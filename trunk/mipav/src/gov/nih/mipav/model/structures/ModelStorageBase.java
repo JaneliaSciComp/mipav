@@ -2,12 +2,15 @@ package gov.nih.mipav.model.structures;
 
 
 import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+
 import java.util.*;
+
 import javax.vecmath.*;
 
 
@@ -216,6 +219,24 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** boolean telling if log magnitude display is used in complex image. */
     private boolean logMagDisp;
 
+    /**
+     * Set to true when the image is the product of the ffts of two images, so that on an inverse_fft this image will be
+     * centered properly. Default is false.
+     */
+    private boolean m_bConvolve = false;
+
+    /** When true, display the data in the Radiological View, when false display the Neurological View:. */
+    private boolean m_bRadiologicalView = true;
+
+    /** Surface color vector. */
+    private Vector m_kColorVector = new Vector();
+
+    /** Surface mask color vector. */
+    private Vector m_kMaskColorVector = new Vector();
+
+    /** Surface mask vector. */
+    private Vector m_kMaskVector = new Vector();
+
     /** minimum and maximum image intensity. */
     private double min, max;
 
@@ -280,28 +301,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** boolean telling if unequal dimensions are allowed in the FFT image. */
     private boolean unequalDim;
 
-    /** DOCUMENT ME! */
-    private int writeLockCount = 0;
-
-    /** Set to true when the image is the product of the ffts of two images,
-     * so that on an inverse_fft this image will be centered properly. Default
-     * is false. */
-    private boolean m_bConvolve = false;
-
-    /** Surface color vector. */
-    private Vector m_kColorVector = new Vector();
-
-    /** Surface mask color vector. */
-    private Vector m_kMaskColorVector = new Vector();
-
-    /** Surface mask vector. */
-    private Vector m_kMaskVector = new Vector();
-
-    /** When true, display the data in the Radiological View, when false
-     * display the Neurological View: */
-    private boolean m_bRadiologicalView = true;
-
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -340,6 +339,45 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return "";
 
     } // end getBufferTypeStr()
+
+
+    /**
+     * Adds a surface mask to this image.
+     *
+     * @param  index        the index of the mask.
+     * @param  kMask        the surface mask
+     * @param  kMaskColors  the per-voxel colors for the mask
+     * @param  kColor       the overall mask color if per-voxel mask colors are not defined.
+     */
+    public void addSurfaceMask(int index, BitSet kMask, Color4f[] kMaskColors, Color4f kColor) {
+
+        if (kColor != null) {
+
+            if (m_kColorVector.size() > index) {
+                m_kColorVector.removeElementAt(index);
+            }
+
+            m_kColorVector.insertElementAt(kColor, index);
+        }
+
+        if (kMask != null) {
+
+            if (m_kMaskVector.size() > index) {
+                m_kMaskVector.removeElementAt(index);
+            }
+
+            m_kMaskVector.insertElementAt(kMask, index);
+        }
+
+        if (kMaskColors != null) {
+
+            if (m_kMaskColorVector.size() > index) {
+                m_kMaskColorVector.removeElementAt(index);
+            }
+
+            m_kMaskColorVector.insertElementAt(kMaskColors, index);
+        }
+    }
 
     /**
      * calculates the min and max values for the image array.
@@ -799,6 +837,173 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         dimExtents = null;
         dimOriginalExtents = null;
+    }
+
+    /**
+     * Exports data based on the mapping from ModelImage space to Patient space.
+     *
+     * @param   orientation  -- the Patient Orientation of the slice to export
+     * @param   tSlice       -- for 4D volumes
+     * @param   slice        -- the constant slice
+     * @param   values       -- the array to write the data into
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public final synchronized float[] export(int orientation, int tSlice, int slice, float[] values)
+            throws IOException {
+        int[] axisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+        boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(this, orientation);
+
+        return export(axisOrder, axisFlip, tSlice, slice, values);
+    }
+
+    /**
+     * Exports data based on the mapping from ModelImage space to Patient space. The mapping parameters are passed in as
+     * the axisOrder and axisFlip arrays.
+     *
+     * @param   axisOrder  -- the mapping of ModelImage space volume axes to Patient space axes
+     * @param   axisFlip   -- the mapping of ModelImage space volume axes to Patient space axes (invert flags)
+     * @param   tSlice     -- for 4D volumes
+     * @param   slice      -- the constant slice
+     * @param   values     -- the array to write the data into
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public final synchronized float[] export(int[] axisOrder, boolean[] axisFlip, int tSlice, int slice, float[] values)
+            throws IOException {
+
+        try {
+            setLock(W_LOCKED);
+        } catch (IOException error) {
+            throw error;
+        }
+
+        /* Get the loop bounds, based on the coordinate-systems: transformation:  */
+        int iBound = (dimExtents.length > 0) ? dimExtents[axisOrder[0]] : 1;
+        int jBound = (dimExtents.length > 1) ? dimExtents[axisOrder[1]] : 1;
+        int kBound = (dimExtents.length > 2) ? dimExtents[axisOrder[2]] : 1;
+
+        /* Get the loop multiplication factors for indexing into the 1D array
+         * with 3 index variables: based on the coordinate-systems:
+         * transformation:  */
+        int[] aiFactors = new int[3];
+        aiFactors[0] = 1;
+        aiFactors[1] = (dimExtents.length > 1) ? dimExtents[0] : 1;
+        aiFactors[2] = (dimExtents.length > 2) ? (dimExtents[0] * dimExtents[1]) : 1;
+
+        int iFactor = aiFactors[axisOrder[0]];
+        int jFactor = aiFactors[axisOrder[1]];
+        int kFactor = aiFactors[axisOrder[2]];
+
+        int kIndex = slice;
+
+        if (axisFlip[2]) {
+            kIndex = (kBound - 1) - slice;
+        }
+
+        int tFactor = (dimExtents.length > 2)
+                      ? (dimExtents[0] * dimExtents[1] * dimExtents[2])
+                      : ((dimExtents.length > 1) ? (dimExtents[0] * dimExtents[1])
+                                                 : ((dimExtents.length > 0) ? dimExtents[0] : 1));
+
+        boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
+        double real, imaginary, mag;
+        float[] fReturn = null;
+
+        /* loop over the 2D image (values) we're writing into */
+        for (int j = 0; j < jBound; j++) {
+
+            for (int i = 0; i < iBound; i++) {
+
+                /* calculate the ModelImage space index: */
+                int iIndex = i;
+                int jIndex = j;
+
+                if (axisFlip[0]) {
+                    iIndex = (iBound - 1) - i;
+                }
+
+                if (axisFlip[1]) {
+                    jIndex = (jBound - 1) - j;
+                }
+
+                int index = (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor);
+
+                /* surface Mask? */
+                Color4f kMaskColor = null;
+
+                if (m_kMaskVector != null) {
+
+                    for (int iMask = 0; iMask < m_kMaskVector.size(); iMask++) {
+                        BitSet kMaskSet = (BitSet) m_kMaskVector.elementAt(iMask);
+
+                        if ((kMaskSet != null) && kMaskSet.get(index)) {
+
+                            if (fReturn == null) {
+                                fReturn = new float[jBound * iBound * 4];
+                            }
+
+                            if (m_kColorVector.size() > iMask) {
+                                kMaskColor = ((Color4f) m_kColorVector.elementAt(iMask));
+                            }
+
+                            if (m_kMaskColorVector.size() > iMask) {
+                                Color4f[] kMaskColors = (Color4f[]) m_kMaskColorVector.elementAt(iMask);
+
+                                if (kMaskColors[index] != null) {
+                                    kMaskColor = kMaskColors[index];
+                                }
+                            }
+
+                            if (kMaskColor != null) {
+                                fReturn[(((j * iBound) + i) * 4) + 0] = kMaskColor.w;
+                                fReturn[(((j * iBound) + i) * 4) + 1] = 255 * kMaskColor.x;
+                                fReturn[(((j * iBound) + i) * 4) + 2] = 255 * kMaskColor.y;
+                                fReturn[(((j * iBound) + i) * 4) + 3] = 255 * kMaskColor.z;
+                            }
+                        }
+                    }
+                }
+
+                /* if color: */
+                if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
+                    values[(((j * iBound) + i) * 4) + 0] = getFloat((index * 4) + 0);
+                    values[(((j * iBound) + i) * 4) + 1] = getFloat((index * 4) + 1);
+                    values[(((j * iBound) + i) * 4) + 2] = getFloat((index * 4) + 2);
+                    values[(((j * iBound) + i) * 4) + 3] = getFloat((index * 4) + 3);
+                }
+                /* if complex: */
+                else if (bufferType == COMPLEX) {
+
+                    if (exportComplex) {
+                        values[(((j * iBound) + i) * 2) + 0] = getFloat(index * 2);
+                        values[(((j * iBound) + i) * 2) + 1] = getFloat((index * 2) + 1);
+                    } else {
+                        real = getFloat(index * 2);
+                        imaginary = getFloat((index * 2) + 1);
+
+                        if (logMagDisp == true) {
+                            mag = Math.sqrt((real * real) + (imaginary * imaginary));
+                            values[(j * iBound) + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
+                        } else {
+                            values[(j * iBound) + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                        }
+                    }
+                }
+                /* not color: */
+                else {
+                    values[(j * iBound) + i] = getFloat(index);
+                }
+            }
+        }
+
+        releaseLock();
+
+        return fReturn;
     }
 
     /**
@@ -1401,6 +1606,165 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * showDiagonal samples the ModelImage data along a non-axis aligned plane. The plane may intersect the ModelImage
+     * volume, defined in x,y,z space, along a diagonal direction.
+     *
+     * <p>This function steps through the image, using the four transformed points to step through the ModelImage along
+     * the diagonal directions, read the corresonding point in the ModelImage and write the value into the image array.
+     * If m_bInterpolate is set to true, the ModelImage data for non-interger vertices is interpolated using tri-linear
+     * interpolation. Note: there is one loop for steping though he data, no matter which type of plane this object
+     * represents (XY, XZ, or ZY).</p>
+     *
+     * @param   tSlice        DOCUMENT ME!
+     * @param   slice         DOCUMENT ME!
+     * @param   extents       DOCUMENT ME!
+     * @param   verts         DOCUMENT ME!
+     * @param   values        DOCUMENT ME!
+     * @param   bInterpolate  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public final synchronized void exportDiagonal(int tSlice, int slice, int[] extents, Point3Df[] verts,
+                                                  float[] values, boolean bInterpolate) throws IOException {
+
+        try {
+            setLock(W_LOCKED);
+        } catch (IOException error) {
+            throw error;
+        }
+
+        int iBound = extents[0];
+        int jBound = extents[1];
+
+        /* Get the loop multiplication factors for indexing into the 1D array
+         * with 3 index variables: based on the coordinate-systems:
+         * transformation:  */
+        int iFactor = 1;
+        int jFactor = dimExtents[0];
+        int kFactor = dimExtents[0] * dimExtents[1];
+        int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+        int buffFactor = 1;
+
+        if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
+            buffFactor = 4;
+        }
+
+        /* Calculate the slopes for traversing the data in x,y,z: */
+        float xSlopeX = verts[1].x - verts[0].x;
+        float ySlopeX = verts[1].y - verts[0].y;
+        float zSlopeX = verts[1].z - verts[0].z;
+
+        float xSlopeY = verts[3].x - verts[0].x;
+        float ySlopeY = verts[3].y - verts[0].y;
+        float zSlopeY = verts[3].z - verts[0].z;
+
+        float x0 = verts[0].x;
+        float y0 = verts[0].y;
+        float z0 = verts[0].z;
+
+        xSlopeX /= (float) (iBound - 1);
+        ySlopeX /= (float) (iBound - 1);
+        zSlopeX /= (float) (iBound - 1);
+
+        xSlopeY /= (float) (jBound - 1);
+        ySlopeY /= (float) (jBound - 1);
+        zSlopeY /= (float) (jBound - 1);
+
+        boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
+        double real, imaginary, mag;
+
+
+        /* loop over the 2D image (values) we're writing into */
+        float x = x0;
+        float y = y0;
+        float z = z0;
+
+        for (int j = 0; j < jBound; j++) {
+
+            /* Initialize the first diagonal point(x,y,z): */
+            x = x0;
+            y = y0;
+            z = z0;
+
+            for (int i = 0; i < iBound; i++) {
+                int iIndex = (int) x;
+                int jIndex = (int) y;
+                int kIndex = (int) z;
+
+                /* calculate the ModelImage space index: */
+                int index = (int) ((iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+
+                /* Bounds checking, if out of bounds, set to zero: */
+                if (((x < 0) || (x >= dimExtents[0])) || ((y < 0) || (y >= dimExtents[1])) ||
+                        ((z < 0) || (z >= dimExtents[2])) || ((index < 0) || ((index * buffFactor) > dataSize))) {
+
+                    if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
+                        values[(((j * iBound) + i) * 4) + 0] = 0;
+                        values[(((j * iBound) + i) * 4) + 1] = 0;
+                        values[(((j * iBound) + i) * 4) + 2] = 0;
+                        values[(((j * iBound) + i) * 4) + 3] = 0;
+                    }
+                    /* not color: */
+                    else {
+                        values[(j * iBound) + i] = (float) this.min;
+                    }
+                } else {
+
+                    /* if color: */
+                    if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
+                        values[(((j * iBound) + i) * 4) + 0] = getFloat((index * 4) + 0);
+                        values[(((j * iBound) + i) * 4) + 1] = getFloat((index * 4) + 1);
+                        values[(((j * iBound) + i) * 4) + 2] = getFloat((index * 4) + 2);
+                        values[(((j * iBound) + i) * 4) + 3] = getFloat((index * 4) + 3);
+                    }
+                    /* if complex: */
+                    else if (bufferType == COMPLEX) {
+
+                        if (exportComplex) {
+                            values[(((j * iBound) + i) * 2) + 0] = getFloat(index * 2);
+                            values[(((j * iBound) + i) * 2) + 1] = getFloat((index * 2) + 1);
+                        } else {
+                            real = getFloat(index * 2);
+                            imaginary = getFloat((index * 2) + 1);
+
+                            if (logMagDisp == true) {
+                                mag = Math.sqrt((real * real) + (imaginary * imaginary));
+                                values[(j * iBound) + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
+                            } else {
+                                values[(j * iBound) + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                            }
+                        }
+                    }
+                    /* not color: */
+                    else {
+
+                        if (bInterpolate) {
+                            values[(j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
+                        } else {
+                            values[(j * iBound) + i] = getFloat(index);
+                        }
+                    }
+                }
+
+                /* Inner loop: Move to the next diagonal point along the
+                 * x-direction of the plane, using the xSlopeX, ySlopeX and
+                 * zSlopeX values: */
+                x = x + xSlopeX;
+                y = y + ySlopeX;
+                z = z + zSlopeX;
+            }
+
+            /* Outer loop: Move to the next diagonal point along the
+             * y-direction of the plane, using the xSlopeY, ySlopeY and
+             * zSlopeY values: */
+            x0 = x0 + xSlopeY;
+            y0 = y0 + ySlopeY;
+            z0 = z0 + zSlopeY;
+        }
+    }
+
+    /**
      * export magnitude data to values array.
      *
      * @param   start   indicates starting position in data array
@@ -1594,7 +1958,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         throw new IOException("Export data error - bounds incorrect");
     }
-
 
 
     /**
@@ -1802,6 +2165,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
 
         return (new Byte((byte) 0));
+    }
+
+    /**
+     * Returns the axis orientation of image.
+     *
+     * @return  the axis orientation of image
+     */
+    public int[] getAxisOrientation() {
+
+        if (fileInfo == null) {
+            return null;
+        }
+
+        return fileInfo[0].getAxisOrientation();
     }
 
     /**
@@ -2102,6 +2479,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return (new Byte((byte) 0));
     }
 
+    /**
+     * Accessor method for the m_bConvolve data memeber.
+     *
+     * @return  m_bConvolve, true when this images is the product of fft( imageA ) fft( imageB )
+     */
+    public boolean getConvolve() {
+        return m_bConvolve;
+    }
+
     /******************************************************************************/
 
     /**
@@ -2265,6 +2651,30 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final int[] getExtents() {
         return dimExtents;
+    }
+
+    /**
+     * Returns the image extents translated into the Patient-Coordinate systsm:
+     *
+     * @param   orientation  the Patient-Coordinate view for which the extents are needed:
+     *
+     * @return  dimExtents[] for the image in Patient Coordinates
+     */
+    public final int[] getExtents(int orientation) {
+
+        /* Do not reorder the extents if this is less than a 3D image: */
+        if (dimExtents.length < 3) {
+            return dimExtents;
+        }
+
+        int[] extentsReturn = new int[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+
+        for (int i = 0; i < 3; i++) {
+            extentsReturn[i] = dimExtents[aiAxisOrder[i]];
+        }
+
+        return extentsReturn;
     }
 
     /**
@@ -2582,12 +2992,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
         if ((x >= 0) && (y >= 0) && (z >= 0) && (x < xDim) && (y < yDim) && (z < dimExtents[2]) && (position1 >= 0) &&
                 (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0) &&
                 (position2 < (dataSize - (xDim * yDim) - 1))) {
-            a1 = ((1 - dx) * data.getFloat(c + (int)(4 * (position1)))) + (dx * data.getFloat(c + (int)(4 * (position1 + 1))));
-            a2 = ((1 - dx) * data.getFloat(c + (int)(4 * (position1 + xDim)))) + (dx * data.getFloat(c + (int)(4 * (position1 + xDim + 1))));
+            a1 = ((1 - dx) * data.getFloat(c + (int) (4 * (position1)))) +
+                 (dx * data.getFloat(c + (int) (4 * (position1 + 1))));
+            a2 = ((1 - dx) * data.getFloat(c + (int) (4 * (position1 + xDim)))) +
+                 (dx * data.getFloat(c + (int) (4 * (position1 + xDim + 1))));
             b1 = ((1 - dy) * a1) + (dy * a2);
 
-            a1 = ((1 - dx) * data.getFloat(c + (int)(4 * (position2)))) + (dx * data.getFloat(c + (int)(4 * (position2 + 1))));
-            a2 = ((1 - dx) * data.getFloat(c + (int)(4 * (position2 + xDim)))) + (dx * data.getFloat(c + (int)(4 * (position2 + xDim + 1))));
+            a1 = ((1 - dx) * data.getFloat(c + (int) (4 * (position2)))) +
+                 (dx * data.getFloat(c + (int) (4 * (position2 + 1))));
+            a2 = ((1 - dx) * data.getFloat(c + (int) (4 * (position2 + xDim)))) +
+                 (dx * data.getFloat(c + (int) (4 * (position2 + xDim + 1))));
             b2 = ((1 - dy) * a1) + (dy * a2);
 
             return (float) (((1 - dz) * b1) + (dz * b2));
@@ -2642,12 +3056,44 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * Returns the image height, based on the Patient Coordinates orientation from which the data will be viewed:
+     *
+     * @param   orientation  the Patient-Viewing orientation
+     *
+     * @return  dimExtents representing the image height for the viewing orientation
+     */
+    public int getHeight(int orientation) {
+
+        if (dimExtents.length < 3) {
+            return dimExtents[1];
+        }
+
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+
+        return dimExtents[aiAxisOrder[1]];
+    }
+
+    /**
      * Accessor that returns the boolean indicating if 3D images are processed one slice at a time.
      *
      * @return  boolean telling if slice by slice processing occurs in 3D
      */
     public boolean getImage25D() {
         return image25D;
+    }
+
+    /**
+     * Gets the image orientation (sagittal, axial, ...).
+     *
+     * @return  integer representing the orientation
+     */
+    public int getImageOrientation() {
+
+        if (fileInfo != null) {
+            return fileInfo[0].getImageOrientation();
+        } else {
+            return FileInfoBase.UNKNOWN_ORIENT;
+        }
     }
 
     /*****************************************************************************/
@@ -3160,6 +3606,52 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return nonZeroMinR;
     }
 
+
+    /**
+     * Returns the origin of the image.
+     *
+     * @return  the origin of the image
+     */
+    public float[] getOrigin() {
+
+        if (fileInfo == null) {
+            return null;
+        }
+
+        return fileInfo[0].getOrigin();
+    }
+
+    /**
+     * Returns the image origin for the image translated into the Patient-Coordinate systsm:
+     *
+     * @param   index        the fileInfo index
+     * @param   orientation  the Patient-Coordinate view for which the origin are needed:
+     *
+     * @return  the origin of the image in Patient Coordinates
+     */
+    public float[] getOrigin(int index, int orientation) {
+
+        if (fileInfo == null) {
+            return null;
+        }
+
+        float[] originTemp = fileInfo[index].getOrigin();
+
+        /* Do not reorder the origin if this is less than a 3D image: */
+        if (dimExtents.length < 3) {
+            return originTemp;
+        }
+
+        float[] originReturn = new float[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+
+        for (int i = 0; i < 3; i++) {
+            originReturn[i] = originTemp[aiAxisOrder[i]];
+        }
+
+        return originReturn;
+    }
+
     /**
      * returns integer telling Butterworth order.
      *
@@ -3268,6 +3760,62 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public FileInfoProject getProjectInfo() {
         return projectInfo;
+    }
+
+    /**
+     * Gets the radiological view flag:
+     *
+     * @return  the RadiologicalView on/off
+     */
+    public boolean getRadiologicalView() {
+        return m_bRadiologicalView;
+    }
+
+    /**
+     * Returns the resolutions for the image without regarding resolution difference between slices.
+     *
+     * @param   index  DOCUMENT ME!
+     *
+     * @return  the resolutions for the image
+     */
+    public float[] getResolutions(int index) {
+
+        if (fileInfo == null) {
+            return null;
+        }
+
+        return fileInfo[index].getResolutions();
+    }
+
+    /**
+     * Returns the resolutions for the image translated into the Patient-Coordinate systsm:
+     *
+     * @param   index        the fileInfo index
+     * @param   orientation  the Patient-Coordinate view for which the resolutions are needed:
+     *
+     * @return  the resolutions for the image in Patient Coordinates
+     */
+    public float[] getResolutions(int index, int orientation) {
+
+        if (fileInfo == null) {
+            return null;
+        }
+
+        float[] resTemp = (float[]) fileInfo[index].getResolutions();
+
+        /* Do not reorder the resolutions if this is less than a 3D image: */
+        if (dimExtents.length < 3) {
+            return resTemp;
+        }
+
+        float[] resReturn = new float[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+
+        for (int i = 0; i < 3; i++) {
+            resReturn[i] = resTemp[aiAxisOrder[i]];
+        }
+
+        return resReturn;
     }
 
     /*****************************************************************************/
@@ -3538,6 +4086,39 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public double getSmallestMagnitudePositiveR() {
         return smallestMagnitudePositiveR;
+    }
+
+
+    /**
+     * Returns the surface mask from this image.
+     *
+     * @param   index  the index of the mask to remove.
+     *
+     * @return  the BitSet mask
+     */
+    public BitSet getSurfaceMask(int index) {
+
+        if (m_kMaskVector.size() > index) {
+            return (BitSet) m_kMaskVector.get(index);
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the surface mask from this image.
+     *
+     * @param   index  the index of the mask to remove.
+     *
+     * @return  the BitSet mask
+     */
+    public Color4f getSurfaceMaskColor(int index) {
+
+        if (m_kColorVector.size() > index) {
+            return (Color4f) m_kColorVector.get(index);
+        }
+
+        return null;
     }
 
     /**
@@ -3959,6 +4540,69 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return unequalDim;
     }
 
+    /**
+     * Returns the units used to measure all dimensions of the image.
+     *
+     * @return  the units used to measure all dimensions of the image.
+     */
+    public int[] getUnitsOfMeasure() {
+
+        if (fileInfo == null) {
+            return null;
+        }
+
+        return fileInfo[0].getUnitsOfMeasure();
+    }
+
+    /**
+     * Returns the unit used to measure the specific dimension of image.
+     *
+     * @param   index  the index of specific dimension
+     *
+     * @return  the unit used to measure the specific dimension
+     */
+    public int getUnitsOfMeasure(int index) {
+
+        if (fileInfo == null) {
+            return -1;
+        }
+
+        return fileInfo[0].getUnitsOfMeasure(index);
+
+    }
+
+
+    /**
+     * Returns the units of measure for the image translated into the Patient-Coordinate systsm:
+     *
+     * @param   index        the fileInfo index
+     * @param   orientation  the Patient-Coordinate view for which the units of measure are needed:
+     *
+     * @return  the units of measure for the image in Patient Coordinates
+     */
+    public int[] getUnitsOfMeasure(int index, int orientation) {
+
+        if (fileInfo == null) {
+            return null;
+        }
+
+        int[] unitsTemp = fileInfo[index].getUnitsOfMeasure();
+
+        /* Do not reorder the units if this is less than a 3D image: */
+        if (dimExtents.length < 3) {
+            return unitsTemp;
+        }
+
+        int[] unitsReturn = new int[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+
+        for (int i = 0; i < 3; i++) {
+            unitsReturn[i] = unitsTemp[aiAxisOrder[i]];
+        }
+
+        return unitsReturn;
+    }
+
     /*****************************************************************************/
 
     /**
@@ -4113,6 +4757,34 @@ public class ModelStorageBase extends ModelSerialCloneable {
         b2 = ((1 - dy) * a1) + (dy * a2);
 
         return (int) (((1 - dz) * b1) + (dz * b2));
+    }
+
+    /**
+     * Get the factors needed to iterate through the image volume. Can be multiplied against iterators to retreive the
+     * index into the image volume data.
+     *
+     * @return  multiples of dimExtents[] for the image
+     */
+    public int[] getVolumeIterationFactors() {
+        return new int[] { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
+    }
+
+    /**
+     * Returns the image width, based on the Patient Coordinates orientation from which the data will be viewed:
+     *
+     * @param   orientation  the Patient-Viewing orientation
+     *
+     * @return  dimExtents representing the image width for the viewing orientation
+     */
+    public int getWidth(int orientation) {
+
+        if (dimExtents.length < 3) {
+            return dimExtents[0];
+        }
+
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+
+        return dimExtents[aiAxisOrder[0]];
     }
 
     /**
@@ -4809,18 +5481,56 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * Releases the lock so that other proceses can read or write the data.
      */
     public final synchronized void releaseLock() {
+        lockStatus = UNLOCKED;
+    }
 
-        if (lockStatus == W_LOCKED) {
-            writeLockCount--;
+    /**
+     * Removes the surface mask from this image.
+     *
+     * @param  index  the index of the mask to remove.
+     */
+    public void removeSurfaceMask(int index) {
 
-            if (writeLockCount <= 0) {
-                lockStatus = UNLOCKED;
+        if (m_kColorVector.size() > index) {
+            m_kColorVector.removeElementAt(index);
+        }
 
-                return;
-            }
-        } else if (lockStatus == RW_LOCKED) {
-            lockStatus = UNLOCKED;
-            writeLockCount = 0; // Just make sure its zero.
+        if (m_kMaskVector.size() > index) {
+            m_kMaskVector.removeElementAt(index);
+        }
+
+        if (m_kMaskColorVector.size() > index) {
+            m_kMaskColorVector.removeElementAt(index);
+        }
+    }
+
+    /**
+     * Returns the array of BitSet masks for backup.
+     *
+     * @return  the BitSet mask array.
+     */
+    public BitSet[] removeSurfaceMasks() {
+        BitSet[] masks = new BitSet[m_kMaskVector.size()];
+
+        for (int i = 0; i < m_kMaskVector.size(); i++) {
+            masks[i] = (BitSet) m_kMaskVector.get(i);
+        }
+
+        m_kMaskVector.removeAllElements();
+
+        return masks;
+    }
+
+    /**
+     * Restores the mask list from the array.
+     *
+     * @param  masks  array of BitSet masks
+     */
+    public void restoreSurfaceMasks(BitSet[] masks) {
+        m_kMaskVector.removeAllElements();
+
+        for (int i = 0; i < masks.length; i++) {
+            m_kMaskVector.insertElementAt(masks[i], i);
         }
     }
 
@@ -5039,96 +5749,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         data.setFloat(position, value);
     }
 
-    /**
-     * version of set that does NOT perform bounds checking.
-     *
-     * @param  value     float data that will be stored in the data array
-     */
-    public final void setAll(float value) {
-    	for(int i = 0; i < data.length(); i++) {
-    		data.setFloat(i, value);	
-    	}
-        
-    }
-    
-    /**
-     * version of set that does NOT perform bounds checking.
-     *
-     * @param  value     byte data that will be stored in the data array
-     */
-    
-    public final void setAll(byte value) {
-    	for(int i = 0; i < data.length(); i++) {
-    		data.setByte(i, value);	
-    	}
-        
-    }
-    
-    /**
-     * version of set that does NOT perform bounds checking.
-     *
-     * @param  value     short data that will be stored in the data array
-     */
-    
-    public final void setAll(short value) {
-    	for(int i = 0; i < data.length(); i++) {
-    		data.setShort(i, value);	
-    	}
-        
-    }
-    
-    /**
-     * version of set that does NOT perform bounds checking.
-     *
-     * @param  value     int data that will be stored in the data array
-     */
-    
-    public final void setAll(int value) {
-    	for(int i = 0; i < data.length(); i++) {
-    		data.setInt(i, value);	
-    	}
-        
-    }
-    
-    /**
-     * version of set that does NOT perform bounds checking.
-     *
-     * @param  value     double data that will be stored in the data array
-     */
-    
-    public final void setAll(double value) {
-    	for(int i = 0; i < data.length(); i++) {
-    		data.setDouble(i, value);	
-    	}
-        
-    }
-    
-    /**
-     * version of set that does NOT perform bounds checking.
-     *
-     * @param  value     UByte data that will be stored in the data array
-     */
-    
-    public final void setAllUByte(short value) {
-    	for(int i = 0; i < data.length(); i++) {
-    		data.setUByte(i, value);	
-    	}
-        
-    }
-    
-    /**
-     * version of set that does NOT perform bounds checking.
-     *
-     * @param  value     UShort data that will be stored in the data array
-     */
-    
-    public final void setAllUShort(int value) {
-    	for(int i = 0; i < data.length(); i++) {
-    		data.setUShort(i, value);	
-    	}
-        
-    }
-    
     /**
      * nD set data fuction where bounds checking is NOT performed.
      *
@@ -5518,6 +6138,103 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value  float data that will be stored in the data array
+     */
+    public final void setAll(float value) {
+
+        for (int i = 0; i < data.length(); i++) {
+            data.setFloat(i, value);
+        }
+
+    }
+
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value  byte data that will be stored in the data array
+     */
+
+    public final void setAll(byte value) {
+
+        for (int i = 0; i < data.length(); i++) {
+            data.setByte(i, value);
+        }
+
+    }
+
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value  short data that will be stored in the data array
+     */
+
+    public final void setAll(short value) {
+
+        for (int i = 0; i < data.length(); i++) {
+            data.setShort(i, value);
+        }
+
+    }
+
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value  int data that will be stored in the data array
+     */
+
+    public final void setAll(int value) {
+
+        for (int i = 0; i < data.length(); i++) {
+            data.setInt(i, value);
+        }
+
+    }
+
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value  double data that will be stored in the data array
+     */
+
+    public final void setAll(double value) {
+
+        for (int i = 0; i < data.length(); i++) {
+            data.setDouble(i, value);
+        }
+
+    }
+
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value  UByte data that will be stored in the data array
+     */
+
+    public final void setAllUByte(short value) {
+
+        for (int i = 0; i < data.length(); i++) {
+            data.setUByte(i, value);
+        }
+
+    }
+
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value  UShort data that will be stored in the data array
+     */
+
+    public final void setAllUShort(int value) {
+
+        for (int i = 0; i < data.length(); i++) {
+            data.setUShort(i, value);
+        }
+
+    }
+
+    /**
      * color set that does perform bounds checking.
      *
      * @param   position  position in one dimensional array
@@ -5608,6 +6325,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final void setC(int x, int y, int z, int c, float value) {
         data.setFloat((4 * ((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c, value);
+    }
+
+    /**
+     * Accessor method for the m_bConvolve data memeber.
+     *
+     * @param  bConvolve  true when this images is the product of fft( imageA ) fft( imageB )
+     */
+    public void setConvolve(boolean bConvolve) {
+        m_bConvolve = bConvolve;
     }
 
     /**
@@ -5731,12 +6457,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
         if (lockStatus == RW_LOCKED) {
             throw new IOException("ModelStorageBase: Image locked !");
         } else if ((lockStatus == UNLOCKED) && (lockType == W_LOCKED)) {
-            writeLockCount++;
             lockStatus = lockType;
-        } else if ((lockStatus == W_LOCKED) && (lockType == W_LOCKED)) {
-            writeLockCount++;
-        } else if ((lockStatus == W_LOCKED) && (lockType == RW_LOCKED)) {
-            throw new IOException("ModelStorageBase: Image locked !");
+        } else if ((lockStatus == W_LOCKED) && (lockType == W_LOCKED)) { }
+        else if ((lockStatus == W_LOCKED) && (lockType == RW_LOCKED)) {
+
+            // throw new IOException("ModelStorageBase: Image locked !");
+            lockStatus = lockType;
         } else if ((lockStatus == UNLOCKED) && (lockType == RW_LOCKED)) {
             lockStatus = lockType;
         }
@@ -5869,6 +6595,30 @@ public class ModelStorageBase extends ModelSerialCloneable {
         if (pInfo != null) {
             projectInfo = pInfo;
         }
+    }
+
+    /**
+     * Sets the radiological view flag.
+     *
+     * @param  bEnabled  when true the radiological view is displayed, when false the neurological view is displayed.
+     */
+    public void setRadiologicalView(boolean bEnabled) {
+        m_bRadiologicalView = bEnabled;
+    }
+
+    /**
+     * Sets the resolutions to the specific.
+     *
+     * @param  index        DOCUMENT ME!
+     * @param  resolutions  DOCUMENT ME!
+     */
+    public void setResolutions(int index, float[] resolutions) {
+
+        if (fileInfo == null) {
+            return;
+        }
+
+        fileInfo[index].setResolutions(resolutions);
     }
 
     /**
@@ -6484,742 +7234,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
     protected void finalize() throws Throwable {
         disposeLocal();
         super.finalize();
-    }
-
-    /**
-     * Accessor method for the m_bConvolve data memeber.
-     * @param bConvolve, true when this images is the
-     * product of fft( imageA ) fft( imageB )
-     */
-    public void setConvolve( boolean bConvolve )
-    {
-        m_bConvolve = bConvolve;
-    }
-
-    /**
-     * Accessor method for the m_bConvolve data memeber.
-     * @return m_bConvolve, true when this images is the
-     * product of fft( imageA ) fft( imageB )
-     */
-    public boolean getConvolve()
-    {
-        return m_bConvolve;
-    }
-
-    /**
-     * Returns the resolutions for the image without regarding resolution
-     * difference between slices.
-     *
-     * @return the resolutions for the image
-     */
-    public float[] getResolutions(int index ){
-        if(fileInfo == null){
-            return null;
-        }
-        return fileInfo[index].getResolutions();
-    }
-
-    /**
-     * Sets the resolutions to the specific
-     * @param index
-     * @param resolutions
-     */
-    public void setResolutions(int index, float[] resolutions){
-        if(fileInfo == null){
-            return;
-        }
-        fileInfo[index].setResolutions(resolutions);
-    }
-
-    /**
-     * Returns the axis orientation of image
-     * @return the axis orientation of image
-     */
-    public int[] getAxisOrientation(){
-        if(fileInfo == null){
-            return null;
-        }
-        return fileInfo[0].getAxisOrientation();
-    }
-
-    /**
-     * Gets the image orientation (sagittal, axial, ...).
-     *
-     * @return  integer representing the orientation
-     */
-    public int getImageOrientation() {
-
-        if (fileInfo != null) {
-            return fileInfo[0].getImageOrientation();
-        } else {
-            return FileInfoBase.UNKNOWN_ORIENT;
-        }
-    }
-
-
-    /**
-     * Returns the origin of the image
-     * @return the origin of the image
-     */
-    public float[] getOrigin(){
-        if(fileInfo == null){
-            return null;
-        }
-        return fileInfo[0].getOrigin();
-    }
-
-    /**
-     * Returns the unit used to measure the specific dimension of image.
-     * @param index  the index of specific dimension
-     * @return       the unit used to measure the specific dimension
-     */
-    public int getUnitsOfMeasure(int index){
-        if(fileInfo == null){
-            return -1;
-        }
-        return fileInfo[0].getUnitsOfMeasure(index);
-
-    }
-
-    /**
-     * Returns the units used to measure all dimensions of the image.
-     * @return the units used to measure all dimensions of the image.
-     */
-    public int[] getUnitsOfMeasure(){
-        if(fileInfo == null){
-            return null;
-        }
-        return fileInfo[0].getUnitsOfMeasure();
-    }
-
-    /**
-     * Exports data based on the mapping from ModelImage space to Patient
-     * space.
-     * @param orientation -- the Patient Orientation of the slice to export
-     * @param tSlice -- for 4D volumes
-     * @param slice -- the constant slice
-     * @param values -- the array to write the data into
-     */
-    public final synchronized float[] export( int orientation,
-                                              int tSlice, int slice,
-                                              float[] values ) throws IOException
-    {
-        int[] axisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
-        boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( this, orientation );
-        return export( axisOrder, axisFlip, tSlice, slice, values );
-    }
-
-    /**
-     * Exports data based on the mapping from ModelImage space to Patient
-     * space. The mapping parameters are passed in as the axisOrder and
-     * axisFlip arrays.
-     * @param axisOrder -- the mapping of ModelImage space volume axes to
-     * Patient space axes
-     * @param axisFlip -- the mapping of ModelImage space volume axes to
-     * Patient space axes (invert flags)
-     * @param tSlice -- for 4D volumes
-     * @param slice -- the constant slice
-     * @param values -- the array to write the data into
-     */
-    public final synchronized float[] export( int[] axisOrder, boolean[] axisFlip,
-                                              int tSlice, int slice,
-                                              float[] values ) throws IOException
-    {
-        try {
-            setLock(W_LOCKED);
-        } catch (IOException error) {
-            throw error;
-        }
-
-        /* Get the loop bounds, based on the coordinate-systems: transformation:  */
-        int iBound = (dimExtents.length > 0 ) ? dimExtents[ axisOrder[0] ] : 1;
-        int jBound = (dimExtents.length > 1 ) ? dimExtents[ axisOrder[1] ] : 1;
-        int kBound = (dimExtents.length > 2 ) ? dimExtents[ axisOrder[2] ] : 1;
-
-        /* Get the loop multiplication factors for indexing into the 1D array
-         * with 3 index variables: based on the coordinate-systems:
-         * transformation:  */
-        int[] aiFactors = new int[3];
-        aiFactors[0] = 1;
-        aiFactors[1] = (dimExtents.length > 1 ) ? dimExtents[0] : 1;
-        aiFactors[2] = (dimExtents.length > 2 ) ? dimExtents[0] * dimExtents[1] : 1;
-
-        int iFactor = aiFactors[ axisOrder[0] ];
-        int jFactor = aiFactors[ axisOrder[1] ];
-        int kFactor = aiFactors[ axisOrder[2] ];
-
-        int kIndex = slice;
-        if ( axisFlip[2] )
-        {
-            kIndex = (kBound - 1) - slice;
-        }
-
-        int tFactor =
-            (dimExtents.length > 2 ) ? dimExtents[0] * dimExtents[1] * dimExtents[2] :
-            (dimExtents.length > 1 ) ? dimExtents[0] * dimExtents[1] :
-            (dimExtents.length > 0 ) ? dimExtents[0] : 1;
-
-        boolean exportComplex = ( values.length == (2 * iBound * jBound) ) ? true : false;
-        double real, imaginary, mag;
-        float[] fReturn = null;
-
-        /* loop over the 2D image (values) we're writing into */
-        for (int j = 0; j < jBound; j++)
-        {
-            for (int i = 0; i < iBound; i++)
-            {
-                /* calculate the ModelImage space index: */
-                int iIndex = i;
-                int jIndex = j;
-
-                if ( axisFlip[0] )
-                {
-                    iIndex = (iBound - 1) - i;
-                }
-                if ( axisFlip[1] )
-                {
-                    jIndex = (jBound - 1) - j;
-                }
-
-                int index =
-                    (iIndex * iFactor) +
-                    (jIndex * jFactor) +
-                    (kIndex * kFactor) +
-                    (tSlice * tFactor);
-
-                /* surface Mask? */
-                Color4f kMaskColor = null;
-                if ( m_kMaskVector != null )
-                {
-                    for (int iMask = 0; iMask < m_kMaskVector.size(); iMask++) {
-                        BitSet kMaskSet = (BitSet) m_kMaskVector.elementAt(iMask);
-
-                        if ((kMaskSet != null) && kMaskSet.get(index)) {
-                            if ( fReturn == null )
-                            {
-                                fReturn = new float[ jBound * iBound * 4];
-                            }
-                            if ( m_kColorVector.size() > iMask )
-                            {
-                                kMaskColor = ((Color4f) m_kColorVector.elementAt(iMask));
-                            }
-                            if ( m_kMaskColorVector.size() > iMask )
-                            {
-                                Color4f[] kMaskColors = (Color4f[]) m_kMaskColorVector.elementAt(iMask);
-                                if ( kMaskColors[index] != null )
-                                {
-                                    kMaskColor = kMaskColors[index];
-                                }
-                            }
-                            if ( kMaskColor != null )
-                            {
-                                fReturn[(j * iBound + i) * 4 + 0] = kMaskColor.w;
-                                fReturn[(j * iBound + i) * 4 + 1] = 255 * kMaskColor.x;
-                                fReturn[(j * iBound + i) * 4 + 2] = 255 * kMaskColor.y;
-                                fReturn[(j * iBound + i) * 4 + 3] = 255 * kMaskColor.z;
-                            }
-                        }
-                    }
-                }
-
-                /* if color: */
-                if ((bufferType == ARGB) ||
-                    (bufferType == ARGB_USHORT) ||
-                    (bufferType == ARGB_FLOAT))
-                {
-                    values[(j * iBound + i) * 4 + 0] = getFloat(index * 4 + 0);
-                    values[(j * iBound + i) * 4 + 1] = getFloat(index * 4 + 1);
-                    values[(j * iBound + i) * 4 + 2] = getFloat(index * 4 + 2);
-                    values[(j * iBound + i) * 4 + 3] = getFloat(index * 4 + 3);
-                }
-                /* if complex: */
-                else if ( bufferType == COMPLEX )
-                {
-
-                    if ( exportComplex )
-                    {
-                        values[(j * iBound + i) * 2 + 0] = getFloat(index * 2);
-                        values[(j * iBound + i) * 2 + 1] = getFloat(index * 2 + 1);
-                    }
-                    else
-                    {
-                        real = getFloat(index * 2);
-                        imaginary = getFloat(index * 2 + 1);
-
-                        if (logMagDisp == true) {
-                            mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                            values[j * iBound + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
-                        } else {
-                            values[j * iBound + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                        }
-                    }
-                }
-                /* not color: */
-                else
-                {
-                    values[j * iBound + i] = getFloat(index);
-                }
-            }
-        }
-
-        releaseLock();
-        return fReturn;
-    }
-
-    /**
-     * showDiagonal samples the ModelImage data along a non-axis aligned
-     * plane. The plane may intersect the ModelImage volume, defined in x,y,z
-     * space, along a diagonal direction.
-     *
-     * This function steps through the image, using the four transformed
-     * points to step through the ModelImage along the diagonal directions,
-     * read the corresonding point in the ModelImage and write the value into
-     * the image array. If m_bInterpolate is set to true, the ModelImage data
-     * for non-interger vertices is interpolated using tri-linear
-     * interpolation. Note: there is one loop for steping though he data, no
-     * matter which type of plane this object represents (XY, XZ, or ZY).</p>
-     *
-     */
-    public final synchronized void exportDiagonal( int tSlice, int slice,
-                                                   int[] extents,
-                                                   Point3Df[] verts,
-                                                   float[] values,
-                                                   boolean bInterpolate )
-        throws IOException
-    {
-        try {
-            setLock(W_LOCKED);
-        } catch (IOException error) {
-            throw error;
-        }
-        int iBound = extents[ 0 ];
-        int jBound = extents[ 1 ];
-
-        /* Get the loop multiplication factors for indexing into the 1D array
-         * with 3 index variables: based on the coordinate-systems:
-         * transformation:  */
-        int iFactor = 1;
-        int jFactor = dimExtents[ 0 ];
-        int kFactor = dimExtents[ 0 ] * dimExtents[ 1 ];
-        int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
-
-        int buffFactor = 1;
-        if ((bufferType == ARGB) ||
-            (bufferType == ARGB_USHORT) ||
-            (bufferType == ARGB_FLOAT))
-        {
-            buffFactor = 4;
-        }
-
-        /* Calculate the slopes for traversing the data in x,y,z: */
-        float xSlopeX = verts[1].x - verts[0].x;
-        float ySlopeX = verts[1].y - verts[0].y;
-        float zSlopeX = verts[1].z - verts[0].z;
-
-        float xSlopeY = verts[3].x - verts[0].x;
-        float ySlopeY = verts[3].y - verts[0].y;
-        float zSlopeY = verts[3].z - verts[0].z;
-
-        float x0 = verts[0].x;
-        float y0 = verts[0].y;
-        float z0 = verts[0].z;
-
-        xSlopeX /= (float) (iBound - 1);
-        ySlopeX /= (float) (iBound - 1);
-        zSlopeX /= (float) (iBound - 1);
-
-        xSlopeY /= (float) (jBound - 1);
-        ySlopeY /= (float) (jBound - 1);
-        zSlopeY /= (float) (jBound - 1);
-
-        boolean exportComplex = ( values.length == (2 * iBound * jBound) ) ? true : false;
-        double real, imaginary, mag;
-
-
-        /* loop over the 2D image (values) we're writing into */
-        float x = x0;
-        float y = y0;
-        float z = z0;
-        for (int j = 0; j < jBound; j++)
-        {
-            /* Initialize the first diagonal point(x,y,z): */
-            x = x0;
-            y = y0;
-            z = z0;
-            for (int i = 0; i < iBound; i++)
-            {
-                int iIndex = (int)x;
-                int jIndex = (int)y;
-                int kIndex = (int)z;
-
-                /* calculate the ModelImage space index: */
-                int index = (int)(
-                    (iIndex * iFactor) +
-                    (jIndex * jFactor) +
-                    (kIndex * kFactor) +
-                    (tSlice * tFactor));
-
-                /* Bounds checking, if out of bounds, set to zero: */
-                if (((x < 0) || (x >= dimExtents[0])) ||
-                    ((y < 0) || (y >= dimExtents[1])) ||
-                    ((z < 0) || (z >= dimExtents[2])) ||
-                    ((index < 0) || ((index * buffFactor) > dataSize) ) )
-                {
-                    if ((bufferType == ARGB) ||
-                        (bufferType == ARGB_USHORT) ||
-                        (bufferType == ARGB_FLOAT))
-                    {
-                        values[(j * iBound + i) * 4 + 0] = 0;
-                        values[(j * iBound + i) * 4 + 1] = 0;
-                        values[(j * iBound + i) * 4 + 2] = 0;
-                        values[(j * iBound + i) * 4 + 3] = 0;
-                    }
-                    /* not color: */
-                    else
-                    {
-                        values[j * iBound + i] = (float)this.min;
-                    }
-                }
-                else
-                {
-                    /* if color: */
-                    if ((bufferType == ARGB) ||
-                        (bufferType == ARGB_USHORT) ||
-                        (bufferType == ARGB_FLOAT))
-                    {
-                        values[(j * iBound + i) * 4 + 0] = getFloat(index * 4 + 0);
-                        values[(j * iBound + i) * 4 + 1] = getFloat(index * 4 + 1);
-                        values[(j * iBound + i) * 4 + 2] = getFloat(index * 4 + 2);
-                        values[(j * iBound + i) * 4 + 3] = getFloat(index * 4 + 3);
-                    }
-                    /* if complex: */
-                    else if ( bufferType == COMPLEX )
-                    {
-                        if ( exportComplex )
-                        {
-                            values[(j * iBound + i) * 2 + 0] = getFloat(index * 2);
-                            values[(j * iBound + i) * 2 + 1] = getFloat(index * 2 + 1);
-                        }
-                        else
-                        {
-                            real = getFloat(index * 2);
-                            imaginary = getFloat(index * 2 + 1);
-                            
-                            if (logMagDisp == true) {
-                                mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                                values[j * iBound + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
-                            } else {
-                                values[j * iBound + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                            }
-                        }
-                    }
-                    /* not color: */
-                    else
-                    {
-                        if ( bInterpolate )
-                        {
-                            values[j * iBound + i] = getFloatTriLinearBounds( x, y, z );
-                        }
-                        else
-                        {
-                            values[j * iBound + i] = getFloat(index);
-                        }
-                    }
-                }
-                /* Inner loop: Move to the next diagonal point along the
-                 * x-direction of the plane, using the xSlopeX, ySlopeX and
-                 * zSlopeX values: */
-                x = x + xSlopeX;
-                y = y + ySlopeX;
-                z = z + zSlopeX;
-            }
-
-            /* Outer loop: Move to the next diagonal point along the
-             * y-direction of the plane, using the xSlopeY, ySlopeY and
-             * zSlopeY values: */
-            x0 = x0 + xSlopeY;
-            y0 = y0 + ySlopeY;
-            z0 = z0 + zSlopeY;
-        }
-    }
-
-    /** Returns the image width, based on the Patient Coordinates orientation
-     * from which the data will be viewed:
-     * @param orientation, the Patient-Viewing orientation
-     * @return dimExtents representing the image width for the viewing orientation
-     */
-    public int getWidth( int orientation )
-    {
-        if ( dimExtents.length < 3 )
-        {
-            return dimExtents[0];
-        }
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
-        return dimExtents[ aiAxisOrder[0] ];
-    }
-
-    /** Returns the image height, based on the Patient Coordinates orientation
-     * from which the data will be viewed:
-     * @param orientation, the Patient-Viewing orientation
-     * @return dimExtents representing the image height for the viewing orientation
-     */
-    public int getHeight( int orientation )
-    {
-        if ( dimExtents.length < 3 )
-        {
-            return dimExtents[1];
-        }
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
-        return dimExtents[ aiAxisOrder[1] ];
-    }
-
-    /**
-     * Returns the resolutions for the image translated into the
-     * Patient-Coordinate systsm:
-     * @param index, the fileInfo index
-     * @param orientation, the Patient-Coordinate view for which the
-     * resolutions are needed:
-     * @return the resolutions for the image in Patient Coordinates
-     */
-    public float[] getResolutions(int index, int orientation ){
-        if(fileInfo == null){
-            return null;
-        }
-        
-        float[] resTemp = (float[]) fileInfo[index].getResolutions();
-        
-        /* Do not reorder the resolutions if this is less than a 3D image: */
-        if ( dimExtents.length < 3 )
-        {
-            return resTemp;
-        }
-
-        float[] resReturn = new float[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
-        for ( int i = 0; i < 3; i++ )
-        {
-            resReturn[i] = resTemp[ aiAxisOrder[i] ];
-        }
-        return resReturn;
-    }
-
-    /**
-     * Returns the image origin for the image translated into the
-     * Patient-Coordinate systsm:
-     * @param index, the fileInfo index
-     * @param orientation, the Patient-Coordinate view for which the
-     * origin are needed:
-     * @return the origin of the image in Patient Coordinates
-     */
-    public float[] getOrigin(int index, int orientation ){
-        if(fileInfo == null){
-            return null;
-        }
-        float[] originTemp = fileInfo[index].getOrigin();
-        /* Do not reorder the origin if this is less than a 3D image: */
-        if ( dimExtents.length < 3 )
-        {
-            return originTemp;
-        }
-        float[] originReturn = new float[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
-        for ( int i = 0; i < 3; i++ )
-        {
-            originReturn[i] = originTemp[ aiAxisOrder[i] ];
-        }
-        return originReturn;
-    }
-
-
-    /**
-     * Returns the units of measure for the image translated into the
-     * Patient-Coordinate systsm:
-     * @param index, the fileInfo index
-     * @param orientation, the Patient-Coordinate view for which the
-     * units of measure are needed:
-     * @return the units of measure for the image in Patient Coordinates
-     */
-    public int[] getUnitsOfMeasure( int index, int orientation ){
-        if(fileInfo == null){
-            return null;
-        }
-        int[] unitsTemp = fileInfo[index].getUnitsOfMeasure();
-        /* Do not reorder the units if this is less than a 3D image: */
-        if ( dimExtents.length < 3 )
-        {
-            return unitsTemp;
-        }
-
-        int[] unitsReturn = new int[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
-        for ( int i = 0; i < 3; i++ )
-        {
-            unitsReturn[i] = unitsTemp[ aiAxisOrder[i] ];
-        }
-        return unitsReturn;
-    }
-
-    /**
-     * Returns the image extents translated into the Patient-Coordinate
-     * systsm:
-     * @param orientation, the Patient-Coordinate view for which the
-     * extents are needed:
-     * @return dimExtents[] for the image in Patient Coordinates
-     */
-    public final int[] getExtents( int orientation ) {
-        /* Do not reorder the extents if this is less than a 3D image: */
-        if ( dimExtents.length < 3 )
-        {
-            return dimExtents;
-        }
-
-        int[] extentsReturn = new int[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
-        for ( int i = 0; i < 3; i++ )
-        {
-            extentsReturn[i] = dimExtents[ aiAxisOrder[i] ];
-        }
-        return extentsReturn;
-    }
-
-    /**
-     * Get the factors needed to iterate through the image volume. Can be
-     * multiplied against iterators to retreive the index into the image
-     * volume data.
-     * @return multiples of dimExtents[] for the image
-     */
-    public int[] getVolumeIterationFactors(  ) {
-        return new int[] { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
-    }
-
-
-    /**
-     * Adds a surface mask to this image.
-     * @param index, the index of the mask.
-     * @param kMask, the surface mask
-     * @param kMaskColors, the per-voxel colors for the mask
-     * @param kColor, the overall mask color if per-voxel mask colors are not defined.
-     */
-    public void addSurfaceMask( int index, BitSet kMask, Color4f[] kMaskColors, Color4f kColor )
-    {
-        if ( kColor != null )
-        {
-            if ( m_kColorVector.size() > index )
-            {
-                m_kColorVector.removeElementAt(index);
-            }
-            m_kColorVector.insertElementAt(kColor, index);
-        }
-        if ( kMask != null )
-        {
-            if ( m_kMaskVector.size() > index )
-            {
-                m_kMaskVector.removeElementAt(index);
-            }
-            m_kMaskVector.insertElementAt(kMask, index);
-        }
-        if ( kMaskColors != null )
-        {
-            if ( m_kMaskColorVector.size() > index )
-            {
-                m_kMaskColorVector.removeElementAt(index);
-            }
-            m_kMaskColorVector.insertElementAt(kMaskColors, index);
-        }
-    }
-
-    /**
-     * Returns the array of BitSet masks for backup.
-     * @return the BitSet mask array.
-     */
-    public BitSet[] removeSurfaceMasks( )
-    {
-        BitSet[] masks = new BitSet[m_kMaskVector.size()];
-        for ( int i = 0; i < m_kMaskVector.size(); i++ )
-        {
-            masks[i] = (BitSet)m_kMaskVector.get(i);
-        }
-        m_kMaskVector.removeAllElements();
-        return masks;
-    }
-
-    /**
-     * Restores the mask list from the array.
-     * @param masks, array of BitSet masks
-     */
-    public void restoreSurfaceMasks( BitSet[] masks )
-    {
-        m_kMaskVector.removeAllElements();
-        for ( int i = 0; i < masks.length; i++ )
-        {
-            m_kMaskVector.insertElementAt( masks[i], i );
-        }
-    }
-
-
-    /**
-     *  Returns the surface mask from this image.
-     * @param index, the index of the mask to remove.
-     * @return the BitSet mask 
-     */
-    public BitSet getSurfaceMask( int index )
-    {
-        if ( m_kMaskVector.size() > index )
-        {
-            return (BitSet)m_kMaskVector.get(index);
-        }
-        return null;
-    }
-
-    /**
-     *  Returns the surface mask from this image.
-     * @param index, the index of the mask to remove.
-     * @return the BitSet mask 
-     */
-    public Color4f getSurfaceMaskColor( int index )
-    {
-        if ( m_kColorVector.size() > index )
-        {
-            return (Color4f)m_kColorVector.get(index);
-        }
-        return null;
-    }
-
-    /**
-     *  Removes the surface mask from this image.
-     * @param index, the index of the mask to remove.
-     */
-    public void removeSurfaceMask( int index )
-    {
-        if ( m_kColorVector.size() > index )
-        {
-            m_kColorVector.removeElementAt(index);
-        }
-        if ( m_kMaskVector.size() > index )
-        {
-            m_kMaskVector.removeElementAt(index);
-        }
-        if ( m_kMaskColorVector.size() > index )
-        {
-            m_kMaskColorVector.removeElementAt(index);
-        }
-    }
-
-    /** Sets the radiological view flag
-     * @param bEnabled, when true the radiological view is displayed, when
-     * false the neurological view is displayed.
-     */
-    public void setRadiologicalView( boolean bEnabled )
-    {
-        m_bRadiologicalView = bEnabled;
-    }
-
-    /** Gets the radiological view flag:
-     * @return the RadiologicalView on/off
-     */
-    public boolean getRadiologicalView(  )
-    {
-        return m_bRadiologicalView;
     }
 
 

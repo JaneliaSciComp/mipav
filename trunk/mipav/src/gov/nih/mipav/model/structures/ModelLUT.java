@@ -94,9 +94,6 @@ public class ModelLUT extends ModelStorageBase {
     /** The X coordinates of the transfer functions. */
     private float[] x = new float[256]; // I don't expect tranfer function to have > 256 points
 
-    /** The Y coordinates of the transfer functions. */
-    private float[] y = new float[256];
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -381,6 +378,9 @@ public class ModelLUT extends ModelStorageBase {
         try {
             exportData(0, height, tmpLUT);
         } catch (IOException error) {
+            releaseLock();
+            System.out.println("ModelLUT.invertLUT export: " + error);
+
             return;
         }
 
@@ -394,6 +394,9 @@ public class ModelLUT extends ModelStorageBase {
         try {
             importData(0, tmp2LUT, true);
         } catch (IOException error) {
+            releaseLock();
+            System.out.println("ModelLUT.invertLUT import: " + error);
+
             return;
         }
 
