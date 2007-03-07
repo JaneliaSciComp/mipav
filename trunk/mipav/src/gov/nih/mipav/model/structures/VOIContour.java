@@ -705,22 +705,22 @@ public class VOIContour extends VOIBase {
 
         gon = scalePolygon(zoomX, zoomY, resolutionX, resolutionY);
         
+        if (active) {
+        	if (closed) {
+        		drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
+        	} else {
+        		drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
+        	}
+		}
+        
         if (thickness == 1) {
-
         	if (closed == true) {
         		g.drawPolygon(gon);
-
-        		if (active == true) {
-        			drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
-    	        }
+        		
         	} else {
         		g.drawPolyline(gon.xpoints, gon.ypoints, gon.npoints);
-
-    	        if (active == true) {
-    	        	drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
-    	        }
         	}
-    	} else { 
+        } else { 
         	//thickness is greater than 1... must draw differently
         
     		int x1, x2, y1, y2;   		
@@ -1086,19 +1086,20 @@ public class VOIContour extends VOIBase {
 
         gon = scalePolygon(zoomX, zoomY, resolutionX, resolutionY);
         
+        if (active) {
+        	if (closed) {
+        		drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
+        	} else {
+        		drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
+        	}
+		}
+        
         if (thickness == 1) {
         	if (closed == true) {
         		g.drawPolygon(gon);
-
-        		if (active == true) {
-        			drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
-        		}
+        		
         	} else {
         		g.drawPolyline(gon.xpoints, gon.ypoints, gon.npoints);
-
-        		if (active == true) {
-        			drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
-        		}
         	}
         } else {
 //        	thickness is greater than 1... must draw differently
