@@ -378,7 +378,6 @@ public class ModelLUT extends ModelStorageBase {
         try {
             exportData(0, height, tmpLUT);
         } catch (IOException error) {
-            releaseLock();
             System.out.println("ModelLUT.invertLUT export: " + error);
 
             return;
@@ -394,7 +393,6 @@ public class ModelLUT extends ModelStorageBase {
         try {
             importData(0, tmp2LUT, true);
         } catch (IOException error) {
-            releaseLock();
             System.out.println("ModelLUT.invertLUT import: " + error);
 
             return;
