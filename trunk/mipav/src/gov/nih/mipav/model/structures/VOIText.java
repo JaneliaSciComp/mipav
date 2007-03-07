@@ -171,7 +171,7 @@ public class VOIText extends VOIBase {
      * @param  boundingBox     boolean that indicates if boundingBox is on or off
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
-                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox) {
+                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox, int thickness) {
         int j;
 
         int xS, yS, xS2, yS2;
@@ -259,7 +259,7 @@ public class VOIText extends VOIBase {
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
                          float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox,
-                         FileInfoBase fileInfo, int dim) {
+                         FileInfoBase fileInfo, int dim, int thickness) {
 
         return;
     }

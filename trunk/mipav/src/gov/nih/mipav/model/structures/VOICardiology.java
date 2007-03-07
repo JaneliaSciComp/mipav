@@ -1136,7 +1136,7 @@ public class VOICardiology extends VOIBase {
      * @param  boundingBox     boolean that indicates if boundingBox is on or off
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
-                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox) {
+                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox, int thickness) {
         Polygon gon = null;
         Polygon innerGon = null;
         Polygon outerGon = null;
@@ -1280,7 +1280,7 @@ public class VOICardiology extends VOIBase {
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
                          float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox,
-                         FileInfoBase fileInfo, int dim) { }
+                         FileInfoBase fileInfo, int dim, int thickness) { }
 
     /**
      * Draws the vertices of the contour.
@@ -2792,7 +2792,7 @@ public class VOICardiology extends VOIBase {
      * @param  g            graphics to paint in
      */
     public void retraceContour(float zoomX, float zoomY, float resolutionX, float resolutionY, float[] resols, int x1,
-                               int y1, Graphics g) {
+                               int y1, Graphics g, int thickness) {
         Point3Df ptRetrace = null;
         double minDistance, dist;
         float x2, y2, z;
@@ -2836,7 +2836,7 @@ public class VOICardiology extends VOIBase {
             units[0] = 0;
             units[1] = 0;
             units[2] = 0;
-            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false);
+            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
 
             // Find nearest point in old contour
             minDistance = 9999999;
@@ -2904,7 +2904,7 @@ public class VOICardiology extends VOIBase {
             units[0] = 0;
             units[1] = 0;
             units[2] = 0;
-            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false);
+            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
             active = true;
         } catch (OutOfMemoryError error) {
             System.gc();

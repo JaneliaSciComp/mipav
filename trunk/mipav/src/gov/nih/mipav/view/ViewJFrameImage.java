@@ -2416,6 +2416,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (getActiveImage() == imageA) {
                 componentImage.getLUTa().invertLUT();
             } else if (getActiveImage() == imageB) {
+            	System.err.println("should be inverting the lutB");
                 componentImage.getLUTb().invertLUT();
             }
 

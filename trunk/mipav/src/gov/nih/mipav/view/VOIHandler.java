@@ -2514,7 +2514,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                                                                          compImage.getResolutionX(),
                                                                                                          compImage.getResolutionY(),
                                                                                                          compImage.getActiveImage().getFileInfo(0).getResolutions(),
-                                                                                                         xS, yS, g);
+                                                                                                         xS, yS, g, VOIs.VOIAt(i).getThickness());
                     compImage.setMode(ViewJComponentEditImage.RETRACE);
 
                     break;

@@ -87,6 +87,9 @@ public class VOI extends ModelSerialCloneable {
     /** Indicates the color or the VOI. */
     private Color color;
 
+    /** The thickness of the VOI lines*/
+    private int thickness = 1;
+    
     /** DOCUMENT ME! */
     private transient ViewJFrameGraph contourGraph = null;
 
@@ -215,6 +218,8 @@ public class VOI extends ModelSerialCloneable {
         hue = (float) ((((ID) * 35) % 360) / 360.0);
         setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0)); // important to use the access method
 
+        this.thickness = Preferences.getVOIThickness();
+        
         // this ensures that color gets set in
         // all protractor contours.
         this.zDim = zDim;
@@ -277,6 +282,8 @@ public class VOI extends ModelSerialCloneable {
 
         setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0)); // important to use the access method
 
+        this.thickness = Preferences.getVOIThickness();
+        
         // this ensures that color gets set in
         // all protractor contours.
         this.zDim = zDim;
@@ -1043,7 +1050,7 @@ public class VOI extends ModelSerialCloneable {
                 if (visible) {
                     ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, originX,
                                                                        originY, resols, unitsOfMeasure, orientation, g,
-                                                                       isSolid);
+                                                                       isSolid, thickness);
                 }
             }
             // System.err.println("DISTANCE IS: " + distance);
@@ -1062,32 +1069,32 @@ public class VOI extends ModelSerialCloneable {
                         ((VOIContour) (curves[slice].elementAt(i))).setBounds(xBounds, yBounds, zBounds);
                         ((VOIContour) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                              originX, originY, resols, unitsOfMeasure,
-                                                                             orientation, g, boundingBox);
+                                                                             orientation, g, boundingBox, thickness);
                     } else if (curveType == LINE) {
                         ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                           originX, originY, resols, unitsOfMeasure,
-                                                                          orientation, g, isSolid);
+                                                                          orientation, g, isSolid, thickness);
                     } else if (curveType == POINT) {
                         ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                            originX, originY, resols, unitsOfMeasure,
-                                                                           orientation, g, isSolid);
+                                                                           orientation, g, isSolid, thickness);
                     } else if (curveType == PROTRACTOR) {
                         ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
                         ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                                 originX, originY, resols,
                                                                                 unitsOfMeasure, orientation, g,
-                                                                                isSolid);
+                                                                                isSolid, thickness);
                     } else if (curveType == ANNOTATION) {
                         ((VOIText) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                           originX, originY, resols, unitsOfMeasure,
-                                                                          orientation, g, isSolid);
+                                                                          orientation, g, isSolid, thickness);
                     } else if (curveType == CARDIOLOGY) {
 
                         // System.err.println("got here");
                         ((VOICardiology) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                                 originX, originY, resols,
                                                                                 unitsOfMeasure, orientation, g,
-                                                                                isSolid);
+                                                                                isSolid, thickness);
                     }
                 }
             }
@@ -1310,7 +1317,7 @@ public class VOI extends ModelSerialCloneable {
 
                         ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                            originX, originY, resols, unitsOfMeasure,
-                                                                           orientation, g, isSolid);
+                                                                           orientation, g, isSolid, thickness);
 
                     }
                 }
@@ -1338,34 +1345,34 @@ public class VOI extends ModelSerialCloneable {
                         ((VOIContour) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                              originX, originY, resols, unitsOfMeasure,
                                                                              orientation, g, boundingBox, fileInfo,
-                                                                             dim);
+                                                                             dim, thickness);
                     } else if (curveType == LINE) {
                         ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                           originX, originY, resols, unitsOfMeasure,
-                                                                          orientation, g, isSolid);
+                                                                          orientation, g, isSolid, thickness);
                     } else if (curveType == POINT) {
                         ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                            originX, originY, resols, unitsOfMeasure,
-                                                                           orientation, g, isSolid);
+                                                                           orientation, g, isSolid, thickness);
                     } else if (curveType == PROTRACTOR) {
                         ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
                         ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                                 originX, originY, resols,
                                                                                 unitsOfMeasure, orientation, g,
-                                                                                isSolid);
+                                                                                isSolid, thickness);
                     } else if (curveType == ANNOTATION) {
 
                         // System.err.println("Text: " + ((VOIText)(curves[slice].elementAt(i))).getText());
                         ((VOIText) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                           originX, originY, resols, unitsOfMeasure,
-                                                                          orientation, g, isSolid);
+                                                                          orientation, g, isSolid, thickness);
                     } else if (curveType == CARDIOLOGY) {
 
                         // System.err.println("got here");
                         ((VOICardiology) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                                 originX, originY, resols,
                                                                                 unitsOfMeasure, orientation, g,
-                                                                                isSolid);
+                                                                                isSolid, thickness);
                     }
                 }
             }
@@ -1404,15 +1411,15 @@ public class VOI extends ModelSerialCloneable {
                                                                              boundingBox);
                 } else if (curveType == LINE) {
                     ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f,
-                                                                      resols, unitsOfMeasure, orientation, g, isSolid);
+                                                                      resols, unitsOfMeasure, orientation, g, isSolid, thickness);
                 } else if (curveType == POINT) {
                     ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f,
-                                                                       resols, unitsOfMeasure, orientation, g, isSolid);
+                                                                       resols, unitsOfMeasure, orientation, g, isSolid, thickness);
                 } else if (curveType == PROTRACTOR) {
                     ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
                     ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f,
                                                                             0f, resols, unitsOfMeasure, orientation, g,
-                                                                            isSolid);
+                                                                            isSolid, thickness);
                 }
             }
         }
@@ -1453,16 +1460,16 @@ public class VOI extends ModelSerialCloneable {
             } else if (curveType == LINE) {
                 ((VOILine) (curves[slice].elementAt(element))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f,
                                                                         resols, unitsOfMeasure, orientation, g,
-                                                                        isSolid);
+                                                                        isSolid, thickness);
             } else if (curveType == POINT) {
                 ((VOIPoint) (curves[slice].elementAt(element))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f,
                                                                          resols, unitsOfMeasure, orientation, g,
-                                                                         isSolid);
+                                                                         isSolid, thickness);
             } else if (curveType == PROTRACTOR) {
                 ((VOIProtractor) (curves[slice].elementAt(element))).setColor(color);
                 ((VOIProtractor) (curves[slice].elementAt(element))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
                                                                               0f, 0f, resols, unitsOfMeasure,
-                                                                              orientation, g, isSolid);
+                                                                              orientation, g, isSolid, thickness);
             }
         }
     }
@@ -1511,7 +1518,7 @@ public class VOI extends ModelSerialCloneable {
             ((VOIProtractor) (curves[slice].elementAt(element))).setColor(color);
             ((VOIProtractor) (curves[slice].elementAt(element))).showProtractorWithAngle(g, res, units, xDim, yDim,
                                                                                          zoomX, zoomY, resolutionX,
-                                                                                         resolutionY, false);
+                                                                                         resolutionY, false, thickness);
 
             return;
         } else if (curveType == CONTOUR) {
@@ -2682,6 +2689,21 @@ public class VOI extends ModelSerialCloneable {
     }
 
     /**
+     * Returns the thickness of the VOI
+     * @return
+     */
+    public int getThickness() {
+    	return this.thickness;
+    }
+    
+    /**
+     * Sets the thickness of the VOI
+     * @param newThickness the new thickness
+     */
+    public void setThickness(int newThickness) {
+    	this.thickness = newThickness;
+    }
+    /**
      * Accessor that returns that whether to calculate total sum of the intensity (true) else calculate the average
      * pixel intensity (used when plotting an intensity graph of a voi).
      *
@@ -3654,6 +3676,7 @@ public class VOI extends ModelSerialCloneable {
                 }
             } else if (curveType == VOI.ANNOTATION) {
 
+            	//check to see if this is near the VOIText's arrow tip
                 if (((VOIText) (curves[slice].elementAt(i))).nearMarkerPoint(x, y, zoom, resolutionX, resolutionY)) {
                     polygonIndex = i;
                     return true;

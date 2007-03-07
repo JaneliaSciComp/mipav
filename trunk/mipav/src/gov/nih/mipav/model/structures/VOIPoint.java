@@ -204,7 +204,7 @@ public class VOIPoint extends VOIBase {
     public void drawSelf( float zoomX, float zoomY, float resolutionX, float resolutionY,
             float originX, float originY,
             float[] resols, int[] unitsOfMeasure, int orientation,
-            Graphics g, boolean boundingBox, FileInfoBase fileInfo, int dim ) {}
+            Graphics g, boolean boundingBox, FileInfoBase fileInfo, int dim, int thickness ) {}
 
     /**
      * Return the VOI crop region's origin of rectangle.
@@ -233,7 +233,7 @@ public class VOIPoint extends VOIBase {
      */
     public void drawSelf( float zoomX, float zoomY, float resolutionX, float resolutionY,
             float originX, float originY,
-            float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean solid ) {
+            float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean solid, int thickness ) {
 
         int xS, yS;
         int x, y;

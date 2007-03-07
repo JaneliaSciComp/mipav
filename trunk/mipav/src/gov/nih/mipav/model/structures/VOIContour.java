@@ -688,7 +688,7 @@ public class VOIContour extends VOIBase {
      * @param  boundingBox     boolean that indicates if boundingBox is on or off
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
-                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox) {
+                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox, int thickness) {
         Polygon gon = null;
         int j;
         String xUnitsString;
@@ -704,19 +704,100 @@ public class VOIContour extends VOIBase {
         }
 
         gon = scalePolygon(zoomX, zoomY, resolutionX, resolutionY);
+        
+        if (thickness == 1) {
 
-        if (closed == true) {
-            g.drawPolygon(gon);
+        	if (closed == true) {
+        		g.drawPolygon(gon);
 
-            if (active == true) {
-                drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
+        		if (active == true) {
+        			drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
+    	        }
+        	} else {
+        		g.drawPolyline(gon.xpoints, gon.ypoints, gon.npoints);
+
+    	        if (active == true) {
+    	        	drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
+    	        }
+        	}
+    	} else { 
+        	//thickness is greater than 1... must draw differently
+        
+    		int x1, x2, y1, y2;   		
+    		int dX, dY, dx, dy;
+    		double ddx, ddy, lineLength, scale;
+    		
+            for (int i = 0; i < size() - 1; i++) {
+                x1 = (int) ((((Point3Df) (elementAt(i))).x * zoomX * resolutionX) + 0.5);
+                y1 = (int) ((((Point3Df) (elementAt(i))).y * zoomY * resolutionY) + 0.5);
+                
+                x2 = (int) ((((Point3Df) (elementAt(i+1))).x * zoomX * resolutionX) + 0.5);
+                y2 = (int) ((((Point3Df) (elementAt(i+1))).y * zoomY * resolutionY) + 0.5);
+                
+                //now draw the connecting lines as polygons with thickness
+                dX = x2 - x1;
+                dY = y2 - y1;
+                // line length
+                lineLength = Math.sqrt(dX * dX + dY * dY);
+
+                scale = (double)(thickness) / (2 * lineLength);
+
+                // The x,y increments from an endpoint needed to create a rectangle...
+                ddx = -scale * (double)dY;
+                ddy = scale * (double)dX;
+                ddx += (ddx > 0) ? 0.5 : -0.5;
+                ddy += (ddy > 0) ? 0.5 : -0.5;
+                dx = (int)ddx;
+                dy = (int)ddy;
+
+                // Now we can compute the corner points...
+                int xPoints[] = new int[4];
+                int yPoints[] = new int[4];
+
+                xPoints[0] = x1 + dx; yPoints[0] = y1 + dy;
+                xPoints[1] = x1 - dx; yPoints[1] = y1 - dy;
+                xPoints[2] = x2 - dx; yPoints[2] = y2 - dy;
+                xPoints[3] = x2 + dx; yPoints[3] = y2 + dy;
+
+                g.fillPolygon(xPoints, yPoints, 4);
             }
-        } else {
-            g.drawPolyline(gon.xpoints, gon.ypoints, gon.npoints);
+            //if it's closed... connect the last and first points
+            if (closed == true) {
+            	x1 = (int) ((((Point3Df) (elementAt(size()-1))).x * zoomX * resolutionX) + 0.5);
+                y1 = (int) ((((Point3Df) (elementAt(size()-1))).y * zoomY * resolutionY) + 0.5);
+                
+                x2 = (int) ((((Point3Df) (elementAt(0))).x * zoomX * resolutionX) + 0.5);
+                y2 = (int) ((((Point3Df) (elementAt(0))).y * zoomY * resolutionY) + 0.5);
+                
+                //now draw the connecting lines as polygons with thickness
+                dX = x2 - x1;
+                dY = y2 - y1;
+                // line length
+                lineLength = Math.sqrt(dX * dX + dY * dY);
 
-            if (active == true) {
-                drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
+                scale = (double)(thickness) / (2 * lineLength);
+
+                // The x,y increments from an endpoint needed to create a rectangle...
+                ddx = -scale * (double)dY;
+                ddy = scale * (double)dX;
+                ddx += (ddx > 0) ? 0.5 : -0.5;
+                ddy += (ddy > 0) ? 0.5 : -0.5;
+                dx = (int)ddx;
+                dy = (int)ddy;
+
+                // Now we can compute the corner points...
+                int xPoints[] = new int[4];
+                int yPoints[] = new int[4];
+
+                xPoints[0] = x1 + dx; yPoints[0] = y1 + dy;
+                xPoints[1] = x1 - dx; yPoints[1] = y1 - dy;
+                xPoints[2] = x2 - dx; yPoints[2] = y2 - dy;
+                xPoints[3] = x2 + dx; yPoints[3] = y2 + dy;
+
+                g.fillPolygon(xPoints, yPoints, 4);
             }
+            
+        	
         }
 
         if (active == true) {
@@ -988,7 +1069,7 @@ public class VOIContour extends VOIBase {
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
                          float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox,
-                         FileInfoBase fileInfo, int dim) {
+                         FileInfoBase fileInfo, int dim, int thickness) {
         Polygon gon = null;
         int j;
         String xUnitsString;
@@ -1004,21 +1085,98 @@ public class VOIContour extends VOIBase {
         }
 
         gon = scalePolygon(zoomX, zoomY, resolutionX, resolutionY);
+        
+        if (thickness == 1) {
+        	if (closed == true) {
+        		g.drawPolygon(gon);
 
-        if (closed == true) {
-            g.drawPolygon(gon);
+        		if (active == true) {
+        			drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
+        		}
+        	} else {
+        		g.drawPolyline(gon.xpoints, gon.ypoints, gon.npoints);
 
-            if (active == true) {
-                drawCenterOfMass(zoomX, zoomY, resolutionX, resolutionY, g);
-            }
+        		if (active == true) {
+        			drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
+        		}
+        	}
         } else {
-            g.drawPolyline(gon.xpoints, gon.ypoints, gon.npoints);
+//        	thickness is greater than 1... must draw differently
+            
+    		int x1, x2, y1, y2;   		
+    		int dX, dY, dx, dy;
+    		double ddx, ddy, lineLength, scale;
+    		
+            for (int i = 0; i < size() - 1; i++) {
+                x1 = (int) ((((Point3Df) (elementAt(i))).x * zoomX * resolutionX) + 0.5);
+                y1 = (int) ((((Point3Df) (elementAt(i))).y * zoomY * resolutionY) + 0.5);
+                
+                x2 = (int) ((((Point3Df) (elementAt(i+1))).x * zoomX * resolutionX) + 0.5);
+                y2 = (int) ((((Point3Df) (elementAt(i+1))).y * zoomY * resolutionY) + 0.5);
+                
+                //now draw the connecting lines as polygons with thickness
+                dX = x2 - x1;
+                dY = y2 - y1;
+                // line length
+                lineLength = Math.sqrt(dX * dX + dY * dY);
 
-            if (active == true) {
-                drawLength(g, zoomX, zoomY, unitsOfMeasure, resols);
+                scale = (double)(thickness) / (2 * lineLength);
+
+                // The x,y increments from an endpoint needed to create a rectangle...
+                ddx = -scale * (double)dY;
+                ddy = scale * (double)dX;
+                ddx += (ddx > 0) ? 0.5 : -0.5;
+                ddy += (ddy > 0) ? 0.5 : -0.5;
+                dx = (int)ddx;
+                dy = (int)ddy;
+
+                // Now we can compute the corner points...
+                int xPoints[] = new int[4];
+                int yPoints[] = new int[4];
+
+                xPoints[0] = x1 + dx; yPoints[0] = y1 + dy;
+                xPoints[1] = x1 - dx; yPoints[1] = y1 - dy;
+                xPoints[2] = x2 - dx; yPoints[2] = y2 - dy;
+                xPoints[3] = x2 + dx; yPoints[3] = y2 + dy;
+
+                g.fillPolygon(xPoints, yPoints, 4);
+            }
+            //if it's closed... connect the last and first points
+            if (closed == true) {
+            	x1 = (int) ((((Point3Df) (elementAt(size()-1))).x * zoomX * resolutionX) + 0.5);
+                y1 = (int) ((((Point3Df) (elementAt(size()-1))).y * zoomY * resolutionY) + 0.5);
+                
+                x2 = (int) ((((Point3Df) (elementAt(0))).x * zoomX * resolutionX) + 0.5);
+                y2 = (int) ((((Point3Df) (elementAt(0))).y * zoomY * resolutionY) + 0.5);
+                
+                //now draw the connecting lines as polygons with thickness
+                dX = x2 - x1;
+                dY = y2 - y1;
+                // line length
+                lineLength = Math.sqrt(dX * dX + dY * dY);
+
+                scale = (double)(thickness) / (2 * lineLength);
+
+                // The x,y increments from an endpoint needed to create a rectangle...
+                ddx = -scale * (double)dY;
+                ddy = scale * (double)dX;
+                ddx += (ddx > 0) ? 0.5 : -0.5;
+                ddy += (ddy > 0) ? 0.5 : -0.5;
+                dx = (int)ddx;
+                dy = (int)ddy;
+
+                // Now we can compute the corner points...
+                int xPoints[] = new int[4];
+                int yPoints[] = new int[4];
+
+                xPoints[0] = x1 + dx; yPoints[0] = y1 + dy;
+                xPoints[1] = x1 - dx; yPoints[1] = y1 - dy;
+                xPoints[2] = x2 - dx; yPoints[2] = y2 - dy;
+                xPoints[3] = x2 + dx; yPoints[3] = y2 + dy;
+
+                g.fillPolygon(xPoints, yPoints, 4);
             }
         }
-
         if (active == true) {
 
             // if active draw little boxes at points
@@ -2639,7 +2797,7 @@ public class VOIContour extends VOIBase {
      * @param  g            graphics to paint in
      */
     public void retraceContour(float zoomX, float zoomY, float resolutionX, float resolutionY, float[] resols, int x1,
-                               int y1, Graphics g) {
+                               int y1, Graphics g, int thickness) {
         Point3Df ptRetrace = null;
         double minDistance, dist;
         float x2, y2, z;
@@ -2683,7 +2841,7 @@ public class VOIContour extends VOIBase {
             units[0] = 0;
             units[1] = 0;
             units[2] = 0;
-            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false);
+            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
 
             // Find nearest point in old contour
             minDistance = 9999999;
@@ -2751,7 +2909,7 @@ public class VOIContour extends VOIBase {
             units[0] = 0;
             units[1] = 0;
             units[2] = 0;
-            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false);
+            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
             active = true;
         } catch (OutOfMemoryError error) {
             System.gc();

@@ -145,7 +145,7 @@ public abstract class VOIBase extends Vector {
      */
     public abstract void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX,
                                   float originY, float[] resols, int[] unitsOfMeasure, int orientation, Graphics g,
-                                  boolean boundingBox);
+                                  boolean boundingBox, int thickness);
 
     /**
      * Abstract method: curve draws itself.
@@ -166,7 +166,7 @@ public abstract class VOIBase extends Vector {
      */
     public abstract void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX,
                                   float originY, float[] resols, int[] unitsOfMeasure, int orientation, Graphics g,
-                                  boolean boundingBox, FileInfoBase fileInfo, int dim);
+                                  boolean boundingBox, FileInfoBase fileInfo, int dim, int thickness);
 
     /**
      * Abstract method: gets the point3df of the active point.
