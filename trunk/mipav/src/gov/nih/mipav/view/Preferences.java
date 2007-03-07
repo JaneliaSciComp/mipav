@@ -1767,6 +1767,24 @@ public class Preferences {
         return increment;
     }
 
+    public static int getVOIThickness() {
+    	int thickness = 1;
+    	String str = getProperty("VOIThickness");
+
+        if (str != null) {
+
+            try {
+            	thickness = Integer.parseInt(str);
+            } catch (Exception ex) {
+                // do nothing.. thickness still 1
+            }
+        } else {
+        	setProperty("VOIThickness", "5");
+        }
+
+        return thickness;
+    }
+    
     /**
      * Gets the VOI draw color.
      *

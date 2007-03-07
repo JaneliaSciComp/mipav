@@ -143,7 +143,7 @@ public class VOILine extends VOIBase {
      * @param  solid           boolean that indicates solidity - NOT used VOILine
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
-                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean solid) {
+                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean solid, int thickness) {
 
         if (g == null) {
             MipavUtil.displayError("VOILine.drawSelf: graphics = null");
@@ -156,7 +156,41 @@ public class VOILine extends VOIBase {
         y[0] = Math.round(y[0] * zoomY * resolutionY);
         x[1] = Math.round(x[1] * zoomX * resolutionX);
         y[1] = Math.round(y[1] * zoomY * resolutionY);
-        g.drawLine((int) x[0], (int) y[0], (int) x[1], (int) y[1]);
+                
+        
+        if (thickness == 1) {
+        	g.drawLine((int) x[0], (int) y[0], (int) x[1], (int) y[1]);
+        } else {
+        	
+        	int dX = (int) (x[1] - x[0]);
+        	int dY = (int) (y[1] - y[0]);
+        	  // line length
+        	double lineLength = Math.sqrt(dX * dX + dY * dY);
+
+        	double scale = (double)(thickness) / (2 * lineLength);
+
+        	// The x,y increments from an endpoint needed to create a rectangle...
+        	double ddx = -scale * (double)dY;
+        	double ddy = scale * (double)dX;
+        	ddx += (ddx > 0) ? 0.5 : -0.5;
+        	ddy += (ddy > 0) ? 0.5 : -0.5;
+        	int dx = (int)ddx;
+        	int dy = (int)ddy;
+
+        	// Now we can compute the corner points...
+        	int xPoints[] = new int[4];
+        	int yPoints[] = new int[4];
+
+        	xPoints[0] = (int)x[0] + dx; yPoints[0] = (int)y[0] + dy;
+        	xPoints[1] = (int)x[0] - dx; yPoints[1] = (int)y[0] - dy;
+        	xPoints[2] = (int)x[1] - dx; yPoints[2] = (int)y[1] - dy;
+        	xPoints[3] = (int)x[1] + dx; yPoints[3] = (int)y[1] + dy;
+        	  
+        	g.fillPolygon(xPoints, yPoints, 4);
+        	
+        	
+        	
+        }
 
         Color currentColor = g.getColor();
 
@@ -191,7 +225,7 @@ public class VOILine extends VOIBase {
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
                          float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox,
-                         FileInfoBase fileInfo, int dim) { }
+                         FileInfoBase fileInfo, int dim, int thickness) { }
 
     /**
      * Draws tick marks at 1/4, 1/2, and 3/4 of the line.

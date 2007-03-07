@@ -35,11 +35,14 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
     private JButton applyButton;
     private JButton colorButton;
     private JTextField VOIName;
+    private JTextField VOIThicknessField;
+    
     private JCheckBox checkboxBoundingBox;
     private JCheckBox checkboxAdditiveOrSubtractive;
     private JCheckBox checkboxIncludeForProcessing;
     private JCheckBox checkboxBoundary;
     private JCheckBox checkboxVOIName;
+    
     private JPanel statsPanel;
 
     private JCheckBox checkboxExclude;
@@ -118,6 +121,10 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         labelColor.setFont(serif12);
         labelColor.setForeground(Color.black);
 
+        JLabel labelThickness = new JLabel("Thickness of VOI:");
+        labelThickness.setFont(serif12);
+        labelThickness.setForeground(Color.black);
+        
         colorButton = new JButton();
         colorButton.setPreferredSize(new Dimension(25, 25));
         colorButton.setToolTipText("Change VOI color");
@@ -126,6 +133,10 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         VOIName = new JTextField(15);
         VOIName.setFont(serif12);
 
+        VOIThicknessField = new JTextField(3);
+        VOIThicknessField.setFont(serif12);
+        MipavUtil.makeNumericsOnly(VOIThicknessField, false);
+        
         JPanel namePanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5,5,5,5);
@@ -141,8 +152,21 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         gbc.fill = GridBagConstraints.HORIZONTAL;
         namePanel.add(VOIName, gbc);
 
+        gbc.weightx = 0;
+        gbc.weighty = 0;
         gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        namePanel.add(labelThickness, gbc);
+        
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        namePanel.add(VOIThicknessField, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         gbc.weightx = 0;
         gbc.weighty = 0;
         gbc.fill = GridBagConstraints.NONE;
@@ -700,6 +724,8 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             VOIName.setText(voi.getName());
             setTitle("VOI Statistics - " + voi.getUID());
 
+            VOIThicknessField.setText(new Integer(voi.getThickness()).toString());
+            
             //turn things on/off depending on if a PolyLine is selected
             if (voi.getCurveType() == VOI.POLYLINE ||
                 voi.getCurveType() == VOI.POLYLINE_SLICE ||
@@ -801,6 +827,26 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             }
             voi.setName(VOIName.getText());
 
+            boolean changedThickness = false;
+            int thickChange = 1;
+            try {
+            	int thickness = voi.getThickness();
+            	thickChange = Integer.parseInt(VOIThicknessField.getText());
+            	if ((thickChange < 0 || thickChange > 20)) {
+            		MipavUtil.displayWarning("VOI thickness must be greater than 0 and less than 20");
+            	}else if (thickness != thickChange ) {
+            		changedThickness = true;
+            	} 
+            } catch (Exception e) {
+            	VOIThicknessField.setText("1");
+            }
+            
+            if (changedThickness) {
+            	voi.setThickness(thickChange);
+            	Preferences.setProperty("VOIThickness", Integer.toString(thickChange));
+            }
+            
+            
             if (checkboxBoundingBox.isSelected() == true) {
                 voi.setBoundingBoxFlag(true);
             } else {

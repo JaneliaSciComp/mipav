@@ -1093,7 +1093,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                              ((ViewJComponentEditImage) (component)).getResolutionY(), 0f, 0f,
                              ((ViewJComponentEditImage) (component)).getActiveImage().getFileInfo(0).getResolutions(),
                              ((ViewJComponentEditImage) (component)).getActiveImage().getFileInfo(0).getUnitsOfMeasure(),
-                             ((ViewJComponentEditImage) (component)).getOrientation(), g, false);
+                             ((ViewJComponentEditImage) (component)).getOrientation(), g, false, Preferences.getVOIThickness());
 
             // draw boxes around the first and last points on the curve
             g.setXORMode(Color.black);

@@ -146,7 +146,7 @@ public class VOIProtractor extends VOIBase {
      * @param  solid           boolean that indicates solidity - NOT used VOILine
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
-                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean solid) {
+                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean solid, int thickness) {
         float[] x = new float[3];
         float[] y = new float[3];
         float[] z = new float[3];
@@ -219,7 +219,7 @@ public class VOIProtractor extends VOIBase {
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
                          float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox,
-                         FileInfoBase fileInfo, int dim) { }
+                         FileInfoBase fileInfo, int dim, int thickness) { }
 
     /**
      * Draws tick marks at 1/4, 1/2, and 3/4 of the line. Not presently used.
@@ -813,11 +813,11 @@ public class VOIProtractor extends VOIBase {
      * @param  showLengths  show the lengths of the protractor segments
      */
     public void showProtractorWithAngle(Graphics g, float[] res, int[] units, int xD, int yD, float zoomX, float zoomY,
-                                        float resolutionX, float resolutionY, boolean showLengths) {
+                                        float resolutionX, float resolutionY, boolean showLengths, int thickness) {
         this.setXYDim(xD, yD);
         this.computeAngle(res);
         this.drawTickMarks(g, units, xD, yD, res, zoomX, zoomY, resolutionX, resolutionY, false);
-        this.drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f, res, units, 0, g, false);
+        this.drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0f, 0f, res, units, 0, g, false, thickness);
 
         return;
     }
