@@ -301,6 +301,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** boolean telling if unequal dimensions are allowed in the FFT image. */
     private boolean unequalDim;
 
+    /** Locking write count. */
+    private int writeLockCount = 0;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -1026,6 +1029,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1086,6 +1090,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1118,6 +1123,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1155,6 +1161,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1187,6 +1194,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1219,6 +1227,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1251,6 +1260,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1283,6 +1293,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1316,6 +1327,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1351,6 +1363,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1588,6 +1601,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1630,6 +1644,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         try {
             setLock(W_LOCKED);
         } catch (IOException error) {
+            releaseLock();
             throw error;
         }
 
@@ -1782,6 +1797,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1817,6 +1833,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1852,6 +1869,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1885,6 +1903,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -1918,6 +1937,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(W_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -4809,6 +4829,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -4851,6 +4872,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -4891,6 +4913,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -4969,6 +4992,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5009,6 +5033,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5087,6 +5112,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5126,6 +5152,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5165,6 +5192,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5208,6 +5236,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5256,6 +5285,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5295,6 +5325,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5334,6 +5365,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5373,6 +5405,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             try {
                 setLock(RW_LOCKED);
             } catch (IOException error) {
+                releaseLock();
                 throw error;
             }
 
@@ -5481,7 +5514,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * Releases the lock so that other proceses can read or write the data.
      */
     public final synchronized void releaseLock() {
-        lockStatus = UNLOCKED;
+
+        if (lockStatus == W_LOCKED) {
+            writeLockCount--;
+
+            if (writeLockCount <= 0) {
+                lockStatus = UNLOCKED;
+                writeLockCount = 0; // Just make sure its zero.
+            }
+        } else if (lockStatus == RW_LOCKED) {
+            lockStatus = UNLOCKED;
+            writeLockCount = 0; // Just make sure its zero.
+        } else {
+            writeLockCount = 0; // Just make sure its zero.
+        }
     }
 
     /**
@@ -6431,6 +6477,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         image25D = _image25D;
     }
 
+
     /**
      * Sets the lockFlag to protect data. When the flag is set no other processes can read or write the data
      *
@@ -6461,11 +6508,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
         } else if ((lockStatus == W_LOCKED) && (lockType == W_LOCKED)) { }
         else if ((lockStatus == W_LOCKED) && (lockType == RW_LOCKED)) {
             throw new IOException("ModelStorageBase: Image locked !");
-            // lockStatus = lockType;
         } else if ((lockStatus == UNLOCKED) && (lockType == RW_LOCKED)) {
             lockStatus = lockType;
         }
     }
+
 
     /**
      * Accessor that sets the boolean telling if log magnitude display is used in a complex image.
