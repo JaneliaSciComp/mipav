@@ -6460,9 +6460,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
             lockStatus = lockType;
         } else if ((lockStatus == W_LOCKED) && (lockType == W_LOCKED)) { }
         else if ((lockStatus == W_LOCKED) && (lockType == RW_LOCKED)) {
-
-            // throw new IOException("ModelStorageBase: Image locked !");
-            lockStatus = lockType;
+            throw new IOException("ModelStorageBase: Image locked !");
+            // lockStatus = lockType;
         } else if ((lockStatus == UNLOCKED) && (lockType == RW_LOCKED)) {
             lockStatus = lockType;
         }
