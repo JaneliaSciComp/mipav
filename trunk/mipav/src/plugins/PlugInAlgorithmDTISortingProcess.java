@@ -260,7 +260,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	
 	
 	/**
-	 * this method created the proc dir in which the list file, path file, and b-matrix file go
+	 * this method creates the proc dir in which the list file, path file, and b-matrix file go
 	 * @return boolean success
 	 */
 	public boolean createProcDir() {
