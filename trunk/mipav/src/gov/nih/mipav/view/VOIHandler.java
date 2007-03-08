@@ -3433,7 +3433,17 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                 newTextVOI.importCurve(x, y, z, sliceNum);
                 newTextVOI.setUID(newTextVOI.hashCode());
-                newTextVOI.setColor(Color.WHITE);
+                
+                String prefColor = Preferences.getProperty("VOITextColor");
+                Color textColor;
+                
+                if (prefColor != null) {
+                	textColor = MipavUtil.extractColor(prefColor);
+                	newTextVOI.setColor(textColor);
+                } else {
+                    Preferences.setProperty("VOITextColor", MipavUtil.makeColorString(Color.white));
+                    newTextVOI.setColor(Color.white);
+                }
 
                 // pop up a dialog that allows text input, color, and font formatting
                 new JDialogAnnotation(compImage.getActiveImage(), newTextVOI, compImage.getSlice(), false);
