@@ -10,6 +10,7 @@ import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewVOIVector;
 
 import java.awt.Polygon;
+import java.awt.Shape;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -300,51 +301,53 @@ public class AlgorithmFlip extends AlgorithmBase {
                 }
                 if(flipAxis == Z_AXIS && srcImage.getNDims() > 2)
                 {
-                    Polygon[] gons = null;
-                    Point3Df[] points = null;
-                    boolean isPoint = false;
+                    Object[] shapes = null;
                     ViewJComponentEditImage compImage = srcImage.getParentFrame().getComponentImage();
-                    int z = compImage.getSlice(), direction = z>zDim/2 ? -1 : 1;
-                    int distance = Math.abs(z - zDim/2), scope = 2*distance;
+                    zDim *= 2;
+                    
                     while(vecIter.hasNext()) { 
+                        ShapeHolder shapeHolder = new ShapeHolder();
                         VOI nextVoi = (VOI)vecIter.next();
-                        
-                        //if(nextVoi.isActive()) {
                         for(int voiSlice=0; voiSlice<zDim; voiSlice++) {    
-                            gons = null;
+                            shapes = null;
                             if(nextVoi.getCurveType() == VOI.CONTOUR ||
                                  nextVoi.getCurveType() == VOI.POLYLINE) {
-                                
-                                gons = nextVoi.exportPolygons(voiSlice);
-                                
+                                shapes = nextVoi.exportPolygons(voiSlice);  
                             }
                             else {
-                                points = nextVoi.exportPoints(voiSlice);
-                                isPoint = true; 
+                                shapes = nextVoi.exportPoints(voiSlice);
                             }
-                            if(gons.length > 0) {
-                                if(!isPoint) {
-                                    nextVoi.removeCurves(voiSlice);
-                                    for(int k=0; k<gons.length; k++) {
-                                        Polygon polyTemp = gons[k];
-                                        nextVoi.importPolygon(polyTemp, voiSlice + scope*direction);
-                                        nextVoi.setActive(true);
-                                    }   
+                            if(shapes.length > 0) {
+                                if(shapeHolder.addShape(shapes, voiSlice));
+                                    nextVoi.removeCurves(voiSlice);      
+                            }
+                        }
+                    
+                        for(int voiSlice=0; voiSlice<zDim; voiSlice++) {
+                            int z = voiSlice, direction = z>zDim/2 ? -1 : 1;
+                            int distance = Math.abs(z - zDim/2), scope = 2*distance;
+                            Object[] shapesAtSlice = shapeHolder.getShapesAtSlice(voiSlice);
+                            for(int k=0; k<shapesAtSlice.length; k++) {
+                                if(shapesAtSlice[k] instanceof Polygon[]) {
+                                    Polygon[] polyTemp = ((Polygon[])shapesAtSlice[k]);
+                                    for(int m=0; m<polyTemp.length; m++) {
+                                        nextVoi.importPolygon(polyTemp[m], voiSlice + scope*direction); 
+                                    }
                                 }
-                                if(isPoint) {
-                                    nextVoi.importPoints(points, voiSlice + scope*direction);
-                                    nextVoi.setActive(true);
+                                else if(shapesAtSlice[k] instanceof Point3Df[]) {
+                                    nextVoi.importPoints((Point3Df[])shapesAtSlice[k], voiSlice + scope*direction);
                                 }
                                 
-                                compImage.show(compImage.getTimeSlice(), voiSlice + scope*direction, 
-                                                 null, null, true, compImage.getInterpMode());
-                                compImage.getVOIHandler().fireVOISelectionChange(nextVoi, null);
-                                compImage.getActiveImage().getParentFrame().setSlice(compImage.getSlice());
-                                compImage.getActiveImage().getParentFrame().updateImages(true);
                             }
                        }
-                        
+                       compImage.getVOIHandler().fireVOISelectionChange(nextVoi, null);
                     }
+                    int z = compImage.getSlice(), direction = z>zDim/2 ? -1 : 1;
+                    int distance = Math.abs(z - zDim/2), scope = 2*distance;
+                    compImage.show(compImage.getTimeSlice(), compImage.getSlice() + scope*direction, 
+                            null, null, true, compImage.getInterpMode());
+                    compImage.getActiveImage().getParentFrame().setSlice(compImage.getSlice());
+                    compImage.getActiveImage().getParentFrame().updateImages(true);
                 }
             }
         }
@@ -397,10 +400,6 @@ public class AlgorithmFlip extends AlgorithmBase {
             }
             if(flipAxis == Z_AXIS && srcImage.getNDims() > 2)
             {
-                
-                Polygon[] gons = null;
-                Point3Df[] points = null;
-                boolean isPoint = false;
                 int voiSlice = -1;
                 ViewJComponentEditImage compImage = srcImage.getParentFrame().getComponentImage();
                 int z = compImage.getSlice(), direction = z>zDim/2 ? -1 : 1;
@@ -411,27 +410,17 @@ public class AlgorithmFlip extends AlgorithmBase {
                     if(nextVoi.isActive()) {
                         if(voiSlice == -1)
                             voiSlice = compImage.getSlice();
-                        if(nextVoi.getCurveType() == VOI.CONTOUR ||
-                             nextVoi.getCurveType() == VOI.POLYLINE) {
-                            
-                            gons = nextVoi.exportPolygons(voiSlice);
-                            nextVoi.removeCurves(voiSlice);
+                        VOIBase base = nextVoi.getActiveContour(voiSlice);
+                        int[] xpoints = new int[base.size()];
+                        int[] ypoints = new int[base.size()];
+                        for(int i=0; i<xpoints.length; i++) {
+                            Point3Df tempPoint = (Point3Df)base.get(i);
+                            xpoints[i] = (int)tempPoint.x;
+                            ypoints[i] = (int)tempPoint.y;
                         }
-                        else {
-                            points = nextVoi.exportPoints(voiSlice);
-                            isPoint = true; 
-                        }
-                        if(!isPoint && gons != null) {
-                            for(int k=0; k<gons.length; k++) {
-                                Polygon polyTemp = gons[k];
-                                nextVoi.importPolygon(polyTemp, voiSlice + scope*direction);
-                                nextVoi.setActive(true);
-                            }   
-                        }
-                        if(isPoint) {
-                            nextVoi.importPoints(points, voiSlice + scope*direction);
-                            nextVoi.setActive(true);
-                        }
+                        Polygon gon = new Polygon(xpoints, ypoints, xpoints.length);
+                        nextVoi.removeCurve(nextVoi.getActiveContourIndex(voiSlice), voiSlice);
+                        nextVoi.importPolygon(gon, voiSlice + direction*scope);
                         
                         compImage.show(compImage.getTimeSlice(), voiSlice + scope*direction, 
                                          null, null, true, compImage.getInterpMode());
@@ -471,5 +460,68 @@ public class AlgorithmFlip extends AlgorithmBase {
        	}
     }
     
+    private class ShapeHolder {
+        
+        private ArrayList shapeList;
+        private ArrayList sliceList;
+        private boolean isConstructed;
+        
+        private ShapeHolder() {
+            shapeList = new ArrayList();
+            sliceList = new ArrayList();
+            isConstructed = true;
+        }
+        
+        private ShapeHolder(Object[] shapeArr, int[] sliceLocArr) {
+            this();
+            if(shapeArr.length == sliceLocArr.length) {
+                for(int i=0; i<shapeArr.length; i++) {
+                    shapeList.add(shapeArr[i]);
+                    sliceList.add(Integer.valueOf(sliceLocArr[i]));
+                }
+            }
+            else
+                isConstructed = false;
+        }
+        
+        private boolean isConstructed() {
+            return isConstructed;
+        }
+        
+        private boolean addShape(Object shape, int slice) {
+            if(shapeList.size() == sliceList.size() && isConstructed) {
+                shapeList.add(shape);
+                sliceList.add(Integer.valueOf(slice));
+                return true;
+            }
+            else
+                return false;
+        }
+    
+    
+        private Object[] getShapesAtSlice(int slice) {
+            ArrayList tempShapes = new ArrayList();
+            for(int i=0; i<sliceList.size(); i++) {
+                if(getSlice(i) == slice) {
+                    tempShapes.add(getShape(i));
+                }
+            }
+            Object[] shapesAtSlice = new Object[tempShapes.size()];
+            for(int i=0; i<tempShapes.size(); i++) {
+                shapesAtSlice[i] = tempShapes.get(i);
+            }
+            return shapesAtSlice;
+        }
+        
+        private int getSlice(int index) {
+            Integer tempInt = ((Integer)sliceList.get(index));
+            return tempInt.intValue();
+        }
+        
+        private Object getShape(int index) {
+            return shapeList.get(index);
+        }
+    }
+
 
 }
