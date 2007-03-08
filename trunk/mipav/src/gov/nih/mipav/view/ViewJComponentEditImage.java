@@ -4870,7 +4870,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if(Preferences.getProperty("IntensityLabelBackgroundColor") != null) {
-        	String prefColor = Preferences.getProperty("IntensityLabelColor");
+        	String prefColor = Preferences.getProperty("IntensityLabelBackgroundColor");
         	backgroundColor = MipavUtil.extractColor(prefColor);
         }
         else {

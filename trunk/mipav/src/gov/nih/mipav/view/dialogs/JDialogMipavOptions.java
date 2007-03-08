@@ -193,10 +193,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private Color[] voiColors;
 
     /** DOCUMENT ME! */
-    private JButton voiDrawButton, intensityLabelColorButton;
+    private JButton voiDrawButton, intensityLabelColorButton, intensityLabelBackgroundButton;
+    
 
     /** DOCUMENT ME! */
-    private Color voiDrawColor, intensityLabelColor;
+    private Color voiDrawColor, intensityLabelColor, intensityLabelBackgroundColor;
 
     // SRB panel contents
     private JPanel srbPanel;
@@ -331,10 +332,20 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             voiColorChoices.setBackground(voiColors[index]);
 
         }else if (command.equalsIgnoreCase("intensityLabelColor")) {
-        	colorChooser = new ViewJColorChooser(null, "Pick Active Color", new ActionListener() { // OKAY listener
+                        	
+        	colorChooser = new ViewJColorChooser(null, "Pick label color", new ActionListener() { // OKAY listener
                 public void actionPerformed(ActionEvent ae) {
                 	intensityLabelColor = colorChooser.getColor();
                 	intensityLabelColorButton.setBackground(intensityLabelColor);
+                }
+            }, new ActionListener() { // CANCEL listener
+                public void actionPerformed(ActionEvent a) { }
+            });
+        } else if (command.equalsIgnoreCase("intensityLabelBackground")) {
+        	colorChooser = new ViewJColorChooser(null, "Pick label background color", new ActionListener() { // OKAY listener
+                public void actionPerformed(ActionEvent ae) {
+                	intensityLabelBackgroundColor = colorChooser.getColor();
+                	intensityLabelBackgroundButton.setBackground(intensityLabelBackgroundColor);
                 }
             }, new ActionListener() { // CANCEL listener
                 public void actionPerformed(ActionEvent a) { }
@@ -402,6 +413,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty("PerformLaxCheck", String.valueOf(performLaxCheck.isSelected()));
             Preferences.setProperty("VOIColor", String.valueOf(voiColorChoices.getSelectedIndex()));
             Preferences.setProperty("IntensityLabelColor", MipavUtil.makeColorString(intensityLabelColor));
+            Preferences.setProperty("IntensityLabelBackgroundColor", MipavUtil.makeColorString(intensityLabelBackgroundColor));
             Preferences.setProperty("VOIDrawColor", MipavUtil.makeColorString(voiDrawColor));
             Preferences.setProperty("VOIPointDrawType", String.valueOf(pointVOIChoices.getSelectedIndex()));
             Preferences.setProperty(Preferences.PREF_CONTINUOUS_VOI_CONTOUR, String.valueOf(continuousVOIBox.isSelected()));
@@ -1601,6 +1613,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     	JLabel l1 = new JLabel("Intensity label color:");
         l1.setFont(MipavUtil.font12);
         l1.setForeground(Color.black);
+        
         gbc.insets = new Insets(0, 0, 0, 5);
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
@@ -1610,12 +1623,20 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         intensityLabelColorButton = new JButton();
         intensityLabelColorButton.setActionCommand("intensityLabelColor");
         intensityLabelColorButton.addActionListener(this);
+        
+        intensityLabelBackgroundButton = new JButton();
+        intensityLabelBackgroundButton.setActionCommand("intensityLabelBackground");
+        intensityLabelBackgroundButton.addActionListener(this);
+        
         gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(intensityLabelColorButton, gbc);
         displayColorPanel.add(intensityLabelColorButton);
-
+        
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(intensityLabelBackgroundButton, gbc);
+        displayColorPanel.add(intensityLabelBackgroundButton);
+        
         String prefColor = Preferences.getProperty("IntensityLabelColor");
 
         if (prefColor != null) {
@@ -1625,8 +1646,19 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty("IntensityLabelColor", MipavUtil.makeColorString(Color.yellow));
             intensityLabelColorButton.setBackground(Color.yellow);
             intensityLabelColor = Color.yellow;
-
         }
+        
+        prefColor = Preferences.getProperty("IntensityLabelBackgroundColor");
+
+        if (prefColor != null) {
+        	intensityLabelBackgroundColor = MipavUtil.extractColor(prefColor);
+        	intensityLabelBackgroundButton.setBackground(intensityLabelBackgroundColor);
+        } else {
+            Preferences.setProperty("IntensityLabelBackgroundColor", MipavUtil.makeColorString(Color.black));
+            intensityLabelBackgroundButton.setBackground(Color.black);
+            intensityLabelBackgroundColor = Color.black;
+        }
+        
         
     }
     
