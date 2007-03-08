@@ -3,6 +3,7 @@ package gov.nih.mipav.model.structures;
 
 import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
 import java.awt.*;
@@ -68,7 +69,17 @@ public class VOIText extends VOIBase {
     /**
      * default constructor.
      */
-    public VOIText() { }
+    public VOIText() { 
+    	String prefColor = Preferences.getProperty("VOITextBackgroundColor");
+        
+        if (prefColor != null) {
+        	this.backgroundColor = MipavUtil.extractColor(prefColor);
+        } else {
+            Preferences.setProperty("VOITextBackgroundColor", MipavUtil.makeColorString(Color.black));
+            this.backgroundColor = Color.black;
+        }
+    	
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
