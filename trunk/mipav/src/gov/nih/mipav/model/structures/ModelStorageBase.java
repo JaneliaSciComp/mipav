@@ -878,134 +878,133 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final synchronized float[] export(int[] axisOrder, boolean[] axisFlip, int tSlice, int slice, float[] values)
             throws IOException {
-
+    	float[] fReturn = null;
         try {
             setLock(W_LOCKED);
-        } catch (IOException error) {
-            throw error;
-        }
+            /* Get the loop bounds, based on the coordinate-systems: transformation:  */
+            int iBound = (dimExtents.length > 0) ? dimExtents[axisOrder[0]] : 1;
+            int jBound = (dimExtents.length > 1) ? dimExtents[axisOrder[1]] : 1;
+            int kBound = (dimExtents.length > 2) ? dimExtents[axisOrder[2]] : 1;
 
-        /* Get the loop bounds, based on the coordinate-systems: transformation:  */
-        int iBound = (dimExtents.length > 0) ? dimExtents[axisOrder[0]] : 1;
-        int jBound = (dimExtents.length > 1) ? dimExtents[axisOrder[1]] : 1;
-        int kBound = (dimExtents.length > 2) ? dimExtents[axisOrder[2]] : 1;
+            /* Get the loop multiplication factors for indexing into the 1D array
+             * with 3 index variables: based on the coordinate-systems:
+             * transformation:  */
+            int[] aiFactors = new int[3];
+            aiFactors[0] = 1;
+            aiFactors[1] = (dimExtents.length > 1) ? dimExtents[0] : 1;
+            aiFactors[2] = (dimExtents.length > 2) ? (dimExtents[0] * dimExtents[1]) : 1;
 
-        /* Get the loop multiplication factors for indexing into the 1D array
-         * with 3 index variables: based on the coordinate-systems:
-         * transformation:  */
-        int[] aiFactors = new int[3];
-        aiFactors[0] = 1;
-        aiFactors[1] = (dimExtents.length > 1) ? dimExtents[0] : 1;
-        aiFactors[2] = (dimExtents.length > 2) ? (dimExtents[0] * dimExtents[1]) : 1;
+            int iFactor = aiFactors[axisOrder[0]];
+            int jFactor = aiFactors[axisOrder[1]];
+            int kFactor = aiFactors[axisOrder[2]];
 
-        int iFactor = aiFactors[axisOrder[0]];
-        int jFactor = aiFactors[axisOrder[1]];
-        int kFactor = aiFactors[axisOrder[2]];
+            int kIndex = slice;
 
-        int kIndex = slice;
+            if (axisFlip[2]) {
+                kIndex = (kBound - 1) - slice;
+            }
 
-        if (axisFlip[2]) {
-            kIndex = (kBound - 1) - slice;
-        }
+            int tFactor = (dimExtents.length > 2)
+                          ? (dimExtents[0] * dimExtents[1] * dimExtents[2])
+                          : ((dimExtents.length > 1) ? (dimExtents[0] * dimExtents[1])
+                                                     : ((dimExtents.length > 0) ? dimExtents[0] : 1));
 
-        int tFactor = (dimExtents.length > 2)
-                      ? (dimExtents[0] * dimExtents[1] * dimExtents[2])
-                      : ((dimExtents.length > 1) ? (dimExtents[0] * dimExtents[1])
-                                                 : ((dimExtents.length > 0) ? dimExtents[0] : 1));
+            boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
+            double real, imaginary, mag;
+            
 
-        boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
-        double real, imaginary, mag;
-        float[] fReturn = null;
+            /* loop over the 2D image (values) we're writing into */
+            for (int j = 0; j < jBound; j++) {
 
-        /* loop over the 2D image (values) we're writing into */
-        for (int j = 0; j < jBound; j++) {
+                for (int i = 0; i < iBound; i++) {
 
-            for (int i = 0; i < iBound; i++) {
+                    /* calculate the ModelImage space index: */
+                    int iIndex = i;
+                    int jIndex = j;
 
-                /* calculate the ModelImage space index: */
-                int iIndex = i;
-                int jIndex = j;
+                    if (axisFlip[0]) {
+                        iIndex = (iBound - 1) - i;
+                    }
 
-                if (axisFlip[0]) {
-                    iIndex = (iBound - 1) - i;
-                }
+                    if (axisFlip[1]) {
+                        jIndex = (jBound - 1) - j;
+                    }
 
-                if (axisFlip[1]) {
-                    jIndex = (jBound - 1) - j;
-                }
+                    int index = (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor);
 
-                int index = (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor);
+                    /* surface Mask? */
+                    Color4f kMaskColor = null;
 
-                /* surface Mask? */
-                Color4f kMaskColor = null;
+                    if (m_kMaskVector != null) {
 
-                if (m_kMaskVector != null) {
+                        for (int iMask = 0; iMask < m_kMaskVector.size(); iMask++) {
+                            BitSet kMaskSet = (BitSet) m_kMaskVector.elementAt(iMask);
 
-                    for (int iMask = 0; iMask < m_kMaskVector.size(); iMask++) {
-                        BitSet kMaskSet = (BitSet) m_kMaskVector.elementAt(iMask);
+                            if ((kMaskSet != null) && kMaskSet.get(index)) {
 
-                        if ((kMaskSet != null) && kMaskSet.get(index)) {
+                                if (fReturn == null) {
+                                    fReturn = new float[jBound * iBound * 4];
+                                }
 
-                            if (fReturn == null) {
-                                fReturn = new float[jBound * iBound * 4];
-                            }
+                                if (m_kColorVector.size() > iMask) {
+                                    kMaskColor = ((Color4f) m_kColorVector.elementAt(iMask));
+                                }
 
-                            if (m_kColorVector.size() > iMask) {
-                                kMaskColor = ((Color4f) m_kColorVector.elementAt(iMask));
-                            }
+                                if (m_kMaskColorVector.size() > iMask) {
+                                    Color4f[] kMaskColors = (Color4f[]) m_kMaskColorVector.elementAt(iMask);
 
-                            if (m_kMaskColorVector.size() > iMask) {
-                                Color4f[] kMaskColors = (Color4f[]) m_kMaskColorVector.elementAt(iMask);
+                                    if (kMaskColors[index] != null) {
+                                        kMaskColor = kMaskColors[index];
+                                    }
+                                }
 
-                                if (kMaskColors[index] != null) {
-                                    kMaskColor = kMaskColors[index];
+                                if (kMaskColor != null) {
+                                    fReturn[(((j * iBound) + i) * 4) + 0] = kMaskColor.w;
+                                    fReturn[(((j * iBound) + i) * 4) + 1] = 255 * kMaskColor.x;
+                                    fReturn[(((j * iBound) + i) * 4) + 2] = 255 * kMaskColor.y;
+                                    fReturn[(((j * iBound) + i) * 4) + 3] = 255 * kMaskColor.z;
                                 }
                             }
+                        }
+                    }
 
-                            if (kMaskColor != null) {
-                                fReturn[(((j * iBound) + i) * 4) + 0] = kMaskColor.w;
-                                fReturn[(((j * iBound) + i) * 4) + 1] = 255 * kMaskColor.x;
-                                fReturn[(((j * iBound) + i) * 4) + 2] = 255 * kMaskColor.y;
-                                fReturn[(((j * iBound) + i) * 4) + 3] = 255 * kMaskColor.z;
+                    /* if color: */
+                    if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
+                        values[(((j * iBound) + i) * 4) + 0] = getFloat((index * 4) + 0);
+                        values[(((j * iBound) + i) * 4) + 1] = getFloat((index * 4) + 1);
+                        values[(((j * iBound) + i) * 4) + 2] = getFloat((index * 4) + 2);
+                        values[(((j * iBound) + i) * 4) + 3] = getFloat((index * 4) + 3);
+                    }
+                    /* if complex: */
+                    else if (bufferType == COMPLEX) {
+
+                        if (exportComplex) {
+                            values[(((j * iBound) + i) * 2) + 0] = getFloat(index * 2);
+                            values[(((j * iBound) + i) * 2) + 1] = getFloat((index * 2) + 1);
+                        } else {
+                            real = getFloat(index * 2);
+                            imaginary = getFloat((index * 2) + 1);
+
+                            if (logMagDisp == true) {
+                                mag = Math.sqrt((real * real) + (imaginary * imaginary));
+                                values[(j * iBound) + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
+                            } else {
+                                values[(j * iBound) + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
                             }
                         }
                     }
-                }
-
-                /* if color: */
-                if ((bufferType == ARGB) || (bufferType == ARGB_USHORT) || (bufferType == ARGB_FLOAT)) {
-                    values[(((j * iBound) + i) * 4) + 0] = getFloat((index * 4) + 0);
-                    values[(((j * iBound) + i) * 4) + 1] = getFloat((index * 4) + 1);
-                    values[(((j * iBound) + i) * 4) + 2] = getFloat((index * 4) + 2);
-                    values[(((j * iBound) + i) * 4) + 3] = getFloat((index * 4) + 3);
-                }
-                /* if complex: */
-                else if (bufferType == COMPLEX) {
-
-                    if (exportComplex) {
-                        values[(((j * iBound) + i) * 2) + 0] = getFloat(index * 2);
-                        values[(((j * iBound) + i) * 2) + 1] = getFloat((index * 2) + 1);
-                    } else {
-                        real = getFloat(index * 2);
-                        imaginary = getFloat((index * 2) + 1);
-
-                        if (logMagDisp == true) {
-                            mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                            values[(j * iBound) + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
-                        } else {
-                            values[(j * iBound) + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                        }
+                    /* not color: */
+                    else {
+                        values[(j * iBound) + i] = getFloat(index);
                     }
                 }
-                /* not color: */
-                else {
-                    values[(j * iBound) + i] = getFloat(index);
-                }
             }
-        }
-
-        releaseLock();
-
+        } catch (IOException error) {
+            throw error;
+        } finally {
+        	releaseLock();
+        } 
+        
         return fReturn;
     }
 
@@ -1028,17 +1027,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start, j = 0; j < length; i += 2, j++) {
+                    valuesR[j] = data.getFloat(i);
+                    valuesI[j] = data.getFloat(i + 1);
+                }
+
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start, j = 0; j < length; i += 2, j++) {
-                valuesR[j] = data.getFloat(i);
-                valuesI[j] = data.getFloat(i + 1);
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1089,16 +1087,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start, j = 0; j < length; i++, j++) {
+                    values[j] = data.get(i);
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.get(i);
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1122,22 +1118,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
-            } catch (IOException error) {
-                releaseLock();
-                throw error;
-            }
+                for (i = start, j = 0; j < length; i++, j++) {
 
-            for (i = start, j = 0; j < length; i++, j++) {
-
-                if (data.getBoolean(i)) {
-                    values.set(j);
-                } else {
-                    values.clear(j);
+                    if (data.getBoolean(i)) {
+                        values.set(j);
+                    } else {
+                        values.clear(j);
+                    }
                 }
+            } catch (IOException error) {
+                throw error;
+            } finally {
+            	releaseLock();
             }
-
-            releaseLock();
-
             return;
         }
 
@@ -1160,16 +1153,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start, j = 0; j < length; i++, j++) {
+                    values[j] = data.getByte(i);
+                }
+
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getByte(i);
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1193,16 +1185,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start, j = 0; j < length; i++, j++) {
+                    values[j] = data.getShort(i);
+                }
+
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
 
             for (i = start, j = 0; j < length; i++, j++) {
                 values[j] = data.getShort(i);
             }
-
-            releaseLock();
 
             return;
         }
@@ -1226,16 +1221,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start, j = 0; j < length; i++, j++) {
+                    values[j] = data.getInt(i);
+                }
+
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getInt(i);
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1259,16 +1253,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
+                for (i = start, j = 0; j < length; i++, j++) {
+                    values[j] = data.getLong(i);
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getLong(i);
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1292,16 +1285,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start, j = 0; j < length; i++, j++) {
+                    values[j] = data.getFloat(i);
+                }
+
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
 
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getFloat(i);
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1326,17 +1319,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start, j = 0; j < length; i++, j++) {
+                    values[j] = data.getDouble(i);
+                }
+
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getDouble(i);
-            }
-
-            releaseLock();
-
             return;
         }
 
@@ -1362,21 +1353,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
-            } catch (IOException error) {
-                releaseLock();
-                throw error;
-            }
 
-            for (y = 0, j = 0; y < length1; y++) {
+                for (y = 0, j = 0; y < length1; y++) {
 
-                for (x = 0; x <= (length0 - 1); x++, j++) {
-                    i = start + x + (y * length0);
-                    values[j] = data.getFloat(i);
+                    for (x = 0; x <= (length0 - 1); x++, j++) {
+                        i = start + x + (y * length0);
+                        values[j] = data.getFloat(i);
+                    }
                 }
-            }
-
-            releaseLock();
-
+            } catch (IOException error) {
+                throw error;
+            } finally {
+            	releaseLock();
+            } 
             return;
         }
 
@@ -1796,18 +1785,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start, j = 0; j < length; i += 2, j++) {
+                    real = data.getDouble(i);
+                    imaginary = data.getDouble(i + 1);
+                    values[j] = Math.sqrt((real * real) + (imaginary * imaginary));
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start, j = 0; j < length; i += 2, j++) {
-                real = data.getDouble(i);
-                imaginary = data.getDouble(i + 1);
-                values[j] = Math.sqrt((real * real) + (imaginary * imaginary));
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1832,18 +1819,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start, j = 0; j < length; i += 2, j++) {
+                    real = (double) data.getFloat(i);
+                    imaginary = (double) data.getFloat(i + 1);
+                    values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                }
+
             } catch (IOException error) {
                 releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start, j = 0; j < length; i += 2, j++) {
-                real = (double) data.getFloat(i);
-                imaginary = (double) data.getFloat(i + 1);
-                values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1868,17 +1855,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start + offset, j = 0; j < length; i += 4, j++) {
+                    values[j] = data.getByte(i);
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start + offset, j = 0; j < length; i += 4, j++) {
-                values[j] = data.getByte(i);
-            }
-
-            releaseLock();
-
             return;
         }
 
@@ -1902,16 +1886,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start + offset, j = 0; j < length; i += 4, j++) {
+                    values[j] = data.getShort(i);
+                }
+
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start + offset, j = 0; j < length; i += 4, j++) {
-                values[j] = data.getShort(i);
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1936,17 +1919,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+                for (i = start + offset, j = 0; j < length; i += 4, j++) {
+                    values[j] = data.getFloat(i);
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            for (i = start + offset, j = 0; j < length; i += 4, j++) {
-                values[j] = data.getFloat(i);
-            }
-
-            releaseLock();
-
             return;
         }
 
