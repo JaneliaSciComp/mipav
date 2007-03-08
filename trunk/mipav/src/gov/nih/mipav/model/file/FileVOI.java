@@ -788,6 +788,8 @@ public class FileVOI extends FileBase {
                       "," + Integer.toString(voi.getColor().getGreen()) + "," +
                       Integer.toString(voi.getColor().getBlue()));
 
+            closedTag(bw, "Thickness", Integer.toString(voi.getThickness()));
+            
 
             if ((voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE) ||
                     (voi.getCurveType() == VOI.POINT)) {
@@ -1534,6 +1536,8 @@ public class FileVOI extends FileBase {
                     Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
                                       Preferences.DEBUG_FILEIO);
                 }
+            } else if (currentKey.equals("Thickness")) {
+            	voi.setThickness(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Slice-number")) {
                 sliceNumber = Integer.parseInt(elementBuffer);
             } else if (currentKey.equals("Pt")) {
@@ -1956,6 +1960,8 @@ public class FileVOI extends FileBase {
                     Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
                                       Preferences.DEBUG_FILEIO);
                 }
+            } else if (currentKey.equals("Thickness")) {
+            	voi.setThickness(Integer.parseInt(elementBuffer));
             } else if (currentKey.equals("Pt")) {
                 float x = 0f, y = 0f, z = 0f;
                 StringTokenizer st = new StringTokenizer(elementBuffer, ",");
