@@ -612,12 +612,14 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				float y = direction[i][1];
 				float z = direction[i][2];
 
-				printStream.printf("%16f", b*x*x );
-				printStream.printf("%16f", 2*b*x*y );
-				printStream.printf("%16f", 2*b*x*z );
-				printStream.printf("%16f", b*y*y );
-				printStream.printf("%16f", 2*b*y*z );
-				printStream.printf("%16f", b*z*z );
+				//following is for 1.4 compliant
+				//otherwise, it would be : printStream.printf("%16f", b*x*x);
+				printStream.printf("%16f", new Object[]{new Float(b*x*x)});
+				printStream.printf("%16f", new Object[]{new Float(2*b*x*y)});
+				printStream.printf("%16f", new Object[]{new Float(2*b*x*z)});
+				printStream.printf("%16f", new Object[]{new Float(b*y*y)});
+				printStream.printf("%16f", new Object[]{new Float(2*b*y*z)});
+				printStream.printf("%16f", new Object[]{new Float(b*z*z)});
 				printStream.println();
 			}	
 			outputStream.close();
