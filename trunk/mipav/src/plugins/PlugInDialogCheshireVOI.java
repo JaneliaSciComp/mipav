@@ -23,7 +23,7 @@ import javax.swing.filechooser.FileFilter;
  *
  *           
  */
-public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -127,35 +127,6 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements Al
         }
     }
 
-    // ************************************************************************
-    // ************************** Algorithm Events ****************************
-    // ************************************************************************
-
-    /**
-     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
-     * has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
-     */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
-        
-        
-
-        if (algorithm instanceof PlugInAlgorithmCheshireVOI) {
-            Preferences.debug("Cheshire to VOI Elapsed: " + algorithm.getElapsedTime());
-            
-            if (algorithm.isCompleted()) {
-                insertScriptLine();
-            }
-
-            if (algorithm != null) {
-                algorithm.finalize();
-                algorithm = null;
-            }
-            dispose();
-        }
-
-    } // end AlgorithmPerformed()
 
     /**
      * Construct a delimited string that contains the parameters to this algorithm.
@@ -194,7 +165,7 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements Al
 
     
     /**
-     * Once all the necessary variables are set, call the cheshire to voi algorithm
+     * Once all the necessary variables are set, call the cheshire to voi plugin
      */
     protected void callAlgorithm() {
 
@@ -212,13 +183,6 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements Al
 
     } // end callAlgorithm()
     
-
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-
-    }
 
     /**
      * {@inheritDoc}
@@ -320,7 +284,7 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements Al
         if(fileDir.isDirectory()) {
             File[] fileArray = fileDir.listFiles();
             for(int i=0, j=0; i<fileArray.length; i++) {
-                if(oly.accept(fileArray[i])) {
+                if(oly.accept(fileArray[i]) && !fileArray[i].isDirectory()) {
                     cheshireFiles.add(fileArray[i]);
                 }
             }

@@ -21,13 +21,13 @@ public class PlugInCheshireVOI implements PlugInGeneric {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Default x dimension for modelImage. */
-    public static final int DEFAULT_X_DIM = 600;
+    public static final int DEFAULT_X_DIM = 2;
     
     /** Default y dimension for modelImage. */
-    public static final int DEFAULT_Y_DIM = 600;
+    public static final int DEFAULT_Y_DIM = 2;
     
     /** Default z dimension for modelImage. */
-    public static final int DEFAULT_Z_DIM = 150;
+    public static final int DEFAULT_Z_DIM = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -37,14 +37,14 @@ public class PlugInCheshireVOI implements PlugInGeneric {
     /** Image where converted cheshire overlays are stored. */
     private ModelImage cheshireComposite;
     
-    /**Frame for cheshireImage. */
-    private ViewJFrameImage cheshireFrame;
-    
     /**Dialog for this plugin. */
     private PlugInDialogCheshireVOI cheshireDialog;
     
     /** The user interface */
     private ViewUserInterface UI;
+    
+    /** Number of cheshire files loaded. */
+    private int filesLoaded;
     
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -63,11 +63,12 @@ public class PlugInCheshireVOI implements PlugInGeneric {
         UI = ViewUserInterface.getReference();
         cheshireDialog = new PlugInDialogCheshireVOI(false, this);
         cheshireFiles = cheshireDialog.getCheshireFiles();
+        filesLoaded = 0;
         int[] dimExtents = new int[3];
         dimExtents[0] = DEFAULT_X_DIM;
         dimExtents[1] = DEFAULT_Y_DIM;
         dimExtents[2] = DEFAULT_Z_DIM;
-        cheshireComposite = new ModelImage(ModelImage.IMAGE_A, dimExtents, "Cheshire Composite", UI);
+        cheshireComposite = new ModelImage(ModelImage.FLOAT, dimExtents, "Cheshire Composite", UI);
         
     }
     
@@ -79,24 +80,36 @@ public class PlugInCheshireVOI implements PlugInGeneric {
     public void runPlugin() {
         if(cheshireDialog.isSuccessfulExit()) {
             FileCheshireVOI[] cheshireArray = new FileCheshireVOI[cheshireFiles.size()];
+            String[] cheshireNames = new String[cheshireFiles.size()];
+            ViewJProgressBar progressBar = new ViewJProgressBar("Cheshire Overlay Loading", "loading cheshire files...", 0, 100, true, null, null);
+            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
             VOIVector voiListVec = new VOIVector();
             float highX = 0, highY = 0, highZ = 0;
+            if(cheshireFiles.size() == 0) {
+                MipavUtil.displayError("No cheshire overlay files found in directory.");
+                progressBar.setVisible(false);
+                return;
+            }
             for(int i=0; i<cheshireFiles.size(); i++) {
                File tempFile = ((File)cheshireFiles.get(i));
                File tryFile = new File(tempFile.getAbsolutePath().substring(0, tempFile.getAbsolutePath().lastIndexOf("."))+".imc");
-               System.out.println(tryFile.getName());
-               System.out.println(tryFile.getParent());
+               File secondTry = new File(tempFile.getAbsolutePath().substring(0, tempFile.getAbsolutePath().lastIndexOf("."))+".img");
                VOI[] voiListArr = null;
-               ModelImage tempImage;
+               ModelImage tempImage;// = new ModelImage(ModelImage.BYTE, dimExtentsTemp, "Cheshire Pretend", UI);
                try {
                    if(tryFile.exists()) {
                        FileCheshire tempCheshire = new FileCheshire(UI, tryFile.getName(), tryFile.getParent()+tryFile.separatorChar, false);
+                       tempImage = tempCheshire.readImage();
+                   }
+                   else if(secondTry.exists()) {
+                       FileCheshire tempCheshire = new FileCheshire(UI, secondTry.getName(), secondTry.getParent()+secondTry.separatorChar, false);
                        tempImage = tempCheshire.readImage();
                    }
                    else {
                        tempImage = cheshireComposite;
                    }
                    cheshireArray[i] = new FileCheshireVOI(tempFile.getName(), tempFile.getParent()+"\\", tempImage);
+                   cheshireNames[i] = tempFile.getName();    
                    voiListArr = cheshireArray[i].readVOI();
                }
                catch (IOException e) {
@@ -109,15 +122,12 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                        for(int k=0; k<extrema.length; k++) {
                            if(extrema[k].x > highX) {
                                highX = extrema[k].x;
-                               System.out.println("HighX:\t"+highX);
                            }
                            if(extrema[k].y > highY) {
                                highY = extrema[k].y;
-                               System.out.println("HighY:\t"+highY);
                            }
                            if(extrema[k].z > highZ) {
                                highZ = extrema[k].z;
-                               System.out.println("HighZ:\t"+highZ);
                            }
                        }
                    }
@@ -125,26 +135,34 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                        voiListVec.add(voiListArr[j]);
                    }
                }
-               cheshireArray[i].fireProgressStateChanged(100);
                
             }
             int[] dimExtents = new int[3];
-            dimExtents[0] = ((int)(highX+2));
-            dimExtents[1] = ((int)(highY+2));
-            dimExtents[2] = ((int)(highZ+2));
+            dimExtents[0] = ((int)(highX*1.5));
+            dimExtents[1] = ((int)(highY*1.5));
+            dimExtents[2] = ((int)(highZ*1.5));
             
-            cheshireComposite.setExtents(dimExtents);
-            cheshireFrame = new ViewJFrameImage(cheshireComposite);
+            ModelImage newImage = new ModelImage(ModelImage.BYTE, dimExtents, "Cheshire Composite", UI);
+            new ViewJFrameImage(newImage);
+           
+            for(int i=0; i< voiListVec.size(); i++) {
+                VOI temp = new VOI((short)i, cheshireNames[i], (int)(highZ*1.5));
+                VOI oldVOI = ((VOI)voiListVec.get(i));
+                Vector[] vec = oldVOI.getCurves();
+                for(int j=0; j<vec.length; j++) {
+                    for(int k=0; k<vec[j].size(); k++) {
+                        temp.importCurve(((VOIContour)vec[j].get(k)), j);
+                    }
+                }
+                newImage.registerVOI(temp);
+            }
             
-            cheshireComposite.addVOIs(voiListVec);
+            progressBar.setVisible(false);
             
         }
         
         else {
             //Do nothing since individual error is already displayed.
         }
-           
-    
-    
     }
 }
