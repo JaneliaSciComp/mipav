@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2005 rel. 3 U (http://www.altova.com) by Matthew Mcauliffe (National Institutes of Health) -->
 <!-- edited with XML Spy v4.4 U (http://www.xmlspy.com) by Linda Myles (NIH/CIT) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:element name="VOI">
@@ -10,6 +11,7 @@
 				<xs:element name="Unique-ID" type="xs:int"/>
 				<xs:element name="Curve-type" type="xs:int"/>
 				<xs:element name="Color" type="xs:string"/>
+				<xs:element name="Thickness" type="xs:positiveInteger" minOccurs="0"/>
 				<xs:element name="Contour" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:sequence>
