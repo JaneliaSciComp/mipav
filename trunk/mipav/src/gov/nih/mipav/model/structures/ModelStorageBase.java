@@ -755,18 +755,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @return  DOCUMENT ME!
      */
     public Object clone() {
-
+    	Object obj = null;
         try {
             setLock(ModelStorageBase.W_LOCKED);
+            obj = super.clone();
         } catch (IOException error) {
             MipavUtil.displayError("" + error);
 
             return null;
+        } finally {
+        	releaseLock();
         }
-
-        Object obj = super.clone();
-
-        releaseLock();
 
         return (obj);
 
@@ -4808,25 +4807,23 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr += 2) {
+                    data.setFloat(ptr, valuesR[i]);
+                    data.setFloat(ptr + 1, valuesI[i]);
+                }
+
+                setLogMagDisplay(logMagDisplay);
+
+                if (mmFlag) {
+                    calcMinMaxMag(logMagDisplay);
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr += 2) {
-                data.setFloat(ptr, valuesR[i]);
-                data.setFloat(ptr + 1, valuesI[i]);
-            }
-
-            setLogMagDisplay(logMagDisplay);
-
-            if (mmFlag) {
-                calcMinMaxMag(logMagDisplay);
-            }
-
-            releaseLock();
 
             return;
         }
@@ -4851,23 +4848,24 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.set(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
+
             } catch (IOException error) {
                 releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
 
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.set(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
-
+            
             return;
         }
 
@@ -4892,23 +4890,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setBoolean(ptr, values.get(i));
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+                releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setBoolean(ptr, values.get(i));
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
-
             return;
         }
 
@@ -4932,21 +4927,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setBoolean(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
             } catch (IOException error) {
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setBoolean(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
 
             return;
         }
@@ -4971,22 +4965,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setByte(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
 
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setByte(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
+            
 
             return;
         }
@@ -5012,22 +5006,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setShort(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+                releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setShort(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
 
             return;
         }
@@ -5052,21 +5044,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setInt(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
+
             } catch (IOException error) {
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setInt(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
 
             return;
         }
@@ -5091,22 +5083,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
-            } catch (IOException error) {
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setLong(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
+
                 releaseLock();
+            } catch (IOException error) {
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setLong(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
 
             return;
         }
@@ -5131,24 +5123,23 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setFloat(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
+                return;
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
 
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setFloat(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
-
-            return;
+            
         }
 
         throw new IOException("Import data error: bounds incorrect");
@@ -5171,22 +5162,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setDouble(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setDouble(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
 
             return;
         }
@@ -5215,23 +5204,25 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr += 2) {
+                    data.setDouble(ptr, valuesR[i]);
+                    data.setDouble(ptr + 1, valuesI[i]);
+                }
+
+                setLogMagDisplay(logMagDisplay);
+
+                if (mmFlag) {
+                    calcMinMaxMag(logMagDisplay);
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
 
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr += 2) {
-                data.setDouble(ptr, valuesR[i]);
-                data.setDouble(ptr + 1, valuesI[i]);
-            }
-
-            setLogMagDisplay(logMagDisplay);
-
-            if (mmFlag) {
-                calcMinMaxMag(logMagDisplay);
-            }
+            
 
             releaseLock();
 
@@ -5264,22 +5255,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = alphaIndexStart + color;
+
+                for (int i = 0; i < length; i++, ptr += 4) {
+                    data.setFloat(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            ptr = alphaIndexStart + color;
-
-            for (int i = 0; i < length; i++, ptr += 4) {
-                data.setFloat(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
 
             return;
         }
@@ -5304,22 +5293,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setUByte(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
+
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setUByte(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
 
             return;
         }
@@ -5344,23 +5332,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setUShort(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+            	releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setUShort(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
-
             return;
         }
 
@@ -5384,22 +5369,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    data.setUInt(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                    calcMinMax();
+                }
+
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+                releaseLock();
             }
-
-            ptr = start;
-
-            for (int i = 0; i < length; i++, ptr++) {
-                data.setUInt(ptr, values[i]);
-            }
-
-            if (mmFlag) {
-                calcMinMax();
-            }
-
-            releaseLock();
 
             return;
         }
@@ -5508,6 +5492,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         } else {
             writeLockCount = 0; // Just make sure its zero.
         }
+        
     }
 
     /**
