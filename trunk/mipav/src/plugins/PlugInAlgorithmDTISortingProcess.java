@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -335,8 +336,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				// doing a mod of the total num slices per volume
 				// if the mod is 0, then we are ok
 				if (seriesFITSSize % numSlicesPerVolume != 0) {
-					Preferences.debug("! ERROR: here are not equal number of image clices in each volume....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-					outputTextArea.append("! ERROR: There are not equal number of image clices in each volume....exiting algorithm \n");
+					Preferences.debug("! ERROR: here are not equal number of image slices in each volume....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+					outputTextArea.append("! ERROR: There are not equal number of image slices in each volume....exiting algorithm \n");
 					return false;
 				}
 
@@ -603,6 +604,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			File bMatrixFile = new File(studyPath + "_proc" + File.separator + studyName + ".BMTXT");
 			FileOutputStream outputStream = new FileOutputStream(bMatrixFile);
 			PrintStream printStream = new PrintStream(outputStream);
+			DecimalFormat decFormat = new DecimalFormat("%16f");
 			//formula for bmtxt values is : 
 			//bxx 2bxy 2bxz byy 2byz bzz
 			//x, y, and z values come from the direction[][]
@@ -612,15 +614,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				float y = direction[i][1];
 				float z = direction[i][2];
 
+				
 				//following is for 1.4 compliant
 				//otherwise, it would be : printStream.printf("%16f", b*x*x);
-				printStream.printf("%16f", new Object[]{new Float(b*x*x)});
-				printStream.printf("%16f", new Object[]{new Float(2*b*x*y)});
-				printStream.printf("%16f", new Object[]{new Float(2*b*x*z)});
-				printStream.printf("%16f", new Object[]{new Float(b*y*y)});
-				printStream.printf("%16f", new Object[]{new Float(2*b*y*z)});
-				printStream.printf("%16f", new Object[]{new Float(b*z*z)});
-				printStream.println();
+				printStream.println(b*x*x + "\t" + 2*b*x*y + "\t" + 2*b*x*z + "\t" + b*y*y + "\t" + 2*b*y*z + "\t" + b*z*z);
 			}	
 			outputStream.close();
 		}
