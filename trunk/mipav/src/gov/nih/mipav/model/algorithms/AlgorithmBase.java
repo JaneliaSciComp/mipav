@@ -5,14 +5,14 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
 import java.awt.event.*;
 
 import java.text.*;
 
 import java.util.*;
-import javax.swing.event.EventListenerList;
-import gov.nih.mipav.MipavMath;
+
+import javax.swing.event.*;
+
 
 /**
  * Base abstract class for algorithms.
@@ -22,21 +22,7 @@ import gov.nih.mipav.MipavMath;
  */
 public abstract class AlgorithmBase extends Thread implements ActionListener, WindowListener {
 
- 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /**
-     * Should be set to true if NOT in a single thread - will NOT force a graphics update of the progress bar. Should be
-     * set to false if in a single thread - will force a graphics update of the progress bar.  This defaults to false,
-     * since we can automatically set it to true when startMethod() is called.  When starting the algorithm with run(),
-     * this boolean should remain false.
-     * @see #startMethod(int)
-     * @see #run()
-     */
-    protected boolean runningInSeparateThread = false;
-
-    /** This flag will be set to true when the algorithm has completed. */
-    private boolean completed = false;
 
     /** Destination flag indicating if a destination (result) image is generated. */
     protected boolean destFlag = false;
@@ -56,14 +42,37 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /** Mask indicating which voxels to process. If true process voxel else skip. */
     protected BitSet mask = null;
 
+    /**
+     * Should be set to true if NOT in a single thread - will NOT force a graphics update of the progress bar. Should be
+     * set to false if in a single thread - will force a graphics update of the progress bar. This defaults to false,
+     * since we can automatically set it to true when startMethod() is called. When starting the algorithm with run(),
+     * this boolean should remain false.
+     *
+     * @see  #startMethod(int)
+     * @see  #run()
+     */
+    protected boolean runningInSeparateThread = false;
+
     /** Source image. */
     protected ModelImage srcImage;
 
     /** Flag indicating whether or not the thread is stopped. */
     protected volatile boolean threadStopped = false;
 
+    /** This flag will be set to true when the algorithm has completed. */
+    private boolean completed = false;
+
     /** Elapsed time (in milliseconds) -- time it took for algorithm to run. */
     private double elapsedTime = 0;
+
+    /** A list of the ChangeListeners which are interested in the ChangeEvent. */
+    private EventListenerList listenerList = new EventListenerList();
+
+    /** DOCUMENT ME! */
+    private int maxProgressValue = 100;
+
+    /** Used to store the minimum and maximum value of the progress bar. */
+    private int minProgressValue = 0;
 
     /**
      * Vector list of AlgorithmInterface objects. When the algorithm has been stopped or completed, all listeners in
@@ -73,17 +82,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
     /** Start time (in milliseconds) to be used to compute elapsed time. */
     private long startTime = 0;
-
-    /**
-     * Used to store the minimum and maximum value of the progress bar.
-     */
-    private int minProgressValue = 0;
-    private int maxProgressValue = 100;
-    
-    /**
-     * A list of the ChangeListeners which are interested in the ChangeEvent. 
-     */
-    private EventListenerList listenerList = new EventListenerList();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -98,7 +96,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         threadStopped = false;
     }
 
-     
+
     /**
      * Constructor which sets thread stopped to false and sets source and destination images.
      *
@@ -117,20 +115,26 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
         threadStopped = false;
     }
-    
+
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    public void actionPerformed(ActionEvent e) {
-    	//System.err.println("action performed!");
-    	if (e.getActionCommand().equalsIgnoreCase("cancel")) {
-    		setThreadStopped(true);
-    	}
-    }
-    
     /**
      * Actually runs the algorithm. Implemented by inheriting algorithms.
      */
     public abstract void runAlgorithm();
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void actionPerformed(ActionEvent e) {
+
+        // System.err.println("action performed!");
+        if (e.getActionCommand().equalsIgnoreCase("cancel")) {
+            setThreadStopped(true);
+        }
+    }
 
     /**
      * Add a listener to this class so that when when the algorithm has completed processing it can use notifyListener
@@ -140,6 +144,19 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public void addListener(AlgorithmInterface obj) {
         objectList.addElement(obj);
+    }
+
+    /**
+     * Adds the ProgressChangeListener to this FileBase object.
+     *
+     * @param  l  the ProgressChangeListener object
+     */
+    public void addProgressChangeListener(ProgressChangeListener l) {
+        listenerList.add(ProgressChangeListener.class, l);
+
+        if (l instanceof ViewJProgressBar) {
+            ((ViewJProgressBar) l).addActionListener(this);
+        }
     }
 
     /**
@@ -190,10 +207,14 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
         setCompleted(false);
         setThreadStopped(true);
-        
+
 
         if (destImage != null) {
             destImage.releaseLock();
+        }
+
+        if (srcImage != null) {
+            srcImage.releaseLock();
         }
     }
 
@@ -211,6 +232,36 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     /**
+     * Helper function to determine which values to pass on to linked algorithms (that will fire progress changes to the
+     * same progress bar). You pass in the current progress and then the max desired progress.... you do NOT adjust the
+     * progress yourself, you assume a 0-100 range always, so if the current progress of a certain algorithm was 50%,
+     * and you want the helper algorithm to run on an adjusted scale of 50% to 70%, then you pass 50 and 70 as current &
+     * desiredMax respectively. if the algorithm passing this in was on a scale of 0->50, then the displayed progress
+     * will range from 25% to 35% (50% of 50->70)
+     *
+     * @param   currentProgress     current progress of algorithm on a 0->100 scale
+     * @param   desiredMaxProgress  max progress desired for linked algorithm
+     *
+     * @return  array of 2 ints [current, max]
+     */
+    public int[] generateProgressValues(int currentProgress, int desiredMaxProgress) {
+        return new int[] {
+                   ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, currentProgress),
+                   ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, desiredMaxProgress)
+               };
+    }
+
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public ModelImage getDestImage() {
+        return destImage;
+    }
+
+    /**
      * Returns the elapsed time in seconds. This does not compute a new elapsed time.
      *
      * @return  the elapsed time, in seconds computed earlier
@@ -218,9 +269,11 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @see     #computeElapsedTime()
      */
     public double getElapsedTime() {
+
         if (elapsedTime == 0) {
             computeElapsedTime();
         }
+
         return (double) (elapsedTime / 1000.0); // convert from milliseconds to seconds
     }
 
@@ -234,14 +287,62 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     /**
-     * Should be set to true if NOT in a single thread (i.e., the main gui and this algo are in different threads)
-     * - will NOT force a graphics update of the progress bar. Should be set to false if in a single thread - will
-     * force a graphics update of the progress bar.
+     * Returns the max progress value.
      *
-     * @return  boolean  true if this algorithm is in a different thread from the main mipav gui thread.
+     * @return  max progress value
      */
-    public boolean isRunningInSeparateThread() {
-        return this.runningInSeparateThread;
+    public int getMaxProgressValue() {
+        return maxProgressValue;
+    }
+
+    /**
+     * Returns the min progress value.
+     *
+     * @return  min progress value
+     */
+    public int getMinProgressValue() {
+        return minProgressValue;
+    }
+
+    /**
+     * If there is a progress bar that is listening to the algorithm's progress change events, this will retrieve that
+     * progress bar. This function is really only here to support AlgorithmExtractSurface, AlgorithmExtractSurfaceCubes,
+     * and AlgorithmHeightFunction which use ModelQuadMesh and ModelTriangle Mesh (which do not follow the standard
+     * algorithmbase setup). This function should not be used elsewhere and will probably be removed (and
+     * modelquad/trianglemesh will be changed).
+     *
+     * @return  a progressbar if there is one listening, null otherwise.
+     */
+    public ViewJProgressBar getProgressChangeListener() {
+        ProgressChangeListener[] pListeners = getProgressChangeListeners();
+        ViewJProgressBar pBar = null;
+
+        for (int p = 0; p < pListeners.length; p++) {
+
+            if (pListeners[p] instanceof ViewJProgressBar) {
+                pBar = (ViewJProgressBar) pListeners[p];
+            }
+        }
+
+        return pBar;
+    }
+
+    /**
+     * Returns the progress change event listener list.
+     *
+     * @return  the progress change event listener list.
+     */
+    public ProgressChangeListener[] getProgressChangeListeners() {
+        return (ProgressChangeListener[]) listenerList.getListeners(ProgressChangeListener.class);
+    }
+
+    /**
+     * Gets the current stored min and max progress values.
+     *
+     * @return  int [] { currentMin, currentMax}
+     */
+    public int[] getProgressValues() {
+        return new int[] { minProgressValue, maxProgressValue };
     }
 
     /**
@@ -261,6 +362,17 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public boolean isImage25D() {
         return image25D;
+    }
+
+    /**
+     * Should be set to true if NOT in a single thread (i.e., the main gui and this algo are in different threads) -
+     * will NOT force a graphics update of the progress bar. Should be set to false if in a single thread - will force a
+     * graphics update of the progress bar.
+     *
+     * @return  boolean true if this algorithm is in a different thread from the main mipav gui thread.
+     */
+    public boolean isRunningInSeparateThread() {
+        return this.runningInSeparateThread;
     }
 
     /**
@@ -309,6 +421,19 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     /**
+     * Removes the ChangeListener from the FileBase object.
+     *
+     * @param  l  the ProgressChangeListener object
+     */
+    public void removeProgressChangeListener(ProgressChangeListener l) {
+        listenerList.remove(ProgressChangeListener.class, l);
+
+        if (l instanceof ViewJProgressBar) {
+            ((ViewJProgressBar) l).removeActionListener(this);
+        }
+    }
+
+    /**
      * Performs start-up and tear-down operations that should be done by all algorithms (timing, history log). Since
      * this class extends the Thread class it can be run in its own thread by invoking object.start(); It can also be
      * invoked without a new thread by calling the the run() method directly (ie. object.run()).
@@ -335,18 +460,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         /// finalize();
     }
 
-    /**
-     * Sets the running in separate thread flag which controls how the progress bar is updated. If true the progress bar
-     * is not forced to update.
-     *
-     * @param  separateThread  Should be set to true if NOT in a single thread (i.e., the main gui and this algo are in
-     *                         different threads) - will NOT force a graphics update of the progress bar. Should be set
-     *                         to false if in a single thread - will force a graphics update of the progress bar.
-     */
-    public void setRunningInSeparateThread(boolean separateThread) {
-        this.runningInSeparateThread = separateThread;
-    }
-
 
     /**
      * Sets completed to flag indicating if algorithm has sucessfully completed.
@@ -355,7 +468,8 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public void setCompleted(boolean flag) {
         completed = flag;
-        if(maxProgressValue == 100){
+
+        if (maxProgressValue == 100) {
             fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
         }
     }
@@ -378,27 +492,58 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     public void setMask(BitSet imageMask) {
         mask = imageMask;
     }
-        	
+
     /**
-     * Helper function to link the currently listening progress bar with an algorithm created within
-     * an algorithm.  This function should only be called when the other algorithm is expected to
-     * update the progress bar seamlessly.  It should be called in conjuction with AlgorithmBase's
-     * setProgressValues() so that the sub-algorithm will have know the min and max progress values.
-     * 
-     * Generally this will be called with the following lines:
-     * linkProgressToAlgorithm(theSubAlgorithm);
-     * theSubAlgorithm.setProgressValues(generateProgressValues(currentProgressOfAlgorithm, desiredMaxProgressOfSubAlgorithm));
-     * @param baseAlgo the subalgorithm created within current algorithm
+     * Sets the max progress value.
+     *
+     * @param  maxProgressValue  the maximum progress value
      */
-    protected void linkProgressToAlgorithm(AlgorithmBase baseAlgo) {
-        ProgressChangeListener[] listeners = this.getProgressChangeListeners();
-        if (listeners != null) {
-            for (int i = 0; i < listeners.length; i++) {
-                baseAlgo.addProgressChangeListener(listeners[i]);
-            }
-        }
+    public void setMaxProgressValue(int maxProgressValue) {
+        this.maxProgressValue = maxProgressValue;
     }
-    
+
+    /**
+     * Sets the min progress value.
+     *
+     * @param  minProgressValue  the minimum progress value
+     */
+    public void setMinProgressValue(int minProgressValue) {
+        this.minProgressValue = minProgressValue;
+    }
+
+    /**
+     * Sets the min and max progress values from an array of two ints.
+     *
+     * @param  minmax  array of two ints [min, max]
+     */
+    public void setProgressValues(int[] minmax) {
+        this.minProgressValue = minmax[0];
+        this.maxProgressValue = minmax[1];
+    }
+
+    /**
+     * Sets both the min and max progress values.
+     *
+     * @param  min  the min progress value
+     * @param  max  the max progress value
+     */
+    public void setProgressValues(int min, int max) {
+        this.minProgressValue = min;
+        this.maxProgressValue = max;
+    }
+
+    /**
+     * Sets the running in separate thread flag which controls how the progress bar is updated. If true the progress bar
+     * is not forced to update.
+     *
+     * @param  separateThread  Should be set to true if NOT in a single thread (i.e., the main gui and this algo are in
+     *                         different threads) - will NOT force a graphics update of the progress bar. Should be set
+     *                         to false if in a single thread - will force a graphics update of the progress bar.
+     */
+    public void setRunningInSeparateThread(boolean separateThread) {
+        this.runningInSeparateThread = separateThread;
+    }
+
     /**
      * Sets the start time to the current time. This should be called at the beginning of the run() method.
      */
@@ -499,7 +644,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public void windowOpened(WindowEvent event) { }
 
-   
 
     /**
      * Takes an array of strings and converts each entry into a float value. Useful for updating DICOM file information.
@@ -521,6 +665,99 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
 
         return imagePositionCoords;
+    }
+
+    /**
+     * Notifies listeners that have registered interest for notification on this event type.
+     *
+     * @param  message  the new message to display on the progress bar
+     */
+    protected void fireProgressStateChanged(String message) {
+        fireProgressStateChanged(ViewJProgressBar.PROGRESS_VALUE_UNCHANGED, null, message);
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for notification on this event type.
+     *
+     * @param  value  the value of the progress bar.
+     */
+    protected void fireProgressStateChanged(int value) {
+        fireProgressStateChanged(value, null, null);
+    }
+
+    /**
+     * Updates listeners of progress status.
+     *
+     * @param  imageName  DOCUMENT ME!
+     * @param  message    DOCUMENT ME!
+     */
+    protected void fireProgressStateChanged(String imageName, String message) {
+        fireProgressStateChanged(ViewJProgressBar.PROGRESS_VALUE_UNCHANGED, imageName, message);
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for notification on this event type.
+     *
+     * @param  value    the value of the progress bar.
+     * @param  title    the title of the progress dialog.
+     * @param  message  the message for that specific progress value.
+     */
+    protected void fireProgressStateChanged(int value, String title, String message) {
+
+        Object[] listeners = listenerList.getListenerList();
+
+        if (listeners == null) {
+            return;
+        }
+
+        // adjust value based on minProgress and maxProgress
+        if ((value != ViewJProgressBar.PROGRESS_VALUE_UNCHANGED) &&
+                (value != ViewJProgressBar.PROGRESS_WINDOW_CLOSING)) {
+            value = ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, value);
+        }
+
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+            if (listeners[i] == ProgressChangeListener.class) {
+                ProgressChangeEvent event = new ProgressChangeEvent(this, value, title, message);
+                ((ProgressChangeListener) listeners[i + 1]).progressStateChanged(event);
+            }
+        }
+    }
+
+    /**
+     * Updates listeners of progress status.
+     *
+     * @param  fVal     the percent progress of the algorithm so far
+     * @param  title    the title to send to the listeners
+     * @param  message  the message to send to the listeners
+     */
+    protected void fireProgressStateChanged(float fVal, String title, String message) {
+        fireProgressStateChanged(ViewJProgressBar.getProgressFromFloat(minProgressValue, maxProgressValue, fVal), title,
+                                 message);
+    }
+
+    /**
+     * Helper function to link the currently listening progress bar with an algorithm created within an algorithm. This
+     * function should only be called when the other algorithm is expected to update the progress bar seamlessly. It
+     * should be called in conjuction with AlgorithmBase's setProgressValues() so that the sub-algorithm will have know
+     * the min and max progress values.
+     *
+     * <p>Generally this will be called with the following lines: linkProgressToAlgorithm(theSubAlgorithm);
+     * theSubAlgorithm.setProgressValues(generateProgressValues(currentProgressOfAlgorithm,
+     * desiredMaxProgressOfSubAlgorithm));</p>
+     *
+     * @param  baseAlgo  the subalgorithm created within current algorithm
+     */
+    protected void linkProgressToAlgorithm(AlgorithmBase baseAlgo) {
+        ProgressChangeListener[] listeners = this.getProgressChangeListeners();
+
+        if (listeners != null) {
+
+            for (int i = 0; i < listeners.length; i++) {
+                baseAlgo.addProgressChangeListener(listeners[i]);
+            }
+        }
     }
 
     /**
@@ -553,207 +790,5 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
     }
 
-    /**
-     * If there is a progress bar that is listening to the algorithm's progress change events, 
-     * this will retrieve that progress bar.  This function is really only here to support
-     * AlgorithmExtractSurface, AlgorithmExtractSurfaceCubes, and AlgorithmHeightFunction
-     * which use ModelQuadMesh and ModelTriangle Mesh (which do not follow the standard algorithmbase setup).
-     * This function should not be used elsewhere and will probably be removed (and modelquad/trianglemesh will
-     * be changed).
-     * @return a progressbar if there is one listening, null otherwise.
-     */
-    public ViewJProgressBar getProgressChangeListener() {
-    	ProgressChangeListener pListeners [] = getProgressChangeListeners();
-        ViewJProgressBar pBar = null;
-        for (int p = 0; p < pListeners.length; p++){
-        	if (pListeners[p] instanceof ViewJProgressBar) {
-        		pBar = (ViewJProgressBar)pListeners[p];
-        	}
-        }
-        
-        return pBar;
-    }
-    
-    /**
-     * Returns the progress change event listener list.
-     * @return the progress change event listener list.
-     */
-    public ProgressChangeListener[] getProgressChangeListeners(){
-        return (ProgressChangeListener[])listenerList.getListeners(ProgressChangeListener.class);
-    }
-    
-    /**
-     * Adds the ProgressChangeListener to this FileBase object.
-     * 
-     * @param l  the ProgressChangeListener object
-     */
-    public void addProgressChangeListener(ProgressChangeListener l){
-        listenerList.add(ProgressChangeListener.class, l);
-        if(l instanceof ViewJProgressBar){
-            ((ViewJProgressBar)l).addActionListener(this);
-        }
-    }
-    
-    /**
-     * Removes the ChangeListener from the FileBase object.
-     * 
-     * @param l the ProgressChangeListener object
-     */
-    public void removeProgressChangeListener(ProgressChangeListener l){
-        listenerList.remove(ProgressChangeListener.class, l);
-        if(l instanceof ViewJProgressBar){
-            ((ViewJProgressBar)l).removeActionListener(this);
-        }
-    }
-    
-    /**
-     * Notifies all listeners that have registered interest for notification
-     * on this event type.
-     * 
-     * @param value   the value of the progress bar.
-     * @param title   the title of the progress dialog.
-     * @param message the message for that specific progress value.
-     */
-    protected void fireProgressStateChanged(int value, String title, String message){
-    	
-        Object[] listeners = listenerList.getListenerList();
-        if(listeners == null){
-            return;
-        }
-        
-        //adjust value based on minProgress and maxProgress
-        if (value != ViewJProgressBar.PROGRESS_VALUE_UNCHANGED &&
-        		value != ViewJProgressBar.PROGRESS_WINDOW_CLOSING) {
-        	value = ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, value);
-        }
-        
-        for(int i = listeners.length-2; i >= 0; i -= 2){
-            if(listeners[i] == ProgressChangeListener.class){
-                ProgressChangeEvent event = new ProgressChangeEvent(this, value, title, message);
-                ((ProgressChangeListener)listeners[i+1]).progressStateChanged(event);
-            }
-        }
-    }
-    
-    /**
-     * Updates listeners of progress status.
-     * 
-     * @param fVal     the percent progress of the algorithm so far
-     * @param title    the title to send to the listeners
-     * @param message  the message to send to the listeners
-     */
-    protected void fireProgressStateChanged(float fVal, String title, String message) {
-    	fireProgressStateChanged(ViewJProgressBar.getProgressFromFloat(minProgressValue, maxProgressValue, fVal), title, message);
-    }
 
-    /**
-     * Updates listeners of progress status
-     * @param imageName
-     * @param message
-     */
-    protected void fireProgressStateChanged(String imageName, String message) {
-    	fireProgressStateChanged(ViewJProgressBar.PROGRESS_VALUE_UNCHANGED, imageName, message);
-    }
-    
-    /**
-     * Notifies listeners that have registered interest for notification
-     * on this event type
-     * @param message the new message to display on the progress bar
-     */
-    protected void fireProgressStateChanged(String message) {
-    	fireProgressStateChanged(ViewJProgressBar.PROGRESS_VALUE_UNCHANGED, null, message);
-    }
-    
-    /**
-     * Notifies all listeners that have registered interest for notification
-     * on this event type.
-     * 
-     * @param value  the value of the progress bar.
-     */
-    protected void fireProgressStateChanged(int value){
-        fireProgressStateChanged(value, null, null);
-    }
-    
-    /**
-     * Helper function to determine which values to pass on to linked algorithms (that will fire progress changes
-     * to the same progress bar).  You pass in the current progress and then the max desired progress....
-     * you do NOT adjust the progress yourself, you assume a 0-100 range always, so if the current progress
-     * of a certain algorithm was 50%, and you want the helper algorithm to run on an adjusted scale of 50% to 70%,
-     * then you pass 50 and 70 as current & desiredMax respectively.  if the algorithm passing this in was
-     * on a scale of 0->50, then the displayed progress will range from 25% to 35% (50% of 50->70)
-     * @param currentProgress current progress of algorithm on a 0->100 scale
-     * @param desiredMaxProgress max progress desired for linked algorithm
-     * @return array of 2 ints [current, max]
-     */
-    public int [] generateProgressValues(int currentProgress, int desiredMaxProgress) {
-    	return new int[] { ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, currentProgress), 
-    			ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, desiredMaxProgress)};
-    }
-    
-    /**
-     * Gets the current stored min and max progress values
-     * @return int [] { currentMin, currentMax}
-     */
-    public int [] getProgressValues() {
-    	return new int [] { minProgressValue, maxProgressValue };
-    }
-    
-    /**
-     * Returns the min progress value
-     * @return min progress value
-     */
-    public int getMinProgressValue(){
-        return minProgressValue;
-    }
-    
-    /**
-     * Sets the min progress value
-     * @param minProgressValue the minimum progress value
-     */
-    public void setMinProgressValue(int minProgressValue){
-        this.minProgressValue = minProgressValue;
-    }
-    
-    /**
-     * Returns the max progress value
-     * @return max progress value
-     */
-    public int getMaxProgressValue(){
-        return maxProgressValue;
-    }
-    
-    /**
-     * Sets the max progress value
-     * @param maxProgressValue the maximum progress value
-     */
-    public void setMaxProgressValue(int maxProgressValue){
-        this.maxProgressValue = maxProgressValue;
-    }
-
-    /**
-     * Sets both the min and max progress values
-     * @param min the min progress value
-     * @param max the max progress value
-     */
-    public void setProgressValues(int min, int max) {
-    	this.minProgressValue = min;
-    	this.maxProgressValue = max;
-    }
-    
-    /**
-     * Sets the min and max progress values from an array of two ints
-     * @param minmax array of two ints [min, max]
-     */
-    public void setProgressValues(int [] minmax) {
-    	this.minProgressValue = minmax[0];
-    	this.maxProgressValue = minmax[1];
-    }
-
-
-	public ModelImage getDestImage() {
-		return destImage;
-	}
-    
-    
-    
 }
