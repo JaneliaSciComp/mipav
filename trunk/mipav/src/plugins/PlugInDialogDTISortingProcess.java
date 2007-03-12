@@ -95,7 +95,7 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
         mainPanelConstraints.gridx = 1;
 		mainPanelConstraints.gridy = 1;
 		mainPanelConstraints.insets = new Insets(15,5,0,0);
-		studyPathTextField = new JTextField(25);
+		studyPathTextField = new JTextField(55);
 		mainPanel.add(studyPathTextField, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 2;
@@ -116,7 +116,7 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 		mainPanelConstraints.gridx = 1;
 		mainPanelConstraints.gridy = 2;
 		mainPanelConstraints.insets = new Insets(15,5,15,0);
-		gradientFilePathTextField = new JTextField(25);
+		gradientFilePathTextField = new JTextField(55);
 		mainPanel.add(gradientFilePathTextField, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 2;
@@ -131,7 +131,7 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
-		outputTextArea = new JTextArea(15, 40);
+		outputTextArea = new JTextArea(15, 70);
 		outputTextArea.setEditable(false);
 		outputTextArea.setBackground(Color.lightGray);
 		outputTextArea.setBorder(new LineBorder(Color.black));
