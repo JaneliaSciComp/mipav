@@ -35,10 +35,16 @@ public class ModelImage extends ModelStorageBase {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 1234298038008494667L;
 
-    /** DOCUMENT ME! */
+    /**
+     * Used to indicate that this image object is Image A when two images are displayed in the same frame. See also
+     * imageOrder in this class.
+     */
     public static final int IMAGE_A = 0;
 
-    /** DOCUMENT ME! */
+    /**
+     * Used to indicate that this image object is Image B when two images are displayed in the same frame. See also
+     * imageOrder in this class.
+     */
     public static final int IMAGE_B = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -214,7 +220,8 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Accessor that returns whether or not the given data type is a color data type.
      *
-     * @param   dataType  DOCUMENT ME!
+     * @param   dataType  The data type from a ModelImage to determine if it is of one of the three types of color
+     *                    images supported.
      *
      * @return  <code>true</code> if color, <code>false</code> if not color.
      */
@@ -265,23 +272,6 @@ public class ModelImage extends ModelStorageBase {
         System.gc();
     }
 
-    /**
-     * Accessor that sets the fileInfo class for the image Different from super(...) in that this method also sets the
-     * imageName.
-     *
-     * <p>DICOM images set their image name based on the patient name held in the first slice</p>
-     *
-     * @param  list      fileInfo structure.
-     * @param  doRename  DOCUMENT ME!
-     */
-    // public void setFileInfo(FileInfoBase fInfo, int i)  {    super.setFileInfo(fInfo, i);        // make sure the
-    // ModelStorageBase sets file info first
-
-    // doing this when reading in, not sure it's necessary here.
-
-    // DICOM files must be given an imagename different from its filename because DICOM images are made of many
-    // different files. if (this.isDicomImage()) {  // if image is DICOM,
-    // setImageName((String)(((FileInfoDicom)fileInfo[0]).getValue("0010,0010")));  // set imageName to patient name } }
 
     /**
      * Anonymize the image by altering the sensitive data of each slice to something generic.
@@ -1792,7 +1782,7 @@ public class ModelImage extends ModelStorageBase {
      * @param  name          DOCUMENT ME!
      */
     public void groupVOIs(ViewVOIVector newVOIVector, int[] where, String name) {
-        System.err.println("calling group VOIs, passing in new vector");
+        // System.err.println("calling group VOIs, passing in new vector");
 
         int i, j, k;
         int nVOIs;
@@ -2374,7 +2364,7 @@ public class ModelImage extends ModelStorageBase {
      *
      * @param   directory  location where the image is to stored.
      * @param   fileName   the name of the file (without the extension).
-     * @param   fileType   DOCUMENT ME!
+     * @param   fileType   The format of the image file (i.e. Analyze, XML, DICOM etc.)
      * @param   isActive   DOCUMENT ME!
      *
      * @return  true if succeeded in saving.
@@ -2688,7 +2678,7 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Sets the slice in all frames displaying this image.
      *
-     * @param  slice  DOCUMENT ME!
+     * @param  slice  Indicates the z dim. slice that should be displayed.
      */
     public void setSlice(int slice) {
 
@@ -2713,7 +2703,7 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Sets the time slice in all frames displaying this image.
      *
-     * @param  tSlice  DOCUMENT ME!
+     * @param  tSlice  Indicates the t (time) dim. slice that should be displayed.
      */
     public void setTimeSlice(int tSlice) {
 
@@ -3282,7 +3272,7 @@ public class ModelImage extends ModelStorageBase {
      * Calls disposeLocal of this class to ensure this class nulls the references to global class variables so that
      * memory will be recovered.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable  Throws an error if there is a problem with the finalization of this object.
      */
     protected void finalize() throws Throwable {
         this.disposeLocal();
@@ -3293,25 +3283,25 @@ public class ModelImage extends ModelStorageBase {
      * Helper method for making the result image's name. Strips the current extension from the original name, adds the
      * given extension, and returns the new name.
      *
-     * @param   image_name  DOCUMENT ME!
-     * @param   ext         Extension to add which gives information about what algorithm was performed on the image.
+     * @param   imageName  Source image name that will be modified to have a new extension.
+     * @param   ext        Extension to add which gives information about what algorithm was performed on the image.
      *
      * @return  The new image name.
      */
-    private static String makeImageName(String image_name, String ext) {
+    private static String makeImageName(String imageName, String ext) {
         String name;
         int index;
 
-        if (image_name != null) {
-            index = image_name.lastIndexOf(".");
+        if (imageName != null) {
+            index = imageName.lastIndexOf(".");
         } else {
             return null;
         }
 
         if (index == -1) {
-            name = image_name;
+            name = imageName;
         } else {
-            name = image_name.substring(0, index);
+            name = imageName.substring(0, index);
         } // Used for setting image name
 
         name += ext;
