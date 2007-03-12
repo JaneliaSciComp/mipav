@@ -755,7 +755,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @return  DOCUMENT ME!
      */
     public Object clone() {
-    	Object obj = null;
+        Object obj = null;
+
         try {
             setLock(ModelStorageBase.W_LOCKED);
             obj = super.clone();
@@ -764,7 +765,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             return null;
         } finally {
-        	releaseLock();
+            releaseLock();
         }
 
         return (obj);
@@ -877,9 +878,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final synchronized float[] export(int[] axisOrder, boolean[] axisFlip, int tSlice, int slice, float[] values)
             throws IOException {
-    	float[] fReturn = null;
+        float[] fReturn = null;
+
         try {
             setLock(W_LOCKED);
+
             /* Get the loop bounds, based on the coordinate-systems: transformation:  */
             int iBound = (dimExtents.length > 0) ? dimExtents[axisOrder[0]] : 1;
             int jBound = (dimExtents.length > 1) ? dimExtents[axisOrder[1]] : 1;
@@ -910,7 +913,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
             double real, imaginary, mag;
-            
+
 
             /* loop over the 2D image (values) we're writing into */
             for (int j = 0; j < jBound; j++) {
@@ -1001,9 +1004,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
         } catch (IOException error) {
             throw error;
         } finally {
-        	releaseLock();
-        } 
-        
+            releaseLock();
+        }
+
         return fReturn;
     }
 
@@ -1026,6 +1029,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i += 2, j++) {
                     valuesR[j] = data.getFloat(i);
                     valuesI[j] = data.getFloat(i + 1);
@@ -1034,7 +1038,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -1086,13 +1090,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.get(i);
                 }
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -1117,6 +1122,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i++, j++) {
 
                     if (data.getBoolean(i)) {
@@ -1128,8 +1134,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
+
             return;
         }
 
@@ -1152,6 +1159,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getByte(i);
                 }
@@ -1159,7 +1167,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -1184,6 +1192,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getShort(i);
                 }
@@ -1191,12 +1200,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getShort(i);
-            }
+            // for (i = start, j = 0; j < length; i++, j++) {
+            // values[j] = data.getShort(i);
+            // }
 
             return;
         }
@@ -1220,6 +1229,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getInt(i);
                 }
@@ -1227,7 +1237,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -1259,7 +1269,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -1284,6 +1294,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getFloat(i);
                 }
@@ -1291,9 +1302,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
-
 
             return;
         }
@@ -1318,6 +1328,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i++, j++) {
                     values[j] = data.getDouble(i);
                 }
@@ -1325,8 +1336,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
+
             return;
         }
 
@@ -1363,8 +1375,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
-            } 
+                releaseLock();
+            }
+
             return;
         }
 
@@ -1588,17 +1601,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
+                for (i = start, j = 0; j < length; i += 2, j++) {
+                    valuesR[j] = data.getDouble(i);
+                    valuesI[j] = data.getDouble(i + 1);
+                }
             } catch (IOException error) {
-                releaseLock();
                 throw error;
+            } finally {
+                releaseLock();
             }
-
-            for (i = start, j = 0; j < length; i += 2, j++) {
-                valuesR[j] = data.getDouble(i);
-                valuesI[j] = data.getDouble(i + 1);
-            }
-
-            releaseLock();
 
             return;
         }
@@ -1784,6 +1796,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i += 2, j++) {
                     real = data.getDouble(i);
                     imaginary = data.getDouble(i + 1);
@@ -1792,7 +1805,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -1818,6 +1831,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start, j = 0; j < length; i += 2, j++) {
                     real = (double) data.getFloat(i);
                     imaginary = (double) data.getFloat(i + 1);
@@ -1828,7 +1842,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 releaseLock();
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -1854,14 +1868,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start + offset, j = 0; j < length; i += 4, j++) {
                     values[j] = data.getByte(i);
                 }
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
+
             return;
         }
 
@@ -1885,6 +1901,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start + offset, j = 0; j < length; i += 4, j++) {
                     values[j] = data.getShort(i);
                 }
@@ -1892,7 +1909,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -1918,14 +1935,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             try {
                 setLock(W_LOCKED);
+
                 for (i = start + offset, j = 0; j < length; i += 4, j++) {
                     values[j] = data.getFloat(i);
                 }
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
+
             return;
         }
 
@@ -4822,7 +4841,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -4859,13 +4878,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 }
 
             } catch (IOException error) {
-                releaseLock();
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
-            
+
             return;
         }
 
@@ -4904,6 +4922,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } finally {
                 releaseLock();
             }
+
             return;
         }
 
@@ -4939,7 +4958,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -4977,10 +4996,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
-            
 
             return;
         }
@@ -5057,7 +5075,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -5092,12 +5110,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-
-                releaseLock();
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -5132,14 +5148,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 if (mmFlag) {
                     calcMinMax();
                 }
-                return;
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
-            
+            return;
         }
 
         throw new IOException("Import data error: bounds incorrect");
@@ -5174,7 +5189,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -5219,12 +5234,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
-
-            
-
-            releaseLock();
 
             return;
         }
@@ -5267,7 +5278,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -5306,7 +5317,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
 
             return;
@@ -5344,8 +5355,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
             } catch (IOException error) {
                 throw error;
             } finally {
-            	releaseLock();
+                releaseLock();
             }
+
             return;
         }
 
@@ -5492,7 +5504,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         } else {
             writeLockCount = 0; // Just make sure its zero.
         }
-        
+
     }
 
     /**
