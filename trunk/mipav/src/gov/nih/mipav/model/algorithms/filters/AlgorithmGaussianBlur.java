@@ -1,10 +1,13 @@
 package gov.nih.mipav.model.algorithms.filters;
 
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+
 
 /**
  * The application of this algorithm blurs an image or VOI region of the image with a Gaussian function at a user
@@ -52,18 +55,28 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Constructor which sets the source and destination images, the minimum and maximum 
-     * progress value.
-     * @param destImg            the destination image
-     * @param srcImg             the source image
-     * @param sigmas             the sigmas
-     * @param maskFlag           the mask flag
-     * @param img25D             the 2.5D indicator
-     * @param minProgressValue   the minimum progress value.
-     * @param maxProgressValue   the maximum progress value.
+     * Creates a new AlgorithmGaussianBlur object.
+     *
+     * @param  srcImg    DOCUMENT ME!
+     * @param  sigmas    DOCUMENT ME!
+     * @param  maskFlag  DOCUMENT ME!
+     * @param  img25D    DOCUMENT ME!
      */
-    public AlgorithmGaussianBlur(ModelImage destImg, ModelImage srcImg,
-            float[] sigmas, boolean maskFlag, boolean img25D) {
+    public AlgorithmGaussianBlur(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D) {
+        this(null, srcImg, sigmas, maskFlag, img25D);
+    }
+
+    /**
+     * Constructor which sets the source and destination images, the minimum and maximum progress value.
+     *
+     * @param  destImg   the destination image
+     * @param  srcImg    the source image
+     * @param  sigmas    the sigmas
+     * @param  maskFlag  the mask flag
+     * @param  img25D    the 2.5D indicator
+     */
+    public AlgorithmGaussianBlur(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
+                                 boolean img25D) {
         super(destImg, srcImg);
 
         this.sigmas = sigmas;
@@ -72,11 +85,6 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
     }
 
-    public AlgorithmGaussianBlur(ModelImage srcImg,
-            float[] sigmas, boolean maskFlag, boolean img25D) {
-        this(null, srcImg, sigmas, maskFlag, img25D);
-    }
-    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -115,6 +123,8 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
+            destImage.releaseLock();
+
             return;
         }
 
@@ -208,8 +218,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
         int mod = totalLength / 100; // mod is 1 percent of length
 
-        fireProgressStateChanged(0, srcImage.getImageName(),
-                "Blurring image ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -236,28 +245,28 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
                         resultBuffer[start + i] = buffer[i];
 
                         if (red) {
-                            resultBuffer[start + i + 1] = AlgorithmConvolver
-                                    .convolve2DRGBPt(i + 1, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[start + i + 1] = AlgorithmConvolver.convolve2DRGBPt(i + 1,
+                                                                                             srcImage.getExtents(),
+                                                                                             buffer, kExtents,
+                                                                                             GaussData);
                         } else {
                             resultBuffer[start + i + 1] = buffer[i + 1];
                         }
 
                         if (green) {
-                            resultBuffer[start + i + 2] = AlgorithmConvolver
-                                    .convolve2DRGBPt(i + 2, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[start + i + 2] = AlgorithmConvolver.convolve2DRGBPt(i + 2,
+                                                                                             srcImage.getExtents(),
+                                                                                             buffer, kExtents,
+                                                                                             GaussData);
                         } else {
                             resultBuffer[start + i + 2] = buffer[i + 2];
                         }
 
                         if (blue) {
-                            resultBuffer[start + i + 3] = AlgorithmConvolver
-                                    .convolve2DRGBPt(i + 3, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[start + i + 3] = AlgorithmConvolver.convolve2DRGBPt(i + 3,
+                                                                                             srcImage.getExtents(),
+                                                                                             buffer, kExtents,
+                                                                                             GaussData);
                         } else {
                             resultBuffer[start + i + 3] = buffer[i + 3];
                         }
@@ -277,9 +286,8 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
-                        resultBuffer[start + i] = AlgorithmConvolver
-                                .convolve2DPt(i, srcImage.getExtents(), buffer,
-                                        kExtents, GaussData);
+                        resultBuffer[start + i] = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer,
+                                                                                  kExtents, GaussData);
                     } else {
                         resultBuffer[start + i] = buffer[i];
                         // resultBuffer[i] = 0;
@@ -291,14 +299,12 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         fireProgressStateChanged(100);
 
         if (threadStopped) {
+            finalize();
+
             return;
         }
 
         try {
-
-            // if (srcImage.getType() != ModelImage.FLOAT) {
-            // srcImage.reallocate(ModelImage.FLOAT);
-            // }
             srcImage.importData(0, resultBuffer, false);
         } catch (IOException error) {
             buffer = null;
@@ -329,8 +335,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         }
 
         try {
-            length = cFactor * srcImage.getSliceSize()
-                    * srcImage.getExtents()[2];
+            length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
@@ -351,8 +356,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-        fireProgressStateChanged(0, srcImage.getImageName(),
-                "Blurring image ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
         if (color == true) {
 
@@ -366,25 +370,22 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
                     resultBuffer[i] = buffer[i];
 
                     if (red) {
-                        resultBuffer[i + 1] = AlgorithmConvolver
-                                .convolve3DRGBPt(i + 1, srcImage.getExtents(),
-                                        buffer, kExtents, GaussData);
+                        resultBuffer[i + 1] = AlgorithmConvolver.convolve3DRGBPt(i + 1, srcImage.getExtents(), buffer,
+                                                                                 kExtents, GaussData);
                     } else {
                         resultBuffer[i + 1] = buffer[i + 1];
                     }
 
                     if (green) {
-                        resultBuffer[i + 2] = AlgorithmConvolver
-                                .convolve3DRGBPt(i + 2, srcImage.getExtents(),
-                                        buffer, kExtents, GaussData);
+                        resultBuffer[i + 2] = AlgorithmConvolver.convolve3DRGBPt(i + 2, srcImage.getExtents(), buffer,
+                                                                                 kExtents, GaussData);
                     } else {
                         resultBuffer[i + 2] = buffer[i + 2];
                     }
 
                     if (blue) {
-                        resultBuffer[i + 3] = AlgorithmConvolver
-                                .convolve3DRGBPt(i + 3, srcImage.getExtents(),
-                                        buffer, kExtents, GaussData);
+                        resultBuffer[i + 3] = AlgorithmConvolver.convolve3DRGBPt(i + 3, srcImage.getExtents(), buffer,
+                                                                                 kExtents, GaussData);
                     } else {
                         resultBuffer[i + 3] = buffer[i + 3];
                     }
@@ -404,8 +405,8 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
-                    resultBuffer[i] = AlgorithmConvolver.convolve3DPt(i,
-                            srcImage.getExtents(), buffer, kExtents, GaussData);
+                    resultBuffer[i] = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents,
+                                                                      GaussData);
                 } else {
                     resultBuffer[i] = buffer[i];
                     // resultBuffer[i] = 0;
@@ -428,7 +429,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
             return;
         }
-        
+
         setCompleted(true);
     }
 
@@ -450,8 +451,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         }
 
         try {
-            length = cFactor * srcImage.getSliceSize()
-                    * srcImage.getExtents()[2];
+            length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             resultBuffer = new float[length];
         } catch (OutOfMemoryError e) {
@@ -462,12 +462,12 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(0, srcImage.getImageName(),
-                "Blurring image ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
         int index;
         int end = srcImage.getExtents()[3];
-        int mod = length * end/100;
+        int mod = length * end / 100;
+
         for (t = 0; (t < end) && !threadStopped; t++) {
 
             try {
@@ -475,7 +475,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Gaussian Blur: Image(s) locked");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -487,35 +487,31 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             if (color == true) {
 
                 for (i = 0; (i < length) && !threadStopped; i += 4) {
-                    if(i % mod == 0){
-                        fireProgressStateChanged(0 + (t*length+i)/mod);                        
+
+                    if ((i % mod) == 0) {
+                        fireProgressStateChanged(0 + (((t * length) + i) / mod));
                     }
+
                     if ((entireImage == true) || mask.get(i / 4)) {
                         resultBuffer[i] = buffer[i];
 
                         if (red) {
-                            resultBuffer[i + 1] = AlgorithmConvolver
-                                    .convolve3DRGBPt(i + 1, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[i + 1] = AlgorithmConvolver.convolve3DRGBPt(i + 1, srcImage.getExtents(),
+                                                                                     buffer, kExtents, GaussData);
                         } else {
                             resultBuffer[i + 1] = buffer[i + 1];
                         }
 
                         if (green) {
-                            resultBuffer[i + 2] = AlgorithmConvolver
-                                    .convolve3DRGBPt(i + 2, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[i + 2] = AlgorithmConvolver.convolve3DRGBPt(i + 2, srcImage.getExtents(),
+                                                                                     buffer, kExtents, GaussData);
                         } else {
                             resultBuffer[i + 2] = buffer[i + 2];
                         }
 
                         if (blue) {
-                            resultBuffer[i + 3] = AlgorithmConvolver
-                                    .convolve3DRGBPt(i + 3, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[i + 3] = AlgorithmConvolver.convolve3DRGBPt(i + 3, srcImage.getExtents(),
+                                                                                     buffer, kExtents, GaussData);
                         } else {
                             resultBuffer[i + 3] = buffer[i + 3];
                         }
@@ -529,13 +525,14 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             } else {
 
                 for (i = 0; (i < length) && !threadStopped; i++) {
-                    if(i % mod == 0){
-                        fireProgressStateChanged(0 + (t*length+i)/mod);                        
+
+                    if ((i % mod) == 0) {
+                        fireProgressStateChanged(0 + (((t * length) + i) / mod));
                     }
+
                     if ((entireImage == true) || mask.get(i)) {
-                        resultBuffer[i] = AlgorithmConvolver.convolve3DPt(i,
-                                srcImage.getExtents(), buffer, kExtents,
-                                GaussData);
+                        resultBuffer[i] = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents,
+                                                                          GaussData);
                     } else {
                         resultBuffer[i] = buffer[i];
                     }
@@ -561,12 +558,14 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
         if (threadStopped) {
             finalize();
+            destImage.releaseLock();
+
             return;
         }
 
         buffer = null;
         resultBuffer = null;
-      
+
         setCompleted(true);
     }
 
@@ -576,7 +575,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
      * @param  nImages  number of images to be blurred. If 2D image then nImage = 1, if 3D image where each image is to
      *                  processed independently then nImages equals the number of images in the volume.
      */
-private void calcStoreInDest2D(int nImages) {
+    private void calcStoreInDest2D(int nImages) {
 
         int i, s, idx;
         int length, totalLength;
@@ -627,7 +626,7 @@ private void calcStoreInDest2D(int nImages) {
 
                 for (i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
 
-                    if ( ((start + i) % mod) == 0) {
+                    if (((start + i) % mod) == 0) {
                         fireProgressStateChanged(0 + Math.round((float) (start + i) / (totalLength - 1) * 100));
                     }
 
@@ -684,9 +683,10 @@ private void calcStoreInDest2D(int nImages) {
         }
 
         fireProgressStateChanged(100);
-        
+
         if (threadStopped) {
             finalize();
+            destImage.releaseLock();
 
             return;
         }
@@ -695,10 +695,11 @@ private void calcStoreInDest2D(int nImages) {
         destImage.releaseLock();
         setCompleted(true);
     }
+
     /**
      * Produces a new image that has been blurred.
      */
-private void calcStoreInDest3D() {
+    private void calcStoreInDest3D() {
 
         int i;
         int length;
@@ -804,6 +805,7 @@ private void calcStoreInDest3D() {
 
         if (threadStopped) {
             finalize();
+            destImage.releaseLock();
 
             return;
         }
@@ -812,10 +814,11 @@ private void calcStoreInDest3D() {
         destImage.releaseLock();
         setCompleted(true);
     }
+
     /**
      * Produces a new image that has been blurred.
      */
-private void calcStoreInDest4D() {
+    private void calcStoreInDest4D() {
 
         int i, t;
         int length;
@@ -852,8 +855,8 @@ private void calcStoreInDest4D() {
         int index;
         int end = srcImage.getExtents()[3];
 
-        int mod = length*end / 100;
-        float progressRange = 100/end;
+        int mod = length * end / 100;
+
         for (t = 0; (t < end) && !threadStopped; t++) {
 
             try {
@@ -874,9 +877,11 @@ private void calcStoreInDest4D() {
             if (color == true) {
 
                 for (i = 0; (i < length) && !threadStopped; i += 4) {
-                    if(i % mod == 0){
-                        fireProgressStateChanged(0 + Math.round((t*length+i)/mod));                        
+
+                    if ((i % mod) == 0) {
+                        fireProgressStateChanged(0 + Math.round(((t * length) + i) / mod));
                     }
+
                     if ((entireImage == true) || mask.get(i / 4)) {
                         destImage.set(i + index, buffer[i]); // alpha
 
@@ -913,9 +918,11 @@ private void calcStoreInDest4D() {
             } else {
 
                 for (i = 0; (i < length) && !threadStopped; i++) {
-                    if(i % mod == 0){
-                        fireProgressStateChanged(0 + Math.round((t*length+i)/mod));                        
+
+                    if ((i % mod) == 0) {
+                        fireProgressStateChanged(0 + Math.round(((t * length) + i) / mod));
                     }
+
                     if ((entireImage == true) || mask.get(i)) {
                         destImage.set(index + i,
                                       AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents,
@@ -926,9 +933,12 @@ private void calcStoreInDest4D() {
                 }
             }
         }
+
         fireProgressStateChanged(100);
+
         if (threadStopped) {
             finalize();
+            destImage.releaseLock();
 
             return;
         }
@@ -937,6 +947,7 @@ private void calcStoreInDest4D() {
         destImage.releaseLock();
         setCompleted(true);
     }
+
     /**
      * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
      * logging procedure is turned on.
@@ -949,14 +960,11 @@ private void calcStoreInDest4D() {
         }
 
         if (srcImage.isColorImage()) {
-            historyString = new String("GaussianBlur(" + sigmaStr
-                    + String.valueOf(entireImage) + ", "
-                    + String.valueOf(image25D) + ", " + red + ", " + green
-                    + ", " + blue + ")\n");
+            historyString = new String("GaussianBlur(" + sigmaStr + String.valueOf(entireImage) + ", " +
+                                       String.valueOf(image25D) + ", " + red + ", " + green + ", " + blue + ")\n");
         } else {
-            historyString = new String("GaussianBlur(" + sigmaStr
-                    + String.valueOf(entireImage) + ", "
-                    + String.valueOf(image25D) + ")\n");
+            historyString = new String("GaussianBlur(" + sigmaStr + String.valueOf(entireImage) + ", " +
+                                       String.valueOf(image25D) + ")\n");
         }
     }
 
@@ -990,8 +998,7 @@ private void calcStoreInDest4D() {
 
         GaussData = new float[xkDim * ykDim];
 
-        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents,
-                sigmas, derivOrder);
+        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents, sigmas, derivOrder);
         Gauss.calc(false);
         Gauss.finalize();
         Gauss = null;
@@ -1039,8 +1046,7 @@ private void calcStoreInDest4D() {
 
         GaussData = new float[xkDim * ykDim * zkDim];
 
-        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents,
-                sigmas, derivOrder);
+        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents, sigmas, derivOrder);
         Gauss.calc(false);
         Gauss.finalize();
         Gauss = null;

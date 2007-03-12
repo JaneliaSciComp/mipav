@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -80,26 +81,18 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
 
 
     /**
-     * Constructor which sets the source and destination images, the minimum and maximum 
-     * progress value.
-     * @param destImg
-     *            image model where result image is to stored
-     * @param srcImg
-     *            source image model
-     * @param sigmas
-     *            Gaussian's standard deviations in the each dimension
-     * @param maskFlag
-     *            Flag that indicates that the gaussian convolution will be
-     *            performed over the whole image if equal to true
-     * @param img25D
-     *            Flag, if true, indicates that each slice of the 3D volume
-     *            should be processed independently. 2D images disregard this
-     *            flag.
-     * @param minProgressValue   the minimum progress value.
-     * @param maxProgressValue   the maximum progress value.
+     * Constructor which sets the source and destination images, the minimum and maximum progress value.
+     *
+     * @param  destImg   image model where result image is to stored
+     * @param  srcImg    source image model
+     * @param  sigmas    Gaussian's standard deviations in the each dimension
+     * @param  maskFlag  Flag that indicates that the gaussian convolution will be performed over the whole image if
+     *                   equal to true
+     * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
+     *                   images disregard this flag.
      */
-    public AlgorithmGaussianBlurSep(ModelImage destImg, ModelImage srcImg,
-            float[] sigmas, boolean maskFlag, boolean img25D) {
+    public AlgorithmGaussianBlurSep(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
+                                    boolean img25D) {
         super(destImg, srcImg);
 
         this.sigmas = sigmas;
@@ -236,48 +229,52 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
-            errorCleanUp("Algorithm Gaussian Blur: Out of memory", true);
+            errorCleanUp("Algorithm Separable Gaussian Blur: Out of memory", true);
 
             return;
         }
 
-        float stepProgressValuePerImage = (float)100 / nImages;
-        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");;
+        float stepProgressValuePerImage = (float) 100 / nImages;
+        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
+        ;
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
 
-            fireProgressStateChanged(0 + Math.round(s * stepProgressValuePerImage), srcImage.getImageName(), "Calculating the gaussian blur of slice " + (s + 1) + "...");
+            fireProgressStateChanged(0 + Math.round(s * stepProgressValuePerImage), srcImage.getImageName(),
+                                     "Calculating the gaussian blur of slice " + (s + 1) + "...");
 
             try {
                 srcImage.exportData(start, length, buffer); // locks and releases lock
             } catch (IOException error) {
                 buffer = null;
                 resultBuffer = null;
-                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", true);
+                errorCleanUp("Algorithm Separable Gaussian Blur: Image(s) locked", true);
 
                 return;
             }
 
 
             AlgorithmSeparableConvolver convolver = null;
-            if(stepProgressValuePerImage < 2){
-            convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
-                    new int[] {
-                        srcImage.getExtents()[0],
-                        srcImage.getExtents()[1]
-                    }, GxDataRound, GyDataRound, color);
-            }else{
+
+            if (stepProgressValuePerImage < 2) {
                 convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
-                        new int[] {
-                            srcImage.getExtents()[0],
-                            srcImage.getExtents()[1]
-                        }, GxDataRound, GyDataRound, color);
-                
-                convolver.setProgressValues(generateProgressValues(getMinProgressValue() + Math.round(stepProgressValuePerImage*s),
-                		getMinProgressValue() + Math.round(stepProgressValuePerImage*(s+1))));
+                                                            new int[] {
+                                                                srcImage.getExtents()[0], srcImage.getExtents()[1]
+                                                            }, GxDataRound, GyDataRound, color);
+            } else {
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
+                                                            new int[] {
+                                                                srcImage.getExtents()[0], srcImage.getExtents()[1]
+                                                            }, GxDataRound, GyDataRound, color);
+
+                convolver.setProgressValues(generateProgressValues(getMinProgressValue() +
+                                                                   Math.round(stepProgressValuePerImage * s),
+                                                                   getMinProgressValue() +
+                                                                   Math.round(stepProgressValuePerImage * (s + 1))));
                 linkProgressToAlgorithm(convolver);
             }
+
             convolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
@@ -297,7 +294,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             } catch (IOException error) {
                 buffer = null;
                 resultBuffer = null;
-                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", true);
+                errorCleanUp("Algorithm Separable Gaussian Blur: Image(s) locked", true);
 
                 return;
             }
@@ -311,7 +308,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         }
 
         srcImage.calcMinMax();
-        
+
         setCompleted(true);
     }
 
@@ -341,23 +338,25 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
-            errorCleanUp("Algorithm Gaussian Blur: Out of memory", true);
+            errorCleanUp("Algorithm Separable Gaussian Blur: Out of memory", true);
 
             return;
         }
 
-         fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");;
+        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
+        ;
 
-        float stepProgressValuePerVolume = (float)100 / nVolumes;
+        float stepProgressValuePerVolume = (float) 100 / nVolumes;
 
         for (t = 0; (t < nVolumes) && !threadStopped; t++) {
 
-            fireProgressStateChanged(0 + Math.round(t * stepProgressValuePerVolume), srcImage.getImageName(), "Calculating the gaussian blur of slice " + (t + 1) + "...");
+            fireProgressStateChanged(0 + Math.round(t * stepProgressValuePerVolume), srcImage.getImageName(),
+                                     "Calculating the gaussian blur of slice " + (t + 1) + "...");
 
             try {
                 srcImage.exportData(t * length, length, buffer); // locks and releases lock
             } catch (IOException error) {
-                displayError("Algorithm Gaussian Blur: Image(s) locked");
+                displayError("Algorithm Separable Gaussian Blur: Image(s) locked");
                 setCompleted(false);
                 fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
@@ -365,26 +364,27 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             }
 
             AlgorithmSeparableConvolver convolver = null;
+
             if (stepProgressValuePerVolume < 2) {
-                convolver = new AlgorithmSeparableConvolver(resultBuffer,
-                        buffer, new int[] { srcImage.getExtents()[0],
-                                srcImage.getExtents()[1],
-                                srcImage.getExtents()[2] }, GxDataRound,
-                        GyDataRound, GzDataRound, color);
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
+                                                            new int[] {
+                                                                srcImage.getExtents()[0], srcImage.getExtents()[1],
+                                                                srcImage.getExtents()[2]
+                                                            }, GxDataRound, GyDataRound, GzDataRound, color);
             } else {
-                convolver = new AlgorithmSeparableConvolver(resultBuffer,
-                        buffer, new int[] { srcImage.getExtents()[0],
-                                srcImage.getExtents()[1],
-                                srcImage.getExtents()[2] }, GxDataRound,
-                        GyDataRound, GzDataRound, color);
-                
-                convolver.setProgressValues(generateProgressValues(getMinProgressValue()
-                                + Math.round(stepProgressValuePerVolume * t),
-                        getMinProgressValue()
-                                + Math.round(stepProgressValuePerVolume
-                                        * (t + 1))));
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
+                                                            new int[] {
+                                                                srcImage.getExtents()[0], srcImage.getExtents()[1],
+                                                                srcImage.getExtents()[2]
+                                                            }, GxDataRound, GyDataRound, GzDataRound, color);
+
+                convolver.setProgressValues(generateProgressValues(getMinProgressValue() +
+                                                                   Math.round(stepProgressValuePerVolume * t),
+                                                                   getMinProgressValue() +
+                                                                   Math.round(stepProgressValuePerVolume * (t + 1))));
                 linkProgressToAlgorithm(convolver);
             }
+
             convolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
@@ -394,8 +394,6 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             if (color) {
                 convolver.setColorChannels(red, green, blue);
             }
-
-            //  convolver.setProgressBar(progressBar, Math.round(t * inc), Math.min(100, Math.round((t + 1) * inc)), true);
 
             convolver.run();
             convolver.finalize();
@@ -411,13 +409,13 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             try {
                 srcImage.importData(t * length, resultBuffer, false);
             } catch (IOException error) {
-                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", false);
+                errorCleanUp("Algorithm Separable Gaussian Blur: Image(s) locked", false);
 
                 return;
             }
         } // for (t = 0; t < nVolumes && !threadStopped; t++)
 
-        
+
         if (threadStopped) {
             finalize();
 
@@ -427,7 +425,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         buffer = null;
         resultBuffer = null;
         srcImage.calcMinMax();
-      
+
         setCompleted(true);
     }
 
@@ -464,34 +462,45 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             return;
         }
 
-        float stepProgressValuePerImage = (float)100 / nImages;
-        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");;
+        float stepProgressValuePerImage = (float) 100 / nImages;
+        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
 
-            fireProgressStateChanged(0 + Math.round(s * stepProgressValuePerImage), srcImage.getImageName(), "Calculating the gaussian blur of slice " + (s + 1) + "...");
+            fireProgressStateChanged(0 + Math.round(s * stepProgressValuePerImage), srcImage.getImageName(),
+                                     "Calculating the gaussian blur of slice " + (s + 1) + "...");
 
             try {
                 srcImage.exportData(start, length, buffer); // locks and releases lock
             } catch (IOException error) {
                 buffer = null;
                 resultBuffer = null;
-                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", true);
+                errorCleanUp("Algorithm Separable Gaussian Blur: Image(s) locked", true);
 
                 return;
             }
 
             AlgorithmSeparableConvolver convolver = null;
+
             if (stepProgressValuePerImage < 2) {
-                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer, new int[] { srcImage.getExtents()[0], srcImage.getExtents()[1] }, 
-                        GxDataRound, GyDataRound, color);
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
+                                                            new int[] {
+                                                                srcImage.getExtents()[0], srcImage.getExtents()[1]
+                                                            }, GxDataRound, GyDataRound, color);
             } else {
-                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer, new int[] { srcImage.getExtents()[0], srcImage.getExtents()[1] }, GxDataRound, GyDataRound, color);
-                
-                convolver.setProgressValues(generateProgressValues(getMinProgressValue() + Math.round(stepProgressValuePerImage * s), getMinProgressValue() + Math.round(stepProgressValuePerImage * (s + 1))));
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
+                                                            new int[] {
+                                                                srcImage.getExtents()[0], srcImage.getExtents()[1]
+                                                            }, GxDataRound, GyDataRound, color);
+
+                convolver.setProgressValues(generateProgressValues(getMinProgressValue() +
+                                                                   Math.round(stepProgressValuePerImage * s),
+                                                                   getMinProgressValue() +
+                                                                   Math.round(stepProgressValuePerImage * (s + 1))));
                 linkProgressToAlgorithm(convolver);
             }
+
             convolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
@@ -502,7 +511,8 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                 convolver.setColorChannels(red, green, blue);
             }
 
-            // convolver.setProgressBar(progressBar, Math.round(s * inc), Math.min(100, Math.round((s + 1) * inc)), true);
+            // convolver.setProgressBar(progressBar, Math.round(s * inc), Math.min(100, Math.round((s + 1) * inc)),
+            // true);
 
             convolver.run();
             convolver.finalize();
@@ -513,7 +523,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             } catch (IOException error) {
                 buffer = null;
                 resultBuffer = null;
-                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", true);
+                errorCleanUp("Algorithm Separable Gaussian Blur: Image(s) locked", true);
 
                 return;
             }
@@ -527,7 +537,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-      
+
         setCompleted(true);
     }
 
@@ -557,49 +567,49 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             resultBuffer = new float[length];
         } catch (OutOfMemoryError e) {
             buffer = null;
-            errorCleanUp("Algorithm Gaussian Blur: Out of memory", true);
+            errorCleanUp(" Separable Algorithm Gaussian Blur: Out of memory", true);
 
             return;
         }
 
-        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");;
+        fireProgressStateChanged(0, srcImage.getImageName(), "Blurring image ...");
 
-        float stepProgressValuePerVolume = (float)100 / nVolumes;
+        float stepProgressValuePerVolume = (float) 100 / nVolumes;
 
         for (t = 0; (t < nVolumes) && !threadStopped; t++) {
 
-            fireProgressStateChanged(0 + Math.round(t * stepProgressValuePerVolume), srcImage.getImageName(), "Calculating the gaussian blur of slice " + (t + 1) + "...");
+            fireProgressStateChanged(0 + Math.round(t * stepProgressValuePerVolume), srcImage.getImageName(),
+                                     "Calculating the gaussian blur of slice " + (t + 1) + "...");
 
             try {
                 srcImage.exportData(t * length, length, buffer); // locks and releases lock
             } catch (IOException error) {
-                displayError("Algorithm Gaussian Blur: Image(s) locked");
+                displayError("Algorithm Separable Gaussian Blur: Image(s) locked");
                 setCompleted(false);
                 fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-                destImage.releaseLock();
 
                 return;
             }
 
             AlgorithmSeparableConvolver convolver = null;
+
             if (stepProgressValuePerVolume < 2) {
-                convolver = new AlgorithmSeparableConvolver(resultBuffer,
-                        buffer, new int[] { srcImage.getExtents()[0],
-                                srcImage.getExtents()[1],
-                                srcImage.getExtents()[2] }, GxDataRound,
-                        GyDataRound, GzDataRound, color);
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
+                                                            new int[] {
+                                                                srcImage.getExtents()[0], srcImage.getExtents()[1],
+                                                                srcImage.getExtents()[2]
+                                                            }, GxDataRound, GyDataRound, GzDataRound, color);
             } else {
-                convolver = new AlgorithmSeparableConvolver(resultBuffer,
-                        buffer, new int[] { srcImage.getExtents()[0],
-                                srcImage.getExtents()[1],
-                                srcImage.getExtents()[2] }, GxDataRound,
-                        GyDataRound, GzDataRound, color);
-                
-                convolver.setProgressValues(generateProgressValues(getMinProgressValue()
-                                + Math.round(stepProgressValuePerVolume * t),
-                        getMinProgressValue()
-                                + Math.round(stepProgressValuePerVolume
-                                        * (t + 1))));
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
+                                                            new int[] {
+                                                                srcImage.getExtents()[0], srcImage.getExtents()[1],
+                                                                srcImage.getExtents()[2]
+                                                            }, GxDataRound, GyDataRound, GzDataRound, color);
+
+                convolver.setProgressValues(generateProgressValues(getMinProgressValue() +
+                                                                   Math.round(stepProgressValuePerVolume * t),
+                                                                   getMinProgressValue() +
+                                                                   Math.round(stepProgressValuePerVolume * (t + 1))));
                 linkProgressToAlgorithm(convolver);
             }
 
@@ -612,8 +622,6 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             if (color) {
                 convolver.setColorChannels(red, green, blue);
             }
-
-            // convolver.setProgressBar(progressBar, Math.round(t * inc), Math.min(100, Math.round((t + 1) * inc)), true);
 
             convolver.run();
             convolver.finalize();
@@ -629,7 +637,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             try {
                 destImage.importData(t * length, resultBuffer, false);
             } catch (IOException error) {
-                errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", false);
+                errorCleanUp("Algorithm Separable Gaussian Blur: Import 3D Image(s) locked", false);
 
                 return;
             }
@@ -643,7 +651,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-       
+
         setCompleted(true);
     }
 
