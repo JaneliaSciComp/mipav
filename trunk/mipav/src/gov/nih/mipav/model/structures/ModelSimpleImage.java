@@ -25,13 +25,13 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Center of mass for the image. */
+    /** X coordinate value of the center of mass for the image. */
     public float cMassX;
 
-    /** DOCUMENT ME! */
+    /** Y coordinate value of the center of mass for the image. */
     public float cMassY;
 
-    /** DOCUMENT ME! */
+    /** Z coordinate value of the center of mass for the image. */
     public float cMassZ;
 
     /** Data buffer that makes up the image. */
@@ -253,7 +253,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
      *
      * @param  dimExtents  Extents of the image; must be non null.
      * @param  voxRes      Resolutions of the image; must be non null.
-     * @param  isColor     DOCUMENT ME!
+     * @param  isColor     If true, indicates that this image is a color image (i.e. ARGB).
      */
     public ModelSimpleImage(int[] dimExtents, float[] voxRes, boolean isColor) {
 
@@ -424,7 +424,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
 
     /**
-     * Calculates the center of mass (gravity) of a 2D image.
+     * Calculates the center of mass (gravity) of a 2D image using the intensity of each pixel as a weighting value.
      *
      * @param  voxelResol  if true multiply the voxel resolutions
      */
@@ -462,7 +462,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /**
      * Calculates the center of mass (gravity) of a 3D image. In image space where the upper left hand corner of the
      * image is 0,0. The x axis goes left to right, y axis goes top to bottom and z axis goes into the screen. (i.e. the
-     * right hand rule). One could simply multiply by voxel resolutions
+     * right hand rule). The intensity of each voxel is used as a weighting value.
      *
      * @param  voxelResol  if true multiply the voxel resolutions
      */
@@ -858,7 +858,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /**
      * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
      *
-     * @param   isColor  DOCUMENT ME!
+     * @param   isColor  If true, indicates that this image is a color image (i.e. ARGB).
      *
      * @return  Subsampled image.
      */
@@ -883,7 +883,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /**
      * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
      *
-     * @param   resultImage  DOCUMENT ME!
+     * @param   resultImage  The subsampled data will be stored in this object.
      *
      * @return  Subsampled image.
      */
@@ -894,8 +894,8 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /**
      * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
      *
-     * @param   resultImage  DOCUMENT ME!
-     * @param   isColor      DOCUMENT ME!
+     * @param   resultImage  The subsampled data will be stored in this object.
+     * @param   isColor      If true, indicates that this image is a color image (i.e. ARGB).
      *
      * @return  Subsampled image.
      */
@@ -1010,7 +1010,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /**
      * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
      *
-     * @param   isColor  DOCUMENT ME!
+     * @param   isColor  If true, indicates that this image is a color image (i.e. ARGB).
      *
      * @return  Subsampled image.
      */
@@ -1330,7 +1330,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /**
      * Takes a simple image and subsamples XY by 2, interpolating so that the new XY values are averages.
      *
-     * @param   isColor  DOCUMENT ME!
+     * @param   isColor  If true, indicates that this image is a color image (i.e. ARGB).
      *
      * @return  Subsampled image.
      */
@@ -1360,7 +1360,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /**
      * Takes a simple image and subsamples XY by 2, interpolating so that the new XY values are averages.
      *
-     * @param   resultImage  DOCUMENT ME!
+     * @param   resultImage  The subsampled data will be stored in this object.
      *
      * @return  Subsampled image.
      */
@@ -1371,8 +1371,8 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /**
      * Takes a simple image and subsamples XY by 2, interpolating so that the new XY values are averages.
      *
-     * @param   resultImage  DOCUMENT ME!
-     * @param   isColor      DOCUMENT ME!
+     * @param   resultImage  The subsampled data will be stored in this object.
+     * @param   isColor      If true, indicates that this image is a color image (i.e. ARGB).
      *
      * @return  Subsampled image.
      */
@@ -1541,7 +1541,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
      * Calls disposeLocal of this class to ensure this class nulls the references to global class variables so that
      * memory will be recovered.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable  Throws an error is there is a problem with the finalization of this object.
      */
     protected void finalize() throws Throwable {
         this.disposeLocal(false);
