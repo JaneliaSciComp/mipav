@@ -14,16 +14,17 @@ import javax.vecmath.*;
          + C[6]*Z^2 + C[7]*X*Y + C[8]*X*Z + C[9]*Y*Z
  * </pre>
  *
- * The coefficients are estimated using a least-squares algorithm. There is one degree of freedom in the coefficients.
- * It is removed by requiring the vector C = (C[0],...,C[9]) to be unit length. The least-square problem is to minimize
- * E(C) = C^t M C with M = (sum_i V_i)(sum_i V_i)^t and
+ * <p>The coefficients are estimated using a least-squares algorithm. There is one degree of freedom in the
+ * coefficients. It is removed by requiring the vector C = (C[0],...,C[9]) to be unit length. The least-square problem
+ * is to minimize E(C) = C^t M C with M = (sum_i V_i)(sum_i V_i)^t and</p>
  *
  * <pre>
      V = (1, X, Y, Z, X^2, Y^2, Z^2, X*Y, X*Z, Y*Z)
  * </pre>
  *
- * Minimum value is the smallest eigenvalue of M and C is a corresponding unit length eigenvector.<br>
+ * <p>Minimum value is the smallest eigenvalue of M and C is a corresponding unit length eigenvector.<br>
  * <br>
+ * </p>
  *
  * <p>The quadratic equation can be factored into P^T A P + B^T P + K = 0 where P = (X,Y,Z), K = C[0], B =
  * (C[1],C[2],C[3]), and A is a 3x3 symmetric matrix with A00 = C[4], A11 = C[5], A22 = C[6], A01 = C[7]/2, A02 =
@@ -34,9 +35,10 @@ import javax.vecmath.*;
      d0 v0^2 + d1 v1^2 + d2 v^2 + e0 v0 + e1 v1 + e2 v2 + f = 0
  * </pre>
  *
- * The characterization of the surface depends on the signs of the d_i. For the MRI brain segmentation, the signs d_i
+ * <p>The characterization of the surface depends on the signs of the d_i. For the MRI brain segmentation, the signs d_i
  * are all positive, thereby producing an ellipsoid.<br>
  * <br>
+ * </p>
  *
  * <p>The quadratic equation can finally be factored into</p>
  *
@@ -44,7 +46,8 @@ import javax.vecmath.*;
      (P-G)^T R^T D R (P-G) = L
  * </pre>
  *
- * where G is the center of the surface, R is the orientation matrix, D is a diagonal matrix, and L is a constant.
+ * <p>where G is the center of the surface, R is the orientation matrix, D is a diagonal matrix, and L is a constant.
+ * </p>
  */
 
 public class AlgorithmQuadraticFit {

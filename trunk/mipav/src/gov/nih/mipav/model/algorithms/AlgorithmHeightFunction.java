@@ -2,14 +2,14 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.ProgressChangeListener;
 
 import java.io.*;
 
 import javax.vecmath.*;
-import gov.nih
-.mipav.view.*;
+
+
 /**
  * The class generates a triangle or quad mesh of a 2D dataset (image) to be displayed in the surface viewer. If the
  * image is 3D, takes the 2D current slice. The triangle mesh is like a relief map of the image; the higher intensities
@@ -132,7 +132,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         }
 
 
-
         try {
             srcImage.exportSliceXY(slice, buffer);
         } catch (IOException error) {
@@ -208,7 +207,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
                 surfaceFileName = srcImage.getUserInterface().getDefaultDirectory() + surfaceFileName;
             }
 
-
             qMesh.save(surfaceFileName, getProgressChangeListener(), 90, 10);
         } catch (IOException e) {
             System.gc();
@@ -225,7 +223,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
 
             return;
         }
-
 
         setCompleted(true);
     }
@@ -266,7 +263,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
 
             return;
         }
-
 
 
         try {
@@ -336,7 +332,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         box[2] = zBox;
 
         /* Read the direction vector from the MipavCoordinateSystems class: */
-        int[] direction = MipavCoordinateSystems.getModelDirections( srcImage );
+        int[] direction = MipavCoordinateSystems.getModelDirections(srcImage);
         float[] startLocation = srcImage.getFileInfo(0).getOrigin();
 
         for (y = 0; (y < yDim) && !threadStopped; y = y + sampleSize) {
@@ -389,7 +385,6 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
 
             return;
         }
-
 
         setCompleted(true);
     }
