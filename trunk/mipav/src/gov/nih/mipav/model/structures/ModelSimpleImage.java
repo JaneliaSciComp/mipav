@@ -1541,7 +1541,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
      * Calls disposeLocal of this class to ensure this class nulls the references to global class variables so that
      * memory will be recovered.
      *
-     * @throws  Throwable  Throws an error is there is a problem with the finalization of this object.
+     * @throws  Throwable  Throws an error if there is a problem with the finalization of this object.
      */
     protected void finalize() throws Throwable {
         this.disposeLocal(false);
