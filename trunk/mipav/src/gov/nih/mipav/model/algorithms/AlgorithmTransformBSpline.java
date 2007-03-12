@@ -70,7 +70,6 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
     /** DOCUMENT ME! */
     private float[] outResolutions;
 
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -192,7 +191,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
                 // Setup to use the progress bar.
                 fireProgressStateChanged(m_kImageSource.getImageName(), "Transforming ...");
-                
+
 
                 // Create result image.
                 try {
@@ -275,7 +274,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
                 // Setup to use the progress bar.
                 fireProgressStateChanged(m_kImageSource.getImageName(), "Transforming ...");
-                
+
 
                 // Create result image.
                 try {
@@ -300,6 +299,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
                     setCompleted(false);
                     finalize();
+
                     return;
                 }
 
@@ -360,9 +360,12 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                                                                 m_kImageResult.isColorImage());
 
                     // create B-spline lattice
-                    m_kBSplineBasisX = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree, destExtents[0]);
-                    m_kBSplineBasisY = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree, destExtents[1]);
-                    m_kBSplineBasisZ = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree, destExtents[2]);
+                    m_kBSplineBasisX = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree,
+                                                                 destExtents[0]);
+                    m_kBSplineBasisY = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree,
+                                                                 destExtents[1]);
+                    m_kBSplineBasisZ = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree,
+                                                                 destExtents[2]);
                     m_kBSpline3D = new BSplineLattice3Df(m_kBSplineBasisX, m_kBSplineBasisY, m_kBSplineBasisZ);
 
                     Point3f kPoint = new Point3f();
@@ -414,7 +417,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
         }
 
         disposeLocal();
-        
+
     }
 
     /**
