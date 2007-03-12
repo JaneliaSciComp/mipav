@@ -144,7 +144,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** each image slice has a information that describes aspects of each slice of an image. */
+    /** Each image slice has a information that describes aspects of each slice of an image. */
     protected FileInfoBase[] fileInfo;
 
     /**
@@ -154,18 +154,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
     protected double lastMin, lastMax;
 
     /**
-     * information about the project which the image is a part of (or null if the image was not opened as part of a
+     * Information about the project which the image is a part of (or null if the image was not opened as part of a
      * project).
      */
     protected FileInfoProject projectInfo;
 
-    /** type of image buffer (i.e. BOOLEAN, BYTE, UBYTE, SHORT ...) */
+    /** Type of image buffer (i.e. BOOLEAN, BYTE, UBYTE, SHORT ...) */
     private int bufferType;
 
-    /** storage location of image data. */
+    /** Storage location of image data. */
     private BufferBase data;
 
-    /** total buffer length. */
+    /** Total buffer length. */
     private int dataSize;
 
     /**
@@ -210,13 +210,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** DOCUMENT ME! */
     private boolean haveWindowed;
 
-    /** boolean telling if 3D images are processed 1 slice at a time. */
+    /** Boolean telling if 3D images are processed 1 slice at a time. */
     private boolean image25D;
 
-    /** locking status of the image. Default = UNLOCKED */
+    /** Locking status of the image. Default = UNLOCKED */
     private int lockStatus = UNLOCKED;
 
-    /** boolean telling if log magnitude display is used in complex image. */
+    /** Boolean telling if log magnitude display is used in complex image. */
     private boolean logMagDisp;
 
     /**
@@ -383,7 +383,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * calculates the min and max values for the image array.
+     * Calculates the min and max values for the image array.
      */
     public void calcMinMax() {
 
@@ -460,7 +460,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * calculates the min and max magnitude values for the image array.
+     * Calculates the min and max magnitude values for the image array.
      *
      * @param  logMagDisplay  if true calculate min and max for log10 of 1 + magnitude
      */
@@ -513,7 +513,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * calculates the min and max nonzero values for the image array.
+     * Calculates the min and max nonzero values for the image array.
      */
     public void calcMinMaxNonZero() {
         boolean foundNonZeroMin;
@@ -1011,14 +1011,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data to valuesr and valuesi arrays.
+     * Export data to the real values and the images values arrays.
      *
      * @param   start    indicates starting position in data array
      * @param   length   length of complex data (in 2 float units) to be copied from data array
      * @param   valuesR  array where real data is to be deposited
      * @param   valuesI  array where imaginary data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportComplexData(int start, int length, float[] valuesR, float[] valuesI)
             throws IOException {
@@ -1049,13 +1049,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export XY slice magnitude data into values array.
+     * Export XY slice magnitude data into values array.
      *
      * @param   slice          indicates slice of data to be exported
      * @param   values         array where data is to be deposited
      * @param   logMagDisplay  if true display log10 of 1 + data
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final void exportComplexSliceXY(int slice, float[] values, boolean logMagDisplay) throws IOException {
 
@@ -1075,13 +1075,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data into values array.
+     * Export data into values array.
      *
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final void exportData(int start, int length, Number[] values) throws IOException {
         int i, j;
@@ -1107,13 +1107,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data into values array.
+     * Export data into values array.
      *
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportData(int start, int length, BitSet values) throws IOException {
         int i, j;
@@ -1144,13 +1144,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data into values array.
+     * Export data into values array.
      *
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportData(int start, int length, byte[] values) throws IOException {
         int i, j;
@@ -1177,13 +1177,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data into values array.
+     * Export data into values array.
      *
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportData(int start, int length, short[] values) throws IOException {
         int i, j;
@@ -1203,10 +1203,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 releaseLock();
             }
 
-            // for (i = start, j = 0; j < length; i++, j++) {
-            // values[j] = data.getShort(i);
-            // }
-
             return;
         }
 
@@ -1214,13 +1210,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * exportData - export data into values array.
+     * Export data into values array.
      *
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportData(int start, int length, int[] values) throws IOException {
         int i, j;
@@ -1247,13 +1243,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data into values array.
+     * Export data into values array.
      *
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportData(int start, int length, long[] values) throws IOException {
         int i, j;
@@ -1279,13 +1275,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data to values array.
+     * Export data to values array.
      *
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportData(int start, int length, float[] values) throws IOException {
         int i, j;
@@ -1313,13 +1309,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data in values array.
+     * Export data in values array.
      *
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportData(int start, int length, double[] values) throws IOException {
         int i, j;
@@ -1353,7 +1349,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length1  length of second dimension of data to be copied from data array
      * @param   values   array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportData(int start, int length0, int length1, float[] values) throws IOException {
         int i, j;
@@ -1392,7 +1388,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a bounds error.
      */
     public final void exportDataNoLock(int start, int length, Number[] values) throws IOException {
         int i, j;
@@ -1416,7 +1412,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a bounds error.
      */
     public final synchronized void exportDataNoLock(int start, int length, BitSet values) throws IOException {
         int i, j;
@@ -1439,13 +1435,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data into values array WITHOUT locking.
+     * Export data into values array WITHOUT locking.
      *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
+     * @param   start   Indicates starting position in data array
+     * @param   length  Length of data to be copied from data array
+     * @param   values  Array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a bounds error.
      */
     public final synchronized void exportDataNoLock(int start, int length, byte[] values) throws IOException {
         int i, j;
@@ -1463,13 +1459,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data into values array WITHOUT locking.
+     * Export data into values array WITHOUT locking.
      *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
+     * @param   start   Indicates starting position in data array
+     * @param   length  Length of data to be copied from data array
+     * @param   values  Array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a bounds error.
      */
     public final synchronized void exportDataNoLock(int start, int length, short[] values) throws IOException {
         int i, j;
@@ -1487,13 +1483,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data into values array WITHOUT locking.
+     * Export data into values array WITHOUT locking.
      *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
+     * @param   start   Indicates starting position in data array
+     * @param   length  Length of data to be copied from data array
+     * @param   values  Array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a bounds error.
      */
     public final synchronized void exportDataNoLock(int start, int length, int[] values) throws IOException {
         int i, j;
@@ -1517,7 +1513,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a bounds error.
      */
     public final synchronized void exportDataNoLock(int start, int length, long[] values) throws IOException {
         int i, j;
@@ -1541,7 +1537,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a bounds error.
      */
     public final synchronized void exportDataNoLock(int start, int length, float[] values) throws IOException {
         int i, j;
@@ -1565,7 +1561,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a bounds error.
      */
     public final synchronized void exportDataNoLock(int start, int length, double[] values) throws IOException {
         int i, j;
@@ -1583,14 +1579,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data to valuesr and valuesi arrays.
+     * Export data to the real values and the imaginary values arrays.
      *
      * @param   start    indicates starting position in data array
      * @param   length   length of complex data (in 2 float units) to be copied from data array
      * @param   valuesR  array where real data is to be deposited
      * @param   valuesI  array where imaginary data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportDComplexData(int start, int length, double[] valuesR, double[] valuesI)
             throws IOException {
@@ -1636,7 +1632,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values        DOCUMENT ME!
      * @param   bInterpolate  DOCUMENT ME!
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportDiagonal(int tSlice, int slice, int[] extents, Point3Df[] verts,
                                                   float[] values, boolean bInterpolate) throws IOException {
@@ -1786,7 +1782,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of magnitude data to be copied from data array
      * @param   values  array where magnitude data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportDMagData(int start, int length, double[] values) throws IOException {
         int i, j;
@@ -1821,7 +1817,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of magnitude data to be copied from data array
      * @param   values  array where magnitude data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportMagData(int start, int length, float[] values) throws IOException {
         int i, j;
@@ -1859,7 +1855,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportRGBData(int offset, int start, int length, byte[] values) throws IOException {
         int i, j;
@@ -1892,7 +1888,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportRGBData(int offset, int start, int length, short[] values) throws IOException {
         int i, j;
@@ -1926,7 +1922,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportRGBData(int offset, int start, int length, float[] values) throws IOException {
         int i, j;
@@ -1959,7 +1955,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportRGBDataNoLock(int offset, int start, int length, float[] values)
             throws IOException {
@@ -1984,7 +1980,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   slice   indicates slice of data to be exported
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final void exportSliceXY(int slice, byte[] values) throws IOException {
         int length = dimExtents[0] * dimExtents[1];
@@ -1993,12 +1989,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export XY slice into values array.
+     * Export XY slice into values array.
      *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
+     * @param   slice   Indicates slice of data to be exported.
+     * @param   values  Array where data is to be deposited.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final void exportSliceXY(int slice, short[] values) throws IOException {
         int length = dimExtents[0] * dimExtents[1];
@@ -2007,12 +2003,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export XY slice into values array.
+     * Export XY slice into values array.
      *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
+     * @param   slice   Indicates slice of data to be exported.
+     * @param   values  Array where data is to be deposited.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final void exportSliceXY(int slice, int[] values) throws IOException {
         int length = dimExtents[0] * dimExtents[1];
@@ -2026,7 +2022,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   slice   indicates slice of data to be exported
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final void exportSliceXY(int slice, long[] values) throws IOException {
         int length = dimExtents[0] * dimExtents[1];
@@ -2040,7 +2036,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   slice   indicates slice of data to be exported
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final void exportSliceXY(int slice, float[] values) throws IOException {
         int length = dimExtents[0] * dimExtents[1];
@@ -2054,7 +2050,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   slice   indicates slice of data to be exported
      * @param   values  array where data is to be deposited
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final void exportSliceXY(int slice, double[] values) throws IOException {
         int length = dimExtents[0] * dimExtents[1];
@@ -4244,24 +4240,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
     }
 
-    /*****************************************************************************/
-
-    /**
-     * Unsigned Byte.
-     *
-     * @param   position  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
 
     /**
      * version of get that does NOT perform bounds checking.
      *
      * @param   position  position in one dimensional array
      *
-     * @return  DOCUMENT ME!
+     * @return  returns true if position in data array range
      */
     public final short getUByte(int position) {
         return (data.getUByte(position));
@@ -4323,12 +4308,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
 
     /**
-     * version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
+     * Version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
      *
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  returns true if position in data array range
      */
     public final short getUByteBiLinear(float x, float y) {
 
@@ -4353,13 +4338,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of get that performs tri-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
+     * Version of get that performs tri-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
      *
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  returns true if position in data array range
      */
     public final short getUByteTriLinear(float x, float y, float z) {
 
@@ -4393,17 +4378,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return (short) (((1 - dz) * b1) + (dz * b2));
     }
 
-    /*****************************************************************************/
-
-    /**
-     * Unsigned Integer.
-     *
-     * @param   position  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
 
     /**
      * version of get that does NOT perform bounds checking.
@@ -4483,7 +4457,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  returns true if position in data array range
      */
     public final long getUIntBiLinear(float x, float y) {
 
@@ -4514,7 +4488,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  returns true if position in data array range
      */
     public final long getUIntTriLinear(float x, float y, float z) {
 
@@ -4621,17 +4595,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return unitsReturn;
     }
 
-    /*****************************************************************************/
-
-    /**
-     * Unsigned Short.
-     *
-     * @param   position  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
 
     /**
      * version of get that does NOT perform bounds checking.
@@ -4711,7 +4674,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  returns true if position in data array range
      */
     public final int getUShortBiLinear(float x, float y) {
 
@@ -4742,7 +4705,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  returns true if position in data array range
      */
     public final int getUShortTriLinear(float x, float y, float z) {
 
@@ -4814,7 +4777,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   mmFlag         whether or not to calculate min and max magnitude values for the image
      * @param   logMagDisplay  whether or not min and max are calculated for log10 of 1 + magnitude array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importComplexData(int start, float[] valuesR, float[] valuesI, boolean mmFlag,
                                                      boolean logMagDisplay) throws IOException {
@@ -4857,7 +4820,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importData(int start, Number[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -4897,7 +4860,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importData(int start, BitSet values, boolean mmFlag) throws IOException {
 
@@ -4936,7 +4899,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importData(int start, boolean[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -4974,7 +4937,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importData(int start, byte[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -5013,7 +4976,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importData(int start, short[] values, boolean mmFlag) throws IOException {
 
@@ -5052,7 +5015,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importData(int start, int[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -5091,7 +5054,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importData(int start, long[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -5129,7 +5092,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importData(int start, float[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -5167,7 +5130,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importData(int start, double[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -5207,7 +5170,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   mmFlag         whether or not to calculate min and max magnitude values for the image
      * @param   logMagDisplay  whether or not min and max are calculated for log10 of 1 + magnitude array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importDComplexData(int start, double[] valuesR, double[] valuesI, boolean mmFlag,
                                                       boolean logMagDisplay) throws IOException {
@@ -5251,7 +5214,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values           array where data is to be acquired
      * @param   mmFlag           whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importRGBData(int color, int alphaIndexStart, float[] values, boolean mmFlag)
             throws IOException {
@@ -5294,7 +5257,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importUData(int start, short[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -5333,7 +5296,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importUData(int start, int[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -5371,7 +5334,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   values  array where data is to be acquired
      * @param   mmFlag  whether or not to calculate min and max values for the image array
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized void importUData(int start, long[] values, boolean mmFlag) throws IOException {
         int length = values.length;
@@ -6069,7 +6032,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  set data array to this value
      */
     public final void set(int x, int y, int z, int b, boolean value) {
         data.setBoolean((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
@@ -6083,7 +6046,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  set data array to this value
      */
     public final void set(int x, int y, int z, int b, byte value) {
         data.setByte((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
@@ -6097,7 +6060,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  set data array to this value
      */
     public final void set(int x, int y, int z, int b, short value) {
         data.setShort((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
@@ -6111,7 +6074,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  set data array to this value
      */
     public final void set(int x, int y, int z, int b, int value) {
         data.setInt((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
@@ -6125,7 +6088,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  set data array to this value
      */
     public final void set(int x, int y, int z, int b, long value) {
         data.setLong((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
@@ -6139,7 +6102,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  set data array to this value
      */
     public final void set(int x, int y, int z, int b, float value) {
         data.setFloat((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
@@ -6153,7 +6116,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  set data array to this value
      */
     public final void set(int x, int y, int z, int b, double value) {
         data.setDouble((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
@@ -6161,7 +6124,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the entire buffer to value passed to this method.
      *
      * @param  value  float data that will be stored in the data array
      */
@@ -6174,7 +6137,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the entire buffer to value passed to this method.
      *
      * @param  value  byte data that will be stored in the data array
      */
@@ -6188,7 +6151,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the entire buffer to value passed to this method.
      *
      * @param  value  short data that will be stored in the data array
      */
@@ -6202,7 +6165,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the entire buffer to value passed to this method.
      *
      * @param  value  int data that will be stored in the data array
      */
@@ -6216,7 +6179,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the entire buffer to value passed to this method.
      *
      * @param  value  double data that will be stored in the data array
      */
@@ -6230,7 +6193,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the entire buffer to value passed to this method.
      *
      * @param  value  UByte data that will be stored in the data array
      */
@@ -6244,7 +6207,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the entire buffer to value passed to this method.
      *
      * @param  value  UShort data that will be stored in the data array
      */
@@ -6258,11 +6221,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * color set that does perform bounds checking.
+     * Sets the entire buffer to value passed to this method.
      *
      * @param   position  position in one dimensional array
-     * @param   color     DOCUMENT ME!
-     * @param   value     DOCUMENT ME!
+     * @param   color     The color channel to be modified
+     * @param   value     set data array to this value
      *
      * @return  returns value if position in data array range
      */
@@ -6277,20 +6240,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return false;
     }
 
-    /**
-     * Set float methods.
-     *
-     * @param  position  DOCUMENT ME!
-     * @param  c         DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
 
     /**
      * color version of setC that does NOT perform bounds checking.
      *
      * @param  position  position in one dimensional array
-     * @param  c         DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  c         The color channel to be modified
+     * @param  value     set data array to this value
      */
     public final void setC(int position, int c, float value) {
         data.setFloat((4 * position) + c, value);
@@ -6301,8 +6257,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  c      DOCUMENT ME!
-     * @param  value  DOCUMENT ME!
+     * @param  c      The color channel to be modified
+     * @param  value  set data array to this value
      */
     public final void setC(int x, int y, int c, float value) {
         data.setFloat((4 * ((y * dimExtents[0]) + x)) + c, value);
@@ -6343,8 +6299,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  c      DOCUMENT ME!
-     * @param  value  DOCUMENT ME!
+     * @param  c      The color channel to be modified
+     * @param  value  set data array to this value
      */
     public final void setC(int x, int y, int z, int c, float value) {
         data.setFloat((4 * ((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c, value);
@@ -6360,7 +6316,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * sets the dimExtents for this structure.
+     * Sets the dimExtents for this structure.
      *
      * @param  dims  DOCUMENT ME!
      */
@@ -6385,10 +6341,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * Accessor that sets the fileInfo class for the image.
      *
      * @param  fInfo  fileInfo structure.
-     * @param  i      DOCUMENT ME!
+     * @param  idx    index that typically indicates image slice.
      */
-    public void setFileInfo(FileInfoBase fInfo, int i) {
-        fileInfo[i] = fInfo;
+    public void setFileInfo(FileInfoBase fInfo, int idx) {
+        fileInfo[idx] = fInfo;
     }
 
     /**
@@ -6448,7 +6404,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that sets the boolean telling if 3D images are processed one slice at a time.
      *
-     * @param  _image25D  DOCUMENT ME!
+     * @param  _image25D  Set true if images are processed one slice at a time.
      */
     public void setImage25D(boolean _image25D) {
         image25D = _image25D;
@@ -6458,7 +6414,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Sets the lockFlag to protect data. When the flag is set no other processes can read or write the data
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error if image is already locked.
      */
     public void setLock() throws IOException {
 
@@ -6472,9 +6428,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Sets the lockFlag to protect data. When the flag is set no other processes can read or write the data
      *
-     * @param   lockType  DOCUMENT ME!
+     * @param   lockType  The type of read/write lock that is to be set.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error if image is already locked.
      */
     public final synchronized void setLock(int lockType) throws IOException {
 
@@ -6630,10 +6586,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * Sets the resolutions to the specific.
+     * Sets the resolutions to the specific value for a specific slice indicated by the index parameter.
      *
-     * @param  index        DOCUMENT ME!
-     * @param  resolutions  DOCUMENT ME!
+     * @param  index        index that typically indicates image slice.
+     * @param  resolutions  the image's voxel resolutions
      */
     public void setResolutions(int index, float[] resolutions) {
 
@@ -6644,18 +6600,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
         fileInfo[index].setResolutions(resolutions);
     }
 
-    /**
-     * Set short methods.
-     *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value.
      *
-     * @param  position  position in one dimensional array
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in one dimensional array.
+     * @param  value     the new voxel value.
      */
     public final void setShort(int position, short value) {
         data.setShort(position, value);
@@ -6666,7 +6616,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setShort(int x, int y, short value) {
         data.setShort((y * dimExtents[0]) + x, value);
@@ -6708,25 +6658,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
         bufferType = type;
     }
 
-    /**
-     * Set unsigned byte methods.
-     *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value.
      *
      * @param  position  position in one dimensional array
-     * @param  value     DOCUMENT ME!
+     * @param  value     the new voxel value.
      */
     public final void setUByte(int position, short value) {
         data.setUByte(position, value);
     }
 
     /**
-     * nD set data fuction where bounds checking is NOT performed.
+     * Sets the image voxel at the specified position to the specified value. nD set data fuction where bounds checking
+     * is NOT performed.
      *
      * @param  position  array of coordinate values
      * @param  value     data that will be stored in the data array
@@ -6745,36 +6690,39 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * 2D fast version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. 2D fast version of set that does NOT
+     * perform bounds checking.
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setUByte(int x, int y, short value) {
         data.setUByte((y * dimExtents[0]) + x, value);
     }
 
     /**
-     * 3D fast version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. 3D fast version of set that does NOT
+     * perform bounds checking.
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setUByte(int x, int y, int z, short value) {
         data.setUByte((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
-     * 4D fast version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. 4D fast version of set that does NOT
+     * perform bounds checking.
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setUByte(int x, int y, int z, int b, short value) {
         data.setUByte((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
@@ -6782,24 +6730,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * Set unsigned short methods.
-     *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
-
-    /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. version of set that does NOT perform
+     * bounds checking.
      *
      * @param  position  position in one dimensional array
-     * @param  value     DOCUMENT ME!
+     * @param  value     the new voxel value.
      */
     public final void setUInt(int position, long value) {
         data.setUInt(position, value);
     }
 
     /**
-     * nD set data fuction where bounds checking is NOT performed.
+     * Sets the image voxel at the specified position to the specified value. nD set data fuction where bounds checking
+     * is NOT performed.
      *
      * @param  position  array of coordinate values
      * @param  value     data that will be stored in the data array
@@ -6818,36 +6761,39 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * 2D fast version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. 2D fast version of set that does NOT
+     * perform bounds checking.
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setUInt(int x, int y, long value) {
         data.setUInt((y * dimExtents[0]) + x, value);
     }
 
     /**
-     * 3D fast version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. 3D fast version of set that does NOT
+     * perform bounds checking.
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setUInt(int x, int y, int z, long value) {
         data.setUInt((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
-     * 4D fast version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. 4D fast version of set that does NOT
+     * perform bounds checking.
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setUInt(int x, int y, int z, int b, long value) {
         data.setUInt((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
@@ -6871,7 +6817,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value.
      *
      * @param  position  position in one dimensional array
      * @param  value     DOCUMENT ME!
@@ -6881,7 +6827,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * nD set data fuction where bounds checking is NOT performed.
+     * Sets the image voxel at the specified position to the specified value. nD set data fuction where bounds checking
+     * is NOT performed.
      *
      * @param  position  array of coordinate values
      * @param  value     data that will be stored in the data array
@@ -6900,36 +6847,39 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * 2D fast version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. 2D fast version of set that does NOT
+     * perform bounds checking.
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setUShort(int x, int y, int value) {
         data.setUShort((y * dimExtents[0]) + x, value);
     }
 
     /**
-     * 3D fast version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. 3D fast version of set that does NOT
+     * perform bounds checking.
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setUShort(int x, int y, int z, int value) {
         data.setUShort((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
     }
 
     /**
-     * 4D fast version of set that does NOT perform bounds checking.
+     * Sets the image voxel at the specified position to the specified value. 4D fast version of set that does NOT
+     * perform bounds checking.
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
      * @param  b      b coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  the new voxel value.
      */
     public final void setUShort(int x, int y, int z, int b, int value) {
         data.setUShort((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
