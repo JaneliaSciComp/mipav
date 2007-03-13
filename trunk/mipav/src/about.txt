@@ -31,23 +31,19 @@ Project Leader:
 ******************************************************************
 ******************************************************************
 
-Software contributors:
+Current MIPAV contributors:
 
-     William Gandler, ISL, NIH
-     David Parsons, ISL, NIH  
+     Alexandra Bokinsky, Ph.D., Geometric Software
      Ruida Cheng, ISL, NIH
-     Evan McCreedy, ISL, NIH
-     Zohara Cohen, Ph.D., PDB, CC, NIH
-     
+     William Gandler, ISL, NIH
      Paul Hemler, Ph.D., Hampden-Sydney College
-     
-     David Eberly, Ph.D., Geometric Software
-     Dennis Wenzel, Geometric Software
-     Alexandra Bokinsky, Geometric Software
+     Mayur Joshi, MSD
      Ben Link, SAIC
-     Lee Orsino, SSAI
-     
-     Denise Timpko, Tech Writer, SRA International, Inc.
+     Evan McCreedy, ISL, NIH
+     Nish Pandya, SSAI
+     Justin Senseney, ISL, NIH
+     Olga Vovk, Tech Writer, MSD
+     Hailong Wang, Ph.D.
 
 ******************************************************************
 ******************************************************************
@@ -90,14 +86,4 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 OR OTHER DEALINGS IN THE SOFTWARE. 
-  
-******************************************************************
-******************************************************************
 
-  The license to distribute a portion of Sun's Java WebServices 
-  requires the following:
-This product includes code licensed from RSA Data Security
-
-  Additional required licenses, distributed with the Java Run Time, 
-  can be viewed in the jre/ directory.  Look for LICENSE, 
-  THIRDPARTYLICENSEREADME.txt and JMFReadme.html files.
