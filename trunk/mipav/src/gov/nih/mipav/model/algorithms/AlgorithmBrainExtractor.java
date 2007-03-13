@@ -104,13 +104,13 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** The length of the vector _normal_ to the surface to sample along. */
     protected int m_iMaxDepth = 7;
 
-    /** DOCUMENT ME! */
+    /** Histogram maximum intensity parameter. */
     protected int m_iMaxThreshold;
 
-    /** DOCUMENT ME! */
+    /** Histogram median intensity parameter. */
     protected int m_iMedianIntensity;
 
-    /** Histogram parameters. */
+    /** Histogram minimum intensity parameter. */
     protected int m_iMinThreshold;
 
     /** The number of triangle in the ellipsoid. */
