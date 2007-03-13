@@ -1,12 +1,13 @@
-import gov.nih.mipav.model.file.FileCheshire;
-import gov.nih.mipav.model.file.FileCheshireVOI;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.plugins.*; // needed to load PlugInAlgorithm / PlugInView / PlugInFile interface
 import gov.nih.mipav.view.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Vector;
+import javax.swing.JFileChooser;
 
 
 /**
@@ -46,6 +47,9 @@ public class PlugInCheshireVOI implements PlugInGeneric {
     /** Number of cheshire files loaded. */
     private int filesLoaded;
     
+    /** JFrameImage for the collected VOIs */
+    private ViewJFrameImage imageFrame;
+    
     
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -80,6 +84,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
     public void runPlugin() {
         if(cheshireDialog.isSuccessfulExit()) {
             FileCheshireVOI[] cheshireArray = new FileCheshireVOI[cheshireFiles.size()];
+            String directory = ((File)cheshireFiles.get(0)).getAbsolutePath();
             String[] cheshireNames = new String[cheshireFiles.size()];
             ViewJProgressBar progressBar = new ViewJProgressBar("Cheshire Overlay Loading", "loading cheshire files...", 0, 100, true, null, null);
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
@@ -90,12 +95,13 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                 progressBar.setVisible(false);
                 return;
             }
+            ModelImage tempImage = null;// = new ModelImage(ModelImage.BYTE, dimExtentsTemp, "Cheshire Pretend", UI);
             for(int i=0; i<cheshireFiles.size(); i++) {
                File tempFile = ((File)cheshireFiles.get(i));
                File tryFile = new File(tempFile.getAbsolutePath().substring(0, tempFile.getAbsolutePath().lastIndexOf("."))+".imc");
                File secondTry = new File(tempFile.getAbsolutePath().substring(0, tempFile.getAbsolutePath().lastIndexOf("."))+".img");
                VOI[] voiListArr = null;
-               ModelImage tempImage;// = new ModelImage(ModelImage.BYTE, dimExtentsTemp, "Cheshire Pretend", UI);
+               
                try {
                    if(tryFile.exists()) {
                        FileCheshire tempCheshire = new FileCheshire(UI, tryFile.getName(), tryFile.getParent()+tryFile.separatorChar, false);
@@ -109,11 +115,11 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                        tempImage = cheshireComposite;
                    }
                    cheshireArray[i] = new FileCheshireVOI(tempFile.getName(), tempFile.getParent()+"\\", tempImage);
-                   cheshireNames[i] = tempFile.getName();    
+                   cheshireNames[i] = tempFile.getName().substring(0, tempFile.getName().lastIndexOf("."));    
                    voiListArr = cheshireArray[i].readVOI();
                }
                catch (IOException e) {
-                   MipavUtil.displayError("Error reading VOIs for image "+tempFile.getName());
+                   Preferences.debug("Error reading VOIs for image "+tempFile.getName());
                    return;
                }
                if(voiListArr != null) {
@@ -143,7 +149,7 @@ public class PlugInCheshireVOI implements PlugInGeneric {
             dimExtents[2] = ((int)(highZ*1.5));
             
             ModelImage newImage = new ModelImage(ModelImage.BYTE, dimExtents, "Cheshire Composite", UI);
-            new ViewJFrameImage(newImage);
+            imageFrame = new ViewJFrameImage(newImage);
            
             for(int i=0; i< voiListVec.size(); i++) {
                 VOI temp = new VOI((short)i, cheshireNames[i], (int)(highZ*1.5));
@@ -156,6 +162,12 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                 }
                 newImage.registerVOI(temp);
             }
+            
+            newImage.setFileInfo(tempImage.getFileInfo());
+            
+            imageFrame.actionPerformed(new ActionEvent(this, 0, "Save all VOIs"));
+            
+            MipavUtil.displayInfo("VOIs saved in folder\n "+newImage.getFileInfo(0).getFileDirectory()+"defaultVOIs_"+newImage.getImageName());
             
             progressBar.setVisible(false);
             
