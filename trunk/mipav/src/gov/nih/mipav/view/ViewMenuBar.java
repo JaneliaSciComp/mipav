@@ -931,20 +931,7 @@ public class ViewMenuBar {
     protected JMenu makeVOIMenu() {
         return menuBuilder.makeMenu("VOI", 'V', false,
                                     new JComponent[] {
-                                        menuBuilder.makeMenu("Edit VOI", true,
-                                                             new JMenuItem[] {
-                                                                 menuBuilder.buildMenuItem("Undo VOI", "undoVOI", 0,
-                                                                                           "undopaint.gif", true),
-                                                                 menuBuilder.buildMenuItem("Cut VOI", "cutVOI", 0,
-                                                                                           "cutpaint.gif", true),
-                                                                 menuBuilder.buildMenuItem("Copy VOI", "copyVOI", 0,
-                                                                                           "copypaint.gif", true),
-                                                                 menuBuilder.buildMenuItem("Paste VOI", "pasteVOI", 0,
-                                                                                           "pastepaint.gif", true),
-                                                                 menuBuilder.buildMenuItem("Select all VOIs",
-                                                                                           "selectAllVOIs", 0, null,
-                                                                                           true),
-                                                             }), separator,
+                                        
                                         menuBuilder.makeMenu("New VOI", true,
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Point", "Point", 0,
@@ -1001,6 +988,26 @@ public class ViewMenuBar {
                                                                                             "SaveAllAnnotations", 0,
                                                                                             	"save.gif", true)
                                                              }), separator,
+                                         menuBuilder.makeMenu("Edit VOI", true,
+                                                                     new JMenuItem[] {
+                                                                 menuBuilder.buildMenuItem("Undo VOI", "undoVOI", 0,
+                                                                                           "undopaint.gif", true),
+                                                                 menuBuilder.buildMenuItem("Cut VOI", "cutVOI", 0,
+                                                                                           "cutpaint.gif", true),
+                                                                 menuBuilder.buildMenuItem("Copy VOI", "copyVOI", 0,
+                                                                                           "copypaint.gif", true),
+                                                                 menuBuilder.buildMenuItem("Paste VOI", "pasteVOI", 0,
+                                                                                           "pastepaint.gif", true),
+                                                             }), 
+                                         menuBuilder.makeMenu("Select VOI", true,
+                                                         new JMenuItem[] {
+                                                             menuBuilder.buildMenuItem("Select all VOIs",
+                                                                                       "selectAllVOIs", 0, null,
+                                                                                       false),
+                                                             menuBuilder.buildMenuItem("Select none", 
+                                                                                       "voiSelectNone", 0, 
+                                                                                       null, false),
+                                                         }), separator,
                                         menuBuilder.makeMenu("VOI grouping", true,
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Group VOIs", "GroupVOIs", 0,

@@ -973,6 +973,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.getVOIHandler().pasteVOI();
         } else if (command.equals("selectAllVOIs")) {
             componentImage.getVOIHandler().selectAllVOIs(true);
+        } else if (event.getActionCommand().equals("voiSelectNone")) {
+            componentImage.getVOIHandler().selectAllVOIs(false);
         } else if (command.equals("deleteVOI")) {
             componentImage.getVOIHandler().deleteSelectedVOI(true);
         } else if (command.equals("BringToFront")) {
