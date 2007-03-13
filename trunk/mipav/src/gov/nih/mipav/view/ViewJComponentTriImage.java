@@ -2131,35 +2131,77 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     protected void updatePaintBitmap(boolean paintPixels, int x, int y) {
         int brushSize = getBrushSize();
         int hBrushSize = getHBrushSize();
-
         int jMin = Math.max(y - hBrushSize, 0);
         int jMax = Math.min(y - hBrushSize + brushSize - 1, imageDim.height - 1);
         int iMin = Math.max(x - hBrushSize, 0);
         int iMax = Math.min(x - hBrushSize + brushSize - 1, imageDim.width - 1);
-
         int i, j, index;
-
         int[] iterFactors = imageActive.getVolumeIterationFactors( );
 
         Point3Df paintPoint = new Point3Df();
-        Point2Df scalePoint = new Point2Df( 1, 1 );
+        
+        if (paintBrush != null) {
+        	
+        	int xDim = imageActive.getExtents()[0];
+        	int yDim = imageActive.getExtents()[1];
+        	int zDim = imageActive.getExtents()[2];
+        	
+        	int brushXDim = paintBrushDim.width;
+        	int brushYDim = paintBrushDim.height;
+        	System.err.println("Dims: " + paintBrushDim);
+                	
+        	for (int height = 0; height < brushYDim; height++) {
+        		for (int width = 0; width < brushXDim; width++) {
+        			if (paintBrush.get((height * brushYDim) + width)) {
+        				
+        				Point3Df patientPaintPoint = new Point3Df( x + width, y + height, slice );
+        	                MipavCoordinateSystems.PatientToFile( patientPaintPoint, paintPoint,
+        	                                                      imageActive, orientation );
+        	                
+        	                if ((paintPoint.x <= (xDim-1) && (paintPoint.x >= 0)) &&
+        	                		(paintPoint.y <= (yDim-1)) && (paintPoint.y >= 0) &&
+        	                		(paintPoint.z <= (zDim-1)) && (paintPoint.z >= 0)) {
+        	                
+        	                	index = (int)((iterFactors[0] * paintPoint.x) +
+        	                			(iterFactors[1] * paintPoint.y) +
+        	                			(iterFactors[2] * paintPoint.z)   );
+        				
+        	                	if (paintPixels == true) {
+        	                		paintBitmap.set(index);
+        	                	} else {
+        	                		paintBitmap.clear(index);
+        	                	}
+        	                }
+        			}
+        			
+        		}
+        	}
+        	
+        } else {
+        	
 
-        for (j = jMin; j <= jMax; j++) {
-            for (i = iMin; i <= iMax; i++) {
-                Point3Df patientPaintPoint = new Point3Df( i, j, slice );
-                MipavCoordinateSystems.PatientToFile( patientPaintPoint, paintPoint,
-                                                      imageActive, orientation );
+           
+          //   Point2Df scalePoint = new Point2Df( 1, 1 );
 
-                index = (int)((iterFactors[0] * paintPoint.x) +
-                              (iterFactors[1] * paintPoint.y) +
-                              (iterFactors[2] * paintPoint.z)   );
-                if (paintPixels) {
-                    paintBitmap.set(index);
-                } else {
-                    paintBitmap.clear(index);
-                }
-            }
+             for (j = jMin; j <= jMax; j++) {
+                 for (i = iMin; i <= iMax; i++) {
+                     Point3Df patientPaintPoint = new Point3Df( i, j, slice );
+                     MipavCoordinateSystems.PatientToFile( patientPaintPoint, paintPoint,
+                                                           imageActive, orientation );
+
+                     index = (int)((iterFactors[0] * paintPoint.x) +
+                                   (iterFactors[1] * paintPoint.y) +
+                                   (iterFactors[2] * paintPoint.z)   );
+                     if (paintPixels) {
+                         paintBitmap.set(index);
+                     } else {
+                         paintBitmap.clear(index);
+                     }
+                 }
+             }
         }
+        
+        
         triImageFrame.updatePaint(paintBitmap);
     }
 

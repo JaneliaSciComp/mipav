@@ -364,6 +364,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return;
         }
 
+        if (command.equals("PaintBrushEditor")) {
+        	new ViewJFrameCreatePaint();
+        }
+        
         if (command.equals("PropagatePaintPrev")) {
             propagatePaintToPreviousSlice();
         } else if (command.equals("PropagatePaintNext")) {

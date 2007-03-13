@@ -5066,7 +5066,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 break;
 
             case ViewJComponentEditImage.PAINT_VOI:
-                compImage.setCursor(MipavUtil.blankCursor);
+            	compImage.setCursor(MipavUtil.blankCursor);
                 compImage.getFrame().requestFocus();
                 break;
 
