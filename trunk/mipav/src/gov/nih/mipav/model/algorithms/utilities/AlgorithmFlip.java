@@ -463,9 +463,9 @@ public class AlgorithmFlip extends AlgorithmBase {
 
                         Polygon gon = new Polygon(xpoints, ypoints, xpoints.length);
                         nextVoi.removeCurve(nextVoi.getActiveContourIndex(voiSlice), voiSlice);
-                        nextVoi.importPolygon(gon, voiSlice + (direction * scope));
+                        nextVoi.importPolygon(gon, voiSlice + (direction * scope) - 1);
 
-                        compImage.show(compImage.getTimeSlice(), voiSlice + (scope * direction), null, null, true,
+                        compImage.show(compImage.getTimeSlice(), voiSlice + (scope * direction) - 1, null, null, true,
                                        compImage.getInterpMode());
                         compImage.getVOIHandler().fireVOISelectionChange(nextVoi, null);
                         compImage.getActiveImage().getParentFrame().setSlice(compImage.getSlice());
