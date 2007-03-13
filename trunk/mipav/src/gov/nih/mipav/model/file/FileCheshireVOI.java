@@ -339,7 +339,7 @@ public class FileCheshireVOI extends FileBase {
             } // while ((notFound) && (currentLocation < (fileLength - 24)))
 
             if (notFound) {
-                MipavUtil.displayError("FileCheshireVOI: No VOIs found in overlay file: "+file.getName());
+                Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: "+file.getName());
                 
                 raFile.close();
                 progressBar.setVisible(false);
@@ -351,7 +351,7 @@ public class FileCheshireVOI extends FileBase {
         else {
 
             // No UserWndLevels or overlays or sticks found in files
-            MipavUtil.displayError("FileCheshireVOI: No VOIs found in overlay file: "+file.getName());
+            Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: "+file.getName());
             
             raFile.close();
             progressBar.setVisible(false);
