@@ -5,84 +5,81 @@ import gov.nih.mipav.view.*;
 
 
 /**
- * DOCUMENT ME!
+ * This file contains 1 user callable eigenvalue function and 2 user callable generalized eigenvalue functions.
+ *
+ * <p>The eigenvalue problem solves the equation: A*x = lambda*x, where A is an n-by-n matrix, x is an n-length column
+ * vector, and lambda is a scalar. The eigenvalues are the n values of lambda that solve the equation, and the
+ * corresponding values of x are the right eigenvectors. The function dsyev solves the eigenvalue problem for the case
+ * of real symmetric matrix A.</p>
+ *
+ * <p>The generalized eigenvalue problem solves the equation: A*x = lambda*B*x where both A and B are n-by-n matrices
+ * and lambda is a scalar. The generalized eigenvalues are the n values of lambda that solve the equation, and the
+ * corresponding values of x are the generalized right eigenvectors. The function dsygv solves the generalized
+ * eigenvalue problem for the case of real symmetric A, symmetric positive definite B. The funciton dggev solves the
+ * generalized eigenvalue problem for the case of real nonsymmetric A, real general B.</p>
+ *
+ * <p>The symmetric generalized eigenvalue driver dsygv was tested with dsygv_test. The statement All 882 tests for
+ * dsygv passed the threshold was repeated 3 times. dchkst_test was implemented to test the dsytrd, dorgtr, dsteqr, and
+ * dsterf routines belonging to the dsygv drver. The statement All 1134 tests for dchkst passed the threshold was
+ * repeated 5 times. ddrvst_test was implemented to test dsyev. The statement All 648 tests for ddrvst passed the
+ * threshold was repeated 5 times.</p>
+ *
+ * <p>The nonsymmetric generalized eigenvalue driver dggev was tested with dggev_test. The resulting statement was 15
+ * out of 1092 dggev tests failed to pass the threshold. dchkgl was implemented to test the dggbal balancing routine of
+ * dggev. All 8 tests showed no signficant error. dchkgk was implemented to test the dggbak backward balancing routine
+ * of dggev. All 8 tests showed no significant error. dchkgg_test was implemented to test the dgghrd, dhgeqz, and dtgevc
+ * routines of the dggev driver. The following output statements resulted: 15 out of 2156 dchkgg tests failed to pass
+ * the threshold. 18 out of 2149 dchkgg tests failed to pass the threshold. 13 out of 2142 dchkgg tests failed to pass
+ * the threshold. 13 out of 2135 dchkgg tests failed to pass the threshold. The errors in the nonsymmetric case would
+ * not occur for matrix sizes of 5 or less. Following one case in parallel in the FORTRAN on the WATCOM compiler and on
+ * Java revealed input variables that were identical up to about 9 signficant places yielding an output variable of
+ * 7.77E-16 on the FORTRAN and -2.61E-15 on the Java. So apparently the Java failures are due to the Java 64 bit
+ * arithmetic having a greater error than the FORTRAN 64 bit arithmetic.</p>
+ *
+ * <p>There are basically 2 problems with Java precision. 1.) The Intel Pentium uses 80 bit numbers in floating point
+ * registers. However, Java must round each number back to 64 bits whenever a Java variable is assigned. There used to
+ * be a proposal to introduce a special keyword extendedfp to fully use whatever math the platform had, but it didn't
+ * get thru. Apparently the Java designers felt for Java being consistent is more important than being successful. 2.)
+ * Java also forbids the use of fused multiply-add (FMA) operations. This operation computes the quantity ax + y as a
+ * single floating-point operation. Operations of this type are found in many compute-intensive applications,
+ * particularly matrix operations. With this instruction, only a single rounding occurs for the two arithmetic
+ * operations, yielding a more accurate result in less time than would be required for two separate operations. Java's
+ * strict language definition does not permit use of FMAs and thus sacrifices up to 50% of performance on some
+ * platforms.</p>
+ *
+ * <p>The only obvious cure for this problem would be to use the Java BigDecimal class. However, the use of BigDecimal
+ * would involve much more work than just changing doubles to BigDecimals. For example, with doubles I would write: f =
+ * f/g; With BigDecimal I would write: f = f.divide(g, mc); where mc is the mathematical context settings. Likewise,
+ * instead of the ordinary arithmetic operators I would have to use add, compareTo, equals, negate, plus, remainder, and
+ * subtract. Using BigDecimal would undoubtedly slow the program down considerably.</p>
+ *
+ * <p>On significant change was made in the port of the nonsymmetric driver. In routine dhgeqz the number of maximum
+ * iterations maxit was increased from 30 * (ihi-ilo+1) to 300 * (ihi-ilo+1)</p>
+ *
+ * <p>Copyright (c) 1992-2007 The University of Tennessee. All rights reserved.</p>
+ *
+ * <p>Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+ * following conditions are met:</p>
+ *
+ * <p>- Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+ * disclaimer.</p>
+ *
+ * <p>- Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+ * following disclaimer listed in this license in the documentation and/or other materials provided with the
+ * distribution.</p>
+ *
+ * <p>- Neither the name of the copyright holders nor the names of its contributors may be used to endorse or promote
+ * products derived from this software without specific prior written permission.</p>
+ *
+ * <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
  */
 public class GeneralizedEigenvalue implements java.io.Serializable {
-    /*This file contains 1 user callable eigenvalue function and 2 user callable generalized
-     * eigenvalue functions.
-     *
-     * The eigenvalue problem solves the equation: A*x = lambda*x, where A is an n-by-n matrix, x is an n-length column
-     * vector, and lambda is a scalar.  The eigenvalues are the n values of lambda that solve the equation, and the
-     * corresponding values of x are the right eigenvectors.  The function dsyev solves the eigenvalue problem for the
-     * case of real symmetric matrix A.
-     *
-     * The generalized eigenvalue problem solves the equation: A*x = lambda*B*x where both A and B are n-by-n matrices and
-     * lambda is a scalar.  The generalized eigenvalues are the n values of lambda that solve the equation, and the
-     * corresponding values of x are the generalized right eigenvectors.  The function dsygv solves the generalized
-     * eigenvalue problem for the case of real symmetric A, symmetric positive definite B.  The funciton dggev solves
-     * the generalized eigenvalue problem for the case of real nonsymmetric A, real general B.
-     *
-     * The symmetric generalized eigenvalue driver dsygv was tested with dsygv_test.  The statement All 882 tests for
-     * dsygv passed the threshold was repeated 3 times. dchkst_test was implemented to test the dsytrd, dorgtr, dsteqr,
-     * and dsterf routines belonging to the dsygv drver.  The statement All 1134 tests for dchkst passed the threshold
-     * was repeated 5 times. ddrvst_test was implemented to test dsyev.  The statement All 648 tests for ddrvst passed
-     * the threshold was repeated 5 times.
-     *
-     * The nonsymmetric generalized eigenvalue driver dggev was tested with dggev_test.  The resulting statement was 15
-     * out of 1092 dggev tests failed to pass the threshold. dchkgl was implemented to test the dggbal balancing routine
-     * of dggev.  All 8 tests showed no signficant error. dchkgk was implemented to test the dggbak backward balancing
-     * routine of dggev.  All 8 tests showed no significant error. dchkgg_test was implemented to test the dgghrd,
-     * dhgeqz, and dtgevc routines of the dggev driver.  The following output statements resulted: 15 out of 2156 dchkgg
-     * tests failed to pass the threshold. 18 out of 2149 dchkgg tests failed to pass the threshold. 13 out of 2142
-     * dchkgg tests failed to pass the threshold. 13 out of 2135 dchkgg tests failed to pass the threshold. The errors
-     * in the nonsymmetric case would not occur for matrix sizes of 5 or less. Following one case in parallel in the
-     * FORTRAN on the WATCOM compiler and on Java revealed input variables that were identical up to about 9 signficant
-     * places yielding an output variable of 7.77E-16 on the FORTRAN and -2.61E-15 on the Java.  So apparently the Java
-     * failures are due to the Java 64 bit arithmetic having a greater error than the FORTRAN 64 bit arithmetic.
-     *
-     * There are basically 2 problems with Java precision. 1.) The Intel Pentium uses 80 bit numbers in floating point
-     * registers.  However, Java must round each number back to 64 bits whenever a Java variable is assigned.  There
-     * used to be a proposal to introduce a special keyword extendedfp to fully use whatever math the platform had, but
-     * it didn't get thru.  Apparently the Java designers felt for Java being consistent is more important than being
-     * successful. 2.) Java also forbids the use of fused multiply-add (FMA) operations.  This operation computes the
-     * quantity ax + y as a single floating-point operation.  Operations of this type are found in many
-     * compute-intensive applications, particularly matrix operations. With this instruction, only a single rounding
-     * occurs for the two arithmetic operations, yielding a more accurate result in less time than would be required for
-     * two separate operations.  Java's strict language definition does not permit use of FMAs and thus sacrifices up to
-     * 50% of performance on some platforms.
-     *
-     * The only obvious cure for this problem would be to use the Java BigDecimal class.  However, the use of BigDecimal
-     * would involve much more work than just changing doubles to BigDecimals.  For example, with doubles I would write:
-     * f = f/g; With BigDecimal I would write: f = f.divide(g, mc); where mc is the mathematical context settings.
-     * Likewise, instead of the ordinary arithmetic operators I would have to use add, compareTo, equals, negate, plus,
-     * remainder, and subtract.  Using BigDecimal would undoubtedly slow the program down considerably.
-     *
-     * On significant change was made in the port of the nonsymmetric driver.  In routine dhgeqz the number of maximum
-     * iterations maxit was increased from 30 * (ihi-ilo+1) to 300 * (ihi-ilo+1)
-     *
-     * Copyright (c) 1992-2007 The University of Tennessee.  All rights reserved.
-     *
-     * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
-     * following conditions are met:
-     *
-     * - Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-     * disclaimer.
-     *
-     * - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
-     * following disclaimer listed in this license in the documentation and/or other materials provided with the
-     * distribution.
-     *
-     * - Neither the name of the copyright holders nor the names of its contributors may be used to endorse or promote
-     * products derived from this software without specific prior written permission.
-     *
-     * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-     * INCLUDING, BUT NOT  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-     * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-     * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-     * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-     * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-     * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-     */
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -4556,9 +4553,9 @@ loop1:           {
                 // Control parameters:
                 /*         kmagn  kmode        ktype
                  *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential (none)
-                 *  = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
-                 * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8
-                 * random symmetric   = 9                      positive definite   = 10 diagonally dominant tridiagonal
+                 * = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
+                 * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8 random
+                 * symmetric   = 9                      positive definite   = 10 diagonally dominant tridiagonal
                  */
 
                 if (mtypes <= maxtyp) {
@@ -6559,9 +6556,9 @@ loop1:           {
                 // Control parameters:
                 /*         kmagn  kmode        ktype
                  *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential (none)
-                 *  = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
-                 * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8
-                 * random symmetric   = 9                      band symmetric, w/ eigenvalues
+                 * = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
+                 * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8 random
+                 * symmetric   = 9                      band symmetric, w/ eigenvalues
                  */
 
                 if (mtypes <= maxtyp) {
