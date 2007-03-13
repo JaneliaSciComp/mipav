@@ -9,12 +9,14 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.icons.PlaceHolder;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 
 import java.io.*;
+import java.net.URL;
 
 import java.text.*;
 
@@ -354,6 +356,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** Flag used ONLY by ViewJComponentRegistration to prohibit VOI drawing */
     protected boolean drawVOIs = true;
     
+    /** BitSet used for painting (brushes on/off) */
+    protected BitSet paintBrush = null;
+    
+    /** Dimension of the pain t*/
+    protected Dimension paintBrushDim = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -491,10 +498,82 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         /* create the WindowLevel controller: */
         m_kWinLevel = new WindowLevel();
+        
+       loadPaintBrush(Preferences.getProperty("LastPaintBrush"));
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    
+    
+    /**
+     * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences
+     * @param paintName the name of the brush to load
+     */
+    public void loadPaintBrush(String paintName) {
+    	String fullPath = null;
+    	
+    	if (paintName == null) {
+    		fullPath = PlaceHolder.class.getResource("paint_sq_8.gif").getPath();
+    	} else {
+    		try {
+    		fullPath = PlaceHolder.class.getResource(paintName).getPath();
+    		} catch (Exception e) {
+    			fullPath = System.getProperty("user.home") + File.separator + 
+    			"mipav" + File.separator + "brushes" + File.separator + paintName;
+    			
+    			if (! (new File(fullPath)).exists()) {
+    				fullPath = PlaceHolder.class.getResource("paint_sq_8.gif").getPath(); 
+    			}
+    			
+    		}
+    	}
+    	
+    	File paintFile = new File(fullPath);
+    	    	
+    	FileIO fileIO = new FileIO();
+
+    	//read in the .gif or .png as a model image to create the BitSet
+    	ModelImage brushImage = fileIO.readImage(paintFile.getPath());
+    	
+    	if (brushImage == null) {
+    		return;
+    	}
+    	
+    	int [] brushExtents = brushImage.getExtents();
+    	
+    	//create the bitset and the brush dimensions
+    	paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
+    	paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
+    	
+    	int counter = 0;
+    		
+    	int [] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
+		try {
+			brushImage.exportData(0, buffer.length, buffer);
+		} catch (Exception e) {
+			MipavUtil.displayError("Open brush failed.");
+			brushImage.disposeLocal();
+			return;
+		}
+		
+		
+		int length = buffer.length;
+	
+		//set or clear the bitset based on the black pixels (black == on)
+		for ( int i = 0; i < length; i += 4, counter++) {
+			if (buffer[i + 1] == 0) {
+				paintBrush.set(counter);
+			} else {
+				paintBrush.clear(counter);
+			}
+		}
+		
+		//remove the image created as it is no longer needed
+		brushImage.disposeLocal();
+		
+    }
+    
     /**
      * Calculates the volume of the painted voxels.
      *
@@ -4186,52 +4265,89 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int brushSize = getBrushSize();
         int hBrushSize = getHBrushSize();
 
-        int jMin = Math.max(yS - hBrushSize, 0);
-        int jMax = Math.min(yS - hBrushSize + brushSize - 1, imageActive.getExtents()[1] - 1);
-        int iMin = Math.max(xS - hBrushSize, 0);
-        int iMax = Math.min(xS - hBrushSize + brushSize - 1, imageActive.getExtents()[0] - 1);
+        if (paintBrush != null) {
+        	
+        	int brushXDim = paintBrushDim.width;
+        	int brushYDim = paintBrushDim.height;
+        	
+        	int counter = 0;
+        	int offset = imageActive.getSliceSize() * slice;
+        	 
+        	int xDim = imageActive.getExtents()[0];
+        	int yDim = imageActive.getExtents()[1];
+        	
+        	for (int height = 0; height < brushYDim; height++) {
+        		for (int width = 0; width < brushXDim; width++, counter++) {
+        			if (paintBrush.get((height * brushYDim) + width)) {
+        				
+        				if (((xS + width) < xDim) &&
+        						(yS + height < yDim)) {
+        					int st = ((yS + height) * imageActive.getExtents()[0]) + (xS + width);
+        				
+        					if (erase == true) {
+        						paintBitmap.clear(offset + st);
+        					} else {
+        						paintBitmap.set(offset + st);
+        					}
+        				}
+        			}
+        			
+        		}
+        	}
+        	
+        } else {
+        
+        	int jMin = Math.max(yS - hBrushSize, 0);
+   	     int jMax = Math.min(yS - hBrushSize + brushSize - 1, imageActive.getExtents()[1] - 1);
+   	     int iMin = Math.max(xS - hBrushSize, 0);
+   	     int iMax = Math.min(xS - hBrushSize + brushSize - 1, imageActive.getExtents()[0] - 1);
 
-        int offset = imageActive.getSliceSize() * slice;
+   	     int offset = imageActive.getSliceSize() * slice;
 
-        for (int j = jMin; j <= jMax; j++) {
+        
+   	     for (int j = jMin; j <= jMax; j++) {
 
-            for (int i = iMin; i <= iMax; i++) {
-                int st = (j * imageActive.getExtents()[0]) + i;
+   	    	 for (int i = iMin; i <= iMax; i++) {
+   	    		 int st = (j * imageActive.getExtents()[0]) + i;
+                
+   	    		 if (erase == true) {
+   	    			 paintBitmap.clear(offset + st);
+   	    		 } else {
+   	    			 paintBitmap.set(offset + st);
+   	    		 }
+   	    	 }
+   	     }
+        
+   	  if (imageActive.getType() == ModelStorageBase.COMPLEX) {
+          int temp = iMin;
 
-                if (erase == true) {
-                    paintBitmap.clear(offset + st);
-                } else {
-                    paintBitmap.set(offset + st);
-                }
-            }
+          iMin = imageActive.getExtents()[0] - Math.max(iMax, 1);
+          iMax = imageActive.getExtents()[0] - Math.max(temp, 1);
+          temp = jMin;
+          jMin = imageActive.getExtents()[1] - Math.max(jMax, 1);
+          jMax = imageActive.getExtents()[1] - Math.max(temp, 1);
+
+          if (imageActive.getNDims() == 3) {
+              offset = imageActive.getSliceSize() * (imageActive.getExtents()[2] - Math.max(slice, 1));
+          }
+
+          for (int j = jMin; j <= jMax; j++) {
+
+              for (int i = iMin; i <= iMax; i++) {
+                  int st = (j * imageActive.getExtents()[0]) + i;
+
+                  if (erase == true) {
+                      paintBitmap.clear(offset + st);
+                  } else {
+                      paintBitmap.set(offset + st);
+                  }
+              }
+          }
+      } // if (imageActive.getType() == ModelStorageBase.COMPLEX)
+        
         }
-
-        if (imageActive.getType() == ModelStorageBase.COMPLEX) {
-            int temp = iMin;
-
-            iMin = imageActive.getExtents()[0] - Math.max(iMax, 1);
-            iMax = imageActive.getExtents()[0] - Math.max(temp, 1);
-            temp = jMin;
-            jMin = imageActive.getExtents()[1] - Math.max(jMax, 1);
-            jMax = imageActive.getExtents()[1] - Math.max(temp, 1);
-
-            if (imageActive.getNDims() == 3) {
-                offset = imageActive.getSliceSize() * (imageActive.getExtents()[2] - Math.max(slice, 1));
-            }
-
-            for (int j = jMin; j <= jMax; j++) {
-
-                for (int i = iMin; i <= iMax; i++) {
-                    int st = (j * imageActive.getExtents()[0]) + i;
-
-                    if (erase == true) {
-                        paintBitmap.clear(offset + st);
-                    } else {
-                        paintBitmap.set(offset + st);
-                    }
-                }
-            }
-        } // if (imageActive.getType() == ModelStorageBase.COMPLEX)
+//changethis
+       
 
         // imageActive.notifyImageDisplayListeners();
     }
@@ -4815,20 +4931,26 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int xS = getScaledX(lastMouseX); // zoomed x.  Used as cursor
         int yS = getScaledY(lastMouseY); // zoomed y.  Used as cursor
 
-        int brushSize = getBrushSize();
-        int hBrushSize = getHBrushSize();
-
-        int jMin = Math.max(yS - hBrushSize, 0);
-        int iMin = Math.max(xS - hBrushSize, 0);
+        int brushWidth = paintBrushDim.width;
+        int brushHeight = paintBrushDim.height;
+     
+      //  int hBrushWidth = brushWidth /2;
+      //  int hBrushHeight = brushHeight /2;
+        
+        int jMin = Math.max(yS, 0);
+        int iMin = Math.max(xS, 0);
 
         iMin *= zoomX * resolutionX;
         jMin *= zoomY * resolutionY;
 
-        int width = MipavMath.round(brushSize * resolutionX * zoomX);
-        int height = MipavMath.round(brushSize * resolutionY * zoomY);
+        int width = MipavMath.round(brushWidth * resolutionX * zoomX);
+        int height = MipavMath.round(brushHeight * resolutionY * zoomY);
 
         graphics2d.setColor(Color.red.darker());
-        graphics2d.drawRect(iMin, jMin, width - 1, height - 1);
+        graphics2d.drawRect(iMin, jMin, width - 1, height - 1);  
+        if (frame instanceof ViewJFrameTriImage) {
+        //	System.err.println("TRI IMAGE");
+        }
     }
     
     

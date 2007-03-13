@@ -8,6 +8,7 @@ import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.ViewToolBarBuilder.PaintBoxRenderer;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
@@ -16,6 +17,7 @@ import java.awt.event.*;
 import java.io.*;
 
 import java.lang.reflect.*;
+import java.net.URL;
 
 import java.text.*;
 
@@ -243,6 +245,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Extents of image. */
     protected int[] extents;
 
+    /** List of built-in and user-defined paint brushes*/
+    protected String [] paintBrushNames = null;
+    
+    /** Box holding the list of available paint brushes*/
+    private JComboBox paintBox = null;
+    
     /**
      * axialOrientation is true if imageConfiguration is originally AXIAL, CORONAL, or SAGITTAL It is reordered to an
      * axial with x going from right to left, y going from anterior to posterior, and z going from inferior to superior
@@ -1478,6 +1486,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
+
+        if (source.equals(paintBox)) {
+        	int index = paintBox.getSelectedIndex();
+        	
+        	triImage[0].loadPaintBrush(paintBrushNames[index]);
+        	triImage[1].loadPaintBrush(paintBrushNames[index]);
+        	triImage[2].loadPaintBrush(paintBrushNames[index]);
+			Preferences.setProperty("LastPaintBrush", paintBrushNames[index]);
+        	
+        	
+        } else {
+        
         int state = event.getStateChange();
 
         if (state == ItemEvent.SELECTED) {
@@ -1506,6 +1526,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 // the "Both" radio button
                 radioImageBoth.setEnabled(true);
             }
+        }
         }
     }
 
@@ -2956,16 +2977,81 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         paintToolBar.add(toolbarBuilder.buildButton("EraseAll", "Erase all paint", "clear"));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        ButtonGroup paintThicknessGroup = new ButtonGroup();
-        paintToolBar.add(toolbarBuilder.buildToggleButton("ThinPaint", "Draw using small brush size (1px)", "thinpaint",
-                                                          paintThicknessGroup));
-        paintToolBar.add(toolbarBuilder.buildToggleButton("MedPaint", "Draw using medium brush size (4px)", "medpaint",
-                                                          paintThicknessGroup));
-        paintToolBar.add(toolbarBuilder.buildToggleButton("ThickPaint", "Draw using large brush size (8px)",
-                                                          "thickpaint", paintThicknessGroup));
-        paintToolBar.add(toolbarBuilder.buildToggleButton("ThickestPaint", "Draw using largest brush size (16px)",
-                                                          "thickestpaint", paintThicknessGroup));
+//create the list of brushes
+        
+        String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" + File.separator;
+		
+        int numBrushes = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL; //built in... 5 so far
+        
+		File brushesDir = new File(userBrushes);
+		if (brushesDir.isDirectory()) {
+			File [] brushes = brushesDir.listFiles();
+			
+			for (int i = 0; i < brushes.length; i++) {
+				
+				if (brushes[i].getName().startsWith("brush") &&
+						brushes[i].getName().endsWith(".png")) {
+					numBrushes++;
+				}
+			}
+		}
+        
+		Integer[] intArray = new Integer[numBrushes];
 
+        for (int i = 0; i < intArray.length; i++) {
+            intArray[i] = new Integer(i);
+        }
+		
+        paintBrushNames = new String[numBrushes];
+        
+        paintBrushNames[0] = "paint_sq_1.gif";
+        paintBrushNames[1] = "paint_sq_4.gif";
+        paintBrushNames[2] = "paint_sq_8.gif";
+        paintBrushNames[3] = "paint_sq_16.gif";
+        paintBrushNames[4] = "paint_sq_24.gif";
+        
+        if (brushesDir.isDirectory()) {
+			File [] brushes = brushesDir.listFiles();
+			int brushIndex = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL;
+			for (int i = 0; i < brushes.length; i++) {
+				
+				if (brushes[i].getName().startsWith("brush") &&
+						brushes[i].getName().endsWith(".png")) {
+					paintBrushNames[brushIndex] = brushes[i].getName();
+					brushIndex++;
+				}
+			}
+		}
+        
+       
+       
+        
+        //build the new combo box of paintbrushes
+        paintBox = new JComboBox(intArray);
+        
+        String brushName = Preferences.getProperty("LastPaintBrush");
+        if (brushName == null) {
+        	paintBox.setSelectedIndex(2);
+        } else {
+        	int selectedIndex = 2;
+        	for (int i = 0; i < paintBrushNames.length; i++) {
+        		if (brushName.endsWith(paintBrushNames[i])) {
+        			selectedIndex = i;
+        			break;
+        		}
+        	}
+        	paintBox.setSelectedIndex(selectedIndex);
+        }
+        
+        paintBox.setRenderer(new PaintBoxRenderer());
+        paintBox.addItemListener(this);
+        
+        paintToolBar.setPreferredSize(new Dimension(90, 24));
+        
+        paintToolBar.add(paintBox);
+      
+        
+   
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         if (!imageA.isColorImage()) {
@@ -4646,5 +4732,73 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
     }
 
+    class PaintBoxRenderer extends JLabel implements ListCellRenderer {
 
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = -965184394601656795L;
+
+        /**
+         * Creates a new ComboBoxRenderer2 object.
+         */
+        public PaintBoxRenderer() {
+            setOpaque(true);
+            setHorizontalAlignment(CENTER);
+            setVerticalAlignment(CENTER);
+        }
+
+        /**
+         * This method finds the image and text corresponding to the selected value and returns the label, set up to
+         * display the text and image.
+         *
+         * @param   list          DOCUMENT ME!
+         * @param   value         DOCUMENT ME!
+         * @param   index         DOCUMENT ME!
+         * @param   isSelected    DOCUMENT ME!
+         * @param   cellHasFocus  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+                boolean cellHasFocus) {
+
+        	// Get the selected index. (The index param isn't
+        	// always valid, so just use the value.)
+        	int selectedIndex = ((Integer) value).intValue();
+
+        	if (isSelected) {
+        		setBackground(list.getSelectionBackground());
+        		setForeground(list.getSelectionForeground());
+        	} else {
+        		setBackground(list.getBackground());
+        		setForeground(list.getForeground());
+        	}
+
+        	
+        	
+        	// Set the icon and text.  If icon was null, say so.
+        	ImageIcon icon = null;
+
+        	if (selectedIndex < ViewToolBarBuilder.NUM_BRUSHES_INTERNAL) {
+        		icon = MipavUtil.getIcon(paintBrushNames[selectedIndex]);
+        	} else {
+        		URL res = null;
+        		try {
+        			String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" + File.separator;
+        			res = new File(userBrushes + File.separator + paintBrushNames[selectedIndex]).toURL();
+        			icon = new ImageIcon(res);
+        		} catch (Exception e) {
+        			//e.printStackTrace();
+        		}
+        	}
+        	setFont(MipavUtil.font12B);
+        	setText("(" + icon.getIconWidth() + " x " + icon.getIconHeight() + ")");
+        	setIcon(icon);
+        	
+        	setPreferredSize(new Dimension(90,24));
+        	setIconTextGap(5);
+        	setHorizontalTextPosition(LEFT);
+        	
+        	return this;
+        }
+    }
 }

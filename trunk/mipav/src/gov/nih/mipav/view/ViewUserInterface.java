@@ -168,6 +168,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     private boolean isClippedVOI2D = true;
     
+    
+    /** An array of BitSet to hold all paintbr*/
+    private BitSet [] paintBrushes = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
