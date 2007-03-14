@@ -2989,8 +2989,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 			
 			for (int i = 0; i < brushes.length; i++) {
 				
-				if (brushes[i].getName().startsWith("brush") &&
-						brushes[i].getName().endsWith(".png")) {
+				if (brushes[i].getName().endsWith(".png")) {
 					numBrushes++;
 				}
 			}
@@ -3004,27 +3003,23 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 		
         paintBrushNames = new String[numBrushes];
         
-        paintBrushNames[0] = "paint_sq_1.gif";
-        paintBrushNames[1] = "paint_sq_4.gif";
-        paintBrushNames[2] = "paint_sq_8.gif";
-        paintBrushNames[3] = "paint_sq_16.gif";
-        paintBrushNames[4] = "paint_sq_24.gif";
+        paintBrushNames[0] = "square 1x1.gif";
+        paintBrushNames[1] = "square 4x4.gif";
+        paintBrushNames[2] = "square 8x8.gif";
+        paintBrushNames[3] = "square 16x16.gif";
+        paintBrushNames[4] = "square 24x24.gif";
         
         if (brushesDir.isDirectory()) {
 			File [] brushes = brushesDir.listFiles();
 			int brushIndex = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL;
 			for (int i = 0; i < brushes.length; i++) {
 				
-				if (brushes[i].getName().startsWith("brush") &&
-						brushes[i].getName().endsWith(".png")) {
+				if (brushes[i].getName().endsWith(".png")) {
 					paintBrushNames[brushIndex] = brushes[i].getName();
 					brushIndex++;
 				}
 			}
 		}
-        
-       
-       
         
         //build the new combo box of paintbrushes
         paintBox = new JComboBox(intArray);
@@ -3045,8 +3040,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         
         paintBox.setRenderer(new PaintBoxRenderer());
         paintBox.addItemListener(this);
+                
+        Dimension buttonSize = paintCanToggleButton.getPreferredSize();
+        buttonSize.setSize(150, buttonSize.getHeight());
         
-        paintToolBar.setPreferredSize(new Dimension(90, 24));
+       
+        paintBox.setPreferredSize(buttonSize);
+        paintBox.setMaximumSize(buttonSize);
         
         paintToolBar.add(paintBox);
       
@@ -4742,7 +4742,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
          */
         public PaintBoxRenderer() {
             setOpaque(true);
-            setHorizontalAlignment(CENTER);
+            setHorizontalAlignment(LEFT);
             setVerticalAlignment(CENTER);
         }
 
@@ -4778,24 +4778,40 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         	// Set the icon and text.  If icon was null, say so.
         	ImageIcon icon = null;
 
+        	setFont(MipavUtil.font12);
         	if (selectedIndex < ViewToolBarBuilder.NUM_BRUSHES_INTERNAL) {
         		icon = MipavUtil.getIcon(paintBrushNames[selectedIndex]);
+        		
         	} else {
         		URL res = null;
         		try {
-        			String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" + File.separator;
-        			res = new File(userBrushes + File.separator + paintBrushNames[selectedIndex]).toURL();
+        			res = new File(ViewToolBarBuilder.USER_BRUSHES + File.separator + paintBrushNames[selectedIndex]).toURL();
         			icon = new ImageIcon(res);
+                	
+        			if (icon.getIconHeight() >= 20 || icon.getIconWidth() >= 20) {
+        				int newWidth, newHeight;
+        				if (icon.getIconHeight() < icon.getIconWidth()) {
+        					newWidth = 20;
+        					float factor = 24f/icon.getIconWidth();
+        					newHeight = (int)(icon.getIconHeight() * factor);
+        				} else {
+        					newHeight = 20;
+        					float factor = 24f/icon.getIconHeight();
+        					newWidth = (int)(icon.getIconWidth() * factor);
+        				}
+        				icon = new ImageIcon(icon.getImage().getScaledInstance(newWidth, newHeight, 0));
+        			}
         		} catch (Exception e) {
         			//e.printStackTrace();
         		}
         	}
-        	setFont(MipavUtil.font12B);
-        	setText("(" + icon.getIconWidth() + " x " + icon.getIconHeight() + ")");
+        	          
+            
+        	setText(paintBrushNames[selectedIndex].substring(0, paintBrushNames[selectedIndex].lastIndexOf(".")));
         	setIcon(icon);
         	
         	setPreferredSize(new Dimension(90,24));
-        	setIconTextGap(5);
+        	setIconTextGap(10);
         	setHorizontalTextPosition(LEFT);
         	
         	return this;

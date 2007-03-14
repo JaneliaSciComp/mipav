@@ -10,6 +10,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 
 import javax.swing.*;
@@ -39,6 +40,9 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 	
 	public ViewJFrameCreatePaint() {
 		setTitle("Create paint brush");
+		try {
+		setIconImage(MipavUtil.getIconImage("paint_brush_editor.gif"));
+		} catch (Exception e) { }
 		gridDialog = new JDialogGridSize(this);
 	
 		this.gridHeight = gridDialog.getGridHeight();
@@ -152,7 +156,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		extents[1] = gridHeight;
 		
 		ModelImage brushImage = new ModelImage(ModelStorageBase.ARGB, extents, "brush");	
-		new ViewJFrameImage(brushImage);
+		ViewJFrameImage iFrame = new ViewJFrameImage(brushImage);
 		BitSet bitset = new BitSet(gridWidth * gridHeight);
 		
 		int counter = 0;
@@ -221,9 +225,34 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 			options.setFileName(loadName);
 			wasLoaded = false;
 		} else {
-			options.setFileName("brush_" + count + ".png");
+			JFileChooser chooser = new JFileChooser();
+	        ViewImageFileFilter filter = new ViewImageFileFilter(new String[] {"png"});
+
+	        chooser.setFileFilter(filter);
+
+	        // if (userInterface.getDefaultDirectory()!=null)
+	        chooser.setCurrentDirectory(new File(userBrushes));
+
+	        // else
+	        // chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+	        int returnVal = chooser.showSaveDialog(this);
+
+	        if (returnVal == JFileChooser.APPROVE_OPTION) {
+	        	loadName = chooser.getSelectedFile().getName();
+
+	        } else {
+	            return;
+	        }
+			
+	        if (!loadName.endsWith(".png")) {
+	        	loadName = loadName + ".png";
+	        }
+	        
+			options.setFileName(loadName);
 		}
 		fileIO.writeImage(brushImage, options);
+		
+		iFrame.close();
 		
 	}
 	
@@ -264,7 +293,12 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		
 		buildGrid(null);
 		
+		JPanel directionPanel = new JPanel();
+		directionPanel.add(WidgetFactory.buildLabel("Left-mouse to draw, right-mouse to erase"));
+		
+		getContentPane().add(directionPanel, BorderLayout.SOUTH);
 		pack();
+		MipavUtil.centerOnScreen(this);
 		setVisible(true);
 	}
 	
@@ -374,6 +408,9 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		
 		public JDialogGridSize(JFrame frame) {
 			super(frame, true);
+			try {
+				setIconImage(MipavUtil.getIconImage("paint_brush_editor.gif"));
+				} catch (Exception e) { }
 			init();
 			wasLoaded = false;
 			
@@ -439,6 +476,9 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 			
 			getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 			pack();
+			
+			MipavUtil.centerOnScreen(this);
+			
 			setVisible(true);
 		}
 		

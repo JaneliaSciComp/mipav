@@ -14,6 +14,7 @@ import gov.nih.mipav.view.icons.PlaceHolder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
+import java.awt.geom.AffineTransform;
 
 import java.io.*;
 import java.net.URL;
@@ -359,7 +360,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** BitSet used for painting (brushes on/off) */
     protected BitSet paintBrush = null;
     
-    /** Dimension of the pain t*/
+    /**  buffered image that is transparent to show the paintbrush cursor*/
+    protected BufferedImage paintImage = null;
+    
+    /** Dimension of the paint*/
     protected Dimension paintBrushDim = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -514,7 +518,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     	String fullPath = null;
     	
     	if (paintName == null) {
-    		fullPath = PlaceHolder.class.getResource("paint_sq_8.gif").getPath();
+    		fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
     	} else {
     		try {
     		fullPath = PlaceHolder.class.getResource(paintName).getPath();
@@ -523,14 +527,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     			"mipav" + File.separator + "brushes" + File.separator + paintName;
     			
     			if (! (new File(fullPath)).exists()) {
-    				fullPath = PlaceHolder.class.getResource("paint_sq_8.gif").getPath(); 
+    				fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath(); 
     			}
     			
     		}
     	}
     	
+    	//fix the URL nonsense with spaces
+    	fullPath = fullPath.replaceAll("%20", " ");
+    	
     	File paintFile = new File(fullPath);
-    	    	
     	FileIO fileIO = new FileIO();
 
     	//read in the .gif or .png as a model image to create the BitSet
@@ -560,12 +566,26 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 		
 		int length = buffer.length;
 	
+		//create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
+		paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.width, BufferedImage.TYPE_INT_ARGB);
+		
+		Color transRed = new Color(Color.red.getRed(), Color.red.getGreen(), Color.red.getBlue(), 150);
+						
 		//set or clear the bitset based on the black pixels (black == on)
 		for ( int i = 0; i < length; i += 4, counter++) {
 			if (buffer[i + 1] == 0) {
 				paintBrush.set(counter);
 			} else {
 				paintBrush.clear(counter);
+			}
+		}
+		
+		counter = 0;
+		for (int y = 0; y < paintBrushDim.height; y++) {
+			for (int x = 0; x < paintBrushDim.width; x++, counter++) {
+				if (paintBrush.get(counter)) {
+					paintImage.setRGB(x, y, transRed.getRGB());
+				}
 			}
 		}
 		
@@ -4931,23 +4951,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int xS = getScaledX(lastMouseX); // zoomed x.  Used as cursor
         int yS = getScaledY(lastMouseY); // zoomed y.  Used as cursor
 
-        int brushWidth = paintBrushDim.width;
-        int brushHeight = paintBrushDim.height;
-     
-      //  int hBrushWidth = brushWidth /2;
-      //  int hBrushHeight = brushHeight /2;
-        
-        int jMin = Math.max(yS, 0);
-        int iMin = Math.max(xS, 0);
+        int jMin = yS;
+        int iMin = xS;
 
         iMin *= zoomX * resolutionX;
         jMin *= zoomY * resolutionY;
 
-        int width = MipavMath.round(brushWidth * resolutionX * zoomX);
-        int height = MipavMath.round(brushHeight * resolutionY * zoomY);
-
-        graphics2d.setColor(Color.red.darker());
-        graphics2d.drawRect(iMin, jMin, width - 1, height - 1);  
+        graphics2d.drawImage(paintImage.getScaledInstance((int)(paintImage.getWidth() * zoomX), (int)(paintImage.getHeight() * zoomY), 0), new AffineTransform(1f,0f,0f,1f,iMin,jMin), null);
+     
         if (frame instanceof ViewJFrameTriImage) {
         //	System.err.println("TRI IMAGE");
         }

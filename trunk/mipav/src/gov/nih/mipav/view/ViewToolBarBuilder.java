@@ -20,7 +20,7 @@ import java.net.*;
 /**
  * Builds the GUI toolbars for the user interface.
  */
-public class ViewToolBarBuilder implements ItemListener {
+public class ViewToolBarBuilder implements ItemListener, ActionListener{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -104,6 +104,12 @@ public class ViewToolBarBuilder implements ItemListener {
     private String [] paintBrushNames = null;
     
     protected static final int NUM_BRUSHES_INTERNAL = 5;
+    
+    private JPopupMenu popup = null;
+    
+    private PopupListener popupListener = null;
+    
+    public static final String USER_BRUSHES = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" + File.separator;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -440,55 +446,9 @@ public class ViewToolBarBuilder implements ItemListener {
         
         //create the list of brushes
         
-        String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" + File.separator;
-		
-        int numBrushes = NUM_BRUSHES_INTERNAL; //built in... 5 so far
-        
-		File brushesDir = new File(userBrushes);
-		if (brushesDir.isDirectory()) {
-			File [] brushes = brushesDir.listFiles();
-			
-			for (int i = 0; i < brushes.length; i++) {
-				
-				if (brushes[i].getName().startsWith("brush") &&
-						brushes[i].getName().endsWith(".png")) {
-					numBrushes++;
-				}
-			}
-		}
-        
-		Integer[] intArray = new Integer[numBrushes];
-
-        for (int i = 0; i < intArray.length; i++) {
-            intArray[i] = new Integer(i);
-        }
-		
-        paintBrushNames = new String[numBrushes];
-        
-        paintBrushNames[0] = "paint_sq_1.gif";
-        paintBrushNames[1] = "paint_sq_4.gif";
-        paintBrushNames[2] = "paint_sq_8.gif";
-        paintBrushNames[3] = "paint_sq_16.gif";
-        paintBrushNames[4] = "paint_sq_24.gif";
-        
-        if (brushesDir.isDirectory()) {
-			File [] brushes = brushesDir.listFiles();
-			int brushIndex = NUM_BRUSHES_INTERNAL;
-			for (int i = 0; i < brushes.length; i++) {
-				
-				if (brushes[i].getName().startsWith("brush") &&
-						brushes[i].getName().endsWith(".png")) {
-					paintBrushNames[brushIndex] = brushes[i].getName();
-					brushIndex++;
-				}
-			}
-		}
-        
-       
-       
-        
-        //build the new combo box of paintbrushes
+        Integer [] intArray = getPaintList();
         paintBox = new JComboBox(intArray);
+        paintBox.setFont(MipavUtil.font12);
         
         String brushName = Preferences.getProperty("LastPaintBrush");
         if (brushName == null) {
@@ -504,8 +464,24 @@ public class ViewToolBarBuilder implements ItemListener {
         	paintBox.setSelectedIndex(selectedIndex);
         }
         
-        paintBox.setRenderer(new PaintBoxRenderer());
-        paintBox.addItemListener(this);
+        paintBox.setRenderer(new PaintBoxRenderer()); 
+     
+        paintBox.addItemListener(this);  
+        
+        popup = new JPopupMenu();
+        
+        JMenuItem menuItem = new JMenuItem("Refresh");
+        menuItem.addActionListener(this);
+        popup.add(menuItem);
+
+        popup.addSeparator();
+
+        menuItem = new JMenuItem("Delete");
+        menuItem.addActionListener(this);
+        popup.add(menuItem);
+        
+        popupListener = new PopupListener();
+        paintBox.addMouseListener(popupListener);
         
         paintToolBar.add(paintBox);
         
@@ -1057,7 +1033,6 @@ public class ViewToolBarBuilder implements ItemListener {
             }
         } else if (source.equals(paintBox)) {
         	int index = paintBox.getSelectedIndex();
-        	
         	if (UI instanceof ViewJFrameImage) {
         		((ViewJFrameImage)UI).getComponentImage().loadPaintBrush(paintBrushNames[index]);
         		Preferences.setProperty("LastPaintBrush", paintBrushNames[index]);
@@ -1336,6 +1311,100 @@ public class ViewToolBarBuilder implements ItemListener {
 
     } // end updateScripts
 
+    public void actionPerformed(ActionEvent e) {
+    	if (e.getActionCommand().equals("Refresh")) {
+    		refreshPaintBox(false, -1);
+    		
+    	} else if (e.getActionCommand().equals("Delete")) {
+    		int index = paintBox.getSelectedIndex();
+    		refreshPaintBox(true, index);
+    	}
+    }
+    
+    private void refreshPaintBox(boolean doDelete, int indexOfRemoval) {
+    	JComponent parent = (JComponent)paintBox.getParent();
+		parent.setVisible(false);
+		int index = 0;
+		for (index = 0; index < parent.getComponentCount(); index++) {
+			if (parent.getComponent(index).equals(paintBox)) {
+				parent.remove(paintBox);
+				break;
+			}
+		}
+		
+		paintBox.removeItemListener(this);
+		paintBox.removeAllItems();
+		paintBox = null;
+		
+		//remove the .png here
+		if (doDelete) {
+			if (indexOfRemoval >= NUM_BRUSHES_INTERNAL) {
+				if (new File(USER_BRUSHES + File.separator + paintBrushNames[indexOfRemoval]).exists()) {
+					new File(USER_BRUSHES + File.separator + paintBrushNames[indexOfRemoval]).delete();
+				}
+			}
+		}
+		
+		Integer [] intArray = getPaintList();
+		paintBox = new JComboBox(intArray);
+		paintBox.setFont(MipavUtil.font12);
+	
+		paintBox.setRenderer(new PaintBoxRenderer()); 
+		paintBox.addItemListener(this);
+		paintBox.addMouseListener(popupListener);
+		
+		paintBox.setSelectedIndex(2);
+		
+		parent.add(paintBox, index);
+		parent.setVisible(true);
+    }
+    
+    private Integer [] getPaintList() {
+    	Integer [] intArray = null;
+		
+        int numBrushes = NUM_BRUSHES_INTERNAL; //built in... 5 so far
+        
+		File brushesDir = new File(USER_BRUSHES);
+		if (brushesDir.isDirectory()) {
+			File [] brushes = brushesDir.listFiles();
+			
+			for (int i = 0; i < brushes.length; i++) {
+				
+				if (brushes[i].getName().endsWith(".png")) {
+					numBrushes++;
+				}
+			}
+		}
+        
+		intArray = new Integer[numBrushes];
+
+        for (int i = 0; i < intArray.length; i++) {
+            intArray[i] = new Integer(i);
+        }
+		
+        paintBrushNames = new String[numBrushes];
+        
+        paintBrushNames[0] = "square 1x1.gif";
+        paintBrushNames[1] = "square 4x4.gif";
+        paintBrushNames[2] = "square 8x8.gif";
+        paintBrushNames[3] = "square 16x16.gif";
+        paintBrushNames[4] = "square 24x24.gif";
+        
+        if (brushesDir.isDirectory()) {
+			File [] brushes = brushesDir.listFiles();
+			int brushIndex = NUM_BRUSHES_INTERNAL;
+			for (int i = 0; i < brushes.length; i++) {
+				
+				if (brushes[i].getName().endsWith(".png")) {
+					paintBrushNames[brushIndex] = brushes[i].getName();
+					brushIndex++;
+				}
+			}
+		}
+    	
+    	return intArray;
+    }
+    
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
@@ -1450,7 +1519,7 @@ public class ViewToolBarBuilder implements ItemListener {
          */
         public PaintBoxRenderer() {
             setOpaque(true);
-            setHorizontalAlignment(CENTER);
+            setHorizontalAlignment(LEFT);
             setVerticalAlignment(CENTER);
         }
 
@@ -1486,18 +1555,15 @@ public class ViewToolBarBuilder implements ItemListener {
         	// Set the icon and text.  If icon was null, say so.
         	ImageIcon icon = null;
 
+        	setFont(MipavUtil.font12);
         	if (selectedIndex < NUM_BRUSHES_INTERNAL) {
         		icon = MipavUtil.getIcon(paintBrushNames[selectedIndex]);
-        		setFont(MipavUtil.font12B);
-            	setText("(" + icon.getIconWidth() + " x " + icon.getIconHeight() + ")");
+        		
         	} else {
         		URL res = null;
         		try {
-        			String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" + File.separator;
-        			res = new File(userBrushes + File.separator + paintBrushNames[selectedIndex]).toURL();
+        			res = new File(USER_BRUSHES + File.separator + paintBrushNames[selectedIndex]).toURL();
         			icon = new ImageIcon(res);
-        			setFont(MipavUtil.font12B);
-                	setText("(" + icon.getIconWidth() + " x " + icon.getIconHeight() + ")");
                 	
         			if (icon.getIconHeight() >= 20 || icon.getIconWidth() >= 20) {
         				int newWidth, newHeight;
@@ -1516,15 +1582,50 @@ public class ViewToolBarBuilder implements ItemListener {
         			//e.printStackTrace();
         		}
         	}
-        	
+        	          
+            
+        	setText(paintBrushNames[selectedIndex].substring(0, paintBrushNames[selectedIndex].lastIndexOf(".")));
         	setIcon(icon);
         	
         	setPreferredSize(new Dimension(90,24));
-        	setIconTextGap(5);
+        	setIconTextGap(10);
         	setHorizontalTextPosition(LEFT);
         	
         	return this;
         }
     }
         
+    private class PopupListener extends MouseAdapter {
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  e  DOCUMENT ME!
+         */
+        public void mousePressed(MouseEvent e) {
+            triggerPopup(e);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  e  DOCUMENT ME!
+         */
+        public void mouseReleased(MouseEvent e) {
+            triggerPopup(e);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  e  DOCUMENT ME!
+         */
+        private void triggerPopup(MouseEvent e) {
+
+            if (e.isPopupTrigger()) {
+                popup.show(e.getComponent(), e.getX(), e.getY());
+            }
+        }
+    }
+    
 }
