@@ -905,7 +905,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				
 				
 				
-				
+				//following is for 1.4 compliant
+				//otherwise, it would be : printStream.printf("%16f", b*x*x);
 				String _bxx_string = String.valueOf(_bxx);
 				int _bxx_stringLength = _bxx_string.length();
 				sb = new StringBuffer(16);
@@ -972,11 +973,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				printStream.print(sb.toString());
 				
 				printStream.println();
-				
 
-				//following is for 1.4 compliant
-				//otherwise, it would be : printStream.printf("%16f", b*x*x);
-				//printStream.println(_bxx + "\t" + _2bxy + "\t" + _2bxz + "\t" + _byy + "\t" + _2byz + "\t" + _bzz);
 			}	
 			outputStream.close();
 		}
