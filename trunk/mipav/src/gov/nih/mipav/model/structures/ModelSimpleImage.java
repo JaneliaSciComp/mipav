@@ -11,8 +11,6 @@ import java.io.*;
  * public. This class is used extensively in Registration algorithms where we needs many copies of the image where the
  * data does not need to be visible to the UserInterface. With the data array as public speed is achieved but at a cost
  * that the buffer is always of the type float.
- *
- * @version  0.1 Oct 10, 2001
  */
 
 
@@ -34,52 +32,52 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /** Z coordinate value of the center of mass for the image. */
     public float cMassZ;
 
-    /** Data buffer that makes up the image. */
+    /** Data buffer that is used to store the image. */
     public float[] data;
 
     /** Size of the data buffer (number of pixels in image). */
     public int dataSize = 1;
 
-    /** Extents, in array form. */
+    /** The dimensionality of the dataset. */
     public int[] extents;
 
     /** Indicates whether is image is a color image or not. */
     public boolean isColor = false;
 
-    /** Maximum of image. */
+    /** Maximum intensity values of image. */
     public float max, maxR, maxG, maxB;
 
-    /** Minimum of image. */
+    /** Minimum intensity values of image. */
     public float min, minR, minG, minB;
 
     /** Number of dimensions of the image. */
     public int nDims = 1;
 
-    /** Resolutions, in array form. */
+    /** Voxel resolutions (typically x,y,z(slice spacing),t). */
     public float[] resolutions;
 
-    /** Number of pixels in time dimension. */
+    /** Number of volumes in the dataset. Typically t represents time. */
     public int tDim;
 
-    /** Time resolution. */
+    /** Resolution in the time dimension. */
     public float tRes = 1.0f;
 
     /** Number of pixels in x dimension. */
     public int xDim;
 
-    /** X resolution. */
+    /** X pixel resolution. */
     public float xRes = 1.0f;
 
     /** Number of pixels in y dimension. */
     public int yDim;
 
-    /** Y resolution. */
+    /** Y pixel resolution. */
     public float yRes = 1.0f;
 
     /** Number of pixels in z dimension. */
     public int zDim;
 
-    /** Z resolution. */
+    /** Z voxel resolution. */
     public float zRes = 1.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -88,8 +86,8 @@ public class ModelSimpleImage extends ModelSerialCloneable {
      * Creates a class to hold the minimum information about an image - the extents, the resolutions, and optionall, the
      * image data.
      *
-     * @param  image  ModelImage Structure where the input image data is stored. In this particular call, this parameter
-     *                must not be null as the extents and resolutions are derived from the input image.
+     * @param  image  ModelImage structure where the input image data is stored. In this particular constructor, this
+     *                parameter must not be null as the extents and resolutions are derived from the input image.
      */
     public ModelSimpleImage(ModelImage image) {
         this(image.getExtents(), image.getFileInfo(0).getResolutions(), image);
@@ -97,6 +95,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
     /**
      * Creates a class to hold the minimum information about an image - the extents with the resolutions defaulted to 1.
+     * A data array of float type will be allocated where the size is defined by the dimExtents[].
      *
      * @param  dimExtents  Extents of the image; must be non null.
      */
@@ -138,7 +137,8 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
     /**
      * Creates a class to hold the minimum information about an image - the extents, the resolutions, and the image
-     * data. Used for a 4D image to make a 3D ModelSimpleImage.
+     * data. A data array of float type will be allocated where the size is defined by the ModelImage. Used for a 4D
+     * image to make a 3D ModelSimpleImage.
      *
      * @param  image      ModelImage Structure where the input image data is stored. In this particular call, this
      *                    parameter must not be null as the extents and resolutions are derived from the input image.
@@ -149,7 +149,8 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Creates a class to hold the minimum information about an image - the extents and the resolutions.
+     * Creates a class to hold the minimum information about an image - the extents and the resolutions. A data array of
+     * float type will be allocated where the size is defined by the dimExtents[].
      *
      * @param  dimExtents  Extents of the image; must be non null.
      * @param  voxRes      Resolutions of the image; must be non null.
@@ -191,12 +192,13 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
     /**
      * Creates a class to hold the minimum information about an image - the extents, the resolutions, and optionally,
-     * the image data.
+     * the image data. A data array of float type will be allocated where the size is defined by the dimExtents[].
      *
      * @param  dimExtents  Extents of the image; must be non null.
      * @param  voxRes      Resolutions of the image; must be non null.
      * @param  image       Structure where image data is stored; can be null. If it is null, the buffer associated with
-     *                     this class will be empty. The ModelImage is not otherwise saved within this class.
+     *                     this class will be empty. The ModelImage is not otherwise saved or referenced within this
+     *                     class.
      */
     public ModelSimpleImage(int[] dimExtents, float[] voxRes, ModelImage image) {
 
@@ -248,8 +250,8 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Creates a class to hold the minimum information about an image - the extents, the resolutions, and optionally,
-     * the image data.
+     * Creates a class to hold the minimum information about an image - the extents, the resolutions. A data array of
+     * float type will be allocated where the size is defined by the dimExtents[].
      *
      * @param  dimExtents  Extents of the image; must be non null.
      * @param  voxRes      Resolutions of the image; must be non null.
@@ -297,13 +299,14 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
     /**
      * Creates a class to hold the minimum information about an image - the extents, the resolutions, and the image
-     * data. Used for a 4D image to make a 3D ModelSimpleImage.
+     * data. A data array of float type will be allocated where the size is defined by the dimExtents[]. Used for a 4D
+     * image to make a 3D ModelSimpleImage.
      *
      * @param  dimExtents  Extents of the image; must be non null.
      * @param  voxRes      Resolutions of the image; must be non null.
      * @param  image       Structure where image data is stored; can be null. If it is null, the buffer associated with
      *                     this class will be empty. The ModelImage is not otherwise saved within this class.
-     * @param  timeSlice   Time slice to export.
+     * @param  timeSlice   Time slice to export into the 3D data array.
      */
     public ModelSimpleImage(int[] dimExtents, float[] voxRes, ModelImage image, int timeSlice) {
         nDims = Math.min(3, dimExtents.length);
@@ -357,7 +360,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Calculates the min and max values for the image array, so that the image is displayed properly.
+     * Calculates the min and max values for the image array.
      */
     public void calcMinMax() {
 
@@ -426,7 +429,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     /**
      * Calculates the center of mass (gravity) of a 2D image using the intensity of each pixel as a weighting value.
      *
-     * @param  voxelResol  if true multiply the voxel resolutions
+     * @param  voxelResol  if true multiply the center of mass by voxel resolutions.
      */
     public void calculateCenterOfMass2D(boolean voxelResol) {
         int x, y;
@@ -461,10 +464,10 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
     /**
      * Calculates the center of mass (gravity) of a 3D image. In image space where the upper left hand corner of the
-     * image is 0,0. The x axis goes left to right, y axis goes top to bottom and z axis goes into the screen. (i.e. the
-     * right hand rule). The intensity of each voxel is used as a weighting value.
+     * image is 0,0,0. The x axis goes left to right, y axis goes top to bottom and z axis goes into the screen. (i.e.
+     * the right hand rule). The intensity of each voxel is used as a weighting value.
      *
-     * @param  voxelResol  if true multiply the voxel resolutions
+     * @param  voxelResol  if true multiply the center of mass by voxel resolutions.
      */
     public void calculateCenterOfMass3D(boolean voxelResol) {
         int x, y, z;
@@ -523,9 +526,9 @@ public class ModelSimpleImage extends ModelSerialCloneable {
      * it is a color image or which contains the same values if the image is already an intensity image. Scale factors
      * are specified for how to compute the intensity image as a linear combination of the RGB channels.
      *
-     * @param   fScaleR  float Scale factor to apply to the red color channel.
-     * @param   fScaleG  float Scale factor to apply to the green color channel.
-     * @param   fScaleB  float Scale factor to apply to the blue color channel.
+     * @param   fScaleR  Scale factor to apply to the red color channel.
+     * @param   fScaleG  Scale factor to apply to the green color channel.
+     * @param   fScaleB  Scale factor to apply to the blue color channel.
      *
      * @return  ModelSimpleImage New instance created with intensity values only.
      */
@@ -536,9 +539,10 @@ public class ModelSimpleImage extends ModelSerialCloneable {
         // If not a color image, then just copy the intensity values.
         if (!this.isColor) {
 
-            for (int i = 0; i < kIntensityImage.data.length; i++) {
-                kIntensityImage.data[i] = this.data[i];
-            }
+            // for (int i = 0; i < kIntensityImage.data.length; i++) {
+            // kIntensityImage.data[i] = this.data[i];
+            // }
+            System.arraycopy(this.data, 0, kIntensityImage.data, 0, kIntensityImage.data.length);
         }
 
         // If is a color image, then combine each RGBA (ignoring the A)
@@ -558,7 +562,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
     /**
      * Create a mapping of this image. The mapping is defined by a set of floating point coordinates for each sample in
-     * the image. The coordinates are actuallys stored in separate images, one for each dimension. The number dimensions
+     * the image. The coordinates are actually stored in separate images, one for each dimension. The number dimensions
      * and the resolutions of these coordinate images must be the same so that either one can be used to determine the
      * dimensions and resolutions of the new image where the mapped source image values will be stored using bilinear
      * interpolation.
@@ -638,7 +642,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
 
     /**
      * Create a mapping of this image. The mapping is defined by a set of floating point coordinates for each sample in
-     * the image. The coordinates are actuallys stored in separate images, one for each dimension. The number dimensions
+     * the image. The coordinates are actually stored in separate images, one for each dimension. The number dimensions
      * and the resolutions of these coordinate images must be the same so that either one can be used to determine the
      * dimensions and resolutions of the new image where the mapped source image values will be stored using trilinear
      * interpolation.
@@ -776,10 +780,10 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
+     * Version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
      *
-     * @param   x  x coordinate
-     * @param   y  y coordinate
+     * @param   x  input x coordinate
+     * @param   y  input y coordinate
      *
      * @return  the bilinear interpolated value for x,y.
      */
@@ -847,7 +851,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
+     * Takes a simple image and subsamples it by 2. Linear interpolation is used.
      *
      * @return  Subsampled image.
      */
@@ -856,7 +860,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
+     * Takes a simple image and subsamples it by 2. Linear interpolation is used.
      *
      * @param   isColor  If true, indicates that this image is a color image (i.e. ARGB).
      *
@@ -881,7 +885,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
+     * Takes a simple image and subsamples it by 2. Linear interpolation is used.
      *
      * @param   resultImage  The subsampled data will be stored in this object.
      *
@@ -892,7 +896,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
+     * Takes a simple image and subsamples it by 2. Linear interpolation is used.
      *
      * @param   resultImage  The subsampled data will be stored in this object.
      * @param   isColor      If true, indicates that this image is a color image (i.e. ARGB).
@@ -999,7 +1003,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
+     * Takes a simple image and subsamples it by 2. Linear interpolation is used.
      *
      * @return  Subsampled image.
      */
@@ -1008,7 +1012,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Takes a simple image and subsamples it by 2, interpolating so that the new values are averages.
+     * Takes a simple 3D image and subsamples it by 2. Linear interpolation is used.
      *
      * @param   isColor  If true, indicates that this image is a color image (i.e. ARGB).
      *
@@ -1319,7 +1323,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Takes a simple image and subsamples XY by 2, interpolating so that the new XY values are averages.
+     * Takes a simple 3D image and subsamples each image plane (XY) by 2. Linear interpolation is used.
      *
      * @return  Subsampled image.
      */
@@ -1328,7 +1332,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     }
 
     /**
-     * Takes a simple image and subsamples XY by 2, interpolating so that the new XY values are averages.
+     * Takes a simple 3D image and subsamples each image plane (XY) by 2. Linear interpolation is used.
      *
      * @param   isColor  If true, indicates that this image is a color image (i.e. ARGB).
      *

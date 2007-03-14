@@ -24,7 +24,7 @@ public class ModelSerialCloneable implements Cloneable, Serializable {
      * Copies the object that extends this class. Can be slow sometimes because it actually copies (streams) to the hard
      * drive.
      *
-     * @return  DOCUMENT ME!
+     * @return  The cloned object. Null if there was an error.
      */
     public Object clone() {
 
@@ -48,9 +48,11 @@ public class ModelSerialCloneable implements Cloneable, Serializable {
         } catch (Exception e) {
             MipavUtil.displayError("Error cloning " + this.getClass().getName() + " :\n" + e);
             Preferences.debug("Clone() exception:\n", Preferences.DEBUG_MINOR);
+
             for (int i = 0; i < e.getStackTrace().length; i++) {
                 Preferences.debug("\t" + e.getStackTrace()[i] + "\n", Preferences.DEBUG_MINOR);
             }
+
             return null;
         }
     }
