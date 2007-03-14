@@ -73,6 +73,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	/** boolean if proc dir was created **/
 	private boolean isProcDirCreated = false;
 	
+	/** total num of volumes in study **/
+	private int totalNumVolumes = 0;
+	
 
 
 	/**
@@ -122,10 +125,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
 		for (int i = 0; i < fileInfoVector.size(); i++) {
 			FileInfoDicom fileInfoDicom = (FileInfoDicom) fileInfoVector.elementAt(i);
-			String seriesNumber = ((String) fileInfoDicom.getValue("0020,0011")).trim();
-			if (seriesNumber == null) {
-				seriesNumber = "";
+			String seriesNumber_String = ((String) fileInfoDicom.getValue("0020,0011")).trim();
+			if (seriesNumber_String == null || seriesNumber_String.equals("")) {
+				seriesNumber_String = "0";
 			}
+			Integer seriesNumber = new Integer(seriesNumber_String);
 			if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
 				seriesFileInfoTreeSet = new TreeSet(new InstanceNumberComparator());
 				seriesFileInfoTreeSet.add(fileInfoDicom);
@@ -137,14 +141,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			}
 		}
 
-		//read gradient file
-		Preferences.debug("* Reading gradient file \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Reading gradient file \n");
-		success = readGradientFile();
-		if (success == false) {
-			finalize();
-			return;
-		}
+		
 		
 
 		//create proc dir
@@ -165,6 +162,15 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			return;
 		}
 		
+		
+		//read gradient file
+		Preferences.debug("* Reading gradient file \n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append("* Reading gradient file \n");
+		success = readGradientFile();
+		if (success == false) {
+			finalize();
+			return;
+		}
 		
 		//create list file
 		Preferences.debug("* Creating list file \n", Preferences.DEBUG_ALGORITHM);
@@ -339,6 +345,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				while (iter2.hasNext()) {
 					FileInfoDicom fid = (FileInfoDicom) iter2.next();
 					String imgSlice = ((String) fid.getValue("0020,1041")).trim();
+					//this is to just get total num volumes
+					if (imgSlice.equals(imageSlice)) {
+						totalNumVolumes = totalNumVolumes + 1;
+					}
+					//this is to compare the image slices...but we dont want to get the first one
 					if (imgSlice.equals(imageSlice) && counter != 1) {
 						
 						numSlicesCheckList.add(new Integer(counter - 1 - sliceNum));
@@ -357,19 +368,19 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				}
 			}
 			
-			
 			//ok....we have equal # of image slices in all volumes of the study
 			Object[] keyArray = seriesFileInfoTreeMap.keySet().toArray();
+			String relPath;
 			for(int i=0;i<numSlicesPerVolume;i++) {
 				for(int k=0;k<keyArray.length;k++) {
 					Object[] fidArr = ((TreeSet) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
 					int numVols = fidArr.length / numSlicesPerVolume;
 					String absPath = ((FileInfoDicom) fidArr[i]).getFileDirectory();
-					String relPath = absPath.replace(studyPath, ".." + File.separator + studyName);
+					relPath = new String(".." + File.separator + studyName +absPath.substring(absPath.lastIndexOf(studyName) + studyName.length(), absPath.length()));
 					printStream.println(relPath + ((FileInfoDicom) fidArr[i]).getFileName());
 					for (int j = 1; j < numVols; j++) {
 						absPath = ((FileInfoDicom) fidArr[i + (numSlicesPerVolume * j)]).getFileDirectory();
-						relPath = absPath.replace(studyPath, ".."+ File.separator + studyName);
+						relPath = new String(".." + File.separator + studyName + absPath.substring(absPath.lastIndexOf(studyName) + studyName.length(), absPath.length()));
 						printStream.println(relPath + ((FileInfoDicom) fidArr[i + (numSlicesPerVolume * j)]).getFileName());
 					}
 					
@@ -402,8 +413,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		// FileInfoDicom
 		FileInfoDicom fileInfoDicom = (FileInfoDicom) fileInfoVector.elementAt(0);
 
-		Short originalColums = (Short)(fileInfoDicom.getValue("0028,0011"));
-		String originalColumsString = originalColums.toString();
+		Short originalColumns = (Short)(fileInfoDicom.getValue("0028,0011"));
+		String originalColumsString = originalColumns.toString();
 
 		Short originalRows = (Short) (fileInfoDicom.getValue("0028,0010"));
 		String originalRowsString = originalRows.toString();
@@ -416,7 +427,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			phaseEncodeDirection = "horizontal";
 		}
 
-		String fieldOfView = (String) (fileInfoDicom.getValue("0018,1100"));
+
 
 		String sliceThickness = ((String) (fileInfoDicom.getValue("0018,0050"))).trim();
 		float sliceTh = new Float(sliceThickness.trim()).intValue();
@@ -425,6 +436,19 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		float sliceGp = new Float(sliceGap.trim()).intValue();
 		sliceGp = sliceGp - sliceTh;
 		sliceGap = String.valueOf(sliceGp);
+		
+		String fieldOfView = (String) (fileInfoDicom.getValue("0018,1100"));
+		if(fieldOfView == null || fieldOfView.trim().equals("")) {
+			//get pixel space in x direction
+			String xyPixelSpacingString = ((String) (fileInfoDicom.getValue("0028,0030"))).trim();
+			int index = xyPixelSpacingString.indexOf("\\");
+			String xPixelSpacingString = xyPixelSpacingString.substring(0, index);
+			float xPixelSpacing = new Float(xPixelSpacingString).floatValue();
+			float fieldOfViewFloat = xPixelSpacing * originalColumns.shortValue();
+			fieldOfView = String.valueOf(fieldOfViewFloat);
+		}
+		
+		
 
 		//hard coded for now
 		String imagePlane = "axial";
@@ -507,6 +531,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	
 	/**
 	 * This method reads in the gradient file
+	 * gradient file can be in 2 differetn ways....for eDTI, there will be a number
+	 * on first line followed by correct number of gradients
+	 * if it is DTI, there will be no number and just 7 linies of gradients....this
+	 * needs to be duplicated as many times as there are series
 	 * @return boolean success
 	 */
 	public boolean readGradientFile() {
@@ -514,23 +542,72 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			String str;
 			FileInputStream fis = new FileInputStream(gradientFilePath);
 			BufferedReader d = new BufferedReader(new InputStreamReader(fis));
-			nim = new Integer(d.readLine()).intValue();
-			direction = new float[nim][3];
-			int counter = 0;
-			while((str=d.readLine()) != null) {
-				str = str.trim();
-				String[] arr = str.split(" ");
-				ArrayList arrList = new ArrayList();
-				for(int i=0;i<arr.length;i++) {
-					if(!(arr[i].trim().equals(""))){
-						arrList.add(new Float(arr[i]));
+			String firstLine = d.readLine();
+			String[] firstLineSplits = firstLine.split(" ");
+			ArrayList arrList = new ArrayList();
+			ArrayList arrList2 = new ArrayList();
+			for(int i=0;i<firstLineSplits.length;i++) {
+				if(!(firstLineSplits[i].trim().equals(""))){
+					arrList.add(new Float(firstLineSplits[i]));
+				}
+			}
+			if(arrList.size() == 1) {
+				//this means the first line is just 1 number...indicating eDTI grad file
+				nim = ((Float)arrList.get(0)).intValue();
+				direction = new float[nim][3];
+				while((str=d.readLine()) != null) {
+					str = str.trim();
+					String[] arr = str.split(" ");
+					for(int i=0;i<arr.length;i++) {
+						if(!(arr[i].trim().equals(""))){
+							arrList2.add(new Float(arr[i]));
+						}
 					}
 				}
-				direction[counter][0] = ((Float)arrList.get(0)).floatValue();
-				direction[counter][1] = ((Float)arrList.get(1)).floatValue();
-				direction[counter][2] = ((Float)arrList.get(2)).floatValue();
+
 				
-				counter++;
+				for(int j=0,k=0;j<nim;j++,k=k+3) {
+					direction[j][0] = ((Float)arrList2.get(k)).floatValue();
+					direction[j][1] = ((Float)arrList2.get(k+1)).floatValue();
+					direction[j][2] = ((Float)arrList2.get(k+2)).floatValue();
+				}
+			}
+			else {
+				//this means it is for reg DTI grad file
+				nim = totalNumVolumes;
+				direction = new float[nim][3];
+
+				while((str=d.readLine()) != null) {
+					str = str.trim();
+					String[] arr = str.split(" ");
+					for(int i=0;i<arr.length;i++) {
+						if(!(arr[i].trim().equals(""))){
+							arrList.add(new Float(arr[i]));
+						}
+					}
+				}
+				
+				for(int j=0,k=0;j<7;j++,k=k+3) {
+					direction[j][0] = ((Float)arrList.get(k)).floatValue();
+					direction[j][1] = ((Float)arrList.get(k+1)).floatValue();
+					direction[j][2] = ((Float)arrList.get(k+2)).floatValue();
+				}
+				
+				
+				//we got the first 7 lines for the direction already...so start on the 8th
+				int counter2 = 0;
+				for(int i=7;i<totalNumVolumes;i++) {
+					
+					direction[i][0] = direction[counter2][0];
+					direction[i][1] = direction[counter2][1];
+					direction[i][2] = direction[counter2][2];
+					if(i%6 == 0) {
+						//reset counter
+						counter2 = 0;
+					} else {
+						counter2++;
+					}	
+				}
 			}
 			fis.close();
 		}
@@ -553,7 +630,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 */
 	public boolean obtainBValues() {
 		//get b-values for each volume set
-		//first check to see if it eDTI....this is done by checking to see if numSlicesPerVolume is 119 or 120
+		//first check to see if it eDTI....this is done by checking to see if totalNumVolumes is 119 or 120
 		//if it is, then get SeriesDescription....if it is GE (GE_eDTI), then get BValue from Private Tag
 		//if it is Siemens (SS_eDTI), then get b-value from public tag...in which the b-value
 		//comes after ep_b
@@ -561,16 +638,18 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		// first try and retrieve the b-value from the public tag(0018,0024) and
 		//if thereg expression "ep_b" is present, get the number that follows it..
 		//however, format might also be ep_b1234#0   So...get the number between ep_b and #...this is the b-value
-		//if ep_b not there then look for fake_gedti...if there then use 0 for vol1 and 1000 rest of vols
+		//*** this line is no longer used in the algorithm..i will just comment out for now until we are sure:  -> if ep_b not there then look for fake_gedti...if there then use 0 for vol1 and 1000 rest of vols
 		//else, get the b-value from the private tag(0043,1039)....the b-value is the first number in the string
 		//that is separated by commas
 		Set ketSet = seriesFileInfoTreeMap.keySet();
 		Iterator iter = ketSet.iterator();
 		boolean isEDTI = false;
-		if (numSlicesPerVolume == 119 || numSlicesPerVolume ==120) {
+		if (totalNumVolumes == 119 || totalNumVolumes ==120) {
 			isEDTI = true;
 		}
 		if(isEDTI) {
+			Preferences.debug(" - eDTI data set b-values :\n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append(" - eDTI data set b-values :\n");
 			TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
 			int seriesFITSSize = seriesFITS.size();
 			int numVols = seriesFITSSize / numSlicesPerVolume;
@@ -670,6 +749,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			}
 		}
 		else {
+			Preferences.debug(" - DTI data set b-values :\n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append(" - DTI data set b-values :\n");
 			while (iter.hasNext()) {
 				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
 				int seriesFITSSize = seriesFITS.size();
@@ -701,7 +782,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 						    bValue = new Float(bValueString);
 							bValuesArrayList.add(bValue);
 							continue;
-						}
+						}/*
 						else {
 							String fake_gedti = "fake_gedti";
 							index = bValueLongString_pubTag.indexOf(fake_gedti);	
@@ -715,7 +796,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 								bValuesArrayList.add(new Float(1000));
 								continue;
 							}
-						}
+						}*/
 					}
 					if(index == -1) {
 						try {
@@ -753,8 +834,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		}
 		
 		//lets output the b-values to screen:
-		Preferences.debug(" - b-values : [  ", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append(" - b-values : [  ");
+		Preferences.debug(" - [  ", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append(" - [  ");
 		for (int i = 0; i < bValuesArrayList.size(); i++) {
 			float b = ((Float)bValuesArrayList.get(i)).floatValue();
 			Preferences.debug(String.valueOf(b) + "   ", Preferences.DEBUG_ALGORITHM);
@@ -781,7 +862,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 */
 	public boolean createBMatrixFile() {
 		try {
-
+			StringBuffer sb;
+			int padLength;
 			File bMatrixFile = new File(studyPath + "_proc" + File.separator + studyName + ".BMTXT");
 			FileOutputStream outputStream = new FileOutputStream(bMatrixFile);
 			PrintStream printStream = new PrintStream(outputStream);
@@ -794,11 +876,107 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				float x = direction[i][0];
 				float y = direction[i][1];
 				float z = direction[i][2];
-
 				
+				float _bxx = b*x*x;
+				if(Math.abs(_bxx) == 0) {
+					_bxx = Math.abs(_bxx);
+				}
+				float _2bxy = 2*b*x*y;
+				if(Math.abs(_2bxy) == 0) {
+					_2bxy = Math.abs(_2bxy);
+				}
+				float _2bxz = 2*b*x*z;
+				if(Math.abs(_2bxz) == 0) {
+					_2bxz = Math.abs(_2bxz);
+				}
+				float _byy = b*y*y;
+				if(Math.abs(_byy) == 0) {
+					_byy = Math.abs(_byy);
+				}
+				float _2byz = 2*b*y*z;
+				if(Math.abs(_2byz) == 0) {
+					_2byz = Math.abs(_2byz);
+				}
+				float _bzz = b*z*z;
+				if(Math.abs(_bzz) == 0) {
+					_bzz = Math.abs(_bzz);
+				}
+				
+				
+				
+				
+				
+				String _bxx_string = String.valueOf(_bxx);
+				int _bxx_stringLength = _bxx_string.length();
+				sb = new StringBuffer(16);
+				padLength = 16 - _bxx_stringLength;
+				for(int j=0;j<padLength;j++) {
+					sb.insert(j, " ");
+				}
+				sb.insert(padLength, _bxx_string);
+				printStream.print(sb.toString());
+				
+				
+				String _2bxy_string = String.valueOf(_2bxy);
+				int _2bxy_stringLength = _2bxy_string.length();
+				sb = new StringBuffer(16);
+				padLength = 16 - _2bxy_stringLength;
+				for(int j=0;j<padLength;j++) {
+					sb.insert(j, " ");
+				}
+				sb.insert(padLength, _2bxy_string);
+				printStream.print(sb.toString());
+				
+				
+				String _2bxz_string = String.valueOf(_2bxz);
+				int _2bxz_stringLength = _2bxz_string.length();
+				sb = new StringBuffer(16);
+				padLength = 16 - _2bxz_stringLength;
+				for(int j=0;j<padLength;j++) {
+					sb.insert(j, " ");
+				}
+				sb.insert(padLength, _2bxz_string);
+				printStream.print(sb.toString());
+				
+				
+				String _byy_string = String.valueOf(_byy);
+				int _byy_stringLength = _byy_string.length();
+				sb = new StringBuffer(16);
+				padLength = 16 - _byy_stringLength;
+				for(int j=0;j<padLength;j++) {
+					sb.insert(j, " ");
+				}
+				sb.insert(padLength, _byy_string);
+				printStream.print(sb.toString());
+				
+				
+				String _2byz_string = String.valueOf(_2byz);
+				int _2byz_stringLength = _2byz_string.length();
+				sb = new StringBuffer(16);
+				padLength = 16 - _2byz_stringLength;
+				for(int j=0;j<padLength;j++) {
+					sb.insert(j, " ");
+				}
+				sb.insert(padLength, _2byz_string);
+				printStream.print(sb.toString());
+				
+				
+				String _bzz_string = String.valueOf(_bzz);
+				int _bzz_stringLength = _bzz_string.length();
+				sb = new StringBuffer(16);
+				padLength = 16 - _bzz_stringLength;
+				for(int j=0;j<padLength;j++) {
+					sb.insert(j, " ");
+				}
+				sb.insert(padLength, _bzz_string);
+				printStream.print(sb.toString());
+				
+				printStream.println();
+				
+
 				//following is for 1.4 compliant
 				//otherwise, it would be : printStream.printf("%16f", b*x*x);
-				printStream.println(b*x*x + "\t" + 2*b*x*y + "\t" + 2*b*x*z + "\t" + b*y*y + "\t" + 2*b*y*z + "\t" + b*z*z);
+				//printStream.println(_bxx + "\t" + _2bxy + "\t" + _2bxz + "\t" + _byy + "\t" + _2byz + "\t" + _bzz);
 			}	
 			outputStream.close();
 		}
