@@ -998,6 +998,14 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         return opacity;
     }
 
+    public int getPaintBrush() {
+    	if (paintBox != null) {
+    		return paintBox.getSelectedIndex();
+    	} else {
+    		return 0;
+    	}
+    }
+    
     /**
      * Accessor that returns the current color of the paint.
      *
@@ -1125,6 +1133,17 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         opacity = op;
     }
 
+    /**
+     * Sets the index of the paintBox (to select a different paint brush)
+     * @param index index of the paint box (brush) to select
+     */
+    public void setPaintBrush(int index) {
+    	if (paintBox != null && 
+    			index < paintBrushNames.length) {
+    		paintBox.setSelectedIndex(index);
+    	}
+    }
+    
     /**
      * Accessor that sets the color of the paint.
      *
