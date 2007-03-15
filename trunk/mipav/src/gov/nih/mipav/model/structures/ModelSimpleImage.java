@@ -868,7 +868,7 @@ public class ModelSimpleImage extends ModelSerialCloneable {
      */
     public ModelSimpleImage subSample2dBy2(boolean isColor) {
         ModelSimpleImage srcImage = this;
-        int c;
+
         int[] extents = new int[srcImage.nDims];
         float[] resolutions = new float[srcImage.nDims];
         float[] distance = new float[srcImage.nDims];
@@ -1341,7 +1341,6 @@ public class ModelSimpleImage extends ModelSerialCloneable {
     public ModelSimpleImage subsample3dBy2XY(boolean isColor) {
         ModelSimpleImage srcImage = this;
 
-        int c;
         int[] extents = new int[srcImage.nDims];
         float[] resolutions = new float[srcImage.nDims];
         float[] distance = new float[srcImage.nDims];
