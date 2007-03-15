@@ -54,18 +54,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * there is above it.  For example, if the FFT is 2048 by 2048 by 2048, the center occurs at (1024,1024,1024) so
      * that (0,0,0) is further away than (2047,2047,2047) */
 
-    /** Thin paint brush, 1 pixel wide. */
-    public static final int thinPaint = 0;
-
-    /** Medium paint brush, 4 pixel wide. */
-    public static final int medPaint = 1;
-
-    /** Thick paint brush, 8 pixel wide. */
-    public static final int thickPaint = 2;
-
-    /** The thickest paint brush, 16 pixels wide. */
-    public static final int thickestPaint = 3;
-
     /** DOCUMENT ME! */
     public static final int EXPONENTIAL = 0;
 
@@ -435,7 +423,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         mode = DEFAULT;
-        paintBrushSize = thickestPaint;
 
         if (imgBufferA == null) {
             int bufferFactor = (imageA.isColorImage() ? 4 : 1);
@@ -547,7 +534,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     	}
     	
     	int [] brushExtents = brushImage.getExtents();
-    	
+    	    	
     	//create the bitset and the brush dimensions
     	paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
     	paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
@@ -566,10 +553,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 		
 		int length = buffer.length;
 	
-		//create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
-		paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.width, BufferedImage.TYPE_INT_ARGB);
+		if (paintImage != null) {
+			paintImage.flush();
+			paintImage = null;
+		}
 		
-		Color transRed = new Color(Color.red.getRed(), Color.red.getGreen(), Color.red.getBlue(), 150);
+		//create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
+		paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
+		
+	
 						
 		//set or clear the bitset based on the black pixels (black == on)
 		for ( int i = 0; i < length; i += 4, counter++) {
@@ -580,18 +572,32 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 			}
 		}
 		
-		counter = 0;
-		for (int y = 0; y < paintBrushDim.height; y++) {
-			for (int x = 0; x < paintBrushDim.width; x++, counter++) {
-				if (paintBrush.get(counter)) {
-					paintImage.setRGB(x, y, transRed.getRGB());
-				}
-			}
-		}
+		updatePaintBrushCursor();
 		
 		//remove the image created as it is no longer needed
 		brushImage.disposeLocal();
 		
+    }
+    
+    /** Updates the Paint Cursor's BufferedImage with the correct color/opacity */
+    public void updatePaintBrushCursor() {
+    	int opacity = MipavMath.round(255 * .3);
+    	Color paintColor = Color.red;
+		try {
+			opacity = (int)(frame.getControls().getTools().getOpacity() * 255);
+			paintColor = frame.getControls().getTools().getPaintColor();
+		} catch (Exception e) {}
+		
+		Color brushColor = new Color(paintColor.getRed(),paintColor.getGreen(), paintColor.getBlue(), opacity);
+    	int counter = 0;
+		
+		for (int y = 0; y < paintBrushDim.height; y++) {
+			for (int x = 0; x < paintBrushDim.width; x++, counter++) {
+				if (paintBrush.get(counter)) {
+					paintImage.setRGB(x, y, brushColor.getRGB());
+				}
+			}
+		}
     }
     
     /**
@@ -4948,20 +4954,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-        int xS = getScaledX(lastMouseX); // zoomed x.  Used as cursor
-        int yS = getScaledY(lastMouseY); // zoomed y.  Used as cursor
-
-        int jMin = yS;
-        int iMin = xS;
-
-        iMin *= zoomX * resolutionX;
-        jMin *= zoomY * resolutionY;
-
-        graphics2d.drawImage(paintImage.getScaledInstance((int)(paintImage.getWidth() * zoomX), (int)(paintImage.getHeight() * zoomY), 0), new AffineTransform(1f,0f,0f,1f,iMin,jMin), null);
-     
-        if (frame instanceof ViewJFrameTriImage) {
-        //	System.err.println("TRI IMAGE");
-        }
+        int xS = lastMouseX;
+        int yS = lastMouseY;
+        // yx, xz
+        float factor = 1f;
+        float factor2 = 1f;
+        	
+        factor = resolutionX / resolutionY;
+        if (factor < 1) {
+        	factor2 = 1f / factor;
+        	factor = 1f;
+        } 
+        	
+        graphics2d.drawImage(paintImage.getScaledInstance(MipavMath.round(paintImage.getWidth() * zoomX * factor), MipavMath.round(paintImage.getHeight() * zoomY * factor2), 0), new AffineTransform(1f,0f,0f,1f,xS,yS), null);  
     }
     
     

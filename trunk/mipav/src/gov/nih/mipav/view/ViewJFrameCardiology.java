@@ -615,19 +615,19 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
         switch (keyCode) {
 
             case KeyEvent.VK_1:
-                componentImage.setPaintBrushSize(componentImage.thinPaint);
+            //    componentImage.setPaintBrushSize(componentImage.thinPaint);
                 break;
 
             case KeyEvent.VK_2:
-                componentImage.setPaintBrushSize(componentImage.medPaint);
+           //     componentImage.setPaintBrushSize(componentImage.medPaint);
                 break;
 
             case KeyEvent.VK_3:
-                componentImage.setPaintBrushSize(componentImage.thickPaint);
+            //    componentImage.setPaintBrushSize(componentImage.thickPaint);
                 break;
 
             case KeyEvent.VK_4:
-                componentImage.setPaintBrushSize(componentImage.thickestPaint);
+             //   componentImage.setPaintBrushSize(componentImage.thickestPaint);
                 break;
         }
 

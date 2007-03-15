@@ -152,18 +152,48 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 	private void saveBrush() {
 		int [] extents = new int[2];
 		
-		extents[0] = gridWidth;
-		extents[1] = gridHeight;
+		int xStart = -1;
+		int yStart = -1;
+		int xEnd = 0;
+		int yEnd = 0;
+		
+		
+		//find the bounds on the grid image so that we can save a trimmed version to .png
+		for (int i = 0; i < gridHeight; i++) {
+			for (int j = 0; j < gridWidth; j++) {
+				if( buttonGrid[i][j].isSelected()) {
+					if (xStart == -1) {
+						xStart = j;
+					}
+					if (yStart == -1) {
+						yStart = i;
+					}
+					if (j > xEnd) {
+						xEnd = j;
+					}
+					
+					yEnd = i;
+				}
+			}
+		}
+		int width = xEnd - xStart;
+		int height = yEnd - yStart;
+		
+		extents[0] = width;
+		extents[1] = height;
 		
 		ModelImage brushImage = new ModelImage(ModelStorageBase.ARGB, extents, "brush");	
 		ViewJFrameImage iFrame = new ViewJFrameImage(brushImage);
-		BitSet bitset = new BitSet(gridWidth * gridHeight);
+		
+		
+		
+		BitSet bitset = new BitSet(width * height);
 		
 		int counter = 0;
 		
 		
-		for (int i = 0; i < gridHeight; i++) {
-			for (int j = 0; j < gridWidth; j++, counter++) {
+		for (int i = yStart; i < yEnd; i++) {
+			for (int j = xStart; j < xEnd; j++, counter++) {
 				if( buttonGrid[i][j].isSelected()) {
 					bitset.set(counter);
 				} else {
@@ -172,7 +202,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 			}
 		}
 		
-		int [] buffer = new int[4 * gridWidth * gridHeight];
+		int [] buffer = new int[4 * width * height];
      
 
         int i = 0;
@@ -180,9 +210,9 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
         Color background = getContentPane().getBackground();
         
         	
-        for (int y = 0; y < gridHeight; y++) {
+        for (int y = 0; y < height; y++) {
 
-            for (int x = 0; x < gridWidth; x++, counter++) {
+            for (int x = 0; x < width; x++, counter++) {
             	
             	if (bitset.get(counter)) {
             		buffer[i] = 0;
@@ -214,11 +244,6 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		
 		File brushesDir = new File(userBrushes);
 		brushesDir.mkdirs();
-			
-		int count = 0;
-		if (brushesDir.isDirectory()) {
-			 count = brushesDir.listFiles().length;
-		}
 		
 		options.setFileDirectory(userBrushes);
 		if (wasLoaded) {

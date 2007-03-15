@@ -150,6 +150,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     /** Only want one gridoptions dialog per jframeimage */
     private JDialogGridOptions gridOptions = null;
+       
+    /** Holds the selected Paint brush index while painting in hold 0-9 key mode */
+    private int previousPaintBrushIndex = 0;
+    
+    /** used in conjuction with the above variable, stating that the paint brush has been changed but will change back to previous*/
+    private boolean paintBrushLocked = false;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1342,15 +1348,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("SmoothVOI")) {
             new JDialogBSmooth(this, getActiveImage(), zSlice);
         } // Paint
-        else if (command.equals("ThinPaint")) {
-            componentImage.setPaintBrushSize(ViewJComponentEditImage.thinPaint);
-        } else if (command.equals("MedPaint")) {
-            componentImage.setPaintBrushSize(ViewJComponentEditImage.medPaint);
-        } else if (command.equals("ThickPaint")) {
-            componentImage.setPaintBrushSize(ViewJComponentEditImage.thickPaint);
-        } else if (command.equals("ThickestPaint")) {
-            componentImage.setPaintBrushSize(ViewJComponentEditImage.thickestPaint);
-        } else if (command.equals("colorPaint")) { // new colour dialog only when null
+         else if (command.equals("colorPaint")) { // new colour dialog only when null
 
             if (colorChooser == null) {
                 colorChooser = new ViewJColorChooser(this, "Pick paint color", new OkColorListener(), null);
@@ -3554,10 +3552,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void keyPressed(KeyEvent e) {
 
-        // System.err.println("got something");
         int keyCode = e.getKeyCode();
-        componentImage.rememberPaintBrushSize();
-
         switch (keyCode) {
 
             case KeyEvent.VK_PAGE_DOWN:
@@ -3568,47 +3563,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             case KeyEvent.VK_PAGE_UP:
                 incSlice();
 
-                return;
-
-            case KeyEvent.VK_1:
-                if (!e.isControlDown()) {
-                    componentImage.setPaintBrushSize(ViewJComponentEditImage.thinPaint);
-                    componentImage.repaint();
-
-                    return;
-                }
-
-                break;
-
-            case KeyEvent.VK_2:
-                if (!e.isControlDown()) {
-                    componentImage.setPaintBrushSize(ViewJComponentEditImage.medPaint);
-                    componentImage.repaint();
-
-                    return;
-                }
-
-                break;
-
-            case KeyEvent.VK_3:
-                if (!e.isControlDown()) {
-                    componentImage.setPaintBrushSize(ViewJComponentEditImage.thickPaint);
-                    componentImage.repaint();
-
-                    return;
-                }
-
-                break;
-
-            case KeyEvent.VK_4:
-                if (!e.isControlDown()) {
-                    componentImage.setPaintBrushSize(ViewJComponentEditImage.thickestPaint);
-                    componentImage.repaint();
-
-                    return;
-                }
-
-                break;
+                return;           
 
             case KeyEvent.VK_UP:
             case KeyEvent.VK_DOWN:
@@ -3617,6 +3572,24 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 getComponentImage().getVOIHandler().handleArrowKeysVOI(e);
 
                 return;
+        }
+        
+        if (!e.isControlDown()) {
+        	if ( keyCode >= '0' && keyCode <= '9') {
+        	
+        		int index = keyCode - 49;
+        		if (index < 0) {
+        			index = 10;
+        		}
+        		if (!paintBrushLocked) {
+        			previousPaintBrushIndex = getControls().getTools().getPaintBrush();
+        			getControls().getTools().setPaintBrush(index);
+        			getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
+        			paintBrushLocked = true;
+        			updateImages(true);
+        		}
+        		return;
+        	}
         }
 
         // look for shortcuts now
@@ -3639,7 +3612,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void keyReleased(KeyEvent e) {
         int keyCode = e.getKeyCode();
-
         switch (keyCode) {
 
             case KeyEvent.VK_HOME:
@@ -3661,15 +3633,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     componentImage.getVOIHandler().deleteSelectedVOI(true);
 
                 }
-
-                return;
-
-            case KeyEvent.VK_1:
-            case KeyEvent.VK_2:
-            case KeyEvent.VK_3:
-            case KeyEvent.VK_4:
-                componentImage.resetPaintBrushSize();
-                componentImage.repaint();
 
                 return;
 
@@ -3719,6 +3682,18 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
 
         }
+        if (!e.isControlDown()) {
+        	if ( keyCode >= '0' && keyCode <= '9') {
+        		if (paintBrushLocked) {
+        			getControls().getTools().setPaintBrush(previousPaintBrushIndex);
+        			getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
+        			updateImages(true);
+        			paintBrushLocked = false;
+        		}
+        	
+        	}
+        }
+        
     }
 
     /**
@@ -4554,6 +4529,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return false;
         }
 
+        //redraw the paintBrushCursor (quick)
+        componentImage.updatePaintBrushCursor();
+        
         if (componentImage.show(tSlice, zSlice, LUTa, LUTb, forceShow, interpMode) == false) {
             return false;
         }
@@ -5628,10 +5606,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          * @param  e  DOCUMENT ME!
          */
         public void actionPerformed(ActionEvent e) {
+        	System.err.println("got here somehow:");
             Color color = colorChooser.getColor();
-
             controls.getTools().setPaintColor(color);
-
             if (linkTriFrame != null) {
                 linkTriFrame.setPaintColor(color);
             }

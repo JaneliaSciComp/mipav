@@ -1822,8 +1822,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         else {
             super.setMode(newMode);
         }
-
-        setCursor(crosshairCursor);
+        
+        if (newMode == PAINT_VOI) {
+        	setCursor(MipavUtil.blankCursor);
+        } else {
+        	setCursor(crosshairCursor);
+        }
     }
 
     /**
@@ -2148,7 +2152,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         	
         	int brushXDim = paintBrushDim.width;
         	int brushYDim = paintBrushDim.height;
-        	System.err.println("Dims: " + paintBrushDim);
                 	
         	for (int height = 0; height < brushYDim; height++) {
         		for (int width = 0; width < brushXDim; width++) {

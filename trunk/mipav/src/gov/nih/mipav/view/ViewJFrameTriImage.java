@@ -381,6 +381,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
 
+    /** for use in holding down 1-9 or 0 key to change paint brush on the fly */
+    private int previousPaintBrushIndex = 0;
+    
+    /** used with the above to say the paint brush has been changed, waiting to change back*/
+    private boolean paintBrushLocked = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -708,38 +714,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                         // triImage[i].setProtractorVisible(true);
                         triImage[i].repaint();
                     }
-                }
-            }
-        } else if (command.equals("ThinPaint")) {
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].setPaintBrushSize(ViewJComponentTriImage.thinPaint);
-                }
-            }
-        } else if (command.equals("MedPaint")) {
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].setPaintBrushSize(ViewJComponentTriImage.medPaint);
-                }
-            }
-        } else if (command.equals("ThickPaint")) {
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].setPaintBrushSize(ViewJComponentTriImage.thickPaint);
-                }
-            }
-        } else if (command.equals("ThickestPaint")) {
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].setPaintBrushSize(ViewJComponentTriImage.thickestPaint);
                 }
             }
         } else if (command.equals("colorPaint")) {
@@ -1537,38 +1511,24 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
-        int newPaintBrushSize = triImage[AXIAL_A].getBrushSize();
 
-        switch (keyCode) {
-
-            case KeyEvent.VK_1:
-                newPaintBrushSize = ViewJComponentEditImage.thinPaint;
-                break;
-
-            case KeyEvent.VK_2:
-                newPaintBrushSize = ViewJComponentEditImage.medPaint;
-                break;
-
-            case KeyEvent.VK_3:
-                newPaintBrushSize = ViewJComponentEditImage.thickPaint;
-                break;
-
-            case KeyEvent.VK_4:
-                newPaintBrushSize = ViewJComponentEditImage.thickestPaint;
-                break;
-        }
-
-        if (newPaintBrushSize != triImage[AXIAL_A].getBrushSize()) // there has been a change in the paint brush size
-        {
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].rememberPaintBrushSize();
-                    triImage[i].setPaintBrushSize(newPaintBrushSize);
-                    triImage[i].repaint();
-                }
-            }
+        if (!e.isControlDown()) {
+        	if ( keyCode >= '0' && keyCode <= '9') {
+        	
+        		int index = keyCode - 49;
+        		if (index < 0) {
+        			index = 10;
+        		}
+        		if (!paintBrushLocked) {
+        			previousPaintBrushIndex = paintBox.getSelectedIndex();
+        			if (index < paintBox.getItemCount()) {
+        				paintBox.setSelectedIndex(index);
+        				triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+        				paintBrushLocked = true;
+        			}
+        		}
+        		return;
+        	}
         }
     }
 
@@ -1593,22 +1553,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 }
 
                 break;
-
-            case KeyEvent.VK_1:
-            case KeyEvent.VK_2:
-            case KeyEvent.VK_3:
-            case KeyEvent.VK_4:
-                for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                    if (triImage[i] != null) {
-                        triImage[i].resetPaintBrushSize();
-                        triImage[i].repaint();
-                    }
-                }
-
-                break;
+            
         }
 
+        if (!e.isControlDown()) {
+        	if ( keyCode >= '0' && keyCode <= '9') {
+        		if (paintBrushLocked && previousPaintBrushIndex < paintBox.getItemCount()) {
+        			
+        			paintBox.setSelectedIndex(previousPaintBrushIndex);
+        			triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+        			paintBrushLocked = false;
+        		}
+        	
+        	}
+        }
+        
     }
 
     /**
@@ -2515,7 +2474,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
-
+            	
+            	//redraw the paint brush cursor (quick)
+            	triImage[i].updatePaintBrushCursor();
+            	
                 if (triImage[i].show(tSlice, LUTa, LUTb, forceShow, interpMode) == false) {
                     return false;
                 }
@@ -3023,7 +2985,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         
         //build the new combo box of paintbrushes
         paintBox = new JComboBox(intArray);
-        
+        paintBox.setFont(MipavUtil.font12);
         String brushName = Preferences.getProperty("LastPaintBrush");
         if (brushName == null) {
         	paintBox.setSelectedIndex(2);
@@ -3204,6 +3166,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             triImage.setResolutions(1, 1);
         }
 
+        triImage.addKeyListener(this);
+        
         return triImage;
     }
 

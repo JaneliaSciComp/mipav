@@ -227,12 +227,25 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
             current.setText(String.valueOf(opacity));
 
             if (!opacitySlider.getValueIsAdjusting()) {
+            	System.err.println("Stopped adjusting");
                 if (controls != null) {
                     controls.getTools().setOpacity(opacity);
                 }
-                if ( parentFrame != null )
-                {
-                    ((ViewJFrameBase) parentFrame).updateImages(true);
+                
+                if (parentFrame instanceof ViewJFrameTriImage) {
+                	for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+
+                		if (((ViewJFrameTriImage)parentFrame).getTriImage(i) != null) {
+                			((ViewJFrameTriImage)parentFrame).getTriImage(i).getActiveImage().notifyImageDisplayListeners(null, true);
+                		}
+                	}
+                } else if (parentFrame instanceof ViewJFrameImage) {
+                	((ViewJFrameImage)parentFrame).getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
+                } else {
+                	if ( parentFrame != null )
+                	{                	                	
+                		((ViewJFrameBase) parentFrame).updateImages(true);
+                	}
                 }
                 if ( surfacePaint != null )
                 {
