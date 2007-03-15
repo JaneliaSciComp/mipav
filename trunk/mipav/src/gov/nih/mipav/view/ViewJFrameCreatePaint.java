@@ -133,8 +133,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 			
 			for (int i = 0; i < brushes.length; i++) {
 				
-				if (brushes[i].getName().startsWith("brush") &&
-						brushes[i].getName().endsWith(".png")) {
+				if (brushes[i].getName().endsWith(".png")) {
 					brushItem = new JMenuItem(brushes[i].getName());
 					brushItem.addActionListener(this);
 					brushItem.setActionCommand(brushes[i].getPath());
@@ -176,8 +175,10 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 				}
 			}
 		}
-		int width = xEnd - xStart;
-		int height = yEnd - yStart;
+		int width = xEnd - xStart + 1;
+		int height = yEnd - yStart + 1;
+		
+		System.err.println("Width is: " + width + ", height is: " + height);
 		
 		extents[0] = width;
 		extents[1] = height;
@@ -185,15 +186,15 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		ModelImage brushImage = new ModelImage(ModelStorageBase.ARGB, extents, "brush");	
 		ViewJFrameImage iFrame = new ViewJFrameImage(brushImage);
 		
-		
+		System.err.println("xStart: " + xStart + ", yStart: " + yStart + ", xEnd: " + xEnd + ", yEnd: " + yEnd);
 		
 		BitSet bitset = new BitSet(width * height);
 		
 		int counter = 0;
 		
 		
-		for (int i = yStart; i < yEnd; i++) {
-			for (int j = xStart; j < xEnd; j++, counter++) {
+		for (int i = yStart; i <= yEnd; i++) {
+			for (int j = xStart; j <= xEnd; j++, counter++) {
 				if( buttonGrid[i][j].isSelected()) {
 					bitset.set(counter);
 				} else {
