@@ -596,12 +596,12 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				
 				//we got the first 7 lines for the direction already...so start on the 8th
 				int counter2 = 0;
-				for(int i=7;i<totalNumVolumes;i++) {
+				for(int i=8;i<=totalNumVolumes;i++) {
 					
-					direction[i][0] = direction[counter2][0];
-					direction[i][1] = direction[counter2][1];
-					direction[i][2] = direction[counter2][2];
-					if(i%6 == 0) {
+					direction[i-1][0] = direction[counter2][0];
+					direction[i-1][1] = direction[counter2][1];
+					direction[i-1][2] = direction[counter2][2];
+					if(i%7 == 0) {
 						//reset counter
 						counter2 = 0;
 					} else {
@@ -618,7 +618,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			outputTextArea.append("! ERROR: reading of gradient file failed....exiting algorithm \n");
 			return false;
 		}
-
+		
 		return true;
 	}
 	
@@ -650,102 +650,104 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		if(isEDTI) {
 			Preferences.debug(" - eDTI data set b-values :\n", Preferences.DEBUG_ALGORITHM);
 			outputTextArea.append(" - eDTI data set b-values :\n");
-			TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-			int seriesFITSSize = seriesFITS.size();
-			int numVols = seriesFITSSize / numSlicesPerVolume;
-			Object[] fidArr = seriesFITS.toArray();
-			boolean isGE = false;
-			boolean isSiemens = false;
-			int edtiIndex = -1;
-			Float bValue;
-			TreeSet firstTS = (TreeSet)seriesFileInfoTreeMap.get(seriesFileInfoTreeMap.firstKey());
-			FileInfoDicom firstFID = (FileInfoDicom)firstTS.first();
-			String seriesDescLowerCase = ((String)firstFID.getValue("0008,103E")).toLowerCase();
-			String ge_edti = "ge_edti";
-			String ss_edti = "ss_edti";
-			edtiIndex = seriesDescLowerCase.indexOf(ge_edti);
-			if(edtiIndex != -1) {
-				isGE = true;
-			}
-			edtiIndex = -1;
-			edtiIndex = seriesDescLowerCase.indexOf(ss_edti);
-			if(edtiIndex != -1) {
-				isSiemens = true;
-			}
-			if(isGE) {
-				String bValueLongString_privTag = "";
-				String bValueString;
-				for(int k = 0; k < numVols; k++) {
-					try {
-						if(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0043,1039") != null) {
-							bValueLongString_privTag = (String)(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0043,1039"));
+			while (iter.hasNext()) {
+				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+				int seriesFITSSize = seriesFITS.size();
+				int numVols = seriesFITSSize / numSlicesPerVolume;
+				Object[] fidArr = seriesFITS.toArray();
+				boolean isGE = false;
+				boolean isSiemens = false;
+				int edtiIndex = -1;
+				Float bValue;
+				TreeSet firstTS = (TreeSet)seriesFileInfoTreeMap.get(seriesFileInfoTreeMap.firstKey());
+				FileInfoDicom firstFID = (FileInfoDicom)firstTS.first();
+				String seriesDescLowerCase = ((String)firstFID.getValue("0008,103E")).toLowerCase();
+				String ge_edti = "ge_edti";
+				String ss_edti = "ss_edti";
+				edtiIndex = seriesDescLowerCase.indexOf(ge_edti);
+				if(edtiIndex != -1) {
+					isGE = true;
+				}
+				edtiIndex = -1;
+				edtiIndex = seriesDescLowerCase.indexOf(ss_edti);
+				if(edtiIndex != -1) {
+					isSiemens = true;
+				}
+				if(isGE) {
+					String bValueLongString_privTag = "";
+					String bValueString;
+					for(int k = 0; k < numVols; k++) {
+						try {
+							if(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0043,1039") != null) {
+								bValueLongString_privTag = (String)(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0043,1039"));
+							}
 						}
-					}
-					catch(NullPointerException e) {
-						Preferences.debug("! ERROR: The private tag info of 0043,1039 needs to be added to your dicom dictionary....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-						outputTextArea.append("! ERROR: The private tag info of 0043,1039 needs to be added to your dicom dictionary....exiting algorithm \n");
-						return false;
-					}
-					if (bValueLongString_privTag != null && (!bValueLongString_privTag.trim().equals(""))) {	
-						int index_privTag = bValueLongString_privTag.indexOf("\\");
-						if(index_privTag != -1) {
-							bValueString = (bValueLongString_privTag.substring(0, index_privTag)).trim();
-							bValue = new Float(bValueString);
-							bValuesArrayList.add(bValue);
-							continue;
+						catch(NullPointerException e) {
+							Preferences.debug("! ERROR: The private tag info of 0043,1039 needs to be added to your dicom dictionary....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+							outputTextArea.append("! ERROR: The private tag info of 0043,1039 needs to be added to your dicom dictionary....exiting algorithm \n");
+							return false;
+						}
+						if (bValueLongString_privTag != null && (!bValueLongString_privTag.trim().equals(""))) {	
+							int index_privTag = bValueLongString_privTag.indexOf("\\");
+							if(index_privTag != -1) {
+								bValueString = (bValueLongString_privTag.substring(0, index_privTag)).trim();
+								bValue = new Float(bValueString);
+								bValuesArrayList.add(bValue);
+								continue;
+							}
+							else {
+								Preferences.debug("! ERROR: No b-value found for GE eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+								outputTextArea.append("! ERROR: No b-value found for GE eDTI....exiting algorithm \n");
+								return false;
+							}
 						}
 						else {
 							Preferences.debug("! ERROR: No b-value found for GE eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
 							outputTextArea.append("! ERROR: No b-value found for GE eDTI....exiting algorithm \n");
 							return false;
-						}
-					}
-					else {
-						Preferences.debug("! ERROR: No b-value found for GE eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-						outputTextArea.append("! ERROR: No b-value found for GE eDTI....exiting algorithm \n");
-						return false;
-					}	
-				}
-			}
-			else if(isSiemens) {
-				String bValueLongString_pubTag = "";
-				String bValueString;
-				int poundIndex = -1;
-				for(int k = 0; k < numVols; k++) {
-					bValueLongString_pubTag = (String)(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0018,0024"));
-					int length = 0;
-					int index = -1;
-					if(bValueLongString_pubTag != null && (!bValueLongString_pubTag.trim().equals(""))) {
-						String ep_b = "ep_b";
-					    length = ep_b.length();
-					    index = bValueLongString_pubTag.indexOf(ep_b);
-					    poundIndex = bValueLongString_pubTag.indexOf('#');
-					    if(index != -1) {
-							index = index + length;
-							if(poundIndex != -1 && poundIndex > index) {
-								bValueString = (bValueLongString_pubTag.substring(index, poundIndex)).trim();
-							}
-							else {
-								bValueString = (bValueLongString_pubTag.substring(index, bValueLongString_pubTag.length())).trim();
-							}
-
-						    bValue = new Float(bValueString);
-							bValuesArrayList.add(bValue);
-							continue;
-						}
-					    else {
-							Preferences.debug("! ERROR: No b-value found for Siemens eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-							outputTextArea.append("! ERROR: No b-value found for Siemens eDTI....exiting algorithm \n");
-							return false;
-					    }
+						}	
 					}
 				}
-				
-			}
-			else {
-				Preferences.debug("! ERROR: error in determing type of eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-				outputTextArea.append("! ERROR: error in determing type of eDTI....exiting algorithm \n");
-				return false;
+				else if(isSiemens) {
+					String bValueLongString_pubTag = "";
+					String bValueString;
+					int poundIndex = -1;
+					for(int k = 0; k < numVols; k++) {
+						bValueLongString_pubTag = (String)(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0018,0024"));
+						int length = 0;
+						int index = -1;
+						if(bValueLongString_pubTag != null && (!bValueLongString_pubTag.trim().equals(""))) {
+							String ep_b = "ep_b";
+						    length = ep_b.length();
+						    index = bValueLongString_pubTag.indexOf(ep_b);
+						    poundIndex = bValueLongString_pubTag.indexOf('#');
+						    if(index != -1) {
+								index = index + length;
+								if(poundIndex != -1 && poundIndex > index) {
+									bValueString = (bValueLongString_pubTag.substring(index, poundIndex)).trim();
+								}
+								else {
+									bValueString = (bValueLongString_pubTag.substring(index, bValueLongString_pubTag.length())).trim();
+								}
+	
+							    bValue = new Float(bValueString);
+								bValuesArrayList.add(bValue);
+								continue;
+							}
+						    else {
+								Preferences.debug("! ERROR: No b-value found for Siemens eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+								outputTextArea.append("! ERROR: No b-value found for Siemens eDTI....exiting algorithm \n");
+								return false;
+						    }
+						}
+					}
+					
+				}
+				else {
+					Preferences.debug("! ERROR: error in determing type of eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+					outputTextArea.append("! ERROR: error in determing type of eDTI....exiting algorithm \n");
+					return false;
+				}
 			}
 		}
 		else {
