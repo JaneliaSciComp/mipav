@@ -998,6 +998,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         return opacity;
     }
 
+    /**
+     * Returns the selected paint brush's index
+     * @return
+     */
     public int getPaintBrush() {
     	if (paintBox != null) {
     		return paintBox.getSelectedIndex();
