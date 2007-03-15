@@ -301,8 +301,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
 
         tBar.add(makeSeparator());
 
-        tBar.add(buildButton("FlipY", "Flip horizontally", "fliphoriz"));
-        tBar.add(buildButton("FlipX", "Flip vertically", "flipvert"));
+        tBar.add(buildButton("ImageFlipY", "Flip horizontally", "fliphoriz"));
+        tBar.add(buildButton("ImageFlipX", "Flip vertically", "flipvert"));
 
         return tBar;
     }
