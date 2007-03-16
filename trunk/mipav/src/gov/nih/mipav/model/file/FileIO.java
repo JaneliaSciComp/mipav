@@ -2102,8 +2102,8 @@ public class FileIO {
                     (((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088") != null)) {
 
                 if ((String)
-                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050")).getValue(true) !=
-                        null) {
+                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
+                            .getValue(true) != null) {
                     sliceThickness = Float.parseFloat((String)
                                                       ((FileDicomTag)
                                                            ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
@@ -2113,8 +2113,8 @@ public class FileIO {
                 // 0018,0088 = Spacing Between Slices
                 // 0018,0050 = Slice Thickness
                 if ((String)
-                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088")).getValue(true) !=
-                        null) {
+                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
+                            .getValue(true) != null) {
                     sliceSpacing = Float.parseFloat((String)
                                                     ((FileDicomTag)
                                                          ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
@@ -2186,8 +2186,8 @@ public class FileIO {
                     (sliceThickness == -1)) {
 
                 if ((String)
-                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041")).getValue(true) !=
-                        null) {
+                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041"))
+                            .getValue(true) != null) {
 
                     sliceDifference = Float.parseFloat((String)
                                                        ((FileDicomTag)
@@ -3247,7 +3247,8 @@ public class FileIO {
             } else {
                 Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
             }
-            //           updates menubar for each image
+
+            // updates menubar for each image
             Vector imageFrames = UI.getImageFrameVector();
 
 
@@ -5351,7 +5352,6 @@ public class FileIO {
         for (int j = 0; j < fileList.length; j++) {
 
             try {
-                image = Jimi.getImage(fileDir + fileList[j]); // JIMI uses file suffix to correctly load image
 
                 mediaTracker.addImage(image, 0);
 
@@ -5363,16 +5363,27 @@ public class FileIO {
                         image = (Image) ImageIO.read(new File(fileDir + fileName)); // if JIMI fails, try this
                     } catch (IOException ioe) {
                         // intentionally empty
-                    } finally {
 
-                        if (image == null) {
+                    }
+                }
 
-                            if (!quiet) {
-                                MipavUtil.displayError("Unable to load image. Image format may not be supported.");
-                            }
+                try {
 
-                            return null;
+                    if (image == null) {
+
+                        // This is odd Jimi seems to not stop after the application is closed - at least under the
+                        // development environment - must test when running the application. -- Matt 3/16/07
+                        image = Jimi.getImage(fileDir + fileList[j]); // JIMI uses file suffix to correctly load image
+                    }
+                } finally {
+
+                    if (image == null) {
+
+                        if (!quiet) {
+                            MipavUtil.displayError("Unable to load image. Image format may not be supported.");
                         }
+
+                        return null;
                     }
                 }
             } catch (InterruptedException e) {
@@ -8437,9 +8448,9 @@ public class FileIO {
             aviFile.setCompressionQuality(options.getMJPEGQuality());
 
             if (!aviFile.writeImage(image, options.getImageB(), options.getLUTa(), options.getLUTb(),
-                                    options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
-                                    options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
-                                    options.getPaintBitmap(), options.getAVICompression())) {
+                                        options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
+                                        options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
+                                        options.getPaintBitmap(), options.getAVICompression())) {
                 System.err.println("AVI write cancelled");
             }
 
