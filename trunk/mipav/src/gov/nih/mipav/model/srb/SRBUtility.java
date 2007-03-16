@@ -408,7 +408,9 @@ public class SRBUtility {
         FileWriteOptions opts = new FileWriteOptions(((LocalFile) sourceFileList.get(0)).getName(),
                                                      localTempDir.getPath() + "//", false);
 
-
+        //set flag to not put these files into the quicklist
+        opts.doPutInQuicklist(false);
+        
         if (image.getNDims() == 3) {
             opts.setBeginSlice(0);
             opts.setEndSlice(image.getExtents()[2] - 1);
