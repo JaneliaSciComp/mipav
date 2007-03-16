@@ -17,27 +17,53 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 
+/**
+ * Frame that allows the creation of custom paint brushes.  Uses an array of JToggleButtons to create a grid, where the black (on) buttons
+ * represent pixels that will be "on" in the Paint Brush Bitset.  Images are saved as .PNG files (tiny, generally less than 1kb) in the
+ * user_home/mipav/brushes directory (on a per-user basis).  the built in brushes are stored in the view/icons directory.
+ * Saved brushes can be reloaded-overwritten within this editor as well
+ * @author linkb
+ *
+ */
 public class ViewJFrameCreatePaint extends JFrame implements ActionListener, MouseListener {
 
+	/** Array of toggle buttons used to create the grid*/
 	private JToggleButton [][] buttonGrid;
 	
+	/** Make sure the button size is always this dimension */
 	private final Dimension buttonSize = new Dimension(18,18);
 	
+	/** grid's height*/
 	private int gridHeight = 6;
+	
+	/** grid's width*/
 	private int gridWidth = 6;
 	
+	/** Panel that holds the grid (stored as private variable so as to remove/rebuild the grid as needed*/
 	private JPanel gridPanel = null;
 	
+	/** The grid resize dialog*/
 	private JDialogGridSize gridDialog = null;
 	
+	/** Menu item that holds the list of paintbrushes to open (for editing)*/
 	private JMenu openItem = null;
 	
+	/** used to create the "selected" state of the buttons*/
 	private ImageIcon blackImage = null;
+	
+	/** used to create the "unselected" state of the buttons*/
 	private ImageIcon whiteImage = null;
 	
+	/** switch that tells the save-dialog that this brush was opened from disk, so brush will be re-written on save*/
 	private boolean wasLoaded = false;
+	
+	/** the name of the loaded brush (used with the above wasLoaded parameter) */
 	private String loadName = null;
 	
+	/**
+	 * Main constructor.  Prompts user for grid size and shows the grid
+	 *
+	 */
 	public ViewJFrameCreatePaint() {
 		setTitle("Create paint brush");
 		try {
@@ -45,6 +71,10 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		} catch (Exception e) { }
 		gridDialog = new JDialogGridSize(this);
 	
+		if (gridDialog.wasCancelled()) {
+			this.dispose();
+			return;
+		}
 		this.gridHeight = gridDialog.getGridHeight();
 		this.gridWidth = gridDialog.getGridWidth();
 		
@@ -58,6 +88,9 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		init();
 	}
 
+	/**
+	 * Handles action events
+	 */
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand().equals("clearAll")) {
 			setAllSelected(false);
@@ -66,6 +99,12 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		} else if (e.getActionCommand().equals("resizeGrid")) {
 			this.setVisible(false);
 			gridDialog.setVisible(true);
+			
+			if (gridDialog.wasCancelled()) {
+				this.dispose();
+				return;
+			}
+			
 			this.gridHeight = gridDialog.getGridHeight();
 			this.gridWidth = gridDialog.getGridWidth();
 			buildGrid(null);
@@ -78,6 +117,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		}
 	}
 	
+	/** Opens a brush stored on disk (.png)*/
 	private void openBrush(String path) {
 		FileIO fileIO = new FileIO();
 		
@@ -120,6 +160,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		loadName = new File(path).getName();
 	}
 	
+	/** populates the menu item showing available brushes to edit*/
 	private void populateBrushList() {
 		openItem.removeAll();
 		
@@ -148,6 +189,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		}
 	}
 	
+	/** saves the drawn paintbrush to a .png */
 	private void saveBrush() {
 		int [] extents = new int[2];
 		
@@ -178,15 +220,11 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		int width = xEnd - xStart + 1;
 		int height = yEnd - yStart + 1;
 		
-		System.err.println("Width is: " + width + ", height is: " + height);
-		
 		extents[0] = width;
 		extents[1] = height;
 		
 		ModelImage brushImage = new ModelImage(ModelStorageBase.ARGB, extents, "brush");	
 		ViewJFrameImage iFrame = new ViewJFrameImage(brushImage);
-		
-		System.err.println("xStart: " + xStart + ", yStart: " + yStart + ", xEnd: " + xEnd + ", yEnd: " + yEnd);
 		
 		BitSet bitset = new BitSet(width * height);
 		
@@ -239,6 +277,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		FileIO fileIO = new FileIO();
 		
 		FileWriteOptions options = new FileWriteOptions(true);
+		options.doPutInQuicklist(false);
 		options.setFileType(FileUtility.PNG);
 		
 		String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" + File.separator;
@@ -354,6 +393,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 	public void mouseReleased(MouseEvent mouseEvent) {
 	}
 	
+	/** handles the toggling function of the grid (on/off)*/
 	private void processMouse(MouseEvent mouseEvent) {
 		int mouseMods = mouseEvent.getModifiers();
 		
@@ -369,6 +409,10 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		}
 	}
 	
+	/**
+	 * Builds the grid, with or without a pre-loaded BitSet (from an on-disk paintbrush)
+	 * @param preLoad BitSet that can be null, if passed in then the grid will be built based on the on-disk .png file
+	 */
 	private void buildGrid(BitSet preLoad) {
 		
 		if (gridPanel != null) {
@@ -396,16 +440,10 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 				buttonGrid[i][j].setSize(buttonSize);
 				buttonGrid[i][j].setPreferredSize(buttonSize);
 				
-				///if (i % 2 == 0) {
-				//	buttonGrid[i][j].setForeground(Color.white);
-				//	buttonGrid[i][j].setBackground(Color.black);
-				//} else {
-					buttonGrid[i][j].setIcon(whiteImage);
-					buttonGrid[i][j].setSelectedIcon(blackImage);
-					buttonGrid[i][j].setDisabledIcon(whiteImage);
-					buttonGrid[i][j].setDisabledSelectedIcon(blackImage);
-				//}
-				
+				buttonGrid[i][j].setIcon(whiteImage);
+				buttonGrid[i][j].setSelectedIcon(blackImage);
+				buttonGrid[i][j].setDisabledIcon(whiteImage);
+				buttonGrid[i][j].setDisabledSelectedIcon(blackImage);
 				buttonGrid[i][j].addMouseListener(this);
 				buttonGrid[i][j].setEnabled(false);
 				
@@ -424,13 +462,20 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 	}
 
 	
+	/**
+	 * Simple dialog to prompt user for grid size
+	 * @author linkb
+	 *
+	 */
 	private class JDialogGridSize extends JDialogBase {
-		
+				
 		private JTextField widthField;
 		private JTextField heightField;
 		
 		private int height = 6;
 		private int width = 6;
+		
+		private boolean wasCancelled = false;
 		
 		public JDialogGridSize(JFrame frame) {
 			super(frame, true);
@@ -448,8 +493,15 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 				if (setVariables()) {
 					setVisible(false);
 				}
+			} else if (e.getActionCommand().equalsIgnoreCase("Cancel")) {
+				setVisible(false);
+				wasCancelled = true;
 			}
 			
+		}
+		
+		public boolean wasCancelled() {
+			return wasCancelled;
 		}
 		
 		public int getGridHeight() {
