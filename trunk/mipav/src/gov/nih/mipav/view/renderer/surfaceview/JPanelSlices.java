@@ -130,7 +130,7 @@ public class JPanelSlices extends JPanelRendererBase
 
         int[] fileExtents = renderBase.getImageA().getExtents( );
         Point3Df modelExtents = new Point3Df();
-        MipavCoordinateSystems.FileToModel( new Point3Df( fileExtents[0], fileExtents[1], fileExtents[2] ),
+        MipavCoordinateSystems.fileToModel( new Point3Df( fileExtents[0], fileExtents[1], fileExtents[2] ),
                                             modelExtents, renderBase.getImageA() );
 
         xDim = (int)modelExtents.x;
@@ -797,7 +797,7 @@ public class JPanelSlices extends JPanelRendererBase
     public void setCenter( int x, int y, int z )
     {
         Point3Df center = new Point3Df();
-        MipavCoordinateSystems.FileToModel( new Point3Df( x, y, z ), center,
+        MipavCoordinateSystems.fileToModel( new Point3Df( x, y, z ), center,
                                             renderBase.getImageA() );
         setXSlicePos( (int)center.x );
         setYSlicePos( (int)center.y );
@@ -814,7 +814,7 @@ public class JPanelSlices extends JPanelRendererBase
     public Point3Df getCenter( )
     {
         Point3Df center = new Point3Df();
-        MipavCoordinateSystems.ModelToFile( new Point3Df( xSlice, ySlice, zSlice ), center,
+        MipavCoordinateSystems.modelToFile( new Point3Df( xSlice, ySlice, zSlice ), center,
                                             renderBase.getImageA() );
         return center;
     }

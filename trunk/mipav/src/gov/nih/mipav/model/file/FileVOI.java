@@ -386,8 +386,8 @@ public class FileVOI extends FileBase {
                             closedTag(bw, "Text", voiString);
 
                             if (image.getNDims() > 2) {
-                                MipavCoordinateSystems.FileToScanner(textPt, textPtScanner, image);
-                                MipavCoordinateSystems.FileToScanner(arrowPt, arrowPtScanner, image);
+                                MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
+                                MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
                                 closedTag(bw, "TextLocation",
                                           Float.toString(textPtScanner.x) + "," + Float.toString(textPtScanner.y) +
                                           "," + Float.toString(textPtScanner.z));
@@ -869,7 +869,7 @@ public class FileVOI extends FileBase {
                             ptIn.x = x[m];
                             ptIn.y = y[m];
                             ptIn.z = slice;
-                            MipavCoordinateSystems.FileToScanner(ptIn, ptOut, image);
+                            MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
 
                             // System.err.println("Pt in: " + ptIn + ", Pt out: " + ptOut);
                             closedTag(bw, "Pt",
@@ -940,7 +940,7 @@ public class FileVOI extends FileBase {
                                         ptIn.x = x[m];
                                         ptIn.y = y[m];
                                         ptIn.z = slice;
-                                        MipavCoordinateSystems.FileToScanner(ptIn, ptOut, image);
+                                        MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
                                         closedTag(bw, "Pt",
                                                   Float.toString(ptOut.x) + "," + Float.toString(ptOut.y) + "," +
                                                   Float.toString(ptOut.z));
@@ -1801,7 +1801,7 @@ public class FileVOI extends FileBase {
 
                     Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
 
-                    MipavCoordinateSystems.ScannerToFile(ptIn, ptOut, image);
+                    MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
 
 
                     if ((ptOut.x > xDim) || (ptOut.y > yDim) || (ptOut.z >= zDim) || (ptOut.x < 0) || (ptOut.y < 0) ||
@@ -1998,7 +1998,7 @@ public class FileVOI extends FileBase {
                     ptIn = (Point3Df) contourVector.elementAt(index);
 
                     // System.err.println("\tScanner coord: " + ptIn);
-                    MipavCoordinateSystems.ScannerToFile(ptIn, ptOut, image);
+                    MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
 
                     x[index] = MipavMath.round(ptOut.x);
                     y[index] = MipavMath.round(ptOut.y);

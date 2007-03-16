@@ -2237,7 +2237,7 @@ public class SurfaceRender extends RenderViewBase {
     private void getBoxSliceInScreen( Point3Df[] screenBoxPoints, int[] boxSliceConstants )
     {
         Point3Df modelIndex = new Point3Df();
-        MipavCoordinateSystems.FileToModel( new Point3Df( 0, 1, 2 ), modelIndex, imageA );
+        MipavCoordinateSystems.fileToModel( new Point3Df( 0, 1, 2 ), modelIndex, imageA );
         boxSliceConstants[0] = (int)modelIndex.x;
         boxSliceConstants[1] = (int)modelIndex.y;
         boxSliceConstants[2] = (int)modelIndex.z;

@@ -498,7 +498,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                                                                                                            slice ),
                                                                                             patientMousePoint );
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.AXIAL );
+            MipavCoordinateSystems.patientToFile( patientMousePoint, pt, image, FileInfoBase.AXIAL );
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
@@ -515,7 +515,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                                                                                                              slice ),
                                                                                               patientMousePoint );
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.CORONAL );
+            MipavCoordinateSystems.patientToFile( patientMousePoint, pt, image, FileInfoBase.CORONAL );
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
@@ -532,7 +532,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                                                                                                               slice ),
                                                                                                patientMousePoint );
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.SAGITTAL );
+            MipavCoordinateSystems.patientToFile( patientMousePoint, pt, image, FileInfoBase.SAGITTAL );
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;

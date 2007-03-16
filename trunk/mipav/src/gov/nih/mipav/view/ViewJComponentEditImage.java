@@ -13,11 +13,10 @@ import gov.nih.mipav.view.icons.PlaceHolder;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.*;
 import java.awt.geom.AffineTransform;
+import java.awt.image.*;
 
 import java.io.*;
-import java.net.URL;
 
 import java.text.*;
 
@@ -106,6 +105,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** DOCUMENT ME! */
     protected boolean displayFuzzy = false;
+
+    /** Flag used ONLY by ViewJComponentRegistration to prohibit VOI drawing. */
+    protected boolean drawVOIs = true;
 
     /** Frame where the component image is displayed. */
     protected ViewJFrameBase frame;
@@ -212,8 +214,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** if true do not getMask on a setActiveImage command so as to keep the mask from the old active image. */
     protected boolean paintBitmapSwitch = false;
 
+    /** BitSet used for painting (brushes on/off). */
+    protected BitSet paintBrush = null;
+
+    /** Dimension of the paint. */
+    protected Dimension paintBrushDim = null;
+
     /** Paint brush size. */
     protected int paintBrushSize;
+
+    /** buffered image that is transparent to show the paintbrush cursor. */
+    protected BufferedImage paintImage = null;
 
     /** DOCUMENT ME! */
     protected int[] pixBuffer = null;
@@ -311,6 +322,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** DOCUMENT ME! */
     private Image cleanImageB = null;
 
+
+    /** Document Me.* */
+    private boolean intensityLabel = false;
+
     /**
      * last slice the image was at when win region was ON. its necessary because otherwise, a new cleanImageB would have
      * to be created upon every repaint. should be initialized to a negative number
@@ -337,23 +352,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** DOCUMENT ME! */
     private int windowedRegionSize = 100;
-    
-    
-    /** Document Me **/
-    private boolean intensityLabel = false;
 
-    /** Flag used ONLY by ViewJComponentRegistration to prohibit VOI drawing */
-    protected boolean drawVOIs = true;
-    
-    /** BitSet used for painting (brushes on/off) */
-    protected BitSet paintBrush = null;
-    
-    /**  buffered image that is transparent to show the paintbrush cursor*/
-    protected BufferedImage paintImage = null;
-    
-    /** Dimension of the paint*/
-    protected Dimension paintBrushDim = null;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -450,13 +449,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         super.setZoom(zoom, zoom);
 
-        
+
         if (this instanceof ViewJComponentSingleRegistration) {
-        	voiHandler = new VOIRegistrationHandler(this);
-        } else {        
-        	voiHandler = new VOIHandler(this);
+            voiHandler = new VOIRegistrationHandler(this);
+        } else {
+            voiHandler = new VOIHandler(this);
         }
-        
+
         if (imageA.isDicomImage()) {
             voiHandler.setOverlay(Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS));
         } else {
@@ -489,117 +488,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         /* create the WindowLevel controller: */
         m_kWinLevel = new WindowLevel();
-        
-       loadPaintBrush(Preferences.getProperty("LastPaintBrush"));
+
+        loadPaintBrush(Preferences.getProperty("LastPaintBrush"));
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    
-    
-    /**
-     * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences
-     * @param paintName the name of the brush to load
-     */
-    public void loadPaintBrush(String paintName) {
-    	String fullPath = null;
-    	
-    	if (paintName == null) {
-    		fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
-    	} else {
-    		try {
-    		fullPath = PlaceHolder.class.getResource(paintName).getPath();
-    		} catch (Exception e) {
-    			fullPath = System.getProperty("user.home") + File.separator + 
-    			"mipav" + File.separator + "brushes" + File.separator + paintName;
-    			
-    			if (! (new File(fullPath)).exists()) {
-    				fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath(); 
-    			}
-    			
-    		}
-    	}
-    	
-    	//fix the URL nonsense with spaces
-    	fullPath = fullPath.replaceAll("%20", " ");
-    	
-    	File paintFile = new File(fullPath);
-    	FileIO fileIO = new FileIO();
-
-    	//read in the .gif or .png as a model image to create the BitSet
-    	ModelImage brushImage = fileIO.readImage(paintFile.getPath());
-    	
-    	if (brushImage == null) {
-    		return;
-    	}
-    	
-    	int [] brushExtents = brushImage.getExtents();
-    	    	
-    	//create the bitset and the brush dimensions
-    	paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
-    	paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
-    	
-    	int counter = 0;
-    		
-    	int [] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
-		try {
-			brushImage.exportData(0, buffer.length, buffer);
-		} catch (Exception e) {
-			MipavUtil.displayError("Open brush failed.");
-			brushImage.disposeLocal();
-			return;
-		}
-		
-		
-		int length = buffer.length;
-	
-		if (paintImage != null) {
-			paintImage.flush();
-			paintImage = null;
-		}
-		
-		//create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
-		paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
-		
-	
-						
-		//set or clear the bitset based on the black pixels (black == on)
-		for ( int i = 0; i < length; i += 4, counter++) {
-			if (buffer[i + 1] == 0) {
-				paintBrush.set(counter);
-			} else {
-				paintBrush.clear(counter);
-			}
-		}
-		
-		updatePaintBrushCursor();
-		
-		//remove the image created as it is no longer needed
-		brushImage.disposeLocal();
-		
-    }
-    
-    /** Updates the Paint Cursor's BufferedImage with the correct color/opacity */
-    public void updatePaintBrushCursor() {
-    	int opacity = MipavMath.round(255 * .3);
-    	Color paintColor = Color.red;
-		try {
-			opacity = (int)(frame.getControls().getTools().getOpacity() * 255);
-			paintColor = frame.getControls().getTools().getPaintColor();
-		} catch (Exception e) {}
-		
-		Color brushColor = new Color(paintColor.getRed(),paintColor.getGreen(), paintColor.getBlue(), opacity);
-    	int counter = 0;
-		
-		for (int y = 0; y < paintBrushDim.height; y++) {
-			for (int x = 0; x < paintBrushDim.width; x++, counter++) {
-				if (paintBrush.get(counter)) {
-					paintImage.setRGB(x, y, brushColor.getRGB());
-				}
-			}
-		}
-    }
-    
     /**
      * Calculates the volume of the painted voxels.
      *
@@ -1846,6 +1740,93 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     } // end loadLUTFrom()
 
+
+    /**
+     * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences.
+     *
+     * @param  paintName  the name of the brush to load
+     */
+    public void loadPaintBrush(String paintName) {
+        String fullPath = null;
+
+        if (paintName == null) {
+            fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
+        } else {
+
+            try {
+                fullPath = PlaceHolder.class.getResource(paintName).getPath();
+            } catch (Exception e) {
+                fullPath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" +
+                           File.separator + paintName;
+
+                if (!(new File(fullPath)).exists()) {
+                    fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
+                }
+
+            }
+        }
+
+        // fix the URL nonsense with spaces
+        fullPath = fullPath.replaceAll("%20", " ");
+
+        File paintFile = new File(fullPath);
+        FileIO fileIO = new FileIO();
+
+        // read in the .gif or .png as a model image to create the BitSet
+        ModelImage brushImage = fileIO.readImage(paintFile.getPath());
+
+        if (brushImage == null) {
+            return;
+        }
+
+        int[] brushExtents = brushImage.getExtents();
+
+        // create the bitset and the brush dimensions
+        paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
+        paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
+
+        int counter = 0;
+
+        int[] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
+
+        try {
+            brushImage.exportData(0, buffer.length, buffer);
+        } catch (Exception e) {
+            MipavUtil.displayError("Open brush failed.");
+            brushImage.disposeLocal();
+
+            return;
+        }
+
+
+        int length = buffer.length;
+
+        if (paintImage != null) {
+            paintImage.flush();
+            paintImage = null;
+        }
+
+        // create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
+        paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
+
+
+        // set or clear the bitset based on the black pixels (black == on)
+        for (int i = 0; i < length; i += 4, counter++) {
+
+            if (buffer[i + 1] == 0) {
+                paintBrush.set(counter);
+            } else {
+                paintBrush.clear(counter);
+            }
+        }
+
+        updatePaintBrushCursor();
+
+        // remove the image created as it is no longer needed
+        brushImage.disposeLocal();
+
+    }
+
     // ************************************************************************
     // ***************************** Mouse Events *****************************
     // ************************************************************************
@@ -1862,7 +1843,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
-        
+
         if (frame instanceof ViewJFrameLightBox) {
 
             // on a double click, or a single click from the
@@ -1927,10 +1908,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-        //if((mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
-        	processDefaultMouseDrag(mouseEvent, xS, yS);
-        //}
-        
+        // if((mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
+        processDefaultMouseDrag(mouseEvent, xS, yS);
+        // }
+
 
         if (mode == DROPPER_PAINT) {
 
@@ -1976,9 +1957,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             // repaint();
             paintComponent(getGraphics());
         }
-        if(mode == DEFAULT) {
-        	intensityLabel = false;
-        	paintComponent(getGraphics());
+
+        if (mode == DEFAULT) {
+            intensityLabel = false;
+            paintComponent(getGraphics());
         }
     }
 
@@ -2109,25 +2091,27 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void mousePressed(MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
+
         int xS = getScaledX(mouseEvent.getX());
         int yS = getScaledY(mouseEvent.getY());
-        
+
         if (modifyFlag == false) {
             return;
         }
-    
+
         // save the state of the shift button
         mousePressIsShiftDown = mouseEvent.isShiftDown();
-        
-        //shows intsnsity label upon mouse press
-        if(mode == DEFAULT) {
-        	setPixelInformationAtLocation(xS, yS);
-        	if(mouseEvent.getButton() == MouseEvent.BUTTON1) {
-        		intensityLabel = true;
-            	paintComponent(getGraphics());
+
+        // shows intsnsity label upon mouse press
+        if (mode == DEFAULT) {
+            setPixelInformationAtLocation(xS, yS);
+
+            if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
+                intensityLabel = true;
+                paintComponent(getGraphics());
             }
         }
-        
+
 
         if ((mode == DEFAULT) && mouseEvent.isControlDown()) { // center the image around cursor (no zooming)
 
@@ -2136,13 +2120,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             ((ViewJFrameImage) frame).getScrollPane().getHorizontalScrollBar().setValue(mouseEvent.getX() - centerX);
             ((ViewJFrameImage) frame).getScrollPane().getVerticalScrollBar().setValue(mouseEvent.getY() - centerY);
-            
-            
+
+
         }
 
         if ((mode == ZOOMING_IN) || (mode == ZOOMING_OUT)) {
-            //int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-            //int yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+            // int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor int yS =
+            // getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
 
             ((ViewJFrameImage) frame).updateFrame(getZoomMagnitudeX(mouseEvent.getButton() == MouseEvent.BUTTON3),
                                                   getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3), xS,
@@ -2300,9 +2284,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (!((mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                 setMode(DEFAULT);
             }
-        }else if(mode == DEFAULT) {
-        	intensityLabel = false;
-        	paintComponent(getGraphics());
+        } else if (mode == DEFAULT) {
+            intensityLabel = false;
+            paintComponent(getGraphics());
         }
 
         // reset mousePressIsShiftDown for next mouse click
@@ -2325,11 +2309,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (wheelRotation < 0) {
 
                 if (imageActive.getNDims() > 2) {
-                	if(mouseWheelEvent.isShiftDown()) {
-                		if(((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                			((ViewJFrameImage) frame).setShiftDown(true);
-                		}
-                	}
+
+                    if (mouseWheelEvent.isShiftDown()) {
+
+                        if (((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                            ((ViewJFrameImage) frame).setShiftDown(true);
+                        }
+                    }
+
                     ((ViewJFrameImage) frame).incSlice();
                 } else {
                     ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f);
@@ -2337,11 +2324,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             } else {
 
                 if (imageActive.getNDims() > 2) {
-                	if(mouseWheelEvent.isShiftDown()) {
-                		if(((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
-                			((ViewJFrameImage) frame).setShiftDown(true);
-                		}
-                	}
+
+                    if (mouseWheelEvent.isShiftDown()) {
+
+                        if (((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                            ((ViewJFrameImage) frame).setShiftDown(true);
+                        }
+                    }
+
                     ((ViewJFrameImage) frame).decSlice();
                 } else {
                     ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f);
@@ -2379,10 +2369,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void paintComponent(Graphics graphics) {
 
-    	if (this instanceof ViewJComponentRegistration) {
-    	//	System.err.println("Paint component ViewJComponent Registration in EditImage");
-    	}
-    	
+        if (this instanceof ViewJComponentRegistration) {
+
+            // System.err.println("Paint component ViewJComponent Registration in EditImage");
+        }
+
         try {
 
             if (modifyFlag == false) {
@@ -2440,7 +2431,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
 
             if (!(this instanceof ViewJComponentRegistration)) {
-            	voiHandler.paintSolidVOIinImage(offscreenGraphics2d);
+                voiHandler.paintSolidVOIinImage(offscreenGraphics2d);
             }
 
 
@@ -2524,8 +2515,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
 
             if (!(this instanceof ViewJComponentRegistration)) {
-            	voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
+                voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
             }
+
             drawImageText(offscreenGraphics2d); // draw image text, i.e. slice number
 
             if ((mode == WIN_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)) &&
@@ -2544,19 +2536,23 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     cleanImageB = createImage(memImageSource);
                 }
+
                 super.paintWindowComponent(offscreenGraphics2d, lastMouseX, lastMouseY, windowedRegionSize,
                                            windowedRegionSize, getZoomX(), cleanImageB);
 
                 lastWinRegionSlice = slice;
             } else if ((mode == MAG_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
                 paintMagComponent(offscreenGraphics2d);
-            } else if (mode == DEFAULT){
-            	if (!(this instanceof ViewJComponentSingleRegistration)) {
-            	if(intensityLabel) {
-            		//display intensity values on screen
-            		repaintImageIntensityLabelFast(offscreenGraphics2d);
-            	}
-            	}
+            } else if (mode == DEFAULT) {
+
+                if (!(this instanceof ViewJComponentSingleRegistration)) {
+
+                    if (intensityLabel) {
+
+                        // display intensity values on screen
+                        repaintImageIntensityLabelFast(offscreenGraphics2d);
+                    }
+                }
             }
 
             if (onTop) {
@@ -3782,7 +3778,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public String[] setScannerPosition(int x, int y, int zSlice) {
         DecimalFormat nf = new DecimalFormat("#####0.0##");
         Point3Df kOut = new Point3Df();
-        MipavCoordinateSystems.FileToScanner(new Point3Df(x, y, zSlice), kOut, imageActive);
+        MipavCoordinateSystems.fileToScanner(new Point3Df(x, y, zSlice), kOut, imageActive);
 
         float[] tCoord = new float[3];
         tCoord[0] = kOut.x;
@@ -4131,6 +4127,32 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
+     * Updates the Paint Cursor's BufferedImage with the correct color/opacity.
+     */
+    public void updatePaintBrushCursor() {
+        int opacity = MipavMath.round(255 * .3);
+        Color paintColor = Color.red;
+
+        try {
+            opacity = (int) (frame.getControls().getTools().getOpacity() * 255);
+            paintColor = frame.getControls().getTools().getPaintColor();
+        } catch (Exception e) { }
+
+        Color brushColor = new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), opacity);
+        int counter = 0;
+
+        for (int y = 0; y < paintBrushDim.height; y++) {
+
+            for (int x = 0; x < paintBrushDim.width; x++, counter++) {
+
+                if (paintBrush.get(counter)) {
+                    paintImage.setRGB(x, y, brushColor.getRGB());
+                }
+            }
+        }
+    }
+
+    /**
      * Sets this component to paint the "on top" high-light. It is not required to use the coloured rectangle to
      * high-light the on-top component, but the component is not aware of its position in the user-interface, and thus,
      * that the user-interface controls point to it.
@@ -4292,88 +4314,89 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int hBrushSize = getHBrushSize();
 
         if (paintBrush != null) {
-        	
-        	int brushXDim = paintBrushDim.width;
-        	int brushYDim = paintBrushDim.height;
-        	
-        	int counter = 0;
-        	int offset = imageActive.getSliceSize() * slice;
-        	 
-        	int xDim = imageActive.getExtents()[0];
-        	int yDim = imageActive.getExtents()[1];
-        	
-        	for (int height = 0; height < brushYDim; height++) {
-        		for (int width = 0; width < brushXDim; width++, counter++) {
-        			if (paintBrush.get((height * brushYDim) + width)) {
-        				
-        				if (((xS + width) < xDim) &&
-        						(yS + height < yDim)) {
-        					int st = ((yS + height) * imageActive.getExtents()[0]) + (xS + width);
-        				
-        					if (erase == true) {
-        						paintBitmap.clear(offset + st);
-        					} else {
-        						paintBitmap.set(offset + st);
-        					}
-        				}
-        			}
-        			
-        		}
-        	}
-        	
+
+            int brushXDim = paintBrushDim.width;
+            int brushYDim = paintBrushDim.height;
+
+            int counter = 0;
+            int offset = imageActive.getSliceSize() * slice;
+
+            int xDim = imageActive.getExtents()[0];
+            int yDim = imageActive.getExtents()[1];
+
+            for (int height = 0; height < brushYDim; height++) {
+
+                for (int width = 0; width < brushXDim; width++, counter++) {
+
+                    if (paintBrush.get((height * brushYDim) + width)) {
+
+                        if (((xS + width) < xDim) && ((yS + height) < yDim)) {
+                            int st = ((yS + height) * imageActive.getExtents()[0]) + (xS + width);
+
+                            if (erase == true) {
+                                paintBitmap.clear(offset + st);
+                            } else {
+                                paintBitmap.set(offset + st);
+                            }
+                        }
+                    }
+
+                }
+            }
+
         } else {
-        
-        	int jMin = Math.max(yS - hBrushSize, 0);
-   	     int jMax = Math.min(yS - hBrushSize + brushSize - 1, imageActive.getExtents()[1] - 1);
-   	     int iMin = Math.max(xS - hBrushSize, 0);
-   	     int iMax = Math.min(xS - hBrushSize + brushSize - 1, imageActive.getExtents()[0] - 1);
 
-   	     int offset = imageActive.getSliceSize() * slice;
+            int jMin = Math.max(yS - hBrushSize, 0);
+            int jMax = Math.min(yS - hBrushSize + brushSize - 1, imageActive.getExtents()[1] - 1);
+            int iMin = Math.max(xS - hBrushSize, 0);
+            int iMax = Math.min(xS - hBrushSize + brushSize - 1, imageActive.getExtents()[0] - 1);
 
-        
-   	     for (int j = jMin; j <= jMax; j++) {
+            int offset = imageActive.getSliceSize() * slice;
 
-   	    	 for (int i = iMin; i <= iMax; i++) {
-   	    		 int st = (j * imageActive.getExtents()[0]) + i;
-                
-   	    		 if (erase == true) {
-   	    			 paintBitmap.clear(offset + st);
-   	    		 } else {
-   	    			 paintBitmap.set(offset + st);
-   	    		 }
-   	    	 }
-   	     }
-        
-   	  if (imageActive.getType() == ModelStorageBase.COMPLEX) {
-          int temp = iMin;
 
-          iMin = imageActive.getExtents()[0] - Math.max(iMax, 1);
-          iMax = imageActive.getExtents()[0] - Math.max(temp, 1);
-          temp = jMin;
-          jMin = imageActive.getExtents()[1] - Math.max(jMax, 1);
-          jMax = imageActive.getExtents()[1] - Math.max(temp, 1);
+            for (int j = jMin; j <= jMax; j++) {
 
-          if (imageActive.getNDims() == 3) {
-              offset = imageActive.getSliceSize() * (imageActive.getExtents()[2] - Math.max(slice, 1));
-          }
+                for (int i = iMin; i <= iMax; i++) {
+                    int st = (j * imageActive.getExtents()[0]) + i;
 
-          for (int j = jMin; j <= jMax; j++) {
+                    if (erase == true) {
+                        paintBitmap.clear(offset + st);
+                    } else {
+                        paintBitmap.set(offset + st);
+                    }
+                }
+            }
 
-              for (int i = iMin; i <= iMax; i++) {
-                  int st = (j * imageActive.getExtents()[0]) + i;
+            if (imageActive.getType() == ModelStorageBase.COMPLEX) {
+                int temp = iMin;
 
-                  if (erase == true) {
-                      paintBitmap.clear(offset + st);
-                  } else {
-                      paintBitmap.set(offset + st);
-                  }
-              }
-          }
-      } // if (imageActive.getType() == ModelStorageBase.COMPLEX)
-        
+                iMin = imageActive.getExtents()[0] - Math.max(iMax, 1);
+                iMax = imageActive.getExtents()[0] - Math.max(temp, 1);
+                temp = jMin;
+                jMin = imageActive.getExtents()[1] - Math.max(jMax, 1);
+                jMax = imageActive.getExtents()[1] - Math.max(temp, 1);
+
+                if (imageActive.getNDims() == 3) {
+                    offset = imageActive.getSliceSize() * (imageActive.getExtents()[2] - Math.max(slice, 1));
+                }
+
+                for (int j = jMin; j <= jMax; j++) {
+
+                    for (int i = iMin; i <= iMax; i++) {
+                        int st = (j * imageActive.getExtents()[0]) + i;
+
+                        if (erase == true) {
+                            paintBitmap.clear(offset + st);
+                        } else {
+                            paintBitmap.set(offset + st);
+                        }
+                    }
+                }
+            } // if (imageActive.getType() == ModelStorageBase.COMPLEX)
+
         }
-//changethis
-       
+        //changethis
+
 
         // imageActive.notifyImageDisplayListeners();
     }
@@ -4415,14 +4438,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                         winLevelSet = true;
                     }
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
-                
-                //check is left mouse button was pressed...if so...we need to show intensity values
-                if((mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
-                	intensityLabel = true;
-                	paintComponent(getGraphics());
+
+                // check is left mouse button was pressed...if so...we need to show intensity values
+                if ((mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
+                    intensityLabel = true;
+                    paintComponent(getGraphics());
                 }
-              
-                
+
+
             } // if (mode == DEFAULT))
 
             setPixelInformationAtLocation(xS, yS);
@@ -4943,6 +4966,171 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         RGB.makeRGB(-1);
     }
 
+
+    /**
+     * Repaints the image intensity label.
+     *
+     * @param  graphics2d  Graphics2D the graphics context to draw in
+     */
+    private void repaintImageIntensityLabelFast(Graphics2D graphics2d) {
+
+        if ((graphics2d == null) || (lastMouseX == OUT_OF_BOUNDS) || (lastMouseY == OUT_OF_BOUNDS)) {
+            return;
+        }
+
+        int xS = getScaledX(lastMouseX); // zoomed x.  Used as cursor
+        int yS = getScaledY(lastMouseY); // zoomed y.  Used as cursor
+
+        // position where label should go
+        int x = (MipavMath.round(xS * zoomX) + 15);
+        int y = (MipavMath.round(yS * zoomY) + 35);
+
+
+        // positions needed to determine when label should be flipped over when getting too close to edge
+        int wC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
+        int hC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
+        int xC = MipavMath.round(xS * zoomX);
+        int yC = MipavMath.round(yS * zoomY);
+
+        Color textColor = null;
+        Color backgroundColor = null;
+
+        // set color of label text
+        if (Preferences.getProperty("IntensityLabelColor") != null) {
+            String prefColor = Preferences.getProperty("IntensityLabelColor");
+            textColor = MipavUtil.extractColor(prefColor);
+        } else {
+            textColor = Color.yellow;
+        }
+
+        if (Preferences.getProperty("IntensityLabelBackgroundColor") != null) {
+            String prefColor = Preferences.getProperty("IntensityLabelBackgroundColor");
+            backgroundColor = MipavUtil.extractColor(prefColor);
+        } else {
+            backgroundColor = Color.black;
+        }
+
+        // we will only display up to 3 decimal places
+        DecimalFormat df = new DecimalFormat("0.0##");
+
+        graphics2d.setColor(backgroundColor);
+
+        if (imageActive.isColorImage()) {
+            String red = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]).doubleValue());
+            String green = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]).doubleValue());
+            String blue = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]).doubleValue());
+
+            if (((wC - xC) > 170) && ((hC - yC) > 40)) {
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x + 1, y);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 1, y);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x, y - 1);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x, y + 1);
+
+                graphics2d.setColor(textColor);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x, y);
+            } else if (((wC - xC) <= 170) && ((hC - yC) > 40)) {
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 159, y);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 161, y);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 160, y - 1);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 160, y + 1);
+
+                graphics2d.setColor(textColor);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 160, y);
+            } else if (((wC - xC) <= 170) && ((hC - yC) <= 40)) {
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 159, y - 40);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 161, y - 40);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 160, y - 41);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 160, y - 39);
+
+                graphics2d.setColor(textColor);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 160, y - 40);
+            } else if (((wC - xC) > 170) && ((hC - yC) <= 40)) {
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x + 1, y - 40);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x - 1, y - 40);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x, y - 41);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x, y - 39);
+
+                graphics2d.setColor(textColor);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + red + "," +
+                                      green + "," + blue, x, y - 40);
+            }
+        } else {
+            String intensity = df.format(new Float(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]).doubleValue());
+
+            if (((wC - xC) > 100) && ((hC - yC) > 50)) {
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x + 1,
+                                      y);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 1,
+                                      y);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                                      y - 1);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                                      y + 1);
+
+                graphics2d.setColor(textColor);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x, y);
+            } else if (((wC - xC) <= 100) && ((hC - yC) > 50)) {
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 79,
+                                      y);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 81,
+                                      y);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                                      y - 1);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                                      y + 1);
+
+                graphics2d.setColor(textColor);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                                      y);
+            } else if (((wC - xC) <= 100) && ((hC - yC) <= 50)) {
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 79,
+                                      y - 40);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 81,
+                                      y - 40);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                                      y - 41);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                                      y - 39);
+
+                graphics2d.setColor(textColor);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x - 80,
+                                      y - 40);
+            } else if (((wC - xC) > 100) && ((hC - yC) <= 50)) {
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                                      y - 40);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                                      y - 40);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                                      y - 41);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                                      y - 39);
+
+                graphics2d.setColor(textColor);
+                graphics2d.drawString(String.valueOf(xS + 1) + "," + String.valueOf(yS + 1) + ":  " + intensity, x,
+                                      y - 40);
+            }
+        }
+    }
+
     /**
      * Repaints the paint brush cursor without repainting the entire image.
      *
@@ -4956,151 +5144,26 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         int xS = lastMouseX;
         int yS = lastMouseY;
+
         // yx, xz
         float factor = 1f;
         float factor2 = 1f;
-        	
+
         factor = resolutionX / resolutionY;
+
         if (factor < 1) {
-        	factor2 = 1f / factor;
-        	factor = 1f;
-        } 
-        	
-        graphics2d.drawImage(paintImage.getScaledInstance(MipavMath.round(paintImage.getWidth() * zoomX * factor), MipavMath.round(paintImage.getHeight() * zoomY * factor2), 0), new AffineTransform(1f,0f,0f,1f,xS,yS), null);  
+            factor2 = 1f / factor;
+            factor = 1f;
+        }
+
+        graphics2d.drawImage(paintImage.getScaledInstance(MipavMath.round(paintImage.getWidth() * zoomX * factor),
+                                                          MipavMath.round(paintImage.getHeight() * zoomY * factor2), 0),
+                             new AffineTransform(1f, 0f, 0f, 1f, xS, yS), null);
     }
-    
-    
-    
-    /**
-     * Repaints the image intensity label
-     *
-     * @param  graphics2d  Graphics2D the graphics context to draw in
-     */
-    private void repaintImageIntensityLabelFast(Graphics2D graphics2d) {
-        if ((graphics2d == null) || (lastMouseX == OUT_OF_BOUNDS) || (lastMouseY == OUT_OF_BOUNDS)) {
-            return;
-        }
 
-        int xS = getScaledX(lastMouseX); // zoomed x.  Used as cursor
-        int yS = getScaledY(lastMouseY); // zoomed y.  Used as cursor
-
-        //position where label should go
-        int x = (MipavMath.round(xS * zoomX) + 15);
-        int y = (MipavMath.round(yS * zoomY) + 35);
-        
-        
-        //positions needed to determine when label should be flipped over when getting too close to edge
-        int wC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
-        int hC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
-        int xC = MipavMath.round(xS * zoomX);
-        int yC = MipavMath.round(yS * zoomY);
-        
-        Color textColor = null;
-        Color backgroundColor = null;
-
-        //set color of label text
-        if(Preferences.getProperty("IntensityLabelColor") != null) {
-        	String prefColor = Preferences.getProperty("IntensityLabelColor");
-        	textColor = MipavUtil.extractColor(prefColor);
-        }
-        else {
-        	textColor = Color.yellow;
-        }
-
-        if(Preferences.getProperty("IntensityLabelBackgroundColor") != null) {
-        	String prefColor = Preferences.getProperty("IntensityLabelBackgroundColor");
-        	backgroundColor = MipavUtil.extractColor(prefColor);
-        }
-        else {
-        	backgroundColor = Color.black;
-        }
-        
-        //we will only display up to 3 decimal places
-        DecimalFormat df = new DecimalFormat("0.0##");
-        
-        graphics2d.setColor(backgroundColor);
-        
-        if (imageActive.isColorImage()) {
-        	String red = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]).doubleValue());
-        	String green = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]).doubleValue());
-        	String blue = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]).doubleValue());
-        	
-        	 if((wC - xC > 170) && (hC - yC > 40)) {
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x + 1, y);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 1, y);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y - 1);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y + 1);
-        		 
-        		 graphics2d.setColor(textColor);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y);
-        	 } else if((wC - xC <= 170) && (hC - yC > 40)){
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 159, y);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 161, y);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y - 1);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y + 1);
-        		 
-        		 graphics2d.setColor(textColor);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y);
-        	 }else if((wC - xC <= 170) && (hC - yC <= 40)) {
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 159, y - 40);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 161, y - 40);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y - 41);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y - 39);
-        		 
-        		 graphics2d.setColor(textColor);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y - 40);
-        	 }else if((wC - xC > 170) && (hC - yC <= 40)) {
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x + 1, y - 40);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 1, y - 40);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y - 41);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y - 39);
-        		 
-        		 graphics2d.setColor(textColor);
-        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y - 40);
-        	 }
-        }
-        else {
-        	String intensity = df.format(new Float(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]).doubleValue());
-        	if((wC - xC > 100) && (hC - yC > 50)) {
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x + 1, y);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 1, y);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 1);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y + 1);
-        		
-        		graphics2d.setColor(textColor);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y);
-        	} else if((wC - xC <= 100) && (hC - yC > 50)){
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 79, y);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 81, y);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y - 1);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y + 1);
-        		
-        		graphics2d.setColor(textColor);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y);
-        	}else if((wC - xC <= 100) && (hC - yC <= 50)) {
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 79, y - 40);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 81, y - 40);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y - 41);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y - 39);
-        		
-        		graphics2d.setColor(textColor);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y - 40);
-        	}else if((wC - xC > 100) && (hC - yC <= 50)) {
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 40);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 40);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 41);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 39);
-        		
-        		graphics2d.setColor(textColor);
-        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 40);
-        	}
-        }
-    }
-    
 
     /**
      * DOCUMENT ME!
-     *
      *
      * @param  LUT    DOCUMENT ME!
      * @param  image  DOCUMENT ME!

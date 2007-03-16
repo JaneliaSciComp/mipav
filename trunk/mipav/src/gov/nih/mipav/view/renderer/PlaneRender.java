@@ -305,7 +305,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         /* FileToPatient: */
         Point3Df patientPt = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( new Point3Df( kPoint.x,
+        MipavCoordinateSystems.fileToPatient( new Point3Df( kPoint.x,
                                                             kPoint.y,
                                                             kPoint.z ),
                                               patientPt, m_kImageA,
@@ -529,7 +529,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
                 Point3Df patientPt = new Point3Df();
                 this.LocalToPatient( localPt, patientPt );
                 Point3Df kRFAPoint = new Point3Df();
-                MipavCoordinateSystems.PatientToFile(patientPt, kRFAPoint, m_kImageA,
+                MipavCoordinateSystems.patientToFile(patientPt, kRFAPoint, m_kImageA,
                                                      m_iPlaneOrientation );
                 /* Tell the parent to draw the RFA point: */
                 m_kParent.
@@ -1349,7 +1349,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         Point3Df patientPt = new Point3Df();
         this.LocalToPatient( localPt, patientPt );
         Point3Df volumePt = new Point3Df();
-        MipavCoordinateSystems.PatientToFile( patientPt, volumePt, m_kImageA, m_iPlaneOrientation );
+        MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImageA, m_iPlaneOrientation );
         m_kParent.setSliceFromPlane( volumePt );
     }
 
@@ -1366,7 +1366,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         m_kPatientSlice.setCenter( (int)center.x, (int)center.y, (int)center.z );
 
         Point3Df patientPt = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( center, patientPt, m_kImageA, m_iPlaneOrientation );
+        MipavCoordinateSystems.fileToPatient( center, patientPt, m_kImageA, m_iPlaneOrientation );
         setXBar( patientPt.x );
         setYBar( patientPt.y );
         setSlice( patientPt.z );
