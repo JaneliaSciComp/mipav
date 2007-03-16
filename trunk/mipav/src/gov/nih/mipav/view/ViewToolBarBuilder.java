@@ -450,7 +450,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         paintBox = new JComboBox(intArray);
         paintBox.setFont(MipavUtil.font12);
         
-        String brushName = Preferences.getProperty("LastPaintBrush");
+        String brushName = Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH);
         if (brushName == null) {
         	paintBox.setSelectedIndex(2);
         } else {
@@ -1047,7 +1047,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         	int index = paintBox.getSelectedIndex();
         	if (UI instanceof ViewJFrameImage) {
         		((ViewJFrameImage)UI).getComponentImage().loadPaintBrush(paintBrushNames[index]);
-        		Preferences.setProperty("LastPaintBrush", paintBrushNames[index]);
+        		Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
         	}
         	
         } else if (source instanceof AbstractButton) {

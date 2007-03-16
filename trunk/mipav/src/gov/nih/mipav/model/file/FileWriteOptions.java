@@ -150,6 +150,9 @@ public class FileWriteOptions {
     /** DOCUMENT ME! */
     private float zStart;
 
+    /** Tells FileIO whether or not to insert the saved image into the Quicklist (recently used image list) after successful saving */
+    private boolean putInQuicklist = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -191,6 +194,22 @@ public class FileWriteOptions {
         this.imageB = null;
     }
 
+    /** 
+     * Whether or not to put the file into the recently used image list after saving
+     * @return if the image should be put into the quicklist 
+     */
+    public boolean doPutInQuicklist() {
+    	return this.putInQuicklist;
+    }
+    
+    /** 
+     * Sets the flag for putting the image into the recently used image list
+     * @param doPut true = do put into quicklist
+     */
+    public void doPutInQuicklist(boolean doPut) {
+    	this.putInQuicklist = doPut;
+    }
+    
     /**
      * DOCUMENT ME!
      *

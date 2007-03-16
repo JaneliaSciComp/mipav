@@ -150,6 +150,10 @@ public class Preferences {
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
 
+    /** Constant that indicates the last used paint brush so that it will be set as the default when new images are opened 
+     * or mipav is restarted */
+    public static final String PREF_LAST_PAINT_BRUSH = "LastPaintBrush";
+    
     /**
      * Constant that indicates whether .img files should always be written in analyze format (as opposed to asking
      * whether to save as nifti).

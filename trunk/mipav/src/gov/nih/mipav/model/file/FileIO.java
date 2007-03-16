@@ -3229,44 +3229,46 @@ public class FileIO {
         }
 
 
+        
+        // if the flag is set to put the image into the quicklist, do so
+        if (success && options.doPutInQuicklist()) {
+        	 if (options.isMultiFile()) {
+                 String fName = options.getFileName();
+                 String start = Integer.toString(options.getStartNumber());
+                 int numDig = options.getDigitNumber();
+
+                 for (int i = 1; i < numDig; i++) {
+                     start = "0" + start;
+                 }
+
+                 fName = fName.substring(0, fName.indexOf(".")) + start +
+                         fName.substring(fName.indexOf("."), fName.length());
+                 Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
+             } else {
+                 Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
+             }
+//        	 updates menubar for each image
+             Vector imageFrames = UI.getImageFrameVector();
+
+
+             if (imageFrames.size() < 1) {
+                 UI.buildMenu();
+                 UI.setControls();
+             } else {
+                 UI.buildMenu();
+
+                 for (int i = 0; i < imageFrames.size(); i++) {
+
+                     if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
+                         ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
+                     }
+                 }
+
+                 UI.getActiveImageFrame().setControls();
+             }
+        }
+        
         if (success) {
-
-            if (options.isMultiFile()) {
-                String fName = options.getFileName();
-                String start = Integer.toString(options.getStartNumber());
-                int numDig = options.getDigitNumber();
-
-                for (int i = 1; i < numDig; i++) {
-                    start = "0" + start;
-                }
-
-                fName = fName.substring(0, fName.indexOf(".")) + start +
-                        fName.substring(fName.indexOf("."), fName.length());
-                Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
-            } else {
-                Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
-            }
-
-            // updates menubar for each image
-            Vector imageFrames = UI.getImageFrameVector();
-
-
-            if (imageFrames.size() < 1) {
-                UI.buildMenu();
-                UI.setControls();
-            } else {
-                UI.buildMenu();
-
-                for (int i = 0; i < imageFrames.size(); i++) {
-
-                    if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
-                        ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
-                    }
-                }
-
-                UI.getActiveImageFrame().setControls();
-            }
-
             ScriptableActionInterface action;
 
             if (options.isSaveAs()) {
