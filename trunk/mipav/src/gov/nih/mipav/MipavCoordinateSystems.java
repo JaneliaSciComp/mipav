@@ -96,9 +96,9 @@ public class MipavCoordinateSystems {
         }
 
         /* assign the transformed point to pOut: */
-        pOut.x = Math.round(patientPoint[0]);
-        pOut.y = Math.round(patientPoint[1]);
-        pOut.z = Math.round(patientPoint[2]);
+        pOut.x = MipavMath.round(patientPoint[0]);
+        pOut.y = MipavMath.round(patientPoint[1]);
+        pOut.z = MipavMath.round(patientPoint[2]);
     }
 
     /**
@@ -475,9 +475,9 @@ public class MipavCoordinateSystems {
         }
 
         /* assign the transformed point to pOut: */
-        pOut.x = Math.round(modelPoint[0]);
-        pOut.y = Math.round(modelPoint[1]);
-        pOut.z = Math.round(modelPoint[2]);
+        pOut.x = MipavMath.round(modelPoint[0]);
+        pOut.y = MipavMath.round(modelPoint[1]);
+        pOut.z = MipavMath.round(modelPoint[2]);
 
     }
 
@@ -590,15 +590,15 @@ public class MipavCoordinateSystems {
 
         /* assign the transformed point to pOut: */
         if (modelPoint[0] != -1) {
-            pOut.x = Math.round(modelPoint[0]);
+            pOut.x = MipavMath.round(modelPoint[0]);
         }
 
         if (modelPoint[1] != -1) {
-            pOut.y = Math.round(modelPoint[1]);
+            pOut.y = MipavMath.round(modelPoint[1]);
         }
 
         if (modelPoint[2] != -1) {
-            pOut.z = Math.round(modelPoint[2]);
+            pOut.z = MipavMath.round(modelPoint[2]);
         }
     }
 }
