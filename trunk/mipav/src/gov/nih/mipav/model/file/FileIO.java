@@ -2102,8 +2102,8 @@ public class FileIO {
                     (((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088") != null)) {
 
                 if ((String)
-                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
-                            .getValue(true) != null) {
+                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050")).getValue(true) !=
+                        null) {
                     sliceThickness = Float.parseFloat((String)
                                                       ((FileDicomTag)
                                                            ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
@@ -2113,8 +2113,8 @@ public class FileIO {
                 // 0018,0088 = Spacing Between Slices
                 // 0018,0050 = Slice Thickness
                 if ((String)
-                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
-                            .getValue(true) != null) {
+                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088")).getValue(true) !=
+                        null) {
                     sliceSpacing = Float.parseFloat((String)
                                                     ((FileDicomTag)
                                                          ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
@@ -2186,8 +2186,8 @@ public class FileIO {
                     (sliceThickness == -1)) {
 
                 if ((String)
-                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041"))
-                            .getValue(true) != null) {
+                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041")).getValue(true) !=
+                        null) {
 
                     sliceDifference = Float.parseFloat((String)
                                                        ((FileDicomTag)
@@ -3229,45 +3229,45 @@ public class FileIO {
         }
 
 
-        
         // if the flag is set to put the image into the quicklist, do so
         if (success && options.doPutInQuicklist()) {
-        	 if (options.isMultiFile()) {
-                 String fName = options.getFileName();
-                 String start = Integer.toString(options.getStartNumber());
-                 int numDig = options.getDigitNumber();
 
-                 for (int i = 1; i < numDig; i++) {
-                     start = "0" + start;
-                 }
+            if (options.isMultiFile()) {
+                String fName = options.getFileName();
+                String start = Integer.toString(options.getStartNumber());
+                int numDig = options.getDigitNumber();
 
-                 fName = fName.substring(0, fName.indexOf(".")) + start +
-                         fName.substring(fName.indexOf("."), fName.length());
-                 Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
-             } else {
-                 Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
-             }
-//        	 updates menubar for each image
-             Vector imageFrames = UI.getImageFrameVector();
+                for (int i = 1; i < numDig; i++) {
+                    start = "0" + start;
+                }
+
+                fName = fName.substring(0, fName.indexOf(".")) + start +
+                        fName.substring(fName.indexOf("."), fName.length());
+                Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
+            } else {
+                Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
+            }
+            //           updates menubar for each image
+            Vector imageFrames = UI.getImageFrameVector();
 
 
-             if (imageFrames.size() < 1) {
-                 UI.buildMenu();
-                 UI.setControls();
-             } else {
-                 UI.buildMenu();
+            if (imageFrames.size() < 1) {
+                UI.buildMenu();
+                UI.setControls();
+            } else {
+                UI.buildMenu();
 
-                 for (int i = 0; i < imageFrames.size(); i++) {
+                for (int i = 0; i < imageFrames.size(); i++) {
 
-                     if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
-                         ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
-                     }
-                 }
+                    if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
+                        ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
+                    }
+                }
 
-                 UI.getActiveImageFrame().setControls();
-             }
+                UI.getActiveImageFrame().setControls();
+            }
         }
-        
+
         if (success) {
             ScriptableActionInterface action;
 
@@ -8437,9 +8437,9 @@ public class FileIO {
             aviFile.setCompressionQuality(options.getMJPEGQuality());
 
             if (!aviFile.writeImage(image, options.getImageB(), options.getLUTa(), options.getLUTb(),
-                                        options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
-                                        options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
-                                        options.getPaintBitmap(), options.getAVICompression())) {
+                                    options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
+                                    options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
+                                    options.getPaintBitmap(), options.getAVICompression())) {
                 System.err.println("AVI write cancelled");
             }
 
@@ -8989,7 +8989,7 @@ public class FileIO {
         try { // Construct a new file object
 
             ICSFile = new FileICS(UI, options.getFileName(), options.getFileDirectory());
-            createProgressBar(ICSFile, fileName, FILE_WRITE);
+            createProgressBar(ICSFile, options.getFileName(), FILE_WRITE);
             ICSFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9023,7 +9023,7 @@ public class FileIO {
 
         try { // Construct a new file object
             interfileFile = new FileInterfile(UI, options.getFileName(), options.getFileDirectory());
-            createProgressBar(interfileFile, fileName, FILE_WRITE);
+            createProgressBar(interfileFile, options.getFileName(), FILE_WRITE);
             interfileFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9163,7 +9163,7 @@ public class FileIO {
             }
 
             mincFile = new FileMinc(options.getFileName(), options.getFileDirectory());
-            createProgressBar(mincFile, fileName, FILE_READ);
+            createProgressBar(mincFile, options.getFileName(), FILE_READ);
             mincFile.writeImage(image, options);
 
             return true;
@@ -9271,7 +9271,7 @@ public class FileIO {
 
         try { // Construct a new file object
             osmFile = new FileOSM(UI, options.getFileName(), options.getFileDirectory());
-            createProgressBar(osmFile, fileName, FILE_READ);
+            createProgressBar(osmFile, options.getFileName(), FILE_READ);
             osmFile.writeImage(image, options);
         } catch (IOException error) {
 
