@@ -548,7 +548,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                                 // System.err.println("Initial point: " + inPoint);
                                 // convert to scanner and add to vector
-                                MipavCoordinateSystems.FileToScanner(inPoint, outPoint, compImage.getActiveImage());
+                                MipavCoordinateSystems.fileToScanner(inPoint, outPoint, compImage.getActiveImage());
                                 scannerVector.add(outPoint);
                                 // System.err.println("Scanner point: " + outPoint);
                             }
@@ -4063,7 +4063,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                 // System.err.println("In point (scanner): " + inPoint);
 
                                 // convert from scanner
-                                MipavCoordinateSystems.ScannerToFile(inPoint, outPoint, compImage.getActiveImage());
+                                MipavCoordinateSystems.scannerToFile(inPoint, outPoint, compImage.getActiveImage());
                                 ((Point3Df) tempBase.elementAt(c)).x = outPoint.x;
                                 ((Point3Df) tempBase.elementAt(c)).y = outPoint.y;
                                 ((Point3Df) tempBase.elementAt(c)).z = outPoint.z;

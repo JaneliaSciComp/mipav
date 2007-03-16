@@ -2419,13 +2419,13 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     private void setPatientSlicePosition( Point3Df position )
     {
         Point3Df axial = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( position, axial, imageA, FileInfoBase.AXIAL );
+        MipavCoordinateSystems.fileToPatient( position, axial, imageA, FileInfoBase.AXIAL );
 
         Point3Df coronal = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( position, coronal, imageA, FileInfoBase.CORONAL );
+        MipavCoordinateSystems.fileToPatient( position, coronal, imageA, FileInfoBase.CORONAL );
 
         Point3Df sagittal = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( position, sagittal, imageA, FileInfoBase.SAGITTAL );
+        MipavCoordinateSystems.fileToPatient( position, sagittal, imageA, FileInfoBase.SAGITTAL );
 
         patientSliceLabelVals[0].setText( "sagittal slice: " + (int)sagittal.z );
         patientSliceLabelVals[1].setText( "coronal slice: " + (int)coronal.z );

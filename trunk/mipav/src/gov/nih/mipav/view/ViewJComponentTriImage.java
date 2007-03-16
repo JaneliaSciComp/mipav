@@ -511,7 +511,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         m_kPatientSlice.setCenter( i, j, k );
         Point3Df kLocalPoint = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( m_kVolumePoint, kLocalPoint,
+        MipavCoordinateSystems.fileToPatient( m_kVolumePoint, kLocalPoint,
                                               imageActive, orientation );
         slice = (int)kLocalPoint.z;
 
@@ -526,7 +526,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     {
         Point3Df patientMousePoint = new Point3Df();
         super.ScreenToLocal( crosshairPt, patientMousePoint );
-        MipavCoordinateSystems.PatientToFile( patientMousePoint, m_kVolumePoint,
+        MipavCoordinateSystems.patientToFile( patientMousePoint, m_kVolumePoint,
                                               imageActive, orientation );
 
         return new Point3Df( m_kVolumePoint.x, m_kVolumePoint.y, m_kVolumePoint.z );
@@ -565,7 +565,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      */
     public final Point3Df getVolumePosition(float x, float y, float z) {
         Point3Df volumePt = new Point3Df();
-        MipavCoordinateSystems.PatientToFile( new Point3Df( x, y, z ),
+        MipavCoordinateSystems.patientToFile( new Point3Df( x, y, z ),
                                               volumePt, imageActive, orientation );
         return volumePt;
     }
@@ -579,7 +579,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      */
     public Point2Df getScreenCoordinates(Point3Df point3d) {
         Point3Df patientPt = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( point3d, patientPt, imageActive, orientation );
+        MipavCoordinateSystems.fileToPatient( point3d, patientPt, imageActive, orientation );
         Point3Df screenPt = new Point3Df();
         super.LocalToScreen( patientPt, screenPt );
         return new Point2Df( screenPt.x, screenPt.y );
@@ -593,13 +593,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     public void setCrop( Point3Df lower, Point3Df upper )
     {
         /* convert to Patient coordinates, store in m_kLocalCropLower */
-        MipavCoordinateSystems.FileToPatient( lower, m_kLocalCropLower,
+        MipavCoordinateSystems.fileToPatient( lower, m_kLocalCropLower,
                                               imageActive, orientation );
         /* convert to Screen coordinates, store in cornerCropPt */
         super.LocalToScreen( m_kLocalCropLower, cornerCropPt[0] );
 
         /* convert to Patient coordinates, store in m_kLocalCropUpper */
-        MipavCoordinateSystems.FileToPatient( upper, m_kLocalCropUpper,
+        MipavCoordinateSystems.fileToPatient( upper, m_kLocalCropUpper,
                                               imageActive, orientation );
         /* convert to Screen coordinates, store in cornerCropPt */
         super.LocalToScreen( m_kLocalCropUpper, cornerCropPt[1] );
@@ -656,12 +656,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         /* convert from Screen -> Patient -> File */
         super.ScreenToLocal( cornerCropPt[0], m_kLocalCropLower );
         Point3Df kFileCropLower = new Point3Df();
-        MipavCoordinateSystems.PatientToFile( m_kLocalCropLower, kFileCropLower,
+        MipavCoordinateSystems.patientToFile( m_kLocalCropLower, kFileCropLower,
                                               imageActive, orientation );
 
         super.ScreenToLocal( cornerCropPt[1], m_kLocalCropUpper );
         Point3Df kFileCropUpper = new Point3Df();
-        MipavCoordinateSystems.PatientToFile( m_kLocalCropUpper, kFileCropUpper,
+        MipavCoordinateSystems.patientToFile( m_kLocalCropUpper, kFileCropUpper,
                                               imageActive, orientation );
 
         /* update frame */
@@ -913,7 +913,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 Point3Df patientMousePoint = new Point3Df();
                 super.ScreenToLocal( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint );
                 Point3Df volumeMousePoint = new Point3Df();
-                MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
+                MipavCoordinateSystems.patientToFile( patientMousePoint, volumeMousePoint,
                                                       imageActive, orientation );
                 triImageFrame.setCenter( (int)volumeMousePoint.x, (int)volumeMousePoint.y, (int)volumeMousePoint.z);
 
@@ -935,7 +935,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             Point3Df patientMousePoint = new Point3Df();
             super.ScreenToLocal( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint );
-            MipavCoordinateSystems.PatientToFile( patientMousePoint, m_kVolumePoint,
+            MipavCoordinateSystems.patientToFile( patientMousePoint, m_kVolumePoint,
                                                   imageActive, orientation );
             triImageFrame.setCenter( (int)m_kVolumePoint.x, (int)m_kVolumePoint.y, (int)m_kVolumePoint.z );
             if (mode == DEFAULT)
@@ -979,7 +979,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                         Point3Df patientMousePoint = new Point3Df();
                         super.ScreenToLocal( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint );
                         Point3Df volumeMousePoint = new Point3Df();
-                        MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
+                        MipavCoordinateSystems.patientToFile( patientMousePoint, volumeMousePoint,
                                                               imageActive, orientation );
                         found = true;
 
@@ -1223,7 +1223,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 Point3Df patientMousePoint = new Point3Df();
                 super.ScreenToLocal( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint );
                 Point3Df volumeMousePoint = new Point3Df();
-                MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
+                MipavCoordinateSystems.patientToFile( patientMousePoint, volumeMousePoint,
                                                       imageActive, orientation );
 
                 // the "++" here is to make the display 1-based, like the crosshairs, instead of 0-based
@@ -1483,7 +1483,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             Point3Df patientMousePoint = new Point3Df();
             super.ScreenToLocal( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint );
             Point3Df volumeMousePoint = new Point3Df();
-            MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
+            MipavCoordinateSystems.patientToFile( patientMousePoint, volumeMousePoint,
                                                   imageActive, orientation );
 
             xPG = (short) volumeMousePoint.x;
@@ -1508,7 +1508,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 Point3Df patientMousePoint = new Point3Df();
                 super.ScreenToLocal( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint );
                 Point3Df volumeMousePoint = new Point3Df();
-                MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
+                MipavCoordinateSystems.patientToFile( patientMousePoint, volumeMousePoint,
                                                       imageActive, orientation );
 
                 xOrg = (int)volumeMousePoint.x;
@@ -1637,7 +1637,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         Point3Df patientMousePoint = new Point3Df( );
         super.ScreenToLocal( new Point3Df( mouseX, mouseY, slice ), patientMousePoint );
         Point3Df volumeMousePoint = new Point3Df();
-        MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
+        MipavCoordinateSystems.patientToFile( patientMousePoint, volumeMousePoint,
                                               imageActive, orientation );
         mouseX = (int)volumeMousePoint.x;
         mouseY = (int)volumeMousePoint.y;
@@ -2106,7 +2106,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             for (int iX = 0; iX < localImageExtents[0]; iX++) {
 
                 for (int iY = 0; iY < localImageExtents[1]; iY++) {
-                    MipavCoordinateSystems.PatientToFile( new Point3Df( iX, iY, slice ), paintPoint,
+                    MipavCoordinateSystems.patientToFile( new Point3Df( iX, iY, slice ), paintPoint,
                                                           imageActive, orientation );
 
                     iIndex = (int)((iterFactors[0] * paintPoint.x) +
@@ -2158,7 +2158,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         			if (paintBrush.get((height * brushYDim) + width)) {
         				
         				Point3Df patientPaintPoint = new Point3Df( x + width, y + height, slice );
-        	                MipavCoordinateSystems.PatientToFile( patientPaintPoint, paintPoint,
+        	                MipavCoordinateSystems.patientToFile( patientPaintPoint, paintPoint,
         	                                                      imageActive, orientation );
         	                
         	                if ((paintPoint.x <= (xDim-1) && (paintPoint.x >= 0)) &&
@@ -2189,7 +2189,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
              for (j = jMin; j <= jMax; j++) {
                  for (i = iMin; i <= iMax; i++) {
                      Point3Df patientPaintPoint = new Point3Df( i, j, slice );
-                     MipavCoordinateSystems.PatientToFile( patientPaintPoint, paintPoint,
+                     MipavCoordinateSystems.patientToFile( patientPaintPoint, paintPoint,
                                                            imageActive, orientation );
 
                      index = (int)((iterFactors[0] * paintPoint.x) +
@@ -2868,7 +2868,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                         for (int j = 0; j < voiPoints.length; j++) {
                             Point3Df screenPt = new Point3Df();
                             Point3Df patientPt = new Point3Df();
-                            MipavCoordinateSystems.FileToPatient( voiPoints[j],
+                            MipavCoordinateSystems.fileToPatient( voiPoints[j],
                                                                   patientPt,
                                                                   imageActive,
                                                                   orientation );
@@ -2979,7 +2979,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 Point3Df patientMousePoint = new Point3Df();
                 super.ScreenToLocal( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint );
                 Point3Df volumeMousePoint = new Point3Df();
-                MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint, imageActive, orientation );
+                MipavCoordinateSystems.patientToFile( patientMousePoint, volumeMousePoint, imageActive, orientation );
                 int zOrg = (int)volumeMousePoint.z;
 
                 pt = null;

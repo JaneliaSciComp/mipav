@@ -1517,7 +1517,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     // change the image start position ("0020, 0032")
                     
                     originVOI.z = slc;
-                    MipavCoordinateSystems.FileToScanner(originVOI, originLPS, srcImage );
+                    MipavCoordinateSystems.fileToScanner(originVOI, originLPS, srcImage );
                  
                     value = Float.toString(originLPS.x) + "\\" + Float.toString(originLPS.y) + "\\" +
                     Float.toString(originLPS.z);
@@ -1655,7 +1655,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             Point3Df fileOriginVOI = new Point3Df(x[0], y[0], z[0]);
             Point3Df lpsOriginVOI = new Point3Df();
-            MipavCoordinateSystems.FileToScanner(fileOriginVOI, lpsOriginVOI, destImage);
+            MipavCoordinateSystems.fileToScanner(fileOriginVOI, lpsOriginVOI, destImage);
             
             //System.err.println("Out origin (using xmin, ymin, zmin filetoscanner: " + lpsOriginVOI);
            
@@ -1711,7 +1711,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             Point3Df fileOriginVOI = new Point3Df(x[0], y[0], z[0]);
             Point3Df lpsOriginVOI = new Point3Df();
-            MipavCoordinateSystems.FileToScanner(fileOriginVOI, lpsOriginVOI, destImage);
+            MipavCoordinateSystems.fileToScanner(fileOriginVOI, lpsOriginVOI, destImage);
             
             int orientation = destImage.getImageOrientation();
             if (orientation == FileInfoBase.AXIAL ||

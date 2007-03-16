@@ -254,7 +254,7 @@ public class PatientSlice {
      * @return  volume center in FileCoordinates
      */
     public Point3Df getCenter() {
-        MipavCoordinateSystems.PatientToFile(m_kPatientPoint, m_kFilePoint, imageA, orientation);
+        MipavCoordinateSystems.patientToFile(m_kPatientPoint, m_kFilePoint, imageA, orientation);
 
         return new Point3Df(m_kFilePoint.x, m_kFilePoint.y, m_kFilePoint.z);
     }
@@ -348,7 +348,7 @@ public class PatientSlice {
         m_kFilePoint.y = j;
         m_kFilePoint.z = k;
 
-        MipavCoordinateSystems.FileToPatient(m_kFilePoint, m_kPatientPoint, imageA, orientation);
+        MipavCoordinateSystems.fileToPatient(m_kFilePoint, m_kPatientPoint, imageA, orientation);
 
         if (slice == (int) m_kPatientPoint.z) {
             return;
@@ -771,7 +771,7 @@ public class PatientSlice {
         if (newSlice != m_kPatientPoint.z) {
             m_kPatientPoint.z = newSlice;
             slice = newSlice;
-            MipavCoordinateSystems.PatientToFile(m_kPatientPoint, m_kFilePoint, imageA, orientation);
+            MipavCoordinateSystems.patientToFile(m_kPatientPoint, m_kFilePoint, imageA, orientation);
             m_bUpdateImage = true;
 
             return true;
@@ -796,7 +796,7 @@ public class PatientSlice {
                 return m_bAxisAligned;
             }
 
-            MipavCoordinateSystems.FileToPatient(m_kFourCorners[i], kPatientCorner, imageA, orientation);
+            MipavCoordinateSystems.fileToPatient(m_kFourCorners[i], kPatientCorner, imageA, orientation);
 
             if (kPatientCorner.z != m_kPatientPoint.z) {
                 m_bAxisAligned = false;
@@ -871,7 +871,7 @@ public class PatientSlice {
         m_kPatientPoint.y = localImageExtents[1] / 2;
         m_kPatientPoint.z = localImageExtents[2] / 2;
         slice = (int) m_kPatientPoint.z;
-        MipavCoordinateSystems.PatientToFile(m_kPatientPoint, m_kFilePoint, imageA, orientation);
+        MipavCoordinateSystems.patientToFile(m_kPatientPoint, m_kFilePoint, imageA, orientation);
     }
 
     /**
