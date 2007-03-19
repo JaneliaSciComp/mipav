@@ -393,12 +393,12 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
         } else if (event.getActionCommand().equals("MagRegion")) {
 
             for (int i = 0; i < numTotalSlices; i++) {
-                (((ViewJComponentEditImage) componentImageVector.elementAt(i))).setMode(ViewJComponentEditImage.MAG_REGION);
+                (((ViewJComponentEditImage) componentImageVector.elementAt(i))).setCursorMode(ViewJComponentEditImage.MAG_REGION);
             }
         } else if (event.getActionCommand().equals("Pointer")) {
 
             for (int i = 0; i < numTotalSlices; i++) {
-                (((ViewJComponentEditImage) componentImageVector.elementAt(i))).setMode(ViewJComponentEditImage.DEFAULT);
+                (((ViewJComponentEditImage) componentImageVector.elementAt(i))).setCursorMode(ViewJComponentEditImage.DEFAULT);
             }
         } else if (event.getActionCommand().equals("SaveImageAs")) {
             saveAVI();

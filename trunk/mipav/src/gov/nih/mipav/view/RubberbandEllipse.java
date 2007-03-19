@@ -209,7 +209,7 @@ public class RubberbandEllipse extends Rubberband {
 
                 if ((rect.width <= 2) || (rect.height <= 2)) {
                     image.notifyImageDisplayListeners();
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }
@@ -278,7 +278,7 @@ public class RubberbandEllipse extends Rubberband {
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: RubberbandEllipse.mouseReleased");
-                ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                 return;
             }
@@ -355,7 +355,7 @@ public class RubberbandEllipse extends Rubberband {
             image.notifyImageDisplayListeners();
 
             if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
             }
         }
     }

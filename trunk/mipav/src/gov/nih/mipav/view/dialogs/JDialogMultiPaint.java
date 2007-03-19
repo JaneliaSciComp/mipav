@@ -290,7 +290,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             }
 
             image.getParentFrame().getControls().getTools().setPointerSelected();
-            image.getParentFrame().getComponentImage().setMode(ViewJComponentEditImage.DEFAULT);
+            image.getParentFrame().getComponentImage().setCursorMode(ViewJComponentEditImage.DEFAULT);
             removeKeyListener(this);
             setFocusable(false);
             image.getParentFrame().getComponentImage().removeKeyListener(this);
@@ -1128,7 +1128,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         }
 
         image.getParentFrame().getControls().getTools().setPointerSelected();
-        image.getParentFrame().getComponentImage().setMode(ViewJComponentEditImage.DEFAULT);
+        image.getParentFrame().getComponentImage().setCursorMode(ViewJComponentEditImage.DEFAULT);
         removeKeyListener(this);
         setFocusable(false);
         image.getParentFrame().getComponentImage().removeKeyListener(this);

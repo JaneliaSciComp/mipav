@@ -161,7 +161,7 @@ public class RubberbandProtractor extends Rubberband {
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to form new protractor VOI.");
-                    ((ViewJComponentEditImage) (component)).setMode(((ViewJComponentEditImage) (component)).DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(((ViewJComponentEditImage) (component)).DEFAULT);
 
                     return;
                 }
@@ -175,7 +175,7 @@ public class RubberbandProtractor extends Rubberband {
                 image.notifyImageDisplayListeners();
 
                 if (mouseEvent.isShiftDown() != true) {
-                    ((ViewJComponentEditImage) (component)).setMode(((ViewJComponentEditImage) (component)).DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(((ViewJComponentEditImage) (component)).DEFAULT);
                 }
 
                 ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
@@ -202,7 +202,7 @@ public class RubberbandProtractor extends Rubberband {
                 image.notifyImageDisplayListeners();
 
                 if (mouseEvent.isShiftDown() != true) {
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
                 }
 
                 return;

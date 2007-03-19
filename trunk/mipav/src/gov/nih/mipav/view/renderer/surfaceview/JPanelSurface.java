@@ -2627,7 +2627,7 @@ public class JPanelSurface extends JPanelRendererBase
      *
      * @param   meshes  Triangle meshes that make up surface
      * @param   color   Color of surface
-     * @param   mode    The polygon drawing mode
+     * @param   cursorMode    The polygon drawing mode
      *
      * @return  Parent node of surface.
      */

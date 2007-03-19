@@ -136,11 +136,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** When loading an image into B slot, should origins and orients be matched? */
     private boolean doOrigins = false;
 
+    /** Only want one gridoptions dialog per jframeimage. */
+    private JDialogGridOptions gridOptions = null;
+
     /** boolean indicating if shift button is down. */
     private boolean isShiftDown = false;
 
     /** DOCUMENT ME! */
     private int lastVOI_UID = -1;
+
+    /**
+     * used in conjuction with the above variable, stating that the paint brush has been changed but will change back to
+     * previous.
+     */
+    private boolean paintBrushLocked = false;
+
+    /** Holds the selected Paint brush index while painting in hold 0-9 key mode. */
+    private int previousPaintBrushIndex = 0;
 
     /** tells whether or not to XOR when creating binary masks (allowing holes). */
     private boolean useXOR = Preferences.is(Preferences.PREF_USE_VOI_XOR);
@@ -148,15 +160,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** Reference to the magnification tool. */
     private JDialogZoom zoomDialog = null;
 
-    /** Only want one gridoptions dialog per jframeimage */
-    private JDialogGridOptions gridOptions = null;
-       
-    /** Holds the selected Paint brush index while painting in hold 0-9 key mode */
-    private int previousPaintBrushIndex = 0;
-    
-    /** used in conjuction with the above variable, stating that the paint brush has been changed but will change back to previous*/
-    private boolean paintBrushLocked = false;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -371,9 +374,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         if (command.equals("PaintBrushEditor")) {
-        	new ViewJFrameCreatePaint();
+            new ViewJFrameCreatePaint();
         }
-        
+
         if (command.equals("PropagatePaintPrev")) {
             propagatePaintToPreviousSlice();
         } else if (command.equals("PropagatePaintNext")) {
@@ -386,7 +389,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             menuBuilder.setMenuItemEnabled("Extract image(B)", true);
             new JDialogMultiPaint(this, getImageA());
             getControls().getTools().setPaintBrushButtonSelected();
-            componentImage.setMode(ViewJComponentEditImage.PAINT_VOI);
+            componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
         } else if (command.equals("ShowPaintBorder")) {
 
             // swap the border painting
@@ -412,9 +415,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("SaveXCEDESchema")) {
             userInterface.saveXCEDESchema();
         } else if (command.equals("Zoom linearly")) {
-            componentImage.zoomMode = ViewJComponentEditImage.LINEAR;
+            componentImage.zoomMode = ViewJComponentEditImage.LINEAR_ZOOM;
         } else if (command.equals("Zoom exponentially")) {
-            componentImage.zoomMode = ViewJComponentEditImage.EXPONENTIAL;
+            componentImage.zoomMode = ViewJComponentEditImage.GEOMETRIC_ZOOM;
         } else if (command.equals("Dicom")) {
 
             if (((JCheckBoxMenuItem) source).isSelected()) {
@@ -846,11 +849,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                   componentImage.getVOIHandler().getVOI_ID());
             setControls();
         } else if (command.equals("PaintBrush")) {
-            componentImage.setMode(ViewJComponentEditImage.PAINT_VOI);
+            componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
         } else if (command.equals("Dropper")) {
-            componentImage.setMode(ViewJComponentEditImage.DROPPER_PAINT);
+            componentImage.setCursorMode(ViewJComponentEditImage.DROPPER_PAINT);
         } else if (command.equals("Eraser")) {
-            componentImage.setMode(ViewJComponentEditImage.ERASER_PAINT);
+            componentImage.setCursorMode(ViewJComponentEditImage.ERASER_PAINT);
         } else if (command.equals("EraseAll")) {
             componentImage.eraseAllPaint(false);
         } else if (command.equals("EraseCurrent")) {
@@ -867,69 +870,69 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             getActiveImage().notifyImageDisplayListeners();
 
         } else if (command.equals("Pointer")) {
-            componentImage.setMode(ViewJComponentEditImage.DEFAULT);
+            componentImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
         } else if (command.equals("Point")) {
 
             if (!checkForVOICompatibility(VOI.POINT)) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
-            componentImage.setMode(ViewJComponentEditImage.POINT_VOI);
+            componentImage.setCursorMode(ViewJComponentEditImage.POINT_VOI);
         } else if (command.equals("Line")) {
 
             if (!checkForVOICompatibility(VOI.LINE)) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
-            componentImage.setMode(ViewJComponentEditImage.LINE);
+            componentImage.setCursorMode(ViewJComponentEditImage.LINE);
         } else if (command.equals("Polyslice")) {
 
             if (!checkForVOICompatibility(VOI.POLYLINE_SLICE)) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
-            componentImage.setMode(ViewJComponentEditImage.POLYLINE_SLICE_VOI);
+            componentImage.setCursorMode(ViewJComponentEditImage.POLYLINE_SLICE_VOI);
         } else if (command.equals("protractor")) {
 
             if (!checkForVOICompatibility(VOI.PROTRACTOR)) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
-            componentImage.setMode(ViewJComponentEditImage.PROTRACTOR);
+            componentImage.setCursorMode(ViewJComponentEditImage.PROTRACTOR);
         } else if (command.equals("Polyline")) {
 
             if (!checkForVOICompatibility(VOI.POLYLINE)) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
-            componentImage.setMode(ViewJComponentEditImage.POLYLINE);
+            componentImage.setCursorMode(ViewJComponentEditImage.POLYLINE);
         } else if (command.equals("TextVOI")) {
 
             if (!checkForVOICompatibility(VOI.CONTOUR)) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
-            componentImage.setMode(ViewJComponentEditImage.ANNOTATION);
+            componentImage.setCursorMode(ViewJComponentEditImage.ANNOTATION);
         } else if (command.equals("RectVOI")) {
 
             if (!checkForVOICompatibility(VOI.CONTOUR)) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
-            componentImage.setMode(ViewJComponentEditImage.RECTANGLE);
+            componentImage.setCursorMode(ViewJComponentEditImage.RECTANGLE);
         } else if (command.equals("EllipseVOI")) {
 
             if (!checkForVOICompatibility(VOI.CONTOUR)) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
-            componentImage.setMode(ViewJComponentEditImage.ELLIPSE);
+            componentImage.setCursorMode(ViewJComponentEditImage.ELLIPSE);
         } else if (command.equals("LevelSetVOI")) {
             checkForVOICompatibility(VOI.CONTOUR);
-            componentImage.setMode(ViewJComponentEditImage.LEVELSET);
+            componentImage.setCursorMode(ViewJComponentEditImage.LEVELSET);
         } else if (command.equals("Rect3DVOI")) {
             checkForVOICompatibility(VOI.CONTOUR);
-            componentImage.setMode(ViewJComponentEditImage.RECTANGLE3D);
+            componentImage.setCursorMode(ViewJComponentEditImage.RECTANGLE3D);
         } else if (command.equals("LiveWireVOI")) {
             checkForVOICompatibility(VOI.CONTOUR);
 
@@ -938,13 +941,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (!dialog.isCancelled()) {
                     componentImage.getVOIHandler().setModeLivewire(dialog.getSelection());
-                    componentImage.setMode(ViewJComponentEditImage.LIVEWIRE);
+                    componentImage.setCursorMode(ViewJComponentEditImage.LIVEWIRE);
                 }
             } else {
-                componentImage.setMode(ViewJComponentEditImage.LIVEWIRE);
+                componentImage.setCursorMode(ViewJComponentEditImage.LIVEWIRE);
             }
         } else if (command.equals("NewVOI")) {
-            componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+            componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
 
             // if (getActiveImage().getVOIs().size() > 0)
             // System.err.println(" NEW ID: " + (((VOI)(getActiveImage().getVOIs().lastElement())).getID() + 1));
@@ -1208,7 +1211,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             boolean success = handleMaskToPaint(true);
 
             if (success) {
-            	ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
+                ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
             }
         } else if (command.equals("CollapseAllToSinglePaint")) {
             collapseAlltoSinglePaint(false);
@@ -1251,8 +1254,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage,
                                                                         ActionPaintToMask.MASK_SHORT));
-        } else if (command.equals("Open labels")) { 
-        	openVOI(false, true);
+        } else if (command.equals("Open labels")) {
+            openVOI(false, true);
         } else if (command.equals("Open VOI")) {
             boolean success = openVOI(false, false);
 
@@ -1348,7 +1351,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("SmoothVOI")) {
             new JDialogBSmooth(this, getActiveImage(), zSlice);
         } // Paint
-         else if (command.equals("colorPaint")) { // new colour dialog only when null
+        else if (command.equals("colorPaint")) { // new colour dialog only when null
 
             if (colorChooser == null) {
                 colorChooser = new ViewJColorChooser(this, "Pick paint color", new OkColorListener(), null);
@@ -1381,7 +1384,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("CalcPaint")) {
             componentImage.calcPaintedVolume(null);
         } else if (command.equals("PaintCan")) {
-            componentImage.setMode(ViewJComponentEditImage.PAINT_CAN);
+            componentImage.setCursorMode(ViewJComponentEditImage.PAINT_CAN);
 
             if (componentImage.growDialog != null) {
                 return;
@@ -1945,7 +1948,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                             adjLUT = dialog.getModelLUT();
 
                             if (!dialog.isFromFrame()) {
-                            	new ViewJFrameImage(image2load, dialog.getModelLUT(), new Dimension(0, 0));
+                                new ViewJFrameImage(image2load, dialog.getModelLUT(), new Dimension(0, 0));
                             }
                         }
 
@@ -2148,9 +2151,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("PreviousImage")) {
             // decSlice();
         } else if (command.equals("MagImage")) {
-            componentImage.setMode(ViewJComponentEditImage.ZOOMING_IN);
+            componentImage.setCursorMode(ViewJComponentEditImage.ZOOMING_IN);
         } else if (command.equals("UnMagImage")) {
-            componentImage.setMode(ViewJComponentEditImage.ZOOMING_OUT);
+            componentImage.setCursorMode(ViewJComponentEditImage.ZOOMING_OUT);
         } else if (command.equals("LinkFrame")) {
 
             if (isMultipleSameSizeImages(false) == true) {
@@ -2168,9 +2171,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
         } else if (command.equals("MagRegion")) {
-            componentImage.setMode(ViewJComponentEditImage.MAG_REGION);
+            componentImage.setCursorMode(ViewJComponentEditImage.MAG_REGION);
         } else if (command.equals("WinRegion")) {
-            componentImage.setMode(ViewJComponentEditImage.WIN_REGION);
+            componentImage.setCursorMode(ViewJComponentEditImage.WIN_REGION);
         } else if (command.equals("CheckerBoard")) {
 
             if ((componentImage.checkerDialog != null) && componentImage.checkerDialog.isDisplayable()) {
@@ -2320,11 +2323,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.paintComponent(componentImage.getGraphics());
 
         } else if (command.equals("GridOptions")) {
-        	if (gridOptions != null) {
-        		gridOptions.setVisible(true);
-        	} else {
-        		gridOptions = new JDialogGridOptions(this, componentImage);
-        	}
+
+            if (gridOptions != null) {
+                gridOptions.setVisible(true);
+            } else {
+                gridOptions = new JDialogGridOptions(this, componentImage);
+            }
         } else if (command.equals("ShowOverlay")) {
 
             componentImage.getVOIHandler().setOverlay(((JCheckBoxMenuItem) event.getSource()).isSelected());
@@ -2420,7 +2424,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (getActiveImage() == imageA) {
                 componentImage.getLUTa().invertLUT();
             } else if (getActiveImage() == imageB) {
-            	System.err.println("should be inverting the lutB");
+                System.err.println("should be inverting the lutB");
                 componentImage.getLUTb().invertLUT();
             }
 
@@ -2490,7 +2494,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
         } else if (command.equals("quickLUT")) {
-            componentImage.setMode(ViewJComponentEditImage.QUICK_LUT);
+            componentImage.setCursorMode(ViewJComponentEditImage.QUICK_LUT);
         } else if (command.equals("resetLUTs")) {
             componentImage.resetLUTs();
 
@@ -2507,6 +2511,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
         } else if (command.equals("Light box")) {
+
             if (componentImage.getImageA().getLightBoxFrame() == null) {
 
                 // 3 space representation makes no sense on a 2d image!
@@ -2518,9 +2523,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 try {
                     new ViewJFrameLightBox(this, "LightBox", imageA, componentImage.getLUTa(), imageB,
-                                                           componentImage.getLUTb(), componentImage.getResolutionX(),
-                                                           componentImage.getResolutionY(), new Dimension(50, 200),
-                                                           controls);
+                                           componentImage.getLUTb(), componentImage.getResolutionX(),
+                                           componentImage.getResolutionY(), new Dimension(50, 200), controls);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open Lightbox.");
                 }
@@ -2549,10 +2553,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Shortcuts")) {
             userInterface.showShortcutEditor(false);
         } else if (command.startsWith("PlugInAlgorithm")) {
-        	Object thePlugIn = null;
-        	String plugInName = "PlugIn" + command.substring(15);
-        	
-          //  String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            Object thePlugIn = null;
+            String plugInName = "PlugIn" + command.substring(15);
+
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             Preferences.debug("\nplugInName = " + plugInName + "\n");
 
@@ -2577,9 +2581,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.startsWith("PlugInFileRead")) {
 
             Object thePlugIn = null;
-            
+
             String plugInName = "PlugIn" + command.substring(14);
-            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -2606,7 +2610,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             Object thePlugIn = null;
 
             String plugInName = "PlugIn" + command.substring(15);
-            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -2631,9 +2635,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.startsWith("PlugInFileTransfer")) {
             Object thePlugIn = null;
-            
+
             String plugInName = "PlugIn" + command.substring(18);
-            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -2653,9 +2657,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.startsWith("PlugInGeneric")) {
             Object thePlugIn = null;
-            
+
             String plugInName = "PlugIn" + command.substring(13);
-            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -2675,9 +2679,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.startsWith("PluginView")) {
             Object thePlugIn = null;
-            
+
             String plugInName = "PlugIn" + command.substring(10);
-            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -2820,7 +2824,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
                         // selected intensity
-                        
+
 
                         if (imageB.isColorImage()) {
 
@@ -3352,11 +3356,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
      * that were masked with the intensity value that is currently active.
      *
-     * @param  showProgressBar  DOCUMENT ME!
+     * @param   showProgressBar  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
      */
     public boolean handleMaskToPaint(boolean showProgressBar) {
 
-    	boolean success = false;
+        boolean success = false;
+
         if (componentImage != null) {
 
             if (imageB != null) {
@@ -3458,7 +3465,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // should never get to this point. big trouble.
             MipavUtil.displayError("Cannot complete the operation due to an internal error.");
         }
-        
+
         return success;
     }
 
@@ -3553,6 +3560,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void keyPressed(KeyEvent e) {
 
         int keyCode = e.getKeyCode();
+
         switch (keyCode) {
 
             case KeyEvent.VK_PAGE_DOWN:
@@ -3563,7 +3571,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             case KeyEvent.VK_PAGE_UP:
                 incSlice();
 
-                return;           
+                return;
 
             case KeyEvent.VK_UP:
             case KeyEvent.VK_DOWN:
@@ -3573,23 +3581,27 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 return;
         }
-        
+
         if (!e.isControlDown()) {
-        	if ( keyCode >= '0' && keyCode <= '9') {
-        	
-        		int index = keyCode - 49;
-        		if (index < 0) {
-        			index = 10;
-        		}
-        		if (!paintBrushLocked) {
-        			previousPaintBrushIndex = getControls().getTools().getPaintBrush();
-        			getControls().getTools().setPaintBrush(index);
-        			getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
-        			paintBrushLocked = true;
-        			updateImages(true);
-        		}
-        		return;
-        	}
+
+            if ((keyCode >= '0') && (keyCode <= '9')) {
+
+                int index = keyCode - 49;
+
+                if (index < 0) {
+                    index = 10;
+                }
+
+                if (!paintBrushLocked) {
+                    previousPaintBrushIndex = getControls().getTools().getPaintBrush();
+                    getControls().getTools().setPaintBrush(index);
+                    getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
+                    paintBrushLocked = true;
+                    updateImages(true);
+                }
+
+                return;
+            }
         }
 
         // look for shortcuts now
@@ -3612,6 +3624,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void keyReleased(KeyEvent e) {
         int keyCode = e.getKeyCode();
+
         switch (keyCode) {
 
             case KeyEvent.VK_HOME:
@@ -3675,25 +3688,28 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
 
             case KeyEvent.VK_Q:
-                if (componentImage.getMode() == ViewJComponentEditImage.QUICK_LUT) {
-                    componentImage.setMode(ViewJComponentEditImage.DEFAULT);
+                if (componentImage.getCursorMode() == ViewJComponentEditImage.QUICK_LUT) {
+                    componentImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
                 }
 
                 return;
 
         }
+
         if (!e.isControlDown()) {
-        	if ( keyCode >= '0' && keyCode <= '9') {
-        		if (paintBrushLocked) {
-        			getControls().getTools().setPaintBrush(previousPaintBrushIndex);
-        			getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
-        			updateImages(true);
-        			paintBrushLocked = false;
-        		}
-        	
-        	}
+
+            if ((keyCode >= '0') && (keyCode <= '9')) {
+
+                if (paintBrushLocked) {
+                    getControls().getTools().setPaintBrush(previousPaintBrushIndex);
+                    getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
+                    updateImages(true);
+                    paintBrushLocked = false;
+                }
+
+            }
         }
-        
+
     }
 
     /**
@@ -4529,9 +4545,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return false;
         }
 
-        //redraw the paintBrushCursor (quick)
+        // redraw the paintBrushCursor (quick)
         componentImage.updatePaintBrushCursor();
-        
+
         if (componentImage.show(tSlice, zSlice, LUTa, LUTb, forceShow, interpMode) == false) {
             return false;
         }
@@ -5606,9 +5622,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          * @param  e  DOCUMENT ME!
          */
         public void actionPerformed(ActionEvent e) {
-        	System.err.println("got here somehow:");
+            System.err.println("got here somehow:");
+
             Color color = colorChooser.getColor();
             controls.getTools().setPaintColor(color);
+
             if (linkTriFrame != null) {
                 linkTriFrame.setPaintColor(color);
             }

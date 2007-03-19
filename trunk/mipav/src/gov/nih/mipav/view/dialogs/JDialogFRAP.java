@@ -303,13 +303,13 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         } else if ((source == photoBleachedButton) || (source == wholeOrganButton) || (source == backgroundButton)) {
 
             if (photoBleachedButton.isSelected()) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 componentImage.getVOIHandler().setPresetHue(0.0f); // red
             } else if (wholeOrganButton.isSelected()) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
             } else if (backgroundButton.isSelected()) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
             }
         } else if ((source == bandButton) || (source == circleButton) || (source == oneDButton) ||
@@ -402,7 +402,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 if (wholeOrganButton.isSelected()) {
                     wholeOrganButton.setSelected(false);
                     photoBleachedButton.setSelected(true);
-                    componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                    componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                     componentImage.getVOIHandler().setPresetHue(0.0f); // red
                 }
             }
@@ -557,7 +557,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         photoBleachedButton.addActionListener(this);
         VOIGroup.add(photoBleachedButton);
         VOIPanel.add(photoBleachedButton, gbc4);
-        componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+        componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
         componentImage.getVOIHandler().setPresetHue(0.0f); // red
 
         wholeOrganButton = new JRadioButton("Add required whole organ VOI", false);

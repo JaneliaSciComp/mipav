@@ -280,10 +280,10 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
         } else if ((source == activeButton) || (source == backgroundButton)) {
 
             if (activeButton.isSelected()) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 componentImage.getVOIHandler().setPresetHue(-1.0f); // no preset color
             } else if (backgroundButton.isSelected()) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
             }
         } else if (command.equals("Help")) {
@@ -577,7 +577,7 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
         VOIGroup.add(backgroundButton);
         gbc4.gridy = 0;
         VOIPanel.add(backgroundButton, gbc4);
-        componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+        componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
         componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
 
         activeButton = new JRadioButton("Add active VOI", false);

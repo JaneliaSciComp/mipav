@@ -662,9 +662,9 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         } else if (command.equals("WinRegion")) {
 
             if (doRegionB) {
-                componentImage.setMode(ViewJComponentRegistration.WIN_REGION);
+                componentImage.setCursorMode(ViewJComponentRegistration.WIN_REGION);
             } else {
-                componentImage.setMode(ViewJComponentRegistration.DEFAULT);
+                componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
                 updateImages(true);
             }
 
@@ -681,7 +681,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             rightButton.setEnabled(true);
             leftButton.setEnabled(true);
             mode = ViewJComponentBase.TRANSLATE;
-            componentImage.setMode(ViewJComponentBase.TRANSLATE);
+            componentImage.setCursorMode(ViewJComponentBase.TRANSLATE);
             componentImage.setAdjMark(false);
             componentImage.setRefMark(false);
             componentImage.setCenter(false);
@@ -782,10 +782,10 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             rightButton.setEnabled(true);
             leftButton.setEnabled(true);
             mode = ViewJComponentBase.POINT_VOI;
-            componentImageA.setMode(ViewJComponentBase.POINT_VOI);
+            componentImageA.setCursorMode(ViewJComponentBase.POINT_VOI);
             componentImage.setCenter(false);
-            componentImage.setMode(ViewJComponentRegistration.DEFAULT);
-            componentImageB.setMode(ViewJComponentRegistration.DEFAULT);
+            componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
+            componentImageB.setCursorMode(ViewJComponentRegistration.DEFAULT);
             componentImageB.getVOIHandler().selectAllVOIs(false);
         } else if (command.equals("adjMark")) {
             cwButton.setEnabled(false);
@@ -795,10 +795,10 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             rightButton.setEnabled(true);
             leftButton.setEnabled(true);
             mode = ViewJComponentBase.POINT_VOI;
-            componentImageB.setMode(ViewJComponentBase.POINT_VOI);
+            componentImageB.setCursorMode(ViewJComponentBase.POINT_VOI);
             componentImage.setCenter(false);
-            componentImage.setMode(ViewJComponentRegistration.DEFAULT);
-            componentImageA.setMode(ViewJComponentRegistration.DEFAULT);
+            componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
+            componentImageA.setCursorMode(ViewJComponentRegistration.DEFAULT);
             componentImageA.getVOIHandler().selectAllVOIs(false);
         } else if (command.equals("refMarkMinus")) {
             componentImageA.deleteSelectedContours( componentImageA.getCenterPtLocation(), true );
@@ -809,9 +809,9 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             refMarkButton.setSelected(false);
             translateButton.setSelected(false);
             componentImage.setCenter(false);
-            componentImage.setMode(ViewJComponentRegistration.DEFAULT);
-            componentImageA.setMode(ViewJComponentBase.DEFAULT);
-            componentImageB.setMode(ViewJComponentBase.DEFAULT);
+            componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
+            componentImageA.setCursorMode(ViewJComponentBase.DEFAULT);
+            componentImageB.setCursorMode(ViewJComponentBase.DEFAULT);
             setDefaultMode();
         } else if (command.equals("degreeIncrement")) {
             JDialogIncrement dialog = new JDialogIncrement(this, false);
@@ -835,7 +835,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             cwButton.setEnabled(true);
             ccwButton.setEnabled(true);
             mode = ViewJComponentBase.ROTATE;
-            componentImage.setMode(ViewJComponentBase.ROTATE);
+            componentImage.setCursorMode(ViewJComponentBase.ROTATE);
             componentImage.setCenter(true);
 
             // componentImageB.setRegCenterPtCreated(true);
@@ -845,7 +845,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             rightButton.setEnabled(false);
             leftButton.setEnabled(false);
             mode = ViewJComponentBase.ROTATE;
-            componentImage.setMode(ViewJComponentBase.ROTATE);
+            componentImage.setCursorMode(ViewJComponentBase.ROTATE);
             componentImage.setAdjMark(false);
             componentImage.setRefMark(false);
             componentImage.setCenter(false);
@@ -874,7 +874,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             rightButton.setEnabled(false);
             leftButton.setEnabled(false);
             mode = ViewJComponentBase.ROTATE;
-            componentImage.setMode(ViewJComponentBase.ROTATE);
+            componentImage.setCursorMode(ViewJComponentBase.ROTATE);
             componentImage.setAdjMark(false);
             componentImage.setRefMark(false);
             componentImage.setCenter(false);
@@ -927,9 +927,9 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             xRotation = xRes * (image.getExtents()[0] / 2);
             yRotation = yRes * (image.getExtents()[1] / 2);
             defaultModeButton.setSelected(true);
-            componentImageA.setMode(ViewJComponentBase.DEFAULT);
-            componentImageB.setMode(ViewJComponentBase.DEFAULT);
-            componentImage.setMode(ViewJComponentBase.DEFAULT);
+            componentImageA.setCursorMode(ViewJComponentBase.DEFAULT);
+            componentImageB.setCursorMode(ViewJComponentBase.DEFAULT);
+            componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
             updateImages(true);
         } else if (command.equals("commitSlice")) {
 

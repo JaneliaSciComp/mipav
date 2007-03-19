@@ -218,7 +218,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
                     if ((Math.abs(x[2] - x[0]) > 1) && (Math.abs(y[2] - y[0]) > 1)) {
 
                         if ((image.getNDims() > 2) &&
-                                (((ViewJComponentEditImage) (component)).getMode() ==
+                                (((ViewJComponentEditImage) (component)).getCursorMode() ==
                                      ((ViewJComponentEditImage) (component)).RECTANGLE3D)) {
 
                             for (i = 0; i < image.getExtents()[2]; i++) {
@@ -235,9 +235,9 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
                     }
                 } catch (OutOfMemoryError error) {
                     System.gc();
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
                     MipavUtil.displayError("Out of memory: RubberbandRectangle.mouseReleased");
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }
@@ -288,7 +288,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
                                 if ((Math.abs(x[2] - x[0]) > 1) && (Math.abs(y[2] - y[0]) > 1)) {
 
                                     if ((image.getNDims() > 2) &&
-                                            (((ViewJComponentEditImage) (component)).getMode() ==
+                                            (((ViewJComponentEditImage) (component)).getCursorMode() ==
                                                  ((ViewJComponentEditImage) (component)).RECTANGLE3D)) {
 
                                         for (j = 0; j < image.getExtents()[2]; j++) {
@@ -310,9 +310,9 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
 
                 } catch (OutOfMemoryError error) {
                     System.gc();
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
                     MipavUtil.displayError("Out of memory: RubberbandRectangle.mouseReleased");
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }
@@ -323,7 +323,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
             if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
 
                 // System.err.println("Rect Shift down is NOT true");
-                ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
             } else {
                 // System.err.println("Rect shift is down");
             }
