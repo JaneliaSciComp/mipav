@@ -5361,6 +5361,19 @@ public class FileIO {
 
                     try {
                         image = (Image) ImageIO.read(new File(fileDir + fileName)); // if JIMI fails, try this
+
+                        // String[] readTypes = ImageIO.getReaderFormatNames();
+
+                        // for (int t = 0; t < readTypes.length; t++) {
+                        // System.out.println("ImageIO read formats: " + readTypes[t]);
+                        // }
+
+                        // String[] writeTypes = ImageIO.getWriterFormatNames();
+
+                        // for (int t = 0; t < writeTypes.length; t++) {
+                        // System.out.println("ImageIO write formats: " + writeTypes[t]);
+                        // }
+
                     } catch (IOException ioe) {
                         // intentionally empty
 
