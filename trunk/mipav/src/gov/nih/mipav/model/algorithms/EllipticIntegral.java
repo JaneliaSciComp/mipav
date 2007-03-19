@@ -26,7 +26,7 @@ public class EllipticIntegral {
     
     //  ~ Instance fields ------------------------------------------------------------------------------------------------
     
-    // Number of repetitions = N
+    // Number of repetitions = N - 1
     private int N = 12; // 6
     
     //private double TINY = 3.0E-138;  // 3.0E-38
