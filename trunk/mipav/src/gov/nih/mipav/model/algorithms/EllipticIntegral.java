@@ -26,12 +26,12 @@ public class EllipticIntegral {
     
     //  ~ Instance fields ------------------------------------------------------------------------------------------------
     
-    // Number of repetitions = N - 1
+    // Number of repetitions = N
     private int N = 12; // 6
     
-    private double TINY = 3.0E-138;  // 3.0E-38
+    //private double TINY = 3.0E-138;  // 3.0E-38
     
-    private double BIG = 3.0E137; // 3.0E37
+    //private double BIG = 3.0E137; // 3.0E37
     
     private double C1 = 1.0/24.0;
     
@@ -41,9 +41,9 @@ public class EllipticIntegral {
     
     private double C4 = 1.0/14.0;
     
-    private double TINYd = 1.0E-125; // 1.0E-25
+    //private double TINYd = 1.0E-125; // 1.0E-25
     
-    private double BIGd = 4.5E121; // 4.5E21
+    //private double BIGd = 4.5E121; // 4.5E21
     
     private double C1d = 3.0/14.0;
     
@@ -238,6 +238,7 @@ public class EllipticIntegral {
     } // public void run()
     
     // Routine cel12 only calculates complete integrals
+    // Based on the arithmetic-geometric mean procedure
     private void cel12(double ckr, double cki) {
         double kcr[] = new double[1];
         double kci[] = new double[1];
@@ -515,8 +516,6 @@ public class EllipticIntegral {
         double alambi;
         double tr1[] = new double[1];
         double ti1[] = new double[1];
-        double tr2[] = new double[1];
-        double ti2[] = new double[1];
         double zir[] = new double[1];
         double zii[] = new double[1];
         double sqrtzir[] = new double[1];
