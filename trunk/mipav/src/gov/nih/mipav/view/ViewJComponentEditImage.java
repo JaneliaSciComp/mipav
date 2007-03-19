@@ -332,7 +332,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     private Image cleanImageB = null;
 
 
-    /** Document Me. */
+    /** If true then the x,y location and pixel/voxel intensity should be displayed (x,y: intensity). */
     private boolean intensityLabel = false;
 
     /**
@@ -353,7 +353,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** Flag used to indicate if the shift key is depressed. True indicates the shift key is depressed. */
     private boolean shiftDown = false;
 
-    /** DOCUMENT ME! */
+    /**
+     * Flag used to indicate that the intensity values of the image should be displayed in the magnified portion of the
+     * image. The intensity values can only be shown if the magnification is high enough to fit the text representation
+     * of the value in the magnified voxel/pixel.
+     */
     private boolean showMagIntensity = false;
 
     /** Boolean to determine if the mouse had been dragging before mouse release (for moving and setting active). */
