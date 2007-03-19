@@ -40,9 +40,6 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	/** This is the full path to the gradient file **/
 	private String gradientFilePath;
 
-	/** This is the list for all the files in the study dir**/
-	private Vector fileInfoVector;
-
 	/** This is an ordered list of files per series number **/
 	private TreeSet seriesFileInfoTreeSet;
 
@@ -76,6 +73,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	/** total num of volumes in study **/
 	private int totalNumVolumes = 0;
 	
+	/** total image slices **/
+	private int totalImageSlices = 0;
+	
 
 
 	/**
@@ -88,7 +88,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		this.studyName = studyName;
 		this.gradientFilePath = gradientFilePath;
 		this.outputTextArea = outputTextArea;
-		fileInfoVector = new Vector();
+		seriesFileInfoTreeMap = new TreeMap();
 	}
 
 	
@@ -98,16 +98,24 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 * run algorithm
 	 */
 	public void runAlgorithm() {
+		long begTime = System.currentTimeMillis();
 		Preferences.debug("** Beginning Algorithm \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("** Beginning Algorithm \n");
 
+		
+		
+		
 		Preferences.debug("* The study path is " + studyPath + " \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* The study path is " + studyPath + " \n");
 
+		
+		
 		// first create a File object based upon the study path
 		File studyPathRoot = new File(studyPath);
 
-		// parse the directory and populate the fileInfoVector
+		
+		
+		// parse the directory
 		Preferences.debug("* Parsing... \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* Parsing... \n");
 		success = parse(studyPathRoot);
@@ -115,35 +123,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			finalize();
 			return;
 		}
-
-		Preferences.debug("* Number of images in study dir is " + fileInfoVector.size() + " \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Number of images in study dir is " + fileInfoVector.size() + " \n");
-		
-		// now lets separate the fileInfoVector depending on series # and
-		// then populate the seriesFileInfoVectorMap
-		seriesFileInfoTreeMap = new TreeMap();
-
-		for (int i = 0; i < fileInfoVector.size(); i++) {
-			FileInfoDicom fileInfoDicom = (FileInfoDicom) fileInfoVector.elementAt(i);
-			String seriesNumber_String = ((String) fileInfoDicom.getValue("0020,0011")).trim();
-			if (seriesNumber_String == null || seriesNumber_String.equals("")) {
-				seriesNumber_String = "0";
-			}
-			Integer seriesNumber = new Integer(seriesNumber_String);
-			if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
-				seriesFileInfoTreeSet = new TreeSet(new InstanceNumberComparator());
-				seriesFileInfoTreeSet.add(fileInfoDicom);
-				seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
-			} else {
-				seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
-				seriesFileInfoTreeSet.add(fileInfoDicom);
-				seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
-			}
-		}
-
-		
+		Preferences.debug("* Number of image slices in study dir is " + totalImageSlices + " \n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append("* Number of image slices  in study dir is " + totalImageSlices + " \n");
 		
 
+				
 		//create proc dir
 		Preferences.debug("* Creating proc dir \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* Creating proc dir \n");
@@ -153,6 +137,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			return;
 		}
 		
+		
+			
 		// create path file
 		Preferences.debug("* Creating path file \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* Creating path file \n");
@@ -161,6 +147,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			finalize();
 			return;
 		}
+		
 		
 		
 		//read gradient file
@@ -172,6 +159,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			return;
 		}
 		
+		
+		
 		//create list file
 		Preferences.debug("* Creating list file \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* Creating list file \n");
@@ -180,6 +169,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			finalize();
 			return;
 		}
+		
+		
 		
 		//obtain b-values
 		Preferences.debug("* Obtaining b-values \n", Preferences.DEBUG_ALGORITHM);
@@ -191,6 +182,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		}
 		
 		
+		
 		//create b matrix file
 		Preferences.debug("* Creating b-matrix file \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* Creating b-matrix file \n");
@@ -200,10 +192,21 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			return;
 		}
 
+		
+		
 		Preferences.debug("** Ending Algorithm \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("** Ending Algorithm \n");
 		
+		
+		
 		finalize();
+		
+		long endTime = System.currentTimeMillis();
+		long diffTime = endTime - begTime;
+		
+		Preferences.debug("** Algorithm took " + diffTime + " milliseconds \n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append("** Algorithm took " + diffTime + " milliseconds \n");
+		
 	}
 	
 	
@@ -211,7 +214,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	
 	
 	/**
-	 * this method parses the study dir and populates the fileInfoVector
+	 * this method parses the study dir
 	 * @param file
 	 * @return
 	 */
@@ -255,25 +258,36 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 						return false;
 					}
 
-					FileInfoDicom fileInfo = (FileInfoDicom) imageFile.getFileInfo();
-
-					fileInfoVector.addElement(fileInfo);
+					//place FIleInfoDicom of image slice in correct series list that is sorted by instance number
+					FileInfoDicom fileInfoDicom = (FileInfoDicom) imageFile.getFileInfo();
+					String seriesNumber_String = ((String) fileInfoDicom.getValue("0020,0011")).trim();
+					if (seriesNumber_String == null || seriesNumber_String.equals("")) {
+						seriesNumber_String = "0";
+					}
+					Integer seriesNumber = new Integer(seriesNumber_String);
+					if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
+						seriesFileInfoTreeSet = new TreeSet(new InstanceNumberComparator());
+						seriesFileInfoTreeSet.add(fileInfoDicom);
+						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
+					} else {
+						seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
+						seriesFileInfoTreeSet.add(fileInfoDicom);
+						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
+					}
+					totalImageSlices++;
 
 				}
 			}
 		} catch (Exception err) {
 			err.printStackTrace();
 			Preferences.debug(err.toString() + "\n", Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("! ERROR: Unable parse file.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("! ERROR: Unable to parse.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
 			outputTextArea.append(err.toString() + "\n");
-			outputTextArea.append("! ERROR: Unable parse file.....exiting algorithm \n");
+			outputTextArea.append("! ERROR: Unable to parse.....exiting algorithm \n");
 			return false;
 		}
-		if(fileInfoVector.size() == 0) {
-			return false;
-		} else {
-			return true;
-		}
+
+		return true;
 	}
 	
 	
@@ -409,9 +423,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 * @return boolean success
 	 */
 	public boolean createListFile() {
-		// we can get the info for the list file from just 1 of the imageSlices'
-		// FileInfoDicom
-		FileInfoDicom fileInfoDicom = (FileInfoDicom) fileInfoVector.elementAt(0);
+		// we can get the info for the list file from just 1 of the imageSlices' FileInfoDicom
+		TreeSet firstTS = (TreeSet)seriesFileInfoTreeMap.get(seriesFileInfoTreeMap.firstKey());
+		FileInfoDicom fileInfoDicom = (FileInfoDicom)firstTS.first();
 
 		Short originalColumns = (Short)(fileInfoDicom.getValue("0028,0011"));
 		String originalColumsString = originalColumns.toString();
@@ -1019,7 +1033,6 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			}
 		}
 
-		fileInfoVector = null;
 		seriesFileInfoTreeSet = null;
 		seriesFileInfoTreeMap = null;
 		success = true;
