@@ -2,7 +2,6 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.*;
 
 
 /**
@@ -151,6 +150,7 @@ public class EllipticIntegral {
             boolean analyticContinuationUsed, double phir, double phii, double firstr[], 
             double firsti[], double secondr[], double secondi[], boolean useStandardMethod, int[] errorFlag) {
         this.complete = complete;
+        runcel12 = false;
         this.modr = modr;
         this.modi = modi;
         this.complementaryModulusUsed = complementaryModulusUsed;
@@ -166,6 +166,7 @@ public class EllipticIntegral {
     }
     
     public void run() {
+        double ckabs;
         
         if (errorFlag == null) {
             MipavUtil.displayError("Array errorFlag must not be null");
@@ -182,6 +183,12 @@ public class EllipticIntegral {
         if (complementaryModulusUsed) {
             ckr[0] = modr;
             cki[0] = modi;
+            ckabs = zabs(ckr[0], cki[0]);
+            if (ckabs < 1.0E-10) {
+                complete = true;
+                phir = pihf;
+                phii = 0.0;
+            }    
             sqrtc(1.0 - ckr[0]*ckr[0] + cki[0]*cki[0], -2.0*ckr[0]*cki[0], akr, aki);
             if (modr < 0.0) {
                 sgnck = -1;    
@@ -194,7 +201,20 @@ public class EllipticIntegral {
             akr[0] = modr;
             aki[0] = modi;
             sqrtc(1.0 - akr[0]*akr[0] + aki[0]*aki[0], -2.0*akr[0]*aki[0], ckr, cki);
-            if (analyticContinuationUsed) {
+            ckabs = zabs(ckr[0], cki[0]);
+            if (ckabs < 1.0E-10) {
+               complete = true; 
+               complementaryModulusUsed = true;
+               phir = pihf;
+               phii = 0.0;
+               if (ckr[0] < 0.0) {
+                   sgnck = -1;    
+               }
+               else {
+                   sgnck = 1;
+               }
+            }
+            else if (analyticContinuationUsed) {
                 sgnck = -1;
                 ckr[0] = -ckr[0];
                 cki[0] = -cki[0];
@@ -313,6 +333,7 @@ public class EllipticIntegral {
         zmlt(secondr[0], secondi[0], rdr[0]/3.0, rdi[0]/3.0, secondr, secondi);
         secondr[0] = firstr[0] - secondr[0];
         secondi[0] = firsti[0] - secondi[0];
+        return;
     } // ell12
     
     private void rfrd(double xrtr, double xrti, double yrtr, double yrti) {
@@ -476,20 +497,113 @@ public class EllipticIntegral {
     } // rfrd
     
     private void rfrdb(double xrtr, double xrti, double yrtr, double yrti) {
+        double sqrtxr[] = new double[1];
+        double sqrtxi[] = new double[1];
+        double sqrtyr[] = new double[1];
+        double sqrtyi[] = new double[1];
+        double xtr[] = new double[1];
+        double xti[] = new double[1];
+        double ytr[] = new double[1];
+        double yti[] = new double[1];
+        double facr[] = new double[1];
+        double faci[] = new double[1];
+        double sumdr;
+        double sumdi;
+        double facdr[] = new double[1];
+        double facdi[] = new double[1];
+        double alambr;
+        double alambi;
+        double tr1[] = new double[1];
+        double ti1[] = new double[1];
+        double tr2[] = new double[1];
+        double ti2[] = new double[1];
+        double zir[] = new double[1];
+        double zii[] = new double[1];
+        double sqrtzir[] = new double[1];
+        double sqrtzii[] = new double[1];
+        double delxr;
+        double delxi;
+        double delyr;
+        double delyi;
+        double xytr;
+        double xyti;
         
+        sqrtxr[0] = xrtr;
+        sqrtxi[0] = xrti;
+        sqrtyr[0] = yrtr;
+        sqrtyi[0] = yrti;
+        zmlt(xrtr, xrti, xrtr, xrti, xtr, xti);
+        zmlt(yrtr, yrti, yrtr, yrti, ytr, yti);
+        facr[0] = 1.0;
+        faci[0] = 0.0;
+        sumdr = 0.0;
+        sumdi = 0.0;
+        facdr[0] = 1.0;
+        facdi[0] = 0.0;
+        nrep = 0;
+        while (true) {
+            zmlt(sqrtxr[0], sqrtxi[0], sqrtyr[0], sqrtyi[0], tr1, ti1);
+            alambr = tr1[0] + sqrtxr[0] + sqrtyr[0];
+            alambi = ti1[0] + sqrtxi[0] + sqrtyi[0];
+            zdiv(1.0, 0.0, 1.0 + alambr, alambi, zir, zii);
+            xtr[0] = xtr[0] + alambr;
+            xti[0] = xti[0] + alambi;
+            ytr[0] = ytr[0] + alambr;
+            yti[0] = yti[0] + alambi;
+            zmlt(xtr[0], xti[0], zir[0], zii[0], xtr, xti);
+            zmlt(ytr[0], yti[0], zir[0], zii[0], ytr, yti);
+            sqrtc(zir[0], zii[0], sqrtzir, sqrtzii);
+            sqrtzir[0] *= 2.0;
+            sqrtzii[0] *= 2.0;
+            zmlt(facr[0], faci[0], sqrtzir[0], sqrtzii[0], facr, faci);
+            zmlt(facdr[0], facdi[0], zir[0], zii[0], tr1, ti1);
+            sumdr = sumdr + tr1[0];
+            sumdi = sumdi + ti1[0];
+            zmlt(facdr[0], facdi[0], zir[0], zii[0], facdr, facdi);
+            zmlt(facdr[0], facdi[0], sqrtzir[0], sqrtzii[0], facdr, facdi);
+            delxr = 1.0 - xtr[0];
+            delxi = -xti[0];
+            delyr = 1.0 - ytr[0];
+            delyi = - yti[0];
+            if ((zabs(delxr, delxi) < ERRTOLb) && (zabs(delyr, delyi) < ERRTOLb)) {
+                break;    
+            }
+            sqrtc(xtr[0], xti[0], sqrtxr, sqrtxi);
+            sqrtc(ytr[0], yti[0], sqrtyr, sqrtyi);
+            nrep++;
+        } // while (true)
+        xytr = xtr[0] + ytr[0];
+        xyti = xti[0] + yti[0];
+        zmlt(facr[0], faci[0], (8.0 - xytr)/6.0, -xyti/6.0, rfr, rfi);
+        zmlt(facdr[0], facdi[0], 1.6-0.3*xytr, -0.3*xyti, rdr, rdi);
+        rdr[0] = 3*sumdr + rdr[0];
+        rdi[0] = 3*sumdi + rdi[0];
+        return;
     } // rfrdb
     
     private void zsin(double inr, double ini, double outr[], double outi[]) {
-        outr[0] = Math.sin(inr)*Math.cosh(ini);
-        outi[0] = Math.cos(inr)*Math.sinh(ini);
+        outr[0] = Math.sin(inr)*cosh(ini);
+        outi[0] = Math.cos(inr)*sinh(ini);
         return;
     } // private void zsin
     
     private void zcos(double inr, double ini, double outr[], double outi[]) {
-        outr[0] = Math.cos(inr)*Math.cosh(ini);
-        outi[0] = -Math.sin(inr)*Math.sinh(ini);
+        outr[0] = Math.cos(inr)*cosh(ini);
+        outi[0] = -Math.sin(inr)*sinh(ini);
         return;
     } // private void zcos
+    
+    private double cosh(double x) {
+        double var;
+        var = (Math.exp(x) + Math.exp(-x))/2.0;
+        return var;
+    }
+    
+    private double sinh(double x) {
+        double var;
+        var = (Math.exp(x) - Math.exp(-x))/2.0;
+        return var;
+    }
     
     /**
      * complex multiply c = a * b.
