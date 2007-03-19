@@ -23,7 +23,7 @@ import java.text.*;
 import java.util.*;
 
 import javax.swing.*;
-//import org.orcboard.camera.*;
+import org.orcboard.camera.*;
 
 
 /**
@@ -247,6 +247,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     protected int previousPaintBrush = -1;
 
+    
+    protected BitSet paintBrushPrevious = null;
+    protected Dimension paintBrushDimPrevious = null;
+    protected BufferedImage paintImagePrevious = null;
+    
+    
     /** DOCUMENT ME! */
     protected ModelRGB RGBTA;
 
@@ -504,12 +510,149 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         /* create the WindowLevel controller: */
         m_kWinLevel = new WindowLevel();
-
-        loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH));
+        
+       loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences
+     * @param paintName the name of the brush to load
+     */
+    public void loadPaintBrush(String paintName, boolean isQuick) {
+    	
+    	if (isQuick) {
+    		quickSwitchBrush();
+    	}
+    	
+    	String fullPath = null;
+    	
+    	if (paintName == null) {
+    		fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
+    	} else {
+    		try {
+    		fullPath = PlaceHolder.class.getResource(paintName).getPath();
+    		} catch (Exception e) {
+    			fullPath = System.getProperty("user.home") + File.separator + 
+    			"mipav" + File.separator + "brushes" + File.separator + paintName;
+    			
+    			if (! (new File(fullPath)).exists()) {
+    				fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath(); 
+    			}
+    			
+    		}
+    	}
+    	
+    	//fix the URL nonsense with spaces
+    	fullPath = fullPath.replaceAll("%20", " ");
+    	
+    	File paintFile = new File(fullPath);
+    	FileIO fileIO = new FileIO();
+
+    	//read in the .gif or .png as a model image to create the BitSet
+    	ModelImage brushImage = fileIO.readImage(paintFile.getPath());
+    	
+    	if (brushImage == null) {
+    		return;
+    	}
+    	
+    	int [] brushExtents = brushImage.getExtents();
+    	    	
+    	//create the bitset and the brush dimensions
+    	paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
+    	paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
+    	
+    	int counter = 0;
+    		
+    	int [] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
+		try {
+			brushImage.exportData(0, buffer.length, buffer);
+		} catch (Exception e) {
+			MipavUtil.displayError("Open brush failed.");
+			brushImage.disposeLocal();
+			return;
+		}
+		
+		
+		int length = buffer.length;
+	
+		if (paintImage != null) {
+			paintImage.flush();
+			paintImage = null;
+		}
+		
+		//create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
+		paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
+		
+	
+						
+		//set or clear the bitset based on the black pixels (black == on)
+		for ( int i = 0; i < length; i += 4, counter++) {
+			if (buffer[i + 1] == 0) {
+				paintBrush.set(counter);
+			} else {
+				paintBrush.clear(counter);
+			}
+		}
+		
+		updatePaintBrushCursor();
+		
+		//remove the image created as it is no longer needed
+		brushImage.disposeLocal();
+		
+    }
+    
+    /** Updates the Paint Cursor's BufferedImage with the correct color/opacity */
+    public void updatePaintBrushCursor() {
+    	int opacity = MipavMath.round(255 * .3);
+    	Color paintColor = Color.red;
+		try {
+			opacity = (int)(frame.getControls().getTools().getOpacity() * 255);
+			paintColor = frame.getControls().getTools().getPaintColor();
+		} catch (Exception e) {}
+		
+		Color brushColor = new Color(paintColor.getRed(),paintColor.getGreen(), paintColor.getBlue(), opacity);
+    	int counter = 0;
+		
+		for (int y = 0; y < paintBrushDim.height; y++) {
+			for (int x = 0; x < paintBrushDim.width; x++, counter++) {
+				if (paintBrush.get(counter)) {
+					paintImage.setRGB(x, y, brushColor.getRGB());
+				}
+			}
+		}
+    } 
+    
+    /**
+     * Backups up ( and swaps if not null) the current and previously used paintBrush
+     *
+     */
+    public void quickSwitchBrush() {
+    	
+    	//swap previous with current
+    		
+    	if (paintBrushPrevious != null) {
+    		BitSet tempSet = (BitSet)paintBrushPrevious.clone();
+    		Dimension tempDim = (Dimension)paintBrushDimPrevious.clone();
+    		BufferedImage tempBImage = ImageUtil.cloneImage(paintImagePrevious);
+    		
+    		paintBrushPrevious = (BitSet)paintBrush.clone();
+    		paintBrush = tempSet;
+    		
+    		paintBrushDimPrevious = (Dimension)paintBrushDim.clone();
+    		paintBrushDim = tempDim;
+    		
+    		paintImagePrevious = ImageUtil.cloneImage(paintImage);
+    		paintImage = tempBImage;
+    	} else {
+    		paintBrushPrevious = (BitSet)paintBrush.clone();
+    		paintBrushDimPrevious = (Dimension) paintBrushDim.clone();
+    		paintImagePrevious = ImageUtil.cloneImage(paintImage);
+    	}
+    		
+    }
+    
     /**
      * Calculates the volume of the painted voxels.
      *
@@ -1122,6 +1265,20 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         imageA = null;
         imageB = null;
 
+        cleanImageBufferA = null;
+        cleanImageBufferB = null;
+        
+        if (paintImage != null) {
+        	paintImage.flush();
+        	paintImage = null;
+        }
+        if (paintImagePrevious != null) {
+        	paintImagePrevious.flush();
+        	paintImagePrevious = null;
+        }
+        
+        
+        
         if (imageStatList != null) {
 
             // removeVOIUpdateListener(imageStatList);
@@ -1160,6 +1317,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (flag == true) {
             super.disposeLocal();
         }
+        
+        
     }
 
     /**
@@ -2510,9 +2669,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             }
 
-            memImage = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
+            memImageA = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
 
-            Image paintImage = createImage(memImage); // the image representing the paint mask
+            Image paintImage = createImage(memImageA); // the image representing the paint mask
 
 
             // change rendering hint back from BILINEAR to nearest neighbor so that
@@ -4143,32 +4302,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         imageActive.notifyImageDisplayListeners(null, true);
-    }
-
-    /**
-     * Updates the Paint Cursor's BufferedImage with the correct color/opacity.
-     */
-    public void updatePaintBrushCursor() {
-        int opacity = MipavMath.round(255 * .3);
-        Color paintColor = Color.red;
-
-        try {
-            opacity = (int) (frame.getControls().getTools().getOpacity() * 255);
-            paintColor = frame.getControls().getTools().getPaintColor();
-        } catch (Exception e) { }
-
-        Color brushColor = new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), opacity);
-        int counter = 0;
-
-        for (int y = 0; y < paintBrushDim.height; y++) {
-
-            for (int x = 0; x < paintBrushDim.width; x++, counter++) {
-
-                if (paintBrush.get(counter)) {
-                    paintImage.setRGB(x, y, brushColor.getRGB());
-                }
-            }
-        }
     }
 
     /**

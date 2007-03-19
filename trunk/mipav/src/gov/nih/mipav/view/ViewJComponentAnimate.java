@@ -469,16 +469,16 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
         if (data != null) {
             mt = null;
             mt = new MediaTracker(this);
-            memImage = null;
+            memImageA = null;
 
             try {
-                memImage = new MemoryImageSource(imageDim.width, imageDim.height, data, 0, imageDim.width);
-                memImage.setAnimated(false);
+                memImageA = new MemoryImageSource(imageDim.width, imageDim.height, data, 0, imageDim.width);
+                memImageA.setAnimated(false);
 
                 if (!haveFiltered) {
-                    img[slice] = createImage(memImage);
+                    img[slice] = createImage(memImageA);
                 } else {
-                    img[slice] = createImage(new FilteredImageSource(memImage,
+                    img[slice] = createImage(new FilteredImageSource(memImageA,
                                                                      new ViewJFilterAnimate(brightness, contrast)));
                 }
 
@@ -540,8 +540,8 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
                     g.drawImage(img[slice], 0, 0, this);
                 }
 
-                memImage = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
-                Image paintImage = createImage(memImage); // the image representing the paint mask
+                memImageA = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
+                Image paintImage = createImage(memImageA); // the image representing the paint mask
                 // change rendering hint back from BILINEAR to nearest neighbor so that
                 // all other painting will not be in interpolated mode
 //                 g.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,

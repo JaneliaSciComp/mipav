@@ -387,6 +387,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
 
+    /** int used for quick-key painting for speedier paint brush access */
+    private int quickPaintBrushIndex = -1;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -1462,14 +1465,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         Object source = event.getSource();
 
         if (source.equals(paintBox)) {
-            int index = paintBox.getSelectedIndex();
-
-            triImage[0].loadPaintBrush(paintBrushNames[index]);
-            triImage[1].loadPaintBrush(paintBrushNames[index]);
-            triImage[2].loadPaintBrush(paintBrushNames[index]);
-            Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
-
-
+        	int index = paintBox.getSelectedIndex();
+        	
+        	triImage[0].loadPaintBrush(paintBrushNames[index], false);
+        	triImage[1].loadPaintBrush(paintBrushNames[index], false);
+        	triImage[2].loadPaintBrush(paintBrushNames[index], false);
+			Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
+        	
+        	
         } else {
 
             int state = event.getStateChange();
@@ -1513,27 +1516,41 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         int keyCode = e.getKeyCode();
 
         if (!e.isControlDown()) {
-
-            if ((keyCode >= '0') && (keyCode <= '9')) {
-
-                int index = keyCode - 49;
-
-                if (index < 0) {
-                    index = 10;
-                }
-
-                if (!paintBrushLocked) {
-                    previousPaintBrushIndex = paintBox.getSelectedIndex();
-
-                    if (index < paintBox.getItemCount()) {
-                        paintBox.setSelectedIndex(index);
-                        triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-                        paintBrushLocked = true;
-                    }
-                }
-
-                return;
-            }
+        	if ( keyCode >= '0' && keyCode <= '9') {
+        	
+        		int index = keyCode - 49;
+        		if (index < 0) {
+        			index = 10;
+        		}
+        		if (!paintBrushLocked) {
+        			
+        			if (quickPaintBrushIndex == index) {
+        				
+        				for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        					if (triImage[i]!= null) {
+        						triImage[i].quickSwitchBrush();
+        					}
+        				}
+        				triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+        				paintBrushLocked = true;
+        			} else {
+        				quickPaintBrushIndex = index;
+        				previousPaintBrushIndex = getControls().getTools().getPaintBrush();
+        				String name = getControls().getTools().getPaintBrushName(index);
+        				if (name != null) {
+        					
+        					for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        						if (triImage[i]!= null) {
+            					triImage[i].loadPaintBrush(name, true);
+        						}
+            				}
+        					triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+        					paintBrushLocked = true;
+        				}
+        			}
+        		}
+        		return;
+        	}
         }
     }
 
@@ -1562,17 +1579,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         if (!e.isControlDown()) {
-
-            if ((keyCode >= '0') && (keyCode <= '9')) {
-
-                if (paintBrushLocked && (previousPaintBrushIndex < paintBox.getItemCount())) {
-
-                    paintBox.setSelectedIndex(previousPaintBrushIndex);
-                    triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-                    paintBrushLocked = false;
-                }
-
-            }
+        	if ( keyCode >= '0' && keyCode <= '9') {
+        		
+        		if (paintBrushLocked) {
+        			//getControls().getTools().setPaintBrush(previousPaintBrushIndex);
+        			for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        				if (triImage[i]!= null) {
+    					triImage[i].quickSwitchBrush();
+        				}
+    				}
+        			triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+        			paintBrushLocked = false;
+        		}        		
+        	}
         }
 
     }
