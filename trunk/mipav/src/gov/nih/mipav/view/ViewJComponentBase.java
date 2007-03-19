@@ -180,9 +180,6 @@ public abstract class ViewJComponentBase extends JComponent {
     protected int interpMode = NEAREST;
 
     /** DOCUMENT ME! */
-    protected MemoryImageSource memImage = null;
-
-    /** DOCUMENT ME! */
     protected MemoryImageSource memImageA = null;
 
     /** DOCUMENT ME! */
@@ -275,7 +272,10 @@ public abstract class ViewJComponentBase extends JComponent {
         }
 
         imageDim = null;
-        memImage = null;
+        
+        
+        
+        memImageA = null;
         memImageB = null;
         textColor = null;
         sliceString = null;
@@ -527,11 +527,11 @@ public abstract class ViewJComponentBase extends JComponent {
 
         try {
 
-            if (memImage == null) {
-                memImage = new MemoryImageSource(imageDim.width, imageDim.height, data, 0, imageDim.width);
-                img = createImage(memImage);
+            if (memImageA == null) {
+                memImageA = new MemoryImageSource(imageDim.width, imageDim.height, data, 0, imageDim.width);
+                img = createImage(memImageA);
             } else {
-                memImage.newPixels(data, ColorModel.getRGBdefault(), 0, imageDim.width);
+                memImageA.newPixels(data, ColorModel.getRGBdefault(), 0, imageDim.width);
                 img.flush();
             }
         } catch (OutOfMemoryError error) {

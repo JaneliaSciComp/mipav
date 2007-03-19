@@ -145,14 +145,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** DOCUMENT ME! */
     private int lastVOI_UID = -1;
 
-    /**
-     * used in conjuction with the above variable, stating that the paint brush has been changed but will change back to
-     * previous.
-     */
-    private boolean paintBrushLocked = false;
-
-    /** Holds the selected Paint brush index while painting in hold 0-9 key mode. */
-    private int previousPaintBrushIndex = 0;
 
     /** tells whether or not to XOR when creating binary masks (allowing holes). */
     private boolean useXOR = Preferences.is(Preferences.PREF_USE_VOI_XOR);
@@ -160,6 +152,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** Reference to the magnification tool. */
     private JDialogZoom zoomDialog = null;
 
+    /** Holds the selected Paint brush index while painting in hold 0-9 key mode */
+    private int previousPaintBrushIndex = 0;
+    
+    /** */
+    private int quickPaintBrushIndex = -1;
+    
+    /** used in conjuction with the above variable, stating that the paint brush has been changed but will change back to previous*/
+    private boolean paintBrushLocked = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -3583,25 +3584,31 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         if (!e.isControlDown()) {
-
-            if ((keyCode >= '0') && (keyCode <= '9')) {
-
-                int index = keyCode - 49;
-
-                if (index < 0) {
-                    index = 10;
-                }
-
-                if (!paintBrushLocked) {
-                    previousPaintBrushIndex = getControls().getTools().getPaintBrush();
-                    getControls().getTools().setPaintBrush(index);
-                    getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
-                    paintBrushLocked = true;
-                    updateImages(true);
-                }
-
-                return;
-            }
+        	if ( keyCode >= '0' && keyCode <= '9') {
+        	
+        		int index = keyCode - 49;
+        		if (index < 0) {
+        			index = 10;
+        		}
+        		if (!paintBrushLocked) {
+        			        			
+        			if (quickPaintBrushIndex == index) {
+        				getComponentImage().quickSwitchBrush();
+        				getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
+        				paintBrushLocked = true;
+        			} else {
+        				quickPaintBrushIndex = index;
+        				previousPaintBrushIndex = getControls().getTools().getPaintBrush();
+        				String name = getControls().getTools().getPaintBrushName(index);
+        				if (name != null) {
+        					getComponentImage().loadPaintBrush(name, true);
+        					getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
+        					paintBrushLocked = true;
+        				}
+        			}
+        		}
+        		return;
+        	}
         }
 
         // look for shortcuts now
@@ -3697,17 +3704,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         if (!e.isControlDown()) {
-
-            if ((keyCode >= '0') && (keyCode <= '9')) {
-
-                if (paintBrushLocked) {
-                    getControls().getTools().setPaintBrush(previousPaintBrushIndex);
-                    getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
-                    updateImages(true);
-                    paintBrushLocked = false;
-                }
-
-            }
+        	if ( keyCode >= '0' && keyCode <= '9') {
+        		if (paintBrushLocked) {
+        			getComponentImage().quickSwitchBrush();
+        			getComponentImage().getActiveImage().notifyImageDisplayListeners(null, true);
+        			paintBrushLocked = false;
+        		}
+        	
+        	}
         }
 
     }

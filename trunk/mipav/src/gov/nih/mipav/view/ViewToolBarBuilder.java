@@ -1010,6 +1010,20 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
     	}
     }
     
+    /** 
+     * Returns the name of the paintbrush at the given index
+     * @param index the index of the paint brush
+     * @return the name
+     */
+    public String getPaintBrushName(int index) {
+    	String name = null;
+    	if (paintBox != null &&
+    			index < paintBrushNames.length) {
+    		return paintBrushNames[index];
+    	}
+    	return name;
+    }
+    
     /**
      * Accessor that returns the current color of the paint.
      *
@@ -1046,7 +1060,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         } else if (source.equals(paintBox)) {
         	int index = paintBox.getSelectedIndex();
         	if (UI instanceof ViewJFrameImage) {
-        		((ViewJFrameImage)UI).getComponentImage().loadPaintBrush(paintBrushNames[index]);
+        		((ViewJFrameImage)UI).getComponentImage().loadPaintBrush(paintBrushNames[index], false);
         		Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
         	}
         	
