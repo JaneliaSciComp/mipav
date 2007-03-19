@@ -193,28 +193,28 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
             if (donorButton.isSelected()) {
 
                 if (image.getNDims() == 2) {
-                    componentPostImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                    componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                     componentPostImage.getVOIHandler().setPresetHue(0.0f); // red
                 } else {
-                    componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                    componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                     componentImage.getVOIHandler().setPresetHue(0.0f); // red
                 }
             } else if (backgroundButton.isSelected()) {
 
                 if (image.getNDims() == 2) {
-                    componentPostImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                    componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                     componentPostImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
                 } else {
-                    componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                    componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                     componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
                 }
             } else if (signalButton.isSelected()) {
 
                 if (image.getNDims() == 2) {
-                    componentPostImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                    componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                     componentPostImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
                 } else {
-                    componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                    componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                     componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
                 }
 
@@ -554,11 +554,11 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
         VOIPanel.add(donorButton, gbc4);
 
         if (image.getNDims() == 2) {
-            componentPostImage.setMode(ViewJComponentEditImage.NEW_VOI);
+            componentPostImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             componentPostImage.getVOIHandler().setPresetHue(0.0f); // red
         } // if (image.getNDims() == 2)
         else {
-            componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+            componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             componentImage.getVOIHandler().setPresetHue(0.0f); // red
         }
 

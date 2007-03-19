@@ -703,7 +703,7 @@ public class ViewJComponentRegistration
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
-            setMode(DEFAULT);
+            setCursorMode(DEFAULT);
 
             return;
         }
@@ -744,7 +744,7 @@ public class ViewJComponentRegistration
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
-            setMode(DEFAULT);
+            setCursorMode(DEFAULT);
 
             return;
         }
@@ -789,7 +789,7 @@ public class ViewJComponentRegistration
             return;
         }
 
-        if ((mouseEvent.getClickCount() == 1) && ((mode == DEFAULT) || (mode == TRANSLATE) || (mode == ROTATE))) {
+        if ((mouseEvent.getClickCount() == 1) && ((cursorMode == DEFAULT) || (cursorMode == TRANSLATE) || (cursorMode == ROTATE))) {
             VOIs = imageActive.getVOIs();
             nVOI = VOIs.size();
 
@@ -846,7 +846,7 @@ public class ViewJComponentRegistration
             return;
         }
 
-        if ((doDrag == true) && ((mode == TRANSLATE) || (mode == ROTATE))) {
+        if ((doDrag == true) && ((cursorMode == TRANSLATE) || (cursorMode == ROTATE))) {
             xFinish = xS * resolutionX;
             yFinish = yS * resolutionY;
 
@@ -859,7 +859,7 @@ public class ViewJComponentRegistration
             xStart = xFinish;
             yStart = yFinish;
 
-            if (mode == ROTATE) {
+            if (cursorMode == ROTATE) {
                 g = getGraphics();
 
                 if (g == null) {
@@ -883,7 +883,7 @@ public class ViewJComponentRegistration
 
         nVOI = VOIs.size();
 
-        if (mode == MOVE) {
+        if (cursorMode == MOVE) {
 
             for (i = 0; i < nVOI; i++) {
 
@@ -966,12 +966,12 @@ public class ViewJComponentRegistration
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentRegistration.mousePressed");
-            setMode(DEFAULT);
+            setCursorMode(DEFAULT);
 
             return;
         }
 
-        if (mode == MOVE) {
+        if (cursorMode == MOVE) {
             anchorPt.setLocation(xS, yS); // For use in dragging VOIs
 
             VOIs = imageActive.getVOIs();
@@ -1005,7 +1005,7 @@ public class ViewJComponentRegistration
                     }
                 }
             }
-        } else if (mode == ROTATE) {
+        } else if (cursorMode == ROTATE) {
 
             if ((doCenter) && (rotCenterMark == 0)) {
                 hue = 1.0f / 6.0f; // hue for yellow
@@ -1026,7 +1026,7 @@ public class ViewJComponentRegistration
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
-                    setMode(DEFAULT);
+                    setCursorMode(DEFAULT);
 
                     return;
                 }
@@ -1109,14 +1109,14 @@ public class ViewJComponentRegistration
             return;
         }
 
-        if (mode == WIN_REGION) {
+        if (cursorMode == WIN_REGION) {
             super.mouseMoved(mouseEvent);
             g.dispose();
 
             return;
         }
 
-        if ((mode == POINT_VOI) || (mode == TRANSLATE) || (mode == ROTATE)) {
+        if ((cursorMode == POINT_VOI) || (cursorMode == TRANSLATE) || (cursorMode == ROTATE)) {
             g.dispose();
 
             return;
@@ -1131,7 +1131,7 @@ public class ViewJComponentRegistration
 
                 if (VOIs.VOIAt(i).isVisible() &&
                         VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
-                    setMode(MOVE);
+                    setCursorMode(MOVE);
                     g.dispose();
 
                     return;
@@ -1139,7 +1139,7 @@ public class ViewJComponentRegistration
             }
         }
 
-        setMode(DEFAULT);
+        setCursorMode(DEFAULT);
         // setCursor(crosshairCursor);
     }
 
@@ -1164,7 +1164,7 @@ public class ViewJComponentRegistration
             return;
         }
 
-        if ((doDrag == false) && ((mode == TRANSLATE) || (mode == ROTATE))) {
+        if ((doDrag == false) && ((cursorMode == TRANSLATE) || (cursorMode == ROTATE))) {
             xFinish = xS * resolutionX;
             yFinish = yS * resolutionY;
 
@@ -1175,7 +1175,7 @@ public class ViewJComponentRegistration
             }
         }
 
-        if (mode == POINT_VOI) {
+        if (cursorMode == POINT_VOI) {
 
             if (doRefMark) {
                 hue = 0.0f; // hue for red
@@ -1194,7 +1194,7 @@ public class ViewJComponentRegistration
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
-                    setMode(DEFAULT);
+                    setCursorMode(DEFAULT);
 
                     return;
                 }
@@ -1235,7 +1235,7 @@ public class ViewJComponentRegistration
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: ComponentRegistration.mouseReleased");
-                    setMode(DEFAULT);
+                    setCursorMode(DEFAULT);
 
                     return;
                 }
@@ -1501,7 +1501,7 @@ public class ViewJComponentRegistration
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: ComponentRegistration.setCenter");
-                setMode(DEFAULT);
+                setCursorMode(DEFAULT);
 
                 return;
             }
@@ -1578,8 +1578,8 @@ public class ViewJComponentRegistration
      *
      * @param  mode  the integer mode
      */
-    public void setMode(int mode) {
-        this.mode = mode;
+    public void setCursorMode(int mode) {
+        this.cursorMode = mode;
         voiHandler.setMode(mode);
         switch (mode) {
 
@@ -1610,7 +1610,7 @@ public class ViewJComponentRegistration
                 break;
 
             case WIN_REGION:
-            	super.setMode(WIN_REGION);
+            	super.setCursorMode(WIN_REGION);
                 setCursor(magRegionCursor);
                 break;
         }

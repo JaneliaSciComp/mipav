@@ -832,7 +832,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentTriImage.makeProtractor");
-            setMode(DEFAULT);
+            setCursorMode(DEFAULT);
 
             return;
         }
@@ -921,7 +921,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 return;
             }
         }
-        if ((mode == DEFAULT) || (mode == MOVE_VOIPOINT) || (mode == PROTRACTOR)) {
+        if ((cursorMode == DEFAULT) || (cursorMode == MOVE_VOIPOINT) || (cursorMode == PROTRACTOR)) {
 
             if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
                 // adjust window and level when in DEFAULT mode and dragging with right-button
@@ -938,12 +938,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             MipavCoordinateSystems.patientToFile( patientMousePoint, m_kVolumePoint,
                                                   imageActive, orientation );
             triImageFrame.setCenter( (int)m_kVolumePoint.x, (int)m_kVolumePoint.y, (int)m_kVolumePoint.z );
-            if (mode == DEFAULT)
+            if (cursorMode == DEFAULT)
             {
                 return;
             }
         } // if (mode == DEFAULT || mode == MOVE_VOIPOINT || mode == CUBE_BOUNDS || mode == PROTRACTOR)
-        else if (mode == MOVE) {
+        else if (cursorMode == MOVE) {
             distX = xS - anchorPt.x; // distance from original to cursor
             distY = yS - anchorPt.y;
 
@@ -966,7 +966,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         } // end of else if (mode == MOVE)
 
-        if (mode == MOVE_VOIPOINT) {
+        if (cursorMode == MOVE_VOIPOINT) {
             nVOI = VOIs.size();
 
             boolean found = false;
@@ -1034,7 +1034,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             return;
         } // end of else if (mode == MOVE_VOIPOINT)
-        else if (mode == CUBE_BOUNDS) {
+        else if (cursorMode == CUBE_BOUNDS) {
 
             Point2Df mousePoint = new Point2Df( mouseEvent.getX(), mouseEvent.getY() );
             // if we are not already dragging a point, see if the mouse event is near one of the corners
@@ -1053,7 +1053,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             {
                 updateCrop( dragBBpt, mousePoint );
             }
-        } else if ((mode == LINE) && (intensityLine == null) && intensityLineVisible &&
+        } else if ((cursorMode == LINE) && (intensityLine == null) && intensityLineVisible &&
                        ((anchorPt.x != getScaledX(mouseEvent.getX())) || (anchorPt.y !=
                                                                               getScaledY(mouseEvent.getY())))) {
 
@@ -1068,7 +1068,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: ComponentTriImage.mouseReleased");
-                setMode(DEFAULT);
+                setCursorMode(DEFAULT);
 
                 return;
             }
@@ -1097,13 +1097,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             if (intensityLine.nearLinePoint(MipavMath.round(xS * getZoomX() * resolutionX),
                                                 MipavMath.round(yS * getZoomY() * resolutionY), slice, 0, getZoomX(),
                                                 resolutionX, resolutionY)) {
-                setMode(MOVE_POINT);
+                setCursorMode(MOVE_POINT);
                 moveProtractor = false;
             }
         } // else if ((mode == LINE) && (startLine) &&
 
         // ((anchorPt.x != xSOrg) || (anchorPt.y != ySOrg)))
-        else if (mode == MOVE_POINT) {
+        else if (cursorMode == MOVE_POINT) {
 
             if ((voiProtractor != null) && voiProtractor.isActive() && moveProtractor) {
                 voiProtractor.rubberbandVOI(xS, yS, slice, imageDim.width, imageDim.height, false);
@@ -1113,7 +1113,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 intensityLine.rubberbandVOI(xS, yS, slice, imageDim.width, imageDim.height, false);
             }
         } // end of else if (mode == MOVE_POINT)
-        else if (mode == PAINT_VOI) {
+        else if (cursorMode == PAINT_VOI) {
             boolean isLeftMouseButtonDown = mouseEvent.getModifiers() == MouseEvent.BUTTON1_MASK;
             updatePaintBitmap(isLeftMouseButtonDown, xS, yS);
 
@@ -1123,7 +1123,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 return;
             }
         } // end of else if (mode == PAINT_VOI)
-        else if (mode == ERASER_PAINT) {
+        else if (cursorMode == ERASER_PAINT) {
             updatePaintBitmap(false, xS, yS);
 
             if (Preferences.is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)) {
@@ -1132,7 +1132,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 return;
             }
         } // end of else if (mode == ERASER_PAINT)
-        else if (mode == DROPPER_PAINT) {
+        else if (cursorMode == DROPPER_PAINT) {
 
             if ((triImageFrame.getSelectedImage() == IMAGE_A) || (imageBufferB == null)) {
                 intensityDropper = imageBufferA[(yS * imageDim.width) + xS];
@@ -1171,7 +1171,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         lastMouseX = OUT_OF_BOUNDS;
         lastMouseY = OUT_OF_BOUNDS;
 
-        if ((mode == PAINT_VOI) || (mode == ERASER_PAINT)) {
+        if ((cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)) {
             paintComponent(getGraphics());
         }
         /* Return key-event focus to the ViewJFrameTriImage: */
@@ -1202,22 +1202,22 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         if ((intensityLine == null) && intensityLineVisible) {
 
             // if we get here, it means the intensity line button is pressed, but there is no line present
-            mode = LINE;
+            cursorMode = LINE;
 
             return;
         }
 
-        if ((mode == POINT_VOI) || (mode == DROPPER_PAINT) || (mode == CUBE_BOUNDS)) {
+        if ((cursorMode == POINT_VOI) || (cursorMode == DROPPER_PAINT) || (cursorMode == CUBE_BOUNDS)) {
             return;
         }
 
-        if ((mode == PAINT_VOI) || (mode == ERASER_PAINT)) {
+        if ((cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)) {
             repaint();
 
             return;
         }
 
-        if (mode == PAINT_CAN) {
+        if (cursorMode == PAINT_CAN) {
 
             if (growDialog != null) {
                 Point3Df patientMousePoint = new Point3Df();
@@ -1243,22 +1243,22 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         if (voiProtractor != null) {
 
             if (voiProtractor.nearOuterPoint(x, y, slice, 0, getZoomX(), resolutionX, resolutionY)) {
-                setMode(MOVE_POINT);
+                setCursorMode(MOVE_POINT);
                 moveProtractor = true;
             } else if (voiProtractor.isVisible() && voiProtractor.nearLine(xS, yS, slice)) {
-                setMode(MOVE);
+                setCursorMode(MOVE);
                 moveProtractor = true;
             }
 
             return;
-        } else if ((mode == LINE) || (mode == MOVE_POINT)) {
+        } else if ((cursorMode == LINE) || (cursorMode == MOVE_POINT)) {
             return;
-        } else if(mode == ZOOMING_IN ) {
+        } else if(cursorMode == ZOOMING_IN ) {
         	return;
-        }else if(mode == ZOOMING_OUT ) {
+        }else if(cursorMode == ZOOMING_OUT ) {
         	return;
         }else {
-            setMode(DEFAULT);
+            setCursorMode(DEFAULT);
 
             return;
         } // else
@@ -1281,7 +1281,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             return;
         }
 
-        if (mode == POINT_VOI) {
+        if (cursorMode == POINT_VOI) {
             return;
         }
 
@@ -1326,7 +1326,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 }
             }
 
-            if (mode == DEFAULT) {
+            if (cursorMode == DEFAULT) {
                 handleVOIProcessing(mouseEvent);
             }
         }
@@ -1339,27 +1339,27 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             return;
         } // if (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)
 
-        if (mode == DEFAULT) {
+        if (cursorMode == DEFAULT) {
             return;
-        } else if ((mode == LINE) && (intensityLine == null)) {
+        } else if ((cursorMode == LINE) && (intensityLine == null)) {
             anchorPt.setLocation(xS, yS);
 
             return;
         } // else if (mode == LINE)
-        else if (mode == MOVE) {
+        else if (cursorMode == MOVE) {
             anchorPt.setLocation(xS, yS); // For use in dragging VOIs
 
             if ((voiProtractor != null) && voiProtractor.nearLine(xS, yS, slice) && moveProtractor) {
                 voiProtractor.setActive(true);
                 ((VOIProtractor) (voiProtractor.getCurves()[slice].elementAt(0))).setActive(true);
             } else {
-                setMode(DEFAULT);
+                setCursorMode(DEFAULT);
             }
 
             return;
             // do not do a notifyImageDisplayListeners in mode MOVE or VOISpecial labels will disappear
         } // end of if (mode == MOVE)
-        else if (mode == PAINT_VOI) {
+        else if (cursorMode == PAINT_VOI) {
             boolean isLeftMouseButtonDown = mouseEvent.getModifiers() == MouseEvent.BUTTON1_MASK;
             updatePaintBitmap(isLeftMouseButtonDown, xS, yS);
 
@@ -1369,7 +1369,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 return;
             }
         } // end of else if (mode == PAINT_VOI)
-        else if (mode == ERASER_PAINT) {
+        else if (cursorMode == ERASER_PAINT) {
             updatePaintBitmap(false, xS, yS);
 
             if (Preferences.is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)) {
@@ -1378,7 +1378,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 return;
             }
         } // end of else if (mode == ERASER_PAINT)
-        else if (mode == DROPPER_PAINT) {
+        else if (cursorMode == DROPPER_PAINT) {
 
             if ((triImageFrame.getSelectedImage() == IMAGE_A) || (imageBufferB == null)) {
                 intensityDropper = imageBufferA[(yS * imageDim.width) + xS];
@@ -1422,9 +1422,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         moveLine = false;
         moveLineEndpoint = false;
 
-        if ((mode == PAINT_VOI) || (mode == ERASER_PAINT)) {
+        if ((cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)) {
             imageActive.notifyImageDisplayListeners();
-        } else if (mode == MOVE_POINT) {
+        } else if (cursorMode == MOVE_POINT) {
             int j;
 
             if ((voiProtractor != null) && moveProtractor) {
@@ -1476,10 +1476,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             return;
         } // else if (mode == MOVE_POINT)
-        else if (mode == MOVE_VOIPOINT) {
-            setMode(DEFAULT);
+        else if (cursorMode == MOVE_VOIPOINT) {
+            setCursorMode(DEFAULT);
             imageActive.notifyImageDisplayListeners(null, true);
-        } else if (mode == PAINT_CAN) {
+        } else if (cursorMode == PAINT_CAN) {
             Point3Df patientMousePoint = new Point3Df();
             super.ScreenToLocal( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice), patientMousePoint );
             Point3Df volumeMousePoint = new Point3Df();
@@ -1502,7 +1502,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             }
             triImageFrame.updatePaint(paintBitmap);
         } // end of else if (mode == PAINT_CAN)
-        else if (mode == POINT_VOI) {
+        else if (cursorMode == POINT_VOI) {
 
             if ((mouseEvent.getModifiers() & MouseEvent.BUTTON1_MASK) != 0) {
                 Point3Df patientMousePoint = new Point3Df();
@@ -1544,7 +1544,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: ViewJComponentTriImage.mouseReleased");
-                    setMode(DEFAULT);
+                    setCursorMode(DEFAULT);
 
                     return;
                 }
@@ -1807,10 +1807,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      *
      * @param  newMode  DOCUMENT ME!
      */
-    public void setMode(int newMode) {
+    public void setCursorMode(int newMode) {
 
         if (newMode == MOVE_POINT) {
-            this.mode = newMode;
+            this.cursorMode = newMode;
             voiHandler.getRubberband().setActive(false);
             setCursor(crosshairCursor);
         } else if (newMode == LINE) {
@@ -1820,7 +1820,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             }
         }
         else {
-            super.setMode(newMode);
+            super.setCursorMode(newMode);
         }
         
         if (newMode == PAINT_VOI) {
@@ -1868,7 +1868,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentTriImage.setReferenceXY");
-            setMode(DEFAULT);
+            setCursorMode(DEFAULT);
 
             return;
         }
@@ -3002,7 +3002,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
                 if (pt != null) {
                     lastZOrg = zOrg;
-                    setMode(MOVE_VOIPOINT);
+                    setCursorMode(MOVE_VOIPOINT);
                     imageActive.notifyImageDisplayListeners();
                 }
 

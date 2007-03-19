@@ -144,7 +144,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
 
         mipImage.addImageDisplayListener(parent);
 
-        componentImage.setMode(ViewJComponentEditImage.DEFAULT);
+        componentImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
         paintDialog = new JDialogPaintVasculature(this);
         paintDialog.setLocation(getLocation().x + getSize().width, getLocation().y);
 
@@ -210,7 +210,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
                 }
             }
         } else if (command.equals("quickLUT")) {
-            componentImage.setMode(ViewJComponentEditImage.QUICK_LUT);
+            componentImage.setCursorMode(ViewJComponentEditImage.QUICK_LUT);
         } else if (command.equals("resetLUTs")) {
             componentImage.resetLUTs();
 

@@ -249,7 +249,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
         int i, j;
         int r, g, b;
 
-        if (component.getMode() == ViewJComponentEditImage.LEVELSET) {
+        if (component.getCursorMode() == ViewJComponentEditImage.LEVELSET) {
             xS = Math.round(mouseEvent.getX() / (component.getZoomX() * component.getResolutionX())); // zoomed x.
             yS = Math.round(mouseEvent.getY() / (component.getZoomY() * component.getResolutionY())); // zoomed y.
 
@@ -298,7 +298,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
 
         image = component.getActiveImage();
 
-        if (component.getMode() == ViewJComponentEditImage.LEVELSET) {
+        if (component.getCursorMode() == ViewJComponentEditImage.LEVELSET) {
 
             if (levelSet == null) {
                 return;
@@ -352,7 +352,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: RubberbandLevelSet.mouseReleased");
-                    component.setMode(ViewJComponentEditImage.DEFAULT);
+                    component.setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }
@@ -389,7 +389,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
             }
 
             if (mouseEvent.isShiftDown() != true) {
-                ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
             }
 
         }

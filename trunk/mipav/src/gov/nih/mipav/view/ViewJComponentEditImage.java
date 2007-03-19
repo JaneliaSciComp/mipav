@@ -9,11 +9,11 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.view.icons.PlaceHolder;
+import gov.nih.mipav.view.icons.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.AffineTransform;
+import java.awt.geom.*;
 import java.awt.image.*;
 
 import java.io.*;
@@ -54,55 +54,60 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * there is above it.  For example, if the FFT is 2048 by 2048 by 2048, the center occurs at (1024,1024,1024) so
      * that (0,0,0) is further away than (2047,2047,2047) */
 
-    /** DOCUMENT ME! */
-    public static final int EXPONENTIAL = 0;
+    /** Used to indicte geometric zoom steps (2x, 4x, 8x, 16x ...). */
+    public static final int GEOMETRIC_ZOOM = 0;
 
-    /** DOCUMENT ME! */
-    public static final int LINEAR = 1;
+    /** Used to indicte linear zoom steps (2x, 3x, 4x, 5x ...). */
+    public static final int LINEAR_ZOOM = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /**
+     * Dialog used to set properties of the checkerboard display:(Image A displayed in alternating squares with Image B.
+     */
     public JDialogCheckerBoard checkerDialog = null;
 
-    /** DOCUMENT ME! */
+    /** Dialog used to control region growing of the paint tool. */
     public RegionGrowDialog growDialog = null;
 
-    /** used in paint to indicate intensity painted into the image. */
+    /** Used in paint to indicate intensity painted into the image. */
     public float intensityDropper = 1.0f;
 
-    /** default = 120 pixels. */
+    /** Default size of magnifier window = 120 pixels. */
     public int MAGR_HEIGHT = 120;
 
-    /** magnification value of magnifier window -- default = 4.0. */
+    /** Magnification value of magnifier window -- default = 4.0. */
     public float MAGR_MAG = 4f;
 
     /** default = 120 pixels. */
     public int MAGR_WIDTH = 120;
 
-    /** DOCUMENT ME! */
-    public int zoomMode = LINEAR;
+    /** Used to indicate the zoom mode (linear or geometric) when magnifing an image. Default = linear. */
+    public int zoomMode = LINEAR_ZOOM;
 
     /** Set to true when all contours of a VOI are active. */
     protected boolean allActive = false;
 
-    /** alphaBlending values for compositing two images. */
+    /** Value used to control the display when compositing two images. Usually = 1 - alphaPrime. */
     protected float alphaBlend = 0.5f;
 
-    /** DOCUMENT ME! */
+    /**
+     * Value used to control the display when compositing two images. It is the amount of image A to display and is has
+     * a range of [0,1]
+     */
     protected float alphaPrime = 0.5f;
 
     /** Buffer used to store ARGB images of the image presently being displayed. */
     protected int[] cleanImageBufferA = null;
 
-    /** DOCUMENT ME! */
+    /** Buffer used to store ARGB images of the image presently being displayed. */
     protected int[] cleanImageBufferB = null;
-
-    /** DOCUMENT ME! */
-    protected int columnCheckers = -1;
 
     /** Crosshair cursor that can be changed per user preference (in Mipav Options). */
     protected Cursor crosshairCursor = MipavUtil.crosshairCursor;
+
+    /** Used to describe the cursor mode. */
+    protected int cursorMode;
 
     /** DOCUMENT ME! */
     protected boolean displayFuzzy = false;
@@ -117,8 +122,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     protected ViewControlsImage frameControls = null;
 
     /**
-     * regionGrow parameters fuzzyConnectedness is not used if fuzzyThreshold is less than 0. When fuzzyConnectedness is
-     * used, fuzzyThreshold ranges from 0 to 1.
+     * Region grow parameters fuzzyConnectedness is not used if fuzzyThreshold is less than 0. When fuzzyConnectedness
+     * is used, fuzzyThreshold ranges from 0 to 1.
      */
     protected float fuzzyThreshold = -1;
 
@@ -140,7 +145,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** Buffer for image B, raw intensity. */
     protected float[] imageBufferB = null;
 
-    /** DOCUMENT ME! */
+    /** The dimensionality of the image. */
     protected int[] imageExtents;
 
     /** DOCUMENT ME! */
@@ -170,7 +175,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** PatientSlice contains all the Patient Coordinate system view-specific data for rendering this component:. */
     protected PatientSlice m_kPatientSlice;
 
-    /** DOCUMENT ME! */
+    /** Dialog used to control the magnification of the image. */
     protected JDialogMagnificationControls magSettings;
 
     /** DOCUMENT ME! */
@@ -178,9 +183,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** DOCUMENT ME! */
     protected int[] maxExtents = new int[2];
-
-    /** used to describe the cursor mode. */
-    protected int mode;
 
     /** Used to "lock" display when an algorithm is in the calculation process. */
     protected boolean modifyFlag = true;
@@ -199,6 +201,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** Keep track of state of shift for mouse Pressed events. */
     protected boolean mousePressIsShiftDown = false;
+
+    /** The number columns when two images are displayed in the checker board mode. */
+    protected int nColumnCheckers = -1;
+
+    /** Checkerboard display parameters. The number of rows to display. */
+    protected int nRowCheckers = -1; // a negative value indicates no checkerboarding
 
     /** for the use of the user-notifier. */
     protected boolean onTop = false;
@@ -227,7 +235,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** buffered image that is transparent to show the paintbrush cursor. */
     protected BufferedImage paintImage = null;
 
-    /** DOCUMENT ME! */
+    /** The buffer used to store the ARGB image of the image presently being displayed. */
     protected int[] pixBuffer = null;
 
     /** Buffer used to store ARGB image of the windowed imageB. */
@@ -244,9 +252,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** DOCUMENT ME! */
     protected ModelRGB RGBTB;
-
-    /** Checkerboard display parameters. */
-    protected int rowCheckers = -1; // a negative value indicates no checkerboarding
 
     /** Used with commitMask(int imagesDone), to save the value. */
     protected float saveValue;
@@ -296,7 +301,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** DOCUMENT ME! */
     protected Color toppedColor = ACTIVE_IMAGE_COLOR;
 
-    /** DOCUMENT ME! */
+    /**
+     * This flag is used by the fuzzy connectedness to indicate that a VOI should be used to calculate certain values to
+     * initialize the process.
+     */
     protected boolean useVOI = false;
 
     /** DOCUMENT ME! */
@@ -324,11 +332,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     private Image cleanImageB = null;
 
 
-    /** Document Me.* */
+    /** Document Me. */
     private boolean intensityLabel = false;
 
     /**
-     * last slice the image was at when win region was ON. its necessary because otherwise, a new cleanImageB would have
+     * Last slice the image was at when win region was ON. its necessary because otherwise, a new cleanImageB would have
      * to be created upon every repaint. should be initialized to a negative number
      */
     private int lastWinRegionSlice = -1;
@@ -339,19 +347,22 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** DOCUMENT ME! */
     private Image offscreenImage = null;
 
-    /** DOCUMENT ME! */
+    /** This image indicates which images have been painted. */
     private int[] paintImageBuffer = null;
 
-    /** DOCUMENT ME! */
+    /** Flag used to indicate if the shift key is depressed. True indicates the shift key is depressed. */
     private boolean shiftDown = false;
 
     /** DOCUMENT ME! */
     private boolean showMagIntensity = false;
 
-    /** boolean to determine if the mouse had been dragging before mouse release (for moving and setting active). */
+    /** Boolean to determine if the mouse had been dragging before mouse release (for moving and setting active). */
     private boolean wasDragging = false;
 
-    /** DOCUMENT ME! */
+    /**
+     * The window region size of used when two images are displayed in the same frame. The size of the window indicates
+     * how much of image B is displayed.
+     */
     private int windowedRegionSize = 100;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -422,7 +433,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
 
-        mode = DEFAULT;
+        cursorMode = DEFAULT;
 
         if (imgBufferA == null) {
             int bufferFactor = (imageA.isColorImage() ? 4 : 1);
@@ -489,115 +500,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         /* create the WindowLevel controller: */
         m_kWinLevel = new WindowLevel();
-        
-       loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH));
+
+        loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH));
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences
-     * @param paintName the name of the brush to load
-     */
-    public void loadPaintBrush(String paintName) {
-    	String fullPath = null;
-    	
-    	if (paintName == null) {
-    		fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
-    	} else {
-    		try {
-    		fullPath = PlaceHolder.class.getResource(paintName).getPath();
-    		} catch (Exception e) {
-    			fullPath = System.getProperty("user.home") + File.separator + 
-    			"mipav" + File.separator + "brushes" + File.separator + paintName;
-    			
-    			if (! (new File(fullPath)).exists()) {
-    				fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath(); 
-    			}
-    			
-    		}
-    	}
-    	
-    	//fix the URL nonsense with spaces
-    	fullPath = fullPath.replaceAll("%20", " ");
-    	
-    	File paintFile = new File(fullPath);
-    	FileIO fileIO = new FileIO();
-
-    	//read in the .gif or .png as a model image to create the BitSet
-    	ModelImage brushImage = fileIO.readImage(paintFile.getPath());
-    	
-    	if (brushImage == null) {
-    		return;
-    	}
-    	
-    	int [] brushExtents = brushImage.getExtents();
-    	    	
-    	//create the bitset and the brush dimensions
-    	paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
-    	paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
-    	
-    	int counter = 0;
-    		
-    	int [] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
-		try {
-			brushImage.exportData(0, buffer.length, buffer);
-		} catch (Exception e) {
-			MipavUtil.displayError("Open brush failed.");
-			brushImage.disposeLocal();
-			return;
-		}
-		
-		
-		int length = buffer.length;
-	
-		if (paintImage != null) {
-			paintImage.flush();
-			paintImage = null;
-		}
-		
-		//create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
-		paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
-		
-	
-						
-		//set or clear the bitset based on the black pixels (black == on)
-		for ( int i = 0; i < length; i += 4, counter++) {
-			if (buffer[i + 1] == 0) {
-				paintBrush.set(counter);
-			} else {
-				paintBrush.clear(counter);
-			}
-		}
-		
-		updatePaintBrushCursor();
-		
-		//remove the image created as it is no longer needed
-		brushImage.disposeLocal();
-		
-    }
-    
-    /** Updates the Paint Cursor's BufferedImage with the correct color/opacity */
-    public void updatePaintBrushCursor() {
-    	int opacity = MipavMath.round(255 * .3);
-    	Color paintColor = Color.red;
-		try {
-			opacity = (int)(frame.getControls().getTools().getOpacity() * 255);
-			paintColor = frame.getControls().getTools().getPaintColor();
-		} catch (Exception e) {}
-		
-		Color brushColor = new Color(paintColor.getRed(),paintColor.getGreen(), paintColor.getBlue(), opacity);
-    	int counter = 0;
-		
-		for (int y = 0; y < paintBrushDim.height; y++) {
-			for (int x = 0; x < paintBrushDim.width; x++, counter++) {
-				if (paintBrush.get(counter)) {
-					paintImage.setRGB(x, y, brushColor.getRGB());
-				}
-			}
-		}
-    } 
-    
     /**
      * Calculates the volume of the painted voxels.
      *
@@ -1461,6 +1369,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
+     * Returns the VOI mode.
+     *
+     * @return  drawing mode for the VOI tools (i.e. ELLIPSE, LINE ...)
+     */
+    public int getCursorMode() {
+        return cursorMode;
+    }
+
+    /**
      * Returns the frame.
      *
      * @return  frame
@@ -1531,15 +1448,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public ModelLUT getLUTb() {
         return LUTb;
-    }
-
-    /**
-     * Returns the VOI mode.
-     *
-     * @return  drawing mode for the VOI tools (i.e. ELLIPSE, LINE ...)
-     */
-    public int getMode() {
-        return mode;
     }
 
     /**
@@ -1712,7 +1620,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @return  boolean
      */
     public boolean isCheckerboarded() {
-        return ((rowCheckers > 1) && (columnCheckers > 1));
+        return ((nRowCheckers > 1) && (nColumnCheckers > 1));
     }
 
 
@@ -1735,7 +1643,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void keyReleased(KeyEvent e) {
         int keyCode = e.getKeyCode();
 
-        if (mode == WIN_REGION) {
+        if (cursorMode == WIN_REGION) {
 
             switch (keyCode) {
 
@@ -1844,6 +1752,92 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     } // end loadLUTFrom()
 
+    /**
+     * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences.
+     *
+     * @param  paintName  the name of the brush to load
+     */
+    public void loadPaintBrush(String paintName) {
+        String fullPath = null;
+
+        if (paintName == null) {
+            fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
+        } else {
+
+            try {
+                fullPath = PlaceHolder.class.getResource(paintName).getPath();
+            } catch (Exception e) {
+                fullPath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" +
+                           File.separator + paintName;
+
+                if (!(new File(fullPath)).exists()) {
+                    fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
+                }
+
+            }
+        }
+
+        // fix the URL nonsense with spaces
+        fullPath = fullPath.replaceAll("%20", " ");
+
+        File paintFile = new File(fullPath);
+        FileIO fileIO = new FileIO();
+
+        // read in the .gif or .png as a model image to create the BitSet
+        ModelImage brushImage = fileIO.readImage(paintFile.getPath());
+
+        if (brushImage == null) {
+            return;
+        }
+
+        int[] brushExtents = brushImage.getExtents();
+
+        // create the bitset and the brush dimensions
+        paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
+        paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
+
+        int counter = 0;
+
+        int[] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
+
+        try {
+            brushImage.exportData(0, buffer.length, buffer);
+        } catch (Exception e) {
+            MipavUtil.displayError("Open brush failed.");
+            brushImage.disposeLocal();
+
+            return;
+        }
+
+
+        int length = buffer.length;
+
+        if (paintImage != null) {
+            paintImage.flush();
+            paintImage = null;
+        }
+
+        // create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
+        paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
+
+
+        // set or clear the bitset based on the black pixels (black == on)
+        for (int i = 0; i < length; i += 4, counter++) {
+
+            if (buffer[i + 1] == 0) {
+                paintBrush.set(counter);
+            } else {
+                paintBrush.clear(counter);
+            }
+        }
+
+        updatePaintBrushCursor();
+
+        // remove the image created as it is no longer needed
+        brushImage.disposeLocal();
+
+    }
+
 
     // ************************************************************************
     // ***************************** Mouse Events *****************************
@@ -1931,7 +1925,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         // }
 
 
-        if (mode == DROPPER_PAINT) {
+        if (cursorMode == DROPPER_PAINT) {
 
             if (imageActive.isColorImage() == true) {
                 dropperColor = new Color((int) imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1],
@@ -1942,10 +1936,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 intensityDropper = imageBufferActive[(yS * imageActive.getExtents()[0]) + xS];
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             }
-        } else if (mode == ERASER_PAINT) {
+        } else if (cursorMode == ERASER_PAINT) {
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners();
-        } else if (mode == PAINT_VOI) {
+        } else if (cursorMode == PAINT_VOI) {
             performPaint(mouseEvent, mouseMods == MouseEvent.BUTTON3_MASK);
             imageActive.notifyImageDisplayListeners();
         }
@@ -1970,13 +1964,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         lastMouseX = OUT_OF_BOUNDS;
         lastMouseY = OUT_OF_BOUNDS;
 
-        if ((mode == MAG_REGION) || (mode == PAINT_VOI) || (mode == ERASER_PAINT) || (mode == WIN_REGION)) {
+        if ((cursorMode == MAG_REGION) || (cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT) ||
+                (cursorMode == WIN_REGION)) {
 
             // repaint();
             paintComponent(getGraphics());
         }
 
-        if (mode == DEFAULT) {
+        if (cursorMode == DEFAULT) {
             intensityLabel = false;
             paintComponent(getGraphics());
         }
@@ -1996,17 +1991,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         lastMouseY = mouseEvent.getY();
         shiftDown = mouseEvent.isShiftDown();
 
-        if ((mode == ZOOMING_IN) || (mode == ZOOMING_OUT)) {
+        if ((cursorMode == ZOOMING_IN) || (cursorMode == ZOOMING_OUT)) {
 
             // if we are in zoom mode, we don't care about any of the other things
             // that are happening here, in fact, zoom breaks if we don't return
             return;
-        } else if ((mode == RECTANGLE) || (mode == ELLIPSE) || (mode == LINE) || (mode == RECTANGLE3D) ||
-                       (mode == POINT_VOI) || (mode == POLYLINE) || (mode == LEVELSET) || (mode == PAINT_VOI) ||
-                       (mode == DROPPER_PAINT) || (mode == ERASER_PAINT) || (mode == QUICK_LUT) ||
-                       (mode == PROTRACTOR) || (mode == LIVEWIRE) || (mode == ANNOTATION) ||
-                       (mode == POLYLINE_SLICE_VOI) || (mode == MOVE) || (mode == MOVE_POINT) || (mode == NEW_POINT) ||
-                       (mode == RETRACE) || (mode == DELETE_POINT) || (mode == TRANSLATE)) {
+        } else if ((cursorMode == RECTANGLE) || (cursorMode == ELLIPSE) || (cursorMode == LINE) ||
+                       (cursorMode == RECTANGLE3D) || (cursorMode == POINT_VOI) || (cursorMode == POLYLINE) ||
+                       (cursorMode == LEVELSET) || (cursorMode == PAINT_VOI) || (cursorMode == DROPPER_PAINT) ||
+                       (cursorMode == ERASER_PAINT) || (cursorMode == QUICK_LUT) || (cursorMode == PROTRACTOR) ||
+                       (cursorMode == LIVEWIRE) || (cursorMode == ANNOTATION) || (cursorMode == POLYLINE_SLICE_VOI) ||
+                       (cursorMode == MOVE) || (cursorMode == MOVE_POINT) || (cursorMode == NEW_POINT) ||
+                       (cursorMode == RETRACE) || (cursorMode == DELETE_POINT) || (cursorMode == TRANSLATE)) {
             g.dispose();
 
             return;
@@ -2015,7 +2011,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
 
-        if ((mode == PAINT_VOI) && mouseEvent.isShiftDown()) {
+        if ((cursorMode == PAINT_VOI) && mouseEvent.isShiftDown()) {
             performPaint(mouseEvent, false);
             imageActive.notifyImageDisplayListeners(null, true);
 
@@ -2024,8 +2020,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // the user can erase by holding down shift while in eraser mode
         // or by holding down control while in paint mode
-        if (((mode == ERASER_PAINT) && mouseEvent.isShiftDown()) ||
-                ((mode == PAINT_VOI) && mouseEvent.isControlDown())) {
+        if (((cursorMode == ERASER_PAINT) && mouseEvent.isShiftDown()) ||
+                ((cursorMode == PAINT_VOI) && mouseEvent.isControlDown())) {
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners(null, true);
 
@@ -2049,21 +2045,21 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-        if (mode == MAG_REGION) {
+        if (cursorMode == MAG_REGION) {
             repaint();
 
             return;
-        } else if (mode == WIN_REGION) {
+        } else if (cursorMode == WIN_REGION) {
             repaint();
 
             return;
-        } else if ((mode == PAINT_VOI) || (mode == ERASER_PAINT)) {
+        } else if ((cursorMode == PAINT_VOI) || (cursorMode == ERASER_PAINT)) {
 
             // repaint();
             paintComponent(getGraphics());
 
             return;
-        } else if ((mode == PAINT_CAN) || (mode == PAINT_VASC)) {
+        } else if ((cursorMode == PAINT_CAN) || (cursorMode == PAINT_VASC)) {
 
             if (growDialog != null) {
 
@@ -2096,7 +2092,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // System.err.println("got to end...");
 
-        setMode(DEFAULT);
+        setCursorMode(DEFAULT);
     } // end mouseMoved
 
 
@@ -2121,7 +2117,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         mousePressIsShiftDown = mouseEvent.isShiftDown();
 
         // shows intsnsity label upon mouse press
-        if (mode == DEFAULT) {
+        if (cursorMode == DEFAULT) {
             setPixelInformationAtLocation(xS, yS);
 
             if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
@@ -2131,7 +2127,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
 
-        if ((mode == DEFAULT) && mouseEvent.isControlDown()) { // center the image around cursor (no zooming)
+        if ((cursorMode == DEFAULT) && mouseEvent.isControlDown()) { // center the image around cursor (no zooming)
 
             int centerX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width / 2;
             int centerY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height / 2;
@@ -2142,7 +2138,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         }
 
-        if ((mode == ZOOMING_IN) || (mode == ZOOMING_OUT)) {
+        if ((cursorMode == ZOOMING_IN) || (cursorMode == ZOOMING_OUT)) {
             // int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor int yS =
             // getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
 
@@ -2151,7 +2147,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                                                   yS);
 
             if (mouseEvent.isShiftDown() == false) {
-                mode = DEFAULT;
+                cursorMode = DEFAULT;
                 setCursor(MipavUtil.defaultCursor);
             }
 
@@ -2161,7 +2157,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         try {
             mousePressedPaint(mouseEvent);
 
-            if ((mode == WIN_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
+            if ((cursorMode == WIN_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
                 String newValue = JOptionPane.showInputDialog(frame, "Enter new size for windowed region:",
                                                               String.valueOf(windowedRegionSize));
 
@@ -2177,7 +2173,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.mousePressed");
-            setMode(DEFAULT);
+            setCursorMode(DEFAULT);
 
             return;
         }
@@ -2210,7 +2206,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-        if (mode != MOVE) {
+        if (cursorMode != MOVE) {
             setPixelInformationAtLocation(xS, yS);
         }
 
@@ -2224,18 +2220,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
 
-        if (mode == POINT_VOI) { }
-        else if (mode == POLYLINE_SLICE_VOI) { }
-        else if (mode == ANNOTATION) { }
-        else if (mode == LEVELSET) { }
-        else if (mode == RECTANGLE) { }
-        else if (mode == RECTANGLE3D) { }
-        else if (mode == ELLIPSE) { }
-        else if (mode == LINE) { }
-        else if (mode == PROTRACTOR) { }
-        else if (mode == NEW_POINT) { }
-        else if (mode == DELETE_POINT) { }
-        else if (mode == PAINT_CAN) {
+        if (cursorMode == POINT_VOI) { }
+        else if (cursorMode == POLYLINE_SLICE_VOI) { }
+        else if (cursorMode == ANNOTATION) { }
+        else if (cursorMode == LEVELSET) { }
+        else if (cursorMode == RECTANGLE) { }
+        else if (cursorMode == RECTANGLE3D) { }
+        else if (cursorMode == ELLIPSE) { }
+        else if (cursorMode == LINE) { }
+        else if (cursorMode == PROTRACTOR) { }
+        else if (cursorMode == NEW_POINT) { }
+        else if (cursorMode == DELETE_POINT) { }
+        else if (cursorMode == PAINT_CAN) {
             xPG = (short) xS;
             yPG = (short) yS;
             zPG = (short) slice;
@@ -2253,7 +2249,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             imageActive.notifyImageDisplayListeners(null, true);
 
-        } else if (mode == PAINT_VASC) {
+        } else if (cursorMode == PAINT_VASC) {
             int index = xS + (yS * imageActive.getExtents()[0]);
             int z = MipavMath.round(((ViewJFramePaintVasculature) frame).getMIPZValue(index));
             float value = ((ViewJFramePaintVasculature) frame).imageBuffer[index + (z * imageActive.getSliceSize())];
@@ -2271,7 +2267,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                                                                                                                   z,
                                                                                                                   value);
             imageActive.notifyImageDisplayListeners(null, true);
-        } else if (mode == QUICK_LUT) {
+        } else if (cursorMode == QUICK_LUT) {
             int wS, hS;
 
             xS = MipavMath.round(voiHandler.getRubberband().getBounds().x / (getZoomX() * resolutionX));
@@ -2300,9 +2296,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
 
             if (!((mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                setMode(DEFAULT);
+                setCursorMode(DEFAULT);
             }
-        } else if (mode == DEFAULT) {
+        } else if (cursorMode == DEFAULT) {
             intensityLabel = false;
             paintComponent(getGraphics());
         }
@@ -2525,8 +2521,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             offscreenGraphics2d.drawImage(paintImage, 0, 0, zoomedWidth, zoomedHeight, 0, 0, img.getWidth(this),
                                           img.getHeight(this), null);
 
-            if ((mode == PAINT_VOI) ||
-                    ((mode == ERASER_PAINT) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)))) {
+            if ((cursorMode == PAINT_VOI) ||
+                    ((cursorMode == ERASER_PAINT) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY !=
+                                                                                            OUT_OF_BOUNDS)))) {
 
                 // this method repaints the paint brush cursor without repainting the entire image
                 repaintPaintBrushCursorFast(offscreenGraphics2d);
@@ -2538,7 +2535,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             drawImageText(offscreenGraphics2d); // draw image text, i.e. slice number
 
-            if ((mode == WIN_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)) &&
+            if ((cursorMode == WIN_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)) &&
                     (shiftDown == false)) {
 
                 if ((interpMode == INTERPOLATE_B) || (interpMode == INTERPOLATE_BOTH)) {
@@ -2559,9 +2556,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                                            windowedRegionSize, getZoomX(), cleanImageB);
 
                 lastWinRegionSlice = slice;
-            } else if ((mode == MAG_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
+            } else if ((cursorMode == MAG_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
                 paintMagComponent(offscreenGraphics2d);
-            } else if (mode == DEFAULT) {
+            } else if (cursorMode == DEFAULT) {
 
                 if (!(this instanceof ViewJComponentSingleRegistration)) {
 
@@ -2626,7 +2623,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
 
-        if (mode == LEVELSET) {
+        if (cursorMode == LEVELSET) {
             g.setColor(Color.yellow);
             g.drawPolygon(voiHandler.getZoomedLevelSetPolygon());
             // g.drawPolygon(zoomPolygon(rbLevelSet.getLevelSetPolygon(), getZoomX(), getZoomY()));
@@ -3354,8 +3351,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  columnCheckers  int # of columns
      */
     public void setCheckerboard(int rowCheckers, int columnCheckers) {
-        this.rowCheckers = rowCheckers;
-        this.columnCheckers = columnCheckers;
+        this.nRowCheckers = rowCheckers;
+        this.nColumnCheckers = columnCheckers;
 
         ViewJFrameBase vjfb = ((ViewJComponentEditImage) this).getFrame();
         ViewControlsImage vci = vjfb.getControls();
@@ -3377,6 +3374,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setCrosshairCursor(Cursor curs) {
         this.crosshairCursor = curs;
+    }
+
+    /**
+     * Switches modes based on the variable mode. Sets voiHandler.getRubberband() activity and the cursor.
+     *
+     * @param  mode  the integer mode
+     */
+    public void setCursorMode(int mode) {
+        this.cursorMode = mode;
+        voiHandler.setMode(mode);
     }
 
     /**
@@ -3476,8 +3483,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (imageB == null) {
 
             // remove checker boarding
-            rowCheckers = -1;
-            columnCheckers = -1;
+            nRowCheckers = -1;
+            nColumnCheckers = -1;
         }
     }
 
@@ -3593,16 +3600,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setMaxDistance(int val) {
         this.maxDistance = val;
-    }
-
-    /**
-     * Switches modes based on the variable mode. Sets voiHandler.getRubberband() activity and the cursor.
-     *
-     * @param  mode  the integer mode
-     */
-    public void setMode(int mode) {
-        this.mode = mode;
-        voiHandler.setMode(mode);
     }
 
     /**
@@ -4145,6 +4142,32 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
+     * Updates the Paint Cursor's BufferedImage with the correct color/opacity.
+     */
+    public void updatePaintBrushCursor() {
+        int opacity = MipavMath.round(255 * .3);
+        Color paintColor = Color.red;
+
+        try {
+            opacity = (int) (frame.getControls().getTools().getOpacity() * 255);
+            paintColor = frame.getControls().getTools().getPaintColor();
+        } catch (Exception e) { }
+
+        Color brushColor = new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), opacity);
+        int counter = 0;
+
+        for (int y = 0; y < paintBrushDim.height; y++) {
+
+            for (int x = 0; x < paintBrushDim.width; x++, counter++) {
+
+                if (paintBrush.get(counter)) {
+                    paintImage.setRGB(x, y, brushColor.getRGB());
+                }
+            }
+        }
+    }
+
+    /**
      * Sets this component to paint the "on top" high-light. It is not required to use the coloured rectangle to
      * high-light the on-top component, but the component is not aware of its position in the user-interface, and thus,
      * that the user-interface controls point to it.
@@ -4242,7 +4265,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-        if (mode == DROPPER_PAINT) {
+        if (cursorMode == DROPPER_PAINT) {
 
             if (imageActive.isColorImage() == true) {
                 Color dropperColor = new Color((int)
@@ -4258,10 +4281,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
 
-        if (mode == ERASER_PAINT) {
+        if (cursorMode == ERASER_PAINT) {
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners();
-        } else if (mode == PAINT_VOI) {
+        } else if (cursorMode == PAINT_VOI) {
 
             // backup paintBitmap to paintBitmapBU
             backupPaintBitmap();
@@ -4273,7 +4296,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             imageActive.notifyImageDisplayListeners();
         }
 
-        if ((mode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
+        if ((cursorMode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
 
             if ((magSettings != null) && !magSettings.isVisible()) {
                 magSettings.setWidthText((int) (frame.getSize().width * 0.25));
@@ -4387,7 +4410,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             } // if (imageActive.getType() == ModelStorageBase.COMPLEX)
 
         }
-        //changethis
+        // changethis
 
 
         // imageActive.notifyImageDisplayListeners();
@@ -4409,7 +4432,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         try {
 
-            if (mode == DEFAULT) {
+            if (cursorMode == DEFAULT) {
 
                 if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
 
@@ -4628,9 +4651,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     private float getZoomMagnitude(float zoom, boolean reverse) {
 
-        if (zoomMode == LINEAR) {
+        if (zoomMode == LINEAR_ZOOM) {
 
-            if (mode == ZOOMING_IN) {
+            if (cursorMode == ZOOMING_IN) {
 
                 if (reverse) {
 
@@ -4657,7 +4680,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         } else { // zoomMode == EXPONENTIAL
 
-            if (mode == ZOOMING_IN) {
+            if (cursorMode == ZOOMING_IN) {
 
                 if (reverse) {
                     return zoom * 0.5f;
@@ -4728,15 +4751,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         xDim = maxExtents[0];
         yDim = maxExtents[1];
 
-        xSep = xDim / columnCheckers;
-        xMod = xDim % columnCheckers;
-        ySep = yDim / rowCheckers;
-        yMod = yDim % rowCheckers;
-        xStart = new int[columnCheckers + 1];
-        yStart = new int[rowCheckers + 1];
+        xSep = xDim / nColumnCheckers;
+        xMod = xDim % nColumnCheckers;
+        ySep = yDim / nRowCheckers;
+        yMod = yDim % nRowCheckers;
+        xStart = new int[nColumnCheckers + 1];
+        yStart = new int[nRowCheckers + 1];
         xStart[0] = 0;
 
-        for (x = 1; x <= columnCheckers; x++) {
+        for (x = 1; x <= nColumnCheckers; x++) {
             xStart[x] = xStart[x - 1] + xSep;
 
             if (x <= xMod) {
@@ -4746,7 +4769,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         yStart[0] = 0;
 
-        for (y = 1; y <= rowCheckers; y++) {
+        for (y = 1; y <= nRowCheckers; y++) {
             yStart[y] = yStart[y - 1] + ySep;
 
             if (y <= yMod) {

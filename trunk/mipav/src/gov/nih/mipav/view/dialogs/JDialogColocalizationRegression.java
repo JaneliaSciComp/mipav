@@ -484,11 +484,11 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
         if (source == VOICheckBox) {
 
             if (VOICheckBox.isSelected()) {
-                componentImage1.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage1.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 componentImage1.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
 
                 if (componentImage2 != null) {
-                    componentImage2.setMode(ViewJComponentEditImage.NEW_VOI);
+                    componentImage2.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                     componentImage2.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
                 }
             } // if (VOICheckBox.isSelected())

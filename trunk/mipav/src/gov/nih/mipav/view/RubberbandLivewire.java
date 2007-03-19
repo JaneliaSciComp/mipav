@@ -1215,7 +1215,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to form new livewire");
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }
@@ -1279,7 +1279,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 image.notifyImageDisplayListeners();
 
                 if (mouseEvent.isShiftDown() != true) {
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
                 }
 
                 ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
@@ -1294,7 +1294,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                     clickPoints = new Vector();
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to form new livewire");
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }
@@ -1379,7 +1379,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 image.notifyImageDisplayListeners();
 
                 if (mouseEvent.isShiftDown() != true) {
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
                 }
 
                 // setup for next time this class is used
@@ -1392,7 +1392,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                     clickPoints = new Vector();
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to form new livewire");
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }

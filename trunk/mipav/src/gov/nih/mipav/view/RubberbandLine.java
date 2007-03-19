@@ -155,7 +155,7 @@ public class RubberbandLine extends Rubberband {
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to form new line VOI.");
-                    ((ViewJComponentEditImage) (component)).setMode(((ViewJComponentEditImage) (component)).DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(((ViewJComponentEditImage) (component)).DEFAULT);
 
                     return;
                 }
@@ -168,7 +168,7 @@ public class RubberbandLine extends Rubberband {
                 image.notifyImageDisplayListeners();
 
                 if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                    ((ViewJComponentEditImage) (component)).setMode(((ViewJComponentEditImage) (component)).DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(((ViewJComponentEditImage) (component)).DEFAULT);
                 }
 
                 ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
@@ -195,7 +195,7 @@ public class RubberbandLine extends Rubberband {
                 image.notifyImageDisplayListeners();
 
                 if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
                 }
 
                 return;

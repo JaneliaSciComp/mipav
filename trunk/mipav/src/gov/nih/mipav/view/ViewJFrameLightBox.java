@@ -599,12 +599,12 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         } else if (event.getActionCommand().equals("MagRegion")) {
 
             for (int i = 0; i < numVisibleSlices; i++) {
-                componentImage[i].setMode(ViewJComponentEditImage.MAG_REGION);
+                componentImage[i].setCursorMode(ViewJComponentEditImage.MAG_REGION);
             }
         } else if (event.getActionCommand().equals("Pointer")) {
 
             for (int i = 0; i < numVisibleSlices; i++) {
-                componentImage[i].setMode(ViewJComponentEditImage.DEFAULT);
+                componentImage[i].setCursorMode(ViewJComponentEditImage.DEFAULT);
             }
         } else if (event.getActionCommand().equals("Repaint")) {
             updatePaint.setState(true);

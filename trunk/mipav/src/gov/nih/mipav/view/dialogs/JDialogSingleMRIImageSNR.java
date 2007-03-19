@@ -131,13 +131,13 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         } else if ((source == signalButton) || (source == signal2Button) || (source == backgroundButton)) {
 
             if (signalButton.isSelected()) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 componentImage.getVOIHandler().setPresetHue(0.0f); // red
             } else if (signal2Button.isSelected()) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
             } else if (backgroundButton.isSelected()) {
-                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
             }
         }
@@ -255,7 +255,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         signalButton.addActionListener(this);
         VOIGroup.add(signalButton);
         VOIPanel.add(signalButton, gbc4);
-        componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+        componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
         componentImage.getVOIHandler().setPresetHue(0.0f); // red
 
         signal2Button = new JRadioButton("Add an optional second signal VOI", false);

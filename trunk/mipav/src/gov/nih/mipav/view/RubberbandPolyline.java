@@ -361,7 +361,7 @@ public class RubberbandPolyline extends Rubberband {
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to form new polyline");
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }
@@ -372,7 +372,7 @@ public class RubberbandPolyline extends Rubberband {
                 image.notifyImageDisplayListeners();
 
                 if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
                 }
 
                 ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
@@ -385,7 +385,7 @@ public class RubberbandPolyline extends Rubberband {
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to form new polyline");
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }
@@ -413,7 +413,7 @@ public class RubberbandPolyline extends Rubberband {
                 image.notifyImageDisplayListeners();
 
                 if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
                 }
 
 
@@ -424,7 +424,7 @@ public class RubberbandPolyline extends Rubberband {
                     contour = new VOIContour(false);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to form new polygon");
-                    ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
+                    ((ViewJComponentEditImage) (component)).setCursorMode(ViewJComponentEditImage.DEFAULT);
 
                     return;
                 }
