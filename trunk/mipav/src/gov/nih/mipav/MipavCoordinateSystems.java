@@ -142,7 +142,7 @@ public class MipavCoordinateSystems {
             kOutput.y *= afAxialRes[1];
             kOutput.z *= afAxialRes[2];
 
-            boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(kImage, FileInfoBase.AXIAL);
+            boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(kImage, FileInfoBase.AXIAL, true);
 
             if (axisFlip[0]) {
                 kOutput.x = -kOutput.x;
@@ -174,6 +174,21 @@ public class MipavCoordinateSystems {
      * @return  DOCUMENT ME!
      */
     public static final boolean[] getAxisFlip(ModelStorageBase image, int iOrientation) {
+        return getAxisFlip(image, iOrientation, false);
+    }
+
+    /**
+     * Get the booean axisFlip array that describes how FileCoordinate axes are inverted in PatientCoordinates. The
+     * values are determined by the FileInfoBase.ORI_L2R_TYPE, etc. values stored in the input
+     * image.FileInfoBase.axisOrientation and by the desired patient viewing orientation.
+     *
+     * @param   image         DOCUMENT ME!
+     * @param   iOrientation  the desired PatientCoordinates view of the data (AXIAL, SAGITTAL, CORONAL)
+     * @param   bDICOM        whether we are trying to find the axis flip array for a translation into DICOM spaces
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static final boolean[] getAxisFlip(ModelStorageBase image, int iOrientation, boolean bDICOM) {
         boolean[] abAxisFlip = { false, false, false };
         int[] aiAxisOrientation = getAxisOrientation(image);
 
@@ -212,7 +227,7 @@ public class MipavCoordinateSystems {
         }
 
         if (!image.getRadiologicalView() && (iOrientation != FileInfoBase.SAGITTAL) &&
-                (iOrientation != FileInfoBase.UNKNOWN_ORIENT)) {
+                (iOrientation != FileInfoBase.UNKNOWN_ORIENT) && !bDICOM) {
             abAxisFlip[0] = !abAxisFlip[0];
         }
 
@@ -397,7 +412,7 @@ public class MipavCoordinateSystems {
      * @param  orientation  the desired PatientCoordinates orientation.
      */
     public static final void patientToFile(Point3Df pIn, Point3Df pOut, ModelStorageBase image, int orientation) {
-        MipavCoordinateSystems.fileToPatient(pIn, pOut, image, orientation, true);
+        MipavCoordinateSystems.patientToFile(pIn, pOut, image, orientation, true);
     }
 
     /**
@@ -498,7 +513,7 @@ public class MipavCoordinateSystems {
             kTemp.y /= afAxialRes[1];
             kTemp.z /= afAxialRes[2];
 
-            boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(kImage, FileInfoBase.AXIAL);
+            boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(kImage, FileInfoBase.AXIAL, true);
 
             if (axisFlip[0]) {
                 kOutput.x = -kOutput.x;
