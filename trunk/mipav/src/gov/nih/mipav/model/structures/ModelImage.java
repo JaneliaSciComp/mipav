@@ -1777,9 +1777,9 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Forms a single VOI structure from all the VOIs presently loaded in the imageModel.
      *
-     * @param  newVOIVector  DOCUMENT ME!
-     * @param  where         DOCUMENT ME!
-     * @param  name          DOCUMENT ME!
+     * @param  newVOIVector  a new ViewVOIVector to hold the grouped VOIs
+     * @param  where         int array telling where to sort
+     * @param  name          the name of the VOI
      */
     public void groupVOIs(ViewVOIVector newVOIVector, int[] where, String name) {
         // System.err.println("calling group VOIs, passing in new vector");
@@ -2365,7 +2365,7 @@ public class ModelImage extends ModelStorageBase {
      * @param   directory  location where the image is to stored.
      * @param   fileName   the name of the file (without the extension).
      * @param   fileType   The format of the image file (i.e. Analyze, XML, DICOM etc.)
-     * @param   isActive   DOCUMENT ME!
+     * @param   isActive   Whether saving is being done in a separate thread
      *
      * @return  true if succeeded in saving.
      */
@@ -3100,7 +3100,7 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Give the image a new image name, updates frame (if not null), and file infos.
      *
-     * @param  newImageName  DOCUMENT ME!
+     * @param  newImageName  The new name for the image
      */
     public void updateFileName(String newImageName) {
         String oldImageName = getImageName();
