@@ -129,7 +129,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
 
             if (((VOIContour) (contours[0].elementAt(elementNum))).isActive()) {
                 srcGon = ((VOIContour) (contours[0].elementAt(elementNum))).exportPolygon(1, 1, 1, 1);
-
+                System.err.println("Element number is: " + elementNum);
                 if (srcGon.npoints > 5) {
                     xPoints = new float[srcGon.npoints + 5];
                     yPoints = new float[srcGon.npoints + 5];
@@ -138,6 +138,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
                     fireProgressStateChanged(25 + (((75 * elementNum) + 25) / nContours));
                     runSmooth(xPoints, yPoints, resultGon);
                     fireProgressStateChanged(25 + (((75 * elementNum) + 50) / nContours));
+                    
                     resultVOI.importPolygon(resultGon, 0);
                     resultGon = new Polygon();
 
@@ -151,6 +152,10 @@ public class AlgorithmBSmooth extends AlgorithmBase {
                         ((VOIContour) (resultVOI.getCurves()[0].lastElement())).trimPoints(Preferences.getTrim(),
                                                                                            Preferences.getTrimAdjacient());
                     }
+                } else {
+                	// nPoints is less than 5.  doesn't mean we want to scrap the contour though!
+                	resultVOI.importPolygon(srcGon, 0);
+                	
                 }
             } // if ( ((VOIContour)(contours[0].elementAt(elementNum))).isActive() )
         } // for(elementNum = 0; elementNum < nContours; elementNum++)
@@ -211,6 +216,10 @@ public class AlgorithmBSmooth extends AlgorithmBase {
                             ((VOIContour) (resultVOI.getCurves()[slice].lastElement())).trimPoints(Preferences.getTrim(),
                                                                                                    Preferences.getTrimAdjacient());
                         }
+                    } else {
+                    	// nPoints is less than 5.  doesn't mean we want to scrap the contour though!
+                    	resultVOI.importPolygon(srcGon, slice);
+                    	
                     }
                 }
             }

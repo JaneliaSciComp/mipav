@@ -282,16 +282,20 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
 
                     contours = VOIs.VOIAt(groupNum).getCurves();
 
+                    int resultIndex = 0;
+                    
                     for (slice = 0; slice < sliceNum; slice++) {
                         nContours = contours[slice].size();
-
-                        for (element = nContours - 1; element >= 0; element--) {
+                        resultIndex = 0;
+                        for (element = nContours - 1; element >= 0; element--, resultIndex++) {
 
                             if (((VOIContour) (contours[slice].elementAt(element))).isActive()) {
-                                System.err.println("slice is: " + slice + " element is: " + element + " groupnum is: " +
-                                                   groupNum);
+                               // System.err.println("slice is: " + slice + " element is: " + element + " groupnum is: " +
+                              //                     groupNum);
                                 VOIs.VOIAt(groupNum).removeCurve(element, slice);
-                                VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getActiveContour(slice), slice);
+                                
+                                VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getCurves()[slice].elementAt(resultIndex), slice);
+                              //  VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getActiveContour(slice), slice);
                             }
                         }
                     }
