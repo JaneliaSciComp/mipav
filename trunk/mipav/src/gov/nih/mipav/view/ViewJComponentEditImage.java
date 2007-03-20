@@ -11,6 +11,8 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.icons.*;
 
+import org.orcboard.camera.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
@@ -23,7 +25,6 @@ import java.text.*;
 import java.util.*;
 
 import javax.swing.*;
-import org.orcboard.camera.*;
 
 
 /**
@@ -229,11 +230,21 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** Dimension of the paint. */
     protected Dimension paintBrushDim = null;
 
+    /** DOCUMENT ME! */
+    protected Dimension paintBrushDimPrevious = null;
+
+
+    /** DOCUMENT ME! */
+    protected BitSet paintBrushPrevious = null;
+
     /** Paint brush size. */
     protected int paintBrushSize;
 
     /** buffered image that is transparent to show the paintbrush cursor. */
     protected BufferedImage paintImage = null;
+
+    /** DOCUMENT ME! */
+    protected BufferedImage paintImagePrevious = null;
 
     /** The buffer used to store the ARGB image of the image presently being displayed. */
     protected int[] pixBuffer = null;
@@ -247,12 +258,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     protected int previousPaintBrush = -1;
 
-    
-    protected BitSet paintBrushPrevious = null;
-    protected Dimension paintBrushDimPrevious = null;
-    protected BufferedImage paintImagePrevious = null;
-    
-    
+
     /** DOCUMENT ME! */
     protected ModelRGB RGBTA;
 
@@ -510,149 +516,68 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         /* create the WindowLevel controller: */
         m_kWinLevel = new WindowLevel();
-        
-       loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
+
+        loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences
-     * @param paintName the name of the brush to load
-     */
-    public void loadPaintBrush(String paintName, boolean isQuick) {
-    	
-    	if (isQuick) {
-    		quickSwitchBrush();
-    	}
-    	
-    	String fullPath = null;
-    	
-    	if (paintName == null) {
-    		fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
-    	} else {
-    		try {
-    		fullPath = PlaceHolder.class.getResource(paintName).getPath();
-    		} catch (Exception e) {
-    			fullPath = System.getProperty("user.home") + File.separator + 
-    			"mipav" + File.separator + "brushes" + File.separator + paintName;
-    			
-    			if (! (new File(fullPath)).exists()) {
-    				fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath(); 
-    			}
-    			
-    		}
-    	}
-    	
-    	//fix the URL nonsense with spaces
-    	fullPath = fullPath.replaceAll("%20", " ");
-    	
-    	File paintFile = new File(fullPath);
-    	FileIO fileIO = new FileIO();
-
-    	//read in the .gif or .png as a model image to create the BitSet
-    	ModelImage brushImage = fileIO.readImage(paintFile.getPath());
-    	
-    	if (brushImage == null) {
-    		return;
-    	}
-    	
-    	int [] brushExtents = brushImage.getExtents();
-    	    	
-    	//create the bitset and the brush dimensions
-    	paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
-    	paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
-    	
-    	int counter = 0;
-    		
-    	int [] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
-		try {
-			brushImage.exportData(0, buffer.length, buffer);
-		} catch (Exception e) {
-			MipavUtil.displayError("Open brush failed.");
-			brushImage.disposeLocal();
-			return;
-		}
-		
-		
-		int length = buffer.length;
-	
-		if (paintImage != null) {
-			paintImage.flush();
-			paintImage = null;
-		}
-		
-		//create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
-		paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
-		
-	
-						
-		//set or clear the bitset based on the black pixels (black == on)
-		for ( int i = 0; i < length; i += 4, counter++) {
-			if (buffer[i + 1] == 0) {
-				paintBrush.set(counter);
-			} else {
-				paintBrush.clear(counter);
-			}
-		}
-		
-		updatePaintBrushCursor();
-		
-		//remove the image created as it is no longer needed
-		brushImage.disposeLocal();
-		
-    }
-    
-    /** Updates the Paint Cursor's BufferedImage with the correct color/opacity */
-    public void updatePaintBrushCursor() {
-    	int opacity = MipavMath.round(255 * .3);
-    	Color paintColor = Color.red;
-		try {
-			opacity = (int)(frame.getControls().getTools().getOpacity() * 255);
-			paintColor = frame.getControls().getTools().getPaintColor();
-		} catch (Exception e) {}
-		
-		Color brushColor = new Color(paintColor.getRed(),paintColor.getGreen(), paintColor.getBlue(), opacity);
-    	int counter = 0;
-		
-		for (int y = 0; y < paintBrushDim.height; y++) {
-			for (int x = 0; x < paintBrushDim.width; x++, counter++) {
-				if (paintBrush.get(counter)) {
-					paintImage.setRGB(x, y, brushColor.getRGB());
-				}
-			}
-		}
-    } 
-    
-    /**
-     * Backups up ( and swaps if not null) the current and previously used paintBrush
+     * Gets position data to display in message bar - for DICOM and MINC images, gives patient position as well. The
+     * image's associated transformation must be FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL, or the orientations must be
+     * set up correctly, or else the function returns null.
      *
+     * @param   image     The image the point lies within.
+     * @param   position  (x,y,z(slice)) position in FileCoordinates
+     *
+     * @return  An array of strings that represent patient position.
      */
-    public void quickSwitchBrush() {
-    	
-    	//swap previous with current
-    		
-    	if (paintBrushPrevious != null) {
-    		BitSet tempSet = (BitSet)paintBrushPrevious.clone();
-    		Dimension tempDim = (Dimension)paintBrushDimPrevious.clone();
-    		BufferedImage tempBImage = ImageUtil.cloneImage(paintImagePrevious);
-    		
-    		paintBrushPrevious = (BitSet)paintBrush.clone();
-    		paintBrush = tempSet;
-    		
-    		paintBrushDimPrevious = (Dimension)paintBrushDim.clone();
-    		paintBrushDim = tempDim;
-    		
-    		paintImagePrevious = ImageUtil.cloneImage(paintImage);
-    		paintImage = tempBImage;
-    	} else {
-    		paintBrushPrevious = (BitSet)paintBrush.clone();
-    		paintBrushDimPrevious = (Dimension) paintBrushDim.clone();
-    		paintImagePrevious = ImageUtil.cloneImage(paintImage);
-    	}
-    		
+    public static final String[] getScannerPositionLabels(ModelImage image, Point3Df position) {
+        DecimalFormat nf = new DecimalFormat("#####0.0##");
+        Point3Df kOut = new Point3Df();
+        MipavCoordinateSystems.fileToScanner(position, kOut, image);
+
+        float[] tCoord = new float[3];
+        tCoord[0] = kOut.x;
+        tCoord[1] = kOut.y;
+        tCoord[2] = kOut.z;
+
+        String[] labels = { "R-L: ", "A-P: ", "I-S: " };
+
+        if (!image.getRadiologicalView()) {
+            labels[0] = new String("L-R: ");
+        }
+
+        String[] strs = new String[3];
+
+        if (image.getRadiologicalView()) {
+
+            if ((tCoord[0] < 0)) {
+                strs[0] = new String(labels[0] + labels[0].charAt(0) + ": " + String.valueOf(nf.format(tCoord[0])));
+            } else {
+                strs[0] = new String(labels[0] + labels[0].charAt(2) + ": " + String.valueOf(nf.format(tCoord[0])));
+            }
+        } else {
+
+            if ((tCoord[0] < 0)) {
+                strs[0] = new String(labels[0] + labels[0].charAt(2) + ": " + String.valueOf(nf.format(tCoord[0])));
+            } else {
+                strs[0] = new String(labels[0] + labels[0].charAt(0) + ": " + String.valueOf(nf.format(tCoord[0])));
+            }
+        }
+
+        for (int i = 1; i < 3; i++) {
+
+            if ((tCoord[i] < 0)) {
+                strs[i] = new String(labels[i] + labels[i].charAt(0) + ": " + String.valueOf(nf.format(tCoord[i])));
+            } else {
+                strs[i] = new String(labels[i] + labels[i].charAt(2) + ": " + String.valueOf(nf.format(tCoord[i])));
+            }
+        }
+
+        return strs;
     }
-    
+
     /**
      * Calculates the volume of the painted voxels.
      *
@@ -1267,18 +1192,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         cleanImageBufferA = null;
         cleanImageBufferB = null;
-        
+
         if (paintImage != null) {
-        	paintImage.flush();
-        	paintImage = null;
+            paintImage.flush();
+            paintImage = null;
         }
+
         if (paintImagePrevious != null) {
-        	paintImagePrevious.flush();
-        	paintImagePrevious = null;
+            paintImagePrevious.flush();
+            paintImagePrevious = null;
         }
-        
-        
-        
+
+
         if (imageStatList != null) {
 
             // removeVOIUpdateListener(imageStatList);
@@ -1317,8 +1242,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (flag == true) {
             super.disposeLocal();
         }
-        
-        
+
+
     }
 
     /**
@@ -1921,6 +1846,98 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  paintName  the name of the brush to load
      */
     public void loadPaintBrush(String paintName) {
+        String fullPath = null;
+
+        if (paintName == null) {
+            fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
+        } else {
+
+            try {
+                fullPath = PlaceHolder.class.getResource(paintName).getPath();
+            } catch (Exception e) {
+                fullPath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" +
+                           File.separator + paintName;
+
+                if (!(new File(fullPath)).exists()) {
+                    fullPath = PlaceHolder.class.getResource("square 8x8.gif").getPath();
+                }
+
+            }
+        }
+
+        // fix the URL nonsense with spaces
+        fullPath = fullPath.replaceAll("%20", " ");
+
+        File paintFile = new File(fullPath);
+        FileIO fileIO = new FileIO();
+
+        // read in the .gif or .png as a model image to create the BitSet
+        ModelImage brushImage = fileIO.readImage(paintFile.getPath());
+
+        if (brushImage == null) {
+            return;
+        }
+
+        int[] brushExtents = brushImage.getExtents();
+
+        // create the bitset and the brush dimensions
+        paintBrushDim = new Dimension(brushExtents[0], brushExtents[1]);
+        paintBrush = new BitSet(brushExtents[0] * brushExtents[1]);
+
+        int counter = 0;
+
+        int[] buffer = new int[brushExtents[0] * brushExtents[1] * 4];
+
+        try {
+            brushImage.exportData(0, buffer.length, buffer);
+        } catch (Exception e) {
+            MipavUtil.displayError("Open brush failed.");
+            brushImage.disposeLocal();
+
+            return;
+        }
+
+
+        int length = buffer.length;
+
+        if (paintImage != null) {
+            paintImage.flush();
+            paintImage = null;
+        }
+
+        // create a buffered image that will be drawn in place of a cursor (with red transparent pixels)
+        paintImage = new BufferedImage(paintBrushDim.width, paintBrushDim.height, BufferedImage.TYPE_INT_ARGB);
+
+
+        // set or clear the bitset based on the black pixels (black == on)
+        for (int i = 0; i < length; i += 4, counter++) {
+
+            if (buffer[i + 1] == 0) {
+                paintBrush.set(counter);
+            } else {
+                paintBrush.clear(counter);
+            }
+        }
+
+        updatePaintBrushCursor();
+
+        // remove the image created as it is no longer needed
+        brushImage.disposeLocal();
+
+    }
+
+    /**
+     * Loads built-in (.gif) or custom (.png) paint brushes based on the last-used paint brush in preferences.
+     *
+     * @param  paintName  the name of the brush to load
+     * @param  isQuick    DOCUMENT ME!
+     */
+    public void loadPaintBrush(String paintName, boolean isQuick) {
+
+        if (isQuick) {
+            quickSwitchBrush();
+        }
+
         String fullPath = null;
 
         if (paintName == null) {
@@ -2985,6 +3002,34 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
+     * Backups up ( and swaps if not null) the current and previously used paintBrush.
+     */
+    public void quickSwitchBrush() {
+
+        // swap previous with current
+
+        if (paintBrushPrevious != null) {
+            BitSet tempSet = (BitSet) paintBrushPrevious.clone();
+            Dimension tempDim = (Dimension) paintBrushDimPrevious.clone();
+            BufferedImage tempBImage = ImageUtil.cloneImage(paintImagePrevious);
+
+            paintBrushPrevious = (BitSet) paintBrush.clone();
+            paintBrush = tempSet;
+
+            paintBrushDimPrevious = (Dimension) paintBrushDim.clone();
+            paintBrushDim = tempDim;
+
+            paintImagePrevious = ImageUtil.cloneImage(paintImage);
+            paintImage = tempBImage;
+        } else {
+            paintBrushPrevious = (BitSet) paintBrush.clone();
+            paintBrushDimPrevious = (Dimension) paintBrushDim.clone();
+            paintImagePrevious = ImageUtil.cloneImage(paintImage);
+        }
+
+    }
+
+    /**
      * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
      * between previously supplied bounds.
      *
@@ -3851,7 +3896,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if ((imageActive.getOrigin()[0] != 0) || (imageActive.getOrigin()[1] != 0) ||
                     ((imageActive.getNDims() > 2) && (imageActive.getOrigin()[2] != 0))) {
-                String[] values = setScannerPosition(xS, yS, slice);
+                String[] values = getScannerPositionLabels(imageActive, new Point3Df(xS, yS, slice));
 
                 if (values != null) {
 
@@ -3941,47 +3986,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void setRGBTB(ModelRGB RGBT) {
         RGBTB = RGBT;
         m_kPatientSlice.setRGBTB(RGBT);
-    }
-
-    /**
-     * Sets position data to display in message bar - for DICOM and MINC images, gives patient position as well. The
-     * image's associated transformation must be FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL or the function returns null.
-     *
-     * @param   x       Position x-value in FileCoordinates
-     * @param   y       Position y-value in FileCoordinates
-     * @param   zSlice  Position z-value (slice) in FileCoordinates
-     *
-     * @return  An array of strings that represent patient position.
-     */
-    public String[] setScannerPosition(int x, int y, int zSlice) {
-        DecimalFormat nf = new DecimalFormat("#####0.0##");
-        Point3Df kOut = new Point3Df();
-        MipavCoordinateSystems.fileToScanner(new Point3Df(x, y, zSlice), kOut, imageActive);
-
-        float[] tCoord = new float[3];
-        tCoord[0] = kOut.x;
-        tCoord[1] = kOut.y;
-        tCoord[2] = kOut.z;
-
-        String[] labels = { "R-L: ", "A-P: ", "I-S: " };
-
-        if (!imageActive.getRadiologicalView()) {
-            tCoord[0] *= -1;
-            labels[0] = new String("L-R: ");
-        }
-
-        String[] strs = new String[3];
-
-        for (int i = 0; i < 3; i++) {
-
-            if (tCoord[i] < 0) {
-                strs[i] = new String(labels[i].charAt(0) + ": " + String.valueOf(nf.format(tCoord[i])));
-            } else {
-                strs[i] = new String(labels[i].charAt(2) + ": " + String.valueOf(nf.format(tCoord[i])));
-            }
-        }
-
-        return strs;
     }
 
     /**
@@ -4302,6 +4306,32 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         imageActive.notifyImageDisplayListeners(null, true);
+    }
+
+    /**
+     * Updates the Paint Cursor's BufferedImage with the correct color/opacity.
+     */
+    public void updatePaintBrushCursor() {
+        int opacity = MipavMath.round(255 * .3);
+        Color paintColor = Color.red;
+
+        try {
+            opacity = (int) (frame.getControls().getTools().getOpacity() * 255);
+            paintColor = frame.getControls().getTools().getPaintColor();
+        } catch (Exception e) { }
+
+        Color brushColor = new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), opacity);
+        int counter = 0;
+
+        for (int y = 0; y < paintBrushDim.height; y++) {
+
+            for (int x = 0; x < paintBrushDim.width; x++, counter++) {
+
+                if (paintBrush.get(counter)) {
+                    paintImage.setRGB(x, y, brushColor.getRGB());
+                }
+            }
+        }
     }
 
     /**

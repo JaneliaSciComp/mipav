@@ -1,8 +1,6 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.*;
-
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
@@ -15,8 +13,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-
-import java.text.*;
 
 import java.util.*;
 
@@ -1293,6 +1289,7 @@ public abstract class ViewJFrameBase extends JFrame
      * This method opens an existing VOI.
      *
      * @param   quietMode  if true indicates that warnings should not be displayed.
+     * @param   doLabels   DOCUMENT ME!
      *
      * @return  whether a VOI was successfully opened (ie - the dialog wasn't cancelled)
      */
@@ -1690,7 +1687,7 @@ public abstract class ViewJFrameBase extends JFrame
                 aviFile.setIsScript(options.isScript());
 
                 if (!aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(), getRGBTB(), red, green, blue, opacity,
-                                        alphaBlend, paintBitmap, options.getAVICompression())) {
+                                            alphaBlend, paintBitmap, options.getAVICompression())) {
 
                     System.err.println("AVI image write cancelled");
                 }
@@ -2310,6 +2307,144 @@ public abstract class ViewJFrameBase extends JFrame
     } // end saveAllVOIsTo()
 
     /**
+     * DOCUMENT ME!
+     *
+     * @param  saveAll  DOCUMENT ME!
+     */
+    public void saveLabels(boolean saveAll) {
+        String fileName;
+        String directory;
+        JFileChooser chooser;
+
+        int nVOI;
+        int i;
+        ViewVOIVector VOIs;
+        boolean foundLabel = false;
+
+        if (displayMode == IMAGE_A) {
+
+            VOIs = (ViewVOIVector) imageA.getVOIs();
+            nVOI = VOIs.size();
+
+            for (i = 0; i < nVOI; i++) {
+
+                if ((VOIs.VOIAt(i).isActive() || saveAll) && (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
+                    foundLabel = true;
+                }
+            }
+
+            if (!foundLabel) {
+                MipavUtil.displayWarning("There are no labels on the image.");
+
+                return;
+            }
+
+            chooser = new JFileChooser();
+            chooser.setDialogTitle("Save label(s) as");
+
+            if (userInterface.getDefaultDirectory() != null) {
+                File file = new File(userInterface.getDefaultDirectory());
+
+                if (file != null) {
+                    chooser.setCurrentDirectory(file);
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            }
+
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
+
+            int returnVal = chooser.showSaveDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                userInterface.setDefaultDirectory(directory);
+
+                this.voiSavedFileName = directory + fileName;
+
+
+            } else {
+                return;
+            }
+
+            try {
+
+                FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
+
+                fileVOI.writeAnnotationXML(saveAll);
+
+            } catch (IOException error) {
+                MipavUtil.displayError("Error writing labels");
+            }
+
+        } else if (displayMode == IMAGE_B) {
+
+            VOIs = (ViewVOIVector) imageB.getVOIs();
+            nVOI = VOIs.size();
+
+            for (i = 0; i < nVOI; i++) {
+
+                if ((VOIs.VOIAt(i).isActive() || saveAll) && (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
+                    foundLabel = true;
+                }
+            }
+
+            if (i == nVOI) {
+                MipavUtil.displayError("Please select a VOI.");
+
+                return;
+            }
+
+            if (!foundLabel) {
+                MipavUtil.displayWarning("There are no labels on the image.");
+
+                return;
+            }
+
+            chooser = new JFileChooser();
+            chooser.setDialogTitle("Save label(s) as");
+
+            if (userInterface.getDefaultDirectory() != null) {
+                File file = new File(userInterface.getDefaultDirectory());
+
+                if (file != null) {
+                    chooser.setCurrentDirectory(file);
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            }
+
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
+
+            int returnVal = chooser.showSaveDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                userInterface.setDefaultDirectory(directory);
+            } else {
+                return;
+            }
+
+            try {
+
+                FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
+                fileVOI.writeAnnotationXML(true);
+
+            } catch (IOException error) {
+                MipavUtil.displayError("Error writing label(s)");
+            }
+        } else {
+            MipavUtil.displayError(" Cannot save images when viewing both images.");
+        }
+    }
+
+    /**
      * This method saves the LUT for the active image. If the image is not a color image then both the functions and the
      * LUT data are saved. If this is a color image, then only the functions are saved.
      *
@@ -2785,7 +2920,7 @@ public abstract class ViewJFrameBase extends JFrame
                 aviFile.setIsScript(options.isScript());
 
                 if (!aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(), getRGBTB(), red, green, blue, opacity,
-                                        alphaBlend, paintBitmap, options.getAVICompression())) {
+                                            alphaBlend, paintBitmap, options.getAVICompression())) {
 
                     System.err.println("AVI image write cancelled");
                 }
@@ -2950,136 +3085,6 @@ public abstract class ViewJFrameBase extends JFrame
 
     }
 
-    public void saveLabels(boolean saveAll) {
-    	String fileName;
-        String directory;
-        JFileChooser chooser;
-
-        int nVOI;
-        int i;
-        ViewVOIVector VOIs;
-        boolean foundLabel = false;
-
-        if (displayMode == IMAGE_A) {
-
-            VOIs = (ViewVOIVector) imageA.getVOIs();
-            nVOI = VOIs.size();
-
-            for (i = 0; i < nVOI; i++) {
-
-                if ((VOIs.VOIAt(i).isActive() || saveAll) && 
-                		VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
-                    foundLabel = true;
-                }
-            }
-            if (!foundLabel) {
-            	MipavUtil.displayWarning("There are no labels on the image.");
-            	return;
-            }
-            chooser = new JFileChooser();
-            chooser.setDialogTitle("Save label(s) as");
-
-            if (userInterface.getDefaultDirectory() != null) {
-                File file = new File(userInterface.getDefaultDirectory());
-
-                if (file != null) {
-                    chooser.setCurrentDirectory(file);
-                } else {
-                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                }
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
-
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
-
-            int returnVal = chooser.showSaveDialog(this);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                fileName = chooser.getSelectedFile().getName();
-                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                userInterface.setDefaultDirectory(directory);
-
-                this.voiSavedFileName = directory + fileName;
-
-
-            } else {
-                return;
-            }
-
-            try {
-
-                FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
-
-                fileVOI.writeAnnotationXML(saveAll);
-                
-            } catch (IOException error) {
-                MipavUtil.displayError("Error writing labels");
-            }
-
-        } else if (displayMode == IMAGE_B) {
-
-            VOIs = (ViewVOIVector) imageB.getVOIs();
-            nVOI = VOIs.size();
-
-            for (i = 0; i < nVOI; i++) {
-
-            	if ((VOIs.VOIAt(i).isActive() || saveAll) && 
-                		VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
-                    foundLabel = true;
-                }
-            }
-
-            if (i == nVOI) {
-                MipavUtil.displayError("Please select a VOI.");
-
-                return;
-            }
-
-            if (!foundLabel) {
-            	MipavUtil.displayWarning("There are no labels on the image.");
-            	return;
-            }
-            chooser = new JFileChooser();
-            chooser.setDialogTitle("Save label(s) as");
-
-            if (userInterface.getDefaultDirectory() != null) {
-                File file = new File(userInterface.getDefaultDirectory());
-
-                if (file != null) {
-                    chooser.setCurrentDirectory(file);
-                } else {
-                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                }
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
-
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
-
-            int returnVal = chooser.showSaveDialog(this);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                fileName = chooser.getSelectedFile().getName();
-                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                userInterface.setDefaultDirectory(directory);
-            } else {
-                return;
-            }
-
-            try {
-
-                FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
-                fileVOI.writeAnnotationXML(true);
-             
-            } catch (IOException error) {
-                MipavUtil.displayError("Error writing label(s)");
-            }
-        } else {
-            MipavUtil.displayError(" Cannot save images when viewing both images.");
-        }
-    }
-    
     /**
      * This method saves a selected VOI - should this be in VOI structure ??!!!
      *
@@ -3587,37 +3592,10 @@ public abstract class ViewJFrameBase extends JFrame
             return;
         }
 
-        DecimalFormat nf = new DecimalFormat("#####0.0##");
-        Point3Df kOut = new Point3Df();
-        MipavCoordinateSystems.fileToScanner(position, kOut, imageA);
+        String[] labelContents = ViewJComponentEditImage.getScannerPositionLabels(imageA, position);
 
-        float[] tCoord = new float[3];
-        tCoord[0] = kOut.x;
-        tCoord[1] = kOut.y;
-        tCoord[2] = kOut.z;
-
-        String[] labels = new String[3];
-        labels[1] = new String("A-P: ");
-
-        if (imageA.getRadiologicalView()) {
-            labels[0] = new String("R-L: ");
-        } else {
-            tCoord[0] *= -1;
-            labels[0] = new String("L-R: ");
-        }
-
-        labels[2] = new String("I-S: ");
-
-
-        for (int i = 0; i < 3; i++) {
-
-            if (tCoord[i] < 0) {
-                scannerLabelVals[i].setText(labels[i] + labels[i].charAt(0) + ": " +
-                                            String.valueOf(nf.format(tCoord[i])));
-            } else {
-                scannerLabelVals[i].setText(labels[i] + labels[i].charAt(2) + ": " +
-                                            String.valueOf(nf.format(tCoord[i])));
-            }
+        for (int i = 0; i < labelContents.length; i++) {
+            scannerLabelVals[i].setText(labelContents[i]);
         }
     }
 
