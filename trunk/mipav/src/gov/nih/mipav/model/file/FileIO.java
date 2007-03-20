@@ -54,9 +54,6 @@ public class FileIO {
     /** Directory where the image file can be found. */
     private String fileDir;
 
-    /** File name of the image. */
-    private String fileName;
-
     /** If a LUT is to be saved with the image it is stored here. */
     private ModelLUT LUT = null;
 
@@ -2367,7 +2364,6 @@ public class FileIO {
             return null;
         }
 
-        this.fileName = fileName;
         this.fileDir = fileDir;
         fileName.trim();
 
@@ -2551,7 +2547,9 @@ public class FileIO {
                 case FileUtility.XML_MULTIFILE:
                     image = readXMLMulti(fileName, fileDir);
                     break;
-
+                case FileUtility.PARREC:
+                    image = readPARREC(fileName, fileDir, one);
+                    break;
                 default:
                     return null;
             }
@@ -3778,6 +3776,61 @@ public class FileIO {
 
     }
 
+    /****for PAR/REC support ***********************************************************************************************************/
+    /**
+       * Reads a PARREC file by calling the read method of the file. This method contains special code to not display the progress bar should
+       * the image be <q>splash.img</q>.
+       *
+       * @param   fileName  Name of the image file to read.
+       * @param   fileDir   Directory of the image file to read.
+       * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
+       *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
+       *                    from 3D dataset.
+       *
+       * @return  The image that was read in, or null if failure.
+       */
+      private ModelImage readPARREC(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        FilePARREC imageFile;
+
+        try {
+            imageFile = new FilePARREC(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
+            image = imageFile.readImage(one);
+        } catch (IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        }
+
+
+        return image;
+      }
+    
     /**
      * Reads an analyze file by calling the read method of the file. Also checks if it's a Cheshire, Interfile, or NIFTI
      * and if so, calls that method instead. This method contains special code to not display the progress bar should
@@ -4426,7 +4479,6 @@ public class FileIO {
      * @return  The image that was read in, or null if failure.
      */
     private ModelImage readCOR(String fileName, String fileDir) {
-        float[] resols;
         int[] extents; // extent of image  (!def!)
         int length = 0;
         int i;
@@ -4508,7 +4560,6 @@ public class FileIO {
         length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
 
         try {
-            resols = new float[5];
 
             if (nImages > 1) {
                 extents = new int[3];
@@ -6252,12 +6303,7 @@ public class FileIO {
      */
     private ModelImage readMGH(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
-        boolean showProgressBar = (!quiet) ? true : false;
         FileMGH imageFile;
-
-        if (!UI.isAppFrameVisible()) {
-            showProgressBar = false;
-        }
 
         try {
             imageFile = new FileMGH(UI, fileName, fileDir);
@@ -6327,7 +6373,7 @@ public class FileIO {
                         imageFile.setFileName(fileList[i]);
                         fileInfoMicro = imageFile.readHeader();
 
-                        if (imageFile.trimmer(fileName).equals(fileInfoMicro.getBaseNameforReconstructedSlices() + "_")) {
+                        if (FileMicroCat.trimmer(fileName).equals(fileInfoMicro.getBaseNameforReconstructedSlices() + "_")) {
                             break;
                         }
                     }
@@ -6839,12 +6885,7 @@ public class FileIO {
      */
     private ModelImage readNRRD(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
-        boolean showProgressBar = (!quiet) ? true : false;
         FileNRRD imageFile;
-
-        if (!UI.isAppFrameVisible()) {
-            showProgressBar = false;
-        }
 
         try {
             imageFile = new FileNRRD(UI, fileName, fileDir);
