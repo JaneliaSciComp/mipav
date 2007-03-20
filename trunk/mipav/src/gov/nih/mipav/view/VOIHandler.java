@@ -2118,7 +2118,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     } else if ((VOIs.VOIAt(i).getCurveType() == VOI.POINT) ||
                                    (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
                         compImage.setCursor(compImage.crosshairCursor);
-                        //asdf
+
+                        // asdf
                         if (allActive) {
                             VOIs.VOIAt(i).moveVOI(-1, xDim, yDim, zDim, distX, distY, 0);
                         } else {
@@ -2514,7 +2515,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                                                                          compImage.getResolutionX(),
                                                                                                          compImage.getResolutionY(),
                                                                                                          compImage.getActiveImage().getFileInfo(0).getResolutions(),
-                                                                                                         xS, yS, g, VOIs.VOIAt(i).getThickness());
+                                                                                                         xS, yS, g,
+                                                                                                         VOIs.VOIAt(i).getThickness());
                     compImage.setCursorMode(ViewJComponentEditImage.RETRACE);
 
                     break;
@@ -3014,13 +3016,14 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                         if ((compImage.getActiveImage().getFileInfo(0).getOrigin()[0] != 0) ||
                                                 (compImage.getActiveImage().getFileInfo(0).getOrigin()[1] != 0) ||
                                                 (compImage.getActiveImage().getFileInfo(0).getOrigin()[2] != 0)) {
-                                            FileInfoBase fileInfo = compImage.getActiveImage().getFileInfo()[compImage.getSlice()];
-                                            String[] startValues = compImage.setScannerPosition((int) startPt.x,
-                                                                                                (int) startPt.y,
-                                                                                                compImage.getSlice());
-                                            String[] endValues = compImage.setScannerPosition((int) endPt.x,
-                                                                                              (int) endPt.y,
-                                                                                              compImage.getSlice());
+                                            String[] startValues = ViewJComponentEditImage.getScannerPositionLabels(compImage.getActiveImage(),
+                                                                                                                    new Point3Df(startPt.x,
+                                                                                                                                 startPt.y,
+                                                                                                                                 compImage.getSlice()));
+                                            String[] endValues = ViewJComponentEditImage.getScannerPositionLabels(compImage.getActiveImage(),
+                                                                                                                  new Point3Df(endPt.x,
+                                                                                                                               endPt.y,
+                                                                                                                               compImage.getSlice()));
 
                                             if ((startValues != null) && (endValues != null)) {
                                                 ViewUserInterface.getReference().setDataText("Line: " + tmpString2 +
@@ -3410,36 +3413,37 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 y[0] = yS;
                 z[0] = sliceNum;
 
-                
-                //decide where to put the second point (arrow tip) so that it is within bounds
-                int [] extents = compImage.getActiveImage().getExtents();
-                
-                if ( (xS + 15) < extents[0]){
-                	x[1] = xS + 15;
+
+                // decide where to put the second point (arrow tip) so that it is within bounds
+                int[] extents = compImage.getActiveImage().getExtents();
+
+                if ((xS + 15) < extents[0]) {
+                    x[1] = xS + 15;
                 } else if ((xS - 15) > 0) {
-                	x[1] = xS - 15;
+                    x[1] = xS - 15;
                 } else {
-                	x[1] = xS;
+                    x[1] = xS;
                 }
-                if ( (yS + 15) < extents[1]){
-                	y[1] = yS + 15;
+
+                if ((yS + 15) < extents[1]) {
+                    y[1] = yS + 15;
                 } else if ((yS - 15) > 0) {
-                	y[1] = yS - 15;
+                    y[1] = yS - 15;
                 } else {
-                	y[1] = yS;
+                    y[1] = yS;
                 }
-                
+
                 z[1] = sliceNum;
 
                 newTextVOI.importCurve(x, y, z, sliceNum);
                 newTextVOI.setUID(newTextVOI.hashCode());
-                
+
                 String prefColor = Preferences.getProperty("VOITextColor");
                 Color textColor;
-                
+
                 if (prefColor != null) {
-                	textColor = MipavUtil.extractColor(prefColor);
-                	newTextVOI.setColor(textColor);
+                    textColor = MipavUtil.extractColor(prefColor);
+                    newTextVOI.setColor(textColor);
                 } else {
                     Preferences.setProperty("VOITextColor", MipavUtil.makeColorString(Color.white));
                     newTextVOI.setColor(Color.white);
@@ -5066,7 +5070,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 break;
 
             case ViewJComponentEditImage.PAINT_VOI:
-            	compImage.setCursor(MipavUtil.blankCursor);
+                compImage.setCursor(MipavUtil.blankCursor);
                 compImage.getFrame().requestFocus();
                 break;
 
