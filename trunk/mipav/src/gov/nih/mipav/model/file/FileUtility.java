@@ -379,7 +379,13 @@ public class FileUtility {
 	 * extension: .xpm
 	 */
 	public static final int XPM = 58;
-	
+
+    /*for PAR/REC Support*/
+    /**
+	 *
+	 * extension: "par","parv2","rec","frec"
+	 */
+    public static final int PARREC = 59;
 	
 
     /** Arrary of strings describing the file formats.
@@ -393,9 +399,9 @@ public class FileUtility {
         "JIMI", "JPEG", "LSM", "LSM multifile", "Magnetom Vision", "Map", "Medvision", "MGH", "Micro CAT", "MINC",
         "MIPAV", "MRC", "NIFTI", "NIFTI multifile", "NRRD", "OSM", "PCX", "PIC", "PICT", "PNG", "Project", "PSD", "QT",
         "Raw", "Raw multifile", "SPM", "STK", "Surface XML", "TGA", "Tiff", "Tiff multifile", "TMG", "VOI", "XBM",
-        "XML", "XML multifile", "XPM"
+        "XML", "XML multifile", "XPM", "Philips PARREC"
     };
-    
+    /*for PAR/REC Support*/
 
     
     /** Supported File Extensions 
@@ -411,8 +417,8 @@ public class FileUtility {
     									"img", "nii", "nhdr", "nrrd", "ima", "dcm", "bin", "map", "mnc",
     									"avi", "imc", "oly", "qt", "mov", "head", "brik", "ics", "ids",
     									"hdr", "spm", "fits", "dm3", "tmg", "mrc", "wu", "sig", "gedno",
-    									"log", "ct", "info", "info~", "voi", "afni"};
-    
+    									"log", "ct", "info", "info~", "voi", "afni","par","parv2","rec","frec"};
+    /*for PAR/REC Support*/    
     
     
     /** This map is needed in order to populate JDialogUnknownIO typeNames */
@@ -609,6 +615,18 @@ public class FileUtility {
         }
         else if (suffix.equalsIgnoreCase(".afni")) {
             fileType = FileUtility.AFNI;
+        }
+        else if (suffix.equalsIgnoreCase(".par")) {      /*for PAR/REC Supported*/
+            fileType = FileUtility.PARREC;
+        }
+        else if (suffix.equalsIgnoreCase(".parv2")) {
+            fileType = FileUtility.PARREC;
+        }
+        else if (suffix.equalsIgnoreCase(".rec")) {
+            fileType = FileUtility.PARREC;
+        }
+        else if (suffix.equalsIgnoreCase(".frec")) {    /*for PAR/REC Supported*/
+            fileType = FileUtility.PARREC;
         }
         else { 
         	//cannot automatically determine the filetype from the filename extension
@@ -839,7 +857,9 @@ public class FileUtility {
             case FileUtility.XPM:
                 suffix = ".xpm";
                 break;
-             
+            case FileUtility.PARREC:
+            	suffix = ".par";
+            	break;
         }
 
         return suffix;
@@ -1135,20 +1155,8 @@ public class FileUtility {
         }
         return absolutePath;
     }
-
-
-
-
-
-
-
-
+    
 	public static String[] getSupportedFileExtensions() {
 		return supportedFileExtensions;
 	}
-
-    
-    
-    
-   
 }
