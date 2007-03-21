@@ -10,6 +10,11 @@ import gov.nih.mipav.view.*;
  * The code for EllipticIntegralType = COMPLETE1, COMPLETE2, INCOMPLETE1, and INCOMPLETE2 is ported from a C++ program in 
  * Figures 1 and 2 of "Numerical Calculation of the Elliptic Integrals of the First and Second Kinds with Complex Modulus"
  * by Tohru Morita, Interdisciplinary Information Sciences, Vol. 6, No. 1, 2000, pp. 67-74.
+ * 
+ * How to doublecheck? Use a combination of 2 sources:
+ * 1.) Code for complete and incomplete elliptic integrals of the first kind with real arguments ported from Computation of 
+ * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc., 1996, Chapter 18, Elliptic Integrals and 
+ * Jacobian Elliptic Functions, pp. 654-679.
  */
 
 public class EllipticIntegral {
@@ -23,6 +28,14 @@ public class EllipticIntegral {
     // F(phi, k) INCOMPLETE1
     
     // E(phi, k) INCOMPLETE2
+    
+    // Complex arguments for first and second complete and incomplete elliptic integrals 
+    private static final int MORITA_SOURCE = 1;
+    
+    // Real arguments for first and second complete and incomplete elliptic integrals
+    private static final int ZHANG_SOURCE = 2;
+    
+    
     
     //  ~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -117,6 +130,15 @@ public class EllipticIntegral {
     private double rdr[] = new double[1];
     private double rdi[] = new double[1];
     
+    private int source;
+    
+    // modulus, 0 <= mod <= 1
+    private double mod;
+    private double phi; // argument in radians
+    private double first[];
+    private double second[];
+    private boolean runcomelp;
+    
     //  ~ Constructors ---------------------------------------------------------------------------------------------------
     
     // Constructor only for complete integrals with phi = PI/2.
@@ -126,6 +148,7 @@ public class EllipticIntegral {
     public EllipticIntegral(double modr, double modi, boolean complementaryModulusUsed, 
                             boolean analyticContinuationUsed, double firstr[], double firsti[],
                             double secondr[], double secondi[], int[] errorFlag) {
+        source = MORITA_SOURCE;
         complete = true;
         runcel12 = true;
         this.modr = modr;
@@ -149,6 +172,7 @@ public class EllipticIntegral {
     public EllipticIntegral(boolean complete, double modr, double modi, boolean complementaryModulusUsed, 
             boolean analyticContinuationUsed, double phir, double phii, double firstr[], 
             double firsti[], double secondr[], double secondi[], boolean useStandardMethod, int[] errorFlag) {
+        source = MORITA_SOURCE;
         this.complete = complete;
         runcel12 = false;
         this.modr = modr;
@@ -165,80 +189,117 @@ public class EllipticIntegral {
         this.errorFlag = errorFlag;
     }
     
+    // Used for complete elliptic integrals of first and second kind with real modulus
+    // 0 <= mod <= 1, mod is the modulus
+    public EllipticIntegral(double mod, double first[], double second[]) {
+        source = ZHANG_SOURCE;
+        runcomelp = true;
+        this.mod = mod;
+        this.first = first;
+        this.second = second;
+    }
+    
+    // Used for complete and incomplete elliptic integrals of first and second kind with
+    // real modulus and argument
+    // 0 <= mod <= 1, mod is the modulus
+    // phi, argument in radians
+    public EllipticIntegral(double mod, double phi, double first[], double second[]) {
+        source = ZHANG_SOURCE;
+        runcomelp = false;
+        this.mod = mod;
+        this.phi = phi;
+        this.first = first;
+        this.second = second;
+    }
+    
     public void run() {
         double ckabs;
         
-        if (errorFlag == null) {
-            MipavUtil.displayError("Array errorFlag must not be null");
-
-            return;
-        }
-        
-        if (complete && ((phir != pihf) || (phii != 0.0))) {
-            MipavUtil.displayError("Complete integrals must have phir = PI/2 and phii = 0");
-            errorFlag[0] = 1;
-            return;
-        }
-        
-        if (complementaryModulusUsed) {
-            ckr[0] = modr;
-            cki[0] = modi;
-            ckabs = zabs(ckr[0], cki[0]);
-            if (ckabs < 1.0E-10) {
-                complete = true;
-                phir = pihf;
-                phii = 0.0;
-            }    
-            sqrtc(1.0 - ckr[0]*ckr[0] + cki[0]*cki[0], -2.0*ckr[0]*cki[0], akr, aki);
-            if (modr < 0.0) {
-                sgnck = -1;    
+        switch(source) {
+            case MORITA_SOURCE:
+            if (errorFlag == null) {
+                MipavUtil.displayError("Array errorFlag must not be null");
+    
+                return;
+            }
+            
+            if (complete && ((phir != pihf) || (phii != 0.0))) {
+                MipavUtil.displayError("Complete integrals must have phir = PI/2 and phii = 0");
+                errorFlag[0] = 1;
+                return;
+            }
+            
+            if (complementaryModulusUsed) {
+                ckr[0] = modr;
+                cki[0] = modi;
+                ckabs = zabs(ckr[0], cki[0]);
+                if (ckabs < 1.0E-10) {
+                    complete = true;
+                    phir = pihf;
+                    phii = 0.0;
+                }    
+                sqrtc(1.0 - ckr[0]*ckr[0] + cki[0]*cki[0], -2.0*ckr[0]*cki[0], akr, aki);
+                if (modr < 0.0) {
+                    sgnck = -1;    
+                }
+                else {
+                    sgnck = 1;
+                }
+            } // if (complementaryModulusUsed)
+            else { // modulus used
+                akr[0] = modr;
+                aki[0] = modi;
+                sqrtc(1.0 - akr[0]*akr[0] + aki[0]*aki[0], -2.0*akr[0]*aki[0], ckr, cki);
+                ckabs = zabs(ckr[0], cki[0]);
+                if (ckabs < 1.0E-10) {
+                   complete = true; 
+                   complementaryModulusUsed = true;
+                   phir = pihf;
+                   phii = 0.0;
+                   if (ckr[0] < 0.0) {
+                       sgnck = -1;    
+                   }
+                   else {
+                       sgnck = 1;
+                   }
+                }
+                else if (analyticContinuationUsed) {
+                    sgnck = -1;
+                    ckr[0] = -ckr[0];
+                    cki[0] = -cki[0];
+                }
+                else {
+                    sgnck = 1;
+                }
+            } // modulus used
+            
+            if (runcel12) {
+                cel12(ckr[0], cki[0]);
+                return;
             }
             else {
-                sgnck = 1;
+                if (complete) {
+                    sgnck = 0;
+                }
+                ell12(phir, phii, akr[0], aki[0], ckr[0], cki[0], sgnck);
             }
-        } // if (complementaryModulusUsed)
-        else { // modulus used
-            akr[0] = modr;
-            aki[0] = modi;
-            sqrtc(1.0 - akr[0]*akr[0] + aki[0]*aki[0], -2.0*akr[0]*aki[0], ckr, cki);
-            ckabs = zabs(ckr[0], cki[0]);
-            if (ckabs < 1.0E-10) {
-               complete = true; 
-               complementaryModulusUsed = true;
-               phir = pihf;
-               phii = 0.0;
-               if (ckr[0] < 0.0) {
-                   sgnck = -1;    
-               }
-               else {
-                   sgnck = 1;
-               }
-            }
-            else if (analyticContinuationUsed) {
-                sgnck = -1;
-                ckr[0] = -ckr[0];
-                cki[0] = -cki[0];
-            }
-            else {
-                sgnck = 1;
-            }
-        } // modulus used
-        
-        if (runcel12) {
-            cel12(ckr[0], cki[0]);
-            return;
-        }
-        else {
-            if (complete) {
-                sgnck = 0;
-            }
-            ell12(phir, phii, akr[0], aki[0], ckr[0], cki[0], sgnck);
-        }
+            break;
+            case ZHANG_SOURCE:
+                if (runcomelp) {
+                    comelp(mod);
+                }
+                else {
+                    elit(mod, phi);
+                }
+            break;
+        } // switch (source)
         
     } // public void run()
     
-    // Routine cel12 only calculates complete integrals
+    // Routine cel12 only calculates complete integrals of the first and second kind
+    // with complex arguments
     // Based on the arithmetic-geometric mean procedure
+    // Ported from Tohru Morita article
     private void cel12(double ckr, double cki) {
         double kcr[] = new double[1];
         double kci[] = new double[1];
@@ -291,6 +352,9 @@ public class EllipticIntegral {
         return;
     } // cel12
     
+    // Calculates complete and incomplete elliptic integrals of the first and second kind
+    // with complex arguments
+    // Ported from the Tohru Morita article
     private void ell12(double phir, double phii, double akr, double aki, double ckr,
                        double cki, int sgnck) {
         double cr[] = new double[1];
@@ -337,6 +401,7 @@ public class EllipticIntegral {
         return;
     } // ell12
     
+    // Ported from Tohru Morita article
     private void rfrd(double xrtr, double xrti, double yrtr, double yrti) {
        double sqrtxr[] = new double[1];
        double sqrtxi[] = new double[1];
@@ -497,6 +562,7 @@ public class EllipticIntegral {
        return;
     } // rfrd
     
+    // Ported from Tohru Morita article
     private void rfrdb(double xrtr, double xrti, double yrtr, double yrti) {
         double sqrtxr[] = new double[1];
         double sqrtxi[] = new double[1];
@@ -580,6 +646,104 @@ public class EllipticIntegral {
         return;
     } // rfrdb
     
+    // Ported from Computation of Special Functions by Shanjie Zhang and Jianming Jin
+    // Computes complete first and second elliptic integrals with a real modulus
+    // 0 <= mod <= 1, mod is the modulus
+    private void comelp(double mod) {
+        double pk;
+        double ak;
+        double bk;
+        double ae;
+        double be;
+        
+        pk = 1.0 - mod*mod;
+        if (mod == 1.0) {
+            first[0] = Double.MAX_VALUE;
+            second[0] = 1.0;
+        }
+        else {
+            ak = (((.01451196212*pk + .03742563713)*pk
+                 + .03590092383)*pk + .09666344259)*pk
+                 + 1.38629436112;
+            bk = (((.00441787012*pk + .03328355346)*pk
+                 + .06880248576)*pk + .12498593597)*pk + 0.5;
+            first[0] = ak - bk*Math.log(pk);
+            ae = (((.01736506451*pk + .04757383546)*pk
+                 + .0626060122)* pk + .44325141463)*pk + 1.0;
+            be = (((.00526449639*pk + .04069697526)*pk
+                 + .09200180037)*pk + .2499836831)*pk;
+            second[0] = ae - be*Math.log(pk);
+        }
+        return;
+    }
+    
+    // Ported from Computation of Special Functions by Shanjie Zhang and Jianming Jin
+    // Computes complete and incomplete first and second elliptic integrals with a real modulus
+    // and real argument
+    // 0 <= mod <= 1, mod is the modulus
+    // arg is the argument in radians
+    
+    private void elit(double mod, double phi) {
+        double g;
+        double a0;
+        double b0;
+        double d0;
+        double r;
+        double fac;
+        int n;
+        double a = 0.0;
+        double b;
+        double c;
+        double d = 0.0;
+        double ck;
+        double ce;
+        
+        g = 0.0;
+        a0 = 1.0;
+        b0 = Math.sqrt(1.0 - mod*mod);
+        d0 = phi;
+        r = mod*mod;
+        if ((mod == 1.0) && (phi == pihf)) {
+            first[0] = Double.MAX_VALUE;
+            second[0] = 1.0;
+        }
+        else if (mod == 1.0) {
+            first[0] = Math.log((1.0 + Math.sin(d0))/Math.cos(d0));
+            second[0] = Math.sin(d0);
+        }
+        else {
+            fac = 1.0;
+            for (n = 1; n <= 40; n++) {
+                a = (a0 + b0)/2.0;
+                b = Math.sqrt(a0*b0);
+                c = (a0 - b0)/2.0;
+                fac = 2.0 * fac;
+                r = r + fac*c*c;
+                if (phi != pihf) {
+                    d = d0 + Math.atan((b0/a0)*Math.tan(d0));
+                    g = g + c*Math.sin(d);
+                    d0 = d + Math.PI*(int)(d/Math.PI + 0.5);
+                }
+                a0 = a;
+                b0 = b;
+                if (c < 1.0E-7) {
+                    break;
+                }
+            } // for (n = 1; n <= 40; n++)
+            ck = Math.PI/(2.0*a);
+            ce = Math.PI*(2.0 - r)/(4.0*a);
+            if (phi == pihf) {
+                first[0] = ck;
+                second[0] = ce;
+            }
+            else {
+                first[0] = d/(fac*a);
+                second[0] = first[0]*ce/ck + g;
+            }
+        }
+        return;
+    }
+    
     private void zsin(double inr, double ini, double outr[], double outi[]) {
         outr[0] = Math.sin(inr)*cosh(ini);
         outi[0] = Math.cos(inr)*sinh(ini);
@@ -649,6 +813,8 @@ public class EllipticIntegral {
         return;
     }
     
+    // Ported from Tohru Morita article
+    // Performs square root of complex argument
     private void sqrtc(double zinr, double zini, double zsqr[], double zsqi[]) {
        double a;
        double th;
