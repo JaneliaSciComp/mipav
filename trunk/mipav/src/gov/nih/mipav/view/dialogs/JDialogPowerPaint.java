@@ -17,6 +17,7 @@ import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 
 
 /**
@@ -27,7 +28,7 @@ import javax.swing.*;
  * @see      JDialogBase
  * @see      AlgorithmInterface
  */
-public class JDialogPowerPaint extends JDialogBase implements MouseListener, MouseWheelListener, KeyListener {
+public class JDialogPowerPaint extends JDialogBase implements MouseListener, MouseWheelListener, KeyListener, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -290,6 +291,18 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /** DOCUMENT ME! */
     private JTextField textStructuring;
 
+	/** handling of intensity threshold */
+	private 	float 		upperThreshold  =       1.0f;
+	/** handling of intensity threshold */
+	private 	float 		lowerThreshold  =       0.5f;
+	/** handling of intensity threshold */
+	private 	JCheckBox	checkThreshold;
+	/** handling of intensity threshold */
+	private		JSlider		slideLower;
+	private 	JSlider  	slideUpper;
+	private		JPanel		panelThreshold;
+	
+	
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -454,6 +467,23 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 				removeKeyListener(this);
 				image.getParentFrame().getComponentImage().removeKeyListener(this);
 			}
+		} 
+		else if (command.equals("Threshold")) {
+			if (checkThreshold.isSelected()) {
+				image.getParentFrame().getComponentImage().addMouseListener(this);
+				if (image.getTriImageFrame() != null) {
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseListener(this);
+				}
+			} else {
+				image.getParentFrame().getComponentImage().removeMouseListener(this);
+				if (image.getTriImageFrame() != null) {
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseListener(this);
+					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseListener(this);
+				}
+			}				
 		}
     }
 
@@ -596,28 +626,78 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mouseEntered(MouseEvent mouseEvent) { }
+    public void mouseEntered(MouseEvent mouseEvent) { 
+	}
 
     /**
      * DOCUMENT ME!
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mouseExited(MouseEvent mouseEvent) { }
+    public void mouseExited(MouseEvent mouseEvent) { 
+	}
 
     /**
      * DOCUMENT ME!
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mousePressed(MouseEvent mouseEvent) { }
+    public void mousePressed(MouseEvent mouseEvent) { 
+	}
 
     /**
      * DOCUMENT ME!
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mouseReleased(MouseEvent mouseEvent) { }
+    public void mouseReleased(MouseEvent mouseEvent) { 
+		if (image.getParentFrame().getComponentImage().getCursorMode()==ViewJComponentEditImage.PAINT_VOI) {
+		//if (image.getParentFrame().getComponentImage().getMode()==ViewJComponentEditImage.PAINT_VOI) {
+			if (checkThreshold.isSelected()) {
+				//System.out.print("1-");
+				if ( mouseEvent.getComponent().equals(image.getParentFrame().getComponentImage() ) 
+					|| ( image.getTriImageFrame() != null && 
+						(  mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
+						|| mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))
+						|| mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A)) ) ) ) {
+
+					//System.out.print("2-");
+			
+					BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+					if (obj == null) {
+						MipavUtil.displayError("paint mask not found");
+			
+						return;
+					}
+					//System.out.print("3-");
+			
+					double min = image.getMin() + lowerThreshold*(image.getMax()-image.getMin());
+					double max = image.getMin() + upperThreshold*(image.getMax()-image.getMin());
+	
+					//System.out.print("4-");
+			
+					for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
+						// check the previous paint first: no change there
+						if (!previous.get(index)) {
+							double val =  image.getDouble(index);
+							if ( (val<min) || (val>max) )
+								obj.set(index,false);
+						}
+					}
+					//System.out.print("5-");
+					
+					// save it to previous
+					previous = (BitSet) obj.clone();
+
+					refreshImagePaint(image,obj);
+				
+					//System.out.print("6-");
+				
+				}
+				
+			}
+		}
+	}
 
     /**
      * DOCUMENT ME!
@@ -673,8 +753,21 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
     /** Handle the key released event */
     public void keyReleased(KeyEvent e) {
+		System.out.print("kr-");
     }
 
+	/** state change listener for the sliders */
+	public void stateChanged(ChangeEvent e) {
+		if (e.getSource().equals(slideLower)) {
+			if (!slideLower.getValueIsAdjusting()) {
+				lowerThreshold = (float)(slideLower.getValue() / 1000.0f);
+			}
+		} else if (e.getSource().equals(slideUpper)) {
+			if (!slideUpper.getValueIsAdjusting()) {
+				lowerThreshold = (float)(slideUpper.getValue() / 1000.0f);
+			}
+		}
+	}
 
     /**
      * 3D images: 18-neighborhood.
@@ -2656,6 +2749,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
         createStructuringElement2D();
         createStructuringElement3D();
+		
+		// remember current paint
+		previous = image.getParentFrame().getComponentImage().getPaintMask();
 
         // object processing
         buttonGrowRegion = new JButton("Grow Region");
@@ -2866,12 +2962,51 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         buttonShortkeys.setFont(serif12);
         buttonShortkeys.setToolTipText("Use shortkeys for all commands: g: grow, f: fill, r: remove, d: dilate, e:erode");
 
+		checkThreshold = new JCheckBox("Threshold");
+        checkThreshold.addActionListener(this);
+        checkThreshold.setActionCommand("Threshold");
+        checkThreshold.setToolTipText("Enable the use of intensity thresholds when painting");
+
+        slideLower = new JSlider(0, 1000, 0);
+        slideLower.setMajorTickSpacing(200);
+		slideLower.setMinorTickSpacing(100);
+		slideLower.setPaintTicks(true);
+		slideLower.setPaintLabels(false);
+		slideLower.addChangeListener(this);
+		slideLower.setToolTipText("Minimum relative intensity for painting");
+
+		slideUpper = new JSlider(0, 1000, 1000);
+        slideUpper.setMajorTickSpacing(250);
+		slideUpper.setMinorTickSpacing(100);
+		slideUpper.setPaintTicks(true);
+		slideUpper.setPaintLabels(false);
+        slideUpper.addChangeListener(this);
+		slideUpper.setToolTipText("Maximum relative intensity for painting");
+
+		
 		GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 2, 2, 2);
 
+        panelThreshold = new JPanel(new GridBagLayout());
+		panelThreshold.setForeground(Color.black);
+		
+		gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panelThreshold.add(checkThreshold, gbc);
+		gbc.gridx = 0;
+        gbc.gridy = 1;
+        panelThreshold.add(slideLower,gbc);
+		gbc.gridx = 0;
+        gbc.gridy = 2;
+        panelThreshold.add(slideUpper,gbc);
+		
         objectPanel = new JPanel(new GridBagLayout());
         objectPanel.setBorder(buildTitledBorder("Object Processing"));
 
@@ -2971,6 +3106,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(comboConnectType, gbc);
+		gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.weightx = 1;
+        gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        objectPanel.add(panelThreshold, gbc);
 
         morphoPanel = new JPanel(new GridBagLayout());
         morphoPanel.setBorder(buildTitledBorder("Morphology"));
@@ -3055,7 +3196,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridy = 1;
         exportPanel.add(buttonImportFromMask, gbc);
 
-        mainPanel = new JPanel(new GridBagLayout());
+		mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
 
         gbc.gridx = 0;
