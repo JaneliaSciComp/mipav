@@ -1511,6 +1511,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                         if (success) {
                         	addStudyData(fileInfo);
                         }
+                        imageFile.finalize();
+                        imageFile = null;
                     }
                 }
         } catch (Exception err) {
