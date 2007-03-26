@@ -11,8 +11,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.icons.*;
 
-import org.orcboard.camera.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
@@ -3011,20 +3009,58 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (paintBrushPrevious != null) {
             BitSet tempSet = (BitSet) paintBrushPrevious.clone();
             Dimension tempDim = (Dimension) paintBrushDimPrevious.clone();
-            BufferedImage tempBImage = ImageUtil.cloneImage(paintImagePrevious);
-
+                       
+            int prevWidth = paintImagePrevious.getWidth();
+            int prevHeight = paintImagePrevious.getHeight();
+            
+       
+            BufferedImage tempBImage = new BufferedImage(prevWidth, prevHeight, paintImagePrevious.getType());
+            
+            for (int i = 0; i < prevWidth; i++) {
+            	for (int j = 0; j < prevHeight; j++) {
+            		tempBImage.setRGB(i, j, paintImagePrevious.getRGB(i, j));
+            	}
+            }
+            
+            int curWidth = paintImage.getWidth();
+            int curHeight = paintImage.getHeight();
+            BufferedImage tempBImageCurrent = new BufferedImage(curWidth, curHeight, paintImage.getType());
+            
+            for (int i = 0; i < curWidth; i++) {
+            	for (int j = 0; j < curHeight; j++) {
+            		tempBImageCurrent.setRGB(i, j, paintImage.getRGB(i, j));
+            	}
+            }
+            
             paintBrushPrevious = (BitSet) paintBrush.clone();
             paintBrush = tempSet;
 
             paintBrushDimPrevious = (Dimension) paintBrushDim.clone();
             paintBrushDim = tempDim;
 
-            paintImagePrevious = ImageUtil.cloneImage(paintImage);
+            paintImagePrevious.flush();
+            paintImagePrevious = null;
+            
+            paintImage.flush();
+            paintImage = null;
+            
+            //switch them
             paintImage = tempBImage;
+            paintImagePrevious = tempBImageCurrent;
         } else {
             paintBrushPrevious = (BitSet) paintBrush.clone();
             paintBrushDimPrevious = (Dimension) paintBrushDim.clone();
-            paintImagePrevious = ImageUtil.cloneImage(paintImage);
+            
+            int width = paintImage.getWidth();
+            int height = paintImage.getHeight();
+            
+            paintImagePrevious = new BufferedImage(width, height, paintImage.getType());
+            
+            for (int i = 0; i < width; i++) {
+            	for (int j = 0; j < height; j++) {
+            		paintImagePrevious.setRGB(i, j, paintImage.getRGB(i, j));
+            	}
+            }
         }
 
     }
