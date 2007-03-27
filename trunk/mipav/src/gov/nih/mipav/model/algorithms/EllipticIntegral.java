@@ -7,27 +7,62 @@ import gov.nih.mipav.view.*;
 /**
  * 
  * @author ilb
+ * The elliptic integral of the first kind is defined by
+ * F(k, phi) = Integral from 0 to phi of d(theta)/sqrt(1 - k*k*sin(theta)*sin(theta)) where k is the modulus
+ * Letting t = sin(theta), the elliptic integral of the first kind can be written as
+ * F(k, x) = Integral from 0 to x of dt/sqrt((1-t*t)(1-k*k*t*t))
+ * where x = sin(phi)
+ * 
+ * The elliptic integral of the second kind is defined by
+ * E(k, phi) = Integral from 0 to phi of sqrt(1 - k*k*sin(theta)*sin(theta))d(theta) where k is the modulus
+ * Letting t = sin(theta), the elliptic integral of the second kind can be written as
+ * E(k, x) = Integral from 0 to x of (sqrt(1 - k*k*t*t)/sqrt(1 - t*t))dt
+ * where x = sin(phi)
+ * 
+ * The elliptic integral of the third kind is defined by
+ * Pi(k, c, phi) = Integral from 0 to phi of d(theta)/((1 - c*sin(theta)*sin(theta))*sqrt(1 - k*k*sin(theta)*sin(theta)))
+ * Letting t = sin(theta), the elliptic integral of the third kind can be written as
+ * Pi(k, c, x) = Integral from 0 to x of dt/((1 - c*t*t)*sqrt((1 - t*t)*(1 - k*k*t*t)))
+ * where x = sin(phi)
+ * 
+ * When phi = PI/2 (x = 1), the elliptic integrals defined above are called complete elliptic integrals
+ * When phi is not equal to PI/2, the elliptic integrals are often referred to as incomplete elliptic integrals
+ * The complete elliptic integral of the first kind is:
+ * K(k) = Integral from 0 to PI/2 of d(theta)/sqrt(1 - k*k*sin(theta)*sin(theta)) where k is the modulus =
+ * Integral from 0 to 1 of dt/sqrt((1-t*t)(1-k*k*t*t))
+ * The complete elliptic integral of the second kind is:
+ * E(k, phi) = Integral from 0 to PI/2 of sqrt(1 - k*k*sin(theta)*sin(theta))d(theta) where k is the modulus =
+ * Integral from 0 to 1 of (sqrt(1 - k*k*t*t)/sqrt(1 - t*t))dt
+ * The comlplete elliptic integral of the third kind is:
+ * Pi(k, c, phi) = Integral from 0 to PI/2 of d(theta)/((1 - c*sin(theta)*sin(theta))*sqrt(1 - k*k*sin(theta)*sin(theta))) =
+ * Integral from 0 to 1 of dt/((1 - c*t*t)*sqrt((1 - t*t)*(1 - k*k*t*t)))
+ * 
+ * 
  * The code for EllipticIntegralType = COMPLETE1, COMPLETE2, INCOMPLETE1, and INCOMPLETE2 is ported from a C++ program in 
  * Figures 1 and 2 of "Numerical Calculation of the Elliptic Integrals of the First and Second Kinds with Complex Modulus"
  * by Tohru Morita, Interdisciplinary Information Sciences, Vol. 6, No. 1, 2000, pp. 67-74.
  * 
  * How to doublecheck? Use a combination of 2 sources:
- * 1.) Code for complete and incomplete elliptic integrals of the first kind with real arguments ported from Computation of 
+ * 1.) Port of FORTRAN code for complete and incomplete elliptic integrals of the first kind with real arguments from Computation of 
  * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc., 1996, Chapter 18, Elliptic Integrals and 
  * Jacobian Elliptic Functions, pp. 654-679.
+ * 2.) PORT of FORTRAN code http://wwwasd.web.cern.ch/wwwasd/lhc++/requirements/special_functions/celint64.f revision 1.1.1.1
+ *     1996/04/01 by mclareni.  This code is a translation of the Algol procedure elco2(x,y,kc,a,b,u,v) in Ronald Bulirsch,
+ *     Handbook Series Special Functions Numerical Calculation of Elliptic Integrals and Elliptic Functions, Numerische 
+ *     Mathematik, Volume 7, 1965, pp. 78 - 90.
  */
 
 public class EllipticIntegral {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
+    //~ Static fields/initializers ------------------------------------------------------------------------------------
+    
+    // F(k, phi) INCOMPLETE1  
+    
+    // E(k, phi) INCOMPLETE2
+    
     // K(k) COMPLETE1
     
     // E(k) COMPLETE2
-    
-    // F(phi, k) INCOMPLETE1
-    
-    // E(phi, k) INCOMPLETE2
     
     // Complex arguments for first and second complete and incomplete elliptic integrals 
     private static final int MORITA_SOURCE = 1;
@@ -137,7 +172,10 @@ public class EllipticIntegral {
     private double phi; // argument in radians
     private double first[];
     private double second[];
-    private boolean runcomelp;
+    private boolean runcomelp = false;
+    private boolean runelit = false;
+    private double c;
+    private double third[];
     
     //  ~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -205,11 +243,24 @@ public class EllipticIntegral {
     // phi, argument in radians
     public EllipticIntegral(double mod, double phi, double first[], double second[]) {
         source = ZHANG_SOURCE;
-        runcomelp = false;
+        runelit = true;
         this.mod = mod;
         this.phi = phi;
         this.first = first;
         this.second = second;
+    }
+    
+    // Used for complete and incomplete elliptic integrals of the third kind with
+    // real modulus, real argument phi, and real parameter c
+    // 0 <= mod <= 1
+    // phi, argument in radians
+    // c parameter, 0 <= c <=1
+    public EllipticIntegral(double mod, double phi, double c, double third[]) {
+        source = ZHANG_SOURCE;
+        this.mod = mod;
+        this.phi = phi;
+        this.c = c;
+        this.third = third;
     }
     
     public void run() {
@@ -288,8 +339,11 @@ public class EllipticIntegral {
                 if (runcomelp) {
                     comelp(mod);
                 }
-                else {
+                else if (runelit) {
                     elit(mod, phi);
+                }
+                else {
+                    elit3(mod, phi, c);
                 }
             break;
         } // switch (source)
@@ -743,6 +797,61 @@ public class EllipticIntegral {
         }
         return;
     }
+    
+    // Ported from Computation of Special Functions by Shanjie Zhang and Jianming Jin
+    // Computes complete and incomplete elliptic integrals of the third kind with a real modulus
+    // real argument, and real parameter
+    // 0 <= mod <= 1, mod is the modulus
+    // arg is the argument in radians
+    // c is the parameter, 0 <= c <= 1
+    private void elit3(double mod, double phi, double c) {
+      double t[] = new double [] {.9931285991850949, .9639719272779138,
+                                  .9122344282513259, .8391169718222188,
+                                  .7463319064601508, .6360536807265150,
+                                  .5108670019508271, .3737060887154195,
+                                  .2277858511416451, .07652652113349734};
+      double w[] = new double [] {.01761400713915212, .04060142980038694,
+                                  .06267204833410907, .08327674157670475,
+                                  .1019301198172404, .1181945319615184,
+                                  .1316886384491766, .1420961093183820,
+                                  .1491729864726037, .1527533871307258};
+      boolean lb1;
+      boolean lb2;
+      double c1;
+      double c2;
+      int i;
+      double c0;
+      double t1;
+      double t2;
+      double f1;
+      double f2;
+      double st;
+      
+      // Convert radians to degrees
+      phi = phi * (180.0/Math.PI);
+      lb1 = ((mod == 1.0) && (Math.abs(phi - 90.0) <= 1.0E-8));
+      lb2 = ((c == 1.0) && (Math.abs(phi - 90.0) <= 1.0E-8));
+      if (lb1 || lb2) {
+          third[0] = Double.MAX_VALUE;
+          return;
+      }
+      // Evaluate elliptic integral using Gauss-Legendre quadrature
+      c1 = 0.87266462599716E-12*phi;
+      c2 = c1;
+      third[0] = 0.0;
+      for (i = 1; i <= 10; i++) {
+          c0 = c2 * t[i-1];
+          t1 = c1 + c0;
+          t2 = c1 - c0;
+          st = Math.sin(t1);
+          f1 = 1.0/((1.0 - c*st*st)*Math.sqrt(1.0 - mod*mod*st*st));
+          st = Math.sin(t2);
+          f2 = 1.0/((1.0 - c*st*st)*Math.sqrt(1.0 - mod*mod*st*st));
+          third[0] = third[0] + w[i-1]*(f1 + f2);
+      } // for (i = 1; i <= 10; i++)
+      third[0] = c1*third[0];
+      return;
+    } // elit3
     
     private void zsin(double inr, double ini, double outr[], double outi[]) {
         outr[0] = Math.sin(inr)*cosh(ini);
