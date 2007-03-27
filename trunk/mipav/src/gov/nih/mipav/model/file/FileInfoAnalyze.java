@@ -36,40 +36,40 @@ public class FileInfoAnalyze extends FileInfoBase {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 7319414471012796383L;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for no data type. */
     public static final short DT_NONE = 0;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for undefined data type. */
     public static final short DT_UNKNOWN = 0;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for binary (1 bit) data type. */
     public static final short DT_BINARY = 1;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for unsigned byte (char) (8 bit) data type. */
     public static final short DT_UNSIGNED_CHAR = 2;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for short (16 bit) data type. */
     public static final short DT_SIGNED_SHORT = 4;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for short (16 bit) data type. */
     public static final short DT_UNSIGNED_SHORT = 4;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for integer (32 bit) data type. */
     public static final short DT_SIGNED_INT = 8;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for float (32 bit) data type. */
     public static final short DT_FLOAT = 16;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for complex (64 bit) data type. */
     public static final short DT_COMPLEX = 32;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for double (64 bit) data type. */
     public static final short DT_DOUBLE = 64;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for color (RGB - 24 bits) data type. */
     public static final short DT_RGB = 128;
 
-    /** DOCUMENT ME! */
+    /** Analyze define for _ALL_ data type. */
     public static final short DT_ALL = 255;
 
     /**
@@ -228,7 +228,7 @@ public class FileInfoAnalyze extends FileInfoBase {
      * Byte offset in the ".img" file at which voxels start This value can be negative to specify that the absolute
      * value is applied for every image in the file.
      */
-    //private float vox_offset = -1;
+    // private float vox_offset = -1;
 
     // public     short   dim[]  = new short[8]; // image dimension data
     // stored in FileInfoBase
@@ -1535,7 +1535,8 @@ public class FileInfoAnalyze extends FileInfoBase {
      *   </tr>
      * </table>
      *
-     * "ce" comes from ChangeEvent upon which this is based. care to make our own ChangeEvent to store and handle this?
+     * <p>"ce" comes from ChangeEvent upon which this is based. care to make our own ChangeEvent to store and handle
+     * this?</p>
      *
      * @param  ce  DOCUMENT ME!
      */
@@ -1555,7 +1556,7 @@ public class FileInfoAnalyze extends FileInfoBase {
         } else if (tname.equalsIgnoreCase("cal units")) {
             setCalUnits(tvalue);
         } else if (tname.equalsIgnoreCase("voxel offset")) {
-            setOffset((int)(Float.parseFloat((String) tcvalue.elementAt(0))));
+            setOffset((int) (Float.parseFloat((String) tcvalue.elementAt(0))));
         } else if (tname.equalsIgnoreCase("cal_min")) {
             setCalMin(Float.parseFloat((String) tcvalue.elementAt(0)));
         } else if (tname.equalsIgnoreCase("cal_max")) {
