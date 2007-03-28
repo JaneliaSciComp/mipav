@@ -50,6 +50,21 @@ import gov.nih.mipav.view.*;
  *     1996/04/01 by mclareni.  This code is a translation of the Algol procedure elco2(x,y,kc,a,b,u,v) in Ronald Bulirsch,
  *     Handbook Series Special Functions Numerical Calculation of Elliptic Integrals and Elliptic Functions, Numerische 
  *     Mathematik, Volume 7, 1965, pp. 78 - 90.
+ *     elco2 calculates a general elliptic integral of the second kind. It calculates w = u + i*v = Integral from 0 to z = x + i*y of
+ *     (a + b*e*e)/((1 + e*e)*sqrt((1 + e*e)*(1 + kc*kc*e*e)))de
+ *     kc is the complementary modulus = sqrt(1 - k*k), where k is the modulus
+ *     The elco2 function fails if kc = 0 or x < 0.  The elco2 may have reduced accuracy at the branchpoints x = 0, y = +-i, +-i/kc.
+ *     
+ *     F(k, arctan(w)) = elco2(w, kc, a = 1, b = 1)
+ *     Let arctan(w) = z.  Then w = tan(z) and for the incomplete elliptic integral of the first kind:
+ *     F(k, z) = elco2(tan(z), kc, a = 1, b = 1)
+ *     So elco2 cannot be used to check complex k (modulus), but it can be used as a partial check on complex z.  It can check on complex z
+ *     as long as 2 conditons are met: 1.) Real part of tan(z) >= 0 and 2.) kc > 0
+ *     
+ *     E(k, arctan(w)) = elco2(w, kc, a = 1, b = kc*kc)
+ *     Let arctan(w) = z.  Then w = tan(z) and for the incomplete elliptic integral of the second kind:
+ *     E(k, z) = elco2(tan(z), kc, a = 1, b = kc*kc) and it can check the incomplete elliptic integral of the second kind for
+ *     the same conditions that the incomplete elliptic integral of the first kind can be checked. 
  */
 
 public class EllipticIntegral {
@@ -71,7 +86,8 @@ public class EllipticIntegral {
     private static final int ZHANG_SOURCE = 2;
     
     
-    
+    // Complex argument for phi only in first and second complete and incomplete elliptic integrals
+    private static final int CERN_SOURCE = 3;
     //  ~ Instance fields ------------------------------------------------------------------------------------------------
     
     // Number of repetitions = N - 1
@@ -176,6 +192,14 @@ public class EllipticIntegral {
     private boolean runelit = false;
     private double c;
     private double third[];
+    private double x;
+    private double y;
+    private double kc;
+    private double a;
+    private double b;
+    private double u[];
+    private double v[]; 
+    
     
     //  ~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -263,6 +287,18 @@ public class EllipticIntegral {
         this.third = third;
     }
     
+    public EllipticIntegral(double x, double y, double kc, double a, double b,
+                            double u[], double v[]) {
+        source = CERN_SOURCE;
+        this.x = x;
+        this.y = y;
+        this.kc = kc;
+        this.a = a;
+        this.b = b;
+        this.u = u;
+        this.v = v;
+    }
+    
     public void run() {
         double ckabs;
         
@@ -345,6 +381,9 @@ public class EllipticIntegral {
                 else {
                     elit3(mod, phi, c);
                 }
+            break;
+            case CERN_SOURCE:
+                elco2(x, y, kc, a, b);
             break;
         } // switch (source)
         
@@ -853,6 +892,159 @@ public class EllipticIntegral {
       return;
     } // elit3
     
+    // PORT of FORTRAN code http://wwwasd.web.cern.ch/wwwasd/lhc++/requirements/special_functions/celint64.f revision 1.1.1.1
+    // 1996/04/01 by mclareni.
+    // Output is u[0] + i*v[0]
+    private void elco2(double x, double y, double kc, double a, double b) {
+      int ierr[];
+      double tr[];
+      double ti[];
+      double aa;
+      double bb;
+      double sy;
+      double c;
+      double e2;
+      double d;
+      double xk;
+      double e1;
+      double f2;
+      double f1;
+      double dn1;
+      double dn2;
+      double d1[] = new double[13];
+      double d2[] = new double[13];
+      double h;
+      int n;
+      double xm;
+      double f;
+      double ykc;
+      double e;
+      int L;
+      double xm1;
+      double xm2;
+      int j;
+      boolean loop;
+      double cc;
+      
+      cc = Math.pow(10.0, -16);
+      if (((x == 0.0) && (y == 0.0)) || (kc == 0.0)) {
+          zmlt(x, y, x, y, u, v);
+          u[0] = u[0] + 1.0;
+          sqrtc(u[0], v[0], u, v);
+          ierr = new int[1];
+          tr = new double[1];
+          ti = new double[1];
+          zlog(x + u[0], y + v[0], tr, ti, ierr);
+          zdiv((a-b)*x, (a-b)*y, u[0], v[0], u, v);
+          u[0] = b*tr[0] + u[0];
+          v[0] = b*ti[0] + v[0];
+      }
+      else if (x < 0.0) {
+          // Cannot calculate for (x < 0.0)
+          u[0] = Double.NaN;
+          v[0] = Double.NaN;
+          Preferences.debug("Cannot calculate for x < 0.0");
+      }
+      else {
+          aa = a;
+          bb = b;
+          if (y >= 0.0) {
+              sy = 1.0;
+          }
+          else {
+              sy = -1.0;
+          }
+          y = Math.abs(y);
+          c = x*x - y*y;
+          e2 = 2.0*x*y;
+          d = kc*kc;
+          xk = 1.0 - d;
+          e1 = 1.0 + c;
+          f2 = 1.0/(e1*e1 + e2*e2);
+          f1 = ((1.0 + d*c)*e1 + d*e2*e2)*f2;
+          f2 = -2.0*xk*x*y*f2;
+          dn1 = Math.sqrt(0.5*(Math.sqrt(f1*f1 + f2*f2) + Math.abs(f1)));
+          dn2 = 0.5*f2/dn1;
+          if (f1 < 0.0) {
+              f1 = dn1;
+              dn1 = -dn2;
+              dn2 = -f1;
+          }
+          if (xk < 0.0) {
+              dn1 = Math.abs(dn1);
+              dn2 = Math.abs(dn2);
+          }
+          c = 1.0 + dn1;
+          f1 = e1*c - e2*dn2;
+          f2 = e1*dn2 + e2*c;
+          d2[0] = 1.0/(f1*f1 + f2*f2);
+          d1[0] = (x*f1 + y*f2)*d2[0];
+          d2[0] = (y*f1 - x*f2)*d2[0];
+          h = aa - bb;
+          n = 1;
+          xm = 1.0;
+          f = 1.0;
+          d = 1.0;
+          ykc = Math.abs(kc);
+          e = aa;
+          aa = bb + aa;
+          L = 4;
+          do {
+              loop = false;
+              xm1 = 0.5*(ykc + xm);
+              xm2 = xm1 * xm1;
+              xk = f * xk/(4.0 * xm2);
+              bb = e * ykc + bb;
+              e = aa;
+              f2 = 1.0/(c*c + dn2*dn2);
+              f1 = ((ykc + xm*dn1)*c + xm*dn2*dn2)*f2;
+              e1 = f1/xm1;
+              e2 = xk*dn2*f2;
+              dn1 = Math.sqrt(0.5*(Math.sqrt(e1*e1 + 4.0*e2*e2) + Math.abs(e1)));
+              dn2 = e2/dn1;
+              f1 = dn1*x - dn2*y;
+              f2 = dn1*y + dn2*x;
+              x = Math.abs(f1);
+              y = Math.abs(f2);
+              aa = bb/xm1 + aa;
+              L = 2 * L;
+              c = 1.0 + dn1;
+              d = 0.5*xk*d;
+              e1 = 1.0 + (x*x - y*y)* xm2;
+              e2 = 2.0*x*y*xm2;
+              f1 = c*e1 - dn2*e2;
+              f2 = c*e2 + dn2*e1;
+              e1 = d/(f1*f1 + f2*f2);
+              d1[n] = (x*f1 + y*f2)*e1;
+              d2[n] = (y*f1 - x*f2)*e1;
+              xk = xk * xk;
+              if (xk > cc) {
+                  ykc = Math.sqrt(xm*ykc);
+                  f = xm2;
+                  xm = xm1;
+                  n = n + 1;
+                  loop = true;
+              }
+          } while (loop);
+          f2 = 0.0;
+          f1 = 0.0;
+          for (j = n; j >= 0; j--) {
+              f1 = d1[j] + f1;
+              f2 = d2[j] + f2;
+          }
+          x = xm1 * x;
+          y = xm1 * y;
+          c = x*x + y*y;
+          e2 = 1.0/(1.0 + 2.0*y + c);
+          e1 = (1.0 - c)*e2;
+          e2 = 2.0*x*e2;
+          d = aa/(xm1*L);
+          u[0] = d*Math.atan2(e2,e1) + h*f1;
+          v[0] = sy*(h*f2 - Math.log(e1*e1 + e2*e2)*0.5*d);
+      }
+      return;
+    } // elco2
+    
     private void zsin(double inr, double ini, double outr[], double outi[]) {
         outr[0] = Math.sin(inr)*cosh(ini);
         outi[0] = Math.cos(inr)*sinh(ini);
@@ -966,6 +1158,70 @@ public class EllipticIntegral {
 
             return (v * Math.sqrt(1.0 + (q * q)));
         }
+    }
+    
+    /**
+     * complex logarithm b = clog(a).
+     *
+     * @param  ar    double
+     * @param  ai    double
+     * @param  br    double[]
+     * @param  bi    double[]
+     * @param  ierr  int[] ierr = 0, normal return ierr = 1, z = cmplx(0.0, 0.0)
+     */
+    private void zlog(double ar, double ai, double[] br, double[] bi, int[] ierr) {
+        double theta;
+        double zm;
+        ierr[0] = 0;
+
+        if (ar == 0.0) {
+
+            if (ai == 0.0) {
+                ierr[0] = 1;
+
+                return;
+            } // if (ai == 0.0)
+            else {
+
+                if (ai > 0.0) {
+                    bi[0] = Math.PI / 2.0;
+                } else {
+                    bi[0] = -Math.PI / 2.0;
+                }
+
+                br[0] = Math.log(Math.abs(ai));
+
+                return;
+            }
+        } // if (ar == 0.0)
+        else if (ai == 0.0) {
+
+            if (ar > 0.0) {
+                br[0] = Math.log(ar);
+                bi[0] = 0.0;
+
+                return;
+            } else {
+                br[0] = Math.log(Math.abs(ar));
+                bi[0] = Math.PI;
+
+                return;
+            }
+        } // else if (ai == 0.0)
+
+        theta = Math.atan(ai / ar);
+
+        if ((theta <= 0.0) && (ar < 0.0)) {
+            theta = theta + Math.PI;
+        } else if (ar < 0.0) {
+            theta = theta - Math.PI;
+        }
+
+        zm = zabs(ar, ai);
+        br[0] = Math.log(zm);
+        bi[0] = theta;
+
+        return;
     }
 
 }
