@@ -36,40 +36,40 @@ public class FileInfoAnalyze extends FileInfoBase {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 7319414471012796383L;
 
-    /** Analyze define for no data type. */
+    /** Analyze file format define use to indicate no image data type. */
     public static final short DT_NONE = 0;
 
-    /** Analyze define for undefined data type. */
+    /** AAnalyze file format define use to indicate undefined image data type. */
     public static final short DT_UNKNOWN = 0;
 
-    /** Analyze define for binary (1 bit) data type. */
+    /** Analyze file format define use to indicate binary (1 bit) image data type. */
     public static final short DT_BINARY = 1;
 
-    /** Analyze define for unsigned byte (char) (8 bit) data type. */
+    /** Analyze file format define use to indicate unsigned byte (char) (8 bit) image data type. */
     public static final short DT_UNSIGNED_CHAR = 2;
 
-    /** Analyze define for short (16 bit) data type. */
+    /** Analyze file format define use to indicate short (16 bit) image data type. */
     public static final short DT_SIGNED_SHORT = 4;
 
-    /** Analyze define for short (16 bit) data type. */
+    /** Analyze file format define use to indicate short (16 bit) image data type. */
     public static final short DT_UNSIGNED_SHORT = 4;
 
-    /** Analyze define for integer (32 bit) data type. */
+    /** Analyze file format define use to indicate integer (32 bit) image data type. */
     public static final short DT_SIGNED_INT = 8;
 
-    /** Analyze define for float (32 bit) data type. */
+    /** Analyze file format define use to indicate float (32 bit) image data type. */
     public static final short DT_FLOAT = 16;
 
-    /** Analyze define for complex (64 bit) data type. */
+    /** Analyze file format define use to indicate complex (64 bit) image data type. */
     public static final short DT_COMPLEX = 32;
 
-    /** Analyze define for double (64 bit) data type. */
+    /** Analyze file format define use to indicate double (64 bit) image data type. */
     public static final short DT_DOUBLE = 64;
 
-    /** Analyze define for color (RGB - 24 bits) data type. */
+    /** Analyze file format define use to indicate color (RGB - 24 bits) image data type. */
     public static final short DT_RGB = 128;
 
-    /** Analyze define for _ALL_ data type. */
+    /** Analyze file format define use to indicate _ALL_ image data type. */
     public static final short DT_ALL = 255;
 
     /**
@@ -103,7 +103,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     /** DOCUMENT ME! */
     private String aux_file = null;
 
-    /** Bits per pixel : 1,8,16,32,64, 24(rgb). */
+    /** Bits per pixel. Valid values include: 1, 8, 16, 32, 64, 24(rgb). */
     private short bitpix = -1;
 
     /** Range of calibration values. */
@@ -112,26 +112,26 @@ public class FileInfoAnalyze extends FileInfoBase {
     /** Values of 0.0 for both fields imply that no calibration min and max values are used ! */
     private float cal_min = 0;
 
-    /** specifies the name of the calibration unit. */
+    /** Specifies the name of the calibration unit. */
     private String cal_units = null;
 
-    /** DOCUMENT ME! */
+    /** Indicates if compression is used. Default is -1 indicating no compression */
     private float compressed = -1;
 
-    /** 10 chars. */
+    /** Unknown use 10 chars. */
     private String data_type = null;
 
     /**
      * Stores the image data type DT_NONE = 0; DT_UNKNOWN = 0; DT_BINARY = 1; DT_UNSIGNED_CHAR = 2; DT_SIGNED_SHORT = 4;
-     * DT_UNSIGNED_SHORT = 4; // DT_SIGNED_INT = 8; DT_FLOAT = 16; DT_COMPLEX = 32; DT_DOUBLE = 64; DT_RGB = 128; DT_ALL
-     * = 255;
+     * DT_UNSIGNED_SHORT = 4; DT_SIGNED_INT = 8; DT_FLOAT = 16; DT_COMPLEX = 32; DT_DOUBLE = 64; DT_RGB = 128; DT_ALL =
+     * 255;
      */
     private short datatype = -1;
 
-    /** Name of file 18 chars. */
+    /** Name of file with a length of 18 chars. */
     private String db_name = null;
 
-    /** DOCUMENT ME! */
+    /** String with a max character length of 80 used to describe image. */
     private String descrip = null;
 
     /** Unused. */
@@ -140,16 +140,16 @@ public class FileInfoAnalyze extends FileInfoBase {
     // FileInfoBase  pixdim[0] = number of dimensions  pixdim[1] = voxel width  pixdim[2] = voxel height  pixdim[3] =
     // voxel thickness  pixdim[4] = time
 
-    /** DOCUMENT ME! */
+    /** String with a max character length of 10 used to indicate the experiment date. */
     private String exp_date = null;
 
-    /** DOCUMENT ME! */
+    /** String with a max character length of 10 used to indicate the experiment time. */
     private String exp_time = null;
 
     /** Should be 16384. */
     private int extents = 0;
 
-    /** DOCUMENT ME! */
+    /** Unknown length. */
     private int field_skip = -1;
 
     /** MIPAV uses this variable to define the X-axis origin. */
@@ -161,49 +161,55 @@ public class FileInfoAnalyze extends FileInfoBase {
     /** MIPAV uses this variable to define the Z-axis origin. */
     private float funused3 = -1;
 
-    /** DOCUMENT ME! */
+    /** Unknown use. Length of 10. */
     private String generated = null;
 
-    /** maximum pixel values for the entire dataset. */
+    /** Maximum pixel values for the entire dataset. */
     private int glmax = -99999;
 
-    /** minimum pixel values for the entire database. */
+    /** Minimum pixel values for the entire database. */
     private int glmin = -99999;
 
-    /** DOCUMENT ME! */
+    /** Unknown use. Length of 3. */
     private String hist_un0 = null;
 
-    /** DOCUMENT ME! */
+    /** Unknown use. Length of 1. */
     private char hkey_un0;
 
-    /** DOCUMENT ME! */
-    private int omax = -1, omin = -1;
+    /** Unknown use. */
+    private int omax = -1;
+
+    /** Unknown use. */
+    private int omin = -1;
 
     /** DOCUMENT ME! */
     private byte orient = -1;
 
-    /** DOCUMENT ME! */
+    /** Unknown use. Length of 10. */
     private String originator = null;
 
-    /** DOCUMENT ME! */
+    /** Patient's ID. Length of 10. */
     private String patient_id = null;
 
     /** I think it means data has uniform spacing (resolutions). */
     private char regular = 'r';
 
-    /** DOCUMENT ME! */
+    /** Scan ID Length of 10. */
     private String scannum = null;
 
-    /** DOCUMENT ME! */
+    /** Unknown use. */
     private short session_error = -1;
 
     /** Always of length 348. */
     private int sizeof_hdr = -1;
 
-    /** DOCUMENT ME! */
-    private int smax = -1, smin = -1;
+    /** Unknown use. */
+    private int smax = -1;
 
-    /** DOCUMENT ME! */
+    /** Unknown use. */
+    private int smin = -1;
+
+    /** Unknown use. */
     private int start_field = -1;
 
     /** MIPAV uses this variable to define the X-axis orientation. */
@@ -215,13 +221,13 @@ public class FileInfoAnalyze extends FileInfoBase {
     /** MIPAV uses this variable to define the Z-axis orientation. */
     private short unused3 = -1;
 
-    /** DOCUMENT ME! */
+    /** Unknown use. */
     private float verified = -1;
 
-    /** DOCUMENT ME! */
+    /** Unknown use. */
     private int views = -1;
 
-    /** DOCUMENT ME! */
+    /** Unknown use. */
     private int vols_added = -1;
 
     /**
@@ -525,7 +531,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * accessor to cal-max.
+     * Accessor to cal-max.
      *
      * @return  float cal_max
      */
@@ -534,7 +540,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * Accessor to cal-min.
+     * Accessor to cal_min.
      *
      * @return  float cal_min
      */
@@ -597,9 +603,9 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Accessor to the dim_un0.
      *
-     * @return  DOCUMENT ME!
+     * @return  Returns the dim_un0 variable.
      */
     public short getDim() {
         return dim_un0;
@@ -633,16 +639,16 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Analyze _extents_ value of 16,384.
      *
-     * @return  DOCUMENT ME!
+     * @return  The extents value which always seems to be 16,384.
      */
     public int getFileExtents() {
         return extents;
     }
 
     /**
-     * MIPAV hack to the ANALYZE standard. retrieves start locaiton from x-axis. To be stored as Funused1.
+     * MIPAV hack to the ANALYZE standard. Retrieves start locaiton from x-axis. To be stored as Funused1.
      *
      * @return  float funused1
      */
@@ -651,7 +657,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * MIPAV hack to the ANALYZE standard. retrieves start locaiton from y-axis. To be stored as Funused2.
+     * MIPAV hack to the ANALYZE standard. Retrieves start locaiton from y-axis. To be stored as Funused2.
      *
      * @return  float funused2
      */
@@ -660,7 +666,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * MIPAV hack to the ANALYZE standard. retrieves start location from z-axis. To be stored as Funused3.
+     * MIPAV hack to the ANALYZE standard. Retrieves start location from z-axis. To be stored as Funused3.
      *
      * @return  float funused3
      */
@@ -696,18 +702,18 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Accessor to get the Analyze's hist_un0 string.
      *
-     * @return  DOCUMENT ME!
+     * @return  Returns the hist_un0 string.
      */
     public String getHist() {
         return hist_un0;
     }
 
     /**
-     * DOCUMENT ME!
+     * Accessor to get the Analyze's hkey_un0 string.
      *
-     * @return  DOCUMENT ME!
+     * @return  Returns the hkey_un0 string.
      */
     public char getHkey() {
         return hkey_un0;
@@ -786,9 +792,9 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Provides the current scannum string.
      *
-     * @return  DOCUMENT ME!
+     * @return  String current scannum string
      */
     public int getSizeOfHeader() {
         return sizeof_hdr;
@@ -851,7 +857,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     /**
      * Provides the verified value.
      *
-     * @return  float verified
+     * @return  The Analyze verified parameter.
      */
     public float getVerified() {
         return verified;
@@ -860,7 +866,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     /**
      * Provides current views value.
      *
-     * @return  int the view
+     * @return  The view parameter.
      */
     public int getViews() {
         return views;
@@ -869,7 +875,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     /**
      * Provides the current vols_added value.
      *
-     * @return  int the vols_added
+     * @return  The vols_added
      */
     public int getVolsAdded() {
         return vols_added;
@@ -878,7 +884,7 @@ public class FileInfoAnalyze extends FileInfoBase {
     /**
      * Provides the string for vox-units.
      *
-     * @return  String string for vox_units
+     * @return  The vox_units parameter
      */
     public String getVoxUnits() {
         return vox_units;
@@ -887,10 +893,10 @@ public class FileInfoAnalyze extends FileInfoBase {
     /**
      * Supplies auxiliary-file string; permits no more than 24 characters.
      *
-     * @param  aux  DOCUMENT ME!
+     * @param  auxFile  T
      */
-    public void setAuxFile(String aux) {
-        aux_file = setString(aux, 24);
+    public void setAuxFile(String auxFile) {
+        aux_file = setString(auxFile, 24);
     }
 
     /**
@@ -1234,13 +1240,13 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * Sets omax. if supplied value is less than omin, the omin gets reset to the supplied value as well, so that omin
+     * Sets omax. If supplied value is less than omin, the omin gets reset to the supplied value as well, so that omin
      * is still no greater than omax.
      *
-     * @param  o  DOCUMENT ME!
+     * @param  oMax  Value that omax is set to.
      */
-    public void setOmax(int o) {
-        omax = o;
+    public void setOmax(int oMax) {
+        omax = oMax;
 
         if (omax < omin) {
             omin = omax;
@@ -1251,10 +1257,10 @@ public class FileInfoAnalyze extends FileInfoBase {
      * Sets omin. if supplied value is greater than omax, the omax gets reset to the supplied value as well, so that
      * omax is still no less than omin.
      *
-     * @param  o  DOCUMENT ME!
+     * @param  oMin  Value that omin is set to.
      */
-    public void setOmin(int o) {
-        omin = o;
+    public void setOmin(int oMin) {
+        omin = oMin;
 
         if (omin > omax) {
             omax = omin;
@@ -1352,25 +1358,25 @@ public class FileInfoAnalyze extends FileInfoBase {
     /**
      * Allows a maximum of 10 characters to set the originator string.
      *
-     * @param  origin  DOCUMENT ME!
+     * @param  originator  Originator string.
      */
-    public void setOriginator(String origin) {
-        originator = setString(origin, 10);
+    public void setOriginator(String originator) {
+        this.originator = setString(originator, 10);
     }
 
     /**
      * Allows a maximum of 10 characters to set the patient ID string.
      *
-     * @param  IDnum  DOCUMENT ME!
+     * @param  patIDnum  Patient ID string.
      */
-    public void setPatientID(String IDnum) {
-        patient_id = setString(IDnum, 10);
+    public void setPatientID(String patIDnum) {
+        patient_id = setString(patIDnum, 10);
     }
 
     /**
      * Supply the value of regular character.
      *
-     * @param  ch  DOCUMENT ME!
+     * @param  ch  value of r indicates all images are of the same size which seems to always be the case.
      */
     public void setRegular(char ch) {
         regular = ch;
@@ -1379,38 +1385,38 @@ public class FileInfoAnalyze extends FileInfoBase {
     /**
      * Allows a maximum of 10 characters to set the scannum string.
      *
-     * @param  num  DOCUMENT ME!
+     * @param  scanNum  Scan number of the image.
      */
-    public void setScanNum(String num) {
-        scannum = setString(num, 10);
+    public void setScanNum(String scanNum) {
+        scannum = setString(scanNum, 10);
     }
 
     /**
      * Supply the value of session error.
      *
-     * @param  s  DOCUMENT ME!
+     * @param  sessionError  The session error.
      */
-    public void setSessionErr(short s) {
-        session_error = s;
+    public void setSessionErr(short sessionError) {
+        session_error = sessionError;
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets the size of the header which is always 348.
      *
-     * @param  size  DOCUMENT ME!
+     * @param  size  The size of the header which is always 348 for Analyze images.
      */
     public void setSizeOfHeader(int size) {
         sizeof_hdr = size;
     }
 
     /**
-     * Sets smax. if supplied value is less than smin, the smin gets reset to the supplied value as well, so that smin
+     * Sets smax. If supplied value is less than smin, the smin gets reset to the supplied value as well, so that smin
      * is still no greater than smax.
      *
-     * @param  s  DOCUMENT ME!
+     * @param  sMax  DOCUMENT ME!
      */
-    public void setSmax(int s) {
-        smax = s;
+    public void setSmax(int sMax) {
+        smax = sMax;
 
         if (smax < smin) {
             smin = smax;
@@ -1418,13 +1424,13 @@ public class FileInfoAnalyze extends FileInfoBase {
     }
 
     /**
-     * Sets smin. if supplied value is greater than smax, the smax gets reset to the supplied value as well, so that
+     * Sets smin. If supplied value is greater than smax, the smax gets reset to the supplied value as well, so that
      * smax is still no less than smin.
      *
-     * @param  s  DOCUMENT ME!
+     * @param  sMin  The sMin value.
      */
-    public void setSmin(int s) {
-        smin = s;
+    public void setSmin(int sMin) {
+        smin = sMin;
 
         if (smin > smax) {
             smax = smin;
@@ -1434,57 +1440,57 @@ public class FileInfoAnalyze extends FileInfoBase {
     /**
      * Supplies the submitted value to the start_field variable.
      *
-     * @param  field  DOCUMENT ME!
+     * @param  startField  The start field value.
      */
-    public void setStartField(int field) {
-        start_field = field;
+    public void setStartField(int startField) {
+        start_field = startField;
     }
 
 
     /**
      * Sets unused 1.
      *
-     * @param  un  DOCUMENT ME!
+     * @param  unused  The unused value.
      */
-    public void setUnused1(int un) {
-        unused1 = (short) un;
-        super.setAxisOrientation(un, 0);
+    public void setUnused1(int unused) {
+        unused1 = (short) unused;
+        super.setAxisOrientation(unused, 0);
     }
 
     /**
      * Sets unused 2.
      *
-     * @param  un  DOCUMENT ME!
+     * @param  unused  The unused value.
      */
-    public void setUnused2(int un) {
-        unused2 = (short) un;
-        super.setAxisOrientation(un, 1);
+    public void setUnused2(int unused) {
+        unused2 = (short) unused;
+        super.setAxisOrientation(unused, 1);
     }
 
     /**
      * Sets unused 3.
      *
-     * @param  un  DOCUMENT ME!
+     * @param  unused  The unused value.
      */
-    public void setUnused3(int un) {
-        unused3 = (short) un;
-        super.setAxisOrientation(un, 2);
+    public void setUnused3(int unused) {
+        unused3 = (short) unused;
+        super.setAxisOrientation(unused, 2);
     }
 
     /**
      * Supply the value to verified.
      *
-     * @param  veri  DOCUMENT ME!
+     * @param  verified  The verified value
      */
-    public void setVerified(float veri) {
-        verified = veri;
+    public void setVerified(float verified) {
+        this.verified = verified;
     }
 
     // public void setHistUn0            /* thinks this is unused !! */
     /**
-     * sets the views variable.
+     * Sets the views variable.
      *
-     * @param  view  DOCUMENT ME!
+     * @param  view  The view value.
      */
     public void setViews(int view) {
         views = view;
@@ -1503,10 +1509,10 @@ public class FileInfoAnalyze extends FileInfoBase {
     /**
      * Allows no more than 4 characters for the string describing the vox units.
      *
-     * @param  vox  DOCUMENT ME!
+     * @param  voxUnits  DOCUMENT ME!
      */
-    public void setVoxUnits(String vox) {
-        vox_units = setString(vox, 4);
+    public void setVoxUnits(String voxUnits) {
+        vox_units = setString(voxUnits, 4);
     }
 
     /**
@@ -1628,7 +1634,7 @@ public class FileInfoAnalyze extends FileInfoBase {
      * start locations as we <b>are</b> re-using the funused variables. This means that if the unused variables are not
      * right to begin with, this certainly won't correct them!</p>
      *
-     * @param  fInfo  DOCUMENT ME!
+     * @param  fInfo  File info. object used to update values in this object.
      */
     public void updateFileInfos(FileInfoAnalyze fInfo) {
 
@@ -1679,32 +1685,33 @@ public class FileInfoAnalyze extends FileInfoBase {
 
 
     /**
-     * Verifies string is not larger than len length; strings larger than len, are clipped before being returned.
+     * Verifies string is not larger than length; strings larger than length, are clipped before being returned.
      *
-     * @see     String#substring(int, int)
+     * @param   str     The input string.
+     * @param   length  The maximum length of the string.
      *
      * @return  String new substring
      */
-    protected String setString(String str, int len) {
+    protected String setString(String str, int length) {
 
-        if (str.length() < len) {
+        if (str.length() <= length) {
             return str;
         } else {
-            return str.substring(0, len);
+            return str.substring(0, length);
         }
     }
 
     /**
-     * selection of text for the table and the editpanel.
+     * Selection of text for the table and the editpanel.
      *
-     * @param   or  DOCUMENT ME!
+     * @param   orientation  value indicating the orientation.
      *
      * @return  String the orientation string
      */
-    private String selectOrientationText(int or) {
+    private String selectOrientationText(int orientation) {
         String orientat;
 
-        switch (or) {
+        switch (orientation) {
 
             case TRANSVERSE_UNFLIPPED:
                 orientat = "transverse unflipped";

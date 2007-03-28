@@ -25,7 +25,7 @@ public class FileAnalyze extends FileBase {
     /** The extensions of ANALYZE file. */
     public static final String[] EXTENSIONS = { ".hdr", ".img" };
 
-    /** The size of the header. */
+    /** The size of the header, always 348 for Analyze images. */
     public static final int HEADER_SIZE = 348;
 
     /** The extent size of the ANALYZE file. */
@@ -217,11 +217,11 @@ public class FileAnalyze extends FileBase {
     }
 
     /**
-     * ======= Returns the header file.
+     * Returns the header file (ends in .hdr) as a string.
      *
      * @param   fileNames  DOCUMENT ME!
      *
-     * @return  DOCUMENT ME!
+     * @return  The header file (ends in .hdr)
      */
     public static String getHeaderFile(String[] fileNames) {
 
@@ -379,7 +379,7 @@ public class FileAnalyze extends FileBase {
     }
 
     /**
-     * >>>>>>> .merge-right.r1074 Absolute value of image.
+     * Take the absolute value of image.
      *
      * @param   image  Image to take absolute value of.
      *
@@ -436,65 +436,6 @@ public class FileAnalyze extends FileBase {
         } catch (OutOfMemoryError error) {
             throw (error);
         }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     *
-     * @throws  IOException       DOCUMENT ME!
-     * @throws  OutOfMemoryError  DOCUMENT ME!
-     */
-    public ModelImage createImage() throws IOException, OutOfMemoryError {
-        fileInfo = new FileInfoAnalyze(fileName, fileDir, FileUtility.ANALYZE);
-
-        if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
-            throw (new IOException(" Analyze header file error"));
-        }
-
-        int[] extents = null;
-
-        try {
-            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(),
-                                   ViewUserInterface.getReference());
-        } catch (OutOfMemoryError error) {
-            throw (error);
-        }
-
-        // if vox units defines the units of measure, then use that instead
-        // clones the file info
-        updateUnitsOfMeasure(fileInfo, image);
-        updateStartLocations(image.getFileInfo());
-
-
-        try { // Construct a FileRaw to actually read the image.
-
-            FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
-
-            int offset = (int) Math.abs(vox_offset);
-
-            rawFile.readImage(image, offset);
-
-            if (vox_offset < 0.0f) {
-                absoluteValue(image);
-            }
-
-            flipTopBottom(image);
-
-        } catch (IOException error) {
-            throw new IOException("FileAnalyze: " + error);
-        } catch (OutOfMemoryError e) {
-            throw (e);
-        }
-
-        /** Initializes the ModelImage object */
-        if (image != null) {
-            image.calcMinMax();
-        }
-
-        return image;
     }
 
 
@@ -1591,7 +1532,8 @@ public class FileAnalyze extends FileBase {
             fileInfo.setEndianess(endianess);
 
             setBufferInt(bufferImageHeader, fileInfo.getSizeOfHeader(), 0, endianess);
-            fileInfo.setDataType("         \n");
+
+            fileInfo.setDataType("          "); // 10 Spaces - not sure what really goes here.
             setBufferString(bufferImageHeader, fileInfo.getDataTypeName(), 4);
             setBufferString(bufferImageHeader, fileName + "\n", 14);
             setBufferInt(bufferImageHeader, fileInfo.getFileExtents(), 32, endianess);
