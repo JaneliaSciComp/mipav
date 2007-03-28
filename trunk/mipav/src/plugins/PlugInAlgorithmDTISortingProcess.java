@@ -408,17 +408,19 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			isSiemens = false;
 			Preferences.debug("* Manufacturer : GE \n", Preferences.DEBUG_ALGORITHM);
 			outputTextArea.append("* Manufacturer : GE \n");
-			//getting software version for GE
-			String softwareVersion = ((String) firstFileInfoDicom.getValue("0018,1020")).trim();
-			try {
-				geSoftwareVersion = new Integer(softwareVersion).intValue();
-				Preferences.debug("* Software Version : " + geSoftwareVersion + " \n", Preferences.DEBUG_ALGORITHM);
-				outputTextArea.append("* Software Version : " + geSoftwareVersion + " \n");
-			}catch(NumberFormatException e ) {
-				Preferences.debug("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-				outputTextArea.append("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
-				return false;
-			}	
+			//getting software version for GE if regular DTI and not eDTI
+			if(!isEDTI) {
+				String softwareVersion = ((String) firstFileInfoDicom.getValue("0018,1020")).trim();
+				try {
+					geSoftwareVersion = new Integer(softwareVersion).intValue();
+					Preferences.debug("* Software Version : " + geSoftwareVersion + " \n", Preferences.DEBUG_ALGORITHM);
+					outputTextArea.append("* Software Version : " + geSoftwareVersion + " \n");
+				}catch(NumberFormatException e ) {
+					Preferences.debug("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+					outputTextArea.append("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
+					return false;
+				}
+			}
 		}
 		else {
 			isSiemens = true;
@@ -851,7 +853,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 					}
 				}
 				if(isGE) {
-					if(geSoftwareVersion <= 8 && !isEDTI) {
+					if(!isEDTI && geSoftwareVersion <= 8) {
 						if(((String[])fidArr[numSlicesPerVolume * k])[6] != null) {
 							bValueString_privTag_001910B9 = (String)(((String[])fidArr[numSlicesPerVolume * k])[6]);
 							bValueString = bValueString_privTag_001910B9.trim();
