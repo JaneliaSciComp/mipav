@@ -7,7 +7,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.Writer;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,6 +41,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
 	/** This is the full path to the gradient file **/
 	private String gradientFilePath;
+	
+	/** This is the full path to the b matrix file **/
+	private String bmtxtFilePath;
 
 	/** This is an ordered list of files per series number **/
 	private TreeSet seriesFileInfoTreeSet;
@@ -76,6 +81,26 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	/** total image slices **/
 	private int totalImageSlices = 0;
 	
+	/** Document ME **/
+	private String[] dicomInfo;
+	
+	/** first fileinfo dicom...used for list file info **/
+	private FileInfoDicom firstFileInfoDicom;
+	
+	/** boolean telling if dataset is eDTI **/
+	private boolean isEDTI = false;
+	
+	/** boolean telling if datset is GE **/
+	private boolean isGE = false;
+	
+	/** boolean telling if datset is SIEMENS **/
+	private boolean isSiemens = false;
+	
+	/** int telling software version if datset is GE **/
+	private int geSoftwareVersion = -1;
+
+
+	
 
 
 	/**
@@ -83,10 +108,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 * @param studyPath
 	 * @param gradientFilePath
 	 */
-	public PlugInAlgorithmDTISortingProcess(String studyPath, String studyName, String gradientFilePath, JTextArea outputTextArea) {
+	public PlugInAlgorithmDTISortingProcess(String studyPath, String studyName, String gradientFilePath, String bmtxtFilePath, JTextArea outputTextArea) {
 		this.studyPath = studyPath;
 		this.studyName = studyName;
 		this.gradientFilePath = gradientFilePath;
+		this.bmtxtFilePath = bmtxtFilePath;
 		this.outputTextArea = outputTextArea;
 		seriesFileInfoTreeMap = new TreeMap();
 	}
@@ -99,35 +125,43 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 */
 	public void runAlgorithm() {
 		long begTime = System.currentTimeMillis();
+		
+		
 		Preferences.debug("** Beginning Algorithm \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("** Beginning Algorithm \n");
 
-		
-		
 		
 		Preferences.debug("* The study path is " + studyPath + " \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* The study path is " + studyPath + " \n");
 
 		
-		
 		// first create a File object based upon the study path
 		File studyPathRoot = new File(studyPath);
 
 		
-		
 		// parse the directory
-		Preferences.debug("* Parsing... \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Parsing... \n");
+		Preferences.debug("* Parsing", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append("* Parsing");
 		success = parse(studyPathRoot);
 		if (success == false) {
 			finalize();
 			return;
 		}
-		Preferences.debug("* Number of image slices in study dir is " + totalImageSlices + " \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Number of image slices  in study dir is " + totalImageSlices + " \n");
-		
+		//System.gc();
+		Preferences.debug("\n* Number of image slices in study dir is " + totalImageSlices + " \n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append("\n* Number of image slices  in study dir is " + totalImageSlices + " \n");
 
-				
+		
+		
+		//set initial info
+		success = setInitialInfo();
+		if (success == false) {
+			finalize();
+			return;
+		}
+		
+		
+		
 		//create proc dir
 		Preferences.debug("* Creating proc dir \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* Creating proc dir \n");
@@ -138,7 +172,6 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		}
 		
 		
-			
 		// create path file
 		Preferences.debug("* Creating path file \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* Creating path file \n");
@@ -148,19 +181,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			return;
 		}
 		
-		
-		
-		//read gradient file
-		Preferences.debug("* Reading gradient file \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Reading gradient file \n");
-		success = readGradientFile();
-		if (success == false) {
-			finalize();
-			return;
-		}
-		
-		
-		
+
 		//create list file
 		Preferences.debug("* Creating list file \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* Creating list file \n");
@@ -170,43 +191,64 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			return;
 		}
 		
-		
-		
-		//obtain b-values
-		Preferences.debug("* Obtaining b-values \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Obtaining b-values \n");
-		success = obtainBValues();
-		if (success == false) {
-			finalize();
-			return;
-		}
-		
-		
-		
-		//create b matrix file
-		Preferences.debug("* Creating b-matrix file \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Creating b-matrix file \n");
-		success = createBMatrixFile();
-		if (success == false) {
-			finalize();
-			return;
-		}
 
+		if(!gradientFilePath.equals("")) {
+			//this means user provided gradient file...so...
+			
+			//read gradient file
+			Preferences.debug("* Reading gradient file \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append("* Reading gradient file \n");
+			success = readGradientFile();
+			if (success == false) {
+				finalize();
+				return;
+			}
+			
+			//obtain b-values
+			Preferences.debug("* Obtaining b-values \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append("* Obtaining b-values \n");
+			success = obtainBValues();
+			if (success == false) {
+				finalize();
+				return;
+			}
+			
+			//create b matrix file
+			Preferences.debug("* Creating b-matrix file \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append("* Creating b-matrix file \n");
+			success = createBMatrixFile();
+			if (success == false) {
+				finalize();
+				return;
+			}
+		} 
+		else {
+			//this means that the bmtxt file was provided instead...so...
+			
+			//copy and rename b-matrix file
+			Preferences.debug("* b-matrix file provided \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append("* b-matrix file provided \n");
+			success = copyBMatrixFile();
+			if (success == false) {
+				finalize();
+				return;
+			}
+		}
 		
 		
 		Preferences.debug("** Ending Algorithm \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("** Ending Algorithm \n");
 		
 		
-		
 		finalize();
+		
 		
 		long endTime = System.currentTimeMillis();
 		long diffTime = endTime - begTime;
+		float seconds = ((float)diffTime)/1000;
 		
-		Preferences.debug("** Algorithm took " + diffTime + " milliseconds \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("** Algorithm took " + diffTime + " milliseconds \n");
-		
+		Preferences.debug("** Algorithm took " + seconds + " seconds \n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
 	}
 	
 	
@@ -235,7 +277,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				if (children[i].isDirectory()) {
 					parse(children[i]);
 				} else if (!children[i].isDirectory()) {
-
+					
 					try {
 
 						if (imageFile == null) {
@@ -246,8 +288,6 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
 						if (imageFilter.accept(children[i])) {
 							success = imageFile.readParserHeader();
-						} else if (imageFile.isDICOM()) {
-							success = imageFile.readParserHeader();
 						} else {
 							continue;
 						}
@@ -257,9 +297,36 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 						error.printStackTrace();
 						return false;
 					}
-
-					//place FIleInfoDicom of image slice in correct series list that is sorted by instance number
+					
 					FileInfoDicom fileInfoDicom = (FileInfoDicom) imageFile.getFileInfo();
+					if (totalImageSlices == 0) {
+						//we need the first file info dicom handle so we can use it for the list file
+						firstFileInfoDicom = fileInfoDicom;
+					}
+					//get relevant info from fileinfodicom and place it in array that is then sorted by
+					//instance number in its appropriate series list
+					dicomInfo = new String[7];
+					String instanceNo = ((String) fileInfoDicom.getValue("0020,0013")).trim();
+					String imageSlice = ((String) fileInfoDicom.getValue("0020,1041")).trim();
+					String publicTag00180024 = ((String)fileInfoDicom.getValue("0018,0024"));
+					String privateTag00431039 = null;
+					String privateTag001910B9 = null;
+					if(fileInfoDicom.getValue("0043,1039") != null) {
+						privateTag00431039 = (String) fileInfoDicom.getValue("0043,1039");
+					}
+
+					if(fileInfoDicom.getValue("0019,10B9") != null) {
+						privateTag001910B9 = (String) fileInfoDicom.getValue("0019,10B9");
+					}
+					String absPath = fileInfoDicom.getFileDirectory();
+					String fileName = fileInfoDicom.getFileName();
+					dicomInfo[0] = instanceNo;
+					dicomInfo[1] = imageSlice;
+					dicomInfo[2] = absPath;
+					dicomInfo[3] = fileName;
+					dicomInfo[4] = publicTag00180024;
+					dicomInfo[5] = privateTag00431039;
+					dicomInfo[6] = privateTag001910B9;
 					String seriesNumber_String = ((String) fileInfoDicom.getValue("0020,0011")).trim();
 					if (seriesNumber_String == null || seriesNumber_String.equals("")) {
 						seriesNumber_String = "0";
@@ -267,17 +334,26 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 					Integer seriesNumber = new Integer(seriesNumber_String);
 					if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
 						seriesFileInfoTreeSet = new TreeSet(new InstanceNumberComparator());
-						seriesFileInfoTreeSet.add(fileInfoDicom);
+						seriesFileInfoTreeSet.add(dicomInfo);
 						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
 					} else {
 						seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
-						seriesFileInfoTreeSet.add(fileInfoDicom);
+						seriesFileInfoTreeSet.add(dicomInfo);
 						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
 					}
+					dicomInfo = null;
+					fileInfoDicom = null;
+					imageFile.finalize();
+					imageFile = null;
+					if(totalImageSlices % 100 == 0) {
+						//System.gc();
+						Preferences.debug(".", Preferences.DEBUG_ALGORITHM);
+						outputTextArea.append(".");
+					}
 					totalImageSlices++;
-
 				}
 			}
+			
 		} catch (Exception err) {
 			err.printStackTrace();
 			Preferences.debug(err.toString() + "\n", Preferences.DEBUG_ALGORITHM);
@@ -289,6 +365,70 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
 		return true;
 	}
+	
+	
+	
+	
+	
+	/**
+	 * this method sets initial info about the study
+	 * @return
+	 */
+	public boolean setInitialInfo() {
+		
+		
+		//checking to see if it eDTI
+		String privateTag0019109C = null;
+		try {
+			if(firstFileInfoDicom.getValue("0019,109C") != null) {
+				privateTag0019109C = (String) firstFileInfoDicom.getValue("0019,109C");
+			}
+		}
+		catch(NullPointerException e) {
+			Preferences.debug("! ERROR: The private tag info of 0019,109C needs to be added to your dicom dictionary....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append("! ERROR: The private tag info of 0019,109C needs to be added to your dicom dictionary....exiting algorithm \n");
+			return false;
+		}
+		if(privateTag0019109C != null && privateTag0019109C.toLowerCase().indexOf("edti") != -1) {
+			isEDTI = true;
+			Preferences.debug("* eDTI data set \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append("* eDTI data set \n");
+		}
+		else {
+			Preferences.debug("* DTI data set \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append("* DTI data set \n");		
+		}
+		
+		
+		
+		//checking to see if it is GE or SIEMENS
+		String manufacturer = ((String) firstFileInfoDicom.getValue("0008,0070")).trim();
+		if(manufacturer.toLowerCase().startsWith("ge")) {
+			isGE = true;
+			isSiemens = false;
+			Preferences.debug("* Manufacturer : GE \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append("* Manufacturer : GE \n");
+			//getting software version for GE
+			String softwareVersion = ((String) firstFileInfoDicom.getValue("0018,1020")).trim();
+			try {
+				geSoftwareVersion = new Integer(softwareVersion).intValue();
+				Preferences.debug("* Software Version : " + geSoftwareVersion + " \n", Preferences.DEBUG_ALGORITHM);
+				outputTextArea.append("* Software Version : " + geSoftwareVersion + " \n");
+			}catch(NumberFormatException e ) {
+				Preferences.debug("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+				outputTextArea.append("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
+				return false;
+			}	
+		}
+		else {
+			isSiemens = true;
+			isGE = false;
+			Preferences.debug("* Manufacturer : SIEMENS \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append("* Manufacturer : SIEMENS \n");
+		}
+		return true;
+	}
+	
 	
 	
 	
@@ -313,7 +453,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			File[] listFiles = procDir.listFiles();
 			if (listFiles.length > 0) {
 				for (int i = 0; i < listFiles.length; i++) {
-					listFiles[i].delete();
+					String name = listFiles[i].getName();
+					if(name.equals(studyName + ".path") || name.equals(studyName + ".list") || name.equals(studyName + ".BMTXT")) {
+						listFiles[i].delete();
+					}
 				}
 			}
 		}
@@ -324,6 +467,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		return true;
 	}
 
+	
 	
 	
 	
@@ -342,10 +486,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			ArrayList numSlicesCheckList = new ArrayList();
 			while (iter.hasNext()) {
 				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-				int seriesFITSSize = seriesFITS.size();
 				Iterator iter2 = seriesFITS.iterator();
 				// lets get the first element and remember its imageSlice
-				String imageSlice = ((String) (((FileInfoDicom) seriesFITS.first()).getValue("0020,1041"))).trim();
+				String imageSlice = ((String) (((String[]) seriesFITS.first())[1])).trim();
 
 				// now we need to figure out how many slices are in each
 				// vol...do this by
@@ -357,8 +500,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				int counter = 1;
 				int sliceNum = 0;
 				while (iter2.hasNext()) {
-					FileInfoDicom fid = (FileInfoDicom) iter2.next();
-					String imgSlice = ((String) fid.getValue("0020,1041")).trim();
+					String[] arr = (String[]) iter2.next();
+					String imgSlice = ((String) arr[1]).trim();
 					//this is to just get total num volumes
 					if (imgSlice.equals(imageSlice)) {
 						totalNumVolumes = totalNumVolumes + 1;
@@ -371,7 +514,6 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 					}
 					++counter;
 				}
-				//counter = counter - 1;
 			}
 			numSlicesPerVolume = ((Integer)numSlicesCheckList.get(0)).intValue();
 			for(int i=1;i<numSlicesCheckList.size();i++) {
@@ -389,13 +531,13 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				for(int k=0;k<keyArray.length;k++) {
 					Object[] fidArr = ((TreeSet) seriesFileInfoTreeMap.get(keyArray[k])).toArray();
 					int numVols = fidArr.length / numSlicesPerVolume;
-					String absPath = ((FileInfoDicom) fidArr[i]).getFileDirectory();
+					String absPath = (String)((String[]) fidArr[i])[2];
 					relPath = new String(".." + File.separator + studyName +absPath.substring(absPath.lastIndexOf(studyName) + studyName.length(), absPath.length()));
-					printStream.println(relPath + ((FileInfoDicom) fidArr[i]).getFileName());
+					printStream.println(relPath + (String)((String[]) fidArr[i])[3]);
 					for (int j = 1; j < numVols; j++) {
-						absPath = ((FileInfoDicom) fidArr[i + (numSlicesPerVolume * j)]).getFileDirectory();
+						absPath = (String)((String[]) fidArr[i + (numSlicesPerVolume * j)])[2];
 						relPath = new String(".." + File.separator + studyName + absPath.substring(absPath.lastIndexOf(studyName) + studyName.length(), absPath.length()));
-						printStream.println(relPath + ((FileInfoDicom) fidArr[i + (numSlicesPerVolume * j)]).getFileName());
+						printStream.println(relPath + (String)((String[]) fidArr[i + (numSlicesPerVolume * j)])[3]);
 					}
 					
 				}
@@ -415,6 +557,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		}
 	}
 
+
 	
 	
 	
@@ -424,16 +567,16 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 */
 	public boolean createListFile() {
 		// we can get the info for the list file from just 1 of the imageSlices' FileInfoDicom
-		TreeSet firstTS = (TreeSet)seriesFileInfoTreeMap.get(seriesFileInfoTreeMap.firstKey());
-		FileInfoDicom fileInfoDicom = (FileInfoDicom)firstTS.first();
+		//TreeSet firstTS = (TreeSet)seriesFileInfoTreeMap.get(seriesFileInfoTreeMap.firstKey());
+		//FileInfoDicom fileInfoDicom = (FileInfoDicom)firstTS.first();
 
-		Short originalColumns = (Short)(fileInfoDicom.getValue("0028,0011"));
+		Short originalColumns = (Short)(firstFileInfoDicom.getValue("0028,0011"));
 		String originalColumsString = originalColumns.toString();
 
-		Short originalRows = (Short) (fileInfoDicom.getValue("0028,0010"));
+		Short originalRows = (Short) (firstFileInfoDicom.getValue("0028,0010"));
 		String originalRowsString = originalRows.toString();
 
-		String dir = ((String) (fileInfoDicom.getValue("0018,1312"))).trim();
+		String dir = ((String) (firstFileInfoDicom.getValue("0018,1312"))).trim();
 		String phaseEncodeDirection = "";
 		if (dir.equalsIgnoreCase("col")) {
 			phaseEncodeDirection = "vertical";
@@ -443,18 +586,18 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
 
 
-		String sliceThickness = ((String) (fileInfoDicom.getValue("0018,0050"))).trim();
+		String sliceThickness = ((String) (firstFileInfoDicom.getValue("0018,0050"))).trim();
 		float sliceTh = new Float(sliceThickness.trim()).intValue();
 
-		String sliceGap = ((String) (fileInfoDicom.getValue("0018,0088"))).trim();
+		String sliceGap = ((String) (firstFileInfoDicom.getValue("0018,0088"))).trim();
 		float sliceGp = new Float(sliceGap.trim()).intValue();
 		sliceGp = sliceGp - sliceTh;
 		sliceGap = String.valueOf(sliceGp);
 		
-		String fieldOfView = (String) (fileInfoDicom.getValue("0018,1100"));
+		String fieldOfView = (String) (firstFileInfoDicom.getValue("0018,1100"));
 		if(fieldOfView == null || fieldOfView.trim().equals("")) {
 			//get pixel space in x direction
-			String xyPixelSpacingString = ((String) (fileInfoDicom.getValue("0028,0030"))).trim();
+			String xyPixelSpacingString = ((String) (firstFileInfoDicom.getValue("0028,0030"))).trim();
 			int index = xyPixelSpacingString.indexOf("\\");
 			String xPixelSpacingString = xyPixelSpacingString.substring(0, index);
 			float xPixelSpacing = new Float(xPixelSpacingString).floatValue();
@@ -474,7 +617,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
 		String bmtrixFilename = studyName + ".BMTXT";
 		
-		String nimString = String.valueOf(nim);
+		String nimString = String.valueOf(totalNumVolumes);
 		
 
 		try {
@@ -538,6 +681,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		outputTextArea.append(" - list file created : " + studyPath + "_proc" + File.separator + studyName + ".list" + " \n");
 		return true;
 	}
+
 	
 	
 	
@@ -633,8 +777,15 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			return false;
 		}
 		
+		
+		Preferences.debug(" - gradient file read \n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append(" - gradient file read \n");
 		return true;
 	}
+	
+	
+	
+	
 	
 	
 	/**
@@ -644,149 +795,43 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 */
 	public boolean obtainBValues() {
 		//get b-values for each volume set
-		//first check to see if it eDTI....this is done by checking to see if totalNumVolumes is 119 or 120
-		//if it is, then get SeriesDescription....if it is GE (GE_eDTI), then get BValue from Private Tag
-		//if it is Siemens (SS_eDTI), then get b-value from public tag...in which the b-value
-		//comes after ep_b
-		//if it is not eDTI:
-		// first try and retrieve the b-value from the public tag(0018,0024) and
-		//if thereg expression "ep_b" is present, get the number that follows it..
-		//however, format might also be ep_b1234#0   So...get the number between ep_b and #...this is the b-value
-		//*** this line is no longer used in the algorithm..i will just comment out for now until we are sure:  -> if ep_b not there then look for fake_gedti...if there then use 0 for vol1 and 1000 rest of vols
-		//else, get the b-value from the private tag(0043,1039)....the b-value is the first number in the string
-		//that is separated by commas
+		
+		//For DTI:
+		//1. If Siemens, then extract b-value from public tag 0018,0024
+		//2. If GE and if Software Version is <= 8, then extract b-value from private tag 0019,10B9...the b-value is the number after ep_b
+		//3. If GE and if Software Version is > 8, then extract b-value from private tag 0043,1039....the b-value is the first number in the string
+		
+		//For eDTI:
+		//1. If Siemens, then extract b-value from public tag 0018,0024...the b-value is the number after ep_b
+		//2. If GE, then extract b-value from private tag 0043,1039....the b-value is the first number in the string
+		
 		Set ketSet = seriesFileInfoTreeMap.keySet();
 		Iterator iter = ketSet.iterator();
-		boolean isEDTI = false;
-		if (totalNumVolumes == 119 || totalNumVolumes ==120) {
-			isEDTI = true;
-		}
-		if(isEDTI) {
-			Preferences.debug(" - eDTI data set b-values :\n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append(" - eDTI data set b-values :\n");
-			while (iter.hasNext()) {
-				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-				int seriesFITSSize = seriesFITS.size();
-				int numVols = seriesFITSSize / numSlicesPerVolume;
-				Object[] fidArr = seriesFITS.toArray();
-				boolean isGE = false;
-				boolean isSiemens = false;
-				int edtiIndex = -1;
-				Float bValue;
-				TreeSet firstTS = (TreeSet)seriesFileInfoTreeMap.get(seriesFileInfoTreeMap.firstKey());
-				FileInfoDicom firstFID = (FileInfoDicom)firstTS.first();
-				String seriesDescLowerCase = ((String)firstFID.getValue("0008,103E")).toLowerCase();
-				String ge_edti = "ge_edti";
-				String ss_edti = "ss_edti";
-				edtiIndex = seriesDescLowerCase.indexOf(ge_edti);
-				if(edtiIndex != -1) {
-					isGE = true;
-				}
-				edtiIndex = -1;
-				edtiIndex = seriesDescLowerCase.indexOf(ss_edti);
-				if(edtiIndex != -1) {
-					isSiemens = true;
-				}
-				if(isGE) {
-					String bValueLongString_privTag = "";
-					String bValueString;
-					for(int k = 0; k < numVols; k++) {
-						try {
-							if(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0043,1039") != null) {
-								bValueLongString_privTag = (String)(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0043,1039"));
-							}
-						}
-						catch(NullPointerException e) {
-							Preferences.debug("! ERROR: The private tag info of 0043,1039 needs to be added to your dicom dictionary....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-							outputTextArea.append("! ERROR: The private tag info of 0043,1039 needs to be added to your dicom dictionary....exiting algorithm \n");
-							return false;
-						}
-						if (bValueLongString_privTag != null && (!bValueLongString_privTag.trim().equals(""))) {	
-							int index_privTag = bValueLongString_privTag.indexOf("\\");
-							if(index_privTag != -1) {
-								bValueString = (bValueLongString_privTag.substring(0, index_privTag)).trim();
-								bValue = new Float(bValueString);
-								bValuesArrayList.add(bValue);
-								continue;
-							}
-							else {
-								Preferences.debug("! ERROR: No b-value found for GE eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-								outputTextArea.append("! ERROR: No b-value found for GE eDTI....exiting algorithm \n");
-								return false;
-							}
-						}
-						else {
-							Preferences.debug("! ERROR: No b-value found for GE eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-							outputTextArea.append("! ERROR: No b-value found for GE eDTI....exiting algorithm \n");
-							return false;
-						}	
-					}
-				}
-				else if(isSiemens) {
-					String bValueLongString_pubTag = "";
-					String bValueString;
-					int poundIndex = -1;
-					for(int k = 0; k < numVols; k++) {
-						bValueLongString_pubTag = (String)(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0018,0024"));
-						int length = 0;
-						int index = -1;
-						if(bValueLongString_pubTag != null && (!bValueLongString_pubTag.trim().equals(""))) {
-							String ep_b = "ep_b";
-						    length = ep_b.length();
-						    index = bValueLongString_pubTag.indexOf(ep_b);
-						    poundIndex = bValueLongString_pubTag.indexOf('#');
-						    if(index != -1) {
-								index = index + length;
-								if(poundIndex != -1 && poundIndex > index) {
-									bValueString = (bValueLongString_pubTag.substring(index, poundIndex)).trim();
-								}
-								else {
-									bValueString = (bValueLongString_pubTag.substring(index, bValueLongString_pubTag.length())).trim();
-								}
-	
-							    bValue = new Float(bValueString);
-								bValuesArrayList.add(bValue);
-								continue;
-							}
-						    else {
-								Preferences.debug("! ERROR: No b-value found for Siemens eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-								outputTextArea.append("! ERROR: No b-value found for Siemens eDTI....exiting algorithm \n");
-								return false;
-						    }
-						}
-					}
-					
-				}
-				else {
-					Preferences.debug("! ERROR: error in determing type of eDTI....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-					outputTextArea.append("! ERROR: error in determing type of eDTI....exiting algorithm \n");
-					return false;
-				}
-			}
-		}
-		else {
-			Preferences.debug(" - DTI data set b-values :\n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append(" - DTI data set b-values :\n");
-			while (iter.hasNext()) {
-				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
-				int seriesFITSSize = seriesFITS.size();
-				int numVols = seriesFITSSize / numSlicesPerVolume;
-				Object[] fidArr = seriesFITS.toArray();
-				String bValueLongString_privTag = "";
-				String bValueLongString_pubTag = "";
-				String bValueString;
-				Float bValue;
-				int poundIndex = -1;
-				for(int k = 0; k < numVols; k++) {
-					bValueLongString_pubTag = (String)(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0018,0024"));
+
+		Preferences.debug(" - b-values :\n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append(" - b-values :\n");
+		while (iter.hasNext()) {
+			TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
+			int seriesFITSSize = seriesFITS.size();
+			int numVols = seriesFITSSize / numSlicesPerVolume;
+			Object[] fidArr = seriesFITS.toArray();
+			String bValueLongString_pubTag = "";
+			String bValueLongString_privTag_0043 = "";
+			String bValueString_privTag_001910B9 = "";
+			String bValueString;
+			Float bValue;
+			int poundIndex = -1;
+			for(int k = 0; k < numVols; k++) {
+				if(isSiemens) {
+					bValueLongString_pubTag = (String)(((String[])fidArr[numSlicesPerVolume * k])[4]);
 					int length = 0;
 					int index = -1;
 					if(bValueLongString_pubTag != null && (!bValueLongString_pubTag.trim().equals(""))) {
 						String ep_b = "ep_b";
-					    length = ep_b.length();
-					    index = bValueLongString_pubTag.indexOf(ep_b);
-					    poundIndex = bValueLongString_pubTag.indexOf('#');
-					    if(index != -1) {
+						length = ep_b.length();
+						index = bValueLongString_pubTag.indexOf(ep_b);
+						poundIndex = bValueLongString_pubTag.indexOf('#');
+						if(index != -1) {
 							index = index + length;
 							if(poundIndex != -1 && poundIndex > index) {
 								bValueString = (bValueLongString_pubTag.substring(index, poundIndex)).trim();
@@ -794,54 +839,63 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 							else {
 								bValueString = (bValueLongString_pubTag.substring(index, bValueLongString_pubTag.length())).trim();
 							}
-
-						    bValue = new Float(bValueString);
+							if(bValueString.equals("") || bValueString == null) {
+								Preferences.debug("! ERROR: No b-value found in private tag 0018,0024....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+								outputTextArea.append("! ERROR: No b-value found in private tag 0018,0024....exiting algorithm \n");
+								return false;
+							}
+							bValue = new Float(bValueString);
 							bValuesArrayList.add(bValue);
 							continue;
-						}/*
-						else {
-							String fake_gedti = "fake_gedti";
-							index = bValueLongString_pubTag.indexOf(fake_gedti);	
 						}
-						if(index != -1) {
-							if(k == 0) {
-								bValuesArrayList.add(new Float(0));
-								continue;
-							}
-							else {
-								bValuesArrayList.add(new Float(1000));
-								continue;
-							}
-						}*/
 					}
-					if(index == -1) {
-						try {
-							if(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0043,1039") != null) {
-								bValueLongString_privTag = (String)(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0043,1039"));
+				}
+				if(isGE) {
+					if(geSoftwareVersion <= 8 && !isEDTI) {
+						if(((String[])fidArr[numSlicesPerVolume * k])[6] != null) {
+							bValueString_privTag_001910B9 = (String)(((String[])fidArr[numSlicesPerVolume * k])[6]);
+							bValueString = bValueString_privTag_001910B9.trim();
+							if(bValueString.equals("") || bValueString == null) {
+								Preferences.debug("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+								outputTextArea.append("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
+								return false;
 							}
+							bValue = new Float(bValueString);
+							bValuesArrayList.add(bValue);
+							continue;
 						}
-						catch(NullPointerException e) {
-							Preferences.debug("! ERROR: The private tag info of 0043,1039 needs to be added to your dicom dictionary....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-							outputTextArea.append("! ERROR: The private tag info of 0043,1039 needs to be added to your dicom dictionary....exiting algorithm \n");
+						else {
+							Preferences.debug("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+							outputTextArea.append("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
+							return false;						
+						}
+					}
+					else {
+						if(((String[])fidArr[numSlicesPerVolume * k])[5] != null) {
+							bValueLongString_privTag_0043 = (String)(((String[])fidArr[numSlicesPerVolume * k])[5]);
+						}
+						else {
+							Preferences.debug("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+							outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
 							return false;
 						}
-						if (bValueLongString_privTag != null && (!bValueLongString_privTag.trim().equals(""))) {	
-							int index_privTag = bValueLongString_privTag.indexOf("\\");
+						if (bValueLongString_privTag_0043 != null && (!bValueLongString_privTag_0043.trim().equals(""))) {	
+							int index_privTag = bValueLongString_privTag_0043.indexOf("\\");
 							if(index_privTag != -1) {
-								bValueString = (bValueLongString_privTag.substring(0, index_privTag)).trim();
+								bValueString = (bValueLongString_privTag_0043.substring(0, index_privTag)).trim();
 								bValue = new Float(bValueString);
 								bValuesArrayList.add(bValue);
 								continue;
 							}
 							else {
-								Preferences.debug("! ERROR: No b-value found....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-								outputTextArea.append("! ERROR: No b-value found....exiting algorithm \n");
+								Preferences.debug("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+								outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
 								return false;
 							}
 						}
 						else {
-							Preferences.debug("! ERROR: No b-value found....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-							outputTextArea.append("! ERROR: No b-value found....exiting algorithm \n");
+							Preferences.debug("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+							outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
 							return false;
 						}
 					}
@@ -869,6 +923,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		
 		return true;
 	}
+
+	
+	
 	
 	
 	
@@ -1006,7 +1063,64 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		outputTextArea.append(" - b-matrix file created : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" + " \n");
 		return true;
 	}
-
+	
+	
+	
+	
+	
+	
+	/** 
+	 * This method copies the optional b matrix file that user provided, and 
+	 * copies it to proc dir and renames it to the correct naming syntax
+	 */
+	public boolean copyBMatrixFile() {
+		File from = new File(bmtxtFilePath);
+		File to = new File(studyPath + "_proc" + File.separator + studyName + ".BMTXT");
+		Writer out = null;
+		FileInputStream fis = null;
+		FileOutputStream fos = null;
+		try {
+			String str;
+			fis = new FileInputStream(from);
+			fos = new FileOutputStream(to);
+			out = new OutputStreamWriter(fos);
+			BufferedReader d = new BufferedReader(new InputStreamReader(fis));
+			while((str=d.readLine()) != null) {
+				out.write(str + "\n");
+				out.flush();
+			}
+		}
+		catch (Exception e) {
+			Preferences.debug(e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("! ERROR: copying of b-matrix to proc dir failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+			outputTextArea.append(e.toString() + "\n");
+			outputTextArea.append("! ERROR: copying of b-matrix to proc dir failed....exiting algorithm \n");
+			return false;
+		}
+		finally {
+			try {
+				if(out != null) {
+					out.close();
+				}
+				if(fos != null) {
+					fos.close();
+				}
+				if(fis != null) {
+					fis.close();
+				}
+			}
+			catch (IOException e) {
+				
+			}
+			
+		}
+			
+		Preferences.debug(" - b-matrix file copied and renamed to : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" + " \n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append(" - b-matrix file copied and renamed to  : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" + " \n");
+		return true;
+	}
+	
+	
 	
 	
 	
@@ -1026,7 +1140,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				File[] files = procDir.listFiles();
 				if (files.length > 0) {
 					for(int i=0;i<files.length;i++) {
-						files[i].delete();
+						String name = files[i].getName();
+						if(name.equals(studyName + ".path") || name.equals(studyName + ".list") || name.equals(studyName + ".BMTXT")) {
+							files[i].delete();
+						}
 					}
 				}
 				procDir.delete();
@@ -1046,13 +1163,13 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 */
 	private class InstanceNumberComparator implements Comparator {
 		public int compare(Object oA, Object oB) {
-			FileInfoDicom fidA = (FileInfoDicom) oA;
-			FileInfoDicom fidB = (FileInfoDicom) oB;
-			String instancNoA_String = ((String) fidA.getValue("0020,0013")).trim();
+			String[] aA = (String[]) oA;
+			String[] aB = (String[]) oB;
+			String instancNoA_String = ((String)aA[0]).trim();
 			if (instancNoA_String == null) {
 				instancNoA_String = "";
 			}
-			String instancNoB_String = ((String) fidB.getValue("0020,0013")).trim();
+			String instancNoB_String = ((String)aB[0]).trim();
 			if (instancNoB_String == null) {
 				instancNoB_String = "";
 			}
@@ -1069,4 +1186,5 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			return 0;
 		}
 	}
+
 }
