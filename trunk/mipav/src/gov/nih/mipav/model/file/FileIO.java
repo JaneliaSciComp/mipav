@@ -2099,8 +2099,8 @@ public class FileIO {
                     (((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088") != null)) {
 
                 if ((String)
-                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
-                            .getValue(true) != null) {
+                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050")).getValue(true) !=
+                        null) {
                     sliceThickness = Float.parseFloat((String)
                                                       ((FileDicomTag)
                                                            ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
@@ -2110,8 +2110,8 @@ public class FileIO {
                 // 0018,0088 = Spacing Between Slices
                 // 0018,0050 = Slice Thickness
                 if ((String)
-                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
-                            .getValue(true) != null) {
+                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088")).getValue(true) !=
+                        null) {
                     sliceSpacing = Float.parseFloat((String)
                                                     ((FileDicomTag)
                                                          ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
@@ -2183,8 +2183,8 @@ public class FileIO {
                     (sliceThickness == -1)) {
 
                 if ((String)
-                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041"))
-                            .getValue(true) != null) {
+                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041")).getValue(true) !=
+                        null) {
 
                     sliceDifference = Float.parseFloat((String)
                                                        ((FileDicomTag)
@@ -2547,9 +2547,11 @@ public class FileIO {
                 case FileUtility.XML_MULTIFILE:
                     image = readXMLMulti(fileName, fileDir);
                     break;
+
                 case FileUtility.PARREC:
                     image = readPARREC(fileName, fileDir, one);
                     break;
+
                 default:
                     return null;
             }
@@ -3776,61 +3778,6 @@ public class FileIO {
 
     }
 
-    /****for PAR/REC support ***********************************************************************************************************/
-    /**
-       * Reads a PARREC file by calling the read method of the file. This method contains special code to not display the progress bar should
-       * the image be <q>splash.img</q>.
-       *
-       * @param   fileName  Name of the image file to read.
-       * @param   fileDir   Directory of the image file to read.
-       * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-       *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-       *                    from 3D dataset.
-       *
-       * @return  The image that was read in, or null if failure.
-       */
-      private ModelImage readPARREC(String fileName, String fileDir, boolean one) {
-        ModelImage image = null;
-        FilePARREC imageFile;
-
-        try {
-            imageFile = new FilePARREC(fileName, fileDir);
-            createProgressBar(imageFile, fileName, FILE_READ);
-            image = imageFile.readImage(one);
-        } catch (IOException error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            return null;
-        } catch (OutOfMemoryError error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            return null;
-        }
-
-
-        return image;
-      }
-    
     /**
      * Reads an analyze file by calling the read method of the file. Also checks if it's a Cheshire, Interfile, or NIFTI
      * and if so, calls that method instead. This method contains special code to not display the progress bar should
@@ -4021,7 +3968,7 @@ public class FileIO {
                 if (extents.length != fileInfo.getExtents().length) {
 
                     if (!quiet) {
-                        MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
+                        MipavUtil.displayError("Inconsistent analyze image file found.  This File will be skipped.  The number of dimensions does not match.");
                     }
 
                     continue;
@@ -4033,7 +3980,7 @@ public class FileIO {
                             if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
 
                                 if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
+                                    MipavUtil.displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
                                 }
 
                                 continue;
@@ -4046,7 +3993,7 @@ public class FileIO {
                                     (extents[2] != fileInfo.getExtents()[2])) {
 
                                 if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
+                                    MipavUtil.displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
                                 }
 
                                 continue;
@@ -4060,7 +4007,7 @@ public class FileIO {
                                     (extents[3] != fileInfo.getExtents()[3])) {
 
                                 if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
+                                    MipavUtil.displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
                                 }
 
                                 continue;
@@ -5489,7 +5436,8 @@ public class FileIO {
             }
 
             if ((extents[0] != 0) && ((extents[0] != imageWidth) || (extents[1] != imageHeight))) {
-                MipavUtil.displayError("Images in directory do not have the same X-Y dimensions.");
+                MipavUtil.displayError("Images files with similar names in the directory do not have the same X-Y dimensions.\n" +
+                                       "You may want to disable the Multi-file option.");
 
                 return null;
             }
@@ -6373,7 +6321,8 @@ public class FileIO {
                         imageFile.setFileName(fileList[i]);
                         fileInfoMicro = imageFile.readHeader();
 
-                        if (FileMicroCat.trimmer(fileName).equals(fileInfoMicro.getBaseNameforReconstructedSlices() + "_")) {
+                        if (FileMicroCat.trimmer(fileName).equals(fileInfoMicro.getBaseNameforReconstructedSlices() +
+                                                                  "_")) {
                             break;
                         }
                     }
@@ -6714,7 +6663,7 @@ public class FileIO {
                 if (extents.length != fileInfo.getExtents().length) {
 
                     if (!quiet) {
-                        MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
+                        MipavUtil.displayError("Inconsistent nifti image file found.  This File will be skipped.  The number of dimensions does not match.");
                     }
 
                     continue;
@@ -6726,7 +6675,7 @@ public class FileIO {
                             if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
 
                                 if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
+                                    MipavUtil.displayError("Inconsistent nifti image file found.  One or more of the X-Y dimensions do not match.");
                                 }
 
                                 continue;
@@ -6739,7 +6688,7 @@ public class FileIO {
                                     (extents[2] != fileInfo.getExtents()[2])) {
 
                                 if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
+                                    MipavUtil.displayError("Inconsistent nifti image file found.  One or more of the X-Y-Z dimensions do not match.");
                                 }
 
                                 continue;
@@ -6753,7 +6702,7 @@ public class FileIO {
                                     (extents[3] != fileInfo.getExtents()[3])) {
 
                                 if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
+                                    MipavUtil.displayError("Inconsistent nifti image file found.  One or more of the X-Y-Z-T dimensions do not match.");
                                 }
 
                                 continue;
@@ -7222,6 +7171,69 @@ public class FileIO {
 
         return image;
 
+    }
+
+    /**
+     * for PAR/REC support.
+     *
+     * @param   fileName  DOCUMENT ME!
+     * @param   fileDir   DOCUMENT ME!
+     * @param   one       DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    /**
+     * Reads a PARREC file by calling the read method of the file. This method contains special code to not display the
+     * progress bar should the image be <q>splash.img</q>.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
+     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
+     *                    from 3D dataset.
+     *
+     * @return  The image that was read in, or null if failure.
+     */
+    private ModelImage readPARREC(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        FilePARREC imageFile;
+
+        try {
+            imageFile = new FilePARREC(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
+            image = imageFile.readImage(one);
+        } catch (IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        }
+
+
+        return image;
     }
 
     /**
@@ -8104,7 +8116,7 @@ public class FileIO {
                 if (extents.length != fileInfo.getExtents().length) {
 
                     if (!quiet) {
-                        MipavUtil.displayError("Inconsistent image file found.  This file will be skipped.");
+                        MipavUtil.displayError("Inconsistent xml image file found.  This file will be skipped.  The number of dimensions does not match.");
                     }
 
                     continue;
@@ -8116,7 +8128,7 @@ public class FileIO {
                             if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
 
                                 if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent image file found.  This file will be skipped.");
+                                    MipavUtil.displayError("Inconsistent xml image file found.  This file will be skipped.  One or more of the X-Y dimensions do not match.");
                                 }
 
                                 continue;
@@ -8129,7 +8141,7 @@ public class FileIO {
                                     (extents[2] != fileInfo.getExtents()[2])) {
 
                                 if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent image file found.  This file will be skipped.");
+                                    MipavUtil.displayError("Inconsistent xml image file found.  This file will be skipped.  One or more of the X-Y-Z dimensions do not match.");
                                 }
 
                                 continue;
@@ -8143,7 +8155,7 @@ public class FileIO {
                                     (extents[3] != fileInfo.getExtents()[3])) {
 
                                 if (!quiet) {
-                                    MipavUtil.displayError("Inconsistent image file found.  This file will be skipped.");
+                                    MipavUtil.displayError("Inconsistent xml image file found.  This file will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
                                 }
 
                                 continue;
@@ -8502,9 +8514,9 @@ public class FileIO {
             aviFile.setCompressionQuality(options.getMJPEGQuality());
 
             if (!aviFile.writeImage(image, options.getImageB(), options.getLUTa(), options.getLUTb(),
-                                        options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
-                                        options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
-                                        options.getPaintBitmap(), options.getAVICompression())) {
+                                    options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
+                                    options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
+                                    options.getPaintBitmap(), options.getAVICompression())) {
                 System.err.println("AVI write cancelled");
             }
 
