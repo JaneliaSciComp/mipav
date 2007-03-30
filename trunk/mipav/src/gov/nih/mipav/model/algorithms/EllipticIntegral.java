@@ -53,7 +53,8 @@ import gov.nih.mipav.view.*;
  *     elco2 calculates a general elliptic integral of the second kind. It calculates w = u + i*v = Integral from 0 to z = x + i*y of
  *     (a + b*e*e)/((1 + e*e)*sqrt((1 + e*e)*(1 + kc*kc*e*e)))de
  *     kc is the complementary modulus = sqrt(1 - k*k), where k is the modulus
- *     The elco2 function fails if kc = 0 or x < 0.  The elco2 may have reduced accuracy at the branchpoints x = 0, y = +-i, +-i/kc.
+ *     The original algol elco2 function fails if kc = 0 or x < 0.  However, the FORTRAN code appears to work for kc = 0.
+ *     The elco2 may have reduced accuracy at the branchpoints x = 0, y = +-i, +-i/kc.
  *     
  *     F(k, arctan(w)) = elco2(w, kc, a = 1, b = 1)
  *     Let arctan(w) = z.  Then w = tan(z) and for the incomplete elliptic integral of the first kind:
@@ -88,6 +89,9 @@ public class EllipticIntegral {
     
     // Complex argument for phi only in first and second complete and incomplete elliptic integrals
     private static final int CERN_SOURCE = 3;
+    
+    // Compare outputs of different modules for self-testing
+    private static final int TEST_SOURCE = 4;
     //  ~ Instance fields ------------------------------------------------------------------------------------------------
     
     // Number of repetitions = N - 1
@@ -199,9 +203,14 @@ public class EllipticIntegral {
     private double b;
     private double u[];
     private double v[]; 
+    private ViewUserInterface UI = ViewUserInterface.getReference();
     
     
     //  ~ Constructors ---------------------------------------------------------------------------------------------------
+    
+    public EllipticIntegral() {
+        source = TEST_SOURCE;
+    }
     
     // Constructor only for complete integrals with phi = PI/2.
     // The method called is based on the arithmetic-geometric mean procedure
@@ -227,7 +236,7 @@ public class EllipticIntegral {
     }
     
     // When calculating the complete integrals K(k) and E(K), we can make complete true or false, except
-    // when abs(k') <= 1.0E-10, in which case complete must be true and the complemetary modulus must be
+    // when abs(k') <= 1.0E-10, in which case complete must be true and the complementary modulus must be
     // used
     // The only merit of the alternative method over the standard method is that the code is simpler
     // Both methods are based on modifications of Carlson's algortihm
@@ -303,6 +312,9 @@ public class EllipticIntegral {
         double ckabs;
         
         switch(source) {
+            case TEST_SOURCE:
+                runTest();
+            break;
             case MORITA_SOURCE:
             if (errorFlag == null) {
                 MipavUtil.displayError("Array errorFlag must not be null");
@@ -388,6 +400,273 @@ public class EllipticIntegral {
         } // switch (source)
         
     } // public void run()
+    
+    private void runTest() {
+        int count;
+        firstr = new double[1];
+        firsti = new double[1];
+        secondr = new double[1];
+        secondi = new double[1];
+        first = new double[1];
+        second = new double[1];
+        u = new double[1];
+        v = new double[1];
+        errorFlag = new int[1];
+        double firstr1 = 0.0;
+        double firsti1 = 0.0;
+        double secondr1 = 0.0;
+        double secondi1 = 0.0;
+        double firstr2 = 0.0;
+        double firsti2 = 0.0;
+        double secondr2 = 0.0;
+        double secondi2 = 0.0;
+        double first1 = 0.0;
+        double second1 = 0.0;
+        double first2 = 0.0;
+        double second2 = 0.0;
+        double firstr3 = 0.0;
+        double firsti3 = 0.0;
+        double secondr3 = 0.0;
+        double secondi3 = 0.0;
+        int errorsDetected = 0;
+        double tol = 1.0E-5;
+        int angle;
+        int angler;
+        int anglei;
+        double numr[] = new double[1];
+        double numi[] = new double[1];
+        double denr[] = new double[1];
+        double deni[] = new double[1];
+        double outr[] = new double[1];
+        double outi[] = new double[1];
+        double firstAbs1 = 0.0;
+        double secondAbs1 = 0.0;
+        double firstAbs3 = 0.0;
+        double secondAbs3 = 0.0;
+        double firstAng1 = 0.0;
+        double secondAng1 = 0.0;
+        double firstAng3 = 0.0;
+        double secondAng3 = 0.0;
+        
+        // Check complete Elliptic Integrals of the First and Second Kinds for real arguments 
+        UI.setDataText("Complete Elliptic Integrals of the First and Second Kinds for real arguments\n");
+        modi = 0.0;
+        complementaryModulusUsed = false;
+        analyticContinuationUsed = false;
+        phir = pihf;
+        phii = 0.0;
+        phi = pihf;
+        for (count = 0; count <= 100; count++) {
+            modr = count * 0.01;
+            UI.setDataText("modr = " + modr + "\n");
+            errorFlag[0] = 0;
+            source = MORITA_SOURCE;
+            complete = true;
+            runcel12 = true;
+            run();
+            if (errorFlag[0] != 0) {
+                UI.setDataText("Morita arithmetic-geometric mean gave error\n");
+            }
+            else {
+                firstr1 = firstr[0];
+                firsti1 = firsti[0];
+                secondr1 = secondr[0];
+                secondi1 = secondi[0];
+                UI.setDataText("Morita arithmetic-geometric mean: K(" + modr +") = " + firstr1 + "  i * " + firsti1 + "  E(" + modr + ") = " + 
+                                secondr1 + "  i * " + secondi1 + "\n");
+            }
+            
+            errorFlag[0] = 0;
+            source = MORITA_SOURCE;
+            complete = true;
+            runcel12 = false;
+            useStandardMethod = true;
+            run();
+            if (errorFlag[0] != 0) {
+                UI.setDataText("Morita Carlson's gave error\n");
+            }
+            else {
+                firstr2 = firstr[0];
+                firsti2 = firsti[0];
+                secondr2 = secondr[0];
+                secondi2 = secondi[0];
+                UI.setDataText("Morita Carlson's: K(" + modr +") = " + firstr2 + "  i * " + firsti2 + "  E(" + modr + ") = " + 
+                                secondr2 + "  i * " + secondi2 + "\n");
+            }
+            
+            errorFlag[0] = 0;
+            comelp(modr);
+            if (errorFlag[0] != 0) {
+                UI.setDataText("ZHANG comelp gave error\n");
+            }
+            else {
+                first1 = first[0];
+                second1 = second[0];
+                UI.setDataText("ZHANG comelp: K(" + modr +") = " + first1 + "  E(" + modr + ") = " + 
+                                second1 + "\n");
+            }
+            
+            errorFlag[0] = 0;
+            elit(modr, phir);
+            if (errorFlag[0] != 0) {
+                UI.setDataText("ZHANG elit gave error\n");
+            }
+            else {
+                first2 = first[0];
+                second2 = second[0];
+                UI.setDataText("ZHANG elit: K(" + modr +") = " + first2 + "  E(" + modr + ") = " + 
+                                second2 + "\n");
+            }
+            
+            if ((Math.abs((firstr2 - firstr1)/firstr1) > tol) || (Math.abs((first1 - firstr1)/firstr1) > tol) ||
+                (Math.abs((first2 - firstr1)/firstr1) > tol) || (Math.abs((secondr2 - secondr1)/secondr1) > tol) ||
+                (Math.abs((second1 - secondr1)/secondr1) > tol) || (Math.abs((second2 - secondr1)/secondr1) > tol)) {
+                UI.setDataText("Error detected\n");
+                errorsDetected++;
+            }  
+      } // for (count = 0; count <= 100; count++)
+        
+        // Check incomplete Elliptic Integrals of the First and Second Kinds for real arguments 
+        UI.setDataText("Incomplete Elliptic Integrals of the First and Second Kinds for real arguments\n");
+        for (count = 0; count <= 100; count+= 10) {
+            modr = count * 0.01;
+            UI.setDataText("modr = " + modr + "\n");
+            kc = Math.sqrt(1.0 - modr*modr);
+            for (angle = 0; angle < 100; angle += 10) {
+                phir = pihf * angle/100.0;
+                UI.setDataText("phir = " + phir + "\n");
+                
+                errorFlag[0] = 0;
+                source = MORITA_SOURCE;
+                complete = false;
+                runcel12 = false;
+                useStandardMethod = true;
+                run();
+                if (errorFlag[0] != 0) {
+                    UI.setDataText("Morita Carlson's gave error\n");
+                }
+                else {
+                    UI.setDataText("Morita Carlson's: F(" + modr + ", " + phir + ") = " + firstr[0] + "  i * " + firsti[0] +
+                                   "  E(" + modr + ", " + phir  + ") = " + secondr[0] + "  i * " + secondi[0] + "\n");
+                }
+                
+                errorFlag[0] = 0;
+                elit(modr, phir);
+                if (errorFlag[0] != 0) {
+                    UI.setDataText("ZHANG elit gave error\n");
+                }
+                else {
+                    UI.setDataText("ZHANG elit: F(" + modr + ", " + phir + ") = " + first[0] +
+                            "  E(" + modr + ", " + phir  + ") = " + second[0] + "\n");
+                }
+                
+                errorFlag[0] = 0;
+                // Calculate F(modr, phir)
+                elco2(Math.tan(phir), 0.0, kc, 1.0, 1.0);
+                if (errorFlag[0] != 0) {
+                    UI.setDataText("CERN elco2 gave error\n");
+                }
+                else {
+                    firstr3 = u[0];
+                    firsti3 = v[0];
+                    UI.setDataText("CERN elco2: F(" + modr + ", " + phir + ") = " + firstr3 + " i * " + firsti3 + "\n");
+                }
+                
+                errorFlag[0] = 0;
+                // Calculate E(modr, phir)
+                elco2(Math.tan(phir), 0.0, kc, 1.0, kc*kc);
+                if (errorFlag[0] != 0) {
+                    UI.setDataText("CERN elco2 gave error\n");
+                }
+                else {
+                    secondr3 = u[0];
+                    secondi3 = v[0];
+                    UI.setDataText("CERN elco2: E(" + modr + ", " + phir + ") = " + secondr3 + " i * " + secondi3 + "\n");
+                }
+                
+                if ((Math.abs((first[0] - firstr[0])/firstr[0]) > tol) || (Math.abs((firstr3 - firstr[0])/firstr[0]) > tol) ||
+                    (Math.abs((second[0] - secondr[0])/secondr[0]) > tol) || (Math.abs((secondr3 - secondr[0])/secondr[0]) > tol)) {
+                    UI.setDataText("Error detected\n");
+                    errorsDetected++;    
+                }
+            } // for (angle = 0; angle < 100; angle += 10)
+        } // for (count = 0; count <= 100; count += 10)
+        
+        // Check incomplete Elliptic Integrals of the First and Second Kinds for real argument mod and complex argument phi
+        UI.setDataText("Incomplete Elliptic Integrals of the First and Second Kinds for real argument mod and complex argument phi\n");
+        for (count = 0; count <= 100; count += 10) {
+            modr = count * 0.01;
+            UI.setDataText("modr = " + modr + "\n");
+            kc = Math.sqrt(1.0 - modr*modr);  
+            for (angler = 0; angler < 100; angler += 20) {
+                phir = pihf * angler/100.0;
+                UI.setDataText("phir = " + phir + "\n");
+                for (anglei = 0; anglei < 100; anglei += 20) {
+                    phii = pihf * anglei/100.0;
+                    UI.setDataText("phii = " + phii + "\n");
+                    
+                    errorFlag[0] = 0;
+                    source = MORITA_SOURCE;
+                    complete = false;
+                    runcel12 = false;
+                    useStandardMethod = true;
+                    run();
+                    if (errorFlag[0] != 0) {
+                        UI.setDataText("Morita Carlson's gave error\n");
+                    }
+                    else {
+                        UI.setDataText("Morita Carlson's: F(" + modr + ", " + phir + ") = " + firstr[0] + "  i * " + firsti[0] +
+                                       "  E(" + modr + ", " + phir  + ") = " + secondr[0] + "  i * " + secondi[0] + "\n");
+                        firstAbs1 = zabs(firstr[0], firsti[0]);
+                        secondAbs1 = zabs(secondr[0], secondi[0]);
+                        firstAng1 = Math.atan2(firsti[0], firstr[0]);
+                        secondAng1 = Math.atan2(secondi[0], secondr[0]);
+                    }
+                    
+                    zsin(phir,phii,numr, numi);
+                    zcos(phir,phii,denr, deni);
+                    zdiv(numr[0], numi[0], denr[0], deni[0], outr, outi);
+                    if (outr[0] >= 0.0) {
+                        errorFlag[0] = 0;
+                        // Calculate F(modr, phir)
+                        elco2(outr[0], outi[0], kc, 1.0, 1.0);
+                        if (errorFlag[0] != 0) {
+                            UI.setDataText("CERN elco2 gave error\n");
+                        }
+                        else {
+                            firstr3 = u[0];
+                            firsti3 = v[0];
+                            firstAbs3 = zabs(firstr3, firsti3);
+                            firstAng3 = Math.atan2(firsti3, firstr3);
+                            UI.setDataText("CERN elco2: F(" + modr + ", " + phir + ") = " + firstr3 + " i * " + firsti3 + "\n");
+                        }
+                        
+                        errorFlag[0] = 0;
+                        // Calculate E(modr, phir)
+                        elco2(outr[0], outi[0], kc, 1.0, kc*kc);
+                        if (errorFlag[0] != 0) {
+                            UI.setDataText("CERN elco2 gave error\n");
+                        }
+                        else {
+                            secondr3 = u[0];
+                            secondi3 = v[0];
+                            secondAbs3 = zabs(secondr3, secondi3);
+                            secondAng3 = Math.atan2(secondi3, secondr3);
+                            UI.setDataText("CERN elco2: E(" + modr + ", " + phir + ") = " + secondr3 + " i * " + secondi3 + "\n");
+                        }
+                        
+                        if ((Math.abs((firstAbs3 - firstAbs1)/firstAbs1) > tol) || (Math.abs((secondAbs3 - secondAbs1)/secondAbs1) > tol) ||
+                            (firstAng1 != 0.0 && (Math.abs((firstAng3 - firstAng1)/firstAng1) > tol))
+                            || (secondAng1 != 0.0 && (Math.abs((secondAng3 - secondAng1)/secondAng1) > tol))) {
+                            UI.setDataText("Error detected\n");
+                            errorsDetected++;       
+                        }
+                    } // if (outr[0] >= 0.0)
+                } // for (anglei = 0; anglei < 100; anglei += 20)
+            } // for (angler = 0; angler < 100; angler += 20)
+        } // for (count = 0; count <= 100; count += 10)
+        UI.setDataText("Errors detected = " + errorsDetected + "\n");
+    } // runTest()
     
     // Routine cel12 only calculates complete integrals of the first and second kind
     // with complex arguments
