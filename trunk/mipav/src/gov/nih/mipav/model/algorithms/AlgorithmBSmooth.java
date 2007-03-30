@@ -113,11 +113,6 @@ public class AlgorithmBSmooth extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Bspline smooth: Evolving boundary ...");
 
-
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        
-        
         fireProgressStateChanged(25);
 
         resultVOI = new VOI((short) srcImage.getVOIs().size(), "Bsmooth-VOI", 1, VOI.CONTOUR, -1.0f);
@@ -182,10 +177,6 @@ public class AlgorithmBSmooth extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Bspline smooth: Evolving boundary ...");
 
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        
-        
         fireProgressStateChanged(0);
         contours = activeVOI.getCurves();
 
