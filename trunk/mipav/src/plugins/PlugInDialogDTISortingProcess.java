@@ -70,20 +70,24 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
     /** Scroll Pane for the Text Area **/
     private JScrollPane scrollPane;
     
-    /** Document me **/
+    /** button group for radio buttons **/
     private ButtonGroup optionsGroup;
     
-	/** Document me **/
+	/** gradient file option **/
     private JRadioButton gradFileRadio;
     
-    /** Document me **/
+    /** b-matrix file option **/
     private JRadioButton bmtxtFileRadio;
     
-    /** Document me **/
+    /** label  **/
     private JLabel gradientFileLabel;
     
-    /** Document me **/
+    /** label **/
     private JLabel bmtxtFileLabel;
+    
+    /** current directory  **/
+    private String currDir = null;
+
 	
 	/**
 	 * Constructor
@@ -100,7 +104,7 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("DTI Sorting Process");
+        setTitle("DTI Sorting Process " + " testVersion: 1.0  Date: 3.30.07 ");
         
         GridBagLayout mainPanelGridBagLayout = new GridBagLayout();
         GridBagConstraints mainPanelConstraints = new GridBagConstraints();
@@ -142,7 +146,7 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 		mainPanelConstraints.gridx = 1;
 		mainPanelConstraints.gridy = 2;
 		mainPanelConstraints.insets = new Insets(15,5,15,0);
-        JLabel gradientFileLabel = new JLabel("gradient file : ");
+        gradientFileLabel = new JLabel("gradient file : ");
         mainPanel.add(gradientFileLabel, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 2;
@@ -258,43 +262,40 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 		String command = e.getActionCommand();
 		if(command.equalsIgnoreCase("studyPathBrowse")) {
 			JFileChooser chooser = new JFileChooser();
-			if (UI.getDefaultDirectory() != null) {
-				chooser.setCurrentDirectory(new File(UI.getDefaultDirectory()));
-            } else {
-            	chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+			if (currDir != null) {
+				chooser.setCurrentDirectory(new File(currDir));
             }
 			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	        chooser.setDialogTitle("Choose study path directory");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	studyPathTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+	        	currDir = chooser.getSelectedFile().getAbsolutePath();
 	        	studyName = chooser.getSelectedFile().getName();
 	        }
 		}
 		else if(command.equalsIgnoreCase("gradientFileBrowse")) {
 			JFileChooser chooser = new JFileChooser();
-			if (UI.getDefaultDirectory() != null) {
-				chooser.setCurrentDirectory(new File(UI.getDefaultDirectory()));
-            } else {
-            	chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+			if (currDir != null) {
+				chooser.setCurrentDirectory(new File(currDir));
             }
 	        chooser.setDialogTitle("Choose gradient file");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	gradientFilePathTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+	        	currDir = chooser.getSelectedFile().getParentFile().getAbsolutePath();
 	        }
 		}
 		else if(command.equalsIgnoreCase("bmtxtFileBrowse")) {
 			JFileChooser chooser = new JFileChooser();
-			if (UI.getDefaultDirectory() != null) {
-				chooser.setCurrentDirectory(new File(UI.getDefaultDirectory()));
-            } else {
-            	chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+			if (currDir != null) {
+				chooser.setCurrentDirectory(new File(currDir));
             }
 	        chooser.setDialogTitle("Choose b matrix file");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	bmtxtFilePathTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+	        	currDir = chooser.getSelectedFile().getParentFile().getAbsolutePath();
 	        }
 		}
 		else if(command.equalsIgnoreCase("gradFileRadio")) {
