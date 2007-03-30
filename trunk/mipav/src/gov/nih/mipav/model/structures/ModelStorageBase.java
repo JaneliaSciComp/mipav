@@ -27,115 +27,124 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3710345290762731636L;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the buffer is unlocked and can be writen to or read from. */
     public static final int UNLOCKED = 0;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the buffer is locked from reading. */
     public static final int RW_LOCKED = 1;
 
-    /** DOCUMENT ME! */
-    public static final int W_LOCKED = 2; // locked from writing
+    /** Used to indicate that the buffer is locked from writing. */
+    public static final int W_LOCKED = 2;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate nearest neighbor interpolation. */
     public static final int NEAREST = 0;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate linear (ie. bilinear, trilinear) interpolation. */
     public static final int LINEAR = 1;
 
-    /** DOCUMENT ME! */
-    public static final int TALYOR = 2;
+    /** Used to indicate Taylor series interpolation. */
+    public static final int TAYLOR = 2;
 
-    /** buffer types. */
+    /** Used to indicate that the data buffer is of type Boolean (1 bit per voxel). */
     public static final int BOOLEAN = 0;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the data buffer is of type signed byte (8 bits per voxel). */
     public static final int BYTE = 1;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the data buffer is of type unsigned byte (8 bits per voxel). */
     public static final int UBYTE = 2;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the data buffer is of type signed short (16 bits per voxel). */
     public static final int SHORT = 3;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the data buffer is of type unsigned short (16 bits per voxal). */
     public static final int USHORT = 4;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the data buffer is of type signed integer (32 bits per voxel). */
     public static final int INTEGER = 5;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the data buffer is of type unsigned integer (32 bits per voxel). */
     public static final int UINTEGER = 14;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the data buffer is of type signed long integer (64 bits per voxel). */
     public static final int LONG = 6;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the data buffer is of type float (32 bits per voxel). */
     public static final int FLOAT = 7;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the data buffer is of type double (64 bits per voxel). */
     public static final int DOUBLE = 8;
 
-    /** DOCUMENT ME! */
-    public static final int ARGB = 9; // 4 * UBYTE(8  bits)  = 4  bytes
+    /**
+     * Used to indicate that the data buffer is of type ARGB where each channel (A = alpha, R = red, G = green, B =
+     * blue) is represented by a unsigned byte value. (4 * UBYTE(8 bits) = 4 bytes)
+     */
+    public static final int ARGB = 9;
 
-    /** DOCUMENT ME! */
-    public static final int ARGB_USHORT = 10; // 4 * USHORT(16 bits) = 8 bytes
+    /**
+     * Used to indicate that the data buffer is of type ARGB where each channel (A = alpha, R = red, G = green, B =
+     * blue) is represented by a unsigned short value. (4 * USHORT(16 bits) = 8 bytes)
+     */
+    public static final int ARGB_USHORT = 10;
 
-    /** DOCUMENT ME! */
-    public static final int ARGB_FLOAT = 11; // 4 * FLOAT(32 bits)  = 16 bytes
+    /**
+     * Used to indicate that the data buffer is of type ARGB where each channel (A = alpha, R = red, G = green, B =
+     * blue) is represented by a float value. (4 * FLOAT(32 bits) = 16 bytes)
+     */
+    public static final int ARGB_FLOAT = 11;
 
-    /** DOCUMENT ME! */
-    public static final int COMPLEX = 12; // 2 * FLOAT(32 bits)  = 8  bytes
+    /** Used to indicate that the data buffer is of complex type floats (2 x 64 bits per voxel). */
+    public static final int COMPLEX = 12;
 
-    /** DOCUMENT ME! */
-    public static final int DCOMPLEX = 13; // 2 * DOUBLE(64 bits) = 16 bytes
+    /** Used to indicate that the data buffer is of complex type of doubles (2 x 128 bits per voxel). */
+    public static final int DCOMPLEX = 13;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type boolean. */
     public static final String BOOLEAN_STRING = "Boolean";
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type byte. */
     public static final String BYTE_STRING = "Byte";
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type unsigned byte. */
     public static final String UBYTE_STRING = "Unsigned Byte";
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type signed short. */
     public static final String SHORT_STRING = "Short";
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type unsigned short. */
     public static final String USHORT_STRING = "Unsigned Short";
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type signed integer. */
     public static final String INTEGER_STRING = "Integer";
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type signed long. */
     public static final String LONG_STRING = "Long";
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type signed float. */
     public static final String FLOAT_STRING = "Float";
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type signed double. */
     public static final String DOUBLE_STRING = "Double";
 
-    /** DOCUMENT ME! */
-    public static final String ARGB_STRING = "ARGB"; // 4 * UBYTE(8  bits)  = 4  bytes
+    /** Used to indicate, as a String, that the data buffer is of type color (ARGB - unsigned bytes). */
+    public static final String ARGB_STRING = "ARGB";
 
-    /** DOCUMENT ME! */
-    public static final String ARGB_USHORT_STRING = "ARGB Ushort"; // 4 * USHORT(16 bits) = 8 bytes
+    /** Used to indicate, as a String, that the data buffer is of type color (ARGB - unsigned shorts). */
+    public static final String ARGB_USHORT_STRING = "ARGB Ushort";
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type color (ARGB - floats). */
     public static final String ARGB_FLOAT_STRING = "ARGB Float"; // 4 * FLOAT(32 bits)  = 16 bytes
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type complex (float). */
     public static final String COMPLEX_STRING = "Complex"; // 2 * FLOAT(32 bits)  = 8  bytes
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type complex (double). */
     public static final String DCOMPLEX_STRING = "Complex Double"; // 2 * DOUBLE(64 bits) = 16 bytes
 
-    /** DOCUMENT ME! */
+    /** Used to indicate, as a String, that the data buffer is of type unsigned integer. */
     public static final String UINTEGER_STRING = "Unsigned Integer";
 
-    /** DOCUMENT ME! */
+    /** String representations of the data types supported by ModelStorageBase. */
     public static final String[] bufferTypeStr = {
         BOOLEAN_STRING, BYTE_STRING, UBYTE_STRING, SHORT_STRING, USHORT_STRING, INTEGER_STRING, LONG_STRING,
         FLOAT_STRING, DOUBLE_STRING, ARGB_STRING, ARGB_USHORT_STRING, ARGB_FLOAT_STRING, COMPLEX_STRING,
@@ -169,7 +178,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private int dataSize;
 
     /**
-     * bounds of the image where.
+     * Bounds of the image where.
      *
      * <ul>
      *   <li>dimExtents[0] = x dimension</li>
@@ -181,7 +190,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private int[] dimExtents;
 
     /**
-     * bounds of the image where.
+     * Bounds of the image where.
      *
      * <ul>
      *   <li>dimOriginalExtents[0] = x dimension</li>
@@ -192,22 +201,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     private int[] dimOriginalExtents;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private int filterType = 2;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private float freq1 = 0.4f;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private float freq2 = 0.7f;
 
-    /** 5 variables used in Gabor transform. */
+    /** 5 variables used in Gabor transform. - should be removed - redesigned */
     private float freqU = 0.0f; // frequency along horizontal axis before rotation from -1 to 1
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private float freqV = 0.0f; // frequency along vertical axis before rotation from -1 to 1
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private boolean haveWindowed;
 
     /** Boolean telling if 3D images are processed 1 slice at a time. */
@@ -216,7 +225,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** Locking status of the image. Default = UNLOCKED */
     private int lockStatus = UNLOCKED;
 
-    /** Boolean telling if log magnitude display is used in complex image. */
+    /** Boolean telling if log magnitude display is used in complex image. - TO BE MOVED - redesigned */
     private boolean logMagDisp;
 
     /**
@@ -228,64 +237,64 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** When true, display the data in the Radiological View, when false display the Neurological View:. */
     private boolean m_bRadiologicalView = true;
 
-    /** Surface color vector. */
+    /** Surface color vector. - TO BE MOVED - redesigned */
     private Vector m_kColorVector = new Vector();
 
-    /** Surface mask color vector. */
+    /** Surface mask color vector. - TO BE MOVED - redesigned */
     private Vector m_kMaskColorVector = new Vector();
 
-    /** Surface mask vector. */
+    /** Surface mask vector.- TO BE MOVED - redesigned. */
     private Vector m_kMaskVector = new Vector();
 
-    /** minimum and maximum image intensity. */
+    /** Minimum and maximum image intensity. */
     private double min, max;
 
-    /** minimum and maximum image RGB. */
+    /** Minimum and maximum for a color image. */
     private double minR, maxR, minG, maxG, minB, maxB;
 
-    /** number of dimensions that represent the image. */
+    /** Number of dimensions of the data. */
     private int nDims;
 
-    /** minimum and maximum image intensity with log magnitude operation removed. */
+    /** Minimum and maximum image intensity with log magnitude operation removed. - TO BE MOVED */
     private double noLogMin, noLogMax, noLogMinNonZero;
 
-    /** minimum and maximum nonzero intensity. */
+    /** Minimum and maximum nonzero intensity. - TO BE MOVED - redesigned */
     private double nonZeroMin, nonZeroMax;
 
-    /** minimum and maximum nonzero image RGB. */
+    /** Minimum and maximum nonzero image RGB. - TO BE MOVED - redesigned */
     private double nonZeroMinR, nonZeroMaxR, nonZeroMinG, nonZeroMaxG, nonZeroMinB, nonZeroMaxB;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME!- TO BE MOVED - redesigned. */
     private int originalButterworthOrder;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME!- TO BE MOVED - redesigned. */
     private boolean originalCropCheckbox;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private boolean originalDoCrop;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME!- TO BE MOVED - redesigned. */
     private int[] originalEnd;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED- redesigned */
     private int originalFilterConstruction;
 
-    /** This are variables used by the FFT filter algorithm. */
+    /** This are variables used by the FFT filter algorithm. - should be removed - redesigned */
     private int originalKernelDimension;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private float originalMaximum;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private float originalMinimum;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private int[] originalStart;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private float sigmaU = 0.1f; // standard deviation along horizontal axis before rotation
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - should be removed - redesigned */
     private float sigmaV = 0.1f; // standard deviation along vertical axis before rotation
 
     /** smallest magnitude negative and positive. */
@@ -295,10 +304,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private double smallestMagnitudeNegativeR, smallestMagnitudePositiveR, smallestMagnitudeNegativeG,
                    smallestMagnitudePositiveG, smallestMagnitudeNegativeB, smallestMagnitudePositiveB;
 
-    /** DOCUMENT ME! */
+    /** DOCUMENT ME! - TO BE MOVED - redesigned */
     private float theta = 0.0f; // angle or rotation in radians
 
-    /** boolean telling if unequal dimensions are allowed in the FFT image. */
+    /** Boolean telling if unequal dimensions are allowed in the FFT image. TO BE MOVED */
     private boolean unequalDim;
 
     /** Locking write count. */
@@ -307,14 +316,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * default constructor.
+     * Default constructor.
      */
     public ModelStorageBase() {
         data = null;
     }
 
     /**
-     * allocates buffer memory of the specified type.
+     * Allocates buffer memory of the specified type.
      *
      * @param  type        type of buffer to allocate
      * @param  dimExtents  extents of the buffer in each dimension (multipleid together produces the size of the buffer
@@ -752,7 +761,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Copies the object.
      *
-     * @return  DOCUMENT ME!
+     * @return  Returns the cloned object.
      */
     public Object clone() {
         Object obj = null;
@@ -773,8 +782,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * convertToFloat - disposes of old data and constructs a new buffer of the user specific type if the image in NOT
-     * locked.
+     * Disposes of old data and constructs a new buffer of the user specific type if the image in NOT locked.
      *
      * @exception  IOException  throws an exception if the image model is locked.
      */
@@ -845,14 +853,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Exports data based on the mapping from ModelImage space to Patient space.
      *
-     * @param   orientation  -- the Patient Orientation of the slice to export
-     * @param   tSlice       -- for 4D volumes
-     * @param   slice        -- the constant slice
-     * @param   values       -- the array to write the data into
+     * @param   orientation  The Patient Orientation of the slice to export
+     * @param   tSlice       Index into the forth dimension
+     * @param   slice        Indicates slice of data to be exported
+     * @param   values       The array in which to write the data
      *
-     * @return  DOCUMENT ME!
+     * @return  A float array of the data mapped to patient space.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized float[] export(int orientation, int tSlice, int slice, float[] values)
             throws IOException {
@@ -866,15 +874,15 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * Exports data based on the mapping from ModelImage space to Patient space. The mapping parameters are passed in as
      * the axisOrder and axisFlip arrays.
      *
-     * @param   axisOrder  -- the mapping of ModelImage space volume axes to Patient space axes
-     * @param   axisFlip   -- the mapping of ModelImage space volume axes to Patient space axes (invert flags)
-     * @param   tSlice     -- for 4D volumes
-     * @param   slice      -- the constant slice
-     * @param   values     -- the array to write the data into
+     * @param   axisOrder  The mapping of ModelImage space volume axes to Patient space axes
+     * @param   axisFlip   The mapping of ModelImage space volume axes to Patient space axes (invert flags)
+     * @param   tSlice     Index into the forth dimension
+     * @param   slice      Indicates slice of data to be exported
+     * @param   values     The array to write the data into
      *
-     * @return  DOCUMENT ME!
+     * @return  A float array of the data mapped to patient space.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
     public final synchronized float[] export(int[] axisOrder, boolean[] axisFlip, int tSlice, int slice, float[] values)
             throws IOException {
@@ -1013,10 +1021,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Export data to the real values and the images values arrays.
      *
-     * @param   start    indicates starting position in data array
-     * @param   length   length of complex data (in 2 float units) to be copied from data array
-     * @param   valuesR  array where real data is to be deposited
-     * @param   valuesI  array where imaginary data is to be deposited
+     * @param   start    Indicates starting position in data array
+     * @param   length   Length of complex data (in 2 float units) to be copied from data array
+     * @param   valuesR  Array where real data is to be deposited
+     * @param   valuesI  Array where imaginary data is to be deposited
      *
      * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
@@ -1616,21 +1624,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * showDiagonal samples the ModelImage data along a non-axis aligned plane. The plane may intersect the ModelImage
+     * ShowDiagonal samples the ModelImage data along a non-axis aligned plane. The plane may intersect the ModelImage
      * volume, defined in x,y,z space, along a diagonal direction.
      *
      * <p>This function steps through the image, using the four transformed points to step through the ModelImage along
      * the diagonal directions, read the corresonding point in the ModelImage and write the value into the image array.
-     * If m_bInterpolate is set to true, the ModelImage data for non-interger vertices is interpolated using tri-linear
+     * If bInterpolate is set to true, the ModelImage data for non-interger vertices is interpolated using tri-linear
      * interpolation. Note: there is one loop for steping though he data, no matter which type of plane this object
      * represents (XY, XZ, or ZY).</p>
      *
-     * @param   tSlice        DOCUMENT ME!
-     * @param   slice         DOCUMENT ME!
-     * @param   extents       DOCUMENT ME!
-     * @param   verts         DOCUMENT ME!
-     * @param   values        DOCUMENT ME!
-     * @param   bInterpolate  DOCUMENT ME!
+     * @param   tSlice        Index into the forth dimension
+     * @param   slice         Indicates slice of data to be exported
+     * @param   extents       Image extents in the local coordinate system.
+     * @param   verts         The rotated non-axis aligned corners of the slice
+     * @param   values        The array in which to write the data.
+     * @param   bInterpolate  If true then use interpolation.
      *
      * @throws  IOException  Throws an error when there is a locking or bounds error.
      */
@@ -1776,7 +1784,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export magnitude data to values array.
+     * Export magnitude data to values array.
      *
      * @param   start   indicates starting position in data array
      * @param   length  length of magnitude data to be copied from data array
@@ -1948,9 +1956,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data in values array WITHOUT using locking.
+     * Export data in values array WITHOUT using locking.
      *
-     * @param   offset  DOCUMENT ME!
+     * @param   offset  offset into the data array
      * @param   start   indicates starting position in data array
      * @param   length  length of data to be copied from data array
      * @param   values  array where data is to be deposited
@@ -1975,9 +1983,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
 
     /**
-     * export XY slice into values array.
+     * Export XY slice into values array.
      *
-     * @param   slice   indicates slice of data to be exported
+     * @param   slice   Indicates slice of data to be exported
      * @param   values  array where data is to be deposited
      *
      * @throws  IOException  Throws an error when there is a locking or bounds error.
@@ -2201,7 +2209,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The Number of the bilinearly interpolated data.
      */
     public final Number getBiLinear(float x, float y) {
 
@@ -2230,29 +2238,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
     }
 
-    /*****************************************************************************/
-
     /**
-     * Boolean.
+     * Version of get that does NOT perform bounds checking.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data.
      *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
-
-    /*
-     *   version of get that does NOT perform bounds checking  @param position   position in one dimensional array
+     * @return  The boolean value from the data array.
      */
     public final boolean getBoolean(int position) {
         return (data.getBoolean(position));
     }
 
     /**
-     * nD get data fuction where bounds checking is NOT performed.
+     * n-Dimensional get data fuction where bounds checking is NOT performed.
      *
-     * @param   position  array of coordinate values
+     * @param   position  index into the data
      *
      * @return  returns true if position in data array range
      */
@@ -2287,9 +2287,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param   x  x coordinate
      * @param   y  y coordinate
-     * @param   z  z coordinate
+     * @param   z  z coordinate*
      *
-     * @return  value
+     * @return  The value at that position in the data array.
      */
     public final boolean getBoolean(int x, int y, int z) {
         return (data.getBoolean((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
@@ -2301,30 +2301,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
-     * @param   b  DOCUMENT ME!
+     * @param   b  4th dimension coordinate.*
      *
-     * @return  value
+     * @return  The value at that position in the data array.
      */
     public final boolean getBoolean(int x, int y, int z, int b) {
         return (data.getBoolean((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
                                 (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
-    /*****************************************************************************/
 
     /**
-     * Byte.
+     * Version of get that does NOT perform bounds checking @param position position in one dimensional array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  Indexe into the data array.
      *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
-
-    /*
-     *   version of get that does NOT perform bounds checking  @param position   position in one dimensional array
-     * @return            value at that position in the data array
+     * @return  The value at that position in the data array.
      */
     public final byte getByte(int position) {
         return (data.getByte(position));
@@ -2381,13 +2373,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param   x  x coordinate
      * @param   y  y coordinate
-     * @param   z  z coordinate
-     * @param   b  DOCUMENT ME!
+     * @param   z  z coordinate (usually the slice plane index)
+     * @param   t  t coordinate (usually the volume index)
      *
      * @return  value at that position in the data array
      */
-    public final byte getByte(int x, int y, int z, int b) {
-        return (data.getByte((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
+    public final byte getByte(int x, int y, int z, int t) {
+        return (data.getByte((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
                              (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
@@ -2397,7 +2389,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The interpolated value from the data array.
      */
     public final byte getByteBiLinear(float x, float y) {
 
@@ -2428,7 +2420,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The interpolated value from the data array.
      */
     public final byte getByteTriLinear(float x, float y, float z) {
 
@@ -2463,21 +2455,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return (byte) (((1 - dz) * b1) + (dz * b2));
     }
 
-    /*****************************************************************************/
 
     /**
-     * Number.
-     *
-     * @param   position  DOCUMENT ME!
-     * @param   color     DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
-
-    /**
-     * color function to get data where bounds checking is performed.
+     * Color function to get data where bounds checking is performed.
      *
      * @param   position  position in one dimensional array
      * @param   color     DOCUMENT ME!
@@ -2502,24 +2482,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return m_bConvolve;
     }
 
-    /******************************************************************************/
 
     /**
-     * Double.
+     * The interpolated value from the data array.ersion of get that does NOT perform bounds checking.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into one dimensional array
      *
-     * @return  DOCUMENT ME!
-     */
-
-    /******************************************************************************/
-
-    /**
-     * version of get that does NOT perform bounds checking.
-     *
-     * @param   position  position in one dimensional array
-     *
-     * @return  DOCUMENT ME!
+     * @return  The value from the data array.
      */
     public final double getDouble(int position) {
         return (data.getDouble(position));
@@ -2528,9 +2497,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * nD get data fuction where bounds checking is NOT performed.
      *
-     * @param   position  array of coordinate values
+     * @param   position  Index into one dimensional array
      *
-     * @return  returns true if position in data array range
+     * @return  The value from the data array.
      */
     public final double getDouble(int[] position) {
         int i;
@@ -2552,7 +2521,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  value at that position in the data array
+     * @return  Value at that position in the data array
      */
     public final double getDouble(int x, int y) {
         return (data.getDouble((y * dimExtents[0]) + x));
@@ -2565,7 +2534,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  value at that position in the data array
+     * @return  Value at that position in the data array
      */
     public final double getDouble(int x, int y, int z) {
         return (data.getDouble((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
@@ -2577,12 +2546,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
-     * @param   b  DOCUMENT ME!
+     * @param   t  t coordinate (usually the volume index)*
      *
-     * @return  value
+     * @return  The value at that position in the data array.
      */
-    public final double getDouble(int x, int y, int z, int b) {
-        return (data.getDouble((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
+    public final double getDouble(int x, int y, int z, int t) {
+        return (data.getDouble((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
                                (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
@@ -2592,7 +2561,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The interpolated value at that position in the data array.
      */
     public final double getDoubleBiLinear(float x, float y) {
 
@@ -2623,7 +2592,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The value at that position in the data array.
      */
     public final double getDoubleTriLinear(float x, float y, float z) {
 
@@ -2672,7 +2641,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param   orientation  the Patient-Coordinate view for which the extents are needed:
      *
-     * @return  dimExtents[] for the image in Patient Coordinates
+     * @return  Extents for the image in Patient Coordinates
      */
     public final int[] getExtents(int orientation) {
 
@@ -2692,9 +2661,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * Accessor that returns the fileInfo of a specific image slice.
+     * Accessor that returns the fileInfo array (one per slice).
      *
-     * @return  FileInfoBase fileInfo structure
+     * @return  fileInfo array structure
      */
     public FileInfoBase[] getFileInfo() {
         return fileInfo;
@@ -2705,14 +2674,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param   i  index that indicates image slice
      *
-     * @return  FileInfoBase fileInfo structure
+     * @return  fileInfo array structure for a specific image slice
      */
     public FileInfoBase getFileInfo(int i) {
         return fileInfo[i];
     }
 
     /**
-     * returns type of filter - low, high, bandpass, or bandstop.
+     * returns type of filter - low, high, bandpass, or bandstop. - TO BE MOVED
      *
      * @return  filterType
      */
@@ -2720,24 +2689,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return filterType;
     }
 
-    /*****************************************************************************/
 
     /**
-     * Float.
+     * Version of get that does NOT perform bounds checking.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the one dimensional data array
      *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
-
-    /**
-     * gversion of get that does NOT perform bounds checking.
-     *
-     * @param   position  position in one dimensional array
-     *
-     * @return  DOCUMENT ME!
+     * @return  The value at that position in the data array.
      */
     public final float getFloat(int position) {
         return (data.getFloat(position));
@@ -2746,9 +2704,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * nD get data fuction where bounds checking is NOT performed.
      *
-     * @param   position  array of coordinate values
+     * @param   position  index into the one dimensional data array
      *
-     * @return  returns true if position in data array range
+     * @return  The value at that position in the data array.
      */
     public final float getFloat(int[] position) {
         int i;
@@ -2770,7 +2728,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array.
      */
     public final float getFloat(int x, int y) {
         return (data.getFloat((y * dimExtents[0]) + x));
@@ -2784,7 +2742,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array.
      */
     public final float getFloat(int x, int y, int z) {
         return (data.getFloat((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
@@ -2798,7 +2756,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   z  z coordinate
      * @param   t  t coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array.
      */
     public final float getFloat(int x, int y, int z, int t) {
         return (data.getFloat((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
@@ -2811,7 +2769,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The interpolated value at that position in the data array.
      */
     public final float getFloatBiLinear(float x, float y) {
 
@@ -2840,7 +2798,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param   x  x coordinate
      * @param   y  y coordinate
-     * @param   c  color index
+     * @param   c  color channel index
      *
      * @return  value at that position in the data array
      */
@@ -2854,7 +2812,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
-     * @param   c  DOCUMENT ME!
+     * @param   c  color channel index
      *
      * @return  value at that position in the data array
      */
@@ -2869,9 +2827,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      * @param   t  t coordinate
-     * @param   c  color value
+     * @param   c  color channel index
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array.
      */
     public final float getFloatC(int x, int y, int z, int t, int c) {
         return (data.getFloat(4 *
@@ -2886,7 +2844,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The value at that position in the data array.
      */
     public final float getFloatTriLinear(float x, float y, float z) {
 
@@ -3061,7 +3019,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! - TO BE MOVED
      *
      * @return  DOCUMENT ME!
      */
@@ -3074,7 +3032,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param   orientation  the Patient-Viewing orientation
      *
-     * @return  dimExtents representing the image height for the viewing orientation
+     * @return  The image height for the viewing orientation
      */
     public int getHeight(int orientation) {
 
@@ -3110,20 +3068,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
     }
 
-    /*****************************************************************************/
 
     /**
-     * Int.
-     *
-     * @param   position  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
-
-    /**
-     * version of get that does NOT perform bounds checking.
+     * Version of get that does NOT perform bounds checking.
      *
      * @param   position  position in one dimensional array
      *
@@ -3185,12 +3132,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
-     * @param   b  DOCUMENT ME!
+     * @param   t  t coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array
      */
-    public final int getInt(int x, int y, int z, int b) {
-        return (data.getInt((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
+    public final int getInt(int x, int y, int z, int t) {
+        return (data.getInt((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
                             (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
@@ -3200,7 +3147,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The interpolated value at that position in the data array
      */
     public final int getIntBiLinear(float x, float y) {
 
@@ -3225,13 +3172,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of get that performs tri-linear interpoloation. Note - does NOT perform bounds checking
+     * Version of get that performs tri-linear interpoloation. Note - does NOT perform bounds checking
      *
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The value at that position in the data array
      */
     public final int getIntTriLinear(float x, float y, float z) {
 
@@ -3284,24 +3231,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return logMagDisp;
     }
 
-    /*****************************************************************************/
 
     /**
-     * Long.
+     * Version of get that does NOT perform bounds checking.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  The index in one dimensional array
      *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
-
-    /**
-     * version of get that does NOT perform bounds checking.
-     *
-     * @param   position  position in one dimensional array
-     *
-     * @return  DOCUMENT ME!
+     * @return  The value at that position in the data array
      */
     public final long getLong(int position) {
         return (data.getLong(position));
@@ -3310,9 +3246,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * nD get data fuction where bounds checking is NOT performed.
      *
-     * @param   position  array of coordinate values
+     * @param   position  The index in one dimensional array
      *
-     * @return  returns true if position in data array range
+     * @return  The value at that position in the data array
      */
     public final long getLong(int[] position) {
         int i;
@@ -3359,12 +3295,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
-     * @param   b  DOCUMENT ME!
+     * @param   t  t coordinate
      *
      * @return  value at that position in the data array
      */
-    public final long getLong(int x, int y, int z, int b) {
-        return (data.getLong((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
+    public final long getLong(int x, int y, int z, int t) {
+        return (data.getLong((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
                              (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
@@ -3374,7 +3310,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The interpolated value at that position in the data array
      */
     public final long getLongBiLinear(float x, float y) {
 
@@ -3399,13 +3335,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * version of get that performs tri-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
+     * Version of get that performs tri-linear interpoloation. <b>Note - does NOT perform bounds checking</b>
      *
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The interpolated value at that position in the data array
      */
     public final long getLongTriLinear(float x, float y, float z) {
 
@@ -3667,16 +3603,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * returns integer telling Butterworth order.
+     * returns integer telling Butterworth order. - TO BE MOVED
      *
-     * @return  int showing Butterworth filter order;
+     * @return  value indicating the Butterworth filter order;
      */
     public final int getOriginalButterworthOrder() {
         return originalButterworthOrder;
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! - TO BE MOVED
      *
      * @return  DOCUMENT ME!
      */
@@ -3685,7 +3621,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! - TO BE MOVED
      *
      * @return  DOCUMENT ME!
      */
@@ -3694,7 +3630,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! -TO BE MOVED
      *
      * @return  DOCUMENT ME!
      */
@@ -3731,16 +3667,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! - TO BE MOVED
      *
-     * @return  DOCUMENT ME!
+     * @return  DOCUMENT ME! - to be moved
      */
     public final float getOriginalMaximum() {
         return originalMaximum;
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! - TO BE MOVED
      *
      * @return  DOCUMENT ME!
      */
@@ -3749,7 +3685,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! - TO BE MOVED
      *
      * @return  DOCUMENT ME!
      */
@@ -3757,20 +3693,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return originalStart;
     }
 
-    /****************************************************************************/
-
-    /**
-     * Accessors.
-     *
-     * @return  DOCUMENT ME!
-     */
-
-    /****************************************************************************/
 
     /**
      * Accessor that returns the project information for this image.
      *
-     * @return  FileInfoProject projectInfo structure
+     * @return  ProjectInfo structure
      */
     public FileInfoProject getProjectInfo() {
         return projectInfo;
@@ -3788,9 +3715,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Returns the resolutions for the image without regarding resolution difference between slices.
      *
-     * @param   index  DOCUMENT ME!
+     * @param   index  The index indicating which data slice to exact the resolutions
      *
-     * @return  the resolutions for the image
+     * @return  the resolutions for the data slice
      */
     public float[] getResolutions(int index) {
 
@@ -3832,24 +3759,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return resReturn;
     }
 
-    /*****************************************************************************/
 
     /**
-     * Short.
+     * Version of get that does NOT perform bounds checking.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  The index into the one dimensional array
      *
-     * @return  DOCUMENT ME!
-     */
-
-    /*****************************************************************************/
-
-    /**
-     * version of get that does NOT perform bounds checking.
-     *
-     * @param   position  position in one dimensional array
-     *
-     * @return  DOCUMENT ME!
+     * @return  The value at that position in the data array
      */
     public final short getShort(int position) {
         return (data.getShort(position));
@@ -3858,9 +3774,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * nD get data fuction where bounds checking is NOT performed.
      *
-     * @param   position  array of coordinate values
+     * @param   position  The index into the one dimensional array
      *
-     * @return  returns true if position in data array range
+     * @return  The value at that position in the data array
      */
     public final short getShort(int[] position) {
         int i;
@@ -3907,12 +3823,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
-     * @param   b  DOCUMENT ME!
+     * @param   t  t coordinate
      *
      * @return  value at that position in the data array
      */
-    public final short getShort(int x, int y, int z, int b) {
-        return (data.getShort((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
+    public final short getShort(int x, int y, int z, int t) {
+        return (data.getShort((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
                               (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
@@ -3922,7 +3838,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The value at that position in the data array
      */
     public final short getShortBiLinear(float x, float y) {
 
@@ -3953,7 +3869,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The intoplated value at that position in the data array
      */
     public final short getShortTriLinear(float x, float y, float z) {
 
@@ -3989,7 +3905,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * returns standard deviation U of filter.
+     * returns standard deviation U of filter. TO BE MOVED
      *
      * @return  sigmaU
      */
@@ -3998,7 +3914,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * returns standard deviation V of filter.
+     * returns standard deviation V of filter. TO BE MOVED
      *
      * @return  sigmaV
      */
@@ -4009,7 +3925,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the total size(length) of the data array.
      *
-     * @return  int indicating the number of data points in the dataArray
+     * @return  Value indicating the number of data points in the data array
      */
     public final int getSize() {
         return dataSize;
@@ -4027,7 +3943,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the smallest magnitude negative value in the dataArray.
      *
-     * @return  double indicating smallest magnitude negative value in the dataArray NaN if no negative value is present
+     * @return  value indicating smallest magnitude negative value in the dataArray NaN if no negative value is present
      */
     public double getSmallestMagnitudeNegative() {
         return smallestMagnitudeNegative;
@@ -4036,7 +3952,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the smallest magnitude negative blue value in the dataArray.
      *
-     * @return  double indicating smallest magnitude negative blue value in the dataArray NaN if no negative blue value
+     * @return  value indicating smallest magnitude negative blue value in the dataArray NaN if no negative blue value
      *          is present
      */
     public double getSmallestMagnitudeNegativeB() {
@@ -4046,8 +3962,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the smallest magnitude negative green value in the dataArray.
      *
-     * @return  double indicating smallest magnitude negative green value in the dataArray NaN if no negative green
-     *          value is present
+     * @return  value indicating smallest magnitude negative green value in the dataArray NaN if no negative green value
+     *          is present
      */
     public double getSmallestMagnitudeNegativeG() {
         return smallestMagnitudeNegativeG;
@@ -4056,7 +3972,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the smallest magnitude negative red value in the dataArray.
      *
-     * @return  double indicating smallest magnitude negative red value in the dataArray NaN if no negative red value is
+     * @return  value indicating smallest magnitude negative red value in the dataArray NaN if no negative red value is
      *          present
      */
     public double getSmallestMagnitudeNegativeR() {
@@ -4066,7 +3982,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the smallest magnitude positive value in the dataArray.
      *
-     * @return  double indicating smallest magnitude positive value in the dataArray NaN if no positive value is present
+     * @return  value indicating smallest magnitude positive value in the dataArray NaN if no positive value is present
      */
     public double getSmallestMagnitudePositive() {
         return smallestMagnitudePositive;
@@ -4075,7 +3991,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the smallest magnitude positive blue value in the dataArray.
      *
-     * @return  double indicating smallest magnitude positive blue value in the dataArray NaN if no positive blue value
+     * @return  value indicating smallest magnitude positive blue value in the dataArray NaN if no positive blue value
      *          is present
      */
     public double getSmallestMagnitudePositiveB() {
@@ -4085,8 +4001,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the smallest magnitude positive green value in the dataArray.
      *
-     * @return  double indicating smallest magnitude positive green value in the dataArray NaN if no positive green
-     *          value is present
+     * @return  value indicating smallest magnitude positive green value in the dataArray NaN if no positive green value
+     *          is present
      */
     public double getSmallestMagnitudePositiveG() {
         return smallestMagnitudePositiveG;
@@ -4095,7 +4011,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the smallest magnitude positive red value in the dataArray.
      *
-     * @return  double indicating smallest magnitude positive red value in the dataArray NaN if no positive red value is
+     * @return  value indicating smallest magnitude positive red value in the dataArray NaN if no positive red value is
      *          present
      */
     public double getSmallestMagnitudePositiveR() {
@@ -4136,7 +4052,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * returns roation angle theta in radians of filter.
+     * Returns roation angle theta in radians of filter. TO BE MOVED
      *
      * @return  theta
      */
@@ -4151,7 +4067,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  DOCUMENT ME!
+     * @return  The introplated value at that position in the data array
      */
     public final Number getTriLinear(float x, float y, float z) {
 
@@ -4194,9 +4110,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * Accessor that returns the image type.
+     * Accessor that returns the image buffer type.
      *
-     * @return  int indicating image type
+     * @return  Indicates the data buffer type
      */
     public final int getType() {
         return bufferType;
@@ -4205,7 +4121,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that returns the image type.
      *
-     * @return  int indicating image type
+     * @return  The data buffer type as a String.
      */
     public final String getTypeString() {
 
@@ -4244,9 +4160,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * version of get that does NOT perform bounds checking.
      *
-     * @param   position  position in one dimensional array
+     * @param   position  The index into the one dimensional array
      *
-     * @return  returns true if position in data array range
+     * @return  DOCUMENT ME!
      */
     public final short getUByte(int position) {
         return (data.getUByte(position));
@@ -4255,9 +4171,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * nD get data fuction where bounds checking is NOT performed.
      *
-     * @param   position  array of coordinate values
+     * @param   position  The index into the one dimensional array
      *
-     * @return  returns true if position in data array range
+     * @return  The value at that position in the data array
      */
     public final short getUByte(int[] position) {
         int i;
@@ -4279,7 +4195,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The interpolated value at that position in the data array.
      */
     public final short getUByte(int x, int y) {
         return (data.getUByte((y * dimExtents[0]) + x));
@@ -4292,20 +4208,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array.
      */
     public final short getUByte(int x, int y, int z) {
         return (data.getUByte((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
-
-    /*
-     *   4D get data fuction where bounds checking is NOT performed  @param x          x coordinate  @param y          y
-     * coordinate  @param z          z coordinate  @return           value at that position in the data array
-     *
-     * public final short getUByte(int x, int y, int z, int b) { return
-     * (data.getUByte(b*(dimExtents[0]*dimExtents[1]*dimExtents[2]) + z*(dimExtents[0]*dimExtents[1]) + y*dimExtents[0]
-     * + x)); }
-     */
 
     /**
      * Version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
@@ -4313,7 +4220,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  returns true if position in data array range
+     * @return  The interpolated value at that position in the data array.
      */
     public final short getUByteBiLinear(float x, float y) {
 
@@ -4344,7 +4251,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  returns true if position in data array range
+     * @return  The interpolated value at that position in the data array.
      */
     public final short getUByteTriLinear(float x, float y, float z) {
 
@@ -4384,7 +4291,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param   position  position in one dimensional array
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array.
      */
     public final long getUInt(int position) {
         return (data.getUInt(position));
@@ -4393,9 +4300,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * nD get data fuction where bounds checking is NOT performed.
      *
-     * @param   position  array of coordinate values
+     * @param   position  The index into the array of data.
      *
-     * @return  returns true if position in data array range
+     * @return  The value at that position in the data array.
      */
     public final long getUInt(int[] position) {
         int i;
@@ -4442,12 +4349,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
-     * @param   b  DOCUMENT ME!
+     * @param   t  t coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array.
      */
-    public final long getUInt(int x, int y, int z, int b) {
-        return (data.getUInt((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
+    public final long getUInt(int x, int y, int z, int t) {
+        return (data.getUInt((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
                              (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
@@ -4457,7 +4364,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  returns true if position in data array range
+     * @return  The value at that position in the data array.
      */
     public final long getUIntBiLinear(float x, float y) {
 
@@ -4488,7 +4395,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  returns true if position in data array range
+     * @return  The interpolated value at that position in the data array.
      */
     public final long getUIntTriLinear(float x, float y, float z) {
 
@@ -4524,9 +4431,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * Accessor that returns the boolean indicating if unequal dimensions are allowed in complex images.
+     * Accessor that returns the boolean indicating if unequal dimensions are allowed in complex images. TO BE MOVED
      *
-     * @return  boolean telling if unequal dimensions are allowed
+     * @return  Indicated if unequal dimensions are allowed
      */
     public boolean getUnequalDim() {
         return unequalDim;
@@ -4535,7 +4442,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Returns the units used to measure all dimensions of the image.
      *
-     * @return  the units used to measure all dimensions of the image.
+     * @return  The units used to measure all dimensions of the image.
      */
     public int[] getUnitsOfMeasure() {
 
@@ -4549,9 +4456,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Returns the unit used to measure the specific dimension of image.
      *
-     * @param   index  the index of specific dimension
+     * @param   index  The index of specific dimension
      *
-     * @return  the unit used to measure the specific dimension
+     * @return  The unit used to measure the specific dimension
      */
     public int getUnitsOfMeasure(int index) {
 
@@ -4599,9 +4506,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * version of get that does NOT perform bounds checking.
      *
-     * @param   position  position in one dimensional array
+     * @param   position  The index into the one dimensional array
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array
      */
     public final int getUShort(int position) {
         return (data.getUShort(position));
@@ -4610,9 +4517,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * nD get data fuction where bounds checking is NOT performed.
      *
-     * @param   position  array of coordinate values
+     * @param   position  The index into the one dimensional array
      *
-     * @return  returns true if position in data array range
+     * @return  The value at that position in the data array
      */
     public final int getUShort(int[] position) {
         int i;
@@ -4634,7 +4541,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array
      */
     public final int getUShort(int x, int y) {
         return (data.getUShort((y * dimExtents[0]) + x));
@@ -4647,7 +4554,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array
      */
     public final int getUShort(int x, int y, int z) {
         return (data.getUShort((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
@@ -4659,22 +4566,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   x  x coordinate
      * @param   y  y coordinate
      * @param   z  z coordinate
-     * @param   b  DOCUMENT ME!
+     * @param   t  t coordinate
      *
-     * @return  value at that position in the data array
+     * @return  The value at that position in the data array
      */
-    public final int getUShort(int x, int y, int z, int b) {
-        return (data.getUShort((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
+    public final int getUShort(int x, int y, int z, int t) {
+        return (data.getUShort((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
                                (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
 
     /**
-     * version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
+     * Version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
      *
      * @param   x  x coordinate
      * @param   y  y coordinate
      *
-     * @return  returns true if position in data array range
+     * @return  The interpolated value at that position in the data array.
      */
     public final int getUShortBiLinear(float x, float y) {
 
@@ -4705,7 +4612,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y  y coordinate
      * @param   z  z coordinate
      *
-     * @return  returns true if position in data array range
+     * @return  The interpolated value at that position in the data array.
      */
     public final int getUShortTriLinear(float x, float y, float z) {
 
@@ -4854,7 +4761,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * import boolean (BitSet) data into data array.
+     * Import boolean (BitSet) data into data array.
      *
      * @param   start   indicates starting position in data array
      * @param   values  array where data is to be acquired
@@ -4893,7 +4800,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * import boolean data into data array.
+     * Import boolean data into data array.
      *
      * @param   start   indicates starting position in data array
      * @param   values  array where data is to be acquired
@@ -4931,7 +4838,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * import byte data into data array.
+     * Import byte data into data array.
      *
      * @param   start   indicates starting position in data array
      * @param   values  array where data is to be acquired
@@ -5367,7 +5274,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * disposes of old data and constructs a new buffer of the user specific type if the image in NOT locked.
+     * Disposes of old data and constructs a new buffer of the user specific type if the image in NOT locked.
      *
      * @param      type  type of new buffer
      *
@@ -5387,8 +5294,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * reallocate - disposes of old data and constructs a new buffer of the user specific type if the image in NOT
-     * locked.
+     * Disposes of old data and constructs a new buffer of the user specific type if the image in NOT locked.
      *
      * @param      dimExtents  extents of the buffer in each dimension (multipleid together produces the size of the
      *                         buffer to be allocated
@@ -5409,8 +5315,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * reallocate - disposes of old data and constructs a new buffer of the user specific type if the image in NOT
-     * locked.
+     * Disposes of old data and constructs a new buffer of the user specific type if the image in NOT locked.
      *
      * @param      type        type of new buffer
      * @param      dimExtents  extents of the buffer in each dimension (multiplied together produces the size of the
@@ -5473,7 +5378,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Removes the surface mask from this image.
      *
-     * @param  index  the index of the mask to remove.
+     * @param  index  The index of the mask to remove.
      */
     public void removeSurfaceMask(int index) {
 
@@ -5521,10 +5426,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * set that does perform bounds checking.
+     * Set that does perform bounds checking.
      *
      * @param   position  position in one dimensional array
-     * @param   value     DOCUMENT ME!
+     * @param   value     The value to stored in the data array.
      *
      * @return  returns value if position in data array range
      */
@@ -5542,8 +5447,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * nD set data fuction where bounds checking is performed.
      *
-     * @param   position  array
-     * @param   value     single value array to return data
+     * @param   position  The coordinate into the 1D data array
+     * @param   value     The value to stored in the data array.
      *
      * @return  returns true if position in data array range
      */
@@ -5573,14 +5478,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * Set boolean methods.
+     * version of set that does NOT perform bounds checking @param position position in one dimensional array.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
-
-    /*
-     *   version of set that does NOT perform bounds checking  @param position   position in one dimensional array
+     * @param  position  The index into the data array.
+     * @param  value     The value to stored in the data array.
      */
     public final void set(int position, boolean value) {
         data.setBoolean(position, value);
@@ -5590,7 +5491,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * nD set data fuction where bounds checking is NOT performed.
      *
      * @param  position  array of coordinate values
-     * @param  value     data that will be stored in the data array
+     * @param  value     The value to stored in the data array.
      */
     public final void set(int[] position, boolean value) {
         int i;
@@ -5606,17 +5507,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * Set byte methods.
+     * Version of set that does NOT perform bounds checking.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
-
-    /**
-     * version of set that does NOT perform bounds checking.
-     *
-     * @param  position  position in one dimensional array
-     * @param  value     DOCUMENT ME!
+     * @param  position  The position in one dimensional array
+     * @param  value     The value to stored in the data array.
      */
     public final void set(int position, byte value) {
         data.setByte(position, value);
@@ -5660,18 +5554,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
         data.setShort(location, value);
     }
 
-    /**
-     * Set int methods.
-     *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
 
     /**
-     * version of set that does NOT perform bounds checking.
+     * Version of set that does NOT perform bounds checking.
      *
      * @param  position  position in one dimensional array
-     * @param  value     DOCUMENT ME!
+     * @param  value     The value to stored in the data array.
      */
     public final void set(int position, int value) {
         data.setInt(position, value);
@@ -5700,7 +5588,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * version of set that does NOT perform bounds checking.
      *
      * @param  position  position in one dimensional array
-     * @param  value     DOCUMENT ME!
+     * @param  value     The value to stored in the data array.
      */
     public final void set(int position, long value) {
         data.setLong(position, value);
@@ -5754,18 +5642,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
         data.setFloat(location, value);
     }
 
-    /**
-     * Set double methods.
-     *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
 
     /**
      * version of set that does NOT perform bounds checking.
      *
      * @param  position  position in one dimensional array
-     * @param  value     DOCUMENT ME!
+     * @param  value     The value to stored in the data array.
      */
     public final void set(int position, double value) {
         data.setDouble(position, value);
@@ -5822,7 +5704,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, boolean value) {
         data.setBoolean((y * dimExtents[0]) + x, value);
@@ -5833,7 +5715,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, byte value) {
         data.setByte((y * dimExtents[0]) + x, value);
@@ -5844,7 +5726,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, int value) {
         data.setInt((y * dimExtents[0]) + x, value);
@@ -5855,7 +5737,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, long value) {
         data.setLong((y * dimExtents[0]) + x, value);
@@ -5866,7 +5748,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, float value) {
         data.setFloat((y * dimExtents[0]) + x, value);
@@ -5877,7 +5759,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @param  x      x coordinate
      * @param  y      y coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, double value) {
         data.setDouble((y * dimExtents[0]) + x, value);
@@ -5917,7 +5799,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, int z, boolean value) {
         data.setBoolean((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
@@ -5929,7 +5811,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, int z, byte value) {
         data.setByte((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
@@ -5941,7 +5823,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, int z, short value) {
         data.setShort((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
@@ -5953,7 +5835,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, int z, int value) {
         data.setInt((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
@@ -5965,7 +5847,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, int z, long value) {
         data.setLong((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
@@ -5977,7 +5859,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, int z, float value) {
         data.setFloat((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
@@ -5989,7 +5871,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  value  DOCUMENT ME!
+     * @param  value  The value to stored in the data array.
      */
     public final void set(int x, int y, int z, double value) {
         data.setDouble((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x, value);
@@ -6002,7 +5884,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param   y      y coordinate
      * @param   z      z coordinate
      * @param   b      b coordinate (ie. multi modality images or time)
-     * @param   value  set data array to this value
+     * @param   value  The value to stored in the data array.
      *
      * @return  returns true if position in data array range
      */
@@ -6318,7 +6200,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Sets the dimExtents for this structure.
      *
-     * @param  dims  DOCUMENT ME!
+     * @param  dims  The data's dimensionality.
      */
     public void setExtents(int[] dims) {
         this.dimExtents = (int[]) dims.clone();
@@ -6348,7 +6230,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  _filterType  int
      */
@@ -6357,7 +6239,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  _freq1  float
      */
@@ -6366,7 +6248,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  _freq2  float
      */
@@ -6375,7 +6257,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  _freqU  float
      */
@@ -6384,7 +6266,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  _freqV  float
      */
@@ -6393,7 +6275,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  window  boolean
      */
@@ -6448,7 +6330,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
 
     /**
-     * Accessor that sets the boolean telling if log magnitude display is used in a complex image.
+     * Accessor that sets the boolean telling if log magnitude display is used in a complex image. TO BE MOVED
      *
      * @param  logMagDisplay  DOCUMENT ME!
      */
@@ -6459,7 +6341,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that sets the maximum value in the dataArray.
      *
-     * @param  _max  double indicating maximum value in the dataArray
+     * @param  _max  Indicates the maximum value in the data array
      */
     public void setMax(double _max) {
         max = _max;
@@ -6468,14 +6350,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Accessor that sets the minimum value in the dataArray.
      *
-     * @param  _min  double indicating minimum value in the dataArray
+     * @param  _min  Indicates the minimum value in the data array
      */
     public void setMin(double _min) {
         min = _min;
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  butterworthOrder  DOCUMENT ME!
      */
@@ -6484,7 +6366,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  cropCheckbox  boolean
      */
@@ -6493,7 +6375,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  doCrop  boolean
      */
@@ -6502,7 +6384,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  end  int[]
      */
@@ -6511,7 +6393,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * sets original dimensionality of the images.
+     * Sets original dimensionality of the images. TO BE MOVED
      *
      * @param  dims  int[] dimensionality for x,y, and z ... dimensions
      */
@@ -6520,7 +6402,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  filterConstruction  DOCUMENT ME!
      */
@@ -6529,7 +6411,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  kDim  DOCUMENT ME!
      */
@@ -6538,7 +6420,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  maximum  float
      */
@@ -6547,7 +6429,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  minimum  float
      */
@@ -6556,7 +6438,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  start  int[]
      */
@@ -6623,7 +6505,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  _sigmaU  float
      */
@@ -6632,7 +6514,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  _sigmaV  float
      */
@@ -6641,7 +6523,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * DOCUMENT ME!
+     * DOCUMENT ME! TO BE MOVED
      *
      * @param  _theta  float
      */
@@ -6650,7 +6532,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * sets the type of data.
+     * Sets the type of data.
      *
      * @param  type  the type of data
      */
@@ -6792,16 +6674,16 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param  x      x coordinate
      * @param  y      y coordinate
      * @param  z      z coordinate
-     * @param  b      b coordinate
+     * @param  t      t coordinate
      * @param  value  the new voxel value.
      */
-    public final void setUInt(int x, int y, int z, int b, long value) {
-        data.setUInt((b * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
+    public final void setUInt(int x, int y, int z, int t, long value) {
+        data.setUInt((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) + (z * (dimExtents[0] * dimExtents[1])) +
                      (y * dimExtents[0]) + x, value);
     }
 
     /**
-     * Accessor that sets the boolean telling if unequal dimesnions are allowed in a complex image.
+     * Accessor that sets the boolean telling if unequal dimesnions are allowed in a complex image. TO BE MOVED
      *
      * @param  unequalDimension  DOCUMENT ME!
      */
@@ -6809,18 +6691,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
         unequalDim = unequalDimension;
     }
 
-    /**
-     * Set unsigned short methods.
-     *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
 
     /**
      * Sets the image voxel at the specified position to the specified value.
      *
      * @param  position  position in one dimensional array
-     * @param  value     DOCUMENT ME!
+     * @param  value     The value to stored in the data array.
      */
     public final void setUShort(int position, int value) {
         data.setUShort(position, value);
@@ -7177,7 +7053,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     } // end computeDataSize()
 
     /**
-     * allocates buffer memory of the specified type.
+     * Allocates buffer memory of the specified type.
      *
      * @param  type        type of buffer to allocate
      * @param  dimExtents  extents of the buffer in each dimension (multiplied together produces the size of the buffer
@@ -7202,7 +7078,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * Calls disposeLocal of this class to ensure this class nulls the references to global class variables so that
      * memory will be recovered.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable  Throws an error if the finalization failed.
      */
     protected void finalize() throws Throwable {
         disposeLocal();
