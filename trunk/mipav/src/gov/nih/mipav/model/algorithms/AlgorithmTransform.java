@@ -297,7 +297,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         this.oYdim = oYdim;
         this.interp = interp;
 
-        updateFileInfo(srcImage, destImage, destResolutions);
+     //   updateFileInfo(srcImage, destImage, destResolutions);
     }
 
     /**
@@ -439,7 +439,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         } // end of DIM == 4
 
         destImage = new ModelImage(type, extents, name);
-        updateFileInfo(srcImage, destImage, destResolutions);
+      //  updateFileInfo(srcImage, destImage, destResolutions);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1211,7 +1211,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         oXres = transformedImg.getFileInfo(0).getResolutions()[0];
         oYres = transformedImg.getFileInfo(0).getResolutions()[1];
 
-        updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions());
+        updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(), trans);
 
         int mod = Math.max(1, oYdim / 50);
         int imgLength = iXdim * iYdim;
@@ -1672,7 +1672,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         float[] resolutions = new float[] { oXres, oYres };
 
-        updateFileInfo(image, transformedImg, resolutions);
+        updateFileInfo(image, transformedImg, resolutions, trans);
 
         int roundX, roundY;
         float temp1, temp2;
@@ -3071,7 +3071,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         // int   [] extents      = new int   [] {oXdim, oYdim, oZdim};
         float[] resolutions = new float[] { oXres, oYres, oZres };
 
-        updateFileInfo(image, transformedImg, resolutions);
+        updateFileInfo(image, transformedImg, resolutions, trans);
 
         for (i = 0; i < oXdim; i++) {
             imm = (float) i * oXres;
@@ -3569,7 +3569,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             updateOrigin(this.transMatrix);
         }
 
-        updateFileInfo(srcImage, destImage, destResolutions);
+        updateFileInfo(srcImage, destImage, destResolutions, this.transMatrix);
 
         if (pad && !canPad) {
             MipavUtil.displayError("For padding: interpolation linear and no resampling.");
@@ -3689,15 +3689,16 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param  resultImage  Resultant image.
      * @param  resolutions  DOCUMENT ME!
      */
-    private static void updateFileInfo(ModelImage image, ModelImage resultImage, float[] resolutions) {
+    private static void updateFileInfo(ModelImage image, ModelImage resultImage, float[] resolutions,
+    		TransMatrix matrix) {
+    	//FileInfoBase[] fileInfo = (FileInfoBase[]) (image.getFileInfo().clone());
         FileInfoBase[] fileInfo = resultImage.getFileInfo();
 
+        System.err.println("updateFileInfo");
+        
         if (resultImage.getNDims() == 2) {
-            fileInfo[0].setModality(image.getFileInfo()[0].getModality());
-            fileInfo[0].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
+        	fileInfo[0] = (FileInfoBase)image.getFileInfo(0).clone();
             fileInfo[0].setDataType(resultImage.getType());
-            fileInfo[0].setEndianess(image.getFileInfo()[0].getEndianess());
-            fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
             fileInfo[0].setResolutions(resolutions);
             fileInfo[0].setExtents(resultImage.getExtents());
             fileInfo[0].setMax(resultImage.getMax());
@@ -3705,17 +3706,22 @@ public class AlgorithmTransform extends AlgorithmBase {
             fileInfo[0].setImageOrientation(imgOrient);
             fileInfo[0].setAxisOrientation(axisOrient);
             fileInfo[0].setOrigin(imgOrigin);
-            fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
-            fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
         } else if (resultImage.getNDims() == 3) {
-
-            // System.out.println("direction " + direct[2]);
+        	float [] coord = new float[3];
+        	float [] tempPos = new float[3];
+        	String orientation;
+    
+        	if (image.getFileInfo()[0].getFileFormat() == FileUtility.DICOM) {
+        		System.err.println("doing dicom trans");
+        	}
+        	
             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                fileInfo[i].setModality(image.getFileInfo()[0].getModality());
-                fileInfo[i].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
+            	if (image.getExtents()[2] > i) {
+            		fileInfo[i] = (FileInfoBase)image.getFileInfo(i).clone();
+            	} else {
+            		fileInfo[i] = (FileInfoBase)image.getFileInfo(0).clone();
+            	}
                 fileInfo[i].setDataType(resultImage.getType());
-                fileInfo[i].setEndianess(image.getFileInfo()[0].getEndianess());
-                fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setSliceThickness(resolutions[2]);
                 fileInfo[i].setExtents(resultImage.getExtents());
@@ -3725,12 +3731,44 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setAxisOrientation(axisOrient);
                 imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
                 fileInfo[i].setOrigin(imgOrigin);
-                fileInfo[i].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
-                fileInfo[i].setPhotometric(image.getFileInfo()[0].getPhotometric());
+                
+                if (fileInfo[i].getFileFormat() == FileUtility.DICOM) {
+                	
+                    orientation = (String) ((FileDicomTag) ((FileInfoDicom)fileInfo[i]).getEntry("0020,0032")).getValue(true);
+
+                    if (orientation == null) {
+                        MipavUtil.displayError("Patient Position string = null");
+                    }
+
+                    int index1 = -1, index2 = -1;
+                    
+                    for (int k = 0; k < orientation.length(); k++) {
+
+                        if (orientation.charAt(k) == '\\') {
+
+                            if (index1 == -1) {
+                                index1 = k;
+                            } else {
+                                index2 = k;
+                            }
+                        }
+                    }
+
+                    coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                    coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                    coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+                    
+
+                    matrix.transform(coord[0], coord[1], coord[2], tempPos);
+                    
+                    //System.err.println("transformed " + orientation + " to: " +tempPos[0] + " " + tempPos[1] + " " + tempPos[2]);
+                    
+                    orientation = tempPos[0] + "\\" + tempPos[1] + "\\" + tempPos[2];
+                   ((FileInfoDicom)fileInfo[i]).setValue("0020,0032", orientation);                    
+                }
+                
             }
         } else if (resultImage.getNDims() == 4) {
-            fileInfo = resultImage.getFileInfo();
-
             for (int i = 0; i < (resultImage.getExtents()[2] * resultImage.getExtents()[3]); i++) {
                 fileInfo[i].setModality(image.getFileInfo()[0].getModality());
                 fileInfo[i].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
@@ -3750,6 +3788,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setPhotometric(image.getFileInfo()[0].getPhotometric());
             }
         }
+        
+        resultImage.setFileInfo(fileInfo);
     }
 
     /**
@@ -3759,6 +3799,8 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private static void updateOrigin(TransMatrix xfrm) {
 
+    	//xfrm.invert();
+    	
         if (xfrm.getNCols() == 3) {
             float[] tempOrigin = new float[2];
 
@@ -3774,10 +3816,12 @@ public class AlgorithmTransform extends AlgorithmBase {
             imgOrigin[2] = tempOrigin[2];
         }
 
+        //xfrm.invert();
+        
     }
 
     /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
+     * Constructs a string of the construction parameters and outputs the string to the message frame if the logging
      * procedure is turned on.
      */
     private void constructLog() {
