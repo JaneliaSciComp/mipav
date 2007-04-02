@@ -97,7 +97,7 @@ public class EllipticIntegral {
     // Number of repetitions = N - 1
     private int N = 12; // 6
     
-    //private double TINY = 3.0E-138;  // 3.0E-38
+    private double TINY = 3.0E-138;  // 3.0E-38
     
     //private double BIG = 3.0E137; // 3.0E37
     
@@ -109,9 +109,9 @@ public class EllipticIntegral {
     
     private double C4 = 1.0/14.0;
     
-    //private double TINYd = 1.0E-125; // 1.0E-25
+    private double TINYd = 1.0E-125; // 1.0E-25
     
-    //private double BIGd = 4.5E121; // 4.5E21
+    private double BIGd = 4.5E121; // 4.5E21
     
     private double C1d = 3.0/14.0;
     
@@ -478,6 +478,7 @@ public class EllipticIntegral {
             
             errorFlag[0] = 0;
             source = MORITA_SOURCE;
+            complementaryModulusUsed = false;
             complete = true;
             runcel12 = false;
             useStandardMethod = true;
@@ -546,7 +547,21 @@ public class EllipticIntegral {
                     UI.setDataText("Morita Carlson's gave error\n");
                 }
                 else {
-                    UI.setDataText("Morita Carlson's: F(" + modr + ", " + phir + ") = " + firstr[0] + "  i * " + firsti[0] +
+                    UI.setDataText("Morita standard Carlson's: F(" + modr + ", " + phir + ") = " + firstr[0] + "  i * " + firsti[0] +
+                                   "  E(" + modr + ", " + phir  + ") = " + secondr[0] + "  i * " + secondi[0] + "\n");
+                }
+                
+                errorFlag[0] = 0;
+                source = MORITA_SOURCE;
+                complete = false;
+                runcel12 = false;
+                useStandardMethod = false;
+                run();
+                if (errorFlag[0] != 0) {
+                    UI.setDataText("Morita short Carlson's gave error\n");
+                }
+                else {
+                    UI.setDataText("Morita short Carlson's: F(" + modr + ", " + phir + ") = " + firstr[0] + "  i * " + firsti[0] +
                                    "  E(" + modr + ", " + phir  + ") = " + secondr[0] + "  i * " + secondi[0] + "\n");
                 }
                 
@@ -690,6 +705,13 @@ public class EllipticIntegral {
         double tr[] = new double[1];
         double ti[] = new double[1];
         
+        if (zabs(ckr, ckr) < TINY) {
+            firstr[0] = Double.NaN;
+            firsti[0] = 0.0;
+            secondr[0] = Double.NaN;
+            secondi[0] = 0.0;
+            return;
+        }
         kcr[0] = ckr;
         kci[0] = cki;
         zmlt(ckr, cki, ckr, cki, tar, tai);
@@ -740,17 +762,17 @@ public class EllipticIntegral {
         double qr;
         double qi;
         
+        zsin(phir, phii, sr, si);
+        zmlt(sr[0], si[0], akr, aki, sk2r, sk2i);
+        zmlt(sk2r[0], sk2i[0], sk2r[0], sk2i[0], sk2r, sk2i);
         if (sgnck == 0) {
             cr[0] = 0.0;
             ci[0] = 0.0;
             qrtr[0] = ckr;
             qrti[0] = cki;
         } // if (sgnck == 0)
-        else {
-            zsin(phir, phii, sr, si);
+        else {  
             zcos(phir, phii, cr, ci);
-            zmlt(sr[0], si[0], akr, aki, sk2r, sk2i);
-            zmlt(sk2r[0], sk2i[0], sk2r[0], sk2i[0], sk2r, sk2i);
             qr = 1.0 - sk2r[0];
             qi = -sk2i[0];
             sqrtc(qr, qi, qrtr, qrti);
@@ -764,6 +786,13 @@ public class EllipticIntegral {
         }
         else {
             rfrdb(cr[0], ci[0], qrtr[0], qrti[0]);    
+        }
+        if (Double.isNaN(rdr[0])) {
+            firstr[0] = Double.NaN;
+            firsti[0] = 0.0;
+            secondr[0] = Double.NaN;
+            secondi[0] = 0.0;
+            return;
         }
         zmlt(sr[0], si[0], rfr[0], rfi[0], firstr, firsti);
         zmlt(sr[0], si[0], sk2r[0], sk2i[0], secondr, secondi);
@@ -836,6 +865,11 @@ public class EllipticIntegral {
        sqrtyi[0] = yrti;
        zmlt(xrtr, xrti, xrtr, xrti, xtr, xti);
        zmlt(yrtr, yrti, yrtr, yrti, ytr, yti);
+       if ((zabs(xtr[0] + ytr[0], xti[0] + yti[0]) < TINYd) || (zabs(xtr[0], xti[0]) > BIGd) ||
+           (zabs(ytr[0], yti[0]) > BIGd)) {
+           rdr[0] = Double.NaN;
+           return;
+       }
        facr[0] = 1.0;
        faci[0] = 0.0;
        sumdr = 0.0;
@@ -971,6 +1005,11 @@ public class EllipticIntegral {
         sqrtyi[0] = yrti;
         zmlt(xrtr, xrti, xrtr, xrti, xtr, xti);
         zmlt(yrtr, yrti, yrtr, yrti, ytr, yti);
+        if ((zabs(xtr[0] + ytr[0], xti[0] + yti[0]) < TINYd) || (zabs(xtr[0], xti[0]) > BIGd) ||
+                (zabs(ytr[0], yti[0]) > BIGd)) {
+                rdr[0] = Double.NaN;
+                return;
+            }
         facr[0] = 1.0;
         faci[0] = 0.0;
         sumdr = 0.0;
