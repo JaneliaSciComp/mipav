@@ -473,6 +473,7 @@ public class ViewMenuBar {
                              new JMenuItem[] {
                                  menuBuilder.buildMenuItem("Circle to rectangle", "CircleToRec", 0, null, false),
                                  menuBuilder.buildMenuItem("Circular sector to rectangle", "CirToRec", 0, null, false),
+                                 menuBuilder.buildMenuItem("Ellipse to circle", "EllipseToCircle", 0, null, false),
                                  menuBuilder.buildMenuItem("Reslice - isotropic voxels", null, 0, null, false),
                                  menuBuilder.buildMenuItem("Subsample", "subsample", 0, null, false),
                                  menuBuilder.buildMenuItem("Transform", null, 0, null, false),
@@ -1227,6 +1228,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
             menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
+            menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
@@ -1240,6 +1242,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
             menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
+            menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("3D rectangle", false);
             menuBuilder.setMenuItemEnabled("Animate", false);
