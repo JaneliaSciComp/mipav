@@ -1100,6 +1100,10 @@ public class ViewOpenImageSequence extends JFrame
         filenameTableSorter = new TableSorter(filenameTableModel);
         filenameTable = new JTable(filenameTableSorter);
         filenameTable.addKeyListener(this);
+        filenameTableSorter.setColumnComparator(new Integer(0).getClass(), TableSorter.COMPARABLE_COMPARATOR);
+        filenameTableSorter.setColumnComparator(new Double("0.0").getClass(), TableSorter.COMPARABLE_COMPARATOR);
+        filenameTableSorter.setColumnComparator(new Float("0.0").getClass(), TableSorter.COMPARABLE_COMPARATOR);
+        filenameTableSorter.setColumnComparator(new String().getClass(), TableSorter.LEXICAL_COMPARATOR);
         filenameTableSorter.setTableHeader(filenameTable.getTableHeader());
         //MouseListener tableListener = new TableListener();
         
