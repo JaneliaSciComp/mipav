@@ -29,7 +29,7 @@ import javax.swing.table.*;
  * image.
  */
 public class ViewOpenImageSequence extends JFrame
-        implements ActionListener, ListSelectionListener, PreviewImageContainer, MouseListener, KeyListener,
+        implements ActionListener, PreviewImageContainer, MouseListener, KeyListener,
                    ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ public class ViewOpenImageSequence extends JFrame
     protected File[] fileListData;
 
     /** DOCUMENT ME! */
-    protected JList filenameList;
+    //protected JList filenameList;
 
     /** DOCUMENT ME! */
     protected JLabel lblOrigDim;
@@ -161,6 +161,17 @@ public class ViewOpenImageSequence extends JFrame
 
     /** DOCUMENT ME! */
     int[] channelMap;
+    
+    /** DOCUMENT ME! */
+    private SortingTableModel filenameTableModel;
+    
+    /** DOCUMENT ME! */
+    private TableSorter filenameTableSorter;
+    
+    /** DOCUMENT ME! */
+    private JTable filenameTable;
+    
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -229,18 +240,21 @@ public class ViewOpenImageSequence extends JFrame
                 // filter out files that don't have same file extension as selected file
                 fileListVector = filterFileExtension(fileListVector, selectedFile);
 
-                // put the list of files into the JList component for display
-                filenameList.setListData(fileListVector);
+                for(int i=0;i<fileListVector.size();i++) {
+                	Vector newRow = new Vector();
+                	newRow.addElement(fileListVector.get(i));
+                	filenameTableModel.addRow(newRow);
+                }
+                
 
                 while (table.getModel().getRowCount() > 0) // reset table
                 {
                     ((DefaultTableModel) table.getModel()).removeRow(0);
                 }
 
-                if (filenameList.getModel().getSize() > 0) // auto-select first entry
-                {
-                    filenameList.setSelectedIndex(0);
-                    makePreview(currentPath.getName(), (String) filenameList.getModel().getElementAt(0));
+                if(filenameTableModel.getRowCount() > 0) { //auto-select first entry
+                	filenameTable.setRowSelectionInterval(0, 0);
+                	makePreview(currentPath.getAbsolutePath() + File.separator, (String) filenameTable.getValueAt(0, 0));
                 }
             }
         } else if (command.equals(APPLY)) {
@@ -251,10 +265,9 @@ public class ViewOpenImageSequence extends JFrame
                 return;
             }
 
-            if (filenameList.getModel().getSize() == 0) {
-                return;
+            if(filenameTable.getRowCount() == 0) {
+            	return;
             }
-
             // save dimensions parameters for next time
             Preferences.setLastOpenSequenceParams(txtSlices.getText(), txtChannels.getText(), txtTimePoints.getText(),
                                                   String.valueOf(getSelectedSequence()));
@@ -264,7 +277,7 @@ public class ViewOpenImageSequence extends JFrame
         } else if (command.equals(FILTER)) {
 
             // constrain list data to selected items
-            filenameList.setListData(filenameList.getSelectedValues());
+        	keepSelected();
         } else if (command.equals(REMOVE)) {
 
             // crop list data from selected items
@@ -319,7 +332,10 @@ public class ViewOpenImageSequence extends JFrame
      *
      * @param  event  DOCUMENT ME!
      */
-    public void keyPressed(KeyEvent event) { }
+    public void keyPressed(KeyEvent event) { 
+    	
+    	
+    }
 
     /**
      * DOCUMENT ME!
@@ -329,7 +345,6 @@ public class ViewOpenImageSequence extends JFrame
     public void keyReleased(KeyEvent event) {
 
         if (event.getSource() == table) {
-
             if (table.getSelectedColumn() != 0) {
                 String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
                 String filename = (String) table.getModel().getValueAt(table.getSelectedRow(),
@@ -338,6 +353,7 @@ public class ViewOpenImageSequence extends JFrame
                 makePreview(currentPath, filename);
             }
         }
+        
     }
 
     /**
@@ -376,14 +392,22 @@ public class ViewOpenImageSequence extends JFrame
     public void mousePressed(MouseEvent event) {
 
         if (event.getButton() == MouseEvent.BUTTON1) {
-
-            if (table.getSelectedColumn() != 0) {
-                String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
-                String filename = (String) table.getModel().getValueAt(table.getSelectedRow(),
-                                                                       table.getSelectedColumn());
-
-                makePreview(currentPath, filename);
-            }
+        	if(event.getSource() == table) {
+	            if (table.getSelectedColumn() != 0) {
+	                String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
+	                String filename = (String) table.getModel().getValueAt(table.getSelectedRow(),
+	                                                                       table.getSelectedColumn());
+	
+	                makePreview(currentPath, filename);
+	            }
+        	}
+        	if(event.getSource() == filenameTable) {
+            	int selectedIndex = filenameTable.getSelectedRow();
+            	makePreview(currentPath.getAbsolutePath() + File.separator, (String) filenameTable.getValueAt(selectedIndex, 0));
+        	}
+        	
+            
+            
         }
     }
 
@@ -433,17 +457,6 @@ public class ViewOpenImageSequence extends JFrame
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
-     */
-    public void valueChanged(ListSelectionEvent event) {
-        String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
-        String selectedFilename = (String) filenameList.getSelectedValue();
-
-        makePreview(currentPath, selectedFilename);
-    }
 
     /**
      * Arrange the table in CTZ order.
@@ -475,8 +488,14 @@ public class ViewOpenImageSequence extends JFrame
                     Vector zSliceVector = new Vector();
 
                     for (int j = 0; j < numSlices; j++) {
+                    	/* nish
                         zSliceVector.addElement(filenameList.getModel().getElementAt((j * numTimePoints * numChannels) +
-                                                                                     (numChannels * i) + k));
+                                                                                     (numChannels * i) + k)); */
+                    	zSliceVector.addElement(filenameTable.getValueAt((j * numTimePoints * numChannels) + (numChannels * i) + k, 0));
+                          
+                    	
+                    	
+                    	
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -521,8 +540,12 @@ public class ViewOpenImageSequence extends JFrame
                     Vector zSliceVector = new Vector();
 
                     for (int j = 0; j < (numSlices * numChannels); j += numChannels) {
+                    	/* nish
                         zSliceVector.addElement(filenameList.getModel().getElementAt(j + k +
-                                                                                     (numSlices * numChannels * i)));
+                                                                                     (numSlices * numChannels * i))); */
+                    	
+                    	zSliceVector.addElement(filenameTable.getValueAt(j + k + (numSlices * numChannels * i), 0));
+                    	
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -567,8 +590,12 @@ public class ViewOpenImageSequence extends JFrame
                     Vector zSliceVector = new Vector();
 
                     for (int j = 0; j < numSlices; j++) {
+                    	/* nish
                         zSliceVector.addElement(filenameList.getModel().getElementAt((j * numTimePoints * numChannels) +
-                                                                                     (k * numTimePoints) + i));
+                                                                                     (k * numTimePoints) + i)); */
+                    	
+                    	
+                    	zSliceVector.addElement(filenameTable.getValueAt((j * numTimePoints * numChannels) + (k * numTimePoints) + i, 0));
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -610,7 +637,11 @@ public class ViewOpenImageSequence extends JFrame
                 Vector timePointVector = new Vector();
 
                 for (int k = 0; k < (numChannels * numSlices); k++) {
-                    timePointVector.addElement(filenameList.getModel().getElementAt((k * numTimePoints) + i));
+                	/* nish
+                    timePointVector.addElement(filenameList.getModel().getElementAt((k * numTimePoints) + i)); */
+                	
+                	
+                	timePointVector.addElement(filenameTable.getValueAt((k * numTimePoints) + i, 0));
                 }
 
                 tableModel.addColumn("Time point " + (i + 1), timePointVector);
@@ -652,8 +683,11 @@ public class ViewOpenImageSequence extends JFrame
                     Vector zSliceVector = new Vector();
 
                     for (int j = 0; j < numSlices; j++) {
+                    	/* nish
                         zSliceVector.addElement(filenameList.getModel().getElementAt((j + (k * numSlices)) +
-                                                                                     (i * numSlices * numChannels)));
+                                                                                     (i * numSlices * numChannels))); */
+                    	
+                    	zSliceVector.addElement(filenameTable.getValueAt((j + (k * numSlices)) + (i * numSlices * numChannels), 0));
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -698,8 +732,11 @@ public class ViewOpenImageSequence extends JFrame
                     Vector zSliceVector = new Vector();
 
                     for (int j = 0; j < numSlices; j++) {
+                    	/* nish
                         zSliceVector.addElement(filenameList.getModel().getElementAt(j + (numSlices * i) +
-                                                                                     (numTimePoints * numSlices * k)));
+                                                                                     (numTimePoints * numSlices * k))); */
+                    	
+                    	zSliceVector.addElement(filenameTable.getValueAt(j + (numSlices * i) + (numTimePoints * numSlices * k), 0));
                     }
 
                     timePointVector.addAll(zSliceVector);
@@ -1057,13 +1094,30 @@ public class ViewOpenImageSequence extends JFrame
     protected JPanel buildLeftSubPanel() {
         JPanel leftSubPanel = new JPanel(new BorderLayout());
         leftSubPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "File list"));
-
+        
+        
+        filenameTableModel = new SortingTableModel();
+        filenameTableSorter = new TableSorter(filenameTableModel);
+        filenameTable = new JTable(filenameTableSorter);
+        filenameTable.addKeyListener(this);
+        filenameTableSorter.setTableHeader(filenameTable.getTableHeader());
+        //MouseListener tableListener = new TableListener();
+        
+        filenameTable.addMouseListener(this);
+        filenameTableModel.addColumn("File Name");
+        filenameTable.setDefaultRenderer(new String().getClass(), new MIPAVTableCellRenderer());
+        
+        
+        
+        
         /** adding the filename scroll pane **/
-        filenameList = new JList();
+        //filenameList = new JList();
 
-        JScrollPane scrollPane = new JScrollPane(filenameList);
-        filenameList.addListSelectionListener(this);
-        filenameList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        //JScrollPane scrollPane = new JScrollPane(filenameList);
+        //filenameList.addListSelectionListener(this);
+        //filenameList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        
+        JScrollPane scrollPane = new JScrollPane(filenameTable);
         leftSubPanel.add(scrollPane, BorderLayout.CENTER);
 
         /** end adding the filename scroll pane **/
@@ -1621,7 +1675,6 @@ public class ViewOpenImageSequence extends JFrame
      * @param  selectedFilename  String
      */
     private void makePreview(String currentPath, String selectedFilename) {
-
         if ((selectedFilename == null) || (currentPath == null) || selectedFilename.equals(previewFilename)) {
             return; // prevent multiple image loads/redraws
         } else {
@@ -1661,6 +1714,7 @@ public class ViewOpenImageSequence extends JFrame
                 txtHeight.setText(String.valueOf(modelImage.getExtents()[1] / 2));
             }
         } catch (Exception e) {
+        	System.out.println("errr");
             Preferences.debug(e.getMessage());
         } finally {
             modelImage.disposeLocal();
@@ -1671,20 +1725,54 @@ public class ViewOpenImageSequence extends JFrame
      * Method removed selected items from the file list.
      */
     private void removeSelected() {
-        int[] selectedIndices = filenameList.getSelectedIndices();
-
-        ListModel listModel = filenameList.getModel();
-        Vector listData = new Vector();
-
-        for (int i = 0; i < listModel.getSize(); i++) {
-            listData.addElement(listModel.getElementAt(i));
-        }
-
-        for (int i = selectedIndices.length - 1; i >= 0; i--) {
-            listData.removeElementAt(selectedIndices[i]);
-        }
-
-        filenameList.setListData(listData);
+    	int[] selectedRows  = filenameTable.getSelectedRows();
+    	if(selectedRows.length > 0) {
+    		Vector fileVect = new Vector();
+	    	int rowCount = filenameTableModel.getRowCount();
+	    	for (int i=0;i<rowCount;i++) {
+	    		if(!filenameTable.isRowSelected(i)) {
+	    			fileVect.addElement(filenameTableModel.getValueAt(i, 0));
+	    		}	
+	    	}
+	    	for(int i=rowCount-1;i >=0;i--)
+	    	   {
+	    		filenameTableModel.removeRow(i); 
+	    	   }
+	    	for(int i=0;i<fileVect.size();i++) {
+            	Vector newRow = new Vector();
+            	newRow.addElement(fileVect.get(i));
+            	filenameTableModel.addRow(newRow);
+            }
+    	}
+    }
+    
+    
+    
+    
+    
+    /**
+     * Method keep selected items from the file list.
+     */
+    private void keepSelected() {
+    	int[] selectedRows  = filenameTable.getSelectedRows();
+    	if(selectedRows.length > 0) {
+    		Vector fileVect = new Vector();
+	    	int rowCount = filenameTableModel.getRowCount();
+	    	for (int i=0;i<rowCount;i++) {
+	    		if(filenameTable.isRowSelected(i)) {
+	    			fileVect.addElement(filenameTableModel.getValueAt(i, 0));
+	    		}	
+	    	}
+	    	for(int i=rowCount-1;i >=0;i--)
+	    	   {
+	    		filenameTableModel.removeRow(i); 
+	    	   }
+	    	for(int i=0;i<fileVect.size();i++) {
+            	Vector newRow = new Vector();
+            	newRow.addElement(fileVect.get(i));
+            	filenameTableModel.addRow(newRow);
+            }
+    	}
     }
 
     /**
@@ -1729,4 +1817,6 @@ public class ViewOpenImageSequence extends JFrame
         } catch (NumberFormatException nfe) { }
     }
 
+
 }
+
