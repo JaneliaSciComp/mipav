@@ -104,7 +104,7 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("DTI Sorting Process " + " testVersion: 1.0  Date: 3.30.07 ");
+        setTitle("DTI Sorting Process " + " test version: 1.1  Date: 4.02.07 ");
         
         GridBagLayout mainPanelGridBagLayout = new GridBagLayout();
         GridBagConstraints mainPanelConstraints = new GridBagConstraints();
