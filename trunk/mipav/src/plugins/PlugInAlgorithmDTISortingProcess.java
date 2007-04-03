@@ -318,12 +318,23 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 					String publicTag00180024 = ((String)fileInfoDicom.getValue("0018,0024"));
 					String privateTag00431039 = null;
 					String privateTag001910B9 = null;
-					if(fileInfoDicom.getValue("0043,1039") != null) {
-						privateTag00431039 = (String) fileInfoDicom.getValue("0043,1039");
+					try {
+						if(fileInfoDicom.getValue("0043,1039") != null) {
+							privateTag00431039 = (String) fileInfoDicom.getValue("0043,1039");
+						}
+					}
+					catch(NullPointerException e) {
+						privateTag00431039 = null;
 					}
 
-					if(fileInfoDicom.getValue("0019,10B9") != null) {
-						privateTag001910B9 = (String) fileInfoDicom.getValue("0019,10B9");
+					
+					try {
+						if(fileInfoDicom.getValue("0019,10B9") != null) {
+							privateTag001910B9 = (String) fileInfoDicom.getValue("0019,10B9");
+						}
+					}
+					catch(NullPointerException e) {
+						privateTag001910B9 = null;
 					}
 					String absPath = fileInfoDicom.getFileDirectory();
 					String fileName = fileInfoDicom.getFileName();
