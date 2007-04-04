@@ -66,6 +66,18 @@ import gov.nih.mipav.view.*;
  *     Let arctan(w) = z.  Then w = tan(z) and for the incomplete elliptic integral of the second kind:
  *     E(k, z) = elco2(tan(z), kc, a = 1, b = kc*kc) and it can check the incomplete elliptic integral of the second kind for
  *     the same conditions that the incomplete elliptic integral of the first kind can be checked. 
+ *     
+ *     Test results:
+ *     For complete elliptic integrals of the first and second kind with real arguments, the Morita arithmetic-geometric mean, Morita Carlson's, 
+ *     ZHANG comelp, and ZHANG elit all give the same answer.
+ *     
+ *     For incomplete elliptic integrals of the first and second kind with real arguemnts, both Morita Carlson's, ZHANG elit and CERN elco2 give the same answer.
+ *     The problem with the CERN code is that is fails if the real part of z = x + iy is less than zero.  However, from the Wolfram EllipticF documentation,
+ *     the F(z|m) is an odd function with respect to z.  F(-z|m) = -F(z|m), so there is no need to use elco2 for values of x < 0.  Note that the Wolfram m = k*k,
+ *     where k is the modulus used in Computation of Special Functions.
+ *     
+ *     For incomplete elliptic integrals of the first and second kind with complex phi and real modulus, the Morita standard Carlson's and the 
+ *     CERN elco2 give the same answer.
  */
 
 public class EllipticIntegral {
@@ -132,6 +144,8 @@ public class EllipticIntegral {
     private double ERRTOL = 8.0E-3; // 8.0E-2
     
     private double ERRTOLb = 1.5E-6; // 1.5E-3
+    
+    private double THIRD = 1.0/3.0;
     
     private boolean complete;
     
@@ -332,7 +346,7 @@ public class EllipticIntegral {
                 ckr[0] = modr;
                 cki[0] = modi;
                 ckabs = zabs(ckr[0], cki[0]);
-                if (ckabs < 1.0E-10) {
+                if ((ckabs < 1.0E-10) && (Math.abs(phir - pihf) < TINY) && (Math.abs(phii) < TINY)){
                     complete = true;
                     phir = pihf;
                     phii = 0.0;
@@ -350,7 +364,7 @@ public class EllipticIntegral {
                 aki[0] = modi;
                 sqrtc(1.0 - akr[0]*akr[0] + aki[0]*aki[0], -2.0*akr[0]*aki[0], ckr, cki);
                 ckabs = zabs(ckr[0], cki[0]);
-                if (ckabs < 1.0E-10) {
+                if ((ckabs < 1.0E-10) && (Math.abs(phir - pihf) < TINY) && (Math.abs(phii) < TINY)){
                    complete = true; 
                    complementaryModulusUsed = true;
                    phir = pihf;
@@ -461,6 +475,7 @@ public class EllipticIntegral {
             UI.setDataText("modr = " + modr + "\n");
             errorFlag[0] = 0;
             source = MORITA_SOURCE;
+            complementaryModulusUsed = false;
             complete = true;
             runcel12 = true;
             run();
@@ -539,6 +554,7 @@ public class EllipticIntegral {
                 
                 errorFlag[0] = 0;
                 source = MORITA_SOURCE;
+                complementaryModulusUsed = false;
                 complete = false;
                 runcel12 = false;
                 useStandardMethod = true;
@@ -552,7 +568,9 @@ public class EllipticIntegral {
                 }
                 
                 errorFlag[0] = 0;
+                phir = pihf * angle/100.0;
                 source = MORITA_SOURCE;
+                complementaryModulusUsed = false;
                 complete = false;
                 runcel12 = false;
                 useStandardMethod = false;
@@ -566,6 +584,7 @@ public class EllipticIntegral {
                 }
                 
                 errorFlag[0] = 0;
+                phir = pihf * angle/100.0;
                 elit(modr, phir);
                 if (errorFlag[0] != 0) {
                     UI.setDataText("ZHANG elit gave error\n");
@@ -589,6 +608,7 @@ public class EllipticIntegral {
                 
                 errorFlag[0] = 0;
                 // Calculate E(modr, phir)
+                phir = pihf * angle/100.0;
                 elco2(Math.tan(phir), 0.0, kc, 1.0, kc*kc);
                 if (errorFlag[0] != 0) {
                     UI.setDataText("CERN elco2 gave error\n");
@@ -622,6 +642,7 @@ public class EllipticIntegral {
                     
                     errorFlag[0] = 0;
                     source = MORITA_SOURCE;
+                    complementaryModulusUsed = false;
                     complete = false;
                     runcel12 = false;
                     useStandardMethod = true;
@@ -630,14 +651,16 @@ public class EllipticIntegral {
                         UI.setDataText("Morita Carlson's gave error\n");
                     }
                     else {
-                        UI.setDataText("Morita Carlson's: F(" + modr + ", " + phir + ") = " + firstr[0] + "  i * " + firsti[0] +
-                                       "  E(" + modr + ", " + phir  + ") = " + secondr[0] + "  i * " + secondi[0] + "\n");
+                        UI.setDataText("Morita Carlson's: F(" + modr + ", " + phir + ", " + phii + ") = " + firstr[0] + "  i * " + firsti[0] +
+                                       "  E(" + modr + ", " + phir  + ", " + phii + ") = " + secondr[0] + "  i * " + secondi[0] + "\n");
                         firstAbs1 = zabs(firstr[0], firsti[0]);
                         secondAbs1 = zabs(secondr[0], secondi[0]);
                         firstAng1 = Math.atan2(firsti[0], firstr[0]);
                         secondAng1 = Math.atan2(secondi[0], secondr[0]);
                     }
                     
+                    phir = pihf * angler/100.0;
+                    phii = pihf * anglei/100.0;
                     zsin(phir,phii,numr, numi);
                     zcos(phir,phii,denr, deni);
                     zdiv(numr[0], numi[0], denr[0], deni[0], outr, outi);
@@ -653,7 +676,7 @@ public class EllipticIntegral {
                             firsti3 = v[0];
                             firstAbs3 = zabs(firstr3, firsti3);
                             firstAng3 = Math.atan2(firsti3, firstr3);
-                            UI.setDataText("CERN elco2: F(" + modr + ", " + phir + ") = " + firstr3 + " i * " + firsti3 + "\n");
+                            UI.setDataText("CERN elco2: F(" + modr + ", " + phir + ", " + phii + ") = " + firstr3 + " i * " + firsti3 + "\n");
                         }
                         
                         errorFlag[0] = 0;
@@ -667,7 +690,7 @@ public class EllipticIntegral {
                             secondi3 = v[0];
                             secondAbs3 = zabs(secondr3, secondi3);
                             secondAng3 = Math.atan2(secondi3, secondr3);
-                            UI.setDataText("CERN elco2: E(" + modr + ", " + phir + ") = " + secondr3 + " i * " + secondi3 + "\n");
+                            UI.setDataText("CERN elco2: E(" + modr + ", " + phir + ", " + phii + ") = " + secondr3 + " i * " + secondi3 + "\n");
                         }
                         
                         if ((Math.abs((firstAbs3 - firstAbs1)/firstAbs1) > tol) || (Math.abs((secondAbs3 - secondAbs1)/secondAbs1) > tol) ||
@@ -705,10 +728,10 @@ public class EllipticIntegral {
         double tr[] = new double[1];
         double ti[] = new double[1];
         
-        if (zabs(ckr, ckr) < TINY) {
-            firstr[0] = Double.NaN;
+        if (zabs(ckr, cki) < TINY) {
+            firstr[0] = Double.POSITIVE_INFINITY;
             firsti[0] = 0.0;
-            secondr[0] = Double.NaN;
+            secondr[0] = 1.0;
             secondi[0] = 0.0;
             return;
         }
@@ -762,6 +785,15 @@ public class EllipticIntegral {
         double qr;
         double qi;
         
+        
+        if ((Math.abs(phir - pihf) < TINY) && (Math.abs(phii) < TINY) &&
+            (Math.abs(akr - 1.0) < TINY) && (Math.abs(aki) < TINY)) {
+            firstr[0] = Double.POSITIVE_INFINITY;
+            firsti[0] = 0.0;
+            secondr[0] = 1.0;
+            secondi[0] = 0.0;
+            return;    
+        }
         zsin(phir, phii, sr, si);
         zmlt(sr[0], si[0], akr, aki, sk2r, sk2i);
         zmlt(sk2r[0], sk2i[0], sk2r[0], sk2i[0], sk2r, sk2i);
@@ -782,7 +814,8 @@ public class EllipticIntegral {
             }
         }
         if (useStandardMethod) {
-            rfrd(cr[0], ci[0], qrtr[0], qrti[0]);    
+            rfrd(cr[0], ci[0], qrtr[0], qrti[0]);
+            //rfcomplex(cr[0], ci[0], qrtr[0], qrti[0]);
         }
         else {
             rfrdb(cr[0], ci[0], qrtr[0], qrti[0]);    
@@ -1057,6 +1090,101 @@ public class EllipticIntegral {
         return;
     } // rfrdb
     
+    private void rfcomplex(double xrtr, double xrti, double yrtr, double yrti) {
+        double sqrtxr[] = new double[1];
+        double sqrtxi[] = new double[1];
+        double sqrtyr[] = new double[1];
+        double sqrtyi[] = new double[1];
+        double sqrtzr[] = new double[1];
+        double sqrtzi[] = new double[1];
+        double xtr[] = new double[1];
+        double xti[] = new double[1];
+        double ytr[] = new double[1];
+        double yti[] = new double[1];
+        double ztr[] = new double[1];
+        double zti[] = new double[1];
+        double alambr;
+        double alambi;
+        double aver;
+        double avei;
+        double tr1[] = new double[1];
+        double ti1[] = new double[1];
+        double tr2[] = new double[1];
+        double ti2[] = new double[1];
+        double delxr[] = new double[1];
+        double delxi[] = new double[1];
+        double delyr[] = new double[1];
+        double delyi[] = new double[1];
+        double delzr[] = new double[1];
+        double delzi[] = new double[1];
+        double e2r;
+        double e2i;
+        double e3r[] = new double[1];
+        double e3i[] = new double[1];
+        
+        sqrtxr[0] = xrtr;
+        sqrtxi[0] = xrti;
+        sqrtyr[0] = yrtr;
+        sqrtyi[0] = yrti;
+        ztr[0] = 1.0;
+        zti[0] = 0.0;
+        sqrtzr[0] = 1.0;
+        sqrtzi[0] = 0.0;
+        zmlt(xrtr, xrti, xrtr, xrti, xtr, xti);
+        zmlt(yrtr, yrti, yrtr, yrti, ytr, yti);
+        if ((zabs(xtr[0] + ytr[0], xti[0] + yti[0]) < TINYd) || 
+            (zabs(xtr[0] + ztr[0], xti[0] + zti[0]) < TINYd) ||
+            (zabs(ytr[0] + ztr[0], yti[0] + zti[0]) < TINYd) ||
+            (zabs(xtr[0], xti[0]) > BIGd) ||
+            (zabs(ytr[0], yti[0]) > BIGd)) {
+            rfr[0] = Double.NaN;
+            return;
+        }
+        nrep = 0;
+        while (true) {
+            zmlt(sqrtxr[0], sqrtxi[0], sqrtyr[0], sqrtyi[0], tr1, ti1);
+            alambr = tr1[0];
+            alambi = ti1[0];
+            zmlt(sqrtxr[0], sqrtxi[0], sqrtzr[0], sqrtzi[0], tr1, ti1);
+            alambr = alambr + tr1[0];
+            alambi = alambi + ti1[0];
+            zmlt(sqrtyr[0], sqrtyi[0], sqrtzr[0], sqrtzi[0], tr1, ti1);
+            alambr = alambr + tr1[0];
+            alambi = alambi + ti1[0];
+            xtr[0] = 0.25*(xtr[0] + alambr);
+            xti[0] = 0.25*(xti[0] + alambi);
+            ytr[0] = 0.25*(ytr[0] + alambr);
+            yti[0] = 0.25*(yti[0] + alambi);
+            ztr[0] = 0.25*(ztr[0] + alambr);
+            zti[0] = 0.25*(zti[0] + alambi);
+            aver = THIRD*(xtr[0] + ytr[0] + ztr[0]);
+            avei = THIRD*(xti[0] + yti[0] + zti[0]);
+            zdiv(aver - xtr[0], avei - xti[0], aver, avei, delxr, delxi);
+            zdiv(aver - ytr[0], avei - yti[0], aver, avei, delyr, delyi);
+            zdiv(aver - ztr[0], avei - zti[0], aver, avei, delzr, delzi);
+            if ((zabs(delxr[0], delxi[0]) < ERRTOL) && (zabs(delyr[0], delyi[0]) < ERRTOL) &&
+                (zabs(delzr[0], delzi[0]) < ERRTOL)) {
+                break;    
+            }
+            sqrtc(xtr[0], xti[0], sqrtxr, sqrtxi);
+            sqrtc(ytr[0], yti[0], sqrtyr, sqrtyi);
+            sqrtc(ztr[0], zti[0], sqrtzr, sqrtzi);
+            nrep++;
+        } // while (true)
+        zmlt(delxr[0], delxi[0], delyr[0], delyi[0], tr1, ti1);
+        zmlt(delzr[0], delzi[0], delzr[0], delzi[0], tr2, ti2);
+        e2r = tr1[0] - tr2[0];
+        e2i = ti1[0] - ti2[0];
+        zmlt(delxr[0], delxi[0], delyr[0], delyi[0], e3r, e3i);
+        zmlt(e3r[0], e3i[0], delzr[0], delzi[0], e3r, e3i);
+        zmlt(C1*e2r - C2 - C3*e3r[0], C1*e2i - C3*e3i[0], e2r, e2i, tr1, ti1);
+        tr1[0] = 1.0 + tr1[0] + C4*e3r[0];
+        ti1[0] = ti1[0] + C4*e3i[0];
+        sqrtc(aver, avei, tr2, ti2);
+        zdiv(tr1[0], ti1[0], tr2[0], ti2[0], rfr, rfi);
+        return;
+     } // rfcomplex
+    
     // Ported from Computation of Special Functions by Shanjie Zhang and Jianming Jin
     // Computes complete first and second elliptic integrals with a real modulus
     // 0 <= mod <= 1, mod is the modulus
@@ -1068,8 +1196,8 @@ public class EllipticIntegral {
         double be;
         
         pk = 1.0 - mod*mod;
-        if (mod == 1.0) {
-            first[0] = Double.MAX_VALUE;
+        if (Math.abs(mod - 1.0) < TINY) {
+            first[0] = Double.POSITIVE_INFINITY;
             second[0] = 1.0;
         }
         else {
@@ -1114,11 +1242,11 @@ public class EllipticIntegral {
         b0 = Math.sqrt(1.0 - mod*mod);
         d0 = phi;
         r = mod*mod;
-        if ((mod == 1.0) && (phi == pihf)) {
-            first[0] = Double.MAX_VALUE;
+        if ((Math.abs(mod - 1.0) < TINY) && (Math.abs(phi - pihf) < TINY)) {
+            first[0] = Double.POSITIVE_INFINITY;
             second[0] = 1.0;
         }
-        else if (mod == 1.0) {
+        else if (Math.abs(mod - 1.0) < TINY) {
             first[0] = Math.log((1.0 + Math.sin(d0))/Math.cos(d0));
             second[0] = Math.sin(d0);
         }
