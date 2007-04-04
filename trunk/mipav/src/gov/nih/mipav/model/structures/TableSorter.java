@@ -80,6 +80,82 @@ public class TableSorter extends AbstractTableModel {
             return o1.toString().compareTo(o2.toString());
         }
     };
+    
+    
+    
+    /** This is comparator such that it also determines if the string has
+     *  numbers leading the string....if it does have numbers, it sorts using the
+     *  numbers also
+     *  */
+    public static final Comparator LEXICAL_NUMS_COMPARATOR = new Comparator() {
+    	public int compare(Object o1, Object o2) {
+    		String s1 = (String)o1;
+    		int b1 = -1;
+    		String s2 = (String)o2;
+    		int b2 = -1;
+    		ArrayList numChars = new ArrayList();
+    		for(int i=0;i<s1.length();i++) {
+    			char c = s1.charAt(i);
+    			if(Character.isDigit(c)) {
+    				numChars.add(new Character(c));
+    			}
+    			else {
+    				break;
+    			}
+    		}
+    		if(numChars.size() > 0) {
+    			char data[] = new char[numChars.size()];
+    			for(int i=0;i<numChars.size();i++) {
+    				data[i] = ((Character)numChars.get(i)).charValue();
+    			}
+    			Integer int1 = new Integer(new String(data));
+    			b1 = int1.intValue();
+    		}
+    		numChars = new ArrayList();
+    		for(int i=0;i<s2.length();i++) {
+    			char c = s2.charAt(i);
+    			if(Character.isDigit(c)) {
+    				numChars.add(new Character(c));
+    			}
+    			else {
+    				break;
+    			}
+    		}
+    		if(numChars.size() > 0) {
+    			char data[] = new char[numChars.size()];
+    			for(int i=0;i<numChars.size();i++) {
+    				data[i] = ((Character)numChars.get(i)).charValue();
+    			}
+    			Integer int2 = new Integer(new String(data));
+    			b2 = int2.intValue();
+    		}
+    		if(b1 == -1 && b2 == -1) {
+    			return o1.toString().compareTo(o2.toString());
+    		}
+    		if(b1 != -1 && b2 == -1) {
+    			return -1;
+    		}
+    		if(b1 == -1 && b2 != -1) {
+    			return 1;
+    		}
+    		if(b1 != -1 && b2 != -1) {
+    			if(b1 < b2) {
+    				return -1;
+    			}
+    			else if(b1 > b2) {
+    				return 1;
+    			}
+    			else {
+    				return o1.toString().compareTo(o2.toString());
+    			}
+    		}
+    		//this should never happen
+    		return -1;
+    	}
+    	
+    };
+    
+    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
