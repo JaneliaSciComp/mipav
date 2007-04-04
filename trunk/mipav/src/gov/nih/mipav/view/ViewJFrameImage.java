@@ -3408,17 +3408,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         int activeRed = activeColor.getRed();
                         int activeGreen = activeColor.getGreen();
                         int activeBlue = activeColor.getBlue();
-
+             
                         if (imageB.isColorImage()) {
-
                             for (int k = 0; k <= (intensityMapB.length - 4); k = k + 4) {
                                 int r, g, b;
                                 r = (new Float(intensityMapB[k + 1])).intValue();
                                 g = (new Float(intensityMapB[k + 2])).intValue();
-                                b = (new Float(intensityMapB[k + 3])).intValue();
+                                b = (new Float(intensityMapB[k + 3])).intValue();                                              
 
                                 if ((r == activeRed) && (g == activeGreen) && (b == activeBlue)) {
-                                    bitSet.set((currentSlice * intensityMapB.length) + (k / 4)); // turn the paint bit
+                                    bitSet.set((currentSlice * (intensityMapB.length / 4)) + (k / 4)); // turn the paint bit
                                                                                                  // set index to ON
                                     intensityMapB[k + 1] = 0; // erase the painted mask from this index
                                     intensityMapB[k + 2] = 0; // erase the painted mask from this index
