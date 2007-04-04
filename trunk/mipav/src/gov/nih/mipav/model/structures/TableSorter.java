@@ -90,8 +90,10 @@ public class TableSorter extends AbstractTableModel {
     public static final Comparator LEXICAL_NUMS_COMPARATOR = new Comparator() {
     	public int compare(Object o1, Object o2) {
     		String s1 = (String)o1;
+    		//this is the int value if there are numbers leading s1....initilaize to -1
     		int b1 = -1;
     		String s2 = (String)o2;
+    		//this is the int value if there are numbers leading s2....initilaize to -1
     		int b2 = -1;
     		ArrayList numChars = new ArrayList();
     		for(int i=0;i<s1.length();i++) {
@@ -129,15 +131,19 @@ public class TableSorter extends AbstractTableModel {
     			Integer int2 = new Integer(new String(data));
     			b2 = int2.intValue();
     		}
+    		//this means no numbers in either strings....use string compare
     		if(b1 == -1 && b2 == -1) {
     			return o1.toString().compareTo(o2.toString());
     		}
+    		//this means s1 has numbers leading it and s2 has NO numbers leading it
     		if(b1 != -1 && b2 == -1) {
     			return -1;
     		}
+    		//this means s1 has NO numbers leading it and s2 has numbers leading it
     		if(b1 == -1 && b2 != -1) {
     			return 1;
     		}
+    		//this means they both have numbers leading it
     		if(b1 != -1 && b2 != -1) {
     			if(b1 < b2) {
     				return -1;
