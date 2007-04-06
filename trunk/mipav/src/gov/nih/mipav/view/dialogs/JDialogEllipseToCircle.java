@@ -186,7 +186,7 @@ public class JDialogEllipseToCircle extends JDialogBase
         try {
             String name = makeImageName(image.getImageName(), "_circle");
             extents[0] = xDim;
-            extents[1] = yDim;
+            extents[1] = xDim;
             resultImage = new ModelImage(image.getType(), extents, name, image.getUserInterface());
             resultImage.setImageName(name);
 
@@ -264,7 +264,7 @@ public class JDialogEllipseToCircle extends JDialogBase
         gbc6.gridx = 0;
         gbc6.gridy = 0;
 
-        xLabel = new JLabel("X dimension of output image ");
+        xLabel = new JLabel("X and Y dimensions of output image ");
         xLabel.setForeground(Color.black);
         xLabel.setFont(serif12);
         xLabel.setEnabled(true);
@@ -277,7 +277,7 @@ public class JDialogEllipseToCircle extends JDialogBase
         gbc6.gridx = 1;
         paramPanel.add(xText, gbc6);
 
-        yLabel = new JLabel("Y dimension of output image ");
+        /*yLabel = new JLabel("Y dimension of output image ");
         yLabel.setForeground(Color.black);
         yLabel.setFont(serif12);
         yLabel.setEnabled(true);
@@ -290,7 +290,7 @@ public class JDialogEllipseToCircle extends JDialogBase
         yText.setFont(serif12);
         yText.setEnabled(true);
         gbc6.gridx = 1;
-        paramPanel.add(yText, gbc6);
+        paramPanel.add(yText, gbc6);*/
 
         getContentPane().add(inputPanel, BorderLayout.NORTH);
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -320,14 +320,14 @@ public class JDialogEllipseToCircle extends JDialogBase
             xDim = Integer.valueOf(xText.getText()).intValue();
         }
 
-        if (!testParameter(yText.getText(), 5, 1000000)) {
+        /*if (!testParameter(yText.getText(), 5, 1000000)) {
             yText.requestFocus();
             yText.selectAll();
 
             return false;
         } else {
             yDim = Integer.valueOf(yText.getText()).intValue();
-        }
+        }*/
 
         VOIs = image.getVOIs();
         if (VOIs == null) {
