@@ -9,10 +9,20 @@ import java.io.*;
 import java.util.*;
 
 /**
- 
+ * This program performs the conformal mapping of an ellipse to a circle.
+ * Consider the original ellipse as having a tilt theta with the x axis.
+ * Then the conformal mapping is done in 3 steps.
+ * 1.) Rotate around the circle by -theta and convert to a unit disc by dividing the distance
+ * from the center by the radius.
+ * 2.) Map from the unit circle to a standard ellipse on the x axis with foci at +- 1 and
+ * with the same major axis/minor axis ratio as the original ellipse.
+ * 3.) Map from the standard ellipse to the original ellipse by rotating, scaling, and translating.
  * <p>References: 1.) Advanced Calculus For Applications Second Edition by F. B. Hildebrand, Section 10.4 Analytic
  * Functions of a Complex Variable pages 550-554 and Section 11.4 Conformal Mapping pages 628-632, Prentice-Hall, Inc.,
  * 1976. 
+ * 2.) "On Conformal Representations of the Interior of an Ellipse" by Stanislawa Kanas and Toshiyuki Sugawa, 
+ * Annales Academiae Scientiarum Fennicae Mathematica, Volume 31, 2006, pp. 329-348.
+ * 3.) http://mathworld.com/InverseSine.html
  */
 public class AlgorithmEllipseToCircle extends AlgorithmBase {
 
@@ -48,20 +58,12 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        double x2, y2;
         
         double radius;
         
         
 
         double xc, yc;
-        double sq2;
-        double invSq2;
-        double xr[] = new double[1];
-        double yr[] = new double[1];
-        double xmul;
-        double ymul;
-        double prod;
 
         int xDimSource;
 
@@ -118,13 +120,10 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         double axisRatio;
         double xi;
         double us;
-        double uslow;
         double usmid;
-        double ushigh;
         double slow;
         double smid;
         double shigh;
-        double s;
         double eps;
         double knum;
         double kdenom;
@@ -155,6 +154,8 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         double ellipseRatio;
         ViewUserInterface UI = ViewUserInterface.getReference();
         int numErrors = 0;
+        double sinr[] = new double[1];
+        double sini[] = new double[1];
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -219,9 +220,15 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         }
         
         centerOfMass = ((VOIContour)(contours[0].elementAt(0))).getCenterOfMass();
+        Preferences.debug("X center = " + centerOfMass.x + "\n");
+        Preferences.debug("Y center = " + centerOfMass.y + "\n");
         
         ((VOIContour)(contours[0].elementAt(0))).secondOrderAttributes(xDimSource, yDimSource, xRes, yRes, xUnits, yUnits,
                                                                        pAxis, eccentricity, majorAxis, minorAxis);
+        Preferences.debug("Major axis angle in degrees = " + pAxis[0] + "\n");
+        Preferences.debug("Eccentricity = " + eccentricity[0] + "\n");
+        Preferences.debug("Major axis length = " + majorAxis[0] + "\n");
+        Preferences.debug("Minor axis length = " + minorAxis[0] + "\n");
         theta = (Math.PI/180.0)*pAxis[0];
         costh = Math.cos(theta);
         sinth = Math.sin(theta);
@@ -234,7 +241,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         // The standard ellipse used here will have foci at +-1 and will be of the form:
         // (x*x)/((cosh(xi)**2) + (y*y)/((sinh(xi)**2) = 1
         // So to scale from the original ellipse to the standard ellipse use:
-        // tanh(xi) = sinh(xi)/cosh(xi) = b/a = majorAxis/minorAxis = axisRatio
+        // tanh(xi) = sinh(xi)/cosh(xi) = b/a = minorAxis/majorAxis = axisRatio
         // xi = arg tanh(axisRatio)
         // xi = 0.5 * log((1 + axisRatio)/(1 - axisRatio))
         axisRatio = minorAxis[0]/majorAxis[0];
@@ -247,8 +254,10 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         // F(z, s) = integral from 0 to z of dx/sqrt((1 - x*x)*(1 - s*s*x*x))
         // But the EllipticIntegral functions in MIPAV all use the form:
         // F(k, phi) = integral from 0 to phi of d(theta)/sqrt(1 - k*k*sin(theta)*sin(theta))
-        // so x in the first form in sin(phi) or phi = arcsin(x)
+        // So x in the elliptical integral form used here equals sin(phi) in the elliptical integral
+        // form used in MIPAV or phi = arcsin(x)
         // For complex z arc sin(z) = -i*log(i*z + sqrt(1 - z*z))
+        // Now how to find s:
         // 0 <= s <= 1, where u(s) = 2*xi
         // u(s) =(PI/2) * K(sqrt(1 - s*s))/K(s)
         // where u(s) decreases from infinity to 0 as s moves from 0 to 1
@@ -278,7 +287,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         }
         coef = pihf/kdenom;
         sqrtS= Math.sqrt(smid);
-        UI.setDataText("smid = " + smid + "\n");
+        Preferences.debug("smid = " + smid + "\n");
 
         xDimDest = destImage.getExtents()[0];
         yDimDest = destImage.getExtents()[1];
@@ -298,7 +307,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         destBuffer = new float[cf * destSlice];
         
         // Put center of circle at center of destination image
-        // Actually the image shoudl be a square
+        // Actually the image should be a square
         xc = (xDimDest - 1.0)/2.0;
         yc = (yDimDest - 1.0)/2.0;
         radius = Math.min(xc, yc);
@@ -328,7 +337,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
                     // at +- 1.
                     xrot = xrot/(radius*sqrtS);
                     yrot = yrot/(radius*sqrtS);
-                    // Need arc sin (xrot, yrot) = -i*log(i*z + sqrt(1 - z*z))
+                    // Need arc sin (z) = -i*log(i*z + sqrt(1 - z*z)), where z = xrot + i * yrot
                     zmlt(xrot, yrot, xrot, yrot, prodr, prodi);
                     sqrtc(1.0 - prodr[0], -prodi[0], rootr, rooti);
                     zmlt(0.0, 1.0, xrot, yrot, prodr, prodi);
@@ -344,9 +353,15 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
                     if (error[0] == 1) {
                         numErrors++;
                     }
-                    // Rotate to tilt of original ellipse
-                    xp = firstr[0] * costh - firsti[0] * sinth;
-                    yp = firstr[0] * sinth + firsti[0] * costh;
+                    // Multiply by PI/(2*K(s)) = coef;
+                    firstr[0] = coef * firstr[0];
+                    firsti[0] = coef * firsti[0];
+                    zsin(firstr[0], firsti[0], sinr, sini);
+                    // Now map from the standard ellipse on the xaxis with foci at +- 1
+                    // to the original drawn ellipse
+                    // Rotate to angle theta tilt of original ellipse
+                    xp = sinr[0] * costh - sini[0] * sinth;
+                    yp = sinr[0] * sinth + sini[0] * costh;
                     // Scale to size of original ellipse
                     xp = xp * ellipseRatio;
                     yp = yp * ellipseRatio;
@@ -554,6 +569,24 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         bi[0] = theta;
 
         return;
+    }
+    
+    private void zsin(double inr, double ini, double outr[], double outi[]) {
+        outr[0] = Math.sin(inr)*cosh(ini);
+        outi[0] = Math.cos(inr)*sinh(ini);
+        return;
+    } // private void zsin
+    
+    private double cosh(double x) {
+        double var;
+        var = (Math.exp(x) + Math.exp(-x))/2.0;
+        return var;
+    }
+    
+    private double sinh(double x) {
+        double var;
+        var = (Math.exp(x) - Math.exp(-x))/2.0;
+        return var;
     }
 
     
