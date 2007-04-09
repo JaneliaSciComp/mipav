@@ -12,7 +12,8 @@ import java.util.*;
  * This program performs the conformal mapping of an ellipse to a circle.
  * Consider the original ellipse as having a tilt theta with the x axis.
  * Then the conformal mapping is done in 3 steps.
- * 1.) Rotate around the circle by -theta and convert to a unit disc by dividing the distance
+ * 1.) Translate the circle from the center of the square image to the origin, 
+ * rotate around the circle by -theta and convert to a unit disc by dividing the distance
  * from the center by the radius.
  * 2.) Map from the unit circle to a standard ellipse on the x axis with foci at +- 1 and
  * with the same major axis/minor axis ratio as the original ellipse.
@@ -327,12 +328,14 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
             index1 = j * xDimDest;
             for (i = 0; i < xDimDest; i++) {
                 // Only consider points in the destination circle
-                if (((j - yc)*(j - yc) + (i - xc)*(i - xc)) <= radSq) {    
-                    // Rotate around the circle by -theta
+                if (((j - yc)*(j - yc) + (i - xc)*(i - xc)) <= radSq) {   
+                    // Translate circle to origin
                     xp = i - xc;
                     yp = j - yc;
+                    // Rotate around the circle by -theta
                     xrot = xp * costh + yp * sinth;
                     yrot = -xp * sinth + yp * costh;
+                    // xrot = xrot/radius and yrot = yrot/radius scales the circle to a unit disc
                     // Use conformal map from unit circle to ellipse on the xaxis with foci
                     // at +- 1.
                     xrot = xrot/(radius*sqrtS);
