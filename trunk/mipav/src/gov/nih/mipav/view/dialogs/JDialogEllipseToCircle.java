@@ -229,7 +229,7 @@ public class JDialogEllipseToCircle extends JDialogBase
         JLabel xLabel;
         JLabel yLabel;
         setForeground(Color.black);
-        setTitle("Ellipse To Circle");
+        setTitle("Ellipse To Circle Conformal Mapping");
 
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setBorder(buildTitledBorder("Input"));
