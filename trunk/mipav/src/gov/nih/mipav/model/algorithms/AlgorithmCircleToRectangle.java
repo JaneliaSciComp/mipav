@@ -61,6 +61,249 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
     /**
      * Starts the program.
      */
+    public void runAlgorithmNext() {
+        double x2, y2;
+        
+        double radius;
+        double xc, yc;
+        JacobianElliptic je;
+        double xr[] = new double[1];
+        double yr[] = new double[1];
+
+        int xDimSource;
+
+        int yDimSource;
+
+        int sourceSlice;
+
+        int i, j;
+        int index, index1;
+
+        int xDimDest;
+        int yDimDest;
+        int destSlice;
+        float[] srcBuffer;
+        float[] destBuffer;
+        double xp;
+        double ySrc;
+        double xSrc;
+        float imageMin;
+        int xBase;
+        float delX;
+        int yBase;
+        float delY;
+        int sIndex;
+        int cf;
+        double uk;
+        double klow;
+        double kmid;
+        double khigh;
+        double first[] = new double[1];
+        double second[] = new double[1];
+        EllipticIntegral eInt;
+        double knum;
+        double kdenom;
+        double ukmid;
+        double eps;
+        double xoff;
+        double xw[] = new double[1];
+        double yw[] = new double[1];
+        double kSqrt;
+
+        if (srcImage == null) {
+            displayError("Source Image is null");
+            finalize();
+
+            return;
+        }
+
+        constructLog();
+
+        fireProgressStateChanged(srcImage.getImageName(), "Circle to rectangle ...");
+
+        if (srcImage.isColorImage()) {
+            cf = 4;
+        } else {
+            cf = 1;
+        }
+
+        xc = x[0];
+        x2 = x[1];
+        yc = y[0];
+        y2 = y[1];
+        
+        Preferences.debug("x center = " + xc + " y center = " + yc + "\n");
+        
+        radius = Math.sqrt((x2-xc)*(x2-xc) + (y2-yc)*(y2-yc));
+        Preferences.debug("radius = " + radius + "\n");
+
+        xDimSource = srcImage.getExtents()[0];
+        yDimSource = srcImage.getExtents()[1];
+        sourceSlice = xDimSource * yDimSource;
+
+        xDimDest = destImage.getExtents()[0];
+        yDimDest = destImage.getExtents()[1];
+        destSlice = xDimDest * yDimDest;
+        srcBuffer = new float[cf * sourceSlice];
+
+        try {
+            srcImage.exportData(0, cf * sourceSlice, srcBuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+
+            setCompleted(false);
+
+            return;
+        }
+
+        destBuffer = new float[cf * destSlice];
+
+        if (!srcImage.isColorImage()) {
+            imageMin = (float) srcImage.getMin();
+
+            for (i = 0; i < destSlice; i++) {
+                destBuffer[i] = imageMin;
+            }
+        } // if (!srcImage.isColorImage())
+
+        // 4 mappings
+        // Mapping 1 from destination rectangle to a rectangle centered around the y axis
+        // Mapping 1 from rectangle at (0,0), (xDimDest-1, 0), (xDimDest-1,yDimDest-1),
+        // (0, yDimDest-1) to rectangle at (-(xDimDest-1)/2,0), ((xDimDest-1)/2,0), ((xDimDest-1)/2, yDimDest-1),
+        // (-(xDimDest-1)/2, yDimDest-1).
+        
+        // Mapping 2 occurs from the y axis centered rectangle to the upper half plane
+        
+        // In mapping 3 go from the y centered rectangle to the unit circle
+        
+        // In mapping 4 scale and translate the unit circle to arrive at the destination circle
+        // (xDimDest-1)/2.0/(yDimDest-1) = 2.0 * K(k)/K(sqrt(1 - k*k)), where K is the complete
+        // elliptic integral of the first kind.
+        //      Now how to find k:
+        // u(k) = K(k)/K(sqrt(1 - k*k)) = 0.25*(xDimDest - 1.0)/(yDimDest = 1.0),
+        // where u(k) increases from 0 to infinity as k increases from 0 to 1
+        uk = 0.25 * (xDimDest - 1.0)/(yDimDest - 1.0);
+        klow = 0.001;
+        khigh = 0.999;
+        kmid = (klow + khigh)/2.0;
+        while (true) {
+            eInt = new EllipticIntegral(Math.sqrt(1.0 - kmid*kmid), first, second); 
+            eInt.run();
+            kdenom = first[0];
+            eInt = new EllipticIntegral(kmid, first, second);
+            eInt.run();
+            knum = first[0];
+            ukmid = knum/kdenom;
+            eps = Math.abs((ukmid - uk)/uk);
+            if (eps < 1.0E-8) {
+                break;
+            }
+            if (ukmid < uk) {
+                klow = kmid;
+            }
+            else {
+                khigh = kmid;
+            }
+            kmid = (klow + khigh)/2.0;
+        }
+        
+        
+        Preferences.debug("kmid = " + kmid + "\n");
+        kSqrt = Math.sqrt(kmid);
+        xoff = (xDimDest - 1.0)/2.0;
+        for (j = 0; j < yDimDest; j++) {
+            fireProgressStateChanged(100 * j / yDimDest);
+            index1 = j * xDimDest;
+
+            for (i = 0; i < xDimDest; i++) {
+                // Translate to a rectangle centered around the y axis
+                xp = i - xoff;
+                // Conformal map from the y centered rectangle to the upper half plane
+                // w = sn(z, k)
+                // The sn function must be a (xDimDest - 1) periodic function and a
+                // 2*i*(yDimDest - 1) periodic function ???
+                je = new JacobianElliptic(xp,(double)j,kmid,JacobianElliptic.SN,xw,yw);
+                je.run();
+                Preferences.debug("xw[0] = " + xw[0] + " yw[0] = " + yw[0] + "\n");
+                // Map from upper half plane to inside of unit circle
+                // xi = (i - sqrt(k)*w)/(1.0 + sqrt(k)*w)
+                zdiv(-kSqrt*xw[0], -kSqrt*yw[0] + 1.0, kSqrt*xw[0] + 1.0, kSqrt*yw[0], xr, yr);
+                // Scale and translate from unit circle to user selected circle
+                xSrc = radius*xr[0] + xc;
+                ySrc = radius*yr[0] + yc;
+                // Use bilinear interpolation to find the contributions from the
+                // 4 nearest neighbors in the original circle space
+                if ((xSrc >= 0.0) && ((xSrc) <= (xDimSource - 1)) && (ySrc >= 0.0) && (ySrc <= (yDimSource - 1))) {
+                    xBase = (int) Math.floor(xSrc);
+                    delX = (float) (xSrc - xBase);
+                    yBase = (int) Math.floor(ySrc);
+                    delY = (float) (ySrc - yBase);
+                    index = index1 + i;
+                    sIndex = (yBase * xDimSource) + xBase;
+
+                    if (srcImage.isColorImage()) {
+                        destBuffer[(4 * index) + 1] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
+                        destBuffer[(4 * index) + 2] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
+                        destBuffer[(4 * index) + 3] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
+
+                        if (xSrc < (xDimSource - 1)) {
+                            destBuffer[(4 * index) + 1] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
+                            destBuffer[(4 * index) + 2] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
+                            destBuffer[(4 * index) + 3] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
+                        }
+
+                        if (ySrc < (yDimSource - 1)) {
+                            destBuffer[(4 * index) + 1] += (1 - delX) * delY *
+                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 1];
+                            destBuffer[(4 * index) + 2] += (1 - delX) * delY *
+                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 2];
+                            destBuffer[(4 * index) + 3] += (1 - delX) * delY *
+                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 3];
+                        }
+
+                        if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
+                            destBuffer[(4 * index) + 1] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 1];
+                            destBuffer[(4 * index) + 2] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 2];
+                            destBuffer[(4 * index) + 3] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 3];
+                        }
+                    } // if (srcImage.isColorImage())
+                    else { // black and white image
+                        destBuffer[index] = (1 - delX) * (1 - delY) * srcBuffer[sIndex];
+
+                        if (xSrc < (xDimSource - 1)) {
+                            destBuffer[index] += delX * (1 - delY) * srcBuffer[sIndex + 1];
+                        }
+
+                        if (ySrc < (yDimSource - 1)) {
+                            destBuffer[index] += (1 - delX) * delY * srcBuffer[sIndex + xDimSource];
+                        }
+
+                        if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
+                            destBuffer[index] += delX * delY * srcBuffer[sIndex + xDimSource + 1];
+                        }
+                    } // else black and white image
+                }
+            }
+        } // for (j = 0; j < yDimDest; j++)
+
+        try {
+            destImage.importData(0, destBuffer, true);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+            setCompleted(false);
+
+            return;
+        }
+
+        setCompleted(true);
+
+        return;
+    }
+    
+    /**
+     * Starts the program.
+     */
     public void runAlgorithm() {
         double x2, y2;
         
@@ -548,6 +791,61 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         setCompleted(true);
 
         return;
+    }
+    
+    /**
+     * complex divide c = a/b.
+     *
+     * @param  ar  double
+     * @param  ai  double
+     * @param  br  double
+     * @param  bi  double
+     * @param  cr  double[]
+     * @param  ci  double[]
+     */
+    private void zdiv(double ar, double ai, double br, double bi, double[] cr, double[] ci) {
+        double bm, cc, cd, ca, cb;
+
+        bm = 1.0 / zabs(br, bi);
+        cc = br * bm;
+        cd = bi * bm;
+        ca = ((ar * cc) + (ai * cd)) * bm;
+        cb = ((ai * cc) - (ar * cd)) * bm;
+        cr[0] = ca;
+        ci[0] = cb;
+
+        return;
+    }
+    
+    /**
+     * zabs computes the absolute value or magnitude of a double precision complex variable zr + j*zi.
+     *
+     * @param   zr  double
+     * @param   zi  double
+     *
+     * @return  double
+     */
+    private double zabs(double zr, double zi) {
+        double u, v, q, s;
+        u = Math.abs(zr);
+        v = Math.abs(zi);
+        s = u + v;
+
+        // s * 1.0 makes an unnormalized underflow on CDC machines into a true
+        // floating zero
+        s = s * 1.0;
+
+        if (s == 0.0) {
+            return 0.0;
+        } else if (u > v) {
+            q = v / u;
+
+            return (u * Math.sqrt(1.0 + (q * q)));
+        } else {
+            q = u / v;
+
+            return (v * Math.sqrt(1.0 + (q * q)));
+        }
     }
 
     /**
