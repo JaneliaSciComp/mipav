@@ -181,45 +181,45 @@ public class JacobianElliptic {
     /**
      *  From Handbook of Mathematical Functions with Formulas, Graphs, and Mathematical
      *  Tables edited by Milton Abramowitz and Irene A. Stegun, Chapter 16 Jacobian 
-     *  Elliptic Functions and Theta Functions, Section 16.2.1 Complex Arguments
+     *  Elliptic Functions and Theta Functions, Section 16.21 Complex Arguments
      *  s = sn(realZ|hk), c = cn(realZ|hk), d = dn(realZ|hk)
-     *  s1 = sn(imagZ|hk), c1 = cn(imagZ|hk), d1 = dn(imagZ|hk)
+     *  s1 = sn(imagZ|(1-hk)), c1 = cn(imagZ|(1-hk)), d1 = dn(imagZ|(1-hk))
      *  sn(realZ + i*imagZ|hk) = (s*d1 + i*c*d*s1*c1)/(c1*c1 + m*s*s*s1*s1)
      *  cn(realZ + i*imagZ|hk) = (c*c1 - i*s*d*s1*d1)/(c1*c1 + m*s*s*s1*s1)
      *  dn(realZ + i*imagZ|hk) = (d*c1*d1 - i*m*s*c*s1)/(c1*c1 + m*s*s*s1*s1)
      */
     private void complexArgument() {
         JacobianElliptic je;
-        double esn[] = new double[1];
-        double ecn[] = new double[1];
-        double edn[] = new double[1];
-        double esd[] = new double[1];
-        double dph[] = new double[1];
-        double esn1[] = new double[1];
-        double ecn1[] = new double[1];
-        double edn1[] = new double[1];
-        double esd1[] = new double[1];
-        double dph1[] = new double[1];
+        double esnr[] = new double[1];
+        double ecnr[] = new double[1];
+        double ednr[] = new double[1];
+        double esdr[] = new double[1];
+        double dphr[] = new double[1];
+        double esni[] = new double[1];
+        double ecni[] = new double[1];
+        double edni[] = new double[1];
+        double esdi[] = new double[1];
+        double dphi[] = new double[1];
         double denom;
-        je = new JacobianElliptic(realZ, hk, esn, ecn, edn, esd, dph);
+        je = new JacobianElliptic(realZ, hk, esnr, ecnr, ednr, esdr, dphr);
         je.run();
-        je = new JacobianElliptic(imagZ, hk, esn1, ecn1, edn1, esd1, dph1);
+        je = new JacobianElliptic(imagZ, (1.0-hk), esni, ecni, edni, esdi, dphi);
         je.run();
-        denom = ecn1[0]*ecn1[0] + hk*esn[0]*esn[0]*esn1[0]*esn1[0];
+        denom = ecni[0]*ecni[0] + hk*esnr[0]*esnr[0]*esni[0]*esni[0];
         if (kind == SN) {
-            realResult[0] = esn[0]*edn1[0]/denom;
-            imagResult[0] = ecn[0]*edn[0]*esn1[0]*ecn1[0]/denom;
+            realResult[0] = esnr[0]*edni[0]/denom;
+            imagResult[0] = ecnr[0]*ednr[0]*esni[0]*ecni[0]/denom;
         } // if (kind == SN)
         else if (kind == CN) {
-            realResult[0] = ecn[0]*ecn1[0]/denom;
-            imagResult[0] = -esn[0]*edn[0]*esn1[0]*edn1[0]/denom;
+            realResult[0] = ecnr[0]*ecni[0]/denom;
+            imagResult[0] = -esnr[0]*ednr[0]*esni[0]*edni[0]/denom;
         } // else if (kind == CN)
         else if (kind == DN) {
-            realResult[0] = edn[0]*ecn1[0]*edn1[0]/denom;
-            imagResult[0] = -hk*esn[0]*ecn[0]*esn1[0]/denom;
+            realResult[0] = ednr[0]*ecni[0]*edni[0]/denom;
+            imagResult[0] = -hk*esnr[0]*ecnr[0]*esni[0]/denom;
         } // else if kind == DN)
         else if (kind == SD) {
-            zdiv(esn[0]*edn1[0],ecn[0]*edn[0]*esn1[0]*ecn1[0],edn[0]*ecn1[0]*edn1[0],-hk*esn[0]*ecn[0]*esn1[0],
+            zdiv(esnr[0]*edni[0],ecnr[0]*ednr[0]*esni[0]*ecni[0],ednr[0]*ecni[0]*edni[0],-hk*esnr[0]*ecnr[0]*esni[0],
                  realResult, imagResult);
         } // else if (kind == SD)
         return;
