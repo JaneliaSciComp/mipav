@@ -10,6 +10,7 @@ import java.io.File;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -87,6 +88,10 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
     
     /** current directory  **/
     private String currDir = null;
+    
+    /** comment for interleaved dataset needing to provide b-matrix file**/
+    private JLabel interleavedLabel;
+
 
 	
 	/**
@@ -104,7 +109,7 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("DTI Sorting Process " + " test version: 1.1  Date: 4.02.07 ");
+        setTitle("DTI Sorting Process " + " v1.5");
         
         GridBagLayout mainPanelGridBagLayout = new GridBagLayout();
         GridBagConstraints mainPanelConstraints = new GridBagConstraints();
@@ -113,25 +118,24 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
         
         mainPanelConstraints.gridx = 1;
 		mainPanelConstraints.gridy = 1;
-		mainPanelConstraints.insets = new Insets(15,5,20,0);
+		mainPanelConstraints.insets = new Insets(15,5,30,0);
         JLabel studyPathLabel = new JLabel("study path directory : ");
         mainPanel.add(studyPathLabel, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 2;
 		mainPanelConstraints.gridy = 1;
-		mainPanelConstraints.insets = new Insets(15,5,20,0);
+		mainPanelConstraints.insets = new Insets(15,5,30,0);
 		studyPathTextField = new JTextField(55);
 		mainPanel.add(studyPathTextField, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 3;
 		mainPanelConstraints.gridy = 1;
-		mainPanelConstraints.insets = new Insets(15,5,20,5);
+		mainPanelConstraints.insets = new Insets(15,5,30,5);
 		studyPathBrowseButton = new JButton("Browse");
 		studyPathBrowseButton.addActionListener(this);
 		studyPathBrowseButton.setActionCommand("studyPathBrowse");
 		mainPanel.add(studyPathBrowseButton, mainPanelConstraints);
-		
-		
+
 		optionsGroup = new ButtonGroup();
 		
 		gradFileRadio = new JRadioButton();
@@ -141,27 +145,29 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 		optionsGroup.add(gradFileRadio);
 		mainPanelConstraints.gridx = 0;
 		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.insets = new Insets(0,5,15,0);
 		mainPanel.add(gradFileRadio, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 1;
 		mainPanelConstraints.gridy = 2;
-		mainPanelConstraints.insets = new Insets(15,5,15,0);
+		mainPanelConstraints.insets = new Insets(0,5,15,0);
         gradientFileLabel = new JLabel("gradient file : ");
         mainPanel.add(gradientFileLabel, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 2;
 		mainPanelConstraints.gridy = 2;
-		mainPanelConstraints.insets = new Insets(15,5,15,0);
+		mainPanelConstraints.insets = new Insets(0,5,15,0);
 		gradientFilePathTextField = new JTextField(55);
 		mainPanel.add(gradientFilePathTextField, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 3;
 		mainPanelConstraints.gridy = 2;
-		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		mainPanelConstraints.insets = new Insets(0,5,15,5);
 		gradientFileBrowseButton = new JButton("Browse");
 		gradientFileBrowseButton.addActionListener(this);
 		gradientFileBrowseButton.setActionCommand("gradientFileBrowse");
 		mainPanel.add(gradientFileBrowseButton, mainPanelConstraints);
+		
 		
 		
 		bmtxtFileRadio = new JRadioButton();
@@ -171,6 +177,7 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 		optionsGroup.add(bmtxtFileRadio);
 		mainPanelConstraints.gridx = 0;
 		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.insets = new Insets(0,5,5,0);
 		mainPanel.add(bmtxtFileRadio, mainPanelConstraints);
 		
 		mainPanelConstraints.gridx = 1;
@@ -197,11 +204,17 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 		bmtxtFileBrowseButton.setEnabled(false);
 		mainPanel.add(bmtxtFileBrowseButton, mainPanelConstraints);
 		
+		mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 4;
+		mainPanelConstraints.gridwidth = 2;
+		mainPanelConstraints.insets = new Insets(0,5,5,5);
+		interleavedLabel = new JLabel("* for interleaved datasets, b-matrix file is required");
+		mainPanel.add(interleavedLabel, mainPanelConstraints);
 		
 		
 		
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 4;
+		mainPanelConstraints.gridy = 5;
 		mainPanelConstraints.gridwidth = 4;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		outputTextArea = new JTextArea(15, 70);
