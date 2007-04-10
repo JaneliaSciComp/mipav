@@ -129,8 +129,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		long begTime = System.currentTimeMillis();
 		
 		
-		Preferences.debug("** Beginning Algorithm v1.5...\n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("** Beginning Algorithm v1.5...\n");
+		Preferences.debug("** Beginning Algorithm v1.6...\n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append("** Beginning Algorithm v1.6...\n");
 
 		
 		Preferences.debug("* The study path is " + studyPath + " \n", Preferences.DEBUG_ALGORITHM);
