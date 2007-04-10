@@ -26,6 +26,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewFileTreeNode;
@@ -100,6 +101,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	private int geSoftwareVersion = -1;
 
 
+
 	
 
 
@@ -127,8 +129,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		long begTime = System.currentTimeMillis();
 		
 		
-		Preferences.debug("** Beginning Algorithm...test version: 1.1  Date: 4.02.07 \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("** Beginning Algorithm...test version: 1.1  Date: 4.02.07 \n");
+		Preferences.debug("** Beginning Algorithm v1.5...\n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append("** Beginning Algorithm v1.5...\n");
 
 		
 		Preferences.debug("* The study path is " + studyPath + " \n", Preferences.DEBUG_ALGORITHM);
@@ -187,7 +189,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			return;
 		}
 		
-
+		
 		//create list file
 		Preferences.debug("* Creating list file \n", Preferences.DEBUG_ALGORITHM);
 		outputTextArea.append("* Creating list file \n");
@@ -257,12 +259,14 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
 	}
 	
-	
-	
+
 	
 	
 	/**
 	 * this method parses the study dir
+	 * sort into lists using series number that is available in dicom tag.  
+	 * then based on the filename, get vol number (for example mipav_dicom_dti_series11_volume10005.dcm), and sort within lists using vol number
+	 * and instance number that comes from dicom tag.
 	 * @param file
 	 * @return
 	 */
@@ -310,11 +314,41 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 						//we need the first file info dicom handle so we can use it for the list file
 						firstFileInfoDicom = fileInfoDicom;
 					}
+					
+					
 					//get relevant info from fileinfodicom and place it in array that is then sorted by
-					//instance number in its appropriate series list
+					//instance number and vol in its appropriate series list
 					dicomInfo = new String[7];
+					
 					String instanceNo = ((String) fileInfoDicom.getValue("0020,0013")).trim();
-					String imageSlice = ((String) fileInfoDicom.getValue("0020,1041")).trim();
+					if(instanceNo.trim().equals("")) {
+						Preferences.debug("! ERROR: instance number dicom field is empty.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+						outputTextArea.append("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
+						return false;
+					}
+					
+					
+					TransMatrix matrix = null;
+					float[] tPt = new float[3];
+					matrix = fileInfoDicom.getPatientOrientation();
+					if (matrix != null) {
+
+                        /* transform the x location, y location, and z location, found
+                         * from the Image Position tag, by the matrix.  The tPt array now has the three numbers
+                         * arranged as if this image had been transformed.  The third place in the array holds
+                         * the number that the axis is being sliced along. xlocation, ylocation, zlocation are
+                         * from the DICOM tag 0020,0032 patient location.....in other words tPt[2] is the slice
+                         * location;
+                         */
+                        matrix.transform(fileInfoDicom.xLocation, fileInfoDicom.yLocation, fileInfoDicom.zLocation, tPt);
+                        
+                    } else {
+						Preferences.debug("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+						outputTextArea.append("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
+						return false;
+                    }
+					String absPath = fileInfoDicom.getFileDirectory();
+					String fileName = fileInfoDicom.getFileName();
 					String publicTag00180024 = ((String)fileInfoDicom.getValue("0018,0024"));
 					String privateTag00431039 = null;
 					String privateTag001910B9 = null;
@@ -336,22 +370,26 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 					catch(NullPointerException e) {
 						privateTag001910B9 = null;
 					}
-					String absPath = fileInfoDicom.getFileDirectory();
-					String fileName = fileInfoDicom.getFileName();
+					
+					
+					
+					
+					
 					dicomInfo[0] = instanceNo;
-					dicomInfo[1] = imageSlice;
+					dicomInfo[1] = String.valueOf(tPt[2]);
 					dicomInfo[2] = absPath;
 					dicomInfo[3] = fileName;
 					dicomInfo[4] = publicTag00180024;
 					dicomInfo[5] = privateTag00431039;
 					dicomInfo[6] = privateTag001910B9;
+
 					String seriesNumber_String = ((String) fileInfoDicom.getValue("0020,0011")).trim();
 					if (seriesNumber_String == null || seriesNumber_String.equals("")) {
 						seriesNumber_String = "0";
 					}
 					Integer seriesNumber = new Integer(seriesNumber_String);
 					if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
-						seriesFileInfoTreeSet = new TreeSet(new InstanceNumberComparator());
+						seriesFileInfoTreeSet = new TreeSet(new InstanceNumberVolComparator());
 						seriesFileInfoTreeSet.add(dicomInfo);
 						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
 					} else {
@@ -376,6 +414,14 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
 		return true;
 	}
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -512,14 +558,14 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			while (iter.hasNext()) {
 				TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
 				Iterator iter2 = seriesFITS.iterator();
-				// lets get the first element and remember its imageSlice
-				String imageSlice = ((String) (((String[]) seriesFITS.first())[1])).trim();
+				// lets get the first element and remember its slice location
+				String sliceLocation = ((String) (((String[]) seriesFITS.first())[1])).trim();
 
 				// now we need to figure out how many slices are in each
 				// vol...do this by
 				// finding at what value the counter is when it is equal to the
 				// first one since
-				// the imageSlice wraps around...this represents the next
+				// the sliceLocation wraps around...this represents the next
 				// vol...so the num of slices
 				// in each vol is 1 less that
 				int counter = 1;
@@ -528,11 +574,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 					String[] arr = (String[]) iter2.next();
 					String imgSlice = ((String) arr[1]).trim();
 					//this is to just get total num volumes
-					if (imgSlice.equals(imageSlice)) {
+					if (imgSlice.equals(sliceLocation)) {
 						totalNumVolumes = totalNumVolumes + 1;
 					}
 					//this is to compare the image slices...but we dont want to get the first one
-					if (imgSlice.equals(imageSlice) && counter != 1) {
+					if (imgSlice.equals(sliceLocation) && counter != 1) {
 						
 						numSlicesCheckList.add(new Integer(counter - 1 - sliceNum));
 						sliceNum = counter - 1;
@@ -822,12 +868,12 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		//get b-values for each volume set
 		
 		//For DTI:
-		//1. If Siemens, then extract b-value from public tag 0018,0024
+		//1. If Siemens, then extract b-value from public tag 0018,0024...the b-value is the number after ep_b and before #  
 		//2. If GE and if Software Version is <= 8, then extract b-value from private tag 0019,10B9...the b-value is the number after ep_b
 		//3. If GE and if Software Version is > 8, then extract b-value from private tag 0043,1039....the b-value is the first number in the string
 		
 		//For eDTI:
-		//1. If Siemens, then extract b-value from public tag 0018,0024...the b-value is the number after ep_b
+		//1. If Siemens, then extract b-value from public tag 0018,0024...the b-value is the number after ep_b and before #  
 		//2. If GE, then extract b-value from private tag 0043,1039....the b-value is the first number in the string
 		
 		Set ketSet = seriesFileInfoTreeMap.keySet();
@@ -873,7 +919,12 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 							bValuesArrayList.add(bValue);
 							continue;
 						}
-					}
+						else {
+							Preferences.debug("! ERROR: No b-value found in private tag 0018,0024....if dataset is interleaved, b-matrix file must be provided....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+							outputTextArea.append("! ERROR: No b-value found in private tag 0018,0024....if dataset is interleaved, b-matrix file must be provided....exiting algorithm \n");
+							return false;
+						}
+					}	
 				}
 				if(isGE) {
 					if(!isEDTI && geSoftwareVersion <= 8) {
@@ -1179,14 +1230,205 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		seriesFileInfoTreeMap = null;
 		success = true;
 	}
+	
+	
+	
+	
+	
+	/**
+	 * this method parses the study dir
+	 * @param file
+	 * @return
+	 * THIS METHOD IS NO LONGER BEING USED B/C THE OTHER PARSE METHOD HANDLES NORMAL DATASETS
+	 * AND INTERLEAVED DATASETS
+	 */
+	/**public boolean parse(File file) throws IOException{
+
+		imageFilter = new ViewImageFileFilter(new String[] { "dcm", "DCM", "ima", "IMA" });
+
+		File[] children = file.listFiles();
+		FileDicom imageFile = null;
+
+
+
+			boolean success = false;
+			for (int i = 0; i < children.length; i++) {
+				if (isThreadStopped()) {
+		            return false;
+		        }
+				if (children[i].isDirectory()) {
+					parse(children[i]);
+				} else if (!children[i].isDirectory()) {
+					
+					try {
+
+						if (imageFile == null) {
+							imageFile = new FileDicom(children[i].getName(), children[i].getParent() + File.separatorChar);
+						} else {
+							imageFile.setFileName(children[i]);
+						}
+
+						if (imageFilter.accept(children[i])) {
+							success = imageFile.readParserHeader();
+						} else {
+							continue;
+						}
+					} catch (IOException error) {
+						Preferences.debug("\n! ERROR: " + error.toString() + "\n", Preferences.DEBUG_ALGORITHM);
+						Preferences.debug("! ERROR: Unable to read file, " + children[i] + ", to parse.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+						outputTextArea.append("\n! ERROR: " + error.toString() + "\n");
+						outputTextArea.append("! ERROR: Unable to read file, " + children[i] + ", to parse.....exiting algorithm \n");
+						throw error;
+					}
+					
+					FileInfoDicom fileInfoDicom = (FileInfoDicom) imageFile.getFileInfo();
+					if (totalImageSlices == 0) {
+						//we need the first file info dicom handle so we can use it for the list file
+						firstFileInfoDicom = fileInfoDicom;
+					}
+					//get relevant info from fileinfodicom and place it in array that is then sorted by
+					//instance number in its appropriate series list
+					dicomInfo = new String[7];
+					String instanceNo = ((String) fileInfoDicom.getValue("0020,0013")).trim();
+					if(instanceNo.trim().equals("")) {
+						Preferences.debug("! ERROR: instance number dicom field is empty.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+						outputTextArea.append("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
+						return false;
+					}
+					String imageSlice = ((String) fileInfoDicom.getValue("0020,1041")).trim();
+					if(imageSlice.trim().equals("")) {
+						Preferences.debug("! ERROR: image slice dicom field is empty.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+						outputTextArea.append("! ERROR: image slice dicom field is empty.....exiting algorithm \n");
+						return false;
+					}
+					String publicTag00180024 = ((String)fileInfoDicom.getValue("0018,0024"));
+					String privateTag00431039 = null;
+					String privateTag001910B9 = null;
+					try {
+						if(fileInfoDicom.getValue("0043,1039") != null) {
+							privateTag00431039 = (String) fileInfoDicom.getValue("0043,1039");
+						}
+					}
+					catch(NullPointerException e) {
+						privateTag00431039 = null;
+					}
+
+					
+					try {
+						if(fileInfoDicom.getValue("0019,10B9") != null) {
+							privateTag001910B9 = (String) fileInfoDicom.getValue("0019,10B9");
+						}
+					}
+					catch(NullPointerException e) {
+						privateTag001910B9 = null;
+					}
+					String absPath = fileInfoDicom.getFileDirectory();
+					String fileName = fileInfoDicom.getFileName();
+					dicomInfo[0] = instanceNo;
+					dicomInfo[1] = imageSlice;
+					dicomInfo[2] = absPath;
+					dicomInfo[3] = fileName;
+					dicomInfo[4] = publicTag00180024;
+					dicomInfo[5] = privateTag00431039;
+					dicomInfo[6] = privateTag001910B9;
+					String seriesNumber_String = ((String) fileInfoDicom.getValue("0020,0011")).trim();
+					if (seriesNumber_String == null || seriesNumber_String.equals("")) {
+						seriesNumber_String = "0";
+					}
+					Integer seriesNumber = new Integer(seriesNumber_String);
+					if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
+						seriesFileInfoTreeSet = new TreeSet(new InstanceNumberComparator());
+						seriesFileInfoTreeSet.add(dicomInfo);
+						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
+					} else {
+						seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
+						seriesFileInfoTreeSet.add(dicomInfo);
+						seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
+					}
+					dicomInfo = null;
+					fileInfoDicom = null;
+					imageFile.finalize();
+					imageFile = null;
+					if(totalImageSlices % 100 == 0) {
+						Preferences.debug(".", Preferences.DEBUG_ALGORITHM);
+						outputTextArea.append(".");
+					}
+					if(totalImageSlices % 500 == 0) {
+						System.gc();
+					}
+					totalImageSlices++;
+				}
+			}
+
+		return true;
+	}**/
 
 	// -------------------------------INNER CLASS------------------------------------------------------
 
+
+	/**
+	 * This inner class is used to sort
+	 * the list by instance number and vol. 
+	 * the vol is determined by the filename
+	 * 
+	 */
+	private class InstanceNumberVolComparator implements Comparator {
+		public int compare(Object oA, Object oB) {
+			String[] aA = (String[]) oA;
+			String[] aB = (String[]) oB;
+			String instancNoA_String = ((String)aA[0]).trim();
+			if (instancNoA_String == null) {
+				instancNoA_String = "";
+			}
+			String instancNoB_String = ((String)aB[0]).trim();
+			if (instancNoB_String == null) {
+				instancNoB_String = "";
+			}
+			
+			int instanceNoA = new Integer(instancNoA_String).intValue();
+			int instanceNoB = new Integer(instancNoB_String).intValue();
+			
+			
+			String filenameA = ((String)aA[3]).trim();
+			String filenameB = ((String)aB[3]).trim();
+			
+			String volStringA = filenameA.substring(filenameA.lastIndexOf("volume") + 6, filenameA.lastIndexOf('.'));
+			int volNumberA = new Integer(volStringA).intValue();
+			
+			String volStringB = filenameB.substring(filenameB.lastIndexOf("volume") + 6, filenameB.lastIndexOf('.'));
+			int volNumberB = new Integer(volStringB).intValue();
+			
+			
+			
+			if(volNumberA == volNumberB) {
+				if (instanceNoA < instanceNoB) {
+					return -1;
+				}
+				if (instanceNoA > instanceNoB) {
+					return 1;
+				}
+			}
+			if(volNumberA < volNumberB) {
+				return -1;
+			}
+			if(volNumberA > volNumberB) {
+				return 1;
+			}
+		
+			//this should never happen
+			return -1;
+		}
+	}
+	
+	
+	
 	/**
 	 * This inner class is used to sort
 	 * the list by instance number
+	 * THIS COMPARATOR IS NO LONGER BEING USED B/C THE OTHER COMPARATOR HANDLES
+	 * NORMAL DATASETS AND  INTERLEAVED DATASETS
 	 */
-	private class InstanceNumberComparator implements Comparator {
+	/**private class InstanceNumberComparator implements Comparator {
 		public int compare(Object oA, Object oB) {
 			String[] aA = (String[]) oA;
 			String[] aB = (String[]) oB;
@@ -1210,6 +1452,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			}
 			return 0;
 		}
-	}
+	}**/
+	
 
 }
