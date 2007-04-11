@@ -7217,9 +7217,9 @@ loop1:               {
     } // dgemv
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DGERQ2 Orginal DGEQR2 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
-     * dgeqr2 computes an QR factorization of a real m by n matrix A: A = Q * R
+     * This is a port of the version 3.1 LAPACK routine DGEQR2 Orginal DGEQR2 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, NAG Ltd. November, 2006
+     * dgeqr2 computes a QR factorization of a real m by n matrix A: A = Q * R
      *
      * @param  m     input int The number of rows of the matrix A. m >= 0.
      * @param  n     input int The number of columns of the matrix A. n >= 0.
@@ -7233,7 +7233,7 @@ loop1:               {
      * @param  lda   input int The leading dimension of the array A. lda >= max(1,m).
      * @param  tau   output double[] of dimension min(m,n) The scalar factors of the elementary reflectors.
      * @param  work  (workspace) double[] of dimension (n)
-     * @param  info  output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value.
+     * @param  info  output int[] = 0: successful exit, < 0: If info[0] = -i, the i-th argument had an illegal value.
      */
     private void dgeqr2(int m, int n, double[][] A, int lda, double[] tau, double[] work, int[] info) {
         int i;
@@ -7323,9 +7323,9 @@ loop1:               {
     } // dgeqr2
 
     /**
-     * This is a port of version 3.0 LAPACK routine DGEQRF Orginal DGEQRF created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dgeqrf
-     * computes an QR factorization of a real m by n matrix A: A = Q * R.
+     * This is a port of version 3.1 LAPACK routine DGEQRF Orginal DGEQRF created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., Noovember, 2006 
+     * dgeqrf computes a QR factorization of a real m by n matrix A: A = Q * R.
      *
      * @param  m      input int The number of rows of the matrix A. m >= 0.
      * @param  n      input int The number of columns of the matrix A. n >= 0.
@@ -7338,13 +7338,13 @@ loop1:               {
      *                and v(i-1) = 1; v(i:m-1) is stored on exit in A(i:m-1,i-1), and tau in tau[i-1].
      * @param  lda    input int The leading dimension of the array A. lda >= max(1,m).
      * @param  tau    output double[] of dimension min(m,n). The scalar factors of the elementary reflectors.
-     * @param  work   (workspace/output) double[] of dimension (lwork) On exit, if info[0] = 0, work[0] returns the
+     * @param  work   (workspace/output) double[] of dimension (max(1,lwork)) On exit, if info[0] = 0, work[0] returns the
      *                optimal lwork.
      * @param  lwork  input int The dimension of the array work. lwork >= max(1,n). For optimum performance, lwork >=
      *                n*nb, where nb is the optimal blocksize. If lwork = -1, then a workspace query is assumed; the
      *                routine only calculates the optimal size of the work array, returns this value as the first entry
      *                of the work array, and no error message related to lwork is output.
-     * @param  info   output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value
+     * @param  info   output int[] = 0: successful exit, < 0: If info[0] = -i, the i-th argument had an illegal value
      */
     private void dgeqrf(int m, int n, double[][] A, int lda, double[] tau, double[] work, int lwork, int[] info) {
         boolean lquery;
@@ -7532,7 +7532,6 @@ loop1:               {
 
                 for (q = 0; q < (n - i + 1); q++) {
                     A[i - 1 + p][i - 1 + q] = array1[p][q];
-                    ;
                 }
             }
         }
@@ -8038,16 +8037,16 @@ loop1:               {
     } // dget52
 
     /**
-     * This is a port of version 3.0 LAPACK routine DGGBAK Orginal DGGBAK created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of version 3.1 LAPACK routine DGGBAK Orginal DGGBAK created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dggbak forms the right or left eigenvectors of a real generalized eigenvalue problem A*x = lambda*B*x, by
      * backward transformation on the computed eigenvectors of the balanced pair of matrices output by dggbal.
      *
      * @param  job     input char Specifies the type of backward transformation required: = 'N': do nothing, return
-     *                 immediately = 'P': do backward transformation for permutation only = 'S': do backward
-     *                 transformation for scaling only = 'B': do backward transformation for both permutation and
+     *                 immediately, = 'P': do backward transformation for permutation only, = 'S': do backward
+     *                 transformation for scaling only, = 'B': do backward transformations for both permutation and
      *                 scaling job must be the same as the argument job supplied to dggbal.
-     * @param  side    input char = 'R': V contains right eigenvectors = 'L': V contains left eigenvectors
+     * @param  side    input char = 'R': V contains right eigenvectors, = 'L': V contains left eigenvectors
      * @param  n       input int The number of rows of the matrix V. n >= 0.
      * @param  ilo     input int
      * @param  ihi     input int The integers ilo and ihi determined by dggbal. 1 <= ilo <= ihi <= n, if n > 0; ilo = 1
@@ -8061,7 +8060,7 @@ loop1:               {
      *                 to be transformed, as returned by dtgevc. On exit, V is overwritten by the transformed
      *                 eigenvectors.
      * @param  ldv     input int The leading dimension of the matrix V. ldv >= max(1,n).
-     * @param  info    output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value.
+     * @param  info    output int[] = 0: successful exit, < 0: If info[0] = -i, the i-th argument had an illegal value.
      *                 Further Details: See R. C. Ward, Balancing the generalized eigenvalue problem, SIAM J. Sci. Stat.
      *                 Comp. 2 (1981), 141-152.
      */
@@ -8099,10 +8098,14 @@ loop1:               {
             info[0] = -3;
         } else if (ilo < 1) {
             info[0] = -4;
-        } else if ((ihi < ilo) || (ihi > Math.max(1, n))) {
+        } else if ((n == 0) && (ihi == 0) && (ilo != 1)) {
+            info[0] = -4;
+        } else if ((n > 0) && ((ihi < ilo) || (ihi > Math.max(1, n)))) {
+            info[0] = -5;
+        } else if ((n == 0) && (ilo == 1) && (ihi != 0)) {
             info[0] = -5;
         } else if (m < 0) {
-            info[0] = -6;
+            info[0] = -8;
         } else if (ldv < Math.max(1, n)) {
             info[0] = -10;
         }
@@ -8255,8 +8258,8 @@ loop1:               {
     } // dggbak
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DGGBAL Orginal DGGBAL created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of the version 3.1 LAPACK routine DGGBAL Orginal DGGBAL created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006 
      * dggbal balances a pair of general real matrices (A,B). This involves, first, permuting A and B by similarity
      * transformations to isolate eigenvalues in the first 1 to ilo-1 and last ihi+1 to n elements on the diagonal; and
      * second, applying a diagonal similarity transformation to rows and columns ilo to ihi to make the rows and columns
@@ -8265,9 +8268,11 @@ loop1:               {
      * <p>Balancing may reduce the 1-norm of the matrices, and improve the accuracy of the computed eigenvalues and/or
      * eigenvectors in the generalized eigenvector problem A*x = lambda*B*x.</p>
      *
-     * @param  job     input char Specifies the operations to be performed on A and B: = 'N': none: simply set ilo = 1,
-     *                 ihi = n, lscale[i] = 1.0 and rscale[i] = 1.0 for i = 0,...,n-1. = 'P': permute only = 'S': scale
-     *                 only = 'B': both permute and scale.
+     * @param  job     input char Specifies the operations to be performed on A and B:
+     *                 = 'N': none: simply set ilo = 1, ihi = n, lscale[i] = 1.0 and rscale[i] = 1.0 for i = 0,...,n-1.
+     *                 = 'P': permute only
+     *                 = 'S': scale only 
+     *                 = 'B': both permute and scale.
      * @param  n       input int The order of matrices A and B. n >= 0.
      * @param  A       input/output double[][] of dimension (lda,n) On entry, the input matrix A. On exit, A is
      *                 overwritten by the balanced matrix. If job = 'N', A is not referenced.
@@ -8280,16 +8285,21 @@ loop1:               {
      *                 j and j = 0,...,ilo-2 and i = ihi,...,n-1. if job = 'N' or 'S', ilo = 1 and ihi = n.
      * @param  lscale  output double[] of dimension n Details of the permutations and scaling factors applied to the
      *                 left side of A and B. If p[j] is the index of the row interchanged with row j, and d[j] is the
-     *                 scaling factor applied to row j, then lscale[j] = p[j] for j = 0,...,ilo-2 = d[j] for j =
-     *                 ilo-1,...,ihi-1 = p[j] for j = ihi,...,n-1. The order in which the interchanges are made is n-1
-     *                 to ihi, then 0 to ilo-2.
+     *                 scaling factor applied to row j, then lscale[j] = p[j] for j = 0,...,ilo-2
+     *                                                                 = d[j] for j = ilo-1,...,ihi-1
+     *                                                                 = p[j] for j = ihi,...,n-1.
+     *                 The order in which the interchanges are made is n-1 to ihi, then 0 to ilo-2.
      * @param  rscale  output double[] of dimension n Details of the permutations and scaling factors applied to the
      *                 right side of A and B. If p[j] is the index of the column interchanged with column j, and d[j] is
-     *                 the scaling factor applied to column j, then rscale[j] = p[j] for j = 0,...,ilo-2 = d[j] for j =
-     *                 ilo-1,...,ihi-1 = p[j] for j = ihi,...,n-1. The order in which the interchanges are made is n-1
-     *                 to ihi, then 0 to ilo-2.
-     * @param  work    workspace double[] of dimension (6*n)
-     * @param  info    output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value.
+     *                 the scaling factor applied to column j, then rscale[j] = p[j] for j = 0,...,ilo-2
+     *                                                                        = d[j] for j = ilo-1,...,ihi-1
+     *                                                                        = p[j] for j = ihi,...,n-1.
+     *                 The order in which the interchanges are made is n-1 to ihi, then 0 to ilo-2.
+     * @param  work    workspace double[] of dimension lwork
+     *                 lwork must be at least max(1,6*n) when job = 'S' or 'B', and at least 1 when job = 'N' or 'P'.
+     * @param  info    output int[] 
+     *                 = 0: successful exit
+     *                 < 0: If info[0] = -i, the i-th argument had an illegal value.
      *                 Further details: See R.C. Ward, Balancing the generalized eigenvalue problem, SIAM J. Sci. Stat.
      *                 Comp. 2 (1981), 141-152.
      */
@@ -8360,7 +8370,7 @@ loop1:               {
         } else if (lda < Math.max(1, n)) {
             info[0] = -4;
         } else if (ldb < Math.max(1, n)) {
-            info[0] = -5;
+            info[0] = -6;
         }
 
         if (info[0] != 0) {
@@ -8369,11 +8379,18 @@ loop1:               {
             return;
         }
 
-        k = 1;
-        L = n;
-
         // Quick return if possible
         if (n == 0) {
+            ilo[0] = 1;
+            ihi[0] = n;
+            return;
+        }
+        
+        if (n == 1) {
+            ilo[0] = 1;
+            ihi[0] = n;
+            lscale[0] = 1.0;
+            rscale[0] = 1.0;
             return;
         }
 
@@ -8388,15 +8405,9 @@ loop1:               {
 
             return;
         } // if ((job == 'N') || (job == 'n'))
-
-        if (k == L) {
-            ilo[0] = 1;
-            ihi[0] = 1;
-            lscale[0] = 1.0;
-            rscale[0] = 1.0;
-
-            return;
-        } // if (k == L)
+        
+        k = 1;
+        L = n;
 
         if ((job != 'S') && (job != 's')) {
             first = false;
@@ -8553,11 +8564,15 @@ loop8:                       {
         ilo[0] = k;
         ihi[0] = L;
 
-        if (ilo[0] == ihi[0]) {
+        if ((job == 'P') || (job == 'P')) {
+            for (i = ilo[0]; i <= ihi[0]; i++) {
+                lscale[i-1] = 1.0;
+                rscale[i-1] = 1.0;
+            }
             return;
         }
-
-        if ((job == 'P') || (job == 'P')) {
+        
+        if (ilo[0] == ihi[0]) {
             return;
         }
 
@@ -14059,13 +14074,13 @@ loop3:                       {
     } // dlaran
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLARF Orginal DLARF created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
-     * 29, 1992 dlarf applies a real elementary reflector H to a real m by n matrix C, from either the left or right. H
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLARF Orginal DLARF created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlarf applies a real elementary reflector H to a real m by n matrix C, from either the left or right. H
      * is represented in the form H = I - tau * v * v' where tau is a real scalar and v is a real vector If tau = 0,
      * then H is taken to be the unit matrix.
      *
-     * @param  side  input char = 'L': form H * C = 'R': form C * H
+     * @param  side  input char = 'L': form H * C, = 'R': form C * H
      * @param  m     input int The number of rows of the matrix C
      * @param  n     input int The number of columns of the matrix C.
      * @param  v     input double[] If side = 'L' dimension = (1 + (m-1)*abs(incv)) If side = 'R' dimension = (1 +
@@ -14772,15 +14787,18 @@ loop3:                       {
     } // dlarfb
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARFG Orginal DLARFG created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30,
-     * 1994 dlarfg generates a real elementary reflector H of order n, such that H * (alpha) = (beta), H' * H = I. ( x )
-     * ( 0 ) where alpha and beta are scalars, and x is an (n-1)-element real vector. H is represented in the form H = I
-     * - tau * (1) * (1 v'), (v) where tau is a real scalar and v is a real (n-1)-element vector. If the elements of x
+     * This is a port of version 3.1 LAPACK auxiliary routine DLARFG Orginal DLARFG created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dlarfg generates a real elementary reflector H of order n, such that H * (alpha) = (beta), H' * H = I. 
+     *                                                                           ( x )     ( 0 ) 
+     * where alpha and beta are scalars, and x is an (n-1)-element real vector. H is represented in the form
+     *  H = I - tau * (1) * (1 v'),
+     *                (v) 
+     * where tau is a real scalar and v is a real (n-1)-element vector. If the elements of x
      * are all zero, then tau = 0 and H is taken to be the unit matrix. Otherwise 1 <= tau <= 2.
      *
      * @param  n      input int The order of the elementary reflector.
-     * @param  alpha  input/output double[] On entry, the value alpha On exit, it is overwritten with the value beta.
+     * @param  alpha  input/output double[] On entry, the value alpha. On exit, it is overwritten with the value beta.
      * @param  x      input/output double[] of dimension (1 + (n-2)*abs(incx)) On entry, the vector x. On exit, it is
      *                overwritten with the vector v.
      * @param  incx   input int The increment between elements of x. incx > 0
@@ -15435,7 +15453,7 @@ loop3:                       {
     /**
      * This is a port of version 3.0 LAPACK auxiliary routine DLARTG Orginal DLARTG created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
-     * 30,.1994 dlartg generates a plane rotation so that [ cs sn ] . [ f ] = [ r ] where cs*cs + sn*sn = 1. [ -sn cs ]
+     * 30, 1994 dlartg generates a plane rotation so that [ cs sn ] . [ f ] = [ r ] where cs*cs + sn*sn = 1. [ -sn cs ]
      * [ g ] [ 0 ] If g = 0, then cs = 1 and sn = 0. If f = 0 and g != 0, then cs = 0 and sn = 1. If f exceeds g in
      * magnitude, then cs will be positive.
      *
