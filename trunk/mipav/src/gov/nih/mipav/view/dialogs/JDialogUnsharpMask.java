@@ -470,6 +470,8 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     unsharpMaskAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), unsharpMaskAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
