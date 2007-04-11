@@ -5401,8 +5401,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         windowLevel = new JDialogWinLevel[2];
 
-        pack();
-
         if (loc == null) {
             MipavUtil.centerOnScreen(this);
         } else {
@@ -5412,10 +5410,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // build the shortcuts that will fire when CTRL/SHIFT/ALT keys are pressed with another key
 
-        // User interface will have list of frames
-        userInterface.registerFrame(this);
+
         updateImages(true);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        pack();
 
         if (userInterface.isAppFrameVisible()) {
             setVisible(true);
@@ -5433,6 +5432,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          */
         addComponentListener(this);
         validate();
+
+        //      User interface will have list of frames
+        userInterface.registerFrame(this);
 
     } // end init()
 
