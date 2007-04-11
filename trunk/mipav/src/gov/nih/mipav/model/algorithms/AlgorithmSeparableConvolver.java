@@ -369,8 +369,13 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 endX = startX + ((xKDim - 1) * cFactor);
 
                 if (startX < 0) {
-                    count = count - (offsetX / cFactor);
-                    startX = 0;
+                    count = count - ((offsetX - (cFactor - 1)) / cFactor);
+                    if (cFactor > 1) {
+                        startX = (pix % cFactor);
+                    }
+                    else {
+                        startX = 0;
+                    }
                 }
 
                 if (endX >= offset) {
@@ -388,11 +393,13 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                     } else {
                         norm -= kernelXBuffer[count];
                     }
-
+                    
                     count++;
+                    
                 }
 
                 tempImgBuffer[pix] = sum / norm;
+                
             } else {
                 tempImgBuffer[pix] = imgBuffer[pix];
             }
@@ -537,8 +544,13 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 end = start + ((kDim - 1) * cFactor);
 
                 if (start < 0) {
-                    count = count - (offsetX / cFactor);
-                    start = 0;
+                    count = count - ((offsetX - (cFactor - 1)) / cFactor);
+                    if (cFactor > 1) {
+                        start = (pix % cFactor);
+                    }
+                    else {
+                        start = 0;
+                    }
                 }
 
                 if (end >= offset) {
@@ -783,7 +795,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         }
 
         try {
-            int offset = imgExtents[0] * cFactor;
             int length = imgExtents[0] * imgExtents[1] * cFactor;
 
             imgBuffer = new double[length];
