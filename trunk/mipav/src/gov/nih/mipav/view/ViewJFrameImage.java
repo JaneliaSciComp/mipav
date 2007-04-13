@@ -2900,6 +2900,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public synchronized void componentResized(ComponentEvent event) {
         int width, height;
         float bigger;
+        System.out.println("In component resized.");
 
         if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
             return;
@@ -5422,6 +5423,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setVisible(false);
         }
 
+        System.out.println("In init 1.");
+
         /*
          * The addComponentListener statement was moved from earlier in the code to the end because of a bug found on
          * Linux.  It appeared that adding the component listener earlier caused events to be sent which led to a
@@ -5431,10 +5434,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          * Nathan Pollack (Contractor - SSAI)  June 19, 2006
          */
         addComponentListener(this);
-        validate();
 
-        //      User interface will have list of frames
+        // validate(); not really needed because pack does a validate.
+        System.out.println("In init 2.");
+
+        // User interface will have list of frames
         userInterface.registerFrame(this);
+        System.out.println("In init 3.");
 
     } // end init()
 
