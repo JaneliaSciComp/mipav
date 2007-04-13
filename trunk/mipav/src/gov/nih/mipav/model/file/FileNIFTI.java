@@ -2132,434 +2132,197 @@ public class FileNIFTI extends FileBase {
 
         // With extents from rawFile
     }
-
-    /**
-     * Return the 3 axis orientation codes that correspond to the closest standard anatomical orientation of the (i,j,k)
-     * axes.
-     *
-     * @param   mat  4x4 matrix that transforms (i,j,k) indexes to x,y,z coordinates where +x =Left, +y = Posterior, +z
-     *               = Superior Only the upper-left 3x3 corner of the matrix is used This routine finds the permutation
-     *               of (x,y,z) which has the smallest angle to the (i,j,k) axes directions, which are columns of the
-     *               input matrix Errors: The codes returned will be zero.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private int[] getAxisOrientation(TransMatrix mat) {
-        int[] axisOrientation = new int[3];
-        double[][] array;
-        double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
-        Matrix Q;
-        double detQ;
-        double vbest;
-        int ibest, jbest, kbest, pbest, qbest, rbest;
-        int i, j, k, p, q, r;
-        Matrix P;
-        double detP;
-        Matrix M;
-
-        array = mat.getMatrix(0, 2, 0, 2).getArray();
-        xi = array[0][0];
-        xj = array[0][1];
-        xk = array[0][2];
-        yi = array[1][0];
-        yj = array[1][1];
-        yk = array[1][2];
-        zi = array[2][0];
-        zj = array[2][1];
-        zk = array[2][2];
-
-        int izero = 0;
-        int jzero = 0;
-        int kzero = 0;
-        int xzero = 0;
-        int yzero = 0;
-        int zzero = 0;
-
-        if (xi == 0.0) {
-            izero++;
-            xzero++;
-        }
-
-        if (yi == 0.0) {
-            izero++;
-            yzero++;
-        }
-
-        if (zi == 0.0) {
-            izero++;
-            zzero++;
-        }
-
-        if (xj == 0.0) {
-            jzero++;
-            xzero++;
-        }
-
-        if (yj == 0.0) {
-            jzero++;
-            yzero++;
-        }
-
-        if (zj == 0.0) {
-            jzero++;
-            zzero++;
-        }
-
-        if (xk == 0.0) {
-            kzero++;
-            xzero++;
-        }
-
-        if (yk == 0.0) {
-            kzero++;
-            yzero++;
-        }
-
-        if (zk == 0.0) {
-            kzero++;
-            zzero++;
-        }
-
-        if ((izero == 2) && (jzero == 2) && (kzero == 2) && (xzero == 2) && (yzero == 2) && (zzero == 2)) {
-
-            if (xi > 0.0) {
-                axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
-            } else if (xi < 0.0) {
-                axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
-            } else if (yi > 0.0) {
-                axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
-            } else if (yi < 0.0) {
-                axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
-            } else if (zi > 0.0) {
-                axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
-            } else if (zi < 0.0) {
-                axisOrientation[0] = FileInfoBase.ORI_S2I_TYPE;
-            }
-
-            if (xj > 0.0) {
-                axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
-            } else if (xj < 0.0) {
-                axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
-            } else if (yj > 0.0) {
-                axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
-            } else if (yj < 0.0) {
-                axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
-            } else if (zj > 0.0) {
-                axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
-            } else if (zj < 0.0) {
-                axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
-            }
-
-            if (xk > 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
-            } else if (xk < 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
-            } else if (yk > 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
-            } else if (yk < 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
-            } else if (zk > 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
-            } else if (zk < 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_S2I_TYPE;
-            }
-
-            return axisOrientation;
-        } // if ((izero == 2) && (jzero == 2) && (kzero == 2) && (xzero == 2) && (yzero == 2) && (zzero == 2))
-
-        // Normalize column vectors to get unit vectors along each ijk-axis
-
-        // Normalize i axis
-        val = Math.sqrt((xi * xi) + (yi * yi) + (zi * zi));
-
-        if (val == 0.0) {
-            MipavUtil.displayError("xi = yi = zi = 0 in getAxisOrientation");
-
-            return null;
-        }
-
-        xi /= val;
-        yi /= val;
-        zi /= val;
-
-        // Normalize j axis
-        val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj));
-
-        if (val == 0.0) {
-            MipavUtil.displayError("xj = yj = zj = 0 in getAxisOrientation");
-
-            return null;
-        }
-
-        xj /= val;
-        yj /= val;
-        zj /= val;
-
-        // Orthogonalize j axis to i axis, if needed
-        val = (xi * xj) + (yi * yj) + (zi * zj); // dot product between i and j
-
-        if (Math.abs(val) > 1.0e-4) {
-            xj -= val * xi;
-            yj -= val * yi;
-            zj -= val * zi;
-            val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj)); // Must renormalize
-
-            if (val == 0.0) {
-                MipavUtil.displayError("j was parallel to i in getAxisOrientation");
-
-                return null;
-            }
-
-            xj /= val;
-            yj /= val;
-            zj /= val;
-        }
-
-        // Normalize k axis; if it is zero, make it the cross product i x j
-        val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
-
-        if (val == 0.0) {
-            xk = (yi * zj) - (zi * yj);
-            yk = (zi * xj) - (zj * xi);
-            zk = (xi * yj) - (yi * xj);
-        } else {
-            xk /= val;
-            yk /= val;
-            zk /= val;
-        }
-
-        // Orthogonalize k to i
-        val = (xi * xk) + (yi * yk) + (zi * zk); // dot product between i and k
-
-        if (Math.abs(val) > 1.0e-4) {
-            xk -= val * xi;
-            yk -= val * yi;
-            zk -= val * zi;
-            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
-
-            if (val == 0.0) {
-                MipavUtil.displayError("val == 0 when orthogonalizing k to i");
-
-                return null;
-            }
-
-            xk /= val;
-            yk /= val;
-            zk /= val;
-        }
-
-        // Orthogonalize k to j
-        val = (xj * xk) + (yj * yk) + (zj * zk); // dot product between j and k
-
-        if (Math.abs(val) > 1.0e-4) {
-            xk -= val * xj;
-            yk -= val * yj;
-            zk -= val * zj;
-            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
-
-            if (val == 0.0) {
-                MipavUtil.displayError("val == 0 when orthogonalizing k to j");
-
-                return null;
-            }
-
-            xk /= val;
-            yk /= val;
-            zk /= val;
-        }
-
-        array[0][0] = xi;
-        array[0][1] = xj;
-        array[0][2] = xk;
-        array[1][0] = yi;
-        array[1][1] = yj;
-        array[1][2] = yk;
-        array[2][0] = zi;
-        array[2][1] = zj;
-        array[2][2] = zk;
-
-        // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
-        Q = new Matrix(array);
-        detQ = Q.det();
-
-        if (detQ == 0.0) {
-            MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
-
-            return null;
-        }
-
-        // Build and test all possible +1/-1 coordinate permutation matrices P;
-        // then find the P such that the rotation matrix M=PQ is closest to the
-        // identity, in the sense of M having the smallest total rotation angle
-
-        // Despite the formidable looking 6 nested loops, there are
-        // only 3*3*3*2*2*2 = 216 passes, which will run very quickly
-        vbest = -Double.MAX_VALUE;
-        pbest = 1;
-        qbest = 1;
-        rbest = 1;
-        ibest = 1;
-        jbest = 2;
-        kbest = 3;
-
-        for (i = 1; i <= 3; i++) { // i = column number to use for row #1
-
-            for (j = 1; j <= 3; j++) { // j = column number to use for row #2
-
-                if (i == j) {
-                    continue;
-                }
-
-                for (k = 1; k <= 3; k++) { // k = column number to use for row #3
-
-                    if ((i == k) || (j == k)) {
-                        continue;
-                    }
-
-                    array[0][0] = 0.0;
-                    array[0][1] = 0.0;
-                    array[0][2] = 0.0;
-                    array[1][0] = 0.0;
-                    array[1][1] = 0.0;
-                    array[1][2] = 0.0;
-                    array[2][0] = 0.0;
-                    array[2][1] = 0.0;
-                    array[2][2] = 0.0;
-                    P = new Matrix(array);
-
-                    for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
-
-                        for (q = -1; q <= 1; q += 2) {
-
-                            for (r = -1; r <= 1; r += 2) {
-                                P.set(0, i - 1, p);
-                                P.set(1, j - 1, q);
-                                P.set(2, k - 1, r);
-                                detP = P.det();
-
-                                // sign of permutation doesn't match sign of Q
-                                if ((detP * detQ) <= 0.0) {
-                                    continue;
-                                }
-
-                                M = P.times(Q);
-
-                                // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
-                                // we want largest trace(M) == smallest angle == M nearest to I
-                                val = M.get(0, 0) + M.get(1, 1) + M.get(2, 2); // trace
-
-                                if (val > vbest) {
-                                    vbest = val;
-                                    ibest = i;
-                                    jbest = j;
-                                    kbest = k;
-                                    pbest = p;
-                                    qbest = q;
-                                    rbest = r;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // At this point ibest is 1 or 2 or 3; pbest is -1 or +1; etc.
-
-        // The matrix P that corresponds is the best permutation approximation
-        // to Q-inverse; that is, P (approximately) takes (x,y,z) coordinates
-        // to the (i,j,k) axes
-
-        // For example, the first row of P (which contains pbest in column ibest)
-        // determines the way the i axis points relative to the anatomical
-        // (x,y,z) axes.  If ibest is 2, then the i axis is along the yaxis,
-        // which is direction P2A (if pbest < 0) or A2P (if pbest > 0).
-
-        // So, using ibest and pbest, we can assign the output code for
-        // the i axis.  The same also applies for the j and k axes.
-
-        switch (ibest * pbest) {
-
-            case -1:
-                axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
-                break;
-
-            case 1:
-                axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
-                break;
-
-            case -2:
-                axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
-                break;
-
-            case 2:
-                axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
-                break;
-
-            case -3:
-                axisOrientation[0] = FileInfoBase.ORI_S2I_TYPE;
-                break;
-
-            case 3:
-                axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
-                break;
-        }
-
-        switch (jbest * qbest) {
-
-            case -1:
-                axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
-                break;
-
-            case 1:
-                axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
-                break;
-
-            case -2:
-                axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
-                break;
-
-            case 2:
-                axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
-                break;
-
-            case -3:
-                axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
-                break;
-
-            case 3:
-                axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
-                break;
-        }
-
-        switch (kbest * rbest) {
-
-            case -1:
-                axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
-                break;
-
-            case 1:
-                axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
-                break;
-
-            case -2:
-                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
-                break;
-
-            case 2:
-                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
-                break;
-
-            case -3:
-                axisOrientation[2] = FileInfoBase.ORI_S2I_TYPE;
-                break;
-
-            case 3:
-                axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
-                break;
-        }
-
-        return axisOrientation;
+    
+    /*---------------------------------------------------------------------------*/
+    /*! compute the (closest) orientation from a 4x4 ijk->xyz tranformation matrix
+
+       <pre>
+       Input:  4x4 matrix that transforms (i,j,k) indexes to (x,y,z) coordinates,
+               where +x=Right, +y=Anterior, +z=Superior.
+               (Only the upper-left 3x3 corner of R is used herein.)
+       Output: 3 orientation codes that correspond to the closest "standard"
+               anatomical orientation of the (i,j,k) axes.
+       Method: Find which permutation of (x,y,z) has the smallest angle to the
+               (i,j,k) axes directions, which are the columns of the R matrix.
+       Errors: The codes returned will be zero.
+
+       For example, an axial volume might get return values of
+         *icod = NIFTI_R2L   (i axis is mostly Right to Left)
+         *jcod = NIFTI_P2A   (j axis is mostly Posterior to Anterior)
+         *kcod = NIFTI_I2S   (k axis is mostly Inferior to Superior)
+       </pre>
+
+       \see "QUATERNION REPRESENTATION OF ROTATION MATRIX" in nifti1.h
+
+       \see nifti_quatern_to_mat44, nifti_mat44_to_quatern,
+            nifti_make_orthog_mat44
+    *//*-------------------------------------------------------------------------*/
+    private int[] getAxisOrientation( TransMatrix mat)
+    {  int[] axisOrientation = new int[3];
+       double[][] array;
+       double xi,xj,xk , yi,yj,yk , zi,zj,zk , val,detQ,detP ;
+       Matrix P , Q , M ;
+       int i,j,k=0,p,q,r , ibest,jbest,kbest,pbest,qbest,rbest ;
+       double vbest ;
+
+       /* load column vectors for each (i,j,k) direction from matrix */
+
+       /*-- i axis --*/ /*-- j axis --*/ /*-- k axis --*/
+       array = mat.getMatrix(0, 2, 0, 2).getArray();
+       xi = array[0][0] ; xj = array[0][1] ; xk = array[0][2] ;
+       yi = array[1][0] ; yj = array[1][1] ; yk = array[1][2] ;
+       zi = array[2][0] ; zj = array[2][1] ; zk = array[2][2] ;
+
+       /* normalize column vectors to get unit vectors along each ijk-axis */
+
+       /* normalize i axis */
+       axisOrientation[0] = FileInfoBase.ORI_UNKNOWN_TYPE;
+       val = Math.sqrt( xi*xi + yi*yi + zi*zi ) ;
+       if( val == 0.0 ) return axisOrientation;                 /* stupid input */
+       xi /= val ; yi /= val ; zi /= val ;
+
+       /* normalize j axis */
+
+       val = Math.sqrt( xj*xj + yj*yj + zj*zj ) ;
+       if( val == 0.0 ) return axisOrientation;                 /* stupid input */
+       xj /= val ; yj /= val ; zj /= val ;
+
+       /* orthogonalize j axis to i axis, if needed */
+
+       val = xi*xj + yi*yj + zi*zj ;    /* dot product between i and j */
+       if( Math.abs(val) > 1.e-4 ){
+         xj -= val*xi ; yj -= val*yi ; zj -= val*zi ;
+         val = Math.sqrt( xj*xj + yj*yj + zj*zj ) ;  /* must renormalize */
+         if( val == 0.0 ) return axisOrientation;              /* j was parallel to i? */
+         xj /= val ; yj /= val ; zj /= val ;
+       }
+
+       /* normalize k axis; if it is zero, make it the cross product i x j */
+
+       val = Math.sqrt( xk*xk + yk*yk + zk*zk ) ;
+       if( val == 0.0 ){ xk = yi*zj-zi*yj; yk = zi*xj-zj*xi ; zk=xi*yj-yi*xj ; }
+       else            { xk /= val ; yk /= val ; zk /= val ; }
+
+       /* orthogonalize k to i */
+
+       val = xi*xk + yi*yk + zi*zk ;    /* dot product between i and k */
+       if( Math.abs(val) > 1.e-4 ){
+         xk -= val*xi ; yk -= val*yi ; zk -= val*zi ;
+         val = Math.sqrt( xk*xk + yk*yk + zk*zk ) ;
+         if( val == 0.0 ) return axisOrientation;      /* bad */
+         xk /= val ; yk /= val ; zk /= val ;
+       }
+
+       /* orthogonalize k to j */
+
+       val = xj*xk + yj*yk + zj*zk ;    /* dot product between j and k */
+       if( Math.abs(val) > 1.e-4 ){
+         xk -= val*xj ; yk -= val*yj ; zk -= val*zj ;
+         val = Math.sqrt( xk*xk + yk*yk + zk*zk ) ;
+         if( val == 0.0 ) return axisOrientation;      /* bad */
+         xk /= val ; yk /= val ; zk /= val ;
+       }
+
+       Q = new Matrix(3,3);
+       
+       Q.set(0, 0, xi); Q.set(0, 1, xj); Q.set(0, 2, xk);
+       Q.set(1, 0, yi); Q.set(1, 1, yj); Q.set(1, 2, yk);
+       Q.set(2, 0, zi); Q.set(2, 1, zj); Q.set(2, 2, zk);
+
+       /* at this point, Q is the rotation matrix from the (i,j,k) to (x,y,z) axes */
+
+       detQ = Q.det();
+
+       if (detQ == 0.0) {
+           MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
+
+           return axisOrientation;
+       }
+       
+       P = new Matrix(3,3);
+       /* Build and test all possible +1/-1 coordinate permutation matrices P;
+          then find the P such that the rotation matrix M=PQ is closest to the
+          identity, in the sense of M having the smallest total rotation angle. */
+
+       /* Despite the formidable looking 6 nested loops, there are
+          only 3*3*3*2*2*2 = 216 passes, which will run very quickly. */
+
+       vbest = -666.0 ; ibest=pbest=qbest=rbest=1 ; jbest=2 ; kbest=3 ;
+       for( i=1 ; i <= 3 ; i++ ){     /* i = column number to use for row #1 */
+        for( j=1 ; j <= 3 ; j++ ){    /* j = column number to use for row #2 */
+         if( i == j ) continue ;
+          for( k=1 ; k <= 3 ; k++ ){  /* k = column number to use for row #3 */
+           if( i == k || j == k ) continue ;
+           P.set(0, 0, 0.0); P.set(0, 1, 0.0); P.set(0, 2, 0.0);
+           P.set(1, 0, 0.0); P.set(1, 1, 0.0); P.set(1, 2, 0.0);
+           P.set(2, 0, 0.0); P.set(2, 1, 0.0); P.set(2, 2, 0.0);
+           for( p=-1 ; p <= 1 ; p+=2 ){    /* p,q,r are -1 or +1      */
+            for( q=-1 ; q <= 1 ; q+=2 ){   /* and go into rows #1,2,3 */
+             for( r=-1 ; r <= 1 ; r+=2 ){
+               P.set(0, i-1, p);
+               P.set(1, j-1, q);
+               P.set(2, k-1, r);
+               detP = P.det();           /* sign of permutation */
+               if( detP * detQ <= 0.0 ) continue ;  /* doesn't match sign of Q */
+               M = P.times(Q) ;
+
+               /* angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))       */
+               /* we want largest trace(M) == smallest angle == M nearest to I */
+
+               val = M.get(0,0) + M.get(1,1) + M.get(2,2); /* trace */
+               if( val > vbest ){
+                 vbest = val ;
+                 ibest = i ; jbest = j ; kbest = k ;
+                 pbest = p ; qbest = q ; rbest = r ;
+               }
+       }}}}}}
+
+       /* At this point ibest is 1 or 2 or 3; pbest is -1 or +1; etc.
+
+          The matrix P that corresponds is the best permutation approximation
+          to Q-inverse; that is, P (approximately) takes (x,y,z) coordinates
+          to the (i,j,k) axes.
+
+          For example, the first row of P (which contains pbest in column ibest)
+          determines the way the i axis points relative to the anatomical
+          (x,y,z) axes.  If ibest is 2, then the i axis is along the y axis,
+          which is direction P2A (if pbest > 0) or A2P (if pbest < 0).
+
+          So, using ibest and pbest, we can assign the output code for
+          the i axis.  Mutatis mutandis for the j and k axes, of course. */
+
+       switch( ibest*pbest ){
+         case  1: i = FileInfoBase.ORI_L2R_TYPE ; break ;
+         case -1: i = FileInfoBase.ORI_R2L_TYPE ; break ;
+         case  2: i = FileInfoBase.ORI_P2A_TYPE ; break ;
+         case -2: i = FileInfoBase.ORI_A2P_TYPE ; break ;
+         case  3: i = FileInfoBase.ORI_I2S_TYPE ; break ;
+         case -3: i = FileInfoBase.ORI_S2I_TYPE ; break ;
+       }
+
+       switch( jbest*qbest ){
+           case  1: j = FileInfoBase.ORI_L2R_TYPE ; break ;
+           case -1: j = FileInfoBase.ORI_R2L_TYPE ; break ;
+           case  2: j = FileInfoBase.ORI_P2A_TYPE ; break ;
+           case -2: j = FileInfoBase.ORI_A2P_TYPE ; break ;
+           case  3: j = FileInfoBase.ORI_I2S_TYPE ; break ;
+           case -3: j = FileInfoBase.ORI_S2I_TYPE ; break ;
+           default: j = 1;
+       }
+
+       switch( kbest*rbest ){
+           case  1: k = FileInfoBase.ORI_L2R_TYPE ; break ;
+           case -1: k = FileInfoBase.ORI_R2L_TYPE ; break ;
+           case  2: k = FileInfoBase.ORI_P2A_TYPE ; break ;
+           case -2: k = FileInfoBase.ORI_A2P_TYPE ; break ;
+           case  3: k = FileInfoBase.ORI_I2S_TYPE ; break ;
+           case -3: k = FileInfoBase.ORI_S2I_TYPE ; break ;  
+       }
+
+       axisOrientation[0] = i ; 
+       axisOrientation[1] = j ;
+       axisOrientation[2] = k ; 
+       return axisOrientation;
     }
 
     /**
@@ -3301,6 +3064,8 @@ public class FileNIFTI extends FileBase {
         
         matrix = fileInfo.getMatrix();
         Preferences.debug("Matrix on write entry = " + matrix + "\n");
+        getAxisOrientation(matrix);
+        
         matrix.set(0, 3, -LPSOrigin[0]);
         matrix.set(1, 3, LPSOrigin[1]);
         matrix.set(2, 3, LPSOrigin[2]);
@@ -3406,7 +3171,7 @@ public class FileNIFTI extends FileBase {
                 } // switch(axisOrientation[2])
 
             }
-                
+            
         } // if (!isNIFTI)
 
         if (matrix != null) {
