@@ -1661,9 +1661,9 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // ddrvst_test
 
     /**
-     * This is a port of the version 3.0 LAPACK driver routine DGGEV Orginal DGGEV created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999
-     * dggev computes for a pair on n by n real nonsymmetric matrices (A,B) the generalized eigenvalues, and optionally,
+     * This is a port of the version 3.1 LAPACK driver routine DGGEV Orginal DGGEV created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dggev computes for a pair of n by n real nonsymmetric matrices (A,B) the generalized eigenvalues, and optionally,
      * the left and/or right generalized eigenvectors.
      *
      * <p>A generalized eigenvalue for a pair of matrices (A,B) is a scalar lambda or a ratio alpha/beta = lambda, such
@@ -1674,10 +1674,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * B * v[j] The left eigenvector u[j] corresponding to the eigenvalue lambda[j] of (A,B) satisfies u[j]**H * A =
      * lambda[j] * u[j]**H * B where u[j]**H is the conjugate-transpose of u[j].</p>
      *
-     * @param  jobvl   input char = 'N': do not compute the left generalized eigenvectors = 'V': compute the left
-     *                 generalized eigenvectors
-     * @param  jobvr   input char = 'N': do not compute the right generalized eigenvectors = 'V': compute the right
-     *                 generalized eigenvectors
+     * @param  jobvl   input char = 'N': do not compute the left generalized eigenvectors 
+     *                            = 'V': compute the left generalized eigenvectors
+     * @param  jobvr   input char = 'N': do not compute the right generalized eigenvectors
+     *                            = 'V': compute the right generalized eigenvectors
      * @param  n       input int The order of the matrices A, B, vl, and vr. n >= 0.
      * @param  A       input/output double[][] of dimension (lda,n) On entry, the matrix A in the pair (A,B). On exit, A
      *                 has been overwritten.
@@ -1709,14 +1709,18 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *                 i*vr(:,j+1). Each eigenvector will be scaled so the largest component have abs(real part) +
      *                 abs(imag part) = 1. Not referenced if jobvr = 'N'.
      * @param  ldvr    input int The leading dimension of matrix vr. ldvr >= 1, and if jobvr = 'V', ldvr >= n.
-     * @param  work    (workspace/output) double[] of dimension lwork On exit, if info[0] = 0, work[0] returns the
+     * @param  work    (workspace/output) double[] of dimension max(1,lwork) On exit, if info[0] = 0, work[0] returns the
      *                 optimal lwork.
      * @param  lwork   input int The dimension of the array work. lwork >= max(1,8*n). For good performance, lwork must
-     *                 generally be larger
-     * @param  info    output int[] = 0: successful exit < 0: if info[0] = -i, the i-th argument had an illegal value =
-     *                 1,...,n: The QZ iteration failed. No eigenvectors have been calculated, but alphar[j] ,
-     *                 alphai[j], and beta[j] should be correct for j = info[0],...,n-1. > n: = n+1: other than QZ
-     *                 iteration failed in DHGEQZ. = n+2: error return from dtgevc.
+     *                 generally be larger.  If lwork = -1, then a workspace query is assumed; the routine only
+     *                 calculates the optimal size of the work array, returns this value as the first entry of the work
+     *                 array, and no error message related to lwork is issued.
+     * @param  info    output int[] = 0: successful exit
+     *                              < 0: if info[0] = -i, the i-th argument had an illegal value
+     *                              = 1,...,n: The QZ iteration failed. No eigenvectors have been calculated, but alphar[j] ,
+     *                                         alphai[j], and beta[j] should be correct for j = info[0],...,n-1.
+     *                              > n: = n+1: other than QZ iteration failed in DHGEQZ.
+     *                                   = n+2: error return from dtgevc.
      */
     public void dggev(char jobvl, char jobvr, int n, double[][] A, int lda, double[][] B, int ldb, double[] alphar,
                       double[] alphai, double[] beta, double[][] vl, int ldvl, double[][] vr, int ldvr, double[] work,
@@ -1825,17 +1829,22 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
 
         minwrk = 1;
 
-        if ((info[0] == 0) && ((lwork >= 1) || lquery)) {
+        if (info[0] == 0) {
+            minwrk = Math.max(1, 8 * n);
             name = new String("DGEQRF");
             opts = new String(" ");
-            maxwrk = (7 * n) + (n * ilaenv(1, name, opts, n, 1, n, 0));
-            minwrk = Math.max(1, 8 * n);
+            maxwrk = Math.max(1, n*(7 + ilaenv(1, name, opts, n, 1, n, 0)));
+            name = new String("DORMQR");
+            maxwrk = Math.max(maxwrk, n*(7 + ilaenv(1, name, opts, n, 1, n, 0)));
+            if (ilvl) {
+                name = new String("DORGQR");
+                maxwrk = Math.max(maxwrk, n*(7 + ilaenv(1, name, opts, n, 1, n, -1)));
+            }
             work[0] = maxwrk;
-        } // if ((info[0] == 0) && ((lwork >= 1) || lquery))
-
-        if ((lwork < minwrk) && (!lquery)) {
-            info[0] = -16;
-        }
+            if ((lwork < minwrk) && (!lquery)) {
+                info[0] = -16;
+            }
+        } // if (info[0] == 0)
 
         if (info[0] != 0) {
             MipavUtil.displayError("Error dggev had info[0] = " + info[0]);
@@ -1983,25 +1992,27 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // (Workspace:  need n, prefer n*nb)
         if (ilvl) {
             dlaset('F', n, n, 0.0, 1.0, vl, ldvl);
-            row1 = Math.max(1, irows - 1);
-            array1 = new double[row1][irows - 1];
-
-            for (i = 0; i < row1; i++) {
-
-                for (j = 0; j < (irows - 1); j++) {
-                    array1[i][j] = B[ilo[0] + i][ilo[0] - 1 + j];
+            if (irows > 1) {
+                row1 = Math.max(1, irows - 1);
+                array1 = new double[row1][irows - 1];
+    
+                for (i = 0; i < row1; i++) {
+    
+                    for (j = 0; j < (irows - 1); j++) {
+                        array1[i][j] = B[ilo[0] + i][ilo[0] - 1 + j];
+                    }
                 }
-            }
-
-            array2 = new double[row1][irows - 1];
-            dlacpy('L', irows - 1, irows - 1, array1, row1, array2, row1);
-
-            for (i = 0; i < row1; i++) {
-
-                for (j = 0; j < (irows - 1); j++) {
-                    vl[ilo[0] + i][ilo[0] - 1 + j] = array2[i][j];
+    
+                array2 = new double[row1][irows - 1];
+                dlacpy('L', irows - 1, irows - 1, array1, row1, array2, row1);
+    
+                for (i = 0; i < row1; i++) {
+    
+                    for (j = 0; j < (irows - 1); j++) {
+                        vl[ilo[0] + i][ilo[0] - 1 + j] = array2[i][j];
+                    }
                 }
-            }
+            } // if (irows > 1)
 
             row1 = Math.max(1, irows);
             array1 = new double[row1][irows];
@@ -2072,7 +2083,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         } // else
 
         // Perform QZ algorithm (Compute eigenvalues, and optionally, the
-        // Schur forms and Schur vecrtors)
+        // Schur forms and Schur vectors)
         // (Workspace: need n)
 
         iwrk = itau;
@@ -2137,10 +2148,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
             dtgevc(chtemp, 'B', ldumma, n, A, lda, B, ldb, vl, ldvl, vr, ldvr, n, in, work5, ierr);
 
             if (ierr[0] != 0) {
-                UI.setDataText("dtgevc call to dlascl had ierr[0] = " + ierr[0] + "\n");
-            }
-
-            if (ierr[0] != 0) {
+                UI.setDataText("dggev call to dtgevc had ierr[0] = " + ierr[0] + "\n");
                 info[0] = n + 2;
                 work[0] = maxwrk;
 
@@ -8867,25 +8875,43 @@ loop9:
     } // dggbal
 
     /**
-     * This is a port of version 3.0 LAPACK routine DGGHRD Orginal DGGHRD created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of version 3.1 LAPACK routine DGGHRD Orginal DGGHRD created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dgghrd reduces a pair of real matrices (A,B) to generalized upper Hessenberg form using orthogonal
-     * transformations, where A is a general matrix and B is upper triangular: Q' * A * Z = H and Q' * B * Z = T, where
-     * H is upper Hessenberg, T is upper triangular, and Q and Z are orthogonal, and ' means transpose.
+     * transformations, where A is a general matrix and B is upper triangular.  The form of the generalized
+     * eigenvalue problem is
+     *      A*x = lambda*B*x
+     * and B is typically made upper triangular by computing its QR factorization and moving the orthogonal
+     * matrix Q to the left side of the equation.
+     * 
+     * This subroutine simultaneously reduces A to a Hessenberg matrix H:
+     *      Q**T * A * Z = H
+     * and transforms B to another upper triangular matrix T:
+     *      Q**T * B * Z = T
+     * in order to reduce the problem to its standard form
+     *      H*y = lambda*T*y
+     * where y = z**T * x
      *
      * <p>The orthogonal matrices Q and Z are determined as products of Givens rotations. They may either be formed
-     * explicitly, or they may be postmultiplied into input matrices Q1 and Z1, so that Q1 * A * Z1' = (Q1*Q) * H *
-     * (Z1*Z)' Q1 * B * Z1' = (Q1*Q) * T * (Z1*Z)'</p>
+     * explicitly, or they may be postmultiplied into input matrices Q1 and Z1, so that
+     *         Q1 * A * Z1**T = (Q1*Q) * H * (Z1*Z)**T 
+     *         Q1 * B * Z1**T = (Q1*Q) * T * (Z1*Z)**T
+     *         
+     * If Q1 is the orthogonal matrix from the QR factorization of B in the original equation A*x = lambda*b*x,
+     * then dgghrd reduces the original problem to the generalized Hessenberg form.</p>
      *
-     * @param  compq  input char 'N': do not compute Q 'I': Q is initialized to the unit matrix, and the orthogonal
-     *                matrix Q is returned 'V': Q must contain an orthogonal matrix Q1 on entry, and the product Q1*Q is
-     *                returned
-     * @param  compz  input char 'N': do not compute Z 'I': Z is initialized to the unit matrix, and the orthogonal
-     *                matrix Z is returned 'V': Z must contain an orthogonal matrix Z1 on entry, and the product Z1*Z is
-     *                returned
+     * @param  compq  input char 
+     *                = 'N': do not compute Q
+     *                = 'I': Q is initialized to the unit matrix, and the orthogonal matrix Q is returned
+     *                = 'V': Q must contain an orthogonal matrix Q1 on entry, and the product Q1*Q is returned
+     * @param  compz  input char 
+     *                = 'N': do not compute Z
+     *                = 'I': Z is initialized to the unit matrix, and the orthogonal matrix Z is returned
+     *                = 'V': Z must contain an orthogonal matrix Z1 on entry, and the product Z1*Z is returned
      * @param  n      input int The order of the matrices A and B. n >= 0.
      * @param  ilo    input int
-     * @param  ihi    input int It is assumed that A is already upper triangular in rows and columns 0:ilo-2 and ih:n-1.
+     * @param  ihi    input int ilo and ihi mark the rows and columns of A which are to be reduced.  
+     *                It is assumed that A is already upper triangular in rows and columns 0:ilo-2 and ih:n-1.
      *                ilo and ihi are normally set by a previous call to dggbal; otherwise they should be set to 1 and n
      *                respectively. 1 <= ilo <= ihi <= n, if n > 0; ilo = 1 and ihi = 0, if n == 0.
      * @param  A      input/output double[][] of dimension (lda,n) On entry, the n by n general matrix to be reduced. On
@@ -8893,23 +8919,25 @@ loop9:
      *                matrix H, and the rest is set to zero.
      * @param  lda    input int The leading dimension of the array A. lda >= max(1,n).
      * @param  B      input/output double[][] of dimension (ldb,n) On entry, the n by n upper triangular matrix B. On
-     *                exit, the upper triangular matrix T = Q' B Z. The elements below the diagonal are set to zero.
+     *                exit, the upper triangular matrix T = Q**T B Z. The elements below the diagonal are set to zero.
      * @param  ldb    input int The leading dimension of the array B. ldb >= max(1,n).
-     * @param  Q      input/output double[][] of dimension (ldq,n). If compq = 'N': Q is not referenced. If compq = 'I':
-     *                On entry, Q need not be set, and on exit it contains the orthogonal matrix Q, where Q' is the
-     *                product of the Givens transformations which are applied to A and B on the left. If compq = 'V': On
-     *                entry, Q must contain an orthogonal matrix Q1, and on exit this is overwritten by Q1*Q.
+     * @param  Q      input/output double[][] of dimension (ldq,n). 
+     *                On entry, if compq = 'V', the orthogonal matix Q1, typically from the QR factorization of B.
+     *                On exit, if compq = 'I', the orthogonal matrix Q, and if compq = 'V', the product Q1*Q.
+     *                Not referenced if compq = 'N'.
      * @param  ldq    input int The leading dimension of the array Q. ldq >= n if compq = 'V' or 'I'; ldq >= 1
      *                otherwise.
-     * @param  Z      input/output double[][] of dimension (ldz,n) If compz = 'N': Z is not referenced. If compz = 'I':
-     *                On entry, Z need not be set, and on exit it contains the orthogonal matrix Z, which is the product
-     *                of the Givens transformations which are applied to A and B on the right. If compz = 'V': On entry,
-     *                Z must contain an orthogonal matrix Z1, and on exit this is overwritten by Z1*Z.
+     * @param  Z      input/output double[][] of dimension (ldz,n) 
+     *                On entry, if compz = 'V', the orthogonal matrix Z1.
+     *                On exit, if compz = 'I', the orthogonal matrix Z, and if compz = 'V', the product Z1*Z.
+     *                Not referenced if compz = 'N'.
      * @param  ldz    input int The leading dimension of the array Z. ldz >= n if compz = 'V' or 'I'; ldz >= 1
      *                otherwise.
-     * @param  info   output int[] = 0: successful exit. < 0: If info = -i, the i-th argument had an illegal value.
-     *                Further details: This routine reduces A to Hessenberg and B to triangular form by an unblocked
-     *                reduction, as described in Matrix Computations by Golub and Van Loan (Johns Hopkins Press).
+     * @param  info   output int[] 
+     *                    = 0: successful exit. 
+     *                    < 0: If info = -i, the i-th argument had an illegal value.
+     * Further details: This routine reduces A to Hessenberg and B to triangular form by an unblocked
+     * reduction, as described in Matrix Computations by Golub and Van Loan (Johns Hopkins Press).
      */
     private void dgghrd(char compq, char compz, int n, int ilo, int ihi, double[][] A, int lda, double[][] B, int ldb,
                         double[][] Q, int ldq, double[][] Z, int ldz, int[] info) {
@@ -9124,94 +9152,117 @@ loop9:
     } // dgghrd
 
     /**
-     * This is a port of version 3.0 LAPACK routine DHGEQZ Orginal DHGEQZ created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dhgeqz
-     * implements a single-/double-shift version of the QZ method for finding the generalized eigenvalues w[j] =
-     * (alphar[j] + i*alphai[j])/beta[j] of the equation det( A - w(i) B) = 0 In addition, the pair A,B may be reduced
-     * to generalized Schur form: B is upper triangular, and A is block upper triangular, where the diagonal blocks are
-     * either 1 by 1 or 2 by 2, the 2 by 2 blocks having complex generalized eigenvalues (see the description of the
-     * argument job.)
-     *
-     * <p>If job = 'S', then the pair (A,B) is simultaneously reduced to Schur form by applying one orthogonal
-     * transformation (usually called Q) on the left and another (usually called Z) on the right. The 2 by 2
-     * upper-triangular diagonal blocks of B corresponding to 2 by 2 blocks of A will be reduced to positive diagonal
-     * matrices. (i.e., if A[j+1][j] is nonzero, then B[j+1][j] = B[j][j+1] = 0 and B[j][j] and B[j+1][j+1] will be
-     * positive).</p>
-     *
-     * <p>If job = 'E', then at each iteration, the same transformations are computed, but they are only applied to
-     * those parts of A and B which are needed to compute alphar, alphai, and betar.</p>
-     *
-     * <p>If job = 'S' and compq and compz are 'V' or 'I', then the orthogonal transformations used to reduce (A,B) are
-     * accumulated into the arrays Q and Z such that: Q(in) A(in) Z(in)* = Q(out) A(out) Z(out)* Q(in) B(in) Z(in)* =
-     * Q(Out) B(out) Z(out)* Ref: C.B. Moler & G.W. Stewart, "An Algorithm for Generalized Matrix Eigenvalue Problems",
+     * This is a port of version 3.1 LAPACK routine DHGEQZ Orginal DHGEQZ created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006 
+     * dhgeqz computes the eigenvalues of a real matrix pair (H,T), where H is an upper Hessenberg matrix and T is
+     * upper triangular, using the double-shift QZ method.
+     * Matrix pairs of this type are produced by the reduction to generalized upper Hessenberg form of a real matrix
+     * pair (A, B);
+     * A = Q1*H*Z**T, B = Q1*T*Z1**T,
+     * as computed by dgghrd.
+     * 
+     * If job = 'S', then the Hessenberg-triangular pair (H,T) is also reduced to generalized Schur form,
+     * H = Q*S*Z**T, T = Q*P*Z**T,
+     * where Q and Z are orthogonal matrices, P is an upper triangular matrix, and S is a quasi-triangular matrix
+     * with 1-by-1 and 2-by-2 diagonal blocks.
+     * 
+     * The 1-by-1 blocks correspond to real eigenvalues of the matrix pair (H, T) and the 2-by-2 blocks correspond to
+     * complex conjugate pairs of eigenvalues.
+     * 
+     * Additionally, the 2-by-2 upper triangular diagonal blocks of P corresponding to 2-by-2 blocks of S are reduced
+     * to positive diagonal form, i.e., if (S(j+1,j) is non-zero, then P(j+1,j) = P(j,j+1) = 0, P(j,j) > 0, and
+     * P(j+1,j+1) > 0.
+     * 
+     * Optionally, the orthogonal matrix Q from the generalized Schur factorization may be postmultiplied into an input
+     * matrix Q1, and the orthogonal matrix Z may be postmultiplied into an input matrix Z1.  If Q1 and Z1 are the
+     * orthogonal matrices from dgghrd that reduced the matrix pair (A,B) to generalized upper Hessenberg form, then
+     * the output matrices Q1*Q and Z1*Z are the orthogonal factors from the generalized Schur factorization of (A,B):
+     * A = (Q1*Q)*S*(Z1*Z)**T, B = (Q1*Q)*P*(Z1*Z)**T.
+     * 
+     * To avoid overflow, eignevalues of the matrix pair (H,T) (equivalently, of (A,b)) are computed as a pair of values
+     * (alpha, beta), where alpha is complex and beta real.  If beta is nonzero, lambda = alpha / beta is an eigenvalue
+     * of the generalized nonsymmetric eigenvalue problem (GNEP)
+     *      A*x = lambda*B*x
+     * and if alpha is nonzero, mu = beta / alpha is an eigenvalue fo the alternate form of the GNEP
+     *      mu*A*y = B*y
+     * Real eigenvalues can be read directly from the generalized Schur form:
+     *      alpha = S(i,i), beta = P(i,i)
+     *      
+     * Ref: C.B. Moler & G.W. Stewart, "An Algorithm for Generalized Matrix Eigenvalue Problems",
      * SIAM J. Numer. Anal., 10(1973), pp. 241- 256.</p>
      *
-     * @param  job     input char = 'E': compute only alphar, alphai, and beta. A and B will not necessarily be put into
-     *                 generalized Schur form. = 'S': put A and B into generalized Schur form, as well as computing
-     *                 alphar, alphai, and beta.
-     * @param  compq   input char = 'N': do not modify Q. = 'V': multiply the array Q on the right by the transpose of
-     *                 the orthogonal transformation that is applied to the left side of A and B to reduce them to Schur
-     *                 form. = 'I': like compq = 'V', except that Q will be initialized to the identity first.
-     * @param  compz   input char = 'N': do not modify Z. = 'V': multiply the array Z on the right by the orthogonal
-     *                 transformation that is applied to the right side of A and B to reduce them to Schur form. = 'I':
-     *                 like compz = 'V', except that Z will be initialized to the identity first.
-     * @param  n       input int The order of matrices A, B, Q, and Z. n >= 0.
+     * @param  job     input char 
+     *                 = 'E': Compute eigenvalues only
+     *                 = 'S': Compute eigenvalues and the Schur form.
+     * @param  compq   input char
+     *                 = 'N': Left Schur vectors (Q) are not computed.
+     *                 = 'I': Q is initialized to the unit matrix and the matrix Q of left Schur vectors of 
+     *                        (H,T) is returned.
+     *                 = 'V': Q must contain an orthogonal matrix Q1 on entry and the product Q1*Q is returned.
+     * @param  compz   input char
+     *                 = 'N': Right Schur vectors (Z) are not computed.
+     *                 = 'I': Z is initialized to the unit matrix and the matrix Z of right Schur vectors of
+     *                        (H,T) is returned.
+     *                 = 'V': Z must contain an orthogonal matrix Z1 on entry and the product Z1*Z is returned.
+     * @param  n       input int The order of matrices H, T, Q, and Z. n >= 0.
      * @param  ilo     input int
-     * @param  ihi     input int It is assumed that A is already upper triangular in rows and columns 0:ilo-2 and
-     *                 ihi:n-1. 1 <= ilo <= ihi <= n, if n > 0; ilo = 1 and ihi = 0, if n = 0.
-     * @param  A       (input/output) double[][] of dimension (lda,n) On entry, the n by n upper Hessenberg matrix A.
-     *                 Elements below the subdiagonal must be zero. If job = 'S', then on exit A and B will have been
-     *                 simultaneously reduced to generalized Schur form. If job = 'E', then on exit A will have been
-     *                 destroyed. The diagonal blocks will be correct, but the off-diagonal portion will be meaningless.
-     * @param  lda     input int The leading dimension of the array A. lda >= max(1,n).
-     * @param  B       (input/output) double[][] of dimension (ldb,n) On entry, the n by n upper triangular matrix B.
-     *                 Elements below the diagonal must be zero. 2 by 2 blocks in B corresponding to 2 by 2 blocks in A
-     *                 will be reduced to positive diagonal form. (i.e., if A[j+1][j] is nonzero, then B[j+1][j] =
-     *                 B[j][j+1] = 0 and B[j][j] and B[j+1][j+1] will be positive.) If job = 'S', then on exit A and B
-     *                 will have been simultaneously reduced to Schur form. If job = 'E', then on exit B will have been
-     *                 destroyed. Elements corresponding to diagonal blocks of A will be correct, but the off-diagonal
-     *                 portion will be meaningless.
-     * @param  ldb     input int The leading dimension of the array B. ldb >= max(1,n).
-     * @param  alphar  output double[] of dimension (n) alphar(0:n-1) will be set to real parts of the diagonal elements
-     *                 of A that would result from reducing A and B to Schur form and then further reducing them both to
-     *                 triangular form using unitary transformations such that the diagonal of B was nonnegative real.
-     *                 Thus, if A[j][j] is in a 1 by 1 block (i.e., A[j+1][j] = A[j][j+1] = 0), then alphar[j] =
-     *                 A[j][j]. Note that the (real or complex) values (alphar[j] + i*alphai[j])/beta[j], j = 0,...,n-1,
-     *                 are the generalized eigenvalues of the matrix pencil A - wB.
-     * @param  alphai  output double[] of dimension (n) alphai(0:n-1) will be set to imaginary parts of the diagonal
-     *                 elements of A that would result from reducing A and B to Schur form and then further reducing
-     *                 them both to triangular form using unitary transformations such that the diagonal of B was
-     *                 nonnegative real. Thus, if A[j][j] is in a 1 by 1 block (i.e., A[j+1][j] = A[j][j+1] = 0), then
-     *                 alphar[j] = 0. Note that the (real or complex) values (alphar[j] + i*alphai[j])/beta[j],
-     *                 j=0,...,n-1, are the generalized eigenvalues of the matrix pencil A - wB.
-     * @param  beta    output double[] of dimension (n) beta(0:n-1) will be set to the (real) diagonal elements of B
-     *                 that would result from reducing A and B to Schur form and then further reducing them to
-     *                 triangular form using unitary transformations such that the diagonal of B was nonnegative real.
-     *                 Thus, if A[j][j] is in a 1 by 1 block (i.e., A[j+1][j] = A[j][j+1] = 0), then beta[j] = B[j][j].
-     *                 Note that the (real or complex) values (alphar[j] + i*alphai[j])/beta[j], j = 0,...,n-1, are the
-     *                 generalized eigenvalues of the matrix pencil A - wB. (Note that beta(0:n-1) will always be
-     *                 nonnegative, and no betai is necessary.)
-     * @param  Q       (input/output) double[][] of dimension (ldq,n) If compq = 'N', then Q will not be referenced. If
-     *                 compq = 'V' or 'I', then the transpose of the orthogonal transformations which are applied to A
-     *                 and B on the left will be applied to the array Q on the right.
+     * @param  ihi     input int ilo and ihi mark the rows and columns of H which are in Hessenberg form.
+     *                 It is assumed that A is already upper triangular in rows and columns 0:ilo-2 and
+     *                 ihi:n-1. If n > 0, 1 <= ilo <= ihi <= n; if n = 0, ilo = 1 and ihi = 0.
+     * @param  H       (input/output) double[][] of dimension (ldh,n) On entry, the n by n upper Hessenberg matrix H.
+     *                 On exit, if job = 'S', H contains the upper quasi-triangluar matrix S from the generalized
+     *                 Schur factorization; 2-by-2 diagonal blocks (corresponding to complex conjugate pairs of 
+     *                 eigenvalues) are returned in standard form, with H(i,i) = H(i+1,i+1) and 
+     *                 H(i+1,i) * H(i,i+1) < 0.  if job = 'E', the diagonal blocks of H match those of S, but the
+     *                 rest of H is unspecified
+     * @param ldh      input int  The leading dimension of the array H.  ldh >= max(1, n).
+     * @param  T       (input/output) double[][] of dimension (ldt,n) On entry, the n by n upper triangular matrix T.
+     *                 On exit, if job = 'S', T contains the upper triangular matrix P from the generalized Schur
+     *                 factorization; 2-by-2 diagonal blocks of P corresponding to 2-by-2 blocks of S are reduced to
+     *                 postive diagonal form, i.e., if H(j+1,j) is non-zero, then T(j+1,j) = T(j,j+1) = 0, T(j,j) > 0,
+     *                 and T(j+1,j+1) > 0.
+     *                 if job = 'E', the diagonal blocks of T match those of P, but the rest of T is unspecified.
+     * @param  ldt     input int The leading dimension of the array T. ldt >= max(1,n).
+     * @param  alphar  output double[] of dimension (n) The real parts of each scalar alpha definfing an 
+     *                 eigenvalue of GNEP.
+     * @param  alphai  output double[] of dimension (n) The imaginary parts of each scalar alpha defining an
+     *                 eigenvalue of GNEP.  If alphai[j] is zero, then the j-th eigenvalue is real; if positive,
+     *                 then the j-th and (j+1)-st eigenvalues are a complex conjugate pair, with 
+     *                 alpha(j+1) = -alpha(j).
+     * @param  beta    output double[] of dimension (n) The scalars beta that define the eigenvalues of GNEP.
+     *                 Together, the quantities alpha = (alphar[j], alphai[j]) and beta = beta[j] represent the
+     *                 j-th eigenvalue of the matrix pair (A,B), in one of the forms lambda = alpha/beta or
+     *                 mu = beta/alpha.  Since either lambda or mu may overflow, they should not, in general,
+     *                 be computed.
+     * @param  Q       (input/output) double[][] of dimension (ldq,n) 
+     *                 On entry, if compz = 'V', the orthogonal matrix Q1 is used in the reduction of (A,B) to
+     *                 generalized Hessenberg form.
+     *                 On exit, if compz = 'I', the orthogonal matrix of left Schur vectors of (H,T), and if
+     *                 compz = 'V', the orthogonal matrix of left Schur vectors of (A,B).
+     *                 Not referenced if compz = 'N'.
      * @param  ldq     input int The leading dimension of the array Q. ldq >= 1. If compq = 'V' or 'I', then ldq >= n.
-     * @param  Z       (input/output) double[][] of dimension (ldz,n) If compz = 'N', then Z will not be referenced. If
-     *                 compz = 'V' or 'I', then the orthogonal transformations which are applied to A and B on the right
-     *                 will be applied to the array Z on the right.
+     * @param  Z       (input/output) double[][] of dimension (ldz,n) 
+     *                 On entry, if compz = 'V', the orthogonal matrix Z1 is used in the reduction of (A,B) to
+     *                 generalized Hessenberg form.
+     *                 On exit, if compz = 'I', the orthogonal matrix of right Schur vectors of (H,T), and if
+     *                 compz = 'V', the orthogonal matrix of right Schur vectors of (A,B).
+     *                 Not referenced if compz = 'N'.
      * @param  ldz     input int The leading dimension of the array Z. ldz >= 1. If compz = 'V' or 'I', then ldz >= n.
-     * @param  work    (workspace/output) double[] of dimension (lwork) On exit, if info[0] >= 0, work[0] returns the
-     *                 optimal lwork.
+     * @param  work    (workspace/output) double[] of dimension max(1,lwork) 
+     *                 On exit, if info[0] >= 0, work[0] returns the optimal lwork.
      * @param  lwork   input int The dimension of the array work. lwork >= max(1,n). If lwork = -1, then a workspace
      *                 query is assumed; the routine only calculates the optimal size of the work array, returns this
      *                 value as the first entry of the work array, and no error message related to lwork is output.
-     * @param  info    output int[] = 0: successful exit. < 0: If info[0] = -i, the i-th argument had an illegal value =
-     *                 1,...,n: the QZ iteration did not converge. (A,B) is not in Schur form, but alphar[i], alphai[i],
-     *                 and beta[i], i = info,...,n-1 should be correct. = n+1,...,2*n: the shift calculation failed.
-     *                 (A,B) is not in Schur form, but alphar[i], alphai[i], and beta[i], i = info-n,...,n-1 should be
-     *                 correct > 2*n: various "impossible" errors.
+     * @param  info    output int[] 
+     *                 = 0: successful exit. 
+     *                 < 0: If info[0] = -i, the i-th argument had an illegal value 
+     *                 = 1,...,n: the QZ iteration did not converge. (H,T) is not in Schur form, but alphar[i], alphai[i],
+     *                            and beta[i], i = info,...,n-1 should be correct.
+     *                 = n+1,...,2*n: the shift calculation failed.  (H,T) is not in Schur form, but alphar[i], alphai[i],
+     *                                and beta[i], i = info-n,...,n-1 should be correct
      */
-    private void dhgeqz(char job, char compq, char compz, int n, int ilo, int ihi, double[][] A, int lda, double[][] B,
-                        int ldb, double[] alphar, double[] alphai, double[] beta, double[][] Q, int ldq, double[][] Z,
+    private void dhgeqz(char job, char compq, char compz, int n, int ilo, int ihi, double[][] H, int ldh, double[][] T,
+                        int ldt, double[] alphar, double[] alphai, double[] beta, double[][] Q, int ldq, double[][] Z,
                         int ldz, double[] work, int lwork, int[] info) {
         double safety = 100.0;
         boolean ilazr2;
@@ -9390,9 +9441,9 @@ loop9:
             info[0] = -5;
         } else if ((ihi > n) || (ihi < (ilo - 1))) {
             info[0] = -6;
-        } else if (lda < n) {
+        } else if (ldh < n) {
             info[0] = -8;
-        } else if (ldb < n) {
+        } else if (ldt < n) {
             info[0] = -10;
         } else if ((ldq < 1) || (ilq && (ldq < n))) {
             info[0] = -15;
@@ -9436,7 +9487,7 @@ loop9:
         for (i = 0; i < in; i++) {
 
             for (j = 0; j < in; j++) {
-                array1[i][j] = A[ilo - 1 + i][ilo - 1 + j];
+                array1[i][j] = H[ilo - 1 + i][ilo - 1 + j];
             }
         }
 
@@ -9445,7 +9496,7 @@ loop9:
         for (i = 0; i < in; i++) {
 
             for (j = 0; j < in; j++) {
-                array1[i][j] = B[ilo - 1 + i][ilo - 1 + j];
+                array1[i][j] = T[ilo - 1 + i][ilo - 1 + j];
             }
         }
 
@@ -9458,18 +9509,18 @@ loop9:
         // Set Eigenvalues ihi+1:n
         for (j = ihi; j < n; j++) {
 
-            if (B[j][j] < 0.0) {
+            if (T[j][j] < 0.0) {
 
                 if (ilschr) {
 
                     for (jr = 0; jr <= j; jr++) {
-                        A[jr][j] = -A[jr][j];
-                        B[jr][j] = -B[jr][j];
+                        H[jr][j] = -H[jr][j];
+                        T[jr][j] = -T[jr][j];
                     }
                 } // if (ilschr)
                 else { // !ilschr
-                    A[j][j] = -A[j][j];
-                    B[j][j] = -B[j][j];
+                    H[j][j] = -H[j][j];
+                    T[j][j] = -T[j][j];
                 } // else !ilschr
 
                 if (ilz) {
@@ -9480,9 +9531,9 @@ loop9:
                 } // if (ilz)
             } // if (B[j][j] < 0.0)
 
-            alphar[j] = A[j][j];
+            alphar[j] = H[j][j];
             alphai[j] = 0.0;
-            beta[j] = B[j][j];
+            beta[j] = T[j][j];
         } // for (j = ihi; j < n; j++)
 
 // If ihi < ilo, skip QZ steps
@@ -9524,8 +9575,8 @@ loop1:   {
                 // Split the matrix if possible
 
 // Two tests:
-// 1: A[j][j-1] = 0 or j = ilo
-// 2: B[j][j] = 0
+// 1: H[j][j-1] = 0 or j = ilo
+// 2: T[j][j] = 0
 loop2:           {
 
 loop4:               {
@@ -9538,45 +9589,45 @@ loop6:                       {
 
                                     // Special case: j = ilast
                                     break loop6;
-                                } else if (Math.abs(A[ilast - 1][ilast - 2]) <= atol) {
-                                    A[ilast - 1][ilast - 2] = 0.0;
+                                } else if (Math.abs(H[ilast - 1][ilast - 2]) <= atol) {
+                                    H[ilast - 1][ilast - 2] = 0.0;
 
                                     break loop6;
-                                } // else if (Math.abs(A[ilast-1][ilast-2]) <= atol)
+                                } // else if (Math.abs(H[ilast-1][ilast-2]) <= atol)
 
 loop7:                           {
 
-                                    if (Math.abs(B[ilast - 1][ilast - 1]) <= btol) {
-                                        B[ilast - 1][ilast - 1] = 0.0;
+                                    if (Math.abs(T[ilast - 1][ilast - 1]) <= btol) {
+                                        T[ilast - 1][ilast - 1] = 0.0;
 
                                         break loop7;
-                                    } // if (Math.abs(B[ilast-1][ilast-1]) <= btol)
+                                    } // if (Math.abs(T[ilast-1][ilast-1]) <= btol)
 
                                     // General case: j < ilast
                                     for (j = ilast - 1; j >= ilo; j--) {
 
-                                        // Test 1: for A[j-1][j-2] = 0 or j = ilo
+                                        // Test 1: for H[j-1][j-2] = 0 or j = ilo
                                         if (j == ilo) {
                                             ilazro = true;
-                                        } else if (Math.abs(A[j - 1][j - 2]) <= atol) {
-                                            A[j - 1][j - 2] = 0.0;
+                                        } else if (Math.abs(H[j - 1][j - 2]) <= atol) {
+                                            H[j - 1][j - 2] = 0.0;
                                             ilazro = true;
-                                        } // else if (Math.abs(A[j-1][j-2]) <= atol)
+                                        } // else if (Math.abs(H[j-1][j-2]) <= atol)
                                         else {
                                             ilazro = false;
                                         } // else
 
-                                        // Test2: for B[j-1][j-1] = 0
-                                        if (Math.abs(B[j - 1][j - 1]) < btol) {
-                                            B[j - 1][j - 1] = 0.0;
+                                        // Test2: for T[j-1][j-1] = 0
+                                        if (Math.abs(T[j - 1][j - 1]) < btol) {
+                                            T[j - 1][j - 1] = 0.0;
 
                                             // Test 1a: Check for 2 consecutive small
-                                            // subdiagonals in A
+                                            // subdiagonals in H
                                             ilazr2 = false;
 
                                             if (!ilazro) {
-                                                temp[0] = Math.abs(A[j - 1][j - 2]);
-                                                temp2[0] = Math.abs(A[j - 1][j - 1]);
+                                                temp[0] = Math.abs(H[j - 1][j - 2]);
+                                                temp2[0] = Math.abs(H[j - 1][j - 1]);
                                                 tempr[0] = Math.max(temp[0], temp2[0]);
 
                                                 if ((tempr[0] < 1.0) && (tempr[0] != 0.0)) {
@@ -9584,7 +9635,7 @@ loop7:                           {
                                                     temp2[0] = temp2[0] / tempr[0];
                                                 } // if ((tempr[0] < 1.0) && (tempr[0] != 0.0))
 
-                                                if ((temp[0] * (ascale * Math.abs(A[j][j - 1]))) <=
+                                                if ((temp[0] * (ascale * Math.abs(H[j][j - 1]))) <=
                                                         (temp2[0] * (ascale * atol))) {
                                                     ilazr2 = true;
                                                 } // if (temp[0]*(ascale*Math.abs(A[j][j-1])) <=
@@ -9600,35 +9651,35 @@ loop7:                           {
                                             if (ilazro || ilazr2) {
 
                                                 for (jch = j; jch <= (ilast - 1); jch++) {
-                                                    temp[0] = A[jch - 1][jch - 1];
-                                                    dlartg(temp[0], A[jch][jch - 1], c, s, aout);
-                                                    A[jch - 1][jch - 1] = aout[0];
-                                                    A[jch][jch - 1] = 0.0;
+                                                    temp[0] = H[jch - 1][jch - 1];
+                                                    dlartg(temp[0], H[jch][jch - 1], c, s, aout);
+                                                    H[jch - 1][jch - 1] = aout[0];
+                                                    H[jch][jch - 1] = 0.0;
                                                     dx = new double[ilastm - jch];
                                                     dy = new double[ilastm - jch];
 
                                                     for (i = 0; i < (ilastm - jch); i++) {
-                                                        dx[i] = A[jch - 1][jch + i];
-                                                        dy[i] = A[jch][jch + i];
+                                                        dx[i] = H[jch - 1][jch + i];
+                                                        dy[i] = H[jch][jch + i];
                                                     }
 
                                                     drot(ilastm - jch, dx, 1, dy, 1, c[0], s[0]);
 
                                                     for (i = 0; i < (ilastm - jch); i++) {
-                                                        A[jch - 1][jch + i] = dx[i];
-                                                        A[jch][jch + i] = dy[i];
+                                                        H[jch - 1][jch + i] = dx[i];
+                                                        H[jch][jch + i] = dy[i];
                                                     }
 
                                                     for (i = 0; i < (ilastm - jch); i++) {
-                                                        dx[i] = B[jch - 1][jch + i];
-                                                        dy[i] = B[jch][jch + i];
+                                                        dx[i] = T[jch - 1][jch + i];
+                                                        dy[i] = T[jch][jch + i];
                                                     }
 
                                                     drot(ilastm - jch, dx, 1, dy, 1, c[0], s[0]);
 
                                                     for (i = 0; i < (ilastm - jch); i++) {
-                                                        B[jch - 1][jch + i] = dx[i];
-                                                        B[jch][jch + i] = dy[i];
+                                                        T[jch - 1][jch + i] = dx[i];
+                                                        T[jch][jch + i] = dy[i];
                                                     }
 
                                                     if (ilq) {
@@ -9649,12 +9700,12 @@ loop7:                           {
                                                     } // if (ilq)
 
                                                     if (ilazr2) {
-                                                        A[jch - 1][jch - 2] = A[jch - 1][jch - 2] * c[0];
+                                                        H[jch - 1][jch - 2] = H[jch - 1][jch - 2] * c[0];
                                                     } // if (ilazr2)
 
                                                     ilazr2 = false;
 
-                                                    if (Math.abs(B[jch][jch]) >= btol) {
+                                                    if (Math.abs(T[jch][jch]) >= btol) {
 
                                                         if ((jch + 1) >= ilast) {
                                                             break loop6;
@@ -9664,9 +9715,9 @@ loop7:                           {
 
                                                             break loop5;
                                                         } // else
-                                                    } // if (Math.abs(B[jch][jch]) >= btol)
+                                                    } // if (Math.abs(T[jch][jch]) >= btol)
 
-                                                    B[jch][jch] = 0.0;
+                                                    T[jch][jch] = 0.0;
                                                 } // for (jch = j; jch <= ilast-1; jch++)
 
                                                 break loop7;
@@ -9674,29 +9725,29 @@ loop7:                           {
                                             else { // !(ilazro || ilazr2)
 
                                                 // Only test 2 passed -- chase the zero to
-                                                // B[ilast-1][ilast-1]
+                                                // T[ilast-1][ilast-1]
                                                 // Then process as in the case
-                                                // B[ilast-1][ilast-1] = 0
+                                                // T[ilast-1][ilast-1] = 0
                                                 for (jch = j; jch <= (ilast - 1); jch++) {
-                                                    temp[0] = B[jch - 1][jch];
-                                                    dlartg(temp[0], B[jch][jch], c, s, bout);
-                                                    B[jch - 1][jch] = bout[0];
-                                                    B[jch][jch] = 0.0;
+                                                    temp[0] = T[jch - 1][jch];
+                                                    dlartg(temp[0], T[jch][jch], c, s, bout);
+                                                    T[jch - 1][jch] = bout[0];
+                                                    T[jch][jch] = 0.0;
 
                                                     if (jch < (ilastm - 1)) {
                                                         dx = new double[ilastm - jch - 1];
                                                         dy = new double[ilastm - jch - 1];
 
                                                         for (i = 0; i < (ilastm - jch - 1); i++) {
-                                                            dx[i] = B[jch - 1][jch + 1 + i];
-                                                            dy[i] = B[jch][jch + 1 + i];
+                                                            dx[i] = T[jch - 1][jch + 1 + i];
+                                                            dy[i] = T[jch][jch + 1 + i];
                                                         } // for (i = 0; i < ilastm-jch-1; i++)
 
                                                         drot(ilastm - jch - 1, dx, 1, dy, 1, c[0], s[0]);
 
                                                         for (i = 0; i < (ilastm - jch - 1); i++) {
-                                                            B[jch - 1][jch + 1 + i] = dx[i];
-                                                            B[jch][jch + 1 + i] = dy[i];
+                                                            T[jch - 1][jch + 1 + i] = dx[i];
+                                                            T[jch][jch + 1 + i] = dy[i];
                                                         } // for (i = 0; i < ilastm-jch-1; i++)
                                                     } // if (jch < ilastm-1)
 
@@ -9704,15 +9755,15 @@ loop7:                           {
                                                     dy = new double[ilastm - jch + 2];
 
                                                     for (i = 0; i < (ilastm - jch + 2); i++) {
-                                                        dx[i] = A[jch - 1][jch - 2 + i];
-                                                        dy[i] = A[jch][jch - 2 + i];
+                                                        dx[i] = H[jch - 1][jch - 2 + i];
+                                                        dy[i] = H[jch][jch - 2 + i];
                                                     } // for (i = 0; i < ilastm-jch+2; i++)
 
                                                     drot(ilastm - jch + 2, dx, 1, dy, 1, c[0], s[0]);
 
                                                     for (i = 0; i < (ilastm - jch + 2); i++) {
-                                                        A[jch - 1][jch - 2 + i] = dx[i];
-                                                        A[jch][jch - 2 + i] = dy[i];
+                                                        H[jch - 1][jch - 2 + i] = dx[i];
+                                                        H[jch][jch - 2 + i] = dy[i];
                                                     } // for (i = 0; i < ilastm-jch+2; i++)
 
                                                     if (ilq) {
@@ -9732,38 +9783,38 @@ loop7:                           {
                                                         }
                                                     } // if (ilq)
 
-                                                    temp[0] = A[jch][jch - 1];
-                                                    dlartg(temp[0], A[jch][jch - 2], c, s, aout);
-                                                    A[jch][jch - 1] = aout[0];
-                                                    A[jch][jch - 2] = 0.0;
+                                                    temp[0] = H[jch][jch - 1];
+                                                    dlartg(temp[0], H[jch][jch - 2], c, s, aout);
+                                                    H[jch][jch - 1] = aout[0];
+                                                    H[jch][jch - 2] = 0.0;
                                                     dx = new double[jch + 1 - ifrstm];
                                                     dy = new double[jch + 1 - ifrstm];
 
                                                     for (i = 0; i < (jch + 1 - ifrstm); i++) {
-                                                        dx[i] = A[ifrstm - 1 + i][jch - 1];
-                                                        dy[i] = A[ifrstm - 1 + i][jch - 2];
+                                                        dx[i] = H[ifrstm - 1 + i][jch - 1];
+                                                        dy[i] = H[ifrstm - 1 + i][jch - 2];
                                                     }
 
                                                     drot(jch + 1 - ifrstm, dx, 1, dy, 1, c[0], s[0]);
 
                                                     for (i = 0; i < (jch + 1 - ifrstm); i++) {
-                                                        A[ifrstm - 1 + i][jch - 1] = dx[i];
-                                                        A[ifrstm - 1 + i][jch - 2] = dy[i];
+                                                        H[ifrstm - 1 + i][jch - 1] = dx[i];
+                                                        H[ifrstm - 1 + i][jch - 2] = dy[i];
                                                     }
 
                                                     dx = new double[jch - ifrstm];
                                                     dy = new double[jch - ifrstm];
 
                                                     for (i = 0; i < (jch - ifrstm); i++) {
-                                                        dx[i] = B[ifrstm - 1 + i][jch - 1];
-                                                        dy[i] = B[ifrstm - 1 + i][jch - 2];
+                                                        dx[i] = T[ifrstm - 1 + i][jch - 1];
+                                                        dy[i] = T[ifrstm - 1 + i][jch - 2];
                                                     }
 
                                                     drot(jch - ifrstm, dx, 1, dy, 1, c[0], s[0]);
 
                                                     for (i = 0; i < (jch - ifrstm); i++) {
-                                                        B[ifrstm - 1 + i][jch - 1] = dx[i];
-                                                        B[ifrstm - 1 + i][jch - 2] = dy[i];
+                                                        T[ifrstm - 1 + i][jch - 1] = dx[i];
+                                                        T[ifrstm - 1 + i][jch - 2] = dy[i];
                                                     }
 
                                                     if (ilz) {
@@ -9803,39 +9854,39 @@ loop7:                           {
 
                                     return;
 
-                                    // B[ilast-1][ilast-1] = 0 -- Clear A[ilast-1][ilast-2]
+                                    // B[ilast-1][ilast-1] = 0 -- Clear H[ilast-1][ilast-2]
                                     // to split off a 1x1 block.
                                 } // loop7
 
-                                temp[0] = A[ilast - 1][ilast - 1];
-                                dlartg(temp[0], A[ilast - 1][ilast - 2], c, s, aout);
-                                A[ilast - 1][ilast - 1] = aout[0];
-                                A[ilast - 1][ilast - 2] = 0.0;
+                                temp[0] = H[ilast - 1][ilast - 1];
+                                dlartg(temp[0], H[ilast - 1][ilast - 2], c, s, aout);
+                                H[ilast - 1][ilast - 1] = aout[0];
+                                H[ilast - 1][ilast - 2] = 0.0;
                                 dx = new double[ilast - ifrstm];
                                 dy = new double[ilast - ifrstm];
 
                                 for (i = 0; i < (ilast - ifrstm); i++) {
-                                    dx[i] = A[ifrstm - 1 + i][ilast - 1];
-                                    dy[i] = A[ifrstm - 1 + i][ilast - 2];
+                                    dx[i] = H[ifrstm - 1 + i][ilast - 1];
+                                    dy[i] = H[ifrstm - 1 + i][ilast - 2];
                                 }
 
                                 drot(ilast - ifrstm, dx, 1, dy, 1, c[0], s[0]);
 
                                 for (i = 0; i < (ilast - ifrstm); i++) {
-                                    A[ifrstm - 1 + i][ilast - 1] = dx[i];
-                                    A[ifrstm - 1 + i][ilast - 2] = dy[i];
+                                    H[ifrstm - 1 + i][ilast - 1] = dx[i];
+                                    H[ifrstm - 1 + i][ilast - 2] = dy[i];
                                 }
 
                                 for (i = 0; i < (ilast - ifrstm); i++) {
-                                    dx[i] = B[ifrstm - 1 + i][ilast - 1];
-                                    dy[i] = B[ifrstm - 1 + i][ilast - 2];
+                                    dx[i] = T[ifrstm - 1 + i][ilast - 1];
+                                    dy[i] = T[ifrstm - 1 + i][ilast - 2];
                                 }
 
                                 drot(ilast - ifrstm, dx, 1, dy, 1, c[0], s[0]);
 
                                 for (i = 0; i < (ilast - ifrstm); i++) {
-                                    B[ifrstm - 1 + i][ilast - 1] = dx[i];
-                                    B[ifrstm - 1 + i][ilast - 2] = dy[i];
+                                    T[ifrstm - 1 + i][ilast - 1] = dx[i];
+                                    T[ifrstm - 1 + i][ilast - 2] = dy[i];
                                 }
 
                                 if (ilz) {
@@ -9854,22 +9905,22 @@ loop7:                           {
                                         Z[i][ilast - 2] = dy[i];
                                     }
                                 } // if (ilz)
-                                // A{ilast-1][ilast-2] = 0 -- Standardize B, set alphar,
+                                // H{ilast-1][ilast-2] = 0 -- Standardize T, set alphar,
                                 // alphai, and beta
                             } // loop6
 
-                            if (B[ilast - 1][ilast - 1] < 0.0) {
+                            if (T[ilast - 1][ilast - 1] < 0.0) {
 
                                 if (ilschr) {
 
                                     for (j = ifrstm - 1; j < ilast; j++) {
-                                        A[j][ilast - 1] = -A[j][ilast - 1];
-                                        B[j][ilast - 1] = -B[j][ilast - 1];
+                                        H[j][ilast - 1] = -H[j][ilast - 1];
+                                        T[j][ilast - 1] = -T[j][ilast - 1];
                                     } // for (j = ifrstm-1; j < ilast; j++)
                                 } // if (ilschr)
                                 else { // !ilschr
-                                    A[ilast - 1][ilast - 1] = -A[ilast - 1][ilast - 1];
-                                    B[ilast - 1][ilast - 1] = -B[ilast - 1][ilast - 1];
+                                    H[ilast - 1][ilast - 1] = -H[ilast - 1][ilast - 1];
+                                    T[ilast - 1][ilast - 1] = -T[ilast - 1][ilast - 1];
                                 } // else !ilschr
 
                                 if (ilz) {
@@ -9878,11 +9929,11 @@ loop7:                           {
                                         Z[j][ilast - 1] = -Z[j][ilast - 1];
                                     }
                                 } // if (ilz)
-                            } // if (B[ilast-1][ilast-1] < 0.0)
+                            } // if (T[ilast-1][ilast-1] < 0.0)
 
-                            alphar[ilast - 1] = A[ilast - 1][ilast - 1];
+                            alphar[ilast - 1] = H[ilast - 1][ilast - 1];
                             alphai[ilast - 1] = 0.0;
-                            beta[ilast - 1] = B[ilast - 1][ilast - 1];
+                            beta[ilast - 1] = T[ilast - 1][ilast - 1];
 
                             // Go to next block -- exit if finished.
                             ilast = ilast - 1;
@@ -9919,16 +9970,16 @@ loop7:                           {
                         // compute single shifts
 
                         // At this point, ifirst < ilast, and the diagonal elements of
-                        // B[(ifirst-1:ilast-1,ifirst-1:ilast-1) are larger than btol
+                        // T[(ifirst-1:ilast-1,ifirst-1:ilast-1) are larger than btol
                         // (in magnitude)
                         if (((iiter / 10) * 10) == iiter) {
 
                             // Exceptional shift.  Chosen for no particularly good
                             // reason (Single shift only.)
-                            if (((maxit * safmin) * Math.abs(A[ilast - 2][ilast - 1])) <
-                                    Math.abs(B[ilast - 2][ilast - 2])) {
-                                eshift = eshift + (A[ilast - 2][ilast - 1] / B[ilast - 2][ilast - 2]);
-                            } // if ((maxit*safmin)*Math.abs(A[ilast-2][ilast-1]) <
+                            if (((maxit * safmin) * Math.abs(H[ilast - 2][ilast - 1])) <
+                                    Math.abs(T[ilast - 2][ilast - 2])) {
+                                eshift = eshift + (H[ilast - 2][ilast - 1] / T[ilast - 2][ilast - 2]);
+                            } // if ((maxit*safmin)*Math.abs(H[ilast-2][ilast-1]) <
                             else {
                                 eshift = eshift + (1.0 / (safmin * maxit));
                             } // else
@@ -9939,7 +9990,7 @@ loop7:                           {
                         else { // ((iiter/10)*10 != iiter)
 
                             // Shifts based on the generalized eigenvalues of the
-                            // bottom-right 2x2 block of A and B.  Ths first eigenvalue
+                            // bottom-right 2x2 block of H and T.  Ths first eigenvalue
                             // returned by dlag2 is the Wilkinson shift (AEP p.512).
                             array1 = new double[2][2];
                             array2 = new double[2][2];
@@ -9947,8 +9998,8 @@ loop7:                           {
                             for (i = 0; i < 2; i++) {
 
                                 for (k = 0; k < 2; k++) {
-                                    array1[i][k] = A[ilast - 2 + i][ilast - 2 + k];
-                                    array2[i][k] = B[ilast - 2 + i][ilast - 2 + k];
+                                    array1[i][k] = H[ilast - 2 + i][ilast - 2 + k];
+                                    array2[i][k] = T[ilast - 2 + i][ilast - 2 + k];
                                 }
                             }
 
@@ -9985,8 +10036,8 @@ loop8:                   {
 
                             for (j = ilast - 1; j >= (ifirst + 1); j--) {
                                 istart = j;
-                                temp[0] = Math.abs(s1[0] * A[j - 1][j - 2]);
-                                temp2[0] = Math.abs((s1[0] * A[j - 1][j - 1]) - (wr[0] * B[j - 1][j - 1]));
+                                temp[0] = Math.abs(s1[0] * H[j - 1][j - 2]);
+                                temp2[0] = Math.abs((s1[0] * H[j - 1][j - 1]) - (wr[0] * T[j - 1][j - 1]));
                                 tempr[0] = Math.max(temp[0], temp2[0]);
 
                                 if ((tempr[0] < 1.0) && (tempr[0] != 0.0)) {
@@ -9994,7 +10045,7 @@ loop8:                   {
                                     temp2[0] = temp2[0] / tempr[0];
                                 } // if ((tempr[0] < 1.0) && (tempr[0] != 0.0))
 
-                                if (Math.abs((ascale * A[j][j - 1]) * temp[0]) <= ((ascale * atol) * temp2[0])) {
+                                if (Math.abs((ascale * H[j][j - 1]) * temp[0]) <= ((ascale * atol) * temp2[0])) {
                                     break loop8;
                                 } // if (Math.abs((ascale*A[j][j-1])*temp) <=
                             } // for (j = ilast-1; j >= ifirst+1; j--)
@@ -10004,27 +10055,27 @@ loop8:                   {
 
                         // Do an implicit single-shift QZ sweep.
                         // Initial Q;
-                        temp[0] = (s1[0] * A[istart - 1][istart - 1]) - (wr[0] * B[istart - 1][istart - 1]);
-                        temp2[0] = s1[0] * A[istart][istart - 1];
+                        temp[0] = (s1[0] * H[istart - 1][istart - 1]) - (wr[0] * T[istart - 1][istart - 1]);
+                        temp2[0] = s1[0] * H[istart][istart - 1];
                         dlartg(temp[0], temp2[0], c, s, tempr);
 
                         // Sweep
                         for (j = istart; j <= (ilast - 1); j++) {
 
                             if (j > istart) {
-                                temp[0] = A[j - 1][j - 2];
-                                dlartg(temp[0], A[j][j - 2], c, s, aout);
-                                A[j - 1][j - 2] = aout[0];
-                                A[j][j - 2] = 0.0;
+                                temp[0] = H[j - 1][j - 2];
+                                dlartg(temp[0], H[j][j - 2], c, s, aout);
+                                H[j - 1][j - 2] = aout[0];
+                                H[j][j - 2] = 0.0;
                             } // if (j > istart)
 
                             for (jc = j; jc <= ilastm; jc++) {
-                                temp[0] = (c[0] * A[j - 1][jc - 1]) + (s[0] * A[j][jc - 1]);
-                                A[j][jc - 1] = (-s[0] * A[j - 1][jc - 1]) + (c[0] * A[j][jc - 1]);
-                                A[j - 1][jc - 1] = temp[0];
-                                temp2[0] = (c[0] * B[j - 1][jc - 1]) + (s[0] * B[j][jc - 1]);
-                                B[j][jc - 1] = (-s[0] * B[j - 1][jc - 1]) + (c[0] * B[j][jc - 1]);
-                                B[j - 1][jc - 1] = temp2[0];
+                                temp[0] = (c[0] * H[j - 1][jc - 1]) + (s[0] * H[j][jc - 1]);
+                                H[j][jc - 1] = (-s[0] * H[j - 1][jc - 1]) + (c[0] * H[j][jc - 1]);
+                                H[j - 1][jc - 1] = temp[0];
+                                temp2[0] = (c[0] * T[j - 1][jc - 1]) + (s[0] * T[j][jc - 1]);
+                                T[j][jc - 1] = (-s[0] * T[j - 1][jc - 1]) + (c[0] * T[j][jc - 1]);
+                                T[j - 1][jc - 1] = temp2[0];
                             } // for (jc = j; jc <= ilastm; jc++)
 
                             if (ilq) {
@@ -10036,21 +10087,21 @@ loop8:                   {
                                 } // for (jr = 1; jr <= n; jr++)
                             } // if (ilq)
 
-                            temp[0] = B[j][j];
-                            dlartg(temp[0], B[j][j - 1], c, s, bout);
-                            B[j][j] = bout[0];
-                            B[j][j - 1] = 0.0;
+                            temp[0] = T[j][j];
+                            dlartg(temp[0], T[j][j - 1], c, s, bout);
+                            T[j][j] = bout[0];
+                            T[j][j - 1] = 0.0;
 
                             for (jr = ifrstm; jr <= Math.min(j + 2, ilast); jr++) {
-                                temp[0] = (c[0] * A[jr - 1][j]) + (s[0] * A[jr - 1][j - 1]);
-                                A[jr - 1][j - 1] = (-s[0] * A[jr - 1][j]) + (c[0] * A[jr - 1][j - 1]);
-                                A[jr - 1][j] = temp[0];
+                                temp[0] = (c[0] * H[jr - 1][j]) + (s[0] * H[jr - 1][j - 1]);
+                                H[jr - 1][j - 1] = (-s[0] * H[jr - 1][j]) + (c[0] * H[jr - 1][j - 1]);
+                                H[jr - 1][j] = temp[0];
                             } // for (jr = ifrstm; jr <= Math.min(j+2,ilast); jr++)
 
                             for (jr = ifrstm; jr <= j; jr++) {
-                                temp[0] = (c[0] * B[jr - 1][j]) + (s[0] * B[jr - 1][j - 1]);
-                                B[jr - 1][j - 1] = (-s[0] * B[jr - 1][j]) + (c[0] * B[jr - 1][j - 1]);
-                                B[jr - 1][j] = temp[0];
+                                temp[0] = (c[0] * T[jr - 1][j]) + (s[0] * T[jr - 1][j - 1]);
+                                T[jr - 1][j - 1] = (-s[0] * T[jr - 1][j]) + (c[0] * T[jr - 1][j - 1]);
+                                T[jr - 1][j] = temp[0];
                             } // for (jr = ifrstm; jr <= j; jr++)
 
                             if (ilz) {
@@ -10075,10 +10126,10 @@ loop8:                   {
 
                         // Special case -- 2x2 block with complex eigenvalues
                         // Step 1: Standardize, that is, rotate so that
-                        // ( B11   0  )
-                        // B =  (          ) with B11 non-negative.
-                        // (  0   B22 )
-                        dlasv2(B[ilast - 2][ilast - 2], B[ilast - 2][ilast - 1], B[ilast - 1][ilast - 1], b22, b11, sr,
+                        // ( T11   0  )
+                        // T =  (          ) with T11 non-negative.
+                        // (  0   T22 )
+                        dlasv2(T[ilast - 2][ilast - 2], T[ilast - 2][ilast - 1], T[ilast - 1][ilast - 1], b22, b11, sr,
                                cr, sL, cL);
 
                         if (b11[0] < 0.0) {
@@ -10092,30 +10143,30 @@ loop8:                   {
                         dy = new double[ilastm + 1 - ifirst];
 
                         for (i = 0; i < (ilastm + 1 - ifirst); i++) {
-                            dx[i] = A[ilast - 2][ilast - 2 + i];
-                            dy[i] = A[ilast - 1][ilast - 2 + i];
+                            dx[i] = H[ilast - 2][ilast - 2 + i];
+                            dy[i] = H[ilast - 1][ilast - 2 + i];
                         }
 
                         drot(ilastm + 1 - ifirst, dx, 1, dy, 1, cL[0], sL[0]);
 
                         for (i = 0; i < (ilastm + 1 - ifirst); i++) {
-                            A[ilast - 2][ilast - 2 + i] = dx[i];
-                            A[ilast - 1][ilast - 2 + i] = dy[i];
+                            H[ilast - 2][ilast - 2 + i] = dx[i];
+                            H[ilast - 1][ilast - 2 + i] = dy[i];
                         }
 
                         dx = new double[ilast + 1 - ifrstm];
                         dy = new double[ilast + 1 - ifrstm];
 
                         for (i = 0; i < (ilast + 1 - ifrstm); i++) {
-                            dx[i] = A[ifrstm - 1 + i][ilast - 2];
-                            dy[i] = A[ifrstm - 1 + i][ilast - 1];
+                            dx[i] = H[ifrstm - 1 + i][ilast - 2];
+                            dy[i] = H[ifrstm - 1 + i][ilast - 1];
                         }
 
                         drot(ilast + 1 - ifrstm, dx, 1, dy, 1, cr[0], sr[0]);
 
                         for (i = 0; i < (ilast + 1 - ifrstm); i++) {
-                            A[ifrstm - 1 + i][ilast - 2] = dx[i];
-                            A[ifrstm - 1 + i][ilast - 1] = dy[i];
+                            H[ifrstm - 1 + i][ilast - 2] = dx[i];
+                            H[ifrstm - 1 + i][ilast - 1] = dy[i];
                         }
 
                         if (ilast < ilastm) {
@@ -10123,15 +10174,15 @@ loop8:                   {
                             dy = new double[ilastm - ilast];
 
                             for (i = 0; i < (ilastm - ilast); i++) {
-                                dx[i] = B[ilast - 2][ilast + i];
-                                dy[i] = B[ilast - 1][ilast + i];
+                                dx[i] = T[ilast - 2][ilast + i];
+                                dy[i] = T[ilast - 1][ilast + i];
                             }
 
                             drot(ilastm - ilast, dx, 1, dy, 1, cL[0], sL[0]);
 
                             for (i = 0; i < (ilastm - ilast); i++) {
-                                B[ilast - 2][ilast + i] = dx[i];
-                                B[ilast - 1][ilast + i] = dy[i];
+                                T[ilast - 2][ilast + i] = dx[i];
+                                T[ilast - 1][ilast + i] = dy[i];
                             }
                         } // if (ilast < ilastm)
 
@@ -10140,15 +10191,15 @@ loop8:                   {
                             dy = new double[ifirst - ifrstm];
 
                             for (i = 0; i < (ifirst - ifrstm); i++) {
-                                dx[i] = B[ifrstm - 1 + i][ilast - 2];
-                                dy[i] = B[ifrstm - 1 + i][ilast - 1];
+                                dx[i] = T[ifrstm - 1 + i][ilast - 2];
+                                dy[i] = T[ifrstm - 1 + i][ilast - 1];
                             }
 
                             drot(ifirst - ifrstm, dx, 1, dy, 1, cr[0], sr[0]);
 
                             for (i = 0; i < (ifirst - ifrstm); i++) {
-                                B[ifrstm - 1 + i][ilast - 2] = dx[i];
-                                B[ifrstm - 1 + i][ilast - 1] = dy[i];
+                                T[ifrstm - 1 + i][ilast - 2] = dx[i];
+                                T[ifrstm - 1 + i][ilast - 1] = dy[i];
                             }
                         } // if (ifrstm < ilast-1)
 
@@ -10186,17 +10237,17 @@ loop8:                   {
                             }
                         } // if (ilz)
 
-                        B[ilast - 2][ilast - 2] = b11[0];
-                        B[ilast - 2][ilast - 1] = 0.0;
-                        B[ilast - 1][ilast - 2] = 0.0;
-                        B[ilast - 1][ilast - 1] = b22[0];
+                        T[ilast - 2][ilast - 2] = b11[0];
+                        T[ilast - 2][ilast - 1] = 0.0;
+                        T[ilast - 1][ilast - 2] = 0.0;
+                        T[ilast - 1][ilast - 1] = b22[0];
 
                         // If b22[0] is negative, negate column ilast-1
                         if (b22[0] < 0.0) {
 
                             for (j = ifrstm; j <= ilast; j++) {
-                                A[j - 1][ilast - 1] = -A[j - 1][ilast - 1];
-                                B[j - 1][ilast - 1] = -B[j - 1][ilast - 1];
+                                H[j - 1][ilast - 1] = -H[j - 1][ilast - 1];
+                                T[j - 1][ilast - 1] = -T[j - 1][ilast - 1];
                             } // for (j = ifrstm; j <= ilast; j++)
 
                             if (ilz) {
@@ -10215,8 +10266,8 @@ loop8:                   {
                         for (i = 0; i < 2; i++) {
 
                             for (k = 0; k < 2; k++) {
-                                array1[i][k] = A[ilast - 2 + i][ilast - 2 + k];
-                                array2[i][k] = B[ilast - 2 + i][ilast - 2 + k];
+                                array1[i][k] = H[ilast - 2 + i][ilast - 2 + k];
+                                array2[i][k] = T[ilast - 2 + i][ilast - 2 + k];
                             }
                         }
 
@@ -10231,10 +10282,10 @@ loop8:                   {
                         s1inv = 1.0 / s1[0];
 
                         // Do EISPACK (QZVAL) computation of alpha and beta
-                        a11 = A[ilast - 2][ilast - 2];
-                        a21 = A[ilast - 1][ilast - 2];
-                        a12 = A[ilast - 2][ilast - 1];
-                        a22 = A[ilast - 1][ilast - 1];
+                        a11 = H[ilast - 2][ilast - 2];
+                        a21 = H[ilast - 1][ilast - 2];
+                        a12 = H[ilast - 2][ilast - 1];
+                        a22 = H[ilast - 1][ilast - 1];
 
                         // Compute complex Givens rotation on right
                         // (Assume come element of C = (sA - wB) > unfl)
@@ -10354,21 +10405,21 @@ loop8:                   {
                         // double-shift
 
                         // Eigenvalue equation is w**2 - cw + d = 0,
-                        // so compute 1st column of (ABInverse)**2 - c A BInverse + d
+                        // so compute 1st column of (ABInverse)**2 - c H TInverse + d
                         // using the formula in QZIT (from EISPACK)
 
                         // We assume the block is at least 3x3
-                        ad11 = (ascale * A[ilast - 2][ilast - 2]) / (bscale * B[ilast - 2][ilast - 2]);
-                        ad21 = (ascale * A[ilast - 1][ilast - 2]) / (bscale * B[ilast - 2][ilast - 2]);
-                        ad12 = (ascale * A[ilast - 2][ilast - 1]) / (bscale * B[ilast - 1][ilast - 1]);
-                        ad22 = (ascale * A[ilast - 1][ilast - 1]) / (bscale * B[ilast - 1][ilast - 1]);
-                        u12 = B[ilast - 2][ilast - 1] / B[ilast - 1][ilast - 1];
-                        ad11L = (ascale * A[ifirst - 1][ifirst - 1]) / (bscale * B[ifirst - 1][ifirst - 1]);
-                        ad21L = (ascale * A[ifirst][ifirst - 1]) / (bscale * B[ifirst - 1][ifirst - 1]);
-                        ad12L = (ascale * A[ifirst - 1][ifirst]) / (bscale * B[ifirst][ifirst]);
-                        ad22L = (ascale * A[ifirst][ifirst]) / (bscale * B[ifirst][ifirst]);
-                        ad32L = (ascale * A[ifirst + 1][ifirst]) / (bscale * B[ifirst][ifirst]);
-                        u12L = B[ifirst - 1][ifirst] / B[ifirst][ifirst];
+                        ad11 = (ascale * H[ilast - 2][ilast - 2]) / (bscale * T[ilast - 2][ilast - 2]);
+                        ad21 = (ascale * H[ilast - 1][ilast - 2]) / (bscale * T[ilast - 2][ilast - 2]);
+                        ad12 = (ascale * H[ilast - 2][ilast - 1]) / (bscale * T[ilast - 1][ilast - 1]);
+                        ad22 = (ascale * H[ilast - 1][ilast - 1]) / (bscale * T[ilast - 1][ilast - 1]);
+                        u12 = T[ilast - 2][ilast - 1] / T[ilast - 1][ilast - 1];
+                        ad11L = (ascale * H[ifirst - 1][ifirst - 1]) / (bscale * T[ifirst - 1][ifirst - 1]);
+                        ad21L = (ascale * H[ifirst][ifirst - 1]) / (bscale * T[ifirst - 1][ifirst - 1]);
+                        ad12L = (ascale * H[ifirst - 1][ifirst]) / (bscale * T[ifirst][ifirst]);
+                        ad22L = (ascale * H[ifirst][ifirst]) / (bscale * T[ifirst][ifirst]);
+                        ad32L = (ascale * H[ifirst + 1][ifirst]) / (bscale * T[ifirst][ifirst]);
+                        u12L = T[ifirst - 1][ifirst] / T[ifirst][ifirst];
 
                         v[0] = ((ad11 - ad11L) * (ad22 - ad11L) * ad12 * ad21) + (ad21 * u12 * ad11L) +
                                ((ad12L - (ad11L * u12L)) * ad21L);
@@ -10389,36 +10440,36 @@ loop8:                   {
                         for (j = istart; j <= (ilast - 2); j++) {
 
                             // All but last elements: use 3x3 Householder transforms.
-                            // Zero (j-2)st column of A
+                            // Zero (j-2)st column of H
                             if (j > istart) {
-                                v[0] = A[j - 1][j - 2];
-                                v[1] = A[j][j - 2];
-                                v[2] = A[j + 1][j - 2];
+                                v[0] = H[j - 1][j - 2];
+                                v[1] = H[j][j - 2];
+                                v[2] = H[j + 1][j - 2];
                                 dx = new double[1];
-                                dx[0] = A[j - 1][j - 2];
+                                dx[0] = H[j - 1][j - 2];
                                 dy = new double[2];
                                 dy[0] = v[1];
                                 dy[1] = v[2];
                                 dlarfg(3, dx, dy, 1, tau);
-                                A[j - 1][j - 2] = dx[0];
+                                H[j - 1][j - 2] = dx[0];
                                 v[1] = dy[0];
                                 v[2] = dy[1];
                                 v[0] = 1.0;
-                                A[j][j - 2] = 0.0;
-                                A[j + 1][j - 2] = 0.0;
+                                H[j][j - 2] = 0.0;
+                                H[j + 1][j - 2] = 0.0;
                             } // if (j > istart)
 
                             for (jc = j; jc <= ilastm; jc++) {
                                 temp[0] = tau[0] *
-                                              (A[j - 1][jc - 1] + (v[1] * A[j][jc - 1]) + (v[2] * A[j + 1][jc - 1]));
-                                A[j - 1][jc - 1] = A[j - 1][jc - 1] - temp[0];
-                                A[j][jc - 1] = A[j][jc - 1] - (temp[0] * v[1]);
-                                A[j + 1][jc - 1] = A[j + 1][jc - 1] - (temp[0] * v[2]);
+                                              (H[j - 1][jc - 1] + (v[1] * H[j][jc - 1]) + (v[2] * H[j + 1][jc - 1]));
+                                H[j - 1][jc - 1] = H[j - 1][jc - 1] - temp[0];
+                                H[j][jc - 1] = H[j][jc - 1] - (temp[0] * v[1]);
+                                H[j + 1][jc - 1] = H[j + 1][jc - 1] - (temp[0] * v[2]);
                                 temp2[0] = tau[0] *
-                                               (B[j - 1][jc - 1] + (v[1] * B[j][jc - 1]) + (v[2] * B[j + 1][jc - 1]));
-                                B[j - 1][jc - 1] = B[j - 1][jc - 1] - temp2[0];
-                                B[j][jc - 1] = B[j][jc - 1] - (temp2[0] * v[1]);
-                                B[j + 1][jc - 1] = B[j + 1][jc - 1] - (temp2[0] * v[2]);
+                                               (T[j - 1][jc - 1] + (v[1] * T[j][jc - 1]) + (v[2] * T[j + 1][jc - 1]));
+                                T[j - 1][jc - 1] = T[j - 1][jc - 1] - temp2[0];
+                                T[j][jc - 1] = T[j][jc - 1] - (temp2[0] * v[1]);
+                                T[j + 1][jc - 1] = T[j + 1][jc - 1] - (temp2[0] * v[2]);
                             } // for (jc = j; jc <= ilastm; jc++)
 
                             if (ilq) {
@@ -10432,11 +10483,11 @@ loop8:                   {
                                 } // for (jr = 1; jr <= n; jr++)
                             } // if (ilq)
 
-                            // Zero (j-1)-st column of B (see dlagbc for details)
+                            // Zero (j-1)-st column of T (see dlagbc for details)
                             // Swap rows to pivot
                             ilpivt = false;
-                            temp[0] = Math.max(Math.abs(B[j][j]), Math.abs(B[j][j + 1]));
-                            temp2[0] = Math.max(Math.abs(B[j + 1][j]), Math.abs(B[j + 1][j + 1]));
+                            temp[0] = Math.max(Math.abs(T[j][j]), Math.abs(T[j][j + 1]));
+                            temp2[0] = Math.max(Math.abs(T[j + 1][j]), Math.abs(T[j + 1][j + 1]));
 
 loop3:                       {
 
@@ -10448,20 +10499,20 @@ loop3:                       {
                                     break loop3;
                                 } // if (Math.max(temp[0],temp2[0]) < safmin)
                                 else if (temp[0] >= temp2[0]) {
-                                    w11 = B[j][j];
-                                    w21 = B[j + 1][j];
-                                    w12 = B[j][j + 1];
-                                    w22 = B[j + 1][j + 1];
-                                    u1 = B[j][j - 1];
-                                    u2 = B[j + 1][j - 1];
+                                    w11 = T[j][j];
+                                    w21 = T[j + 1][j];
+                                    w12 = T[j][j + 1];
+                                    w22 = T[j + 1][j + 1];
+                                    u1 = T[j][j - 1];
+                                    u2 = T[j + 1][j - 1];
                                 } // else if (temp[0] >= temp2[0])
                                 else {
-                                    w21 = B[j][j];
-                                    w11 = B[j + 1][j];
-                                    w22 = B[j][j + 1];
-                                    w12 = B[j + 1][j + 1];
-                                    u2 = B[j][j - 1];
-                                    u1 = B[j + 1][j - 1];
+                                    w21 = T[j][j];
+                                    w11 = T[j + 1][j];
+                                    w22 = T[j][j + 1];
+                                    w12 = T[j + 1][j + 1];
+                                    u2 = T[j][j - 1];
+                                    u1 = T[j + 1][j - 1];
                                 } // else
 
                                 // Sweap columns if necessary
@@ -10522,18 +10573,18 @@ loop3:                       {
                             // Apply transformations from the right
                             for (jr = ifrstm; jr <= Math.min(j + 3, ilast); jr++) {
                                 temp[0] = tau[0] *
-                                              (A[jr - 1][j - 1] + (v[1] * A[jr - 1][j]) + (v[2] * A[jr - 1][j + 1]));
-                                A[jr - 1][j - 1] = A[jr - 1][j - 1] - temp[0];
-                                A[jr - 1][j] = A[jr - 1][j] - (temp[0] * v[1]);
-                                A[jr - 1][j + 1] = A[jr - 1][j + 1] - (temp[0] * v[2]);
+                                              (H[jr - 1][j - 1] + (v[1] * H[jr - 1][j]) + (v[2] * H[jr - 1][j + 1]));
+                                H[jr - 1][j - 1] = H[jr - 1][j - 1] - temp[0];
+                                H[jr - 1][j] = H[jr - 1][j] - (temp[0] * v[1]);
+                                H[jr - 1][j + 1] = H[jr - 1][j + 1] - (temp[0] * v[2]);
                             } // for (jr = ifrstm; jr <= Math.min(j+3,ilast); jr++)
 
                             for (jr = ifrstm; jr <= (j + 2); jr++) {
                                 temp[0] = tau[0] *
-                                              (B[jr - 1][j - 1] + (v[1] * B[jr - 1][j]) + (v[2] * B[jr - 1][j + 1]));
-                                B[jr - 1][j - 1] = B[jr - 1][j - 1] - temp[0];
-                                B[jr - 1][j] = B[jr - 1][j] - (temp[0] * v[1]);
-                                B[jr - 1][j + 1] = B[jr - 1][j + 1] - (temp[0] * v[2]);
+                                              (T[jr - 1][j - 1] + (v[1] * T[jr - 1][j]) + (v[2] * T[jr - 1][j + 1]));
+                                T[jr - 1][j - 1] = T[jr - 1][j - 1] - temp[0];
+                                T[jr - 1][j] = T[jr - 1][j] - (temp[0] * v[1]);
+                                T[jr - 1][j + 1] = T[jr - 1][j + 1] - (temp[0] * v[2]);
                             } // for (jr = ifrstm; jr <= j+2; jr++)
 
                             if (ilz) {
@@ -10547,25 +10598,25 @@ loop3:                       {
                                 } // for (jr = 1; jr <= n; jr++)
                             } // if (ilz)
 
-                            B[j][j - 1] = 0.0;
-                            B[j + 1][j - 1] = 0.0;
+                            T[j][j - 1] = 0.0;
+                            T[j + 1][j - 1] = 0.0;
                         } // for (j = istart; j <= ilast-2; j++)
 
                         // Last elements: Use Givens rotations
                         // Rotations from the left
                         j = ilast - 1;
-                        temp[0] = A[j - 1][j - 2];
-                        dlartg(temp[0], A[j][j - 2], c, s, aout);
-                        A[j - 1][j - 2] = aout[0];
-                        A[j][j - 2] = 0.0;
+                        temp[0] = H[j - 1][j - 2];
+                        dlartg(temp[0], H[j][j - 2], c, s, aout);
+                        H[j - 1][j - 2] = aout[0];
+                        H[j][j - 2] = 0.0;
 
                         for (jc = j; jc <= ilastm; jc++) {
-                            temp[0] = (c[0] * A[j - 1][jc - 1]) + (s[0] * A[j][jc - 1]);
-                            A[j][jc - 1] = (-s[0] * A[j - 1][jc - 1]) + (c[0] * A[j][jc - 1]);
-                            A[j - 1][jc - 1] = temp[0];
-                            temp2[0] = (c[0] * B[j - 1][jc - 1]) + (s[0] * B[j][jc - 1]);
-                            B[j][jc - 1] = (-s[0] * B[j - 1][jc - 1]) + (c[0] * B[j][jc - 1]);
-                            B[j - 1][jc - 1] = temp2[0];
+                            temp[0] = (c[0] * H[j - 1][jc - 1]) + (s[0] * H[j][jc - 1]);
+                            H[j][jc - 1] = (-s[0] * H[j - 1][jc - 1]) + (c[0] * H[j][jc - 1]);
+                            H[j - 1][jc - 1] = temp[0];
+                            temp2[0] = (c[0] * T[j - 1][jc - 1]) + (s[0] * T[j][jc - 1]);
+                            T[j][jc - 1] = (-s[0] * T[j - 1][jc - 1]) + (c[0] * T[j][jc - 1]);
+                            T[j - 1][jc - 1] = temp2[0];
                         } // for (jc = j; jc <= ilastm; jc++)
 
                         if (ilq) {
@@ -10578,21 +10629,21 @@ loop3:                       {
                         } // if (ilq)
 
                         // Rotations from the right
-                        temp[0] = B[j][j];
-                        dlartg(temp[0], B[j][j - 1], c, s, bout);
-                        B[j][j] = bout[0];
-                        B[j][j - 1] = 0.0;
+                        temp[0] = T[j][j];
+                        dlartg(temp[0], T[j][j - 1], c, s, bout);
+                        T[j][j] = bout[0];
+                        T[j][j - 1] = 0.0;
 
                         for (jr = ifrstm; jr <= ilast; jr++) {
-                            temp[0] = (c[0] * A[jr - 1][j]) + (s[0] * A[jr - 1][j - 1]);
-                            A[jr - 1][j - 1] = (-s[0] * A[jr - 1][j]) + (c[0] * A[jr - 1][j - 1]);
-                            A[jr - 1][j] = temp[0];
+                            temp[0] = (c[0] * H[jr - 1][j]) + (s[0] * H[jr - 1][j - 1]);
+                            H[jr - 1][j - 1] = (-s[0] * H[jr - 1][j]) + (c[0] * H[jr - 1][j - 1]);
+                            H[jr - 1][j] = temp[0];
                         } // for (jr = ifrstm; jr <= ilast; jr++)
 
                         for (jr = ifrstm; jr <= (ilast - 1); jr++) {
-                            temp[0] = (c[0] * B[jr - 1][j]) + (s[0] * B[jr - 1][j - 1]);
-                            B[jr - 1][j - 1] = (-s[0] * B[jr - 1][j]) + (c[0] * B[jr - 1][j - 1]);
-                            B[jr - 1][j] = temp[0];
+                            temp[0] = (c[0] * T[jr - 1][j]) + (s[0] * T[jr - 1][j - 1]);
+                            T[jr - 1][j - 1] = (-s[0] * T[jr - 1][j]) + (c[0] * T[jr - 1][j - 1]);
+                            T[jr - 1][j] = temp[0];
                         } // for (jr = ifrstm; jr <= ilast-1; jr++)
 
                         if (ilz) {
@@ -10622,18 +10673,18 @@ loop3:                       {
         // Set eigenvalues 0:ilo-2
         for (j = 0; j < (ilo - 1); j++) {
 
-            if (B[j][j] < 0.0) {
+            if (T[j][j] < 0.0) {
 
                 if (ilschr) {
 
                     for (jr = 0; jr <= j; jr++) {
-                        A[jr][j] = -A[jr][j];
-                        B[jr][j] = -B[jr][j];
+                        H[jr][j] = -H[jr][j];
+                        T[jr][j] = -T[jr][j];
                     } // for (jr = 0; jr <= j; jr++)
                 } // if (ilschr)
                 else {
-                    A[j][j] = -A[j][j];
-                    B[j][j] = -B[j][j];
+                    H[j][j] = -H[j][j];
+                    T[j][j] = -T[j][j];
                 } // else
 
                 if (ilz) {
@@ -10644,9 +10695,9 @@ loop3:                       {
                 } // if (ilz)
             } // if (B[j][j] < 0.0)
 
-            alphar[j] = A[j][j];
+            alphar[j] = H[j][j];
             alphai[j] = 0.0;
-            beta[j] = B[j][j];
+            beta[j] = T[j][j];
         } // for (j = 0; j < ilo-1; j++)
 
         // Normal termination
