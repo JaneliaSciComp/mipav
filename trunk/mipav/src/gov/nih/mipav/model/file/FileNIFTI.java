@@ -33,7 +33,7 @@ import java.io.*;
  * 2.) The NIFTI image is flipped along the j axis, so this would cause R12, R22, R32, and
  * qoffset_anterior to be multiplied by -1.
  * 3.) R13, R23, and R33 are multiplied by qfac.
- * So we in going to MIPAV we use -R11, -R13*qfac, -qoffset_x, -R21,
+ * So we in going to MIPAV we use -R11, -R13*qfac, -qoffset_right, -R21,
  * -R23*qfac, -R32, and R33*qfac.
  * If qform_code == 0 and sform_code > 0:
  * x = srow_x[0]* i + srow_x[1] * j + srow_x[2] * k + srow_x[3]
@@ -124,6 +124,8 @@ public class FileNIFTI extends FileBase {
 
     /** DOCUMENT ME! */
     private TransMatrix matrix = new TransMatrix(4);
+    
+    private TransMatrix niftiMatrix = new TransMatrix(4);
 
     /** DOCUMENT ME! */
     private double newMax;
@@ -1518,7 +1520,7 @@ public class FileNIFTI extends FileBase {
                 default:
                     Preferences.debug("Unknown coord_code = " + coord_code);
             }
-
+            
             if (qform_code > 0) {
                 quatern_b = getBufferFloat(bufferByte, 256, endianess);
                 b = quatern_b;
@@ -1544,22 +1546,31 @@ public class FileNIFTI extends FileBase {
 
                 r00 = (a * a) + (b * b) - (c * c) - (d * d);
                 matrix.setMatrix(-r00 * resolutions[0], 0, 0);
+                niftiMatrix.setMatrix(r00 * resolutions[0], 0 , 0);
                 r01 = 2.0 * ((b * c) - (a * d));
                 matrix.setMatrix(r01 * resolutions[1], 0, 1);
+                niftiMatrix.setMatrix(-r01 * resolutions[1], 0, 1);
                 r02 = 2.0 * ((b * d) + (a * c));
                 matrix.setMatrix(-r02 * qfac *resolutions[2], 0, 2);
+                niftiMatrix.setMatrix(r02 * qfac * resolutions[2], 0 , 2);
                 r10 = 2.0 * ((b * c) + (a * d));
                 matrix.setMatrix(-r10 * resolutions[0], 1, 0);
+                niftiMatrix.setMatrix(r10 * resolutions[0], 1, 0);
                 r11 = (a * a) + (c * c) - (b * b) - (d * d);
                 matrix.setMatrix(r11 * resolutions[1], 1, 1);
+                niftiMatrix.setMatrix(-r11 * resolutions[1], 1, 1);
                 r12 = 2.0 * ((c * d) - (a * b));
                 matrix.setMatrix(-r12 * qfac * resolutions[2], 1, 2);
+                niftiMatrix.setMatrix(r12 * qfac * resolutions[2], 1, 2);
                 r20 = 2.0 * ((b * d) - (a * c));
                 matrix.setMatrix(r20 * resolutions[0], 2, 0);
+                niftiMatrix.setMatrix(r20 * resolutions[0], 2, 0);
                 r21 = 2.0 * ((c * d) + (a * b));
                 matrix.setMatrix(-r21 * resolutions[1], 2, 1);
+                niftiMatrix.setMatrix(-r21 * resolutions[1], 2, 1);
                 r22 = (a * a) + (d * d) - (c * c) - (b * b);
                 matrix.setMatrix(r22 * qfac * resolutions[2], 2, 2);
+                niftiMatrix.setMatrix(r22 * qfac * resolutions[2], 2, 2);
                 qoffset_x = getBufferFloat(bufferByte, 268, endianess);
                 qoffset_y = getBufferFloat(bufferByte, 272, endianess);
                 qoffset_z = getBufferFloat(bufferByte, 276, endianess);
@@ -1567,7 +1578,7 @@ public class FileNIFTI extends FileBase {
                 LPSOrigin[0] = -qoffset_x;
                 LPSOrigin[1] = qoffset_y;
                 LPSOrigin[2] = qoffset_z;
-                axisOrientation = getAxisOrientation(matrix);
+                axisOrientation = getAxisOrientation(niftiMatrix);
                 Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
                                   axisOrientation[2] + "\n");
                 fileInfo.setAxisOrientation(axisOrientation);
@@ -1635,21 +1646,30 @@ public class FileNIFTI extends FileBase {
                 srow_z[1] = getBufferFloat(bufferByte, 316, endianess);
                 srow_z[2] = getBufferFloat(bufferByte, 320, endianess);
                 srow_z[3] = getBufferFloat(bufferByte, 324, endianess);
-                matrix.setMatrix((double) -srow_x[0], 0, 0);
-                matrix.setMatrix((double) srow_x[1], 0, 1);
-                matrix.setMatrix((double) -srow_x[2], 0, 2);
-                matrix.setMatrix((double) -srow_y[0], 1, 0);
+                matrix.setMatrix((double) srow_x[0], 0, 0);
+                niftiMatrix.setMatrix((double)srow_x[0], 0, 0);
+                matrix.setMatrix((double) -srow_x[1], 0, 1);
+                niftiMatrix.setMatrix((double)srow_x[1], 0, 1);
+                matrix.setMatrix((double) srow_x[2], 0, 2);
+                niftiMatrix.setMatrix((double) srow_x[2], 0, 2);
+                matrix.setMatrix((double) srow_y[0], 1, 0);
+                niftiMatrix.setMatrix((double) srow_y[0], 1, 0);
                 matrix.setMatrix((double) srow_y[1], 1, 1);
-                matrix.setMatrix((double) -srow_y[2], 1, 2);
+                niftiMatrix.setMatrix((double) -srow_y[1], 1, 1);
+                matrix.setMatrix((double) srow_y[2], 1, 2);
+                niftiMatrix.setMatrix((double) srow_y[2], 1, 2);
                 matrix.setMatrix((double) srow_z[0], 2, 0);
-                matrix.setMatrix((double) -srow_z[1], 2, 1);
+                niftiMatrix.setMatrix((double) srow_z[0], 2, 0);
+                matrix.setMatrix((double) srow_z[1], 2, 1);
+                niftiMatrix.setMatrix((double) -srow_z[1], 2, 1);
                 matrix.setMatrix((double) srow_z[2], 2, 2);
+                niftiMatrix.setMatrix((double) srow_z[2], 2, 2);
                 LPSOrigin = new float[3];
                 LPSOrigin[0] = -srow_x[3];
                 LPSOrigin[1] = srow_y[3];
                 LPSOrigin[2] = srow_z[3];
 
-                axisOrientation = getAxisOrientation(matrix);
+                axisOrientation = getAxisOrientation(niftiMatrix);
                 Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
                                   axisOrientation[2] + "\n");
                 fileInfo.setAxisOrientation(axisOrientation);
@@ -3065,7 +3085,6 @@ public class FileNIFTI extends FileBase {
         matrix = fileInfo.getMatrix();
         Preferences.debug("Matrix on write entry = " + matrix + "\n");
         getAxisOrientation(matrix);
-        
         matrix.set(0, 3, -LPSOrigin[0]);
         matrix.set(1, 3, LPSOrigin[1]);
         matrix.set(2, 3, LPSOrigin[2]);
