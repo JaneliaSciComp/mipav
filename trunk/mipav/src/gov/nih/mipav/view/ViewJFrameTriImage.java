@@ -2355,6 +2355,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void setTraverseButton() {
         traverseButton.setSelected(true);
+        if ((imageB != null) && (!radioImageBoth.isEnabled())) {
+            radioImageBoth.setEnabled(true);
+        }
+
+        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+            if (triImage[i] != null) {
+                triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
+                triImage[i].setProtractorVisible(false);
+                triImage[i].setIntensityLineVisible(false);
+
+            }
+        }
+
+        updateImages(true);
     }
 
     /**
@@ -2851,6 +2866,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.setFloatable(false);
 
         traverseButton = toolbarBuilder.buildToggleButton("traverse", "Traverse image", "translate", VOIGroup);
+        traverseButton.setSelected(true);
         imageToolBar.add(traverseButton);
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());

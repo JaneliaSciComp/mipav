@@ -673,18 +673,21 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
 
             if (frame instanceof ViewJFrameImage) {
                 ((ViewJFrameImage) frame).getComponentImage().setDisplayFuzzy(displayFuzzy);
-
+                ((ViewJFrameImage) frame).getControls().getTools().setPointerSelected();
+                ((ViewJFrameImage) frame).getComponentImage().setCursorMode(ViewJComponentEditImage.DEFAULT);
                 // ((ViewJFrameImage)frame).getComponentImage().growDialog = null;
                 resetDialogs();
             } else if (frame instanceof ViewJFramePaintVasculature) {
                 ((ViewJFramePaintVasculature) frame).getComponentImage().setDisplayFuzzy(displayFuzzy);
-
+                ((ViewJFramePaintVasculature) frame).getControls().getTools().setPointerSelected();
+                ((ViewJFramePaintVasculature) frame).getComponentImage().setCursorMode(ViewJComponentEditImage.DEFAULT);
                 // ((ViewJFramePaintVasculature)frame).getComponentImage().growDialog = null;
                 resetDialogs();
             } else if (frame instanceof ViewJFrameTriImage) {
                 ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.AXIAL_A).setDisplayFuzzy(displayFuzzy);
                 ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.CORONAL_A).setDisplayFuzzy(displayFuzzy);
                 ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.SAGITTAL_A).setDisplayFuzzy(displayFuzzy);
+                ((ViewJFrameTriImage) frame).setTraverseButton();
                 resetDialogs();
             }
 
@@ -1865,19 +1868,23 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
 
         if (frame instanceof ViewJFrameImage) {
             ((ViewJFrameImage) frame).getComponentImage().setDisplayFuzzy(displayFuzzy);
-
+            ((ViewJFrameImage) frame).getControls().getTools().setPointerSelected();
+            ((ViewJFrameImage) frame).getComponentImage().setCursorMode(ViewJComponentEditImage.DEFAULT);
             resetDialogs();
         } else if (frame instanceof ViewJFramePaintVasculature) {
             ((ViewJFramePaintVasculature) frame).getComponentImage().setDisplayFuzzy(displayFuzzy);
-
+            ((ViewJFramePaintVasculature) frame).getControls().getTools().setPointerSelected();
+            ((ViewJFramePaintVasculature) frame).getComponentImage().setCursorMode(ViewJComponentEditImage.DEFAULT);
             resetDialogs();
         } else if (frame instanceof ViewJFrameTriImage) {
             ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.AXIAL_A).setDisplayFuzzy(displayFuzzy);
             ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.CORONAL_A).setDisplayFuzzy(displayFuzzy);
             ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.SAGITTAL_A).setDisplayFuzzy(displayFuzzy);
+            ((ViewJFrameTriImage) frame).setTraverseButton();
             resetDialogs();
         }
 
+        
         dispose();
     }
 
@@ -3309,4 +3316,10 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
 
         return staticPanel;
     }
+    
+    
+    
+    
+    
+ 
 }
