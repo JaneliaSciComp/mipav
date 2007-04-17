@@ -141,7 +141,6 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                        voiListVec.add(voiListArr[j]);
                    }
                }
-               
             }
             int[] dimExtents = new int[3];
             dimExtents[0] = ((int)(highX*1.5));
@@ -167,7 +166,14 @@ public class PlugInCheshireVOI implements PlugInGeneric {
             
             imageFrame.actionPerformed(new ActionEvent(this, 0, "Save all VOIs"));
             
-            MipavUtil.displayInfo("VOIs saved in folder\n "+newImage.getFileInfo(0).getFileDirectory()+"defaultVOIs_"+newImage.getImageName());
+            String imageName = newImage.getImageName();
+            String fileDir = newImage.getFileInfo(0).getFileDirectory();
+            
+            imageFrame.close();
+            
+            progressBar.updateValue(100);
+            
+            MipavUtil.displayInfo("VOIs saved in folder\n "+fileDir+"defaultVOIs_"+imageName);
             
             progressBar.setVisible(false);
             
