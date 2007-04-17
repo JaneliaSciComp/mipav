@@ -75,19 +75,6 @@ public class JDialogTriFrameLinker extends JDialogBase {
         init();
     }
 
-    /**
-     * Creates a new JDialogTriFrameLinker object.
-     *
-     * @deprecated  Use this(ModelImage) instead Used primarily for the script to store variables and run the algorithm.
-     *              No actual dialog will appear but the set up info and result image will be stored here.
-     *
-     * @param        UI  The user interface, needed to create the image frame.
-     * @param        im  Source image.
-     */
-    public JDialogTriFrameLinker(ViewUserInterface UI, ModelImage im) {
-        this(im);
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**

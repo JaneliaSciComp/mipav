@@ -52,11 +52,11 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
     /** DOCUMENT ME! */
     private boolean setLastImageFlag = true; // default is to put image path into recently opened image list
 
+    /** Document Me. */
+    private String[] userDefinedFileTypeAssociations = null;
+
     /** DOCUMENT ME! */
     private boolean xmlLinked = false;
-    
-    /** Document Me */
-    private String[] userDefinedFileTypeAssociations = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -67,20 +67,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
      *                     indicates the UI will be displayed, and <code>false</code> is that it will not be displayed.
      */
     public ViewOpenFileUI(boolean openDialog) {
-        super(openDialog, false);
-    }
-
-    /**
-     * Creates the way to open and verify files before they are loaded by the FileIO.
-     *
-     * @param       ui          Main user interface.
-     * @param       openDialog  a boolean that selects whether this UI should be built and displayed. <code>true</code>
-     *                          indicates the UI will be displayed, and <code>false</code> is that it will not be
-     *                          displayed.
-     *
-     * @deprecated  Shouldn't pass around the UI since it's a singleton.
-     */
-    public ViewOpenFileUI(ViewUserInterface ui, boolean openDialog) {
         super(openDialog, false);
     }
 
@@ -197,7 +183,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
         int secondImage = 0; // 0 if not present
 
-        //lets set the user defined file filters
+        // lets set the user defined file filters
         ViewImageFileFilter.setUserDefinedExtensions();
 
         // address of TIFF header of second image in file if present
@@ -269,6 +255,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 }
 
                 chooser.setDialogTitle("Open Image");
+
                 int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -294,7 +281,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         for (int k = 0; k < openedFiles.length; k++) {
 
             try {
-            	fileIO = new FileIO();
+                fileIO = new FileIO();
                 fileName = openedFiles[k].getName();
                 image = fileIO.readImage(fileName, directory, multiFile, null);
 
@@ -304,8 +291,8 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     return null;
                 }
 
-                
-                //imagesArrayList.add(image.getImageName());
+
+                // imagesArrayList.add(image.getImageName());
 
                 LUT = fileIO.getModelLUT();
                 modelRGB = fileIO.getModelRGB();
@@ -399,6 +386,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     } catch (OutOfMemoryError e) {
                         MipavUtil.displayError("Out of memory!");
                         imagesArrayList.add(images);
+
                         return imagesArrayList; // we did successfully open the first image
                     }
                 }
@@ -427,6 +415,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
                 UI.getActiveImageFrame().setControls();
             }
+
             imagesArrayList.add(images);
         }
 
@@ -455,8 +444,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         // address of TIFF header of second image in file if present
         // for LSM510 image files
 
-        
-        
+
         // separate fileName and directory
         index = fileName.lastIndexOf(File.separatorChar);
 

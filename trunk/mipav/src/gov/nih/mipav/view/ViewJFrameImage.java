@@ -197,21 +197,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         this(_imageA, LUTa, loc, _imageA.getLogMagDisplay());
     }
 
-    /**
-     * Creates a new ViewJFrameImage object.
-     *
-     * @deprecated  - Reference to ViewUserInterface no longer required. Use ViewJFrameImage(ModelImage, ModelLUT,
-     *              Dimension) instead. Makes a frame and puts an image component into it.
-     *
-     * @param       _imageA  First image to display
-     * @param       LUTa     LUT of the imageA (if null grayscale LUT is constructed)
-     * @param       loc      location where image should be initially placed
-     * @param       ui       main user interface frame.
-     */
-    public ViewJFrameImage(ModelImage _imageA, ModelLUT LUTa, Dimension loc, ViewUserInterface ui) {
-
-        this(_imageA, LUTa, loc, _imageA.getLogMagDisplay());
-    }
 
     /**
      * Makes a frame and puts an image component into it.
@@ -241,23 +226,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             getLUTa().zeroToOneLUTAdjust();
         }
 
-    }
-
-    /**
-     * Creates a new ViewJFrameImage object.
-     *
-     * @deprecated  - Reference to ViewUserInterface no longer required. Use ViewJFrameImage(ModelImage, ModelLUT,
-     *              Dimension, boolean) instead. Makes a frame and puts an image component into it.
-     *
-     * @param       _imageA        First image to display
-     * @param       LUTa           LUT of the imageA (if null grayscale LUT is constructed)
-     * @param       loc            location where image should be initially placed
-     * @param       ui             main user interface frame.
-     * @param       logMagDisplay  Display log magnitude of image
-     */
-    public ViewJFrameImage(ModelImage _imageA, ModelLUT LUTa, Dimension loc, ViewUserInterface ui,
-                           boolean logMagDisplay) {
-        this(_imageA, LUTa, loc, logMagDisplay);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -5423,11 +5391,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setVisible(false);
         }
 
-    
 
-        //User interface will have list of frames
+        // User interface will have list of frames
         userInterface.registerFrame(this);
-        
+
         /*
          * The addComponentListener statement was moved from earlier in the code to the end because of a bug found on
          * Linux.  It appeared that adding the component listener earlier caused events to be sent which led to a
@@ -5437,7 +5404,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          * Nathan Pollack (Contractor - SSAI)  June 19, 2006
          */
         addComponentListener(this);
-        
+
 
         // validate(); not really needed because pack does a validate.
 
