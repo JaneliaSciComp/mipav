@@ -357,13 +357,13 @@ public class JDialogTriImageTransformation extends JDialogBase {
             int imageOrient = imageA.getFileInfo(0).getImageOrientation();
 
             if (imageOrient == FileInfoBase.AXIAL) {
-                xfrm.setRotate(-thetaZY, -thetaXZ, -thetaXY, TransMatrix.DEGREES);
+                xfrm.setRotate(thetaZY, -thetaXZ, -thetaXY, TransMatrix.DEGREES);
             } else if (imageOrient == FileInfoBase.CORONAL) {
-                xfrm.setRotate(-thetaXY, -thetaZY, -thetaXZ, TransMatrix.DEGREES);
+                xfrm.setRotate(thetaZY, thetaXY, -thetaXZ, TransMatrix.DEGREES);
             } else if (imageOrient == FileInfoBase.SAGITTAL) {
-                xfrm.setRotate(-thetaXZ, -thetaXY, -thetaZY, TransMatrix.DEGREES);
+                xfrm.setRotate(-thetaXZ, thetaXY, -thetaZY, TransMatrix.DEGREES);
             } else {
-                xfrm.setRotate(-thetaZY, -thetaXZ, -thetaXY, TransMatrix.DEGREES);
+                xfrm.setRotate(thetaZY, thetaXZ, -thetaXY, TransMatrix.DEGREES);
             }
 
             xfrm.setTranslate(-(double) centerX * image.getFileInfo()[0].getResolutions()[0],
