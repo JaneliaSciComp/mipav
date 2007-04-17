@@ -390,6 +390,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
 
+    /** Flag for snapping protractor to nearest multiple of 90 degrees. */
+    private boolean snapProtractor90 = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -474,6 +477,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         } else if (command.equals("FastPaint")) {
             Preferences.setProperty(Preferences.PREF_FAST_TRIPLANAR_REPAINT,
                                     (menuObj.isMenuItemSelected("Fast rendering in paint mode") ? "true" : "false"));
+        } else if (command.equals("Snap90")) {
+            Preferences.setProperty(Preferences.PREF_TRIPLANAR_SNAP90,
+                                     (menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple") ? "true" : "false"));
+
+            snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
+            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+                if (triImage[i] != null) {
+                    triImage[i].setSnapProtractor90(snapProtractor90);
+                }
+            }
         } else if (command.equals("ShowTalairachGrid")) {
 
             // according to current logic, there is a possibility that the
@@ -633,7 +647,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             updateImages(true);
         } else if (command.equals("Protractor")) {
-
+            
+            snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
+            
             if (triImage[AXIAL_A].isProtractorVisible()) {
                 btnInvisible[2].setSelected(true);
             }
@@ -648,6 +664,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                     if (triImage[i] != null) {
                         triImage[i].setCursorMode(ViewJComponentBase.PROTRACTOR);
+                        triImage[i].setSnapProtractor90(snapProtractor90);
                         triImage[i].makeProtractor();
                         triImage[i].setProtractorVisible(true);
                         triImage[i].setIntensityLineVisible(false);
@@ -2704,6 +2721,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                                          separator,
                                          menuObj.buildCheckBoxMenuItem("Fast rendering in paint mode", "FastPaint",
                                                                        Preferences.is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)),
+                                         menuObj.buildCheckBoxMenuItem("Snap protractor to 90 degrees multiple", "Snap90", 
+                                                                       Preferences.is(Preferences.PREF_TRIPLANAR_SNAP90)),
                                          menuObj.buildCheckBoxMenuItem("Use 2x2 tri-planar layout", OLD_LAYOUT,
                                                                        oldLayout), separator,
                                          menuObj.buildMenuItem("Show volume coordinates and Talairach controls",
