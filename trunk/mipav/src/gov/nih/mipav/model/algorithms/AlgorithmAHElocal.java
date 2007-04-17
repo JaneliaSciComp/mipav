@@ -538,7 +538,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         try {
             fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
-            
+
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock
@@ -575,8 +575,8 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                     if (((color == 1) && rChannel) || ((color == 2) && gChannel) // process only desired channels
                             || ((color == 3) && bChannel)) { // -- and not alpha channel at all --
 
-                    	fireProgressStateChanged("Processing color " + Integer.toString(color));
-            
+                        fireProgressStateChanged("Processing color " + Integer.toString(color));
+
 
                         srcImage.exportRGBData(color, 0, length, buffer); // get the slice
 
@@ -618,7 +618,6 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -666,7 +665,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         try {
             fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
-            
+
 
             if (!isColorImage) {
 
@@ -678,9 +677,9 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                 // image length is length in 3 dims
                 for (i = 0; (i < numberOfSlices) && !threadStopped; i++) {
 
-                	fireProgressStateChanged((int) (((float) (i) / numberOfSlices) * 100));
-                	fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
-                            
+                    fireProgressStateChanged((int) (((float) (i) / numberOfSlices) * 100));
+                    fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
+
                     srcImage.exportData(length * i, length, buffer); // locks and releases lock
                     monoSliceEqualizer(buffer, resultBuffer);
 
@@ -711,20 +710,17 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
                         for (i = 0; (i < numberOfSlices) && !threadStopped; i++) { // get all the slices
 
-                 
-                        	fireProgressStateChanged((int)
-                        			(((float) ((Math.max(0, colorUsed - 1) *
-                        					numberOfSlices) + i) /
-                        					(numColors * numberOfSlices)) * 100));
-                        	
-                        	if ((color == 1) && rChannel) {
-                        		fireProgressStateChanged("Processing red slice " + Integer.toString(i + 1));
-                        	} else if ((color == 2) && gChannel) {
-                        		fireProgressStateChanged("Processing green slice " + Integer.toString(i + 1));
-                        	} else if ((color == 3) && bChannel) {
-                        		fireProgressStateChanged("Processing blue slice " + Integer.toString(i + 1));
-                        	}
-	                        
+
+                            fireProgressStateChanged((int) (((float) ((Math.max(0, colorUsed - 1) * numberOfSlices) +
+                                                                      i) / (numColors * numberOfSlices)) * 100));
+
+                            if ((color == 1) && rChannel) {
+                                fireProgressStateChanged("Processing red slice " + Integer.toString(i + 1));
+                            } else if ((color == 2) && gChannel) {
+                                fireProgressStateChanged("Processing green slice " + Integer.toString(i + 1));
+                            } else if ((color == 3) && bChannel) {
+                                fireProgressStateChanged("Processing blue slice " + Integer.toString(i + 1));
+                            }
 
                             srcImage.exportRGBData(color, 4 * length * i, length, buffer); // grab the next slice
 
@@ -762,7 +758,6 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -795,7 +790,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         try {
             fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
-            
+
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock
@@ -829,9 +824,9 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
                 for (color = 0; (color < valuesPerPixel) && !threadStopped; color++) { // for each color
 
-                
-                	fireProgressStateChanged("Processing color " + Integer.toString(color));
-                 
+
+                    fireProgressStateChanged("Processing color " + Integer.toString(color));
+
                     srcImage.exportRGBData(color, 0, length, buffer); // grab the slice
 
                     if (((color == 1) && rChannel) || ((color == 2) && gChannel) // process only desired channels
@@ -878,7 +873,6 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -925,7 +919,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         try {
             fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
-            
+
 
             if (!isColorImage) {
 
@@ -936,10 +930,10 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
                 for (i = 0; (i < numberOfSlices) && !threadStopped; i++) { // process for all slices
 
-                 
-                	fireProgressStateChanged((int) ((float) (i) / numberOfSlices * 100));
-                	fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
-         
+
+                    fireProgressStateChanged((int) ((float) (i) / numberOfSlices * 100));
+                    fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
+
                     srcImage.exportData(length * i, length, buffer); // locks and releases lock
                     monoSliceEqualizer(buffer, resultBuffer);
 
@@ -967,19 +961,17 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
                     for (i = 0; (i < numberOfSlices) && !threadStopped; i++) { // for all slices at once
 
-                 
-                    	fireProgressStateChanged((int)
-                                                            (((float) ((Math.max(0, colorUsed - 1) * numberOfSlices) +
-                                                                       i) / (numColors * numberOfSlices)) * 100));
 
-                                if ((color == 1) && rChannel) {
-                                    fireProgressStateChanged("Processing red slice " + Integer.toString(i + 1));
-                                } else if ((color == 2) && gChannel) {
-                                    fireProgressStateChanged("Processing green slice " + Integer.toString(i + 1));
-                                } else if ((color == 3) && bChannel) {
-                                    fireProgressStateChanged("Processing blue slice " + Integer.toString(i + 1));
-                                }
-                
+                        fireProgressStateChanged((int) (((float) ((Math.max(0, colorUsed - 1) * numberOfSlices) + i) /
+                                                             (numColors * numberOfSlices)) * 100));
+
+                        if ((color == 1) && rChannel) {
+                            fireProgressStateChanged("Processing red slice " + Integer.toString(i + 1));
+                        } else if ((color == 2) && gChannel) {
+                            fireProgressStateChanged("Processing green slice " + Integer.toString(i + 1));
+                        } else if ((color == 3) && bChannel) {
+                            fireProgressStateChanged("Processing blue slice " + Integer.toString(i + 1));
+                        }
 
                         srcImage.exportRGBData(color, 4 * length * i, length, buffer);
 
@@ -1024,30 +1016,10 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         }
 
         // or the processing completed okay, so dispose of the user notification
-        
+
         setCompleted(true);
     }
 
-    /**
-     * clamps -- deprecated.
-     */
-    protected final void clampHisto() {
-        int clipLimit = 1; // calculated to find the greatest number
-
-        // of pixels (at the brightness with the
-        // greatest nunber) permitted when clipping
-        int maxCount = -1;
-
-        for (int bin = 0; bin < totalBins; bin++) {
-
-            if (histogram[bin] > maxCount) {
-                maxCount = histogram[bin]; // store the count
-            }
-        }
-
-        clipLimit = (int) (clipLevel * maxCount);
-        clip(histogram, clipLimit);
-    }
 
     /**
      * after generating a histogram, <code>clip</code> will reduce the number of pixels attributed to that brightness
@@ -1363,18 +1335,6 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         return aboveThreshold;
     }
 
-    /**
-     * CUMULATION function converts the PDF of the pixels in the image to a CDF. -- deprecated
-     *
-     * @param  histogram  DOCUMENT ME!
-     */
-    protected final void makeCumulative(int[] histogram) {
-
-        // make histogram cumulative
-        for (int bin = 1; bin < totalBins; bin++) {
-            histogram[bin] += histogram[bin - 1];
-        }
-    }
 
     /**
      * Makes the kernel. Creates out of memory, sets the center and the size.
@@ -1421,22 +1381,6 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         setKernelMask();
     }
 
-    /**
-     * scale to max height of the histogram deprecated.
-     *
-     * @param  histogram  DOCUMENT ME!
-     */
-    protected final void makeScaled(int[] histogram) {
-
-        // scale while adding to mapping
-        float scale = (float) (maxScale) / (histogram[totalBins - 1]);
-
-        // largest scalevalue over the number of partitions on the histogram
-        // (notice that equiv to kernel.length when after cumulative)
-        for (int bin = 0; bin < totalBins; bin++) {
-            histomap[bin] = (float) histogram[bin] * scale;
-        }
-    }
 
     /**
      * Allows a single monochrome image slice to be filtered. Any color image may be processed in this so long as each
@@ -1498,12 +1442,12 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         // for all pixels in the slice:
         for (i = 0; (i < sliceLength) && !threadStopped; i++) {
 
-           
-                // if display is showing, update the progress bar
-                if ((numberOfSlices == 1) && ((i % onePercent) == 0)) { // filtering but a single slice
-                    fireProgressStateChanged(Math.round(((float) i / sliceLength) * 100));
-                }
-        
+
+            // if display is showing, update the progress bar
+            if ((numberOfSlices == 1) && ((i % onePercent) == 0)) { // filtering but a single slice
+                fireProgressStateChanged(Math.round(((float) i / sliceLength) * 100));
+            }
+
             // if pixel, i, is to be adjusted (ie., adjusting entire
             // image or this pixel is in the VOImask),
             // then do adjusting
@@ -1702,9 +1646,9 @@ public class AlgorithmAHElocal extends AlgorithmBase {
      */
     private void setCopyColorText(String colorText) {
 
-      
-    	fireProgressStateChanged("Copying all " + colorText + " values ... ");
-       
+
+        fireProgressStateChanged("Copying all " + colorText + " values ... ");
+
     }
 
     /**

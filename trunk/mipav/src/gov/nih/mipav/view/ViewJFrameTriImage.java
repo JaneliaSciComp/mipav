@@ -372,6 +372,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** for use in holding down 1-9 or 0 key to change paint brush on the fly. */
     private int previousPaintBrushIndex = 0;
 
+    /** int used for quick-key painting for speedier paint brush access. */
+    private int quickPaintBrushIndex = -1;
+
     /** Used to setup the paint spinner. */
     private double spinnerDefaultValue = 1, spinnerMin = 0, spinnerMax = 255, spinnerStep = 1;
 
@@ -387,9 +390,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
 
-    /** int used for quick-key painting for speedier paint brush access */
-    private int quickPaintBrushIndex = -1;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -416,25 +416,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         } catch (Exception e) { }
 
         init();
-    }
-
-    /**
-     * Creates a new ViewJFrameTriImage object.
-     *
-     * @deprecated  use ViewJFrameTriImage(ModelImage, ModelLUT, ModelImage, ModelLUT, ViewControlsImage,
-     *              ViewJFrameImage) Make a frame and puts an image component into it.
-     *
-     * @param       _imageA   First image to display
-     * @param       LUTa      LUT of the imageA (if null grayscale LUT is constructed)
-     * @param       _imageB   Second loaded image
-     * @param       LUTb      LUT of the imageB
-     * @param       ui        main user interface frame.
-     * @param       controls  controls used to obtain initial OPACITY and color
-     * @param       parent    DOCUMENT ME!
-     */
-    public ViewJFrameTriImage(ModelImage _imageA, ModelLUT LUTa, ModelImage _imageB, ModelLUT LUTb,
-                              ViewUserInterface ui, ViewControlsImage controls, ViewJFrameImage parent) {
-        this(_imageA, LUTa, _imageB, LUTb, controls, parent);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1465,14 +1446,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         Object source = event.getSource();
 
         if (source.equals(paintBox)) {
-        	int index = paintBox.getSelectedIndex();
-        	
-        	triImage[0].loadPaintBrush(paintBrushNames[index], false);
-        	triImage[1].loadPaintBrush(paintBrushNames[index], false);
-        	triImage[2].loadPaintBrush(paintBrushNames[index], false);
-			Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
-        	
-        	
+            int index = paintBox.getSelectedIndex();
+
+            triImage[0].loadPaintBrush(paintBrushNames[index], false);
+            triImage[1].loadPaintBrush(paintBrushNames[index], false);
+            triImage[2].loadPaintBrush(paintBrushNames[index], false);
+            Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
+
+
         } else {
 
             int state = event.getStateChange();
@@ -1516,41 +1497,51 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         int keyCode = e.getKeyCode();
 
         if (!e.isControlDown()) {
-        	if ( keyCode >= '0' && keyCode <= '9') {
-        	
-        		int index = keyCode - 49;
-        		if (index < 0) {
-        			index = 10;
-        		}
-        		if (!paintBrushLocked) {
-        			
-        			if (quickPaintBrushIndex == index) {
-        				
-        				for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-        					if (triImage[i]!= null) {
-        						triImage[i].quickSwitchBrush();
-        					}
-        				}
-        				triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-        				paintBrushLocked = true;
-        			} else {
-        				quickPaintBrushIndex = index;
-        				previousPaintBrushIndex = getControls().getTools().getPaintBrush();
-        				String name = getControls().getTools().getPaintBrushName(index);
-        				if (name != null) {
-        					
-        					for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-        						if (triImage[i]!= null) {
-            					triImage[i].loadPaintBrush(name, true);
-        						}
-            				}
-        					triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-        					paintBrushLocked = true;
-        				}
-        			}
-        		}
-        		return;
-        	}
+
+            if ((keyCode >= '0') && (keyCode <= '9')) {
+
+                int index = keyCode - 49;
+
+                if (index < 0) {
+                    index = 10;
+                }
+
+                if (!paintBrushLocked) {
+
+                    if (quickPaintBrushIndex == index) {
+
+                        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+                            if (triImage[i] != null) {
+                                triImage[i].quickSwitchBrush();
+                            }
+                        }
+
+                        triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+                        paintBrushLocked = true;
+                    } else {
+                        quickPaintBrushIndex = index;
+                        previousPaintBrushIndex = getControls().getTools().getPaintBrush();
+
+                        String name = getControls().getTools().getPaintBrushName(index);
+
+                        if (name != null) {
+
+                            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+                                if (triImage[i] != null) {
+                                    triImage[i].loadPaintBrush(name, true);
+                                }
+                            }
+
+                            triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+                            paintBrushLocked = true;
+                        }
+                    }
+                }
+
+                return;
+            }
         }
     }
 
@@ -1579,19 +1570,23 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         if (!e.isControlDown()) {
-        	if ( keyCode >= '0' && keyCode <= '9') {
-        		
-        		if (paintBrushLocked) {
-        			//getControls().getTools().setPaintBrush(previousPaintBrushIndex);
-        			for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-        				if (triImage[i]!= null) {
-    					triImage[i].quickSwitchBrush();
-        				}
-    				}
-        			triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-        			paintBrushLocked = false;
-        		}        		
-        	}
+
+            if ((keyCode >= '0') && (keyCode <= '9')) {
+
+                if (paintBrushLocked) {
+
+                    // getControls().getTools().setPaintBrush(previousPaintBrushIndex);
+                    for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+                        if (triImage[i] != null) {
+                            triImage[i].quickSwitchBrush();
+                        }
+                    }
+
+                    triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
+                    paintBrushLocked = false;
+                }
+            }
         }
 
     }
@@ -2355,6 +2350,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void setTraverseButton() {
         traverseButton.setSelected(true);
+
         if ((imageB != null) && (!radioImageBoth.isEnabled())) {
             radioImageBoth.setEnabled(true);
         }

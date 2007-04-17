@@ -149,18 +149,6 @@ public abstract class ViewJFrameBase extends JFrame
         }
     }
 
-    /**
-     * Creates a new ViewJFrameBase object.
-     *
-     * @deprecated  Makes an image frame.
-     *
-     * @param       _imageA  model image A
-     * @param       _imageB  model image B
-     * @param       ui       main user interface frame.
-     */
-    public ViewJFrameBase(ModelImage _imageA, ModelImage _imageB, ViewUserInterface ui) {
-        this(_imageA, _imageB);
-    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 

@@ -232,20 +232,6 @@ public class JDialogVolViewResample extends JDialogBase {
         }
     }
 
-    /**
-     * Creates a new JDialogVolViewResample object.
-     *
-     * @deprecated  use JDialogVolViewResample(ModelImage, ModelImage) Creates the dialog, using the input parameters to
-     *              place it on the screen.
-     *
-     * @param       _imageA         Model image A.
-     * @param       _imageB         Model image B.
-     * @param       _userInterface  Parent ui.
-     */
-    public JDialogVolViewResample(ModelImage _imageA, ModelImage _imageB, ViewUserInterface _userInterface) {
-        this(_imageA, _imageB);
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
