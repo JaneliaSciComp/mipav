@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2005 rel. 3 U (http://www.altova.com) by Matthew Mcauliffe (National Institutes of Health) -->
 <!-- edited with XMLSPY v2004 rel. 2 U (http://www.xmlspy.com) by Ben Link (SAIC (NIH)) -->
 <!-- edited with XML Spy v4.3 U (http://www.xmlspy.com) by Linda Myles (NIH/CIT) -->
 <!--MIPAV Image Header-->
@@ -105,7 +106,7 @@
 								</xs:simpleType>
 							</xs:element>
 							<xs:element name="Origin" type="xs:float" minOccurs="0" maxOccurs="4"/>
-							<xs:element name="Matrix" minOccurs="0">
+							<xs:element name="Matrix" minOccurs="0" maxOccurs="unbounded">
 								<xs:complexType>
 									<xs:sequence>
 										<xs:element name="Transform-ID">
@@ -116,6 +117,7 @@
 													<xs:enumeration value="Another Dataset"/>
 													<xs:enumeration value="Talairach Tournoux"/>
 													<xs:enumeration value="MNI 152"/>
+													<xs:enumeration value="Composite"/>
 												</xs:restriction>
 											</xs:simpleType>
 										</xs:element>
