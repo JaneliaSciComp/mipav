@@ -236,6 +236,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
     /** Upper Crop Bounding Box in Patient Coordinates: */
     private Point3Df m_kLocalCropUpper = new Point3Df();
+    
+    /** Flag for snapping protractor to nearest multiple of 90 degrees. */
+    private boolean snapProtractor90 = false;
+    
+    private float seg1Length;
+    
+    private double theta2;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -771,6 +778,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     public boolean isShowBoundingRect() {
         return showBoundingRect;
     }
+    
+    /** Accessor to set the snapProtractor90 variable */
+    public void setSnapProtractor90(boolean snapProtractor90) {
+        this.snapProtractor90 = snapProtractor90;
+    }
 
     /**
      * Constructs and initializes one of the 3 protractors, depending on which component this is.
@@ -813,7 +825,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                     voiProtractor.importCurve(x, y, z, j);
                 }
 
-                ((VOIProtractor) (voiProtractor.getCurves()[j].elementAt(0))).setSnap(true);
+                ((VOIProtractor) (voiProtractor.getCurves()[j].elementAt(0))).setSnap(false);
 
                 if (voiProtractor != null) {
                     ((VOIProtractor) (voiProtractor.getCurves()[j].elementAt(0))).setActive(true);
@@ -1433,8 +1445,45 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 float[] z = new float[3];
 
                 voiProtractor.exportArrays(x, y, z, slice);
+                
+                if (snapProtractor90) {
+                theta = (180.0 / Math.PI) * Math.atan2((double) ((y[1] - y[0]) * res[1]), (double) ((x[1] - x[0]) * res[0]));
+                seg1Length = (float) Math.sqrt((double) (((x[1] - x[0]) * (x[1] - x[0]) * res[0] * res[0]) +
+                                                             ((y[1] - y[0]) * (y[1] - y[0]) * res[1] * res[1])));
 
-                theta = ((VOIProtractor) (voiProtractor.getCurves()[slice].elementAt(0))).getTheta2();
+                    if ((theta >= -45.0) && (theta <= 45.0)) {
+                        x[1] = Math.min(x[0] + (seg1Length / res[0]), localImageExtents[0] - 1.0f);
+                        y[1] = y[0];
+                        theta = 0.0;
+                    } else if ((theta > 45.0) && (theta <= 135.0)) {
+                        x[1] = x[0];
+                        y[1] = Math.min(y[0] + (seg1Length / res[1]), localImageExtents[1] - 1.0f);
+                        theta = 90.0;
+                    } else if ((theta < -45.0) && (theta >= -135.0)) {
+                        x[1] = x[0];
+                        y[1] = Math.max(y[0] - (seg1Length / res[1]), 0.0f);
+                        theta = -90.0;
+                    } else {
+                        x[1] = Math.max(x[0] - (seg1Length / res[0]), 0.0f);
+                        y[1] = y[0];
+                        theta = 180.0;
+                    }
+
+                    theta2 = (180.0 / Math.PI) * Math.atan2((double) ((y[2] - y[0]) * res[1]), (double) ((x[2] - x[0]) * res[0]));
+                    theta2 = theta2 - theta;
+
+                    if (theta2 < -180.0) {
+                        theta2 = theta2 + 360.0;
+                    }
+
+                    if (theta2 > 180.0) {
+                        theta2 = theta2 - 360.0;
+                    }
+                    theta = theta2;
+                } // if (snapProtractor90)
+                else {
+                    theta = ((VOIProtractor) (voiProtractor.getCurves()[slice].elementAt(0))).getTheta2();
+                }
 
                 for (j = 0; j < localImageExtents[2]; j++) {
                     voiProtractor.removeCurves(j);
@@ -1442,7 +1491,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                     z[1] = j;
                     z[2] = j;
                     voiProtractor.importCurve(x, y, z, j);
-                    // ( (VOIProtractor) (voiProtractor.getCurves()[j].elementAt(0))).setSnap(true);
+                    //( (VOIProtractor) (voiProtractor.getCurves()[j].elementAt(0))).setSnap(true);
                 }
 
                 ((VOIProtractor) (voiProtractor.getCurves()[slice].elementAt(0))).setActive(true);
