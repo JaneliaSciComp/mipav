@@ -92,6 +92,9 @@ public class Preferences {
      * 9 tri-planar images. Inserted here because repainting 9 images in real time gets to be tedious.
      */
     public static final String PREF_FAST_TRIPLANAR_REPAINT = "FastTriPlanarRepaint";
+    
+    /** Constant that indicates if triplanar protractor should snap to nearest multiple of 90 degrees */
+    public static final String PREF_TRIPLANAR_SNAP90 = "TriPlanarSnap90";
 
     /** Constant that indicates whether the angle of line VOIs should be shown on screen. */
     public static final String PREF_SHOW_LINE_ANGLE = "ShowLineVOIAngle";
