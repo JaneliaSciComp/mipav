@@ -8,7 +8,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.*;
 
 import java.util.*;
 
@@ -1202,11 +1201,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         if (blurRef) {
 
             if (doColor) {
-                blurredRef = new ModelImage(ModelImage.ARGB_FLOAT, refImage.getExtents(), "BlurRef",
-                                            refImage.getUserInterface());
+                blurredRef = new ModelImage(ModelImage.ARGB_FLOAT, refImage.getExtents(), "BlurRef");
             } else {
-                blurredRef = new ModelImage(ModelImage.FLOAT, refImage.getExtents(), "BlurRef",
-                                            refImage.getUserInterface());
+                blurredRef = new ModelImage(ModelImage.FLOAT, refImage.getExtents(), "BlurRef");
             }
 
             // update resolutions
@@ -1240,11 +1237,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         if (blurInput) {
 
             if (doColor) {
-                blurredInput = new ModelImage(ModelImage.ARGB_FLOAT, inputImage.getExtents(), "BlurInput",
-                                              inputImage.getUserInterface());
+                blurredInput = new ModelImage(ModelImage.ARGB_FLOAT, inputImage.getExtents(), "BlurInput");
             } else {
-                blurredInput = new ModelImage(ModelImage.FLOAT, inputImage.getExtents(), "BlurInput",
-                                              inputImage.getUserInterface());
+                blurredInput = new ModelImage(ModelImage.FLOAT, inputImage.getExtents(), "BlurInput");
             }
 
             // update resolutions
@@ -1496,7 +1491,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Registering images", "Beginning registration");
-        
+
 
         if (weighted) {
 
@@ -1952,11 +1947,11 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         answer.matrix.invert();
 
-        
+
         disposeLocal();
         finalize();
         setCompleted(true);
-        
+
     }
 
     /**
@@ -3114,7 +3109,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         linkProgressToAlgorithm(powell);
         powell.setProgressValues(generateProgressValues(60, 100));
-        
+
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.setLimits(limits);
         powell.run();
@@ -3129,7 +3124,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         item2.midsagMatrix = powell.getMatrixMidsagittal(input.xRes);
         fireProgressStateChanged(100);
         Preferences.debug("Best answer: \n" + item2 + "\n");
-        
+
         cost.disposeLocal();
         powell.disposeLocal();
 
@@ -3215,10 +3210,10 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         Collections.sort(minima);
 
         fireProgressStateChanged("Optimizing with " + degree + " DOF");
-        
+
         linkProgressToAlgorithm(powell);
-        powell.setProgressValues(generateProgressValues(35,43));
-        
+        powell.setProgressValues(generateProgressValues(35, 43));
+
         powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.run();
@@ -3242,7 +3237,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                                    bracketBound);
             linkProgressToAlgorithm(powell);
-            powell.setProgressValues(generateProgressValues(43,51));
+            powell.setProgressValues(generateProgressValues(43, 51));
             powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.setLimits(limits);
             powell.run();
@@ -3261,7 +3256,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 fireProgressStateChanged(51);
                 powell = new AlgorithmConstPowellOpt3D(this, cog, 12, cost, item.initial, getTolerance(12), maxIter,
                                                        bracketBound);
-                
+
                 linkProgressToAlgorithm(powell);
                 powell.setProgressValues(generateProgressValues(51, 60));
                 powell.setRunningInSeparateThread(runningInSeparateThread);

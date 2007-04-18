@@ -950,8 +950,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
         }
 
         if (displayFuzzy) {
-            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy",
-                                        srcImage.getUserInterface());
+            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy");
 
             try {
                 fuzzyImage.importData(0, fuzzyScene, true);
@@ -1455,8 +1454,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
         }
 
         if (displayFuzzy) {
-            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy",
-                                        srcImage.getUserInterface());
+            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy");
 
             try {
                 fuzzyImage.importData(0, fuzzyScene, true);
@@ -1941,7 +1939,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                 // black and white image
 
                 fireProgressStateChanged("Region Grow", "Growing round 1...");
-                
+
                 fuzzyScene = new int[length];
 
                 for (i = 0; i < length; i++) {
@@ -2456,10 +2454,9 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
             return 0;
         }
 
-  
+
         if (displayFuzzy) {
-            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy",
-                                        srcImage.getUserInterface());
+            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy");
 
             try {
                 fuzzyImage.importData(0, fuzzyScene, true);
@@ -2587,6 +2584,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
 
         this.paintMask = paintMask;
         this.growDialog = growDialog;
+
         int pCtr = 0;
 
         try {
@@ -3064,10 +3062,9 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
             return 0;
         }
 
-      
+
         if (displayFuzzy) {
-            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy",
-                                        srcImage.getUserInterface());
+            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy");
 
             try {
                 fuzzyImage.importData(0, fuzzyScene, true);
@@ -3145,8 +3142,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
         compImage.showRegionInfo(count, null);
 
         if ((displayFuzzy) && (fuzzyImage == null)) {
-            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy",
-                                        srcImage.getUserInterface());
+            fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy");
 
             try {
                 fuzzyImage.importData(0, fuzzyScene, true);

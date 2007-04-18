@@ -285,11 +285,10 @@ public class VOICardiology extends VOIBase {
      * @param   data        DOCUMENT ME!
      * @param   sectionNum  DOCUMENT ME!
      * @param   imgXDim     DOCUMENT ME!
-     * @param   ui          DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
      */
-    public float[] calcAverageIntensity(float[] data, int sectionNum, int imgXDim, ViewUserInterface ui) {
+    public float[] calcAverageIntensity(float[] data, int sectionNum, int imgXDim) {
 
         // we will build a temporary VOIContour for the section
         // for now do not worry about the infarction area
@@ -372,9 +371,11 @@ public class VOICardiology extends VOIBase {
 
         System.err.println("Section: " + sectionNum + " numPixels: " + numPix + ", numInfarctionPixels: " +
                            infarctionPixels);
-        ui.getMessageFrame().getData().append("Section: " + sectionNum + "\n\taverage intensity: " + results[0] +
-                                              "\n\ttotal num pixels: " + numPix + "\n\tinfarction average intensity: " +
-                                              results[1] + "\n");
+        ViewUserInterface.getReference().getMessageFrame().getData().append("Section: " + sectionNum +
+                                                                            "\n\taverage intensity: " + results[0] +
+                                                                            "\n\ttotal num pixels: " + numPix +
+                                                                            "\n\tinfarction average intensity: " +
+                                                                            results[1] + "\n");
 
         return results;
     }
@@ -386,11 +387,10 @@ public class VOICardiology extends VOIBase {
      * @param   dimX         DOCUMENT ME!
      * @param   dimY         DOCUMENT ME!
      * @param   resolutions  DOCUMENT ME!
-     * @param   ui           DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
      */
-    public double calcAverageLength(int sectionNum, int dimX, int dimY, float[] resolutions, ViewUserInterface ui) {
+    public double calcAverageLength(int sectionNum, int dimX, int dimY, float[] resolutions) {
         double sectionAngle = (2.0 * Math.PI) / numSections;
         double sectionAngleStart = sectionAngle * sectionNum;
         double sectionAngleEnd = sectionAngleStart + sectionAngle;
@@ -550,14 +550,19 @@ public class VOICardiology extends VOIBase {
         // System.err.println("Number of intersections used in calculation: " + numIntersectionsEntire);
         System.err.println("Entire section average length (INNER to OUTER): " +
                            (differenceTotal / numIntersectionsEntire));
-        ui.getMessageFrame().getData().append("Section: " + sectionNum + " average length (inner to outer): " +
-                                              (differenceTotal / numIntersectionsEntire) + "\n");
+        ViewUserInterface.getReference().getMessageFrame().getData().append("Section: " + sectionNum +
+                                                                            " average length (inner to outer): " +
+                                                                            (differenceTotal / numIntersectionsEntire) +
+                                                                            "\n");
 
         for (int b = 0; b < numInfSections; b++) {
             System.err.println("infarction section (clockwise)" + b + " average length: " +
                                (differenceTotalInf[b] / numIntersectionsInfarction[b]));
-            ui.getMessageFrame().getData().append("\t Infarction section (clockwise): " + b + " average length: " +
-                                                  (differenceTotalInf[b] / numIntersectionsInfarction[b]) + "\n");
+            ViewUserInterface.getReference().getMessageFrame().getData().append("\t Infarction section (clockwise): " +
+                                                                                b + " average length: " +
+                                                                                (differenceTotalInf[b] /
+                                                                                     numIntersectionsInfarction[b]) +
+                                                                                "\n");
         }
 
         return (differenceTotal / numIntersectionsEntire);
@@ -1134,9 +1139,11 @@ public class VOICardiology extends VOIBase {
      * @param  orientation     the orientation of the image slice where the VOI is to be drawn
      * @param  g               graphics to paint in
      * @param  boundingBox     boolean that indicates if boundingBox is on or off
+     * @param  thickness       DOCUMENT ME!
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
-                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox, int thickness) {
+                         float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox,
+                         int thickness) {
         Polygon gon = null;
         Polygon innerGon = null;
         Polygon outerGon = null;
@@ -1277,6 +1284,7 @@ public class VOICardiology extends VOIBase {
      * @param  boundingBox     boolean that indicates if boundingBox is on or off
      * @param  fileInfo        DOCUMENT ME!
      * @param  dim             DOCUMENT ME!
+     * @param  thickness       DOCUMENT ME!
      */
     public void drawSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, float originX, float originY,
                          float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox,
@@ -2790,6 +2798,7 @@ public class VOICardiology extends VOIBase {
      * @param  x1           x coordinate of new point to add
      * @param  y1           y coordinateof new point to add
      * @param  g            graphics to paint in
+     * @param  thickness    DOCUMENT ME!
      */
     public void retraceContour(float zoomX, float zoomY, float resolutionX, float resolutionY, float[] resols, int x1,
                                int y1, Graphics g, int thickness) {

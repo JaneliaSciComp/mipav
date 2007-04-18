@@ -222,15 +222,15 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
                      (interp == HEPTIC_LAGRANGIAN)) && (!clip) &&
                     ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE))) {
-                destImage = new ModelImage(ModelStorageBase.SHORT, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(ModelStorageBase.SHORT, extents, name);
             } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
                             (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.USHORT)) {
-                destImage = new ModelImage(ModelStorageBase.INTEGER, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(ModelStorageBase.INTEGER, extents, name);
             } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
                             (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.UINTEGER)) {
-                destImage = new ModelImage(ModelStorageBase.LONG, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(ModelStorageBase.LONG, extents, name);
             } else {
-                destImage = new ModelImage(type, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(type, extents, name);
             }
         } // end of if (srcImage.getNDims == 2)
         else if (srcImage.getNDims() == 3) {
@@ -245,15 +245,15 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
                      (interp == HEPTIC_LAGRANGIAN)) && (!clip) &&
                     ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE))) {
-                destImage = new ModelImage(ModelStorageBase.SHORT, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(ModelStorageBase.SHORT, extents, name);
             } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
                             (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.USHORT)) {
-                destImage = new ModelImage(ModelStorageBase.INTEGER, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(ModelStorageBase.INTEGER, extents, name);
             } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
                             (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.UINTEGER)) {
-                destImage = new ModelImage(ModelStorageBase.LONG, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(ModelStorageBase.LONG, extents, name);
             } else {
-                destImage = new ModelImage(type, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(type, extents, name);
             }
         } // end of else if (srcImage.getNDims() == 3)
         else { // (srcImage.getNDims() == 4) {
@@ -273,15 +273,15 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
                      (interp == HEPTIC_LAGRANGIAN)) && (!clip) &&
                     ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE))) {
-                destImage = new ModelImage(ModelStorageBase.SHORT, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(ModelStorageBase.SHORT, extents, name);
             } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
                             (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.USHORT)) {
-                destImage = new ModelImage(ModelStorageBase.INTEGER, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(ModelStorageBase.INTEGER, extents, name);
             } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
                             (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.UINTEGER)) {
-                destImage = new ModelImage(ModelStorageBase.LONG, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(ModelStorageBase.LONG, extents, name);
             } else {
-                destImage = new ModelImage(type, extents, name, srcImage.getUserInterface());
+                destImage = new ModelImage(type, extents, name);
             }
         } // end of else for srcImage.getNDims() == 4
 
@@ -4308,7 +4308,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         maskImage = image.generateShortImage(1);
-        tmpMask = new ModelImage(ModelImage.SHORT, destImage.getExtents(), null, null);
+        tmpMask = new ModelImage(ModelImage.SHORT, destImage.getExtents(), null);
 
         try {
             maskImage.exportData(0, iXdim * iYdim, imgBuffer); // locks and releases lock
@@ -4425,7 +4425,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T23 = (float) xfrm[2][3];
 
         maskImage = image.generateShortImage(1);
-        tmpMask = new ModelImage(ModelImage.SHORT, destImage.getExtents(), "VOI Mask", null);
+        tmpMask = new ModelImage(ModelImage.SHORT, destImage.getExtents(), "VOI Mask");
 
         try {
             maskImage.exportData(0, iXdim * iYdim * iZdim, imgBuffer); // locks and releases lock

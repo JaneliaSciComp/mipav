@@ -33,7 +33,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
         super(null, srcImg);
         this.orient = orient;
 
-        if ( srcImage.getFileInfo(0).isDicomOrdered() ) {
+        if (srcImage.getFileInfo(0).isDicomOrdered()) {
             MipavUtil.displayWarning("Image is already dicom ordered");
 
             return;
@@ -186,7 +186,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
         maximum = srcImage.getMax();
 
         fireProgressStateChanged(srcImage.getFileInfo()[0].getFileName(), "Reordering image to dicom order ...");
-        
+
         fireProgressStateChanged(0);
         xyzSize = xDim * yDim * zDim;
 
@@ -198,7 +198,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
         } catch (IOException e) {
             MipavUtil.displayError("Error on srcImage.exportData(0,xyzSize,datasetBuffer)");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
@@ -206,7 +206,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Out of memory in Algorithm Dicom Order");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -227,8 +227,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
 
         try {
             destImage = new ModelImage(srcImage.getType(), newExtents,
-                                       JDialogBase.makeImageName(srcImage.getImageName(), "_dicomImage"),
-                                       srcImage.getUserInterface());
+                                       JDialogBase.makeImageName(srcImage.getImageName(), "_dicomImage"));
             newFileInfo = new FileInfoBase[newZDim];
 
             for (i = 0; (i < newZDim) && !threadStopped; i++) {
@@ -260,7 +259,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
             newFileInfo = null;
             System.gc();
             MipavUtil.displayError("AlgorithmDicomOrder: Out of memory on new ModelImage");
-            
+
             setCompleted(false);
 
             return;
@@ -397,14 +396,14 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
             MipavUtil.displayError("Error on resultImage.importData(0,dicomBuffer,true)");
             dicomBuffer = null;
             setCompleted(false);
-            
+
 
             return;
         }
 
         dicomBuffer = null;
 
-        
+
         setCompleted(true);
     }
 

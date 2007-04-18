@@ -5,8 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 
@@ -236,7 +234,7 @@ public class AlgorithmReslice extends AlgorithmBase {
         destExtents[2] = slicesNeeded;
 
         try {
-            destImage = new ModelImage(srcImage.getType(), destExtents, "Isotropic", srcImage.getUserInterface());
+            destImage = new ModelImage(srcImage.getType(), destExtents, "Isotropic");
         } catch (OutOfMemoryError x) {
             errorCleanUp("Reslice: unable to allocate enough memory", false);
 
@@ -284,7 +282,6 @@ public class AlgorithmReslice extends AlgorithmBase {
             return;
         }
 
-        
 
         // makeTables();
 
@@ -402,7 +399,7 @@ public class AlgorithmReslice extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        
+
         setCompleted(true);
     }
 
@@ -441,7 +438,7 @@ public class AlgorithmReslice extends AlgorithmBase {
         destExtents[2] = slicesNeeded;
 
         try {
-            destImage = new ModelImage(srcImage.getType(), destExtents, "Isotropic", srcImage.getUserInterface());
+            destImage = new ModelImage(srcImage.getType(), destExtents, "Isotropic");
         } catch (OutOfMemoryError x) {
             errorCleanUp("Reslice: unable to allocate enough memory", true);
 
@@ -486,8 +483,6 @@ public class AlgorithmReslice extends AlgorithmBase {
 
             return;
         }
-
-        
 
         d = 0;
         pct = 0;
@@ -537,7 +532,7 @@ public class AlgorithmReslice extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        
+
         setCompleted(true);
     }
 

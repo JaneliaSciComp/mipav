@@ -191,11 +191,10 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
 
         fireProgressStateChanged(leftImage.getImageName(), "Stereo Depth ...");
 
-        leftBWImage = new ModelImage(ModelImage.FLOAT, leftImage.getExtents(), leftImage.getImageName() + "_changed",
-                                     leftImage.getUserInterface());
+        leftBWImage = new ModelImage(ModelImage.FLOAT, leftImage.getExtents(), leftImage.getImageName() + "_changed");
 
-        rightBWImage = new ModelImage(ModelImage.FLOAT, rightImage.getExtents(), rightImage.getImageName() + "_changed",
-                                      rightImage.getUserInterface());
+        rightBWImage = new ModelImage(ModelImage.FLOAT, rightImage.getExtents(),
+                                      rightImage.getImageName() + "_changed");
 
         if (!isColorImage) {
 
@@ -761,7 +760,7 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
          *
          * try { destImage.importData(0,rightBuffer,true); } catch(IOException e) { rightBuffer = null;
          * errorCleanUp("Algorithm StereoDepth: IOException on destImage.importData", true); return; } */
-        
+
         setCompleted(true);
 
     }

@@ -925,11 +925,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         if (blurRef) {
 
             if (doColor) {
-                blurredRef = new ModelImage(ModelImage.ARGB_FLOAT, refImage.getExtents(), "BlurRef",
-                                            refImage.getUserInterface());
+                blurredRef = new ModelImage(ModelImage.ARGB_FLOAT, refImage.getExtents(), "BlurRef");
             } else {
-                blurredRef = new ModelImage(ModelImage.FLOAT, refImage.getExtents(), "BlurRef",
-                                            refImage.getUserInterface());
+                blurredRef = new ModelImage(ModelImage.FLOAT, refImage.getExtents(), "BlurRef");
             }
 
             // update resolutions
@@ -959,11 +957,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         if (blurInput) {
 
             if (doColor) {
-                blurredInput = new ModelImage(ModelImage.ARGB_FLOAT, inputImage.getExtents(), "BlurInput",
-                                              inputImage.getUserInterface());
+                blurredInput = new ModelImage(ModelImage.ARGB_FLOAT, inputImage.getExtents(), "BlurInput");
             } else {
-                blurredInput = new ModelImage(ModelImage.FLOAT, inputImage.getExtents(), "BlurInput",
-                                              inputImage.getUserInterface());
+                blurredInput = new ModelImage(ModelImage.FLOAT, inputImage.getExtents(), "BlurInput");
             }
 
             FileInfoBase[] fileInfo = blurredRef.getFileInfo();
@@ -1357,7 +1353,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         } // if (DOF >= 3)
 
         fireProgressStateChanged("Registering images", "Beginning registration");
-        
+
 
         long time = System.currentTimeMillis();
 
@@ -2332,8 +2328,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(DOF), maxIter, rigidFlag,
                                           bracketBound);
         linkProgressToAlgorithm(powell);
-        powell.setProgressValues(generateProgressValues(60,100));
-        
+        powell.setProgressValues(generateProgressValues(60, 100));
+
         powell.run();
 
         if (threadStopped) {
@@ -2398,7 +2394,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                                           bracketBound);
 
         linkProgressToAlgorithm(powell);
-        powell.setProgressValues(generateProgressValues(60,100));
+        powell.setProgressValues(generateProgressValues(60, 100));
 
         powell.run();
 
@@ -2509,14 +2505,14 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                                                   rigidFlag, bracketBound);
 
                 fireProgressStateChanged("Optimizing with 7 DOF");
-                
+
 
                 fireProgressStateChanged(51);
-                
+
 
                 linkProgressToAlgorithm(powell);
-                powell.setProgressValues(generateProgressValues(51,60));
-              
+                powell.setProgressValues(generateProgressValues(51, 60));
+
                 powell.run();
 
                 if (threadStopped) {

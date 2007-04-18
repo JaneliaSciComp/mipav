@@ -876,7 +876,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         Preferences.debug(getConstructionInfo());
 
         fireProgressStateChanged("Registering images", "Beginning registration");
-        
+
 
         if (doGraph) {
             rot = new float[3][inputImage.getExtents()[3]];
@@ -1050,8 +1050,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 averageBuffer2[i] /= isoImage.getExtents()[3];
             }
 
-            outsideReferenceVolume = new ModelImage(isoImage.getType(), extents, "average_volume",
-                                                    inputImage.getUserInterface());
+            outsideReferenceVolume = new ModelImage(isoImage.getType(), extents, "average_volume");
             outsideReferenceVolume.getFileInfo()[0].setResolutions(resols);
 
             try {
@@ -1070,15 +1069,15 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         simpleRef_1 = new ModelSimpleImage(extents, resols, doColor); // 3D simple image
 
         if (doColor) {
-            input1 = new ModelImage(ModelImage.ARGB_FLOAT, iExtents, "volume3D", inputImage.getUserInterface());
+            input1 = new ModelImage(ModelImage.ARGB_FLOAT, iExtents, "volume3D");
         } else {
-            input1 = new ModelImage(ModelImage.FLOAT, iExtents, "volume3D", inputImage.getUserInterface());
+            input1 = new ModelImage(ModelImage.FLOAT, iExtents, "volume3D");
         }
 
         input1.getFileInfo()[0].setResolutions(iResols);
 
         if (weighted) {
-            inputw_1 = new ModelImage(ModelImage.FLOAT, iExtents, "volume3DW", inputImage.getUserInterface());
+            inputw_1 = new ModelImage(ModelImage.FLOAT, iExtents, "volume3DW");
             inputw_1.getFileInfo()[0].setResolutions(iResols);
         }
 
@@ -1776,7 +1775,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 inputImage.exportData(iNumber * colorFactor * volumeSize, colorFactor * volumeSize, buffer); // locks and releases and lock
             } catch (IOException error) {
                 displayError("AlgorithmOAR35D: Source image is locked");
-                
+
                 setCompleted(false);
 
                 return;
@@ -1790,7 +1789,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 input1.importData(0, buffer, true);
             } catch (IOException error) {
                 displayError("AlgorithmOAR35D: IOException on input1.importData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -1825,7 +1824,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 output_1.exportData(0, colorFactor * iExtents[0] * iExtents[1] * iExtents[2], buffer);
             } catch (IOException error) {
                 displayError("AlgorithmOAR35D: IOException on output_1.exportData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -1847,7 +1846,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 inputImage.importData(iNumber * colorFactor * iExtents[0] * iExtents[1] * iExtents[2], buffer, false);
             } catch (IOException error) {
                 displayError("AlgorithmOAR35D: IOException on inputImage.importData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -1968,7 +1967,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                     output_1.exportData(0, colorFactor * extentsIso[0] * extentsIso[1] * extentsIso[2], bufferA);
                 } catch (IOException error) {
                     displayError("AlgorithmOAR35D: IOException on output_1.exportData to bufferA");
-                    
+
                     setCompleted(false);
 
                     return;
@@ -2024,7 +2023,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                                                inputWeight.getSliceSize() * inputWeight.getExtents()[2], bufferIW);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR35D: inputWeight image is locked");
-                        
+
                         setCompleted(false);
 
                         return;
@@ -2038,7 +2037,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                         inputw_1.importData(0, bufferIW, true);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR35D: IOException on inputW_1.importData");
-                        
+
                         setCompleted(false);
 
                         return;
@@ -2063,7 +2062,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                         output_1.exportData(0, extentsIso[0] * extentsIso[1] * extentsIso[2], bufferW);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR35D: IOException on output_1.exportData");
-                        
+
                         setCompleted(false);
 
                         return;
@@ -2153,7 +2152,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                                                inputWeight.getSliceSize() * inputWeight.getExtents()[2], bufferIW);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR35D: inputWeight image is locked");
-                        
+
                         setCompleted(false);
 
                         return;
@@ -2169,7 +2168,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                             inputw_1.importData(0, bufferIW, true);
                         } catch (IOException error) {
                             displayError("AlgorithmOAR35D: IOException on inputW_1.importData");
-                            
+
                             setCompleted(false);
 
                             return;
@@ -2194,7 +2193,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                             output_1.exportData(0, extentsIso[0] * extentsIso[1] * extentsIso[2], bufferW);
                         } catch (IOException error) {
                             displayError("AlgorithmOAR35D: IOException on output_1.exportData");
-                            
+
                             setCompleted(false);
 
                             return;
@@ -2281,7 +2280,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         inputImage.calcMinMax();
 
-        
+
         disposeLocal();
         finalize();
         setCompleted(true);

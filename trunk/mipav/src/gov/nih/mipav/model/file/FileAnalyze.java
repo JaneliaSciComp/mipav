@@ -902,10 +902,9 @@ public class FileAnalyze extends FileBase {
                 }
 
                 image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] },
-                                       fileInfo.getFileName(), ViewUserInterface.getReference());
+                                       fileInfo.getFileName());
             } else {
-                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(),
-                                       ViewUserInterface.getReference());
+                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
             }
         } catch (OutOfMemoryError error) {
             throw (error);

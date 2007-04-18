@@ -548,8 +548,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
                 destExtents[2] = srcImage.getExtents()[2]; // Z or T dim
             }
 
-            zXMask = new ModelImage(ModelImage.UBYTE, destExtents, srcImage.getImageName() + "_edgeNM",
-                                    srcImage.getUserInterface());
+            zXMask = new ModelImage(ModelImage.UBYTE, destExtents, srcImage.getImageName() + "_edgeNM");
         } catch (OutOfMemoryError e) {
             destImage = null;
             srcImage = null;

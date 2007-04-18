@@ -516,7 +516,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                 destExtents[2] = srcImage.getExtents()[2]; // Z dim
             }
 
-            zXMask = new ModelImage(ModelImage.UBYTE, destExtents, " Edges", srcImage.getUserInterface());
+            zXMask = new ModelImage(ModelImage.UBYTE, destExtents, " Edges");
         } catch (OutOfMemoryError e) {
             destImage = null;
             srcImage = null;

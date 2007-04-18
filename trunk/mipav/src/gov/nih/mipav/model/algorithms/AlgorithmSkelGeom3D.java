@@ -3,7 +3,6 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -368,7 +367,6 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-
     /**
      * DOCUMENT ME!
      */
@@ -430,7 +428,6 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
         constructLog();
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing 3D skeletonization...");
-        
 
 
         everyOther = true;
@@ -490,7 +487,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
             vol = new byte[totLength];
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory error allocating volFloat and vol");
-            
+
             setCompleted(false);
 
             return;
@@ -500,7 +497,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
             srcImage.exportData(0, totLength, volFloat);
         } catch (IOException e) {
             MipavUtil.displayError("IO error on srcImage.exportData");
-            
+
             setCompleted(false);
 
             return;
@@ -516,9 +513,9 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
 
         /*boolean test;
          * test = false; if (test) { solidImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(),
-         *                   "solidImage", srcImage.getUserInterface()); try {     solidImage.importData(0, vol, true);
-         * } catch (IOException e) {     MipavUtil.displayError("IOException on soldImage.importData");
-         *      setCompleted(false);     return; }
+         *        "solidImage", srcImage.getUserInterface()); try {     solidImage.importData(0, vol, true); } catch
+         * (IOException e) {     MipavUtil.displayError("IOException on soldImage.importData");     setCompleted(false);
+         *     return; }
          *
          * new ViewJFrameImage(solidImage);  setCompleted(true); return;} // if (test)*/
 
@@ -529,8 +526,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
             extents2D[0] = srcImage.getExtents()[0];
             extents2D[1] = srcImage.getExtents()[1];
             buffer2D = new byte[sliceSize];
-            grayImage2D = new ModelImage(ModelStorageBase.USHORT, extents2D, srcImage.getImageName() + "_gray2D",
-                                         srcImage.getUserInterface());
+            grayImage2D = new ModelImage(ModelStorageBase.USHORT, extents2D, srcImage.getImageName() + "_gray2D");
 
             fileInfo = grayImage2D.getFileInfo()[0];
             fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
@@ -547,7 +543,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
                     grayImage2D.importData(0, buffer2D, true);
                 } catch (IOException e) {
                     MipavUtil.displayError("Error on grayImage2D importData");
-                    
+
                     setCompleted(false);
 
                     return;
@@ -563,7 +559,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
                     grayImage2D.exportData(0, sliceSize, buffer2D);
                 } catch (IOException e) {
                     MipavUtil.displayError("Error on grayImage2D exportData");
-                    
+
                     setCompleted(false);
 
                     return;
@@ -582,14 +578,13 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
 
         fireProgressStateChanged("Delete all but the largest object\n");
         Preferences.debug("Delete all but the largest object\n");
-        idImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), srcImage.getImageName() + "_id",
-                                 srcImage.getUserInterface());
+        idImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), srcImage.getImageName() + "_id");
 
         try {
             idImage.importData(0, vol, true);
         } catch (IOException e) {
             MipavUtil.displayError("IOException on idImage.importData");
-            
+
             setCompleted(false);
 
             return;
@@ -619,7 +614,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
             idImage.exportData(0, totLength, idArray);
         } catch (IOException e) {
             MipavUtil.displayError("IOException on idImage.exportData");
-            
+
             setCompleted(false);
 
             return;
@@ -658,14 +653,13 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
 
         /*boolean test;
          * test = true; if (test) { solidImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(),
-         *                  "solidImage", srcImage.getUserInterface()); try {     solidImage.importData(0, vol, true); }
-         * catch (IOException e) {     MipavUtil.displayError("IOException on soldImage.importData");
-         *      setCompleted(false);     return; }
+         *      "solidImage", srcImage.getUserInterface()); try {     solidImage.importData(0, vol, true); } catch
+         * (IOException e) {     MipavUtil.displayError("IOException on soldImage.importData");     setCompleted(false);
+         *     return; }
          *
          * new ViewJFrameImage(solidImage);  setCompleted(true); return;} // if (test)*/
 
-        grayImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), srcImage.getImageName() + "_gray",
-                                   srcImage.getUserInterface());
+        grayImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), srcImage.getImageName() + "_gray");
 
         for (i = 0; i < srcImage.getExtents()[2]; i++) {
             fileInfo = grayImage.getFileInfo()[i];
@@ -678,7 +672,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
             grayImage.importData(0, vol, true);
         } catch (IOException error) {
             MipavUtil.displayError("IOException on grayImage.importData");
-            
+
             setCompleted(false);
 
             return;
@@ -855,7 +849,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
         root = buildConvexHull();
 
         if (errorStatus == -1) {
-            
+
             setCompleted(false);
 
             return;
@@ -872,7 +866,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
         time = System.currentTimeMillis() - time;
         Preferences.debug(" Level 1 min = " + ((float) time / 60000.0f) + "\n");
         srcImage.notifyImageDisplayListeners();
-        
+
         setCompleted(true);
 
         return;
@@ -1482,7 +1476,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
             }
         }
 
-        cylImage = new ModelImage(ModelImage.BYTE, extents, "cylinder", srcImage.getUserInterface());
+        cylImage = new ModelImage(ModelImage.BYTE, extents, "cylinder");
 
         try {
             cylImage.importData(0, vol, true);
@@ -1494,7 +1488,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
             }
 
             MipavUtil.displayError("Error on cylImage.importData");
-            
+
             setCompleted(false);
 
             return;
@@ -1510,7 +1504,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
             }
 
             MipavUtil.displayError("Error on cylImage.saveImage");
-            
+
             setCompleted(false);
 
             return;
@@ -4896,9 +4890,8 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
         }
 
         /*public void setChRoot(simplex node) {
-         *  simplex current = firstNode; while (current != null) {     if (current != node) {
-         * current.setChRoot(false);     }     else {         current.setChRoot(true);     }     current =
-         * current.nextNode; } }
+         *  simplex current = firstNode; while (current != null) {     if (current != node) { current.setChRoot(false);
+         *    }     else {         current.setChRoot(true);     }     current = current.nextNode; } }
          *
          * public simplex getChRoot() { simplex current = firstNode; while (current != null) {     if
          * (current.getChRoot()) {         return current;     }     current = current.nextNode; } return null;}*/

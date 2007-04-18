@@ -4337,7 +4337,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                     destExtents[1] = nyp;
                     destExtents[2] = nzp;
 
-                    vvv = new ModelImage(vol.getType(), destExtents, vol.getImageName(), vol.getUserInterface());
+                    vvv = new ModelImage(vol.getType(), destExtents, vol.getImageName());
 
                     AlgorithmAddMargins imageMarginsAlgo = new AlgorithmAddMargins(vol, vvv, 0.0, rotpx, rotpy, rotpz,
                                                                                    rotpz);

@@ -1,13 +1,14 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 
+import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
-import gov.nih.mipav.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -498,8 +499,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             }
 
             name = JDialogBase.makeImageName(imageB.getImageName(), "_shifted");
-            shiftedImgB = new ModelImage(imageB.getType(), destExtentsA, imageB.getImageName(),
-                                         imageB.getUserInterface());
+            shiftedImgB = new ModelImage(imageB.getType(), destExtentsA, imageB.getImageName());
 
             AlgorithmAddMargins algoMargins = new AlgorithmAddMargins(resultImg, shiftedImgB, 0, add[0], 0, add[1],
                                                                       add[2], 0);
@@ -525,8 +525,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             boundY[1] = destExtentsA[1] - 1;
             boundZ[1] = destExtentsA[2] - 1;
             name = JDialogBase.makeImageName(imageB.getImageName(), "_aligned");
-            resultImg = new ModelImage(imageB.getType(), destExtentsC, imageB.getImageName(),
-                                       imageB.getUserInterface());
+            resultImg = new ModelImage(imageB.getType(), destExtentsC, imageB.getImageName());
 
             AlgorithmCrop algoCrop = new AlgorithmCrop(resultImg, shiftedImgB, 0, boundX, boundY, boundZ);
 
@@ -648,8 +647,8 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         }
 
         /* Read the direction vector from MipavCoordinateSystems class: */
-        axisDirA = MipavCoordinateSystems.getModelDirections( imageA );
-        axisDirB = MipavCoordinateSystems.getModelDirections( imageB );
+        axisDirA = MipavCoordinateSystems.getModelDirections(imageA);
+        axisDirB = MipavCoordinateSystems.getModelDirections(imageB);
 
         for (int i = 0; i < 3; i++) {
             switchOrig = axisDirB[index2ImgA[i]] * axisDirA[i];
@@ -691,8 +690,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
 
         name = JDialogBase.makeImageName(imageB.getImageName(), "_cropped");
 
-        ModelImage tempImg = new ModelImage(imageB.getType(), newNewDims, imageB.getImageName(),
-                                            imageB.getUserInterface());
+        ModelImage tempImg = new ModelImage(imageB.getType(), newNewDims, imageB.getImageName());
         AlgorithmCrop algoCrop = new AlgorithmCrop(tempImg, orientedImgB, 0, boundX, boundY, boundZ);
         algoCrop.setRunningInSeparateThread(runningInSeparateThread);
         algoCrop.run();

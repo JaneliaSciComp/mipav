@@ -3920,7 +3920,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         try {
 
-        	fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Colocolization Histogram ...");
+            fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Colocolization Histogram ...");
 
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
@@ -4073,8 +4073,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fireProgressStateChanged("Subtracting background from " + srcImage.getImageName());
                 fireProgressStateChanged(12);
                 subtractedSrcImage = new ModelImage(srcImage.getType(), srcImage.getExtents(),
-                                                    registeredSrcImage.getImageName() + "_subtract",
-                                                    srcImage.getUserInterface());
+                                                    registeredSrcImage.getImageName() + "_subtract");
                 buffer = new float[length];
 
                 try {
@@ -4134,8 +4133,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fireProgressStateChanged("Subtracting background from " + baseImage.getImageName());
                 fireProgressStateChanged(15);
                 subtractedBaseImage = new ModelImage(baseImage.getType(), baseImage.getExtents(),
-                                                     registeredBaseImage.getImageName() + "_subtract",
-                                                     baseImage.getUserInterface());
+                                                     registeredBaseImage.getImageName() + "_subtract");
                 buffer = new float[length];
 
                 try {
@@ -4329,13 +4327,14 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fwhm = fwhmS;
 
                 if (fwhmS != Integer.MAX_VALUE) {
-                    ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " auto covariance full width at half maximum = " + fwhmS +
-                                   "\n");
+                    ViewUserInterface.getReference().setDataText(srcImage.getImageName() +
+                                                                 " auto covariance full width at half maximum = " +
+                                                                 fwhmS + "\n");
                     Preferences.debug(srcImage.getImageName() + " auto covariance full width at half maximum = " +
                                       fwhmS + "\n");
                 } else {
                     ViewUserInterface.getReference().setDataText("Cannot determine " + srcImage.getImageName() +
-                                   " auto covariance full width at half maximum\n");
+                                                                 " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + srcImage.getImageName() +
                                       " auto covariance full width at half maximum\n");
                 }
@@ -4350,13 +4349,14 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fwhm = Math.min(fwhmS, fwhmB);
 
                 if (fwhmB != Integer.MAX_VALUE) {
-                    ViewUserInterface.getReference().setDataText(baseImage.getImageName() + " auto covariance full width at half maximum = " + fwhmB +
-                                   "\n");
+                    ViewUserInterface.getReference().setDataText(baseImage.getImageName() +
+                                                                 " auto covariance full width at half maximum = " +
+                                                                 fwhmB + "\n");
                     Preferences.debug(baseImage.getImageName() + " auto covariance full width at half maximum = " +
                                       fwhmB + "\n");
                 } else {
                     ViewUserInterface.getReference().setDataText("Cannot determine " + baseImage.getImageName() +
-                                   " auto covariance full width at half maximum\n");
+                                                                 " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + baseImage.getImageName() +
                                       " auto covariance full width at half maximum\n");
                 }
@@ -4594,7 +4594,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 }
 
                 if (PValue < 0.95f) {
-                    
+
                     setCompleted(true);
 
                     return;
@@ -5295,7 +5295,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         if (minPositiveThreshold < 0) {
             removeVOIUpdateListener();
             MipavUtil.displayError("No positve threshold found");
-            
+
             setCompleted(false);
 
             return;
@@ -5945,7 +5945,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if (minPositiveThreshold < 0) {
                 removeVOIUpdateListener();
                 MipavUtil.displayError("No positve threshold found on second iteration");
-                
+
                 setCompleted(false);
 
                 return;
@@ -6032,7 +6032,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         fireProgressStateChanged(100);
 
-        
+
         setCompleted(true);
     }
 
@@ -6154,7 +6154,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         try {
 
-        	fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Colocolization Histogram ...");
+            fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Colocolization Histogram ...");
 
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
@@ -6223,12 +6223,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 float xresB = srcImage.getFileInfo(0).getResolutions()[0];
                 float yresB = srcImage.getFileInfo(0).getResolutions()[1];
 
-                refImage = new ModelImage(srcImage.getType(), extents2D, "refImage", srcImage.getUserInterface());
-                inputImage = new ModelImage(baseImage.getType(), extents2D, "inputImage", baseImage.getUserInterface());
-                registeredSrcImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "regSImage",
-                                                    srcImage.getUserInterface());
-                registeredBaseImage = new ModelImage(baseImage.getType(), baseImage.getExtents(), "regBImage",
-                                                     baseImage.getUserInterface());
+                refImage = new ModelImage(srcImage.getType(), extents2D, "refImage");
+                inputImage = new ModelImage(baseImage.getType(), extents2D, "inputImage");
+                registeredSrcImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "regSImage");
+                registeredBaseImage = new ModelImage(baseImage.getType(), baseImage.getExtents(), "regBImage");
 
                 for (z = 0; z < zDim; z++) {
                     fireProgressStateChanged("Registering slice = " + (z + 1));
@@ -6359,8 +6357,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fireProgressStateChanged("Subtracting background from " + srcImage.getImageName());
                 fireProgressStateChanged(12);
                 subtractedSrcImage = new ModelImage(srcImage.getType(), srcImage.getExtents(),
-                                                    registeredSrcImage.getImageName() + "_subtract",
-                                                    srcImage.getUserInterface());
+                                                    registeredSrcImage.getImageName() + "_subtract");
                 buffer = null;
                 buffer = new float[length];
 
@@ -6425,8 +6422,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fireProgressStateChanged("Subtracting background from " + baseImage.getImageName());
                 fireProgressStateChanged(15);
                 subtractedBaseImage = new ModelImage(baseImage.getType(), baseImage.getExtents(),
-                                                     registeredBaseImage.getImageName() + "_subtract",
-                                                     baseImage.getUserInterface());
+                                                     registeredBaseImage.getImageName() + "_subtract");
                 buffer = null;
                 buffer = new float[length];
 
@@ -6625,13 +6621,14 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fwhm = fwhmS;
 
                 if (fwhmS != Integer.MAX_VALUE) {
-                    ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " auto covariance full width at half maximum = " + fwhmS +
-                                   "\n");
+                    ViewUserInterface.getReference().setDataText(srcImage.getImageName() +
+                                                                 " auto covariance full width at half maximum = " +
+                                                                 fwhmS + "\n");
                     Preferences.debug(srcImage.getImageName() + " auto covariance full width at half maximum = " +
                                       fwhmS + "\n");
                 } else {
                     ViewUserInterface.getReference().setDataText("Cannot determine " + srcImage.getImageName() +
-                                   " auto covariance full width at half maximum\n");
+                                                                 " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + srcImage.getImageName() +
                                       " auto covariance full width at half maximum\n");
                 }
@@ -6646,13 +6643,14 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fwhm = Math.min(fwhmS, fwhmB);
 
                 if (fwhmB != Integer.MAX_VALUE) {
-                    ViewUserInterface.getReference().setDataText(baseImage.getImageName() + " auto covariance full width at half maximum = " + fwhmB +
-                                   "\n");
+                    ViewUserInterface.getReference().setDataText(baseImage.getImageName() +
+                                                                 " auto covariance full width at half maximum = " +
+                                                                 fwhmB + "\n");
                     Preferences.debug(baseImage.getImageName() + " auto covariance full width at half maximum = " +
                                       fwhmB + "\n");
                 } else {
                     ViewUserInterface.getReference().setDataText("Cannot determine " + baseImage.getImageName() +
-                                   " auto covariance full width at half maximum\n");
+                                                                 " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + baseImage.getImageName() +
                                       " auto covariance full width at half maximum\n");
                 }
@@ -6955,7 +6953,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 }
 
                 if (PValue < 0.95f) {
-                    
+
                     setCompleted(true);
 
                     return;
@@ -7646,7 +7644,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         if (minPositiveThreshold < 0) {
             removeVOIUpdateListener();
             MipavUtil.displayError("No positve threshold found");
-            
+
             setCompleted(false);
 
             return;
@@ -8293,7 +8291,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if (minPositiveThreshold < 0) {
                 removeVOIUpdateListener();
                 MipavUtil.displayError("No positve threshold found on second iteration");
-                
+
                 setCompleted(false);
 
                 return;
@@ -8380,7 +8378,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         }
 
         fireProgressStateChanged(100);
-        
+
         setCompleted(true);
     }
 
@@ -8499,7 +8497,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         try {
 
-        	fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Colocolization Histogram ...");
+            fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Colocolization Histogram ...");
 
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
@@ -8595,20 +8593,14 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 String name = srcImage.getImageName() + "_register";
 
                 if (srcImage.getType() == ModelStorageBase.ARGB) {
-                    refImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "refImage",
-                                              srcImage.getUserInterface());
-                    inputImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "inputImage",
-                                                srcImage.getUserInterface());
-                    registeredSrcImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), name,
-                                                        srcImage.getUserInterface());
+                    refImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "refImage");
+                    inputImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "inputImage");
+                    registeredSrcImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), name);
 
                 } else {
-                    refImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "refImage",
-                                              srcImage.getUserInterface());
-                    inputImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "inputImage",
-                                                srcImage.getUserInterface());
-                    registeredSrcImage = new ModelImage(ModelStorageBase.ARGB_USHORT, srcImage.getExtents(), name,
-                                                        srcImage.getUserInterface());
+                    refImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "refImage");
+                    inputImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "inputImage");
+                    registeredSrcImage = new ModelImage(ModelStorageBase.ARGB_USHORT, srcImage.getExtents(), name);
 
                 }
 
@@ -8767,8 +8759,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fireProgressStateChanged("Subtracting background from " + srcImage.getImageName());
                 fireProgressStateChanged(15);
                 subtractedSrcImage = new ModelImage(srcImage.getType(), srcImage.getExtents(),
-                                                    registeredSrcImage.getImageName() + "_subtract",
-                                                    srcImage.getUserInterface());
+                                                    registeredSrcImage.getImageName() + "_subtract");
                 buffer = null;
                 buffer = new float[length];
 
@@ -9331,7 +9322,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 }
 
                 if (PValue < 0.95f) {
-                    
+
                     setCompleted(true);
 
                     return;
@@ -10079,7 +10070,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             subtractedSrcImage.clearMask();
             subtractedSrcImage.notifyImageDisplayListeners();
             MipavUtil.displayError("No positive threshold found on first iteration");
-            
+
             setCompleted(false);
 
             return;
@@ -10777,7 +10768,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if (minPositiveThreshold < 0) {
                 removeVOIUpdateListener();
                 MipavUtil.displayError("No positve threshold found on second iteration");
-                
+
                 setCompleted(false);
 
                 return;
@@ -10829,8 +10820,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
          * +"\n"); } if (nonPositiveThreshold <= 0) { UI.setDataText("Nonpositive linear correlation coefficient = " +
          * nonPositiveThreshold + "\n"); UI.setDataText("for pixels with red < " + firstNonPositive1 + " or green < " +
          * firstNonPositive2 + "\n"); } UI.setDataText("Linear correlation coefficient = " + minPositiveThreshold +
-         * "\n"); UI.setDataText("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n"); }
-         * // if ((useRed) && (useGreen)) else if ((useRed) && (useBlue)) { if (firstUndefined1 >= 0) {
+         * "\n"); UI.setDataText("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n"); } //
+         * if ((useRed) && (useGreen)) else if ((useRed) && (useBlue)) { if (firstUndefined1 >= 0) {
          * UI.setDataText("Cannot calculate linear correlation coefficient\n"); UI.setDataText("for pixels with red < "
          * + firstUndefined1 + " or blue < " + firstUndefined2 +"\n"); } if (nonPositiveThreshold <= 0) {
          * UI.setDataText("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
@@ -10875,7 +10866,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         fireProgressStateChanged(100);
 
-        
+
         setCompleted(true);
     }
 
@@ -10995,8 +10986,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         try {
 
-        	fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Colocolization Histogram ...");
-        	
+            fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Colocolization Histogram ...");
+
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
             zDim = srcImage.getExtents()[2];
@@ -11105,20 +11096,14 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 String name = srcImage.getImageName() + "_register";
 
                 if (srcImage.getType() == ModelStorageBase.ARGB) {
-                    refImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "refImage",
-                                              srcImage.getUserInterface());
-                    inputImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "inputImage",
-                                                srcImage.getUserInterface());
-                    registeredSrcImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), name,
-                                                        srcImage.getUserInterface());
+                    refImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "refImage");
+                    inputImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "inputImage");
+                    registeredSrcImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), name);
 
                 } else {
-                    refImage = new ModelImage(ModelStorageBase.USHORT, extents2D, "refImage",
-                                              srcImage.getUserInterface());
-                    inputImage = new ModelImage(ModelStorageBase.USHORT, extents2D, "inputImage",
-                                                srcImage.getUserInterface());
-                    registeredSrcImage = new ModelImage(ModelStorageBase.ARGB_USHORT, srcImage.getExtents(), name,
-                                                        srcImage.getUserInterface());
+                    refImage = new ModelImage(ModelStorageBase.USHORT, extents2D, "refImage");
+                    inputImage = new ModelImage(ModelStorageBase.USHORT, extents2D, "inputImage");
+                    registeredSrcImage = new ModelImage(ModelStorageBase.ARGB_USHORT, srcImage.getExtents(), name);
 
                 }
 
@@ -11296,8 +11281,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fireProgressStateChanged("Subtracting background from " + srcImage.getImageName());
                 fireProgressStateChanged(15);
                 subtractedSrcImage = new ModelImage(srcImage.getType(), srcImage.getExtents(),
-                                                    registeredSrcImage.getImageName() + "_subtract",
-                                                    srcImage.getUserInterface());
+                                                    registeredSrcImage.getImageName() + "_subtract");
                 buffer = null;
                 buffer = new float[length];
 
@@ -11929,7 +11913,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 }
 
                 if (PValue < 0.95f) {
-                    
+
                     setCompleted(true);
 
                     return;
@@ -12675,7 +12659,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             subtractedSrcImage.clearMask();
             subtractedSrcImage.notifyImageDisplayListeners();
             MipavUtil.displayError("No positive threshold found");
-            
+
             setCompleted(false);
 
             return;
@@ -13377,7 +13361,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if (minPositiveThreshold < 0) {
                 removeVOIUpdateListener();
                 MipavUtil.displayError("No positve threshold found on second iteration");
-                
+
                 setCompleted(false);
 
                 return;
@@ -13429,8 +13413,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
          * +"\n"); } if (nonPositiveThreshold <= 0) { UI.setDataText("Nonpositive linear correlation coefficient = " +
          * nonPositiveThreshold + "\n"); UI.setDataText("for pixels with red < " + firstNonPositive1 + " or green < " +
          * firstNonPositive2 + "\n"); } UI.setDataText("Linear correlation coefficient = " + minPositiveThreshold +
-         * "\n"); UI.setDataText("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n"); }
-         * // if ((useRed) && (useGreen)) else if ((useRed) && (useBlue)) { if (firstUndefined1 >= 0) {
+         * "\n"); UI.setDataText("for pixels with red < " + lastPositive1 + " or green < " + lastPositive2 + "\n"); } //
+         * if ((useRed) && (useGreen)) else if ((useRed) && (useBlue)) { if (firstUndefined1 >= 0) {
          * UI.setDataText("Cannot calculate linear correlation coefficient\n"); UI.setDataText("for pixels with red < "
          * + firstUndefined1 + " or blue < " + firstUndefined2 +"\n"); } if (nonPositiveThreshold <= 0) {
          * UI.setDataText("Nonpositive linear correlation coefficient = " + nonPositiveThreshold + "\n");
@@ -13474,7 +13458,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         }
 
         fireProgressStateChanged(100);
-        
+
         setCompleted(true);
     }
 

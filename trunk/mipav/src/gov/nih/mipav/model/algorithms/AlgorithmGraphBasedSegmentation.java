@@ -169,8 +169,8 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 int midBits = Float.floatToIntBits(midVal);
                 int keyBits = Float.floatToIntBits(key);
                 cmp = ((midBits == keyBits) ? 0 : // Values are equal
-                ((midBits < keyBits) ? -1 : // (-0.0, 0.0) or (!NaN, NaN)
-                1)); // (0.0, -0.0) or (NaN, !NaN)
+                    ((midBits < keyBits) ? -1 : // (-0.0, 0.0) or (!NaN, NaN)
+                    1)); // (0.0, -0.0) or (NaN, !NaN)
             }
 
             if (cmp < 0) {
@@ -451,14 +451,14 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             constructLog();
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing graph based segmentation...");
-            
+
 
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
             sliceLength = xDim * yDim;
             extents = srcImage.getExtents();
             srcName = srcImage.getImageName();
-            
+
             c1Buffer = new float[sliceLength];
             c2Buffer = new float[sliceLength];
 
@@ -483,8 +483,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             wholeImage = true;
             image25D = false;
 
-            smoothImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), "smoothedImage",
-                                         srcImage.getUserInterface());
+            smoothImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), "smoothedImage");
             smoothImage.importData(0, c1Buffer, true);
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, wholeImage, image25D);
             gaussAlgo.run();
@@ -722,7 +721,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 srcImage.importData(0, segBuffer, true);
             }
 
-            
             setCompleted(true);
 
             return;
@@ -732,7 +730,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("AlgorithmGraphBasedSegmentation reports:\n" + ioe.toString());
 
-           
 
             setCompleted(false);
 
@@ -800,7 +797,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             constructLog();
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing graph based segmentation...");
-            
+
 
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
@@ -822,8 +819,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             wholeImage = true;
             image25D = false;
 
-            smoothImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), "smoothedImage",
-                                         srcImage.getUserInterface());
+            smoothImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), "smoothedImage");
             smoothImage.importData(0, redBuffer, true);
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, wholeImage, image25D);
             gaussAlgo.run();
@@ -1072,7 +1068,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 srcImage.importData(0, segBuffer, true);
             }
 
-            
             setCompleted(true);
 
             return;
@@ -1082,7 +1077,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("AlgorithmGraphBasedSegmentation reports:\n" + ioe.toString());
 
-          
+
             setCompleted(false);
 
             return;
@@ -1143,7 +1138,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             constructLog();
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing graph based segmentation...");
-            
+
 
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
@@ -1161,8 +1156,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             wholeImage = true;
             image25D = false;
 
-            smoothImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), "smoothedImage",
-                                         srcImage.getUserInterface());
+            smoothImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), "smoothedImage");
             smoothImage.importData(0, buffer, true);
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, wholeImage, image25D);
             gaussAlgo.run();
@@ -1385,7 +1379,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 srcImage.importData(0, segBuffer, true);
             }
 
-            
             setCompleted(true);
 
             return;

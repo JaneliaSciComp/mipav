@@ -741,7 +741,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         deleteObjects(min, max, true);
 
         fireProgressStateChanged(0, null, "Identifing objects ...");
-        
+
 
         int mod = sliceSize / 50; // mod is 2 percent of length
 
@@ -845,18 +845,17 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -897,18 +896,18 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
         try {
-        	
-        	fireProgressStateChanged("Pruning image ...");
-            
+
+            fireProgressStateChanged("Pruning image ...");
+
 
             fireProgressStateChanged(0);
-            
+
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
@@ -947,7 +946,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         // if THREAD stopped already, then dump out!
         if (threadStopped) {
             setCompleted(false);
-            
+
 
             return;
         }
@@ -1108,12 +1107,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -1148,17 +1146,16 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
         try {
 
-        	fireProgressStateChanged("Pruning image ...");
-            
+            fireProgressStateChanged("Pruning image ...");
 
-            
+
             fireProgressStateChanged(0);
         } catch (NullPointerException npe) {
 
@@ -1198,7 +1195,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         // if THREAD stopped already, then dump out!
         if (threadStopped) {
             setCompleted(false);
-            
+
 
             return;
         }
@@ -1253,15 +1250,14 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         if (showFrame) {
 
-            ModelImage tImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Check",
-                                               srcImage.getUserInterface());
+            ModelImage tImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Check");
 
             try {
                 tImage.importData(0, processBuffer, true);
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in Dilate");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -1387,11 +1383,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         /*
-                Preferences.debug( "pixArray : " );
-                for ( int k = 0; k < pixArray.length; k++ ) {
-                    Preferences.debug( k + " = " + pixArray[k] );
-                }
-        */
+         *      Preferences.debug( "pixArray : " );     for ( int k = 0; k < pixArray.length; k++ ) {
+         * Preferences.debug( k + " = " + pixArray[k] );     }
+         */
         // if THREAD stopped already, then dump out!
         if (threadStopped) {
             return;
@@ -1418,15 +1412,14 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         imgBuffer = tempBuffer;
 
         if (showFrame) {
-            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "PruneAuto",
-                                                  srcImage.getUserInterface());
+            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "PruneAuto");
 
             try {
                 tempImage.importData(0, imgBuffer, true);
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in PruneAuto");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -1449,12 +1442,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -1507,12 +1499,10 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             return;
         }
 
-        
-
         constructLog();
 
-        int [] progressValues = getProgressValues();
-        
+        int[] progressValues = getProgressValues();
+
         switch (algorithm) {
 
             case ERODE:
@@ -1524,32 +1514,32 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 break;
 
             case CLOSE:
-            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 erode(false, iterationsE);
                 break;
 
             case OPEN:
-            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 erode(true, iterationsE);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 dilate(false, iterationsD);
                 break;
 
             case PARTICLE_ANALYSIS_NEW:
 
                 // open
-            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 15));
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 15));
                 fillHoles(true);
 
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 15),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 30));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 30));
                 erode(true, iterationsOpen);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 30),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45));
                 dilate(true, iterationsOpen);
 
                 if (kernelTypeErode == SIZED_CIRCLE) {
@@ -1560,21 +1550,21 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                 makeKernel(CONNECTED4);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 60));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 60));
                 erode(true, iterationsE);
 
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 60),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 75));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 75));
                 skeletonize(numPruningPixels, true);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 75),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 80));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 80));
                 pruneAuto(true);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 80),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95));
                 particleAnalysisNew(true);
                 setMinMax(0, 1000000);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 identifyObjects(false);
                 break;
 
@@ -1599,10 +1589,10 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 break;
 
             case ULTIMATE_ERODE:
-            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 skeletonize(numPruningPixels, true);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
-                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 pruneAuto(false);
                 break;
 
@@ -1779,11 +1769,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int sliceSize = xDim * yDim;
         short[] tempBuffer;
 
-        
+
         fireProgressStateChanged("Skeletonize image ...");
-           
-                fireProgressStateChanged(0);
-         
+
+        fireProgressStateChanged(0);
+
 
         for (pix = 0; pix < sliceSize; pix++) {
             processBuffer[pix] = 0;
@@ -1806,15 +1796,14 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         if (showFrame) {
-            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "skeletonize",
-                                                  srcImage.getUserInterface());
+            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "skeletonize");
 
             try {
                 tempImage.importData(0, imgBuffer, true);
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in skeletonize");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -1840,12 +1829,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -1875,11 +1863,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int[] pointArray;
         int pointIndex = 0;
 
-       
-                fireProgressStateChanged("Distance image ...");
-          
-                fireProgressStateChanged(0);
-       
+
+        fireProgressStateChanged("Distance image ...");
+
+        fireProgressStateChanged(0);
+
 
         try {
             pointArray = new int[sliceSize / 2];
@@ -1937,7 +1925,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
             try {
 
-                if (((pix % mod) == 0) ) {
+                if (((pix % mod) == 0)) {
                     fireProgressStateChanged(Math.round((pix + 1) / ((float) sliceSize) * 100));
                 }
             } catch (NullPointerException npe) {
@@ -1989,18 +1977,17 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -2026,7 +2013,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            
+
             finalize();
 
             return;
@@ -2040,11 +2027,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         short floodValue = 1;
         short[] tmpBuffer;
 
-      
-                fireProgressStateChanged("Removing objects ...");
-          
-                fireProgressStateChanged(0);
-         
+
+        fireProgressStateChanged("Removing objects ...");
+
+        fireProgressStateChanged(0);
+
 
         objects.removeAllElements();
 
@@ -2069,7 +2056,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            
+
             finalize();
 
             return;
@@ -2124,7 +2111,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            
+
             finalize();
 
             return;
@@ -2186,7 +2173,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                
+
                 finalize();
 
                 return;
@@ -2200,18 +2187,17 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -2247,9 +2233,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int stepY = kDim * xDim;
         short[] tempBuffer;
 
-       fireProgressStateChanged("Dilating image ...");
-       fireProgressStateChanged(0);
-      
+        fireProgressStateChanged("Dilating image ...");
+        fireProgressStateChanged(0);
+
 
         for (pix = 0; pix < sliceSize; pix++) {
             processBuffer[pix] = 0;
@@ -2263,9 +2249,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                 try {
 
-                    if (((((c * sliceSize) + pix) % mod) == 0) ) {
+                    if (((((c * sliceSize) + pix) % mod) == 0)) {
                         fireProgressStateChanged(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
-                                                               100));
+                                                                100));
                     }
                 } catch (NullPointerException npe) {
 
@@ -2328,15 +2314,14 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         if (showFrame) {
-            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Dilate",
-                                                  srcImage.getUserInterface());
+            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Dilate");
 
             try {
                 tempImage.importData(0, imgBuffer, true);
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in Dilate");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -2360,12 +2345,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -2396,8 +2380,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int pointIndex = 0;
 
         fireProgressStateChanged("Distance image ...");
-            fireProgressStateChanged(0);
-            
+        fireProgressStateChanged(0);
+
 
         try {
             pointArray = new int[sliceSize / 2];
@@ -2451,7 +2435,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
             try {
 
-                if (((pix % mod) == 0) ) {
+                if (((pix % mod) == 0)) {
                     fireProgressStateChanged(Math.round((pix + 1) / ((float) sliceSize) * 100));
                 }
             } catch (NullPointerException npe) {
@@ -2503,18 +2487,17 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -2552,8 +2535,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         short[] tempBuffer;
 
         fireProgressStateChanged("Eroding image ...");
-       fireProgressStateChanged(0);
-        
+        fireProgressStateChanged(0);
+
 
         int mod = (iters * sliceSize) / 20; // mod is 5 percent of length
 
@@ -2567,9 +2550,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                 try {
 
-                    if (((((c * sliceSize) + pix) % mod) == 0) ) {
+                    if (((((c * sliceSize) + pix) % mod) == 0)) {
                         fireProgressStateChanged(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
-                                                               100));
+                                                                100));
                     }
                 } catch (NullPointerException npe) {
 
@@ -2647,15 +2630,14 @@ kernelLoop:
         }
 
         if (showFrame) {
-            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Erode",
-                                                  srcImage.getUserInterface());
+            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Erode");
 
             try {
                 tempImage.importData(0, imgBuffer, true);
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in Erode");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -2679,12 +2661,11 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -2750,27 +2731,26 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
         if (showFrame) {
-            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Fill Objects",
-                                                  srcImage.getUserInterface());
+            ModelImage tempImage = new ModelImage(ModelImage.USHORT, srcImage.getExtents(), "Fill Objects");
 
             try {
                 tempImage.importData(0, imgBuffer, true);
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in Fill Objects");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -2782,7 +2762,6 @@ kernelLoop:
             return;
         }
 
-        
         setCompleted(true);
 
     }
@@ -2900,14 +2879,14 @@ kernelLoop:
 
         fireProgressStateChanged("Finding Edges ...");
         fireProgressStateChanged(0);
-         
+
 
         try {
             tempBuffer = new short[imgBuffer.length];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -2926,7 +2905,7 @@ kernelLoop:
 
                 try {
 
-                    if ((((sliceSize + pix) % mod) == 0) ) {
+                    if ((((sliceSize + pix) % mod) == 0)) {
                         fireProgressStateChanged(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100));
                     }
                 } catch (NullPointerException npe) {
@@ -3001,7 +2980,7 @@ kernelLoop:
 
                 try {
 
-                    if ((((sliceSize + pix) % mod) == 0) ) {
+                    if ((((sliceSize + pix) % mod) == 0)) {
                         fireProgressStateChanged(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100));
                     }
                 } catch (NullPointerException npe) {
@@ -3104,12 +3083,11 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
 
     }
@@ -3435,7 +3413,7 @@ kernelLoop:
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            
+
             finalize();
 
             return;
@@ -3452,28 +3430,28 @@ kernelLoop:
         ModelImage distanceImage = null;
         AlgorithmWatershed ws = null;
 
-        int [] progressValues = getProgressValues();
-        
+        int[] progressValues = getProgressValues();
+
         fireProgressStateChanged("Particle analysis (PA) ...");
-          fireProgressStateChanged(0);
-       
+        fireProgressStateChanged(0);
+
 
         // add open and close to remove noise; Might not need because delete objects
         // of some size works.
-          
-          try {
-        	
-            // add set minimum dist
-        	  setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 0),
-            		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 25));
-        	  ultimateErode(true); // forms list of points (one point per object)
-        	  setProgressValues(progressValues);
 
-            
-        	  fireProgressStateChanged(25);
-          
-        	  fireProgressStateChanged("PA - distance map ...");
-         
+        try {
+
+            // add set minimum dist
+            setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 0),
+                              ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 25));
+            ultimateErode(true); // forms list of points (one point per object)
+            setProgressValues(progressValues);
+
+
+            fireProgressStateChanged(25);
+
+            fireProgressStateChanged("PA - distance map ...");
+
 
             srcImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
             bgPoint = new Point(-1, -1);
@@ -3487,13 +3465,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D..particleAnalysis: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D.particleAnalysis: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -3515,7 +3493,7 @@ kernelLoop:
 
         if (threadStopped) {
             setCompleted(false);
-            
+
             finalize();
 
             return;
@@ -3538,9 +3516,9 @@ kernelLoop:
             }
         }
 
-      fireProgressStateChanged("Watershed stage ...");
-      fireProgressStateChanged(70);
-       
+        fireProgressStateChanged("Watershed stage ...");
+        fireProgressStateChanged(70);
+
         destExtents[0] = xDim;
         destExtents[1] = yDim;
 
@@ -3578,35 +3556,35 @@ kernelLoop:
 
             if (threadStopped) {
                 setCompleted(false);
-                
+
                 finalize();
 
                 return;
             }
 
-            wsImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed", srcImage.getUserInterface());
+            wsImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed");
 
-            distanceImage = new ModelImage(ModelImage.FLOAT, destExtents, "Distance ", srcImage.getUserInterface());
+            distanceImage = new ModelImage(ModelImage.FLOAT, destExtents, "Distance ");
             distanceImage.importData(0, distanceMap, true);
             ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null);
 
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
         linkProgressToAlgorithm(ws);
-        ws.setProgressValues(generateProgressValues(70,90));
-        
+        ws.setProgressValues(generateProgressValues(70, 90));
+
         ws.setSeedVector(seeds);
         ws.setEnergyImage(distanceImage);
         ws.run();
@@ -3614,7 +3592,8 @@ kernelLoop:
         // if the watershed algo is halted,
         if (!ws.isCompleted()) {
             setThreadStopped(true); // halt the rest of this processing.
-             // and kill progressbar
+
+            // and kill progressbar
             setCompleted(false);
 
             return;
@@ -3633,7 +3612,7 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (NullPointerException npe) {
@@ -3644,14 +3623,14 @@ kernelLoop:
             }
         }
 
-       fireProgressStateChanged("Deleting objects ...");
-       fireProgressStateChanged(90);
-       
+        fireProgressStateChanged("Deleting objects ...");
+        fireProgressStateChanged(90);
 
-       setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 90),
-       		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
-       deleteObjects(min, max, false);
-       setProgressValues(progressValues);
+
+        setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 90),
+                          ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+        deleteObjects(min, max, false);
+        setProgressValues(progressValues);
 
     }
 
@@ -3666,7 +3645,7 @@ kernelLoop:
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            
+
             finalize();
 
             return;
@@ -3682,15 +3661,15 @@ kernelLoop:
         ModelImage distanceImage = null;
         AlgorithmWatershed ws = null;
 
-        int [] progressValues = getProgressValues();
-        
+        int[] progressValues = getProgressValues();
+
         fireProgressStateChanged("Particle analysis (PA) ...");
         fireProgressStateChanged(0);
-        
+
 
         try {
 
-            // add set minimum dist           
+            // add set minimum dist
 
             srcImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
             setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 60));
@@ -3700,13 +3679,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D..particleAnalysis: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D.particleAnalysis: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -3728,7 +3707,7 @@ kernelLoop:
 
         if (threadStopped) {
             setCompleted(false);
-            
+
             finalize();
 
             return;
@@ -3751,8 +3730,8 @@ kernelLoop:
             }
         }
 
-      fireProgressStateChanged(75, null, "Watershed stage ...");
-       
+        fireProgressStateChanged(75, null, "Watershed stage ...");
+
 
         destExtents[0] = xDim;
         destExtents[1] = yDim;
@@ -3791,40 +3770,41 @@ kernelLoop:
 
             if (threadStopped) {
                 setCompleted(false);
-                
+
                 finalize();
 
                 return;
             }
 
-            wsImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed", srcImage.getUserInterface());
-            distanceImage = new ModelImage(ModelImage.FLOAT, destExtents, "Distance ", srcImage.getUserInterface());
+            wsImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed");
+            distanceImage = new ModelImage(ModelImage.FLOAT, destExtents, "Distance");
             distanceImage.importData(0, distanceMap, true);
             ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null);
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
         ws.setSeedVector(seeds);
         linkProgressToAlgorithm(ws);
-        ws.setProgressValues(generateProgressValues(80,95));
+        ws.setProgressValues(generateProgressValues(80, 95));
         ws.setEnergyImage(distanceImage);
         ws.run();
 
         // if the watershed algo is halted,
         if (!ws.isCompleted()) {
             setThreadStopped(true); // halt the rest of this processing.
-             // and kill progressbar
+
+            // and kill progressbar
             setCompleted(false);
 
             return;
@@ -3850,7 +3830,7 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (NullPointerException npe) {
@@ -3865,7 +3845,6 @@ kernelLoop:
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -4288,7 +4267,7 @@ kernelLoop:
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -4309,18 +4288,17 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
         setCompleted(true);
     }
 

@@ -163,7 +163,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
         // blur attenuation image
         ModelImage tmpImg = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(),
-                                           srcImage.getImageName() + "_attenuation", srcImage.getUserInterface());
+                                           srcImage.getImageName() + "_attenuation");
 
         try {
             tmpImg.importData(0, attenuationBuffer, true);

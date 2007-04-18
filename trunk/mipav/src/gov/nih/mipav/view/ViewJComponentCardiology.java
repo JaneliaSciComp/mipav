@@ -123,8 +123,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         for (int i = 0; i < activeArray.length; i++) {
 
             if (activeArray[i]) {
-                avgIntensities = cardioVOI.calcAverageIntensity(imageGraphBuffer, i, imageActive.getExtents()[0],
-                                                                imageActive.getUserInterface());
+                avgIntensities = cardioVOI.calcAverageIntensity(imageGraphBuffer, i, imageActive.getExtents()[0]);
 
                 System.err.println(i + " entire section: " + avgIntensities[0] + ", infarction: " + avgIntensities[1]);
 
@@ -140,22 +139,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
      * DOCUMENT ME!
      */
     public void calculateVOILengths() {
-        System.err.println("calculating segment lengths");
-
-        double[] averageOuterLength = null;
-        double[] averageInnerLength = null;
-        double[] averageInfarctionLength = null;
+        // System.err.println("calculating segment lengths");
 
         VOICardiology cardioVOI = ((VOICardiology) imageActive.getVOIs().VOIAt(0).getCurves()[0].elementAt(0));
-
         boolean[] activeArray = cardioVOI.getActive();
-        averageOuterLength = new double[activeArray.length];
-        averageInnerLength = new double[activeArray.length];
-        averageInfarctionLength = new double[activeArray.length];
-
         int numActive = 0; // counter for number of active sections
-
-        double innerToOuter = 0f;
 
         // for each active section, run through and calculate lengths
         for (int i = 0; i < activeArray.length; i++) {
@@ -164,7 +152,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 numActive++;
 
                 cardioVOI.calcAverageLength(i, imageActive.getExtents()[0], imageActive.getExtents()[1],
-                                            imageActive.getResolutions(0), imageActive.getUserInterface());
+                                            imageActive.getResolutions(0));
 
             }
         }
@@ -320,9 +308,10 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             return;
         }
 
-        if ((cursorMode == RECTANGLE) || (cursorMode == ELLIPSE) || (cursorMode == LINE) || (cursorMode == RECTANGLE3D) ||
-                (cursorMode == POINT_VOI) || (cursorMode == POLYLINE) || (cursorMode == LEVELSET) || (cursorMode == PAINT_VOI) ||
-                (cursorMode == DROPPER_PAINT) || (cursorMode == ERASER_PAINT) || (cursorMode == QUICK_LUT) || (cursorMode == PROTRACTOR) ||
+        if ((cursorMode == RECTANGLE) || (cursorMode == ELLIPSE) || (cursorMode == LINE) ||
+                (cursorMode == RECTANGLE3D) || (cursorMode == POINT_VOI) || (cursorMode == POLYLINE) ||
+                (cursorMode == LEVELSET) || (cursorMode == PAINT_VOI) || (cursorMode == DROPPER_PAINT) ||
+                (cursorMode == ERASER_PAINT) || (cursorMode == QUICK_LUT) || (cursorMode == PROTRACTOR) ||
                 (cursorMode == LIVEWIRE) || (cursorMode == ANNOTATION)) {
             g.dispose();
 
@@ -482,7 +471,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             for (j = 0; j < VOIs.VOIAt(i).getCurves()[slice].size(); j++) {
 
                                 if (((VOIContour) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).contains(xS, yS,
-                                                                                                            true)) {
+                                                                                                                true)) {
                                     return;
                                 }
                             }

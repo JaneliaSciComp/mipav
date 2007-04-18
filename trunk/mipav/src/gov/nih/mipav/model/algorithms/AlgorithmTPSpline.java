@@ -325,7 +325,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
         try {
             fireProgressStateChanged(matchImage.getImageName(), "Calculating spline coefficients ...");
-            
+
 
             if (z == null) {
                 setupTPSpline2D();
@@ -341,9 +341,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             setCompleted(false);
 
             return;
-        } finally {
-            
-        }
+        } finally { }
     }
 
     /**
@@ -1350,7 +1348,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         int mod;
 
         fireProgressStateChanged("Thin plate spline", "Performing base to match grid transformation...");
-        
+
 
         if (xWarp.length != yWarp.length) {
             MipavUtil.displayError("tpSpline2D: xWarp array length does not equal yWarp array length");
@@ -1380,7 +1378,6 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             }
         }
 
-        
 
         return result;
     }
@@ -1493,7 +1490,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 extents = new int[] { xDimA, yDimA };
             }
 
-            resultImage = new ModelImage(matchImage.getType(), extents, name, matchImage.getUserInterface());
+            resultImage = new ModelImage(matchImage.getType(), extents, name);
             updateFileInfo();
 
         } catch (OutOfMemoryError error) {
@@ -1528,7 +1525,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 resultBuf = null;
                 System.gc();
                 MipavUtil.displayError("AlgorithmTPSpline: Out of memory on imgBuf" + error);
-                
+
                 finalize();
                 setCompleted(false);
 
@@ -1540,7 +1537,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 try {
                     matchImage.exportData(zNum * lengthB, lengthB, imgBuf);
                 } catch (IOException error) {
-                    
+
                     MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
                     finalize();
                     setCompleted(false);
@@ -1625,7 +1622,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 resultBuf = null;
                 System.gc();
                 MipavUtil.displayError("AlgorithmTPSpline: Out of memory error on imgBuf" + error);
-                
+
                 finalize();
                 setCompleted(false);
 
@@ -1637,7 +1634,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 try {
                     matchImage.exportData(zNum * lengthB, lengthB, imgBuf);
                 } catch (IOException error) {
-                    
+
                     MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
                     finalize();
                     setCompleted(false);
@@ -1736,7 +1733,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         try {
             resultImage.importData(0, resultBuf, true);
         } catch (IOException error) {
-            
+
             MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
             finalize();
             setCompleted(false);
@@ -1744,7 +1741,6 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
 
         return;
@@ -1797,7 +1793,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
         try {
             extents = new int[] { xDimA, yDimA, zDimA };
-            resultImage = new ModelImage(matchImage.getType(), extents, name, matchImage.getUserInterface());
+            resultImage = new ModelImage(matchImage.getType(), extents, name);
         } catch (OutOfMemoryError error) {
             extents = null;
 
@@ -1834,7 +1830,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 resultBuf = null;
                 System.gc();
                 MipavUtil.displayError("AlgorithmTPSpline: Out of memory on image buffers." + error);
-                
+
                 finalize();
                 setCompleted(false);
 
@@ -1844,7 +1840,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             try {
                 matchImage.exportData(0, lengthB, imgBuf);
             } catch (IOException error) {
-                
+
                 MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
                 finalize();
                 setCompleted(false);
@@ -1958,7 +1954,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 resultBuf = null;
                 System.gc();
                 MipavUtil.displayError("AlgorithmTPSpline: Out of memory on buffers" + error);
-                
+
                 finalize();
                 setCompleted(false);
 
@@ -1968,7 +1964,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             try {
                 matchImage.exportData(0, lengthB, imgBuf);
             } catch (IOException error) {
-                
+
                 MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
                 finalize();
                 setCompleted(false);
@@ -2113,7 +2109,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         try {
             resultImage.importData(0, resultBuf, true);
         } catch (IOException error) {
-            
+
             MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
             finalize();
             setCompleted(false);
@@ -2121,7 +2117,6 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
 
         return;

@@ -537,8 +537,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
      *
      * int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width; int yScreen =
-     * Toolkit.getDefaultToolkit().getScreenSize().height; 
-     * 
+     * Toolkit.getDefaultToolkit().getScreenSize().height;
+     *
      *
      * makeComplexData(); sliceSize = dimLengths[0]*dimLengths[1]; // Perform forward FFT on data transformDir = FORWARD;
      * exec(realData,imagData,0); try {     realProduct     = new float[newSliceSize];     imagProduct     = new
@@ -552,24 +552,23 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * GxxData = new float[kernDim*kernDim];     GenerateGaussian Gxx = new GenerateGaussian(GxxData, kExtents, sigmas,
      * derivOrder);     Gxx.calc(false);     derivOrder[0] = 0;     derivOrder[1] = 2;     GyyData = new
      * float[kernDim*kernDim];     GenerateGaussian Gyy = new GenerateGaussian(GyyData, kExtents, sigmas, derivOrder);
-     *   Gyy.calc(false);     for (i = 0; i < GyyData.length; i++) {         GxxData[i] = -(GxxData[i] + GyyData[i]);
-     *  }
+     * Gyy.calc(false);     for (i = 0; i < GyyData.length; i++) {         GxxData[i] = -(GxxData[i] + GyyData[i]); }
      *
-     *   for (i = 0; i < newSliceSize; i++)       realKernelData[i] = 0.0f;
+     * for (i = 0; i < newSliceSize; i++)       realKernelData[i] = 0.0f;
      *
-     *   for (y = 0; y <= kernDim - 1; y++) {       for (x = 0; x <= kernDim - 1; x++) {         pos = y*kernDim + x;
-     *      realKernelData[x + newDimLengths[0]*y] = GxxData[pos];         }     }
+     * for (y = 0; y <= kernDim - 1; y++) {       for (x = 0; x <= kernDim - 1; x++) {         pos = y*kernDim + x;
+     * realKernelData[x + newDimLengths[0]*y] = GxxData[pos];         }     }
      *
-     *   // The filter FFT is created     transformDir = FILTER;     exec(realKernelData,imagKernelData,0);     if
+     * // The filter FFT is created     transformDir = FILTER;     exec(realKernelData,imagKernelData,0);     if
      * (threadStopped) {         finalize();         return null;     }
      *
-     *   for (i = 0; i < newSliceSize; i++) {       realProduct[i] = realData[i]*realKernelData[i] -
+     * for (i = 0; i < newSliceSize; i++) {       realProduct[i] = realData[i]*realKernelData[i] -
      * imagData[i]*imagKernelData[i];       imagProduct[i] = imagData[i]*realKernelData[i] +
      * realData[i]*imagKernelData[i];     }
      *
-     *   // Perform inverse FFT     transformDir = INVERSE;     exec(realProduct,imagProduct,0);
+     * // Perform inverse FFT     transformDir = INVERSE;     exec(realProduct,imagProduct,0);
      *
-     *   for (i = 0; i < sliceSize; i++) {         if (finalData[i] > resultData[i]) {             resultData[i] =
+     * for (i = 0; i < sliceSize; i++) {         if (finalData[i] > resultData[i]) {             resultData[i] =
      * finalData[i];             sData[i] = (byte)s;         }     }
      *
      * } // for (s = 1; s <= 8 && !threadStopped; s++)  setCompleted(true); return resultData;}*/
@@ -660,7 +659,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         int z;
 
         fireProgressStateChanged(0, null, "Running frequency filter ...");
-        
+
         makeComplexData();
 
         if (constructionMethod == WINDOW) {
@@ -694,9 +693,10 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                
-                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running forward FFTs ...");
-               // fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
+
+                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
+                                         "Running forward FFTs ...");
+                // fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
 
                 for (i = 0; i < newSliceSize; i++) {
                     realData[(z * newSliceSize) + i] = realSubsetData[i];
@@ -764,7 +764,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         if (image25D) {
             realSubsetData = new float[newSliceSize];
             imagSubsetData = new float[newSliceSize];
-            //fireProgressStateChanged("Running inverse FFTs");
+            // fireProgressStateChanged("Running inverse FFTs");
 
             for (z = 0; z < newDimLengths[2]; z++) {
 
@@ -774,10 +774,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                
-                fireProgressStateChanged((Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running inverse FFTs ...");
-                
-                //fireProgressStateChanged(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)));
+
+                fireProgressStateChanged((Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
+                                         "Running inverse FFTs ...");
+
+                // fireProgressStateChanged(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)));
             } // for (z = 0; z < newDimLengths[2]; z++)
 
             realSubsetData = null;
@@ -798,20 +799,21 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         fireProgressStateChanged(-1, null, "Storing inverse FFT in source image ...");
-//        fireProgressStateChanged("Storing inverse FFT in source image...");
+
+        //        fireProgressStateChanged("Storing inverse FFT in source image...");
         // back in the spatial domain so only realData is now present
         try {
             srcImage.reallocate(ModelStorageBase.FLOAT, dimLengths);
         } catch (IOException error) {
             displayError("AlgorithmFrequencyFilter: IOException on srcImage.reallocate");
-            
+
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory on srcImage.reallocate");
-            
+
             setCompleted(false);
 
             return;
@@ -821,21 +823,21 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             srcImage.importData(0, finalData, true);
         } catch (IOException error) {
             displayError("AlgorithmFrequencyFilter: IOException on source image import data");
-            
+
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory on source image import data");
-            
+
             setCompleted(false);
 
             return;
         }
 
         fireProgressStateChanged(100, null, null);
-        
+
         setCompleted(true);
     }
 
@@ -852,7 +854,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         int z;
 
         fireProgressStateChanged(0, null, "Running frequency filter ...");
-        
+
         makeComplexData();
 
         if (constructionMethod == WINDOW) {
@@ -886,8 +888,9 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running forward FFTs ...");
-              //  fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
+                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
+                                         "Running forward FFTs ...");
+                // fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
 
                 for (i = 0; i < newSliceSize; i++) {
                     realData[(z * newSliceSize) + i] = realSubsetData[i];
@@ -954,7 +957,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         if (image25D) {
             realSubsetData = new float[newSliceSize];
             imagSubsetData = new float[newSliceSize];
-           // fireProgressStateChanged("Running inverse FFTs");
+            // fireProgressStateChanged("Running inverse FFTs");
 
             for (z = 0; z < newDimLengths[2]; z++) {
 
@@ -964,8 +967,9 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                fireProgressStateChanged((Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running inverse FFTs ...");
-               // fireProgressStateChanged(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)));
+                fireProgressStateChanged((Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
+                                         "Running inverse FFTs ...");
+                // fireProgressStateChanged(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)));
             } // for (z = 0; z < newDimLengths[2]; z++)
 
             realSubsetData = null;
@@ -986,21 +990,21 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         fireProgressStateChanged(-1, null, "Storing inverse FFT in destination image ...");
-        //fireProgressStateChanged("Storing inverse FFT in destination image...");
+        // fireProgressStateChanged("Storing inverse FFT in destination image...");
 
         // back in the spatial domain so only realData is now present
         try {
             destImage.reallocate(ModelStorageBase.FLOAT, dimLengths);
         } catch (IOException error) {
             displayError("AlgorithmFrequencyFilter: IOException on destImage.reallocate");
-            
+
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory on destImage.reallocate");
-            
+
             setCompleted(false);
 
             return;
@@ -1010,23 +1014,23 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             destImage.importData(0, finalData, true);
         } catch (IOException error) {
             displayError("AlgorithmFrequencyFilter: IOException on destination image import data");
-            
+
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory on destination image import data");
-            
+
             setCompleted(false);
 
             return;
         }
 
         // destImage.calcMinMax();
-        
+
         fireProgressStateChanged(100, null, null);
-        
+
         setCompleted(true);
     }
 
@@ -1065,7 +1069,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -1116,7 +1120,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -1227,7 +1231,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -1631,7 +1635,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             tempData = null;
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory creating tempData in edgeStrip routine");
-            
+
             setCompleted(false);
 
             return;
@@ -1734,7 +1738,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             finalData = null;
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory creating finalData in edgeStrip routine");
-            
+
             setCompleted(false);
 
             return;
@@ -1788,7 +1792,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                      (constructionMethod == GABOR))) {
 
             if (!image25D) {
-                //fireProgressStateChanged("Centering data before inverse FFT...");
+
+                // fireProgressStateChanged("Centering data before inverse FFT...");
                 fireProgressStateChanged(-1, null, "Centering data before inverse FFT ...");
             }
 
@@ -1796,7 +1801,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         if (!image25D) {
-            //fireProgressStateChanged("Running FFT algorithm...");
+
+            // fireProgressStateChanged("Running FFT algorithm...");
             fireProgressStateChanged(-1, null, "Running FFT algorithm ...");
         }
 
@@ -1876,12 +1882,12 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 if (transformDir == FORWARD) {
                     fireProgressStateChanged((Math.round(10 + ((float) (i + 1) / ndim * 40))), null, null);
-                 //   fireProgressStateChanged(Math.round(10 + ((float) (i + 1) / ndim * 40)));
+                    // fireProgressStateChanged(Math.round(10 + ((float) (i + 1) / ndim * 40)));
                 }
 
                 if (transformDir == INVERSE) {
                     fireProgressStateChanged((Math.round(50 + ((float) (i + 1) / ndim * 40))), null, null);
-                  //  fireProgressStateChanged(Math.round(50 + ((float) (i + 1) / ndim * 40)));
+                    // fireProgressStateChanged(Math.round(50 + ((float) (i + 1) / ndim * 40)));
                 }
             } // if (!image25D)
         }
@@ -1896,7 +1902,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
             if (!image25D) {
                 fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
-//                fireProgressStateChanged("Centering data after FFT algorithm...");
+                //                fireProgressStateChanged("Centering data after FFT algorithm...");
             }
 
             center(rData, iData);
@@ -1918,7 +1924,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             // Do edge stripping to restore the original dimensions the source image had
             // before the forward FFT
             if (!image25D) {
-               // fireProgressStateChanged("Zero stripping data after inverse FFT...");
+
+                // fireProgressStateChanged("Zero stripping data after inverse FFT...");
                 fireProgressStateChanged(-1, null, "Zero stripping data after inverse FFT ...");
             }
 
@@ -2013,8 +2020,9 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 for (x = 0; x <= (kDim - 1); x++) {
                     pos = (z * kDim * kDim) + (y * kDim) + x;
-                    distance = (float) Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
-                                                 ((z - halfKDim) * (z - halfKDim)));
+                    distance = (float)
+                                   Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
+                                             ((z - halfKDim) * (z - halfKDim)));
 
                     if (distance < tau) {
                         wKernel[pos] = (float) (0.54 + (0.46 * Math.cos(Math.PI * distance / tau)));
@@ -2101,8 +2109,9 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 for (x = 0; x <= (kDim - 1); x++) {
                     pos = (z * kDim * kDim) + (y * kDim) + x;
-                    distance = (float) Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
-                                                 ((z - halfKDim) * (z - halfKDim)));
+                    distance = (float)
+                                   Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
+                                             ((z - halfKDim) * (z - halfKDim)));
 
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
                         iKernel[pos] = ((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI));
@@ -2192,8 +2201,9 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 for (x = 0; x <= (kDim - 1); x++) {
                     pos = (z * kDim * kDim) + (y * kDim) + x;
-                    distance = (float) Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
-                                                 ((z - halfKDim) * (z - halfKDim)));
+                    distance = (float)
+                                   Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
+                                             ((z - halfKDim) * (z - halfKDim)));
 
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
                         iKernel[pos] = 1.0f - (((FHigh * FHigh) - (FLow * FLow)) / ((float) (4.0 * Math.PI)));
@@ -2280,8 +2290,9 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 for (x = 0; x <= (kDim - 1); x++) {
                     pos = (z * kDim * kDim) + (y * kDim) + x;
-                    distance = (float) Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
-                                                 ((z - halfKDim) * (z - halfKDim)));
+                    distance = (float)
+                                   Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
+                                             ((z - halfKDim) * (z - halfKDim)));
 
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
                         iKernel[pos] = 1.0f - ((cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI)));
@@ -2367,8 +2378,9 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 for (x = 0; x <= (kDim - 1); x++) {
                     pos = (z * kDim * kDim) + (y * kDim) + x;
-                    distance = (float) Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
-                                                 ((z - halfKDim) * (z - halfKDim)));
+                    distance = (float)
+                                   Math.sqrt(((x - halfKDim) * (x - halfKDim)) + ((y - halfKDim) * (y - halfKDim)) +
+                                             ((z - halfKDim) * (z - halfKDim)));
 
                     if ((x == halfKDim) && (y == halfKDim) && (z == halfKDim)) {
                         iKernel[pos] = (cutoffFreq * cutoffFreq) / ((float) (4.0 * Math.PI));
@@ -2735,7 +2747,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             realData = null;
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory creating realData");
-            
+
             setCompleted(false);
 
             return;
@@ -2747,7 +2759,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             imagData = null;
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory creating imagData");
-            
+
             setCompleted(false);
 
             return;
@@ -2763,14 +2775,14 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 Arrays.fill(imagData, 0.0f);
             } else {
                 displayError("AlgorithmFrequencyFilter: Source image is incorrectly COMPLEX");
-                
+
                 setCompleted(false);
 
                 return;
             }
         } catch (IOException error) {
             displayError("AlgorithmFrequencyFilter: Source image is locked");
-            
+
             setCompleted(false);
 
             return;
@@ -2779,7 +2791,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             imagData = null;
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory");
-            
+
             setCompleted(false);
 
             return;
@@ -2800,8 +2812,10 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         if (filterType == HOMOMORPHIC) {
-           //fireProgressStateChanged("Taking log of data");
+
+            // fireProgressStateChanged("Taking log of data");
             fireProgressStateChanged(-1, null, "Taking log of data ...");
+
             if (minimum < 1.0f) {
                 float makePos = 1.0f - minimum;
 
@@ -2823,7 +2837,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 tempData = null;
                 System.gc();
                 displayError("AlgorithmFrequencyFilter: Out of memory creating tempData for cropping");
-                
+
                 setCompleted(false);
 
                 return;
@@ -3010,16 +3024,16 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         if (zeroPad) {
 
             // zero pad the data so that all dimensions are powers of 2
-            //fireProgressStateChanged("Zero padding source data...");
+            // fireProgressStateChanged("Zero padding source data...");
             fireProgressStateChanged(-1, null, "Zero padding source data ...");
-            
+
             try {
                 tempData = new float[newArrayLength];
             } catch (OutOfMemoryError e) {
                 tempData = null;
                 System.gc();
                 displayError("AlgorithmFrequencyFilter: Out of memory creating tempData for zero padding");
-                
+
                 setCompleted(false);
 
                 return;
@@ -3115,7 +3129,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 realData = null;
                 System.gc();
                 displayError("AlgorithmFrequencyFilter: Out of memory creating realData in zero padding routine");
-                
+
                 setCompleted(false);
 
                 return;
@@ -3215,7 +3229,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 imagData = null;
                 System.gc();
                 displayError("AlgorithmFrequencyFilter: Out of memory creating imagData in zero padding routine");
-                
+
                 setCompleted(false);
 
                 return;
@@ -3226,7 +3240,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             }
 
             fireProgressStateChanged((.1f), null, null);
-            //fireProgressStateChanged(10);
+            // fireProgressStateChanged(10);
         } // end of if (zeroPad)
     } // end of makeComplexData()
 
@@ -3300,8 +3314,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             gaborExtents = new int[2];
             gaborExtents[0] = newDimLengths[0];
             gaborExtents[1] = newDimLengths[1];
-            gaborImage = new ModelImage(ModelStorageBase.FLOAT, gaborExtents, "gaborFilter",
-                                        srcImage.getUserInterface());
+            gaborImage = new ModelImage(ModelStorageBase.FLOAT, gaborExtents, "gaborFilter");
 
             try {
                 gaborImage.importData(0, realData2, true);
@@ -3509,7 +3522,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 default:
                     displayError("makeKernelData: no such filter type");
-                    
+
                     setCompleted(false);
 
                     return;
@@ -3526,7 +3539,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 realKernelData = null;
                 System.gc();
                 displayError("AlgorithmFrequencyFilter: Out of memory creating realKernelData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -3548,7 +3561,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 imagKernelData = null;
                 System.gc();
                 displayError("AlgorithmFrequencyFilter: Out of memory creating imagKernelData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -3581,7 +3594,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 default:
                     displayError("makeKernelData: no such filter type");
-                    
+
                     setCompleted(false);
 
                     return;
@@ -3595,7 +3608,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 realKernelData = null;
                 System.gc();
                 displayError("AlgorithmFrequencyFilter: Out of memory creating realKernelData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -3621,7 +3634,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 imagKernelData = null;
                 System.gc();
                 displayError("AlgorithmFrequencyFilter: Out of memory creating imagKernelData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -3662,16 +3675,17 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private void restoreFinalData() {
         int i;
         float[] finalData2;
-        
+
         fireProgressStateChanged(-1, null, "Taking exponentials ...");
-       // fireProgressStateChanged("Taking exponentials");
+        // fireProgressStateChanged("Taking exponentials");
 
         for (i = 0; i < finalData.length; i++) {
             finalData[i] = (float) Math.exp(finalData[i]);
         }
 
         if ((lowTruncated > 0.0) || (highTruncated > 0.0)) {
-            //fireProgressStateChanged("Sorting data");
+
+            // fireProgressStateChanged("Sorting data");
             fireProgressStateChanged(-1, null, "Sorting data ...");
             finalData2 = new float[finalData.length];
 
@@ -3683,7 +3697,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
             if (lowTruncated > 0.0) {
                 fireProgressStateChanged(-1, null, "Clamping low data ...");
-                //fireProgressStateChanged("Clamping low data");
+                // fireProgressStateChanged("Clamping low data");
 
                 int lowIndex = Math.round(lowTruncated * (finalData.length - 1));
                 float lowClamp = finalData2[lowIndex];
@@ -3698,7 +3712,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
             if (highTruncated > 0.0) {
                 fireProgressStateChanged(-1, null, "Clamping high data ...");
-               // fireProgressStateChanged("Clamping high data");
+                // fireProgressStateChanged("Clamping high data");
 
                 int highIndex = Math.round((1 - highTruncated) * (finalData.length - 1));
                 float highClamp = finalData2[highIndex];
@@ -3806,7 +3820,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             tempData = null;
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory creating tempData in shiftBack routine");
-            
+
             setCompleted(false);
 
             return;
@@ -3973,7 +3987,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             tempData = null;
             System.gc();
             displayError("AlgorithmFrequencyFilter: Out of memory creating tempData in zeroAround routine");
-            
+
             setCompleted(false);
 
             return;

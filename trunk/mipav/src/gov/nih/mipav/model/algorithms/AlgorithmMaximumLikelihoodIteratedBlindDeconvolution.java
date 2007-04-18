@@ -86,8 +86,29 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /** Show the deconvolved image in progress every m_iNumberProgress steps:. */
     private int m_iNumberProgress;
 
+    /** DOCUMENT ME! */
+    private ModelImage m_kCalcResult1;
+
+    /** DOCUMENT ME! */
+    private ModelImage m_kCalcResult2;
+
+    /** DOCUMENT ME! */
+    private ModelImage m_kCalcResult3;
+
     /** estimated of the reconstructed image:. */
     private ModelImage m_kEstimatedImage;
+
+    /** Images to store FFT and Calc results. */
+    private ModelImage m_kImageSpectrum1;
+
+    /** DOCUMENT ME! */
+    private ModelImage m_kImageSpectrum2;
+
+    /** DOCUMENT ME! */
+    private ModelImage m_kImageSpectrum3;
+
+    /** DOCUMENT ME! */
+    private ModelImage m_kMirrorImage;
 
     /** source image to be reconstructed! */
     private ModelImage m_kOriginalSourceImage;
@@ -98,28 +119,23 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /** point spread function image:. */
     private ModelImage m_kPSFImage;
 
+    /** Used for color image. */
+    private ModelImage m_kPSFImageCopy;
+
+    /** DOCUMENT ME! */
+    private ModelImage m_kSourceBlue = null;
+
+    /** DOCUMENT ME! */
+    private ModelImage m_kSourceGreen = null;
+
     /** source image to be reconstructed! */
     private ModelImage m_kSourceImage;
-    
-    /** Images to store FFT and Calc results */
-    private ModelImage m_kImageSpectrum1;
-    private ModelImage m_kImageSpectrum2;
-    private ModelImage m_kImageSpectrum3;
-    private ModelImage m_kMirrorImage;
-    private ModelImage m_kCalcResult1;
-    private ModelImage m_kCalcResult2;
-    private ModelImage m_kCalcResult3;
-    
+
     /**
      * For color images: the source is converted to gray for the deconvolution. Once the estimate and psf are found,
      * each component is reconstructed.
      */
     private ModelImage m_kSourceRed = null;
-    private ModelImage m_kSourceBlue = null;
-    private ModelImage m_kSourceGreen = null;
-    
-    /** Used for color image */
-    private ModelImage m_kPSFImageCopy;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -132,8 +148,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      * @param  fObjectiveNumericalAperature  the numerical aperature of the imaging lense
      * @param  fWavelength                   the reflected or fluorescing light
      * @param  fRefractiveIndex              the index of refraction for the sample
-     * @param  bUseConstraints               When true, the lens NA, wavelength, and refractive index are
-     *                                       used in the deconvolution process
+     * @param  bUseConstraints               When true, the lens NA, wavelength, and refractive index are used in the
+     *                                       deconvolution process
      */
     public AlgorithmMaximumLikelihoodIteratedBlindDeconvolution(ModelImage kSrcImg, int iIterations, int iProgress,
                                                                 float fObjectiveNumericalAperature, float fWavelength,
@@ -169,11 +185,11 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         /* The initial guess at the estimated image is the original image: */
-           m_kEstimatedImage = (ModelImage) (m_kSourceImage.clone());
+        m_kEstimatedImage = (ModelImage) (m_kSourceImage.clone());
         m_kEstimatedImage.setImageName("estimate" + 0);
 
         /* The initial psf is a gaussian of size 3x3: */
-        //m_kPSFImage = initPSF(m_kSourceImage.getNDims(), m_kSourceImage.getExtents());
+        // m_kPSFImage = initPSF(m_kSourceImage.getNDims(), m_kSourceImage.getExtents());
         initPSF(m_kSourceImage.getNDims(), m_kSourceImage.getExtents());
 
         /*
@@ -190,31 +206,37 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      * Dispose of local variables that may be taking up lots of room.
      */
     public void disposeLocal() {
+
         if (m_kImageSpectrum1 != null) {
             m_kImageSpectrum1.disposeLocal();
             m_kImageSpectrum1 = null;
         }
+
         if (m_kImageSpectrum2 != null) {
             m_kImageSpectrum2.disposeLocal();
             m_kImageSpectrum2 = null;
         }
+
         if (m_kImageSpectrum3 != null) {
             m_kImageSpectrum3.disposeLocal();
             m_kImageSpectrum3 = null;
         }
+
         if (m_kMirrorImage != null) {
             m_kMirrorImage.disposeLocal();
             m_kMirrorImage = null;
         }
+
         if (m_kCalcResult1 != null) {
             m_kCalcResult1.disposeLocal();
             m_kCalcResult1 = null;
         }
+
         if (m_kCalcResult3 != null) {
             m_kCalcResult3.disposeLocal();
             m_kCalcResult3 = null;
         }
-        
+
         System.gc();
     }
 
@@ -228,20 +250,21 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     }
 
     /**
+     * Returns the point spread function image.
+     *
+     * @return  m_kPSFImage
+     */
+    public ModelImage getPSFImage() {
+        return m_kPSFImageCopy;
+    }
+
+    /**
      * Returns the reconstructed image:
      *
      * @return  m_kEstimatedImage
      */
     public ModelImage getReconstructedImage() {
         return m_kEstimatedImage;
-    }
-    
-    /**
-     * Returns the point spread function image
-     * @return m_kPSFImage
-     */
-    public ModelImage getPSFImage() {
-        return m_kPSFImageCopy;
     }
 
 
@@ -257,9 +280,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         if (m_iNumberIterations != 0) {
-            
+
             runDeconvolution(m_kSourceImage, m_kEstimatedImage, m_kPSFImage, true);
-            
+
             if (threadStopped) {
                 finalize();
 
@@ -300,6 +323,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      * Performs a AlgorithmImageCalculator calculation on the two input images. Used here to either multiply or divide
      * two images.
      *
+     * @param   kReturn  DOCUMENT ME!
      * @param   kImage1  the first input image
      * @param   kImage2  the second input image
      * @param   iType    the type of calculation (multiply or divide)
@@ -307,7 +331,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      * @return  kReturn, the result of the image calculation
      */
     private ModelImage calc(ModelImage kReturn, ModelImage kImage1, ModelImage kImage2, int iType) {
-    	
+
         AlgorithmImageCalculator algImageCalc = new AlgorithmImageCalculator(kReturn, kImage1, kImage2, iType,
                                                                              AlgorithmImageMath.CLIP, true, null);
 
@@ -320,7 +344,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         System.gc();
 
         return kReturn;
-        
+
     }
 
     /**
@@ -331,7 +355,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         m_kSourceImage = null;
 
         m_kOriginalSourceImage = null;
-        
+
         if (m_kPSFImage != null) {
             m_kPSFImage.disposeLocal();
             m_kPSFImage = null;
@@ -376,7 +400,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
         /* 2). Hourglass constraint: */
         if (m_bUseMicroscopeConstraints) {
-            ModelImage kWorking = (ModelImage) kImagePSF.clone(); 
+            ModelImage kWorking = (ModelImage) kImagePSF.clone();
             float fXHalf = (m_afResolutions[0] * (m_iDimX + 1)) / 2f;
             float fYHalf = (m_afResolutions[1] * (m_iDimY + 1)) / 2f;
             float fZHalf = (m_afResolutions[2] * (m_iDimZ + 1)) / 2f;
@@ -405,10 +429,11 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
             /* 3). Bandlimit and missing cone constraint: */
             if (m_kImageSpectrum1 == null) {
-            	m_kImageSpectrum1 = (ModelImage) kWorking.clone(); 
+                m_kImageSpectrum1 = (ModelImage) kWorking.clone();
             }
+
             ModelImage kImageFFT = fft(m_kImageSpectrum1, kWorking, 1);
-            //kWorking.disposeLocal();
+            // kWorking.disposeLocal();
 
             for (int z = 0; z < m_iDimZ; z++) {
 
@@ -438,8 +463,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             }
 
             if (m_kImageSpectrum2 == null) {
-            	m_kImageSpectrum2 = (ModelImage) kWorking.clone(); 
+                m_kImageSpectrum2 = (ModelImage) kWorking.clone();
             }
+
             kWorking.disposeLocal();
             kImageInvFFT = fft(m_kImageSpectrum2, m_kImageSpectrum1, -1);
         } else {
@@ -479,11 +505,13 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
         /* 1). Unit summation constraint: */
         for (int i = 0; i < m_iArrayLength; i++) {
-        	kImagePSF.set(i, kImageInvFFT.getFloat(i) / fSum);
+            kImagePSF.set(i, kImageInvFFT.getFloat(i) / fSum);
         }
+
         kImageInvFFT.calcMinMax();
+
         return kImagePSF;
-        
+
     }
 
     /**
@@ -543,9 +571,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         /* Create three separate ModelImages of the same type: */
-        m_kSourceRed = new ModelImage(iType, kImage.getExtents(), "GrayRed", null);
-        m_kSourceGreen = new ModelImage(iType, kImage.getExtents(), "GrayGreen", null);
-        m_kSourceBlue = new ModelImage(iType, kImage.getExtents(), "GrayBlue", null);
+        m_kSourceRed = new ModelImage(iType, kImage.getExtents(), "GrayRed");
+        m_kSourceGreen = new ModelImage(iType, kImage.getExtents(), "GrayGreen");
+        m_kSourceBlue = new ModelImage(iType, kImage.getExtents(), "GrayBlue");
 
         AlgorithmRGBtoGrays kRGBAlgoMulti = new AlgorithmRGBtoGrays(m_kSourceRed, m_kSourceGreen, m_kSourceBlue,
                                                                     kImage);
@@ -559,11 +587,14 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
         JDialogRGBtoGrays kDialogTemp = new JDialogRGBtoGrays(kImage.getParentFrame(), kImage);
         kDialogTemp.updateFileInfo(kImage, m_kSourceRed);
-        //JDialogBase.updateFileInfo(kImage, m_kSourceRed);
+
+        // JDialogBase.updateFileInfo(kImage, m_kSourceRed);
         kDialogTemp.updateFileInfo(kImage, m_kSourceGreen);
-        //JDialogBase.updateFileInfo(kImage, m_kSourceGreen);
+
+        // JDialogBase.updateFileInfo(kImage, m_kSourceGreen);
         kDialogTemp.updateFileInfo(kImage, m_kSourceBlue);
-        //JDialogBase.updateFileInfo(kImage, m_kSourceBlue);
+
+        // JDialogBase.updateFileInfo(kImage, m_kSourceBlue);
         kDialogTemp.dispose();
         kDialogTemp = null;
 
@@ -580,7 +611,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         m_kSourceBlue.calcMinMax();
 
         /* Convert the input image kImage to gray: */
-        ModelImage kResult = new ModelImage(iType, kImage.getExtents(), null, null);
+        ModelImage kResult = new ModelImage(iType, kImage.getExtents(), null);
         AlgorithmRGBtoGray kRGBAlgo = new AlgorithmRGBtoGray(kResult, kImage);
 
         /* Must not run in separate thread, since we need the results before
@@ -608,28 +639,34 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     private ModelImage convolve(ModelImage kImage1, ModelImage kImage2, float fNoise) {
 
         /* Calculate the forward fft of the two input images: */
-    	if (m_kImageSpectrum1 == null) {
-        	m_kImageSpectrum1 = (ModelImage) kImage1.clone(); 
+        if (m_kImageSpectrum1 == null) {
+            m_kImageSpectrum1 = (ModelImage) kImage1.clone();
         }
+
         ModelImage kImageSpectrum1 = fft(m_kImageSpectrum1, kImage1, 1);
+
         if (m_kImageSpectrum2 == null) {
-        	m_kImageSpectrum2 = (ModelImage) kImage2.clone(); 
+            m_kImageSpectrum2 = (ModelImage) kImage2.clone();
         }
+
         ModelImage kImageSpectrum2 = fft(m_kImageSpectrum2, kImage2, 1);
 
         /* multiply the resulting spectrums: */
         if (m_kCalcResult1 == null) {
-        	m_kCalcResult1 = (ModelImage) (kImageSpectrum1.clone());
+            m_kCalcResult1 = (ModelImage) (kImageSpectrum1.clone());
         }
-        ModelImage kConvolve = calc(m_kCalcResult1, kImageSpectrum1, kImageSpectrum2, AlgorithmImageCalculator.MULTIPLY);
+
+        ModelImage kConvolve = calc(m_kCalcResult1, kImageSpectrum1, kImageSpectrum2,
+                                    AlgorithmImageCalculator.MULTIPLY);
 
         /* Set the image Convolve flag to be true: */
         kConvolve.setConvolve(true);
 
         /* Calculate the inverse FFT: */
         if (m_kImageSpectrum3 == null) {
-        	m_kImageSpectrum3 = (ModelImage) kConvolve.clone(); 
+            m_kImageSpectrum3 = (ModelImage) kConvolve.clone();
         }
+
         ModelImage kResult = fft(m_kImageSpectrum3, kConvolve, -1);
 
         /* Add noise factor: */
@@ -645,13 +682,14 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /**
      * Computes the fft of the input image, returns the fft. Calls AlgorithmFFT.
      *
-     * @param   kImage  the input image
-     * @param   iDir    forward fft when iDir = 1, inverse fft when iDir = -1
+     * @param   kImageFFT  DOCUMENT ME!
+     * @param   kImage     the input image
+     * @param   iDir       forward fft when iDir = 1, inverse fft when iDir = -1
      *
      * @return  kResult, the fft of kImage
      */
     private ModelImage fft(ModelImage kImageFFT, ModelImage kImage, int iDir) {
-    	    	    	
+
         // FFT parameters
         boolean logMagDisplay = false;
         boolean unequalDim = true;
@@ -665,8 +703,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         int butterworthOrder = 0;
 
         // take the FFT of the first input image:
-        AlgorithmFFT kFFT = new AlgorithmFFT(kImageFFT, kImage, iDir, logMagDisplay, unequalDim, image25D,
-                                             imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
+        AlgorithmFFT kFFT = new AlgorithmFFT(kImageFFT, kImage, iDir, logMagDisplay, unequalDim, image25D, imageCrop,
+                                             kernelDiameter, filterType, freq1, freq2, constructionMethod,
                                              butterworthOrder);
 
         /* Must not run in separate thread, since we need the results before
@@ -735,15 +773,14 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /**
      * Initialize the first PSF guess as a 3x3 Gaussian.
      *
-     * @param   iNumberDimensions  iNumberDimensions, the dimensions of the data
-     * @param   aiExtents          aiExtents, the ranges in each dimension
-     *
-     * @return  , the ModelImage containing the Gaussian.
+     * @param  iNumberDimensions  iNumberDimensions, the dimensions of the data
+     * @param  aiExtents          aiExtents, the ranges in each dimension
      */
     private void initPSF(int iNumberDimensions, int[] aiExtents) {
 
         /* Create a new ModelImage to contain the Gaussian: */
         m_kPSFImage = new ModelImage(ModelStorageBase.FLOAT, aiExtents, "psf" + 0);
+
         /* Set up the data for the GenerateGaussian class: */
         float[] fGaussData = new float[m_iArrayLength];
         float[] fSigmas = new float[iNumberDimensions];
@@ -776,13 +813,13 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         for (int i = 0; i < m_iArrayLength; i++) {
-        	m_kPSFImage.set(i, (float) (255 * (fGaussData[i] - fMin) / (fMax - fMin)));
+            m_kPSFImage.set(i, (float) (255 * (fGaussData[i] - fMin) / (fMax - fMin)));
         }
 
         fGaussData = null;
         fSigmas = null;
         iDerivOrder = null;
-                
+
         /* Apply constraints to the image and return: */
         constraints(m_kPSFImage);
     }
@@ -795,9 +832,10 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      * @return  DOCUMENT ME!
      */
     private ModelImage mirror(ModelImage kImage) {
-    	if (m_kMirrorImage == null) {
-    		m_kMirrorImage = (ModelImage) (kImage.clone());
-    	}
+
+        if (m_kMirrorImage == null) {
+            m_kMirrorImage = (ModelImage) (kImage.clone());
+        }
 
         if (kImage.getNDims() == 3) {
             AlgorithmFlip flipz = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
@@ -849,43 +887,46 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
             /* Divide the original image by the result and store: */
             if (m_kCalcResult3 == null) {
-            	m_kCalcResult3 = (ModelImage) (kSource.clone());
+                m_kCalcResult3 = (ModelImage) (kSource.clone());
             }
-            originalDividedByEstimateCPSF = calc(m_kCalcResult3, kSource, tempImageConvolve, AlgorithmImageCalculator.DIVIDE);
-            
+
+            originalDividedByEstimateCPSF = calc(m_kCalcResult3, kSource, tempImageConvolve,
+                                                 AlgorithmImageCalculator.DIVIDE);
+
             /* Create new kEstimate based on original image and psf: */
             /* Convolve the divided image with the psf mirror: */
             ModelImage kPSFMirror = mirror(kPSF);
-            
+
             tempImageConvolve = convolve(originalDividedByEstimateCPSF, kPSFMirror, 0);
-            
+
             if (m_kCalcResult2 == null) {
-            	m_kCalcResult2 = (ModelImage) (tempImageConvolve.clone());
+                m_kCalcResult2 = (ModelImage) (tempImageConvolve.clone());
             }
+
             /* multiply the result by the current estimated image: */
             tempImageCalc = calc(m_kCalcResult2, tempImageConvolve, kEstimate, AlgorithmImageCalculator.MULTIPLY);
             kEstimate = tempImageCalc;
             kEstimate.setImageName("estimated" + i);
-            
-            
-            if (i == 1 && bCopy == true){
-            	m_kEstimatedImage.disposeLocal();
+
+
+            if ((i == 1) && (bCopy == true)) {
+                m_kEstimatedImage.disposeLocal();
             }
 
 
             /* Create new psf based on original image and psf: */
             /* convolve the divided image with the estimated mirror: */
             ModelImage kEstimateMirror = mirror(kEstimate);
-            
+
             tempImageConvolve = convolve(originalDividedByEstimateCPSF, kEstimateMirror, 0);
-            
+
             /* multiply the result by the current psf image: */
             /* Apply constraints to new PSF: */
             tempImageCalc = calc(m_kPSFImage, tempImageConvolve, kPSF, AlgorithmImageCalculator.MULTIPLY);
             kPSF = constraints(tempImageCalc);
             kPSF.setImageName("psf" + i);
-            
-                        
+
+
             /* Display progression: */
             if (((i % m_iNumberProgress) == 0) && (i != m_iNumberIterations)) {
                 new ViewJFrameImage((ModelImage) (kEstimate.clone()), null, new Dimension(610, 200));
@@ -897,23 +938,23 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         if (bCopy) {
-        	
-        	if (!m_kOriginalSourceImage.isColorImage()) {
-            	m_kEstimatedImage.disposeLocal();
-            	m_kEstimatedImage = kEstimate;
+
+            if (!m_kOriginalSourceImage.isColorImage()) {
+                m_kEstimatedImage.disposeLocal();
+                m_kEstimatedImage = kEstimate;
                 m_kPSFImageCopy = (ModelImage) kPSF.clone();
                 m_kPSFImage.disposeLocal();
                 kPSF.disposeLocal();
             } else {
-            	m_kEstimatedImage = (ModelImage) kEstimate.clone();
-            	m_kPSFImageCopy = (ModelImage) kPSF.clone();
-                
+                m_kEstimatedImage = (ModelImage) kEstimate.clone();
+                m_kPSFImageCopy = (ModelImage) kPSF.clone();
+
             }
-            	
+
         } else {
-        	kReturn = (ModelImage) (kEstimate.clone());
+            kReturn = (ModelImage) (kEstimate.clone());
         }
-        	
-      return kReturn;
+
+        return kReturn;
     }
 }

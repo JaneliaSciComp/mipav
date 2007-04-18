@@ -866,7 +866,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         Preferences.debug(getConstructionInfo());
 
         fireProgressStateChanged("Registering images", "Beginning registration");
-        
+
 
         if (doGraph) {
 
@@ -1022,24 +1022,24 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         simpleRef_1 = new ModelSimpleImage(extents, resols, doColor); // 2D simple image
 
         if (doColor) {
-            input1 = new ModelImage(ModelImage.ARGB_FLOAT, iExtents, "slice2D", inputImage.getUserInterface());
+            input1 = new ModelImage(ModelImage.ARGB_FLOAT, iExtents, "slice2D");
 
             if (inputImage2 != null) {
-                input2 = new ModelImage(ModelImage.ARGB_FLOAT, iExtents, "slice2DI2", inputImage.getUserInterface());
+                input2 = new ModelImage(ModelImage.ARGB_FLOAT, iExtents, "slice2DI2");
             }
 
             if (inputImage3 != null) {
-                input3 = new ModelImage(ModelImage.ARGB_FLOAT, iExtents, "slice2DI3", inputImage.getUserInterface());
+                input3 = new ModelImage(ModelImage.ARGB_FLOAT, iExtents, "slice2DI3");
             }
         } else {
-            input1 = new ModelImage(ModelImage.FLOAT, iExtents, "slice2D", inputImage.getUserInterface());
+            input1 = new ModelImage(ModelImage.FLOAT, iExtents, "slice2D");
 
             if (inputImage2 != null) {
-                input2 = new ModelImage(ModelImage.FLOAT, iExtents, "slice2DI2", inputImage.getUserInterface());
+                input2 = new ModelImage(ModelImage.FLOAT, iExtents, "slice2DI2");
             }
 
             if (inputImage3 != null) {
-                input3 = new ModelImage(ModelImage.FLOAT, iExtents, "slice2DI3", inputImage.getUserInterface());
+                input3 = new ModelImage(ModelImage.FLOAT, iExtents, "slice2DI3");
             }
         }
 
@@ -1054,7 +1054,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         if (weighted) {
-            inputw_1 = new ModelImage(ModelImage.FLOAT, iExtents, "slice2DW", inputImage.getUserInterface());
+            inputw_1 = new ModelImage(ModelImage.FLOAT, iExtents, "slice2DW");
             inputw_1.getFileInfo()[0].setResolutions(iResols);
         }
 
@@ -1540,7 +1540,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 inputImage.exportData(iNumber * colorFactor * sliceSize, colorFactor * sliceSize, buffer); // locks and releases and lock
             } catch (IOException error) {
                 displayError("AlgorithmOAR25D: Source image is locked");
-                
+
                 setCompleted(false);
                 notifyListeners(this);
 
@@ -1555,7 +1555,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 input1.importData(0, buffer, true);
             } catch (IOException error) {
                 displayError("AlgorithmOAR25D: IOException on input1.importData");
-                
+
                 setCompleted(false);
                 notifyListeners(this);
 
@@ -1585,7 +1585,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     inputImage2.exportData(iNumber * colorFactor * sliceSize, colorFactor * sliceSize, buffer); // locks and releases and lock
                 } catch (IOException error) {
                     displayError("AlgorithmOAR25D: inputImage2 is locked");
-                    
+
                     setCompleted(false);
                     notifyListeners(this);
 
@@ -1596,7 +1596,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     input2.importData(0, buffer, true);
                 } catch (IOException error) {
                     displayError("AlgorithmOAR25D: IOException on input2.importData");
-                    
+
                     setCompleted(false);
                     notifyListeners(this);
 
@@ -1610,7 +1610,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     inputImage3.exportData(iNumber * colorFactor * sliceSize, colorFactor * sliceSize, buffer); // locks and releases and lock
                 } catch (IOException error) {
                     displayError("AlgorithmOAR25D: inputImage3 is locked");
-                    
+
                     setCompleted(false);
                     notifyListeners(this);
 
@@ -1621,7 +1621,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     input3.importData(0, buffer, true);
                 } catch (IOException error) {
                     displayError("AlgorithmOAR25D: IOException on input3.importData");
-                    
+
                     setCompleted(false);
                     notifyListeners(this);
 
@@ -1691,7 +1691,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 output_1.exportData(0, colorFactor * iExtents[0] * iExtents[1], buffer);
             } catch (IOException error) {
                 displayError("AlgorithmOAR25D: IOException on output_1.exportData");
-                
+
                 setCompleted(false);
                 notifyListeners(this);
 
@@ -1714,7 +1714,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 inputImage.importData(iNumber * colorFactor * iExtents[0] * iExtents[1], buffer, false);
             } catch (IOException error) {
                 displayError("AlgorithmOAR25D: IOException on inputImage.importData");
-                
+
                 setCompleted(false);
                 notifyListeners(this);
 
@@ -1741,7 +1741,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     output_2.exportData(0, colorFactor * iExtents[0] * iExtents[1], buffer);
                 } catch (IOException error) {
                     displayError("AlgorithmOAR25D: IOException on output_2.exportData");
-                    
+
                     setCompleted(false);
                     notifyListeners(this);
 
@@ -1752,7 +1752,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     inputImage2.importData(iNumber * colorFactor * iExtents[0] * iExtents[1], buffer, false);
                 } catch (IOException error) {
                     displayError("AlgorithmOAR25D: IOException on inputImage2.importData");
-                    
+
                     setCompleted(false);
                     notifyListeners(this);
 
@@ -1766,7 +1766,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     output_3.exportData(0, colorFactor * iExtents[0] * iExtents[1], buffer);
                 } catch (IOException error) {
                     displayError("AlgorithmOAR25D: IOException on output_3.exportData");
-                    
+
                     setCompleted(false);
                     notifyListeners(this);
 
@@ -1777,7 +1777,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     inputImage3.importData(iNumber * colorFactor * iExtents[0] * iExtents[1], buffer, false);
                 } catch (IOException error) {
                     displayError("AlgorithmOAR25D: IOException on inputImage3.importData");
-                    
+
                     setCompleted(false);
                     notifyListeners(this);
 
@@ -1884,7 +1884,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                     output_1.exportData(0, colorFactor * extentsIso[0] * extentsIso[1], bufferA);
                 } catch (IOException error) {
                     displayError("AlgorithmOAR25D: IOException on output_1.exportData to bufferA");
-                    
+
                     setCompleted(false);
                     notifyListeners(this);
 
@@ -1933,7 +1933,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                                                bufferIW);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR25D: inputWeight image is locked");
-                        
+
                         setCompleted(false);
                         notifyListeners(this);
 
@@ -1948,7 +1948,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                         inputw_1.importData(0, bufferIW, true);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR25D: IOException on inputW_1.importData");
-                        
+
                         setCompleted(false);
                         notifyListeners(this);
 
@@ -1973,7 +1973,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                         output_1.exportData(0, extentsIso[0] * extentsIso[1], bufferW);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR25D: IOException on output_1.exportData");
-                        
+
                         setCompleted(false);
                         notifyListeners(this);
 
@@ -2048,7 +2048,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                                                bufferIW);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR25D: inputWeight image is locked");
-                        
+
                         setCompleted(false);
                         notifyListeners(this);
 
@@ -2065,7 +2065,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                             inputw_1.importData(0, bufferIW, true);
                         } catch (IOException error) {
                             displayError("AlgorithmOAR25D: IOException on inputW_1.importData");
-                            
+
                             setCompleted(false);
                             notifyListeners(this);
 
@@ -2090,7 +2090,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                             output_1.exportData(0, extentsIso[0] * extentsIso[1], bufferW);
                         } catch (IOException error) {
                             displayError("AlgorithmOAR25D: IOException on output_1.exportData");
-                            
+
                             setCompleted(false);
                             notifyListeners(this);
 
@@ -2174,7 +2174,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             inputImage.setVOIs(VOIs);
         }
 
-        
         disposeLocal();
         finalize();
         setCompleted(true);

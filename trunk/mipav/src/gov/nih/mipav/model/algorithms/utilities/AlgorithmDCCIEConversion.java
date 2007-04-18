@@ -9,7 +9,7 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
-import java.util.Vector;
+import java.util.*;
 
 
 /**
@@ -91,8 +91,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
 
         fireProgressStateChanged("DCCIE Conversion", "Searching for images");
         fireProgressStateChanged(0);
-        
-        
+
 
         addFilesToVector(dirPath, fileVector);
 
@@ -120,7 +119,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
         }
 
         fileIO = null;
-        
+
     }
 
     /**
@@ -221,8 +220,8 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
             System.err.println("filename: " + fileName);
 
             if (inputDICOM) {
-            	fileIO.setFileDir(inputFile.getParent() + File.separator);
-            	inputImage = fileIO.readDicom(inputFile.getName(), new String[] {inputFile.getName()}, false);
+                fileIO.setFileDir(inputFile.getParent() + File.separator);
+                inputImage = fileIO.readDicom(inputFile.getName(), new String[] { inputFile.getName() }, false);
             } else {
                 inputImage = fileIO.readImage(inputFile.getName(), inputFile.getParent() + File.separator);
             }
@@ -292,7 +291,8 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
 
                     try {
                         patientID = (String)
-                                        ((FileDicomTag) ((FileInfoDicom) inputImage.getFileInfo(0)).getEntry("0010,0020"))
+                                        ((FileDicomTag)
+                                             ((FileInfoDicom) inputImage.getFileInfo(0)).getEntry("0010,0020"))
                                             .getValue(false);
                         // System.err.println("patient id is: " + patientID);
                     } catch (Exception ex) { // do nothing
@@ -348,8 +348,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
                     newExtents[1] = extents[1] + topPadding;
                     newExtents[2] = extents[2];
 
-                    ModelImage paddedImage = new ModelImage(inputImage.getType(), newExtents, "TEMPImage",
-                                                            userInterface);
+                    ModelImage paddedImage = new ModelImage(inputImage.getType(), newExtents, "TEMPImage");
 
                     fireProgressStateChanged("Adding margins to image...");
 

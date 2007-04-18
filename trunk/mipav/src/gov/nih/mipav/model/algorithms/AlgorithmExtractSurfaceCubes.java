@@ -1,11 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -280,7 +281,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         box[2] = (iZDim - 1) * fZRes;
 
         /* Read the direction vector from the MipavCoordinateSystems class: */
-        int[] direction = MipavCoordinateSystems.getModelDirections( srcImage );
+        int[] direction = MipavCoordinateSystems.getModelDirections(srcImage);
         float[] startLocation = srcImage.getFileInfo(0).getOrigin();
 
         int[] buffer = null;
@@ -365,8 +366,8 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                     Point3f[] akVertex = akComponent[i].getVertexCopy();
                     int[] aiConnect = akComponent[i].getIndexCopy();
 
-                    kDecimator.decimate(akVertex, aiConnect, getProgressChangeListener(), 50 + (i * 50 / akComponent.length),
-                                        akComponent.length * 2);
+                    kDecimator.decimate(akVertex, aiConnect, getProgressChangeListener(),
+                                        50 + (i * 50 / akComponent.length), akComponent.length * 2);
 
                     akClod[i] = new ModelClodMesh(akVertex, aiConnect, kDecimator.getRecords());
                 }
@@ -485,8 +486,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 }
 
                 // progressBar.setValue(10, separateThread);
-                maskImage = new ModelImage(ModelImage.USHORT, destExtents, "Surface image",
-                                           srcImage.getUserInterface());
+                maskImage = new ModelImage(ModelImage.USHORT, destExtents, "Surface image");
                 maskImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
                 maskImage.importData(0, tempImage, true);
 
@@ -494,8 +494,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 tempImage = null;
                 System.gc();
             } else if (mode == MASK_MODE) {
-                maskImage = new ModelImage(ModelImage.USHORT, destExtents, "Surface image",
-                                           srcImage.getUserInterface());
+                maskImage = new ModelImage(ModelImage.USHORT, destExtents, "Surface image");
 
                 maskImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
 

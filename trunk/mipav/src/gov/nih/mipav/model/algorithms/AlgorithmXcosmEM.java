@@ -6,8 +6,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.text.*;
@@ -282,7 +280,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
             return;
         }
 
-        //        constructLog();
+        // constructLog();
 
         if (originalImage.isColorImage()) {
             MipavUtil.displayError("AlgorithmXcosmEM.runAlgorithm()  Source Image must be GrayScale");
@@ -414,12 +412,11 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         } // end for (iz = 0; ... )
 
         /*
-         *                int[] exts;               exts = new int[3];               exts[0] = Rx + 2;
-         * exts[1] = Ry + 2;               exts[2] = TwoRz; ModelImage otf = new ModelImage(ModelImage.FLOAT, exts,
-         * "mypsf",      destImage.getUserInterface());               try {                   otf.importData(0, retotf,
-         * true);               } catch (IOException error) {                   retotf = null;
-         * errorCleanUp("AlgorithmXcosmEM: could NOT import otf image", true);                   return null;
-         *    } // end try{}-catch{}
+         *                int[] exts;               exts = new int[3];               exts[0] = Rx + 2; exts[1] = Ry + 2;
+         *               exts[2] = TwoRz; ModelImage otf = new ModelImage(ModelImage.FLOAT, exts, "mypsf",
+         * destImage.getUserInterface());               try {                   otf.importData(0, retotf, true);
+         *       } catch (IOException error) {                   retotf = null; errorCleanUp("AlgorithmXcosmEM: could
+         * NOT import otf image", true);                   return null;   } // end try{}-catch{}
          *
          * FileIO fio = new FileIO(destImage.getUserInterface()); FileWriteOptions fileOptions = new
          * FileWriteOptions("mypsf.wu", "C:/", true);               fio.writeImage(otf, fileOptions);
@@ -431,12 +428,11 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
         /*
          *      int[] exts;     exts = new int[3];     exts[0] = Rx + 2;     exts[1] = Ry + 2;     exts[2] = TwoRz;
-         * ModelImage otf = new ModelImage(ModelImage.FLOAT, exts, "mypsf",
-         * destImage.getUserInterface());     try {         otf.importData(0, retotf, true);     } catch (IOException
-         * error) {         retotf = null; errorCleanUp("AlgorithmXcosmEM: could NOT import otf image", true);
-         * return null;     } // end try{}-catch{}
+         * ModelImage otf = new ModelImage(ModelImage.FLOAT, exts, "mypsf", destImage.getUserInterface());     try {
+         *     otf.importData(0, retotf, true);     } catch (IOException error) {         retotf = null;
+         * errorCleanUp("AlgorithmXcosmEM: could NOT import otf image", true); return null;     } // end try{}-catch{}
          *
-         *   FileIO fio = new FileIO(destImage.getUserInterface());     FileWriteOptions fileOptions = new
+         * FileIO fio = new FileIO(destImage.getUserInterface());     FileWriteOptions fileOptions = new
          * FileWriteOptions("myfftJ.wu", "C:/Documents and Settings/phemler/My
          * Documents/Research/xcosm/myBuild/currBuild/", true);     fio.writeImage(otf, fileOptions);
          */
@@ -590,7 +586,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                     }
 
                     array2[idx2] = array1[idx1];
-                    //              System.out.println("idx1: " + idx1 + "  idx2: " + idx2);
+                    // System.out.println("idx1: " + idx1 + "  idx2: " + idx2);
                 } // end for (ix = 0; ...)
             } // end for (iy = 0; ...)
         } // end for (iz = 0; ...)
@@ -683,26 +679,17 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
         // Ok to here: 1/21/05
         /*
-                int[] exts;
-                exts = new int[3];
-                exts[0] = nx1;
-                exts[1] = ny1;
-                exts[2] = 2*nz1;
-                ModelImage myModelImage = new ModelImage(ModelImage.FLOAT, exts,
-                                                         "myarray",
-                                                         destImage.getUserInterface());
-                try {
-                    myModelImage.importData(0, array1, true);
-                } catch (IOException error) {
-                    myModelImage = null;
-                    errorCleanUp("AlgorithmXcosmEM: could NOT import array1 image", true);
-                    return;
-                } // end try{}-catch{}
-
-                FileIO fio = new FileIO(destImage.getUserInterface());
-                FileWriteOptions fileOptions = new FileWriteOptions("myarray1J.wu", "C:/Documents and Settings/phemler/My Documents/Research/xcosm/myBuild/currBuild/", true);
-                fio.writeImage(myModelImage, fileOptions);
-        */
+         *      int[] exts;     exts = new int[3];     exts[0] = nx1;     exts[1] = ny1;     exts[2] = 2*nz1;
+         * ModelImage myModelImage = new ModelImage(ModelImage.FLOAT, exts,
+         * "myarray",                                              destImage.getUserInterface());     try {
+         * myModelImage.importData(0, array1, true);     } catch (IOException error) {         myModelImage = null;
+         *    errorCleanUp("AlgorithmXcosmEM: could NOT import array1 image", true);         return;     } // end
+         * try{}-catch{}
+         *
+         *   FileIO fio = new FileIO(destImage.getUserInterface());     FileWriteOptions fileOptions = new
+         * FileWriteOptions("myarray1J.wu", "C:/Documents and Settings/phemler/My
+         * Documents/Research/xcosm/myBuild/currBuild/", true);     fio.writeImage(myModelImage, fileOptions);
+         */
 
         pl_size1 = nx1 * ny1;
         pl_size2 = nx2 * ny2;
@@ -718,12 +705,11 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         /*
          *     int[] exts;    exts = new int[3];    exts[0] = nx1;    exts[1] = ny1;    exts[2] = 2*nz1;    ModelImage
          * myModelImage = new ModelImage(ModelImage.FLOAT, exts,                                             "myarray",
-         *                                            destImage.getUserInterface());    try {
-         * myModelImage.importData(0, array1, true);    } catch (IOException error) {        myModelImage = null;
-         * errorCleanUp("AlgorithmXcosmEM: could NOT import array1 image", true);        return;    } // end
-         * try{}-catch{}
+         *                                          destImage.getUserInterface());    try { myModelImage.importData(0,
+         * array1, true);    } catch (IOException error) {        myModelImage = null; errorCleanUp("AlgorithmXcosmEM:
+         * could NOT import array1 image", true);        return;    } // end try{}-catch{}
          *
-         *  FileIO fio = new FileIO(destImage.getUserInterface());    FileWriteOptions fileOptions = new
+         * FileIO fio = new FileIO(destImage.getUserInterface());    FileWriteOptions fileOptions = new
          * FileWriteOptions("myarray1J.wu", "C:/Documents and Settings/phemler/My
          * Documents/Research/xcosm/myBuild/currBuild/", true);    fio.writeImage(myModelImage, fileOptions);
          */
@@ -733,26 +719,17 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
         // Ok to here: 1/21/05
         /*
-                int[] exts;
-                exts = new int[3];
-                exts[0] = nx1;
-                exts[1] = ny1;
-                exts[2] = 2 * nz1;
-                ModelImage myModelImage = new ModelImage(ModelImage.FLOAT, exts,
-                                                         "myarray",
-                                                         destImage.getUserInterface());
-                try {
-                    myModelImage.importData(0, array1, true);
-                } catch (IOException error) {
-                    myModelImage = null;
-                    errorCleanUp("AlgorithmXcosmEM: could NOT import array1 image", true);
-                    return;
-                } // end try{}-catch{}
-
-                FileIO fio = new FileIO(destImage.getUserInterface());
-                FileWriteOptions fileOptions = new FileWriteOptions("myarray1J.wu", "C:/Documents and Settings/phemler/My Documents/Research/xcosm/myBuild/currBuild/", true);
-                fio.writeImage(myModelImage, fileOptions);
-        */
+         *      int[] exts;     exts = new int[3];     exts[0] = nx1;     exts[1] = ny1;     exts[2] = 2 * nz1;
+         * ModelImage myModelImage = new ModelImage(ModelImage.FLOAT, exts,
+         * "myarray",                                              destImage.getUserInterface());     try {
+         * myModelImage.importData(0, array1, true);     } catch (IOException error) {         myModelImage = null;
+         *    errorCleanUp("AlgorithmXcosmEM: could NOT import array1 image", true);         return;     } // end
+         * try{}-catch{}
+         *
+         *   FileIO fio = new FileIO(destImage.getUserInterface());     FileWriteOptions fileOptions = new
+         * FileWriteOptions("myarray1J.wu", "C:/Documents and Settings/phemler/My
+         * Documents/Research/xcosm/myBuild/currBuild/", true);     fio.writeImage(myModelImage, fileOptions);
+         */
 
         for (iz = zstart; iz <= zend; iz++) {
             idx1 = iz * pl_size1;
@@ -775,26 +752,17 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         // Ok to here: 1/21/05
 
         /*
-                int[] exts;
-                exts = new int[3];
-                exts[0] = nx1;
-                exts[1] = ny1;
-                exts[2] = 2 * nz1;
-                ModelImage myModelImage = new ModelImage(ModelImage.FLOAT, exts,
-                                                         "myarray",
-                                                         destImage.getUserInterface());
-                try {
-                    myModelImage.importData(0, array1, true);
-                } catch (IOException error) {
-                    myModelImage = null;
-                    errorCleanUp("AlgorithmXcosmEM: could NOT import array1 image", true);
-                    return;
-                } // end try{}-catch{}
-
-                FileIO fio = new FileIO(destImage.getUserInterface());
-                FileWriteOptions fileOptions = new FileWriteOptions("myarray1J.wu", "C:/Documents and Settings/phemler/My Documents/Research/xcosm/myBuild/currBuild/", true);
-                fio.writeImage(myModelImage, fileOptions);
-        */
+         *      int[] exts;     exts = new int[3];     exts[0] = nx1;     exts[1] = ny1;     exts[2] = 2 * nz1;
+         * ModelImage myModelImage = new ModelImage(ModelImage.FLOAT, exts,
+         * "myarray",                                              destImage.getUserInterface());     try {
+         * myModelImage.importData(0, array1, true);     } catch (IOException error) {         myModelImage = null;
+         *    errorCleanUp("AlgorithmXcosmEM: could NOT import array1 image", true);         return;     } // end
+         * try{}-catch{}
+         *
+         *   FileIO fio = new FileIO(destImage.getUserInterface());     FileWriteOptions fileOptions = new
+         * FileWriteOptions("myarray1J.wu", "C:/Documents and Settings/phemler/My
+         * Documents/Research/xcosm/myBuild/currBuild/", true);     fio.writeImage(myModelImage, fileOptions);
+         */
 
     } // end EMRatio (...)
 
@@ -815,14 +783,16 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         j = 1;
 
         for (i = 1; i < n; i += 2) {
-            //            System.out.println("i: " + i + "  j: " + j);
+
+            // System.out.println("i: " + i + "  j: " + j);
             if (j > i) {
-                //                SWAP(work[j], work[i]);
+
+                // SWAP(work[j], work[i]);
                 tempr = work[j - 1];
                 work[j - 1] = work[i - 1];
                 work[i - 1] = tempr;
 
-                //                SWAP(work[j + 1], work[i + 1]);
+                // SWAP(work[j + 1], work[i + 1]);
                 tempr = work[j];
                 work[j] = work[i];
                 work[i] = tempr;
@@ -838,8 +808,8 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
             j += m;
         } // end for (i = 1; ...)
 
-        //        for (i = 0; i < n; i++)
-        //            System.out.println("work[" + i + "]: " + shiftedwork[i]);
+        // for (i = 0; i < n; i++)
+        // System.out.println("work[" + i + "]: " + shiftedwork[i]);
 
         mmax = 2;
 
@@ -895,14 +865,16 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         j = 1;
 
         for (i = 1; i < n; i += 2) {
-            //            System.out.println("i: " + i + "  j: " + j);
+
+            // System.out.println("i: " + i + "  j: " + j);
             if (j > i) {
-                //                SWAP(shiftedwork[j], shiftedwork[i]);
+
+                // SWAP(shiftedwork[j], shiftedwork[i]);
                 tempr = shiftedwork[j];
                 shiftedwork[j] = shiftedwork[i];
                 shiftedwork[i] = tempr;
 
-                //                SWAP(shiftedwork[j + 1], shiftedwork[i + 1]);
+                // SWAP(shiftedwork[j + 1], shiftedwork[i + 1]);
                 tempr = shiftedwork[j + 1];
                 shiftedwork[j + 1] = shiftedwork[i + 1];
                 shiftedwork[i + 1] = tempr;
@@ -918,8 +890,8 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
             j += m;
         } // end for (i = 1; ...)
 
-        //        for (i = 0; i < n; i++)
-        //            System.out.println("work[" + i + "]: " + shiftedwork[i]);
+        // for (i = 0; i < n; i++)
+        // System.out.println("work[" + i + "]: " + shiftedwork[i]);
 
         mmax = 2;
 
@@ -972,15 +944,15 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         if (direc == 1) {
             c2 = -0.5f;
 
-            //            for (int i1 = 0; i1 < n; i1++) {
-            //                System.out.println("wk[" + i1 + "]: " + work[i1]);
-            //            }
+            // for (int i1 = 0; i1 < n; i1++) {
+            // System.out.println("wk[" + i1 + "]: " + work[i1]);
+            // }
 
             fftl(n, 1);
 
-            //            for (int i1 = 0; i1 < n; i1++) {
-            //                System.out.println("wk[" + i1 + "]: " + work[i1]);
-            //            }
+            // for (int i1 = 0; i1 < n; i1++) {
+            // System.out.println("wk[" + i1 + "]: " + work[i1]);
+            // }
 
         } else {
             c2 = 0.5f;
@@ -1002,7 +974,8 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
             i2 = 1 + i1;
             i3 = n2p3 - i2;
             i4 = 1 + i3;
-            //            System.out.println("i1: " + i1 + "  i2: " + i2 + "  i3: " + i3 + "  i4: " + i4);
+
+            // System.out.println("i1: " + i1 + "  i2: " + i2 + "  i3: " + i3 + "  i4: " + i4);
             h1r = c1 * (work[i1 - 1] + work[i3 - 1]);
             h1i = c1 * (work[i2 - 1] - work[i4 - 1]);
             h2r = -c2 * (work[i2 - 1] + work[i4 - 1]);
@@ -1045,15 +1018,15 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         if (direc == 1) {
             c2 = -0.5f;
 
-            //            for (int i1 = 0; i1 < n; i1++) {
-            //                System.out.println("wk[" + i1 + "]: " + work[i1]);
-            //            }
+            // for (int i1 = 0; i1 < n; i1++) {
+            // System.out.println("wk[" + i1 + "]: " + work[i1]);
+            // }
 
             fftl(n, 1);
 
-            //            for (int i1 = 0; i1 < n; i1++) {
-            //                System.out.println("wk[" + i1 + "]: " + work[i1]);
-            //            }
+            // for (int i1 = 0; i1 < n; i1++) {
+            // System.out.println("wk[" + i1 + "]: " + work[i1]);
+            // }
 
         } else {
             c2 = 0.5f;
@@ -1081,7 +1054,8 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
             i2 = 1 + i1;
             i3 = n2p3 - i2;
             i4 = 1 + i3;
-            //            System.out.println("i1: " + i1 + "  i2: " + i2 + "  i3: " + i3 + "  i4: " + i4);
+
+            // System.out.println("i1: " + i1 + "  i2: " + i2 + "  i3: " + i3 + "  i4: " + i4);
             h1r = c1 * (shiftedwork[i1] + shiftedwork[i3]);
             h1i = c1 * (shiftedwork[i2] - shiftedwork[i4]);
             h2r = -c2 * (shiftedwork[i2] + shiftedwork[i4]);
@@ -1205,7 +1179,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         } // end for (i = 0; ...)
 
         System.out.println("maxSol: " + df.format(maxSol));
-        //        saveWASHU(sol, Rx+2, Ry+2, 2*Rz+2, "mydiffrJ.wu");
+        // saveWASHU(sol, Rx+2, Ry+2, 2*Rz+2, "mydiffrJ.wu");
         // correct to here:  4/1/05
 
         /*--------------------------------------------------------------------
@@ -1230,7 +1204,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
             } // end for (j = 0; ...)
         } // end for (i = 0; ...)
 
-        //        saveWASHU(sol, Rx+2, Ry+2, 2*Rz+2, "mydiffrJ.wu");
+        // saveWASHU(sol, Rx+2, Ry+2, 2*Rz+2, "mydiffrJ.wu");
 
         for (i = 2; i <= nx1; i++) {
 
@@ -1415,21 +1389,14 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         } // end for (iz = 0; ...)
 
         /*
-                        for (iz = 0; iz < nz; iz++) {
-                            i1 = iz * iplSize;
-                            o1 = iz * oplSize; // start index of lower plane
-                            o2 = (oz - 1 - iz) * oplSize; // start index of upper plane
-                            for (iy = 0; iy < ny; iy++) {
-                                inOffSet = i1 + iy * nx;
-                                out1Offset = o1 + iy * ox;
-                                out2OffSet = o2 + iy * ox;
-                                for (ix = 0; ix < nx; ix++) {
-                                    out[ix + out1Offset] = in[ix + inOffSet];
-                                    out[ix + out2OffSet] = in[ix + inOffSet];
-                                } // end for (ix = 0, ...)
-                            } // end for (iy = 0, ...)
-                        } // end for (iz = 0, ...)
-                 */
+         *              for (iz = 0; iz < nz; iz++) {                 i1 = iz * iplSize;                 o1 = iz *
+         * oplSize; // start index of lower plane                 o2 = (oz - 1 - iz) * oplSize; // start index of upper
+         * plane                 for (iy = 0; iy < ny; iy++) {                     inOffSet = i1 + iy * nx;
+         *        out1Offset = o1 + iy * ox;                     out2OffSet = o2 + iy * ox;                     for (ix
+         * = 0; ix < nx; ix++) {                         out[ix + out1Offset] = in[ix + inOffSet];
+         *   out[ix + out2OffSet] = in[ix + inOffSet];                     } // end for (ix = 0, ...)                 }
+         * // end for (iy = 0, ...)             } // end for (iz = 0, ...)
+         */
     } // end mirror(...)
 
     /**
@@ -1442,20 +1409,20 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
      */
     void mirror2(float[] array, int nx, int ny, int nz) {
         int ix, iz, pl_size, lastPlane, srcIdx, destIdx;
-            //    float *f1,*f2,*endarray;
+        // float *f1,*f2,*endarray;
 
         pl_size = nx * ny;
 
         /* endarray points to beginning of last plane in output array */
         lastPlane = pl_size * ((2 * nz) - 1);
-        //    endarray = (array + pl_size*(2*nz-1));
+        // endarray = (array + pl_size*(2*nz-1));
 
         for (iz = 0; iz < nz; iz++) {
             srcIdx = iz * pl_size;
             destIdx = lastPlane - (iz * pl_size);
 
-            //      f1 = array+iz*pl_size;
-            //      f2 = endarray-iz*pl_size;
+            // f1 = array+iz*pl_size;
+            // f2 = endarray-iz*pl_size;
             for (ix = 0; ix < pl_size; ix++, srcIdx++, destIdx++) {
                 array[destIdx] = array[srcIdx];
             }
@@ -1520,7 +1487,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
     void processEM(float[] image, int Inx, int Iny, int Inz, float[] result, int Rx, int Ry, int Rz, float[] psf,
                    int Px, int Py, int Pz, float[] diffr, int lowZ, int highZ) {
 
-                float imageSum = imageWeightedSum(image, Inx, Iny, Inx, Iny, Inz);
+        float imageSum = imageWeightedSum(image, Inx, Iny, Inx, Iny, Inz);
 
         // calculate the OTF
         float[] OTF;
@@ -1612,8 +1579,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
             if (weightOne > 0.0f) {
                 firstOrder(result, Rx, Ry, diffr, Rx + 2, Ry + 2, Rx, Ry, Rz);
-                //               saveWASHU(result, Rx, Ry, Rz, "myResultJ.wu");
-                // looks correct to here 4/5/2005
+                //               saveWASHU(result, Rx, Ry, Rz, "myResultJ.wu"); looks correct to here 4/5/2005
             }
 
             // Zero out anything below `epsilon`
@@ -1629,7 +1595,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
         } // end for (loop = 0; ...)
 
-        //        saveWASHU(result, Rx, Ry, Rz, "myResultJ.wu");
+        // saveWASHU(result, Rx, Ry, Rz, "myResultJ.wu");
     } // end processEM (...)
 
     /**
@@ -1667,54 +1633,49 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                     } // end for (i1 = 0; ...)
 
                     //                    if (i2 == (ny-1) && i3 == (nz-1)) {
-                    //                    System.out.println("Before the first FFT");
-                    //                    System.out.println("i2: " + i2 + "  i3: " + i3);
-                    //                        for (i1 = 0; i1 < nx; i1 += 2) {
-                    //                            System.out.println("wk[" + (i1/2) + "]  " + nf.format(work[i1]) + "   " + nf.format(work[(i1+1)]));
-                    //                        } // end for (i1 = 0; ...)
-                    //                    } // end (if (i2 == 0 && i3 == 0)
+                    // System.out.println("Before the first FFT");                    System.out.println("i2: " + i2 + "
+                    //  i3: " + i3);                        for (i1 = 0; i1 < nx; i1 += 2) {
+                    // System.out.println("wk[" + (i1/2) + "]  " + nf.format(work[i1]) + "   " +
+                    // nf.format(work[(i1+1)]));                        } // end for (i1 = 0; ...)                    }
+                    // // end (if (i2 == 0 && i3 == 0)
 
                     fftr(halfNx, 1);
 
                     //                    if (i2 == (ny-1) && i3 == (nz-1)) {
-                    //                        System.out.println("After the first FFT");
-                    //                        System.out.println("i2: " + i2 + "  i3: " + i3);
-                    //                        for (i1 = 0; i1 < nx; i1 += 2) {
-                    //                            System.out.println("wk[" + (i1/2) + "]  " + nf.format(work[i1]) + "   " + nf.format(work[(i1+1)]));
-                    //                        } // end for (i1 = 0; ...)
-                    //                    } // end (if (i2 == ? && i3 == ?)
+                    // System.out.println("After the first FFT");                        System.out.println("i2: " + i2
+                    // + "  i3: " + i3);                        for (i1 = 0; i1 < nx; i1 += 2) {
+                    //    System.out.println("wk[" + (i1/2) + "]  " + nf.format(work[i1]) + "   " +
+                    // nf.format(work[(i1+1)]));                        } // end for (i1 = 0; ...)                    }
+                    // // end (if (i2 == ? && i3 == ?)
 
                     i1 = (i2 * cx) + (i3 * cxy);
                     xx[i1] = work[0];
                     xx[i1 + 1] = 0.0f;
 
-                    //                    System.out.println("Setting xx[" + i1 + "]: " + xx[i1]);
-                    //                    System.out.println("Setting xx[" + (i1+1) + "]: " + xx[i1+1]);
+                    // System.out.println("Setting xx[" + i1 + "]: " + xx[i1]);
+                    // System.out.println("Setting xx[" + (i1+1) + "]: " + xx[i1+1]);
                     i1 += nx;
                     xx[i1] = work[1];
                     xx[i1 + 1] = 0.0f;
 
-                    //                    System.out.println("Setting xx[" + i1 + "]: " + xx[i1]);
-                    //                    System.out.println("Setting xx[" + (i1+1) + "]: " + xx[i1+1]);
+                    // System.out.println("Setting xx[" + i1 + "]: " + xx[i1]);
+                    // System.out.println("Setting xx[" + (i1+1) + "]: " + xx[i1+1]);
                     // Start at 2 since the above fills in element 0 and 1
                     for (i1 = 2; i1 < nx; i1 += 2) {
                         tmpI = i1 + (i2 * cx) + (i3 * cxy);
                         xx[tmpI] = work[i1];
                         xx[tmpI + 1] = work[i1 + 1];
                         //                        System.out.println("Setting xx[" + tmpI + "]: " + xx[tmpI]);
-                        //                        System.out.println("Setting xx[" + (tmpI+1) + "]: " + xx[tmpI+1]);
+                        //              System.out.println("Setting xx[" + (tmpI+1) + "]: " + xx[tmpI+1]);
                     }
 
-                    //                    if (i2 == 0 && i3 == 0) {
-                    //                    if (i2 == (ny-1) && i3 == (nz-1)) {
-                    //                        System.out.println("After the first FFT");
-                    //                        System.out.println("i2: " + i2 + "  i3: " + i3);
-                    //                        for (i1 = 0; i1 < nx; i1 += 2) {
-                    //                            tmpI = i1 + i2 * cx + i3 * cxy;
-                    //                            System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
-                    //                        } // end for (i1 = 0; ...)
-                    //                        System.out.println("DONE");
-                    //                    } // end (if (i2 == ? && i3 == ?)
+                    //                    if (i2 == 0 && i3 == 0) {                    if (i2 == (ny-1) && i3 == (nz-1))
+                    // {                        System.out.println("After the first FFT");
+                    // System.out.println("i2: " + i2 + "  i3: " + i3);                        for (i1 = 0; i1 < nx; i1
+                    // += 2) {                            tmpI = i1 + i2 * cx + i3 * cxy;
+                    // System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
+                    //                       } // end for (i1 = 0; ...)
+                    // System.out.println("DONE");                    } // end (if (i2 == ? && i3 == ?)
 
                 } // end for (i2 = 0; ...)
             } // end for (i3 = 0; ...)
@@ -1731,31 +1692,31 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                         work[(2 * i2) + 1] = xx[tmpI + 1];
                     } // end for (i2 = 0; ... )
 
-                    //                    if (i1 == 2 && i3 == 0) {
-                    //                    if (i1 == nx && i3 == (nz-1)) {
-                    //                        System.out.println("Before the second FFT");
-                    //                        System.out.println("i1: " + i1 + "  i3: " + i3);
-                    //                        for (i2 = 0; i2 < ny; i2++) {
-                    //                            System.out.println("wk[" + i2 + "]  " +
-                    //                                               nf.format(work[2*i2]) + "   " +
-                    //                                               nf.format(work[(2*i2 + 1)]));
-                    //                        } // end for (i2 = 0; ...)
-                    //                        System.out.print("DONE");
-                    //                    } // end (if (i1 == 0 && i3 == 0)
+                    // if (i1 == 2 && i3 == 0) {
+                    // if (i1 == nx && i3 == (nz-1)) {
+                    // System.out.println("Before the second FFT");
+                    // System.out.println("i1: " + i1 + "  i3: " + i3);
+                    // for (i2 = 0; i2 < ny; i2++) {
+                    // System.out.println("wk[" + i2 + "]  " +
+                    // nf.format(work[2*i2]) + "   " +
+                    // nf.format(work[(2*i2 + 1)]));
+                    // } // end for (i2 = 0; ...)
+                    // System.out.print("DONE");
+                    // } // end (if (i1 == 0 && i3 == 0)
 
                     fftl(ny, 1);
 
-                    //                    if (i1 == 2 && i3 == 0) {
-                    //                    if (i1 == nx && i3 == (nz-1)) {
-                    //                        System.out.println("After the second FFT");
-                    //                        System.out.println("i1: " + i1 + "  i3: " + i3);
-                    //                        for (i2 = 0; i2 < ny; i2++) {
-                    //                            System.out.println("wk[" + i2 + "]  " +
-                    //                                               nf.format(work[2*i2]) + "   " +
-                    //                                               nf.format(work[(2*i2 + 1)]));
-                    //                        } // end for (i2 = 0; ...)
-                    //                        System.out.print("DONE");
-                    //                    } // end (if (i1 == 0 && i3 == 0)
+                    // if (i1 == 2 && i3 == 0) {
+                    // if (i1 == nx && i3 == (nz-1)) {
+                    // System.out.println("After the second FFT");
+                    // System.out.println("i1: " + i1 + "  i3: " + i3);
+                    // for (i2 = 0; i2 < ny; i2++) {
+                    // System.out.println("wk[" + i2 + "]  " +
+                    // nf.format(work[2*i2]) + "   " +
+                    // nf.format(work[(2*i2 + 1)]));
+                    // } // end for (i2 = 0; ...)
+                    // System.out.print("DONE");
+                    // } // end (if (i1 == 0 && i3 == 0)
 
 
                     for (i2 = 0; i2 < ny; i2++) {
@@ -1764,16 +1725,13 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                         xx[tmpI + 1] = work[(2 * i2) + 1];
                     } // end for (i2 = 0; ...)
 
-                    //                    if (i1 == 0 && i3 == 0) {
-                    //                    if (i1 == nx && i3 == (nz-1)) {
-                    //                        System.out.println("After the second FFT");
-                    //                        System.out.println("i1: " + i1 + "  i3: " + i3);
-                    //                        for (i2 = 0; i2 < ny; i2++) {
-                    //                            tmpI = i1 + i2 * cx + i3 * cxy;
-                    //                            System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
-                    //                        } // end for (i1 = 0; ...)
-                    //                        System.out.println("DONE");
-                    //                    } // end (if (i2 == ? && i3 == ?)
+                    //                    if (i1 == 0 && i3 == 0) {                    if (i1 == nx && i3 == (nz-1)) {
+                    //                      System.out.println("After the second FFT");
+                    // System.out.println("i1: " + i1 + "  i3: " + i3);                        for (i2 = 0; i2 < ny;
+                    // i2++) {                            tmpI = i1 + i2 * cx + i3 * cxy;
+                    // System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
+                    //                       } // end for (i1 = 0; ...)
+                    // System.out.println("DONE");                    } // end (if (i2 == ? && i3 == ?)
 
                 } // end for (i1 = 0; ...)
             } // end for (i3 = 0; ... )
@@ -1792,31 +1750,31 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                         work[(2 * i3) + 1] = xx[tmpI + 1];
                     } // end for (i3 = 0; ... )
 
-                    //                    if (i1 == 2 && i2 == 2) {
-                    //                    if (i1 == nx && i2 == (ny-1)) {
-                    //                        System.out.println("Before the first FFT");
-                    //                        System.out.println("i1: " + i1 + "  i2: " + i2);
-                    //                        for (i3 = 0; i3 < nz; i3++) {
-                    //                            System.out.println("wk[" + i3 + "]  " +
-                    //                                               nf.format(work[2*i3]) + "   " +
-                    //                                               nf.format(work[(2*i3 + 1)]));
-                    //                        } // end for (i3 = 0; ...)
-                    //                        System.out.print("DONE");
-                    //                    } // end (if (i1 == 0 && i2 == 0)
+                    // if (i1 == 2 && i2 == 2) {
+                    // if (i1 == nx && i2 == (ny-1)) {
+                    // System.out.println("Before the first FFT");
+                    // System.out.println("i1: " + i1 + "  i2: " + i2);
+                    // for (i3 = 0; i3 < nz; i3++) {
+                    // System.out.println("wk[" + i3 + "]  " +
+                    // nf.format(work[2*i3]) + "   " +
+                    // nf.format(work[(2*i3 + 1)]));
+                    // } // end for (i3 = 0; ...)
+                    // System.out.print("DONE");
+                    // } // end (if (i1 == 0 && i2 == 0)
 
                     fftl(nz, dir);
 
-                    //                    if (i1 == 2 && i2 == 2) {
-                    //                    if (i1 == nx && i2 == (ny-1)) {
-                    //                        System.out.println("After the first FFT");
-                    //                        System.out.println("i1: " + i1 + "  i2: " + i2);
-                    //                        for (i3 = 0; i3 < nz; i3++) {
-                    //                            System.out.println("wk[" + i3 + "]  " +
-                    //                                               nf.format(work[2*i3]) + "   " +
-                    //                                               nf.format(work[(2*i3 + 1)]));
-                    //                        } // end for (i3 = 0; ...)
-                    //                        System.out.print("DONE");
-                    //                    } // end (if (i1 == 0 && i2 == 0)
+                    // if (i1 == 2 && i2 == 2) {
+                    // if (i1 == nx && i2 == (ny-1)) {
+                    // System.out.println("After the first FFT");
+                    // System.out.println("i1: " + i1 + "  i2: " + i2);
+                    // for (i3 = 0; i3 < nz; i3++) {
+                    // System.out.println("wk[" + i3 + "]  " +
+                    // nf.format(work[2*i3]) + "   " +
+                    // nf.format(work[(2*i3 + 1)]));
+                    // } // end for (i3 = 0; ...)
+                    // System.out.print("DONE");
+                    // } // end (if (i1 == 0 && i2 == 0)
 
                     for (i3 = 0; i3 < nz; i3++) {
                         tmpI = i1 + (i2 * cx) + (i3 * cxy);
@@ -1824,16 +1782,13 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                         xx[tmpI + 1] = work[(2 * i3) + 1];
                     } // end for (i3 = 0; ... )
 
-                    //                    if (i1 == 0 && i2 == 0) {
-                    //                    if (i1 == nx && i2 == (ny-1)) {
-                    //                        System.out.println("After the first FFT");
-                    //                        System.out.println("i1: " + i1 + "  i2: " + i2);
-                    //                        for (i3 = 0; i3 < ny; i3++) {
-                    //                            tmpI = i1 + i2 * cx + i3 * cxy;
-                    //                            System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
-                    //                        } // end for (i1 = 0; ...)
-                    //                        System.out.println("DONE");
-                    //                    } // end (if (i1 == ? && i2 == ?)
+                    //                    if (i1 == 0 && i2 == 0) {                    if (i1 == nx && i2 == (ny-1)) {
+                    //                      System.out.println("After the first FFT");
+                    // System.out.println("i1: " + i1 + "  i2: " + i2);                        for (i3 = 0; i3 < ny;
+                    // i3++) {                            tmpI = i1 + i2 * cx + i3 * cxy;
+                    // System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
+                    //                       } // end for (i1 = 0; ...)
+                    // System.out.println("DONE");                    } // end (if (i1 == ? && i2 == ?)
 
                 } // end for (i2 = 0; ... )
             } // end for (i1 = 0; ... )
@@ -1880,16 +1835,13 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                             xx[tmpI + 1] = work[(2 * i3) + 1];
                         } // end for (i3 = 0; ... )
 
-                        //                   if (i1 == 0 && i2 == 5) {
-                        //                    if (i1 == nx && i2 == (ny-1)) {
-                        //                        System.out.println("After the first FFT");
-                        //                        System.out.println("i1: " + i1 + "  i2: " + i2);
-                        //                        for (i3 = 0; i3 < ny; i3++) {
-                        //                            tmpI = i1 + i2 * cx + i3 * cxy;
-                        //                            System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
-                        //                        } // end for (i1 = 0; ...)
-                        //                        System.out.println("DONE");
-                        //                    } // end (if (i1 == ? && i2 == ?)
+                        //                   if (i1 == 0 && i2 == 5) {                    if (i1 == nx && i2 == (ny-1))
+                        // {                        System.out.println("After the first FFT");
+                        // System.out.println("i1: " + i1 + "  i2: " + i2);                        for (i3 = 0; i3 < ny;
+                        // i3++) {                            tmpI = i1 + i2 * cx + i3 * cxy;
+                        // System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " +
+                        // nf.format(xx[(tmpI+1)]));                        } // end for (i1 = 0; ...)
+                        //      System.out.println("DONE");                    } // end (if (i1 == ? && i2 == ?)
 
 
                     } // end for (i2 = 0; ...)
@@ -1909,33 +1861,26 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                     } // end for (i2 = 0; ... )
 
                     /*
-                                       if (i1 == 0 && i3 == 0) {
-                    //                   if (i1 == nx && i3 == (nz-1)) {
-                                         System.out.println("Before the second IFFT");
-                                         System.out.println("i1: " + i1 + "  i3: " + i3);
-                                         for (i2 = 0; i2 < ny; i2++) {
-                                         System.out.println("wk[" + i2 + "]  " +
-                                                             nf.format(work[2*i2]) + "   " +
-                                                             nf.format(work[(2*i2 + 1)]));
-                                         } // end for (i2 = 0; ...)
-                                         System.out.print("DONE");
-                                         } // end (if (i1 == 0 && i3 == 0)
-                    */
+                     *                 if (i1 == 0 && i3 == 0) { //                   if (i1 == nx && i3 == (nz-1)) {
+                     *               System.out.println("Before the second IFFT");
+                     * System.out.println("i1: " + i1 + "  i3: " + i3);                  for (i2 = 0; i2 < ny; i2++) {
+                     *                System.out.println("wk[" + i2 + "]  " +
+                     * nf.format(work[2*i2]) + "   " +                                      nf.format(work[(2*i2 +
+                     * 1)]));                  } // end for (i2 = 0; ...)                  System.out.print("DONE");
+                     *              } // end (if (i1 == 0 && i3 == 0)
+                     */
 
                     fftl(ny, dir);
 
                     /*
-                                        if (i1 == nx/2 && i3 == nx/2) {
-                                            System.out.println("After the second IFFT");
-                                            System.out.println("i1: " + i1 + "  i3: " + i3);
-                                            for (i2 = 0; i2 < ny; i2++) {
-                                                System.out.println("wk[" + i2 + "]  " +
-                                                                   nf.format(work[2 * i2]) + "   " +
-                                                                   nf.format(work[(2 * i2 + 1)]));
-                                            } // end for (i2 = 0; ...)
-                                            System.out.print("DONE");
-                                        } // end (if (i1 == 0 && i3 == 0)
-                    */
+                     *                  if (i1 == nx/2 && i3 == nx/2) {                     System.out.println("After
+                     * the second IFFT");                     System.out.println("i1: " + i1 + "  i3: " + i3);
+                     *           for (i2 = 0; i2 < ny; i2++) {                         System.out.println("wk[" + i2 +
+                     * "]  " +                                            nf.format(work[2 * i2]) + "   " +
+                     *                               nf.format(work[(2 * i2 + 1)]));                     } // end for
+                     * (i2 = 0; ...)                     System.out.print("DONE");                 } // end (if (i1 == 0
+                     * && i3 == 0)
+                     */
 
                     for (i2 = 0; i2 < ny; i2++) {
                         tmpI = i1 + (i2 * cx) + (i3 * cxy);
@@ -1946,10 +1891,9 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                     /*
                      *                  if (i1 == 0 && i3 == 0) { System.out.println("After the second IFFT");
                      * System.out.println("i1: " + i1 + "  i3: " + i3);                     for (i2 = 0; i2 < ny; i2++)
-                     * {                         tmpI = i1 + i2 * cx + i3 * cxy;
-                     * System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
-                     *                    } // end for (i1 = 0; ...)                     System.out.println("DONE");
-                     *             } // end (if (i2 == ? && i3 == ?)
+                     * {                         tmpI = i1 + i2 * cx + i3 * cxy; System.out.println("x[" + tmpI + "]  "
+                     * + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));                   } // end for (i1 = 0;
+                     * ...)                     System.out.println("DONE");            } // end (if (i2 == ? && i3 == ?)
                      */
 
                 } // end for (i1 = 0; ...)
@@ -1969,7 +1913,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                      *                  if (i2 == ny/2 && i3 == nz/2) { System.out.println("Before the third IFFT");
                      * System.out.println("i2: " + i2 + "  i3: " + i3);                     for (i1 = 0; i1 < nx; i1 +=
                      * 2) {                         System.out.println("wk[" + (i1/2) + "]  " + nf.format(work[i1]) + "
-                     *  " + nf.format(work[(i1+1)]));                     } // end for (i1 = 0; ...)
+                     * " + nf.format(work[(i1+1)]));                     } // end for (i1 = 0; ...)
                      * System.out.println("Done");                 } // end (if (i2 == 0 && i3 == 0)
                      */
 
@@ -1979,8 +1923,8 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                      *                  if (i2 == 0 && i3 == 0) { System.out.println("After the third IFFT");
                      * System.out.println("i2: " + i2 + "  i3: " + i3);                     for (i1 = 0; i1 < nx; i1 +=
                      * 2) {                         System.out.println("wk[" + (i1/2) + "]  " + nf.format(work[i1]) + "
-                     *  " + nf.format(work[(i1+1)]));                     } // end for (i1 = 0; ...)                 }
-                     * // end (if (i2 == ? && i3 == ?)
+                     * " + nf.format(work[(i1+1)]));                     } // end for (i1 = 0; ...)                 } //
+                     * end (if (i2 == ? && i3 == ?)
                      */
 
                     for (i1 = 0; i1 < nx; i1 += 2) {
@@ -1988,19 +1932,16 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                         xx[tmpI] = work[i1];
                         xx[tmpI + 1] = work[i1 + 1];
                         //                        System.out.println("Setting xx[" + tmpI + "]: " + xx[tmpI]);
-                        //                        System.out.println("Setting xx[" + (tmpI+1) + "]: " + xx[tmpI+1]);
+                        //              System.out.println("Setting xx[" + (tmpI+1) + "]: " + xx[tmpI+1]);
                     }
 
-                    //                    if (i2 == 0 && i3 == 0) {
-                    //                    if (i2 == (ny-1) && i3 == (nz-1)) {
-                    //                        System.out.println("After the third IFFT");
-                    //                        System.out.println("i2: " + i2 + "  i3: " + i3);
-                    //                        for (i1 = 0; i1 < nx; i1 += 2) {
-                    //                            tmpI = i1 + i2 * cx + i3 * cxy;
-                    //                            System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
-                    //                        } // end for (i1 = 0; ...)
-                    //                        System.out.println("DONE");
-                    //                    } // end (if (i2 == ? && i3 == ?)
+                    //                    if (i2 == 0 && i3 == 0) {                    if (i2 == (ny-1) && i3 == (nz-1))
+                    // {                        System.out.println("After the third IFFT");
+                    // System.out.println("i2: " + i2 + "  i3: " + i3);                        for (i1 = 0; i1 < nx; i1
+                    // += 2) {                            tmpI = i1 + i2 * cx + i3 * cxy;
+                    // System.out.println("x[" + tmpI + "]  " + nf.format(xx[tmpI]) + "   " + nf.format(xx[(tmpI+1)]));
+                    //                       } // end for (i1 = 0; ...)
+                    // System.out.println("DONE");                    } // end (if (i2 == ? && i3 == ?)
 
                 } // end for (i2 = 0; ...)
 
@@ -2028,7 +1969,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         exts[1] = ry;
         exts[2] = rz;
 
-        ModelImage myModelImage = new ModelImage(ModelImage.FLOAT, exts, fileName, destImage.getUserInterface());
+        ModelImage myModelImage = new ModelImage(ModelImage.FLOAT, exts, fileName);
 
         try {
             myModelImage.importData(0, array, true);
@@ -2298,7 +2239,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
      */
     private void run3D() {
 
-    	 fireProgressStateChanged(srcImage.getImageName(), "Xcosm Expectation Maximization ...");
+        fireProgressStateChanged(srcImage.getImageName(), "Xcosm Expectation Maximization ...");
 
         int iterations = 0;
 
@@ -2308,7 +2249,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         int imageLength = origInx * origIny * origInz;
         int psfLength = origPx * origPy * origPz;
         int diffrLength = (origPx + 2) * (origPy + 2) * ((2 * origPz) + 2);
-        //        int diffrLength = (origPx + 2) * (origPy + 2) * (2 * origPz);
+        // int diffrLength = (origPx + 2) * (origPy + 2) * (2 * origPz);
 
         // buffers for the image data
         float[] sourceBuffer;
@@ -2360,7 +2301,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         resultImage.calcMinMax();
 
         // The meat is done
-        
+
 
         if (threadStopped) {
             finalize();
