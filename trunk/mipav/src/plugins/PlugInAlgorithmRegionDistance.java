@@ -441,8 +441,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
 
         fireProgressStateChanged("Creating blue image");
-        grayImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gray",
-                                   srcImage.getUserInterface());
+        grayImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gray");
         fileInfo = grayImage.getFileInfo()[0];
         fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -2067,20 +2066,20 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     /*lowestSqr = Float.MAX_VALUE;
                      * for (j1 = 0, y = 0; y < yDim; y++, j1 += xDim) { for (x = 0; x < xDim; x++) {     index = x + j1;
-                     *    if (boundaryArray[index] == objectID[j]) {         distSqr = (xPosGeo[j] - x) * (xPosGeo[j] -
+                     *   if (boundaryArray[index] == objectID[j]) {         distSqr = (xPosGeo[j] - x) * (xPosGeo[j] -
                      * x) *                   xRes * xRes +                   (yPosGeo[j] - y) * (yPosGeo[j] - y) *
-                     *        yRes * yRes;         if (distSqr < lowestSqr) {             lowestSqr = distSqr;
-                     * xEdge = x;             yEdge = y;         }     } } } geoToEdge = (float) Math.sqrt(lowestSqr);
+                     *  yRes * yRes;         if (distSqr < lowestSqr) {             lowestSqr = distSqr; xEdge = x;
+                     *        yEdge = y;         }     } } } geoToEdge = (float) Math.sqrt(lowestSqr);
                      * UI.setDataText("\t\t" + nf.format(geoToEdge)); geoToEdge *= 100.0f /centerToFarEdge[i];
                      * UI.setDataText("\t" + nf.format(geoToEdge));
                      *
                      * lowestSqr = Float.MAX_VALUE; for (j1 = 0, y = 0; y < yDim; y++, j1 += xDim) { for (x = 0; x < xDim;
                      * x++) {     index = x + j1;     if (boundaryArray[index] == objectID[j]) {         distSqr =
                      * (xPosGrav[j] - x) * (xPosGrav[j] - x) *                   xRes * xRes + (yPosGrav[j] - y) *
-                     * (yPosGrav[j] - y) *                   yRes * yRes;         if (distSqr < lowestSqr) {
-                     * lowestSqr = distSqr;             xEdge = x;             yEdge = y;  }     } } } gravToEdge =
-                     * (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(gravToEdge)); gravToEdge *=
-                     * 100.0f /centerToFarEdge[i];UI.setDataText("\t" +
+                     * (yPosGrav[j] - y) *                   yRes * yRes;         if (distSqr < lowestSqr) { lowestSqr =
+                     * distSqr;             xEdge = x;             yEdge = y;  }     } } } gravToEdge = (float)
+                     * Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(gravToEdge)); gravToEdge *= 100.0f
+                     * /centerToFarEdge[i];UI.setDataText("\t" +
                      * nf.format(gravToEdge));*/
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)
@@ -2371,8 +2370,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        grayImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gray",
-                                   srcImage.getUserInterface());
+        grayImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gray");
 
         for (i = 0; i < srcImage.getExtents()[2]; i++) {
             fileInfo = grayImage.getFileInfo()[i];
@@ -2468,8 +2466,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         extents2D[0] = srcImage.getExtents()[0];
         extents2D[1] = srcImage.getExtents()[1];
         buffer2D = new byte[sliceLength];
-        grayImage2D = new ModelImage(ModelStorageBase.USHORT, extents2D, srcImage.getImageName() + "_gray2D",
-                                     srcImage.getUserInterface());
+        grayImage2D = new ModelImage(ModelStorageBase.USHORT, extents2D, srcImage.getImageName() + "_gray2D");
 
         fileInfo = grayImage2D.getFileInfo()[0];
         fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
@@ -4445,22 +4442,21 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                      * for (k1 = 0, z = 0; z < zDim; z++, k1 += sliceLength) { for (j1 = k1, y = 0; y < yDim; y++, j1 +=
                      * xDim) {     for (x = 0; x < xDim; x++) {         index = x + j1;         if (boundaryArray[index]
                      * == objectID[j]) {             distSqr = (xPosGeo[j] - x) * (xPosGeo[j] - x) *  xRes * xRes +
-                     *                  (yPosGeo[j] - y) * (yPosGeo[j] - y) * yRes * yRes +
-                     * (zPosGeo[j] - z) * (zPosGeo[j] - z) * zRes * zRes;             if (distSqr < lowestSqr) {
-                     *         lowestSqr = distSqr;       xEdge = x;                 yEdge = y;                 zEdge =
-                     * z;             }         }  } } } geoToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t"
-                     * + nf.format(geoToEdge)); geoToEdge *= 100.0f / centerToFarEdge[i]; UI.setDataText("\t" +
-                     * nf.format(geoToEdge));
+                     *            (yPosGeo[j] - y) * (yPosGeo[j] - y) * yRes * yRes + (zPosGeo[j] - z) * (zPosGeo[j] -
+                     * z) * zRes * zRes;             if (distSqr < lowestSqr) {        lowestSqr = distSqr;       xEdge
+                     * = x;                 yEdge = y;                 zEdge = z;             }         }  } } }
+                     * geoToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(geoToEdge));
+                     * geoToEdge *= 100.0f / centerToFarEdge[i]; UI.setDataText("\t" + nf.format(geoToEdge));
                      *
                      * lowestSqr = Float.MAX_VALUE; for (k1 = 0, z = 0; z < zDim; z++, k1 += sliceLength) { for (j1 = k1,
                      * y = 0; y < yDim; y++, j1 += xDim) {     for (x = 0; x < xDim; x++) {         index = x + j1;   if
                      * (boundaryArray[index] == objectID[j]) {             distSqr = (xPosGrav[j] - x) * (xPosGrav[j] -
                      * x) *                       xRes * xRes +                       (yPosGrav[j] - y) * (yPosGrav[j] -
                      * y) *                       yRes * yRes +                       (zPosGrav[j] - z) * (zPosGrav[j] -
-                     * z) *                       zRes * zRes;             if (distSqr < lowestSqr) {
-                     * lowestSqr = distSqr;                 xEdge = x;                 yEdge = y;     zEdge = z;
-                     *     }         }     } } } gravToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" +
-                     * nf.format(gravToEdge)); gravToEdge *= 100.0f /
+                     * z) *                       zRes * zRes;             if (distSqr < lowestSqr) { lowestSqr =
+                     * distSqr;                 xEdge = x;                 yEdge = y;     zEdge = z;    }         }
+                     * } } } gravToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(gravToEdge));
+                     * gravToEdge *= 100.0f /
                      * centerToFarEdge[i];UI.setDataText("\t" + nf.format(gravToEdge));*/
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)

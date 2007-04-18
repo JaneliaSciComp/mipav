@@ -241,7 +241,7 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
             try {
 
                 // Make result image of Ubyte type
-                resultImage = new ModelImage(ModelStorageBase.UBYTE, destExtents, name, userInterface);
+                resultImage = new ModelImage(ModelStorageBase.UBYTE, destExtents, name);
 
                 // ctSegAlgo = new PlugInAlgorithmFlowWrapFix(resultImage, image, iters, kernelSize, kernelShape,
                 // stdDev, regionFlag);
@@ -292,7 +292,7 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
             try {
 
                 // Make result image of float type
-                resultImage = new ModelImage(ModelStorageBase.UBYTE, destExtents, name, userInterface);
+                resultImage = new ModelImage(ModelStorageBase.UBYTE, destExtents, name);
 
                 ctSegAlgo = new PlugInAlgorithmCT_MD(resultImage, image);
                 ctSegAlgo.fatL = fatLVal;

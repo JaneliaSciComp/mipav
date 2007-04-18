@@ -164,16 +164,15 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
         try {
 
             resultImageRGB_AllRatios = new ModelImage(ModelImage.ARGB, imageA.getExtents(),
-                                                      (imageA.getImageName() + "RGB_AllRatios"), userInterface);
+                                                      (imageA.getImageName() + "RGB_AllRatios"));
 
             resultImageHSB_Hue = new ModelImage(ModelImage.ARGB, imageA.getExtents(),
-                                                (imageA.getImageName() + "HSB_Hue"), userInterface);
+                                                (imageA.getImageName() + "HSB_Hue"));
 
-            resultImageRGB = new ModelImage(ModelImage.ARGB, imageA.getExtents(), (imageA.getImageName() + "RGB"),
-                                            userInterface);
+            resultImageRGB = new ModelImage(ModelImage.ARGB, imageA.getExtents(), (imageA.getImageName() + "RGB"));
 
             resultImageFinal = new ModelImage(ModelImage.ARGB, imageA.getExtents(),
-                                              (imageA.getImageName() + "Final (2 out of 3)"), userInterface);
+                                              (imageA.getImageName() + "Final (2 out of 3)"));
 
             // get some important information from imageA and put it in
             // the result image

@@ -304,7 +304,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         fillValueOutsideThresholds = true;
         fireProgressStateChanged("Thresholding image...");
         threshImage = new ModelImage(ModelStorageBase.BOOLEAN, srcImage.getExtents(),
-                                     srcImage.getImageName() + "_thresh", srcImage.getUserInterface());
+                                     srcImage.getImageName() + "_thresh");
 
         fileInfo = threshImage.getFileInfo()[0];
         fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
@@ -881,7 +881,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         extents2D[0] = xDim;
         extents2D[1] = yDim;
 
-        sliceImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "sliceImage", srcImage.getUserInterface());
+        sliceImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "sliceImage");
         shortBuffer = new short[sliceSize];
 
         for (i = 0; i < sliceSize; i++) {
@@ -1219,14 +1219,13 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             fireProgressStateChanged("Thresholding image ...");
             fireProgressStateChanged((rep * 50) + 5);
             threshImage = new ModelImage(ModelStorageBase.BOOLEAN, srcImage.getExtents(),
-                                         srcImage.getImageName() + "_thresh", srcImage.getUserInterface());
+                                         srcImage.getImageName() + "_thresh");
             extents2D = new int[2];
             extents2D[0] = xDim;
             extents2D[1] = yDim;
 
-            sliceImage = new ModelImage(srcImage.getType(), extents2D, "sliceImage", srcImage.getUserInterface());
-            threshSliceImage = new ModelImage(ModelStorageBase.BOOLEAN, extents2D, "threshSliceImage",
-                                              srcImage.getUserInterface());
+            sliceImage = new ModelImage(srcImage.getType(), extents2D, "sliceImage");
+            threshSliceImage = new ModelImage(ModelStorageBase.BOOLEAN, extents2D, "threshSliceImage");
 
             for (i = 0; i < srcImage.getExtents()[2]; i++) {
                 fileInfo = threshImage.getFileInfo()[i];
@@ -1674,8 +1673,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         entireImage = true;
         fillValueOutsideThresholds = true;
         fireProgressStateChanged("Thresholding image...");
-        threshImage = new ModelImage(ModelStorageBase.USHORT, extents2D, srcImage.getImageName() + "_thresh",
-                                     srcImage.getUserInterface());
+        threshImage = new ModelImage(ModelStorageBase.USHORT, extents2D, srcImage.getImageName() + "_thresh");
 
 
         algoThreshDual = new AlgorithmThresholdDual(threshImage, srcImage, threshold, fillValue,
@@ -1894,14 +1892,13 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         fireProgressStateChanged("Thresholding image ...");
         fireProgressStateChanged(10);
         threshImage = new ModelImage(ModelStorageBase.BOOLEAN, srcImage.getExtents(),
-                                     srcImage.getImageName() + "_thresh", srcImage.getUserInterface());
+                                     srcImage.getImageName() + "_thresh");
         extents2D = new int[2];
         extents2D[0] = xDim;
         extents2D[1] = yDim;
 
-        sliceImage = new ModelImage(srcImage.getType(), extents2D, "sliceImage", srcImage.getUserInterface());
-        threshSliceImage = new ModelImage(ModelStorageBase.BOOLEAN, extents2D, "threshSliceImage",
-                                          srcImage.getUserInterface());
+        sliceImage = new ModelImage(srcImage.getType(), extents2D, "sliceImage");
+        threshSliceImage = new ModelImage(ModelStorageBase.BOOLEAN, extents2D, "threshSliceImage");
 
         for (i = 0; i < srcImage.getExtents()[2]; i++) {
             fileInfo = threshImage.getFileInfo()[i];
