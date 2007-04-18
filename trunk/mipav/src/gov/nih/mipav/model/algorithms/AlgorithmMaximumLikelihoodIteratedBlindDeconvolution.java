@@ -10,6 +10,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
+import java.io.IOException;
 
 
 /**
@@ -85,6 +86,18 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
     /** Show the deconvolved image in progress every m_iNumberProgress steps:. */
     private int m_iNumberProgress;
+    
+    /** The new extents if resample is true otherwise contains the original extents. Used only if resample is true. */
+    private int[] m_iExtents;
+    
+    /** The new resolutions in each dimension if resample is true. Used only if resample is true. */
+    private float[] m_fNewRes;
+    
+    /** The interpolation method. Used only if resample is true. */
+    private int interp = 0;
+    
+    /** Boolean to resample original image to the power of 2. */
+    private boolean m_bResample = false;
 
     /** DOCUMENT ME! */
     private ModelImage m_kCalcResult1;
@@ -153,9 +166,17 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      */
     public AlgorithmMaximumLikelihoodIteratedBlindDeconvolution(ModelImage kSrcImg, int iIterations, int iProgress,
                                                                 float fObjectiveNumericalAperature, float fWavelength,
-                                                                float fRefractiveIndex, boolean bUseConstraints) {
-        m_kOriginalSourceImage = kSrcImg;
-        m_kSourceImage = (ModelImage) kSrcImg.clone();
+                                                                float fRefractiveIndex, boolean bUseConstraints, int[] newExtents, boolean doResample) {
+    	if (doResample) {
+    		m_kOriginalSourceImage = resample(kSrcImg, newExtents);
+    		m_kSourceImage = (ModelImage) m_kOriginalSourceImage.clone();
+    		new ViewJFrameImage((ModelImage)(m_kOriginalSourceImage.clone()), null, new Dimension(610, 200));
+    		
+    	} else {
+    		m_kOriginalSourceImage = kSrcImg;
+            m_kSourceImage = (ModelImage) kSrcImg.clone();
+    		
+    	}
         m_iNumberIterations = iIterations;
         m_iNumberProgress = iProgress;
         m_fObjectiveNumericalAperature = fObjectiveNumericalAperature;
@@ -173,7 +194,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* convert color images: */
         if (m_kSourceImage.isColorImage() && (m_iNumberIterations != 0)) {
             m_kSourceImage.disposeLocal();
-            m_kSourceImage = convertToGray(kSrcImg);
+            m_kSourceImage = convertToGray(m_kOriginalSourceImage);
         }
 
         /* Convert to float: */
@@ -186,7 +207,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
         /* The initial guess at the estimated image is the original image: */
         m_kEstimatedImage = (ModelImage) (m_kSourceImage.clone());
-        m_kEstimatedImage.setImageName("estimate" + 0);
+           m_kEstimatedImage.setImageName("estimate" + 0);
 
         /* The initial psf is a gaussian of size 3x3: */
         // m_kPSFImage = initPSF(m_kSourceImage.getNDims(), m_kSourceImage.getExtents());
@@ -309,6 +330,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                 /* Use the reconstructed color channels to generate new color image: */
                 m_kEstimatedImage.disposeLocal();
                 m_kEstimatedImage = convertFromGray(m_kSourceRed, m_kSourceGreen, m_kSourceBlue);
+                
             }
         }
 
@@ -527,10 +549,10 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      */
     private ModelImage convertFromGray(ModelImage kRed, ModelImage kGreen, ModelImage kBlue) {
         ModelImage kResult = (ModelImage) m_kOriginalSourceImage.clone();
-
+        
         // Make algorithm
-        AlgorithmRGBConcat kMathAlgo = new AlgorithmRGBConcat(kRed, kGreen, kBlue, kResult, false);
-
+        AlgorithmRGBConcat kMathAlgo = new AlgorithmRGBConcat(kRed, kGreen, kBlue, kResult, true);
+    	
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
         kMathAlgo.setRunningInSeparateThread(false);
@@ -609,7 +631,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         m_kSourceRed.calcMinMax();
         m_kSourceGreen.calcMinMax();
         m_kSourceBlue.calcMinMax();
-
+        
+        
         /* Convert the input image kImage to gray: */
         ModelImage kResult = new ModelImage(iType, kImage.getExtents(), null);
         AlgorithmRGBtoGray kRGBAlgo = new AlgorithmRGBtoGray(kResult, kImage);
@@ -857,7 +880,39 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
         return m_kMirrorImage;
     }
-
+    
+    private ModelImage resample(ModelImage kImage, int[] newExtents) {
+    	
+    	ModelImage kTransformedImage = (ModelImage) (kImage.clone());
+    	int[] extents = kImage.getExtents();
+    	float[] res = kImage.getFileInfo(0).getResolutions();
+    	m_fNewRes = new float[extents.length];
+    	AlgorithmTransform algoTransform = null;
+    	
+    	for (int i = 0; i < extents.length; i++) {
+    		m_fNewRes[i] = (res[i] * (extents[i])) / (newExtents[i]);
+    	}
+    	
+    	if (kImage.getNDims() == 3) {
+            algoTransform = new AlgorithmTransform(kImage, new TransMatrix(4), AlgorithmTransform.TRILINEAR,
+            														 m_fNewRes[0], m_fNewRes[1], m_fNewRes[2],
+            														 newExtents[0], newExtents[1], newExtents[2],
+            														 false, true, false);
+        } else{
+        	algoTransform = new AlgorithmTransform(kImage, new TransMatrix(4), AlgorithmTransform.BILINEAR,
+					 m_fNewRes[0], m_fNewRes[1],
+					 newExtents[0], newExtents[1], false, true, false);
+        	
+        }
+        	
+    	algoTransform.run();
+    	kTransformedImage = algoTransform.getTransformedImage();
+        algoTransform.finalize();
+        
+        return kTransformedImage;
+        
+    	
+    }
 
     /**
      * Runs the deconvolution algorithm.
