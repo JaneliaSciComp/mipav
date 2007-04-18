@@ -197,7 +197,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
         constructLog();
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing MRI shading correction...");
-        
+
 
         srcImage.calcMinMax();
         xDim = srcImage.getExtents()[0];
@@ -232,7 +232,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
             sigmas[0] = scaleX;
             sigmas[1] = scaleY;
             lapName = srcImage.getImageName() + "_2";
-            image2 = new ModelImage(ModelImage.FLOAT, extents, lapName, srcImage.getUserInterface());
+            image2 = new ModelImage(ModelImage.FLOAT, extents, lapName);
             buffer2 = new float[sliceSize];
             histogram = new float[numIBins][numLapBins];
             sobel = new float[numIBins][numLapBins];
@@ -691,7 +691,6 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
                 srcImage.calcMinMax();
             }
 
-          
             setCompleted(true);
 
             return;
@@ -702,7 +701,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm MRI shading correction reports:\n" + ioe.toString());
 
-           
+
             setCompleted(false);
 
             return;

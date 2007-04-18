@@ -76,12 +76,11 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
      * Creates new frame.
      *
      * @param  title  Title of dialog frame
-     * @param  _UI    GUI object where working directory is located
      */
-    public ViewJFrameMessage(String title, ViewUserInterface _UI) {
+    public ViewJFrameMessage(String title) {
         super(title);
 
-        UI = _UI;
+        UI = ViewUserInterface.getReference();
         setResizable(true);
         init(title);
     }

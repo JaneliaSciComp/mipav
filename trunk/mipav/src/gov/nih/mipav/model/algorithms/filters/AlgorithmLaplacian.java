@@ -246,7 +246,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         }
 
         fireProgressStateChanged(0, null, "Calculation the laplacian ...");
-        
+
         constructLog();
 
         if (destImage != null) {
@@ -311,7 +311,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        
+
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -332,7 +332,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
                 if ((((start + i) % mod) == 0)) {
                     fireProgressStateChanged(((float) (start + i) / (totalLength - 1)), null, null);
-                  
+
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -396,7 +396,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             return;
         }
 
-        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -470,7 +469,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        
+
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -615,7 +614,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             return;
         }
 
-        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -731,7 +729,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         destExtents[0] = srcImage.getExtents()[0]; // X dim
         destExtents[1] = srcImage.getExtents()[1]; // Y dim
 
-        zXMask = new ModelImage(ModelImage.UBYTE, destExtents, " Edges", srcImage.getUserInterface());
+        zXMask = new ModelImage(ModelImage.UBYTE, destExtents, " Edges");
 
         x0 = buffer[0];
         x2 = buffer[xDim];

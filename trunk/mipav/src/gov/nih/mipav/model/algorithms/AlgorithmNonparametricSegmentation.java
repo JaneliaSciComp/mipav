@@ -200,7 +200,7 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
             constructLog();
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing Nonparametric segmentation...");
-            
+
 
             if (useRed) {
                 c1Min = srcImage.getMinR();
@@ -296,8 +296,7 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
             smoothExtents = new int[2];
             smoothExtents[0] = c1Bins;
             smoothExtents[1] = c2Bins;
-            smoothImage = new ModelImage(ModelImage.FLOAT, smoothExtents, "smoothedHistogram",
-                                         srcImage.getUserInterface());
+            smoothImage = new ModelImage(ModelImage.FLOAT, smoothExtents, "smoothedHistogram");
             smoothImage.importData(0, featureSpace, true);
 
             // Create a 3 by 3 smoothing kernel
@@ -557,7 +556,6 @@ loop1:
                 srcImage.importData(0, segBuffer, true);
             }
 
-            
             setCompleted(true);
 
             return;
@@ -575,7 +573,7 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametricsegmentation reports:\n" + error.toString());
 
-         
+
             setCompleted(false);
 
             return;
@@ -668,7 +666,7 @@ loop1:
             constructLog();
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing Nonparametric segmentation...");
-            
+
 
             redMin = srcImage.getMinR();
             greenMin = srcImage.getMinG();
@@ -760,8 +758,7 @@ loop1:
             smoothExtents[0] = redBins;
             smoothExtents[1] = greenBins;
             smoothExtents[2] = blueBins;
-            smoothImage = new ModelImage(ModelImage.FLOAT, smoothExtents, "smoothedHistogram",
-                                         srcImage.getUserInterface());
+            smoothImage = new ModelImage(ModelImage.FLOAT, smoothExtents, "smoothedHistogram");
             smoothImage.importData(0, featureSpace, true);
 
             // Create a 3 by 3 by 3 smoothing kernel
@@ -1060,7 +1057,6 @@ loop1:
                 srcImage.importData(0, segBuffer, true);
             }
 
-            
             setCompleted(true);
 
             return;
@@ -1070,7 +1066,7 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametric segmentation reports:\n" + ioe.toString());
 
-           
+
             setCompleted(false);
 
             return;
@@ -1079,7 +1075,7 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametricsegmentation reports:\n" + error.toString());
 
-           
+
             setCompleted(false);
 
             return;
@@ -1171,7 +1167,7 @@ loop1:
             constructLog();
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing Nonparametric segmentation...");
-            
+
 
             imin = (float) srcImage.getMin();
             imax = (float) srcImage.getMax();
@@ -1212,7 +1208,7 @@ loop1:
             lapSigmas[0] = 0.3f;
             lapSigmas[1] = 0.3f;
             lapName = srcImage.getImageName() + "_2";
-            image2 = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), lapName, srcImage.getUserInterface());
+            image2 = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), lapName);
             buffer = new float[totLength];
             buffer2 = new float[totLength];
 
@@ -1258,8 +1254,7 @@ loop1:
             smoothExtents = new int[2];
             smoothExtents[0] = iBins;
             smoothExtents[1] = lapBins;
-            smoothImage = new ModelImage(ModelImage.FLOAT, smoothExtents, "smoothedHistogram",
-                                         srcImage.getUserInterface());
+            smoothImage = new ModelImage(ModelImage.FLOAT, smoothExtents, "smoothedHistogram");
             smoothImage.importData(0, featureSpace, true);
 
             // Create a 3 by 3 smoothing kernel
@@ -1534,7 +1529,6 @@ loop1:
                 srcImage.importData(0, segBuffer, true);
             }
 
-            
             setCompleted(true);
 
             return;
@@ -1552,7 +1546,7 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametricsegmentation reports:\n" + error.toString());
 
-          
+
             setCompleted(false);
 
             return;

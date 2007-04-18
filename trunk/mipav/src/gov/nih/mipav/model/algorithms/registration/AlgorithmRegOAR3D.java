@@ -1086,11 +1086,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         if (blurRef) {
 
             if (doColor) {
-                blurredRef = new ModelImage(ModelImage.ARGB_FLOAT, refImage.getExtents(), "BlurRef",
-                                            refImage.getUserInterface());
+                blurredRef = new ModelImage(ModelImage.ARGB_FLOAT, refImage.getExtents(), "BlurRef");
             } else {
-                blurredRef = new ModelImage(ModelImage.FLOAT, refImage.getExtents(), "BlurRef",
-                                            refImage.getUserInterface());
+                blurredRef = new ModelImage(ModelImage.FLOAT, refImage.getExtents(), "BlurRef");
             }
 
             // update resolutions
@@ -1124,11 +1122,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         if (blurInput) {
 
             if (doColor) {
-                blurredInput = new ModelImage(ModelImage.ARGB_FLOAT, inputImage.getExtents(), "BlurInput",
-                                              inputImage.getUserInterface());
+                blurredInput = new ModelImage(ModelImage.ARGB_FLOAT, inputImage.getExtents(), "BlurInput");
             } else {
-                blurredInput = new ModelImage(ModelImage.FLOAT, inputImage.getExtents(), "BlurInput",
-                                              inputImage.getUserInterface());
+                blurredInput = new ModelImage(ModelImage.FLOAT, inputImage.getExtents(), "BlurInput");
             }
 
             // update resolutions

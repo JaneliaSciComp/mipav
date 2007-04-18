@@ -1,11 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -27,12 +28,10 @@ import javax.vecmath.*;
      Oxford Centre for Functional Magnetic Resonance Imaging of the Brain<br>
  * </pre>
  *
- * See the document BrainExtraction.pdf for a detailed description of the algorithm as implemented in this class. A few
- * modifications to the original algorithm were made.
+ * <p>See the document BrainExtraction.pdf for a detailed description of the algorithm as implemented in this class. A
+ * few modifications to the original algorithm were made.</p>
  */
 public class AlgorithmObjectExtractor extends AlgorithmBase {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -221,7 +220,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         box[2] = (m_iZBound - 1) * m_fZDelta;
 
         /* Read the direction vector from the MipavCoordinateSystems class: */
-        direction = MipavCoordinateSystems.getModelDirections( srcImage );
+        direction = MipavCoordinateSystems.getModelDirections(srcImage);
         startLocation = srcImg.getFileInfo()[0].getOrigin();
         image = srcImg;
         this.voi = voi;
@@ -278,7 +277,6 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         } catch (IOException e) {
             System.out.println(" Problem saving mesh.");
         }
-
 
         setCompleted(true);
     }
@@ -1234,17 +1232,20 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
         // rotate, scale, and translate sphere to get ellipsoid
         float resXFactor = m_fXDelta /
-                               (float) Math.sqrt((m_kRotate.m00 * m_kRotate.m00 * m_fXDelta * m_fXDelta) +
-                                                     (m_kRotate.m01 * m_kRotate.m01 * m_fYDelta * m_fYDelta) +
-                                                     (m_kRotate.m02 * m_kRotate.m02 * m_fZDelta * m_fZDelta));
+                               (float)
+                                   Math.sqrt((m_kRotate.m00 * m_kRotate.m00 * m_fXDelta * m_fXDelta) +
+                                                 (m_kRotate.m01 * m_kRotate.m01 * m_fYDelta * m_fYDelta) +
+                                                 (m_kRotate.m02 * m_kRotate.m02 * m_fZDelta * m_fZDelta));
         float resYFactor = m_fYDelta /
-                               (float) Math.sqrt((m_kRotate.m10 * m_kRotate.m10 * m_fXDelta * m_fXDelta) +
-                                                     (m_kRotate.m11 * m_kRotate.m11 * m_fYDelta * m_fYDelta) +
-                                                     (m_kRotate.m12 * m_kRotate.m12 * m_fZDelta * m_fZDelta));
+                               (float)
+                                   Math.sqrt((m_kRotate.m10 * m_kRotate.m10 * m_fXDelta * m_fXDelta) +
+                                                 (m_kRotate.m11 * m_kRotate.m11 * m_fYDelta * m_fYDelta) +
+                                                 (m_kRotate.m12 * m_kRotate.m12 * m_fZDelta * m_fZDelta));
         float resZFactor = m_fZDelta /
-                               (float) Math.sqrt((m_kRotate.m20 * m_kRotate.m20 * m_fXDelta * m_fXDelta) +
-                                                     (m_kRotate.m21 * m_kRotate.m21 * m_fYDelta * m_fYDelta) +
-                                                     (m_kRotate.m22 * m_kRotate.m22 * m_fZDelta * m_fZDelta));
+                               (float)
+                                   Math.sqrt((m_kRotate.m20 * m_kRotate.m20 * m_fXDelta * m_fXDelta) +
+                                                 (m_kRotate.m21 * m_kRotate.m21 * m_fYDelta * m_fYDelta) +
+                                                 (m_kRotate.m22 * m_kRotate.m22 * m_fZDelta * m_fZDelta));
 
         for (i = 0; i < m_iVQuantity; i++) {
             m_akVertex[i].x *= m_afLength[0];
@@ -1839,8 +1840,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         AlgorithmGradientMagnitude gradMagAlgo = null;
 
         try {
-            energyImage = new ModelImage(ModelImage.FLOAT, image.getExtents(), image.getImageName() + "_gm",
-                                         image.getUserInterface());
+            energyImage = new ModelImage(ModelImage.FLOAT, image.getExtents(), image.getImageName() + "_gm");
 
             float[] sigmas = new float[3];
             sigmas[0] = 2f;
@@ -2676,8 +2676,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         }
 
         if (saveGVF) {
-            ModelImage gvfImage = new ModelImage(ModelImage.FLOAT, image.getExtents(), image.getImageName() + "_uvf",
-                                                 image.getUserInterface());
+            ModelImage gvfImage = new ModelImage(ModelImage.FLOAT, image.getExtents(), image.getImageName() + "_uvf");
 
             try {
                 gvfImage.importData(0, uVal, true);
@@ -2696,8 +2695,8 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             }
 
             try {
-                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_uvf", FileUtility.XML,
-                                   true);
+                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_uvf",
+                                   FileUtility.XML, true);
             } catch (OutOfMemoryError error) {
 
                 if (gvfImage != null) {
@@ -2729,8 +2728,8 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             }
 
             try {
-                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_vvf", FileUtility.XML,
-                                   true);
+                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_vvf",
+                                   FileUtility.XML, true);
             } catch (OutOfMemoryError error) {
 
                 if (gvfImage != null) {
@@ -2762,8 +2761,8 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             }
 
             try {
-                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_wvf", FileUtility.XML,
-                                   true);
+                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_wvf",
+                                   FileUtility.XML, true);
             } catch (OutOfMemoryError error) {
 
                 if (gvfImage != null) {
@@ -2781,7 +2780,6 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             gvfImage.disposeLocal();
             gvfImage = null;
         } // if (saveGVF)
-
 
 
         return;

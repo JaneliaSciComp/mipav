@@ -157,7 +157,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
         }
 
         // make images for the arrays
-        blurredImageSpectrum = new ModelImage(ModelStorageBase.COMPLEX, inImage.getExtents(), null, null);
+        blurredImageSpectrum = new ModelImage(ModelStorageBase.COMPLEX, inImage.getExtents(), null);
 
         // FFT parameters
         int forwardTransformDir = 1;
@@ -207,7 +207,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             estimatedReals[i] = rndNum.genUniformRandomNum(0.00001f, 1.0f);
         }
 
-        estimatedImage = new ModelImage(inImage.getType(), inImage.getExtents(), null, null);
+        estimatedImage = new ModelImage(inImage.getType(), inImage.getExtents(), null);
 
         try {
             estimatedImage.importData(0, estimatedReals, true);
@@ -229,7 +229,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             return;
         }
 
-        estimatedImageSpectrum = new ModelImage(ModelStorageBase.COMPLEX, inImage.getExtents(), null, null);
+        estimatedImageSpectrum = new ModelImage(ModelStorageBase.COMPLEX, inImage.getExtents(), null);
 
         // take the FFT of the estimatedImage
         estimatedFFT = new AlgorithmFFT(estimatedImageSpectrum, estimatedImage, forwardTransformDir, logMagDisplay,
@@ -240,7 +240,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                                          unequalDim, image25D, imageCrop, kernelDiameter, filterType, freq1, freq2,
                                          constructionMethod, butterworthOrder);
 
-        psfImageSpectrum = new ModelImage(ModelStorageBase.COMPLEX, inImage.getExtents(), null, null);
+        psfImageSpectrum = new ModelImage(ModelStorageBase.COMPLEX, inImage.getExtents(), null);
         psfImageSpectrum.setOriginalExtents(inImage.getExtents());
 
 
@@ -601,7 +601,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
      * DOCUMENT ME!
      */
     public void runIt() {
-        ModelImage cBlurImage = new ModelImage(inImage.getType(), inImage.getExtents(), null, null);
+        ModelImage cBlurImage = new ModelImage(inImage.getType(), inImage.getExtents(), null);
 
 
         // make an array containing the input data

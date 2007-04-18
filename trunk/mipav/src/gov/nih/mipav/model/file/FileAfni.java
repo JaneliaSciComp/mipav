@@ -7,8 +7,6 @@ import gov.nih.mipav.model.structures.jama.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.text.*;
@@ -1248,7 +1246,7 @@ public class FileAfni extends FileBase {
         readImage2();
 
         if (readACPC) {
-            
+
             fireProgressStateChanged(0);
             iXdim = dicomXDim;
             iYdim = dicomYDim;
@@ -1307,7 +1305,7 @@ public class FileAfni extends FileBase {
             int type = image.getType();
             image.disposeLocal();
             image = null;
-            image = new ModelImage(type, imgExtents, originalFileName, UI);
+            image = new ModelImage(type, imgExtents, originalFileName);
 
 
             xfrm.setTranslate(center.x, center.y, center.z);
@@ -1589,7 +1587,6 @@ public class FileAfni extends FileBase {
                 image.setFileInfo(fileInfo, i);
             }
 
-            
 
         } // if (readACPC)
 
@@ -1687,7 +1684,7 @@ public class FileAfni extends FileBase {
 
                 /* b.set(0,0,rr.x - M[0][3]/iXres);
                  *       b.set(1,0,rr.y - M[1][3]/iYres);      b.set(2,0,rr.z - M[2][3]/iZres);      X = A.solve(b);
-                 *  TCenter.x = (float)(X.get(0,0));      TCenter.y = (float)(X.get(1,0));      TCenter.z =
+                 * TCenter.x = (float)(X.get(0,0));      TCenter.y = (float)(X.get(1,0));      TCenter.z =
                  * (float)(X.get(2,0)); */
                 TCenter.x = Talx / oXres;
                 TCenter.y = Taly / oYres;
@@ -1996,7 +1993,7 @@ public class FileAfni extends FileBase {
             image.disposeLocal();
             image = null;
 
-            image = new ModelImage(type, imgExtents, originalFileName, UI);
+            image = new ModelImage(type, imgExtents, originalFileName);
             fileInfo.setImageOrientation(FileInfoBase.AXIAL);
 
             for (i = 0; i < dicomZDim; i++) {
@@ -2032,7 +2029,7 @@ public class FileAfni extends FileBase {
             Talx = Math.abs(dicomOrigin[0]);
             Taly = Math.abs(dicomOrigin[1]);
             Talz = Math.abs(dicomOrigin[2]);
-            
+
             fireProgressStateChanged(0);
 
             for (i = 0; i < 12; i++) {
@@ -2168,7 +2165,6 @@ public class FileAfni extends FileBase {
                 image.setFileInfo(fileInfo, i);
             }
 
-            
 
         } // if (readTLRC)
 
@@ -2314,7 +2310,6 @@ public class FileAfni extends FileBase {
         fileHeaderName = fileName.substring(0, lastPeriod + 1) + "HEAD";
         fileDataName = fileName.substring(0, lastPeriod + 1) + "BRIK";
 
-        
 
         zBegin = options.getBeginSlice();
         zEnd = options.getEndSlice();
@@ -3887,7 +3882,7 @@ public class FileAfni extends FileBase {
         } // switch(mage.getFileInfo()[0].getDataType())
 
         raFile.close();
-        
+
     }
 
     /**
@@ -4324,7 +4319,7 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -4343,7 +4338,7 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -4370,7 +4365,7 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -4398,7 +4393,7 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -7093,18 +7088,18 @@ public class FileAfni extends FileBase {
 
             // all values in .BRIK file are multiplied by brickFloatFacs[0]
             // UBYTE, SHORT, and INTEGER must be changed to FLOAT
-            image = new ModelImage(ModelStorageBase.FLOAT, imgExtents, fileInfo.getFileName(), UI);
+            image = new ModelImage(ModelStorageBase.FLOAT, imgExtents, fileInfo.getFileName());
             fileInfo.setDataType(ModelStorageBase.FLOAT);
         } else if ((havePosFloatFacs) && (brikDataType == ModelStorageBase.ARGB)) {
 
             // all values in .BRIK file are multiplied by brickFloatsFacs[0]
             // ARGB must be changed to ARGB_FLOAT
-            image = new ModelImage(ModelStorageBase.ARGB_FLOAT, imgExtents, fileInfo.getFileName(), UI);
+            image = new ModelImage(ModelStorageBase.ARGB_FLOAT, imgExtents, fileInfo.getFileName());
             fileInfo.setDataType(ModelStorageBase.ARGB_FLOAT);
         } else {
 
             // original data type preserved
-            image = new ModelImage(brikDataType, imgExtents, fileInfo.getFileName(), UI);
+            image = new ModelImage(brikDataType, imgExtents, fileInfo.getFileName());
         }
 
         // Dicom is always axial orientation
@@ -7327,7 +7322,7 @@ public class FileAfni extends FileBase {
         image.calcMinMax();
 
         raFile.close();
-        
+
 
         return image;
 
@@ -7387,7 +7382,7 @@ public class FileAfni extends FileBase {
         int newY = 0;
         int newZ = 0;
         int progress, progressLength, mod;
-        
+
         fireProgressStateChanged(ViewUserInterface.getReference().getProgressBarPrefix() + "AFNI...");
 
         switch (brikDataType) {
@@ -7399,7 +7394,7 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * subBrickNumber;
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -7418,7 +7413,7 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * subBrickNumber;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -7445,7 +7440,7 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * subBrickNumber;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -7473,7 +7468,7 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * subBrickNumber;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -7851,7 +7846,7 @@ public class FileAfni extends FileBase {
 
         for (k = 0; k < oZdim; k++) {
 
-            if ( ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
@@ -7983,7 +7978,7 @@ public class FileAfni extends FileBase {
 
         for (k = botZ; k <= topZ; k++) {
 
-            if ( ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) (k - botZ) / (topZ - botZ) * 100) + .5));
             }
 

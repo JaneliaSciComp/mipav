@@ -193,7 +193,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         constructLog();
         fireProgressStateChanged(srcImage.getImageName(), "Principal component ...");
-        
+
 
         pComponent();
 
@@ -437,7 +437,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating mean");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -464,7 +464,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating values");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -474,7 +474,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         } catch (IOException error) {
             displayError("Algorithm PComponent: Image(s) locked");
             setCompleted(false);
-            
+
             setThreadStopped(true);
 
             return;
@@ -515,7 +515,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         if (threadStopped) {
             finalize();
-            
+
             setCompleted(false);
 
             return;
@@ -534,7 +534,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating covar");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -554,7 +554,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating x");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -567,7 +567,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating mm");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -626,7 +626,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         if (threadStopped) {
             finalize();
-            
+
             setCompleted(false);
 
             return;
@@ -642,7 +642,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating matCovar");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -655,7 +655,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating eig");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -676,7 +676,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating tempRow");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -718,7 +718,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         if (threadStopped) {
             finalize();
-            
+
             setCompleted(false);
 
             return;
@@ -737,7 +737,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating p");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -789,7 +789,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         if (threadStopped) {
             finalize();
-            
+
             setCompleted(false);
 
             return;
@@ -809,7 +809,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 displayError("Algorithm Principal component: Out of memory allocating pImage");
                 setCompleted(false);
                 setThreadStopped(true);
-                
+
 
                 return;
             }
@@ -826,20 +826,19 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 displayError("Algorithm Principal component: Out of memory allocating imageFrame");
                 setCompleted(false);
                 setThreadStopped(true);
-                
+
 
                 return;
             }
 
             for (i = nPresent - 1; (i >= 0) && (!threadStopped); i--) {
-                pImage[i] = new ModelImage(ModelImage.FLOAT, pExtents, srcImage.getImageName() + "_p" + (i + 1),
-                                           srcImage.getUserInterface());
+                pImage[i] = new ModelImage(ModelImage.FLOAT, pExtents, srcImage.getImageName() + "_p" + (i + 1));
 
                 try {
                     pImage[i].importData(0, p[i], true);
                 } catch (IOException error) {
                     displayError("AlgorithmPrincipalComponents: IOException on pImage[" + i + "] import data");
-                    
+
                     setCompleted(false);
                     setThreadStopped(true);
 
@@ -854,7 +853,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     displayError("AlgorithmPrincipalComponents: Out of memory creating imageFrame[" + i + "]");
-                    
+
                     setCompleted(false);
                     setThreadStopped(true);
 
@@ -866,7 +865,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
             if (threadStopped) {
                 finalize();
-                
+
                 setCompleted(false);
 
                 return;
@@ -884,7 +883,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
             if (pNumber == -1) {
                 displayError("AlgorithmPrincipalComponents: Error on createPNumberDialog");
-                
+
                 setCompleted(false);
                 setThreadStopped(true);
 
@@ -906,7 +905,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating eigenInverse");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -934,7 +933,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating pTrunc");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -999,7 +998,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         if (threadStopped) {
             finalize();
-            
+
             setCompleted(false);
 
             return;
@@ -1013,7 +1012,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 destImage[iNumber++].importData(0, values, true);
             } catch (IOException error) {
                 displayError("AlgorithmPrincipalComponents: IOException on filter destination image import data");
-                
+
                 setCompleted(false);
 
                 return;
@@ -1021,7 +1020,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         } // if (doFilter)
 
         if (!doAveraging) {
-            
+
             setCompleted(true);
         } // if (!doAveraging)
 
@@ -1036,7 +1035,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating result");
             setCompleted(false);
             setThreadStopped(true);
-            
+
 
             return;
         }
@@ -1078,13 +1077,12 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             destImage[iNumber].importData(0, result, true);
         } catch (IOException error) {
             displayError("AlgorithmPrincipalComponents: IOException on averaged destination image import data");
-            
+
             setCompleted(false);
 
             return;
         }
 
-        
         setCompleted(true);
     }
 

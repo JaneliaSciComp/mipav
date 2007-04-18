@@ -108,23 +108,8 @@ public class ModelImage extends ModelStorageBase {
      * @param  type        indicates type of buffer(ie. boolean, byte ...)
      * @param  dimExtents  array indicating image extent in each dimension.
      * @param  name        name of the image.
-     *
-     *                     <p>The only difference with this constructor is that it does not require the
-     *                     ViewUserInterface param.</p>
      */
     public ModelImage(int type, int[] dimExtents, String name) {
-        this(type, dimExtents, name, ViewUserInterface.getReference());
-    }
-
-    /**
-     * Creates a new ModelImage object.
-     *
-     * @param  type        indicates type of buffer(ie. boolean, byte ...)
-     * @param  dimExtents  array indicating image extent in each dimension.
-     * @param  name        name of the image.
-     * @param  _UI         user interface reference so that image can be registered
-     */
-    public ModelImage(int type, int[] dimExtents, String name, ViewUserInterface _UI) {
         super(type, dimExtents);
 
         int i;
@@ -132,7 +117,7 @@ public class ModelImage extends ModelStorageBase {
         // The user interface has a vector of all image models loaded into
         // MIPAV. I keep a reference to the userinterface here so that when an image
         // is created it can added to the hashtable in the user interface.
-        UI = _UI;
+        UI = ViewUserInterface.getReference();
         imageName = makeImageName(name, ""); // removes suffix if one is there.
 
         if (UI == null) {
@@ -213,6 +198,22 @@ public class ModelImage extends ModelStorageBase {
         frameList = new Vector();
         voiVector = new VOIVector();
         makeInfoPanes();
+    }
+
+    /**
+     * Creates a new ModelImage object.
+     *
+     * @param       type        indicates type of buffer(ie. boolean, byte ...)
+     * @param       dimExtents  DOCUMENT ME!
+     * @param       name        DOCUMENT ME!
+     * @param       _UI         DOCUMENT ME!
+     *
+     * @return      DOCUMENT ME!
+     *
+     * @deprecated  DOCUMENT ME!
+     */
+    public ModelImage(int type, int[] dimExtents, String name, ViewUserInterface _UI) {
+        this(type, dimExtents, name);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -703,7 +704,7 @@ public class ModelImage extends ModelStorageBase {
         }
 
         try {
-            maskImage = new ModelImage(ModelImage.SHORT, this.getExtents(), "Short Image", UI);
+            maskImage = new ModelImage(ModelImage.SHORT, this.getExtents(), "Short Image");
 
             JDialogBase.updateFileInfoOtherModality(this, maskImage);
 
@@ -752,7 +753,7 @@ public class ModelImage extends ModelStorageBase {
         }
 
         try {
-            maskImage = new ModelImage(ModelImage.UBYTE, this.getExtents(), "UBYTE Image", UI);
+            maskImage = new ModelImage(ModelImage.UBYTE, this.getExtents(), "UBYTE Image");
 
             JDialogBase.updateFileInfoOtherModality(this, maskImage);
 
@@ -1464,7 +1465,9 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Returns the reference to the user interface.
      *
-     * @return  the reference to the user interface.
+     * @deprecated  DOCUMENT ME!
+     *
+     * @return      the reference to the user interface.
      */
     public ViewUserInterface getUserInterface() {
         return UI;

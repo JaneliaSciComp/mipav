@@ -67,14 +67,17 @@ public class AlgorithmAGVF extends AlgorithmBase {
     /** Maximum iterations to generate new boundary. */
     protected int boundaryIterations = 1000;
 
+    /** DOCUMENT ME! */
+    protected int[] extents;
+
+    /** DOCUMENT ME! */
+    protected int xDim, yDim, zDim;
+
     /** Only applies to 3D, if true do slice by slice. */
     private boolean do25D = true;
 
     /** DOCUMENT ME! */
     private float[] expGvfBuffer;
-
-    /** DOCUMENT ME! */
-    protected int[] extents;
 
     /** DOCUMENT ME! */
     private float[] fx;
@@ -141,9 +144,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float[] wVal;
-
-    /** DOCUMENT ME! */
-    protected int xDim, yDim, zDim;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -297,6 +297,191 @@ public class AlgorithmAGVF extends AlgorithmBase {
     }
 
     /**
+     * Removes points (vectors) that form sharp angles (i.e. smoothes boudnary) Also adds points separated by some
+     * distance and removes adjacent points
+     *
+     * @param   xPts  x coords of points that define a contour
+     * @param   yPts  y coords of points that define a contour
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected Vector cleanLine(float[] xPts, float[] yPts) {
+        int i;
+        double distance;
+        float midX, midY;
+        Vector pts = new Vector(50, 50);
+
+        for (i = 0; i < xPts.length; i++) {
+            pts.addElement(new Point2Df(xPts[i], yPts[i]));
+        }
+
+        // add points to contour where points are separated by a some distance
+        // also remove adjacent points
+        for (i = 1; i < (pts.size() - 1); i++) {
+
+            distance = distance(((Point2Df) (pts.elementAt(i))).x, ((Point2Df) (pts.elementAt(i + 1))).x,
+                                ((Point2Df) (pts.elementAt(i))).y, ((Point2Df) (pts.elementAt(i + 1))).y);
+
+            if (distance > 3) {
+                midX = (float) ((((Point2Df) (pts.elementAt(i))).x + ((Point2Df) (pts.elementAt(i + 1))).x) / 2.0);
+                midY = (float) ((((Point2Df) (pts.elementAt(i))).y + ((Point2Df) (pts.elementAt(i + 1))).y) / 2.0);
+
+                pts.insertElementAt(new Point2Df(midX, midY), i + 1);
+                i--;
+            } else if (distance > 1) { }
+            else {
+                pts.removeElementAt(i + 1);
+                i--;
+            }
+        }
+
+        // find angle -- remove points that have too sharp an angle, i.e. smooth boundary
+        boolean flag = true;
+        int end;
+        end = pts.size() - 2;
+
+        double magV1, magV2;
+        double angle;
+        double pt1x, pt1y, pt2x, pt2y, pt3x, pt3y;
+        double v1x, v1y, v2x, v2y;
+
+        while (flag == true) {
+            flag = false;
+
+            for (i = 0; i < end; i++) {
+
+                pt1x = ((Point2Df) (pts.elementAt(i))).x;
+                pt1y = ((Point2Df) (pts.elementAt(i))).y;
+                pt2x = ((Point2Df) (pts.elementAt(i + 1))).x;
+                pt2y = ((Point2Df) (pts.elementAt(i + 1))).y;
+                pt3x = ((Point2Df) (pts.elementAt(i + 2))).x;
+                pt3y = ((Point2Df) (pts.elementAt(i + 2))).y;
+
+                v1x = pt1x - pt2x;
+                v1y = pt1y - pt2y;
+
+                v2x = pt3x - pt2x;
+                v2y = pt3y - pt2y;
+
+                magV1 = Math.sqrt((v1x * v1x) + (v1y * v1y));
+                v1x = v1x / magV1;
+                v1y = v1y / magV1;
+
+                magV2 = Math.sqrt((v2x * v2x) + (v2y * v2y));
+                v2x = v2x / magV2;
+                v2y = v2y / magV2;
+
+                angle = Math.acos((v1x * v2x) + (v1y * v2y));
+
+                // Smooth points
+                if (angle < smoothness) {
+                    pts.removeElementAt(i + 1);
+                    i--;
+                    end = pts.size() - 2;
+                    flag = true;
+                }
+            }
+        }
+
+        return pts;
+    }
+
+    /**
+     * Sets structures to null.
+     */
+    protected void cleanup() {
+        uVal = null;
+        vVal = null;
+        wVal = null;
+        gvfBuffer = null;
+        expGvfBuffer = null;
+        gVal = null;
+        fx = null;
+        fy = null;
+        fz = null;
+        GxData = null;
+        GyData = null;
+        GzData = null;
+        kExtents = null;
+        System.gc();
+    }
+
+    /**
+     * Actual function that evolves the boundary.
+     *
+     * @param  xPoints    x coordinates that describe the contour
+     * @param  yPoints    y coordinates that describe the contour
+     * @param  u          x component of the GVF
+     * @param  v          y component of the GVF
+     * @param  resultGon  resultant polygon
+     */
+    protected void runSnake(float[] xPoints, float[] yPoints, float[] u, float[] v, Polygon resultGon) {
+        int i, j;
+        int nPts;
+        Point2Df interpPt = new Point2Df();
+        float[] newXPts = null, newYPts = null;
+        int position;
+        boolean finished = false;
+
+        Vector ptsArray;
+
+        for (int s = 2; s >= 2.0; s--) {
+
+            for (int z = 0; (z < boundaryIterations) && (!finished) && (!threadStopped); z++) {
+                finished = true;
+
+                ptsArray = cleanLine(xPoints, yPoints);
+
+                xPoints = new float[ptsArray.size()];
+                yPoints = new float[ptsArray.size()];
+
+                for (i = 0; i < ptsArray.size(); i++) {
+                    xPoints[i] = ((Point2Df) (ptsArray.elementAt(i))).x;
+                    yPoints[i] = ((Point2Df) (ptsArray.elementAt(i))).y;
+                }
+
+                nPts = xPoints.length;
+                newXPts = new float[xPoints.length];
+                newYPts = new float[xPoints.length];
+
+                for (i = 1; i < (nPts - 1); i++) {
+
+                    interpPt.x = xPoints[i];
+                    interpPt.y = yPoints[i];
+
+                    position = (int) interpPt.x + (xDim * (int) interpPt.y);
+                    newXPts[i] = interpPt.x +
+                                 getBilinear(position, interpPt.x - (int) interpPt.x, interpPt.y - (int) interpPt.y,
+                                             extents, u);
+
+                    newYPts[i] = interpPt.y +
+                                 getBilinear(position, interpPt.x - (int) interpPt.x, interpPt.y - (int) interpPt.y,
+                                             extents, v);
+
+                    if ((Math.abs(newXPts[i] - interpPt.x) >= 0.02f) || (Math.abs(newYPts[i] - interpPt.y) >= 0.02f)) {
+                        finished = false;
+                    }
+                }
+
+                newXPts[0] = newXPts[i - 1];
+                newYPts[0] = newYPts[i - 1];
+                newXPts[i] = newXPts[1];
+                newYPts[i] = newYPts[1];
+
+                xPoints = newXPts;
+                yPoints = newYPts;
+            }
+        }
+
+        // resultGon = new Polygon();
+        for (j = 1; j < (yPoints.length - 1); j++) {
+            resultGon.addPoint(Math.round(xPoints[j]), Math.round(yPoints[j]));
+        }
+
+        return;
+    }
+
+    /**
      * Prepares the data and runs the algorithm for a 3D image.
      */
     private void calc25D() {
@@ -341,7 +526,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
             fireProgressStateChanged(srcImage.getImageName(), "Evolving boundary ...");
         } catch (OutOfMemoryError e) {
             cleanup();
-            
+
             displayError("Algorithm AGVF: Out of memory");
             setCompleted(false);
 
@@ -363,7 +548,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 MipavUtil.displayError("AlgorithmAGVF: IOException on srcImage");
-                
+
                 setCompleted(false);
 
                 return;
@@ -383,7 +568,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                     cleanup();
                     MipavUtil.displayError("AlgorithmAGVF: IOException on destImage" +
                                            ".importData(slice*length,gvfBuffer,false)" + error);
-                    
+
                     setCompleted(false);
 
                     return;
@@ -427,7 +612,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
             cleanup();
             fireProgressStateChanged(100);
-            
+
             setCompleted(true);
 
             return;
@@ -451,7 +636,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                     cleanup();
                     displayError("Algorithm AGVF: Image(s) locked");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -470,7 +655,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                         cleanup();
                         MipavUtil.displayError("AlgorithmAGVF: IOException on destImage" +
                                                ".importData(slice*length,gvfBuffer,false)");
-                        
+
                         setCompleted(false);
 
                         return;
@@ -529,7 +714,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                     cleanup();
                     displayError("Algorithm AGVF: Image(s) locked");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -548,7 +733,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                         cleanup();
                         MipavUtil.displayError("AlgorithmAGVF: IOException on destImage" +
                                                ".importData(slice*length,gvfBuffer,false)");
-                        
+
                         setCompleted(false);
 
                         return;
@@ -595,7 +780,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         cleanup();
         fireProgressStateChanged(100);
         setCompleted(true);
-        
+
     }
 
     /**
@@ -633,22 +818,22 @@ public class AlgorithmAGVF extends AlgorithmBase {
             this.fireProgressStateChanged(srcImage.getImageName(), "Evolving boundary ...");
         } catch (IOException error) {
             cleanup();
-            
+
             displayError("Algorithm AGVF: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            
+
             displayError("Algorithm AGVF:  Out of Memory");
             setCompleted(false);
 
             return;
         }
 
-        // 
-        // 
+        //
+        //
         fireProgressStateChanged(25);
 
         calcGVF(imgBuffer);
@@ -670,7 +855,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                 cleanup();
                 MipavUtil.displayError("AlgorithmAGVF: IOException on destImage" + ".importData(0,gvfBuffer,true)" +
                                        error);
-                
+
                 setCompleted(false);
 
                 return;
@@ -713,7 +898,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         }
 
         cleanup();
-        
+
         setCompleted(true);
     }
 
@@ -766,7 +951,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
             this.fireProgressStateChanged(srcImage.getImageName(), "Evolving boundary ...");
         } catch (OutOfMemoryError e) {
             cleanup();
-            
+
             displayError("Algorithm AGVF: Out of memory");
             setCompleted(false);
 
@@ -780,7 +965,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             MipavUtil.displayError("AlgorithmAGVF: IOException on srcImage.exportData");
-            
+
             setCompleted(false);
 
             return;
@@ -800,7 +985,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 MipavUtil.displayError("AlgorithmAGVF: IOException on destImage" + ".importData(0,gvfBuffer,true)");
-                
+
                 setCompleted(false);
 
                 return;
@@ -827,8 +1012,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
          *
          * if (threadStopped) { finalize(); return; }
          *
-         * if (propagationFlag == false)  { cleanup(); fireProgressStateChanged(100); 
-         * setCompleted(true); return; }
+         * if (propagationFlag == false)  { cleanup(); fireProgressStateChanged(100); setCompleted(true); return; }
          *
          * slice   = stSlice; baseGon = resultGon; slice++; tempGon    = resultGon; xPoints = new
          * float[tempGon.npoints+5]; yPoints = new float[tempGon.npoints+5]; resultGon = new Polygon(); if (slice <
@@ -899,7 +1083,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
         cleanup();
         fireProgressStateChanged(100);
-        
+
         setCompleted(true);
 
     }
@@ -1818,8 +2002,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
             wVal[i] = gvfBuffer[i];
         }
 
-        ModelImage gvfImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_uvf",
-                                             srcImage.getUserInterface());
+        ModelImage gvfImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_uvf");
 
         try {
             gvfImage.importData(0, uVal, true);
@@ -1831,7 +2014,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.importData");
-            
+
             setCompleted(false);
 
             return;
@@ -1848,7 +2031,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.saveImage");
-            
+
             setCompleted(false);
 
             return;
@@ -1864,7 +2047,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.importData");
-            
+
             setCompleted(false);
 
             return;
@@ -1881,7 +2064,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.saveImage");
-            
+
             setCompleted(false);
 
             return;
@@ -1897,7 +2080,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.importData");
-            
+
             setCompleted(false);
 
             return;
@@ -1914,7 +2097,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.saveImage");
-            
+
             setCompleted(false);
 
             return;
@@ -1924,116 +2107,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
         gvfImage = null;
 
         return;
-    }
-
-    /**
-     * Removes points (vectors) that form sharp angles (i.e. smoothes boudnary) Also adds points separated by some
-     * distance and removes adjacent points
-     *
-     * @param   xPts  x coords of points that define a contour
-     * @param   yPts  y coords of points that define a contour
-     *
-     * @return  DOCUMENT ME!
-     */
-    protected Vector cleanLine(float[] xPts, float[] yPts) {
-        int i;
-        double distance;
-        float midX, midY;
-        Vector pts = new Vector(50, 50);
-
-        for (i = 0; i < xPts.length; i++) {
-            pts.addElement(new Point2Df(xPts[i], yPts[i]));
-        }
-
-        // add points to contour where points are separated by a some distance
-        // also remove adjacent points
-        for (i = 1; i < (pts.size() - 1); i++) {
-
-            distance = distance(((Point2Df) (pts.elementAt(i))).x, ((Point2Df) (pts.elementAt(i + 1))).x,
-                                ((Point2Df) (pts.elementAt(i))).y, ((Point2Df) (pts.elementAt(i + 1))).y);
-
-            if (distance > 3) {
-                midX = (float) ((((Point2Df) (pts.elementAt(i))).x + ((Point2Df) (pts.elementAt(i + 1))).x) / 2.0);
-                midY = (float) ((((Point2Df) (pts.elementAt(i))).y + ((Point2Df) (pts.elementAt(i + 1))).y) / 2.0);
-
-                pts.insertElementAt(new Point2Df(midX, midY), i + 1);
-                i--;
-            } else if (distance > 1) { }
-            else {
-                pts.removeElementAt(i + 1);
-                i--;
-            }
-        }
-
-        // find angle -- remove points that have too sharp an angle, i.e. smooth boundary
-        boolean flag = true;
-        int end;
-        end = pts.size() - 2;
-
-        double magV1, magV2;
-        double angle;
-        double pt1x, pt1y, pt2x, pt2y, pt3x, pt3y;
-        double v1x, v1y, v2x, v2y;
-
-        while (flag == true) {
-            flag = false;
-
-            for (i = 0; i < end; i++) {
-
-                pt1x = ((Point2Df) (pts.elementAt(i))).x;
-                pt1y = ((Point2Df) (pts.elementAt(i))).y;
-                pt2x = ((Point2Df) (pts.elementAt(i + 1))).x;
-                pt2y = ((Point2Df) (pts.elementAt(i + 1))).y;
-                pt3x = ((Point2Df) (pts.elementAt(i + 2))).x;
-                pt3y = ((Point2Df) (pts.elementAt(i + 2))).y;
-
-                v1x = pt1x - pt2x;
-                v1y = pt1y - pt2y;
-
-                v2x = pt3x - pt2x;
-                v2y = pt3y - pt2y;
-
-                magV1 = Math.sqrt((v1x * v1x) + (v1y * v1y));
-                v1x = v1x / magV1;
-                v1y = v1y / magV1;
-
-                magV2 = Math.sqrt((v2x * v2x) + (v2y * v2y));
-                v2x = v2x / magV2;
-                v2y = v2y / magV2;
-
-                angle = Math.acos((v1x * v2x) + (v1y * v2y));
-
-                // Smooth points
-                if (angle < smoothness) {
-                    pts.removeElementAt(i + 1);
-                    i--;
-                    end = pts.size() - 2;
-                    flag = true;
-                }
-            }
-        }
-
-        return pts;
-    }
-
-    /**
-     * Sets structures to null.
-     */
-    protected void cleanup() {
-        uVal = null;
-        vVal = null;
-        wVal = null;
-        gvfBuffer = null;
-        expGvfBuffer = null;
-        gVal = null;
-        fx = null;
-        fy = null;
-        fz = null;
-        GxData = null;
-        GyData = null;
-        GzData = null;
-        kExtents = null;
-        System.gc();
     }
 
     /**
@@ -2160,81 +2233,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
         GenerateGaussian Gz = new GenerateGaussian(GzData, kExtents, sigmas, derivOrder);
         Gz.calc(true);
-    }
-
-    /**
-     * Actual function that evolves the boundary.
-     *
-     * @param  xPoints    x coordinates that describe the contour
-     * @param  yPoints    y coordinates that describe the contour
-     * @param  u          x component of the GVF
-     * @param  v          y component of the GVF
-     * @param  resultGon  resultant polygon
-     */
-    protected void runSnake(float[] xPoints, float[] yPoints, float[] u, float[] v, Polygon resultGon) {
-        int i, j;
-        int nPts;
-        Point2Df interpPt = new Point2Df();
-        float[] newXPts = null, newYPts = null;
-        int position;
-        boolean finished = false;
-
-        Vector ptsArray;
-
-        for (int s = 2; s >= 2.0; s--) {
-
-            for (int z = 0; (z < boundaryIterations) && (!finished) && (!threadStopped); z++) {
-                finished = true;
-
-                ptsArray = cleanLine(xPoints, yPoints);
-
-                xPoints = new float[ptsArray.size()];
-                yPoints = new float[ptsArray.size()];
-
-                for (i = 0; i < ptsArray.size(); i++) {
-                    xPoints[i] = ((Point2Df) (ptsArray.elementAt(i))).x;
-                    yPoints[i] = ((Point2Df) (ptsArray.elementAt(i))).y;
-                }
-
-                nPts = xPoints.length;
-                newXPts = new float[xPoints.length];
-                newYPts = new float[xPoints.length];
-
-                for (i = 1; i < (nPts - 1); i++) {
-
-                    interpPt.x = xPoints[i];
-                    interpPt.y = yPoints[i];
-
-                    position = (int) interpPt.x + (xDim * (int) interpPt.y);
-                    newXPts[i] = interpPt.x +
-                                 getBilinear(position, interpPt.x - (int) interpPt.x, interpPt.y - (int) interpPt.y,
-                                             extents, u);
-
-                    newYPts[i] = interpPt.y +
-                                 getBilinear(position, interpPt.x - (int) interpPt.x, interpPt.y - (int) interpPt.y,
-                                             extents, v);
-
-                    if ((Math.abs(newXPts[i] - interpPt.x) >= 0.02f) || (Math.abs(newYPts[i] - interpPt.y) >= 0.02f)) {
-                        finished = false;
-                    }
-                }
-
-                newXPts[0] = newXPts[i - 1];
-                newYPts[0] = newYPts[i - 1];
-                newXPts[i] = newXPts[1];
-                newYPts[i] = newYPts[1];
-
-                xPoints = newXPts;
-                yPoints = newYPts;
-            }
-        }
-
-        // resultGon = new Polygon();
-        for (j = 1; j < (yPoints.length - 1); j++) {
-            resultGon.addPoint(Math.round(xPoints[j]), Math.round(yPoints[j]));
-        }
-
-        return;
     }
 
     /**

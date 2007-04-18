@@ -99,9 +99,8 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
      *
      * @param  info  information about the files and parameters the frame should work with
      * @param  loc   location where the frame should be placed initially
-     * @param  ui    main user interface frame
      */
-    public ViewJFrameMultiple(FileInfoProject info, Dimension loc, ViewUserInterface ui) {
+    public ViewJFrameMultiple(FileInfoProject info, Dimension loc) {
         super(null, null, loc, false);
 
         states = new StateList();

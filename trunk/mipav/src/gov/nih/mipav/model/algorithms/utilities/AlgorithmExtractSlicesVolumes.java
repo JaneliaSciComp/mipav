@@ -251,7 +251,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
                 if (extract[zSrc]) {
                     progress++;
-                    
+
                     fireProgressStateChanged((int) ((progress / numToExtract) * 100));
 
                     try {
@@ -264,8 +264,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                         }
 
                         resultImage = new ModelImage(srcImage.getType(), newExtents,
-                                                     srcImage.getImageName() + "_slice" + (zSrc + 1),
-                                                     srcImage.getUserInterface());
+                                                     srcImage.getImageName() + "_slice" + (zSrc + 1));
 
                         resultImage.importData(0, imageBuffer, false);
 
@@ -292,7 +291,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
                 if (extract[zSrc]) {
                     progress++;
-                    
+
                     fireProgressStateChanged((int) ((progress / numToExtract) * 100));
 
                     resultImage = new ModelImage(srcImage.getType(), newExtents,

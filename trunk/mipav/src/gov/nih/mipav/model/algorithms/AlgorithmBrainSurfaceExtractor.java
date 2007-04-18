@@ -663,7 +663,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             resultImage.getFileInfo(i).setResolutions(yRes, 1);
             resultImage.getFileInfo(i).setResolutions(zRes, 2);
             resultImage.getFileInfo(i).setSliceThickness(srcImage.getFileInfo(i).getSliceThickness());
-            
+
             resultImage.getFileInfo(i).setImageOrientation(orient);
             resultImage.getFileInfo(i).setAxisOrientation(axisOrient);
         }
@@ -762,8 +762,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             }
         }
 
-        ModelImage regionImage = new ModelImage(maskImage.getType(), maskImage.getExtents(), maskImage.getImageName(),
-                                                maskImage.getUserInterface());
+        ModelImage regionImage = new ModelImage(maskImage.getType(), maskImage.getExtents(), maskImage.getImageName());
 
         try {
             regionImage.importData(0, maskData, true);
@@ -953,8 +952,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         newExtents[1] = img.getExtents()[1];
         newExtents[2] = img.getExtents()[2] + 4;
 
-        ModelImage paddedImg = new ModelImage(img.getType(), newExtents, img.getImageName() + "_pad",
-                                              img.getUserInterface());
+        ModelImage paddedImg = new ModelImage(img.getType(), newExtents, img.getImageName() + "_pad");
 
         try {
 
@@ -996,8 +994,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         extents[1] = paddedImg.getExtents()[1];
         extents[2] = paddedImg.getExtents()[2] - 4;
 
-        ModelImage img = new ModelImage(paddedImg.getType(), extents, paddedImg.getImageName() + "_nopad",
-                                        paddedImg.getUserInterface());
+        ModelImage img = new ModelImage(paddedImg.getType(), extents, paddedImg.getImageName() + "_nopad");
 
         boolean[] slices = new boolean[paddedImg.getExtents()[2]];
         slices[0] = true;

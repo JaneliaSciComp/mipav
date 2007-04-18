@@ -596,10 +596,8 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                        baseImage.getFileInfo(0).getResolutions()[1]
                                    };
 
-                refWeightImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "VOI ref",
-                                                srcImage.getUserInterface());
-                inputWeightImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "VOI input",
-                                                  srcImage.getUserInterface());
+                refWeightImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "VOI ref");
+                inputWeightImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "VOI input");
 
                 refWeightImage.getFileInfo(0).setResolutions(refRes);
                 inputWeightImage.getFileInfo(0).setResolutions(inputRes);
@@ -1081,10 +1079,8 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                        baseImage.getFileInfo(0).getResolutions()[1]
                                    };
 
-                refWeightImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "VOI ref",
-                                                srcImage.getUserInterface());
-                inputWeightImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "VOI input",
-                                                  srcImage.getUserInterface());
+                refWeightImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "VOI ref");
+                inputWeightImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "VOI input");
 
                 refWeightImage.getFileInfo(0).setResolutions(refRes);
                 inputWeightImage.getFileInfo(0).setResolutions(inputRes);
@@ -1092,12 +1088,10 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                 // registration algorithm
             } // if (!entireImage)
 
-            refImage = new ModelImage(srcImage.getType(), extents2D, "refImage", srcImage.getUserInterface());
-            inputImage = new ModelImage(baseImage.getType(), extents2D, "inputImage", baseImage.getUserInterface());
-            registeredSrcImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "regSImage",
-                                                srcImage.getUserInterface());
-            registeredBaseImage = new ModelImage(baseImage.getType(), baseImage.getExtents(), "regBImage",
-                                                 baseImage.getUserInterface());
+            refImage = new ModelImage(srcImage.getType(), extents2D, "refImage");
+            inputImage = new ModelImage(baseImage.getType(), extents2D, "inputImage");
+            registeredSrcImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), "regSImage");
+            registeredBaseImage = new ModelImage(baseImage.getType(), baseImage.getExtents(), "regBImage");
 
             for (z = 0; z < zDim; z++) {
                 zPos = z * length;
@@ -1578,10 +1572,8 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                        srcImage.getFileInfo(0).getResolutions()[1]
                                    };
 
-                refWeightImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "VOI ref",
-                                                srcImage.getUserInterface());
-                inputWeightImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "VOI input",
-                                                  srcImage.getUserInterface());
+                refWeightImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "VOI ref");
+                inputWeightImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), "VOI input");
 
                 refWeightImage.getFileInfo(0).setResolutions(refRes);
                 inputWeightImage.getFileInfo(0).setResolutions(inputRes);
@@ -1618,20 +1610,14 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
             String name = srcImage.getImageName() + "_register";
 
             if (srcImage.getType() == ModelStorageBase.ARGB) {
-                refImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "refImage",
-                                          srcImage.getUserInterface());
-                inputImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "inputImage",
-                                            srcImage.getUserInterface());
-                registeredSrcImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), name,
-                                                    srcImage.getUserInterface());
+                refImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "refImage");
+                inputImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "inputImage");
+                registeredSrcImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), name);
 
             } else {
-                refImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "refImage",
-                                          srcImage.getUserInterface());
-                inputImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "inputImage",
-                                            srcImage.getUserInterface());
-                registeredSrcImage = new ModelImage(ModelStorageBase.ARGB_USHORT, srcImage.getExtents(), name,
-                                                    srcImage.getUserInterface());
+                refImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "refImage");
+                inputImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "inputImage");
+                registeredSrcImage = new ModelImage(ModelStorageBase.ARGB_USHORT, srcImage.getExtents(), name);
 
             }
 
@@ -2178,10 +2164,8 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                        srcImage.getFileInfo(0).getResolutions()[1]
                                    };
 
-                refWeightImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "VOI ref",
-                                                srcImage.getUserInterface());
-                inputWeightImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "VOI input",
-                                                  srcImage.getUserInterface());
+                refWeightImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "VOI ref");
+                inputWeightImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "VOI input");
 
                 refWeightImage.getFileInfo(0).setResolutions(refRes);
                 inputWeightImage.getFileInfo(0).setResolutions(inputRes);
@@ -2192,18 +2176,14 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
             String name = srcImage.getImageName() + "_register";
 
             if (srcImage.getType() == ModelStorageBase.ARGB) {
-                refImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "refImage", srcImage.getUserInterface());
-                inputImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "inputImage",
-                                            srcImage.getUserInterface());
-                registeredSrcImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), name,
-                                                    srcImage.getUserInterface());
+                refImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "refImage");
+                inputImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "inputImage");
+                registeredSrcImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), name);
 
             } else {
-                refImage = new ModelImage(ModelStorageBase.USHORT, extents2D, "refImage", srcImage.getUserInterface());
-                inputImage = new ModelImage(ModelStorageBase.USHORT, extents2D, "inputImage",
-                                            srcImage.getUserInterface());
-                registeredSrcImage = new ModelImage(ModelStorageBase.ARGB_USHORT, srcImage.getExtents(), name,
-                                                    srcImage.getUserInterface());
+                refImage = new ModelImage(ModelStorageBase.USHORT, extents2D, "refImage");
+                inputImage = new ModelImage(ModelStorageBase.USHORT, extents2D, "inputImage");
+                registeredSrcImage = new ModelImage(ModelStorageBase.ARGB_USHORT, srcImage.getExtents(), name);
 
             }
 

@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -10,8 +11,7 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.util.*;
-import gov.nih.mipav.MipavMath;
-import gov.nih.mipav.model.scripting.*;
+
 
 /**
  * This program applies the watershed algorithm to the image. It assumes that the user has identified the starting
@@ -107,7 +107,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
         constructLog();
 
         fireProgressStateChanged("Watershed ...");
-        
+
         if (srcImage.getNDims() == 2) {
             calc2D();
         } else if (srcImage.getNDims() > 2) {
@@ -168,8 +168,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
         if (energyImage == null) {
 
             try {
-                energyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gm",
-                                             srcImage.getUserInterface());
+                energyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gm");
                 gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false);
                 gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 gradMagAlgo.run();
@@ -201,14 +200,18 @@ public class AlgorithmWatershed extends AlgorithmBase {
                         energyImage.set(i, max);
                     }
                 }
+
                 boolean wasRecording = ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING;
+
                 if (wasRecording) {
-                	ScriptRecorder.getReference().pauseRecording();
+                    ScriptRecorder.getReference().pauseRecording();
                 }
+
                 energyImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_gm",
                                       FileUtility.XML, true);
+
                 if (wasRecording) {
-                	ScriptRecorder.getReference().startRecording();
+                    ScriptRecorder.getReference().startRecording();
                 }
             } catch (OutOfMemoryError error) {
 
@@ -323,7 +326,7 @@ Found:
 
         try {
             fireProgressStateChanged(srcImage.getImageName(), "Watershed: Filling regions ...");
-            
+
         } catch (OutOfMemoryError error) {
 
             if (energyImage != null) {
@@ -398,7 +401,7 @@ Found:
 
         /* Find minima near user's seeds ****************************************************
          *
-         *    Seed_vector contains the seeds provided by user      current_basin labels a basin corresponding to a seed
+         * Seed_vector contains the seeds provided by user      current_basin labels a basin corresponding to a seed
          *
          **************************************************************************************/
         Point3Df P;
@@ -431,7 +434,7 @@ Found:
             System.gc();
             displayError("Watershed: unable to allocate enough memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -572,7 +575,7 @@ Found:
             energyImage = null;
             displayError("Algorithm Watershed2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
@@ -587,7 +590,7 @@ Found:
             System.gc();
             displayError("Algorithm Watershed2D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -646,7 +649,7 @@ Found:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -693,7 +696,7 @@ Found:
 
         energyImage.disposeLocal();
         hQueue.dispose();
-        
+
         setCompleted(true);
     }
 
@@ -719,16 +722,16 @@ Found:
         if (energyImage == null) {
 
             try {
-                energyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gm",
-                                             srcImage.getUserInterface());
+                energyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gm");
 
                 gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false);
                 gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
-                
+
                 linkProgressToAlgorithm(gradMagAlgo);
                 gradMagAlgo.setProgressValues(generateProgressValues(0, 50));
-                
+
                 gradMagAlgo.run();
+
                 if (gradMagAlgo.isCompleted() == false) {
                     setCompleted(false);
                     energyImage.disposeLocal();
@@ -751,18 +754,21 @@ Found:
                         energyImage.set(i, max);
                     }
                 }
+
                 boolean wasRecording = ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING;
-                
+
                 if (wasRecording) {
-                	ScriptRecorder.getReference().pauseRecording();
+                    ScriptRecorder.getReference().pauseRecording();
                 }
+
                 energyImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_gm",
-                        FileUtility.XML, true);
+                                      FileUtility.XML, true);
+
                 if (wasRecording) {
-                	ScriptRecorder.getReference().startRecording();
+                    ScriptRecorder.getReference().startRecording();
                 }
-                
-                
+
+
             } catch (OutOfMemoryError error) {
 
                 if (energyImage != null) {
@@ -782,7 +788,7 @@ Found:
         }
 
         fireProgressStateChanged("Watershed ...");
-        
+
         System.gc();
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -815,8 +821,9 @@ Found:
             System.gc();
             displayError("Watershed: unable to allocate enough memory");
         }
-        
+
         if (seedVector == null) {
+
             try {
                 seedVector = new Vector();
             } catch (OutOfMemoryError error) {
@@ -830,11 +837,10 @@ Found:
                 }
             }
 
-            
-            
-            
+
             // Find seed points
             for (i = 0; i < nVOI; i++) {
+
                 if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                     contours = VOIs.VOIAt(i).getCurves();
 
@@ -869,7 +875,7 @@ Found:
                         }
                     }
                 }
-                
+
             }
         }
 
@@ -877,7 +883,7 @@ Found:
         int lastImageIndex = (zDim - 1) * imageLength;
         int temp;
         int mod = length / 100; // mod is 1 percent of length
-     
+
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
@@ -960,7 +966,7 @@ Found:
 
         /**Find minima near user's seeds ****************************************************
          *
-         *    Seed_vector contains the seeds provided by user      current_basin labels a basin corresponding to a seed
+         * Seed_vector contains the seeds provided by user      current_basin labels a basin corresponding to a seed
          *
          **************************************************************************************/
         Point3Df P = new Point3Df(0, 0, 0);
@@ -990,7 +996,7 @@ Found:
             System.gc();
             displayError("Watershed: unable to allocate enough memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -1169,6 +1175,7 @@ Found:
                 // hQueue.add(pixC, energyImage.getFloat(pixC));
             }
         }
+
         if (threadStopped) {
             contours = null;
             finalize();
@@ -1195,7 +1202,7 @@ Found:
             energyImage = null;
             displayError("Algorithm Watershed3D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
@@ -1209,7 +1216,7 @@ Found:
             System.gc();
             displayError("Algorithm Watershed3D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -1264,7 +1271,7 @@ Found:
         } catch (IOException error) {
             displayError("Algorithm Watershed3D: Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -1275,6 +1282,7 @@ Found:
                 destImage.setShort(i, (short) 0);
             }
         }
+
         // Make sure all watershed VOIs have there watershed ID -- fixes border voxels
         for (i = 0; i < nVOI; i++) {
 
@@ -1310,7 +1318,7 @@ Found:
         }
 
         setCompleted(true);
-        
+
         imgBuffer = null;
         System.gc();
     }
@@ -1341,7 +1349,7 @@ Found:
      *  int i; int  xDim, yDim; int  length; short distance[];
      *
      * //gradMagImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), "Gradient Magnitude", null); //gradMagAlgo
-     *  = new AlgorithmGradientMagnitudeSep(gradMagImage, srcImage, sigmas, true); //gradMagAlgo.run();
+     * = new AlgorithmGradientMagnitudeSep(gradMagImage, srcImage, sigmas, true); //gradMagAlgo.run();
      *
      * //gradMagAlgo = null; //System.gc();
      *
@@ -1350,108 +1358,104 @@ Found:
      * distance = new short[length];
      *
      * short    newBasin           = 0; short    currentBasin       = 1; short    current_distance   = 0; int
-     * fictitiousPixel    = -1; //Point3Ds P; int      tempP = 0; int      pixC, pixN, pixS, pixE, pixW; //float
-     * tempGM; //short    tempLabel;
+     * fictitiousPixel    = -1; //Point3Ds P; int      tempP = 0; int      pixC, pixN, pixS, pixE, pixW; //float tempGM;
+     * //short    tempLabel;
      *
      * int      bins  = (int)(srcImage.getMax() - srcImage.getMin()); //int      bins  = (int)(gradMagImage.getMax() -
      * gradMagImage.getMin()); int      sensitivity = 75; //bins  = 1000;
      *
      * IntVector pixelsVector  = new IntVector(10000, 5000); IntVector queue         = new IntVector(); IntVector stack
-     *      = new IntVector(); //HQueue   hQueue = new HQueue((float)gradMagImage.getMin(), //
-     *   (float)gradMagImage.getMax(), //                             bins);
+     *  = new IntVector(); //HQueue   hQueue = new HQueue((float)gradMagImage.getMin(), //
+     * (float)gradMagImage.getMax(), //                             bins);
      *
      * HQueue   hQueue = new HQueue((float)srcImage.getMin(),                              (float)srcImage.getMax(),
-     *                        bins);
+     *                 bins);
      *
      * for (i = 0; i < length; i++){     if ( i%xDim == 0 || i%xDim == (xDim-1)){         destImage.setShort(i, BOUNDARY);
-     *     }     else if (i/xDim == 0 || i/xDim == (yDim-1) ) {         destImage.setShort(i, BOUNDARY);     }     else
-     * {         destImage.setShort(i, INITIAL);         hQueue.add(i, srcImage.getFloat(i));     } }
+     *    }     else if (i/xDim == 0 || i/xDim == (yDim-1) ) {         destImage.setShort(i, BOUNDARY);     }     else {
+     *         destImage.setShort(i, INITIAL);         hQueue.add(i, srcImage.getFloat(i));     } }
      *
      * for (int j = 0; j < length; j++){     distance[j] = 0; } //int x,y; //Start flooding local mins
      *
      * for (i=0; i < bins-sensitivity; i+=sensitivity ){
      *
-     *   pixelsVector = hQueue.cloneElementsAt(i, i+sensitivity);
+     * pixelsVector = hQueue.cloneElementsAt(i, i+sensitivity);
      *
-     *   // i to i+n to MASK     while (pixelsVector.isEmpty() == false){
+     * // i to i+n to MASK     while (pixelsVector.isEmpty() == false){
      *
-     *       tempP = pixelsVector.lastElement();         pixelsVector.removeLastElement();
+     *    tempP = pixelsVector.lastElement();         pixelsVector.removeLastElement();
      *
-     *       pixC = tempP;         pixN = pixC-xDim;         pixS = pixC+xDim;         pixE = pixC+1;         pixW =
+     *    pixC = tempP;         pixN = pixC-xDim;         pixS = pixC+xDim;         pixE = pixC+1;         pixW =
      * pixC-1;
      *
-     *       if (destImage.getShort(pixC) == BOUNDARY){         }         else {             destImage.setShort(pixC,
+     *    if (destImage.getShort(pixC) == BOUNDARY){         }         else {             destImage.setShort(pixC,
      * MASK);             if ((destImage.getShort(pixN) > 0) ||                 (destImage.getShort(pixS) > 0) ||
-     *          (destImage.getShort(pixE) > 0) ||                 (destImage.getShort(pixW) > 0)) {
-     * distance[pixC]= 1;                 // distance of a path connected pixC to the nearest flooded pixel
-     *    // such that the nodes(pixels) of the path are at the same level,                 // if there exists such a
-     * path.                 queue.addElement(pixC);          }        }     }
+     *  (destImage.getShort(pixE) > 0) ||                 (destImage.getShort(pixW) > 0)) { distance[pixC]= 1;
+     *       // distance of a path connected pixC to the nearest flooded pixel   // such that the nodes(pixels) of the
+     * path are at the same level,                 // if there exists such a path.
+     * queue.addElement(pixC);          }        }     }
      *
-     *   current_distance = 1;     queue.addElement(fictitiousPixel);     while (true) {         tempP =
+     * current_distance = 1;     queue.addElement(fictitiousPixel);     while (true) {         tempP =
      * queue.firstElement();         queue.removeElementAt(0);         if (tempP == fictitiousPixel){             if
-     * (queue.isEmpty() == true){                 break;             }             else {
-     * current_distance++;                 queue.addElement(fictitiousPixel);                 tempP =
-     * queue.firstElement();                 queue.removeElementAt(0);             }         }         pixC = tempP;
-     *     pixN = pixC-xDim;         pixS = pixC+xDim;         pixE = pixC+1;         pixW = pixC-1;
+     * (queue.isEmpty() == true){                 break;             }             else { current_distance++;
+     *      queue.addElement(fictitiousPixel);                 tempP = queue.firstElement();
+     * queue.removeElementAt(0);             }         }         pixC = tempP;    pixN = pixC-xDim;         pixS =
+     * pixC+xDim;         pixE = pixC+1;         pixW = pixC-1;
      *
-     *       if (destImage.getShort(pixW) > 0 && distance[pixW] < current_distance){             if
+     *    if (destImage.getShort(pixW) > 0 && distance[pixW] < current_distance){             if
      * (destImage.getShort(pixC) > 0 ) {                 if (destImage.getShort(pixC) != destImage.getShort(pixW)){
-     *                destImage.setShort(pixC, WSHED);                 }             }             else if (
-     * destImage.getShort(pixC) == MASK ){          // West neighbor has to be basin
-     * destImage.setShort(pixC, destImage.getShort(pixW));                 currentBasin = destImage.getShort(pixW);
-     *      // extend basin to center;             }         }         else if (destImage.getShort(pixW) == MASK &&
-     * distance[pixW] == 0){             distance[pixW] =(short)(current_distance + 1);
-     * queue.addElement(pixW);         }
+     *          destImage.setShort(pixC, WSHED);                 }             }             else if (
+     * destImage.getShort(pixC) == MASK ){          // West neighbor has to be basin destImage.setShort(pixC,
+     * destImage.getShort(pixW));                 currentBasin = destImage.getShort(pixW);     // extend basin to
+     * center;             }         }         else if (destImage.getShort(pixW) == MASK && distance[pixW] == 0){
+     *      distance[pixW] =(short)(current_distance + 1); queue.addElement(pixW);         }
      *
      *
-     *       if (destImage.getShort(pixE) > 0 && distance[pixE] < current_distance){             if
+     *    if (destImage.getShort(pixE) > 0 && distance[pixE] < current_distance){             if
      * (destImage.getShort(pixC) > 0 ) {                 if (destImage.getShort(pixC) != destImage.getShort(pixE)){
-     *                destImage.setShort(pixC, WSHED);                 }             }             else if (
+     *          destImage.setShort(pixC, WSHED);                 }             }             else if (
      * destImage.getShort(pixC) == MASK ){                 destImage.setShort(pixC, destImage.getShort(pixE));
-     *       currentBasin = destImage.getShort(pixE);             }         }         else if (destImage.getShort(pixE)
-     * == MASK && distance[pixE] == 0){             distance[pixE] = (short)(current_distance + 1);
-     * queue.addElement(pixE);         }
+     * currentBasin = destImage.getShort(pixE);             }         }         else if (destImage.getShort(pixE) ==
+     * MASK && distance[pixE] == 0){             distance[pixE] = (short)(current_distance + 1); queue.addElement(pixE);
+     *         }
      *
      *
-     *       if (destImage.getShort(pixN) > 0 && distance[pixN] < current_distance){             if
+     *    if (destImage.getShort(pixN) > 0 && distance[pixN] < current_distance){             if
      * (destImage.getShort(pixC) > 0 ) {                 if (destImage.getShort(pixC) != destImage.getShort(pixN)){
-     *                destImage.setShort(pixC, WSHED);                 }             }             else if (
+     *          destImage.setShort(pixC, WSHED);                 }             }             else if (
      * destImage.getShort(pixC) == MASK ){                 destImage.setShort(pixC, destImage.getShort(pixN));
-     *       currentBasin = destImage.getShort(pixN);             }         }         else if (destImage.getShort(pixN)
-     * == MASK && distance[pixN] == 0){             distance[pixN] = (short)(current_distance + 1);
-     * queue.addElement(pixN);         }
+     * currentBasin = destImage.getShort(pixN);             }         }         else if (destImage.getShort(pixN) ==
+     * MASK && distance[pixN] == 0){             distance[pixN] = (short)(current_distance + 1); queue.addElement(pixN);
+     *         }
      *
      *
-     *       if (destImage.getShort(pixS) > 0 && distance[pixS] < current_distance){             if
+     *    if (destImage.getShort(pixS) > 0 && distance[pixS] < current_distance){             if
      * (destImage.getShort(pixC) > 0 ) {                 if (destImage.getShort(pixC) != destImage.getShort(pixS)){
-     *                destImage.setShort(pixC, WSHED);                 }             }             else if (
+     *          destImage.setShort(pixC, WSHED);                 }             }             else if (
      * destImage.getShort(pixC) == MASK ){                 destImage.setShort(pixC, destImage.getShort(pixS));
-     *       currentBasin = destImage.getShort(pixS);             }         }         else if (destImage.getShort(pixS)
-     * == MASK && distance[pixS] == 0){             distance[pixS] = (short)(current_distance + 1);
-     * queue.addElement(pixS);         }     }
+     * currentBasin = destImage.getShort(pixS);             }         }         else if (destImage.getShort(pixS) ==
+     * MASK && distance[pixS] == 0){             distance[pixS] = (short)(current_distance + 1); queue.addElement(pixS);
+     *         }     }
      *
-     *    while(hQueue.isEmptyAt(i) == false) {         tempP = hQueue.firstAt(i);         distance[tempP]=0;         if
-     * (destImage.getShort(tempP) == MASK){             destImage.setShort(tempP, newBasin++);
-     * stack.push(tempP);             while (stack.isEmpty() == false){                 tempP = stack.pop();
-     *     pixC = tempP;                 pixN = pixC-xDim;                 pixS = pixC+xDim;                 pixE =
-     * pixC+1;                 pixW = pixC-1;
+     * while(hQueue.isEmptyAt(i) == false) {         tempP = hQueue.firstAt(i);         distance[tempP]=0;         if
+     * (destImage.getShort(tempP) == MASK){             destImage.setShort(tempP, newBasin++); stack.push(tempP);
+     *      while (stack.isEmpty() == false){                 tempP = stack.pop();    pixC = tempP;                 pixN
+     * = pixC-xDim;                 pixS = pixC+xDim;                 pixE = pixC+1;                 pixW = pixC-1;
      *
-     *               if (destImage.getShort(pixN) == MASK) {                     stack.push(pixN);
-     * destImage.setShort(pixN, newBasin);                 }                 if (destImage.getShort(pixS) == MASK) {
-     *                 stack.push(pixS);                     destImage.setShort(pixS, newBasin);                 }
-     *           if (destImage.getShort(pixE) == MASK) {                     stack.push(pixE);
-     * destImage.setShort(pixE, newBasin);                 }                 if (destImage.getShort(pixW)  == MASK){
-     *                 stack.push(pixW);                     destImage.setShort(pixW, newBasin);                 }
-     *       }         }     } }
+     *            if (destImage.getShort(pixN) == MASK) {                     stack.push(pixN); destImage.setShort(pixN,
+     * newBasin);                 }                 if (destImage.getShort(pixS) == MASK) {
+     * stack.push(pixS);                     destImage.setShort(pixS, newBasin);                 }          if
+     * (destImage.getShort(pixE) == MASK) {                     stack.push(pixE); destImage.setShort(pixE, newBasin);
+     *              }                 if (destImage.getShort(pixW)  == MASK){                stack.push(pixW);
+     *           destImage.setShort(pixW, newBasin);                 }      }         }     } }
      *
      * short tempInt; for (i = 0; i < length; i++) {     if (destImage.getShort(i) == MASK){         destImage.setShort(i,
      * (short)0);     }     else if (destImage.getShort(i) == BOUNDARY){         destImage.setShort(i, (short)0);     }
-     *    else if (destImage.getShort(i) == WSHED){         destImage.setShort(i, (short)100);     }     else if
+     *  else if (destImage.getShort(i) == WSHED){         destImage.setShort(i, (short)100);     }     else if
      * (destImage.getShort(i) < 0){         destImage.setShort(i, (short)0);     }     else {         tempInt =
      * destImage.getShort(i);         destImage.setShort(i, (short)(tempInt+5));     } }
      *
-     * destImage.calcMinMax(); //        gradMagImage.disposeLocal(); hQueue.dispose(); setCompleted(true);
-     * // }
+     * destImage.calcMinMax(); //        gradMagImage.disposeLocal(); hQueue.dispose(); setCompleted(true); // }
      */
 
     /**

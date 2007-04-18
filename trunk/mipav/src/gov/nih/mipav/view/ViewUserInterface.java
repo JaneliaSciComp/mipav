@@ -87,11 +87,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Initial menubar for MIPAV. */
     protected JMenuBar openingMenuBar;
 
+    /** DOCUMENT ME! */
+    private Vector clippedScannerVectors = new Vector();
+
     /** Vector to hold the clipped slice numbers. */
     private Vector clippedSlices = new Vector();
 
-    private Vector clippedScannerVectors = new Vector();
-    
     /** Vector to hold clipped VOIs (multiple). */
     private ViewVOIVector clippedVOIs = new ViewVOIVector();
 
@@ -119,6 +120,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Whether the mipav GUI should be shown; set by the -hide command line option. */
     private boolean isAppFrameVisible = true;
+
+    /** DOCUMENT ME! */
+    private boolean isClippedVOI2D = true;
 
     /**
      * Indicates the user's last choice of whether to open images as multi-file (stack) or single file in the file open
@@ -151,6 +155,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     private JDialogMipavOptions optionsDialog = null;
 
+
+    /** An array of BitSet to hold all paintbr. */
+    private BitSet[] paintBrushes = null;
+
     /** DOCUMENT ME! */
     private NDARPipeline pipeline = null;
 
@@ -166,12 +174,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** DOCUMENT ME! */
     private JXCEDEExplorer xcedeExplorer;
 
-    private boolean isClippedVOI2D = true;
-    
-    
-    /** An array of BitSet to hold all paintbr*/
-    private BitSet [] paintBrushes = null;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -503,7 +505,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             Object thePlugIn = null;
             String plugInName = "PlugIn" + command.substring(14);
-            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -530,7 +532,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             Object thePlugIn = null;
             String plugInName = "PlugIn" + command.substring(15);
-            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -556,7 +558,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.startsWith("PlugInFileTransfer")) {
             Object thePlugIn = null;
             String plugInName = "PlugIn" + command.substring(18);
-            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -576,9 +578,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         } else if (command.startsWith("PlugInGeneric")) {
             Object thePlugIn = null;
-           
+
             String plugInName = "PlugIn" + command.substring(13);
-          //  String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -651,46 +653,41 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Whether or not the VOI is a 2D (true = 2d, false = 3d+)
-     * @return
-     */
-    public boolean isClippedVOI2D() {
-    	return this.isClippedVOI2D;
-    }
-    
-    /**
-     * Adds a clipped 2D VOI to the clipboard
+     * Adds a clipped 2D VOI to the clipboard.
      *
      * @param  voi    VOI
      * @param  slice  int
      */
     public void addClipped2DVOI(VOI voi, int slice) {
-    	
-    	if (isClippedVOI2D == false) {
-    		clearClippedVOIs();
-    		isClippedVOI2D = true;
-    	}
-    	
+
+        if (isClippedVOI2D == false) {
+            clearClippedVOIs();
+            isClippedVOI2D = true;
+        }
+
         this.clippedVOIs.add(voi);
         this.clippedSlices.add(new Integer(slice));
     }
 
     /**
      * Adds a clipped VOI from a 3D image to the clipboard.
-     * @param voi the voi
-     * @param slice slice number
-     * @param scannerPts a vector of all the VOI's points pre-converted to scanner coordinates
+     *
+     * @param  voi         the voi
+     * @param  slice       slice number
+     * @param  scannerPts  a vector of all the VOI's points pre-converted to scanner coordinates
      */
     public void addClippedScannerVOI(VOI voi, int slice, Vector scannerPts) {
-    	if (isClippedVOI2D == true) {
-    		clearClippedVOIs();
-    		isClippedVOI2D = false;
-    	}
-    	this.clippedVOIs.add(voi);
+
+        if (isClippedVOI2D == true) {
+            clearClippedVOIs();
+            isClippedVOI2D = false;
+        }
+
+        this.clippedVOIs.add(voi);
         this.clippedSlices.add(new Integer(slice));
         this.clippedScannerVectors.add(scannerPts);
     }
-    
+
     /**
      * Builds the anonymize directory dialog and displays it.
      */
@@ -746,7 +743,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void buildMessageFrame() {
 
-        messageFrame = new ViewJFrameMessage("Output", this);
+        messageFrame = new ViewJFrameMessage("Output");
         messageFrame.setSize(550, 300);
 
         try {
@@ -816,10 +813,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                         // System.err.println("adding " + name + " as PlugInAlgorithm");
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
-                                                                                name.length()), "PlugInAlgorithm" +
-                                                                                name.substring(name.indexOf("PlugIn") + 6,
-                                                                                        name.length()), 0,
-                                                                 al, null, false);
+                                                                                name.length()),
+                                                                 "PlugInAlgorithm" +
+                                                                 name.substring(name.indexOf("PlugIn") + 6,
+                                                                                name.length()), 0, al, null, false);
                         algorithmMenu.add(menuItem);
                         menuItem.setName(name);
                     } else if (plugIn instanceof PlugInFile) {
@@ -829,7 +826,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                                                     name.length()) + " - read image",
                                                                      "PlugInFileRead" +
                                                                      name.substring(name.indexOf("PlugIn") + 6,
-                                                                             name.length()), 0, al, null, false);
+                                                                                    name.length()), 0, al, null, false);
                             fileMenu.add(menuItem);
                             menuItem.setName(name);
                         }
@@ -842,7 +839,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                                                     name.length()) + " - write image",
                                                                      "PlugInFileWrite" +
                                                                      name.substring(name.indexOf("PlugIn") + 6,
-                                                                             name.length()), 0, al, null, false);
+                                                                                    name.length()), 0, al, null, false);
                             fileMenu.add(menuItem);
                             menuItem.setName(name);
                         }
@@ -852,25 +849,25 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                                                 name.length()) + " - transfer files",
                                                                  "PlugInFileTransfer" +
                                                                  name.substring(name.indexOf("PlugIn") + 6,
-                                                                         name.length()), 0, al, null, false);
+                                                                                name.length()), 0, al, null, false);
                         fileTransferMenu.add(menuItem);
                         menuItem.setName(name);
                     } else if (plugIn instanceof PlugInGeneric) {
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
-                                                                                name.length()), "PlugInGeneric" +
-                                                                                name.substring(name.indexOf("PlugIn") + 6,
-                                                                                        name.length()), 0, al,
-                                                                 null, false);
+                                                                                name.length()),
+                                                                 "PlugInGeneric" +
+                                                                 name.substring(name.indexOf("PlugIn") + 6,
+                                                                                name.length()), 0, al, null, false);
                         genericMenu.add(menuItem);
                         menuItem.setName(name);
                     } else if ((plugIn instanceof PlugInView) && !(al instanceof ViewUserInterface)) {
 
                         // System.err.println("adding " + name + " as PlugInView");
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
-                                                                                name.length()), "PlugInView" +
-                                                                                name.substring(name.indexOf("PlugIn") + 6,
-                                                                                        name.length()), 0, al,
-                                                                 null, false);
+                                                                                name.length()),
+                                                                 "PlugInView" +
+                                                                 name.substring(name.indexOf("PlugIn") + 6,
+                                                                                name.length()), 0, al, null, false);
 
                         viewMenu.add(menuItem);
                         menuItem.setName(name);
@@ -1107,6 +1104,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * DOCUMENT ME!
      *
+     * @return  DOCUMENT ME!
+     */
+    public Vector getClippedScannerVectors() {
+        return this.clippedScannerVectors;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
      * @return  Vector
      */
     public Vector getClippedSlices() {
@@ -1122,10 +1128,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return this.clippedVOIs;
     }
 
-    public Vector getClippedScannerVectors() {
-    	return this.clippedScannerVectors;
-    }
-    
     /**
      * Accessor to get directory location of last file access.
      *
@@ -1505,6 +1507,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public boolean isAppFrameVisible() {
         return isAppFrameVisible;
+    }
+
+    /**
+     * Whether or not the VOI is a 2D (true = 2d, false = 3d+).
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean isClippedVOI2D() {
+        return this.isClippedVOI2D;
     }
 
     /**
