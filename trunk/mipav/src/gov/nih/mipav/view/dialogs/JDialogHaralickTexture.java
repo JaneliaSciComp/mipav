@@ -219,7 +219,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         }
     }
 
@@ -653,8 +653,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                     }
 
                     name[index] = makeImageName(image.getImageName(), dirString + opString);
-                    resultImage[index] = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name[index],
-                                                        userInterface);
+                    resultImage[index] = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name[index]);
 
                 } // for (j = 0; j < numOperators; j++)
             } // for (i = 0; i < numDirections; i++)

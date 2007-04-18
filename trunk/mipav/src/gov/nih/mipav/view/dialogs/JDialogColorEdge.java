@@ -6,10 +6,14 @@ import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
+
 import java.awt.*;
 import java.awt.event.*;
+
 import java.util.*;
+
 import javax.swing.*;
 
 
@@ -17,14 +21,31 @@ import javax.swing.*;
  * GUI for entering parameters for the Color Edge algorithm and making it scriptable.
  */
 public class JDialogColorEdge extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
-    
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -5364017650931720063L;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private AlgorithmColorEdge algoColorEdge;
-    
+
     /** DOCUMENT ME! */
     private int displayLoc;
+
+    /** DOCUMENT ME! */
+    private int red1, green1, blue1;
+
+    /** DOCUMENT ME! */
+    private JTextField red1Text, green1Text, blue1Text;
+
+    /** DOCUMENT ME! */
+    private int red2, green2, blue2;
+
+    /** DOCUMENT ME! */
+    private JTextField red2Text, green2Text, blue2Text;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage;
@@ -34,15 +55,6 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private String[] titles; // used to save image names when replacing an image
-
-    /** DOCUMENT ME! */
-    private JTextField red1Text, green1Text, blue1Text;
-    
-    private JTextField red2Text, green2Text, blue2Text;
-    
-    private int red1, green1, blue1;
-    
-    private int red2, green2, blue2;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
@@ -70,10 +82,13 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         setTitle("Color Edge");
         userInterface = ViewUserInterface.getReference();
         sourceImage = mi;
+
         if (!mi.isColorImage()) {
             MipavUtil.displayError("Must be a color image");
+
             return;
         }
+
         displayLoc = NEW; // currently replace is not supported
 
         getContentPane().setLayout(new BorderLayout());
@@ -86,55 +101,6 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected  void storeParamsFromGUI() throws ParserException{
-        scriptParameters.storeInputImage(sourceImage);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_color_1", new int[] {red1, green1, blue1}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_color_2", new int[] {red2, green2, blue2}));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected  void setGUIFromParams() {
-        sourceImage = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = sourceImage.getParentFrame();
-        
-        if (!sourceImage.isColorImage()) {
-            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Must be a color image.");
-        }
-        
-        if (scriptParameters.doOutputNewImage()) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        int[] rgb1 = scriptParameters.getParams().getList("rgb_color_1").getAsIntArray();
-        red1 = rgb1[0];
-        green1 = rgb1[1];
-        blue1 = rgb1[2];
-        
-        int[] rgb2 = scriptParameters.getParams().getList("rgb_color_2").getAsIntArray();
-        red2 = rgb2[0];
-        green2 = rgb2[1];
-        blue2 = rgb2[2];
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     // ************************************************************************
     // ************************** Action Events *******************************
@@ -160,7 +126,7 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
                 Preferences.debug("JDialogColorEdge: " + "error setting variables.");
             }
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         }
     }
 
@@ -230,8 +196,8 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
             }
         } // else not a Color Edge algorithm
         else {
-            Preferences.debug("JDialogColorEdge caught algorithm performed for: " +
-                              algorithm.getClass().getName(), Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("JDialogColorEdge caught algorithm performed for: " + algorithm.getClass().getName(),
+                              Preferences.DEBUG_ALGORITHM);
         }
 
         algoColorEdge.finalize();
@@ -311,53 +277,23 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * 
-     * @param red1
-     */
-    public void setRed1(int red1) {
-        this.red1 = red1;
-    }
-    
-    /**
-     * 
-     * @param green1
-     */
-    public void setGreen1(int green1) {
-        this.green1 = green1;
-    }
-    
-    /**
-     * 
-     * @param blue1
+     * DOCUMENT ME!
+     *
+     * @param  blue1  DOCUMENT ME!
      */
     public void setBlue1(int blue1) {
         this.blue1 = blue1;
     }
-    
+
     /**
-     * 
-     * @param red2
-     */
-    public void setRed2(int red2) {
-        this.red2 = red2;
-    }
-    
-    /**
-     * 
-     * @param green2
-     */
-    public void setGreen2(int green2) {
-        this.green2 = green2;
-    }
-    
-    /**
-     * 
-     * @param blue2
+     * DOCUMENT ME!
+     *
+     * @param  blue2  DOCUMENT ME!
      */
     public void setBlue2(int blue2) {
         this.blue2 = blue2;
     }
-    
+
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
      */
@@ -375,14 +311,156 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         // displayLoc = REPLACE;
         displayLoc = NEW;
     }
-    
+
     /**
-     * creates the planel which contains the OKAY and Cancel buttons. sets their sizes, colours and listeners.
+     * DOCUMENT ME!
      *
-     * @return  DOCUMENT ME!
+     * @param  green1  DOCUMENT ME!
      */
-    private JPanel buildOkayCancelPanel() {
-        return buildButtons();
+    public void setGreen1(int green1) {
+        this.green1 = green1;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  green2  DOCUMENT ME!
+     */
+    public void setGreen2(int green2) {
+        this.green2 = green2;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  red1  DOCUMENT ME!
+     */
+    public void setRed1(int red1) {
+        this.red1 = red1;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  red2  DOCUMENT ME!
+     */
+    public void setRed2(int red2) {
+        this.red2 = red2;
+    }
+
+    /**
+     * Once all the necessary variables are set, call the local normalization algorithm based on what type of image this
+     * is and whether or not there is a separate destination image.
+     */
+    protected void callAlgorithm() {
+        String name = makeImageName(sourceImage.getImageName(), "_ColorEdge");
+
+
+        // if (displayLoc == NEW) {
+        try {
+
+            // Make result image of UBYTE type
+            resultImage = new ModelImage(ModelStorageBase.UBYTE, sourceImage.getExtents(), name);
+
+            /*if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+             *  ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
+             *                                                   26); // Secondary Capture SOP UID ((FileInfoDicom)
+             * (resultImage.getFileInfo(0))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ",
+             *                                 26); ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012",
+             * "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt ((FileInfoDicom)
+             * (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //}*/
+
+            // Make algorithm
+            algoColorEdge = new AlgorithmColorEdge(resultImage, sourceImage, red1, green1, blue1, red2, green2, blue2);
+
+            // This is very important. Adding this object as a listener
+            // allows the algorithm to notify this object when it
+            // has completed or failed. See algorithm performed event.
+            // This is made possible by implementing
+            // AlgorithmedPerformed interface
+            algoColorEdge.addListener(this);
+
+            createProgressBar(sourceImage.getImageName(), algoColorEdge);
+
+            setVisible(false); // Hide dialog
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish
+                // to still have user interface work fast.
+                if (algoColorEdge.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+
+                algoColorEdge.run();
+            }
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Dialog LocalNormalization: unable to allocate enough memory");
+
+            if (resultImage != null) {
+                resultImage.disposeLocal(); // Clean up memory of result image
+                resultImage = null;
+            }
+
+            return;
+        }
+        // }
+        /*else {  // displayLoc == REPLACE        (2D)
+         */
+
+    } // end callAlgorithm()
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        sourceImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = sourceImage.getParentFrame();
+
+        if (!sourceImage.isColorImage()) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Must be a color image.");
+        }
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        int[] rgb1 = scriptParameters.getParams().getList("rgb_color_1").getAsIntArray();
+        red1 = rgb1[0];
+        green1 = rgb1[1];
+        blue1 = rgb1[2];
+
+        int[] rgb2 = scriptParameters.getParams().getList("rgb_color_2").getAsIntArray();
+        red2 = rgb2[0];
+        green2 = rgb2[1];
+        blue2 = rgb2[2];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(sourceImage);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_color_1",
+                                                                       new int[] { red1, green1, blue1 }));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_color_2",
+                                                                       new int[] { red2, green2, blue2 }));
     }
 
     /**
@@ -393,7 +471,7 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
      *
      * @return  The color panel.
      *
-     * @see  JDialogUnsharpMask
+     * @see     JDialogUnsharpMask
      */
     private JPanel buildColorPanel() {
         JPanel colorPanel = new JPanel();
@@ -482,69 +560,13 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * Once all the necessary variables are set, call the local normalization algorithm based on what type of image this
-     * is and whether or not there is a separate destination image.
+     * creates the planel which contains the OKAY and Cancel buttons. sets their sizes, colours and listeners.
+     *
+     * @return  DOCUMENT ME!
      */
-    protected void callAlgorithm() {
-        String name = makeImageName(sourceImage.getImageName(), "_ColorEdge");
-
-        
-        // if (displayLoc == NEW) {
-        try {
-
-            // Make result image of UBYTE type
-            resultImage     = new ModelImage(ModelStorageBase.UBYTE, sourceImage.getExtents(), name, userInterface);
-
-            /*if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
-                                                                        26); // Secondary Capture SOP UID
-                ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ",
-                                                                        26);
-                ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
-            }*/
-
-            // Make algorithm
-            algoColorEdge = new AlgorithmColorEdge(resultImage, sourceImage, red1, green1, blue1,
-                                                   red2, green2, blue2);
-
-            // This is very important. Adding this object as a listener
-            // allows the algorithm to notify this object when it
-            // has completed or failed. See algorithm performed event.
-            // This is made possible by implementing
-            // AlgorithmedPerformed interface
-            algoColorEdge.addListener(this);
-            
-            createProgressBar(sourceImage.getImageName(), algoColorEdge);
-            
-            setVisible(false); // Hide dialog
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish
-                // to still have user interface work fast.
-                if (algoColorEdge.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-
-                algoColorEdge.run();
-            }
-        } catch (OutOfMemoryError x) {
-            MipavUtil.displayError("Dialog LocalNormalization: unable to allocate enough memory");
-
-            if (resultImage != null) {
-                resultImage.disposeLocal(); // Clean up memory of result image
-                resultImage = null;
-            }
-
-            return;
-        }
-        // }
-        /*else {  // displayLoc == REPLACE        (2D)
-         */
-        
-    } // end callAlgorithm()
+    private JPanel buildOkayCancelPanel() {
+        return buildButtons();
+    }
 
     /**
      * Builds a new JTextField, with the given String, sets its font (to MipavUtil.font12), sets the foreground colour
@@ -571,14 +593,15 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
      */
     private boolean setVariables() {
         int imageMax = 255;
+
         if (sourceImage.getType() == ModelStorageBase.ARGB_USHORT) {
             imageMax = 65535;
         }
-        
+
         try {
             red1 = Integer.parseInt(red1Text.getText());
         } catch (NullPointerException npe) {
-            MipavUtil.displayError("No value!  Value must be >= 0"); 
+            MipavUtil.displayError("No value!  Value must be >= 0");
             red1Text.requestFocus();
             red1Text.selectAll(); // doesn't really do anything since the object is empty
 
@@ -586,25 +609,25 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         }
 
         if (red1 < 0) {
-            MipavUtil.displayError("Value must be >= 0"); 
+            MipavUtil.displayError("Value must be >= 0");
             red1Text.requestFocus();
-            red1Text.selectAll(); 
+            red1Text.selectAll();
 
             return false;
         }
-        
+
         if (red1 > imageMax) {
-            MipavUtil.displayError("Value must be <= " + imageMax); 
+            MipavUtil.displayError("Value must be <= " + imageMax);
             red1Text.requestFocus();
-            red1Text.selectAll(); 
+            red1Text.selectAll();
 
             return false;
         }
-        
+
         try {
             green1 = Integer.parseInt(green1Text.getText());
         } catch (NullPointerException npe) {
-            MipavUtil.displayError("No value!  Value must be >= 0"); 
+            MipavUtil.displayError("No value!  Value must be >= 0");
             green1Text.requestFocus();
             green1Text.selectAll(); // doesn't really do anything since the object is empty
 
@@ -612,25 +635,25 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         }
 
         if (green1 < 0) {
-            MipavUtil.displayError("Value must be >= 0"); 
+            MipavUtil.displayError("Value must be >= 0");
             green1Text.requestFocus();
-            green1Text.selectAll(); 
+            green1Text.selectAll();
 
             return false;
         }
-        
+
         if (green1 > imageMax) {
-            MipavUtil.displayError("Value must be <= " + imageMax); 
+            MipavUtil.displayError("Value must be <= " + imageMax);
             green1Text.requestFocus();
-            green1Text.selectAll(); 
+            green1Text.selectAll();
 
             return false;
         }
-        
+
         try {
             blue1 = Integer.parseInt(blue1Text.getText());
         } catch (NullPointerException npe) {
-            MipavUtil.displayError("No value!  Value must be >= 0"); 
+            MipavUtil.displayError("No value!  Value must be >= 0");
             blue1Text.requestFocus();
             blue1Text.selectAll(); // doesn't really do anything since the object is empty
 
@@ -638,25 +661,25 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         }
 
         if (blue1 < 0) {
-            MipavUtil.displayError("Value must be >= 0"); 
+            MipavUtil.displayError("Value must be >= 0");
             blue1Text.requestFocus();
-            blue1Text.selectAll(); 
+            blue1Text.selectAll();
 
             return false;
         }
-        
+
         if (blue1 > imageMax) {
-            MipavUtil.displayError("Value must be <= " + imageMax); 
+            MipavUtil.displayError("Value must be <= " + imageMax);
             blue1Text.requestFocus();
-            blue1Text.selectAll(); 
+            blue1Text.selectAll();
 
             return false;
         }
-        
+
         try {
             red2 = Integer.parseInt(red2Text.getText());
         } catch (NullPointerException npe) {
-            MipavUtil.displayError("No value!  Value must be >= 0"); 
+            MipavUtil.displayError("No value!  Value must be >= 0");
             red2Text.requestFocus();
             red2Text.selectAll(); // doesn't really do anything since the object is empty
 
@@ -664,25 +687,25 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         }
 
         if (red2 < 0) {
-            MipavUtil.displayError("Value must be >= 0"); 
+            MipavUtil.displayError("Value must be >= 0");
             red2Text.requestFocus();
-            red2Text.selectAll(); 
+            red2Text.selectAll();
 
             return false;
         }
-        
+
         if (red2 > imageMax) {
-            MipavUtil.displayError("Value must be <= " + imageMax); 
+            MipavUtil.displayError("Value must be <= " + imageMax);
             red2Text.requestFocus();
-            red2Text.selectAll(); 
+            red2Text.selectAll();
 
             return false;
         }
-        
+
         try {
             green2 = Integer.parseInt(green2Text.getText());
         } catch (NullPointerException npe) {
-            MipavUtil.displayError("No value!  Value must be >= 0"); 
+            MipavUtil.displayError("No value!  Value must be >= 0");
             green2Text.requestFocus();
             green2Text.selectAll(); // doesn't really do anything since the object is empty
 
@@ -690,25 +713,25 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         }
 
         if (green2 < 0) {
-            MipavUtil.displayError("Value must be >= 0"); 
+            MipavUtil.displayError("Value must be >= 0");
             green2Text.requestFocus();
-            green2Text.selectAll(); 
+            green2Text.selectAll();
 
             return false;
         }
-        
+
         if (green2 > imageMax) {
-            MipavUtil.displayError("Value must be <= " + imageMax); 
+            MipavUtil.displayError("Value must be <= " + imageMax);
             green2Text.requestFocus();
-            green2Text.selectAll(); 
+            green2Text.selectAll();
 
             return false;
         }
-        
+
         try {
             blue2 = Integer.parseInt(blue2Text.getText());
         } catch (NullPointerException npe) {
-            MipavUtil.displayError("No value!  Value must be >= 0"); 
+            MipavUtil.displayError("No value!  Value must be >= 0");
             blue2Text.requestFocus();
             blue2Text.selectAll(); // doesn't really do anything since the object is empty
 
@@ -716,21 +739,21 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         }
 
         if (blue2 < 0) {
-            MipavUtil.displayError("Value must be >= 0"); 
+            MipavUtil.displayError("Value must be >= 0");
             blue2Text.requestFocus();
-            blue2Text.selectAll(); 
+            blue2Text.selectAll();
 
             return false;
         }
-        
+
         if (blue2 > imageMax) {
-            MipavUtil.displayError("Value must be <= " + imageMax); 
+            MipavUtil.displayError("Value must be <= " + imageMax);
             blue2Text.requestFocus();
-            blue2Text.selectAll(); 
+            blue2Text.selectAll();
 
             return false;
         }
-        
+
         return true;
     }
 }

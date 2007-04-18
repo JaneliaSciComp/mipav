@@ -4,15 +4,11 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
-import gov.nih.mipav.view.components.JPanelColorChannels;
-import gov.nih.mipav.view.components.JPanelSigmas;
-import gov.nih.mipav.view.components.PanelManager;
-import gov.nih.mipav.view.components.WidgetFactory;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -43,6 +39,9 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
+    private JPanelColorChannels colorChannelPanel;
+
+    /** DOCUMENT ME! */
     private AlgorithmGaussianBlurITK gaussianBlurAlgo;
 
     /** DOCUMENT ME! */
@@ -55,22 +54,19 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
     private JCheckBox image25DCheckbox;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputOptionsPanel;
+
+    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
+
+    /** DOCUMENT ME! */
+    private JPanelSigmas sigmaPanel;
 
     /** DOCUMENT ME! */
     private String[] titles;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
-    /** DOCUMENT ME! */
-    private JPanelColorChannels colorChannelPanel;
-    
-    /** DOCUMENT ME! */
-    private JPanelAlgorithmOutputOptions outputOptionsPanel;
-    
-    /** DOCUMENT ME! */
-    private JPanelSigmas sigmaPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -127,6 +123,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -202,7 +199,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
         if (delim.equals("")) {
             delim = " ";
         }
-        
+
         String str = new String();
         str += outputOptionsPanel.isProcessWholeImageSet() + delim;
         str += image25D + delim;
@@ -252,12 +249,12 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
         if ((defaultsString != null) && (outputOptionsPanel != null)) {
 
             try {
-                //Preferences.debug(defaultsString);
+                // Preferences.debug(defaultsString);
 
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                
+
                 outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-                
+
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
                 sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
                 sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
@@ -282,8 +279,8 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + sigmaPanel.isResolutionCorrectionEnabled() + "," +
-                                           outputOptionsPanel.isOutputNewImageSet());
+        String defaultsString = new String(getParameterString(",") + "," + sigmaPanel.isResolutionCorrectionEnabled() +
+                                           "," + outputOptionsPanel.isOutputNewImageSet());
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
@@ -313,11 +310,11 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
 
                     // Make result image
                     if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
                     } else {
 
                         // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
@@ -343,9 +340,9 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gaussianBlurAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), gaussianBlurAlgo);
-                    
+
                     gaussianBlurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -391,7 +388,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gaussianBlurAlgo.addListener(this);
                     createProgressBar(image.getImageName(), gaussianBlurAlgo);
-                    
+
                     gaussianBlurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -444,11 +441,11 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
 
                     // Make result image
                     if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
                     } else {
 
                         // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
@@ -480,9 +477,9 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gaussianBlurAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), gaussianBlurAlgo);
-                    
+
                     gaussianBlurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -526,9 +523,9 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gaussianBlurAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), gaussianBlurAlgo);
-                    
+
                     gaussianBlurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -575,6 +572,48 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
     }
 
     /**
+     * Perform any actions required after the running of the algorithm is complete.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputOptionsPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
+        sigmaPanel = new JPanelSigmas(image);
+        colorChannelPanel = new JPanelColorChannels(image);
+
+        scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        scriptParameters.setSigmasGUI(sigmaPanel);
+        scriptParameters.setColorOptionsGUI(colorChannelPanel);
+    }
+
+    /**
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     *
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
+        scriptParameters.storeSigmas(sigmaPanel);
+        scriptParameters.storeColorOptions(colorChannelPanel);
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -582,7 +621,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
 
         setTitle("Gaussian Blur");
         getContentPane().setLayout(new BorderLayout());
-        
+
         sigmaPanel = new JPanelSigmas(image);
 
         image25DCheckbox = WidgetFactory.buildCheckBox("Process each slice independently (2.5D)", false, this);
@@ -619,6 +658,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+
         if (image25DCheckbox.isSelected()) {
             image25D = true;
         } else {
@@ -630,46 +670,5 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
         }
 
         return true;
-    }
-    
-    /**
-     * Perform any actions required after the running of the algorithm is complete.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputOptionsPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-
-    /**
-     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-
-        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
-        sigmaPanel = new JPanelSigmas(image);
-        colorChannelPanel = new JPanelColorChannels(image);
-        
-        scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        scriptParameters.setSigmasGUI(sigmaPanel);
-        scriptParameters.setColorOptionsGUI(colorChannelPanel);
-    }
-
-    /**
-     * Store the parameters from the dialog to record the execution of this algorithm.
-     * 
-     * @throws  ParserException  If there is a problem creating one of the new parameters.
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
-
-        scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
-        scriptParameters.storeSigmas(sigmaPanel);
-        scriptParameters.storeColorOptions(colorChannelPanel);
     }
 }

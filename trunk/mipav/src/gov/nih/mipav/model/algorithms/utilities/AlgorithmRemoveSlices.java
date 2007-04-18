@@ -197,7 +197,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         // create a resultImage to hold the results in temporarily.  At the end
         // of processing the resultBuffer will be exported from the resultImage and
         // imported to the srcImage.
-        resultImage = new ModelImage(srcImage.getType(), newExtents, "RemoveSlicesTemp", srcImage.getUserInterface());
+        resultImage = new ModelImage(srcImage.getType(), newExtents, "RemoveSlicesTemp");
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             tDestOffset = getOffset(newNDims, newExtents, colorFactor, t);

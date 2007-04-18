@@ -513,7 +513,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
             try {
 
                 if (outputType == AlgorithmThresholdDual.BINARY_TYPE) {
-                    resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, name, userInterface);
+                    resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, name);
                 } else {
 
                     // resultImage      = new ModelImage(image.getType(), destExtents, " Threshold", userInterface);

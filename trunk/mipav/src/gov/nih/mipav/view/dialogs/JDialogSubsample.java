@@ -215,8 +215,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         setVisible(false);
 
         // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
-        resultImage = new ModelImage(image.getType(), newExtents, image.getImageName() + "_subsample_" + denom,
-                                     userInterface);
+        resultImage = new ModelImage(image.getType(), newExtents, image.getImageName() + "_subsample_" + denom);
 
         algoSub = new AlgorithmSubsample(image, resultImage, newExtents, sigmas, processIndep, doVOI, xfrm);
 

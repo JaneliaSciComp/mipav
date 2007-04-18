@@ -281,7 +281,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                 try {
 
                     // Make result image of float type
-                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                     // resultImage = (ModelImage)image.clone();
                     resultImage.setImageName(name);
@@ -391,7 +391,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                 try {
 
                     // Make result image of float type
-                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                     // resultImage = (ModelImage)image.clone();
                     resultImage.setImageName(name);

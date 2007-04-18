@@ -493,7 +493,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
             int[] extents = new int[2];
             extents[0] = bin1;
             extents[1] = bin2;
-            resultImage = new ModelImage(ModelStorageBase.DOUBLE, extents, name, firstImage.getUserInterface());
+            resultImage = new ModelImage(ModelStorageBase.DOUBLE, extents, name);
 
             // Make algorithm
             if (firstImage.isColorImage()) {

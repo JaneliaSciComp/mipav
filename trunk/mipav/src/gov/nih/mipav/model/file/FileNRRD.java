@@ -2106,7 +2106,7 @@ public class FileNRRD extends FileBase {
         if (autoSequence || fileNameSequence) {
 
             try {
-                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(), UI);
+                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
             } catch (OutOfMemoryError error) {
                 throw (error);
             }
@@ -2191,7 +2191,7 @@ public class FileNRRD extends FileBase {
             }
 
             try {
-                subImage = new ModelImage(fileInfo.getDataType(), subExtents, "subImage", UI);
+                subImage = new ModelImage(fileInfo.getDataType(), subExtents, "subImage");
             } catch (OutOfMemoryError error) {
                 throw (error);
             }
@@ -2468,9 +2468,9 @@ public class FileNRRD extends FileBase {
                     }
 
                     image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] },
-                                           fileInfo.getFileName(), UI);
+                                           fileInfo.getFileName());
                 } else {
-                    image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(), UI);
+                    image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
                 }
             } catch (OutOfMemoryError error) {
                 throw (error);

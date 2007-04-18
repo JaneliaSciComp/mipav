@@ -120,7 +120,7 @@ public class JDialogCaptureScreens extends JDialogBase {
             extents[2] = numSlices;
             pixels = new int[extents[0] * extents[1]];
             bufferSize = 4 * extents[0] * extents[1];
-            testImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture", userInterface);
+            testImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture");
             buffer = new short[bufferSize];
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("JDialogScreenCapture: unable to allocate enough memory for RGB image");

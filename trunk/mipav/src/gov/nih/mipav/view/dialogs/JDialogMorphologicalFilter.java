@@ -8,7 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -27,7 +27,8 @@ import javax.swing.*;
  * @author   William Gandler
  * @see      AlgorithmMorphologicalFilter
  */
-public class JDialogMorphologicalFilter extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogMorphologicalFilter extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -41,7 +42,8 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private boolean image25D = false;
-    
+
+    /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
 
     /** DOCUMENT ME! */
@@ -55,6 +57,9 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private AlgorithmMorphologicalFilter mfAlgo;
+
+    /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -86,8 +91,6 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
-    private JPanelAlgorithmOutputOptions outputPanel;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -212,46 +215,6 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        
-        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
-        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_size_x", sizeX));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_size_y", sizeY));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_size_z", sizeZ));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        setSizeX(scriptParameters.getParams().getInt("filter_size_x"));
-        setSizeY(scriptParameters.getParams().getInt("filter_size_y"));
-        setSizeZ(scriptParameters.getParams().getInt("filter_size_z"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     // *******************************************************************
     // ************************* Item Events ****************************
@@ -266,6 +229,7 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
         Object source = event.getSource();
 
         if (source == image25DCheckbox) {
+
             if (image25DCheckbox.isSelected()) {
                 labelSizeZ.setEnabled(false); // is not relevant
                 textSizeZ.setEnabled(false);
@@ -297,6 +261,7 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
 
                 outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
             } catch (Exception ex) {
+
                 // since there was a problem parsing the defaults string, start over with the original defaults
                 Preferences.debug("Resetting defaults for dialog: " + getDialogName());
                 Preferences.removeProperty(getDialogName());
@@ -311,14 +276,14 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
      */
     public void saveDefaults() {
         String delim = ",";
-        
+
         String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
         defaultsString += image25D + delim;
         defaultsString += sizeX + delim;
         defaultsString += sizeY + delim;
         defaultsString += sizeZ + delim;
         defaultsString += outputPanel.isOutputNewImageSet();
-        
+
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
@@ -377,7 +342,7 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                 try {
 
                     // Make result image of float type
-                    resultImage = new ModelImage(image.getType(), image.getExtents(), name, userInterface);
+                    resultImage = new ModelImage(image.getType(), image.getExtents(), name);
 
                     // resultImage = (ModelImage)image.clone();
                     // resultImage.setImageName(name);
@@ -389,15 +354,16 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                      * "1.2.840.34379.17",         16 ); // bogus Implementation UID made up by Matt ( (FileInfoDicom) (
                      * resultImage.getFileInfo( 0 ) ) ).setValue( "0002,0013", "MIPAV--NIH", 10 ); //}*/
                     // Make algorithm
-                    mfAlgo = new AlgorithmMorphologicalFilter(resultImage, image, sizes, outputPanel.isProcessWholeImageSet(), false);
+                    mfAlgo = new AlgorithmMorphologicalFilter(resultImage, image, sizes,
+                                                              outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mfAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), mfAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -426,7 +392,8 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    mfAlgo = new AlgorithmMorphologicalFilter(image, sizes, outputPanel.isProcessWholeImageSet(), false);
+                    mfAlgo = new AlgorithmMorphologicalFilter(image, sizes, outputPanel.isProcessWholeImageSet(),
+                                                              false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -434,7 +401,7 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                     mfAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), mfAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -495,7 +462,8 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                      * // bogus Implementation UID made up by Matt      ( (FileInfoDicom) ( resultImage.getFileInfo( i )
                      * ) ).setValue( "0002,0013", "MIPAV--NIH", 10 ); //  } }*/
                     // Make algorithm
-                    mfAlgo = new AlgorithmMorphologicalFilter(resultImage, image, sizes, outputPanel.isProcessWholeImageSet(), image25D);
+                    mfAlgo = new AlgorithmMorphologicalFilter(resultImage, image, sizes,
+                                                              outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -503,7 +471,7 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                     mfAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), mfAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -531,7 +499,8 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                 try {
 
                     // Make algorithm
-                    mfAlgo = new AlgorithmMorphologicalFilter(image, sizes, outputPanel.isProcessWholeImageSet(), image25D);
+                    mfAlgo = new AlgorithmMorphologicalFilter(image, sizes, outputPanel.isProcessWholeImageSet(),
+                                                              image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -539,7 +508,7 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                     mfAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), mfAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -575,6 +544,47 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
             }
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setSizeX(scriptParameters.getParams().getInt("filter_size_x"));
+        setSizeY(scriptParameters.getParams().getInt("filter_size_y"));
+        setSizeZ(scriptParameters.getParams().getInt("filter_size_z"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_size_x", sizeX));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_size_y", sizeY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_size_z", sizeZ));
     }
 
     /**

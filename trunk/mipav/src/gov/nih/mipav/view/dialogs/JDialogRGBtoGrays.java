@@ -74,7 +74,7 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
      *
      * @param  event  Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {}
+    public void actionPerformed(ActionEvent event) { }
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -87,6 +87,7 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmRGBtoGrays) {
 
             if ((RGBAlgo.isCompleted() == true) && (resultImageB != null)) {
@@ -145,17 +146,17 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
         try {
 
             if (imageA.getType() == ModelStorageBase.ARGB) {
-                resultImageR = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayR", userInterface);
-                resultImageG = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayG", userInterface);
-                resultImageB = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayB", userInterface);
+                resultImageR = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayR");
+                resultImageG = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayG");
+                resultImageB = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayB");
             } else if (imageA.getType() == ModelStorageBase.ARGB_USHORT) {
-                resultImageR = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayR", userInterface);
-                resultImageG = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayG", userInterface);
-                resultImageB = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayB", userInterface);
+                resultImageR = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayR");
+                resultImageG = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayG");
+                resultImageB = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayB");
             } else if (imageA.getType() == ModelStorageBase.ARGB_FLOAT) {
-                resultImageR = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayR", userInterface);
-                resultImageG = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayG", userInterface);
-                resultImageB = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayB", userInterface);
+                resultImageR = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayR");
+                resultImageG = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayG");
+                resultImageB = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayB");
             }
 
             // Make algorithm
@@ -167,7 +168,7 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
             RGBAlgo.addListener(this);
 
             createProgressBar(imageA.getImageName(), RGBAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -230,18 +231,16 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
     public ModelImage getResultImageR() {
         return resultImageR;
     }
-    
+
     /**
-     * {@inheritDoc}
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(imageA);
-        
-        AlgorithmParameters.storeImageInRecorder(getResultImageR());
-        AlgorithmParameters.storeImageInRecorder(getResultImageG());
-        AlgorithmParameters.storeImageInRecorder(getResultImageB());
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImageR());
+        AlgorithmParameters.storeImageInRunner(getResultImageG());
+        AlgorithmParameters.storeImageInRunner(getResultImageB());
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -250,13 +249,15 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
         userInterface = imageA.getUserInterface();
         parentFrame = imageA.getParentFrame();
     }
-    
+
     /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
+     * {@inheritDoc}
      */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImageR());
-        AlgorithmParameters.storeImageInRunner(getResultImageG());
-        AlgorithmParameters.storeImageInRunner(getResultImageB());
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+
+        AlgorithmParameters.storeImageInRecorder(getResultImageR());
+        AlgorithmParameters.storeImageInRecorder(getResultImageG());
+        AlgorithmParameters.storeImageInRecorder(getResultImageB());
     }
 }

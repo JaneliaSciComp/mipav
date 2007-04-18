@@ -119,7 +119,6 @@ public class FileImageXML extends FileXML {
      * @param  _UI    User interface.
      * @param  fName  File name.
      * @param  fDir   File directory.
-     * @param  show   Flag for showing the progress bar.
      */
     public FileImageXML(ViewUserInterface _UI, String fName, String fDir) {
         super(_UI, fName, fDir);
@@ -444,10 +443,10 @@ public class FileImageXML extends FileXML {
                 }
 
                 image = new ModelImage(((FileInfoImageXML) fileInfo).getDataType(),
-                                       new int[] { extents[0], extents[1] }, fileInfo.getFileName(), UI);
+                                       new int[] { extents[0], extents[1] }, fileInfo.getFileName());
             } else {
                 image = new ModelImage(((FileInfoImageXML) fileInfo).getDataType(),
-                                       ((FileInfoImageXML) fileInfo).getExtents(), fileInfo.getFileName(), UI);
+                                       ((FileInfoImageXML) fileInfo).getExtents(), fileInfo.getFileName());
             }
 
             if ((historyVector != null) && !historyVector.isEmpty()) {
@@ -467,8 +466,7 @@ public class FileImageXML extends FileXML {
             String readFileName = new String(imageFileName);
 
             // imageFileName was parsed from the "image".xml file.
-            rawFile = new FileRaw(fileDir + File.separator + readFileName, (FileInfoImageXML) fileInfo,
-                                  FileBase.READ);
+            rawFile = new FileRaw(fileDir + File.separator + readFileName, (FileInfoImageXML) fileInfo, FileBase.READ);
 
             int offset = 0;
 
@@ -540,11 +538,13 @@ public class FileImageXML extends FileXML {
             }
 
         } catch (IOException error) {
+
             //
             image.disposeLocal();
             throw new IOException("FileXML: " + error);
         } catch (OutOfMemoryError e) {
             image.disposeLocal();
+
             //
             throw (e);
         }
@@ -606,7 +606,8 @@ public class FileImageXML extends FileXML {
                 imageFileName = FileUtility.stripExtension(fileName) + ".raw";
             }
 
-            rawFile = new FileRaw(imageFileName, fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo, FileBase.READ);
+            rawFile = new FileRaw(imageFileName, fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo,
+                                  FileBase.READ);
             rawFile.readImage(buffer, 0, ((FileInfoImageXML) fileInfo).getDataType());
 
             if (fileInfo.getFileName().indexOf(".img") == (fileInfo.getFileName().length() - 4)) {
@@ -1332,7 +1333,7 @@ public class FileImageXML extends FileXML {
 
                 img.exportSliceXY(img.getExtents()[2] / 2, data);
                 tempImage = new ModelImage(img.getType(), new int[] { img.getExtents()[0], img.getExtents()[1] },
-                                           "thumbnail", img.getUserInterface());
+                                           "thumbnail");
                 tempImage.importData(0, data, true);
                 // temp.getFileInfo()[0].setResolutions(image.getFileInfo()[0].getResolutions()[0], 0);
                 // temp.getFileInfo()[0].setResolutions(image.getFileInfo()[0].getResolutions()[1], 1); new
@@ -1395,7 +1396,7 @@ public class FileImageXML extends FileXML {
             // if the image is not color, convert it to color
             if (!thumbnailImage.isColorImage()) {
                 ModelImage tempConcat = new ModelImage(ModelStorageBase.ARGB, thumbnailImage.getExtents(),
-                                                       "thumbnail_rgb", img.getUserInterface());
+                                                       "thumbnail_rgb");
                 AlgorithmRGBConcat algoRGB = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage, thumbnailImage,
                                                                     tempConcat, true);
 
@@ -1461,7 +1462,7 @@ public class FileImageXML extends FileXML {
         if (additionalSets != null) {
             writeSet(bw, additionalSets);
         }
-     
+
 
         // if the Talairach Transform Info is not null, write it
         // into the XML header
@@ -1601,7 +1602,7 @@ public class FileImageXML extends FileXML {
 
             rawFile = new FileRaw(img.getFileInfo(0));
             linkProgress(rawFile);
-            
+
             if (img.getNDims() == 3) {
                 rawFile.writeImage3DTo2D(img, options, rawExtension);
                 writeHeader3DTo2D(img, fhName, fileDir, options);
@@ -1627,7 +1628,7 @@ public class FileImageXML extends FileXML {
                 FileRaw rawFile;
 
                 rawFile = new FileRaw(fileName, fileDir, img.getFileInfo(0), FileBase.READ_WRITE);
-             
+
                 linkProgress(rawFile);
 
                 // options.setFileName(rawName);
@@ -1951,6 +1952,7 @@ public class FileImageXML extends FileXML {
             for (int i = 0; i < image.getExtents()[2]; i++) {
                 xmlInfo[i].setOrigin(origin);
                 axisOrient = xmlInfo[i].getAxisOrientation(2);
+
                 if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_P2A_TYPE) ||
                         (axisOrient == FileInfoBase.ORI_I2S_TYPE) || (axisOrient == FileInfoBase.ORI_UNKNOWN_TYPE)) {
                     origin[2] += resolutions[2];

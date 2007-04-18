@@ -133,7 +133,7 @@ public class FileTMG extends FileBase {
             imgExtents[1] = getUnsignedShort(endianess);
             fileInfo.setExtents(imgExtents);
 
-            image = new ModelImage(dataType, imgExtents, fileInfo.getFileName(), UI);
+            image = new ModelImage(dataType, imgExtents, fileInfo.getFileName());
 
 
             imgResols[0] = (float) rangeX / (float) imgExtents[0];

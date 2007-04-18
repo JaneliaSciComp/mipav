@@ -464,8 +464,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                 return;
             }
 
-            destImage = new ModelImage(imageA.getType(), destExtents, makeImageName(imageA.getImageName(), "_concat"),
-                                       userInterface);
+            destImage = new ModelImage(imageA.getType(), destExtents, makeImageName(imageA.getImageName(), "_concat"));
 
             try {
 

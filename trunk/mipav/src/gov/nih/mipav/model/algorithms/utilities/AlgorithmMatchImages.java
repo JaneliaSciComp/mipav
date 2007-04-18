@@ -654,12 +654,12 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         constructLog();
 
         fireProgressStateChanged("Retrieving data ...");
-        
+
         // Get data
         getData();
 
         fireProgressStateChanged(10, null, "Matching colors ...");
-        
+
         // Match image colors
         matchColors();
 
@@ -685,6 +685,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         }
 
         fireProgressStateChanged(40, null, " Matching units ...");
+
         // Match resolutions
         checkUnits();
 
@@ -719,7 +720,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
         // Match origins.
         if (doOrigins) {
-        	fireProgressStateChanged(80, null, " Matching origins ...");
+            fireProgressStateChanged(80, null, " Matching origins ...");
             Preferences.debug("\nMatching origins...\n");
             matchOrigins();
         }
@@ -744,13 +745,13 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         }
 
         if (doDimensions) {
-        	fireProgressStateChanged(90, null, " Matching dimensions ...");
+            fireProgressStateChanged(90, null, " Matching dimensions ...");
             Preferences.debug("\nMatching dimensions...\n");
             matchDimensions();
         }
 
         fireProgressStateChanged(100);
-        
+
         setCompleted(true);
     }
 
@@ -780,60 +781,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
      */
     public void setPadValue(int pad) {
         padValue = (double) pad;
-    }
-
-    /**
-     * Update fileInfoBase.
-     *
-     * @param  image  DOCUMENT ME!
-     * @param  dim    DOCUMENT ME!
-     * @param  res    DOCUMENT ME!
-     * @param  start  DOCUMENT ME!
-     * @param  tID    DOCUMENT ME!
-     */
-    private void updateFileInfo(ModelImage image, int[] dim, double[] res, double[] start, int tID) {
-        int[] tempI3 = new int[nDims];
-        float[] tempF3 = new float[nDims];
-        float slicePos;
-        int lastSlice;
-        FileInfoBase fileInfoB;
-
-        if (nDims == 3) {
-            lastSlice = dim[2];
-            slicePos = (float) start[2];
-        } else {
-            lastSlice = 1;
-            slicePos = 0.0f;
-        }
-
-        // Set file properties of result image.
-        for (int i = 0; i < nDims; i++) {
-            tempI3[i] = dim[i];
-        }
-
-        for (int i = 0; i < nDims; i++) {
-            tempF3[i] = (float) res[i];
-        }
-
-        image.setExtents(tempI3);
-
-        for (int i = 0; i < lastSlice; i++) {
-            fileInfoB = (FileInfoBase) image.getFileInfo(i);
-            fileInfoB.setResolutions(tempF3);
-
-            if (nDims == 3) {
-                fileInfoB.setSliceThickness(tempF3[2]);
-            }
-
-            fileInfoB.setOrigin((float) start[0], 0);
-            fileInfoB.setOrigin((float) start[1], 1);
-            fileInfoB.setOrigin(slicePos, 2);
-            fileInfoB.setTransformID(tID);
-
-            if (nDims == 3) {
-                slicePos += (float) (sign2LPS_A[2] * res[2]);
-            } // if (nDims == 3)
-        }
     }
 
     /**
@@ -1794,7 +1741,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             Preferences.debug("Original ImageB signs for LPS: " + sign2LPS_B[0] + ", " + sign2LPS_B[1] + "\n");
         } // else nDims == 2
 
-        //  Get image origin before transformation.
+        // Get image origin before transformation.
         for (i = 0; i < nDims; i++) {
             origLPS_A[i] = (double) sourceImgA.getFileInfo(0).getOrigin(i);
             origLPS_B[i] = (double) sourceImgB.getFileInfo(0).getOrigin(i);
@@ -2228,7 +2175,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         } // else nDims == 2
 
         resultImgB.disposeLocal();
-        resultImgB = new ModelImage(resultType, newDimB, nameB, sourceImgB.getUserInterface());
+        resultImgB = new ModelImage(resultType, newDimB, nameB);
 
         try {
             resultImgB.importData(0, buffer2, true);
@@ -2318,15 +2265,16 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         if (nDims == 3) {
             Preferences.debug("Final ImageB origins in LPS order: " + (float) origLPS_B[0] + ", " +
                               (float) origLPS_B[1] + ", " + (float) origLPS_B[2] + "\n");
-            ViewUserInterface.getReference().setDataText("Image B origins (in LPS order) after matching orientation: " + (float) origLPS_B[0] + ", " +
-                           (float) origLPS_B[1] + ", " + (float) origLPS_B[2] + "\n");
+            ViewUserInterface.getReference().setDataText("Image B origins (in LPS order) after matching orientation: " +
+                                                         (float) origLPS_B[0] + ", " + (float) origLPS_B[1] + ", " +
+                                                         (float) origLPS_B[2] + "\n");
             resultImgB.setImageOrientation(sourceImgA.getImageOrientation());
         } // if (nDims == 3)
         else { // nDims == 2
             Preferences.debug("Final ImageB origins in LPS order: " + (float) origLPS_B[0] + ", " +
                               (float) origLPS_B[1] + "\n");
-            ViewUserInterface.getReference().setDataText("Image B origins (in LPS order) after matching orientation: " + (float) origLPS_B[0] + ", " +
-                           (float) origLPS_B[1] + "\n");
+            ViewUserInterface.getReference().setDataText("Image B origins (in LPS order) after matching orientation: " +
+                                                         (float) origLPS_B[0] + ", " + (float) origLPS_B[1] + "\n");
         } // else nDims == 2
 
         // Update file info for result images.
@@ -2749,6 +2697,60 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             updateFileInfo(resultImgB, dimB, resB, origLPS_B, tIDB);
         } else {
             Preferences.debug("No need to resample imageB.  Already at minimum resolution.\n\n");
+        }
+    }
+
+    /**
+     * Update fileInfoBase.
+     *
+     * @param  image  DOCUMENT ME!
+     * @param  dim    DOCUMENT ME!
+     * @param  res    DOCUMENT ME!
+     * @param  start  DOCUMENT ME!
+     * @param  tID    DOCUMENT ME!
+     */
+    private void updateFileInfo(ModelImage image, int[] dim, double[] res, double[] start, int tID) {
+        int[] tempI3 = new int[nDims];
+        float[] tempF3 = new float[nDims];
+        float slicePos;
+        int lastSlice;
+        FileInfoBase fileInfoB;
+
+        if (nDims == 3) {
+            lastSlice = dim[2];
+            slicePos = (float) start[2];
+        } else {
+            lastSlice = 1;
+            slicePos = 0.0f;
+        }
+
+        // Set file properties of result image.
+        for (int i = 0; i < nDims; i++) {
+            tempI3[i] = dim[i];
+        }
+
+        for (int i = 0; i < nDims; i++) {
+            tempF3[i] = (float) res[i];
+        }
+
+        image.setExtents(tempI3);
+
+        for (int i = 0; i < lastSlice; i++) {
+            fileInfoB = (FileInfoBase) image.getFileInfo(i);
+            fileInfoB.setResolutions(tempF3);
+
+            if (nDims == 3) {
+                fileInfoB.setSliceThickness(tempF3[2]);
+            }
+
+            fileInfoB.setOrigin((float) start[0], 0);
+            fileInfoB.setOrigin((float) start[1], 1);
+            fileInfoB.setOrigin(slicePos, 2);
+            fileInfoB.setTransformID(tID);
+
+            if (nDims == 3) {
+                slicePos += (float) (sign2LPS_A[2] * res[2]);
+            } // if (nDims == 3)
         }
     }
 

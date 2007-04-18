@@ -759,7 +759,7 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                     } // 4D
 
                     // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
-                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName(), userInterface);
+                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
 
                     // if dimensions have not been changed, copy the fileinfo core information into the appropriate
                     // result image fileinfos

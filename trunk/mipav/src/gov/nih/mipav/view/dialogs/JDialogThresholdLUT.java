@@ -207,7 +207,7 @@ public class JDialogThresholdLUT extends JDialogBase {
                     destExtents[1] = image.getExtents()[1]; // Y dim
 
                     try {
-                        resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, " Threshold", userInterface);
+                        resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, " Threshold");
                         thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, 0, AlgorithmThresholdDual.BINARY_TYPE, 
                         		true, true);
                         thresholdAlgo.run();
@@ -241,7 +241,7 @@ public class JDialogThresholdLUT extends JDialogBase {
                     destExtents[2] = image.getExtents()[2];
 
                     try {
-                        resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, " Threshold", userInterface);
+                        resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, " Threshold");
 
                         // Make algorithm
                         thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, 0, AlgorithmThresholdDual.BINARY_TYPE, true, true);

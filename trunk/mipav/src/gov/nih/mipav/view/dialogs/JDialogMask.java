@@ -304,7 +304,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
 
                 // Make result image of source type
                 resultImage = new ModelImage(image.getType(), image.getExtents(),
-                                             makeImageName(image.getImageName(), "_mask"), userInterface);
+                                             makeImageName(image.getImageName(), "_mask"));
 
                 // Make algorithm
                 if (image.isColorImage()) {

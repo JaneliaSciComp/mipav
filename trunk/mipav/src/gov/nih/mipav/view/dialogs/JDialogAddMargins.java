@@ -487,8 +487,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
                     destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
 
-                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName(),
-                                                 image.getUserInterface());
+                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
                     resultImage.setMatrix(image.getMatrix());
 
                     // resultImage.
@@ -548,8 +547,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                         destExtents[3] = image.getExtents()[3];
                     }
 
-                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName(),
-                                                 image.getUserInterface());
+                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
                     resultImage.setMatrix(image.getMatrix());
 
                     // preload this image with the minimum of the source image

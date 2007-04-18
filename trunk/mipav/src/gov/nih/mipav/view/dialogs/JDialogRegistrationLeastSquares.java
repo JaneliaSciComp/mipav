@@ -159,7 +159,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                 if (DIM == 2) {
                     int[] extents = new int[] { xdimA, ydimA };
                     float[] resolutions = new float[] { xresA, yresA };
-                    resultImage = new ModelImage(matchImage.getType(), extents, name, matchImage.getUserInterface());
+                    resultImage = new ModelImage(matchImage.getType(), extents, name);
                     resultImage.getFileInfo(0).setResolutions(resolutions);
 
                     if (matchImage.isColorImage() == false) {
@@ -179,7 +179,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
 
                     int[] extents = new int[] { xdimA, ydimA, zdimA };
                     float[] resolutions = new float[] { xresA, yresA, zresA };
-                    resultImage = new ModelImage(matchImage.getType(), extents, name, matchImage.getUserInterface());
+                    resultImage = new ModelImage(matchImage.getType(), extents, name);
 
                     for (int i = 0; i < zdimA; i++) {
                         resultImage.getFileInfo(i).setResolutions(resolutions);

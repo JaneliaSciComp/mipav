@@ -229,8 +229,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
 
                 try {
                     resultImage[iNumber++] = new ModelImage(srcImage.getType(), srcImage.getExtents(),
-                                                            srcImage.getImageName() + "_PCFiltered",
-                                                            srcImage.getUserInterface());
+                                                            srcImage.getImageName() + "_PCFiltered");
                 } catch (OutOfMemoryError e) {
 
                     for (int i = 0; i < resultImage.length; i++) {
@@ -262,8 +261,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
 
                 try {
                     resultImage[iNumber] = new ModelImage(imageType, destExtents,
-                                                          srcImage.getImageName() + "_PCAveraged",
-                                                          srcImage.getUserInterface());
+                                                          srcImage.getImageName() + "_PCAveraged");
                 } catch (OutOfMemoryError e) {
 
                     for (int i = 0; i < resultImage.length; i++) {

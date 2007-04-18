@@ -345,7 +345,7 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
             }
 
             // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
-            resultImage = new ModelImage(image.getType(), destExtents, image.getImageName(), image.getUserInterface());
+            resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
 
             // Make algorithm:
             insertSliceAlgo = new AlgorithmInsertSlice(image, resultImage, insertSlice, sliceType, insertedImage);

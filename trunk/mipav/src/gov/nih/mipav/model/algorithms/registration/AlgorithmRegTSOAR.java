@@ -228,9 +228,8 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 }
             } // if (doGraph)
 
-            imageRef = new ModelImage(srcImage.getType(), volumeExtents, "Reference image",
-                                      srcImage.getUserInterface());
-            imageInput = new ModelImage(srcImage.getType(), volumeExtents, "Input image", srcImage.getUserInterface());
+            imageRef = new ModelImage(srcImage.getType(), volumeExtents, "Reference image");
+            imageInput = new ModelImage(srcImage.getType(), volumeExtents, "Input image");
 
             float[] buffer = new float[imageRef.getSize()];
 

@@ -227,13 +227,13 @@ public class FileCheshireVOI extends FileBase {
 
         progressBar = new ViewJProgressBar("Creating VOIs", "Reading " + fileName, 0, 100, true, null, null);
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        
-        
+
+
         fireProgressStateChanged(0);
 
         String name = JDialogBase.makeImageName(image.getImageName(), "_result");
 
-        maskImage = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), name, image.getUserInterface());
+        maskImage = new ModelImage(ModelStorageBase.BYTE, image.getExtents(), name);
         xDim = image.getExtents()[0];
         yDim = image.getExtents()[1];
         sliceSize = xDim * yDim;
@@ -275,9 +275,10 @@ public class FileCheshireVOI extends FileBase {
 
                 if (valueByte != matchUserWndLevels[jj]) {
                     MipavUtil.displayError("FileCheshireVOI: Expected serWndLevels not found following U");
-                    
+
                     raFile.close();
                     progressBar.setVisible(false);
+
                     return null;
                 }
             } // for (jj = 1; jj <= (matchUserWndLevels.length - 1); jj++)
@@ -293,9 +294,10 @@ public class FileCheshireVOI extends FileBase {
 
                 if (valueByte != matchoverlays[jj]) {
                     MipavUtil.displayError("FileCheshireVOI: Expected verlays not found following o");
-                    
+
                     raFile.close();
                     progressBar.setVisible(false);
+
                     return null;
                 }
             } // for (jj = 1; jj <= (matchoverlays.length - 1); jj++)
@@ -310,9 +312,10 @@ public class FileCheshireVOI extends FileBase {
 
                 if (valueByte != matchsticks[jj]) {
                     MipavUtil.displayError("FileCheshireVOI: Expected ticks does not found following s");
-                    
+
                     raFile.close();
                     progressBar.setVisible(false);
+
                     return null;
                 }
             } // for (jj = 1; jj <= (matchsticks.length - 1); jj++)
@@ -339,10 +342,11 @@ public class FileCheshireVOI extends FileBase {
             } // while ((notFound) && (currentLocation < (fileLength - 24)))
 
             if (notFound) {
-                Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: "+file.getName());
-                
+                Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: " + file.getName());
+
                 raFile.close();
                 progressBar.setVisible(false);
+
                 return null;
             } else {
                 nextSliceAddress = raFile.getFilePointer() + 24;
@@ -351,10 +355,11 @@ public class FileCheshireVOI extends FileBase {
         else {
 
             // No UserWndLevels or overlays or sticks found in files
-            Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: "+file.getName());
-            
+            Preferences.debug("FileCheshireVOI: No VOIs found in overlay file: " + file.getName());
+
             raFile.close();
             progressBar.setVisible(false);
+
             return null;
         }
 
@@ -423,15 +428,15 @@ public class FileCheshireVOI extends FileBase {
         /*  raFile.seek(0x24L);
          * // Comment out the chain starting at 0x24 as this produced a contour in 10080-2-dwi-bo-sw.oly // in slice 15
          * that was not seen in the Cheshire program. nextSliceAddress = getInt(endianess); while (nextSliceAddress >=
-         * 0x90L) {   sliceAddress[numberSlices++] = nextSliceAddress;   raFile.seek(nextSliceAddress);
-         * nextSliceAddress = getInt(endianess);   checkOffset = true;   for (kk = 0; kk < numberSlices; kk++) {
-         * if ((nextSliceAddress >= sliceAddress[kk]) && (nextSliceAddress <= (sliceAddress[kk] +
-         *                              sliceOffset[kk]))) {           // Now feeding into an already found slice
-         * address           nextSliceAddress = 0;           checkOffset = false;       }   }   while(checkOffset) {
-         *   checkOffset = false;       for (jj = 0; jj < numberSlices; jj++) {           if (nextSliceAddress ==
-         * (sliceAddress[jj] + sliceOffset[jj] + 4)) {               sliceOffset[jj] = sliceOffset[jj]+ 4;
-         * raFile.seek(nextSliceAddress);               nextSliceAddress = getInt(endianess);               checkOffset
-         * = true;           } // if (nextSliceAddress == (sliceAddress[jj] + sliceOffset[jj] + 4))       } // for (jj =
+         * 0x90L) {   sliceAddress[numberSlices++] = nextSliceAddress;   raFile.seek(nextSliceAddress); nextSliceAddress
+         * = getInt(endianess);   checkOffset = true;   for (kk = 0; kk < numberSlices; kk++) { if ((nextSliceAddress >=
+         * sliceAddress[kk]) && (nextSliceAddress <= (sliceAddress[kk] +                             sliceOffset[kk])))
+         * {           // Now feeding into an already found slice address           nextSliceAddress = 0;
+         * checkOffset = false;       }   }   while(checkOffset) {  checkOffset = false;       for (jj = 0; jj <
+         * numberSlices; jj++) {           if (nextSliceAddress == (sliceAddress[jj] + sliceOffset[jj] + 4)) {
+         *     sliceOffset[jj] = sliceOffset[jj]+ 4; raFile.seek(nextSliceAddress);               nextSliceAddress =
+         * getInt(endianess);               checkOffset = true;           } // if (nextSliceAddress == (sliceAddress[jj]
+         * + sliceOffset[jj] + 4))       } // for (jj =
          * 0; jj < numberSlices; jj++)   } // while(checkOffset)} // while (nextSliceAddress >= 0x90L) */
 
         fireProgressStateChanged("Reading slice by slice");
@@ -444,9 +449,10 @@ public class FileCheshireVOI extends FileBase {
 
             if (slice >= zDim) {
                 MipavUtil.displayError("Impossible slice number of " + slice);
-                
+
                 raFile.close();
                 progressBar.setVisible(false);
+
                 return null;
             }
 
@@ -534,9 +540,10 @@ public class FileCheshireVOI extends FileBase {
 
                     if (valueInt != upperLeftY) {
                         MipavUtil.displayError("Second upperLeftY does not match first");
-                        
+
                         raFile.close();
                         progressBar.setVisible(false);
+
                         return null;
                     }
 
@@ -544,9 +551,10 @@ public class FileCheshireVOI extends FileBase {
 
                     if (valueInt != upperLeftX) {
                         MipavUtil.displayError("Second upperLeftX does not match first");
-                        
+
                         raFile.close();
                         progressBar.setVisible(false);
+
                         return null;
                     }
 
@@ -554,9 +562,10 @@ public class FileCheshireVOI extends FileBase {
 
                     if (valueInt != lowerRightY) {
                         MipavUtil.displayError("Second lowerRightY doesn not match first");
-                        
+
                         raFile.close();
                         progressBar.setVisible(false);
+
                         return null;
                     }
 
@@ -564,9 +573,10 @@ public class FileCheshireVOI extends FileBase {
 
                     if (valueInt != lowerRightX) {
                         MipavUtil.displayError("Second lowerRightX does not match first");
-                        
+
                         raFile.close();
                         progressBar.setVisible(false);
+
                         return null;
                     }
 
@@ -612,7 +622,7 @@ public class FileCheshireVOI extends FileBase {
                                             if ((maskBuffer[position] != 0) &&
                                                     (maskBuffer[position] != (byte) VOINumber)) {
                                                 MipavUtil.displayError("Overlapping VOIs in slice = " + slice);
-                                                
+
                                                 currentLocation = raFile.getFilePointer();
                                                 Preferences.debug("following bytes current location = " +
                                                                   currentLocation);
@@ -654,12 +664,13 @@ public class FileCheshireVOI extends FileBase {
                                             if ((maskBuffer[position] != 0) &&
                                                     (maskBuffer[position] != (byte) VOINumber)) {
                                                 MipavUtil.displayError("Overlapping VOIs in slice = " + slice);
-                                                
+
                                                 currentLocation = raFile.getFilePointer();
                                                 Preferences.debug("multiplier bytes current location = " +
                                                                   currentLocation);
                                                 raFile.close();
                                                 progressBar.setVisible(false);
+
                                                 return null;
                                             } else {
                                                 maskBuffer[position] = (byte) VOINumber;
@@ -705,8 +716,9 @@ public class FileCheshireVOI extends FileBase {
             maskAll = new BitSet(length);
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("FileCheshireVOI: Out of memory.");
-            
+
             progressBar.setVisible(false);
+
             return null;
         }
 
@@ -792,8 +804,9 @@ public class FileCheshireVOI extends FileBase {
 
                             if (grayScaleNumber >= 1000) {
                                 MipavUtil.displayError("File Cheshire VOI Extraction: Impossibly high >= 1000 gray scales detected");
-                                    
+
                                 progressBar.setVisible(false);
+
                                 return null;
                             } // end of if (grayScaleNumber >= 1000)
                         } // end of if (newGrayScale)
@@ -826,8 +839,8 @@ public class FileCheshireVOI extends FileBase {
 
         fireProgressStateChanged(100);
         progressBar.setVisible(false);
-        
-        
+
+
         return voi;
 
 
@@ -909,8 +922,8 @@ public class FileCheshireVOI extends FileBase {
                     // Since each pixel in imgBuffer is copied as a 4 pixel square in
                     // expImgBuffer, there must always be at least 2 neighbors.
                     /* if ((neighbors == 0)|| (neighbors == 1)) {
-                     * if ((xt + 1) < xDimE) {  maskAll.set(xt + 1 + xDimE*yt); } if ((yt + 1) < yDimE) {
-                     * maskAll.set(xt + xDimE*(yt+1)); } if (((xt + 1) < xDimE) && ((yt + 1) < yDimE)) {  maskAll.set(xt
+                     * if ((xt + 1) < xDimE) {  maskAll.set(xt + 1 + xDimE*yt); } if ((yt + 1) < yDimE) { maskAll.set(xt
+                     * + xDimE*(yt+1)); } if (((xt + 1) < xDimE) && ((yt + 1) < yDimE)) {  maskAll.set(xt
                      * + 1 + xDimE*(yt + 1)); } } // end of if ((neighbors == 0) || (neighbors == 1)) */
                     if (neighbors == 2) {
 

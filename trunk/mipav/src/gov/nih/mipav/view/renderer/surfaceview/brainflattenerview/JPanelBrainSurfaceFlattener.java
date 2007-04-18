@@ -6,15 +6,12 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
-import gov.nih.mipav.view.renderer.surfaceview.*;
 import gov.nih.mipav.view.renderer.surfaceview.flythruview.*;
 
 import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-
-import java.text.*;
 
 import javax.swing.*;
 
@@ -434,7 +431,7 @@ public class JPanelBrainSurfaceFlattener extends JPanelRendererBase implements V
         float fMax = m_kView.getMaxCurvature();
 
         int[] iExtents = { 256, 256 };
-        m_kLUTImageA = new ModelImage(ModelStorageBase.FLOAT, iExtents, "temp", ViewUserInterface.getReference());
+        m_kLUTImageA = new ModelImage(ModelStorageBase.FLOAT, iExtents, "temp");
         m_kLUTImageA.addImageDisplayListener(this);
 
         for (int i = 0; i < 256; i++) {

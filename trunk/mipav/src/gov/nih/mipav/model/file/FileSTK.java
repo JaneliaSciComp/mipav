@@ -456,9 +456,9 @@ public class FileSTK extends FileBase {
 
                 if (one) {
                     image = new ModelImage(fileInfo.getDataType(), new int[] { imgExtents[0], imgExtents[1] },
-                                           fileInfo.getFileName(), UI);
+                                           fileInfo.getFileName());
                 } else {
-                    image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName(), UI);
+                    image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
                 }
             }
 

@@ -1821,9 +1821,9 @@ public class FileNIFTI extends FileBase {
                 }
 
                 image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] },
-                                       fileInfo.getFileName(), UI);
+                                       fileInfo.getFileName());
             } else {
-                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(), UI);
+                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
             }
         } catch (OutOfMemoryError error) {
             throw (error);

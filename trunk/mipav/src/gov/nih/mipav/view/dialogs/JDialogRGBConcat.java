@@ -388,7 +388,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
             try {
                 System.gc();
                 resultImage = new ModelImage(ModelImage.ARGB, imageR.getExtents(),
-                                             makeImageName(imageR.getImageName(), "_rgb"), userInterface);
+                                             makeImageName(imageR.getImageName(), "_rgb"));
 
                 // Make algorithm
                 mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode);
@@ -605,8 +605,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
     private boolean setVariables() {
         String tmpStr;
         ViewUserInterface UI;
-        blank = new ModelImage(ModelImage.SHORT, imageR.getExtents(), makeImageName(imageR.getImageName(), ""),
-                               userInterface);
+        blank = new ModelImage(ModelImage.SHORT, imageR.getExtents(), makeImageName(imageR.getImageName(), ""));
 
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;

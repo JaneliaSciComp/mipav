@@ -176,7 +176,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         } else if ((runMethod == 2) || (runMethod == 3)) {
 
             try {
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name, userInterface);
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name);
 
                 if (image.getNDims() == 2) {
                     sigmas = new float[2];

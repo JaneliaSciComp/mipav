@@ -1,56 +1,41 @@
 package gov.nih.mipav.model.file;
 
+
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.Toolkit;
 import java.io.*;
+
 import java.util.zip.*;
 
 
 /**
- * The class reads MGH files.  The 4 by 4
- * matrix in MGH transforms x,y,z indexes to (right, anterior, superior) coordinates where +x = Right, +y = Anterior, +z = Superior. In
- * MIPAV the 4 by 4 matrix does not imply the axis orientations.</p>
- * 
- * The MGH definition is:
- * [right]       [xr yr zr] [       xsize * x]   [rorigin]
- * [anterior] =  [xa ya za] [       ysize * y] + [aorigin]
- * [superior]    [xs ys zs] [       zsize * z]   [sorigin]
- * Now in going to MIPAV a change must occur.
- * MGH has L->R and P->A while MIPAV uses R->L and A->P, so this would cause
- * xr, yr, zr, rorigin, xa, ya, za, and aorigin to be multiplied by -1.
- * cr, ca, and cs refer to the center point of the scanner coordinate system.
- 
- A 284 byte header always precedes the data buffer
- In version 1 if the goodRASFlag <= 0, then only the first 30 bytes are read.  
- If the goodRASFlag > 0, then the first 90 bytes are read
- 
-  Immediately after the data buffer other optional data structures may be found:
-  They are:
-  Recovery time in milliseconds float
-  Flip angle in radians float
-  Echo time in milliseconds float
-  Inversion time in millseconds float
-  Field of view in millimeters float
-  Comment about fov field from Nick Schmansky:
-  The FoV field should be ignored.  In discussing this field with Bruce Fischl, and
-  looking more closely at the code, it appears to be a field with a long and 
-  inconsistent usage history (in how it is set and where the data originates).
-  We do not rely on it in our binaries.
-  Lastly, tags including the Talairach transform file name and a list of commands used
-  to create this data(provenance info) may be present.
-  
-  I am not reading the contents of the Talairach transform file for 3 reasons:
-  1.) This information is probably not very useful.
-  2.) Every sample file that I obtained from MGH gave the same name: talairach.xfm.
-      If this name is always used, then it is impossible to tell which .mgh file it
-      corresponds to.
-  3.) The Talairach transform file is a clear ascii file, so it can be easily read
-      with any number of common programs.
- </p>
+ * The class reads MGH files. The 4 by 4 matrix in MGH transforms x,y,z indexes to (right, anterior, superior)
+ * coordinates where +x = Right, +y = Anterior, +z = Superior. In MIPAV the 4 by 4 matrix does not imply the axis
+ * orientations.
+ *
+ * <p>The MGH definition is: [right] [xr yr zr] [ xsize * x] [rorigin] [anterior] = [xa ya za] [ ysize * y] + [aorigin]
+ * [superior] [xs ys zs] [ zsize * z] [sorigin] Now in going to MIPAV a change must occur. MGH has L->R and P->A while
+ * MIPAV uses R->L and A->P, so this would cause xr, yr, zr, rorigin, xa, ya, za, and aorigin to be multiplied by -1.
+ * cr, ca, and cs refer to the center point of the scanner coordinate system.</p>
+ *
+ * <p>A 284 byte header always precedes the data buffer In version 1 if the goodRASFlag <= 0, then only the first 30
+ * bytes are read. If the goodRASFlag > 0, then the first 90 bytes are read</p>
+ *
+ * <p>Immediately after the data buffer other optional data structures may be found: They are: Recovery time in
+ * milliseconds float Flip angle in radians float Echo time in milliseconds float Inversion time in millseconds float
+ * Field of view in millimeters float Comment about fov field from Nick Schmansky: The FoV field should be ignored. In
+ * discussing this field with Bruce Fischl, and looking more closely at the code, it appears to be a field with a long
+ * and inconsistent usage history (in how it is set and where the data originates). We do not rely on it in our
+ * binaries. Lastly, tags including the Talairach transform file name and a list of commands used to create this
+ * data(provenance info) may be present.</p>
+ *
+ * <p>I am not reading the contents of the Talairach transform file for 3 reasons: 1.) This information is probably not
+ * very useful. 2.) Every sample file that I obtained from MGH gave the same name: talairach.xfm. If this name is always
+ * used, then it is impossible to tell which .mgh file it corresponds to. 3.) The Talairach transform file is a clear
+ * ascii file, so it can be easily read with any number of common programs.</p>
  *
  * @see  FileIO
  * @see  FileInfoMGH
@@ -58,138 +43,187 @@ import java.util.zip.*;
  */
 
 public class FileMGH extends FileBase {
-    //~ Static fields/initializers -------------------------------------------
-    
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private static final int MRI_UCHAR = 0;
-    
+
+    /** DOCUMENT ME! */
     private static final int MRI_INT = 1;
-    
+
+    /** DOCUMENT ME! */
     private static final int MRI_LONG = 2;
-    
+
+    /** DOCUMENT ME! */
     private static final int MRI_FLOAT = 3;
-    
+
+    /** DOCUMENT ME! */
     private static final int MRI_SHORT = 4;
-    
+
+    /** DOCUMENT ME! */
     private static final int MRI_BITMAP = 5;
-    
+
+    /** DOCUMENT ME! */
     private static final int MRI_TENSOR = 6;
-    
+
+    /** DOCUMENT ME! */
     private static final int TAG_OLD_COLORTABLE = 1;
-    
+
+    /** DOCUMENT ME! */
     private static final int TAG_OLD_USEREALRAS = 2;
-    
+
+    /** DOCUMENT ME! */
     private static final int TAG_CMDLINE = 3;
-    
+
+    /** DOCUMENT ME! */
     private static final int TAG_OLD_SURF_GEOM = 20;
-    
+
+    /** DOCUMENT ME! */
     private static final int TAG_OLD_MGH_XFORM = 30;
-    
+
+    /** DOCUMENT ME! */
     private static final int TAG_MGH_XFORM = 31;
-    
+
+    /** DOCUMENT ME! */
     private static final int MAX_CMDS = 1000;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+
+
+    String[] cmdlines = new String[MAX_CMDS];
+
+    /** DOCUMENT ME! */
+    int ncmds = 0;
 
     /** DOCUMENT ME! */
     private int[] axisOrientation;
 
     /** DOCUMENT ME! */
-    private String fileDir;
-    
+    private int bytesPerValue;
+
+    /** DOCUMENT ME! */
+    private float ca;
+
+    /** DOCUMENT ME! */
+    private float cr;
+
+    /** DOCUMENT ME! */
+    private float cs;
+
+    /** DOCUMENT ME! */
+    private int dataType = ModelStorageBase.UBYTE;
+
+    /** DOCUMENT ME! */
+    private int depth;
+
+    /** DOCUMENT ME! */
+    private int dof;
+
+    /** DOCUMENT ME! */
+    private int[] extents;
+
+    /** DOCUMENT ME! */
     private File file;
-    
-    private boolean gunzip;
-    
-    private FileInputStream fis;
+
+    /** DOCUMENT ME! */
+    private String fileDir;
 
     /** DOCUMENT ME! */
     private FileInfoMGH fileInfo = null;
 
     /** DOCUMENT ME! */
-    private String fileName;
-    
     private long fileLength;
-    
-    /** Present version number is 1 */
-    private int version;
-    
-    private int width;
-    
-    private int height;
-    
-    private int depth;
-    
-    private int nFrames;
-    
-    private int extents[];
-    
-    private int mghType;
-    
-    private int dataType = ModelStorageBase.UBYTE;
-    
-    private int bytesPerValue;
-    
-    private int dof;
-    
-    private short goodRASFlag;
-    
-    private float resolutions[] = new float[3];
-    
-    private float xr;
-    
-    private float xa;
-    
-    private float xs;
-    
-    private float yr;
-    
-    private float ya;
-    
-    private float ys;
-    
-    private float zr;
-    
-    private float za;
-    
-    private float zs;
-    
-    private float cr;
-    
-    private float ca;
-    
-    private float cs;
-    
-    private long optionalStructuresLocation;
-    
-    private float tr;
-    
+
+    /** DOCUMENT ME! */
+    private String fileName;
+
+    /** DOCUMENT ME! */
+    private FileInputStream fis;
+
+    /** DOCUMENT ME! */
     private float flipAngle;
-    
-    private float te;
-    
-    private float ti;
-    
+
+    /** DOCUMENT ME! */
     private float fov;
-    
-    private TransMatrix matrix = new TransMatrix(4);
+
+    /** DOCUMENT ME! */
+    private short goodRASFlag;
+
+    /** DOCUMENT ME! */
+    private boolean gunzip;
+
+    /** DOCUMENT ME! */
+    private int height;
 
     /** DOCUMENT ME! */
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private float[] origin;
-    
-    
-    /** DOCUMENT ME! */
-    
-    
-    String cmdlines[] = new String[MAX_CMDS];
+    private TransMatrix matrix = new TransMatrix(4);
 
-    int ncmds = 0;
+    /** DOCUMENT ME! */
+    private int mghType;
+
+    /** DOCUMENT ME! */
+    private int nFrames;
+
+    /** DOCUMENT ME! */
+    private long optionalStructuresLocation;
+
+    /** DOCUMENT ME! */
+    private float[] origin;
+
+    /** DOCUMENT ME! */
+    private float[] resolutions = new float[3];
+
+    /** DOCUMENT ME! */
+    private float te;
+
+    /** DOCUMENT ME! */
+    private float ti;
+
+    /** DOCUMENT ME! */
+    private float tr;
 
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
 
-    
+    /** Present version number is 1. */
+    private int version;
+
+    /** DOCUMENT ME! */
+    private int width;
+
+    /** DOCUMENT ME! */
+    private float xa;
+
+    /** DOCUMENT ME! */
+    private float xr;
+
+    /** DOCUMENT ME! */
+    private float xs;
+
+    /** DOCUMENT ME! */
+    private float ya;
+
+    /** DOCUMENT ME! */
+    private float yr;
+
+    /** DOCUMENT ME! */
+    private float ys;
+
+    /** DOCUMENT ME! */
+    private float za;
+
+    /** DOCUMENT ME! */
+    private float zr;
+
+    /** DOCUMENT ME! */
+    private float zs;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -198,7 +232,6 @@ public class FileMGH extends FileBase {
      * @param  _UI    User interface.
      * @param  fName  File name.
      * @param  fDir   File directory.
-     * @param  show   Flag for showing the progress bar.
      */
     public FileMGH(ViewUserInterface _UI, String fName, String fDir) {
         UI = _UI;
@@ -207,8 +240,6 @@ public class FileMGH extends FileBase {
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
-   
 
     /**
      * Returns the FileInfoMGH read from the file.
@@ -242,12 +273,12 @@ public class FileMGH extends FileBase {
         int i;
         boolean okay;
         String str;
-        byte buf[];
+        byte[] buf;
 
         index = fileName.lastIndexOf(".");
 
         if ((fileName.substring(index + 1).equalsIgnoreCase("mgz")) ||
-            (fileName.substring(index + 1).equalsIgnoreCase("gz"))) {
+                (fileName.substring(index + 1).equalsIgnoreCase("gz"))) {
             gunzip = true;
         } else {
             gunzip = false;
@@ -258,16 +289,17 @@ public class FileMGH extends FileBase {
         if (gunzip) {
             int totalBytesRead = 0;
             fireProgressStateChanged("Uncompressing GZIP file ...");
-            
+
             fis = new FileInputStream(file);
 
             GZIPInputStream gzin = new GZIPInputStream(new BufferedInputStream(fis));
-            if (fileName.substring(index+1).equalsIgnoreCase("mgz")) {
-                 fileName = fileName.substring(0,index).concat(".mgh");
+
+            if (fileName.substring(index + 1).equalsIgnoreCase("mgz")) {
+                fileName = fileName.substring(0, index).concat(".mgh");
+            } else {
+                fileName = fileName.substring(0, index);
             }
-            else {
-                fileName = fileName.substring(0,index);
-            }
+
             String uncompressedName = fileDir + fileName;
             FileOutputStream out = new FileOutputStream(uncompressedName);
             byte[] buffer = new byte[256];
@@ -294,23 +326,23 @@ public class FileMGH extends FileBase {
         // MGH file are always BIG_ENDIAN
         endianess = BIG_ENDIAN;
         fileInfo.setEndianess(BIG_ENDIAN);
-       
+
         // Current value of version number is 1
         version = getInt(endianess); // 0
         fileInfo.setVersion(version);
-        
+
         // First dimension of the image buffer
         width = getInt(endianess); // 4
-        
+
         // Second dimension of the image buffer
         height = getInt(endianess); // 8
-        
+
         // Third dimension of the image buffer
         depth = getInt(endianess); // 12
-        
+
         // Fourth dimension of the image buffer
         nFrames = getInt(endianess); // 16
-        
+
         if (nFrames > 1) {
             extents = new int[4];
             extents[0] = width;
@@ -323,36 +355,43 @@ public class FileMGH extends FileBase {
             extents[0] = width;
             extents[1] = height;
             extents[2] = depth;
-        }
-        else {
+        } else {
             extents = new int[2];
             extents[0] = width;
             extents[1] = height;
         }
+
         fileInfo.setExtents(extents);
-        
+
         mghType = getInt(endianess); // 20
+
         switch (mghType) {
+
             case MRI_UCHAR:
                 dataType = ModelStorageBase.UBYTE;
                 bytesPerValue = 1;
                 break;
+
             case MRI_SHORT:
                 dataType = ModelStorageBase.SHORT;
                 bytesPerValue = 2;
                 break;
+
             case MRI_INT:
                 dataType = ModelStorageBase.INTEGER;
                 bytesPerValue = 4;
                 break;
+
             case MRI_LONG:
                 dataType = ModelStorageBase.LONG;
                 bytesPerValue = 8;
                 break;
+
             case MRI_FLOAT:
                 dataType = ModelStorageBase.FLOAT;
                 bytesPerValue = 4;
                 break;
+
             case MRI_TENSOR:
                 dataType = ModelStorageBase.FLOAT;
                 bytesPerValue = 4;
@@ -365,26 +404,31 @@ public class FileMGH extends FileBase {
                     extents[3] = nFrames;
                     fileInfo.setExtents(extents);
                 } // if (nFrames != 9)
+
                 break;
+
             case MRI_BITMAP:
                 Preferences.debug("Cannot handle type = MRI_BITMAP");
+
                 return false;
         } // switch (mghType)
-         // raFile.close();
+        // raFile.close();
+
         fileInfo.setDataType(dataType);
-        
+
         // Degrees of freedom
         dof = getInt(endianess); // 24
         fileInfo.setDOF(dof);
-        
-        goodRASFlag = (short)getSignedShort(endianess); // 28
+
+        goodRASFlag = (short) getSignedShort(endianess); // 28
+
         // The x, y, and z variables define the rotational part
         // of the affine transform.
-        // The "c_ras" values define where the volume center 
+        // The "c_ras" values define where the volume center
         // sits in the RAS coordinate system.  That is, c_r,
         // c_a, c_s are the RAS coordinate values of a voxel
         // point (width/2, height/2, depth/2).  The convention
-        // used is that the center of a voxel corresponds to 
+        // used is that the center of a voxel corresponds to
         // the integer voxel coordinate position.
         if (goodRASFlag > 0) {
             resolutions[0] = getFloat(endianess); // 30
@@ -404,6 +448,7 @@ public class FileMGH extends FileBase {
             cs = getFloat(endianess); // 86
         } // if (goodRASFlag > 0)
         else {
+
             // Default coronal orientation with z axis to the left,
             // y axis inferior, and z axis anterior
             resolutions[0] = 1.0f;
@@ -422,27 +467,27 @@ public class FileMGH extends FileBase {
             ca = 0.0f;
             cs = 0.0f;
         }
+
         fileInfo.setResolutions(resolutions);
-        matrix.setMatrix((double)-xr*resolutions[0], 0, 0);
-        matrix.setMatrix((double)-yr*resolutions[1], 0, 1);
-        matrix.setMatrix((double)-zr*resolutions[2], 0, 2);
-        
-        matrix.setMatrix((double)-xa*resolutions[0], 1, 0);
-        matrix.setMatrix((double)-ya*resolutions[1], 1, 1);
-        matrix.setMatrix((double)-za*resolutions[2], 1, 2);
-        
-        matrix.setMatrix((double)xs*resolutions[0], 2, 0);
-        matrix.setMatrix((double)ys*resolutions[1], 2, 1);
-        matrix.setMatrix((double)zs*resolutions[2], 2, 2);
-        
-        
+        matrix.setMatrix((double) -xr * resolutions[0], 0, 0);
+        matrix.setMatrix((double) -yr * resolutions[1], 0, 1);
+        matrix.setMatrix((double) -zr * resolutions[2], 0, 2);
+
+        matrix.setMatrix((double) -xa * resolutions[0], 1, 0);
+        matrix.setMatrix((double) -ya * resolutions[1], 1, 1);
+        matrix.setMatrix((double) -za * resolutions[2], 1, 2);
+
+        matrix.setMatrix((double) xs * resolutions[0], 2, 0);
+        matrix.setMatrix((double) ys * resolutions[1], 2, 1);
+        matrix.setMatrix((double) zs * resolutions[2], 2, 2);
+
+
         axisOrientation = getAxisOrientation(matrix);
         Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
                           axisOrientation[2] + "\n");
         fileInfo.setAxisOrientation(axisOrientation);
-        
-        if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) ||
-                (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
+
+        if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) || (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
             fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
         } else if ((axisOrientation[2] == FileInfoBase.ORI_A2P_TYPE) ||
                        (axisOrientation[2] == FileInfoBase.ORI_P2A_TYPE)) {
@@ -450,171 +495,192 @@ public class FileMGH extends FileBase {
         } else {
             fileInfo.setImageOrientation(FileInfoBase.AXIAL);
         }
-        
+
         origin = new float[3];
+
         for (j = 0; j < 3; j++) {
 
-            if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE){
-                origin[j] = -(width/2.0f)*resolutions[0]; 
-            }
-            else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
-                origin[j] = (width/2.0f)*resolutions[0];    
-            }
-            else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){
-                origin[j] = -(height/2.0f)*resolutions[1];      
-            }
-            else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
-                origin[j] = (height/2.0f)*resolutions[1];
-            }
-            else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){
-                origin[j] = -(depth/2.0f)*resolutions[2];
-            }
-            else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
-                origin[j] = (depth/2.0f)*resolutions[2];
+            if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
+                origin[j] = -(width / 2.0f) * resolutions[0];
+            } else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
+                origin[j] = (width / 2.0f) * resolutions[0];
+            } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
+                origin[j] = -(height / 2.0f) * resolutions[1];
+            } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
+                origin[j] = (height / 2.0f) * resolutions[1];
+            } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
+                origin[j] = -(depth / 2.0f) * resolutions[2];
+            } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
+                origin[j] = (depth / 2.0f) * resolutions[2];
             }
         }
-        
+
         fileInfo.setOrigin(origin);
         matrix.setMatrix((double) origin[0], 0, 3);
         matrix.setMatrix((double) origin[1], 1, 3);
         matrix.setMatrix((double) origin[2], 2, 3);
         Preferences.debug("matrix = \n" + matrix + "\n");
         fileInfo.setMatrix(matrix);
-        
+
         fileInfo.setLeftCenter(-cr);
         fileInfo.setPosteriorCenter(-ca);
         fileInfo.setSuperiorCenter(cs);
-        
-        optionalStructuresLocation = 284 + bytesPerValue*width*height*depth*nFrames;
-        if (fileLength >= optionalStructuresLocation + 4) {
+
+        optionalStructuresLocation = 284 + (bytesPerValue * width * height * depth * nFrames);
+
+        if (fileLength >= (optionalStructuresLocation + 4)) {
             raFile.seek(optionalStructuresLocation);
+
             // Recovery time in milliseconds
             tr = getFloat(endianess);
             fileInfo.setTR(tr);
         }
-        
-        if (fileLength >= optionalStructuresLocation + 8) {
+
+        if (fileLength >= (optionalStructuresLocation + 8)) {
+
             // Flip angle in radians
             flipAngle = getFloat(endianess);
             fileInfo.setFlipAngle(flipAngle);
         }
-        
-        if (fileLength >= optionalStructuresLocation + 12) {
+
+        if (fileLength >= (optionalStructuresLocation + 12)) {
+
             // Echo time in milliseconds
             te = getFloat(endianess);
             fileInfo.setTE(te);
         }
-        
-        if (fileLength >= optionalStructuresLocation + 16) {
+
+        if (fileLength >= (optionalStructuresLocation + 16)) {
+
             // Inversion time in milliseconds
             ti = getFloat(endianess);
             fileInfo.setTI(ti);
         }
-        
-        if (fileLength >= optionalStructuresLocation + 20) {
+
+        if (fileLength >= (optionalStructuresLocation + 20)) {
+
             // Field of view in millimeters
             fov = getFloat(endianess);
             fileInfo.setFOV(fov);
         }
-        
+
         bytesLeft = fileLength - (optionalStructuresLocation + 20);
+
         while (bytesLeft >= 4) {
             tag = getInt(endianess);
+
             switch (tag) {
-            case 0: 
-                Preferences.debug("Tag = 0 signalling end of file read\n");
-                break;
-            case TAG_OLD_COLORTABLE:
-                Preferences.debug("TAG_OLD_COLORTABLE\n");
-                break;
-            case TAG_OLD_USEREALRAS:
-                Preferences.debug("TAG_OLD_USEREALRAS\n");
-                break;
-            case TAG_CMDLINE:
-                Preferences.debug("TAG_CMDLINE\n");
-                break;
-            case TAG_OLD_SURF_GEOM:
-                Preferences.debug("TAG_OLD_SURF_GEOM\n");
-                break;
-            case TAG_OLD_MGH_XFORM:
-                Preferences.debug("TAG_OLD_MGH_XFORM\n");
-                break;
-            case TAG_MGH_XFORM:
-                Preferences.debug("TAG_MGH_XFORM\n");
-                break;
-            default:
-                Preferences.debug("Tag = " + tag + "\n");
+
+                case 0:
+                    Preferences.debug("Tag = 0 signalling end of file read\n");
+                    break;
+
+                case TAG_OLD_COLORTABLE:
+                    Preferences.debug("TAG_OLD_COLORTABLE\n");
+                    break;
+
+                case TAG_OLD_USEREALRAS:
+                    Preferences.debug("TAG_OLD_USEREALRAS\n");
+                    break;
+
+                case TAG_CMDLINE:
+                    Preferences.debug("TAG_CMDLINE\n");
+                    break;
+
+                case TAG_OLD_SURF_GEOM:
+                    Preferences.debug("TAG_OLD_SURF_GEOM\n");
+                    break;
+
+                case TAG_OLD_MGH_XFORM:
+                    Preferences.debug("TAG_OLD_MGH_XFORM\n");
+                    break;
+
+                case TAG_MGH_XFORM:
+                    Preferences.debug("TAG_MGH_XFORM\n");
+                    break;
+
+                default:
+                    Preferences.debug("Tag = " + tag + "\n");
             }
+
             bytesLeft -= 4;
+
             if ((bytesLeft > 0) && (tag != 0)) {
-                 switch (tag) {
-                 case TAG_OLD_MGH_XFORM:
-                     pLen = getInt(endianess) - 1;
-                     bytesLeft -= 4;
-                     break;
-                 case TAG_OLD_SURF_GEOM:
-                 case TAG_OLD_USEREALRAS:
-                 case TAG_OLD_COLORTABLE:
-                     pLen = 0;
-                     break;
-                 default:
-                     pLen = getLong(endianess);
-                     bytesLeft -= 8;
-                 } // switch (tag)
-                 
-                 switch (tag) {
-                 case TAG_OLD_MGH_XFORM:
-                 case TAG_MGH_XFORM:
-                     okay = true;
-                     for (i = 0; i < pLen && okay; i++) {
-                         if (i == 0) {
-                             transformFileName = getString(1);
-                             bytesLeft -= 1;
-                         }
-                         else {
-                             str = getString(1);
-                             bytesLeft -= 1;
-                             if (str.charAt(0) == '\n') {
-                                 okay = false;
-                             }
-                             else {
-                                 transformFileName = transformFileName.concat(str);
-                             }
-                         }
-                     } // for (i = 0; i < pLen && okay; i++)
-                     Preferences.debug("Transform file name = " + transformFileName + "\n");
-                     fileInfo.setTransformFileName(transformFileName);
-                     break;
-                     
-                 case TAG_CMDLINE:
-                     if (ncmds < MAX_CMDS) {
-                         cmdlines[ncmds] = getString((int)pLen);
-                         bytesLeft -= pLen;
-                         Preferences.debug("cmdlines[" + ncmds + "] = " + cmdlines[ncmds] + "\n");
-                         ncmds++;
-                     }
-                     else {
-                         Preferences.debug("Number of comands exceeds 1000/n");
-                     }
-                     break;
-                 default:
-                     buf = new byte[(int)pLen];
-                     raFile.read(buf);
-                     bytesLeft -= pLen;
-                     buf = null;
-                 } // switch (tag)
+
+                switch (tag) {
+
+                    case TAG_OLD_MGH_XFORM:
+                        pLen = getInt(endianess) - 1;
+                        bytesLeft -= 4;
+                        break;
+
+                    case TAG_OLD_SURF_GEOM:
+                    case TAG_OLD_USEREALRAS:
+                    case TAG_OLD_COLORTABLE:
+                        pLen = 0;
+                        break;
+
+                    default:
+                        pLen = getLong(endianess);
+                        bytesLeft -= 8;
+                } // switch (tag)
+
+                switch (tag) {
+
+                    case TAG_OLD_MGH_XFORM:
+                    case TAG_MGH_XFORM:
+                        okay = true;
+                        for (i = 0; (i < pLen) && okay; i++) {
+
+                            if (i == 0) {
+                                transformFileName = getString(1);
+                                bytesLeft -= 1;
+                            } else {
+                                str = getString(1);
+                                bytesLeft -= 1;
+
+                                if (str.charAt(0) == '\n') {
+                                    okay = false;
+                                } else {
+                                    transformFileName = transformFileName.concat(str);
+                                }
+                            }
+                        } // for (i = 0; i < pLen && okay; i++)
+
+                        Preferences.debug("Transform file name = " + transformFileName + "\n");
+                        fileInfo.setTransformFileName(transformFileName);
+                        break;
+
+                    case TAG_CMDLINE:
+                        if (ncmds < MAX_CMDS) {
+                            cmdlines[ncmds] = getString((int) pLen);
+                            bytesLeft -= pLen;
+                            Preferences.debug("cmdlines[" + ncmds + "] = " + cmdlines[ncmds] + "\n");
+                            ncmds++;
+                        } else {
+                            Preferences.debug("Number of comands exceeds 1000/n");
+                        }
+
+                        break;
+
+                    default:
+                        buf = new byte[(int) pLen];
+                        raFile.read(buf);
+                        bytesLeft -= pLen;
+                        buf = null;
+                } // switch (tag)
             } // if ((bytesLeft > 0) && (tag != 0))
         } // while (bytesLeft >= 4)
-        
+
         if (ncmds > 0) {
             fileInfo.setCmdlines(cmdlines);
         }
-        
+
         raFile.close();
+
         return true; // If it got this far, it has successfully read in the header
     }
-    
-    
+
 
     /**
      * Reads a MGH image file by reading the header then making a FileRaw to read the image for all filenames in the
@@ -630,7 +696,7 @@ public class FileMGH extends FileBase {
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
         int offset;
-                      
+
         fileInfo = new FileInfoMGH(fileName, fileDir, FileUtility.MGH);
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
@@ -649,9 +715,9 @@ public class FileMGH extends FileBase {
                 }
 
                 image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] },
-                                       fileInfo.getFileName(), UI);
+                                       fileInfo.getFileName());
             } else {
-                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(), UI);
+                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
             }
         } catch (OutOfMemoryError error) {
             throw (error);
@@ -664,8 +730,7 @@ public class FileMGH extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
-                                  FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
             offset = 284;
 
@@ -677,11 +742,11 @@ public class FileMGH extends FileBase {
             }
 
             rawFile.readImage(image, offset);
-            
+
             if (one) {
                 fileInfo.setExtents(extents);
             }
-            
+
         } catch (IOException error) {
             throw new IOException("FileMGH: " + error);
         } catch (OutOfMemoryError e) {
@@ -720,7 +785,7 @@ public class FileMGH extends FileBase {
 
             offset = 284;
 
-            rawFile.readImage(buffer, offset, dataType); 
+            rawFile.readImage(buffer, offset, dataType);
             rawFile.raFile.close();
         } catch (IOException error) {
             throw new IOException("FileMGH: " + error);
@@ -731,8 +796,352 @@ public class FileMGH extends FileBase {
         return;
     }
 
-    
-    
+    /**
+     * Writes a MGH or MGZ format type image.
+     *
+     * @param      image    Image model of data to write.
+     * @param      options  options such as starting and ending slices and times
+     *
+     * @exception  IOException  if there is an error writing the file
+     */
+    public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
+        int index;
+        boolean gzip;
+        int zBegin;
+        int zEnd;
+        int tBegin;
+        int tEnd;
+        boolean endianess;
+        byte[] byteBuffer;
+        int sliceSize;
+        int z;
+        int t;
+        int zDim;
+        int numberSlices;
+        int count;
+        int j;
+        short[] shortBuffer;
+        int[] intBuffer;
+        float[] floatBuffer;
+        long[] longBuffer;
+        int tmpInt;
+
+        index = fileName.lastIndexOf(".");
+
+        if ((fileName.substring(index + 1).equalsIgnoreCase("mgz")) ||
+                (fileName.substring(index + 1).equalsIgnoreCase("gz"))) {
+            gzip = true;
+
+        } else {
+            gzip = false;
+        }
+
+        zBegin = options.getBeginSlice();
+        zEnd = options.getEndSlice();
+
+        if (image.getNDims() == 4) {
+            tBegin = options.getBeginTime();
+            tEnd = options.getEndTime();
+        } else {
+            tBegin = 0;
+            tEnd = 0;
+        }
+
+        if (gzip) {
+            file = new File(fileDir + fileName.substring(0, index + 1) + "mgh");
+        } else {
+            file = new File(fileDir + fileName);
+        }
+
+        raFile = new RandomAccessFile(file, "rw");
+
+        // Necessary so that if this is an overwritten file there isn't any
+        // junk at the end
+        raFile.setLength(0);
+
+        // MGH file are always BIG_ENDIAN
+        endianess = BIG_ENDIAN;
+        extents = image.getExtents();
+        sliceSize = extents[0] * extents[1];
+        dataType = image.getFileInfo(0).getDataType();
+        resolutions = image.getFileInfo(0).getResolutions();
+        matrix = image.getMatrix();
+
+        if (matrix == null) {
+            matrix = new TransMatrix(4);
+        }
+
+        // Current value of version number is 1
+        writeInt(1, endianess); // 0
+
+        // First dimension of the image buffer
+        writeInt(extents[0], endianess); // 4
+
+        // Second dimension of the image buffer
+        writeInt(extents[1], endianess); // 8
+
+        // Third dimension of the image buffer
+        writeInt(zEnd - zBegin + 1, endianess); // 12
+
+        // Fourth dimension of the image buffer
+        writeInt(tEnd - tBegin + 1, endianess); // 16
+
+        // Type of data
+        switch (dataType) {
+
+            case ModelStorageBase.UBYTE:
+                mghType = MRI_UCHAR;
+                break;
+
+            case ModelStorageBase.BYTE:
+            case ModelStorageBase.SHORT:
+                mghType = MRI_SHORT;
+                break;
+
+            case ModelStorageBase.USHORT:
+            case ModelStorageBase.INTEGER:
+                mghType = MRI_INT;
+                break;
+
+            case ModelStorageBase.UINTEGER:
+            case ModelStorageBase.LONG:
+                mghType = MRI_LONG;
+                break;
+
+            case ModelStorageBase.FLOAT:
+                mghType = MRI_FLOAT;
+                break;
+
+            default:
+                Preferences.debug("Cannot handle type = " + image.getFileInfo(0).getDataType() + "\n");
+                throw (new IOException("Cannot write MGH image with data type = " + image.getFileInfo(0).getDataType()));
+        } // switch (mghType)
+
+        writeInt(mghType, endianess); // 20
+
+        // Degrees of freedom
+        writeInt(0, endianess); // 24
+
+        // Good RAS flag
+        writeShort((short) 1, endianess); // 28
+
+        // The x, y, and z variables define the rotational part
+        // of the affine transform.
+        xr = -(float) matrix.get(0, 0) / resolutions[0];
+        yr = -(float) matrix.get(0, 1) / resolutions[1];
+        zr = -(float) matrix.get(0, 2) / resolutions[2];
+
+        xa = -(float) matrix.get(1, 0) / resolutions[0];
+        ya = -(float) matrix.get(1, 1) / resolutions[1];
+        za = -(float) matrix.get(1, 2) / resolutions[2];
+
+        xs = (float) matrix.get(2, 0) / resolutions[0];
+        ys = (float) matrix.get(2, 1) / resolutions[1];
+        zs = (float) matrix.get(2, 2) / resolutions[2];
+
+        writeFloat(resolutions[0], endianess); // 30
+        writeFloat(resolutions[1], endianess); // 34
+        writeFloat(resolutions[2], endianess); // 38
+        writeFloat(xr, endianess); // 42
+        writeFloat(xa, endianess); // 46
+        writeFloat(xs, endianess); // 50
+        writeFloat(yr, endianess); // 54
+        writeFloat(ya, endianess); // 58
+        writeFloat(ys, endianess); // 62
+        writeFloat(zr, endianess); // 66
+        writeFloat(za, endianess); // 70
+        writeFloat(zs, endianess); // 74
+
+        // Since in readMGH the origin value is such as to
+        // put the center at 0,0,0
+        // cr
+        writeFloat(0.0f, endianess); // 78
+
+        // ca
+        writeFloat(0.0f, endianess); // 82
+
+        // cs
+        writeFloat(0.0f, endianess); // 86
+
+        // Fill out the other 194 bytes of the 284 byte header
+        byteBuffer = new byte[194];
+        raFile.write(byteBuffer);
+
+        zDim = image.getExtents()[2];
+        numberSlices = (tEnd - tBegin + 1) * (zEnd - zBegin + 1);
+        count = 0;
+
+        switch (dataType) {
+
+            case ModelStorageBase.UBYTE:
+                byteBuffer = new byte[sliceSize];
+                for (t = tBegin; t <= tEnd; t++) {
+
+                    for (z = zBegin; z <= zEnd; z++) {
+                        fireProgressStateChanged((100 * count++) / numberSlices);
+
+                        image.exportSliceXY((t * zDim) + z, byteBuffer);
+                        raFile.write(byteBuffer);
+                    }
+                }
+
+                break;
+
+            case ModelStorageBase.BYTE:
+            case ModelStorageBase.SHORT:
+                shortBuffer = new short[sliceSize];
+                byteBuffer = new byte[2 * sliceSize];
+                for (t = 0; t <= tEnd; t++) {
+
+                    for (z = zBegin; z <= zEnd; z++) {
+                        fireProgressStateChanged((100 * count++) / numberSlices);
+
+                        image.exportSliceXY((t * zDim) + z, shortBuffer);
+
+                        for (j = 0; j < sliceSize; j++) {
+                            byteBuffer[2 * j] = (byte) (shortBuffer[j] >>> 8);
+                            byteBuffer[(2 * j) + 1] = (byte) (shortBuffer[j]);
+                        }
+
+                        raFile.write(byteBuffer);
+                    } // for (z = zBegin; z <= zEnd; z++)
+                } // for (t = tBegin; t <= tEnd; t++)
+
+                break;
+
+            case ModelStorageBase.USHORT:
+            case ModelStorageBase.INTEGER:
+                intBuffer = new int[sliceSize];
+                byteBuffer = new byte[4 * sliceSize];
+                for (t = tBegin; t <= tEnd; t++) {
+
+                    for (z = zBegin; z <= zEnd; z++) {
+                        fireProgressStateChanged((100 * count++) / numberSlices);
+
+                        image.exportSliceXY((t * zDim) + z, intBuffer);
+
+                        for (j = 0; j < sliceSize; j++) {
+                            byteBuffer[4 * j] = (byte) (intBuffer[j] >>> 24);
+                            byteBuffer[(4 * j) + 1] = (byte) (intBuffer[j] >>> 16);
+                            byteBuffer[(4 * j) + 2] = (byte) (intBuffer[j] >>> 8);
+                            byteBuffer[(4 * j) + 3] = (byte) (intBuffer[j]);
+                        }
+
+                        raFile.write(byteBuffer);
+                    } // for (z = zBegin; z <= zEnd; z++)
+                } // for (t = tBegin; t <= tEnd; t++)
+
+                break;
+
+            case ModelStorageBase.UINTEGER:
+            case ModelStorageBase.LONG:
+                longBuffer = new long[sliceSize];
+                byteBuffer = new byte[8 * sliceSize];
+                for (t = tBegin; t <= tEnd; t++) {
+
+                    for (z = zBegin; z <= zEnd; z++) {
+                        fireProgressStateChanged((100 * count++) / numberSlices);
+
+                        image.exportSliceXY((t * zDim) + z, longBuffer);
+
+                        for (j = 0; j < sliceSize; j++) {
+                            byteBuffer[8 * j] = (byte) (longBuffer[j] >>> 56);
+                            byteBuffer[(8 * j) + 1] = (byte) (longBuffer[j] >>> 48);
+                            byteBuffer[(8 * j) + 2] = (byte) (longBuffer[j] >>> 40);
+                            byteBuffer[(8 * j) + 3] = (byte) (longBuffer[j] >>> 32);
+                            byteBuffer[(8 * j) + 4] = (byte) (longBuffer[j] >>> 24);
+                            byteBuffer[(8 * j) + 5] = (byte) (longBuffer[j] >>> 16);
+                            byteBuffer[(8 * j) + 6] = (byte) (longBuffer[j] >>> 8);
+                            byteBuffer[(8 * j) + 7] = (byte) (longBuffer[j]);
+                        }
+
+                        raFile.write(byteBuffer);
+                    } // for (z = zBegin; z <= zEnd; z++)
+                } // for (t = tBegin; t <= tEnd; t++)
+
+                break;
+
+            case ModelStorageBase.FLOAT:
+                floatBuffer = new float[sliceSize];
+                byteBuffer = new byte[4 * sliceSize];
+                for (t = tBegin; t <= tEnd; t++) {
+
+                    for (z = zBegin; z <= zEnd; z++) {
+                        fireProgressStateChanged((100 * count++) / numberSlices);
+
+                        image.exportSliceXY((t * zDim) + z, floatBuffer);
+
+                        for (j = 0; j < sliceSize; j++) {
+                            tmpInt = Float.floatToIntBits(floatBuffer[j]);
+                            byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
+                            byteBuffer[(4 * j) + 1] = (byte) (tmpInt >>> 16);
+                            byteBuffer[(4 * j) + 2] = (byte) (tmpInt >>> 8);
+                            byteBuffer[(4 * j) + 3] = (byte) (tmpInt);
+                        }
+
+                        raFile.write(byteBuffer);
+                    } // for (z = zBegin; z <= zEnd; z++)
+                } // for (t = tBegin; t <= tEnd; t++)
+
+                break;
+
+
+        } // switch(dataType)
+
+        raFile.close();
+
+        if (gzip) {
+            fireProgressStateChanged("Compressing GZIP file ...");
+
+            GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(fileDir + fileName));
+
+            FileInputStream in = new FileInputStream(fileDir + fileName.substring(0, index + 1) + "mgh");
+
+            byteBuffer = new byte[1024];
+
+            int len;
+
+            while ((len = in.read(byteBuffer)) > 0) {
+                out.write(byteBuffer, 0, len);
+            }
+
+            in.close();
+            out.finish();
+            out.close();
+        } // if (gzip)
+
+    } // writeImage
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  fileInfo  -- a NIFTI file Info that has already been read
+     * @param  image     -- a ModelImage that the fileInfo needs to be attached to
+     */
+    private void attachFileInfo(FileInfoMGH fileInfo, ModelImage image) {
+
+        int[] extents = fileInfo.getExtents();
+
+        if (image.getNDims() == 2) {
+            image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
+        } else if (image.getNDims() == 3) { // If there is more than one image
+
+            for (int i = 0; i < extents[2]; i++) {
+                FileInfoMGH newFileInfo = (FileInfoMGH) fileInfo.clone();
+                newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
+                image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
+            }
+        } else if (image.getNDims() == 4) { // If there is more than one image
+
+            for (int i = 0; i < (extents[2] * extents[3]); i++) {
+                FileInfoMGH newFileInfo = (FileInfoMGH) fileInfo.clone();
+                newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
+                image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
+            }
+        }
+
+    } // end updateUnitsOfMeasure()
+
 
     /**
      * Return the 3 axis orientation codes that correspond to the closest standard anatomical orientation of the (i,j,k)
@@ -1166,8 +1575,6 @@ public class FileMGH extends FileBase {
     /**
      * Helper method to calculate the offset for getting only the middle NIFTI image slice from the 3D file.
      *
-     * @param   fileInfo  File info.
-     *
      * @return  offset
      */
     private int getOffset() {
@@ -1191,7 +1598,7 @@ public class FileMGH extends FileBase {
                 offset *= 8;
                 break;
 
-            
+
         }
 
         return offset;
@@ -1249,329 +1656,5 @@ public class FileMGH extends FileBase {
          * image.getExtents()[4];    i++) { fileInfo[i].setorigins(startLocs); startLocs[4] += resolutions[4]; }  }*/
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  fileInfo  -- a NIFTI file Info that has already been read
-     * @param  image     -- a ModelImage that the fileInfo needs to be attached to
-     */
-    private void attachFileInfo(FileInfoMGH fileInfo, ModelImage image) {
 
-        int[] extents = fileInfo.getExtents();
-
-        if (image.getNDims() == 2) {
-            image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
-        } else if (image.getNDims() == 3) { // If there is more than one image
-            for (int i = 0; i < extents[2]; i++) {
-                FileInfoMGH newFileInfo = (FileInfoMGH) fileInfo.clone();
-                newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
-                image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
-            }
-        } else if (image.getNDims() == 4) { // If there is more than one image
-            for (int i = 0; i < (extents[2] * extents[3]); i++) {
-                FileInfoMGH newFileInfo = (FileInfoMGH) fileInfo.clone();
-                newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
-                image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
-            }
-        }
-
-    } // end updateUnitsOfMeasure()
-    
-    /**
-     * Writes a MGH or MGZ format type image.
-     *
-     * @param      image    Image model of data to write.
-     * @param      options  options such as starting and ending slices and times
-     *
-     * @exception  IOException  if there is an error writing the file
-     */
-    public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
-        int index;
-        boolean gzip;
-        int zBegin;
-        int zEnd;
-        int tBegin;
-        int tEnd;
-        boolean endianess;
-        byte byteBuffer[];
-        int sliceSize;
-        int z;
-        int t;
-        int zDim;
-        int numberSlices;
-        int count;
-        int j;
-        short shortBuffer[];
-        int intBuffer[];
-        float floatBuffer[];
-        long longBuffer[];
-        int tmpInt;
-       
-        index = fileName.lastIndexOf(".");
-
-        if ((fileName.substring(index + 1).equalsIgnoreCase("mgz")) ||
-            (fileName.substring(index + 1).equalsIgnoreCase("gz"))) {
-            gzip = true;
-            
-        } else {
-            gzip = false;
-        }  
-        
-        zBegin = options.getBeginSlice();
-        zEnd = options.getEndSlice();
-
-        if (image.getNDims() == 4) {
-            tBegin = options.getBeginTime();
-            tEnd = options.getEndTime();
-        } else {
-            tBegin = 0;
-            tEnd = 0;
-        }
-
-        if (gzip) {
-            file = new File(fileDir + fileName.substring(0,index+1) + "mgh");
-        }
-        else  {
-            file = new File(fileDir + fileName);
-        }
-        raFile = new RandomAccessFile(file, "rw");
-
-        // Necessary so that if this is an overwritten file there isn't any
-        // junk at the end
-        raFile.setLength(0);
-        
-        // MGH file are always BIG_ENDIAN
-        endianess = BIG_ENDIAN;
-        extents = image.getExtents();
-        sliceSize = extents[0] * extents[1];
-        dataType = image.getFileInfo(0).getDataType();
-        resolutions = image.getFileInfo(0).getResolutions();
-        matrix = image.getMatrix();
-        if (matrix == null) {
-            matrix = new TransMatrix(4);
-        }
-        
-        // Current value of version number is 1
-        writeInt(1, endianess); // 0
-        
-        //  First dimension of the image buffer
-        writeInt(extents[0], endianess); // 4
-        
-        // Second dimension of the image buffer
-        writeInt(extents[1], endianess); // 8
-        
-        // Third dimension of the image buffer
-        writeInt(zEnd - zBegin + 1, endianess); // 12
-        
-        // Fourth dimension of the image buffer
-        writeInt(tEnd - tBegin + 1, endianess); // 16
-        
-        // Type of data 
-        switch (dataType) {
-        case ModelStorageBase.UBYTE:
-            mghType = MRI_UCHAR;
-            break;
-        case ModelStorageBase.BYTE:
-        case ModelStorageBase.SHORT:
-            mghType = MRI_SHORT;
-            break;
-        case ModelStorageBase.USHORT:
-        case ModelStorageBase.INTEGER:
-            mghType = MRI_INT;
-            break;
-        case ModelStorageBase.UINTEGER:
-        case ModelStorageBase.LONG:
-            mghType = MRI_LONG;
-            break;
-        case ModelStorageBase.FLOAT:
-            mghType = MRI_FLOAT;
-            break;
-        default:
-            Preferences.debug("Cannot handle type = " + image.getFileInfo(0).getDataType() + "\n");
-            throw (new IOException("Cannot write MGH image with data type = " +
-                    image.getFileInfo(0).getDataType()));
-        } // switch (mghType)
-        writeInt(mghType, endianess); // 20
-        
-        // Degrees of freedom
-        writeInt(0, endianess); // 24
-        
-        // Good RAS flag
-        writeShort((short)1, endianess); // 28
-        
-        // The x, y, and z variables define the rotational part
-        // of the affine transform.
-        xr = -(float)matrix.get(0,0)/resolutions[0];
-        yr = -(float)matrix.get(0,1)/resolutions[1];
-        zr = -(float)matrix.get(0,2)/resolutions[2];
-            
-        xa = -(float)matrix.get(1,0)/resolutions[0];
-        ya = -(float)matrix.get(1,1)/resolutions[1];
-        za = -(float)matrix.get(1,2)/resolutions[2];
-        
-        xs = (float)matrix.get(2,0)/resolutions[0];
-        ys = (float)matrix.get(2,1)/resolutions[1];
-        zs = (float)matrix.get(2,2)/resolutions[2];
-        
-        writeFloat(resolutions[0], endianess); // 30
-        writeFloat(resolutions[1], endianess); // 34
-        writeFloat(resolutions[2], endianess); // 38
-        writeFloat(xr, endianess); // 42
-        writeFloat(xa, endianess); // 46
-        writeFloat(xs, endianess); // 50
-        writeFloat(yr, endianess); // 54
-        writeFloat(ya, endianess); // 58
-        writeFloat(ys, endianess); // 62
-        writeFloat(zr, endianess); // 66
-        writeFloat(za, endianess); // 70
-        writeFloat(zs, endianess); // 74
-        // Since in readMGH the origin value is such as to
-        // put the center at 0,0,0
-        // cr
-        writeFloat(0.0f, endianess); // 78
-        // ca
-        writeFloat(0.0f, endianess); // 82
-        // cs
-        writeFloat(0.0f, endianess); // 86
-        // Fill out the other 194 bytes of the 284 byte header
-        byteBuffer = new byte[194];
-        raFile.write(byteBuffer);
-        
-        zDim = image.getExtents()[2];
-        numberSlices = (tEnd - tBegin + 1) * (zEnd - zBegin + 1);
-        count = 0;
-        switch (dataType) {
-
-        case ModelStorageBase.UBYTE:
-            byteBuffer = new byte[sliceSize];
-            for (t = tBegin; t <= tEnd; t++) {
-
-                for (z = zBegin; z <= zEnd; z++) {
-                    fireProgressStateChanged((100 * count++) / numberSlices);
-                    
-                    image.exportSliceXY((t * zDim) + z, byteBuffer);
-                    raFile.write(byteBuffer);
-                }
-            }
-
-            break;
-        case ModelStorageBase.BYTE:
-        case ModelStorageBase.SHORT:
-            shortBuffer = new short[sliceSize];
-            byteBuffer = new byte[2 * sliceSize];
-            for (t = 0; t <= tEnd; t++) {
-
-                for (z = zBegin; z <= zEnd; z++) {
-                    fireProgressStateChanged((100 * count++) / numberSlices);
-                    
-                    image.exportSliceXY((t * zDim) + z, shortBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        byteBuffer[2 * j] = (byte) (shortBuffer[j] >>> 8);
-                        byteBuffer[(2 * j) + 1] = (byte) (shortBuffer[j]);
-                    }
-
-                    raFile.write(byteBuffer);
-                } // for (z = zBegin; z <= zEnd; z++)
-            } // for (t = tBegin; t <= tEnd; t++)
-
-            break;
-        case ModelStorageBase.USHORT:
-        case ModelStorageBase.INTEGER:
-            intBuffer = new int[sliceSize];
-            byteBuffer = new byte[4 * sliceSize];
-            for (t = tBegin; t <= tEnd; t++) {
-
-                for (z = zBegin; z <= zEnd; z++) {
-                    fireProgressStateChanged((100 * count++) / numberSlices);
-                    
-                    image.exportSliceXY((t * zDim) + z, intBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        byteBuffer[4 * j] = (byte) (intBuffer[j] >>> 24);
-                        byteBuffer[(4 * j) + 1] = (byte) (intBuffer[j] >>> 16);
-                        byteBuffer[(4 * j) + 2] = (byte) (intBuffer[j] >>> 8);
-                        byteBuffer[(4 * j) + 3] = (byte) (intBuffer[j]);
-                    }
-
-                    raFile.write(byteBuffer);
-                } // for (z = zBegin; z <= zEnd; z++)
-            } // for (t = tBegin; t <= tEnd; t++)
-
-            break;
-            
-        case ModelStorageBase.UINTEGER:
-        case ModelStorageBase.LONG:
-            longBuffer = new long[sliceSize];
-            byteBuffer = new byte[8 * sliceSize];
-            for (t = tBegin; t <= tEnd; t++) {
-
-                for (z = zBegin; z <= zEnd; z++) {
-                    fireProgressStateChanged((100 * count++) / numberSlices);
-                    
-                    image.exportSliceXY((t * zDim) + z, longBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        byteBuffer[8 * j] = (byte) (longBuffer[j] >>> 56);
-                        byteBuffer[(8 * j) + 1] = (byte) (longBuffer[j] >>> 48);
-                        byteBuffer[(8 * j) + 2] = (byte) (longBuffer[j] >>> 40);
-                        byteBuffer[(8 * j) + 3] = (byte) (longBuffer[j] >>> 32);
-                        byteBuffer[(8 * j) + 4] = (byte) (longBuffer[j] >>> 24);
-                        byteBuffer[(8 * j) + 5] = (byte) (longBuffer[j] >>> 16);
-                        byteBuffer[(8 * j) + 6] = (byte) (longBuffer[j] >>> 8);
-                        byteBuffer[(8 * j) + 7] = (byte) (longBuffer[j]);
-                    }
-
-                    raFile.write(byteBuffer);
-                } // for (z = zBegin; z <= zEnd; z++)
-            } // for (t = tBegin; t <= tEnd; t++)
-
-            break;
-
-        case ModelStorageBase.FLOAT:
-            floatBuffer = new float[sliceSize];
-            byteBuffer = new byte[4 * sliceSize];
-            for (t = tBegin; t <= tEnd; t++) {
-                for (z = zBegin; z <= zEnd; z++) {
-                    fireProgressStateChanged((100 * count++) / numberSlices);
-                    
-                    image.exportSliceXY((t * zDim) + z, floatBuffer);
-
-                    for (j = 0; j < sliceSize; j++) {
-                        tmpInt = Float.floatToIntBits(floatBuffer[j]);
-                        byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
-                        byteBuffer[(4 * j) + 1] = (byte) (tmpInt >>> 16);
-                        byteBuffer[(4 * j) + 2] = (byte) (tmpInt >>> 8);
-                        byteBuffer[(4 * j) + 3] = (byte) (tmpInt);
-                    }
-
-                    raFile.write(byteBuffer);
-                } // for (z = zBegin; z <= zEnd; z++)
-            } // for (t = tBegin; t <= tEnd; t++)
-
-            break;
-
-        
-        } // switch(dataType)
-        raFile.close();
-        if (gzip) {
-           fireProgressStateChanged("Compressing GZIP file ...");
-            
-            GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(fileDir + fileName));
-            
-            FileInputStream in = new FileInputStream(fileDir + fileName.substring(0,index+1) + "mgh");
-            
-            byteBuffer = new byte[1024];
-            int len;
-            while ((len = in.read(byteBuffer)) > 0) {
-                out.write(byteBuffer, 0, len);
-            }
-            in.close();
-            out.finish();
-            out.close();
-        } // if (gzip)
-    
-    } // writeImage
-
-    
 }

@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer;
 
+
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -249,7 +250,7 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
      *
      * <p>the default is the number of rows is the dependent variable, and is dependent apon the total number of images
      * and the number of columns. Don't confuse the reading to be "This display is (t/f) dependent on the row." It
-     * -could- be read as "The display is a column-independent (t/f) matrix".
+     * -could- be read as "The display is a column-independent (t/f) matrix".</p>
      */
     private boolean row_dependent = true; // number of rows (y-axis) is dependent on # images & # cols.
 
@@ -427,9 +428,10 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
         }
 
         Point t = new Point();
-        int fwidth = (int) Math.round((double) gridColumn *
-                                          (double) (imagePanelSizeX + gridSpacing + (2 * borderSize) +
-                                                        (2 * selectedBorderSize))) + gridSpacing;
+        int fwidth = (int)
+                         Math.round((double) gridColumn *
+                                        (double) (imagePanelSizeX + gridSpacing + (2 * borderSize) +
+                                                      (2 * selectedBorderSize))) + gridSpacing;
 
         t.setLocation(fwidth, 0);
         pageScrollPanel.getViewport().setViewPosition(t);
@@ -1390,10 +1392,11 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
         pagePanel.add(imagePanel);
 
         ViewJComponentEditImage componentImage = new ViewJComponentEditImage(this,
-                                                                             (ModelImage) (modelImageVector.elementAt(currentIndex)),
+                                                                             (ModelImage)
+                                                                             (modelImageVector.elementAt(currentIndex)),
                                                                              LUTa, imageBufferA, imageB, LUTb, null,
                                                                              null, magnification / 100, extents, false,
-                                                                             FileInfoBase.UNKNOWN_ORIENT );
+                                                                             FileInfoBase.UNKNOWN_ORIENT);
 
         componentImage.setLocation(borderSize + selectedBorderSize, borderSize + selectedBorderSize);
 
@@ -1934,8 +1937,7 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
             }
         }
 
-        destImage = new ModelImage(srcImage.getType(), destExtents, srcImage.getImageName() + "Extract",
-                                   srcImage.getUserInterface());
+        destImage = new ModelImage(srcImage.getType(), destExtents, srcImage.getImageName() + "Extract");
 
 
         // create  <FileInfoBase fileInfoBuffer;> buffer; may be of type FileInfoDicom
@@ -2035,10 +2037,10 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
                                                      (double) imagePanelSizeX) - 1;
                     }
 
-                    gridColumnMinimized = (int) Math.round((double) frame.getSize().width /
-                                                               (double) (imagePanelSizeX + gridSpacing +
-                                                                             (2 * borderSize) +
-                                                                             (2 * selectedBorderSize)));
+                    gridColumnMinimized = (int)
+                                              Math.round((double) frame.getSize().width /
+                                                             (double) (imagePanelSizeX + gridSpacing +
+                                                                           (2 * borderSize) + (2 * selectedBorderSize)));
                     availColumn = Math.min(gridColumnLimit, gridColumn);
                     availColumn = Math.min(gridColumnMinimized, availColumn);
 
@@ -2048,9 +2050,10 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
 
                     // System.out.println("gridColumnMinimized = " + gridColumnMinimized + " gridColumn = " +
                     // gridColumn + " gridColumnLimit = " + gridColumnLimit);
-                    widthFrame = (int) Math.round((double) availColumn *
-                                                      (double) (imagePanelSizeX + gridSpacing + (2 * borderSize) +
-                                                                    (2 * selectedBorderSize))) + gridSpacing;
+                    widthFrame = (int)
+                                     Math.round((double) availColumn *
+                                                    (double) (imagePanelSizeX + gridSpacing + (2 * borderSize) +
+                                                                  (2 * selectedBorderSize))) + gridSpacing;
                     frame.setSize(widthFrame, origY);
                 }
             });
@@ -2133,8 +2136,7 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
             }
         }
 
-        destImage = new ModelImage(srcImage.getType(), destExtents, srcImage.getImageName() + "Extract",
-                                   srcImage.getUserInterface());
+        destImage = new ModelImage(srcImage.getType(), destExtents, srcImage.getImageName() + "Extract");
 
 
         // create  <FileInfoBase fileInfoBuffer;> buffer; may be of type FileInfoDicom

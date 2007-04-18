@@ -293,7 +293,7 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
 
                     if (checkboxDisplay.isSelected() == true) {
                         resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(),
-                                                     image.getImageName() + "_gvf", userInterface);
+                                                     image.getImageName() + "_gvf");
 
                         // Make the algorithm class
                         gvfAlgo = new AlgorithmGVF(resultImage, image, sigmas, gvfIterations, boundaryIterations,
@@ -374,8 +374,7 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                 try {
 
                     if (checkboxDisplay.isSelected() == true) {
-                        resultImage = new ModelImage(ModelStorageBase.FLOAT, extents, image.getImageName() + "_gvf",
-                                                     userInterface);
+                        resultImage = new ModelImage(ModelStorageBase.FLOAT, extents, image.getImageName() + "_gvf");
 
                         // Make algorithm
                         gvfAlgo = new AlgorithmGVF(resultImage, image, sigmas, gvfIterations, boundaryIterations,

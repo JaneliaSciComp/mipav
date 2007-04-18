@@ -320,8 +320,9 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                 volBuffer = new float[volLength];
                 image.exportData(0, volLength, volBuffer); // copy image into 1D array
 
-                int length = (int) Math.round(((VOIContour) (curves[0].elementAt(j))).getLengthPtToPt(resolutions) /
-                                                  resolutions[0]);
+                int length = (int)
+                                 Math.round(((VOIContour) (curves[0].elementAt(j))).getLengthPtToPt(resolutions) /
+                                                resolutions[0]);
 
                 tmpPosition = new Vector3Df[2 * length];
                 tmpIntensity = new float[2 * length];
@@ -345,15 +346,14 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                 String name = makeImageName(image.getImageName(), "_result");
 
                 // Make NEW result image of float type
-                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name,
-                                             ((ViewJFrameBase) (parentFrame)).getUserInterface());
+                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                 // call algoRegKidney here
                 algoRegVOILankmark = new AlgorithmRegVOILandmark(image, resultImage, sigmas, true, position, minTx,
                                                                  maxTx, minTy, maxTy, minRz, maxRz, step, opt,
                                                                  costFunc);
                 algoRegVOILankmark.addListener(this);
-                
+
                 createProgressBar(image.getImageName(), algoRegVOILankmark);
 
                 // Start the thread as a low priority because we wish to still have user interface work fast

@@ -6,8 +6,6 @@ import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -1020,7 +1018,7 @@ public class FileLSM extends FileBase {
     private int offsetMeanOfRoisOverlay;
 
     /** DOCUMENT ME! */
-    //private int offsetNextRecording;
+    // private int offsetNextRecording;
 
     /** DOCUMENT ME! */
     private int offsetOutputLut;
@@ -1445,9 +1443,9 @@ public class FileLSM extends FileBase {
 
                 if (one) {
                     image = new ModelImage(fileDataType, new int[] { imgExtents[0], imgExtents[1] },
-                                           fileInfo.getFileName(), UI);
+                                           fileInfo.getFileName());
                 } else {
-                    image = new ModelImage(fileDataType, imgExtents, fileInfo.getFileName(), UI);
+                    image = new ModelImage(fileDataType, imgExtents, fileInfo.getFileName());
                 }
             }
 
@@ -2065,8 +2063,8 @@ public class FileLSM extends FileBase {
                 imageSlice = 1;
                 image.setFileInfo(fileInfo, 0);
             }
-            
-            
+
+
             for (i = 0; i < imageSlice; i++) {
 
                 try {
@@ -2101,7 +2099,7 @@ public class FileLSM extends FileBase {
             }
 
             raFile.close();
-            
+
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -3245,7 +3243,7 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j++, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -3268,7 +3266,7 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            
+
 
                             for (j = 0; j < nBytes; j++, i++) {
 
@@ -3285,7 +3283,7 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            
+
                             j = 0;
 
                             while (j < nBytes) {
@@ -3299,8 +3297,8 @@ public class FileLSM extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[i] = byteBuffer[j];
@@ -3321,8 +3319,8 @@ public class FileLSM extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[i] = byteBuffer[j];
@@ -3351,7 +3349,7 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            
+
 
                             for (j = 0; j < nBytes; j++, i++) {
 
@@ -3368,7 +3366,7 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            
+
                             j = 0;
 
                             while (j < nBytes) {
@@ -3382,8 +3380,8 @@ public class FileLSM extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[i] = byteBuffer[j] & 0xff;
@@ -3404,8 +3402,8 @@ public class FileLSM extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[i] = byteBuffer[j] & 0xff;
@@ -3427,7 +3425,7 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -3462,7 +3460,7 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -3490,7 +3488,7 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -3525,7 +3523,7 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -3561,7 +3559,7 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            
+
 
                             // For the moment I compress RGB images to unsigned bytes.
                             for (j = 0; j < nBytes; j += 3, i += 4) {
@@ -3589,14 +3587,14 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                
+
 
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
-                                                                               progressLength * 100));
+                                                                                progressLength * 100));
                                     }
 
                                     buffer[i] = 255;
@@ -3622,13 +3620,13 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                
+
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
-                                                                                    progress) / progressLength * 100));
+                                                                                     progress) / progressLength * 100));
                                     }
 
                                     if (greenOffset == 1) {
@@ -3652,13 +3650,14 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                
+
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
-                                                                                    progress) / progressLength * 100));
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                     (2 * buffer.length / 3) +
+                                                                                     progress) / progressLength * 100));
                                     }
 
                                     if (blueOffset == 2) {
@@ -3688,7 +3687,7 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            
+
 
                             // For the moment I compress RGB images to unsigned bytes.
                             for (j = 0; j < nBytes; j += 6, i += 4) {
@@ -3740,14 +3739,14 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                
+
 
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                                     if ((((i / 3) + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
-                                                                               progressLength * 100));
+                                                                                progressLength * 100));
                                     }
 
                                     buffer[i] = 65535;
@@ -3792,13 +3791,13 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                
+
 
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                                     if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
-                                                                                    progress) / progressLength * 100));
+                                                                                     progress) / progressLength * 100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -3843,13 +3842,14 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                
+
 
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                                     if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
-                                                                                    progress) / progressLength * 100));
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                     (2 * buffer.length / 3) +
+                                                                                     progress) / progressLength * 100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7295,7 +7295,7 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
                         nLength = 8 * ((nBytes + 63) >> 6); // new BitSet(size) = new long[(size+63)>>6];
 
                         if (lzwCompression) {
@@ -7318,7 +7318,7 @@ public class FileLSM extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     buffer[x + (y * xDim)] = decomp[j >> 3] & (1 << (j % 8));
@@ -7343,7 +7343,7 @@ public class FileLSM extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     buffer[x + (y * xDim)] = byteBuffer[j >> 3] & (1 << (j % 8));
@@ -7385,7 +7385,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
 
                             if (lzwCompression) {
 
@@ -7400,8 +7400,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[x + (y * xDim)] = decomp[j] & 0xff;
@@ -7423,8 +7423,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[x + (y * xDim)] = byteBuffer[j];
@@ -7456,7 +7456,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
                             j = 0;
 
                             while (j < nBytes) {
@@ -7473,7 +7473,7 @@ public class FileLSM extends FileBase {
 
                                             if (((i + progress) % mod) == 0) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100));
+                                                                                        progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -7506,7 +7506,7 @@ public class FileLSM extends FileBase {
 
                                             if (((i + progress) % mod) == 0) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100));
+                                                                                        progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -7554,7 +7554,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
 
                             if (lzwCompression) {
 
@@ -7569,8 +7569,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[x + (y * xDim)] = decomp[j] & 0xff;
@@ -7592,8 +7592,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -7625,7 +7625,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
                             j = 0;
 
                             while (j < nBytes) {
@@ -7642,7 +7642,7 @@ public class FileLSM extends FileBase {
 
                                             if (((i + progress) % mod) == 0) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100));
+                                                                                        progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -7675,7 +7675,7 @@ public class FileLSM extends FileBase {
 
                                             if (((i + progress) % mod) == 0) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100));
+                                                                                        progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -7715,7 +7715,7 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
                         for (j = 0; j < nBytes; j += 2) {
 
                             if ((x < xDim) && (y < yDim)) {
@@ -7768,7 +7768,7 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
 
                         if (lzwCompression) {
 
@@ -7784,7 +7784,7 @@ public class FileLSM extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     b1 = getUnsignedByte(decomp, j);
@@ -7812,7 +7812,7 @@ public class FileLSM extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7860,7 +7860,7 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
 
                         if (lzwCompression) {
 
@@ -7876,7 +7876,7 @@ public class FileLSM extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     b1 = getUnsignedByte(decomp, j);
@@ -7909,7 +7909,7 @@ public class FileLSM extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7959,7 +7959,7 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
 
                         if (lzwCompression) {
 
@@ -7975,7 +7975,7 @@ public class FileLSM extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     b1 = getUnsignedByte(decomp, j);
@@ -8010,7 +8010,7 @@ public class FileLSM extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -8064,7 +8064,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
 
                             if (lzwCompression) {
                                 // System.err.println("Read " + nBytes + " from raFile");
@@ -8081,8 +8081,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[4 * (x + (y * xDim))] = 255;
@@ -8107,8 +8107,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[4 * (x + (y * xDim))] = 255;
@@ -8154,7 +8154,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim * 3;
                             progressLength = imageSlice * xDim * yDim * 3;
                             mod = progressLength / 100;
-                            
+
 
                             if (lzwCompression) {
                                 // System.err.println("Read " + nBytes + " from raFile");
@@ -8177,7 +8177,7 @@ public class FileLSM extends FileBase {
 
                                         if (((counter + progress) % mod) == 0) {
                                             fireProgressStateChanged(Math.round((float) (counter + progress) /
-                                                                                   progressLength * 100));
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[i] = 255;

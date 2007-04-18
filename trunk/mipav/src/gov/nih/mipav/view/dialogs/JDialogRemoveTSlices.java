@@ -278,7 +278,7 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
                 }
 
                 // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
-                resultImage = new ModelImage(image.getType(), destExtents, image.getImageName(), userInterface);
+                resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
 
 
                 // Make algorithm:

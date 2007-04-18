@@ -1,11 +1,12 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
+
 import java.text.*;
 
 
@@ -23,13 +24,13 @@ public class AlgorithmRotate extends AlgorithmBase {
 
     /** Rotate about the x axis 180 degrees. */
     public static final int X_AXIS_180 = 0;
-    
+
     /** Rotate about the x axis 90 degrees. */
     public static final int X_AXIS_PLUS = 1;
 
     /** Rotate about the x axis -90 degrees (or 270 degrees). */
     public static final int X_AXIS_MINUS = 2;
-    
+
     /** Rotate about the y axis 180 degrees. */
     public static final int Y_AXIS_180 = 3;
 
@@ -38,7 +39,7 @@ public class AlgorithmRotate extends AlgorithmBase {
 
     /** Rotate about the y axis -90 degrees (or 270 degrees). */
     public static final int Y_AXIS_MINUS = 5;
-    
+
     /** Rotate about the z axis 180 degrees. */
     public static final int Z_AXIS_180 = 6;
 
@@ -64,9 +65,9 @@ public class AlgorithmRotate extends AlgorithmBase {
     public AlgorithmRotate(ModelImage srcImg, int rotateMode) {
         super(null, srcImg);
 
-        if ((rotateMode == Y_AXIS_180) || (rotateMode == Y_AXIS_PLUS) || (rotateMode == Y_AXIS_MINUS) || 
-            (rotateMode == X_AXIS_180) || (rotateMode == X_AXIS_PLUS) || (rotateMode == X_AXIS_MINUS) ||
-            (rotateMode == Z_AXIS_180) || (rotateMode == Z_AXIS_PLUS) || (rotateMode == Z_AXIS_MINUS)) {
+        if ((rotateMode == Y_AXIS_180) || (rotateMode == Y_AXIS_PLUS) || (rotateMode == Y_AXIS_MINUS) ||
+                (rotateMode == X_AXIS_180) || (rotateMode == X_AXIS_PLUS) || (rotateMode == X_AXIS_MINUS) ||
+                (rotateMode == Z_AXIS_180) || (rotateMode == Z_AXIS_PLUS) || (rotateMode == Z_AXIS_MINUS)) {
             rotateAxis = rotateMode;
         } else {
             rotateAxis = Z_AXIS_PLUS; // default rotate mode
@@ -82,7 +83,7 @@ public class AlgorithmRotate extends AlgorithmBase {
      */
     public AlgorithmRotate(ModelImage srcImg, int rotateMode, int progress) {
         this(srcImg, rotateMode);
-        //      progressMode = progress;
+        // progressMode = progress;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -112,6 +113,7 @@ public class AlgorithmRotate extends AlgorithmBase {
 
         if (srcImage == null) {
             displayError("Source Image is null");
+
             return;
         }
 
@@ -120,77 +122,59 @@ public class AlgorithmRotate extends AlgorithmBase {
     }
 
     /**
-     * Calculates the rotated image and replaces the source image with the
-     * rotated image. 
+     * Calculates the rotated image and replaces the source image with the rotated image.
      */
-    private void calcInPlace()
-    {
+    private void calcInPlace() {
+
         /* axisOrder and axisFlip changed to match the rotateAxis value: */
         int[] axisOrder = { 0, 1, 2, 3 };
         boolean[] axisFlip = { false, false, false, false };
-        
+
         TransMatrix rotMatrix = new TransMatrix(4);
         rotMatrix.identity();
 
-        if ( rotateAxis == X_AXIS_180 )
-        {
+        if (rotateAxis == X_AXIS_180) {
             axisFlip[1] = true;
             axisFlip[2] = true;
-            rotMatrix.setRotate(180, 0, 0, TransMatrix.DEGREES); 
-        }
-        else if ( rotateAxis == X_AXIS_PLUS )
-        {
+            rotMatrix.setRotate(180, 0, 0, TransMatrix.DEGREES);
+        } else if (rotateAxis == X_AXIS_PLUS) {
             axisOrder[1] = 2;
             axisOrder[2] = 1;
             axisFlip[1] = true;
             rotMatrix.setRotate(90, 0, 0, TransMatrix.DEGREES);
             // rotMatrix gives y' = -z, z' = y;
-        }
-        else if ( rotateAxis == X_AXIS_MINUS )
-        {
+        } else if (rotateAxis == X_AXIS_MINUS) {
             axisOrder[1] = 2;
             axisOrder[2] = 1;
             axisFlip[2] = true;
             rotMatrix.setRotate(-90, 0, 0, TransMatrix.DEGREES);
             // rotMatrix gives y' = z, z' = -y;
-        }
-        else if ( rotateAxis == Y_AXIS_180 )
-        {
+        } else if (rotateAxis == Y_AXIS_180) {
             axisFlip[0] = true;
             axisFlip[2] = true;
             rotMatrix.setRotate(0, 180, 0, TransMatrix.DEGREES);
-        }
-        else if ( rotateAxis == Y_AXIS_PLUS )
-        {
+        } else if (rotateAxis == Y_AXIS_PLUS) {
             axisOrder[0] = 2;
             axisOrder[2] = 0;
             axisFlip[2] = true;
             rotMatrix.setRotate(0, 90, 0, TransMatrix.DEGREES);
             // rotMatrix gives x' = z, z' = -x
-        }
-        else if ( rotateAxis == Y_AXIS_MINUS )
-        {
+        } else if (rotateAxis == Y_AXIS_MINUS) {
             axisOrder[0] = 2;
             axisOrder[2] = 0;
             axisFlip[0] = true;
             rotMatrix.setRotate(0, -90, 0, TransMatrix.DEGREES);
             // rotMatrix gives x' = -z, z' = x
-        }
-        else if ( rotateAxis == Z_AXIS_180 )
-        {
+        } else if (rotateAxis == Z_AXIS_180) {
             axisFlip[0] = true;
             axisFlip[1] = true;
             rotMatrix.setRotate(0, 0, 180, TransMatrix.DEGREES);
-        }
-        else if ( rotateAxis == Z_AXIS_PLUS )
-        {
+        } else if (rotateAxis == Z_AXIS_PLUS) {
             axisOrder[0] = 1;
             axisOrder[1] = 0;
             axisFlip[0] = true;
             rotMatrix.setRotate(0, 0, 90, TransMatrix.DEGREES);
-        }
-        else if ( rotateAxis == Z_AXIS_MINUS )
-        {
+        } else if (rotateAxis == Z_AXIS_MINUS) {
             axisOrder[0] = 1;
             axisOrder[1] = 0;
             axisFlip[1] = true;
@@ -198,34 +182,36 @@ public class AlgorithmRotate extends AlgorithmBase {
         }
 
         int buffFactor = 1;
+
         if (srcImage.isColorImage()) {
             buffFactor = 4; // ARGB Image
         } else if ((srcImage.getType() == ModelStorageBase.COMPLEX) ||
-                   (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                       (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
             buffFactor = 2;
-        } 
+        }
 
-        int slice = buffFactor * srcImage.getExtents()[ axisOrder[0] ] * srcImage.getExtents()[ axisOrder[1] ];
+        int slice = buffFactor * srcImage.getExtents()[axisOrder[0]] * srcImage.getExtents()[axisOrder[1]];
         float[] sliceBuffer = new float[slice];
         int tDim = 1;
         int volume = 1;
         int zDim = 1;
+
         if (srcImage.getNDims() == 4) {
             zDim = srcImage.getExtents()[2];
             tDim = srcImage.getExtents()[3];
             volume = slice * zDim;
-        }
-        else if (srcImage.getNDims() == 3) {
+        } else if (srcImage.getNDims() == 3) {
             zDim = srcImage.getExtents()[2];
         }
+
         int yDim = srcImage.getExtents()[1];
         int xDim = srcImage.getExtents()[0];
         int x, y, c;
-        float oldVol[];
-        float newVol[];
-        int oldSlice = buffFactor*xDim*yDim;
+        float[] oldVol;
+        float[] newVol;
+        int oldSlice = buffFactor * xDim * yDim;
         int newSlice;
-        int oldXDim = buffFactor*xDim;
+        int oldXDim = buffFactor * xDim;
         int newXDim;
         int vol = buffFactor * xDim * yDim * zDim;
 
@@ -234,6 +220,7 @@ public class AlgorithmRotate extends AlgorithmBase {
         float[] newResolutions;
         float[] newStartLocations;
         int[] newUnitsOfMeasure;
+
         try {
             newDimExtents = new int[srcImage.getNDims()];
             newAxisOrients = new int[srcImage.getNDims()];
@@ -242,58 +229,71 @@ public class AlgorithmRotate extends AlgorithmBase {
             newStartLocations = new float[srcImage.getNDims()];
         } catch (OutOfMemoryError e) {
             errorCleanUp("Algorithm Rotate: Out of memory", true);
+
             return;
         }
-        for ( int i = 0; i < srcImage.getNDims(); i++ )
-        {
-            newDimExtents[i] = srcImage.getExtents()[ axisOrder[i] ];
-            newResolutions[i] = srcImage.getResolutions(0)[ axisOrder[i] ];
-            newUnitsOfMeasure[i] = srcImage.getUnitsOfMeasure()[ axisOrder[i] ];
-            newStartLocations[i] = srcImage.getOrigin()[ axisOrder[i] ];
-            if ( i < 3 )
-            {
-                newAxisOrients[i] = srcImage.getAxisOrientation()[ axisOrder[i] ];
-                if ( axisFlip[i] )
-                {
+
+        for (int i = 0; i < srcImage.getNDims(); i++) {
+            newDimExtents[i] = srcImage.getExtents()[axisOrder[i]];
+            newResolutions[i] = srcImage.getResolutions(0)[axisOrder[i]];
+            newUnitsOfMeasure[i] = srcImage.getUnitsOfMeasure()[axisOrder[i]];
+            newStartLocations[i] = srcImage.getOrigin()[axisOrder[i]];
+
+            if (i < 3) {
+                newAxisOrients[i] = srcImage.getAxisOrientation()[axisOrder[i]];
+
+                if (axisFlip[i]) {
                     newAxisOrients[i] = FileInfoBase.oppositeOrient(newAxisOrients[i]);
                 }
             }
         }
-        destImage = new ModelImage(srcImage.getType(), newDimExtents, srcImage.getImageName(),
-                                   srcImage.getUserInterface());
+
+        destImage = new ModelImage(srcImage.getType(), newDimExtents, srcImage.getImageName());
 
         /* Export the ModelImage data, remapping the axes: */
         if (rotateAxis == X_AXIS_PLUS) {
             oldVol = new float[vol];
             newVol = new float[vol];
-            newSlice = buffFactor*xDim*zDim;
-            newXDim = buffFactor*xDim;
+            newSlice = buffFactor * xDim * zDim;
+            newXDim = buffFactor * xDim;
+
             for (int t = 0; (t < tDim) && !threadStopped; t++) {
+
                 try {
-                    srcImage.exportData(t*vol, vol, oldVol);
-                }
-                catch (IOException error) {
+                    srcImage.exportData(t * vol, vol, oldVol);
+                } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
+
                     return;
                 }
+
                 for (int z = 0; (z < zDim) && !threadStopped; z++) {
-                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    fireProgressStateChanged(Math.round((float) ((t * zDim) + z) / ((tDim * zDim) - 1) * 100));
+
                     for (y = 0; y < yDim; y++) {
+
                         for (x = 0; x < xDim; x++) {
+
                             for (c = 0; c < buffFactor; c++) {
-                                newVol[y*newSlice + (zDim-1-z)*newXDim + x*buffFactor + c] =
-                                oldVol[z*oldSlice + y*oldXDim + x*buffFactor + c];
+                                newVol[(y * newSlice) + ((zDim - 1 - z) * newXDim) + (x * buffFactor) + c] = oldVol[(z *
+                                                                                                                         oldSlice) +
+                                                                                                                    (y *
+                                                                                                                         oldXDim) +
+                                                                                                                    (x *
+                                                                                                                         buffFactor) +
+                                                                                                                    c];
                             }
                         }
                     }
                 }
+
                 try {
-                    destImage.importData(t* vol, newVol, false);
-                }
-                catch (IOException error) {
+                    destImage.importData(t * vol, newVol, false);
+                } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
+
                     return;
                 }
             }
@@ -301,158 +301,205 @@ public class AlgorithmRotate extends AlgorithmBase {
         else if (rotateAxis == X_AXIS_MINUS) {
             oldVol = new float[vol];
             newVol = new float[vol];
-            newSlice = buffFactor*xDim*zDim;
-            newXDim = buffFactor*xDim;
+            newSlice = buffFactor * xDim * zDim;
+            newXDim = buffFactor * xDim;
+
             for (int t = 0; (t < tDim) && !threadStopped; t++) {
+
                 try {
-                    srcImage.exportData(t*vol, vol, oldVol);
-                }
-                catch (IOException error) {
+                    srcImage.exportData(t * vol, vol, oldVol);
+                } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
+
                     return;
                 }
+
                 for (int z = 0; (z < zDim) && !threadStopped; z++) {
-                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    fireProgressStateChanged(Math.round((float) ((t * zDim) + z) / ((tDim * zDim) - 1) * 100));
+
                     for (y = 0; y < yDim; y++) {
+
                         for (x = 0; x < xDim; x++) {
+
                             for (c = 0; c < buffFactor; c++) {
-                                newVol[(yDim-1-y)*newSlice + z*newXDim + x*buffFactor + c] =
-                                oldVol[z*oldSlice + y*oldXDim + x*buffFactor + c];
+                                newVol[((yDim - 1 - y) * newSlice) + (z * newXDim) + (x * buffFactor) + c] = oldVol[(z *
+                                                                                                                         oldSlice) +
+                                                                                                                    (y *
+                                                                                                                         oldXDim) +
+                                                                                                                    (x *
+                                                                                                                         buffFactor) +
+                                                                                                                    c];
                             }
                         }
                     }
                 }
+
                 try {
-                    destImage.importData(t* vol, newVol, false);
-                }
-                catch (IOException error) {
+                    destImage.importData(t * vol, newVol, false);
+                } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
+
                     return;
                 }
-            }    
+            }
         } // else if (rotateAxis == X_AXIS_MINUS)
         else if (rotateAxis == Y_AXIS_PLUS) {
             oldVol = new float[vol];
             newVol = new float[vol];
-            newSlice = buffFactor*yDim*zDim;
-            newXDim = buffFactor*zDim;
+            newSlice = buffFactor * yDim * zDim;
+            newXDim = buffFactor * zDim;
+
             for (int t = 0; (t < tDim) && !threadStopped; t++) {
+
                 try {
-                    srcImage.exportData(t*vol, vol, oldVol);
-                }
-                catch (IOException error) {
+                    srcImage.exportData(t * vol, vol, oldVol);
+                } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
+
                     return;
                 }
+
                 for (int z = 0; (z < zDim) && !threadStopped; z++) {
-                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    fireProgressStateChanged(Math.round((float) ((t * zDim) + z) / ((tDim * zDim) - 1) * 100));
+
                     for (y = 0; y < yDim; y++) {
+
                         for (x = 0; x < xDim; x++) {
+
                             for (c = 0; c < buffFactor; c++) {
-                                newVol[(xDim-1-x)*newSlice + y*newXDim + z*buffFactor + c] =
-                                oldVol[z*oldSlice + y*oldXDim + x*buffFactor + c];
+                                newVol[((xDim - 1 - x) * newSlice) + (y * newXDim) + (z * buffFactor) + c] = oldVol[(z *
+                                                                                                                         oldSlice) +
+                                                                                                                    (y *
+                                                                                                                         oldXDim) +
+                                                                                                                    (x *
+                                                                                                                         buffFactor) +
+                                                                                                                    c];
                             }
                         }
                     }
                 }
+
                 try {
-                    destImage.importData(t* vol, newVol, false);
-                }
-                catch (IOException error) {
+                    destImage.importData(t * vol, newVol, false);
+                } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
+
                     return;
                 }
-            }    
+            }
         } // else if (rotateAxis == Y_AXIS_PLUS)
         else if (rotateAxis == Y_AXIS_MINUS) {
             oldVol = new float[vol];
             newVol = new float[vol];
-            newSlice = buffFactor*yDim*zDim;
-            newXDim = buffFactor*zDim;
+            newSlice = buffFactor * yDim * zDim;
+            newXDim = buffFactor * zDim;
+
             for (int t = 0; (t < tDim) && !threadStopped; t++) {
+
                 try {
-                    srcImage.exportData(t*vol, vol, oldVol);
-                }
-                catch (IOException error) {
+                    srcImage.exportData(t * vol, vol, oldVol);
+                } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
+
                     return;
                 }
+
                 for (int z = 0; (z < zDim) && !threadStopped; z++) {
-                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    fireProgressStateChanged(Math.round((float) ((t * zDim) + z) / ((tDim * zDim) - 1) * 100));
+
                     for (y = 0; y < yDim; y++) {
+
                         for (x = 0; x < xDim; x++) {
+
                             for (c = 0; c < buffFactor; c++) {
-                                newVol[x*newSlice + y*newXDim + (zDim-1-z)*buffFactor + c] =
-                                oldVol[z*oldSlice + y*oldXDim + x*buffFactor + c];
+                                newVol[(x * newSlice) + (y * newXDim) + ((zDim - 1 - z) * buffFactor) + c] = oldVol[(z *
+                                                                                                                         oldSlice) +
+                                                                                                                    (y *
+                                                                                                                         oldXDim) +
+                                                                                                                    (x *
+                                                                                                                         buffFactor) +
+                                                                                                                    c];
                             }
                         }
                     }
                 }
+
                 try {
-                    destImage.importData(t* vol, newVol, false);
-                }
-                catch (IOException error) {
+                    destImage.importData(t * vol, newVol, false);
+                } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
+
                     return;
                 }
-            }    
+            }
         } // else if (rotateAxis == Y_AXIS_MINUS)
         else {
+
             for (int t = 0; (t < tDim) && !threadStopped; t++) {
+
                 for (int z = 0; (z < zDim) && !threadStopped; z++) {
-                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    fireProgressStateChanged(Math.round((float) ((t * zDim) + z) / ((tDim * zDim) - 1) * 100));
+
                     try {
-                        srcImage.export( axisOrder, axisFlip, t, z, sliceBuffer);
-                        destImage.importData(t * volume + z * slice, sliceBuffer, false);
+                        srcImage.export(axisOrder, axisFlip, t, z, sliceBuffer);
+                        destImage.importData((t * volume) + (z * slice), sliceBuffer, false);
                     } catch (IOException error) {
                         displayError("AlgorithmSubset reports: Destination image already locked.");
                         setCompleted(false);
+
                         return;
                     }
                 }
             }
         } // else
+
         if (threadStopped) {
             sliceBuffer = null;
             finalize();
+
             return;
         }
+
         destImage.calcMinMax();
-        float min = (float)destImage.getMin();
-        float max = (float)destImage.getMax();
+
+        float min = (float) destImage.getMin();
+        float max = (float) destImage.getMax();
 
         int orientation = FileInfoBase.UNKNOWN_ORIENT;
-        if ( srcImage.getNDims() >= 3 )
-        {
+
+        if (srcImage.getNDims() >= 3) {
+
             if (newAxisOrients[2] != FileInfoBase.ORI_UNKNOWN_TYPE) {
-                
-                if ((newAxisOrients[2] == FileInfoBase.ORI_A2P_TYPE) || (newAxisOrients[2] == FileInfoBase.ORI_P2A_TYPE)) {
+
+                if ((newAxisOrients[2] == FileInfoBase.ORI_A2P_TYPE) ||
+                        (newAxisOrients[2] == FileInfoBase.ORI_P2A_TYPE)) {
                     orientation = FileInfoBase.CORONAL;
                 } else if ((newAxisOrients[2] == FileInfoBase.ORI_S2I_TYPE) ||
-                           (newAxisOrients[2] == FileInfoBase.ORI_I2S_TYPE)) {
+                               (newAxisOrients[2] == FileInfoBase.ORI_I2S_TYPE)) {
                     orientation = FileInfoBase.AXIAL;
                 } else if ((newAxisOrients[2] == FileInfoBase.ORI_R2L_TYPE) ||
-                           (newAxisOrients[2] == FileInfoBase.ORI_L2R_TYPE)) {
+                               (newAxisOrients[2] == FileInfoBase.ORI_L2R_TYPE)) {
                     orientation = FileInfoBase.SAGITTAL;
                 }
             }
         }
+
         calcStartLocations(newStartLocations);
 
         // Set the file info for the new rotated image identical to the original image,
         // and then adjusts the appropriate info.
         // For all image formats other than DICOM and NIFTI
         if ((srcImage.getFileInfo(0).getFileFormat() != FileUtility.DICOM) &&
-            (srcImage.getFileInfo(0).getFileFormat() != FileUtility.NIFTI)) {
+                (srcImage.getFileInfo(0).getFileFormat() != FileUtility.NIFTI)) {
             FileInfoBase[] newFileInfo = new FileInfoBase[newDimExtents[2]];
 
-            for ( int i = 0; i < newFileInfo.length; i++ ) {
+            for (int i = 0; i < newFileInfo.length; i++) {
                 newFileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
                 newFileInfo[i].setExtents(newDimExtents);
                 newFileInfo[i].setImageOrientation(orientation);
@@ -461,21 +508,22 @@ public class AlgorithmRotate extends AlgorithmBase {
                 newFileInfo[i].setUnitsOfMeasure(newUnitsOfMeasure);
                 newFileInfo[i].setOrigin(newStartLocations[0], 0);
                 newFileInfo[i].setOrigin(newStartLocations[1], 1);
-                if ( srcImage.getNDims() >= 3 )
-                {
+
+                if (srcImage.getNDims() >= 3) {
                     newFileInfo[i].setOrigin(newStartLocations[2] + (newResolutions[2] * i), 2);
                     newFileInfo[i].setSliceThickness(newResolutions[2]);
                 }
+
                 if (newFileInfo[i].getFileFormat() == FileUtility.MINC) {
                     newFileInfo[i].setRescaleSlope(((FileInfoMinc) newFileInfo[i]).calculateSlope(min, max));
-                    newFileInfo[i].
-                        setRescaleIntercept(((FileInfoMinc) newFileInfo[i]).
-                                            calculateIntercept(min,newFileInfo[i].getRescaleSlope()));
+                    newFileInfo[i].setRescaleIntercept(((FileInfoMinc) newFileInfo[i]).calculateIntercept(min,
+                                                                                                          newFileInfo[i].getRescaleSlope()));
                 }
             }
+
             destImage.setFileInfo(newFileInfo);
-            if ( srcImage.getNDims() >= 3 )
-            {
+
+            if (srcImage.getNDims() >= 3) {
                 TransMatrix tMat = (TransMatrix) srcImage.getMatrix().clone();
                 tMat.timesEquals(rotMatrix);
                 tMat.setMatrix(newFileInfo[0].getOrigin()[0], 0, 3);
@@ -483,11 +531,10 @@ public class AlgorithmRotate extends AlgorithmBase {
                 tMat.setMatrix(newFileInfo[0].getOrigin()[2], 2, 3);
                 destImage.setMatrix(tMat);
             }
-        }
-        else if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.NIFTI) {
+        } else if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.NIFTI) {
             FileInfoNIFTI[] newNiftiInfo = new FileInfoNIFTI[newDimExtents[2]];
 
-            for ( int i = 0; i < newNiftiInfo.length; i++ ) {
+            for (int i = 0; i < newNiftiInfo.length; i++) {
                 newNiftiInfo[i] = (FileInfoNIFTI) srcImage.getFileInfo(0).clone();
                 newNiftiInfo[i].setExtents(newDimExtents);
                 newNiftiInfo[i].setImageOrientation(orientation);
@@ -496,47 +543,50 @@ public class AlgorithmRotate extends AlgorithmBase {
                 newNiftiInfo[i].setUnitsOfMeasure(newUnitsOfMeasure);
                 newNiftiInfo[i].setOrigin(newStartLocations[0], 0);
                 newNiftiInfo[i].setOrigin(newStartLocations[1], 1);
-                if ( srcImage.getNDims() >= 3 )
-                {
+
+                if (srcImage.getNDims() >= 3) {
                     newNiftiInfo[i].setOrigin(newStartLocations[2] + (newResolutions[2] * i), 2);
                     newNiftiInfo[i].setSliceThickness(newResolutions[2]);
                 }
             }
+
             destImage.setFileInfo(newNiftiInfo);
-            if ( srcImage.getNDims() >= 3 )
-            {
+
+            if (srcImage.getNDims() >= 3) {
                 TransMatrix tMat = (TransMatrix) srcImage.getMatrix().clone();
                 tMat.timesEquals(rotMatrix);
                 tMat.setMatrix(newNiftiInfo[0].getOrigin()[0], 0, 3);
                 tMat.setMatrix(newNiftiInfo[0].getOrigin()[1], 1, 3);
                 tMat.setMatrix(newNiftiInfo[0].getOrigin()[2], 2, 3);
                 destImage.setMatrix(tMat);
+
                 TransMatrix niftiMatrix = newNiftiInfo[0].getMatrix();
-                float [] LPSOrigin = new float[3];
+                float[] LPSOrigin = new float[3];
                 LPSOrigin[0] = newNiftiInfo[0].getOrigin()[0];
                 LPSOrigin[1] = newNiftiInfo[0].getOrigin()[1];
                 LPSOrigin[2] = newNiftiInfo[0].getOrigin()[2];
+
                 for (int j = 0; j < 3; j++) {
-                    if (newAxisOrients[j] == FileInfoBase.ORI_L2R_TYPE ||
-                        newAxisOrients[j] == FileInfoBase.ORI_R2L_TYPE){
+
+                    if ((newAxisOrients[j] == FileInfoBase.ORI_L2R_TYPE) ||
+                            (newAxisOrients[j] == FileInfoBase.ORI_R2L_TYPE)) {
                         LPSOrigin[0] = newNiftiInfo[0].getOrigin()[j];
-                       
-                    }
-                    else if (newAxisOrients[j] == FileInfoBase.ORI_P2A_TYPE ||
-                             newAxisOrients[j] == FileInfoBase.ORI_A2P_TYPE){
+
+                    } else if ((newAxisOrients[j] == FileInfoBase.ORI_P2A_TYPE) ||
+                                   (newAxisOrients[j] == FileInfoBase.ORI_A2P_TYPE)) {
                         LPSOrigin[1] = newNiftiInfo[0].getOrigin()[j];
-                           
-                    }
-                    else if (newAxisOrients[j] == FileInfoBase.ORI_S2I_TYPE ||
-                             newAxisOrients[j] == FileInfoBase.ORI_I2S_TYPE){
+
+                    } else if ((newAxisOrients[j] == FileInfoBase.ORI_S2I_TYPE) ||
+                                   (newAxisOrients[j] == FileInfoBase.ORI_I2S_TYPE)) {
                         LPSOrigin[2] = newNiftiInfo[0].getOrigin()[j];
-                           
+
                     }
                 }
-                
+
                 niftiMatrix.set(0, 3, -LPSOrigin[0]);
                 niftiMatrix.set(1, 3, LPSOrigin[1]);
                 niftiMatrix.set(2, 3, LPSOrigin[2]);
+
                 if ((newAxisOrients != null) && (newAxisOrients[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
                         (newAxisOrients[1] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
                         (newAxisOrients[2] != FileInfoBase.ORI_UNKNOWN_TYPE)) {
@@ -632,9 +682,9 @@ public class AlgorithmRotate extends AlgorithmBase {
                     } // switch(newAxisOrients[2])
 
                 }
-            }    
-        }
-        else { // If file is DICOM...
+            }
+        } else { // If file is DICOM...
+
             FileInfoDicom[] newDicomInfo = new FileInfoDicom[newDimExtents[2]];
             StringBuffer newTagPixelSpc = null;
             StringBuffer newTagSliceSpc = null;
@@ -648,30 +698,30 @@ public class AlgorithmRotate extends AlgorithmBase {
             // pixel spacing, slice thickness, and spacing between slices changes for
             // X- or Y-axis rotation, but not for Z-axis rotation.  Also should not be set if
             // it wasn't there in the first place.
-            if ((rotateAxis != Z_AXIS_180) && (rotateAxis != Z_AXIS_PLUS) &&
-                (rotateAxis != Z_AXIS_PLUS) && (tmp != null)) {
+            if ((rotateAxis != Z_AXIS_180) && (rotateAxis != Z_AXIS_PLUS) && (rotateAxis != Z_AXIS_PLUS) &&
+                    (tmp != null)) {
                 newTagPixelSpc = new StringBuffer(Float.toString(newResolutions[0]) + "\\" +
                                                   Float.toString(newResolutions[1]));
                 newTagSliceSpc = new StringBuffer(Float.toString(newResolutions[2]));
             }
 
             matrix = oldDicomInfo.getPatientOrientation();
-            
+
             if (matrix != null) {
                 rotMatrix.timesEquals(matrix);
                 imageOrient = matrixToDICOMString(rotMatrix);
             }
-            
-            for ( int i = 0; i < newDimExtents[2]; i++ ) {
+
+            for (int i = 0; i < newDimExtents[2]; i++) {
+
                 // more correct information for a Z-axis rotation, so copy the file info on a slice basis
-                if ((rotateAxis == Z_AXIS_180) || (rotateAxis == Z_AXIS_PLUS) || 
-                    (rotateAxis == Z_AXIS_MINUS)) {
+                if ((rotateAxis == Z_AXIS_180) || (rotateAxis == Z_AXIS_PLUS) || (rotateAxis == Z_AXIS_MINUS)) {
                     newDicomInfo[i] = (FileInfoDicom) srcImage.getFileInfo(i).clone();
                 } // not possible for other rotations because the z-dimension is different
                 else {
                     newDicomInfo[i] = (FileInfoDicom) srcImage.getFileInfo(0).clone();
                 }
-                 
+
                 newDicomInfo[i].setExtents(newDimExtents);
                 newDicomInfo[i].setImageOrientation(orientation);
                 newDicomInfo[i].setAxisOrientation(newAxisOrients);
@@ -687,10 +737,12 @@ public class AlgorithmRotate extends AlgorithmBase {
                 if (newTagPixelSpc != null) {
                     newDicomInfo[i].setValue("0028,0030", newTagPixelSpc.toString(), newTagPixelSpc.length()); // pixel spacing
                 }
+
                 if (newTagSliceSpc != null) {
                     newDicomInfo[i].setValue("0018,0050", newTagSliceSpc.toString(), newTagSliceSpc.length()); // slice thickness
                     newDicomInfo[i].setValue("0018,0088", newTagSliceSpc.toString(), newTagSliceSpc.length()); // spacing between slices
                 }
+
                 if (newDicomInfo[i].getValue("0020,0037") != null) {
                     newDicomInfo[i].setValue("0020,0037", imageOrient, imageOrient.length());
                 }
@@ -698,6 +750,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                 String position = null;
                 DecimalFormat nf = new DecimalFormat("##0.000000");
                 String sliceLocation = null;
+
                 if (orientation == FileInfoBase.SAGITTAL) {
                     fSliceLocation = newStartLocations[0] + (i * newResolutions[0]);
                     position = positionToDICOMString(fSliceLocation, newStartLocations[1], newStartLocations[2]);
@@ -711,16 +764,19 @@ public class AlgorithmRotate extends AlgorithmBase {
                     position = positionToDICOMString(newStartLocations[0], newStartLocations[1], fSliceLocation);
                     sliceLocation = nf.format(fSliceLocation);
                 }
+
                 if (newDicomInfo[i].getValue("0020,1041") != null) {
                     newDicomInfo[i].setValue("0020,1041", sliceLocation, sliceLocation.length()); // image location
                 }
+
                 if (newDicomInfo[i].getValue("0020,0032") != null) {
                     newDicomInfo[i].setValue("0020,0032", position, position.length());
                 }
             }
+
             destImage.setFileInfo(newDicomInfo);
-            if ( srcImage.getNDims() >= 3 )
-            {
+
+            if (srcImage.getNDims() >= 3) {
                 TransMatrix tMat = (TransMatrix) srcImage.getMatrix().clone();
                 tMat.timesEquals(rotMatrix);
                 tMat.setMatrix(newDicomInfo[0].getOrigin()[0], 0, 3);
@@ -729,8 +785,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                 destImage.setMatrix(tMat);
             }
         }
-        
-        
+
         destImage.releaseLock();
         setCompleted(true);
     }
@@ -745,110 +800,107 @@ public class AlgorithmRotate extends AlgorithmBase {
         float[] oldLoc = srcImage.getFileInfo()[0].getOrigin();
         float[] oldRes = srcImage.getFileInfo()[0].getResolutions();
         int[] oldDims = srcImage.getExtents();
-        
+
         if (srcImage.getNDims() == 3) {
             newLoc[0] = oldLoc[0];
             newLoc[1] = oldLoc[1];
             newLoc[2] = oldLoc[2];
-            
+
             if (rotateAxis == X_AXIS_180) {
+
                 if (oldLoc[1] > 0.0f) {
-                    newLoc[1] = oldLoc[1] - (oldDims[1] - 1) * oldRes[1];
+                    newLoc[1] = oldLoc[1] - ((oldDims[1] - 1) * oldRes[1]);
+                } else {
+                    newLoc[1] = oldLoc[1] + ((oldDims[1] - 1) * oldRes[1]);
                 }
-                else {
-                    newLoc[1] = oldLoc[1] + (oldDims[1] - 1) * oldRes[1];
-                }
+
                 if (oldLoc[2] > 0.0f) {
-                    newLoc[2] = oldLoc[2] - (oldDims[2] - 1) * oldRes[2];
+                    newLoc[2] = oldLoc[2] - ((oldDims[2] - 1) * oldRes[2]);
+                } else {
+                    newLoc[2] = oldLoc[2] + ((oldDims[2] - 1) * oldRes[2]);
                 }
-                else {
-                    newLoc[2] = oldLoc[2] + (oldDims[2] - 1) * oldRes[2];
-                }
-            }
-            else if (rotateAxis == X_AXIS_PLUS) {
+            } else if (rotateAxis == X_AXIS_PLUS) {
+
                 if (oldLoc[2] > 0.0f) {
-                    newLoc[1] = oldLoc[2] - (oldDims[2] - 1) * oldRes[2];
+                    newLoc[1] = oldLoc[2] - ((oldDims[2] - 1) * oldRes[2]);
+                } else {
+                    newLoc[1] = oldLoc[2] + ((oldDims[2] - 1) * oldRes[2]);
                 }
-                else {
-                    newLoc[1] = oldLoc[2] + (oldDims[2] - 1) * oldRes[2];
-                }
+
                 newLoc[2] = oldLoc[1];
-            }
-            else if (rotateAxis == X_AXIS_MINUS) {
+            } else if (rotateAxis == X_AXIS_MINUS) {
                 newLoc[1] = oldLoc[2];
+
                 if (oldLoc[1] > 0.0f) {
-                    newLoc[2] = oldLoc[1] - (oldDims[1] - 1) * oldRes[1];
+                    newLoc[2] = oldLoc[1] - ((oldDims[1] - 1) * oldRes[1]);
+                } else {
+                    newLoc[2] = oldLoc[1] + ((oldDims[1] - 1) * oldRes[1]);
                 }
-                else {
-                    newLoc[2] = oldLoc[1] + (oldDims[1] - 1) * oldRes[1];
-                }
-            }
-            else if (rotateAxis == Y_AXIS_180) {
+            } else if (rotateAxis == Y_AXIS_180) {
+
                 if (oldLoc[0] > 0.0f) {
-                    newLoc[0] = oldLoc[0] - (oldDims[0] - 1) * oldRes[0];
+                    newLoc[0] = oldLoc[0] - ((oldDims[0] - 1) * oldRes[0]);
+                } else {
+                    newLoc[0] = oldLoc[0] + ((oldDims[0] - 1) * oldRes[0]);
                 }
-                else {
-                    newLoc[0] = oldLoc[0] + (oldDims[0] - 1) * oldRes[0];
-                }
+
                 if (oldLoc[2] > 0.0f) {
-                    newLoc[2] = oldLoc[2] - (oldDims[2] - 1) * oldRes[2];
+                    newLoc[2] = oldLoc[2] - ((oldDims[2] - 1) * oldRes[2]);
+                } else {
+                    newLoc[2] = oldLoc[2] + ((oldDims[2] - 1) * oldRes[2]);
                 }
-                else {
-                    newLoc[2] = oldLoc[2] + (oldDims[2] - 1) * oldRes[2];
-                }
-            }
-            else if (rotateAxis == Y_AXIS_PLUS) {
+            } else if (rotateAxis == Y_AXIS_PLUS) {
                 newLoc[0] = oldLoc[2];
+
                 if (oldLoc[0] > 0.0f) {
-                    newLoc[2] = oldLoc[0] - (oldDims[0] - 1) * oldRes[0];
+                    newLoc[2] = oldLoc[0] - ((oldDims[0] - 1) * oldRes[0]);
+                } else {
+                    newLoc[2] = oldLoc[0] + ((oldDims[0] - 1) * oldRes[0]);
                 }
-                else {
-                    newLoc[2] = oldLoc[0] + (oldDims[0] - 1) * oldRes[0];
-                }
-            }
-            else if (rotateAxis == Y_AXIS_MINUS) {
+            } else if (rotateAxis == Y_AXIS_MINUS) {
+
                 if (oldLoc[2] > 0.0f) {
-                    newLoc[0] = oldLoc[2] - (oldDims[2] - 1) * oldRes[2];
+                    newLoc[0] = oldLoc[2] - ((oldDims[2] - 1) * oldRes[2]);
+                } else {
+                    newLoc[0] = oldLoc[2] + ((oldDims[2] - 1) * oldRes[2]);
                 }
-                else {
-                    newLoc[0] = oldLoc[2] + (oldDims[2] - 1) * oldRes[2];
-                }
+
                 newLoc[2] = oldLoc[0];
-            }
-            else if (rotateAxis == Z_AXIS_180) {
+            } else if (rotateAxis == Z_AXIS_180) {
+
                 if (oldLoc[0] > 0.0f) {
-                    newLoc[0] = oldLoc[0] - (oldDims[0] - 1) * oldRes[0];
+                    newLoc[0] = oldLoc[0] - ((oldDims[0] - 1) * oldRes[0]);
+                } else {
+                    newLoc[0] = oldLoc[0] + ((oldDims[0] - 1) * oldRes[0]);
                 }
-                else {
-                    newLoc[0] = oldLoc[0] + (oldDims[0] - 1) * oldRes[0];
-                }
+
                 if (oldLoc[1] > 0.0f) {
-                    newLoc[1] = oldLoc[1] - (oldDims[1] - 1) * oldRes[1];
+                    newLoc[1] = oldLoc[1] - ((oldDims[1] - 1) * oldRes[1]);
+                } else {
+                    newLoc[1] = oldLoc[1] + ((oldDims[1] - 1) * oldRes[1]);
                 }
-                else {
-                    newLoc[1] = oldLoc[1] + (oldDims[1] - 1) * oldRes[1];
-                }
-            }
-            else if (rotateAxis == Z_AXIS_PLUS) {
+            } else if (rotateAxis == Z_AXIS_PLUS) {
+
                 if (oldLoc[1] > 0.0f) {
-                    newLoc[0] = oldLoc[1] - (oldDims[1] - 1) * oldRes[1];
+                    newLoc[0] = oldLoc[1] - ((oldDims[1] - 1) * oldRes[1]);
+                } else {
+                    newLoc[0] = oldLoc[1] + ((oldDims[1] - 1) * oldRes[1]);
                 }
-                else {
-                    newLoc[0] = oldLoc[1] + (oldDims[1] - 1) * oldRes[1];
-                }
+
                 newLoc[1] = oldLoc[0];
-            }
-            else if (rotateAxis == Z_AXIS_MINUS) {
+            } else if (rotateAxis == Z_AXIS_MINUS) {
                 newLoc[0] = oldLoc[1];
+
                 if (oldLoc[0] > 0.0f) {
-                    newLoc[1] = oldLoc[0] - (oldDims[0] - 1) * oldRes[0];
-                }
-                else {
-                    newLoc[1] = oldLoc[0] + (oldDims[0] - 1) * oldRes[0];
+                    newLoc[1] = oldLoc[0] - ((oldDims[0] - 1) * oldRes[0]);
+                } else {
+                    newLoc[1] = oldLoc[0] + ((oldDims[0] - 1) * oldRes[0]);
                 }
             }
         }
+
         for (int m = 0; m < srcImage.getNDims(); m++) {
+
             if (Math.abs(newLoc[m]) < .000001f) {
                 newLoc[m] = 0f;
             }
@@ -860,6 +912,7 @@ public class AlgorithmRotate extends AlgorithmBase {
      * procedure is turned on.
      */
     private void constructLog() {
+
         if (rotateAxis == Y_AXIS_PLUS) {
             historyString = new String("Rotate(Y_AXIS_PLUS" + ")\n");
         } else if (rotateAxis == Y_AXIS_MINUS) {
@@ -891,7 +944,7 @@ public class AlgorithmRotate extends AlgorithmBase {
         DecimalFormat nf = new DecimalFormat("##0.0000000");
 
         strMatrix = nf.format(dMatrix[0][0]) + "\\" + nf.format(dMatrix[0][1]) + "\\" + nf.format(dMatrix[0][2]) +
-            "\\" + nf.format(dMatrix[1][0]) + "\\" + nf.format(dMatrix[1][1]) + "\\" + nf.format(dMatrix[1][2]);
+                    "\\" + nf.format(dMatrix[1][0]) + "\\" + nf.format(dMatrix[1][1]) + "\\" + nf.format(dMatrix[1][2]);
 
         return strMatrix;
     }

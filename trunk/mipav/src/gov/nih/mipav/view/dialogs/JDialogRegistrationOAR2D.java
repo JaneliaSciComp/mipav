@@ -1015,10 +1015,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                                    matchImage.getFileInfo(0).getResolutions()[1]
                                };
 
-            refWeightImage = new ModelImage(ModelStorageBase.BYTE, refImage.getExtents(), "VOI ref",
-                                            refImage.getUserInterface());
-            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match",
-                                              matchImage.getUserInterface());
+            refWeightImage = new ModelImage(ModelStorageBase.BYTE, refImage.getExtents(), "VOI ref");
+            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match");
 
             refWeightImage.getFileInfo(0).setResolutions(refRes);
             inputWeightImage.getFileInfo(0).setResolutions(matchRes);
@@ -1068,7 +1066,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         reg2.addListener(this);
 
         createProgressBar(matchImage.getImageName(), reg2);
-        
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.

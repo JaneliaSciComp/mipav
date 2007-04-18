@@ -155,8 +155,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
             destExtents[2] = paddedSlices;
 
             // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
-            destImage = new ModelImage(srcImage.getType(), destExtents, srcImage.getImageName(),
-                                       srcImage.getUserInterface());
+            destImage = new ModelImage(srcImage.getType(), destExtents, srcImage.getImageName());
             calcInPlace = true;
         }
 
@@ -192,7 +191,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        
+
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             tOldOffset = Xdim * Ydim * oldZdim * colorFactor * t;
@@ -260,7 +259,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                     if (threadStopped) {
                         imageBuffer = null;
                         setCompleted(false);
-                        
+
                         finalize();
 
                         return;
@@ -409,16 +408,18 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                                 fileInfoBuffer.setOrigin((fileInfoBuffer.getOrigin(2) +
                                                           ((currentSlices - j) *
                                                                (fileInfoBuffer.getOrigin(2) -
-                                                                    ((FileInfoBase) srcImage.getFileInfo((t * oldZdim) +
-                                                                                                             z + 1))
-                                                                    .getOrigin(2)))), 2);
+                                                                    ((FileInfoBase)
+                                                                             srcImage.getFileInfo((t * oldZdim) + z +
+                                                                                                      1)).getOrigin(2)))),
+                                                         2);
                             } else if (z == oldZdim) { // if (z == 0)
                                 fileInfoBuffer.setOrigin((fileInfoBuffer.getOrigin(2) +
                                                           ((j + 1) *
                                                                (fileInfoBuffer.getOrigin(2) -
-                                                                    ((FileInfoBase) srcImage.getFileInfo((t * oldZdim) +
-                                                                                                             z - 2))
-                                                                    .getOrigin(2)))), 2);
+                                                                    ((FileInfoBase)
+                                                                             srcImage.getFileInfo((t * oldZdim) + z -
+                                                                                                      2)).getOrigin(2)))),
+                                                         2);
                             }
 
                             fileInfoBuffer.setExtents(destImage.getExtents());
@@ -433,7 +434,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                 if (threadStopped) {
                     imageBuffer = null;
                     setCompleted(false);
-                    
+
                     finalize();
 
                     return;
@@ -511,7 +512,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
         if (threadStopped) {
             imageBuffer = null;
             setCompleted(false);
-            
+
             finalize();
 
             return;
@@ -538,7 +539,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
             if (srcImage.getNDims() > 3) {
                 numTimes = srcImage.getExtents()[3];
             }
-            
+
             fireProgressStateChanged("Importing Image Data...");
 
             try {
@@ -576,7 +577,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                 displayError("Algorithm Pad With Slices reports: Out of memory getting results.");
                 srcImage.releaseLock();
                 setCompleted(false);
-                
+
 
                 return;
             } catch (IOException e2) {
@@ -585,7 +586,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                 displayError(e2.getMessage());
                 srcImage.releaseLock();
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -600,7 +601,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
         }
 
         // Clean up and let the calling dialog know that algorithm did its job
-        
+
         setCompleted(true);
     }
 

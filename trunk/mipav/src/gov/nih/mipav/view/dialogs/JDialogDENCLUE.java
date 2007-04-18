@@ -234,7 +234,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
         try {
 
             // Make result image of float type
-            resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name, userInterface);
+            resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name);
 
             // Make algorithm
             denAlgo = new AlgorithmDENCLUE(resultImage, image, isGaussian, distance, threshold, isArbitrary);

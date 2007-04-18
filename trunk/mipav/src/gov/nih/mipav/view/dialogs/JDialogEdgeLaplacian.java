@@ -257,7 +257,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 // Make result image of float type
                 // Do not clone because you must have the ability to generate negative
                 // values and this will not happen if your image is UBYTE or USHORT
-                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                     ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
@@ -316,7 +316,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 // Make result image of float type
                 // Do not clone because you must have the ability to generate negative
                 // values and this will not happen if your image is UBYTE or USHORT
-                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
@@ -377,7 +377,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 // Make result image of float type
                 // Do not clone because you must have the ability to generate negative
                 // values and this will not happen if your image is UBYTE or USHORT
-                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                     ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
@@ -436,7 +436,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 // Make result image of float type
                 // Do not clone because you must have the ability to generate negative
                 // values and this will not happen if your image is UBYTE or USHORT
-                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 

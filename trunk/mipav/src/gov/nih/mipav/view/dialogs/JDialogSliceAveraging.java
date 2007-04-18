@@ -162,6 +162,7 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmSliceAveraging) {
             image.clearMask();
 
@@ -222,42 +223,6 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_slices_averaged", averagingNumber));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setAveragingNumber(scriptParameters.getParams().getInt("num_slices_averaged"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Accessor that sets the number of slice that will be averaged together.
@@ -304,7 +269,7 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
         if (displayLoc == NEW) {
 
             try {
-                resultImage = new ModelImage(image.getType(), destExtents, name, userInterface);
+                resultImage = new ModelImage(image.getType(), destExtents, name);
                 resultImage.setImageName(name);
 
                 // Make algorithm
@@ -316,7 +281,7 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
                 sAverAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), sAverAlgo);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -355,7 +320,7 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
                 sAverAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), sAverAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -390,6 +355,43 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
             }
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setAveragingNumber(scriptParameters.getParams().getInt("num_slices_averaged"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_slices_averaged", averagingNumber));
     }
 
     /**

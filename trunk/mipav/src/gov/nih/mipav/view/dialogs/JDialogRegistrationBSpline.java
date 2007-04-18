@@ -398,7 +398,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             // as the target image.
             if (m_bCreateDeformationImage) {
                 m_kImageDef = new ModelImage(ModelStorageBase.FLOAT, aiImageExtentsReg,
-                                             makeImageName(m_kImageSrc.getImageName(), "_deformation"), m_kUI);
+                                             makeImageName(m_kImageSrc.getImageName(), "_deformation"));
                 m_kImageDef.getFileInfo(0).setResolutions(afImageResolutionsReg);
             } else {
                 m_kImageDef = null;
@@ -407,7 +407,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             // Create registration result image.
             int iImageTypeReg = m_kImageSrc.isColorImage() ? ModelStorageBase.ARGB_FLOAT : ModelStorageBase.FLOAT;
             m_kImageReg = new ModelImage(iImageTypeReg, aiImageExtentsReg,
-                                         makeImageName(m_kImageSrc.getImageName(), "_registered"), m_kUI);
+                                         makeImageName(m_kImageSrc.getImageName(), "_registered"));
             m_kImageReg.getFileInfo(0).setResolutions(afImageResolutionsReg);
 
             // 2.5D registration

@@ -2265,8 +2265,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         }
 
         try {
-            resultImage = new ModelImage(ModelImage.FLOAT, dims, makeImageName(image.getImageName(), "_TT"),
-                                         userInterface);
+            resultImage = new ModelImage(ModelImage.FLOAT, dims, makeImageName(image.getImageName(), "_TT"));
             fileInfo = resultImage.getFileInfo();
 
             if ((transformType == ACPC_TO_ORIG) || (transformType == TLRC_TO_ORIG)) {

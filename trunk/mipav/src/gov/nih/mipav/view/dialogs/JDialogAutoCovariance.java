@@ -380,27 +380,23 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
 
                 if (haveRed) {
                     String nameR = makeImageName(image.getImageName(), "_autocovarianceR");
-                    resultImageR = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameR,
-                                                  image.getUserInterface());
+                    resultImageR = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameR);
                 }
 
                 if (haveGreen) {
                     String nameG = makeImageName(image.getImageName(), "_autocovarianceG");
-                    resultImageG = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameG,
-                                                  image.getUserInterface());
+                    resultImageG = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameG);
                 }
 
                 if (haveBlue) {
                     String nameB = makeImageName(image.getImageName(), "_autocovarianceB");
-                    resultImageB = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameB,
-                                                  image.getUserInterface());
+                    resultImageB = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameB);
                 }
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImageR, resultImageG, resultImageB, image);
             } else {
                 String name = makeImageName(image.getImageName(), "_autocovariance");
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name,
-                                             image.getUserInterface());
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name);
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImage, image);
             }

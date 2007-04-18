@@ -88,10 +88,10 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     /** The 3 types of markers - rotation center, reference slice, and adjusted slice. */
     public static final int ROTATIONCENTER = 0;
 
-    /** reference marker type */
+    /** reference marker type. */
     public static final int REFMARK = 1;
 
-    /** adjusted marker type */
+    /** adjusted marker type. */
     public static final int ADJMARK = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -102,8 +102,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     /** DOCUMENT ME! */
     protected Font serif12;
 
-    private JToggleButton regButton = null;
-    
     /** DOCUMENT ME! */
     private int adjMark;
 
@@ -112,7 +110,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JButton adjMarkMinusButton; // delete selected adj markers
-    
+
     /** DOCUMENT ME! */
     private JSlider alphaSlider; // slider to adjust alpha blending
 
@@ -249,7 +247,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private boolean lsPerformed = false;
-    
+
     /** DOCUMENT ME! */
     private int mode;
 
@@ -267,7 +265,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JMenuBar openingMenuBar; // menu bar to hold file options
-    
+
     /** DOCUMENT ME! */
     private int[] pixBuffer;
 
@@ -303,6 +301,9 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JButton refMarkMinusButton; // delete selected reference markers
+
+    /** DOCUMENT ME! */
+    private JToggleButton regButton = null;
 
     /** DOCUMENT ME! */
     private ModelRGB RGBa;
@@ -460,10 +461,10 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         newExtents[1] = image.getExtents()[1];
 
         String name = JDialogBase.makeImageName(image.getImageName(), "_result1");
-        imageA = new ModelImage(image.getType(), newExtents, name, userInterface);
+        imageA = new ModelImage(image.getType(), newExtents, name);
 
         name = JDialogBase.makeImageName(image.getImageName(), "_result2");
-        imageB = new ModelImage(secondImage.getType(), newExtents, name, userInterface);
+        imageB = new ModelImage(secondImage.getType(), newExtents, name);
 
         bufferFactor = 1;
 
@@ -801,9 +802,9 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             componentImageA.setCursorMode(ViewJComponentRegistration.DEFAULT);
             componentImageA.getVOIHandler().selectAllVOIs(false);
         } else if (command.equals("refMarkMinus")) {
-            componentImageA.deleteSelectedContours( componentImageA.getCenterPtLocation(), true );
+            componentImageA.deleteSelectedContours(componentImageA.getCenterPtLocation(), true);
         } else if (command.equals("adjMarkMinus")) {
-            componentImageB.deleteSelectedContours( componentImageB.getCenterPtLocation(), true );
+            componentImageB.deleteSelectedContours(componentImageB.getCenterPtLocation(), true);
         } else if (command.equals("defaultMode")) {
             adjMarkButton.setSelected(false);
             refMarkButton.setSelected(false);
@@ -1143,9 +1144,11 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
      * @param  event  event that triggered function
      */
     public synchronized void componentResized(ComponentEvent event) {
+
         if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
             return;
         }
+
         validate();
         setTitle();
         updateImages(true);
@@ -1273,7 +1276,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         }
     }
 
-  
 
     /**
      * Removes the menu and controls of the main frame so that a new frame can load the main frame with the proper
@@ -1524,11 +1526,11 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             newAlphaBlend = 100 - alphaSlider.getValue();
             // updateFrames(false);
         } else if (source == tabbedPane) {
-        	actionPerformed(new ActionEvent("DummySource", 0, "defaultMode"));
+            actionPerformed(new ActionEvent("DummySource", 0, "defaultMode"));
             setTitle();
-            
-            //probably need to put algorithmPerformed stuff back in here
-            
+
+            // probably need to put algorithmPerformed stuff back in here
+
         }
 
         updateImages(true);
@@ -1569,6 +1571,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
      * @return  boolean confirming successful update
      */
     public final boolean updateImages(boolean forceShow) {
+
         if (componentImage == null) {
             return false;
         }
@@ -1587,12 +1590,12 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             if (componentImageB.show(0, 0, null, null, forceShow, -1) == false) {
                 return false;
             }
-            
+
             if (componentImageA.show(0, 0, null, null, forceShow, -1) == false) {
                 return false;
             }
 
-            
+
         }
 
         return true;
@@ -1609,6 +1612,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
      * @return  boolean confirming successful update
      */
     public final boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
+
         if (componentImage == null) {
             return false;
         }
@@ -1906,14 +1910,16 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             buttonArray[2] = zoomOutButton;
 
             regButton = new JToggleButton(MipavUtil.getIcon("winregion.gif"));
-           // regButton.setMargin(new Insets(0, 0, 0, 0));
+
+            // regButton.setMargin(new Insets(0, 0, 0, 0));
             regButton.addActionListener(al);
             regButton.setToolTipText("Window region of image B");
             regButton.setActionCommand("WinRegion");
             regButton.setBorderPainted(false);
             regButton.setRolloverEnabled(true);
             regButton.setRolloverIcon(MipavUtil.getIcon("winregionroll.gif"));
-          //  regButton.setBorder(pressedBorder);
+
+            // regButton.setBorder(pressedBorder);
             regButton.setEnabled(true);
             regButton.addItemListener(this);
             regButton.setFocusPainted(false);
@@ -2003,7 +2009,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
         if (!both) {
             refMarkButton = new JToggleButton(MipavUtil.getIcon("reference.gif"));
-         //   refMarkButton.setMargin(new Insets(0, 0, 0, 0));
+
+            // refMarkButton.setMargin(new Insets(0, 0, 0, 0));
             refMarkButton.addActionListener(al);
             refMarkButton.setToolTipText("Reference slice markers");
             refMarkButton.setActionCommand("refMark");
@@ -2011,7 +2018,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             movementGroup.add(refMarkButton);
             refMarkButton.setBorderPainted(false);
             refMarkButton.setRolloverEnabled(true);
-           // refMarkButton.setBorder(pressedBorder);
+
+            // refMarkButton.setBorder(pressedBorder);
             refMarkButton.setRolloverIcon(MipavUtil.getIcon("referenceroll.gif"));
             refMarkButton.addItemListener(this);
             refMarkButton.setFocusPainted(false);
@@ -2019,7 +2027,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             toggleArray[2] = refMarkButton;
 
             adjMarkButton = new JToggleButton(MipavUtil.getIcon("adjust.gif"));
-       //     adjMarkButton.setMargin(new Insets(0, 0, 0, 0));
+
+            // adjMarkButton.setMargin(new Insets(0, 0, 0, 0));
             adjMarkButton.addActionListener(al);
             adjMarkButton.setToolTipText("Adjusted slice markers");
             adjMarkButton.setActionCommand("adjMark");
@@ -2027,7 +2036,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             movementGroup.add(adjMarkButton);
             adjMarkButton.setBorderPainted(false);
             adjMarkButton.setRolloverEnabled(true);
-          //  adjMarkButton.setBorder(pressedBorder);
+
+            // adjMarkButton.setBorder(pressedBorder);
             adjMarkButton.setRolloverIcon(MipavUtil.getIcon("adjustroll.gif"));
             adjMarkButton.addItemListener(this);
             adjMarkButton.setFocusPainted(false);
@@ -2037,28 +2047,32 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
 
             refMarkMinusButton = new JButton(MipavUtil.getIcon("referenceminus.gif"));
-          //  refMarkMinusButton.setMargin(new Insets(0, 0, 0, 0));
+
+            // refMarkMinusButton.setMargin(new Insets(0, 0, 0, 0));
             refMarkMinusButton.addActionListener(al);
             refMarkMinusButton.setToolTipText("Delete selected reference slice markers");
             refMarkMinusButton.setActionCommand("refMarkMinus");
             refMarkMinusButton.setSelected(false);
             refMarkMinusButton.setBorderPainted(false);
             refMarkMinusButton.setRolloverEnabled(true);
-         //   refMarkMinusButton.setBorder(pressedBorder);
+
+            // refMarkMinusButton.setBorder(pressedBorder);
             refMarkMinusButton.setRolloverIcon(MipavUtil.getIcon("referencerollminus.gif"));
             refMarkMinusButton.addItemListener(this);
             refMarkMinusButton.setFocusPainted(false);
             registrationToolBar.add(refMarkMinusButton);
 
             adjMarkMinusButton = new JButton(MipavUtil.getIcon("adjustminus.gif"));
-       //     adjMarkMinusButton.setMargin(new Insets(0, 0, 0, 0));
+
+            // adjMarkMinusButton.setMargin(new Insets(0, 0, 0, 0));
             adjMarkMinusButton.addActionListener(al);
             adjMarkMinusButton.setToolTipText("Delete selected adjusted slice markers");
             adjMarkMinusButton.setActionCommand("adjMarkMinus");
             adjMarkMinusButton.setSelected(false);
             adjMarkMinusButton.setBorderPainted(false);
             adjMarkMinusButton.setRolloverEnabled(true);
-         //   adjMarkMinusButton.setBorder(pressedBorder);
+
+            // adjMarkMinusButton.setBorder(pressedBorder);
             adjMarkMinusButton.setRolloverIcon(MipavUtil.getIcon("adjustrollminus.gif"));
             adjMarkMinusButton.addItemListener(this);
             adjMarkMinusButton.setFocusPainted(false);
@@ -2066,14 +2080,16 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             registrationToolBar.add(makeSeparator());
 
             copyRefToAdjButton = new JButton(MipavUtil.getIcon("refToAdj.gif"));
-          //  copyRefToAdjButton.setMargin(new Insets(0, 0, 0, 0));
+
+            // copyRefToAdjButton.setMargin(new Insets(0, 0, 0, 0));
             copyRefToAdjButton.addActionListener(al);
             copyRefToAdjButton.setToolTipText("Copy reference markers to adjusted image");
             copyRefToAdjButton.setActionCommand("copyRefAdj");
             copyRefToAdjButton.setSelected(false);
             copyRefToAdjButton.setBorderPainted(false);
             copyRefToAdjButton.setRolloverEnabled(true);
-         //   copyRefToAdjButton.setBorder(pressedBorder);
+
+            // copyRefToAdjButton.setBorder(pressedBorder);
             copyRefToAdjButton.setRolloverIcon(MipavUtil.getIcon("refToAdjRoll.gif"));
             copyRefToAdjButton.addItemListener(this);
             copyRefToAdjButton.setFocusPainted(false);
@@ -2081,14 +2097,16 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             // registrationToolBar.add(makeSeparator());
 
             copyAdjToRefButton = new JButton(MipavUtil.getIcon("adjToRef.gif"));
-        //    copyAdjToRefButton.setMargin(new Insets(0, 0, 0, 0));
+
+            // copyAdjToRefButton.setMargin(new Insets(0, 0, 0, 0));
             copyAdjToRefButton.addActionListener(al);
             copyAdjToRefButton.setToolTipText("Copy adjusted markers to reference image");
             copyAdjToRefButton.setActionCommand("copyAdjRef");
             copyAdjToRefButton.setSelected(false);
             copyAdjToRefButton.setBorderPainted(false);
             copyAdjToRefButton.setRolloverEnabled(true);
-      //      copyAdjToRefButton.setBorder(pressedBorder);
+
+            // copyAdjToRefButton.setBorder(pressedBorder);
             copyAdjToRefButton.setRolloverIcon(MipavUtil.getIcon("adjToRefRoll.gif"));
             copyAdjToRefButton.addItemListener(this);
             copyAdjToRefButton.setFocusPainted(false);
@@ -2096,7 +2114,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             registrationToolBar.add(makeSeparator());
 
             defaultModeButton = new JToggleButton(MipavUtil.getIcon("pointer.gif"));
-         //   defaultModeButton.setMargin(new Insets(0, 0, 0, 0));
+
+            // defaultModeButton.setMargin(new Insets(0, 0, 0, 0));
             defaultModeButton.addActionListener(al);
             defaultModeButton.setToolTipText("Return to default mode");
             defaultModeButton.setActionCommand("defaultMode");
@@ -2109,7 +2128,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             registrationToolBar.add(defaultModeButton);
             registrationToolBar.add(makeSeparator());
         }
-        
+
         JButton commitMoveButton = new JButton("Apply");
         commitMoveButton.addActionListener(al);
         commitMoveButton.setToolTipText("Commit change to image");
@@ -2117,11 +2136,13 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         commitMoveButton.setFont(MipavUtil.font12B);
         commitMoveButton.setMinimumSize(new Dimension(50, 20));
         commitMoveButton.setFocusPainted(false);
-        //commitMoveButton.setPreferredSize(MipavUtil.defaultButtonSize);
+
+        // commitMoveButton.setPreferredSize(MipavUtil.defaultButtonSize);
         commitMoveButton.setBorderPainted(false);
 
         commitMoveButton.setMargin(new Insets(7, 7, 7, 7));
-        //commitMoveButton.setMargin(new Insets(0, 0, 0, 0));
+
+        // commitMoveButton.setMargin(new Insets(0, 0, 0, 0));
         commitMoveButton.addItemListener(this);
         registrationToolBar.add(commitMoveButton);
 
@@ -2138,8 +2159,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
      * @param  ui  user interface
      */
     private void buildScrollPanes(ViewUserInterface ui) {
-JPanel innerPanel, innerPanelA, innerPanelB;
-        
+        JPanel innerPanel, innerPanelA, innerPanelB;
+
 
         try {
 
@@ -2185,15 +2206,15 @@ JPanel innerPanel, innerPanelA, innerPanelB;
 
             // Create the componentImageA which will be the reference image in the dual window
             componentImageA = new ViewJComponentSingleRegistration(this, imageA, LUTa, imageBufferA, pixBufferCompA, 1,
-                                                                   newExtents, logMagDisplay, FileInfoBase.UNKNOWN_ORIENT,
-                                                                   true);
+                                                                   newExtents, logMagDisplay,
+                                                                   FileInfoBase.UNKNOWN_ORIENT, true);
 
             componentImageA.setBuffers(imageBufferA, null, pixBufferCompA, null);
 
             // Create the componentImageB which will be the adjusted image in the dual window
             componentImageB = new ViewJComponentSingleRegistration(this, imageB, LUTb, imageBufferB, pixBufferCompB, 1,
-                                                                   newExtents, logMagDisplay, FileInfoBase.UNKNOWN_ORIENT,
-                                                                   false);
+                                                                   newExtents, logMagDisplay,
+                                                                   FileInfoBase.UNKNOWN_ORIENT, false);
 
             componentImageB.setBuffers(imageBufferB, null, pixBufferCompB, null);
 
@@ -2322,7 +2343,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         pixelIncrementButton.addActionListener(al);
         pixelIncrementButton.setToolTipText("Set pixel increment");
         pixelIncrementButton.setFont(MipavUtil.font12B);
-        //pixelIncrementButton.setMinimumSize(new Dimension(20, 20));
+
+        // pixelIncrementButton.setMinimumSize(new Dimension(20, 20));
         pixelIncrementButton.setMargin(new Insets(7, 7, 7, 7));
         pixelIncrementButton.setActionCommand("pixelIncrement");
         pixelIncrementButton.setBorderPainted(false);
@@ -2333,7 +2355,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         buttonArray[3] = pixelIncrementButton;
 
         translateButton = new JToggleButton(MipavUtil.getIcon("translate.gif"));
-      //  translateButton.setMargin(new Insets(0, 0, 0, 0));
+
+        // translateButton.setMargin(new Insets(0, 0, 0, 0));
         translateButton.addActionListener(al);
         translateButton.setToolTipText("Translate image");
         translateButton.setActionCommand("translate");
@@ -2341,7 +2364,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         movementGroup.add(translateButton);
         translateButton.setBorderPainted(false);
         translateButton.setRolloverEnabled(true);
-       // translateButton.setBorder(pressedBorder);
+
+        // translateButton.setBorder(pressedBorder);
         translateButton.setRolloverIcon(MipavUtil.getIcon("translateroll.gif"));
         translateButton.addItemListener(this);
         translateButton.setFocusPainted(false);
@@ -2406,7 +2430,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         degreeIncrementButton.addActionListener(al);
         degreeIncrementButton.setToolTipText("Set degree increment");
         degreeIncrementButton.setFont(MipavUtil.font12B);
-        //degreeIncrementButton.setMinimumSize(new Dimension(20, 20));
+
+        // degreeIncrementButton.setMinimumSize(new Dimension(20, 20));
         degreeIncrementButton.setMargin(new Insets(7, 7, 7, 7));
         degreeIncrementButton.setActionCommand("degreeIncrement");
         degreeIncrementButton.setBorderPainted(false);
@@ -2419,7 +2444,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         buttonArray[8] = degreeIncrementButton;
 
         rotateButton = new JToggleButton(MipavUtil.getIcon("rotate.gif"));
-       // rotateButton.setMargin(new Insets(0, 0, 0, 0));
+
+        // rotateButton.setMargin(new Insets(0, 0, 0, 0));
         rotateButton.addActionListener(al);
         rotateButton.setToolTipText("Rotate image");
         rotateButton.setActionCommand("rotate");
@@ -2427,7 +2453,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         movementGroup.add(rotateButton);
         rotateButton.setBorderPainted(false);
         rotateButton.setRolloverEnabled(true);
-      //  rotateButton.setBorder(pressedBorder);
+
+        // rotateButton.setBorder(pressedBorder);
         rotateButton.setRolloverIcon(MipavUtil.getIcon("rotateroll.gif"));
         rotateButton.addItemListener(this);
         rotateButton.setFocusPainted(false);
@@ -2461,14 +2488,14 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         buttonArray[10] = ccwButton;
 
         toolBar2.add(makeSeparator());
-        
+
         toolBar2.setFloatable(false);
 
         return toolBar2;
     }
 
     /**
-     * Creates the GUI
+     * Creates the GUI.
      */
     private void init() {
 
@@ -2580,7 +2607,7 @@ JPanel innerPanel, innerPanelA, innerPanelB;
 
         toolBarSep = buildRegistrationToolBar(this, false);
         toolBar.setMinimumSize(toolBarSep.getPreferredSize());
-        
+
         gbc.gridwidth = 2;
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -3162,7 +3189,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         // point coordinates from the old point coordinates
         nVOI = componentImage.getnVOI();
 
-        int [] markerType = null;
+        int[] markerType = null;
+
         if (nVOI > 0) {
             xOrg = componentImage.getxOrg();
             yOrg = componentImage.getyOrg();
@@ -3306,8 +3334,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         // point coordinates from the old point coordinates
         nVOI = componentImage.getnVOI();
 
-        int [] markerType = null;
-        
+        int[] markerType = null;
+
         if (nVOI > 0) {
             xOrg = componentImage.getxOrg();
             yOrg = componentImage.getyOrg();

@@ -429,7 +429,7 @@ public class FileMicroCat extends FileBase {
             length = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
 
             buffer = new float[length];
-            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName, UI);
+            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName);
 
             // Copy all
             if (fileInfo.getExtents().length > 2) { // Set file info

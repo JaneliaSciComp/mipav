@@ -314,7 +314,7 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
         if (displayLoc == NEW) {
 
             try {
-                resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name, userInterface);
+                resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
 
                 /*if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM){
                  *  ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
