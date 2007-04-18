@@ -361,7 +361,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                 try {
 
                     // Make result image of float type
-                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                     // Make algorithm
                     diffusionAlgo = new AlgorithmAnisotropicDiffusion(resultImage, image, sigmas, iters, konst,
@@ -459,7 +459,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                 try {
 
                     // Make result image of float type
-                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                     // Make algorithm
                     diffusionAlgo = new AlgorithmAnisotropicDiffusion(resultImage, image, sigmas, iters, konst,

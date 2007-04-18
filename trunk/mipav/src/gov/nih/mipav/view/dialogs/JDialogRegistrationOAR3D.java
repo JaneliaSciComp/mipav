@@ -1008,10 +1008,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                                    matchImage.getFileInfo(0).getResolutions()[2]
                                };
 
-            refWeightImage = new ModelImage(ModelStorageBase.BYTE, refImage.getExtents(), "VOI ref",
-                                            refImage.getUserInterface());
-            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match",
-                                              matchImage.getUserInterface());
+            refWeightImage = new ModelImage(ModelStorageBase.BYTE, refImage.getExtents(), "VOI ref");
+            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match");
 
             refWeightImage.getFileInfo(0).setResolutions(refRes);
             inputWeightImage.getFileInfo(0).setResolutions(matchRes);

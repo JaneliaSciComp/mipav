@@ -271,8 +271,7 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
             }
 
             // Make result image
-            resultImage = new ModelImage(image.getType(), destExtents, makeImageName(image.getImageName(), "_crop"),
-                                         userInterface);
+            resultImage = new ModelImage(image.getType(), destExtents, makeImageName(image.getImageName(), "_crop"));
 
             cropAlgo = new AlgorithmCrop(resultImage, image, borderSize, xBounds, yBounds, zBounds);
 

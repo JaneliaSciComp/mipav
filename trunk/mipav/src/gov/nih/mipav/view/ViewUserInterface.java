@@ -1013,7 +1013,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         try {
-            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), "BlankImage", this);
+            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), "BlankImage");
         } catch (OutOfMemoryError error) {
 
             if (image != null) {

@@ -285,7 +285,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 destExtents[2] = paddedSlices;
 
                 // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
-                resultImage = new ModelImage(image.getType(), destExtents, image.getImageName(), userInterface);
+                resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
 
 
                 // Make algorithm:

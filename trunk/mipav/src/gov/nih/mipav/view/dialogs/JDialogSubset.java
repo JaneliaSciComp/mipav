@@ -303,7 +303,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         try {
 
             // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
-            resultImage = new ModelImage(image.getType(), destExtents, resultString, image.getUserInterface());
+            resultImage = new ModelImage(image.getType(), destExtents, resultString);
 
             // Make algorithm:
             subsetAlgo = new AlgorithmSubset(image, resultImage, removeDim, sliceNum);

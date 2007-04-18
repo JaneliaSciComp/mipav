@@ -386,11 +386,11 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 
                     // Make result image
                     if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
                     } else {
 
                         // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
@@ -511,11 +511,11 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                 try {
 
                     if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
                     } else {
 
                         // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
@@ -646,11 +646,11 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 
                     // Make result image
                     if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
                     } else {
 
                         // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
@@ -772,11 +772,11 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                 try {
 
                     if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
                     } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
                     } else {
 
                         // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);

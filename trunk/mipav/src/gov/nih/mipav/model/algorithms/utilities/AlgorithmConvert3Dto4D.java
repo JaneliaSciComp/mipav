@@ -127,8 +127,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             extents[2] = zDim;
             extents[3] = tDim;
 
-            destImage = new ModelImage(srcImage.getType(), extents, srcImage.getImageName(),
-                                       srcImage.getUserInterface());
+            destImage = new ModelImage(srcImage.getType(), extents, srcImage.getImageName());
             length = colorFactor * xDim * yDim * zDim;
             buffer = new float[length];
             fireProgressStateChanged(srcImage.getImageName(), "Converting from 3D to 4D ...");

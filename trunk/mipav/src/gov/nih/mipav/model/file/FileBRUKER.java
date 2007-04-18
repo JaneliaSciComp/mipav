@@ -311,8 +311,8 @@ public class FileBRUKER extends FileBase {
             }
 
             imgBuffer = new float[length];
-                     
-            image = new ModelImage(fileInfo.getDataType(), imageExtents, fileName, UI);
+
+            image = new ModelImage(fileInfo.getDataType(), imageExtents, fileName);
 
             for (i = 0; i < imageSlice; i++) {
 
@@ -333,7 +333,7 @@ public class FileBRUKER extends FileBase {
             }
 
             raFile.close();
-            
+
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -520,7 +520,7 @@ public class FileBRUKER extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * imageSlice;
                     mod = progressLength / 10;
-                    
+
                     for (j = 0; j < nBytes; j++, i++) {
 
                         if (((i + progress) % mod) == 0) {
@@ -537,7 +537,7 @@ public class FileBRUKER extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * imageSlice;
                     mod = progressLength / 10;
-                    
+
                     for (j = 0; j < nBytes; j += 2, i++) {
 
                         if (((i + progress) % mod) == 0) {
@@ -564,7 +564,7 @@ public class FileBRUKER extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * imageSlice;
                     mod = progressLength / 10;
-                    
+
                     for (j = 0; j < nBytes; j += 4, i++) {
 
                         if (((i + progress) % mod) == 0) {

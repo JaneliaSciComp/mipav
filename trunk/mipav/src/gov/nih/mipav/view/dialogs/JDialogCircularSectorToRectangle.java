@@ -193,7 +193,7 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
             String name = makeImageName(image.getImageName(), "_rectangle");
             extents[0] = xDim;
             extents[1] = yDim;
-            resultImage = new ModelImage(image.getType(), extents, name, image.getUserInterface());
+            resultImage = new ModelImage(image.getType(), extents, name);
             resultImage.setImageName(name);
 
             // Make algorithm

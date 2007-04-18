@@ -432,7 +432,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             int[] extents = new int[2];
             extents[0] = xDim; // RGB
             extents[1] = yDim;
-            testImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture", userInterface);
+            testImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture");
             buffer = new short[bufferSize];
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("JDialogScreenCapture: unable to allocate enough memory for RGB image");

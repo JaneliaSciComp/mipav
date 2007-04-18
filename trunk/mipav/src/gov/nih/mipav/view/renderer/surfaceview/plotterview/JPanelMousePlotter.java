@@ -1747,7 +1747,7 @@ public class JPanelMousePlotter extends JPanelRendererBase
                 javaImage = new ImageComponent2D(ImageComponent.FORMAT_RGB, xDim, yDim); // needed to capture screen
                 pixels = new int[xScale * yScale];
                 buffer = new short[pixels.length * 4];
-                image = new ModelImage(ModelImage.ARGB, extents, "AVI", ViewUserInterface.getReference());
+                image = new ModelImage(ModelImage.ARGB, extents, "AVI");
                 raster = new javax.media.j3d.Raster(new Point3f(), javax.media.j3d.Raster.RASTER_COLOR, 0, 0, xDim,
                                                     yDim, javaImage, null);
             } catch (OutOfMemoryError e) {

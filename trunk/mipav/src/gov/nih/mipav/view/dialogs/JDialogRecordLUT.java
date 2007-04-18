@@ -268,7 +268,7 @@ public class JDialogRecordLUT extends JDialogBase {
 
             extents[0] = xDim; // RGB
             extents[1] = yDim;
-            testImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture", userInterface);
+            testImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture");
             buffer = new short[bufferSize];
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("JDialogRecordLUT: unable to allocate enough memory for RGB image");

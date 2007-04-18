@@ -5,9 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-import java.awt.Dialog.*;
-
 import java.io.*;
 
 
@@ -122,7 +119,7 @@ public class FileFits extends FileBase {
         int dimNumber;
 
         try {
-         
+
             file = new File(fileDir + fileName);
 
             endianess = FileBase.BIG_ENDIAN; // true
@@ -142,7 +139,7 @@ public class FileFits extends FileBase {
                     ;
                 } else if (!s.startsWith("SIMPLE")) {
                     raFile.close();
-                    
+
                     MipavUtil.displayError("Instead of SIMPLE first keyword starts with " + s);
                     throw new IOException();
                 } else {
@@ -178,7 +175,7 @@ public class FileFits extends FileBase {
                     ;
                 } else if (!s.startsWith("BITPIX")) {
                     raFile.close();
-                    
+
                     MipavUtil.displayError("Instead of BITPIX second keyword starts with " + s);
                     throw new IOException();
                 } else {
@@ -195,7 +192,7 @@ public class FileFits extends FileBase {
                             bitsPerPixel = Integer.parseInt(subS);
                         } catch (NumberFormatException e) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("Instead of integer BITPIX line had " + subS);
                             throw new IOException();
                         }
@@ -229,7 +226,7 @@ public class FileFits extends FileBase {
 
                             default:
                                 raFile.close();
-                                
+
                                 MipavUtil.displayError("BITPIX keyword had illegal value of " + bitsPerPixel);
                                 throw new IOException();
                         }
@@ -248,7 +245,7 @@ public class FileFits extends FileBase {
                     ;
                 } else if (!s.startsWith("NAXIS")) {
                     raFile.close();
-                    
+
                     MipavUtil.displayError("Instead of NAXIS third keyword starts with " + s);
                     throw new IOException();
                 } else {
@@ -265,7 +262,7 @@ public class FileFits extends FileBase {
                             nDimensions = Integer.parseInt(subS);
                         } catch (NumberFormatException e) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("Instead of integer NAXIS line had " + subS);
                             throw new IOException();
                         }
@@ -274,27 +271,27 @@ public class FileFits extends FileBase {
 
                         if (nDimensions < 0) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("NAXIS had an illegal negative value of " + nDimensions);
                             throw new IOException();
                         } else if (nDimensions > 999) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("NAXIS exceeded maximum legal value of 999 with " + nDimensions);
                             throw new IOException();
                         } else if (nDimensions > 4) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("MIPAV cannot display an image with " + nDimensions + " dimensions");
                             throw new IOException();
                         } else if (nDimensions == 1) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("MIPAV cannot display an image with 1 dimension");
                             throw new IOException();
                         } else if (nDimensions == 0) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("NAXIS value of 0 indicates no data is associated with the header");
                             throw new IOException();
                         }
@@ -315,7 +312,7 @@ public class FileFits extends FileBase {
                     ;
                 } else if (!s.startsWith("NAXIS1")) {
                     raFile.close();
-                    
+
                     MipavUtil.displayError("Instead of NAXIS1 fourth keyword starts with " + s);
                     throw new IOException();
                 } else {
@@ -332,7 +329,7 @@ public class FileFits extends FileBase {
                             imgExtents[0] = Integer.parseInt(subS);
                         } catch (NumberFormatException e) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("Instead of integer NAXIS1 line had " + subS);
                             throw new IOException();
                         }
@@ -341,12 +338,12 @@ public class FileFits extends FileBase {
 
                         if (imgExtents[0] < 0) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("NAXIS1 had an illegal negative value of " + imgExtents[0]);
                             throw new IOException();
                         } else if (imgExtents[0] == 0) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("NAXIS1 value of 0 indicates no data is associated with the header");
                             throw new IOException();
                         }
@@ -365,7 +362,7 @@ public class FileFits extends FileBase {
                     ;
                 } else if (!s.startsWith("NAXIS2")) {
                     raFile.close();
-                    
+
                     MipavUtil.displayError("Instead of NAXIS2 fifth keyword starts with " + s);
                     throw new IOException();
                 } else {
@@ -382,7 +379,7 @@ public class FileFits extends FileBase {
                             imgExtents[1] = Integer.parseInt(subS);
                         } catch (NumberFormatException e) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("Instead of integer NAXIS2 line had " + subS);
                             throw new IOException();
                         }
@@ -391,12 +388,12 @@ public class FileFits extends FileBase {
 
                         if (imgExtents[1] < 0) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("NAXIS2 had an illegal negative value of " + imgExtents[1]);
                             throw new IOException();
                         } else if (imgExtents[1] == 0) {
                             raFile.close();
-                            
+
                             MipavUtil.displayError("NAXIS2 value of 0 indicates no data is associated with the header");
                             throw new IOException();
                         }
@@ -416,7 +413,7 @@ public class FileFits extends FileBase {
                         ;
                     } else if (!s.startsWith("NAXIS3")) {
                         raFile.close();
-                        
+
                         MipavUtil.displayError("Instead of NAXIS3 sixth keyword starts with " + s);
                         throw new IOException();
                     } else {
@@ -433,7 +430,7 @@ public class FileFits extends FileBase {
                                 imgExtents[2] = Integer.parseInt(subS);
                             } catch (NumberFormatException e) {
                                 raFile.close();
-                                
+
                                 MipavUtil.displayError("Instead of integer NAXIS3 line had " + subS);
                                 throw new IOException();
                             }
@@ -442,12 +439,12 @@ public class FileFits extends FileBase {
 
                             if (imgExtents[2] < 0) {
                                 raFile.close();
-                                
+
                                 MipavUtil.displayError("NAXIS3 had an illegal negative value of " + imgExtents[2]);
                                 throw new IOException();
                             } else if (imgExtents[2] == 0) {
                                 raFile.close();
-                                
+
                                 MipavUtil.displayError("NAXIS3 value of 0 indicates no data is associated with the header");
                                 throw new IOException();
                             }
@@ -468,7 +465,7 @@ public class FileFits extends FileBase {
                         ;
                     } else if (!s.startsWith("NAXIS4")) {
                         raFile.close();
-                        
+
                         MipavUtil.displayError("Instead of NAXIS4 seventh keyword starts with " + s);
                         throw new IOException();
                     } else {
@@ -485,7 +482,7 @@ public class FileFits extends FileBase {
                                 imgExtents[3] = Integer.parseInt(subS);
                             } catch (NumberFormatException e) {
                                 raFile.close();
-                                
+
                                 MipavUtil.displayError("Instead of integer NAXIS4 line had " + subS);
                                 throw new IOException();
                             }
@@ -494,12 +491,12 @@ public class FileFits extends FileBase {
 
                             if (imgExtents[3] < 0) {
                                 raFile.close();
-                                
+
                                 MipavUtil.displayError("NAXIS4 had an illegal negative value of " + imgExtents[3]);
                                 throw new IOException();
                             } else if (imgExtents[3] == 0) {
                                 raFile.close();
-                                
+
                                 MipavUtil.displayError("NAXIS4 value of 0 indicates no data is associated with the header");
                                 throw new IOException();
                             }
@@ -527,7 +524,7 @@ public class FileFits extends FileBase {
                         BSCALE = Double.parseDouble(subS);
                     } catch (NumberFormatException e) {
                         raFile.close();
-                        
+
                         MipavUtil.displayError("Instead of a float BSCALE line had = " + subS);
                         throw new IOException();
                     }
@@ -547,7 +544,7 @@ public class FileFits extends FileBase {
                         BZERO = Double.parseDouble(subS);
                     } catch (NumberFormatException e) {
                         raFile.close();
-                        
+
                         MipavUtil.displayError("Instead of a float BZERO line had = " + subS);
                         throw new IOException();
                     }
@@ -567,7 +564,7 @@ public class FileFits extends FileBase {
                         BLANK = Integer.parseInt(subS);
                     } catch (NumberFormatException e) {
                         raFile.close();
-                        
+
                         MipavUtil.displayError("Instead of an integer BLANK line had = " + subS);
                         throw new IOException();
                     }
@@ -588,7 +585,7 @@ public class FileFits extends FileBase {
                         imgResols[0] = Math.abs(Float.parseFloat(subS));
                     } catch (NumberFormatException e) {
                         raFile.close();
-                        
+
                         MipavUtil.displayError("Instead of a float CDELT1 line had = " + subS);
                         throw new IOException();
                     }
@@ -608,7 +605,7 @@ public class FileFits extends FileBase {
                         imgResols[1] = Math.abs(Float.parseFloat(subS));
                     } catch (NumberFormatException e) {
                         raFile.close();
-                        
+
                         MipavUtil.displayError("Instead of a float CDELT2 line had = " + subS);
                         throw new IOException();
                     }
@@ -628,7 +625,7 @@ public class FileFits extends FileBase {
                         imgResols[2] = Math.abs(Float.parseFloat(subS));
                     } catch (NumberFormatException e) {
                         raFile.close();
-                        
+
                         MipavUtil.displayError("Instead of a float CDELT3 line had = " + subS);
                         throw new IOException();
                     }
@@ -648,7 +645,7 @@ public class FileFits extends FileBase {
                         imgResols[3] = Math.abs(Float.parseFloat(subS));
                     } catch (NumberFormatException e) {
                         raFile.close();
-                        
+
                         MipavUtil.displayError("Instead of a float CDELT4 line had = " + subS);
                         throw new IOException();
                     }
@@ -778,9 +775,9 @@ public class FileFits extends FileBase {
 
                 if (one) {
                     image = new ModelImage(ModelStorageBase.FLOAT, new int[] { imgExtents[0], imgExtents[1] },
-                                           fileInfo.getFileName(), UI);
+                                           fileInfo.getFileName());
                 } else {
-                    image = new ModelImage(ModelStorageBase.FLOAT, imgExtents, fileInfo.getFileName(), UI);
+                    image = new ModelImage(ModelStorageBase.FLOAT, imgExtents, fileInfo.getFileName());
                 }
 
                 fileInfo.setDataType(ModelStorageBase.FLOAT);
@@ -788,9 +785,9 @@ public class FileFits extends FileBase {
 
                 if (one) {
                     image = new ModelImage(sourceType, new int[] { imgExtents[0], imgExtents[1] },
-                                           fileInfo.getFileName(), UI);
+                                           fileInfo.getFileName());
                 } else {
-                    image = new ModelImage(sourceType, imgExtents, fileInfo.getFileName(), UI);
+                    image = new ModelImage(sourceType, imgExtents, fileInfo.getFileName());
                 }
 
                 fileInfo.setDataType(sourceType);
@@ -845,7 +842,7 @@ public class FileFits extends FileBase {
 
             image.calcMinMax();
             raFile.close();
-            
+
 
             return image;
         } catch (Exception e) {
@@ -894,7 +891,7 @@ public class FileFits extends FileBase {
         int zDim;
         int tDim;
         int count;
-      
+
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
             sEnd = options.getEndSlice();
@@ -985,7 +982,7 @@ public class FileFits extends FileBase {
 
             default:
                 raFile.close();
-                
+
                 MipavUtil.displayError("Cannot save this image type in FITS format");
                 throw new IOException();
         } // switch(image.getType())
@@ -1019,7 +1016,7 @@ public class FileFits extends FileBase {
 
             default:
                 raFile.close();
-                
+
                 MipavUtil.displayError("Cannot save file with " + image.getNDims() + " dimensions");
                 throw new IOException();
         } // switch(image.getNDims())
@@ -1464,7 +1461,7 @@ public class FileFits extends FileBase {
         } // switch(image.getType())
 
         raFile.close();
-        
+
     }
 
     /**
@@ -1495,7 +1492,7 @@ public class FileFits extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -1514,7 +1511,7 @@ public class FileFits extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -1538,7 +1535,7 @@ public class FileFits extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -1563,7 +1560,7 @@ public class FileFits extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -1654,7 +1651,7 @@ public class FileFits extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 10;
-        
+
 
         for (j = 0; j < nBytes; j += 8, i++) {
 

@@ -6,7 +6,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.Dialog.*;
 
 import java.io.*;
 
@@ -233,7 +232,7 @@ public class FileDM3 extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading DM3 file...", 0, 100, false, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            
+
 
             file = new File(fileDir + fileName);
 
@@ -246,7 +245,7 @@ public class FileDM3 extends FileBase {
 
             if (fileVersion != 3) {
                 raFile.close();
-                
+
                 MipavUtil.displayError("File version number = " + fileVersion + " instead of required 3");
                 throw new IOException();
             }
@@ -269,7 +268,7 @@ public class FileDM3 extends FileBase {
             } else {
                 Preferences.debug("byteOrder is an illegal = " + byteOrder + "\n");
                 raFile.close();
-                
+
                 MipavUtil.displayError("Byte order is an illegal = " + byteOrder);
                 throw new IOException();
             }
@@ -444,10 +443,9 @@ public class FileDM3 extends FileBase {
             }
 
             if (one) {
-                image = new ModelImage(sourceType, new int[] { imgExtents[0], imgExtents[1] }, fileInfo.getFileName(),
-                                       UI);
+                image = new ModelImage(sourceType, new int[] { imgExtents[0], imgExtents[1] }, fileInfo.getFileName());
             } else {
-                image = new ModelImage(sourceType, imgExtents, fileInfo.getFileName(), UI);
+                image = new ModelImage(sourceType, imgExtents, fileInfo.getFileName());
             }
 
             fileInfo.setDataType(sourceType);
@@ -564,7 +562,7 @@ public class FileDM3 extends FileBase {
 
             image.calcMinMax();
             raFile.close();
-            
+
 
             return image;
         } catch (Exception e) {
@@ -671,7 +669,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            
+
             throw new IOException();
         }
 
@@ -710,7 +708,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            
+
             throw new IOException();
         }
 
@@ -742,7 +740,7 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -761,7 +759,7 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -780,7 +778,7 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -807,7 +805,7 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -838,7 +836,7 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -865,7 +863,7 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -893,7 +891,7 @@ public class FileDM3 extends FileBase {
                 progress = slice * nBytes;
                 progressLength = nBytes * numberSlices;
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -935,7 +933,7 @@ public class FileDM3 extends FileBase {
         progress = slice * bufferR.length;
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
-        
+
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
@@ -994,7 +992,7 @@ public class FileDM3 extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 10;
-        
+
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
@@ -1049,7 +1047,7 @@ public class FileDM3 extends FileBase {
         progress = slice * bufferR.length;
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
-        
+
 
         for (j = 0; j < nBytes; j += 16, i++) {
 
@@ -1120,7 +1118,7 @@ public class FileDM3 extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            
+
 
             for (j = 0; j < nBytes; j += 4, i++) {
 
@@ -1147,7 +1145,7 @@ public class FileDM3 extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            
+
 
             for (j = 0; j < nBytes; j += 8, i++) {
 
@@ -1297,7 +1295,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            
+
             throw new IOException();
         }
 
@@ -1334,7 +1332,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            
+
             throw new IOException();
         }
 
@@ -1375,7 +1373,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            
+
             throw new IOException();
         }
 
@@ -1413,7 +1411,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            
+
             throw new IOException();
         }
 
@@ -1504,7 +1502,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            
+
             throw new IOException();
         }
 
@@ -1554,7 +1552,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            
+
             throw new IOException();
         }
 
@@ -1630,7 +1628,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            
+
             throw new IOException();
         }
 

@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +23,7 @@ import javax.swing.*;
  * Dialog to get user input Calculate Pearson's correlation coefficient Calculate P value for this correlation
  * coefficient Identify colocalized pixels Algorithms are executed in their own thread.
  */
-public class JDialogColocalizationRegression extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogColocalizationRegression extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -292,73 +292,7 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-    /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
-     */
-    protected void storeParamsFromGUI() throws ParserException{
 
-        scriptParameters.storeInputImage(firstImage);
-        
-    scriptParameters.getParams().put(ParameterFactory.newParameter("bin1",bin1));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("bin2",bin2));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("background1",background1));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("background2",background2));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("leftPad",leftPad));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("rightPad",rightPad));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("bottomPad",bottomPad));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("topPad",topPad));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("useRed",useRed));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("useGreen",useGreen));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("useBlue",useBlue));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("doColocWithThresholds",doColocWithThresholds));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("entireImage",entireImage));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("register",register));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("cost",cost));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("doSecondIteration",doSecondIteration));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("doVOISubtraction",doVOISubtraction));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("pointCalculation",pointCalculation));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("point1",point1));
-    scriptParameters.getParams().put(ParameterFactory.newParameter("point2",point2));
-         
-    }
-    
-    /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
-     */
-    protected void setGUIFromParams(){
-        bin1 = scriptParameters.getParams().getInt("bin1");
-        bin2 = scriptParameters.getParams().getInt("bin2");
-        background1 = scriptParameters.getParams().getFloat("background1");
-        background2 = scriptParameters.getParams().getFloat("background2");
-        leftPad = scriptParameters.getParams().getInt("leftPad");
-        rightPad = scriptParameters.getParams().getInt("rightPad");
-        bottomPad = scriptParameters.getParams().getInt("bottomPad");
-        topPad = scriptParameters.getParams().getInt("topPad");
-        useRed = scriptParameters.getParams().getBoolean("useRed");
-        useGreen = scriptParameters.getParams().getBoolean("useGreen");
-        useBlue = scriptParameters.getParams().getBoolean("useBlue");
-        doColocWithThresholds = scriptParameters.getParams().getBoolean("doColocWithThresholds");
-        entireImage = scriptParameters.getParams().getBoolean("entireImage");
-        register = scriptParameters.getParams().getBoolean("register");
-        cost = scriptParameters.getParams().getInt("cost");
-        doSecondIteration = scriptParameters.getParams().getBoolean("doSecondIteration");
-        doVOISubtraction = scriptParameters.getParams().getBoolean("doVOISubtraction");
-        pointCalculation = scriptParameters.getParams().getBoolean("pointCalculation");
-        point1 = scriptParameters.getParams().getFloat("point1");
-        point2 = scriptParameters.getParams().getFloat("point2");
-    }
-    
-    /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
-     */
-    protected void doPostAlgorithmActions() {
-             AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
-    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -468,7 +402,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
         return resultImage;
     }
 
-  
 
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -625,7 +558,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
         }
     }
 
- 
 
     /**
      * DOCUMENT ME!
@@ -914,6 +846,156 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
     }
 
     /**
+     * DOCUMENT ME!
+     */
+    protected void callAlgorithm() {
+        componentImage1.getVOIHandler().setPresetHue(-1.0f);
+
+        if (componentImage2 != null) {
+            componentImage2.getVOIHandler().setPresetHue(-1.0f);
+        }
+
+        String name = makeImageName(firstImage.getImageName(), "_hist2Dim");
+
+        try {
+            int[] extents = new int[2];
+
+            // Allow padding space at left and bottom
+            extents[0] = bin1 + leftPad + rightPad;
+            extents[1] = bin2 + bottomPad + topPad;
+
+            // Allow log of 1 + counts to be displayed
+            resultImage = new ModelImage(ModelStorageBase.DOUBLE, extents, name);
+
+            // Make algorithm
+
+            if (firstImage.isColorImage()) {
+                // System.err.println("Buffer len is: " + buffer.length); System.err.println(bin1 + " " + bin2 + " " +
+                // background1 + " " + background2 + " " + leftPad + " " + rightPad +                     " " +
+                //   bottomPad + " " + " " + topPad + " " + useRed + " " + useGreen + " " + useBlue + " " +
+                //    doColocWithThresholds + " "                     + entireImage + " " + register + " " + cost + " "
+                // + doSecondIteration + " " + doVOISubtraction);
+
+                colocalizationAlgo = new AlgorithmColocalizationRegression(resultImage, firstImage, mask, bin1, bin2,
+                                                                           background1, background2, leftPad, rightPad,
+                                                                           bottomPad, topPad, useRed, useGreen, useBlue,
+                                                                           doColocWithThresholds, entireImage, register,
+                                                                           cost, doSecondIteration, doVOISubtraction,
+                                                                           pointCalculation, point1, point2);
+            } else {
+                colocalizationAlgo = new AlgorithmColocalizationRegression(resultImage, firstImage, secondImage, mask,
+                                                                           bin1, bin2, background1, background2,
+                                                                           leftPad, rightPad, bottomPad, topPad,
+                                                                           doColocWithThresholds, entireImage, register,
+                                                                           cost, doSecondIteration, doVOISubtraction,
+                                                                           pointCalculation, point1, point2);
+            }
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed of failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            colocalizationAlgo.addListener(this);
+
+            createProgressBar(firstImage.getImageName(), colocalizationAlgo);
+
+            // Hide dialog
+            setVisible(false);
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (colocalizationAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+
+
+                colocalizationAlgo.run();
+            }
+        } catch (OutOfMemoryError x) {
+
+            System.err.println("Checking for resultimage == null");
+
+            if (resultImage != null) {
+
+                resultImage.disposeLocal(); // Clean up memory of result image
+                resultImage = null;
+            }
+
+            System.gc();
+            MipavUtil.displayError("Dialog Histogram 2Dim: unable to allocate enough memory");
+
+            return;
+        }
+    }
+
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the
+     * image table). Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        bin1 = scriptParameters.getParams().getInt("bin1");
+        bin2 = scriptParameters.getParams().getInt("bin2");
+        background1 = scriptParameters.getParams().getFloat("background1");
+        background2 = scriptParameters.getParams().getFloat("background2");
+        leftPad = scriptParameters.getParams().getInt("leftPad");
+        rightPad = scriptParameters.getParams().getInt("rightPad");
+        bottomPad = scriptParameters.getParams().getInt("bottomPad");
+        topPad = scriptParameters.getParams().getInt("topPad");
+        useRed = scriptParameters.getParams().getBoolean("useRed");
+        useGreen = scriptParameters.getParams().getBoolean("useGreen");
+        useBlue = scriptParameters.getParams().getBoolean("useBlue");
+        doColocWithThresholds = scriptParameters.getParams().getBoolean("doColocWithThresholds");
+        entireImage = scriptParameters.getParams().getBoolean("entireImage");
+        register = scriptParameters.getParams().getBoolean("register");
+        cost = scriptParameters.getParams().getInt("cost");
+        doSecondIteration = scriptParameters.getParams().getBoolean("doSecondIteration");
+        doVOISubtraction = scriptParameters.getParams().getBoolean("doVOISubtraction");
+        pointCalculation = scriptParameters.getParams().getBoolean("pointCalculation");
+        point1 = scriptParameters.getParams().getFloat("point1");
+        point2 = scriptParameters.getParams().getFloat("point2");
+    }
+
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     *
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+
+        scriptParameters.storeInputImage(firstImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bin1", bin1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bin2", bin2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("background1", background1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("background2", background2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("leftPad", leftPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rightPad", rightPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bottomPad", bottomPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("topPad", topPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("useRed", useRed));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("useGreen", useGreen));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("useBlue", useBlue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doColocWithThresholds", doColocWithThresholds));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("entireImage", entireImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("register", register));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doSecondIteration", doSecondIteration));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doVOISubtraction", doVOISubtraction));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pointCalculation", pointCalculation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("point1", point1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("point2", point2));
+
+    }
+
+    /**
      * Builds a list of images. Returns combobox. List must be all color or all black and white.
      *
      * @param   image  DOCUMENT ME!
@@ -963,90 +1045,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
         }
 
         return comboBox;
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    protected void callAlgorithm() {
-        componentImage1.getVOIHandler().setPresetHue(-1.0f);
-
-        if (componentImage2 != null) {
-            componentImage2.getVOIHandler().setPresetHue(-1.0f);
-        }
-
-        String name = makeImageName(firstImage.getImageName(), "_hist2Dim");
-
-        try {
-            int[] extents = new int[2];
-
-            // Allow padding space at left and bottom
-            extents[0] = bin1 + leftPad + rightPad;
-            extents[1] = bin2 + bottomPad + topPad;
-
-            // Allow log of 1 + counts to be displayed
-            resultImage = new ModelImage(ModelStorageBase.DOUBLE, extents, name, firstImage.getUserInterface());
-
-            // Make algorithm
-
-            if (firstImage.isColorImage()) {
-                // System.err.println("Buffer len is: " + buffer.length); System.err.println(bin1 + " " + bin2 + " " +
-                // background1 + " " + background2 + " " + leftPad + " " + rightPad +                     " " +
-                //            bottomPad + " " + " " + topPad + " " + useRed + " " + useGreen + " " + useBlue + " " +
-                //                 doColocWithThresholds + " "                     + entireImage + " " + register + " "
-                // + cost + " " + doSecondIteration + " " + doVOISubtraction);
-
-                colocalizationAlgo = new AlgorithmColocalizationRegression(resultImage, firstImage, mask, bin1, bin2,
-                                                                           background1, background2, leftPad, rightPad,
-                                                                           bottomPad, topPad, useRed, useGreen, useBlue,
-                                                                           doColocWithThresholds, entireImage, register,
-                                                                           cost, doSecondIteration, doVOISubtraction,
-                                                                           pointCalculation, point1, point2);
-            } else {
-                colocalizationAlgo = new AlgorithmColocalizationRegression(resultImage, firstImage, secondImage, mask,
-                                                                           bin1, bin2, background1, background2,
-                                                                           leftPad, rightPad, bottomPad, topPad,
-                                                                           doColocWithThresholds, entireImage, register,
-                                                                           cost, doSecondIteration, doVOISubtraction,
-                                                                           pointCalculation, point1, point2);
-            }
-
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed of failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            colocalizationAlgo.addListener(this);
-
-            createProgressBar(firstImage.getImageName(), colocalizationAlgo);
-            
-            // Hide dialog
-            setVisible(false);
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (colocalizationAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-
-
-                colocalizationAlgo.run();
-            }
-        } catch (OutOfMemoryError x) {
-
-            System.err.println("Checking for resultimage == null");
-
-            if (resultImage != null) {
-
-                resultImage.disposeLocal(); // Clean up memory of result image
-                resultImage = null;
-            }
-
-            System.gc();
-            MipavUtil.displayError("Dialog Histogram 2Dim: unable to allocate enough memory");
-
-            return;
-        }
     }
 
     /**

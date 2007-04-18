@@ -105,62 +105,7 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
             dispose();
         }
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected  void storeParamsFromGUI() throws ParserException{
-        scriptParameters.storeInputImage(image);
-        
-        if (image.isColorImage()) {
-            AlgorithmParameters.storeImageInRecorder(getResultImageR());
-            AlgorithmParameters.storeImageInRecorder(getResultImageG());
-            AlgorithmParameters.storeImageInRecorder(getResultImageB());
-        } else {
-            AlgorithmParameters.storeImageInRecorder(getResultImage());
-        }
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        UI = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (image.isColorImage()) {
-            minR = image.getMinR();
-            maxR = image.getMaxR();
-            if (minR != maxR) {
-                haveRed = true;
-            }
-            minG = image.getMinG();
-            maxG = image.getMaxG();
-            if (minG != maxG) {
-                haveGreen = true;
-            }
-            minB = image.getMinB();
-            maxB = image.getMaxB();
-            if (minB != maxB) {
-                haveBlue = true;
-            }
-        }
-    }
-
-    /**
-     * Register the result image(s) in the script runner.
-     */
-    protected void doPostAlgorithmActions() {
-        if (image.isColorImage()) {
-            AlgorithmParameters.storeImageInRunner(getResultImageB());
-            AlgorithmParameters.storeImageInRunner(getResultImageG());
-            AlgorithmParameters.storeImageInRunner(getResultImageR());
-        } else {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************
@@ -380,27 +325,23 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
 
                 if (haveRed) {
                     String nameR = makeImageName(image.getImageName(), "_autocorrelationR");
-                    resultImageR = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameR,
-                                                  image.getUserInterface());
+                    resultImageR = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameR);
                 }
 
                 if (haveGreen) {
                     String nameG = makeImageName(image.getImageName(), "_autocorrelationG");
-                    resultImageG = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameG,
-                                                  image.getUserInterface());
+                    resultImageG = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameG);
                 }
 
                 if (haveBlue) {
                     String nameB = makeImageName(image.getImageName(), "_autocorrelationB");
-                    resultImageB = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameB,
-                                                  image.getUserInterface());
+                    resultImageB = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), nameB);
                 }
 
                 algoAutoCorrelation = new AlgorithmAutoCorrelation(resultImageR, resultImageG, resultImageB, image);
             } else {
                 String name = makeImageName(image.getImageName(), "_autocorrelation");
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name,
-                                             image.getUserInterface());
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name);
 
                 algoAutoCorrelation = new AlgorithmAutoCorrelation(resultImage, image);
             }
@@ -409,9 +350,9 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
             // the algorithm to notify this object when it has completed of failed.
             // See algorithm performed event. This is made possible by implementing
             algoAutoCorrelation.addListener(this);
-            
+
             createProgressBar(image.getImageName(), algoAutoCorrelation);
-            
+
             // Start the thread as a low priority because we wish to still have
             // user interface work fast
 
@@ -421,7 +362,7 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-              
+
                 algoAutoCorrelation.run();
             }
         } catch (OutOfMemoryError x) {
@@ -450,6 +391,67 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
             MipavUtil.displayError("Dialog Autocorrelation: unable to allocate enough memory");
 
             return;
+        }
+    }
+
+    /**
+     * Register the result image(s) in the script runner.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (image.isColorImage()) {
+            AlgorithmParameters.storeImageInRunner(getResultImageB());
+            AlgorithmParameters.storeImageInRunner(getResultImageG());
+            AlgorithmParameters.storeImageInRunner(getResultImageR());
+        } else {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        UI = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (image.isColorImage()) {
+            minR = image.getMinR();
+            maxR = image.getMaxR();
+
+            if (minR != maxR) {
+                haveRed = true;
+            }
+
+            minG = image.getMinG();
+            maxG = image.getMaxG();
+
+            if (minG != maxG) {
+                haveGreen = true;
+            }
+
+            minB = image.getMinB();
+            maxB = image.getMaxB();
+
+            if (minB != maxB) {
+                haveBlue = true;
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        if (image.isColorImage()) {
+            AlgorithmParameters.storeImageInRecorder(getResultImageR());
+            AlgorithmParameters.storeImageInRecorder(getResultImageG());
+            AlgorithmParameters.storeImageInRecorder(getResultImageB());
+        } else {
+            AlgorithmParameters.storeImageInRecorder(getResultImage());
         }
     }
 

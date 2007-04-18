@@ -250,8 +250,7 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
             try {
 
                 // Make result image of unsigned type
-                resultImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed",
-                                             ((ViewJFrameBase) (parentFrame)).getUserInterface());
+                resultImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed");
 
                 // Make algorithm
                 watershedAlgo = new AlgorithmWatershed(resultImage, image, gmImage, sigmas, null);
@@ -280,8 +279,7 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
             try {
 
                 // Make result image of unsigned type
-                resultImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed",
-                                             ((ViewJFrameBase) (parentFrame)).getUserInterface());
+                resultImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed");
 
                 // Make algorithm
                 watershedAlgo = new AlgorithmWatershed(resultImage, image, gmImage, sigmas, null);

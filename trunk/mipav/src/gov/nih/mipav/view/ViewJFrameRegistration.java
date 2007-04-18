@@ -340,9 +340,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     private JButton upButton;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private VOI voi = null;
 
     /** DOCUMENT ME! */
@@ -438,10 +435,10 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         newExtents[1] = image.getExtents()[1];
 
         String name = JDialogBase.makeImageName(image.getImageName(), "_result1");
-        imageA = new ModelImage(image.getType(), newExtents, name, userInterface);
+        imageA = new ModelImage(image.getType(), newExtents, name);
 
         name = JDialogBase.makeImageName(image.getImageName(), "_result2");
-        imageB = new ModelImage(image.getType(), newExtents, name, userInterface);
+        imageB = new ModelImage(image.getType(), newExtents, name);
 
         bufferFactor = 1;
 
@@ -482,7 +479,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         int bufferSize2;
 
         serif12 = MipavUtil.font12;
-        userInterface = ViewUserInterface.getReference();
         LUTa = _LUT;
         LUTb = _LUT2;
 
@@ -493,10 +489,10 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         newExtents[1] = image.getExtents()[1];
 
         String name = JDialogBase.makeImageName(image.getImageName(), "_result1");
-        imageA = new ModelImage(image.getType(), newExtents, name, userInterface);
+        imageA = new ModelImage(image.getType(), newExtents, name);
 
         name = JDialogBase.makeImageName(image.getImageName(), "_result2");
-        imageB = new ModelImage(secondImage.getType(), newExtents, name, userInterface);
+        imageB = new ModelImage(secondImage.getType(), newExtents, name);
 
         bufferFactor = 1;
 

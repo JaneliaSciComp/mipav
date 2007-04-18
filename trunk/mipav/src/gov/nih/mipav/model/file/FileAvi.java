@@ -10,9 +10,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
-import java.awt.*;
-import java.awt.Dialog.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -516,10 +513,10 @@ public class FileAvi extends FileBase {
 
             if ((bitCount == 16) || (bitCount == 24) || (bitCount == 32) || doMSVC) {
                 fileInfo.setDataType(ModelStorageBase.ARGB);
-                imageA = new ModelImage(ModelStorageBase.ARGB, moreExtents, fileName, UI);
+                imageA = new ModelImage(ModelStorageBase.ARGB, moreExtents, fileName);
             } else if (bitCount == 8) {
                 fileInfo.setDataType(ModelStorageBase.UBYTE);
-                imageA = new ModelImage(ModelStorageBase.UBYTE, moreExtents, fileName, UI);
+                imageA = new ModelImage(ModelStorageBase.UBYTE, moreExtents, fileName);
             }
 
             // Now that the image is created this second read thru actually imports the data into the image.
@@ -1767,7 +1764,6 @@ public class FileAvi extends FileBase {
                 }
             }
 
-            
 
             return imageA;
 
@@ -1779,7 +1775,7 @@ public class FileAvi extends FileBase {
             }
 
             System.gc();
-            
+
             throw error;
         }
     }
@@ -2628,7 +2624,7 @@ public class FileAvi extends FileBase {
                 }
             }
         }
-        
+
         FileWriteOptions options = new FileWriteOptions(true);
         options.setAVICompression(newCompressionType);
         options.setFileType(FileUtility.AVI);
@@ -2722,7 +2718,7 @@ public class FileAvi extends FileBase {
                     // System.err.println("New extents: " + newExtents[0] + " by " + newExtents[1] + " by " +
                     // newExtents[2]);
 
-                    ModelImage paddedImage = new ModelImage(imageA.getType(), newExtents, "TEMPImage", UI);
+                    ModelImage paddedImage = new ModelImage(imageA.getType(), newExtents, "TEMPImage");
 
                     for (int index = 0; index < newExtents.length; index++) {
                         paddedImage.getFileInfo()[0].setResolutions(imageA.getFileInfo()[0].getResolutions()[index],
@@ -2981,8 +2977,9 @@ public class FileAvi extends FileBase {
         // Noninterleaved files should use zero.
         // rate/scale = samples/second
 
-        int rate = (int) Math.round((realFrames) /
-                                        ((double) totalFrames / (1.0 / ((double) newMicroSecPerFrame / 1000000.0))));
+        int rate = (int)
+                       Math.round((realFrames) /
+                                      ((double) totalFrames / (1.0 / ((double) newMicroSecPerFrame / 1000000.0))));
         // System.err.println("Microsec per frame: " + newMicroSecPerFrame + " dwScale: " +
         // 1 + " dwRate: " + rate);
 
@@ -3435,7 +3432,7 @@ public class FileAvi extends FileBase {
         writeInt((int) (endPos - (saveidx1Length + 4)), endianess);
 
         // raFile.close();
-        
+
 
         // do some cleanup...
         imageBufferA = null;

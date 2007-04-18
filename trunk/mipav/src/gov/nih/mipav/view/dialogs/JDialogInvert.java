@@ -109,7 +109,7 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
             cancelFlag = true;
             dispose();
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         }
 
     } // end actionPerformed()
@@ -125,6 +125,7 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmChangeType) {
 
             if ((changeTypeAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -194,51 +195,13 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
+
     /**
      * Sets the flags for the checkboxes and resets labels.
      *
      * @param  event  Event that triggered this function.
      */
     public synchronized void itemStateChanged(ItemEvent event) { }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (displayLoc == NEW) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setDataType(image.getFileInfo(0).getDataType());
-        setEndianess(image.getFileInfo(0).getEndianess());
-        setDefaultRanges();
-        setOutputRangeMin(image.getMax());
-        setOutputRangeMax(image.getMin());
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Accessor that sets the data type for what the converted image is to be.
@@ -337,8 +300,7 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                 try {
 
                     // Make result image of the new data type
-                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_invert"),
-                                                 userInterface);
+                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_invert"));
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
@@ -350,7 +312,7 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                     changeTypeAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), changeTypeAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -449,8 +411,7 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                 try {
 
                     // Make result image of the new data type
-                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_invert"),
-                                                 userInterface);
+                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_invert"));
 
                     // Make algorithm
                     System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
@@ -532,6 +493,45 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                 }
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (displayLoc == NEW) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setDataType(image.getFileInfo(0).getDataType());
+        setEndianess(image.getFileInfo(0).getEndianess());
+        setDefaultRanges();
+        setOutputRangeMin(image.getMax());
+        setOutputRangeMax(image.getMin());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
     }
 
     /**

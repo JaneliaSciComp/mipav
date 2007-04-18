@@ -52,7 +52,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private int displayLoc = NEW;
 
-    /** source image */
+    /** source image. */
     private ModelImage imageA;
 
     /** DOCUMENT ME! */
@@ -79,7 +79,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private JRadioButton radioReplace;
 
-    /** result image */
+    /** result image. */
     private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
@@ -147,6 +147,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmImageCalculator) {
 
             if ((mathAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -207,50 +208,6 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(imageA);
-        scriptParameters.storeInputImage(imageB);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("operator_type", opType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type_clip_mode", clipMode));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("advanced_op_string", adOpString));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        imageA = scriptParameters.retrieveInputImage(1);
-        userInterface = imageA.getUserInterface();
-        parentFrame = imageA.getParentFrame();
-        isColor = imageA.isColorImage();
-        
-        setImageB(scriptParameters.retrieveInputImage(2));
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setOperator(scriptParameters.getParams().getInt("operator_type"));
-        setClipMode(scriptParameters.getParams().getInt("data_type_clip_mode"));
-        setAdOpString(scriptParameters.getParams().getString("advanced_op_string"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 
     // *******************************************************************
@@ -345,6 +302,156 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
     }
 
     /**
+     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
+     * and whether or not there is a separate destination image.
+     */
+    protected void callAlgorithm() {
+        System.gc();
+
+        int i;
+
+        if (imageA.getNDims() <= 5) {
+
+            if (displayLoc == NEW) {
+
+                try {
+
+                    // Make result image of float type
+                    resultImage = new ModelImage(imageA.getType(), imageA.getExtents(),
+                                                 makeImageName(imageA.getImageName(), "_calc"));
+
+                    // Make algorithm
+                    mathAlgo = new AlgorithmImageCalculator(resultImage, imageA, imageB, opType, clipMode, true,
+                                                            adOpString);
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed of failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    mathAlgo.addListener(this);
+
+                    createProgressBar(imageA.getImageName(), mathAlgo);
+
+                    // Hide dialog
+                    setVisible(false);
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (mathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+                        mathAlgo.run();
+                    }
+                } catch (OutOfMemoryError x) {
+
+                    if (resultImage != null) {
+                        resultImage.disposeLocal(); // Clean up memory of result image
+                        resultImage = null;
+                    }
+
+                    System.gc();
+                    MipavUtil.displayError("Dialog Image math: unable to allocate enough memory");
+
+                    return;
+                }
+            } else {
+
+                try {
+
+                    // No need to make new image space because the user has choosen to replace the source image
+                    // Make the algorithm class
+                    mathAlgo = new AlgorithmImageCalculator(imageA, imageB, opType, clipMode, true, adOpString);
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed of failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    mathAlgo.addListener(this);
+
+                    createProgressBar(imageA.getImageName(), mathAlgo);
+
+                    // Hide the dialog since the algorithm is about to run.
+                    setVisible(false);
+
+                    // These next lines set the titles in all frames where the source image is displayed to
+                    // "locked - " image name so as to indicate that the image is now read/write locked!
+                    // The image frames are disabled and then unregisted from the userinterface until the
+                    // algorithm has completed.
+                    Vector imageFrames = imageA.getImageFrameVector();
+                    titles = new String[imageFrames.size()];
+
+                    for (i = 0; i < imageFrames.size(); i++) {
+                        titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                        ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                        ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface.
+                        if (mathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+                        mathAlgo.run();
+                    }
+                } catch (OutOfMemoryError x) {
+                    System.gc();
+                    MipavUtil.displayError("Dialog Image Math: unable to allocate enough memory");
+
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage(1);
+        userInterface = imageA.getUserInterface();
+        parentFrame = imageA.getParentFrame();
+        isColor = imageA.isColorImage();
+
+        setImageB(scriptParameters.retrieveInputImage(2));
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setOperator(scriptParameters.getParams().getInt("operator_type"));
+        setClipMode(scriptParameters.getParams().getInt("data_type_clip_mode"));
+        setAdOpString(scriptParameters.getParams().getString("advanced_op_string"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        scriptParameters.storeInputImage(imageB);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("operator_type", opType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type_clip_mode", clipMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("advanced_op_string", adOpString));
+    }
+
+    /**
      * Builds a list of images to operate on from the template image.
      */
     private void buildComboBoxImage() {
@@ -391,111 +498,6 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                             comboBoxImage.addItem(name);
                         }
                     }
-                }
-            }
-        }
-    }
-
-    /**
-     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
-     * and whether or not there is a separate destination image.
-     */
-    protected void callAlgorithm() {
-        System.gc();
-
-        int i;
-
-        if (imageA.getNDims() <= 5) {
-
-            if (displayLoc == NEW) {
-
-                try {
-
-                    // Make result image of float type
-                    resultImage = new ModelImage(imageA.getType(), imageA.getExtents(),
-                                                 makeImageName(imageA.getImageName(), "_calc"), userInterface);
-
-                    // Make algorithm
-                    mathAlgo = new AlgorithmImageCalculator(resultImage, imageA, imageB, opType, clipMode, true,
-                                                            adOpString);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    mathAlgo.addListener(this);
-
-                    createProgressBar(imageA.getImageName(), mathAlgo);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (mathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        mathAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
-                    System.gc();
-                    MipavUtil.displayError("Dialog Image math: unable to allocate enough memory");
-
-                    return;
-                }
-            } else {
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    mathAlgo = new AlgorithmImageCalculator(imageA, imageB, opType, clipMode, true, adOpString);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    mathAlgo.addListener(this);
-
-                    createProgressBar(imageA.getImageName(), mathAlgo);
-                    
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = imageA.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
-                        ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (mathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        mathAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    System.gc();
-                    MipavUtil.displayError("Dialog Image Math: unable to allocate enough memory");
-
-                    return;
                 }
             }
         }

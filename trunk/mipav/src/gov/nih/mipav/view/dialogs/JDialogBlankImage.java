@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -228,7 +229,7 @@ public class JDialogBlankImage extends JDialogBase {
      */
     private void makeImage() {
         int[] destExtents = ((ViewJFrameImage) (parentFrame)).getImageA().getExtents();
-        image = new ModelImage(dataType, destExtents, " Blank", ((ViewJFrameBase) (parentFrame)).getUserInterface());
+        image = new ModelImage(dataType, destExtents, " Blank");
 
     }
 

@@ -208,9 +208,9 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
         try {
 
             if (originalImage.isColorImage()) {
-                resultImage = new ModelImage(originalImage.getType(), originalImage.getExtents(), name, userInterface);
+                resultImage = new ModelImage(originalImage.getType(), originalImage.getExtents(), name);
             } else {
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, originalImage.getExtents(), name, userInterface);
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, originalImage.getExtents(), name);
             }
 
             xcosmEMAlgo = new AlgorithmXcosmEM(resultImage, originalImage, psfImage, windowLowerLimit, estimateDecay,

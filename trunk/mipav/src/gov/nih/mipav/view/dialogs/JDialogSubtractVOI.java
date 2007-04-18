@@ -97,7 +97,7 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
     /**
      * Constructor required for dynamic instantiation (during script execution).
      */
-    public JDialogSubtractVOI() {}
+    public JDialogSubtractVOI() { }
 
     /**
      * Creates new dialog.
@@ -145,6 +145,7 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmSubtractVOI) {
             image.clearMask();
 
@@ -229,7 +230,7 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
      *
      * @param  event  DOCUMENT ME!
      */
-    public void itemStateChanged(ItemEvent event) {}
+    public void itemStateChanged(ItemEvent event) { }
 
     /**
      * Accessor that sets the average mode.
@@ -277,7 +278,7 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
                 // make the new image name
                 String name = makeImageName(image.getImageName(), "_subVOI");
 
-                resultImage = new ModelImage(image.getType(), image.getExtents(), name, userInterface);
+                resultImage = new ModelImage(image.getType(), image.getExtents(), name);
 
                 // Make algorithm
                 subVOIAlgo = new AlgorithmSubtractVOI(resultImage, image, averageMode, clipMode);
@@ -288,7 +289,7 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
                 subVOIAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), subVOIAlgo);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -359,6 +360,46 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setAverageMode(scriptParameters.getParams().getInt("average_mode"));
+        setClipMode(scriptParameters.getParams().getInt("clip_mode"));
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("average_mode", averageMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("clip_mode", clipMode));
     }
 
     /**
@@ -486,6 +527,7 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
         } else if (newImage.isSelected()) {
@@ -505,44 +547,5 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
         }
 
         return true;
-    }
-
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("average_mode", averageMode));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("clip_mode", clipMode));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.doOutputNewImage()) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setAverageMode(scriptParameters.getParams().getInt("average_mode"));
-        setClipMode(scriptParameters.getParams().getInt("clip_mode"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 }

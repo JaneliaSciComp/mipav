@@ -61,7 +61,8 @@ public class AlgorithmSubsample extends AlgorithmBase {
      */
     public AlgorithmSubsample(ModelImage src, ModelImage result, int[] newExtents, float[] _sigmas, boolean indep,
                               boolean transformVOI, TransMatrix transMatrix) {
-    	super(result, src);
+        super(result, src);
+
         if (src == null) {
             MipavUtil.displayError("No source image provided to be subsampled.");
 
@@ -76,7 +77,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         this.transformVOI = transformVOI;
         this.transMatrix = transMatrix;
 
-        if (processIndep && (srcImage.getExtents().length > 2 && srcImage.getExtents()[2] != resultExtents[2])) {
+        if (processIndep && ((srcImage.getExtents().length > 2) && (srcImage.getExtents()[2] != resultExtents[2]))) {
             MipavUtil.displayError("Cannot perform 2.5D subsampling and change the number of slices");
             threadStopped = true;
             setCompleted(false);
@@ -110,7 +111,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
      */
     public void runAlgorithm() {
         fireProgressStateChanged("Subsamping image " + srcImage.getImageName(), "Subsampling image..");
-        
+
 
         ModelSimpleImage temp = null;
 
@@ -125,8 +126,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         }
 
         if (resultImage == null) {
-            resultImage = new ModelImage(srcImage.getType(), resultExtents, srcImage.getImageName() + "_subsampled",
-                                         srcImage.getUserInterface());
+            resultImage = new ModelImage(srcImage.getType(), resultExtents, srcImage.getImageName() + "_subsampled");
         }
 
         try {
@@ -151,7 +151,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(2) * denom, 2);
 
                 resultImage.getFileInfo()[i].setSliceThickness(srcImage.getFileInfo()[0].getSliceThickness() * denom);
-                
+
                 resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(3) * denom, 3);
 
                 resultImage.getFileInfo()[i].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -175,9 +175,10 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
                     // ratio of extents change for z dim might be different from that of the x and y dims
                     denom = (float) srcImage.getExtents()[2] / resultImage.getExtents()[2];
-                    
+
                     resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(2) * denom, 2);
-                    resultImage.getFileInfo()[i].setSliceThickness(srcImage.getFileInfo()[0].getSliceThickness() * denom);
+                    resultImage.getFileInfo()[i].setSliceThickness(srcImage.getFileInfo()[0].getSliceThickness() *
+                                                                       denom);
                 }
 
                 resultImage.getFileInfo()[i].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -222,7 +223,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 srcImage.exportData(0, imgLength, imgBuf);
             } catch (IOException error) {
                 displayError("Algorithm Subsample: IOException on srcImage.exportData");
-                
+
                 finalize();
                 setCompleted(false);
 
@@ -231,7 +232,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 finalize();
                 System.gc();
                 displayError("Algorithm Subsample: Out of memory on srcImage.exportData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -247,7 +248,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
         setCompleted(true);
 
-        
+
     }
 
     /**
@@ -1619,7 +1620,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         maskImage = image.generateShortImage(1);
-        tmpMask = new ModelImage(ModelImage.SHORT, resultExtents, null, null);
+        tmpMask = new ModelImage(ModelImage.SHORT, resultExtents, null);
 
         try {
             maskImage.exportData(0, srcImage.getExtents()[0] * srcImage.getExtents()[1], imgBuffer); // locks and releases lock
@@ -1727,7 +1728,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         T23 = (float) xfrm[2][3];
 
         maskImage = image.generateShortImage(1);
-        tmpMask = new ModelImage(ModelImage.SHORT, resultExtents, "VOI Mask", null);
+        tmpMask = new ModelImage(ModelImage.SHORT, resultExtents, "VOI Mask");
 
         try {
             maskImage.exportData(0, iXdim * iYdim * iZdim, imgBuffer); // locks and releases lock

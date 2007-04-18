@@ -287,7 +287,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
 
         // generate an image from the mip buffer
         mipImage = new ModelImage(ModelStorageBase.FLOAT, new int[] { firstDim, secondDim },
-                                  imageA.getImageName() + "_MIP", userInterface);
+                                  imageA.getImageName() + "_MIP");
 
         try {
             mipImage.importData(0, mipBuffer, true);

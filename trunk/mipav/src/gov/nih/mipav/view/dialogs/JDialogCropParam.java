@@ -3,7 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -29,7 +29,7 @@ import javax.swing.*;
  *   <li>Slices at the back of the image</li>
  * </ol>
  *
- * A new image or replacement of the old image may be selected.
+ * <p>A new image or replacement of the old image may be selected.</p>
  */
 public class JDialogCropParam extends JDialogScriptableBase implements AlgorithmInterface {
 
@@ -140,134 +140,9 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("border_size", borderSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("right_side", rightSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("left_side", leftSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("top_side", topSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("bottom_side", bottomSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("front", front));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.doOutputNewImage()) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        borderSize = scriptParameters.getParams().getInt("border_size");
-        setRight(scriptParameters.getParams().getInt("right_side"));
-        setLeft(scriptParameters.getParams().getInt("left_side"));
-        setTop(scriptParameters.getParams().getInt("top_side"));
-        setBottom(scriptParameters.getParams().getInt("bottom_side"));
-        setFront(scriptParameters.getParams().getInt("front"));
-        setBack(scriptParameters.getParams().getInt("back"));
-        
-        if (rightSide < 0) {
-            throw new ParameterException("right_side", "Cannot have rightSide < 0");
-        }
-
-        if (rightSide >= image.getExtents()[0]) {
-            throw new ParameterException("right_side", "Cannot have rightSide >= image.getExtents()[0]");
-        }
-
-        if (leftSide < 0) {
-            throw new ParameterException("left_side", "Cannot have leftSide < 0");
-        }
-
-        if (leftSide >= image.getExtents()[0]) {
-            throw new ParameterException("left_side", "Cannot have leftSide >= image.getExtents()[0]");
-        }
-
-        if (topSide < 0) {
-            throw new ParameterException("top_side", "Cannot have topSide < 0");
-        }
-
-        if (topSide >= image.getExtents()[1]) {
-            throw new ParameterException("top_side", "Cannot have topSide >= image.getExtents()[1]");
-        }
-
-        if (bottomSide < 0) {
-            throw new ParameterException("bottom_side", "Cannot have bottomSide < 0");
-        }
-
-        if (bottomSide >= image.getExtents()[1]) {
-            throw new ParameterException("bottom_side", "Cannot have bottomSide >= image.getExtents()[1]");
-        }
-
-
-        if (image.getNDims() >= 3) {
-
-            if (front < 0) {
-                throw new ParameterException("front", "Cannot have front < 0");
-            }
-
-            if (front >= image.getExtents()[2]) {
-                throw new ParameterException("front", "Cannot have front >= image.getExtents()[2]");
-            }
-
-            if (back < 0) {
-                throw new ParameterException("back", "Cannot have back < 0");
-            }
-
-            if (back >= image.getExtents()[2]) {
-                throw new ParameterException("back", "Cannot have back >= image.getExtents()[2]");
-            }
-
-        } // if (image.getNDims() >= 3)
-
-        if ((image.getExtents()[0] - rightSide - leftSide) <= 0) {
-            throw new ParameterException("right_side", "Cannot have image.getExtents()[0] - rightSide - leftSide <= 0");
-        }
-
-        if ((image.getExtents()[1] - topSide - bottomSide) <= 0) {
-            throw new ParameterException("top_side", "Cannot have image.getExtents()[1] - topSide - bottomSide <= 0");
-        }
-
-        if (image.getNDims() >= 3) {
-            if ((image.getExtents()[2] - front - back) <= 0) {
-                throw new ParameterException("front", "Cannot have image.getExtents()[2] - front - back <= 0");
-            }
-        }
-
-        xBounds[0] = leftSide;
-        xBounds[1] = image.getExtents()[0] - 1 - rightSide;
-        yBounds[0] = topSide;
-        yBounds[1] = image.getExtents()[1] - 1 - bottomSide;
-
-        if (image.getNDims() >= 3) {
-            zBounds[0] = front;
-            zBounds[1] = image.getExtents()[2] - 1 - back;
-        }
-    }
-
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
-    /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     * 
-     * @param event Event that triggers function.
+     *
+     * @param  event  Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -280,7 +155,7 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         }
     }
 
@@ -295,6 +170,7 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmCrop) {
 
             if ((cropAlgo.isCompleted() == true) && (resultImage != null)) { // in StoreInDest; "new Image"
@@ -345,124 +221,6 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
         cropAlgo.finalize();
         cropAlgo = null;
         dispose();
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    protected void callAlgorithm() {
-
-        if (displayLoc == NEW) {
-
-            try {
-                int[] destExtents = null;
-
-                if (image.getNDims() == 2) {
-                    destExtents = new int[2];
-                    destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
-                    destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
-                } else if (image.getNDims() == 3) {
-
-                    if (Math.abs(zBounds[1] - zBounds[0]) == 0) { // crop 3D image to 2D image
-                        destExtents = new int[2];
-                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
-                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
-                    } else {
-                        destExtents = new int[3];
-                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
-                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
-                        destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
-                    }
-                } else if (image.getNDims() == 4) {
-
-                    if (Math.abs(zBounds[1] - zBounds[0]) == 0) { // crop 4D image to 3D image
-                        destExtents = new int[3];
-                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
-                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
-                        destExtents[2] = image.getExtents()[3];
-                    } else {
-                        destExtents = new int[4];
-                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
-                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
-                        destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
-                        destExtents[3] = image.getExtents()[3];
-                    }
-                } else {
-                    return;
-                }
-
-                // Make result image
-                resultImage = new ModelImage(image.getType(), destExtents, makeImageName(image.getImageName(),
-                                                                                         "_crop"), userInterface);
-
-                cropAlgo = new AlgorithmCrop(resultImage, image, borderSize, xBounds, yBounds, zBounds);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                cropAlgo.addListener(this);
-
-                createProgressBar(image.getImageName(), cropAlgo);
-                
-                // Hide the dialog since the algorithm is about to run.
-                setVisible(false);
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (cropAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                   
-                    cropAlgo.run();
-                }
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog CropParam: unable to allocate enough memory");
-
-                return;
-            }
-        } // if (displayLoc == NEW)
-        else { // displayLoc == REPLACE
-
-            try {
-                cropAlgo = new AlgorithmCrop(image, borderSize, xBounds, yBounds, zBounds);
-                cropAlgo.addListener(this);
-
-                createProgressBar(image.getImageName(), cropAlgo);
-                
-                // Hide the dialog since the algorithm is about to run.
-                setVisible(false);
-
-                // These next lines set the titles in all frames where the source image is displayed to
-                // "locked - " image name so as to indicate that the image is now read/write locked!
-                // The image frames are disabled and then unregisted from the userinterface until the
-                // algorithm has completed.
-                /*Vector imageFrames = image.getImageFrameVector();
-                 *
-                 * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i] = (
-                 * (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
-                 * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled( false );
-                 * userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) );}*/
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (cropAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    
-                    cropAlgo.run();
-                }
-
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog CropParam: unable to allocate enough memory");
-
-                return;
-            }
-
-        } // else displayLoc == REPLACE
     }
 
     /**
@@ -544,6 +302,124 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
     }
 
     /**
+     * DOCUMENT ME!
+     */
+    protected void callAlgorithm() {
+
+        if (displayLoc == NEW) {
+
+            try {
+                int[] destExtents = null;
+
+                if (image.getNDims() == 2) {
+                    destExtents = new int[2];
+                    destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
+                    destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
+                } else if (image.getNDims() == 3) {
+
+                    if (Math.abs(zBounds[1] - zBounds[0]) == 0) { // crop 3D image to 2D image
+                        destExtents = new int[2];
+                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
+                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
+                    } else {
+                        destExtents = new int[3];
+                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
+                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
+                        destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
+                    }
+                } else if (image.getNDims() == 4) {
+
+                    if (Math.abs(zBounds[1] - zBounds[0]) == 0) { // crop 4D image to 3D image
+                        destExtents = new int[3];
+                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
+                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
+                        destExtents[2] = image.getExtents()[3];
+                    } else {
+                        destExtents = new int[4];
+                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1 + (2 * borderSize);
+                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1 + (2 * borderSize);
+                        destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
+                        destExtents[3] = image.getExtents()[3];
+                    }
+                } else {
+                    return;
+                }
+
+                // Make result image
+                resultImage = new ModelImage(image.getType(), destExtents,
+                                             makeImageName(image.getImageName(), "_crop"));
+
+                cropAlgo = new AlgorithmCrop(resultImage, image, borderSize, xBounds, yBounds, zBounds);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                cropAlgo.addListener(this);
+
+                createProgressBar(image.getImageName(), cropAlgo);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (cropAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    cropAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog CropParam: unable to allocate enough memory");
+
+                return;
+            }
+        } // if (displayLoc == NEW)
+        else { // displayLoc == REPLACE
+
+            try {
+                cropAlgo = new AlgorithmCrop(image, borderSize, xBounds, yBounds, zBounds);
+                cropAlgo.addListener(this);
+
+                createProgressBar(image.getImageName(), cropAlgo);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                /*Vector imageFrames = image.getImageFrameVector();
+                 *
+                 * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i] = (
+                 * (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
+                 * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled( false );
+                 * userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) );}*/
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (cropAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    cropAlgo.run();
+                }
+
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog CropParam: unable to allocate enough memory");
+
+                return;
+            }
+
+        } // else displayLoc == REPLACE
+    }
+
+    /**
      * When one of the text inputs has been left blank, trying to convert them to ints results in throwing a null
      * pointer exception. This method determines which one of the JTextFields threw the null pointer Exception.
      *
@@ -595,6 +471,133 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
 
             return rightSideInput; // gotta have some thing returned
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        borderSize = scriptParameters.getParams().getInt("border_size");
+        setRight(scriptParameters.getParams().getInt("right_side"));
+        setLeft(scriptParameters.getParams().getInt("left_side"));
+        setTop(scriptParameters.getParams().getInt("top_side"));
+        setBottom(scriptParameters.getParams().getInt("bottom_side"));
+        setFront(scriptParameters.getParams().getInt("front"));
+        setBack(scriptParameters.getParams().getInt("back"));
+
+        if (rightSide < 0) {
+            throw new ParameterException("right_side", "Cannot have rightSide < 0");
+        }
+
+        if (rightSide >= image.getExtents()[0]) {
+            throw new ParameterException("right_side", "Cannot have rightSide >= image.getExtents()[0]");
+        }
+
+        if (leftSide < 0) {
+            throw new ParameterException("left_side", "Cannot have leftSide < 0");
+        }
+
+        if (leftSide >= image.getExtents()[0]) {
+            throw new ParameterException("left_side", "Cannot have leftSide >= image.getExtents()[0]");
+        }
+
+        if (topSide < 0) {
+            throw new ParameterException("top_side", "Cannot have topSide < 0");
+        }
+
+        if (topSide >= image.getExtents()[1]) {
+            throw new ParameterException("top_side", "Cannot have topSide >= image.getExtents()[1]");
+        }
+
+        if (bottomSide < 0) {
+            throw new ParameterException("bottom_side", "Cannot have bottomSide < 0");
+        }
+
+        if (bottomSide >= image.getExtents()[1]) {
+            throw new ParameterException("bottom_side", "Cannot have bottomSide >= image.getExtents()[1]");
+        }
+
+
+        if (image.getNDims() >= 3) {
+
+            if (front < 0) {
+                throw new ParameterException("front", "Cannot have front < 0");
+            }
+
+            if (front >= image.getExtents()[2]) {
+                throw new ParameterException("front", "Cannot have front >= image.getExtents()[2]");
+            }
+
+            if (back < 0) {
+                throw new ParameterException("back", "Cannot have back < 0");
+            }
+
+            if (back >= image.getExtents()[2]) {
+                throw new ParameterException("back", "Cannot have back >= image.getExtents()[2]");
+            }
+
+        } // if (image.getNDims() >= 3)
+
+        if ((image.getExtents()[0] - rightSide - leftSide) <= 0) {
+            throw new ParameterException("right_side", "Cannot have image.getExtents()[0] - rightSide - leftSide <= 0");
+        }
+
+        if ((image.getExtents()[1] - topSide - bottomSide) <= 0) {
+            throw new ParameterException("top_side", "Cannot have image.getExtents()[1] - topSide - bottomSide <= 0");
+        }
+
+        if (image.getNDims() >= 3) {
+
+            if ((image.getExtents()[2] - front - back) <= 0) {
+                throw new ParameterException("front", "Cannot have image.getExtents()[2] - front - back <= 0");
+            }
+        }
+
+        xBounds[0] = leftSide;
+        xBounds[1] = image.getExtents()[0] - 1 - rightSide;
+        yBounds[0] = topSide;
+        yBounds[1] = image.getExtents()[1] - 1 - bottomSide;
+
+        if (image.getNDims() >= 3) {
+            zBounds[0] = front;
+            zBounds[1] = image.getExtents()[2] - 1 - back;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("border_size", borderSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("right_side", rightSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("left_side", leftSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("top_side", topSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bottom_side", bottomSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("front", front));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
     }
 
     /**

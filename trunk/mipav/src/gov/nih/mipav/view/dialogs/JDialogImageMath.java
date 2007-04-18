@@ -480,16 +480,16 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     // Make result image of source type
 
                     if ((opType != AlgorithmImageMath.AVERAGE) && (opType != AlgorithmImageMath.SUM)) {
-                        resultImage = new ModelImage(image.getType(), image.getExtents(), name, userInterface);
+                        resultImage = new ModelImage(image.getType(), image.getExtents(), name);
                     } else {
                         int[] extents = new int[2];
                         extents[0] = image.getExtents()[0];
                         extents[1] = image.getExtents()[1];
 
                         if (opType == AlgorithmImageMath.AVERAGE) {
-                            resultImage = new ModelImage(image.getType(), extents, name, userInterface);
+                            resultImage = new ModelImage(image.getType(), extents, name);
                         } else {
-                            resultImage = new ModelImage(ModelImage.FLOAT, extents, name, userInterface);
+                            resultImage = new ModelImage(ModelImage.FLOAT, extents, name);
                         }
                     }
 

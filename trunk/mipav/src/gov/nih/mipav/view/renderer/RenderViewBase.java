@@ -809,8 +809,7 @@ public abstract class RenderViewBase extends VolumeCanvas3D
             extents[0] = xDim; // RGB
             extents[1] = yDim;
             extents[2] = 1;
-            captureImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture",
-                                          ViewUserInterface.getReference());
+            captureImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture");
             captureImage.unRegisterImage();
             buffer = new short[bufferSize];
         } catch (OutOfMemoryError error) {

@@ -451,27 +451,26 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
 
         boolean loadImageA = false;
         boolean loadImageB = false;
-        
+
         sigma[0] = 0.5f;
         sigma[1] = 0.5f;
         sigma[2] = 0.5f;
 
         if (imageA != null) {
-            gradMag_A = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), imageA.getImageName() + "_gm",
-                                       imageA.getUserInterface());
+            gradMag_A = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), imageA.getImageName() + "_gm");
             gradMagRescale_A = new ModelImage(ModelImage.USHORT, imageA.getExtents(),
-                                              imageA.getImageName() + "_gm_rescale", imageA.getUserInterface());
+                                              imageA.getImageName() + "_gm_rescale");
 
             loadImageA = loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
-                    imageA.getImageName() + "_gm_rescale" + ".xml", true);
-            
-            if ( gradMagRescale_A.getExtents()[2] != imageA.getExtents()[2] ) {
-            	gradMagRescale_A = new ModelImage(ModelImage.USHORT, imageA.getExtents(),
-                        imageA.getImageName() + "_gm_rescale", imageA.getUserInterface());
-            	loadImageA = false;
+                                     imageA.getImageName() + "_gm_rescale" + ".xml", true);
+
+            if (gradMagRescale_A.getExtents()[2] != imageA.getExtents()[2]) {
+                gradMagRescale_A = new ModelImage(ModelImage.USHORT, imageA.getExtents(),
+                                                  imageA.getImageName() + "_gm_rescale");
+                loadImageA = false;
             }
-            
-            if (! loadImageA ) {
+
+            if (!loadImageA) {
                 rendererProgressBar.setValue(10);
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
@@ -552,20 +551,19 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         }
 
         if (imageB != null) {
-            gradMag_B = new ModelImage(ModelImage.FLOAT, imageB.getExtents(), imageB.getImageName() + "_gm",
-                                       imageB.getUserInterface());
+            gradMag_B = new ModelImage(ModelImage.FLOAT, imageB.getExtents(), imageB.getImageName() + "_gm");
             gradMagRescale_B = new ModelImage(ModelImage.USHORT, imageB.getExtents(),
-                                              imageB.getImageName() + "_gm_rescale", imageB.getUserInterface());
-            
+                                              imageB.getImageName() + "_gm_rescale");
+
             loadImageB = loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
-                    imageB.getImageName() + "_gm_rescale" + ".xml", true);
-            
-            if ( gradMagRescale_B.getExtents()[2] != imageB.getExtents()[2] ) {
-            	gradMagRescale_B = new ModelImage(ModelImage.USHORT, imageB.getExtents(),
-                        imageB.getImageName() + "_gm_rescale", imageB.getUserInterface());
-            	loadImageB = false;
+                                     imageB.getImageName() + "_gm_rescale" + ".xml", true);
+
+            if (gradMagRescale_B.getExtents()[2] != imageB.getExtents()[2]) {
+                gradMagRescale_B = new ModelImage(ModelImage.USHORT, imageB.getExtents(),
+                                                  imageB.getImageName() + "_gm_rescale");
+                loadImageB = false;
             }
-            
+
             if (!loadImageB) {
                 rendererProgressBar.setValue(60);
                 rendererProgressBar.update(rendererProgressBar.getGraphics());

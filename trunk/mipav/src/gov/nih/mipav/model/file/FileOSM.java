@@ -6,7 +6,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.Dialog.*;
 
 import java.io.*;
 
@@ -146,8 +145,7 @@ public class FileOSM extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading OSM file...", 0, 100, true, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            
-            
+
 
             file = new File(fileDir + fileName);
 
@@ -210,13 +208,13 @@ public class FileOSM extends FileBase {
                 dataSize = 4 * nx * ny * nz;
             } else {
                 raFile.close();
-                
+
                 MipavUtil.displayError("mode is an illegal " + mode);
                 throw new IOException();
             }
 
             fileInfo.setDataType(destType);
-            image = new ModelImage(destType, imgExtents, fileInfo.getFileName(), UI);
+            image = new ModelImage(destType, imgExtents, fileInfo.getFileName());
 
             // This information is ignored
             // locations 16, 20, and 24
@@ -360,7 +358,7 @@ public class FileOSM extends FileBase {
 
             image.calcMinMax();
             raFile.close();
-            
+
 
             return image;
         } catch (Exception e) {
@@ -408,8 +406,7 @@ public class FileOSM extends FileBase {
         progressBar = new ViewJProgressBar(fileName, "Writing OSM file...", 0, 100, true, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        
-        
+
 
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
@@ -779,7 +776,7 @@ public class FileOSM extends FileBase {
         } // switch(image.getType())
 
         raFile.close();
-        
+
     }
 
     /**
@@ -808,13 +805,12 @@ public class FileOSM extends FileBase {
 
                 /* j = 0;
                  * for (y = nYStart; y <nYStart + imgExtents[1]; y++) {  for (x = nXStart; x < nXStart + imgExtents[0];
-                 * x++) {      raFile.seek(1024 + x + imgExtents[0]*y +
-                 * imgExtents[0]*imgExtents[1]*(nZStart+slice));
+                 * x++) {      raFile.seek(1024 + x + imgExtents[0]*y + imgExtents[0]*imgExtents[1]*(nZStart+slice));
                  * raFile.read(byteBuffer,j*imgExtents[0],imgExtents[0]);      j++;  } } */
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -833,13 +829,12 @@ public class FileOSM extends FileBase {
 
                 /*j = 0;
                  * for (y = nYStart; y <nYStart + imgExtents[1]; y++) { for (x = nXStart; x < nXStart + imgExtents[0];
-                 * x++) {     raFile.seek(1024 + 2*(x + imgExtents[0]*y +
-                 * imgExtents[0]*imgExtents[1]*(nZStart+slice)));
+                 * x++) {     raFile.seek(1024 + 2*(x + imgExtents[0]*y + imgExtents[0]*imgExtents[1]*(nZStart+slice)));
                  * raFile.read(byteBuffer,2*j*imgExtents[0],2*imgExtents[0]);     j++; }}*/
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -866,13 +861,12 @@ public class FileOSM extends FileBase {
 
                 /*j = 0;
                  * for (y = nYStart; y <nYStart + imgExtents[1]; y++) { for (x = nXStart; x < nXStart + imgExtents[0];
-                 * x++) {     raFile.seek(1024 + 4*(x + imgExtents[0]*y +
-                 * imgExtents[0]*imgExtents[1]*(nZStart+slice)));
+                 * x++) {     raFile.seek(1024 + 4*(x + imgExtents[0]*y + imgExtents[0]*imgExtents[1]*(nZStart+slice)));
                  * raFile.read(byteBuffer,4*j*imgExtents[0],4*imgExtents[0]);     j++; }}*/
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -903,13 +897,12 @@ public class FileOSM extends FileBase {
 
                 /*j = 0;
                  * for (y = nYStart; y <nYStart + imgExtents[1]; y++) { for (x = nXStart; x < nXStart + imgExtents[0];
-                 * x++) {     raFile.seek(1024 + 2*(x + imgExtents[0]*y +
-                 * imgExtents[0]*imgExtents[1]*(nZStart+slice)));
+                 * x++) {     raFile.seek(1024 + 2*(x + imgExtents[0]*y + imgExtents[0]*imgExtents[1]*(nZStart+slice)));
                  * raFile.read(byteBuffer,2*j*imgExtents[0],2*imgExtents[0]);     j++; }}*/
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -936,13 +929,12 @@ public class FileOSM extends FileBase {
 
                 /*j = 0;
                  * for (y = nYStart; y <nYStart + imgExtents[1]; y++) { for (x = nXStart; x < nXStart + imgExtents[0];
-                 * x++) {     raFile.seek(1024 + 4*(x + imgExtents[0]*y +
-                 * imgExtents[0]*imgExtents[1]*(nZStart+slice)));
+                 * x++) {     raFile.seek(1024 + 4*(x + imgExtents[0]*y + imgExtents[0]*imgExtents[1]*(nZStart+slice)));
                  * raFile.read(byteBuffer,4*j*imgExtents[0],4*imgExtents[0]);     j++; }}*/
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {

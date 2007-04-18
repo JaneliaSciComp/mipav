@@ -15,11 +15,10 @@ import javax.swing.*;
 
 
 /**
- * Dialog to get user input of circle center and point on circle curve
- * and output xDim and yDim of rectangle created from transformed circle.
+ * Dialog to get user input of circle center and point on circle curve and output xDim and yDim of rectangle created
+ * from transformed circle.
  */
-public class JDialogCircleToRectangle extends JDialogBase
-        implements AlgorithmInterface, ItemListener, WindowListener {
+public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -193,7 +192,7 @@ public class JDialogCircleToRectangle extends JDialogBase
             String name = makeImageName(image.getImageName(), "_rectangle");
             extents[0] = xDim;
             extents[1] = yDim;
-            resultImage = new ModelImage(image.getType(), extents, name, image.getUserInterface());
+            resultImage = new ModelImage(image.getType(), extents, name);
             resultImage.setImageName(name);
 
             // Make algorithm
@@ -344,12 +343,16 @@ public class JDialogCircleToRectangle extends JDialogBase
 
         if (image.getVOIs() == null) {
             MipavUtil.displayError("No VOIs found.  2 points needed");
+
             return false;
         }
+
         if (image.getVOIs().size() == 0) {
             MipavUtil.displayError("No VOIs found.  2 points needed");
+
             return false;
         }
+
         curves = image.getVOIs().VOIAt(0).getCurves();
         nPts = curves[0].size();
 

@@ -301,7 +301,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
 
                     // Make result image of float type
                     // Will not work for UBYTE and USHORT
-                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                         ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002",
@@ -408,7 +408,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
 
                     // Make result image of float type
                     // Will not work for UBYTE and USHORT
-                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 

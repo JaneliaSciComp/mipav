@@ -149,7 +149,6 @@ public abstract class ViewJFrameBase extends JFrame
         }
     }
 
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
@@ -1646,7 +1645,7 @@ public abstract class ViewJFrameBase extends JFrame
                     return;
                 }
 
-                imageAvi = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(), fileName + "ARGB", userInterface);
+                imageAvi = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(), fileName + "ARGB");
 
                 AlgorithmChangeType algoChange = new AlgorithmChangeType(imageAvi, imageA, (float) imageA.getMin(),
                                                                          (float) imageA.getMax(), 0, 255, false);
@@ -2879,7 +2878,7 @@ public abstract class ViewJFrameBase extends JFrame
                     return;
                 }
 
-                imageAvi = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(), fileName + "ARGB", userInterface);
+                imageAvi = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(), fileName + "ARGB");
 
                 AlgorithmChangeType algoChange = new AlgorithmChangeType(imageAvi, imageA, (float) imageA.getMin(),
                                                                          (float) imageA.getMax(), 0, 255, false);
@@ -4544,7 +4543,7 @@ public abstract class ViewJFrameBase extends JFrame
         System.gc();
 
         try {
-            image = new ModelImage(imageType, newExtents, imageBInfo.getFileName(), userInterface);
+            image = new ModelImage(imageType, newExtents, imageBInfo.getFileName());
         } catch (OutOfMemoryError e) {
             System.gc();
             MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage");
@@ -4830,7 +4829,7 @@ public abstract class ViewJFrameBase extends JFrame
             afniProgressBar.setMessage("Transforming to match ACPC image ...");
 
             try {
-                image = new ModelImage(imageType, newExtents, imageBInfo.getFileName(), userInterface);
+                image = new ModelImage(imageType, newExtents, imageBInfo.getFileName());
             } catch (OutOfMemoryError e) {
                 System.gc();
                 MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage for ACPC rotation");
@@ -5069,7 +5068,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
                 image.disposeLocal();
-                image = new ModelImage(imageType, newExtents, imageBInfo.getFileName(), userInterface);
+                image = new ModelImage(imageType, newExtents, imageBInfo.getFileName());
             } catch (OutOfMemoryError e) {
                 System.gc();
                 MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage for Talairach conversion");

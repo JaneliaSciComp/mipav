@@ -712,7 +712,7 @@ public class JDialogTalairach extends JDialogBase {
         axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
         axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
 
-        ModelImage talairachImage = new ModelImage(image.getType(), extents, name, image.getUserInterface());
+        ModelImage talairachImage = new ModelImage(image.getType(), extents, name);
         talairachImage.setImageOrientation(FileInfoBase.AXIAL);
         fileInfo = new FileInfoAfni[oZdim];
 
@@ -937,8 +937,9 @@ public class JDialogTalairach extends JDialogBase {
                         Sy = 1.0f / scale_M;
                         Ty = (TCenter.y - (ViewJFrameTriImage.ATLAS_BBOX_ANT * Sy) - center.y) / Sy;
                         botY[i] = (int) Math.round(ViewJFrameTriImage.ATLAS_BBOX_ANT / vlength);
-                        topY[i] = (int) Math.round((ViewJFrameTriImage.ATLAS_BBOX_ANT +
-                                                    ViewJFrameTriImage.ATLAS_AC_TO_PC) / vlength);
+                        topY[i] = (int)
+                                      Math.round((ViewJFrameTriImage.ATLAS_BBOX_ANT +
+                                                  ViewJFrameTriImage.ATLAS_AC_TO_PC) / vlength);
                         rrArray[i].x = rr.x;
                         rrArray[i].y = rr.y;
                         rrArray[i].z = rr.z;
@@ -948,8 +949,9 @@ public class JDialogTalairach extends JDialogBase {
                         Sy = 1.0f / scale_P;
                         Ty = (pcie.y - ((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * Sy) -
                               center.y) / Sy;
-                        botY[i] = (int) Math.round((ViewJFrameTriImage.ATLAS_BBOX_ANT +
-                                                    ViewJFrameTriImage.ATLAS_AC_TO_PC) / vlength);
+                        botY[i] = (int)
+                                      Math.round((ViewJFrameTriImage.ATLAS_BBOX_ANT +
+                                                  ViewJFrameTriImage.ATLAS_AC_TO_PC) / vlength);
                         topY[i] = oYdim - 1;
                         rrArray[i].x = posrr.x;
                         rrArray[i].y = posrr.y;
@@ -1051,9 +1053,9 @@ public class JDialogTalairach extends JDialogBase {
             /* xfrm.identity();
              * xfrm.setTranslate(center.x, center.y, center.z); Sx = 1.0f/scale_R; Sy = 1.0f/scale_A; Sz = 1.0f/scale_I;
              * xfrm.setZoom(Sx,Sy,Sz); xfrm.setTranslate((TCenter.x - ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx -
-             * center.x)/Sx,              (TCenter.y - ViewJFrameTriImage.ATLAS_BBOX_ANT*Sy - center.y)/Sy,
-             * (TCenter.z - ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.z)/Sz); Mat = xfrm.getMatrix(); Matrix Ac =
-             * new Matrix(3,3); Ac.set(0,0,oXres*Mat[0][0]/vlength); Ac.set(0,1,oYres*Mat[0][1]/vlength);
+             * center.x)/Sx,              (TCenter.y - ViewJFrameTriImage.ATLAS_BBOX_ANT*Sy - center.y)/Sy, (TCenter.z -
+             * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.z)/Sz); Mat = xfrm.getMatrix(); Matrix Ac = new
+             * Matrix(3,3); Ac.set(0,0,oXres*Mat[0][0]/vlength); Ac.set(0,1,oYres*Mat[0][1]/vlength);
              * Ac.set(0,2,oZres*Mat[0][2]/vlength); Ac.set(1,0,oXres*Mat[1][0]/vlength);
              * Ac.set(1,1,oYres*Mat[1][1]/vlength); Ac.set(1,2,oZres*Mat[1][2]/vlength);
              * Ac.set(2,0,oXres*Mat[2][0]/vlength); Ac.set(2,1,oYres*Mat[2][1]/vlength);
@@ -1070,9 +1072,9 @@ public class JDialogTalairach extends JDialogBase {
              * ViewJFrameTriImage.ATLAS_AC_TO_PC) = 103 xfrm.identity(); xfrm.setTranslate(center.x, center.y,
              * center.z); Sx = 1.0f/scale_R; Sy = 1.0f/scale_P; Sz = 1.0f/scale_I; xfrm.setZoom(Sx,Sy,Sz);
              * xfrm.setTranslate((TCenter.x - ViewJFrameTriImage.ATLAS_BBOX_LAT*Sx - center.x)/Sx,              (pcie.y
-             * - (ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC)*Sy - center.y)/Sy,
-             * (TCenter.z - ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.z)/Sz); Mat = xfrm.getMatrix(); Ac = new
-             * Matrix(3,3); Ac.set(0,0,oXres*Mat[0][0]/vlength); Ac.set(0,1,oYres*Mat[0][1]/vlength);
+             * - (ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC)*Sy - center.y)/Sy, (TCenter.z -
+             * ViewJFrameTriImage.ATLAS_BBOX_INF_NEW*Sz -center.z)/Sz); Mat = xfrm.getMatrix(); Ac = new Matrix(3,3);
+             * Ac.set(0,0,oXres*Mat[0][0]/vlength); Ac.set(0,1,oYres*Mat[0][1]/vlength);
              * Ac.set(0,2,oZres*Mat[0][2]/vlength); Ac.set(1,0,oXres*Mat[1][0]/vlength);
              * Ac.set(1,1,oYres*Mat[1][1]/vlength); Ac.set(1,2,oZres*Mat[1][2]/vlength);
              * Ac.set(2,0,oXres*Mat[2][0]/vlength); Ac.set(2,1,oYres*Mat[2][1]/vlength);

@@ -208,9 +208,9 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
         try {
 
             if (srcImage.isColorImage()) {
-                resultImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), name, userInterface);
+                resultImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), name);
             } else {
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name, userInterface);
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name);
             }
 
             coherenceEnhancingDiffusionAlgo = new AlgorithmCoherenceEnhancingDiffusion(resultImage, srcImage,

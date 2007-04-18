@@ -439,7 +439,7 @@ public class ViewImageDirectory extends JFrame
                             newExtents[newExtents.length - 1] = matchingImageNames.size();
 
                             ModelImage concatImage = new ModelImage(newImage.getType(), newExtents,
-                                                                    newImage.getImageName() + "_concat", userInterface);
+                                                                    newImage.getImageName() + "_concat");
 
                             if (newImage.isColorImage()) {
                                 bufferLength = 4 * newExtents[0] * newExtents[1];

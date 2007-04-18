@@ -95,7 +95,7 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
             }
         } else if (command.equals("Cancel")) {
             dispose();
-        }else if (command.equals("Help")) {
+        } else if (command.equals("Help")) {
             MipavUtil.showHelp("19010");
         }
     }
@@ -111,6 +111,7 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmHistogramMatch) {
             matchImage.clearMask();
 
@@ -175,39 +176,6 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeImage(matchImage, "match_image");
-        scriptParameters.storeImage(baseImage, "base_image");
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        matchImage = scriptParameters.retrieveImage("match_image");
-        baseImage = scriptParameters.retrieveImage("base_image");
-        userInterface = matchImage.getUserInterface();
-        parentFrame = matchImage.getParentFrame();
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Accessor to set the baseImage.
@@ -231,6 +199,137 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
      */
     public void setDisplayLocReplace() {
         displayLoc = REPLACE;
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    protected void callAlgorithm() {
+        String name = makeImageName(matchImage.getImageName(), "_histMatch");
+
+        if (displayLoc == NEW) {
+
+            try {
+                resultImage = new ModelImage(matchImage.getType(), matchImage.getExtents(), name);
+
+                // Make algorithm
+                matchHistogramAlgo = new AlgorithmHistogramMatch(resultImage, matchImage, baseImage);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                matchHistogramAlgo.addListener(this);
+
+                createProgressBar(matchImage.getImageName(), matchHistogramAlgo);
+
+                // Hide dialog
+                setVisible(false);
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (matchHistogramAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+                    matchHistogramAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                System.gc();
+                MipavUtil.displayError("Dialog Histogram match: unable to allocate enough memory");
+
+                return;
+            }
+        } else {
+
+            try {
+
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+                matchHistogramAlgo = new AlgorithmHistogramMatch(matchImage, baseImage);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                matchHistogramAlgo.addListener(this);
+
+                createProgressBar(matchImage.getImageName(), matchHistogramAlgo);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the match image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                Vector imageFrames = matchImage.getImageFrameVector();
+                titles = new String[imageFrames.size()];
+                userInterface = matchImage.getUserInterface();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                }
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (matchHistogramAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+                    matchHistogramAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                System.gc();
+                MipavUtil.displayError("Dialog Histogram match: unable to allocate enough memory");
+
+                return;
+            }
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        matchImage = scriptParameters.retrieveImage("match_image");
+        baseImage = scriptParameters.retrieveImage("base_image");
+        userInterface = matchImage.getUserInterface();
+        parentFrame = matchImage.getParentFrame();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeImage(matchImage, "match_image");
+        scriptParameters.storeImage(baseImage, "base_image");
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
     }
 
     /**
@@ -271,103 +370,6 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
     }
 
     /**
-     * DOCUMENT ME!
-     */
-    protected void callAlgorithm() {
-        String name = makeImageName(matchImage.getImageName(), "_histMatch");
-
-        if (displayLoc == NEW) {
-
-            try {
-                resultImage = new ModelImage(matchImage.getType(), matchImage.getExtents(), name,
-                                             matchImage.getUserInterface());
-
-                // Make algorithm
-                matchHistogramAlgo = new AlgorithmHistogramMatch(resultImage, matchImage, baseImage);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                matchHistogramAlgo.addListener(this);
-
-                createProgressBar(matchImage.getImageName(), matchHistogramAlgo);
-                
-                // Hide dialog
-                setVisible(false);
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (matchHistogramAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    matchHistogramAlgo.run();
-                }
-            } catch (OutOfMemoryError x) {
-
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up memory of result image
-                    resultImage = null;
-                }
-
-                System.gc();
-                MipavUtil.displayError("Dialog Histogram match: unable to allocate enough memory");
-
-                return;
-            }
-        } else {
-
-            try {
-
-                // No need to make new image space because the user has choosen to replace the source image
-                // Make the algorithm class
-                matchHistogramAlgo = new AlgorithmHistogramMatch(matchImage, baseImage);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                matchHistogramAlgo.addListener(this);
-
-                createProgressBar(matchImage.getImageName(), matchHistogramAlgo);
-                
-                // Hide the dialog since the algorithm is about to run.
-                setVisible(false);
-
-                // These next lines set the titles in all frames where the match image is displayed to
-                // "locked - " image name so as to indicate that the image is now read/write locked!
-                // The image frames are disabled and then unregisted from the userinterface until the
-                // algorithm has completed.
-                Vector imageFrames = matchImage.getImageFrameVector();
-                titles = new String[imageFrames.size()];
-                userInterface = matchImage.getUserInterface();
-
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
-                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                }
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (matchHistogramAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    matchHistogramAlgo.run();
-                }
-            } catch (OutOfMemoryError x) {
-                System.gc();
-                MipavUtil.displayError("Dialog Histogram match: unable to allocate enough memory");
-
-                return;
-            }
-        }
-    }
-
-    /**
      * Initializes GUI components and displays dialog.
      */
     private void init() {
@@ -404,17 +406,18 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
         destinationGroup.add(replaceImage); // add the button to the grouping
         destinationPanel.add(replaceImage); // add the button to the component
 
-        //buildOKButton();
-       // buildCancelButton();
+        // buildOKButton();
+        // buildCancelButton();
 
-        //JPanel buttonPanel = new JPanel();
-        //buttonPanel.add(OKButton);
-        //buttonPanel.add(cancelButton);
-        
+        // JPanel buttonPanel = new JPanel();
+        // buttonPanel.add(OKButton);
+        // buttonPanel.add(cancelButton);
+
 
         getContentPane().add(imagePanel, BorderLayout.NORTH);
         getContentPane().add(destinationPanel, BorderLayout.CENTER);
-        //getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+        // getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();

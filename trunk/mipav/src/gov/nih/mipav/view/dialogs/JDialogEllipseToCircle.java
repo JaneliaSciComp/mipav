@@ -187,7 +187,7 @@ public class JDialogEllipseToCircle extends JDialogBase
             String name = makeImageName(image.getImageName(), "_circle");
             extents[0] = xDim;
             extents[1] = xDim;
-            resultImage = new ModelImage(image.getType(), extents, name, image.getUserInterface());
+            resultImage = new ModelImage(image.getType(), extents, name);
             resultImage.setImageName(name);
 
             // Make algorithm

@@ -395,8 +395,7 @@ public class JPanelClip extends JPanelRendererBase
             ext[0] = width;
             ext[1] = length;
 
-            ModelImage resultImage = new ModelImage(renderBase.getImageA().getType(), ext, "Image plane",
-                                                    renderBase.getImageA().getUserInterface());
+            ModelImage resultImage = new ModelImage(renderBase.getImageA().getType(), ext, "Image plane");
 
             try {
                 resultImage.importData(0, plane, true);

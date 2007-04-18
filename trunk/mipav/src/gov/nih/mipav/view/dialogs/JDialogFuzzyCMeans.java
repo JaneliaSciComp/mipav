@@ -435,7 +435,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
                 for (i = 0; i < nClasses; i++) {
                     resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
                                                                   makeImageName(image.getImageName(),
-                                                                                "_class" + (i + 1)), userInterface);
+                                                                                "_class" + (i + 1)));
                 }
                 /* if (outputGainField) {
                  *  resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
@@ -444,8 +444,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
 
             if ((segmentation == HARD_ONLY) || (segmentation == BOTH_FUZZY_HARD)) {
                 resultImage[presentNumber++] = new ModelImage(ModelStorageBase.UBYTE, destExtents,
-                                                              makeImageName(image.getImageName(), "_seg"),
-                                                              userInterface);
+                                                              makeImageName(image.getImageName(), "_seg"));
             }
 
             // Make algorithm

@@ -68,7 +68,7 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
      *
      * @param  event  Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {}
+    public void actionPerformed(ActionEvent event) { }
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -81,6 +81,7 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmRGBtoHSB) {
 
             if ((HSBAlgo.isCompleted() == true) && (resultImageB != null)) {
@@ -139,17 +140,17 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
         try {
 
             if (imageA.getType() == ModelStorageBase.ARGB) {
-                resultImageH = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayHue", userInterface);
-                resultImageS = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GraySaturation", userInterface);
-                resultImageB = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayBrightness", userInterface);
+                resultImageH = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayHue");
+                resultImageS = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GraySaturation");
+                resultImageB = new ModelImage(ModelImage.UBYTE, imageA.getExtents(), "GrayBrightness");
             } else if (imageA.getType() == ModelStorageBase.ARGB_USHORT) {
-                resultImageH = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayHue", userInterface);
-                resultImageS = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GraySaturation", userInterface);
-                resultImageB = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayBrightness", userInterface);
+                resultImageH = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayHue");
+                resultImageS = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GraySaturation");
+                resultImageB = new ModelImage(ModelImage.USHORT, imageA.getExtents(), "GrayBrightness");
             } else if (imageA.getType() == ModelStorageBase.ARGB_FLOAT) {
-                resultImageH = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayHue", userInterface);
-                resultImageS = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GraySaturation", userInterface);
-                resultImageB = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayBrightness", userInterface);
+                resultImageH = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayHue");
+                resultImageS = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GraySaturation");
+                resultImageB = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), "GrayBrightness");
             }
 
             // Make algorithm
@@ -161,7 +162,7 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
             HSBAlgo.addListener(this);
 
             createProgressBar(imageA.getImageName(), HSBAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -224,18 +225,16 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
     public ModelImage getResultImageS() {
         return resultImageS;
     }
-    
+
     /**
-     * {@inheritDoc}
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(imageA);
-        
-        AlgorithmParameters.storeImageInRecorder(getResultImageH());
-        AlgorithmParameters.storeImageInRecorder(getResultImageS());
-        AlgorithmParameters.storeImageInRecorder(getResultImageB());
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImageH());
+        AlgorithmParameters.storeImageInRunner(getResultImageS());
+        AlgorithmParameters.storeImageInRunner(getResultImageB());
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -244,13 +243,15 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
         userInterface = imageA.getUserInterface();
         parentFrame = imageA.getParentFrame();
     }
-    
+
     /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
+     * {@inheritDoc}
      */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImageH());
-        AlgorithmParameters.storeImageInRunner(getResultImageS());
-        AlgorithmParameters.storeImageInRunner(getResultImageB());
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+
+        AlgorithmParameters.storeImageInRecorder(getResultImageH());
+        AlgorithmParameters.storeImageInRecorder(getResultImageS());
+        AlgorithmParameters.storeImageInRecorder(getResultImageB());
     }
 }

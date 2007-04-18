@@ -205,7 +205,7 @@ public class FileMedVision extends FileBase {
         decodeResourceFooter(endianess);
 
         try {
-            image = new ModelImage(fileInfoCom.getDataType(), fileInfoCom.getExtents(), fileInfoCom.getFileName(), UI);
+            image = new ModelImage(fileInfoCom.getDataType(), fileInfoCom.getExtents(), fileInfoCom.getFileName());
             reader = new FileRawChunk(raFile, fileInfoCom);
         } catch (OutOfMemoryError error) {
             throw error;

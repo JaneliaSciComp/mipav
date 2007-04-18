@@ -453,12 +453,10 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
 
             resultImage = new ModelImage[2];
             resultImage[0] = new ModelImage(ModelStorageBase.FLOAT, targetImage.getExtents(),
-                                            sourceImage.getImageName() + " registered",
-                                            ((ViewJFrameBase) (parentFrame)).getUserInterface());
+                                            sourceImage.getImageName() + " registered");
 
             resultImage[1] = new ModelImage(ModelStorageBase.BOOLEAN, targetImage.getExtents(),
-                                            sourceImage.getImageName() + " output mask",
-                                            ((ViewJFrameBase) (parentFrame)).getUserInterface());
+                                            sourceImage.getImageName() + " output mask");
 
             turbo = new AlgorithmRegTurbo(resultImage, targetImage, entireTarget, sourceImage, entireSource, targetPt,
                                           sourcePt, transformation, interpolation, automan);
@@ -487,7 +485,7 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
         turbo.addListener(this);
 
         createProgressBar(sourceImage.getImageName(), turbo);
-        
+
         // These next lines set the titles in all frames where the source image
         // is displayed to "locked - " image name so as to indicate that the image
         // is now read/write locked!  The image frames are disabled and then

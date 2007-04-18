@@ -393,14 +393,14 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
         try {
 
             if ((image.getType() == ModelStorageBase.BYTE) || (image.getType() == ModelStorageBase.UBYTE)) {
-                resultImage = new ModelImage(ModelStorageBase.SHORT, destExtents, newName, userInterface);
+                resultImage = new ModelImage(ModelStorageBase.SHORT, destExtents, newName);
             } else {
-                resultImage = new ModelImage(image.getType(), destExtents, newName, userInterface);
+                resultImage = new ModelImage(image.getType(), destExtents, newName);
             }
 
             if (createField) {
                 fieldImage = new ModelImage(ModelStorageBase.FLOAT, destExtents,
-                                            makeImageName(image.getImageName(), "_Field"), userInterface);
+                                            makeImageName(image.getImageName(), "_Field"));
             } // if (createField)
 
             // Make algorithm

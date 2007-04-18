@@ -703,10 +703,9 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
         sigma[2] = 0.5f;
 
         if (imageA != null) {
-            gradMag_A = new ModelImage(ModelImage.ARGB, imageA.getExtents(), imageA.getImageName() + "_gm",
-                                       imageA.getUserInterface());
+            gradMag_A = new ModelImage(ModelImage.ARGB, imageA.getExtents(), imageA.getImageName() + "_gm");
             gradMagRescale_A = new ModelImage(ModelImage.ARGB, imageA.getExtents(),
-                                              imageA.getImageName() + "_gm_rescale", imageA.getUserInterface());
+                                              imageA.getImageName() + "_gm_rescale");
 
             if (!loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
                                  imageA.getImageName() + "_gm_rescale" + ".xml", true)) {
@@ -775,10 +774,9 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
         }
 
         if (imageB != null) {
-            gradMag_B = new ModelImage(ModelImage.ARGB, imageB.getExtents(), imageB.getImageName() + "_gm",
-                                       imageB.getUserInterface());
+            gradMag_B = new ModelImage(ModelImage.ARGB, imageB.getExtents(), imageB.getImageName() + "_gm");
             gradMagRescale_B = new ModelImage(ModelImage.ARGB, imageB.getExtents(),
-                                              imageB.getImageName() + "_gm_rescale", imageB.getUserInterface());
+                                              imageB.getImageName() + "_gm_rescale");
 
             if (!loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
                                  imageB.getImageName() + "_gm_rescale" + ".xml", false)) {

@@ -192,7 +192,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
             try {
 
                 // Make result image of float type
-                ModelImage resultImage = new ModelImage(ModelImage.FLOAT, destExtents, " EdgeNMSup", userInterface);
+                ModelImage resultImage = new ModelImage(ModelImage.FLOAT, destExtents, " EdgeNMSup");
                 resultImage.setImageName(name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
@@ -242,7 +242,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
             try {
 
                 // Make result image of float type
-                ModelImage resultImage = new ModelImage(ModelImage.FLOAT, destExtents, "EdgeNMSup", userInterface);
+                ModelImage resultImage = new ModelImage(ModelImage.FLOAT, destExtents, "EdgeNMSup");
                 resultImage.setImageName(name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {

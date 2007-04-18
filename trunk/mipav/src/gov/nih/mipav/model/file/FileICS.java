@@ -5,8 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.zip.*;
@@ -359,7 +357,7 @@ public class FileICS extends FileBase {
         int s;
         int x, y;
         FileInputStream fis;
-        
+
         readHeader();
         s = fileName.lastIndexOf(".");
 
@@ -371,7 +369,7 @@ public class FileICS extends FileBase {
 
         if (useGZIP) {
             int totalBytesRead = 0;
-            
+
             fireProgressStateChanged("Uncompressing GZIP file ...");
             fis = new FileInputStream(file);
             fis.skip(dataOffset);
@@ -401,7 +399,7 @@ public class FileICS extends FileBase {
         raFile = new RandomAccessFile(file, "r");
         raFile.seek(dataOffset);
 
-        image = new ModelImage(dataType, imgExtents, fileInfo.getFileName(), UI);
+        image = new ModelImage(dataType, imgExtents, fileInfo.getFileName());
 
         if (imgExtents.length == 2) {
             numberSlices = 1;
@@ -674,7 +672,7 @@ public class FileICS extends FileBase {
         } // else dataType == ModelStorageBase.DOUBLE
 
         raFile.close();
-        
+
 
         return image;
     }
@@ -1437,7 +1435,7 @@ public class FileICS extends FileBase {
         } // switch(mage.getFileInfo()[0].getDataType())
 
         raFile.close();
-        
+
     }
 
     /**
@@ -1469,7 +1467,7 @@ public class FileICS extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -1489,7 +1487,7 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 100;
-                    
+
 
                     for (j = 0; j < nBytes; j++, i++) {
 
@@ -1512,7 +1510,7 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 100;
-                    
+
 
                     for (i = 0; i < (nBytes - 1); i++) {
 
@@ -1554,7 +1552,7 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 100;
-                    
+
 
                     for (j = 0; j < nBytes; j++, i++) {
 
@@ -1578,7 +1576,7 @@ public class FileICS extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -1606,7 +1604,7 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    
+
 
                     for (j = 0; j < nBytes; j += 2, i++) {
 
@@ -1638,7 +1636,7 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    
+
 
                     for (i = 0; i < (nShorts - 1); i++) {
 
@@ -1680,7 +1678,7 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    
+
 
                     for (j = 0; j < nBytes; j += 2, i++) {
 
@@ -1712,7 +1710,7 @@ public class FileICS extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -1741,7 +1739,7 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    
+
 
                     for (j = 0; j < nBytes; j += 4, i++) {
 
@@ -1776,7 +1774,7 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    
+
 
                     for (i = 0; i < (nFloats - 1); i++) {
 
@@ -1818,7 +1816,7 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    
+
 
                     for (j = 0; j < nBytes; j += 4, i++) {
 
@@ -1854,7 +1852,7 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    
+
 
                     for (j = 0; j < nBytes; j++, i++) {
 
@@ -1905,7 +1903,7 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        
+
 
                         for (j = 0; j < nBytes; j += 2, i++) {
 
@@ -1925,7 +1923,7 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        
+
 
                         for (j = 0; j < nBytes; j += 3, i++) {
 
@@ -1946,7 +1944,7 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    
+
 
                     for (j = 0; j < nBytes; j++, i++) {
 
@@ -2002,7 +2000,7 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    
+
 
                     for (j = 0; j < nBytes; j += 2, i++) {
 
@@ -2074,7 +2072,7 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        
+
 
                         for (j = 0; j < nBytes; j += 4, i++) {
 
@@ -2103,7 +2101,7 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        
+
 
                         for (j = 0; j < nBytes; j += 6, i++) {
 
@@ -2137,7 +2135,7 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    
+
 
                     for (j = 0; j < nBytes; j += 2, i++) {
 
@@ -2214,7 +2212,7 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    
+
 
                     for (j = 0; j < nBytes; j += 4, i++) {
 
@@ -2298,7 +2296,7 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        
+
 
                         for (j = 0; j < nBytes; j += 8, i++) {
 
@@ -2334,7 +2332,7 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        
+
 
                         for (j = 0; j < nBytes; j += 12, i++) {
 
@@ -2378,7 +2376,7 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    
+
 
                     for (j = 0; j < nBytes; j += 4, i++) {
 
@@ -2486,7 +2484,7 @@ public class FileICS extends FileBase {
         progress = slice * bufferR.length;
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
-        
+
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
@@ -2546,7 +2544,7 @@ public class FileICS extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 10;
-        
+
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
@@ -2601,7 +2599,7 @@ public class FileICS extends FileBase {
         progress = slice * bufferR.length;
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
-        
+
 
         for (j = 0; j < nBytes; j += 16, i++) {
 
@@ -3508,7 +3506,7 @@ public class FileICS extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            
+
 
             for (j = 0; j < nBytes; j += 4, i++) {
 
@@ -3535,7 +3533,7 @@ public class FileICS extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            
+
 
             for (j = 0; j < nBytes; j += 8, i++) {
 

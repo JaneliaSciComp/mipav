@@ -800,8 +800,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
                 resultExtents[0] = d.width;
                 resultExtents[1] = d.height;
                 resultExtents[2] = nImage;
-                resultImage = new ModelImage(ModelStorageBase.ARGB, resultExtents, imageA.getImageName() + "_animate",
-                                             userInterface);
+                resultImage = new ModelImage(ModelStorageBase.ARGB, resultExtents, imageA.getImageName() + "_animate");
 
                 // Set false or you will see 2 z numbers on each image when
                 // you open the saved image.
@@ -877,7 +876,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                 if (imageA.getType() != ModelStorageBase.UBYTE) {
                     resultImage = new ModelImage(ModelStorageBase.UBYTE, imageA.getExtents(),
-                                                 imageA.getImageName() + "_change", userInterface);
+                                                 imageA.getImageName() + "_change");
 
                     AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(resultImage, imageA, imageA.getMin(),
                                                                                  imageA.getMax(), 0.0, 255.0, false);
@@ -971,8 +970,9 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
         removeComponentListener(this);
 
         width = (int) Math.round(Math.max(getSize().width - (2 * getInsets().left) - 3, minimumToolBarWidth));
-        height = (int) Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom - 3,
-                                           minimumHeight));
+        height = (int)
+                     Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom - 3,
+                                         minimumHeight));
 
         scrollPane.setSize(width, height);
         setSize(Math.max(scrollPane.getSize().width + getInsets().left + getInsets().right,

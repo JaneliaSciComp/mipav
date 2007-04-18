@@ -45,6 +45,9 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
     private JButton chooserButton;
 
     /** DOCUMENT ME! */
+    private JPanelColorChannels colorPanel;
+
+    /** DOCUMENT ME! */
     private boolean cropBackground;
 
     /** DOCUMENT ME! */
@@ -208,8 +211,6 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
 
     /** DOCUMENT ME! */
     private JRadioButton wholeImage;
-    
-    private JPanelColorChannels colorPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -414,87 +415,6 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
     public ModelImage[] getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_input_images", srcImage.length));
-        for (int i = 0; i < srcImage.length; i++) {
-            scriptParameters.storeInputImage(srcImage[i]);
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_result_images", resultNumber));
-        for (int i = 0; i < resultNumber; i++) {
-            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
-        }
-        
-        scriptParameters.storeProcessWholeImage(regionFlag);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_classes", nClasses));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("exponent_q", q));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_crop_background", cropBackground));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholds", threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("segmentation_type", segmentation));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("centroids", centroids));
-        scriptParameters.storeColorOptions(colorPanel);
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        int numInputImages = scriptParameters.getParams().getInt("number_of_input_images");
-        srcImage = new ModelImage[numInputImages];
-        for (int i = 1; i <= numInputImages; i++) {
-            srcImage[i - 1] = scriptParameters.retrieveInputImage(i);
-        }
-        
-        if (srcImage[0].getNDims() == 2) { // source image is 2D
-            destExtents = new int[2];
-            destExtents[0] = srcImage[0].getExtents()[0]; // X dim
-            destExtents[1] = srcImage[0].getExtents()[1]; // Y dim
-        } else { // srcImage[0].getNDims)() == 3
-            destExtents = new int[3];
-            destExtents[0] = srcImage[0].getExtents()[0];
-            destExtents[1] = srcImage[0].getExtents()[1];
-            destExtents[2] = srcImage[0].getExtents()[2];
-        }
-
-        userInterface = srcImage[0].getUserInterface();
-        parentFrame = srcImage[0].getParentFrame();
-        
-        resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
-        
-        setRegionFlag(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
-        setNClasses(scriptParameters.getParams().getInt("number_of_classes"));
-        setQ(scriptParameters.getParams().getFloat("exponent_q"));
-        setCrop(scriptParameters.getParams().getBoolean("do_crop_background"));
-        setThreshold(scriptParameters.getParams().getList("thresholds").getAsFloatArray());
-        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
-        setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
-        setSegmentationType(scriptParameters.getParams().getInt("segmentation_type"));
-        setCentroids(scriptParameters.getParams().getList("centroids").getAsFloatArray());
-        
-        colorPanel = new JPanelColorChannels(srcImage[0]);
-        scriptParameters.setColorOptionsGUI(colorPanel);
-        
-        for (int i = 0; i < srcImage.length; i++) {
-            if (!checkImage(srcImage[i])) {
-                return;
-            }
-        }
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        for (int i = 0; i < resultNumber; i++) {
-            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
-        }
-    }
 
     /**
      * Accessor that sets the centroids.
@@ -634,8 +554,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
                 for (i = 0; i < nClasses; i++) {
                     String name = makeImageName(srcImage[0].getImageName(), "_class" + (i + 1));
 
-                    resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents, name,
-                                                                  userInterface);
+                    resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents, name);
                 }
                 /* if (outputGainField) {
                  *  resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
@@ -645,25 +564,26 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
             if ((segmentation == AlgorithmMSpectralFuzzyCMeans.HARD_ONLY) ||
                     (segmentation == AlgorithmMSpectralFuzzyCMeans.BOTH_FUZZY_HARD)) {
                 resultImage[presentNumber++] = new ModelImage(ModelStorageBase.UBYTE, destExtents,
-                                                              makeImageName(srcImage[0].getImageName(), "_seg"),
-                                                              userInterface);
+                                                              makeImageName(srcImage[0].getImageName(), "_seg"));
             }
 
             // Make algorithm
             afcmAlgo = new AlgorithmMSpectralFuzzyCMeans(resultImage, srcImage, nClasses, nPyramid, oneJacobiIter,
                                                          twoJacobiIter, q, oneSmooth, twoSmooth, outputGainField,
-                                                         segmentation, cropBackground, maxIter, endTol, colorPanel.isRedProcessingRequested(),
-                                                         colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested(), regionFlag);
+                                                         segmentation, cropBackground, maxIter, endTol,
+                                                         colorPanel.isRedProcessingRequested(),
+                                                         colorPanel.isGreenProcessingRequested(),
+                                                         colorPanel.isBlueProcessingRequested(), regionFlag);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             afcmAlgo.addListener(this);
 
-            
+
             createProgressBar(srcImage[0].getImageName(), afcmAlgo);
-            
-            
+
+
             if (regionFlag == false) {
                 afcmAlgo.setMask(srcImage[0].generateVOIMask());
             }
@@ -690,7 +610,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-             
+
                 afcmAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -714,6 +634,92 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
             return;
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        int numInputImages = scriptParameters.getParams().getInt("number_of_input_images");
+        srcImage = new ModelImage[numInputImages];
+
+        for (int i = 1; i <= numInputImages; i++) {
+            srcImage[i - 1] = scriptParameters.retrieveInputImage(i);
+        }
+
+        if (srcImage[0].getNDims() == 2) { // source image is 2D
+            destExtents = new int[2];
+            destExtents[0] = srcImage[0].getExtents()[0]; // X dim
+            destExtents[1] = srcImage[0].getExtents()[1]; // Y dim
+        } else { // srcImage[0].getNDims)() == 3
+            destExtents = new int[3];
+            destExtents[0] = srcImage[0].getExtents()[0];
+            destExtents[1] = srcImage[0].getExtents()[1];
+            destExtents[2] = srcImage[0].getExtents()[2];
+        }
+
+        userInterface = srcImage[0].getUserInterface();
+        parentFrame = srcImage[0].getParentFrame();
+
+        resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
+
+        setRegionFlag(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
+        setNClasses(scriptParameters.getParams().getInt("number_of_classes"));
+        setQ(scriptParameters.getParams().getFloat("exponent_q"));
+        setCrop(scriptParameters.getParams().getBoolean("do_crop_background"));
+        setThreshold(scriptParameters.getParams().getList("thresholds").getAsFloatArray());
+        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
+        setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
+        setSegmentationType(scriptParameters.getParams().getInt("segmentation_type"));
+        setCentroids(scriptParameters.getParams().getList("centroids").getAsFloatArray());
+
+        colorPanel = new JPanelColorChannels(srcImage[0]);
+        scriptParameters.setColorOptionsGUI(colorPanel);
+
+        for (int i = 0; i < srcImage.length; i++) {
+
+            if (!checkImage(srcImage[i])) {
+                return;
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_input_images", srcImage.length));
+
+        for (int i = 0; i < srcImage.length; i++) {
+            scriptParameters.storeInputImage(srcImage[i]);
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_result_images", resultNumber));
+
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
+        }
+
+        scriptParameters.storeProcessWholeImage(regionFlag);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_classes", nClasses));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("exponent_q", q));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_crop_background", cropBackground));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholds", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("segmentation_type", segmentation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("centroids", centroids));
+        scriptParameters.storeColorOptions(colorPanel);
     }
 
     /**
@@ -1174,6 +1180,28 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
     }
 
     /**
+     * A private helper function to get the current used FileFilter from JFileChooser.
+     *
+     * @param   chooser  DOCUMENT ME!
+     * @param   index    the index of the choosable file filters.
+     *
+     * @return  the current used file filter.
+     */
+    private FileFilter getFileFilter(JFileChooser chooser, int index) {
+        FileFilter[] filters = chooser.getChoosableFileFilters();
+        String[] descriptions = ViewImageFileFilter.getDescriptions();
+
+        for (int i = 0; i < filters.length; i++) {
+
+            if (filters[i].getDescription().equals(descriptions[index])) {
+                return filters[i];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -1351,6 +1379,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
         paramPanel.add(segmentationPanel, gbc);
 
         colorPanel = new JPanelColorChannels(srcImage[0]);
+
         if (srcImage[0].isColorImage()) {
             paramPanel.add(colorPanel, gbc);
         } // if (doColor)
@@ -1435,6 +1464,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+
             FileFilter currentFileFilter = getFileFilter(chooser, Preferences.getFileFilter());
             chooser.setFileFilter(currentFileFilter);
 
@@ -1464,24 +1494,6 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
 
             return null;
         }
-    }
-    
-    /**
-     * A private helper function to get the current used FileFilter from JFileChooser.
-     * 
-     * @param chooser
-     * @param index  the index of the choosable file filters.
-     * @return       the current used file filter.
-     */
-    private FileFilter getFileFilter(JFileChooser chooser, int index){
-        FileFilter[] filters = chooser.getChoosableFileFilters();
-        String[] descriptions = ViewImageFileFilter.getDescriptions();
-        for(int i = 0; i < filters.length; i++){
-            if(filters[i].getDescription().equals(descriptions[index])){
-                return filters[i];
-            }
-        }
-        return null;
     }
 
     /**
@@ -1557,8 +1569,8 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
          * textOneSmooth.requestFocus();     textOneSmooth.selectAll();     return false; } tmpStr =
          * textTwoSmooth.getText(); if (testParameter(tmpStr,2.0e3,2.0e7) ) {     twoSmooth =
          * Float.valueOf(tmpStr).floatValue(); } else {     textTwoSmooth.requestFocus();     textTwoSmooth.selectAll();
-         *     return false; } tmpStr = textOneJacobiIter.getText(); if (testParameter(tmpStr,1.0,10.0) ) {
-         * oneJacobiIter = Integer.valueOf(tmpStr).intValue(); } else {     textOneJacobiIter.requestFocus();
+         *    return false; } tmpStr = textOneJacobiIter.getText(); if (testParameter(tmpStr,1.0,10.0) ) { oneJacobiIter
+         * = Integer.valueOf(tmpStr).intValue(); } else {     textOneJacobiIter.requestFocus();
          * textOneJacobiIter.selectAll();     return false; } tmpStr = textTwoJacobiIter.getText(); if
          * (testParameter(tmpStr,1.0,10.0) ) {     twoJacobiIter = Integer.valueOf(tmpStr).intValue(); } else {
          * textTwoJacobiIter.requestFocus();     textTwoJacobiIter.selectAll();     return false; } */

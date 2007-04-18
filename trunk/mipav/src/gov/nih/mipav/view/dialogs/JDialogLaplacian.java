@@ -58,7 +58,13 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     private AlgorithmLaplacian laplacianAlgo;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
+
+    /** DOCUMENT ME! */
+    private JPanelSigmas sigmasPanel;
 
     /** DOCUMENT ME! */
     private JTextField textAmpFact;
@@ -68,10 +74,6 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
-    private JPanelAlgorithmOutputOptions outputPanel;
-    
-    private JPanelSigmas sigmasPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -198,45 +200,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
 
-        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
-        scriptParameters.storeSigmas(sigmasPanel);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("amplification_factor", ampFactor));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        sigmasPanel = new JPanelSigmas(image);
-        
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        scriptParameters.setSigmasGUI(sigmasPanel);
-        setAmpFactor(scriptParameters.getParams().getFloat("amplification_factor"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -267,7 +231,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
                 outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
                 outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-                
+
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
 
                 sigmasPanel.setSigmaX(MipavUtil.getFloat(st));
@@ -292,7 +256,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
      */
     public void saveDefaults() {
         String delim = ",";
-        
+
         String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
         defaultsString += outputPanel.isOutputNewImageSet() + delim;
         defaultsString += image25D + delim;
@@ -301,7 +265,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         defaultsString += sigmasPanel.getUnnormalized3DSigmas()[2] + delim;
         defaultsString += sigmasPanel.isResolutionCorrectionEnabled() + delim;
         defaultsString += ampFactor;
-        
+
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
@@ -339,7 +303,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                 try {
 
                     // Make result image of float type
-                    resultImage = new ModelImage(ModelImage.FLOAT, image.getExtents(), name, userInterface);
+                    resultImage = new ModelImage(ModelImage.FLOAT, image.getExtents(), name);
 
                     // resultImage = (ModelImage)image.clone();
                     // resultImage.setImageName(name);
@@ -353,7 +317,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     }
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas, outputPanel.isProcessWholeImageSet(), false, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas,
+                                                           outputPanel.isProcessWholeImageSet(), false, ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -361,7 +326,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     laplacianAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), laplacianAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -372,7 +337,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                       
+
                         laplacianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -391,7 +356,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isProcessWholeImageSet(), false, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isProcessWholeImageSet(), false,
+                                                           ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -399,7 +365,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     laplacianAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), laplacianAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -425,7 +391,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                       
+
                         laplacianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -463,7 +429,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     }
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas, outputPanel.isOutputNewImageSet(), image25D, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas,
+                                                           outputPanel.isOutputNewImageSet(), image25D, ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -471,7 +438,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     laplacianAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), laplacianAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -482,7 +449,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                   
+
                         laplacianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -500,7 +467,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                 try {
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isOutputNewImageSet(), image25D, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isOutputNewImageSet(), image25D,
+                                                           ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -533,7 +501,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                      
+
                         laplacianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -544,6 +512,45 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
             }
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        sigmasPanel = new JPanelSigmas(image);
+
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        scriptParameters.setSigmasGUI(sigmasPanel);
+        setAmpFactor(scriptParameters.getParams().getFloat("amplification_factor"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+        scriptParameters.storeSigmas(sigmasPanel);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("amplification_factor", ampFactor));
     }
 
     /**
@@ -558,7 +565,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         JPanel mainPanel = new JPanel(new GridLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         mainPanel.setLayout(new GridBagLayout());
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -567,7 +574,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        
+
         sigmasPanel = new JPanelSigmas(image);
         mainPanel.add(sigmasPanel, gbc);
 

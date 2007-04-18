@@ -307,9 +307,9 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
 
                 // Make result image of float type
                 if (image.isColorImage()) {
-                    resultImage = new ModelImage(ModelImage.ARGB, destExtents, name, userInterface);
+                    resultImage = new ModelImage(ModelImage.ARGB, destExtents, name);
                 } else {
-                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                    resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
                 }
 
                 // resultImage = (ModelImage)image.clone();

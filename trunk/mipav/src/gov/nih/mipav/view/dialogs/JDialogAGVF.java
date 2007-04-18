@@ -37,56 +37,27 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
     /** DOCUMENT ME! */
     private JCheckBox checkboxDisplay;
 
+    /** default dilation:. */
+    private float dilation = 2.0f;
+
     /** DOCUMENT ME! */
     private boolean do25D = true;
 
     /** DOCUMENT ME! */
     private JCheckBox do25DCheckBox;
 
-    /** Cell-Tracking addition: */
-    /** When true, do a Cell-tracking version of Active GVF Contours: */
+    /** Cell-Tracking addition:. */
+    /** When true, do a Cell-tracking version of Active GVF Contours:. */
     private boolean doCellTracking = false;
-    /** Checkbox to turn cell-tracking on/off: */
+
+    /** Checkbox to turn cell-tracking on/off:. */
     private JCheckBox doCellTrackingCheckBox;
-    /** user-interface for setting the estimated cell-radius (pixels)*/
-    private JLabel labelRadius;
-    private JTextField textRadius;
-    /** user-interface for setting the size constraint contribution: */
-    private JLabel labelSize;
-    private JTextField textSize;
-    /** user-interface for setting the shape constraint contribution: */
-    private JLabel labelShape;
-    private JTextField textShape;
-    /** user-interface for setting the uniform-resampling constraint
-     * contribution: */
-    private JLabel labelResampling;
-    private JTextField textResampling;
-    /** When true, dilate the cell radius before finding the next contour: */
+
+    /** When true, dilate the cell radius before finding the next contour:. */
     private boolean doDilate = false;
-    /** Checkbox to turn cell-tracking on/off: */
+
+    /** Checkbox to turn cell-tracking on/off:. */
     private JCheckBox doDilateCheckBox;
-    /** user-interface for setting the cell-radius dilation (multiple of cell expected radius)*/
-    private JLabel labelDilation;
-    private JTextField textDilation;
-    /** user-interface for setting the initial cell velocity: */
-    private JLabel labelVelocity;
-    private JTextField textDx;
-    private JTextField textDy;
-    /** Default values for cell-tracking: */
-    /** Default cell radius (pixels) */
-    private float radiusConstraint = 100;
-    /** default shape constraint contribution: */
-    private float shapeConstraint = 0.05f;
-    /** default size constraint contribution: */
-    private float sizeConstraint = 0.05f;
-    /** default sampling constraint contribution: */
-    private float resamplingConstraint = 0.05f;
-    /** default dilation: */
-    private float dilation = 2.0f;
-    /** default initial velocity (dx): */
-    private float velocityDx = 0;
-    /** default initial velocity (dx): */
-    private float velocityDy = 0;
 
     /** DOCUMENT ME! */
     private int groupNum;
@@ -100,11 +71,29 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
     /** DOCUMENT ME! */
     private float kValue;
 
+    /** user-interface for setting the cell-radius dilation (multiple of cell expected radius). */
+    private JLabel labelDilation;
+
     /** DOCUMENT ME! */
     private JLabel labelGaussZ;
 
     /** DOCUMENT ME! */
     private JLabel labelGVFIterations;
+
+    /** user-interface for setting the estimated cell-radius (pixels). */
+    private JLabel labelRadius;
+
+    /** user-interface for setting the uniform-resampling constraint contribution:. */
+    private JLabel labelResampling;
+
+    /** user-interface for setting the shape constraint contribution:. */
+    private JLabel labelShape;
+
+    /** user-interface for setting the size constraint contribution:. */
+    private JLabel labelSize;
+
+    /** user-interface for setting the initial cell velocity:. */
+    private JLabel labelVelocity;
 
     /** DOCUMENT ME! */
     private JRadioButton propagate;
@@ -112,11 +101,18 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
     /** DOCUMENT ME! */
     private boolean propagationFlag;
 
+    /** Default values for cell-tracking:. */
+    /** Default cell radius (pixels). */
+    private float radiusConstraint = 100;
+
     /** DOCUMENT ME! */
     private boolean removeOriginal;
 
     /** DOCUMENT ME! */
     private JCheckBox removeOriginalCheckBox;
+
+    /** default sampling constraint contribution:. */
+    private float resamplingConstraint = 0.05f;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage; // magnitude of GVF
@@ -130,11 +126,17 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
     /** DOCUMENT ME! */
     private float scaleZ = 1.0f;
 
+    /** default shape constraint contribution:. */
+    private float shapeConstraint = 0.05f;
+
     /** DOCUMENT ME! */
     private float[] sigmas;
 
     /** DOCUMENT ME! */
     private JRadioButton singleSlice;
+
+    /** default size constraint contribution:. */
+    private float sizeConstraint = 0.05f;
 
     /** DOCUMENT ME! */
     private float smoothness;
@@ -144,6 +146,15 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
     /** DOCUMENT ME! */
     private JTextField textBoundaryIterations;
+
+    /** DOCUMENT ME! */
+    private JTextField textDilation;
+
+    /** DOCUMENT ME! */
+    private JTextField textDx;
+
+    /** DOCUMENT ME! */
+    private JTextField textDy;
 
     /** DOCUMENT ME! */
     private JTextField textGaussX;
@@ -161,6 +172,18 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
     private JTextField textK;
 
     /** DOCUMENT ME! */
+    private JTextField textRadius;
+
+    /** DOCUMENT ME! */
+    private JTextField textResampling;
+
+    /** DOCUMENT ME! */
+    private JTextField textShape;
+
+    /** DOCUMENT ME! */
+    private JTextField textSize;
+
+    /** DOCUMENT ME! */
     private JTextField textSmoothness;
 
     /** DOCUMENT ME! */
@@ -168,6 +191,12 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+
+    /** default initial velocity (dx):. */
+    private float velocityDx = 0;
+
+    /** default initial velocity (dx):. */
+    private float velocityDy = 0;
 
     /** DOCUMENT ME! */
     private Color voiColor;
@@ -258,6 +287,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
             }
         } // else if (source == do25DCheckBox)
         else if (source == doCellTrackingCheckBox) {
+
             /*  Turn cell-tracking interface on or off:  */
             if (doCellTrackingCheckBox.isSelected()) {
                 labelRadius.setEnabled(true);
@@ -287,20 +317,16 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                 textDy.setEnabled(false);
             }
         } // else if (source == do25DCheckBox)
-        else if ( source == doDilateCheckBox )
-        {
-            if ( doDilateCheckBox.isSelected() )
-            {
+        else if (source == doDilateCheckBox) {
+
+            if (doDilateCheckBox.isSelected()) {
                 labelDilation.setEnabled(true);
                 textDilation.setEnabled(true);
-            }
-            else
-            {
+            } else {
                 labelDilation.setEnabled(false);
                 textDilation.setEnabled(false);
             }
-        }
-        else if (source == OKButton) {
+        } else if (source == OKButton) {
 
             if (singleSlice.isSelected()) {
                 propagationFlag = false;
@@ -395,8 +421,8 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
              * variables: */
             doCellTracking = doCellTrackingCheckBox.isSelected();
             doDilate = doDilateCheckBox.isSelected();
-            if ( doCellTracking )
-            {
+
+            if (doCellTracking) {
                 tmpStr = textRadius.getText();
                 radiusConstraint = Float.valueOf(tmpStr).floatValue();
                 tmpStr = textShape.getText();
@@ -423,43 +449,31 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
                     if (checkboxDisplay.isSelected() == true) {
                         resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(),
-                                                     image.getImageName() + "_gvf", userInterface);
+                                                     image.getImageName() + "_gvf");
 
                         // Make the algorithm class
-                        if ( !doCellTracking )
-                        {
+                        if (!doCellTracking) {
                             agvfAlgo = new AlgorithmAGVF(resultImage, image, sigmas, gvfIterations, boundaryIterations,
                                                          kValue, smoothness, srcVOI, do25D);
-                        }
-                        else
-                        {
-                            agvfAlgo = new AlgorithmCellTrackingAGVF(resultImage, image, sigmas,
-                                                                     gvfIterations, boundaryIterations,
-                                                                     kValue, smoothness, srcVOI, do25D,
-                                                                     radiusConstraint,
-                                                                     shapeConstraint, sizeConstraint,
-                                                                     resamplingConstraint,
-                                                                     doDilate, dilation,
-                                                                     velocityDx, velocityDy );
+                        } else {
+                            agvfAlgo = new AlgorithmCellTrackingAGVF(resultImage, image, sigmas, gvfIterations,
+                                                                     boundaryIterations, kValue, smoothness, srcVOI,
+                                                                     do25D, radiusConstraint, shapeConstraint,
+                                                                     sizeConstraint, resamplingConstraint, doDilate,
+                                                                     dilation, velocityDx, velocityDy);
                         }
                     } else {
 
                         // Make the algorithm class
-                        if ( !doCellTracking )
-                        {
+                        if (!doCellTracking) {
                             agvfAlgo = new AlgorithmAGVF(null, image, sigmas, gvfIterations, boundaryIterations, kValue,
                                                          smoothness, srcVOI, do25D);
-                        }
-                        else
-                        {
-                            agvfAlgo = new AlgorithmCellTrackingAGVF(null, image, sigmas,
-                                                                     gvfIterations, boundaryIterations,
-                                                                     kValue, smoothness, srcVOI, do25D,
-                                                                     radiusConstraint,
-                                                                     shapeConstraint, sizeConstraint,
-                                                                     resamplingConstraint,
-                                                                     doDilate, dilation,
-                                                                     velocityDx, velocityDy  );
+                        } else {
+                            agvfAlgo = new AlgorithmCellTrackingAGVF(null, image, sigmas, gvfIterations,
+                                                                     boundaryIterations, kValue, smoothness, srcVOI,
+                                                                     do25D, radiusConstraint, shapeConstraint,
+                                                                     sizeConstraint, resamplingConstraint, doDilate,
+                                                                     dilation, velocityDx, velocityDy);
                         }
 
                     }
@@ -469,7 +483,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                     // This is made possible by implementing AlgorithmedPerformed interface
                     agvfAlgo.addListener(this);
                     createProgressBar(image.getImageName(), agvfAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -484,7 +498,8 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                         titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                                                                                          (imageFrames.elementAt(i)));
                     }
 
                     if (isRunInSeparateThread()) {
@@ -535,46 +550,33 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                 try {
 
                     if (checkboxDisplay.isSelected() == true) {
-                        resultImage = new ModelImage(ModelStorageBase.FLOAT, extents, image.getImageName() + "_gvf",
-                                                     userInterface);
+                        resultImage = new ModelImage(ModelStorageBase.FLOAT, extents, image.getImageName() + "_gvf");
 
                         // Make algorithm
-                        if ( !doCellTracking )
-                        {
+                        if (!doCellTracking) {
                             agvfAlgo = new AlgorithmAGVF(resultImage, image, sigmas, gvfIterations, boundaryIterations,
                                                          kValue, smoothness, srcVOI, do25D);
 
-                        }
-                        else
-                        {
-                            agvfAlgo = new AlgorithmCellTrackingAGVF(resultImage, image, sigmas,
-                                                                     gvfIterations, boundaryIterations,
-                                                                     kValue, smoothness, srcVOI, do25D,
-                                                                     radiusConstraint,
-                                                                     shapeConstraint, sizeConstraint,
-                                                                     resamplingConstraint,
-                                                                     doDilate, dilation,
-                                                                     velocityDx, velocityDy  );
+                        } else {
+                            agvfAlgo = new AlgorithmCellTrackingAGVF(resultImage, image, sigmas, gvfIterations,
+                                                                     boundaryIterations, kValue, smoothness, srcVOI,
+                                                                     do25D, radiusConstraint, shapeConstraint,
+                                                                     sizeConstraint, resamplingConstraint, doDilate,
+                                                                     dilation, velocityDx, velocityDy);
 
                         }
                     } else {
 
                         // Make algorithm
-                        if ( !doCellTracking )
-                        {
+                        if (!doCellTracking) {
                             agvfAlgo = new AlgorithmAGVF(null, image, sigmas, gvfIterations, boundaryIterations, kValue,
                                                          smoothness, srcVOI, do25D);
-                        }
-                        else
-                        {
-                            agvfAlgo = new AlgorithmCellTrackingAGVF(null, image, sigmas,
-                                                                     gvfIterations, boundaryIterations,
-                                                                     kValue, smoothness, srcVOI, do25D,
-                                                                     radiusConstraint,
-                                                                     shapeConstraint, sizeConstraint,
-                                                                     resamplingConstraint,
-                                                                     doDilate, dilation,
-                                                                     velocityDx, velocityDy  );
+                        } else {
+                            agvfAlgo = new AlgorithmCellTrackingAGVF(null, image, sigmas, gvfIterations,
+                                                                     boundaryIterations, kValue, smoothness, srcVOI,
+                                                                     do25D, radiusConstraint, shapeConstraint,
+                                                                     sizeConstraint, resamplingConstraint, doDilate,
+                                                                     dilation, velocityDx, velocityDy);
                         }
                     }
 
@@ -600,7 +602,8 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                         titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                                                                                          (imageFrames.elementAt(i)));
                     }
 
                     if (isRunInSeparateThread()) {
@@ -861,49 +864,49 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
         gbc2.gridx = 0;
         gbc2.gridy++;
-        labelRadius = new JLabel( "Expected Cell Radius (pixels)" );
-        labelRadius.setEnabled( false );
+        labelRadius = new JLabel("Expected Cell Radius (pixels)");
+        labelRadius.setEnabled(false);
         cellTrackingPanel.add(labelRadius, gbc2);
         gbc2.gridx = 1;
+
         float[] xBounds = new float[2], yBounds = new float[2], zBounds = new float[2];
-        srcVOI.getBounds( xBounds, yBounds, zBounds );
-        radiusConstraint = Math.max( xBounds[1] - xBounds[0],
-                                     yBounds[1] - yBounds[0] );
+        srcVOI.getBounds(xBounds, yBounds, zBounds);
+        radiusConstraint = Math.max(xBounds[1] - xBounds[0], yBounds[1] - yBounds[0]);
         radiusConstraint /= 2.0f;
-        textRadius = new JTextField( new String( "" + radiusConstraint ), 5 );
+        textRadius = new JTextField(new String("" + radiusConstraint), 5);
         textRadius.setFont(serif12);
-        textRadius.setEnabled( false );
+        textRadius.setEnabled(false);
         cellTrackingPanel.add(textRadius, gbc2);
 
         gbc2.gridx = 0;
         gbc2.gridy++;
-        labelSize = new JLabel( "Size Constraint factor (0-1):" );
-        labelSize.setEnabled( false );
+        labelSize = new JLabel("Size Constraint factor (0-1):");
+        labelSize.setEnabled(false);
         cellTrackingPanel.add(labelSize, gbc2);
         gbc2.gridx = 1;
-        textSize = new JTextField( new String( "" + sizeConstraint ), 5 );
+        textSize = new JTextField(new String("" + sizeConstraint), 5);
         textSize.setFont(serif12);
-        textSize.setEnabled( false );
+        textSize.setEnabled(false);
         cellTrackingPanel.add(textSize, gbc2);
 
         gbc2.gridx = 0;
         gbc2.gridy++;
-        labelShape = new JLabel( "Shape Constraint factor (0-1):" );
-        labelShape.setEnabled( false );
+        labelShape = new JLabel("Shape Constraint factor (0-1):");
+        labelShape.setEnabled(false);
         cellTrackingPanel.add(labelShape, gbc2);
         gbc2.gridx = 1;
-        textShape = new JTextField( new String( "" + shapeConstraint ), 5 );
-        textShape.setEnabled( false );
+        textShape = new JTextField(new String("" + shapeConstraint), 5);
+        textShape.setEnabled(false);
         textShape.setFont(serif12);
         cellTrackingPanel.add(textShape, gbc2);
 
         gbc2.gridx = 0;
         gbc2.gridy++;
-        labelResampling = new JLabel( "Implicit Resampling Constraint factor (0-1):" );
-        labelResampling.setEnabled( false );
+        labelResampling = new JLabel("Implicit Resampling Constraint factor (0-1):");
+        labelResampling.setEnabled(false);
         cellTrackingPanel.add(labelResampling, gbc2);
         gbc2.gridx = 1;
-        textResampling = new JTextField( new String( "" + resamplingConstraint ), 5 );
+        textResampling = new JTextField(new String("" + resamplingConstraint), 5);
         textResampling.setFont(serif12);
         textResampling.setEnabled(false);
         cellTrackingPanel.add(textResampling, gbc2);
@@ -921,27 +924,27 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
         gbc2.gridx = 0;
         gbc2.gridy++;
-        labelDilation = new JLabel( "Cell dilation factor:" );
-        labelDilation.setEnabled( false );
+        labelDilation = new JLabel("Cell dilation factor:");
+        labelDilation.setEnabled(false);
         cellTrackingPanel.add(labelDilation, gbc2);
         gbc2.gridx = 1;
-        textDilation = new JTextField( new String( "" + dilation ), 5 );
+        textDilation = new JTextField(new String("" + dilation), 5);
         textDilation.setFont(serif12);
         textDilation.setEnabled(false);
         cellTrackingPanel.add(textDilation, gbc2);
 
         gbc2.gridx = 0;
         gbc2.gridy++;
-        labelVelocity = new JLabel( "Initial Cell Velocity in pixels (X,Y) :" );
-        labelVelocity.setEnabled( false );
+        labelVelocity = new JLabel("Initial Cell Velocity in pixels (X,Y) :");
+        labelVelocity.setEnabled(false);
         cellTrackingPanel.add(labelVelocity, gbc2);
         gbc2.gridx = 1;
-        textDx = new JTextField( new String( "" + velocityDx ), 5 );
+        textDx = new JTextField(new String("" + velocityDx), 5);
         textDx.setFont(serif12);
         textDx.setEnabled(false);
         cellTrackingPanel.add(textDx, gbc2);
         gbc2.gridx = 2;
-        textDy = new JTextField( new String( "" + velocityDy ), 5 );
+        textDy = new JTextField(new String("" + velocityDy), 5);
         textDy.setFont(serif12);
         textDy.setEnabled(false);
         cellTrackingPanel.add(textDy, gbc2);

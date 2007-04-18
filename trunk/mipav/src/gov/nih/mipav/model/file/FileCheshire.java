@@ -5,8 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 
@@ -43,7 +41,7 @@ public class FileCheshire extends FileBase {
     private float[] scaleFactor;
 
     /** DOCUMENT ME! */
-    
+
 
     /** DOCUMENT ME! */
     private int startFirstImage;
@@ -271,7 +269,7 @@ public class FileCheshire extends FileBase {
         }
 
         try {
-            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(), UI);
+            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
         } catch (OutOfMemoryError error) {
             throw (error);
         }
@@ -363,14 +361,13 @@ public class FileCheshire extends FileBase {
 
             rawFile.raFile.close();
         } catch (IOException error) {
-            
+
             throw new IOException("FileCheshire: " + error);
         } catch (OutOfMemoryError e) {
-            
+
             throw (e);
         }
 
-        
 
         // image.calcMinMax();
         return image;

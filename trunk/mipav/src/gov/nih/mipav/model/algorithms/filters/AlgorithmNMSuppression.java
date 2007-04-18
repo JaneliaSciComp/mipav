@@ -282,7 +282,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         destExtents[0] = srcImage.getExtents()[0]; // X dim
         destExtents[1] = srcImage.getExtents()[1]; // Y dim
 
-        zXMask = new ModelImage(ModelImage.UBYTE, destExtents, " Edges", srcImage.getUserInterface());
+        zXMask = new ModelImage(ModelImage.UBYTE, destExtents, " Edges");
 
         x0 = buffer[0];
         x2 = buffer[xDim];
@@ -451,7 +451,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        
+
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -465,7 +465,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm NMSuppression: Image(s) locked");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -554,7 +554,6 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             genZeroXMask(resultBuffer, resultBuffer2);
         }
 
-        
         setCompleted(true);
     }
 
@@ -589,7 +588,6 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             return;
         }
 
-        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -646,7 +644,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         }
 
         setCompleted(true);
-        
+
     }
 
     /**
@@ -696,7 +694,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        
+
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -795,7 +793,6 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             genZeroXMask(buffer, buffer2);
         }
 
-        
         setCompleted(true);
     }
 
@@ -837,7 +834,6 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             return;
         }
 
-        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -876,7 +872,6 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 

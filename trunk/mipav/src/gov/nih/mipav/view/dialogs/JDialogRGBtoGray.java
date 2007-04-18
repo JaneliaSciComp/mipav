@@ -351,13 +351,13 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
 
                 if (imageA.getType() == ModelStorageBase.ARGB) {
                     resultImage = new ModelImage(ModelImage.UBYTE, imageA.getExtents(),
-                                                 (imageA.getImageName() + "Gray"), userInterface);
+                                                 (imageA.getImageName() + "Gray"));
                 } else if (imageA.getType() == ModelStorageBase.ARGB_USHORT) {
                     resultImage = new ModelImage(ModelImage.USHORT, imageA.getExtents(),
-                                                 (imageA.getImageName() + "Gray"), userInterface);
+                                                 (imageA.getImageName() + "Gray"));
                 } else if (imageA.getType() == ModelStorageBase.ARGB_FLOAT) {
                     resultImage = new ModelImage(ModelImage.FLOAT, imageA.getExtents(),
-                                                 (imageA.getImageName() + "Gray"), userInterface);
+                                                 (imageA.getImageName() + "Gray"));
                 }
 
                 // get some important information from imageA and put it in

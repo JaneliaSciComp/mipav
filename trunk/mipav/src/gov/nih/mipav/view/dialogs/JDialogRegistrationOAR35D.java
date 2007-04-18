@@ -670,8 +670,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
                                    matchImage.getFileInfo(0).getResolutions()[3]
                                };
 
-            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match",
-                                              matchImage.getUserInterface());
+            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match");
 
             inputWeightImage.getFileInfo(0).setResolutions(matchRes);
             // make new input image based on the VOIs. pass those new image to the registration algorithm

@@ -3,11 +3,6 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
-import java.awt.*;
-import java.awt.Dialog.*;
-
 import java.io.*;
 
 
@@ -104,9 +99,6 @@ public class FileBioRad extends FileBase {
     private boolean readAgain;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private int xDim = 0;
 
     /** DOCUMENT ME! */
@@ -120,14 +112,12 @@ public class FileBioRad extends FileBase {
     /**
      * reader/writer constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileBioRad(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
-        UI = _UI;
+    public FileBioRad(String fileName, String fileDir) throws IOException {
         this.fileName = fileName;
         this.fileDir = fileDir;
     }
@@ -154,7 +144,7 @@ public class FileBioRad extends FileBase {
         try {
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
-            
+
             xDim = getSignedShort(endianess); // 0
             yDim = getSignedShort(endianess); // 2
             zDim = getSignedShort(endianess); // 4
@@ -164,7 +154,6 @@ public class FileBioRad extends FileBase {
             byteFormat = (short) getSignedShort(endianess); // 14
             num = (short) getSignedShort(endianess); // 16
 
-            
 
             for (i = 0; i < 32; i++) {
                 name[i] = 0;
@@ -230,11 +219,10 @@ public class FileBioRad extends FileBase {
             fileInfo.setDataType(dataType);
 
             if (one) {
-                image = new ModelImage(dataType, new int[] { imgExtents[0], imgExtents[1] }, fileInfo.getFileName(),
-                                       UI);
+                image = new ModelImage(dataType, new int[] { imgExtents[0], imgExtents[1] }, fileInfo.getFileName());
                 zDim = 1;
             } else {
-                image = new ModelImage(dataType, imgExtents, fileInfo.getFileName(), UI);
+                image = new ModelImage(dataType, imgExtents, fileInfo.getFileName());
             }
 
             imgBuffer = new float[bufferSize];
@@ -265,7 +253,7 @@ public class FileBioRad extends FileBase {
             } // for (i = 0; i < imageSlice; i++)
 
             raFile.close();
-            
+
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -309,7 +297,7 @@ public class FileBioRad extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * zDim;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -331,7 +319,7 @@ public class FileBioRad extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * zDim;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -357,7 +345,7 @@ public class FileBioRad extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * zDim;
                 mod = progressLength / 10;
-                
+
 
                 // For the moment I compress RGB images to unsigned bytes.
                 for (j = 0; j < nBytes; j += 2, i += 4) {

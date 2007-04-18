@@ -2033,7 +2033,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
 
             // change image2load to color
             tempImage = new ModelImage(ModelImage.ARGB, image2load.getExtents(),
-                                       JDialogBase.makeImageName(image2load.getImageName(), "_rgb"), userInterface);
+                                       JDialogBase.makeImageName(image2load.getImageName(), "_rgb"));
 
             // get some important information from imageA and put it in
             // the result image
@@ -2071,13 +2071,13 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
 
                 if (image2load.getType() == ModelStorageBase.ARGB) {
                     tempImage = new ModelImage(ModelImage.UBYTE, image2load.getExtents(),
-                                               (image2load.getImageName() + "Gray"), userInterface);
+                                               (image2load.getImageName() + "Gray"));
                 } else if (image2load.getType() == ModelStorageBase.ARGB_USHORT) {
                     tempImage = new ModelImage(ModelImage.USHORT, image2load.getExtents(),
-                                               (image2load.getImageName() + "Gray"), userInterface);
+                                               (image2load.getImageName() + "Gray"));
                 } else if (image2load.getType() == ModelStorageBase.ARGB_FLOAT) {
                     tempImage = new ModelImage(ModelImage.FLOAT, image2load.getExtents(),
-                                               (image2load.getImageName() + "Gray"), userInterface);
+                                               (image2load.getImageName() + "Gray"));
                 }
 
                 // get some important information from imageA and put it in

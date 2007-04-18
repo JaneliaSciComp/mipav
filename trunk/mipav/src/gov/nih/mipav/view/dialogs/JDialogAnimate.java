@@ -372,7 +372,6 @@ public class JDialogAnimate extends JDialogBase {
                 return;
             }
 
-
             algoTrans.run();
 
             // ViewJFrameImage imageFrame = null;
@@ -446,7 +445,7 @@ public class JDialogAnimate extends JDialogBase {
 
             String name = makeImageName(imageA.getImageName(), "_result");
 
-            transformedImageA = new ModelImage(imageA.getType(), extents, name, imageA.getUserInterface());
+            transformedImageA = new ModelImage(imageA.getType(), extents, name);
 
             FileInfoBase[] fileInfo = transformedImageA.getFileInfo();
 
@@ -472,7 +471,7 @@ public class JDialogAnimate extends JDialogBase {
 
                 name = makeImageName(imageB.getImageName(), "_result");
 
-                transformedImageB = new ModelImage(imageB.getType(), extents, name, imageB.getUserInterface());
+                transformedImageB = new ModelImage(imageB.getType(), extents, name);
 
                 fileInfo = transformedImageB.getFileInfo();
 

@@ -21,8 +21,7 @@ import javax.swing.event.*;
 /**
  * Dialog to get user input, then call the algorithm.
  */
-public class JDialogFRETEfficiency extends JDialogScriptableBase
-        implements AlgorithmInterface, ListSelectionListener {
+public class JDialogFRETEfficiency extends JDialogScriptableBase implements AlgorithmInterface, ListSelectionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -380,69 +379,6 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase
             dispose();
         }
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(srcImage);
-        scriptParameters.storeImage(FRETImage, "FRET_image");
-        scriptParameters.storeImage(acceptorImage, "acceptor_image");
-        
-        scriptParameters.storeColorOptions(useRed, useGreen, useBlue);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("DFP_into_FRET", DFPintoFRET));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("AFP_into_FRET", AFPintoFRET));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("DFP_into_AFP", DFPintoAFP));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("AFP_into_DFP", AFPintoDFP));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_FRET_donor_image", createFDivDImage));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_FRET_acceptor_image", createFDivAImage));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_efficiency_image", createEfficiencyImage));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        srcImage = scriptParameters.retrieveInputImage();
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-        
-        FRETImage = scriptParameters.retrieveImage("FRET_image");
-        acceptorImage = scriptParameters.retrieveImage("acceptor_image");
-        
-        if (srcImage.isColorImage()) {
-            doColor = true;
-            useRed = true;
-            useBlue = false;
-            useGreen = false;
-        } else {
-            doColor = false;
-            useRed = false;
-            useBlue = false;
-            useGreen = false;
-        }
-        
-        boolean[] rgb = scriptParameters.getParams().getList(AlgorithmParameters.DO_PROCESS_RGB).getAsBooleanArray();
-        setRed(rgb[0]);
-        setGreen(rgb[1]);
-        setBlue(rgb[2]);
-        
-        setDFPintoFRET(scriptParameters.getParams().getFloat("DFP_into_FRET"));
-        setAFPintoFRET(scriptParameters.getParams().getFloat("AFP_into_FRET"));
-        setDFPintoAFP(scriptParameters.getParams().getFloat("DFP_into_AFP"));
-        setAFPintoDFP(scriptParameters.getParams().getFloat("AFP_into_DFP"));
-        setCreateFDivDImage(scriptParameters.getParams().getBoolean("do_create_FRET_donor_image"));
-        setCreateFDivAImage(scriptParameters.getParams().getBoolean("do_create_FRET_acceptor_image"));
-        setCreateEfficiencyImage(scriptParameters.getParams().getBoolean("do_create_efficiency_image"));
-        
-        if (!checkImage(FRETImage)) {
-            return;
-        }
-
-        if (!checkImage(acceptorImage)) {
-            return;
-        }
-    }
 
     /**
      * DOCUMENT ME!
@@ -549,7 +485,7 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase
      *
      * @param  evt  Event that caused this method to fire.
      */
-    public void valueChanged(ListSelectionEvent evt) {}
+    public void valueChanged(ListSelectionEvent evt) { }
 
     /**
      * Once all the necessary variables are set, call AlgorithmFRETEfficiency.
@@ -562,17 +498,17 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase
             // Make algorithm
             if (createFDivDImage) {
                 fDivDImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(),
-                                            makeImageName(srcImage.getImageName(), "_f/d"), userInterface);
+                                            makeImageName(srcImage.getImageName(), "_f/d"));
             }
 
             if (createFDivAImage) {
                 fDivAImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(),
-                                            makeImageName(srcImage.getImageName(), "_f/a"), userInterface);
+                                            makeImageName(srcImage.getImageName(), "_f/a"));
             }
 
             if (createEfficiencyImage) {
                 efficiencyImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(),
-                                                 makeImageName(srcImage.getImageName(), "_eff"), userInterface);
+                                                 makeImageName(srcImage.getImageName(), "_eff"));
             }
 
             feffAlgo = new AlgorithmFRETEfficiency(srcImage, FRETImage, acceptorImage, useRed, useGreen, useBlue,
@@ -607,6 +543,71 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase
             return;
         }
 
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = srcImage.getUserInterface();
+        parentFrame = srcImage.getParentFrame();
+
+        FRETImage = scriptParameters.retrieveImage("FRET_image");
+        acceptorImage = scriptParameters.retrieveImage("acceptor_image");
+
+        if (srcImage.isColorImage()) {
+            doColor = true;
+            useRed = true;
+            useBlue = false;
+            useGreen = false;
+        } else {
+            doColor = false;
+            useRed = false;
+            useBlue = false;
+            useGreen = false;
+        }
+
+        boolean[] rgb = scriptParameters.getParams().getList(AlgorithmParameters.DO_PROCESS_RGB).getAsBooleanArray();
+        setRed(rgb[0]);
+        setGreen(rgb[1]);
+        setBlue(rgb[2]);
+
+        setDFPintoFRET(scriptParameters.getParams().getFloat("DFP_into_FRET"));
+        setAFPintoFRET(scriptParameters.getParams().getFloat("AFP_into_FRET"));
+        setDFPintoAFP(scriptParameters.getParams().getFloat("DFP_into_AFP"));
+        setAFPintoDFP(scriptParameters.getParams().getFloat("AFP_into_DFP"));
+        setCreateFDivDImage(scriptParameters.getParams().getBoolean("do_create_FRET_donor_image"));
+        setCreateFDivAImage(scriptParameters.getParams().getBoolean("do_create_FRET_acceptor_image"));
+        setCreateEfficiencyImage(scriptParameters.getParams().getBoolean("do_create_efficiency_image"));
+
+        if (!checkImage(FRETImage)) {
+            return;
+        }
+
+        if (!checkImage(acceptorImage)) {
+            return;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        scriptParameters.storeImage(FRETImage, "FRET_image");
+        scriptParameters.storeImage(acceptorImage, "acceptor_image");
+
+        scriptParameters.storeColorOptions(useRed, useGreen, useBlue);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("DFP_into_FRET", DFPintoFRET));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("AFP_into_FRET", AFPintoFRET));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("DFP_into_AFP", DFPintoAFP));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("AFP_into_DFP", AFPintoDFP));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_FRET_donor_image", createFDivDImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_FRET_acceptor_image",
+                                                                       createFDivAImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_efficiency_image",
+                                                                       createEfficiencyImage));
     }
 
     /**

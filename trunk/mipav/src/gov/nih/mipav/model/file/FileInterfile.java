@@ -1081,9 +1081,9 @@ public class FileInterfile extends FileBase {
             fileInfo.setDataType(type);
 
             if (one) {
-                image = new ModelImage(type, new int[] { xDim, yDim }, fileName, UI);
+                image = new ModelImage(type, new int[] { xDim, yDim }, fileName);
             } else {
-                image = new ModelImage(type, imgExtents, fileName, UI);
+                image = new ModelImage(type, imgExtents, fileName);
             }
 
             if (!haveOrientation) {

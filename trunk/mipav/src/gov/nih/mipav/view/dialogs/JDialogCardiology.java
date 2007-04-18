@@ -3,7 +3,6 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.VOICardiology.*;
 
 import gov.nih.mipav.view.*;
 
@@ -246,9 +245,12 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
 
         Point3Df secondPt = new Point3Df();
 
-        VOIContour outerContour = (VOIContour) image.getVOIs().VOIAt(outerVOIIndex).getCurves()[currentSlice].elementAt(0);
-        VOIContour innerContour = (VOIContour) image.getVOIs().VOIAt(innerVOIIndex).getCurves()[currentSlice].elementAt(0);
-        VOIContour infarctionContour = (VOIContour) image.getVOIs().VOIAt(infarctionVOIIndex).getCurves()[currentSlice].elementAt(0);
+        VOIContour outerContour = (VOIContour)
+                                      image.getVOIs().VOIAt(outerVOIIndex).getCurves()[currentSlice].elementAt(0);
+        VOIContour innerContour = (VOIContour)
+                                      image.getVOIs().VOIAt(innerVOIIndex).getCurves()[currentSlice].elementAt(0);
+        VOIContour infarctionContour = (VOIContour)
+                                           image.getVOIs().VOIAt(infarctionVOIIndex).getCurves()[currentSlice].elementAt(0);
 
         int numPtsOuter = outerContour.size();
         int numPtsInner = innerContour.size();
@@ -662,8 +664,7 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
         ModelImage newImage = null;
 
         if (image.getNDims() == 3) {
-            newImage = new ModelImage(image.getType(), new int[] { dimX, dimY }, image.getImageName() + "_CardioVOI",
-                                      userInterface);
+            newImage = new ModelImage(image.getType(), new int[] { dimX, dimY }, image.getImageName() + "_CardioVOI");
 
             int sliceSize = dimX * dimY;
             float[] buffer = new float[sliceSize];
