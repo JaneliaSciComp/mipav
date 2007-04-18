@@ -319,7 +319,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         int cnt = 0;
         fireProgressStateChanged("Extracting bone");
 
-        ModelImage bone = new ModelImage(boneMarrow.getType(), boneMarrow.getExtents(), "boneImg", null);
+        ModelImage bone = new ModelImage(boneMarrow.getType(), boneMarrow.getExtents(), "boneImg");
 
         int xDim = inputThigh.getExtents()[0];
         int yDim = inputThigh.getExtents()[1];
@@ -545,8 +545,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
         ModelImage[] HardSeg = new ModelImage[1];
         FileInfoBase fileInfo1;
-        HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "Hard-Fuzzy_seg",
-                                    srcImage.getUserInterface());
+        HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "Hard-Fuzzy_seg");
         fileInfo1 = HardSeg[0].getFileInfo()[0];
         fileInfo1.setResolutions(srcImage.getResolutions(0));
         fileInfo1.setUnitsOfMeasure(srcImage.getUnitsOfMeasure());
@@ -758,10 +757,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
     public ModelImage N3(ModelImage srcImage1) {
         fireProgressStateChanged("Executing N3 on image");
 
-        ModelImage fieldImage = new ModelImage(srcImage1.getType(), srcImage1.getExtents(), "fieldImage",
-                                               srcImage1.getUserInterface());
-        ModelImage n3ProcessedImage = new ModelImage(srcImage1.getType(), srcImage1.getExtents(), "n3ProcessedImage",
-                                                     srcImage1.getUserInterface());
+        ModelImage fieldImage = new ModelImage(srcImage1.getType(), srcImage1.getExtents(), "fieldImage");
+        ModelImage n3ProcessedImage = new ModelImage(srcImage1.getType(), srcImage1.getExtents(), "n3ProcessedImage");
         AlgorithmIHN3Correction ihn3Algo1 = null;
         ihn3Algo1 = new AlgorithmIHN3Correction(n3ProcessedImage, fieldImage, srcImage1, 100f, 150, 0.0001f, 33.3f, 4f,
                                                 0.2f, 0.01f, true, false, false);
@@ -983,8 +980,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             // at the end of this step boneSeg must be filled in
 
             // make a empty bone/marrow image
-            ModelImage boneSeg = new ModelImage(HardSeg1.getType(), HardSeg1.getExtents(), "Bone Seg Image",
-                                                HardSeg1.getUserInterface());
+            ModelImage boneSeg = new ModelImage(HardSeg1.getType(), HardSeg1.getExtents(), "Bone Seg Image");
             processBoneAndMarrow(boneSeg, HardSeg1, processedImage);
 
             // PFH            ShowImage(boneSeg, "bone/marrow seg");
@@ -1202,8 +1198,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         int i;
 
         for (i = 0; i < nClasses; i++) {
-            FuzzySeg[i] = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "Hard-Fuzzy_seg",
-                                         srcImage.getUserInterface());
+            FuzzySeg[i] = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "Hard-Fuzzy_seg");
             fileInfo1 = FuzzySeg[i].getFileInfo()[i];
             fileInfo1.setResolutions(srcImage.getResolutions(0));
             fileInfo1.setUnitsOfMeasure(srcImage.getUnitsOfMeasure());
@@ -1231,8 +1226,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      */
     public ModelImage threshold(ModelImage threshSourceImg, float[] thresh) {
         ModelImage resultImage = null;
-        resultImage = new ModelImage(threshSourceImg.getType(), threshSourceImg.getExtents(), "threshResultImg",
-                                     threshSourceImg.getUserInterface());
+        resultImage = new ModelImage(threshSourceImg.getType(), threshSourceImg.getExtents(), "threshResultImg");
 
         AlgorithmThresholdDual threshAlgo = null;
         threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, 1, AlgorithmThresholdDual.BINARY_TYPE, true, true);

@@ -168,8 +168,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
      * @return  DOCUMENT ME!
      */
     public ModelImage boundaryCorrect(ModelImage SegmentedImg) {
-        ModelImage Mask = new ModelImage(SegmentedImg.getType(), SegmentedImg.getExtents(), "Mask",
-                                         SegmentedImg.getUserInterface());
+        ModelImage Mask = new ModelImage(SegmentedImg.getType(), SegmentedImg.getExtents(), "Mask");
         int j, i, iPrime, x, y, xx, yy, BACKGROUNDFound;
 
         for (j = 0; j < zDim; j++) {
@@ -388,7 +387,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
     public void finalize() {
         disposeLocal();
         super.finalize();
-        
+
     }
 
 
@@ -464,8 +463,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
 
         ModelImage[] HardSeg = new ModelImage[1];
         FileInfoBase fileInfo1;
-        HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "Hard-Fuzzy_seg",
-                                    srcImage.getUserInterface());
+        HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "Hard-Fuzzy_seg");
         fileInfo1 = HardSeg[0].getFileInfo()[0];
         fileInfo1.setResolutions(srcImage.getResolutions(0));
         fileInfo1.setUnitsOfMeasure(srcImage.getUnitsOfMeasure());
@@ -504,7 +502,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
     public void runAlgorithm() {
 
         fireProgressStateChanged("OAI Thigh Seg. 6/29/06", "Initializing...");
-        
+
 
         try {
             patientID = (String)
@@ -728,8 +726,8 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         extentB[2] = extentA[2];
 
 
-        obMaskA = new ModelImage(srcImage.getType(), extentA, "obMaskA", srcImage.getUserInterface());
-        obMaskB = new ModelImage(srcImage.getType(), extentB, "obMaskB", srcImage.getUserInterface());
+        obMaskA = new ModelImage(srcImage.getType(), extentA, "obMaskA");
+        obMaskB = new ModelImage(srcImage.getType(), extentB, "obMaskB");
 
         destImageA = new ModelImage(srcImage.getType(), extentA, ("cropped right leg"));
         destImageB = new ModelImage(srcImage.getType(), extentB, ("cropped left leg"));
@@ -756,7 +754,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         // set the first part to being done, and return to the listening dialog
         setCompleted(true);
         finalize();
-        
+
     }
 
     /**

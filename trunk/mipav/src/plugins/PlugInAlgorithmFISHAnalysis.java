@@ -220,11 +220,10 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
         fireProgressStateChanged("Processing image ...");
-        
+
 
         fireProgressStateChanged("Creating blue image");
-        blueImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_blue",
-                                   srcImage.getUserInterface());
+        blueImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_blue");
         fileInfo = blueImage.getFileInfo()[0];
         fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -232,8 +231,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         fireProgressStateChanged(5);
 
         fireProgressStateChanged("Creating green image");
-        greenImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_green",
-                                    srcImage.getUserInterface());
+        greenImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_green");
         fileInfoG = greenImage.getFileInfo()[0];
         fileInfoG.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfoG.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -241,8 +239,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         fireProgressStateChanged(10);
 
         fireProgressStateChanged("Creating red image");
-        redImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_red",
-                                  srcImage.getUserInterface());
+        redImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_red");
         fileInfoR = redImage.getFileInfo()[0];
         fileInfoR.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfoR.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -284,7 +281,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         fireProgressStateChanged(15);
         blueSegImage = new ModelImage[1];
         blueSegImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(),
-                                         blueImage.getImageName() + "_seg", srcImage.getUserInterface());
+                                         blueImage.getImageName() + "_seg");
         fileInfo2 = blueSegImage[0].getFileInfo()[0];
         fileInfo2.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfo2.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -325,7 +322,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         fireProgressStateChanged(20);
         greenSegImage = new ModelImage[1];
         greenSegImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(),
-                                          greenImage.getImageName() + "_seg", srcImage.getUserInterface());
+                                          greenImage.getImageName() + "_seg");
         fileInfoG2 = blueSegImage[0].getFileInfo()[0];
         fileInfoG2.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfoG2.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -364,8 +361,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         fireProgressStateChanged("Performing FuzzyCMeans Segmentation on red");
         fireProgressStateChanged(25);
         redSegImage = new ModelImage[1];
-        redSegImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), redImage.getImageName() + "_seg",
-                                        srcImage.getUserInterface());
+        redSegImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(),
+                                        redImage.getImageName() + "_seg");
         fileInfoR2 = redSegImage[0].getFileInfo()[0];
         fileInfoR2.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfoR2.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -402,8 +399,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
         /*
          * try { imageFrameG=         new ViewJFrameImage(greenSegImage[0], null,         new Dimension(610, 200),
-         *   srcImage.getUserInterface()); } catch (OutOfMemoryError error) { System.gc(); UI.setDataText("Out of
-         * memory: unable to open new frame"); }
+         * srcImage.getUserInterface()); } catch (OutOfMemoryError error) { System.gc(); UI.setDataText("Out of memory:
+         * unable to open new frame"); }
          */
         /*
          * try { imageFrameR=         new ViewJFrameImage(redSegImage[0], null,         new Dimension(610, 200),
@@ -541,8 +538,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         thresholds[1] = max;
         fillValue = 0.0f;
         binaryFlag = true;
-        thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
-                                                   true);
+        thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue,
+                                                   AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -884,10 +881,11 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
                 xPosVOIs[i] = xPos;
                 yPosVOIs[i] = yPos;
 
-                regionToCenter = (float) Math.sqrt(((xPos - xCenter[objectID - 1]) * (xPos - xCenter[objectID - 1]) *
-                                                        xRes * xRes) +
-                                                   ((yPos - yCenter[objectID - 1]) * (yPos - yCenter[objectID - 1]) *
-                                                        yRes * yRes));
+                regionToCenter = (float)
+                                     Math.sqrt(((xPos - xCenter[objectID - 1]) * (xPos - xCenter[objectID - 1]) *
+                                                    xRes * xRes) +
+                                               ((yPos - yCenter[objectID - 1]) * (yPos - yCenter[objectID - 1]) *
+                                                    yRes * yRes));
                 lowestSqr = Float.MAX_VALUE;
 
                 for (j = 0, y = 0; y < yDim; y++, j += xDim) {
@@ -914,43 +912,44 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
                     rfCnt++;
                     UI.setDataText("VOI ID = " + i + ", Name = " + VOIs.VOIAt(i).getName() +
                                    " with red weighted voi center of mass = " + "(" + xPos + ", " + yPos + ")\n");
-                    //                    UI.setGlobalDataText("VOI ID = " + i + " with red weighted voi center of mass = " +
-                    //                                "(" + xPos + ", " + yPos + ")\n");
+                    // UI.setGlobalDataText("VOI ID = " + i + " with red weighted voi center of mass = " +
+                    // "(" + xPos + ", " + yPos + ")\n");
                 } else {
                     VOIs.VOIAt(i).setName("GreenFISH-" + gfCnt);
                     gfCnt++;
                     UI.setDataText("VOI ID = " + i + ", Name = " + VOIs.VOIAt(i).getName() +
                                    " with green weighted voi center of mass = " + "(" + xPos + ", " + yPos + ")\n");
-                    //                    UI.setGlobalDataText("VOI ID = " + i + " with green weighted voi center of mass = " +
-                    //                                "(" + xPos + ", " + yPos + ")\n");
+                    // UI.setGlobalDataText("VOI ID = " + i + " with green weighted voi center of mass = " +
+                    // "(" + xPos + ", " + yPos + ")\n");
                 }
 
                 UI.setDataText("Center of cell mass = (" + xCenter[objectID - 1] + ", " + yCenter[objectID - 1] +
                                ")\n");
 
-                //                UI.setGlobalDataText("Center of cell mass = (" + xCenter[objectID-1] + ", " +
-                //                                                           yCenter[objectID-1] + ")\n");
+                // UI.setGlobalDataText("Center of cell mass = (" + xCenter[objectID-1] + ", " +
+                // yCenter[objectID-1] + ")\n");
                 if (unitsString != null) {
                     UI.setDataText("Distance to center of cell mass = " + regionToCenter + " " + unitsString + "\n");
-                    //                    UI.setGlobalDataText("Distance to center of cell mass = " +
-                    //                                        regionToCenter + " " + unitsString + "\n");
+                    // UI.setGlobalDataText("Distance to center of cell mass = " +
+                    // regionToCenter + " " + unitsString + "\n");
                 } else {
                     UI.setDataText("Distance to center of cell mass = " + regionToCenter + "\n");
                     //                    UI.setGlobalDataText("Distance to center of cell mass = " +
-                    //                                        regionToCenter + "\n");
+                    //                     regionToCenter + "\n");
                 }
 
                 UI.setDataText("Edge of cell = (" + xEdge + ", " + yEdge + ")\n");
-                //                UI.setGlobalDataText("Edge of cell = (" + xEdge + ", " + yEdge + ")\n");
+
+                // UI.setGlobalDataText("Edge of cell = (" + xEdge + ", " + yEdge + ")\n");
                 if (unitsString != null) {
                     UI.setDataText("Distance to edge of cell = " + regionToEdge + " " + unitsString + "\n\n");
-                    //                    UI.setGlobalDataText("Distance to edge of cell = " +
-                    //                                        regionToEdge + " " + unitsString + "\n\n");
+                    // UI.setGlobalDataText("Distance to edge of cell = " +
+                    // regionToEdge + " " + unitsString + "\n\n");
 
                 } else {
                     UI.setDataText("Distance to edge of cell = " + regionToEdge + "\n\n");
                     //                    UI.setGlobalDataText("Distance to edge of cell = " +
-                    //                                        regionToEdge + "\n\n");
+                    //              regionToEdge + "\n\n");
                 }
             } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
         } // for (i = 0; i < nVOIs; i++)
@@ -1039,10 +1038,11 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             for (int oCnt = 0; oCnt < nVOIs; oCnt++) {
 
                 for (int iCnt = oCnt + 1; iCnt < nVOIs; iCnt++) {
-                    distBtwVOIs[distCnt] = (float) Math.sqrt(((xPosVOIs[oCnt] - xPosVOIs[iCnt]) *
-                                                                  (xPosVOIs[oCnt] - xPosVOIs[iCnt]) * xRes * xRes) +
-                                                             ((yPosVOIs[oCnt] - yPosVOIs[iCnt]) *
-                                                                  (yPosVOIs[oCnt] - yPosVOIs[iCnt]) * yRes * yRes));
+                    distBtwVOIs[distCnt] = (float)
+                                               Math.sqrt(((xPosVOIs[oCnt] - xPosVOIs[iCnt]) *
+                                                              (xPosVOIs[oCnt] - xPosVOIs[iCnt]) * xRes * xRes) +
+                                                         ((yPosVOIs[oCnt] - yPosVOIs[iCnt]) *
+                                                              (yPosVOIs[oCnt] - yPosVOIs[iCnt]) * yRes * yRes));
                     UI.setDataText("\n" + VOIs.VOIAt(oCnt).getName() + "--" + VOIs.VOIAt(iCnt).getName() + " = " +
                                    distBtwVOIs[distCnt]);
                     distCnt++;
@@ -1075,7 +1075,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         fireProgressStateChanged("Job Completed");
         fireProgressStateChanged(100);
 
-        
+
         setCompleted(true);
         /*
          * // trying the VOI from AlgorithmMorphology2D short ts = 99; String tSt = new String("Try_VOI");
@@ -1186,7 +1186,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         }
 
         fireProgressStateChanged(srcImage.getImageName(), "Processing image ...");
-        
+
 
         try {
             sliceLength = xDim * yDim;
@@ -1206,8 +1206,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             return;
         }
 
-        blueImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_blue",
-                                   srcImage.getUserInterface());
+        blueImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_blue");
 
         for (i = 0; i < srcImage.getExtents()[2]; i++) {
             fileInfo = blueImage.getFileInfo()[i];
@@ -1232,7 +1231,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         fireProgressStateChanged(5);
         blueSegImage = new ModelImage[1];
         blueSegImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(),
-                                         blueImage.getImageName() + "_seg", srcImage.getUserInterface());
+                                         blueImage.getImageName() + "_seg");
 
         for (i = 0; i < srcImage.getExtents()[2]; i++) {
             fileInfo2 = blueSegImage[0].getFileInfo()[i];
@@ -1284,8 +1283,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         // ViewJFrameImage testFrame = new ViewJFrameImage(blueSegImage[0], null,
         // new Dimension(600, 300), srcImage.getUserInterface());
 
-        thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
-                                                   true);
+        thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue,
+                                                   AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -1669,12 +1668,13 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
                 xPos /= colorCount;
                 yPos /= colorCount;
                 zPos /= colorCount;
-                regionToCenter = (float) Math.sqrt(((xPos - xCenter[objectID - 1]) * (xPos - xCenter[objectID - 1]) *
-                                                        xRes * xRes) +
-                                                   ((yPos - yCenter[objectID - 1]) * (yPos - yCenter[objectID - 1]) *
-                                                        yRes * yRes) +
-                                                   ((zPos - zCenter[objectID - 1]) * (zPos - zCenter[objectID - 1]) *
-                                                        zRes * zRes));
+                regionToCenter = (float)
+                                     Math.sqrt(((xPos - xCenter[objectID - 1]) * (xPos - xCenter[objectID - 1]) * xRes *
+                                                    xRes) +
+                                               ((yPos - yCenter[objectID - 1]) * (yPos - yCenter[objectID - 1]) * yRes *
+                                                    yRes) +
+                                               ((zPos - zCenter[objectID - 1]) * (zPos - zCenter[objectID - 1]) *
+                                                    zRes * zRes));
                 lowestSqr = Float.MAX_VALUE;
 
                 for (k = 0, z = 0; z < zDim; z++, k += sliceLength) {
@@ -1748,7 +1748,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 

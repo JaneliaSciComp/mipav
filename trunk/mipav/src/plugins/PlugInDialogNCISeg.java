@@ -17,6 +17,11 @@ import javax.swing.*;
  */
 public class PlugInDialogNCISeg extends JDialogScriptableBase implements AlgorithmInterface {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 5016769547250838205L;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -63,8 +68,8 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
     /**
      * Empty constructor required for dynamic instantiation during script execution.
      */
-    public PlugInDialogNCISeg() {}
-    
+    public PlugInDialogNCISeg() { }
+
     /**
      * Sets variables needed to call algorithm.
      *
@@ -81,39 +86,6 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(resultImage);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-    	imageA = scriptParameters.retrieveInputImage();
-
-        userInterface = imageA.getUserInterface();
-        parentFrame = imageA.getParentFrame();
-        
-        doBrown = scriptParameters.getParams().getBoolean("doBrown");
-        threshold = scriptParameters.getParams().getFloat("threshold");
-        diffThreshold = scriptParameters.getParams().getFloat("diffThreshold");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(imageA);
-        AlgorithmParameters.storeImageInRecorder(resultImage);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("doBrown", doBrown));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("diffThreshold", diffThreshold));
-    }
-    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -166,8 +138,9 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
 
                 new ViewJFrameImage(resultImage);
             }
+
             if (algorithm.isCompleted()) {
-            	insertScriptLine();
+                insertScriptLine();
             }
         }
     }
@@ -181,8 +154,7 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
 
         try {
 
-            resultImage = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), (imageA.getImageName() + "_NCI_Seg"),
-                                         userInterface);
+            resultImage = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), (imageA.getImageName() + "_NCI_Seg"));
 
             // Make algorithm
             nciAlgo = new PlugInAlgorithmNCISeg(resultImage, imageA, doBrown, threshold, diffThreshold);
@@ -196,7 +168,7 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
             nciAlgo.addListener(this);
 
             createProgressBar(imageA.getImageName(), " ...", nciAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -217,6 +189,39 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
 
             return;
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage();
+
+        userInterface = imageA.getUserInterface();
+        parentFrame = imageA.getParentFrame();
+
+        doBrown = scriptParameters.getParams().getBoolean("doBrown");
+        threshold = scriptParameters.getParams().getFloat("threshold");
+        diffThreshold = scriptParameters.getParams().getFloat("diffThreshold");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doBrown", doBrown));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("diffThreshold", diffThreshold));
     }
 
     /**

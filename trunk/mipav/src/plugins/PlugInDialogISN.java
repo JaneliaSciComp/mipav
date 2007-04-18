@@ -105,8 +105,7 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
     protected void callAlgorithm() {
 
         try {
-            resultImage = new ModelImage(imageA.getType(), imageA.getExtents(), (imageA.getImageName() + "_isn"),
-                                         userInterface);
+            resultImage = new ModelImage(imageA.getType(), imageA.getExtents(), (imageA.getImageName() + "_isn"));
             resultImage.copyFileTypeInfo(imageA);
 
             // Make algorithm

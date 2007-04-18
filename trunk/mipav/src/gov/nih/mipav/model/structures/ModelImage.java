@@ -200,20 +200,23 @@ public class ModelImage extends ModelStorageBase {
         makeInfoPanes();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
     /**
      * Creates a new ModelImage object.
      *
-     * @param       dataType  indicates type of buffer(ie. boolean, byte ...)
+     * @param       type        indicates type of buffer(ie. boolean, byte ...)
+     * @param       dimExtents  DOCUMENT ME!
+     * @param       name        DOCUMENT ME!
+     * @param       _UI         DOCUMENT ME!
      *
      * @return      DOCUMENT ME!
      *
      * @deprecated  DOCUMENT ME!
      */
-    // public ModelImage(int type, int[] dimExtents, String name, ViewUserInterface _UI) {
-    // this(type, dimExtents, name);
-    // }
+    public ModelImage(int type, int[] dimExtents, String name, ViewUserInterface _UI) {
+        this(type, dimExtents, name);
+    }
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Accessor that returns whether or not the given data type is a color data type.
