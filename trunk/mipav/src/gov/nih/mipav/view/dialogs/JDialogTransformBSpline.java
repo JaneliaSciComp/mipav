@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-import java.io.*;
 
 import java.util.*;
 
@@ -97,6 +96,21 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
 
     /**
      * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
+     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
+     *
+     * @param  im  Source image.
+     */
+    public JDialogTransformBSpline(ModelImage im) {
+        super();
+        setForeground(Color.black);
+        image = im;
+        this.userInterface = ViewUserInterface.getReference();
+
+        init();
+    }
+
+    /**
+     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
      * necessary at present.
      *
      * @param  theParentFrame  Parent frame.
@@ -107,22 +121,6 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
         setForeground(Color.black);
         image = im;
         userInterface = ViewUserInterface.getReference();
-
-        init();
-    }
-
-    /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
-     *
-     * @param  ui  User interface.
-     * @param  im  Source image.
-     */
-    public JDialogTransformBSpline(ViewUserInterface ui, ModelImage im) {
-        super();
-        setForeground(Color.black);
-        image = im;
-        this.userInterface = ui;
 
         init();
     }
@@ -213,6 +211,13 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
     }
 
     /**
+     * Sets the remove index based on the selected index in the list.
+     *
+     * @param  evt  Event that caused this method to fire.
+     */
+    public void valueChanged(ListSelectionEvent evt) { }
+
+    /**
      * Calls the algorithm.
      */
     protected void callAlgorithm() {
@@ -236,7 +241,7 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
             algoTrans.addListener(this);
 
             createProgressBar(image.getImageName(), algoTrans);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -256,13 +261,6 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
             return;
         }
     }
-
-    /**
-     * Sets the remove index based on the selected index in the list.
-     *
-     * @param  evt  Event that caused this method to fire.
-     */
-    public void valueChanged(ListSelectionEvent evt) { }
 
     /**
      * Makes the GUI elements of the dialog.

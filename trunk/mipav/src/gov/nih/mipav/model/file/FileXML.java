@@ -12,7 +12,6 @@ import java.io.*;
 
 import java.net.*;
 
-// JAXP packages
 import javax.xml.parsers.*;
 
 
@@ -62,21 +61,23 @@ public abstract class FileXML extends FileBase {
     /** tab level counter for writing xml header. */
     protected int tabLevel = 0;
 
-    /** The user interface. */
-    protected ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * The user interface.
+     *
+     * @param  fName  DOCUMENT ME!
+     * @param  fDir   DOCUMENT ME!
+     */
+    // protected ViewUserInterface UI;
 
     /**
      * Constructs new file object.
      *
-     * @param  _UI    User interface.
      * @param  fName  File name.
      * @param  fDir   File directory.
-     * @param  show   Flag for showing the progress bar.
      */
-    public FileXML(ViewUserInterface _UI, String fName, String fDir) {
-        UI = _UI;
+    public FileXML(String fName, String fDir) {
         fileName = fName;
         fileDir = fDir;
     }

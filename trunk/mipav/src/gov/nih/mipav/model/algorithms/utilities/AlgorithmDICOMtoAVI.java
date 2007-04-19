@@ -9,7 +9,7 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
-import java.util.Vector;
+import java.util.*;
 
 
 /**
@@ -45,7 +45,6 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
     /**
      * Default Constructor.
      *
-     * @param  ui           User Interface
      * @param  dir          full pathname of directory to traverse
      * @param  outputDir    DOCUMENT ME!
      * @param  compression  DOCUMENT ME!
@@ -79,8 +78,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
 
         fireProgressStateChanged("DICOM -> Compressed AVI", "Searching for DICOM images");
         fireProgressStateChanged(0);
-        
-        
+
 
         addFilesToVector(dirPath, fileVector);
 
@@ -108,7 +106,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
         }
 
         fileIO = null;
-        
+
     }
 
     /**
@@ -167,8 +165,9 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
             System.err.println("filename: " + fileName);
 
             fileIO.setFileDir(dicomFile.getParent() + File.separator);
-            ModelImage dicomImage = fileIO.readDicom(dicomFile.getName(), new String[] {dicomFile.getName()}, false);
-            
+
+            ModelImage dicomImage = fileIO.readDicom(dicomFile.getName(), new String[] { dicomFile.getName() }, false);
+
             dicomFile = null;
 
             if (dicomImage == null) {
@@ -316,7 +315,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                 // if the new directory structure doesnt exist, create it, then transcode to AVI
                 if (dicomFile.exists() || dicomFile.mkdirs()) {
                     FileAvi aviFile;
-                    aviFile = new FileAvi(ViewUserInterface.getReference(), name, newDirectory);
+                    aviFile = new FileAvi(name, newDirectory);
                     aviFile.setCompressionQuality(quality);
 
                     if (compression != 0) {

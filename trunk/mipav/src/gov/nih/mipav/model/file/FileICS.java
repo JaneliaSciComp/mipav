@@ -266,9 +266,6 @@ public class FileICS extends FileBase {
     private int tPos = -1;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private String[] units = null;
 
     /** DOCUMENT ME! */
@@ -300,15 +297,13 @@ public class FileICS extends FileBase {
     /**
      * ICS reader constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileICS(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
+    public FileICS(String fileName, String fileDir) throws IOException {
 
-        UI = _UI;
         this.fileName = fileName;
         this.fileDir = fileDir;
     }

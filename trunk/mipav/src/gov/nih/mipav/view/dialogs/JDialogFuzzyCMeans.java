@@ -182,9 +182,6 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
     private float twoSmooth = 2e5f;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private JRadioButton VOIRegions;
 
     /** DOCUMENT ME! */
@@ -208,7 +205,6 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
     public JDialogFuzzyCMeans(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -458,7 +454,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
             fcmAlgo.addListener(this);
 
             createProgressBar(image.getImageName(), fcmAlgo);
-            
+
             if (regionFlag == false) {
                 fcmAlgo.setMask(image.generateVOIMask());
                 // if non null, were set by script file
@@ -524,7 +520,6 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         resultNumber = scriptParameters.getParams().getInt("number_of_result_images");

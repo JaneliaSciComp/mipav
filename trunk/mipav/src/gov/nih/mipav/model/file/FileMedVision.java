@@ -92,20 +92,15 @@ public class FileMedVision extends FileBase {
     /** DOCUMENT ME! */
     private double[][] sliceResolutions;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * FileMedVision - MedVision reader/writer constructor.
      *
-     * @param  _UI    user interface reference
      * @param  fName  file name
      * @param  fDir   file directory
      */
-    public FileMedVision(ViewUserInterface _UI, String fName, String fDir) {
-        UI = _UI;
+    public FileMedVision(String fName, String fDir) {
         fileName = fName;
         fileDir = fDir;
 
@@ -113,8 +108,8 @@ public class FileMedVision extends FileBase {
             progressBar = new ViewJProgressBar("Loading MedVision image", "Loading Image " + fileName, 0, 100, false,
                                                null, null);
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            
-            
+
+
         }
     }
 
@@ -260,7 +255,7 @@ public class FileMedVision extends FileBase {
 
         raFile.close();
         reader.close();
-        
+
 
         return image;
     }

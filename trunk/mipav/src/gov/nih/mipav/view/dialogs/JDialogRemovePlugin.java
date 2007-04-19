@@ -39,21 +39,16 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
     /** List of installed plugins. */
     private JList list;
 
-    /** Pointer to user interface. */
-    private ViewUserInterface ui;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructs new dialog to remove plugins.
      *
      * @param  theParentFrame  Parent frame.
-     * @param  userInterface   User interface pointer.
      */
-    public JDialogRemovePlugin(JFrame theParentFrame, ViewUserInterface userInterface) {
+    public JDialogRemovePlugin(JFrame theParentFrame) {
         super(theParentFrame, false);
         init();
-        ui = userInterface;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -198,11 +193,11 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
             }
 
             // updates menubar for each image
-            Vector imageFrames = ui.getImageFrameVector();
+            Vector imageFrames = ViewUserInterface.getReference().getImageFrameVector();
 
             if (imageFrames.size() < 1) {
-                ui.buildMenu();
-                ui.setControls();
+                ViewUserInterface.getReference().buildMenu();
+                ViewUserInterface.getReference().setControls();
             } else {
 
                 for (i = 0; i < imageFrames.size(); i++) {

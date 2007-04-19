@@ -105,6 +105,19 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Creates a new JDialogFRET object.
+     *
+     * @param  image  DOCUMENT ME!
+     */
+    public JDialogTwoMRIImagesSNR(ModelImage image) {
+        super();
+        this.UI = ViewUserInterface.getReference();
+        this.image = image;
+        parentFrame = image.getParentFrame();
+        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
+    }
+
+    /**
      * Creates new dialog.
      *
      * @param  theParentFrame  Parent frame
@@ -116,20 +129,6 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
         UI = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Creates a new JDialogFRET object.
-     *
-     * @param  UI     DOCUMENT ME!
-     * @param  image  DOCUMENT ME!
-     */
-    public JDialogTwoMRIImagesSNR(ViewUserInterface UI, ModelImage image) {
-        super();
-        this.UI = UI;
-        this.image = image;
-        parentFrame = image.getParentFrame();
-        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -151,7 +150,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             componentImage2.getVOIHandler().setPresetHue(-1.0f);
             componentImage.getVOIHandler().setPresetHue(-1.0f);

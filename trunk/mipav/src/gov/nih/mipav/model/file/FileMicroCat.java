@@ -5,8 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 
@@ -28,23 +26,17 @@ public class FileMicroCat extends FileBase {
     /** DOCUMENT ME! */
     private String fileName;
 
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * MicroCat reader/writer constructor.
      *
-     * @param      UI        user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileMicroCat(ViewUserInterface UI, String fileName, String fileDir) throws IOException {
-        this.UI = UI;
+    public FileMicroCat(String fileName, String fileDir) throws IOException {
         this.fileName = fileName;
         this.fileDir = fileDir;
     }
@@ -451,7 +443,7 @@ public class FileMicroCat extends FileBase {
                 image.importData(m * length, buffer, false);
             }
 
-            
+
         } catch (IOException error) {
 
             if (image != null) {

@@ -98,8 +98,6 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JRadioButton userButton;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -117,7 +115,6 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
     public JDialogRGBtoGray(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, false);
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -467,7 +464,6 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
      */
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
 
         if (scriptParameters.doOutputNewImage()) {

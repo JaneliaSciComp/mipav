@@ -265,6 +265,19 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
     public JDialogColocalizationRegression() { }
 
     /**
+     * Creates a new JDialogColocalizationRegression object.
+     *
+     * @param  firstImage  DOCUMENT ME!
+     */
+    public JDialogColocalizationRegression(ModelImage firstImage) {
+        super();
+        this.UI = ViewUserInterface.getReference();
+        this.firstImage = firstImage;
+        parentFrame = firstImage.getParentFrame();
+        componentImage1 = ((ViewJFrameImage) parentFrame).getComponentImage();
+    }
+
+    /**
      * Creates new dialog.
      *
      * @param  theParentFrame  Parent frame
@@ -275,20 +288,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
         firstImage = im;
         componentImage1 = ((ViewJFrameImage) theParentFrame).getComponentImage();
         init();
-    }
-
-    /**
-     * Creates a new JDialogColocalizationRegression object.
-     *
-     * @param  UI          DOCUMENT ME!
-     * @param  firstImage  DOCUMENT ME!
-     */
-    public JDialogColocalizationRegression(ViewUserInterface UI, ModelImage firstImage) {
-        super();
-        this.UI = UI;
-        this.firstImage = firstImage;
-        parentFrame = firstImage.getParentFrame();
-        componentImage1 = ((ViewJFrameImage) parentFrame).getComponentImage();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

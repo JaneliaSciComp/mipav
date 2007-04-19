@@ -3,8 +3,6 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 
@@ -45,23 +43,18 @@ public class FileBRUKER extends FileBase {
     /** DOCUMENT ME! */
     private ModelLUT LUT = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * BRUKER reader/writer constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileBRUKER(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
+    public FileBRUKER(String fileName, String fileDir) throws IOException {
 
-        UI = _UI;
         this.fileName = fileName;
         this.fileDir = fileDir;
     }

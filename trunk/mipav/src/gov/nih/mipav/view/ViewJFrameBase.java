@@ -1284,7 +1284,7 @@ public abstract class ViewJFrameBase extends JFrame
         ViewOpenVOIUI openVOI = null;
 
         try {
-            openVOI = new ViewOpenVOIUI(userInterface);
+            openVOI = new ViewOpenVOIUI();
 
             if (displayMode == IMAGE_A) {
 
@@ -1329,7 +1329,7 @@ public abstract class ViewJFrameBase extends JFrame
         VOI[] voi = null;
 
         try {
-            openVOI = new ViewOpenVOIUI(userInterface);
+            openVOI = new ViewOpenVOIUI();
             voi = openVOI.open(image, false);
         } catch (OutOfMemoryError error) {
 
@@ -1664,7 +1664,7 @@ public abstract class ViewJFrameBase extends JFrame
 
                 FileAvi aviFile;
 
-                aviFile = new FileAvi(userInterface, fileName, directory);
+                aviFile = new FileAvi(fileName, directory);
 
                 if (fileName.endsWith(".mov") || fileName.endsWith(".MOV")) {
                     aviFile.setWriteQT(true);
@@ -2897,7 +2897,7 @@ public abstract class ViewJFrameBase extends JFrame
 
                 FileAvi aviFile;
 
-                aviFile = new FileAvi(userInterface, fileName, directory);
+                aviFile = new FileAvi(fileName, directory);
 
                 if (fileName.endsWith(".mov") || fileName.endsWith(".MOV")) {
                     aviFile.setWriteQT(true);

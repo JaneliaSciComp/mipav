@@ -54,23 +54,18 @@ public class FileFits extends FileBase {
     /** DOCUMENT ME! */
     private int numberSlices; // 1 for 2D, zDim for 3D, and zDim * tDim for 4D
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * FITS reader/writer constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileFits(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
+    public FileFits(String fileName, String fileDir) throws IOException {
 
-        UI = _UI;
         this.fileName = fileName;
         this.fileDir = fileDir;
     }

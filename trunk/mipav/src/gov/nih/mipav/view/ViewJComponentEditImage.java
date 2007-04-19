@@ -4267,7 +4267,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (imageStatList == null) {
 
             if ((imageActive.getVOIs() != null) && (imageActive.getVOIs().size() != 0)) {
-                imageStatList = new JDialogVOIStatistics(ViewUserInterface.getReference(), imageActive.getVOIs());
+                imageStatList = new JDialogVOIStatistics(imageActive.getVOIs());
                 imageStatList.setVisible(true);
                 // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
             } else {

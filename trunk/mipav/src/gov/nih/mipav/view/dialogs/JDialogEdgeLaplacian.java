@@ -66,9 +66,6 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
     /** DOCUMENT ME! */
     private JPanelSigmas sigmaPanel;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -85,7 +82,6 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
     public JDialogEdgeLaplacian(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -498,9 +494,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
 
+        parentFrame = image.getParentFrame();
         sigmaPanel = new JPanelSigmas(image);
         scriptParameters.setSigmasGUI(sigmaPanel);
 

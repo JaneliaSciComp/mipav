@@ -31,9 +31,6 @@ public class JDialogVOIExtraction extends JDialogBase implements AlgorithmInterf
     private ModelImage imageA = null; // source image
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private AlgorithmVOIExtraction VOIExtractionAlgo;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -98,7 +95,7 @@ public class JDialogVOIExtraction extends JDialogBase implements AlgorithmInterf
             VOIExtractionAlgo.addListener(this);
 
             createProgressBar(imageA.getImageName(), VOIExtractionAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 

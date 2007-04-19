@@ -1176,16 +1176,15 @@ public class FileLSM extends FileBase {
     /**
      * LSM reader/writer constructor.
      *
-     * @param      _UI            user interface reference
      * @param      fileName       file name
      * @param      fileDir        file directory
      * @param      secondAddress  the position within the image file to begin reading from
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileLSM(ViewUserInterface _UI, String fileName, String fileDir, int secondAddress) throws IOException {
+    public FileLSM(String fileName, String fileDir, int secondAddress) throws IOException {
 
-        UI = _UI;
+        UI = ViewUserInterface.getReference();
         this.fileName = fileName;
         this.fileDir = fileDir;
         this.secondAddress = secondAddress;

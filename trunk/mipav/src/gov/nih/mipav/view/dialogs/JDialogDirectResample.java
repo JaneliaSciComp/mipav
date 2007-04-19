@@ -97,15 +97,14 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
     /**
      * Creates the dialog, using the input parameters to place it on the screen.
      *
-     * @param  _imageA         Model image A.
-     * @param  _imageB         Model image B.
-     * @param  _userInterface  Parent ui.
+     * @param  _imageA  Model image A.
+     * @param  _imageB  Model image B.
      */
-    public JDialogDirectResample(ModelImage _imageA, ModelImage _imageB, ViewUserInterface _userInterface) {
-        super(_userInterface.getMainFrame(), false);
+    public JDialogDirectResample(ModelImage _imageA, ModelImage _imageB) {
+        super(ViewUserInterface.getReference().getMainFrame(), false);
         this.image = _imageA;
         this.imageB = _imageB;
-        this.userInterface = _userInterface;
+        this.userInterface = ViewUserInterface.getReference();
         extents = image.getExtents();
         res = image.getFileInfo(0).getResolutions();
         this.dim = extents.length;

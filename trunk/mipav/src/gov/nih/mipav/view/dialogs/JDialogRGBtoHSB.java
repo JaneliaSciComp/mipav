@@ -39,9 +39,6 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
     /** DOCUMENT ME! */
     private ModelImage resultImageS = null; // result image
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -58,7 +55,6 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
     public JDialogRGBtoHSB(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -240,7 +236,6 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
      */
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
     }
 

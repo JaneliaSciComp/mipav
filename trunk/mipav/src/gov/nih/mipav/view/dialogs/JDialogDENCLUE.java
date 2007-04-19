@@ -79,9 +79,6 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
     /** DOCUMENT ME! */
     private JTextField thresholdText;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -99,7 +96,6 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
         super(theParentFrame, false);
 
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -120,7 +116,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
                 callAlgorithm();
             }
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
         } else if ((source == gaussianButton) || (source == squareButton)) {
@@ -281,7 +277,6 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         distance = scriptParameters.getParams().getFloat("gaussian_std_dev_or_influence_distance");

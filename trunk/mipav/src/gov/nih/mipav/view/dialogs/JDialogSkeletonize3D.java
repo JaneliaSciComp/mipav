@@ -133,6 +133,21 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
 
     /**
      * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
+     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
+     *
+     * @param  im  Source image.
+     */
+    public JDialogSkeletonize3D(ModelImage im) {
+        super();
+        setForeground(Color.black);
+        image = im;
+        this.userInterface = ViewUserInterface.getReference();
+
+        init();
+    }
+
+    /**
+     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
      * necessary at present.
      *
      * @param  theParentFrame  Parent frame.
@@ -144,22 +159,6 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
         image = im;
         userInterface = ViewUserInterface.getReference();
 
-
-        init();
-    }
-
-    /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
-     *
-     * @param  ui  User interface.
-     * @param  im  Source image.
-     */
-    public JDialogSkeletonize3D(ViewUserInterface ui, ModelImage im) {
-        super();
-        setForeground(Color.black);
-        image = im;
-        this.userInterface = ui;
 
         init();
     }
@@ -273,6 +272,14 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
         }
     }
 
+
+    /**
+     * Sets the remove index based on the selected index in the list.
+     *
+     * @param  evt  Event that caused this method to fire.
+     */
+    public void valueChanged(ListSelectionEvent evt) { }
+
     /**
      * Calls the algorithm.
      */
@@ -349,7 +356,7 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
             skeletonize3DAlgo.addListener(this);
 
             createProgressBar(image.getImageName(), skeletonize3DAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -383,14 +390,6 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
             return;
         }
     }
-
-
-    /**
-     * Sets the remove index based on the selected index in the list.
-     *
-     * @param  evt  Event that caused this method to fire.
-     */
-    public void valueChanged(ListSelectionEvent evt) { }
 
     /**
      * Checks the dimensionality of the new image vs. the original source image. All new images should be of the same

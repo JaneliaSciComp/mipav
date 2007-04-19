@@ -4,9 +4,6 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
-import java.io.*;
 import java.io.*;
 
 import java.util.*;
@@ -43,6 +40,7 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int numConverted = 0; // number of old xml files that were converted
 
+    /** DOCUMENT ME! */
     private String outString = new String();
 
     /** DOCUMENT ME! */
@@ -80,10 +78,9 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
     /**
      * Default Constructor.
      *
-     * @param  ui   User Interface
      * @param  dir  full pathname of directory to traverse
      */
-    public AlgorithmConvertOldXML(ViewUserInterface ui, String dir) {
+    public AlgorithmConvertOldXML(String dir) {
         this.dirPath = dir;
 
         // clip off the trailing file separator

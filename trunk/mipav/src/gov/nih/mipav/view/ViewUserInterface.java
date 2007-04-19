@@ -497,7 +497,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("QueryDatabase")) {
 
             if (DICOMQueryFrame == null) {
-                DICOMQueryFrame = new ViewJFrameDICOMQuery(this);
+                DICOMQueryFrame = new ViewJFrameDICOMQuery();
             }
         } else if (command.equalsIgnoreCase("anonymizeDirectory")) {
             buildAnonDirectoryDialog();
@@ -599,7 +599,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
         } else if (command.equals("InstallPlugin")) {
-            JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(mainFrame, this);
+            JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(mainFrame);
             instPlugin.setVisible(true);
 
             int index = openingMenuBar.getComponentIndex(pluginsMenu);
@@ -626,7 +626,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("Shortcuts")) {
             showShortcutEditor(false);
         } else if (command.equals("dccieconvert")) {
-            new JDialogDCCIEConversion(this);
+            new JDialogDCCIEConversion();
         } else if (command.equals("loadLeica")) {
             // open a file chooser to select .txt header
 
@@ -698,7 +698,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         String dir = chooser.getImageDirectory();
 
         if (dir != null) { // we may create multiple instances of the same thing
-            new JDialogAnonymizeDirectory(this, dir);
+            new JDialogAnonymizeDirectory(dir);
         }
     }
 
@@ -1421,7 +1421,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             imgMonitorFrame.dispose();
         }
 
-        imgMonitorFrame = new ViewJFrameRegisteredImages(this);
+        imgMonitorFrame = new ViewJFrameRegisteredImages();
     }
 
     /**
@@ -1607,7 +1607,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             mallocFrame.dispose();
         }
 
-        mallocFrame = new JDialogMemoryAllocation(this);
+        mallocFrame = new JDialogMemoryAllocation();
     }
 
     /**
@@ -1619,7 +1619,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             memoryFrame.dispose();
         }
 
-        memoryFrame = new ViewJFrameMemory(this);
+        memoryFrame = new ViewJFrameMemory();
     }
 
     /**
@@ -3313,14 +3313,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n" +
                                          "those in the Preferences file.\n" +
                                          "Memory Allocation will display so you can " + "ensure this is correct.");
-                new JDialogMemoryAllocation(this, true);
+                new JDialogMemoryAllocation(true);
             }
             // else sizes match; there are no problems
         } catch (NullPointerException npe) { // prefs not found/invalid strings
             MipavUtil.displayWarning("Heap size settings in the " + "environment startup file either do not match \n" +
                                      "those in the Preferences file, or are non-existant.\n" +
                                      "Memory Allocation will display so you can " + "ensure this is correct.");
-            new JDialogMemoryAllocation(this, true);
+            new JDialogMemoryAllocation(true);
         } catch (FileNotFoundException fnf) { // LAX not found
             Preferences.debug(fnf.getLocalizedMessage() + "\n");
             MipavUtil.displayWarning(fnf.getLocalizedMessage());

@@ -67,9 +67,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
     /** DOCUMENT ME! */
     private JTextField textNumberIterations, textDiffusitivity;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface = null;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -87,7 +84,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
         super(frame, false);
 
         srcImage = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -263,7 +259,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      */
     protected void setGUIFromParams() {
         srcImage = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = srcImage.getParentFrame();
 
         do25D = scriptParameters.doProcess3DAs25D();

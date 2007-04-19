@@ -79,10 +79,8 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
 
     /**
      * Constructor for running the DICOM to AVI algorithm.
-     *
-     * @param  ui  User Interface
      */
-    public JDialogDICOMtoAVI(ViewUserInterface ui) {
+    public JDialogDICOMtoAVI() {
         super(false);
         this.userInterface = ViewUserInterface.getReference();
         init();
@@ -171,8 +169,8 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
         Preferences.debug("Using AVI output directory: " + aviField.getText() + "\n");
         Preferences.debug("Using " + (String) compressionBox.getSelectedItem() + " compression" + "\n");
 
-        AlgorithmDICOMtoAVI algoDicomConvert = new AlgorithmDICOMtoAVI(dirField.getText(),
-                                                                       aviField.getText(), compression);
+        AlgorithmDICOMtoAVI algoDicomConvert = new AlgorithmDICOMtoAVI(dirField.getText(), aviField.getText(),
+                                                                       compression);
         createProgressBar(dirField.getText(), algoDicomConvert);
 
         /**

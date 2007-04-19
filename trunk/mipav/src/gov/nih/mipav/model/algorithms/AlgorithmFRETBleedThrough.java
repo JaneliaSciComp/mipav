@@ -212,7 +212,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                     } else {
                         MipavUtil.displayError("Cannot have more than 1 background VOI");
                         setCompleted(false);
-                        
+
 
                         return;
                     }
@@ -227,7 +227,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         if (activeIndex == -1) {
             MipavUtil.displayError("Must specify an active VOI");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -235,7 +235,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         if (backgroundIndex == -1) {
             MipavUtil.displayError("Must specify a background VOI");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -247,7 +247,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory error in AlgorithmFRETBleedThrough");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -267,7 +267,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on srcImage.exportRGBData");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -279,7 +279,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FRETImage.exportRGBData");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -291,7 +291,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FRETImage.exportData");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -304,7 +304,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FP2Image.exportRGBData");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -316,7 +316,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FP2Image.exportData");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -330,7 +330,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -340,7 +340,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on FRETImage.exportData");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -350,7 +350,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on FP2Image.exportData");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -552,7 +552,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         setCompleted(true);
     }
 
-   
+
     /**
      * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
      * procedure is turned on.

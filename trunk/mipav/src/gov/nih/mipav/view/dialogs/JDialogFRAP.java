@@ -207,9 +207,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     private JTextField textRadius;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private boolean useBlue = false;
 
     /** DOCUMENT ME! */
@@ -251,6 +248,18 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Creates a new JDialogFRAP object.
+     *
+     * @param  image  DOCUMENT ME!
+     */
+    public JDialogFRAP(ModelImage image) {
+        super();
+        this.image = image;
+        parentFrame = image.getParentFrame();
+        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
+    }
+
+    /**
      * Creates new dialog.
      *
      * @param  theParentFrame  Parent frame
@@ -261,20 +270,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         image = im;
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
         init();
-    }
-
-    /**
-     * Creates a new JDialogFRAP object.
-     *
-     * @param  UI     DOCUMENT ME!
-     * @param  image  DOCUMENT ME!
-     */
-    public JDialogFRAP(ViewUserInterface UI, ModelImage image) {
-        super();
-        this.UI = UI;
-        this.image = image;
-        parentFrame = image.getParentFrame();
-        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -485,6 +480,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         try {
 
             componentImage.getVOIHandler().setPresetHue(-1.0f);
+
             // Make algorithm
             frapAlgo = new AlgorithmFRAP(image, useRed, useGreen, useBlue, firstSliceNum, photoBleachedIndex,
                                          wholeOrganIndex, backgroundIndex, model, register, cost, createRegImage,
@@ -496,7 +492,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             frapAlgo.addListener(this);
 
             createProgressBar(image.getImageName(), frapAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 

@@ -68,15 +68,24 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
     private JTextField textReceiver;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private ButtonGroup VOIGroup;
 
     /** DOCUMENT ME! */
     private ViewVOIVector VOIs;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new JDialogSingleMRIImageSNR object.
+     *
+     * @param  image  DOCUMENT ME!
+     */
+    public JDialogSingleMRIImageSNR(ModelImage image) {
+        super();
+        this.image = image;
+        parentFrame = image.getParentFrame();
+        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
+    }
 
     /**
      * Creates new dialog.
@@ -89,20 +98,6 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         image = im;
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
         init();
-    }
-
-    /**
-     * Creates a new JDialogSingleMRIImageSNR object.
-     *
-     * @param  UI     DOCUMENT ME!
-     * @param  image  DOCUMENT ME!
-     */
-    public JDialogSingleMRIImageSNR(ViewUserInterface UI, ModelImage image) {
-        super();
-        this.UI = UI;
-        this.image = image;
-        parentFrame = image.getParentFrame();
-        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

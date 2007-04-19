@@ -45,9 +45,6 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
     /** DOCUMENT ME! */
     private AlgorithmRGBtoGrays RGBAlgo;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -64,7 +61,6 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
     public JDialogRGBtoGrays(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -246,7 +242,6 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
      */
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
     }
 

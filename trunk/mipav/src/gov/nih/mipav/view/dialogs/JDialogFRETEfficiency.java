@@ -187,6 +187,32 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase implements Algo
      */
     public JDialogFRETEfficiency() { }
 
+    /**
+     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
+     * up info and result image will be stored here.
+     *
+     * @param  im  Source image.
+     */
+    public JDialogFRETEfficiency(ModelImage im) {
+        super();
+        userInterface = ViewUserInterface.getReference();
+        srcImage = im;
+        parentFrame = srcImage.getParentFrame();
+        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
+
+        if (im.isColorImage()) {
+            doColor = true;
+            useRed = true;
+            useBlue = false;
+            useGreen = false;
+        } else {
+            doColor = false;
+            useRed = false;
+            useBlue = false;
+            useGreen = false;
+        }
+    }
+
 
     /**
      * Creates a new JDialogFRETEfficiency object.
@@ -213,33 +239,6 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase implements Algo
         }
 
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogFRETEfficiency(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        srcImage = im;
-        parentFrame = srcImage.getParentFrame();
-        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
-
-        if (im.isColorImage()) {
-            doColor = true;
-            useRed = true;
-            useBlue = false;
-            useGreen = false;
-        } else {
-            doColor = false;
-            useRed = false;
-            useBlue = false;
-            useGreen = false;
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

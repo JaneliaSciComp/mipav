@@ -159,9 +159,6 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     /** DOCUMENT ME! */
     private int toplevelOnly = NO_RANDOM_NAMES;
 
-    /** icon and log access. */
-    private ViewUserInterface ui;
-
     /** DOCUMENT ME! */
     private JButton xlatDestBrowse;
 
@@ -182,14 +179,12 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
      * <p>install the panels of source directory, destination directory, the checkbox for approving the
      * translation-table file and the panel containing the ok and cancel buttons. Installs the checkbox panel.</p>
      *
-     * @param  ui   DOCUMENT ME!
      * @param  dir  DOCUMENT ME!
      */
-    public JDialogAnonymizeDirectory(ViewUserInterface ui, String dir) {
-        super(ui.getMainFrame(), false);
+    public JDialogAnonymizeDirectory(String dir) {
+        super(ViewUserInterface.getReference().getMainFrame(), false);
         setTitle("Anonymize DICOM directory");
         setJMenuBar(buildMenuEntries());
-        this.ui = ui;
 
         everything = new JTabbedPane(JTabbedPane.TOP);
         everything.setFont(MipavUtil.font12B);
@@ -294,7 +289,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             }
 
             AnonymizeDicomDirectories da = new AnonymizeDicomDirectories(s, imageDestDirectory, genericImageName,
-                                                                         sequenceStart, ui, toplevelOnly,
+                                                                         sequenceStart, toplevelOnly,
                                                                          changeFilenameBox.isSelected());
             da.setCheckChildren(recursiveCheckBox.isSelected());
             da.addProcessLoggingNotifier(logPane);
@@ -449,8 +444,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                     // insert into textline if a printable character.
                     if (ch !=
                             KeyEvent.VK_BACK_SPACE /*&&
-                                                        * code != KeyEvent.VK_DELETE     && code != KeyEvent.VK_COPY
-                                                        * && code != KeyEvent.VK_CUT        && code != KeyEvent.VK_UNDO
+                                                        * code != KeyEvent.VK_DELETE     && code != KeyEvent.VK_COPY && code
+                                                        * != KeyEvent.VK_CUT        && code != KeyEvent.VK_UNDO
                                                         *  &&code != KeyEvent.VK_PASTE */) {
                         dirname.insert(t.getCaretPosition(), ch);
 
@@ -854,8 +849,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
     /**
      * puts together the panel of recursive box and directory-randomization level radio button.
      *
-     * @see      JDialogAnonymizeDirectory#buildRecursiveButtonPanel()
-     * @see      JDialogAnonymizeDirectory#buildRandButtonPanel()
+     * @see     JDialogAnonymizeDirectory#buildRecursiveButtonPanel()
+     * @see     JDialogAnonymizeDirectory#buildRandButtonPanel()
      *
      * @return  the loaded panel
      */
@@ -1365,26 +1360,22 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
          *                    output directorues. How the output directories are named depends on the boolean, toprand.
          * @param  aname      the name to use for all images processed.
          * @param  startseq   number to start the sequence for all names in the sequence of anonymousnames.
-         * @param  ui         the user-interface needed to create the FileIO.
          * @param  toprand    determines which directory to anonymize, if any. When processing a list of more than one
          *                    source, the top-level directory can be randomized (as if the selected list were the
          *                    image-directories themselves), or the first sub-directory level of directories (as if the
          *                    selected directories had held lists of patient directories).
          *
          *                    <ul>
-         *                      <li><code>NO_RANDOM_NAMES</code> indicates no directory names are to be changed.
-         *                      </li>
-         *                      <li><code>RANDOM_DIRECTORY_NAME</code> indicates the top-level is to be randomised,
-         *                      </li>
+         *                      <li><code>NO_RANDOM_NAMES</code> indicates no directory names are to be changed.</li>
+         *                      <li><code>RANDOM_DIRECTORY_NAME</code> indicates the top-level is to be randomised,</li>
          *                      <li><code>RANDOM_SUBDIRECTORY_NAME</code> indicates the first sub-directory level to be
          *                        randomised.</li>
          *                    </ul>
          *
-         * There is (true has??) no effect when only one level randomised.
+         *                    <p>There is (true has??) no effect when only one level randomised.</p>
          * @param  do_rename  DOCUMENT ME!
          */
-        AnonymizeDicomDirectories(File[] src, File dest, String aname, int startseq, ViewUserInterface ui, int toprand,
-                                  boolean do_rename) {
+        AnonymizeDicomDirectories(File[] src, File dest, String aname, int startseq, int toprand, boolean do_rename) {
             super("Anonymize Dicom directories");
 
             // System.err.println("DO RENAME IS: " + do_rename);
@@ -1564,8 +1555,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             }
 
             try {
-            	io.setFileDir(imageFile.getParent() + File.separator);
-                mi = io.readDicom(imageFile.getName(), new String[] {imageFile.getName()}, false);
+                io.setFileDir(imageFile.getParent() + File.separator);
+                mi = io.readDicom(imageFile.getName(), new String[] { imageFile.getName() }, false);
                 writeToLog(imageFile.getAbsolutePath(), false);
 
                 if (mi != null) {

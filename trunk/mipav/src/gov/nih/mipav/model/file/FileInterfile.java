@@ -5,8 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -105,14 +103,15 @@ public class FileInterfile extends FileBase {
 
     /** DOCUMENT ME! */
     private boolean haveEnergyWindowsNumber = false;
-    
-    private boolean haveImagesPerEWindow = false;
 
     /** DOCUMENT ME! */
     private boolean haveFileName = false;
 
     /** DOCUMENT ME! */
     private boolean haveFloodCorrected = false;
+
+    /** DOCUMENT ME! */
+    private boolean haveImagesPerEWindow = false;
 
     /** DOCUMENT ME! */
     private boolean haveNumberFormat = false;
@@ -227,9 +226,6 @@ public class FileInterfile extends FileBase {
     private int type;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private String windowNumber = null;
 
 
@@ -250,14 +246,13 @@ public class FileInterfile extends FileBase {
     /**
      * Interfile reader/writer constructor.
      *
-     * @param      _UI               user interface reference
      * @param      originalFileName  file name
      * @param      fileDir           file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileInterfile(ViewUserInterface _UI, String originalFileName, String fileDir) throws IOException {
-        UI = _UI;
+    public FileInterfile(String originalFileName, String fileDir) throws IOException {
+
         this.originalFileName = originalFileName;
         this.fileDir = fileDir;
     }
@@ -1109,7 +1104,7 @@ public class FileInterfile extends FileBase {
             if (!haveEnergyWindowsNumber) {
                 fileInfo.setEnergyWindowsNumber("1");
             }
-            
+
             if (haveEnergyWindowsNumber && !haveImagesPerEWindow) {
                 fileInfo.setImagesPerEWindowBrief("1");
             }
@@ -1203,8 +1198,6 @@ public class FileInterfile extends FileBase {
 
                 numberSlices = 1;
             }
-            
-            
 
             raFile.seek(dataByteOffset);
 
@@ -1250,8 +1243,6 @@ public class FileInterfile extends FileBase {
             for (i = 0; i < numberSlices; i++) {
                 image.setFileInfo(fileInfo, i);
             }
-
-            
 
 
             return image;
@@ -1560,7 +1551,7 @@ public class FileInterfile extends FileBase {
         if (dataFile.exists()) {
 
             // MipavUtil.displayError(dataFile + " already exists - use another name");
-            int response = JOptionPane.showConfirmDialog(UI.getMainFrame(),
+            int response = JOptionPane.showConfirmDialog(ViewUserInterface.getReference().getMainFrame(),
                                                          new String(fileDir + dataFileName +
                                                                     "\nalready exists.  Do you want to replace it?"),
                                                          "Save As", JOptionPane.YES_NO_OPTION,
@@ -1576,7 +1567,7 @@ public class FileInterfile extends FileBase {
 
         lineBytes = new String("name of data file := " + dataFileName + "\r\n").getBytes();
         raFile.write(lineBytes);
-      
+
         if (!simple) {
             patientName = fileInfo.getPatientName();
 
@@ -2720,7 +2711,7 @@ public class FileInterfile extends FileBase {
         } // not ModelStorageBase.BOOLEAN
 
         raFile.close();
-        
+
     }
 
     /**
@@ -2814,7 +2805,7 @@ public class FileInterfile extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 100;
-        
+
 
         for (j = 0; j < buffer.length; j++, i++) {
 
@@ -2852,7 +2843,7 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -2871,7 +2862,7 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                
+
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -2890,7 +2881,7 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -2917,7 +2908,7 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -2944,7 +2935,7 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -2972,7 +2963,7 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                
+
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
@@ -3022,7 +3013,7 @@ public class FileInterfile extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 10;
-        
+
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
@@ -3076,7 +3067,7 @@ public class FileInterfile extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            
+
 
             for (j = 0; j < nBytes; j += 4, i++) {
 
@@ -3103,7 +3094,7 @@ public class FileInterfile extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            
+
 
             for (j = 0; j < nBytes; j += 8, i++) {
 

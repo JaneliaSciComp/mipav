@@ -85,9 +85,6 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase implements
     /** Number of slices that will be present in the 3D image after the missing slices have been inserted. */
     private int totalSlices;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -104,7 +101,6 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase implements
     public JDialogInsertMissingSlices(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im; // set the image from the arguments to an image in this class
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -126,7 +122,7 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase implements
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         }
     }
 
@@ -293,7 +289,6 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase implements
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         findMissingSlices();

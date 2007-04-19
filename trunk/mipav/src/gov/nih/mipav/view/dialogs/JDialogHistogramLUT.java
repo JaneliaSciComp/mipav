@@ -60,9 +60,6 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
     private ModelRGB RGBb;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private JRadioButton VOIRegions;
 
     /** DOCUMENT ME! */
@@ -79,16 +76,13 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
      * @param  imB             Source image B (can be null)
      * @param  _LUTa           LUT associated with image A.
      * @param  _LUTb           LUT associated with image B (can be null).
-     * @param  UI              Pointer to the user interface.
      */
-    public JDialogHistogramLUT(Frame theParentFrame, ModelImage imA, ModelImage imB, ModelLUT _LUTa, ModelLUT _LUTb,
-                               ViewUserInterface UI) {
+    public JDialogHistogramLUT(Frame theParentFrame, ModelImage imA, ModelImage imB, ModelLUT _LUTa, ModelLUT _LUTb) {
         super(theParentFrame, true);
         imageA = imA;
         imageB = imB;
         LUTa = _LUTa;
         LUTb = _LUTb;
-        userInterface = UI;
     }
 
     /**
@@ -100,10 +94,8 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
      * @param  imB             Source image B (can be null)
      * @param  _RGBa           RGB LUT associated with image A.
      * @param  _RGBb           RGB LUT associated with image B (can be null).
-     * @param  UI              Pointer to the user interface.
      */
-    public JDialogHistogramLUT(Frame theParentFrame, ModelImage imA, ModelImage imB, ModelRGB _RGBa, ModelRGB _RGBb,
-                               ViewUserInterface UI) {
+    public JDialogHistogramLUT(Frame theParentFrame, ModelImage imA, ModelImage imB, ModelRGB _RGBa, ModelRGB _RGBb) {
         super(theParentFrame, true);
         imageA = imA;
         imageB = imB;
@@ -130,7 +122,6 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
             RGBb = _RGBb;
         }
 
-        userInterface = UI;
     }
 
     /**
@@ -139,14 +130,17 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
      * @param  theParentFrame  Parent frame
      * @param  _regComponent   Registration component.
      * @param  imA             Source image A
-     * @param  imB             Source image B (can be null)
-     * @param  _LUTa           LUT associated with image A.
-     * @param  _LUTb           LUT associated with image B (can be null).
-     * @param  UI              Pointer to the user interface.
+     * @param  imB             DOCUMENT ME!
+     * @param  _LUTa           Source image B (can be null)
+     * @param  _LUTb           RGB LUT associated with image A.
      */
     public JDialogHistogramLUT(Frame theParentFrame, ViewJComponentRegistration _regComponent, ModelImage imA,
-                               ModelImage imB, ModelLUT _LUTa, ModelLUT _LUTb, ViewUserInterface UI) {
-        this(theParentFrame, imA, imB, _LUTa, _LUTb, UI);
+                               ModelImage imB, ModelLUT _LUTa, ModelLUT _LUTb) {
+        super(theParentFrame, true);
+        imageA = imA;
+        imageB = imB;
+        LUTa = _LUTa;
+        LUTb = _LUTb;
         regComponent = _regComponent;
     }
 
@@ -159,11 +153,10 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
      * @param  imB             Source image B (can be null)
      * @param  _RGBa           RGB LUT associated with image A.
      * @param  _RGBb           RGB LUT associated with image B (can be null).
-     * @param  UI              Pointer to the user interface.
      */
     public JDialogHistogramLUT(Frame theParentFrame, ViewJComponentRegistration _regComponent, ModelImage imA,
-                               ModelImage imB, ModelRGB _RGBa, ModelRGB _RGBb, ViewUserInterface UI) {
-        this(theParentFrame, imA, imB, _RGBa, _RGBb, UI);
+                               ModelImage imB, ModelRGB _RGBa, ModelRGB _RGBb) {
+        this(theParentFrame, imA, imB, _RGBa, _RGBb);
         regComponent = _regComponent;
     }
 

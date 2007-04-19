@@ -81,9 +81,6 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
     /** DOCUMENT ME! */
     private float threshold;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -102,7 +99,6 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
     public JDialogGraphBasedSegmentation(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
@@ -407,7 +403,6 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         if (scriptParameters.doOutputNewImage()) {

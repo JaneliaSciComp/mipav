@@ -40,27 +40,22 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
     private String outputPath; //
 
     /** DOCUMENT ME! */
-    private ViewJProgressBar progressBar = null;
+    // private ViewJProgressBar progressBar = null;
 
     /** DOCUMENT ME! */
     private float quality;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Default Constructor.
      *
-     * @param  ui           User Interface
      * @param  dir          full pathname of directory to traverse
      * @param  outputDir    DOCUMENT ME!
      * @param  compression  DOCUMENT ME!
      * @param  doDICOM      DOCUMENT ME!
      */
-    public AlgorithmDCCIEConversion(ViewUserInterface ui, String dir, String outputDir, int compression,
-                                    boolean doDICOM) {
+    public AlgorithmDCCIEConversion(String dir, String outputDir, int compression, boolean doDICOM) {
         this.dirPath = dir;
         this.outputPath = outputDir;
         this.inputDICOM = doDICOM;
@@ -74,7 +69,6 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
             outputPath = outputPath.substring(0, outputPath.length() - 1);
         }
 
-        this.userInterface = ui;
         this.compression = compression;
 
         fileIO = new FileIO();
@@ -377,7 +371,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
                 // if the new directory structure doesnt exist, create it, then transcode to AVI
                 if (inputFile.exists() || inputFile.mkdirs()) {
                     FileAvi aviFile;
-                    aviFile = new FileAvi(userInterface, name, newDirectory);
+                    aviFile = new FileAvi(name, newDirectory);
                     aviFile.setCompressionQuality(quality);
 
                     if (compression != 0) {

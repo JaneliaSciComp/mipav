@@ -6,7 +6,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.Dialog.*;
 
 import java.io.*;
 
@@ -54,23 +53,18 @@ public class FileTMG extends FileBase {
     /** DOCUMENT ME! */
     private byte[] sBuffer = new byte[80];
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * TMG reader/writer constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileTMG(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
+    public FileTMG(String fileName, String fileDir) throws IOException {
 
-        UI = _UI;
         this.fileName = fileName;
         this.fileDir = fileDir;
     }
@@ -109,8 +103,7 @@ public class FileTMG extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading TMG file...", 0, 100, true, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            
-            
+
 
             file = new File(fileDir + fileName);
 
@@ -164,7 +157,7 @@ public class FileTMG extends FileBase {
             image.importData(0, imgBuffer, true);
 
             raFile.close();
-            
+
 
             return image;
         } catch (Exception e) {
@@ -205,7 +198,7 @@ public class FileTMG extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * imageSlice;
         mod = progressLength / 10;
-        
+
 
         for (j = 0; j < nBytes; j += 2, i++) {
 

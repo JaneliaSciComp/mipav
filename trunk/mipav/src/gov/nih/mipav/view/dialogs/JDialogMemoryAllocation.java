@@ -105,19 +105,16 @@ public class JDialogMemoryAllocation extends JDialogBase {
      * InstallAnywhere will read those settings for the next time it restarts the application.
      *
      * <p>Failure to read the startup file will dispose the dialog before it is displayed.</p>
-     *
-     * @param  ui  the parent frame of this dialog. supplies the app-icon for the upper-right corner of the
-     *             dialog-window
      */
-    public JDialogMemoryAllocation(ViewUserInterface ui) {
-        super(ui.getMainFrame(), true); // enforce modality
+    public JDialogMemoryAllocation() {
+        super(ViewUserInterface.getReference().getMainFrame(), true); // enforce modality
 
-        userInterface = ui;
+        userInterface = ViewUserInterface.getReference();
         setTitle("Change java-runtime Memory Allocation");
 
         // determine the file name based on the application name
         try {
-            startupFile = getStartupFile(ui);
+            startupFile = getStartupFile(ViewUserInterface.getReference());
         } catch (FileNotFoundException fnf) {
             MipavUtil.displayError(fnf.getLocalizedMessage());
 
@@ -159,22 +156,19 @@ public class JDialogMemoryAllocation extends JDialogBase {
             return;
         }
 
-        // this.setSize(350, 105);
         pack();
         setVisible(true);
-
     }
 
     /**
      * strictly reads the memory settings from the LAX-file.
      *
-     * @param  ui                  DOCUMENT ME!
      * @param  checkOnPreferences  DOCUMENT ME!
      */
-    public JDialogMemoryAllocation(ViewUserInterface ui, boolean checkOnPreferences) {
-        super(ui.getMainFrame(), true); // enforce modality
+    public JDialogMemoryAllocation(boolean checkOnPreferences) {
+        super(ViewUserInterface.getReference().getMainFrame(), true); // enforce modality
 
-        userInterface = ui;
+        userInterface = ViewUserInterface.getReference();
 
         if (checkOnPreferences) {
             setTitle("Check java-runtime Memory Allocation");
@@ -184,7 +178,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         // determine the file name based on the application name
         try {
-            startupFile = getStartupFile(ui);
+            startupFile = getStartupFile(ViewUserInterface.getReference());
         } catch (FileNotFoundException fnf) {
             MipavUtil.displayError(fnf.getLocalizedMessage());
 

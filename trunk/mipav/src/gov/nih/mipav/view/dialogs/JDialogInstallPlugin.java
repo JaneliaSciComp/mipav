@@ -56,11 +56,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
      * Creates new dialog.
      *
      * @param  theParentFrame  Parent frame
-     * @param  userInterface   Pointer to the user interface.
      */
-    public JDialogInstallPlugin(JFrame theParentFrame, ViewUserInterface userInterface) {
+    public JDialogInstallPlugin(JFrame theParentFrame) {
         super(theParentFrame, true);
-        ui = userInterface;
+        ui = ViewUserInterface.getReference();
         init();
     }
 

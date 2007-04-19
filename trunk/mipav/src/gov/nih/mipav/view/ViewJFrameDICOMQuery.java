@@ -212,10 +212,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Constructs three tabbed panels - DICOM Query, Host and Help panels.
-     *
-     * @param  _UI  main user interface frame2
      */
-    public ViewJFrameDICOMQuery(ViewUserInterface _UI) {
+    public ViewJFrameDICOMQuery() {
         Color back;
         BorderLayout border;
         GridLayout grid;
@@ -238,7 +236,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             return;
         }
 
-        userInterface = _UI;
+        userInterface = ViewUserInterface.getReference();
 
         try {
             IPAddress = InetAddress.getLocalHost().getHostAddress();
@@ -1369,7 +1367,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * ChangeListener************************************************************************* /** Sets values based on
-     * knob along slider
+     * knob along slider.
      *
      * @param  e  DOCUMENT ME! event that triggered this function
      */
@@ -3395,7 +3393,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         byte[] localAppTitle;
 
         try {
-            localAppTitle = new byte[16]; 
+            localAppTitle = new byte[16];
             moveRequestThread = new Thread(move);
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendMoveRequest");

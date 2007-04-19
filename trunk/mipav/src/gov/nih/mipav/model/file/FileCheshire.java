@@ -41,9 +41,6 @@ public class FileCheshire extends FileBase {
     private float[] scaleFactor;
 
     /** DOCUMENT ME! */
-
-
-    /** DOCUMENT ME! */
     private int startFirstImage;
 
     /** DOCUMENT ME! */
@@ -51,9 +48,6 @@ public class FileCheshire extends FileBase {
 
     /** DOCUMENT ME! */
     private int subLength;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
 
     /** DOCUMENT ME! */
     private int xDim, yDim, zDim, tDim;
@@ -66,14 +60,12 @@ public class FileCheshire extends FileBase {
     /**
      * Creates a new FileCheshire object.
      *
-     * @param  _UI    user interface
      * @param  fName  file name
      * @param  fDir   file directory
      * @param  show   boolean for showing the progress bar
      */
-    public FileCheshire(ViewUserInterface _UI, String fName, String fDir, boolean show) {
+    public FileCheshire(String fName, String fDir, boolean show) {
 
-        UI = _UI;
         fileName = fName;
         fileDir = fDir;
         pBarVisible = show;

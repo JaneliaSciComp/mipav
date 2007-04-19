@@ -1662,9 +1662,8 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
 
     /**
      * This is a port of the version 3.1 LAPACK driver routine DGGEV Orginal DGGEV created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
-     * dggev computes for a pair of n by n real nonsymmetric matrices (A,B) the generalized eigenvalues, and optionally,
-     * the left and/or right generalized eigenvectors.
+     * of California Berkeley, and NAG Ltd., November, 2006 dggev computes for a pair of n by n real nonsymmetric
+     * matrices (A,B) the generalized eigenvalues, and optionally, the left and/or right generalized eigenvectors.
      *
      * <p>A generalized eigenvalue for a pair of matrices (A,B) is a scalar lambda or a ratio alpha/beta = lambda, such
      * that A - lambda*B is singular. It is usually represented as the pair (alpha, beta), as there is a reasonable
@@ -1674,10 +1673,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * B * v[j] The left eigenvector u[j] corresponding to the eigenvalue lambda[j] of (A,B) satisfies u[j]**H * A =
      * lambda[j] * u[j]**H * B where u[j]**H is the conjugate-transpose of u[j].</p>
      *
-     * @param  jobvl   input char = 'N': do not compute the left generalized eigenvectors 
-     *                            = 'V': compute the left generalized eigenvectors
-     * @param  jobvr   input char = 'N': do not compute the right generalized eigenvectors
-     *                            = 'V': compute the right generalized eigenvectors
+     * @param  jobvl   input char = 'N': do not compute the left generalized eigenvectors = 'V': compute the left
+     *                 generalized eigenvectors
+     * @param  jobvr   input char = 'N': do not compute the right generalized eigenvectors = 'V': compute the right
+     *                 generalized eigenvectors
      * @param  n       input int The order of the matrices A, B, vl, and vr. n >= 0.
      * @param  A       input/output double[][] of dimension (lda,n) On entry, the matrix A in the pair (A,B). On exit, A
      *                 has been overwritten.
@@ -1709,18 +1708,16 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *                 i*vr(:,j+1). Each eigenvector will be scaled so the largest component have abs(real part) +
      *                 abs(imag part) = 1. Not referenced if jobvr = 'N'.
      * @param  ldvr    input int The leading dimension of matrix vr. ldvr >= 1, and if jobvr = 'V', ldvr >= n.
-     * @param  work    (workspace/output) double[] of dimension max(1,lwork) On exit, if info[0] = 0, work[0] returns the
-     *                 optimal lwork.
+     * @param  work    (workspace/output) double[] of dimension max(1,lwork) On exit, if info[0] = 0, work[0] returns
+     *                 the optimal lwork.
      * @param  lwork   input int The dimension of the array work. lwork >= max(1,8*n). For good performance, lwork must
-     *                 generally be larger.  If lwork = -1, then a workspace query is assumed; the routine only
+     *                 generally be larger. If lwork = -1, then a workspace query is assumed; the routine only
      *                 calculates the optimal size of the work array, returns this value as the first entry of the work
      *                 array, and no error message related to lwork is issued.
-     * @param  info    output int[] = 0: successful exit
-     *                              < 0: if info[0] = -i, the i-th argument had an illegal value
-     *                              = 1,...,n: The QZ iteration failed. No eigenvectors have been calculated, but alphar[j] ,
-     *                                         alphai[j], and beta[j] should be correct for j = info[0],...,n-1.
-     *                              > n: = n+1: other than QZ iteration failed in DHGEQZ.
-     *                                   = n+2: error return from dtgevc.
+     * @param  info    output int[] = 0: successful exit < 0: if info[0] = -i, the i-th argument had an illegal value =
+     *                 1,...,n: The QZ iteration failed. No eigenvectors have been calculated, but alphar[j] ,
+     *                 alphai[j], and beta[j] should be correct for j = info[0],...,n-1. > n: = n+1: other than QZ
+     *                 iteration failed in DHGEQZ. = n+2: error return from dtgevc.
      */
     public void dggev(char jobvl, char jobvr, int n, double[][] A, int lda, double[][] B, int ldb, double[] alphar,
                       double[] alphai, double[] beta, double[][] vl, int ldvl, double[][] vr, int ldvr, double[] work,
@@ -1833,14 +1830,17 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
             minwrk = Math.max(1, 8 * n);
             name = new String("DGEQRF");
             opts = new String(" ");
-            maxwrk = Math.max(1, n*(7 + ilaenv(1, name, opts, n, 1, n, 0)));
+            maxwrk = Math.max(1, n * (7 + ilaenv(1, name, opts, n, 1, n, 0)));
             name = new String("DORMQR");
-            maxwrk = Math.max(maxwrk, n*(7 + ilaenv(1, name, opts, n, 1, n, 0)));
+            maxwrk = Math.max(maxwrk, n * (7 + ilaenv(1, name, opts, n, 1, n, 0)));
+
             if (ilvl) {
                 name = new String("DORGQR");
-                maxwrk = Math.max(maxwrk, n*(7 + ilaenv(1, name, opts, n, 1, n, -1)));
+                maxwrk = Math.max(maxwrk, n * (7 + ilaenv(1, name, opts, n, 1, n, -1)));
             }
+
             work[0] = maxwrk;
+
             if ((lwork < minwrk) && (!lquery)) {
                 info[0] = -16;
             }
@@ -1992,22 +1992,23 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         // (Workspace:  need n, prefer n*nb)
         if (ilvl) {
             dlaset('F', n, n, 0.0, 1.0, vl, ldvl);
+
             if (irows > 1) {
                 row1 = Math.max(1, irows - 1);
                 array1 = new double[row1][irows - 1];
-    
+
                 for (i = 0; i < row1; i++) {
-    
+
                     for (j = 0; j < (irows - 1); j++) {
                         array1[i][j] = B[ilo[0] + i][ilo[0] - 1 + j];
                     }
                 }
-    
+
                 array2 = new double[row1][irows - 1];
                 dlacpy('L', irows - 1, irows - 1, array1, row1, array2, row1);
-    
+
                 for (i = 0; i < row1; i++) {
-    
+
                     for (j = 0; j < (irows - 1); j++) {
                         vl[ilo[0] + i][ilo[0] - 1 + j] = array2[i][j];
                     }
@@ -2994,11 +2995,9 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  UI  DOCUMENT ME!
      */
-    public void dsygv_test2(ViewUserInterface UI) {
-        this.UI = UI;
+    public void dsygv_test2() {
+        this.UI = ViewUserInterface.getReference();
 
         int itype = 1;
         char jobz = 'V';
@@ -7226,8 +7225,8 @@ loop1:               {
 
     /**
      * This is a port of the version 3.1 LAPACK routine DGEQR2 Orginal DGEQR2 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd. November, 2006
-     * dgeqr2 computes a QR factorization of a real m by n matrix A: A = Q * R
+     * California Berkeley, NAG Ltd. November, 2006 dgeqr2 computes a QR factorization of a real m by n matrix A: A = Q
+     * * R
      *
      * @param  m     input int The number of rows of the matrix A. m >= 0.
      * @param  n     input int The number of columns of the matrix A. n >= 0.
@@ -7332,8 +7331,8 @@ loop1:               {
 
     /**
      * This is a port of version 3.1 LAPACK routine DGEQRF Orginal DGEQRF created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., Noovember, 2006 
-     * dgeqrf computes a QR factorization of a real m by n matrix A: A = Q * R.
+     * California Berkeley, and NAG Ltd., Noovember, 2006 dgeqrf computes a QR factorization of a real m by n matrix A:
+     * A = Q * R.
      *
      * @param  m      input int The number of rows of the matrix A. m >= 0.
      * @param  n      input int The number of columns of the matrix A. n >= 0.
@@ -7346,8 +7345,8 @@ loop1:               {
      *                and v(i-1) = 1; v(i:m-1) is stored on exit in A(i:m-1,i-1), and tau in tau[i-1].
      * @param  lda    input int The leading dimension of the array A. lda >= max(1,m).
      * @param  tau    output double[] of dimension min(m,n). The scalar factors of the elementary reflectors.
-     * @param  work   (workspace/output) double[] of dimension (max(1,lwork)) On exit, if info[0] = 0, work[0] returns the
-     *                optimal lwork.
+     * @param  work   (workspace/output) double[] of dimension (max(1,lwork)) On exit, if info[0] = 0, work[0] returns
+     *                the optimal lwork.
      * @param  lwork  input int The dimension of the array work. lwork >= max(1,n). For optimum performance, lwork >=
      *                n*nb, where nb is the optimal blocksize. If lwork = -1, then a workspace query is assumed; the
      *                routine only calculates the optimal size of the work array, returns this value as the first entry
@@ -8046,9 +8045,9 @@ loop1:               {
 
     /**
      * This is a port of version 3.1 LAPACK routine DGGBAK Orginal DGGBAK created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006
-     * dggbak forms the right or left eigenvectors of a real generalized eigenvalue problem A*x = lambda*B*x, by
-     * backward transformation on the computed eigenvectors of the balanced pair of matrices output by dggbal.
+     * California Berkeley, and NAG Ltd., November, 2006 dggbak forms the right or left eigenvectors of a real
+     * generalized eigenvalue problem A*x = lambda*B*x, by backward transformation on the computed eigenvectors of the
+     * balanced pair of matrices output by dggbal.
      *
      * @param  job     input char Specifies the type of backward transformation required: = 'N': do nothing, return
      *                 immediately, = 'P': do backward transformation for permutation only, = 'S': do backward
@@ -8267,20 +8266,17 @@ loop1:               {
 
     /**
      * This is a port of the version 3.1 LAPACK routine DGGBAL Orginal DGGBAL created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006 
-     * dggbal balances a pair of general real matrices (A,B). This involves, first, permuting A and B by similarity
-     * transformations to isolate eigenvalues in the first 1 to ilo-1 and last ihi+1 to n elements on the diagonal; and
-     * second, applying a diagonal similarity transformation to rows and columns ilo to ihi to make the rows and columns
-     * as close in norm as possbile. Both steps are optional.
+     * California Berkeley, and NAG Ltd., November, 2006 dggbal balances a pair of general real matrices (A,B). This
+     * involves, first, permuting A and B by similarity transformations to isolate eigenvalues in the first 1 to ilo-1
+     * and last ihi+1 to n elements on the diagonal; and second, applying a diagonal similarity transformation to rows
+     * and columns ilo to ihi to make the rows and columns as close in norm as possbile. Both steps are optional.
      *
      * <p>Balancing may reduce the 1-norm of the matrices, and improve the accuracy of the computed eigenvalues and/or
      * eigenvectors in the generalized eigenvector problem A*x = lambda*B*x.</p>
      *
-     * @param  job     input char Specifies the operations to be performed on A and B:
-     *                 = 'N': none: simply set ilo = 1, ihi = n, lscale[i] = 1.0 and rscale[i] = 1.0 for i = 0,...,n-1.
-     *                 = 'P': permute only
-     *                 = 'S': scale only 
-     *                 = 'B': both permute and scale.
+     * @param  job     input char Specifies the operations to be performed on A and B: = 'N': none: simply set ilo = 1,
+     *                 ihi = n, lscale[i] = 1.0 and rscale[i] = 1.0 for i = 0,...,n-1. = 'P': permute only = 'S': scale
+     *                 only = 'B': both permute and scale.
      * @param  n       input int The order of matrices A and B. n >= 0.
      * @param  A       input/output double[][] of dimension (lda,n) On entry, the input matrix A. On exit, A is
      *                 overwritten by the balanced matrix. If job = 'N', A is not referenced.
@@ -8293,21 +8289,17 @@ loop1:               {
      *                 j and j = 0,...,ilo-2 and i = ihi,...,n-1. if job = 'N' or 'S', ilo = 1 and ihi = n.
      * @param  lscale  output double[] of dimension n Details of the permutations and scaling factors applied to the
      *                 left side of A and B. If p[j] is the index of the row interchanged with row j, and d[j] is the
-     *                 scaling factor applied to row j, then lscale[j] = p[j] for j = 0,...,ilo-2
-     *                                                                 = d[j] for j = ilo-1,...,ihi-1
-     *                                                                 = p[j] for j = ihi,...,n-1.
-     *                 The order in which the interchanges are made is n-1 to ihi, then 0 to ilo-2.
+     *                 scaling factor applied to row j, then lscale[j] = p[j] for j = 0,...,ilo-2 = d[j] for j =
+     *                 ilo-1,...,ihi-1 = p[j] for j = ihi,...,n-1. The order in which the interchanges are made is n-1
+     *                 to ihi, then 0 to ilo-2.
      * @param  rscale  output double[] of dimension n Details of the permutations and scaling factors applied to the
      *                 right side of A and B. If p[j] is the index of the column interchanged with column j, and d[j] is
-     *                 the scaling factor applied to column j, then rscale[j] = p[j] for j = 0,...,ilo-2
-     *                                                                        = d[j] for j = ilo-1,...,ihi-1
-     *                                                                        = p[j] for j = ihi,...,n-1.
-     *                 The order in which the interchanges are made is n-1 to ihi, then 0 to ilo-2.
-     * @param  work    workspace double[] of dimension lwork
-     *                 lwork must be at least max(1,6*n) when job = 'S' or 'B', and at least 1 when job = 'N' or 'P'.
-     * @param  info    output int[] 
-     *                 = 0: successful exit
-     *                 < 0: If info[0] = -i, the i-th argument had an illegal value.
+     *                 the scaling factor applied to column j, then rscale[j] = p[j] for j = 0,...,ilo-2 = d[j] for j =
+     *                 ilo-1,...,ihi-1 = p[j] for j = ihi,...,n-1. The order in which the interchanges are made is n-1
+     *                 to ihi, then 0 to ilo-2.
+     * @param  work    workspace double[] of dimension lwork lwork must be at least max(1,6*n) when job = 'S' or 'B',
+     *                 and at least 1 when job = 'N' or 'P'.
+     * @param  info    output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value.
      *                 Further details: See R.C. Ward, Balancing the generalized eigenvalue problem, SIAM J. Sci. Stat.
      *                 Comp. 2 (1981), 141-152.
      */
@@ -8391,14 +8383,16 @@ loop1:               {
         if (n == 0) {
             ilo[0] = 1;
             ihi[0] = n;
+
             return;
         }
-        
+
         if (n == 1) {
             ilo[0] = 1;
             ihi[0] = n;
             lscale[0] = 1.0;
             rscale[0] = 1.0;
+
             return;
         }
 
@@ -8413,7 +8407,7 @@ loop1:               {
 
             return;
         } // if ((job == 'N') || (job == 'n'))
-        
+
         k = 1;
         L = n;
 
@@ -8573,13 +8567,15 @@ loop8:                       {
         ihi[0] = L;
 
         if ((job == 'P') || (job == 'P')) {
+
             for (i = ilo[0]; i <= ihi[0]; i++) {
-                lscale[i-1] = 1.0;
-                rscale[i-1] = 1.0;
+                lscale[i - 1] = 1.0;
+                rscale[i - 1] = 1.0;
             }
+
             return;
         }
-        
+
         if (ilo[0] == ihi[0]) {
             return;
         }
@@ -8876,44 +8872,34 @@ loop9:
 
     /**
      * This is a port of version 3.1 LAPACK routine DGGHRD Orginal DGGHRD created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006
-     * dgghrd reduces a pair of real matrices (A,B) to generalized upper Hessenberg form using orthogonal
-     * transformations, where A is a general matrix and B is upper triangular.  The form of the generalized
-     * eigenvalue problem is
-     *      A*x = lambda*B*x
-     * and B is typically made upper triangular by computing its QR factorization and moving the orthogonal
-     * matrix Q to the left side of the equation.
-     * 
-     * This subroutine simultaneously reduces A to a Hessenberg matrix H:
-     *      Q**T * A * Z = H
-     * and transforms B to another upper triangular matrix T:
-     *      Q**T * B * Z = T
-     * in order to reduce the problem to its standard form
-     *      H*y = lambda*T*y
-     * where y = z**T * x
+     * California Berkeley, and NAG Ltd., November, 2006 dgghrd reduces a pair of real matrices (A,B) to generalized
+     * upper Hessenberg form using orthogonal transformations, where A is a general matrix and B is upper triangular.
+     * The form of the generalized eigenvalue problem is A*x = lambda*B*x and B is typically made upper triangular by
+     * computing its QR factorization and moving the orthogonal matrix Q to the left side of the equation.
+     *
+     * <p>This subroutine simultaneously reduces A to a Hessenberg matrix H: Q**T * A * Z = H and transforms B to
+     * another upper triangular matrix T: Q**T * B * Z = T in order to reduce the problem to its standard form H*y =
+     * lambda*T*y where y = z**T * x</p>
      *
      * <p>The orthogonal matrices Q and Z are determined as products of Givens rotations. They may either be formed
-     * explicitly, or they may be postmultiplied into input matrices Q1 and Z1, so that
-     *         Q1 * A * Z1**T = (Q1*Q) * H * (Z1*Z)**T 
-     *         Q1 * B * Z1**T = (Q1*Q) * T * (Z1*Z)**T
-     *         
-     * If Q1 is the orthogonal matrix from the QR factorization of B in the original equation A*x = lambda*b*x,
-     * then dgghrd reduces the original problem to the generalized Hessenberg form.</p>
+     * explicitly, or they may be postmultiplied into input matrices Q1 and Z1, so that Q1 * A * Z1**T = (Q1*Q) * H *
+     * (Z1*Z)**T Q1 * B * Z1**T = (Q1*Q) * T * (Z1*Z)**T</p>
      *
-     * @param  compq  input char 
-     *                = 'N': do not compute Q
-     *                = 'I': Q is initialized to the unit matrix, and the orthogonal matrix Q is returned
-     *                = 'V': Q must contain an orthogonal matrix Q1 on entry, and the product Q1*Q is returned
-     * @param  compz  input char 
-     *                = 'N': do not compute Z
-     *                = 'I': Z is initialized to the unit matrix, and the orthogonal matrix Z is returned
-     *                = 'V': Z must contain an orthogonal matrix Z1 on entry, and the product Z1*Z is returned
+     * <p>If Q1 is the orthogonal matrix from the QR factorization of B in the original equation A*x = lambda*b*x, then
+     * dgghrd reduces the original problem to the generalized Hessenberg form.</p>
+     *
+     * @param  compq  input char = 'N': do not compute Q = 'I': Q is initialized to the unit matrix, and the orthogonal
+     *                matrix Q is returned = 'V': Q must contain an orthogonal matrix Q1 on entry, and the product Q1*Q
+     *                is returned
+     * @param  compz  input char = 'N': do not compute Z = 'I': Z is initialized to the unit matrix, and the orthogonal
+     *                matrix Z is returned = 'V': Z must contain an orthogonal matrix Z1 on entry, and the product Z1*Z
+     *                is returned
      * @param  n      input int The order of the matrices A and B. n >= 0.
      * @param  ilo    input int
-     * @param  ihi    input int ilo and ihi mark the rows and columns of A which are to be reduced.  
-     *                It is assumed that A is already upper triangular in rows and columns 0:ilo-2 and ih:n-1.
-     *                ilo and ihi are normally set by a previous call to dggbal; otherwise they should be set to 1 and n
-     *                respectively. 1 <= ilo <= ihi <= n, if n > 0; ilo = 1 and ihi = 0, if n == 0.
+     * @param  ihi    input int ilo and ihi mark the rows and columns of A which are to be reduced. It is assumed that A
+     *                is already upper triangular in rows and columns 0:ilo-2 and ih:n-1. ilo and ihi are normally set
+     *                by a previous call to dggbal; otherwise they should be set to 1 and n respectively. 1 <= ilo <=
+     *                ihi <= n, if n > 0; ilo = 1 and ihi = 0, if n == 0.
      * @param  A      input/output double[][] of dimension (lda,n) On entry, the n by n general matrix to be reduced. On
      *                exit, the upper triangle and the first subdiagonal of A are overwritten with the upper Hessenberg
      *                matrix H, and the rest is set to zero.
@@ -8921,23 +8907,19 @@ loop9:
      * @param  B      input/output double[][] of dimension (ldb,n) On entry, the n by n upper triangular matrix B. On
      *                exit, the upper triangular matrix T = Q**T B Z. The elements below the diagonal are set to zero.
      * @param  ldb    input int The leading dimension of the array B. ldb >= max(1,n).
-     * @param  Q      input/output double[][] of dimension (ldq,n). 
-     *                On entry, if compq = 'V', the orthogonal matix Q1, typically from the QR factorization of B.
-     *                On exit, if compq = 'I', the orthogonal matrix Q, and if compq = 'V', the product Q1*Q.
-     *                Not referenced if compq = 'N'.
+     * @param  Q      input/output double[][] of dimension (ldq,n). On entry, if compq = 'V', the orthogonal matix Q1,
+     *                typically from the QR factorization of B. On exit, if compq = 'I', the orthogonal matrix Q, and if
+     *                compq = 'V', the product Q1*Q. Not referenced if compq = 'N'.
      * @param  ldq    input int The leading dimension of the array Q. ldq >= n if compq = 'V' or 'I'; ldq >= 1
      *                otherwise.
-     * @param  Z      input/output double[][] of dimension (ldz,n) 
-     *                On entry, if compz = 'V', the orthogonal matrix Z1.
-     *                On exit, if compz = 'I', the orthogonal matrix Z, and if compz = 'V', the product Z1*Z.
-     *                Not referenced if compz = 'N'.
+     * @param  Z      input/output double[][] of dimension (ldz,n) On entry, if compz = 'V', the orthogonal matrix Z1.
+     *                On exit, if compz = 'I', the orthogonal matrix Z, and if compz = 'V', the product Z1*Z. Not
+     *                referenced if compz = 'N'.
      * @param  ldz    input int The leading dimension of the array Z. ldz >= n if compz = 'V' or 'I'; ldz >= 1
      *                otherwise.
-     * @param  info   output int[] 
-     *                    = 0: successful exit. 
-     *                    < 0: If info = -i, the i-th argument had an illegal value.
-     * Further details: This routine reduces A to Hessenberg and B to triangular form by an unblocked
-     * reduction, as described in Matrix Computations by Golub and Van Loan (Johns Hopkins Press).
+     * @param  info   output int[] = 0: successful exit. < 0: If info = -i, the i-th argument had an illegal value.
+     *                Further details: This routine reduces A to Hessenberg and B to triangular form by an unblocked
+     *                reduction, as described in Matrix Computations by Golub and Van Loan (Johns Hopkins Press).
      */
     private void dgghrd(char compq, char compz, int n, int ilo, int ihi, double[][] A, int lda, double[][] B, int ldb,
                         double[][] Q, int ldq, double[][] Z, int ldz, int[] info) {
@@ -9153,113 +9135,91 @@ loop9:
 
     /**
      * This is a port of version 3.1 LAPACK routine DHGEQZ Orginal DHGEQZ created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006 
-     * dhgeqz computes the eigenvalues of a real matrix pair (H,T), where H is an upper Hessenberg matrix and T is
-     * upper triangular, using the double-shift QZ method.
-     * Matrix pairs of this type are produced by the reduction to generalized upper Hessenberg form of a real matrix
-     * pair (A, B);
-     * A = Q1*H*Z**T, B = Q1*T*Z1**T,
-     * as computed by dgghrd.
-     * 
-     * If job = 'S', then the Hessenberg-triangular pair (H,T) is also reduced to generalized Schur form,
-     * H = Q*S*Z**T, T = Q*P*Z**T,
-     * where Q and Z are orthogonal matrices, P is an upper triangular matrix, and S is a quasi-triangular matrix
-     * with 1-by-1 and 2-by-2 diagonal blocks.
-     * 
-     * The 1-by-1 blocks correspond to real eigenvalues of the matrix pair (H, T) and the 2-by-2 blocks correspond to
-     * complex conjugate pairs of eigenvalues.
-     * 
-     * Additionally, the 2-by-2 upper triangular diagonal blocks of P corresponding to 2-by-2 blocks of S are reduced
-     * to positive diagonal form, i.e., if (S(j+1,j) is non-zero, then P(j+1,j) = P(j,j+1) = 0, P(j,j) > 0, and
-     * P(j+1,j+1) > 0.
-     * 
-     * Optionally, the orthogonal matrix Q from the generalized Schur factorization may be postmultiplied into an input
-     * matrix Q1, and the orthogonal matrix Z may be postmultiplied into an input matrix Z1.  If Q1 and Z1 are the
-     * orthogonal matrices from dgghrd that reduced the matrix pair (A,B) to generalized upper Hessenberg form, then
-     * the output matrices Q1*Q and Z1*Z are the orthogonal factors from the generalized Schur factorization of (A,B):
-     * A = (Q1*Q)*S*(Z1*Z)**T, B = (Q1*Q)*P*(Z1*Z)**T.
-     * 
-     * To avoid overflow, eignevalues of the matrix pair (H,T) (equivalently, of (A,b)) are computed as a pair of values
-     * (alpha, beta), where alpha is complex and beta real.  If beta is nonzero, lambda = alpha / beta is an eigenvalue
-     * of the generalized nonsymmetric eigenvalue problem (GNEP)
-     *      A*x = lambda*B*x
-     * and if alpha is nonzero, mu = beta / alpha is an eigenvalue fo the alternate form of the GNEP
-     *      mu*A*y = B*y
-     * Real eigenvalues can be read directly from the generalized Schur form:
-     *      alpha = S(i,i), beta = P(i,i)
-     *      
-     * Ref: C.B. Moler & G.W. Stewart, "An Algorithm for Generalized Matrix Eigenvalue Problems",
-     * SIAM J. Numer. Anal., 10(1973), pp. 241- 256.</p>
+     * California Berkeley, and NAG Ltd., November, 2006 dhgeqz computes the eigenvalues of a real matrix pair (H,T),
+     * where H is an upper Hessenberg matrix and T is upper triangular, using the double-shift QZ method. Matrix pairs
+     * of this type are produced by the reduction to generalized upper Hessenberg form of a real matrix pair (A, B); A =
+     * Q1*H*Z**T, B = Q1*T*Z1**T, as computed by dgghrd.
      *
-     * @param  job     input char 
-     *                 = 'E': Compute eigenvalues only
-     *                 = 'S': Compute eigenvalues and the Schur form.
-     * @param  compq   input char
-     *                 = 'N': Left Schur vectors (Q) are not computed.
-     *                 = 'I': Q is initialized to the unit matrix and the matrix Q of left Schur vectors of 
-     *                        (H,T) is returned.
-     *                 = 'V': Q must contain an orthogonal matrix Q1 on entry and the product Q1*Q is returned.
-     * @param  compz   input char
-     *                 = 'N': Right Schur vectors (Z) are not computed.
-     *                 = 'I': Z is initialized to the unit matrix and the matrix Z of right Schur vectors of
-     *                        (H,T) is returned.
-     *                 = 'V': Z must contain an orthogonal matrix Z1 on entry and the product Z1*Z is returned.
+     * <p>If job = 'S', then the Hessenberg-triangular pair (H,T) is also reduced to generalized Schur form, H =
+     * Q*S*Z**T, T = Q*P*Z**T, where Q and Z are orthogonal matrices, P is an upper triangular matrix, and S is a
+     * quasi-triangular matrix with 1-by-1 and 2-by-2 diagonal blocks.</p>
+     *
+     * <p>The 1-by-1 blocks correspond to real eigenvalues of the matrix pair (H, T) and the 2-by-2 blocks correspond to
+     * complex conjugate pairs of eigenvalues.</p>
+     *
+     * <p>Additionally, the 2-by-2 upper triangular diagonal blocks of P corresponding to 2-by-2 blocks of S are reduced
+     * to positive diagonal form, i.e., if (S(j+1,j) is non-zero, then P(j+1,j) = P(j,j+1) = 0, P(j,j) > 0, and
+     * P(j+1,j+1) > 0.</p>
+     *
+     * <p>Optionally, the orthogonal matrix Q from the generalized Schur factorization may be postmultiplied into an
+     * input matrix Q1, and the orthogonal matrix Z may be postmultiplied into an input matrix Z1. If Q1 and Z1 are the
+     * orthogonal matrices from dgghrd that reduced the matrix pair (A,B) to generalized upper Hessenberg form, then the
+     * output matrices Q1*Q and Z1*Z are the orthogonal factors from the generalized Schur factorization of (A,B): A =
+     * (Q1*Q)*S*(Z1*Z)**T, B = (Q1*Q)*P*(Z1*Z)**T.</p>
+     *
+     * <p>To avoid overflow, eignevalues of the matrix pair (H,T) (equivalently, of (A,b)) are computed as a pair of
+     * values (alpha, beta), where alpha is complex and beta real. If beta is nonzero, lambda = alpha / beta is an
+     * eigenvalue of the generalized nonsymmetric eigenvalue problem (GNEP) A*x = lambda*B*x and if alpha is nonzero, mu
+     * = beta / alpha is an eigenvalue fo the alternate form of the GNEP mu*A*y = B*y Real eigenvalues can be read
+     * directly from the generalized Schur form: alpha = S(i,i), beta = P(i,i)</p>
+     *
+     * <p>Ref: C.B. Moler & G.W. Stewart, "An Algorithm for Generalized Matrix Eigenvalue Problems", SIAM J. Numer.
+     * Anal., 10(1973), pp. 241- 256.</p>
+     *
+     * @param  job     input char = 'E': Compute eigenvalues only = 'S': Compute eigenvalues and the Schur form.
+     * @param  compq   input char = 'N': Left Schur vectors (Q) are not computed. = 'I': Q is initialized to the unit
+     *                 matrix and the matrix Q of left Schur vectors of (H,T) is returned. = 'V': Q must contain an
+     *                 orthogonal matrix Q1 on entry and the product Q1*Q is returned.
+     * @param  compz   input char = 'N': Right Schur vectors (Z) are not computed. = 'I': Z is initialized to the unit
+     *                 matrix and the matrix Z of right Schur vectors of (H,T) is returned. = 'V': Z must contain an
+     *                 orthogonal matrix Z1 on entry and the product Z1*Z is returned.
      * @param  n       input int The order of matrices H, T, Q, and Z. n >= 0.
      * @param  ilo     input int
-     * @param  ihi     input int ilo and ihi mark the rows and columns of H which are in Hessenberg form.
-     *                 It is assumed that A is already upper triangular in rows and columns 0:ilo-2 and
-     *                 ihi:n-1. If n > 0, 1 <= ilo <= ihi <= n; if n = 0, ilo = 1 and ihi = 0.
-     * @param  H       (input/output) double[][] of dimension (ldh,n) On entry, the n by n upper Hessenberg matrix H.
-     *                 On exit, if job = 'S', H contains the upper quasi-triangluar matrix S from the generalized
-     *                 Schur factorization; 2-by-2 diagonal blocks (corresponding to complex conjugate pairs of 
-     *                 eigenvalues) are returned in standard form, with H(i,i) = H(i+1,i+1) and 
-     *                 H(i+1,i) * H(i,i+1) < 0.  if job = 'E', the diagonal blocks of H match those of S, but the
-     *                 rest of H is unspecified
-     * @param ldh      input int  The leading dimension of the array H.  ldh >= max(1, n).
-     * @param  T       (input/output) double[][] of dimension (ldt,n) On entry, the n by n upper triangular matrix T.
-     *                 On exit, if job = 'S', T contains the upper triangular matrix P from the generalized Schur
+     * @param  ihi     input int ilo and ihi mark the rows and columns of H which are in Hessenberg form. It is assumed
+     *                 that A is already upper triangular in rows and columns 0:ilo-2 and ihi:n-1. If n > 0, 1 <= ilo <=
+     *                 ihi <= n; if n = 0, ilo = 1 and ihi = 0.
+     * @param  H       (input/output) double[][] of dimension (ldh,n) On entry, the n by n upper Hessenberg matrix H. On
+     *                 exit, if job = 'S', H contains the upper quasi-triangluar matrix S from the generalized Schur
+     *                 factorization; 2-by-2 diagonal blocks (corresponding to complex conjugate pairs of eigenvalues)
+     *                 are returned in standard form, with H(i,i) = H(i+1,i+1) and H(i+1,i) * H(i,i+1) < 0. if job =
+     *                 'E', the diagonal blocks of H match those of S, but the rest of H is unspecified
+     * @param  ldh     input int The leading dimension of the array H. ldh >= max(1, n).
+     * @param  T       (input/output) double[][] of dimension (ldt,n) On entry, the n by n upper triangular matrix T. On
+     *                 exit, if job = 'S', T contains the upper triangular matrix P from the generalized Schur
      *                 factorization; 2-by-2 diagonal blocks of P corresponding to 2-by-2 blocks of S are reduced to
      *                 postive diagonal form, i.e., if H(j+1,j) is non-zero, then T(j+1,j) = T(j,j+1) = 0, T(j,j) > 0,
-     *                 and T(j+1,j+1) > 0.
-     *                 if job = 'E', the diagonal blocks of T match those of P, but the rest of T is unspecified.
+     *                 and T(j+1,j+1) > 0. if job = 'E', the diagonal blocks of T match those of P, but the rest of T is
+     *                 unspecified.
      * @param  ldt     input int The leading dimension of the array T. ldt >= max(1,n).
-     * @param  alphar  output double[] of dimension (n) The real parts of each scalar alpha definfing an 
-     *                 eigenvalue of GNEP.
-     * @param  alphai  output double[] of dimension (n) The imaginary parts of each scalar alpha defining an
-     *                 eigenvalue of GNEP.  If alphai[j] is zero, then the j-th eigenvalue is real; if positive,
-     *                 then the j-th and (j+1)-st eigenvalues are a complex conjugate pair, with 
-     *                 alpha(j+1) = -alpha(j).
-     * @param  beta    output double[] of dimension (n) The scalars beta that define the eigenvalues of GNEP.
-     *                 Together, the quantities alpha = (alphar[j], alphai[j]) and beta = beta[j] represent the
-     *                 j-th eigenvalue of the matrix pair (A,B), in one of the forms lambda = alpha/beta or
-     *                 mu = beta/alpha.  Since either lambda or mu may overflow, they should not, in general,
-     *                 be computed.
-     * @param  Q       (input/output) double[][] of dimension (ldq,n) 
-     *                 On entry, if compz = 'V', the orthogonal matrix Q1 is used in the reduction of (A,B) to
-     *                 generalized Hessenberg form.
-     *                 On exit, if compz = 'I', the orthogonal matrix of left Schur vectors of (H,T), and if
-     *                 compz = 'V', the orthogonal matrix of left Schur vectors of (A,B).
-     *                 Not referenced if compz = 'N'.
+     * @param  alphar  output double[] of dimension (n) The real parts of each scalar alpha definfing an eigenvalue of
+     *                 GNEP.
+     * @param  alphai  output double[] of dimension (n) The imaginary parts of each scalar alpha defining an eigenvalue
+     *                 of GNEP. If alphai[j] is zero, then the j-th eigenvalue is real; if positive, then the j-th and
+     *                 (j+1)-st eigenvalues are a complex conjugate pair, with alpha(j+1) = -alpha(j).
+     * @param  beta    output double[] of dimension (n) The scalars beta that define the eigenvalues of GNEP. Together,
+     *                 the quantities alpha = (alphar[j], alphai[j]) and beta = beta[j] represent the j-th eigenvalue of
+     *                 the matrix pair (A,B), in one of the forms lambda = alpha/beta or mu = beta/alpha. Since either
+     *                 lambda or mu may overflow, they should not, in general, be computed.
+     * @param  Q       (input/output) double[][] of dimension (ldq,n) On entry, if compz = 'V', the orthogonal matrix Q1
+     *                 is used in the reduction of (A,B) to generalized Hessenberg form. On exit, if compz = 'I', the
+     *                 orthogonal matrix of left Schur vectors of (H,T), and if compz = 'V', the orthogonal matrix of
+     *                 left Schur vectors of (A,B). Not referenced if compz = 'N'.
      * @param  ldq     input int The leading dimension of the array Q. ldq >= 1. If compq = 'V' or 'I', then ldq >= n.
-     * @param  Z       (input/output) double[][] of dimension (ldz,n) 
-     *                 On entry, if compz = 'V', the orthogonal matrix Z1 is used in the reduction of (A,B) to
-     *                 generalized Hessenberg form.
-     *                 On exit, if compz = 'I', the orthogonal matrix of right Schur vectors of (H,T), and if
-     *                 compz = 'V', the orthogonal matrix of right Schur vectors of (A,B).
-     *                 Not referenced if compz = 'N'.
+     * @param  Z       (input/output) double[][] of dimension (ldz,n) On entry, if compz = 'V', the orthogonal matrix Z1
+     *                 is used in the reduction of (A,B) to generalized Hessenberg form. On exit, if compz = 'I', the
+     *                 orthogonal matrix of right Schur vectors of (H,T), and if compz = 'V', the orthogonal matrix of
+     *                 right Schur vectors of (A,B). Not referenced if compz = 'N'.
      * @param  ldz     input int The leading dimension of the array Z. ldz >= 1. If compz = 'V' or 'I', then ldz >= n.
-     * @param  work    (workspace/output) double[] of dimension max(1,lwork) 
-     *                 On exit, if info[0] >= 0, work[0] returns the optimal lwork.
+     * @param  work    (workspace/output) double[] of dimension max(1,lwork) On exit, if info[0] >= 0, work[0] returns
+     *                 the optimal lwork.
      * @param  lwork   input int The dimension of the array work. lwork >= max(1,n). If lwork = -1, then a workspace
      *                 query is assumed; the routine only calculates the optimal size of the work array, returns this
      *                 value as the first entry of the work array, and no error message related to lwork is output.
-     * @param  info    output int[] 
-     *                 = 0: successful exit. 
-     *                 < 0: If info[0] = -i, the i-th argument had an illegal value 
-     *                 = 1,...,n: the QZ iteration did not converge. (H,T) is not in Schur form, but alphar[i], alphai[i],
-     *                            and beta[i], i = info,...,n-1 should be correct.
-     *                 = n+1,...,2*n: the shift calculation failed.  (H,T) is not in Schur form, but alphar[i], alphai[i],
-     *                                and beta[i], i = info-n,...,n-1 should be correct
+     * @param  info    output int[] = 0: successful exit. < 0: If info[0] = -i, the i-th argument had an illegal value =
+     *                 1,...,n: the QZ iteration did not converge. (H,T) is not in Schur form, but alphar[i], alphai[i],
+     *                 and beta[i], i = info,...,n-1 should be correct. = n+1,...,2*n: the shift calculation failed.
+     *                 (H,T) is not in Schur form, but alphar[i], alphai[i], and beta[i], i = info-n,...,n-1 should be
+     *                 correct
      */
     private void dhgeqz(char job, char compq, char compz, int n, int ilo, int ihi, double[][] H, int ldh, double[][] T,
                         int ldt, double[] alphar, double[] alphai, double[] beta, double[][] Q, int ldq, double[][] Z,
@@ -14126,10 +14086,9 @@ loop3:                       {
 
     /**
      * This is a port of the version 3.1 LAPACK auxiliary routine DLARF Orginal DLARF created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006
-     * dlarf applies a real elementary reflector H to a real m by n matrix C, from either the left or right. H
-     * is represented in the form H = I - tau * v * v' where tau is a real scalar and v is a real vector If tau = 0,
-     * then H is taken to be the unit matrix.
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006 dlarf applies a real elementary reflector H to a real
+     * m by n matrix C, from either the left or right. H is represented in the form H = I - tau * v * v' where tau is a
+     * real scalar and v is a real vector If tau = 0, then H is taken to be the unit matrix.
      *
      * @param  side  input char = 'L': form H * C, = 'R': form C * H
      * @param  m     input int The number of rows of the matrix C
@@ -14839,14 +14798,11 @@ loop3:                       {
 
     /**
      * This is a port of version 3.1 LAPACK auxiliary routine DLARFG Orginal DLARFG created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
-     * dlarfg generates a real elementary reflector H of order n, such that H * (alpha) = (beta), H' * H = I. 
-     *                                                                           ( x )     ( 0 ) 
-     * where alpha and beta are scalars, and x is an (n-1)-element real vector. H is represented in the form
-     *  H = I - tau * (1) * (1 v'),
-     *                (v) 
-     * where tau is a real scalar and v is a real (n-1)-element vector. If the elements of x
-     * are all zero, then tau = 0 and H is taken to be the unit matrix. Otherwise 1 <= tau <= 2.
+     * of California Berkeley, and NAG Ltd., November, 2006 dlarfg generates a real elementary reflector H of order n,
+     * such that H * (alpha) = (beta), H' * H = I. ( x ) ( 0 ) where alpha and beta are scalars, and x is an
+     * (n-1)-element real vector. H is represented in the form H = I - tau * (1) * (1 v'), (v) where tau is a real
+     * scalar and v is a real (n-1)-element vector. If the elements of x are all zero, then tau = 0 and H is taken to be
+     * the unit matrix. Otherwise 1 <= tau <= 2.
      *
      * @param  n      input int The order of the elementary reflector.
      * @param  alpha  input/output double[] On entry, the value alpha. On exit, it is overwritten with the value beta.
@@ -15503,9 +15459,9 @@ loop3:                       {
 
     /**
      * This is a port of version 3.0 LAPACK auxiliary routine DLARTG Orginal DLARTG created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
-     * 30, 1994 dlartg generates a plane rotation so that [ cs sn ] . [ f ] = [ r ] where cs*cs + sn*sn = 1. [ -sn cs ]
-     * [ g ] [ 0 ] If g = 0, then cs = 1 and sn = 0. If f = 0 and g != 0, then cs = 0 and sn = 1. If f exceeds g in
+     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30,
+     * 1994 dlartg generates a plane rotation so that [ cs sn ] . [ f ] = [ r ] where cs*cs + sn*sn = 1. [ -sn cs ] [ g
+     * ] [ 0 ] If g = 0, then cs = 1 and sn = 0. If f = 0 and g != 0, then cs = 0 and sn = 1. If f exceeds g in
      * magnitude, then cs will be positive.
      *
      * @param  f   input double The first component of the vector to be rotated.

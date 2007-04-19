@@ -188,9 +188,6 @@ public class FileMGH extends FileBase {
     /** DOCUMENT ME! */
     private float tr;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     /** Present version number is 1. */
     private int version;
 
@@ -229,12 +226,10 @@ public class FileMGH extends FileBase {
     /**
      * Constructs new file object.
      *
-     * @param  _UI    User interface.
      * @param  fName  File name.
      * @param  fDir   File directory.
      */
-    public FileMGH(ViewUserInterface _UI, String fName, String fDir) {
-        UI = _UI;
+    public FileMGH(String fName, String fDir) {
         fileName = fName;
         fileDir = fDir;
     }

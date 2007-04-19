@@ -243,7 +243,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
                     } else {
                         MipavUtil.displayError("Cannot have more than 1 background VOI");
                         setCompleted(false);
-                        
+
 
                         return;
                     }
@@ -258,7 +258,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
         if (activeIndex == -1) {
             MipavUtil.displayError("Must specify an active VOI");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -266,7 +266,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
         if (backgroundIndex == -1) {
             MipavUtil.displayError("Must specify a background VOI");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -278,7 +278,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory error in AlgorithmFRETEfficiency");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -298,7 +298,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on srcImage.exportRGBData");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -310,7 +310,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FRETImage.exportRGBData");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -322,7 +322,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FRETImage.exportData");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -335,7 +335,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on acceptorImage.exportRGBData");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -347,7 +347,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on acceptorImage.exportData");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -361,7 +361,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -371,7 +371,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on FRETImage.exportData");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -381,7 +381,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on acceptorImage.exportData");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -585,11 +585,10 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
             } // if (efficiencyImage != null)
         } // if ((fDivDImage != null) || (fDivAImage != null) || (efficiencyImage != null))
 
-
         setCompleted(true);
     }
 
- 
+
     /**
      * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
      * procedure is turned on.

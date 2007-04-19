@@ -40,23 +40,17 @@ public class JDialogIntensityThreshold extends JDialogBase {
     /** DOCUMENT ME! */
     private JTextField threshField = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface ui;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new JDialogIntensityThreshold object.
      *
      * @param  theParentFrame  DOCUMENT ME!
-     * @param  userInterface   DOCUMENT ME!
      * @param  compImage       DOCUMENT ME!
      * @param  average         DOCUMENT ME!
      */
-    public JDialogIntensityThreshold(JFrame theParentFrame, ViewUserInterface userInterface,
-                                     ViewJComponentEditImage compImage, boolean average) {
+    public JDialogIntensityThreshold(JFrame theParentFrame, ViewJComponentEditImage compImage, boolean average) {
         super(theParentFrame, false);
-        ui = userInterface;
         this.component = compImage;
         doAverage = average;
         init();

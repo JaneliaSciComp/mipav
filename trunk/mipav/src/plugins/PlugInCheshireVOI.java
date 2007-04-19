@@ -118,12 +118,12 @@ public class PlugInCheshireVOI implements PlugInGeneric {
                 try {
 
                     if (tryFile.exists()) {
-                        FileCheshire tempCheshire = new FileCheshire(UI, tryFile.getName(),
+                        FileCheshire tempCheshire = new FileCheshire(tryFile.getName(),
                                                                      tryFile.getParent() + tryFile.separatorChar,
                                                                      false);
                         tempImage = tempCheshire.readImage();
                     } else if (secondTry.exists()) {
-                        FileCheshire tempCheshire = new FileCheshire(UI, secondTry.getName(),
+                        FileCheshire tempCheshire = new FileCheshire(secondTry.getName(),
                                                                      secondTry.getParent() + secondTry.separatorChar,
                                                                      false);
                         tempImage = tempCheshire.readImage();

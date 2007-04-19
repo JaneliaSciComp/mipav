@@ -42,22 +42,10 @@ public class JDialogRendererAVI extends JDialogBase {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates a new JDialogRendererAVI object.
-     *
-     * @param  theParentFrame  Parent frame.
-     */
-    public JDialogRendererAVI(Frame theParentFrame) {
-        super(theParentFrame, true);
-        init();
-    }
-
-    /**
      * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
      * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
      */
-    public JDialogRendererAVI(ViewUserInterface UI) {
+    public JDialogRendererAVI() {
         super();
     }
 
@@ -65,9 +53,8 @@ public class JDialogRendererAVI extends JDialogBase {
      * Creates a new JDialogRendererAVI object.
      *
      * @param  theParentFrame  Parent frame.
-     * @param  ui              User interface.
      */
-    public JDialogRendererAVI(Frame theParentFrame, ViewUserInterface ui) {
+    public JDialogRendererAVI(Frame theParentFrame) {
         super(theParentFrame, true);
         init();
     }

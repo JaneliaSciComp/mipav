@@ -42,15 +42,26 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
     /** DOCUMENT ME! */
     private AlgorithmSwap34 swap34Algo;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
     public JDialogSwap34() { }
+
+    /**
+     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
+     * up info and result image will be stored here.
+     *
+     * @param  im  Source image.
+     */
+    public JDialogSwap34(ModelImage im) {
+        super(false);
+        image = im;
+        imageName = image.getImageName();
+        parentFrame = image.getParentFrame();
+        doClose = false;
+    }
 
     /**
      * Creates new dialog, but dialog is not visible.
@@ -62,23 +73,6 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
         super(theParentFrame, false);
         image = im;
         imageName = image.getImageName();
-        userInterface = ViewUserInterface.getReference();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogSwap34(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        imageName = image.getImageName();
-        parentFrame = image.getParentFrame();
-        doClose = false;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -202,7 +196,6 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         imageName = image.getImageName();

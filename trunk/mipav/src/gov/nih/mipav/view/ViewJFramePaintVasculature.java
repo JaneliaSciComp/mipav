@@ -188,7 +188,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
 
                         try {
                             histogramDialog = new JDialogHistogramLUT(this, mipImage, imageB, componentImage.getLUTa(),
-                                                                      componentImage.getLUTb(), userInterface);
+                                                                      componentImage.getLUTb());
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }
@@ -196,7 +196,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
 
                         try {
                             histogramDialog = new JDialogHistogramLUT(this, mipImage, imageB, componentImage.getRGBTA(),
-                                                                      componentImage.getRGBTB(), userInterface);
+                                                                      componentImage.getRGBTB());
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }

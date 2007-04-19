@@ -286,9 +286,6 @@ public class FileSTK extends FileBase {
     private double tRes = 1.0;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private int xDim = 0;
 
     /** DOCUMENT ME! */
@@ -302,15 +299,13 @@ public class FileSTK extends FileBase {
     /**
      * STK reader/writer constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileSTK(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
+    public FileSTK(String fileName, String fileDir) throws IOException {
 
-        UI = _UI;
         this.fileName = fileName;
         this.fileDir = fileDir;
     }
@@ -548,7 +543,7 @@ public class FileSTK extends FileBase {
             }
 
             raFile.close();
-            
+
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -809,8 +804,8 @@ public class FileSTK extends FileBase {
                     for (k = options.getBeginSlice(), m = 0; k <= options.getEndSlice(); k++, m++) {
 
                         fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
-                                                               (options.getEndSlice() - options.getBeginSlice() + 1) *
-                                                               100));
+                                                                (options.getEndSlice() - options.getBeginSlice() + 1) *
+                                                                100));
 
                         if (options.isWritePackBit()) {
                             stripCount = filePB.getStripSize(image, timeOffset + (k * bufferSize),
@@ -895,12 +890,12 @@ public class FileSTK extends FileBase {
         } catch (OutOfMemoryError error) {
             System.gc();
             raFile.close();
-            
+
             throw error;
         }
 
         raFile.close();
-        
+
     }
 
     /**
@@ -2010,7 +2005,7 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j++, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -2033,7 +2028,7 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            
+
 
                             for (j = 0; j < nBytes; j++, i++) {
 
@@ -2050,7 +2045,7 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            
+
                             j = 0;
 
                             while (j < nBytes) {
@@ -2064,8 +2059,8 @@ public class FileSTK extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[i] = byteBuffer[j];
@@ -2086,8 +2081,8 @@ public class FileSTK extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[i] = byteBuffer[j];
@@ -2111,7 +2106,7 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            
+
 
                             for (j = 0; j < nBytes; j++, i++) {
 
@@ -2128,7 +2123,7 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            
+
                             j = 0;
 
                             while (j < nBytes) {
@@ -2142,8 +2137,8 @@ public class FileSTK extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[i] = byteBuffer[j] & 0xff;
@@ -2164,8 +2159,8 @@ public class FileSTK extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                                   100));
+                                            fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                    progressLength * 100));
                                         }
 
                                         buffer[i] = byteBuffer[j] & 0xff;
@@ -2187,7 +2182,7 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -2216,7 +2211,7 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -2244,7 +2239,7 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -2274,7 +2269,7 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        
+
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
@@ -2307,7 +2302,7 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            
+
 
                             // For the moment I compress RGB images to unsigned bytes.
                             for (j = 0; j < nBytes; j += 3, i += 4) {
@@ -2335,14 +2330,14 @@ public class FileSTK extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                
+
 
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
-                                                                               progressLength * 100));
+                                                                                progressLength * 100));
                                     }
 
                                     buffer[i] = 255;
@@ -2361,13 +2356,13 @@ public class FileSTK extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                
+
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
-                                                                                    progress) / progressLength * 100));
+                                                                                     progress) / progressLength * 100));
                                     }
 
                                     buffer[i + 2] = getUnsignedByte(byteBuffer, j);
@@ -2385,13 +2380,14 @@ public class FileSTK extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                
+
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
-                                                                                    progress) / progressLength * 100));
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) +
+                                                                                     (2 * buffer.length / 3) +
+                                                                                     progress) / progressLength * 100));
                                     }
 
                                     buffer[i + 3] = getUnsignedByte(byteBuffer, j);
@@ -2450,7 +2446,7 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
                         for (j = 0; j < nBytes; j++) {
 
                             if ((x < xDim) && (y < yDim)) {
@@ -2492,7 +2488,7 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
 
                             for (j = 0; j < nBytes; j++) {
 
@@ -2500,7 +2496,7 @@ public class FileSTK extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     buffer[x + (y * xDim)] = byteBuffer[j];
@@ -2531,7 +2527,7 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
                             j = 0;
 
                             while (j < nBytes) {
@@ -2548,7 +2544,7 @@ public class FileSTK extends FileBase {
 
                                             if (((i + progress) % mod) == 0) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100));
+                                                                                        progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -2581,7 +2577,7 @@ public class FileSTK extends FileBase {
 
                                             if (((i + progress) % mod) == 0) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100));
+                                                                                        progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -2623,7 +2619,7 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
 
                             for (j = 0; j < nBytes; j++) {
 
@@ -2631,7 +2627,7 @@ public class FileSTK extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -2662,7 +2658,7 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
                             j = 0;
 
                             while (j < nBytes) {
@@ -2679,7 +2675,7 @@ public class FileSTK extends FileBase {
 
                                             if (((i + progress) % mod) == 0) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100));
+                                                                                        progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -2712,7 +2708,7 @@ public class FileSTK extends FileBase {
 
                                             if (((i + progress) % mod) == 0) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100));
+                                                                                        progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -2752,7 +2748,7 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
                         for (j = 0; j < nBytes; j += 2) {
 
                             if ((x < xDim) && (y < yDim)) {
@@ -2800,7 +2796,7 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
                         for (j = 0; j < nBytes; j += 2) {
 
                             if ((x < xDim) && (y < yDim)) {
@@ -2848,7 +2844,7 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
                         for (j = 0; j < nBytes; j += 4) {
 
                             if ((x < xDim) && (y < yDim)) {
@@ -2898,7 +2894,7 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        
+
                         for (j = 0; j < nBytes; j += 4) {
 
                             if ((x < xDim) && (y < yDim)) {
@@ -2952,7 +2948,7 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            
+
 
                             for (j = 0; j < nBytes; j += 3) {
 
@@ -2960,7 +2956,7 @@ public class FileSTK extends FileBase {
 
                                     if (((i + progress) % mod) == 0) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
-                                                                               100));
+                                                                                100));
                                     }
 
                                     buffer[4 * (x + (y * xDim))] = 255;

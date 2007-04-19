@@ -36,9 +36,6 @@ public class JDialogCaptureScreens extends JDialogBase {
     /** Number of slices in the image. */
     private int numSlices;
 
-    /** Pointer to the user interface. */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -46,11 +43,9 @@ public class JDialogCaptureScreens extends JDialogBase {
      * frame.
      *
      * @param  parent  the parent frame
-     * @param  UI      the user interface
      */
-    public JDialogCaptureScreens(ViewJFrameImage parent, ViewUserInterface UI) {
+    public JDialogCaptureScreens(ViewJFrameImage parent) {
         super(parent, false);
-        userInterface = UI;
         this.imageFrame = parent;
 
         if (imageFrame.getImageA().getExtents().length < 3) {

@@ -3136,7 +3136,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // nlinmod7.dumpResults(); params = nlinmod7.getParameters();
             /*time = System.currentTimeMillis();
              * nlinmod9 = new FitWholeNL3ModelWeeks(tValues.length, tValues, pIntensity, initial, nLaguerre,
-             *         sig0, sigmax, bmax, tols, tolb);
+             * sig0, sigmax, bmax, tols, tolb);
              * nlinmod9.driver(); nlinmod9.dumpResults();params = nlinmod9.getParameters();*/
 
             ViewUserInterface.getReference().setDataText("MATLAB nonlinear fit\n");
@@ -3179,7 +3179,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // nlinmod8.dumpResults(); params = nlinmod8.getParameters();
             /*time = System.currentTimeMillis();
              * nlinmod10 = new FitWholeNLConModelWeeks(tValues.length, tValues, pIntensity, initial, nLaguerre,
-             *                  sig0, sigmax, bmax,                  tols, tolb); nlinmod10.driver();
+             *        sig0, sigmax, bmax,                  tols, tolb); nlinmod10.driver();
              * nlinmod10.dumpResults();params =
              * nlinmod10.getParameters();*/
 
@@ -3219,14 +3219,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
              * ssemax = sses[index];   } } // for (x = 0; x <= 200; x++) } // for (y = 0; y <= 200; y++)
              *
              * for ( y = 2; y <= 398; y++ ) {   indexY = 401 * y;   for ( x = 2; x <= 398; x++ ) {     index = indexY + x;
-             *   if ( index != indexmin ) {       localFound = true;       for ( j = index - 2 * 401; localFound && ( j
+             *  if ( index != indexmin ) {       localFound = true;       for ( j = index - 2 * 401; localFound && ( j
              * <= index + 2 * 401 ); j += 401 ) {         for ( p = j - 2; localFound && ( p <= j + 2 ); p++ ) {    if (
-             * p != index ) {             if ( 1.000001*sses[index] >= sses[p] ) {               localFound = false;
-             *    }           } // if (i != index)         } // for (i = j-2; localFound && (i <= j+2); i++) } // for (j
-             * = index-2*201; localFound && (j <= index+2*201); j+= 201)       if ( localFound ) { localMinNumber++;
-             *     if ( localMinNumber <= 1000 ) { localMinIndex[localMinNumber - 1] = index;   }       } // if
-             * (localFound)     } // if (index != indexmin)   } // for (x = 2; x <= 198; x++) } // for (y = 2; y <= 198;
-             * y++)
+             * p != index ) {             if ( 1.000001*sses[index] >= sses[p] ) {               localFound = false;   }
+             *           } // if (i != index)         } // for (i = j-2; localFound && (i <= j+2); i++) } // for (j =
+             * index-2*201; localFound && (j <= index+2*201); j+= 201)       if ( localFound ) { localMinNumber++;    if
+             * ( localMinNumber <= 1000 ) { localMinIndex[localMinNumber - 1] = index;   }       } // if (localFound)
+             *  } // if (index != indexmin)   } // for (x = 2; x <= 198; x++) } // for (y = 2; y <= 198; y++)
              *
              *
              * Preferences.debug( "sse global min = " + ssemin + "\n" ); UI.setDataText( "sse global min = " + ssemin +
@@ -3275,7 +3274,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
              * localMinIndex[j];     zPt[0] = 0.0f; yPt[0] = index / 401;     xPt[0] = index % 401;
              * localPtVOI[j].importCurve(xPt, yPt, zPt, 0);   } catch (OutOfMemoryError error) {     System.gc();
              * MipavUtil.displayError("Out of memory on localPtVOI" + (j + 1) +                            " creation");
-             *    setCompleted(false);     return;   }
+             *   setCompleted(false);     return;   }
              *
              * errorImage.registerVOI(localPtVOI[j]);   localPtVOI[j].setActive(true);   ( (VOIPoint)
              * (localPtVOI[j].getCurves()[0].elementAt(0))).       setActive(true); } // for (j = 0; j < localMinNumber;

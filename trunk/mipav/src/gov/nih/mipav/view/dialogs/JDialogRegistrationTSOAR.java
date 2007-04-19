@@ -101,9 +101,6 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
     /** DOCUMENT ME! */
     private JCheckBox transformCheckbox;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -120,7 +117,6 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
     public JDialogRegistrationTSOAR(Frame parent, ModelImage img) {
         super(parent, true);
         image = img;
-        UI = ((ViewJFrameBase) parent).getUserInterface();
         init();
     }
 
@@ -448,7 +444,6 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        UI = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));

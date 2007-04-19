@@ -394,7 +394,7 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
         gbcTP.weighty = 100;
         topPanel.add(controlPanel, gbcTP);
         getContentPane().add(topPanel, "North");
-        buildScrollPane(userInterface);
+        buildScrollPane();
 
         /* componentY is added so that the previous software for ViewJFrameImage can be
          * reused.  There the image was resized without a toolbar, controlPanel, or menubar contributing to the vertical
@@ -715,8 +715,9 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
         removeComponentListener(this);
 
         width = (int) Math.round(Math.max(getSize().width - (2 * getInsets().left) - 3, minimumToolBarWidth));
-        height = (int) Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom - 3,
-                                           minimumHeight));
+        height = (int)
+                     Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom - 3,
+                                         minimumHeight));
 
         scrollPane.setSize(width, height);
         setSize(Math.max(scrollPane.getSize().width + getInsets().left + getInsets().right,
@@ -1432,10 +1433,8 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
 
     /**
      * Make a scroll frame and puts an image component into it.
-     *
-     * @param  ui  main user interface frame
      */
-    private void buildScrollPane(ViewUserInterface ui) {
+    private void buildScrollPane() {
 
         try {
             innerPanel = new JPanel();

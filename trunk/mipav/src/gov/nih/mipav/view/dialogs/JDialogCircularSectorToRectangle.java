@@ -41,9 +41,6 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
     private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private int xDim;
 
     /** DOCUMENT ME! */
@@ -64,6 +61,17 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Creates a new JDialogCircularSectorToRectangle object.
+     *
+     * @param  image  DOCUMENT ME!
+     */
+    public JDialogCircularSectorToRectangle(ModelImage image) {
+        super();
+        this.image = image;
+        parentFrame = image.getParentFrame();
+    }
+
+    /**
      * Creates new dialog.
      *
      * @param  theParentFrame  Parent frame
@@ -73,19 +81,6 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
         super(theParentFrame, false);
         image = im;
         init();
-    }
-
-    /**
-     * Creates a new JDialogCircularSectorToRectangle object.
-     *
-     * @param  UI     DOCUMENT ME!
-     * @param  image  DOCUMENT ME!
-     */
-    public JDialogCircularSectorToRectangle(ViewUserInterface UI, ModelImage image) {
-        super();
-        this.UI = UI;
-        this.image = image;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

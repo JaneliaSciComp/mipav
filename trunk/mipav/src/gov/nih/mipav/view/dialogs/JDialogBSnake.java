@@ -98,9 +98,6 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private Color voiColor;
 
     /** DOCUMENT ME! */
@@ -117,7 +114,6 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
     public JDialogBSnake(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
 
-        userInterface = ViewUserInterface.getReference();
         VOIs = im.getVOIs();
 
         int nVOI;
@@ -251,7 +247,8 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
                         titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                                                                                          (imageFrames.elementAt(i)));
                     }
 
                     // Start the thread as a low priority because we wish to still have user interface.
@@ -294,7 +291,8 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
                         titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                                                                                          (imageFrames.elementAt(i)));
                     }
 
                     // Start the thread as a low priority because we wish to still have user interface work fast

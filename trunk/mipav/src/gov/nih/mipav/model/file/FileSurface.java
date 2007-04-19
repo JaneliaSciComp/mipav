@@ -66,8 +66,7 @@ public class FileSurface {
             if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1)) {
                 kSurface[i] = readSurface(kImage, akFiles[i], kColor);
             } else if (kName.indexOf(".xml") != -1) {
-                FileSurfaceXML kSurfaceXML = new FileSurfaceXML(ViewUserInterface.getReference(), kName,
-                                                                akFiles[i].getParent());
+                FileSurfaceXML kSurfaceXML = new FileSurfaceXML(kName, akFiles[i].getParent());
 
                 try {
                     FileInfoSurfaceXML kFileInfo = kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
@@ -761,7 +760,7 @@ public class FileSurface {
         name = name.substring(i + 1);
 
         // Create the FileSurfaceXML to write the mesh:
-        FileSurfaceXML kSurfaceXML = new FileSurfaceXML(ViewUserInterface.getReference(), null, null);
+        FileSurfaceXML kSurfaceXML = new FileSurfaceXML(null, null);
 
         try {
             kSurfaceXML.writeHeader(name, dir, kMesh, surface.getMaterial(), surface.getOpacity(),

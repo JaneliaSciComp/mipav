@@ -90,9 +90,6 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -111,7 +108,6 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         super(theParentFrame, false);
 
         imageR = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -363,7 +359,6 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
      */
     protected void setGUIFromParams() {
         imageR = scriptParameters.retrieveImage("red_image");
-        userInterface = ViewUserInterface.getReference();
         parentFrame = imageR.getParentFrame();
         setGreenImage(scriptParameters.retrieveImage("green_image"));
         setBlueImage(scriptParameters.retrieveImage("blue_image"));

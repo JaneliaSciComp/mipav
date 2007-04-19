@@ -9,17 +9,13 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.util.*;
-
 import javax.swing.*;
 
 
 /**
- * Dialog to get user input of ellipse which will be conformally
- * mapped to a circle.
+ * Dialog to get user input of ellipse which will be conformally mapped to a circle.
  */
-public class JDialogEllipseToCircle extends JDialogBase
-        implements AlgorithmInterface, ItemListener, WindowListener {
+public class JDialogEllipseToCircle extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -58,6 +54,18 @@ public class JDialogEllipseToCircle extends JDialogBase
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Creates a new JDialogCircleToRectangle object.
+     *
+     * @param  image  DOCUMENT ME!
+     */
+    public JDialogEllipseToCircle(ModelImage image) {
+        super();
+        this.UI = ViewUserInterface.getReference();
+        this.image = image;
+        parentFrame = image.getParentFrame();
+    }
+
+    /**
      * Creates new dialog.
      *
      * @param  theParentFrame  Parent frame
@@ -67,19 +75,6 @@ public class JDialogEllipseToCircle extends JDialogBase
         super(theParentFrame, false);
         image = im;
         init();
-    }
-
-    /**
-     * Creates a new JDialogCircleToRectangle object.
-     *
-     * @param  UI     DOCUMENT ME!
-     * @param  image  DOCUMENT ME!
-     */
-    public JDialogEllipseToCircle(ViewUserInterface UI, ModelImage image) {
-        super();
-        this.UI = UI;
-        this.image = image;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -243,7 +238,7 @@ public class JDialogEllipseToCircle extends JDialogBase
         gbc4.fill = GridBagConstraints.HORIZONTAL;
         gbc4.gridx = 0;
         gbc4.gridy = 0;
-        
+
         input1Label = new JLabel("Draw ellipse");
         input1Label.setForeground(Color.black);
         input1Label.setFont(serif12);
@@ -278,19 +273,11 @@ public class JDialogEllipseToCircle extends JDialogBase
         paramPanel.add(xText, gbc6);
 
         /*yLabel = new JLabel("Y dimension of output image ");
-        yLabel.setForeground(Color.black);
-        yLabel.setFont(serif12);
-        yLabel.setEnabled(true);
-        gbc6.gridx = 0;
-        gbc6.gridy = 1;
-        paramPanel.add(yLabel, gbc6);
-
-        yText = new JTextField(10);
-        yText.setText(String.valueOf(image.getExtents()[1]));
-        yText.setFont(serif12);
-        yText.setEnabled(true);
-        gbc6.gridx = 1;
-        paramPanel.add(yText, gbc6);*/
+         * yLabel.setForeground(Color.black); yLabel.setFont(serif12); yLabel.setEnabled(true); gbc6.gridx = 0;
+         * gbc6.gridy = 1; paramPanel.add(yLabel, gbc6);
+         *
+         * yText = new JTextField(10); yText.setText(String.valueOf(image.getExtents()[1])); yText.setFont(serif12);
+         * yText.setEnabled(true); gbc6.gridx = 1;paramPanel.add(yText, gbc6);*/
 
         getContentPane().add(inputPanel, BorderLayout.NORTH);
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -321,39 +308,42 @@ public class JDialogEllipseToCircle extends JDialogBase
         }
 
         /*if (!testParameter(yText.getText(), 5, 1000000)) {
-            yText.requestFocus();
-            yText.selectAll();
-
-            return false;
-        } else {
-            yDim = Integer.valueOf(yText.getText()).intValue();
-        }*/
+         *  yText.requestFocus(); yText.selectAll();
+         *
+         * return false; } else { yDim = Integer.valueOf(yText.getText()).intValue();}*/
 
         VOIs = image.getVOIs();
+
         if (VOIs == null) {
             MipavUtil.displayError("No VOIs present.  1 ellipse needed");
+
             return false;
         }
-        
+
         nVOIs = VOIs.size();
+
         if (nVOIs == 0) {
             MipavUtil.displayError("No VOIs present.  1 ellipse needed");
+
             return false;
         }
-        
+
         for (i = 0; i < nVOIs; i++) {
+
             if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)) {
                 nContourVOIs++;
             }
         }
-        
+
         if (nContourVOIs == 0) {
             MipavUtil.displayError("No contour VOIs present.  1 ellipse needed");
+
             return false;
         }
-        
+
         if (nContourVOIs > 1) {
             MipavUtil.displayError(nContourVOIs + " contour VOIs present, but only 1 ellipse allowed");
+
             return false;
         }
 

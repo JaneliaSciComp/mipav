@@ -75,9 +75,6 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
     /** DOCUMENT ME! */
     private JTextField userDefinedField;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -95,7 +92,6 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
         super(frame, false);
 
         this.image = img;
-        this.userInterface = ViewUserInterface.getReference();
         setTitle("Replace Pixel/Voxel Value");
         init();
     }
@@ -214,7 +210,6 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         if (scriptParameters.doOutputNewImage()) {

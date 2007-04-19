@@ -3,13 +3,11 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 
 /**
- * Special for Benes
+ * Special for Benes.
  *
  * @version  0.1 Sept 2, 1997
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -27,18 +25,11 @@ public class FileMap extends FileBase {
     /** DOCUMENT ME! */
     private FileInfoBase fileInfo;
 
-    /** DOCUMENT ME! */
-    private String fileName;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new FileMap object.
      *
-     * @param   _UI       DOCUMENT ME!
      * @param   fileName  DOCUMENT ME!
      * @param   fileDir   DOCUMENT ME!
      * @param   fInfo     DOCUMENT ME!
@@ -46,10 +37,8 @@ public class FileMap extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    public FileMap(ViewUserInterface _UI, String fileName, String fileDir, FileInfoBase fInfo, int rwFlag)
-            throws IOException {
+    public FileMap(String fileName, String fileDir, FileInfoBase fInfo, int rwFlag) throws IOException {
 
-        UI = _UI;
         fileInfo = fInfo;
         file = new File(fileDir + fileName);
 
@@ -59,7 +48,6 @@ public class FileMap extends FileBase {
             raFile = new RandomAccessFile(file, "rw");
         }
 
-        this.fileName = fileName;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
