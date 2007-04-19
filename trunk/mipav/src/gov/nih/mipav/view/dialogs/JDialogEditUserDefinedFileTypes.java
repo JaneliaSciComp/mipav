@@ -68,9 +68,9 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
 		setTitle("Edit User Defined Filter");
 
 		//get the user defined file types preferences
-		if (Preferences.getProperty("userDefinedFileTypes") != null) {
-			if (!Preferences.getProperty("userDefinedFileTypes").trim().equals("")) {
-				preferencesFileTypes = Preferences.getProperty("userDefinedFileTypes").split("; ");
+		if (Preferences.getProperty(Preferences.PREF_USER_FILETYPES) != null) {
+			if (!Preferences.getProperty(Preferences.PREF_USER_FILETYPES).trim().equals("")) {
+				preferencesFileTypes = Preferences.getProperty(Preferences.PREF_USER_FILETYPES).split("; ");
 			}
 		}
 
@@ -114,8 +114,8 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
 		gbc.insets = new Insets(10,5,10,5);
 		userInput = new JTextField(30);
 
-		if (Preferences.getProperty("userDefinedFileTypes_textField") != null) {
-			userInput.setText(Preferences.getProperty("userDefinedFileTypes_textField"));
+		if (Preferences.getProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS) != null) {
+			userInput.setText(Preferences.getProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS));
 		}
 		gbl.setConstraints(userInput,gbc);
 		displayPanel.add(userInput);
@@ -201,7 +201,7 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
 			}
 			
 			//set the preferences
-			Preferences.setProperty("userDefinedFileTypes",sb.toString());
+			Preferences.setProperty(Preferences.PREF_USER_FILETYPES,sb.toString());
 			StringBuffer inputStringSB = new StringBuffer();
 			if(userInputFileTypes != null) {
 				for(int i=0;i<userInputFileTypes.length;i++) {
@@ -211,19 +211,19 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
 					}
 				}
 			}
-			Preferences.setProperty("userDefinedFileTypes_textField",inputStringSB.toString());
+			Preferences.setProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS,inputStringSB.toString());
 			
 			
 			
 			//need to disasscociate and reset userdefinedFileTypesAssociations if user
 			//has deleted a userDefined Extension that was part of that preferences
 			if (userInput.getText().trim().equals("")) {
-				Preferences.setProperty("userDefinedFileTypeAssociations","");
+				Preferences.setProperty(Preferences.PREF_USER_FILETYPES,"");
 			}
 			else {
-				if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
-	            	if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) { 
-	            		String[] associations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+				if (Preferences.getProperty(Preferences.PREF_USER_FILETYPES) != null) {
+	            	if (!Preferences.getProperty(Preferences.PREF_USER_FILETYPES).trim().equals("")) { 
+	            		String[] associations = Preferences.getProperty(Preferences.PREF_USER_FILETYPES).split(";");
 	            		StringBuffer assocSB = new StringBuffer();
 	            		for(int i=0;i<associations.length;i++) {
 	            			for(int k=0;k<userInputFileTypes.length;k++) {
@@ -239,7 +239,7 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
 	            				}
 	            			}
 	            		}
-	            		Preferences.setProperty("userDefinedFileTypeAssociations", assocSB.toString());
+	            		Preferences.setProperty(Preferences.PREF_USER_FILETYPES, assocSB.toString());
 	            	}
 				}
 			}

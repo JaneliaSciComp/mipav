@@ -314,13 +314,13 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
 
         // all defaults for the lightbox have been moved to the defaults in the
         // Preferences class.  So can just get the initial values from the properties.
-        setGridColumn(Integer.parseInt(Preferences.getProperty("LightBoxGridCol")));
-        setGridSpacing(Integer.parseInt(Preferences.getProperty("LightBoxGridSize")));
-        setGridColor(extractColor(Preferences.getProperty("LightBoxGridColor")));
-        setBorderSize(Integer.parseInt(Preferences.getProperty("LightBoxBorderSize")));
-        setBorderColor(extractColor(Preferences.getProperty("LightBoxBorderColor")));
-        setSelectedBorderColor(extractColor(Preferences.getProperty("LightBoxSelectedBorderColor")));
-        setSelectedBorderSize(Integer.parseInt(Preferences.getProperty("LightBoxSelectedBorderSize")));
+        setGridColumn(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_GRID_COL)));
+        setGridSpacing(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_GRID_SIZE)));
+        setGridColor(extractColor(Preferences.getProperty(Preferences.PREF_LB_GRID_COLOR)));
+        setBorderSize(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_BORDER_SIZE)));
+        setBorderColor(extractColor(Preferences.getProperty(Preferences.PREF_LB_BORDER_COLOR)));
+        setSelectedBorderColor(extractColor(Preferences.getProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR)));
+        setSelectedBorderSize(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_SELECTED_BORDER_SIZE)));
 
         try {
 

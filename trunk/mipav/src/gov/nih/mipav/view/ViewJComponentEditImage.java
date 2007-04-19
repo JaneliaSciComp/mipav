@@ -416,18 +416,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         showSliceNumber = (imageA.getNDims() > 2) && !(this instanceof ViewJComponentTriImage);
 
         // active image color: get preset
-        if (Preferences.getProperty("ActiveImageColor") == null) {
-            Preferences.setProperty("ActiveImageColor", MipavUtil.makeColorString(ACTIVE_IMAGE_COLOR));
+        if (Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR) == null) {
+            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil.makeColorString(ACTIVE_IMAGE_COLOR));
         } else {
-            this.setHighlightColor(MipavUtil.extractColor(Preferences.getProperty("ActiveImageColor")));
+            this.setHighlightColor(MipavUtil.extractColor(Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR)));
         }
 
         // Custom crosshair cursors
-        if (Preferences.getProperty("CrosshairCursor") == null) {
-            Preferences.setProperty("CrosshairCursor", "default");
+        if (Preferences.getProperty(Preferences.PREF_CROSSHAIR_CURSOR) == null) {
+            Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, "default");
         }
 
-        String crosshairName = Preferences.getProperty("CrosshairCursor");
+        String crosshairName = Preferences.getProperty(Preferences.PREF_CROSSHAIR_CURSOR);
 
         if (crosshairName.equalsIgnoreCase("default")) {
             this.setCrosshairCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
@@ -5216,15 +5216,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         Color backgroundColor = null;
 
         // set color of label text
-        if (Preferences.getProperty("IntensityLabelColor") != null) {
-            String prefColor = Preferences.getProperty("IntensityLabelColor");
+        if (Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_COLOR) != null) {
+            String prefColor = Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_COLOR);
             textColor = MipavUtil.extractColor(prefColor);
         } else {
             textColor = Color.yellow;
         }
 
-        if (Preferences.getProperty("IntensityLabelBackgroundColor") != null) {
-            String prefColor = Preferences.getProperty("IntensityLabelBackgroundColor");
+        if (Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR) != null) {
+            String prefColor = Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR);
             backgroundColor = MipavUtil.extractColor(prefColor);
         } else {
             backgroundColor = Color.black;

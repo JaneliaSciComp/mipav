@@ -241,7 +241,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
             logModel.setRowCount(0);
             logModel.setColumnCount(0);
         } else if (command.equals("overwrite")) {
-            Preferences.setProperty("OverwriteStatistics", String.valueOf(overwriteBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_OVERWRITE_STATISTICS, String.valueOf(overwriteBox.isSelected()));
         } else if (source == OKButton) {
 
             if (setVariables()) {

@@ -194,7 +194,8 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         axis = fileInfo[0].getAxisOrientation();
         imageOrientation = fileInfo[0].getImageOrientation();
 
-        transformID = fileInfo[0].getTransformID();
+        //BEN
+        //transformID = fileInfo[0].getTransformID();
 
         String name = JDialogBase.makeImageName(srcImage.getImageName(), "_result");
 
@@ -222,7 +223,9 @@ public class AlgorithmSwap34 extends AlgorithmBase {
             fileInfoR[i].setMin(min);
             fileInfoR[i].setPixelPadValue(pixelPadValue);
             fileInfoR[i].setPhotometric(photometric);
-            fileInfoR[i].setTransformID(transformID);
+            
+            //BEN
+            //fileInfoR[i].setTransformID(transformID);
 
             if (fileInfoR[i] instanceof FileInfoXML) {
                 ((FileInfoImageXML) (fileInfoR[i])).setMatrix(xfrm);

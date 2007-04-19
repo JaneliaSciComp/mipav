@@ -477,11 +477,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     }
                 }
 
-                matchImage.setMatrix(finalMatrix);
-
-                for (int m = 0; m < matchImage.getExtents()[2]; m++) {
-                    matchImage.getFileInfo()[m].setTransformID(FileInfoBase.TRANSFORM_ANOTHER_DATASET);
-                }
+                finalMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                matchImage.getMatrixHolder().addMatrix(finalMatrix);
 
                 String message = "Using cost function, " + costName;
                 message += ", the cost is " + Double.toString(reg3.getAnswer()) + ".\n";

@@ -283,14 +283,14 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
         }
 
         TransMatrix xfrmAdj = null;
-        Point3Df centerAdj = adjImage.getImageCentermm();
+        Point3Df centerAdj = adjImage.getImageCentermm(false);
         xfrmAdj = new TransMatrix(res.length + 1);
         xfrmAdj.identity();
         xfrmAdj.setTranslate(centerAdj.x, centerAdj.y);
         xfrmAdj.setTranslate(-centerAdj.x, -centerAdj.y);
 
         TransMatrix xfrmRef;
-        Point3Df centerRef = refImage.getImageCentermm();
+        Point3Df centerRef = refImage.getImageCentermm(false);
         xfrmRef = new TransMatrix(res.length + 1);
         xfrmRef.identity();
         xfrmRef.setTranslate(centerRef.x, centerRef.y);

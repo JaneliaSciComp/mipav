@@ -2832,12 +2832,12 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         int filter = ViewImageFileFilter.TECH;
 
         try {
-            filter = Integer.parseInt(Preferences.getProperty("FilenameFilter"));
+            filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
         } catch (NumberFormatException nfe) {
 
             // an invalid value was set in preferences -- so fix it!
             filter = ViewImageFileFilter.TECH;
-            Preferences.setProperty("FilenameFilter", Integer.toString(filter));
+            Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, Integer.toString(filter));
         }
 
         openFile.setFilterType(filter);

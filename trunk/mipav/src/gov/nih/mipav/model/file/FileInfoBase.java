@@ -819,59 +819,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                 throw new IllegalArgumentException("The data type is illegal argument : " + dataType);
         }
     }
-
-    /**
-     * Returns the transform ID associated with a string.
-     *
-     * @param   s  String to test
-     *
-     * @return  data type
-     */
-    public static int getTransformIDFromStr(String s) {
-
-        // look through the array of strings to see if there's a match.
-        try {
-
-            for (int i = 0; i < transformIDStr.length; i++) {
-
-                if (FileInfoBase.getTransformIDStr(i).regionMatches(true, 0, s, 0,
-                                                                        FileInfoBase.getTransformIDStr(i).length())) {
-                    return i;
-                }
-            }
-        } catch (ArrayIndexOutOfBoundsException aie) {
-            return FileInfoBase.TRANSFORM_UNKNOWN;
-        }
-
-        return FileInfoBase.TRANSFORM_UNKNOWN;
-
-    } // getTransformIDFromStr()
-
-    /**
-     * Return the list of transform ID strings (for edit attributes combo box.
-     *
-     * @return  string [] of transform ID
-     */
-    public static String[] getTransformIDStr() {
-        return transformIDStr;
-    }
-
-    /**
-     * Return the string associated with the matrix transform ID.
-     *
-     * @param   m  transform ID
-     *
-     * @return  the string associated with the transform ID
-     */
-    public static String getTransformIDStr(int m) {
-
-        try {
-            return FileInfoBase.transformIDStr[m];
-        } catch (ArrayIndexOutOfBoundsException aie) { }
-
-        return "";
-    }
-
+  
     /**
      * Return all the abbreviated units of measure strings as an array.
      *
@@ -1857,9 +1805,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      *
      * @return  int transform ID
      */
-    public final int getTransformID() {
-        return transformID;
-    }
+  //  public final int getTransformID() {
+   //     return transformID;
+  //  }
 
     /**
      * Returns the units of measure.
@@ -2320,9 +2268,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      *
      * @param  t_id  transform ID
      */
-    public void setTransformID(int t_id) {
-        transformID = t_id;
-    }
+  //  public void setTransformID(int t_id) {
+  //      transformID = t_id;
+  //  }
 
     /**
      * Sets (copies) units of measure for image.

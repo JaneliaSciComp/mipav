@@ -145,7 +145,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         addWindowListener(this);
         buildMenu();
-        Preferences.setProperty("ImageDirectory", dir);
+        Preferences.setProperty(Preferences.PREF_IMAGE_DIR, dir);
         buildSourceTreeListing(true);
         treePanel.setPreferredSize(new Dimension(200, 200));
         imagePanel = new JPanel();
@@ -260,7 +260,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 imageTableModel.removeAllRows();
                 imagePanel.removeAll();
                 imagePanel.repaint();
-                Preferences.setProperty("ImageDirectory", dir);
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, dir);
                 directory = dir;
                 treePanel.removeAll();
                 buildSourceTreeListing(true);

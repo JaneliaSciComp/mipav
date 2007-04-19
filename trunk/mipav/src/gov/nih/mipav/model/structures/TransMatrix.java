@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
@@ -72,6 +73,29 @@ public class TransMatrix extends Matrix // implements TableModelListener
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5604493833934574127L;
 
+    /** Composite transform ID. */
+    public static final int TRANSFORM_UNKNOWN = 0;
+
+    /** Scanner Anatomical transform ID. */
+    public static final int TRANSFORM_SCANNER_ANATOMICAL = 1;
+
+    /** Another Dataset transform ID. */
+    public static final int TRANSFORM_ANOTHER_DATASET = 2;
+
+    /** Talairach Tournoux transform ID. */
+    public static final int TRANSFORM_TALAIRACH_TOURNOUX = 3;
+
+    /** MNI 152 transform ID. */
+    public static final int TRANSFORM_MNI_152 = 4;
+    
+    /** */
+    public static final int TRANSFORM_COMPOSITE = 5;
+    
+    /** Array of transform ID strings. */
+    private static final String[] transformIDStr = {
+        "Unknown", "Scanner Anatomical", "Another Dataset", "Talairach Tournoux", "MNI 152", "Composite"
+    };
+    
     /** DOCUMENT ME! */
     public static final int DEGREES = 0;
 
@@ -131,6 +155,9 @@ public class TransMatrix extends Matrix // implements TableModelListener
     /** DOCUMENT ME! */
     private int U_TRANSZ = 11;
 
+    /** Transform ID associated with the matrix. */
+    private int transformID = TRANSFORM_COMPOSITE;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -139,10 +166,16 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  dim  should be 3 or 4 (square matrix)
      */
     public TransMatrix(int dim) {
-        super(dim, dim);
-        identity();
+       this(dim, TRANSFORM_COMPOSITE);
     }
 
+    public TransMatrix(int dim, int id) {
+    	super(dim, dim);
+    	identity();
+    	this.transformID = id;
+    }
+    
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -151,7 +184,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @return  a TransMatrix object.
      */
     public Object clone() {
-        TransMatrix tMat = new TransMatrix(this.mRow);
+        TransMatrix tMat = new TransMatrix(this.mRow, transformID);
         tMat.matrix = this.getArrayCopy();
 
         return tMat;
@@ -1847,6 +1880,77 @@ public class TransMatrix extends Matrix // implements TableModelListener
         return;
     }
 
+    /**
+     * Returns the transform ID associated with the matrix.
+     *
+     * @return  int transform ID
+     */
+    public final int getTransformID() {
+        return transformID;
+    }
+    
+    /**
+     * Returns the transform ID associated with a string.
+     *
+     * @param   s  String to test
+     *
+     * @return  data type
+     */
+    public static int getTransformIDFromStr(String s) {
+
+        // look through the array of strings to see if there's a match.
+        try {
+
+            for (int i = 0; i < transformIDStr.length; i++) {
+
+                if (TransMatrix.getTransformIDStr(i).regionMatches(true, 0, s, 0,
+                		TransMatrix.getTransformIDStr(i).length())) {
+                    return i;
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException aie) {
+            return FileInfoBase.TRANSFORM_UNKNOWN;
+        }
+
+        return FileInfoBase.TRANSFORM_UNKNOWN;
+
+    } // getTransformIDFromStr()
+
+    /**
+     * Return the list of transform ID strings (for edit attributes combo box.
+     *
+     * @return  string [] of transform ID
+     */
+    public static String[] getTransformIDStr() {
+        return transformIDStr;
+    }
+
+    /**
+     * Return the string associated with the matrix transform ID.
+     *
+     * @param   m  transform ID
+     *
+     * @return  the string associated with the transform ID
+     */
+    public static String getTransformIDStr(int m) {
+
+        try {
+            return TransMatrix.transformIDStr[m];
+        } catch (ArrayIndexOutOfBoundsException aie) { }
+
+        return "";
+    }
+    
+    /**
+     * Sets the transform ID for the matrix.
+     *
+     * @param  t_id  transform ID
+     */
+    public void setTransformID(int t_id) {
+        transformID = t_id;
+    }
+    
+    
     /**
      * Decodes the line in the matrix file.
      *

@@ -764,13 +764,8 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                     // if dimensions have not been changed, copy the fileinfo core information into the appropriate
                     // result image fileinfos
                     if (destExtents.length == image.getExtents().length) {
-                        resultImage.setMatrix((TransMatrix) image.getMatrix().clone());
-
-                        int tID = image.getFileInfo()[0].getTransformID();
-
-                        for (int i = 0; i < resultImage.getFileInfo().length; i++) {
-                            resultImage.getFileInfo()[i].setTransformID(tID);
-                        }
+                    	
+                    	resultImage.getMatrixHolder().addMatrix((TransMatrix) image.getMatrix().clone());
 
                         FileInfoBase.copyCoreInfo(image.getFileInfo(), resultImage.getFileInfo(), checkListRemove);
                     }

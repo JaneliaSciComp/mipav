@@ -884,7 +884,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         historyString = new String("EdgeNMSup(" + sigmaStr + String.valueOf(entireImage) + ", " +
                                    String.valueOf(image25D) + ")\n");
 
-        if (Preferences.is(Preferences.PREF_LOG) && (zXMask.getHistoryArea() != null)) {
+        if (Preferences.is(Preferences.PREF_HISTORY) && (zXMask.getHistoryArea() != null)) {
             zXMask.getHistoryArea().append(historyString);
         }
     }

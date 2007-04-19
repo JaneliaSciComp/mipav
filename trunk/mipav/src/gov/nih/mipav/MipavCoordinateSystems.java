@@ -120,16 +120,20 @@ public class MipavCoordinateSystems {
      * @param  kOutput  the transformed point in ScannerCoordinates
      * @param  kImage   the image for which the point is being transformed.
      */
-    public static final void fileToScanner(Point3Df kInput, Point3Df kOutput, ModelStorageBase kImage) {
+    public static final void fileToScanner(Point3Df kInput, Point3Df kOutput, ModelImage kImage) {
         float[] afAxialOrigin = kImage.getOrigin(0, FileInfoBase.AXIAL);
 
-        if ((kImage.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
+        if ((kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) ||
                 (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
 
             float[] afResolutions = kImage.getResolutions(0);
 
             TransMatrix dicomMatrix = (TransMatrix) (((ModelImage) kImage).getMatrix().clone());
 
+           // System.err.println("DICOM MATRIX (fileToScanner): " + dicomMatrix);
+           // System.err.println("axial origin: " + afAxialOrigin[0] + ", " + afAxialOrigin[1] + ", " + afAxialOrigin[2]);
+            
+            
             // Finally convert the point to axial millimeter DICOM space.
             dicomMatrix.transform(new Point3Df(kInput.x * afResolutions[0], kInput.y * afResolutions[1],
                                                kInput.z * afResolutions[2]), kOutput);
@@ -161,6 +165,7 @@ public class MipavCoordinateSystems {
         kOutput.x += afAxialOrigin[0];
         kOutput.y += afAxialOrigin[1];
         kOutput.z += afAxialOrigin[2];
+        
     }
 
     /**
@@ -479,7 +484,7 @@ public class MipavCoordinateSystems {
      * @param  kOutput  the transformed point in FileCoordinates
      * @param  kImage   the image for which the point is being transformed.
      */
-    public static final void scannerToFile(Point3Df kInput, Point3Df kOutput, ModelStorageBase kImage) {
+    public static final void scannerToFile(Point3Df kInput, Point3Df kOutput, ModelImage kImage) {
         // The input point kInput represents the current position in coronal, sagittal, axial order (L/R, A/P, I/S axis
         // space)
 
@@ -491,7 +496,7 @@ public class MipavCoordinateSystems {
         kTemp.y = kInput.y - afAxialOrigin[1];
         kTemp.z = kInput.z - afAxialOrigin[2];
 
-        if ((kImage.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
+        if ((kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) ||
                 (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
 
             // Invert the dicomMatrix Transform

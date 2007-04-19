@@ -2413,7 +2413,7 @@ public class SurfaceRender extends RenderViewBase {
 
         xfrm.identity();
 
-        Point3Df center = imageA.getImageCentermm();
+        Point3Df center = imageA.getImageCentermm(false);
 
         xfrm.setTranslate(center.x, center.y, center.z);
         xfrm.multMatrix(xfrm.getMatrix(), transMtx.getMatrix(), result);

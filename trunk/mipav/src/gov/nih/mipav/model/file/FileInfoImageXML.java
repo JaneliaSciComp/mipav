@@ -276,7 +276,9 @@ public class FileInfoImageXML extends FileInfoXML {
 
             // when using displayAboutInfo(dialog) this doesn't appear
             // calling prg might use an editing panel to adjust this matrix
-            dialog.appendPrimaryData("Transform ID", getTransformIDStr(getTransformID()));
+        	
+        	//BEN: CHANGE the following...
+            //dialog.appendPrimaryData("Transform ID", TransMatrix.getTransformIDStr(getTransformID()));
             dialog.appendPrimaryData("Matrix", matrix.matrixToString(10, 4));
         }
 

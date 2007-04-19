@@ -41,11 +41,21 @@ public class Preferences {
     public static final String PREF_OVERWRITE_VOI_STATS = "OverwriteStatistics";
 
     /** Constant that indicates if logging is turned on. */
-    public static final String PREF_LOG = "Log";
+    public static final String PREF_HISTORY = "RecordHistory";
 
-    /** Constant that indicates if the DICOM Receiver should be on by default. */
-    public static final String PREF_AUTOSTART_DICOM_RECEIVER = "EnableDICOMReceiver";
-
+    /** Constant for debug s*/
+    public static final String PREF_DEBUG = "DEBUG";
+    
+    public static final String PREF_LOGGING_ENABLED = "LoggingEnabled";
+    
+    /** Constant that indicates the intensity label color*/
+    public static final String PREF_INTENSITY_LABEL_COLOR = "IntensityLabelColor";
+    
+    /** Constant that indicates the intensity label background color*/
+    public static final String PREF_INTENSITY_LABEL_BACKGROUND_COLOR = "IntensityLabelBackgroundColor";
+    
+    public static final String PREF_DEFAULT_FRAME_RATE = "DefaultFrameRate";
+    
     /**
      * Constant that indicates if the last used parameters for algorithm dialogs should be used when they are opened.
      */
@@ -80,13 +90,15 @@ public class Preferences {
 
     /** Constant indicating if the Paint Toolbar is on by default. */
     public static final String PREF_PAINT_TOOLBAR_ON = "PaintToolbar";
-
+    
     /** Constant that indicates if the Scripting toolbar should be shown by default. */
     public static final String PREF_SCRIPTING_TOOLBAR_ON = "Scripting";
 
     /** Constant indicating if the VOI Toolbar is on by default. */
     public static final String PREF_VOI_TOOLBAR_ON = "VOIToolbar";
 
+    public static final String PREF_SHORTCUTS = "Shortcuts";
+    
     /**
      * Constant that indicates whether the triplanar frame should wait for a mouse released event before repainting all
      * 9 tri-planar images. Inserted here because repainting 9 images in real time gets to be tedious.
@@ -102,6 +114,9 @@ public class Preferences {
     /** Constant that indicates whether [SHIFT] must be held down to draw continuous contours (false = hold-shift). */
     public static final String PREF_CONTINUOUS_VOI_CONTOUR = "ContinuousVOIContours";
 
+    /** Constant indicating the look of VOI Points drawn on an image*/
+    public static final String PREF_VOI_POINT_DRAW_TYPE = "VOIPointDrawType";
+    
     /** Constant that indicates whether the triplanar frame should use the old 2x2 layout or the newer 3x1 layout. */
     public static final String PREF_TRIPLANAR_2X2_LAYOUT = "TriPlanar2x2Layout";
 
@@ -111,6 +126,8 @@ public class Preferences {
     /** DOCUMENT ME! */
     public static final String PREF_MENU_FONT_SIZE = "MenuFontSize";
 
+    public static final String PREF_MENU_FONT_COLOR = "MenuFontColor";
+    
     /** DOCUMENT ME! */
     public static final String PREF_SHOW_VOI_NAME = "DrawVOIName";
 
@@ -157,12 +174,125 @@ public class Preferences {
      * or mipav is restarted */
     public static final String PREF_LAST_PAINT_BRUSH = "LastPaintBrush";
     
+    /** Constant that indicates the user defined file type associations*/
+    public static final String PREF_USER_FILETYPE_ASSOC = "userDefinedFileTypeAssociations";
+    
+    /** Constant that indicates the user defined file types*/
+    public static final String PREF_USER_FILETYPES = "userDefinedFileTypes";
+    
+    /** ? */
+    public static final String PREF_USER_FILETYPES_TEXTFIELDS = "userDefinedFileTypes_textField";
+    
+    /** Constant that indicates the filename filter */
+    public static final String PREF_FILENAME_FILTER = "FilenameFilter";
+    
+    /** Constant that indicates the current image directory */
+    public static final String PREF_IMAGE_DIR = "ImageDirectory";
+    
+    /** Constant that indicates the last used VOI text color*/
+    public static final String PREF_VOI_TEXT_COLOR = "VOITextColor";
+    
+    /** Constant that indicates the last used VOI text background color*/
+    public static final String PREF_VOI_TEXT_BACKGROUND_COLOR = "VOITextBackgroundColor";
+    
+    /** Constant that indicates the default dicom storage directory*/
+    public static final String PREF_DICOM_STORAGE_DIR = "Storage1";
+    
+    /** Constant that indicates whether to enable the dicom receiver*/
+    public static final String PREF_AUTOSTART_DICOM_RECEIVER = "EnableDICOMReceiver";
+    
+    /** Constant that indicates the active image color*/
+    public static final String PREF_ACTIVE_IMAGE_COLOR = "ActiveImageColor";
+    
+    /** number of recently used images to store in quicklist*/
+    public static final String PREF_QUICKLIST_NUMBER = "QuickListNumber";
+    
+    /** constant for the names of the last X number of images used to be shown in quicklist*/
+    public static final String PREF_LAST_X_IMAGES = "LastXImages";
+    
+    /** constant for the names of the last X number of projects used*/
+    public static final String PREF_LAST_X_PROJECTS = "LastXProjects";
+    
+    /** constant for warning the user when audio will be discarded from opened AVIs*/
+    public static final String PREF_WARN_AUDIO_AVI ="WarnAudioAVI";
+    
+    public static final String PREF_OVERWRITE_STATISTICS = "OverwriteStatistics";
+    
+    /** Constant that indicates the crosshair cursor to be used */
+    public static final String PREF_CROSSHAIR_CURSOR = "CrosshairCursor";
+    
+    public static final String PREF_TRIM = "TRIM";
+    
+    public static final String PREF_TRIM_FLAG = "TRIM_FLAG";
+    
+    /** Constant indicating the VOI Thickness */
+    public static final String PREF_VOI_THICKNESS = "VOIThickness";
+    
+    /** the voi draw color constant*/
+    public static final String PREF_VOI_DRAW_COLOR = "VOIDrawColor";
+    
+    /** the starting color for VOIs (first drawn)*/
+    public static final String PREF_VOI_START_COLOR = "VOIColor";
+    
+    /** constant for logging*/
+    public static final String PREF_HISTORY_MODE = "Log";
+    
     /**
      * Constant that indicates whether .img files should always be written in analyze format (as opposed to asking
      * whether to save as nifti).
      */
     public static final String PREF_ALWAYS_SAVE_IMG_AS_ANALYZE = "AlwaysSaveImgAsAnalyze";
 
+    /** Constant that indicates the script directory*/
+    public static final String PREF_SCRIPT_DIR = "ScriptDirectory";
+    
+    /** Constant that indicates the last script that was run*/
+    public static final String PREF_LAST_SCRIPT = "LastScript";
+    
+    /** constant that indicates the dicom save dictionary*/
+    public static final String PREF_DICOM_SAVE_DICTIONARY = "DICOMSaveDictionary";
+    
+    /** The starting heap size*/
+    public static final String PREF_STARTING_HEAP_SIZE = "StartingHeapSize";
+    
+    /** The maximum heap size*/
+    public static final String PREF_MAX_HEAP_SIZE = "MaximumHeapSize";
+    
+    
+    public static final String PREF_RAW_EXTENTS = "RawImageExtents";
+    public static final String PREF_RAW_BIG_ENDIAN = "RawImageBigEndianByteOrder";
+    public static final String PREF_RAW_RESOLUTIONS = "RawImageResolutions";
+    public static final String PREF_RAW_UNITS = "RawImageUnits";
+    public static final String PREF_RAW_TYPE  = "RawImageType";
+    public static final String PREF_RAW_DATA_OFFSET ="RawImageDataOffset";
+    
+    public static final String PREF_LB_ROW_DEPENDENT = "LightBoxRowDependent";
+    public static final String PREF_LB_GRID_ROW = "LightBoxGridRow";
+    public static final String PREF_LB_GRID_COL = "LightBoxGridCol";
+    public static final String PREF_LB_GRID_SIZE = "LightBoxGridSize";
+    public static final String PREF_LB_GRID_COLOR = "LightBoxGridColor";
+    public static final String PREF_LB_BORDER_SIZE = "LightBoxBorderSize";
+    public static final String PREF_LB_BORDER_COLOR = "LightBoxBorderColor";
+    public static final String PREF_LB_SELECTED_BORDER_SIZE = "LightBoxSelectedBorderSize";
+    public static final String PREF_LB_SELECTED_BORDER_COLOR = "LightBoxSelectedBorderColor";
+    public static final String PREF_LB_MAG = "LightBoxMagnification";
+    public static final String PREF_LB_LOCATION = "LightBoxLocation";
+    public static final String PREF_LB_TSLICE = "LightBoxIndividualTSlice";
+    
+    public static final String PREF_APP_TITLE = "ApplicationTitle";
+    public static final String PREF_APP_ICON = "ApplicationIcon";
+    
+    public static final String PREF_SHOW_OVERLAYS = "ShowOverlays";
+    
+    /** plugin of algorithm type*/
+    public static final String PREF_PLUGIN_ALGORITHM = "PlugInAlgorithm";
+    
+    /** plugin of file type*/
+    public static final String PREF_PLUGIN_FILE = "PlugInFile";
+    
+    /** plugin of view type*/
+    public static final String PREF_PLUGIN_VIEW = "PlugInView";
+    
     /** Operating system constant for Windows. */
     public static final int OS_WINDOWS = 2;
 
@@ -221,59 +351,57 @@ public class Preferences {
     static {
         defaultProps = new Properties();
 
-        defaultProps.setProperty("EnableDICOMReceiver", "false");
-        defaultProps.setProperty("TRIM", "0.3");
-        defaultProps.setProperty("DEBUG", "false, false, false, false");
-        defaultProps.setProperty("LogFilename", System.getProperty("user.dir") + File.separator + "mipav.log");
-        defaultProps.setProperty("RawImageExtents", "256,256,0,0,0");
-        defaultProps.setProperty("RawImageBigEndianByteOrder", "true");
-        defaultProps.setProperty("RawImageResolutions", "1.0,1.0,1.0,1.0,1.0");
-        defaultProps.setProperty("RawImageUnits", "6,6,6,6"); // 6 = millimeters
-        defaultProps.setProperty("RawImageType", "3"); // 3 = ModelStorageBase.SHORT
-        defaultProps.setProperty("RawImageDataOffset", "0");
-        defaultProps.setProperty("ApplicationTitle", "MIPAV: ");
-        defaultProps.setProperty("ApplicationIcon", "divinci.gif");
-        defaultProps.setProperty("ActiveImageColor", "ff0000"); // red
-        defaultProps.setProperty("CrosshairCursor", "default");
-        defaultProps.setProperty("TRIM_FLAG", "true");
-        defaultProps.setProperty("SplashGraphics", "true");
-        defaultProps.setProperty("Scripting", "false");
-        defaultProps.setProperty("PaintToolbar", "false");
-        defaultProps.setProperty("ShowOverlays", "false");
+        defaultProps.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
+        defaultProps.setProperty(Preferences.PREF_TRIM, "0.3");
+        defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false");
+        defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, System.getProperty("user.dir") + File.separator + "mipav.log");
+        defaultProps.setProperty(Preferences.PREF_RAW_EXTENTS, "256,256,0,0,0");
+        defaultProps.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, "true");
+        defaultProps.setProperty(Preferences.PREF_RAW_RESOLUTIONS, "1.0,1.0,1.0,1.0,1.0");
+        defaultProps.setProperty(Preferences.PREF_RAW_UNITS, "6,6,6,6"); // 6 = millimeters
+        defaultProps.setProperty(Preferences.PREF_RAW_TYPE, "3"); // 3 = ModelStorageBase.SHORT
+        defaultProps.setProperty(Preferences.PREF_RAW_DATA_OFFSET, "0");
+        defaultProps.setProperty(Preferences.PREF_APP_TITLE, "MIPAV: ");
+        defaultProps.setProperty(Preferences.PREF_APP_ICON, "divinci.gif");
+        defaultProps.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, "ff0000"); // red
+        defaultProps.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, "default");
+        defaultProps.setProperty(Preferences.PREF_TRIM_FLAG, "true");
+        defaultProps.setProperty(Preferences.PREF_SHOW_SPLASH, "true");
+        defaultProps.setProperty(Preferences.PREF_SCRIPTING_TOOLBAR_ON, "false");
+        defaultProps.setProperty(Preferences.PREF_PAINT_TOOLBAR_ON, "false");
+        defaultProps.setProperty(Preferences.PREF_SHOW_OVERLAYS, "false");
 
         /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head) */
-        defaultProps.setProperty("FilenameFilter", "8"); // 8 = ViewImageFileFilter.TECH
-        defaultProps.setProperty("SaveXMLOnHDRSave", "false");
-        defaultProps.setProperty("SaveXMLZip", "false");
-        defaultProps.setProperty("SaveAllOnSave", "false");
-        defaultProps.setProperty("OverwriteStatistics", "false");
-        defaultProps.setProperty("LastXImages", "");
-        defaultProps.setProperty("QuickListNumber", "4");
-        defaultProps.setProperty("LastXProjects", "");
-        defaultProps.setProperty("WarnAudioAVI", "true");
-        defaultProps.setProperty("ShowPaintBorder", "false");
+        defaultProps.setProperty(Preferences.PREF_FILENAME_FILTER, "8"); // 8 = ViewImageFileFilter.TECH
+        defaultProps.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, "false");
+        defaultProps.setProperty(Preferences.PREF_SAVE_XML_ZIP, "false");
+        defaultProps.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, "false");
+        defaultProps.setProperty(Preferences.PREF_OVERWRITE_STATISTICS, "false");
+        defaultProps.setProperty(Preferences.PREF_LAST_X_IMAGES, "");
+        defaultProps.setProperty(Preferences.PREF_QUICKLIST_NUMBER, "4");
+        defaultProps.setProperty(Preferences.PREF_LAST_X_PROJECTS, "");
+        defaultProps.setProperty(Preferences.PREF_WARN_AUDIO_AVI, "true");
+        defaultProps.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, "false");
 
         // lightbox properties
-        defaultProps.setProperty("LightBoxRowDependent", "true"); // display by columns
-        defaultProps.setProperty("LightBoxGridRow", "0"); // compute 'best fit' num rows
-        defaultProps.setProperty("LightBoxGridCol", "2"); // use 2 columns
-        defaultProps.setProperty("LightBoxGridSize", "5");
-        defaultProps.setProperty("LightBoxGridColor", "000000");
-        defaultProps.setProperty("LightBoxBorderSize", "3");
-        defaultProps.setProperty("LightBoxBorderColor", "960000");
-        defaultProps.setProperty("LightBoxSelectedBorderSize", "2");
-        defaultProps.setProperty("LightBoxSelectedBorderColor", "ffff00");
-        defaultProps.setProperty("LightBoxMagnification", "45.0");
-        defaultProps.setProperty("LightBoxLocation", "-10,-10"); // use incorrect value to compute 'best' location
+        defaultProps.setProperty(Preferences.PREF_LB_ROW_DEPENDENT, "true"); // display by columns
+        defaultProps.setProperty(Preferences.PREF_LB_GRID_ROW, "0"); // compute 'best fit' num rows
+        defaultProps.setProperty(Preferences.PREF_LB_GRID_COL, "2"); // use 2 columns
+        defaultProps.setProperty(Preferences.PREF_LB_GRID_SIZE, "5");
+        defaultProps.setProperty(Preferences.PREF_LB_GRID_COLOR, "000000");
+        defaultProps.setProperty(Preferences.PREF_LB_BORDER_SIZE, "3");
+        defaultProps.setProperty(Preferences.PREF_LB_BORDER_COLOR, "960000");
+        defaultProps.setProperty(Preferences.PREF_LB_SELECTED_BORDER_SIZE, "2");
+        defaultProps.setProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR, "ffff00");
+        defaultProps.setProperty(Preferences.PREF_LB_MAG, "45.0");
+        defaultProps.setProperty(Preferences.PREF_LB_LOCATION, "-10,-10"); // use incorrect value to compute 'best' location
 
         // look and feel properties
-        defaultProps.setProperty("MenuFont", "Serif");
-        defaultProps.setProperty("MenuFontSize", "12");
-        // defaultProps.setProperty("MenuAcceleratorFontSize", "2");
+        defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
+        defaultProps.setProperty(Preferences.PREF_MENU_FONT_SIZE, "12");
 
-        defaultProps.setProperty("MenuFontColor", "BLACK");
-        defaultProps.setProperty("ShowOutput", "true");
-        // defaultProps.setProperty("MenuAcceleratorFontColor", "");
+        defaultProps.setProperty(Preferences.PREF_MENU_FONT_COLOR, "BLACK");
+        defaultProps.setProperty(Preferences.PREF_SHOW_OUTPUT, "true");
 
         // username and srb server properties
         defaultProps.setProperty(PREF_USERNAME_SRB, "");
@@ -341,7 +469,7 @@ public class Preferences {
     public static final void buildShortcutTable() {
         userShortcutTable = new Hashtable();
 
-        String str = getProperty("Shortcuts");
+        String str = getProperty(Preferences.PREF_SHORTCUTS);
 
         // System.err.println(str);
         String keyStr = null;
@@ -542,17 +670,17 @@ public class Preferences {
      * @return  the default frame rate as a floating point number.
      */
     public static float getDefaultFrameRate() {
-        String str = getProperty("DefaultFrameRate");
+        String str = getProperty(Preferences.PREF_DEFAULT_FRAME_RATE);
 
         if (str != null) {
 
             try {
                 return Float.parseFloat(str);
             } catch (Exception ex) {
-                setProperty("DefaultFrameRate", "10.0");
+                setProperty(Preferences.PREF_DEFAULT_FRAME_RATE, "10.0");
             }
         } else {
-            setProperty("DefaultFrameRate", "10.0");
+            setProperty(Preferences.PREF_DEFAULT_FRAME_RATE, "10.0");
         }
 
         return 10.0f;
@@ -627,7 +755,7 @@ public class Preferences {
      * @return  default storage information
      */
     public static String getDefaultStorageKey() {
-        String key = "Storage1";
+        String key = Preferences.PREF_DICOM_STORAGE_DIR;
         String defaultKey = key;
         StringTokenizer tok;
 
@@ -699,7 +827,7 @@ public class Preferences {
      * @return  String The full path of the dictionary in which a subset of the DICOM tags are stored.
      */
     public static final String getDICOMSaveDictionary() {
-        String key = getProperty("DICOMSaveDictionary");
+        String key = getProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY);
         String defaultKey = System.getProperties().getProperty("user.home") + File.separator + "mipav" +
                             File.separator + "dicomsave.dictionary";
 
@@ -726,7 +854,7 @@ public class Preferences {
             read();
         }
 
-        return Integer.parseInt(getProperty("FilenameFilter"));
+        return Integer.parseInt(getProperty(Preferences.PREF_FILENAME_FILTER));
     }
 
     /**
@@ -785,7 +913,7 @@ public class Preferences {
      */
     public static String getImageDirectory() {
 
-        String str = Preferences.getProperty("ImageDirectory");
+        String str = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
 
         if (str != null) {
             return str;
@@ -834,7 +962,7 @@ public class Preferences {
      * @return  Name of image at index.
      */
     public static final String getLastImageAt(int index) {
-        String str = getProperty("LastXImages");
+        String str = getProperty(Preferences.PREF_LAST_X_IMAGES);
         String[] images = null;
 
         if (str != null) {
@@ -951,7 +1079,7 @@ public class Preferences {
      * @return      Name of project at index.
      */
     public static final String getLastProjectAt(int index) {
-        String str = getProperty("LastXProjects");
+        String str = getProperty(Preferences.PREF_LAST_X_PROJECTS);
         StringTokenizer tok;
         String[] projects = null;
 
@@ -993,8 +1121,8 @@ public class Preferences {
      * @return  Array of strings representing the last images that were loaded
      */
     public static final String[] getLastXImages() {
-        String str = getProperty("LastXImages");
-        String quickStr = getProperty("QuickListNumber");
+        String str = getProperty(Preferences.PREF_LAST_X_IMAGES);
+        String quickStr = getProperty(Preferences.PREF_QUICKLIST_NUMBER);
         StringTokenizer tok;
         String[] images = null;
         String testStr = null;
@@ -1039,7 +1167,7 @@ public class Preferences {
                 if (someRemoved || (tempVec.size() < maxList)) {
 
                     if (tempVec.size() < 1) {
-                        setProperty("LastXImages", "");
+                        setProperty(Preferences.PREF_LAST_X_IMAGES, "");
 
                         return new String[0];
                     }
@@ -1052,7 +1180,7 @@ public class Preferences {
 
                     // chop off the last ";"
                     newStr = newStr.substring(0, newStr.length() - 1);
-                    setProperty("LastXImages", newStr);
+                    setProperty(Preferences.PREF_LAST_X_IMAGES, newStr);
                 }
 
                 images = new String[tempVec.size()];
@@ -1113,7 +1241,7 @@ public class Preferences {
      * @return      Array of strings representing the last projects that were loaded, max of four.
      */
     public static final String[] getLastXProjects() {
-        String str = getProperty("LastXProjects");
+        String str = getProperty(Preferences.PREF_LAST_X_PROJECTS);
         StringTokenizer tok;
         String[] projects = null;
         String testStr = null;
@@ -1123,7 +1251,7 @@ public class Preferences {
         int maxList;
 
         try {
-            maxList = Integer.parseInt(getProperty("QuickListNumber"));
+            maxList = Integer.parseInt(getProperty(Preferences.PREF_QUICKLIST_NUMBER));
         } catch (Exception e) {
             maxList = 4;
         }
@@ -1155,7 +1283,7 @@ public class Preferences {
                 if (someRemoved || (tempVec.size() < maxList)) {
 
                     if (tempVec.size() < 1) {
-                        setProperty("LastXProjects", "");
+                        setProperty(Preferences.PREF_LAST_X_PROJECTS, "");
 
                         return new String[0];
                     }
@@ -1168,7 +1296,7 @@ public class Preferences {
 
                     // chop off the last ";"
                     newStr = newStr.substring(0, newStr.length() - 1);
-                    setProperty("LastXProjects", newStr);
+                    setProperty(Preferences.PREF_LAST_X_PROJECTS, newStr);
                 }
 
                 projects = new String[tempVec.size()];
@@ -1260,7 +1388,7 @@ public class Preferences {
      * @return  The next storage key.
      */
     public static String getNextStorageKey() {
-        String key = "Storage1";
+        String key = Preferences.PREF_DICOM_STORAGE_DIR;
 
         if (mipavProps == null) {
             read();
@@ -1379,7 +1507,7 @@ public class Preferences {
         String str = getProperty("PluginUserDir");
 
         if (str == null) {
-            return getProperty("ImageDirectory");
+            return getProperty(Preferences.PREF_IMAGE_DIR);
         }
 
         return str;
@@ -1463,13 +1591,13 @@ public class Preferences {
      * @return  script dir
      */
     public static final String getScriptsDirectory() {
-        String str = getProperty("ScriptsDir");
+        String str = getProperty(Preferences.PREF_SCRIPT_DIR);
 
         if (str == null) {
 
             // set the default
             str = System.getProperty("user.dir") + File.separator + "scripts";
-            setProperty("ScriptsDir", str);
+            setProperty(Preferences.PREF_SCRIPT_DIR, str);
         }
 
         return str;
@@ -1700,7 +1828,7 @@ public class Preferences {
             read();
         }
 
-        String str = getProperty("TRIM");
+        String str = getProperty(Preferences.PREF_TRIM);
 
         if (str != null) {
             return (Float.valueOf(str).floatValue());
@@ -1720,7 +1848,7 @@ public class Preferences {
             read();
         }
 
-        String str = getProperty("TRIM_FLAG");
+        String str = getProperty(Preferences.PREF_TRIM_FLAG);
 
         if (str != null) {
             return (Boolean.valueOf(str).booleanValue());
@@ -1760,7 +1888,7 @@ public class Preferences {
     public static int getVOIColorIncrement() {
         int increment = 0;
 
-        String str = getProperty("VOIColor");
+        String str = getProperty(Preferences.PREF_VOI_START_COLOR);
 
         if (str != null) {
 
@@ -1781,7 +1909,7 @@ public class Preferences {
      */
     public static Color getVOIDrawColor() {
 
-        String str = getProperty("VOIDrawColor");
+        String str = getProperty(Preferences.PREF_VOI_DRAW_COLOR);
         Color drawColor = Color.yellow;
 
         if (str != null) {
@@ -1803,7 +1931,7 @@ public class Preferences {
      */
     public static int getVOIThickness() {
         int thickness = 1;
-        String str = getProperty("VOIThickness");
+        String str = getProperty(Preferences.PREF_VOI_THICKNESS);
 
         if (str != null) {
 
@@ -1813,7 +1941,7 @@ public class Preferences {
                 // do nothing.. thickness still 1
             }
         } else {
-            setProperty("VOIThickness", "1");
+            setProperty(Preferences.PREF_VOI_THICKNESS, "1");
         }
 
         return thickness;
@@ -2138,7 +2266,7 @@ public class Preferences {
 
             }
 
-            setProperty("Shortcuts", longStr);
+            setProperty(Preferences.PREF_SHORTCUTS, longStr);
         } catch (Exception ex) {
             System.err.println("error setting shortcuts in prefs");
         }
@@ -2197,7 +2325,7 @@ public class Preferences {
                 }
             }
 
-            setProperty("DEBUG", str);
+            setProperty(Preferences.PREF_DEBUG, str);
         }
     }
 
@@ -2231,7 +2359,7 @@ public class Preferences {
      * @param  fileFilterIndex  the index of the current used file filter.
      */
     public static void setFileFilter(int fileFilterIndex) {
-        setProperty("FilenameFilter", new Integer(fileFilterIndex));
+        setProperty(Preferences.PREF_FILENAME_FILTER, new Integer(fileFilterIndex));
     }
 
     /**
@@ -2246,9 +2374,9 @@ public class Preferences {
         }
 
         if (imageDirectory.isDirectory()) {
-            setProperty("ImageDirectory", imageDirectory.getAbsolutePath());
+            setProperty(Preferences.PREF_IMAGE_DIR, imageDirectory.getAbsolutePath());
         } else {
-            setProperty("ImageDirectory", imageDirectory.getParent());
+            setProperty(Preferences.PREF_IMAGE_DIR, imageDirectory.getParent());
         }
     }
 
@@ -2267,8 +2395,8 @@ public class Preferences {
 
         String newName;
         String newProp;
-        String str = getProperty("LastXImages");
-        String quickStr = getProperty("QuickListNumber");
+        String str = getProperty(Preferences.PREF_LAST_X_IMAGES);
+        String quickStr = getProperty(Preferences.PREF_QUICKLIST_NUMBER);
         StringTokenizer tok;
 
         int quickListNumber;
@@ -2333,7 +2461,7 @@ public class Preferences {
 
         // System.err.println("New quicklist string is: " + newProp);
 
-        setProperty("LastXImages", newProp);
+        setProperty(Preferences.PREF_LAST_X_IMAGES, newProp);
     }
 
     /**
@@ -2378,13 +2506,13 @@ public class Preferences {
             return;
         }
 
-        String str = getProperty("LastXProjects");
+        String str = getProperty(Preferences.PREF_LAST_X_PROJECTS);
         StringTokenizer tok;
 
         int quickListNumber;
 
         try {
-            quickListNumber = Integer.parseInt(getProperty("QuickListNumber"));
+            quickListNumber = Integer.parseInt(getProperty(Preferences.PREF_QUICKLIST_NUMBER));
         } catch (Exception e) {
             quickListNumber = 4;
         }
@@ -2412,7 +2540,7 @@ public class Preferences {
             } catch (Exception ex) { }
         }
 
-        setProperty("LastXProjects", newProp);
+        setProperty(Preferences.PREF_LAST_X_PROJECTS, newProp);
     }
 
     /**
@@ -2526,7 +2654,7 @@ public class Preferences {
     public static final void setScriptsDirectory(String scriptsDirectory) {
 
         if (scriptsDirectory != null) {
-            setProperty("ScriptsDir", scriptsDirectory);
+            setProperty(Preferences.PREF_SCRIPT_DIR, scriptsDirectory);
         }
     }
 

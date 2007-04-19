@@ -450,7 +450,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
     protected void writeLog() {
 
         // write to the history area
-        if (Preferences.is(Preferences.PREF_LOG) && isCompleted()) {
+        if (Preferences.is(Preferences.PREF_HISTORY) && isCompleted()) {
 
             if (destImage != null) {
 

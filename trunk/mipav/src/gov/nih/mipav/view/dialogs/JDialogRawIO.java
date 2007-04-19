@@ -388,12 +388,12 @@ public class JDialogRawIO extends JDialogBase {
             }
 
             // set the properties, cos we are sure we are done with the dialog
-            Preferences.setProperty("RawImageBigEndianByteOrder", String.valueOf(endianess));
-            Preferences.setProperty("RawImageDataOffset", textOffset.getText());
-            Preferences.setProperty("RawImageType", Integer.toString(dataType));
-            Preferences.setProperty("RawImageExtents", this.makeExtentsString());
-            Preferences.setProperty("RawImageResolutions", this.makeResolutionString());
-            Preferences.setProperty("RawImageUnits", this.makeUnitString());
+            Preferences.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, String.valueOf(endianess));
+            Preferences.setProperty(Preferences.PREF_RAW_DATA_OFFSET, textOffset.getText());
+            Preferences.setProperty(Preferences.PREF_RAW_TYPE, Integer.toString(dataType));
+            Preferences.setProperty(Preferences.PREF_RAW_EXTENTS, this.makeExtentsString());
+            Preferences.setProperty(Preferences.PREF_RAW_RESOLUTIONS, this.makeResolutionString());
+            Preferences.setProperty(Preferences.PREF_RAW_UNITS, this.makeUnitString());
             dispose();
         } else if (source == cancelButton) {
             cancelFlag = true;
@@ -902,23 +902,23 @@ public class JDialogRawIO extends JDialogBase {
         mainPanel.add(checkboxEnd, gbc);
 
         // check the properties for one of the necessary entries, otherwise we'll use & set defaults
-        if (Preferences.getProperty("RawImageBigEndianByteOrder") != null) {
-            boolean b = (Preferences.getProperty("RawImageBigEndianByteOrder").equalsIgnoreCase("true")) ? true : false;
-            //            setBigEndian(Boolean.getBoolean(Preferences.getProperty("RawImageBigEndianByteOrder")));
+        if (Preferences.getProperty(Preferences.PREF_RAW_BIG_ENDIAN) != null) {
+            boolean b = (Preferences.getProperty(Preferences.PREF_RAW_BIG_ENDIAN).equalsIgnoreCase("true")) ? true : false;
+            //            setBigEndian(Boolean.getBoolean(Preferences.getProperty(Preferences.PREF_RAW_BIG_ENDIAN)));
             setBigEndian(b);
-            setDataOffset(Preferences.getProperty("RawImageDataOffset"));
-            setDataType(Integer.parseInt(Preferences.getProperty("RawImageType")));
-            extractExtents(Preferences.getProperty("RawImageExtents"));
-            extractResolutions(Preferences.getProperty("RawImageResolutions"));
-            extractUnitIndeces(Preferences.getProperty("RawImageUnits"));
+            setDataOffset(Preferences.getProperty(Preferences.PREF_RAW_DATA_OFFSET));
+            setDataType(Integer.parseInt(Preferences.getProperty(Preferences.PREF_RAW_TYPE)));
+            extractExtents(Preferences.getProperty(Preferences.PREF_RAW_EXTENTS));
+            extractResolutions(Preferences.getProperty(Preferences.PREF_RAW_RESOLUTIONS));
+            extractUnitIndeces(Preferences.getProperty(Preferences.PREF_RAW_UNITS));
         } else { // we'll tell the properties that we want to remember these preferences. (use defaults or flag values
                  // here!)
-            Preferences.setProperty("RawImageBigEndianByteOrder", new Boolean(DEFAULT_BIG_ENDIAN_BYTE_ORDER).toString());
-            Preferences.setProperty("RawImageDataOffset", new Integer(DEFAULT_DATA_OFFSET).toString());
-            Preferences.setProperty("RawImageType", new Integer(DEFAULT_IMAGE_TYPE).toString());
-            Preferences.setProperty("RawImageExtents", DEFAULT_EXTENTS);
-            Preferences.setProperty("RawImageResolutions", DEFAULT_RES);
-            Preferences.setProperty("RawImageUnits", DEFAULT_UNIT_INDEX);
+            Preferences.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, new Boolean(DEFAULT_BIG_ENDIAN_BYTE_ORDER).toString());
+            Preferences.setProperty(Preferences.PREF_RAW_DATA_OFFSET, new Integer(DEFAULT_DATA_OFFSET).toString());
+            Preferences.setProperty(Preferences.PREF_RAW_TYPE, new Integer(DEFAULT_IMAGE_TYPE).toString());
+            Preferences.setProperty(Preferences.PREF_RAW_EXTENTS, DEFAULT_EXTENTS);
+            Preferences.setProperty(Preferences.PREF_RAW_RESOLUTIONS, DEFAULT_RES);
+            Preferences.setProperty(Preferences.PREF_RAW_UNITS, DEFAULT_UNIT_INDEX);
         }
 
         getContentPane().add(mainPanel);

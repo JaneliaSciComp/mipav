@@ -83,6 +83,9 @@ public class FileImageXML extends FileXML {
     /** Vector of strings storing the history information (modifications to file). */
     private Vector historyVector = new Vector();
 
+    /** Vector to hold matrices while they are being read in for the header (until they are added to the image */
+    private Vector matrixVector = new Vector();
+    
     /** Model Image associated with the file. */
     private ModelImage image;
 
@@ -356,7 +359,7 @@ public class FileImageXML extends FileXML {
     public float[][] readHeader(String headerFileName, String headerDir, TalairachTransformInfo talairach)
             throws IOException {
         MyXMLHandler myHandler = null;
-        myHandler = new MyXMLHandler((FileInfoImageXML) fileInfo, historyVector, annotationVector, talairach);
+        myHandler = new MyXMLHandler((FileInfoImageXML) fileInfo, historyVector, annotationVector, matrixVector, talairach);
         m_kHandler = myHandler;
 
         /* Pass the .xsd file to the base class for parsing: */
@@ -548,7 +551,8 @@ public class FileImageXML extends FileXML {
             throw (e);
         }
 
-        image.setMatrix(((FileInfoImageXML) fileInfo).getMatrix());
+        image.getMatrixHolder().replaceMatrices(matrixVector);
+       // image.setMatrix(((FileInfoImageXML) fileInfo).getMatrix());
 
         // if talairach data was populated, add it
         if (talairach.getOrigOrient() != null) {
@@ -943,22 +947,94 @@ public class FileImageXML extends FileXML {
         // ((image.getMatrix().getNCols() == 4) &&
         // (nDims == 4)))) {
 
+        
+        //BEN: change this here to save all associated matrices...
+        LinkedHashMap matrixMap = img.getMatrixHolder().getMatrixMap();
+        Iterator iter = matrixMap.keySet().iterator();
+        
+        // boolean to see if talairach transform info should be used
+        boolean useTal = false;
+        
+        String currentKey = null;
+        while (iter.hasNext()) {
+            currentKey = (String)iter.next();
+            
+            TransMatrix tMatrix =  (TransMatrix)matrixMap.get(currentKey);
+            if (tMatrix != null && tMatrix.getNCols() >= img.getNDims()) {
+            	openTag(bw, datasetAttributesStr[13], true);
+                closedTag(bw, "Transform-ID", TransMatrix.getTransformIDStr(tMatrix.getTransformID()));
+                if (tMatrix.getTransformID() == TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX) {
+                	useTal = true;
+                } 
+                
+//              check to see if it is sagittal or coronal with an identity transform matrix (convert)
+                if (tMatrix.isIdentity()) {
+
+                    if (orient == FileInfoBase.SAGITTAL) {
+
+                        if (tMatrix.getNCols() == 3) {
+                        	tMatrix.setMatrix(new double[][] {
+                                               { 0, 1, 0 },
+                                               { 0, 0, -1 },
+                                               { -1, 0, 0 }
+                                           });
+                        } else if (tMatrix.getNCols() == 4) {
+                        	tMatrix.setMatrix(new double[][] {
+                                               { 0, 1, 0, 0 },
+                                               { 0, 0, -1, 0 },
+                                               { -1, 0, 0, 0 },
+                                               { 0, 0, 0, 1 }
+                                           });
+                        }
+                    } else if (orient == FileInfoBase.CORONAL) {
+
+                        if (tMatrix.getNCols() == 3) {
+                        	tMatrix.setMatrix(new double[][] {
+                                               { 1, 0, 0 },
+                                               { 0, 0, -1 },
+                                               { 0, 1, 0 }
+                                           });
+
+                        } else if (tMatrix.getNCols() == 4) {
+                        	tMatrix.setMatrix(new double[][] {
+                                               { 1, 0, 0, 0 },
+                                               { 0, 0, -1, 0 },
+                                               { 0, 1, 0, 0 },
+                                               { 0, 0, 0, 1 }
+                                           });
+                        }
+                    }
+                }
+
+
+                double[][] matrix = tMatrix.getMatrix();
+
+                for (i = 0; i < tMatrix.getNRows(); i++) {
+
+                    for (j = 0; j < tMatrix.getNCols(); j++) {
+                        closedTag(bw, "Data", new Double(matrix[i][j]).toString());
+                    }
+                }
+
+                openTag(bw, datasetAttributesStr[13], false);
+            }
+            
+        }
+        
+        /**
         TransMatrix tMat = img.getMatrix();
 
-        // boolean to see if talairach transform info should be used
-
-        boolean useTal = false;
+       
 
         if ((tMat != null) && (tMat.getNCols() >= img.getNDims())) {
             openTag(bw, datasetAttributesStr[13], true);
-            closedTag(bw, "Transform-ID", FileInfoBase.getTransformIDStr(myFileInfo.getTransformID()));
+            closedTag(bw, "Transform-ID", TransMatrix.getTransformIDStr(myFileInfo.getTransformID()));
 
             if (FileInfoBase.getTransformIDStr(myFileInfo.getTransformID()).equals("Talairach Tournoux")) {
                 useTal = true;
             }
 
             // check to see if it is sagittal or coronal with an identity transform matrix (convert)
-
             if (tMat.isIdentity()) {
 
                 if (orient == FileInfoBase.SAGITTAL) {
@@ -1009,6 +1085,8 @@ public class FileImageXML extends FileXML {
 
             openTag(bw, datasetAttributesStr[13], false);
         }
+
+        */
 
         closedTag(bw, datasetAttributesStr[14], FileInfoBase.getModalityStr(myFileInfo.getModality()));
 
@@ -2397,9 +2475,15 @@ public class FileImageXML extends FileXML {
         /** DOCUMENT ME! */
         boolean isColor = false;
 
+        
+        Vector matrixVector = null;
+        
         /** DOCUMENT ME! */
         TransMatrix matrix;
 
+        /** TransformID for each matrix */
+        int transformID;
+        
         /** DOCUMENT ME! */
         int matrixCol = -1;
 
@@ -2493,6 +2577,8 @@ public class FileImageXML extends FileXML {
         /** DOCUMENT ME! */
         int unitsCount = -1;
 
+        
+        
         /**
          * Creates a new MyXMLHandler object.
          *
@@ -2501,10 +2587,12 @@ public class FileImageXML extends FileXML {
          * @param  anVector   DOCUMENT ME!
          * @param  tal        DOCUMENT ME!
          */
-        public MyXMLHandler(FileInfoImageXML fInfo, Vector hisVector, Vector anVector, TalairachTransformInfo tal) {
+        public MyXMLHandler(FileInfoImageXML fInfo, Vector hisVector, Vector anVector, 
+        		Vector mVector, TalairachTransformInfo tal) {
             fileInfo = fInfo;
             historyVector = hisVector;
             annotationVector = anVector;
+            matrixVector = mVector;
             this.talairach = tal;
         }
 
@@ -2614,7 +2702,7 @@ public class FileImageXML extends FileXML {
                 fileInfo.setModality(FileInfoBase.getModalityFromStr(elementBuffer));
             } else if (currentKey.equals("Transform-ID")) {
                 Preferences.debug("Transform ID: " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
-                fileInfo.setTransformID(FileInfoBase.getTransformIDFromStr(elementBuffer));
+                matrix.setTransformID(TransMatrix.getTransformIDFromStr(elementBuffer));
             } else if (currentKey.equals("Data")) {
                 matrixCol++;
 
@@ -2855,6 +2943,11 @@ public class FileImageXML extends FileXML {
                 if (tlrcResCount == 6) {
                     talairach.setTlrcRes(tlrcRes);
                 }
+            } else if (currentKey.equals("Matrix")) {
+            	//add the current matrix to the vector
+            	if (matrix != null) {
+            		matrixVector.add(matrix);
+            	}
             }
         }
 
@@ -2923,15 +3016,17 @@ public class FileImageXML extends FileXML {
                 fileInfo.setResolutions(new float[nDimensions]);
                 fileInfo.setSliceThickness((float) 0.0);
 
-                if (nDimensions == 2) {
-                    matrix = new TransMatrix(3);
-                } else {
-                    matrix = new TransMatrix(4);
-                }
+               
 
                 fileInfo.setMatrix(matrix);
+            } else if (currentKey.equals("Matrix")) {
+            	 if (nDimensions == 2) {
+                     matrix = new TransMatrix(3);
+                 } else {
+                     matrix = new TransMatrix(4);
+                 }
             } else if (currentKey.equals("Thumbnail")) {
-                thumbnailXDim = Integer.parseInt(atts.getValue("xDim"));
+            	thumbnailXDim = Integer.parseInt(atts.getValue("xDim"));
                 thumbnailYDim = Integer.parseInt(atts.getValue("yDim"));
 
                 // allocate a new buffer for the thumbnail (xDim * yDim))

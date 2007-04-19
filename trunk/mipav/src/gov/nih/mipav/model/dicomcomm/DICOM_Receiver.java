@@ -619,7 +619,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                                    "database access and set storage destination properties.");
 
             String values = "MIPAV;MIPAV;C:\\images;3100";
-            Preferences.setProperty("Storage1", values);
+            Preferences.setProperty(Preferences.PREF_DICOM_STORAGE_DIR, values);
 
             return;
         }

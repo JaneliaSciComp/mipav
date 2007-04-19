@@ -362,17 +362,17 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogMultiPaint(this, getImageA());
             getControls().getTools().setPaintBrushButtonSelected();
             componentImage.setCursorMode(ViewJComponentEditImage.PAINT_VOI);
-        } else if (command.equals("ShowPaintBorder")) {
+        } else if (command.equals(Preferences.PREF_SHOW_PAINT_BORDER)) {
 
             // swap the border painting
-            Preferences.setProperty("ShowPaintBorder",
+            Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER,
                                     String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
 
             for (int i = 0; i < controls.paintToolBar.getComponentCount(); i++) {
 
                 if (controls.paintToolBar.getComponent(i).getName() != null) {
 
-                    if (controls.paintToolBar.getComponent(i).getName().equals("ShowPaintBorder")) {
+                    if (controls.paintToolBar.getComponent(i).getName().equals(Preferences.PREF_SHOW_PAINT_BORDER)) {
                         ((JButton) (controls.paintToolBar.getComponent(i))).setSelected(!((JButton)
                                                                                               (controls.paintToolBar.getComponent(i)))
                                                                                             .isSelected());
@@ -393,7 +393,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Dicom")) {
 
             if (((JCheckBoxMenuItem) source).isSelected()) {
-                Preferences.setProperty("EnableDICOMReceiver", "true");
+                Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
 
                 if (userInterface.getDICOMCatcher() != null) {
 
@@ -407,7 +407,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 userInterface.setDICOMCatcher(new DICOM_Receiver());
                 menuBuilder.setMenuItemEnabled("DICOM database access", true);
             } else {
-                Preferences.setProperty("EnableDICOMReceiver", "false");
+                Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                 if (userInterface.getDICOMCatcher() != null) {
                     userInterface.getDICOMCatcher().setStop();

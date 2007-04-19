@@ -670,11 +670,11 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             case KeyEvent.VK_B:
 
                 // swap the border painting
-                Preferences.setProperty("ShowPaintBorder",
+                Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER,
                                         String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
                 for(int i=0; i<controls.paintToolBar.getComponentCount(); i++)
                     if(controls.paintToolBar.getComponent(i).getName() != null)
-                        if(controls.paintToolBar.getComponent(i).getName().equals("ShowPaintBorder"))
+                        if(controls.paintToolBar.getComponent(i).getName().equals(Preferences.PREF_SHOW_PAINT_BORDER))
                             ((JButton)(controls.paintToolBar.getComponent(i))).setSelected(!((JButton)(controls.paintToolBar.getComponent(i))).isSelected());
                 updateImages(true);
                 break;
@@ -2124,7 +2124,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             MipavUtil.displayInfo("Adjusted image will be resized to match reference image");
 
             TransMatrix xfrm;
-            Point3Df center = image2load.getImageCentermm();
+            Point3Df center = image2load.getImageCentermm(false);
 
             xfrm = new TransMatrix(3);
             xfrm.identity();

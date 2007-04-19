@@ -94,10 +94,10 @@ public class FileIO {
     public FileIO() {
         UI = ViewUserInterface.getReference();
 
-        if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
+        if (Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC) != null) {
 
-            if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) {
-                userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+            if (!Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).trim().equals("")) {
+                userDefinedFileTypeAssociations = Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).split(";");
             }
         }
 
@@ -116,10 +116,10 @@ public class FileIO {
         UI = ViewUserInterface.getReference();
         LUT = _LUT;
 
-        if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
+        if (Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC) != null) {
 
-            if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) {
-                userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+            if (!Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).trim().equals("")) {
+                userDefinedFileTypeAssociations = Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).split(";");
             }
         }
 
@@ -2074,11 +2074,14 @@ public class FileIO {
 
             try {
                 invMatrix.invert();
-                image.setMatrix(invMatrix);
+                invMatrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
+                
+                image.getMatrixHolder().addMatrix(invMatrix);
+                //image.setMatrix(invMatrix);
 
-                for (int m = 0; m < nImages; m++) {
-                    image.getFileInfo()[m].setTransformID(FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL);
-                }
+               // for (int m = 0; m < nImages; m++) {
+                //    image.getFileInfo()[m].setTransformID(FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL);
+               // }
             } catch (RuntimeException rte) {
                 invMatrix.identity();
                 // MipavUtil.displayError("Error = " + rte);
@@ -2578,10 +2581,10 @@ public class FileIO {
                     String association = userDefinedSuffix + ":" + userDefinedFileType;
                     boolean isPresent = false;
 
-                    if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
+                    if (Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC) != null) {
 
-                        if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) {
-                            userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+                        if (!Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).trim().equals("")) {
+                            userDefinedFileTypeAssociations = Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).split(";");
 
                             for (int i = 0; i < userDefinedFileTypeAssociations.length; i++) {
 
@@ -2591,20 +2594,20 @@ public class FileIO {
                             }
 
                             if (!isPresent) {
-                                Preferences.setProperty("userDefinedFileTypeAssociations",
-                                                        Preferences.getProperty("userDefinedFileTypeAssociations") +
+                                Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC,
+                                                        Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC) +
                                                         ";" + association);
                                 setUserDefinedFileTypesPref(userDefinedSuffix);
                                 setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
                             }
 
                         } else {
-                            Preferences.setProperty("userDefinedFileTypeAssociations", association);
+                            Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC, association);
                             setUserDefinedFileTypesPref(userDefinedSuffix);
                             setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
                         }
                     } else {
-                        Preferences.setProperty("userDefinedFileTypeAssociations", association);
+                        Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC, association);
                         setUserDefinedFileTypesPref(userDefinedSuffix);
                         setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
                     }
@@ -2984,14 +2987,14 @@ public class FileIO {
 
     public void setUserDefinedFileTypes_textFieldPref(String udefSuffix) {
 
-        if (Preferences.getProperty("userDefinedFileTypes_textField") != null) {
+        if (Preferences.getProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS) != null) {
 
-            if (Preferences.getProperty("userDefinedFileTypes_textField").trim().equals("")) {
-                Preferences.setProperty("userDefinedFileTypes_textField", "*" + udefSuffix);
+            if (Preferences.getProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS).trim().equals("")) {
+                Preferences.setProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS, "*" + udefSuffix);
             } else {
 
                 // first check to see if its already not there
-                String[] prefTypes = Preferences.getProperty("userDefinedFileTypes_textField").split(";");
+                String[] prefTypes = Preferences.getProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS).split(";");
                 boolean isPresent = false;
 
                 for (int i = 0; i < prefTypes.length; i++) {
@@ -3004,13 +3007,13 @@ public class FileIO {
                 }
 
                 if (!isPresent) {
-                    Preferences.setProperty("userDefinedFileTypes_textField",
-                                            Preferences.getProperty("userDefinedFileTypes_textField") + ";*" +
+                    Preferences.setProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS,
+                                            Preferences.getProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS) + ";*" +
                                             udefSuffix);
                 }
             }
         } else {
-            Preferences.setProperty("userDefinedFileTypes_textField", "*" + udefSuffix);
+            Preferences.setProperty(Preferences.PREF_USER_FILETYPES_TEXTFIELDS, "*" + udefSuffix);
         }
     }
 
@@ -3022,14 +3025,14 @@ public class FileIO {
      */
     public void setUserDefinedFileTypesPref(String udefSuffix) {
 
-        if (Preferences.getProperty("userDefinedFileTypes") != null) {
+        if (Preferences.getProperty(Preferences.PREF_USER_FILETYPES) != null) {
 
-            if (Preferences.getProperty("userDefinedFileTypes").trim().equals("")) {
-                Preferences.setProperty("userDefinedFileTypes", "*" + udefSuffix);
+            if (Preferences.getProperty(Preferences.PREF_USER_FILETYPES).trim().equals("")) {
+                Preferences.setProperty(Preferences.PREF_USER_FILETYPES, "*" + udefSuffix);
             } else {
 
                 // first check to see if its already not there
-                String[] prefTypes = Preferences.getProperty("userDefinedFileTypes").split(";");
+                String[] prefTypes = Preferences.getProperty(Preferences.PREF_USER_FILETYPES).split(";");
                 boolean isPresent = false;
 
                 for (int i = 0; i < prefTypes.length; i++) {
@@ -3042,12 +3045,12 @@ public class FileIO {
                 }
 
                 if (!isPresent) {
-                    Preferences.setProperty("userDefinedFileTypes",
-                                            Preferences.getProperty("userDefinedFileTypes") + "; *" + udefSuffix);
+                    Preferences.setProperty(Preferences.PREF_USER_FILETYPES,
+                                            Preferences.getProperty(Preferences.PREF_USER_FILETYPES) + "; *" + udefSuffix);
                 }
             }
         } else {
-            Preferences.setProperty("userDefinedFileTypes", "*" + udefSuffix);
+            Preferences.setProperty(Preferences.PREF_USER_FILETYPES, "*" + udefSuffix);
         }
 
 

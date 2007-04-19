@@ -351,7 +351,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 public void actionPerformed(ActionEvent a) { }
             });
         }
-        else if (command.equalsIgnoreCase("VOIDrawColor")) {
+        else if (command.equalsIgnoreCase(Preferences.PREF_VOI_DRAW_COLOR)) {
             colorChooser = new ViewJColorChooser(null, "Pick Active Color", new ActionListener() { // OKAY listener
                     public void actionPerformed(ActionEvent ae) {
                         voiDrawColor = colorChooser.getColor();
@@ -390,32 +390,31 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, String.valueOf(showOutputWindow.isSelected()));
 
-            // Preferences.setProperty("DEBUG", new Integer(debugLevel.getSelectedIndex()));
-            Preferences.setProperty("SplashGraphics", String.valueOf(displaySplash.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SHOW_SPLASH, String.valueOf(displaySplash.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_LINE_ANGLE, String.valueOf(showLineVOIAngleBox.isSelected()));
-            Preferences.setProperty("UseAWT", String.valueOf(useAWTBox.isSelected()));
-            Preferences.setProperty("ActiveImageColor", MipavUtil.makeColorString(preferredActiveColor));
-            Preferences.setProperty("CrosshairCursor", crosshairNames[crosshairChoices.getSelectedIndex()]);
+            Preferences.setProperty(Preferences.PREF_USE_AWT, String.valueOf(useAWTBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil.makeColorString(preferredActiveColor));
+            Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices.getSelectedIndex()]);
 
 
-            Preferences.setProperty("ShowPaintBorder", String.valueOf(showPaintBorderBox.isSelected()));
-            Preferences.setProperty("Log", String.valueOf(logModeCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf(showPaintBorderBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_HISTORY_MODE, String.valueOf(logModeCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE,
                                     String.valueOf(saveImgAsAnalyzeCheckBox.isSelected()));
-            Preferences.setProperty("SaveXMLOnHDRSave", String.valueOf(saveXMLOnHDRSaveCheckBox.isSelected()));
-            Preferences.setProperty("SaveAllOnSave", String.valueOf(saveAllCheckBox.isSelected()));
-            Preferences.setProperty("SaveDefaults", String.valueOf(saveDefaultsCheckBox.isSelected()));
-            Preferences.setProperty("SavePromptOverwrite", String.valueOf(savePromptOverwriteBox.isSelected()));
-            Preferences.setProperty("SaveXMLThumbnail", String.valueOf(saveThumbnailCheckBox.isSelected()));
-            Preferences.setProperty("SaveXMLZip", String.valueOf(saveZipCheckBox.isSelected()));
-            Preferences.setProperty("FilenameFilter", String.valueOf(fileFilter));
-            Preferences.setProperty("CloseFrameCheck", String.valueOf(checkOnFrameClose.isSelected()));
-            Preferences.setProperty("PerformLaxCheck", String.valueOf(performLaxCheck.isSelected()));
-            Preferences.setProperty("VOIColor", String.valueOf(voiColorChoices.getSelectedIndex()));
-            Preferences.setProperty("IntensityLabelColor", MipavUtil.makeColorString(intensityLabelColor));
-            Preferences.setProperty("IntensityLabelBackgroundColor", MipavUtil.makeColorString(intensityLabelBackgroundColor));
-            Preferences.setProperty("VOIDrawColor", MipavUtil.makeColorString(voiDrawColor));
-            Preferences.setProperty("VOIPointDrawType", String.valueOf(pointVOIChoices.getSelectedIndex()));
+            Preferences.setProperty(Preferences.PREF_SAVE_XML_ON_HDR_SAVE, String.valueOf(saveXMLOnHDRSaveCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, String.valueOf(saveAllCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SAVE_DEFAULTS, String.valueOf(saveDefaultsCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SAVE_PROMPT_OVERWRITE, String.valueOf(savePromptOverwriteBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, String.valueOf(saveThumbnailCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_SAVE_XML_ZIP, String.valueOf(saveZipCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, String.valueOf(fileFilter));
+            Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(checkOnFrameClose.isSelected()));
+            Preferences.setProperty(Preferences.PREF_LAX_CHECK, String.valueOf(performLaxCheck.isSelected()));
+            Preferences.setProperty(Preferences.PREF_VOI_START_COLOR, String.valueOf(voiColorChoices.getSelectedIndex()));
+            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_COLOR, MipavUtil.makeColorString(intensityLabelColor));
+            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR, MipavUtil.makeColorString(intensityLabelBackgroundColor));
+            Preferences.setProperty(Preferences.PREF_VOI_DRAW_COLOR, MipavUtil.makeColorString(voiDrawColor));
+            Preferences.setProperty(Preferences.PREF_VOI_POINT_DRAW_TYPE, String.valueOf(pointVOIChoices.getSelectedIndex()));
             Preferences.setProperty(Preferences.PREF_CONTINUOUS_VOI_CONTOUR, String.valueOf(continuousVOIBox.isSelected()));
             
             Preferences.setProperty(Preferences.PREF_MENU_FONT, fontNames[fontChooser.getSelectedIndex()]);
@@ -466,9 +465,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             }
 
             // System.err.println("rate is: " + rate);
-            Preferences.setProperty("DefaultFrameRate", Float.toString(rate));
+            Preferences.setProperty(Preferences.PREF_DEFAULT_FRAME_RATE, Float.toString(rate));
 
-            String quickStr = Preferences.getProperty("QuickListNumber");
+            String quickStr = Preferences.getProperty(Preferences.PREF_QUICKLIST_NUMBER);
             int quickNum = 4;
             int newNum = quickListLevel.getSelectedIndex() + 1;
 
@@ -477,7 +476,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             }
 
             if (newNum != quickNum) {
-                Preferences.setProperty("QuickListNumber", String.valueOf(newNum));
+                Preferences.setProperty(Preferences.PREF_QUICKLIST_NUMBER, String.valueOf(newNum));
                 userInterface.buildMenu();
 
                 Vector imageFrames = userInterface.getImageFrameVector();
@@ -495,24 +494,24 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 }
             }
 
-            if (Preferences.is(Preferences.PREF_LOG) && !enableLoggingBox.isSelected()) {
-                Preferences.setProperty("LoggingEnabled", "false");
+            if (Preferences.is(Preferences.PREF_HISTORY) && !enableLoggingBox.isSelected()) {
+                Preferences.setProperty(Preferences.PREF_LOGGING_ENABLED, "false");
                 LogStdStreams.turnOffLogging();
                 Preferences.debug("Turned off logging");
-            } else if ((Preferences.is(Preferences.PREF_LOG) && enableLoggingBox.isSelected()) &&
+            } else if ((Preferences.is(Preferences.PREF_HISTORY) && enableLoggingBox.isSelected()) &&
                            !Preferences.getProperty(Preferences.PREF_LOG_FILENAME).equalsIgnoreCase(logFilename)) {
                 LogStdStreams.turnOffLogging();
                 LogStdStreams.initializeErrorLogging(logFilename, "\n" + "Mipav Log: " + new Date(), true, true);
-                Preferences.setProperty("LogFilename", logFilename);
-            } else if (!Preferences.is(Preferences.PREF_LOG) && enableLoggingBox.isSelected()) {
+                Preferences.setProperty(Preferences.PREF_LOG_FILENAME, logFilename);
+            } else if (!Preferences.is(Preferences.PREF_HISTORY) && enableLoggingBox.isSelected()) {
                 Preferences.debug("Turning on logging");
                 LogStdStreams.initializeErrorLogging(logFilename, "\n" + "Mipav Log: " + new Date(), true, true);
-                Preferences.setProperty("LoggingEnabled", "true");
-                Preferences.setProperty("LogFilename", logFilename);
+                Preferences.setProperty(Preferences.PREF_LOGGING_ENABLED, "true");
+                Preferences.setProperty(Preferences.PREF_LOG_FILENAME, logFilename);
             }
 
             if (dicomCatcher != null) {
-                Preferences.setProperty("EnableDICOMReceiver", String.valueOf(dicomCatcher.isSelected()));
+                Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomCatcher.isSelected()));
             }
 
             // OKButton.setEnabled(false); // doesn't act correctly when open and then new image frame is added.
@@ -528,7 +527,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     try {
                         ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i)).getComponentImage().setHighlightColor(preferredActiveColor);
 
-                        preferredCrosshair = Preferences.getProperty("CrosshairCursor");
+                        preferredCrosshair = Preferences.getProperty(Preferences.PREF_CROSSHAIR_CURSOR);
 
                         if (preferredCrosshair.equalsIgnoreCase("default")) {
                             ((ViewJFrameImage) userInterface.getImageFrameVector().elementAt(i)).getComponentImage().setCrosshairCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
@@ -794,13 +793,13 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayColorPanel.add(activeColor);
 
         // preset the choices.
-        if (Preferences.getProperty("ActiveImageColor") == null) {
-            Preferences.setProperty("ActiveImageColor",
+        if (Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR) == null) {
+            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR,
                                     MipavUtil.makeColorString(ViewJComponentEditImage.ACTIVE_IMAGE_COLOR));
             activeColor.setBackground(ViewJComponentEditImage.ACTIVE_IMAGE_COLOR);
             preferredActiveColor = ViewJComponentEditImage.ACTIVE_IMAGE_COLOR;
         } else {
-            preferredActiveColor = MipavUtil.extractColor(Preferences.getProperty("ActiveImageColor"));
+            preferredActiveColor = MipavUtil.extractColor(Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR));
             activeColor.setBackground(preferredActiveColor);
         }
     }
@@ -911,13 +910,13 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayColorPanel.add(crosshairChoices, gbc2);
 
         // preset the choices.
-        if (Preferences.getProperty("CrosshairCursor") == null) {
-            Preferences.setProperty("CrosshairCursor", "default");
+        if (Preferences.getProperty(Preferences.PREF_CROSSHAIR_CURSOR) == null) {
+            Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, "default");
 
             // crosshairColor.setBackground(ViewJComponentEditImage.CROSSHAIR_CURSOR_COLOR);
             preferredCrosshair = "default";
         } else {
-            preferredCrosshair = Preferences.getProperty("CrosshairCursor");
+            preferredCrosshair = Preferences.getProperty(Preferences.PREF_CROSSHAIR_CURSOR);
             // crosshairColor.setBackground(preferredCrosshairColor);
         }
 
@@ -1015,7 +1014,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices:
         try {
-            fileFilter = Integer.parseInt(Preferences.getProperty("FilenameFilter"));
+            fileFilter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
         } catch (NumberFormatException nfe) {
 
             // an invalid value was set in preferences -- so ignore it!
@@ -1186,7 +1185,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  the layout used in the globablChangesPanel
      */
     protected void makeLoggingOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        boolean loggingOn = Preferences.is(Preferences.PREF_LOG);
+        boolean loggingOn = Preferences.is(Preferences.PREF_HISTORY);
 
         enableLoggingBox = new JCheckBox("Log errors to:", loggingOn);
         enableLoggingBox.setFont(MipavUtil.font12);
@@ -1236,7 +1235,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         otherPanel.add(logModeCheckBox);
 
         // preset the choices.
-        logModeCheckBox.setSelected(Preferences.is(Preferences.PREF_LOG));
+        logModeCheckBox.setSelected(Preferences.is(Preferences.PREF_HISTORY));
     }
 
     /**
@@ -1344,7 +1343,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices:
         int quickNum = 4;
-        String levelStr = Preferences.getProperty("QuickListNumber");
+        String levelStr = Preferences.getProperty(Preferences.PREF_QUICKLIST_NUMBER);
 
         if (levelStr != null) {
             quickNum = Integer.parseInt(levelStr);
@@ -1573,10 +1572,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc2.anchor = GridBagConstraints.WEST;
         displayColorPanel.add(voiColorChoices, gbc2);
 
-        String prefColor = Preferences.getProperty("VOIColor");
+        String prefColor = Preferences.getProperty(Preferences.PREF_VOI_START_COLOR);
 
         if (prefColor == null) {
-            Preferences.setProperty("VOIColor", "0");
+            Preferences.setProperty(Preferences.PREF_VOI_START_COLOR, "0");
             voiColorChoices.setBackground(Color.getHSBColor(0, (float) 1.0, (float) 1.0));
             voiColorChoices.setSelectedIndex(0);
         } else {
@@ -1585,7 +1584,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 int index = Integer.parseInt(prefColor);
 
                 if ((index < 0) || (index > (voiColorNames.length - 1))) {
-                    Preferences.setProperty("VOIColor", "0");
+                    Preferences.setProperty(Preferences.PREF_VOI_START_COLOR, "0");
                     voiColorChoices.setBackground(Color.getHSBColor(0, (float) 1.0, (float) 1.0));
                     voiColorChoices.setSelectedIndex(0);
                 } else {
@@ -1594,7 +1593,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     voiColorChoices.setBackground(Color.getHSBColor(selectedHue, (float) 1.0, (float) 1.0));
                 }
             } catch (Exception ex) {
-                Preferences.setProperty("VOIColor", "0");
+                Preferences.setProperty(Preferences.PREF_VOI_START_COLOR, "0");
                 voiColorChoices.setBackground(Color.getHSBColor(0, (float) 1.0, (float) 1.0));
                 voiColorChoices.setSelectedIndex(0);
             }
@@ -1637,24 +1636,24 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbl.setConstraints(intensityLabelBackgroundButton, gbc);
         displayColorPanel.add(intensityLabelBackgroundButton);
         
-        String prefColor = Preferences.getProperty("IntensityLabelColor");
+        String prefColor = Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_COLOR);
 
         if (prefColor != null) {
         	intensityLabelColor = MipavUtil.extractColor(prefColor);
         	intensityLabelColorButton.setBackground(intensityLabelColor);
         } else {
-            Preferences.setProperty("IntensityLabelColor", MipavUtil.makeColorString(Color.yellow));
+            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_COLOR, MipavUtil.makeColorString(Color.yellow));
             intensityLabelColorButton.setBackground(Color.yellow);
             intensityLabelColor = Color.yellow;
         }
         
-        prefColor = Preferences.getProperty("IntensityLabelBackgroundColor");
+        prefColor = Preferences.getProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR);
 
         if (prefColor != null) {
         	intensityLabelBackgroundColor = MipavUtil.extractColor(prefColor);
         	intensityLabelBackgroundButton.setBackground(intensityLabelBackgroundColor);
         } else {
-            Preferences.setProperty("IntensityLabelBackgroundColor", MipavUtil.makeColorString(Color.black));
+            Preferences.setProperty(Preferences.PREF_INTENSITY_LABEL_BACKGROUND_COLOR, MipavUtil.makeColorString(Color.black));
             intensityLabelBackgroundButton.setBackground(Color.black);
             intensityLabelBackgroundColor = Color.black;
         }
@@ -1691,13 +1690,13 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices.
 
-        String prefColor = Preferences.getProperty("VOIDrawColor");
+        String prefColor = Preferences.getProperty(Preferences.PREF_VOI_DRAW_COLOR);
 
         if (prefColor != null) {
             voiDrawColor = MipavUtil.extractColor(prefColor);
             voiDrawButton.setBackground(voiDrawColor);
         } else {
-            Preferences.setProperty("VOIDrawColor", MipavUtil.makeColorString(Color.yellow));
+            Preferences.setProperty(Preferences.PREF_VOI_DRAW_COLOR, MipavUtil.makeColorString(Color.yellow));
             voiDrawButton.setBackground(Color.yellow);
             voiDrawColor = Color.yellow;
 
@@ -1776,7 +1775,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayColorPanel.add(pointVOIChoices, gbc);
 
         int type = 0;
-        String str = Preferences.getProperty("VOIPointDrawType");
+        String str = Preferences.getProperty(Preferences.PREF_VOI_POINT_DRAW_TYPE);
 
         if (str != null) {
 

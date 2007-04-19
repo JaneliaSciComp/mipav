@@ -275,7 +275,7 @@ public class JDialogVOIStats extends JDialogBase
 
             if (changedThickness) {
                 voi.setThickness(thickChange);
-                Preferences.setProperty("VOIThickness", Integer.toString(thickChange));
+                Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
             }
 
 

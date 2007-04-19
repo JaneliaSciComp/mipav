@@ -747,7 +747,7 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
 
         // only want to save the image here (not the VOIs, LUT, etc.)
         boolean temp = Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE);
-        Preferences.setProperty("SaveAllOnSave", "false");
+        Preferences.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, "false");
 
         FileWriteOptions options = new FileWriteOptions(img.getImageName() + ".xml",
                                                         userInterface.getDefaultDirectory() + File.separator, true);
@@ -763,7 +763,7 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
 
         save(img, options, -1);
 
-        Preferences.setProperty("SaveAllOnSave", Boolean.toString(temp));
+        Preferences.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, Boolean.toString(temp));
     }
 
     /**

@@ -2413,7 +2413,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         String kName = ViewUserInterface.getReference().getDefaultDirectory() + srcImage.getImageName() + "_brain.sur";
 
-        if (srcImage.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) {
+        if (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 
             // Get the DICOM transform that describes the transformation from
             // axial to this image orientation
