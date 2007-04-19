@@ -478,7 +478,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
             DIM = 3;
         }
 
-        userInterface = matchImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = matchImage.getParentFrame();
     }
 

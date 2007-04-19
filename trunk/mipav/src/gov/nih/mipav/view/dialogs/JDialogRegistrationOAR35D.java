@@ -737,7 +737,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
      */
     protected void setGUIFromParams() {
         matchImage = scriptParameters.retrieveInputImage();
-        UI = matchImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
         parentFrame = matchImage.getParentFrame();
 
         if (matchImage.isColorImage()) {

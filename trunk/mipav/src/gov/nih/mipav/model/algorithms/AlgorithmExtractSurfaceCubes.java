@@ -287,7 +287,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         int[] buffer = null;
 
         // Make storage string
-        surfaceFileName = maskImage.getUserInterface().getDefaultDirectory() + File.separator + surfaceFileName;
+        surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator + surfaceFileName;
 
         try {
             length = iXDim * iYDim * iZDim;

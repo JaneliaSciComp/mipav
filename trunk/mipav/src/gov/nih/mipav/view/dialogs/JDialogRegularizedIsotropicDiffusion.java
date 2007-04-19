@@ -237,7 +237,7 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
      */
     protected void setGUIFromParams() {
         srcImage = scriptParameters.retrieveInputImage();
-        userInterface = srcImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = srcImage.getParentFrame();
 
         setDo25D(scriptParameters.doProcess3DAs25D());

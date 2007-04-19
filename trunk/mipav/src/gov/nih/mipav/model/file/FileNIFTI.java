@@ -20,27 +20,19 @@ import java.io.*;
  * associated with an image - one stored in the qform_code parameters and one stored in the sform_code parameters. While
  * MIPAV separately stores axis orientation and matrix information, NIFTI does not store axis orientation information.
  * NIFTI uses a routine to derive axis orientations from the upper 3 by 3 parameters of the 4 by 4 matrix. The 4 by 4
- * matrix in NIFTI transforms x,y,z indexes to (right, anterior, superior) coordinates where +x = Right, +y = Anterior, +z = Superior. In
- * MIPAV the 4 by 4 matrix does not imply the axis orientations.</p>
- * 
- * For qform_code > 0, which should be the normal case the NIFTI definition is:
- * [right]       [R11 R12 R13] [       pixdim[1] * i]   [qoffset_right]
- * [anterior] =  [R21 R22 R23] [       pixdim[2] * j] + [qoffset_anterior]
- * [superior]    [R31 R32 R33] [qfac * pixdim[3] * k]   [qoffset_superior]
- * Now in going to MIPAV 3 changes must occur.
- * 1.) NIFTI is L->R and P->A while MIPAV is R->L and A->P, so this would cause
- * R11, R12, R13, qoffset_right, R21, R22, R23, and qoffset_anterior to be multiplied by -1.
- * 2.) The NIFTI image is flipped along the j axis, so this would cause R12, R22, R32, and
- * qoffset_anterior to be multiplied by -1.
- * 3.) R13, R23, and R33 are multiplied by qfac.
- * So we in going to MIPAV we use -R11, -R13*qfac, -qoffset_right, -R21,
- * -R23*qfac, -R32, and R33*qfac.
- * If qform_code == 0 and sform_code > 0:
- * x = srow_x[0]* i + srow_x[1] * j + srow_x[2] * k + srow_x[3]
- * y = srow_y[0]* i + srow_y[1] * j + srow_y[2] * k + srow_y[3]
- * z = srow_z[0]* i + srow_z[1] * j + srow_z[2] * k + srow_z[3]
- * In going to MIPAV we use -srow_x[0], -srow_x[2], -srow_x[3],
- * -srow_y[0], -srow_y[2], and -srow_z[1].
+ * matrix in NIFTI transforms x,y,z indexes to (right, anterior, superior) coordinates where +x = Right, +y = Anterior,
+ * +z = Superior. In MIPAV the 4 by 4 matrix does not imply the axis orientations.</p>
+ *
+ * <p>For qform_code > 0, which should be the normal case the NIFTI definition is: [right] [R11 R12 R13] [ pixdim[1] *
+ * i] [qoffset_right] [anterior] = [R21 R22 R23] [ pixdim[2] * j] + [qoffset_anterior] [superior] [R31 R32 R33] [qfac *
+ * pixdim[3] * k] [qoffset_superior] Now in going to MIPAV 3 changes must occur. 1.) NIFTI is L->R and P->A while MIPAV
+ * is R->L and A->P, so this would cause R11, R12, R13, qoffset_right, R21, R22, R23, and qoffset_anterior to be
+ * multiplied by -1. 2.) The NIFTI image is flipped along the j axis, so this would cause R12, R22, R32, and
+ * qoffset_anterior to be multiplied by -1. 3.) R13, R23, and R33 are multiplied by qfac. So we in going to MIPAV we use
+ * -R11, -R13*qfac, -qoffset_right, -R21, -R23*qfac, -R32, and R33*qfac. If qform_code == 0 and sform_code > 0: x =
+ * srow_x[0]* i + srow_x[1] * j + srow_x[2] * k + srow_x[3] y = srow_y[0]* i + srow_y[1] * j + srow_y[2] * k + srow_y[3]
+ * z = srow_z[0]* i + srow_z[1] * j + srow_z[2] * k + srow_z[3] In going to MIPAV we use -srow_x[0], -srow_x[2],
+ * -srow_x[3], -srow_y[0], -srow_y[2], and -srow_z[1].</p>
  *
  * <p>MIPAV ANALYZE uses 6 for 16 bit unsigned short in the datatype field while NIFTI uses 512 for 16 bit unsigned
  * short in the datatype field. NIFTI also has a signed char at 256, an unsigned int at 768, a LONG at 1024, an unsigned
@@ -120,12 +112,13 @@ public class FileNIFTI extends FileBase {
     private String intentName;
 
     /** DOCUMENT ME! */
+    private float[] LPSOrigin;
+
+    /** DOCUMENT ME! */
     private char[] magic = new char[4];
 
     /** DOCUMENT ME! */
     private TransMatrix matrix = new TransMatrix(4);
-    
-    private TransMatrix niftiMatrix = new TransMatrix(4);
 
     /** DOCUMENT ME! */
     private double newMax;
@@ -137,6 +130,9 @@ public class FileNIFTI extends FileBase {
     private float[] newOrigin = new float[3];
 
     /** DOCUMENT ME! */
+    private TransMatrix niftiMatrix = new TransMatrix(4);
+
+    /** DOCUMENT ME! */
     private boolean oneFile;
 
     /** DOCUMENT ME! */
@@ -144,8 +140,6 @@ public class FileNIFTI extends FileBase {
 
     /** DOCUMENT ME! */
     private float[] origin;
-    
-    private float[] LPSOrigin;
 
     /** DOCUMENT ME! */
     private int phase_dim = 0;
@@ -202,7 +196,7 @@ public class FileNIFTI extends FileBase {
     private short sform_code;
 
     /** DOCUMENT ME! */
-    
+
 
     /** DOCUMENT ME! */
     private int slice_dim = 0;
@@ -257,7 +251,6 @@ public class FileNIFTI extends FileBase {
      * @param  _UI    User interface.
      * @param  fName  File name.
      * @param  fDir   File directory.
-     * @param  show   Flag for showing the progress bar.
      */
     public FileNIFTI(ViewUserInterface _UI, String fName, String fDir) {
         UI = _UI;
@@ -605,23 +598,24 @@ public class FileNIFTI extends FileBase {
 
         // index         = fileName.toLowerCase().indexOf(".img");
         index = fileName.lastIndexOf(".");
-        
+
         if (index == -1) {
-        	oneFileStorage = false;
-        	fileHeaderName = fileName + ".hdr";
-        	fileHeader = new File(fileDir + fileHeaderName);
-        	
-        	if (fileHeader.exists()== false) {
-        		fileHeaderName = fileName + ".HDR";
-        		fileHeader = new File(fileDir + fileHeaderName);
-        	}
-        	
-        	if (fileHeader.exists() == false) {
-        		return false;
-        	}
-        	
+            oneFileStorage = false;
+            fileHeaderName = fileName + ".hdr";
+            fileHeader = new File(fileDir + fileHeaderName);
+
+            if (fileHeader.exists() == false) {
+                fileHeaderName = fileName + ".HDR";
+                fileHeader = new File(fileDir + fileHeaderName);
+            }
+
+            if (fileHeader.exists() == false) {
+                return false;
+            }
+
         } else {
-        	if (fileName.substring(index + 1).equalsIgnoreCase("nii")) {
+
+            if (fileName.substring(index + 1).equalsIgnoreCase("nii")) {
                 oneFileStorage = true;
                 fileHeaderName = fileName;
             } else {
@@ -639,9 +633,9 @@ public class FileNIFTI extends FileBase {
                     return false;
                 }
             }
-        	
+
         }
-           
+
         // Tagged for removal - Matt 4/17/2003
         // if (fileInfo == null) { // if the file info does not yet exist: make it
         // fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileUtility.NIFTI);
@@ -1465,7 +1459,7 @@ public class FileNIFTI extends FileBase {
             } else {
                 qfac = -1.0f;
             }
-            
+
             if ((qform_code == 0) && (sform_code == 0)) {
 
                 // No particular spatial orientation is assigned
@@ -1520,7 +1514,7 @@ public class FileNIFTI extends FileBase {
                 default:
                     Preferences.debug("Unknown coord_code = " + coord_code);
             }
-            
+
             if (qform_code > 0) {
                 quatern_b = getBufferFloat(bufferByte, 256, endianess);
                 b = quatern_b;
@@ -1546,13 +1540,13 @@ public class FileNIFTI extends FileBase {
 
                 r00 = (a * a) + (b * b) - (c * c) - (d * d);
                 matrix.setMatrix(-r00 * resolutions[0], 0, 0);
-                niftiMatrix.setMatrix(r00 * resolutions[0], 0 , 0);
+                niftiMatrix.setMatrix(r00 * resolutions[0], 0, 0);
                 r01 = 2.0 * ((b * c) - (a * d));
                 matrix.setMatrix(r01 * resolutions[1], 0, 1);
                 niftiMatrix.setMatrix(-r01 * resolutions[1], 0, 1);
                 r02 = 2.0 * ((b * d) + (a * c));
-                matrix.setMatrix(-r02 * qfac *resolutions[2], 0, 2);
-                niftiMatrix.setMatrix(r02 * qfac * resolutions[2], 0 , 2);
+                matrix.setMatrix(-r02 * qfac * resolutions[2], 0, 2);
+                niftiMatrix.setMatrix(r02 * qfac * resolutions[2], 0, 2);
                 r10 = 2.0 * ((b * c) + (a * d));
                 matrix.setMatrix(-r10 * resolutions[0], 1, 0);
                 niftiMatrix.setMatrix(r10 * resolutions[0], 1, 0);
@@ -1582,31 +1576,29 @@ public class FileNIFTI extends FileBase {
                 LPSOrigin[0] = -qoffset_x;
                 LPSOrigin[1] = qoffset_y;
                 LPSOrigin[2] = qoffset_z;
-                
+
                 axisOrientation = getAxisOrientation(niftiMatrix);
                 Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
                                   axisOrientation[2] + "\n");
                 fileInfo.setAxisOrientation(axisOrientation);
+
                 for (j = 0; j < 3; j++) {
+
                     if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
                         LPSOrigin[0] = -Math.abs(LPSOrigin[0]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE){
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
                         LPSOrigin[0] = Math.abs(LPSOrigin[0]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
                         LPSOrigin[1] = -Math.abs(LPSOrigin[1]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
                         LPSOrigin[1] = Math.abs(LPSOrigin[1]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
                         LPSOrigin[2] = -Math.abs(LPSOrigin[2]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
                         LPSOrigin[2] = Math.abs(LPSOrigin[2]);
                     }
                 }
+
                 fileInfo.setOrigin(LPSOrigin);
                 matrix.setMatrix((double) LPSOrigin[0], 0, 3);
                 matrix.setMatrix((double) LPSOrigin[1], 1, 3);
@@ -1623,35 +1615,21 @@ public class FileNIFTI extends FileBase {
                 }
 
                 /*origin = new float[3];
-                for (j = 0; j < 3; j++) {
-
-                    if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE){
-                        origin[j] = -Math.abs(LPSOrigin[0]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
-                        origin[j] = Math.abs(LPSOrigin[0]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){
-                        origin[j] = -Math.abs(LPSOrigin[1]);     
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
-                        origin[j] = Math.abs(LPSOrigin[1]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){
-                        origin[j] = -Math.abs(LPSOrigin[2]);    
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
-                        origin[j] = Math.abs(LPSOrigin[2]);
-                    }
-                }
-
-                
-                fileInfo.setOrigin(origin);
-                matrix.setMatrix((double) origin[0], 0, 3);
-                matrix.setMatrix((double) origin[1], 1, 3);
-                matrix.setMatrix((double) origin[2], 2, 3);*/
+                 * for (j = 0; j < 3; j++) {
+                 *
+                 * if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE){     origin[j] = -Math.abs(LPSOrigin[0]); } else
+                 * if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {     origin[j] = Math.abs(LPSOrigin[0]); } else
+                 * if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){     origin[j] = -Math.abs(LPSOrigin[1]);      }
+                 * else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {     origin[j] = Math.abs(LPSOrigin[1]); }
+                 * else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){     origin[j] = -Math.abs(LPSOrigin[2]);
+                 *   } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {     origin[j] =
+                 * Math.abs(LPSOrigin[2]); } }
+                 *
+                 *
+                 * fileInfo.setOrigin(origin); matrix.setMatrix((double) origin[0], 0, 3); matrix.setMatrix((double)
+                 * origin[1], 1, 3);matrix.setMatrix((double) origin[2], 2, 3);*/
                 Preferences.debug("matrix = \n" + matrix + "\n");
-                //fileInfo.setMatrix(matrix);
+                // fileInfo.setMatrix(matrix);
 
                 Preferences.debug("quatern_a = " + quatern_a + "\n");
                 Preferences.debug("quatern_b = " + quatern_b + "\n");
@@ -1679,9 +1657,9 @@ public class FileNIFTI extends FileBase {
                 srow_z[2] = getBufferFloat(bufferByte, 320, endianess);
                 srow_z[3] = getBufferFloat(bufferByte, 324, endianess);
                 matrix.setMatrix((double) -srow_x[0], 0, 0);
-                niftiMatrix.setMatrix((double)srow_x[0], 0, 0);
+                niftiMatrix.setMatrix((double) srow_x[0], 0, 0);
                 matrix.setMatrix((double) -srow_x[1], 0, 1);
-                niftiMatrix.setMatrix((double)srow_x[1], 0, 1);
+                niftiMatrix.setMatrix((double) srow_x[1], 0, 1);
                 matrix.setMatrix((double) -srow_x[2], 0, 2);
                 niftiMatrix.setMatrix((double) srow_x[2], 0, 2);
                 matrix.setMatrix((double) -srow_y[0], 1, 0);
@@ -1701,31 +1679,29 @@ public class FileNIFTI extends FileBase {
                 LPSOrigin[0] = -srow_x[3];
                 LPSOrigin[1] = srow_y[3];
                 LPSOrigin[2] = srow_z[3];
-                
+
                 axisOrientation = getAxisOrientation(niftiMatrix);
                 Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
                                   axisOrientation[2] + "\n");
                 fileInfo.setAxisOrientation(axisOrientation);
+
                 for (j = 0; j < 3; j++) {
+
                     if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
                         LPSOrigin[0] = -Math.abs(LPSOrigin[0]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE){
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
                         LPSOrigin[0] = Math.abs(LPSOrigin[0]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
                         LPSOrigin[1] = -Math.abs(LPSOrigin[1]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
                         LPSOrigin[1] = Math.abs(LPSOrigin[1]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
                         LPSOrigin[2] = -Math.abs(LPSOrigin[2]);
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
                         LPSOrigin[2] = Math.abs(LPSOrigin[2]);
                     }
                 }
+
                 fileInfo.setOrigin(LPSOrigin);
                 matrix.setMatrix((double) LPSOrigin[0], 0, 3);
                 matrix.setMatrix((double) LPSOrigin[1], 1, 3);
@@ -1742,31 +1718,18 @@ public class FileNIFTI extends FileBase {
                 }
 
                 /*origin = new float[3];
-                for (j = 0; j < 3; j++) {
-
-                    if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE ||
-                        axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE){
-                        origin[j] = LPSOrigin[0];
-                       
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE ||
-                             axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){
-                        origin[j] = LPSOrigin[1];
-                           
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE ||
-                             axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){
-                        origin[j] = LPSOrigin[2];
-                           
-                    }
-                }
-                
-                fileInfo.setOrigin(origin);
-                matrix.setMatrix((double) origin[0], 0, 3);
-                matrix.setMatrix((double) origin[1], 1, 3);
-                matrix.setMatrix((double) origin[2], 2, 3);*/
+                 * for (j = 0; j < 3; j++) {
+                 *
+                 * if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE ||     axisOrientation[j] ==
+                 * FileInfoBase.ORI_R2L_TYPE){     origin[j] = LPSOrigin[0];     } else if (axisOrientation[j] ==
+                 * FileInfoBase.ORI_P2A_TYPE ||          axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){     origin[j]
+                 * = LPSOrigin[1];         } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE ||
+                 * axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){     origin[j] = LPSOrigin[2];         } }
+                 *
+                 * fileInfo.setOrigin(origin); matrix.setMatrix((double) origin[0], 0, 3); matrix.setMatrix((double)
+                 * origin[1], 1, 3);matrix.setMatrix((double) origin[2], 2, 3);*/
                 Preferences.debug("matrix = \n" + matrix + "\n");
-                //fileInfo.setMatrix(matrix);
+                // fileInfo.setMatrix(matrix);
 
                 Preferences.debug("srow_x = " + srow_x[0] + "  " + srow_x[1] + "  " + srow_x[2] + "  " + srow_x[3] +
                                   "\n");
@@ -1836,8 +1799,7 @@ public class FileNIFTI extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
-                                  FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
             if (oneFileStorage) {
                 offset = (int) Math.abs(vox_offset);
@@ -1855,6 +1817,7 @@ public class FileNIFTI extends FileBase {
                     offset = offset + getOffset(fileInfo);
                 }
             }
+
             linkProgress(rawFile);
             rawFile.readImage(image, offset);
 
@@ -1941,6 +1904,7 @@ public class FileNIFTI extends FileBase {
             if (one) {
                 fileInfo.setExtents(extents);
             }
+
             fireProgressStateChanged(100);
         } catch (IOException error) {
             throw new IOException("FileNIFTI: " + error);
@@ -1977,10 +1941,9 @@ public class FileNIFTI extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
-                                  FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
             linkProgress(rawFile);
-            
+
             if (oneFileStorage) {
                 offset = (int) Math.abs(vox_offset);
 
@@ -2126,7 +2089,7 @@ public class FileNIFTI extends FileBase {
         } else if (suffix.equals(".img")) {
             oneFile = false;
         } else {
-            JDialogNIFTIChoice choice = new JDialogNIFTIChoice(image.getUserInterface().getMainFrame());
+            JDialogNIFTIChoice choice = new JDialogNIFTIChoice(ViewUserInterface.getReference().getMainFrame());
 
             if (!choice.okayPressed()) {
                 throw new IOException("FileNIFTIWrite dialog error");
@@ -2205,15 +2168,17 @@ public class FileNIFTI extends FileBase {
                 throw (error);
             }
         }
+
         fireProgressStateChanged(100);
 
         // With extents from rawFile
     }
-    
-    /*---------------------------------------------------------------------------*/
-    /*! compute the (closest) orientation from a 4x4 ijk->xyz tranformation matrix
 
-       <pre>
+    /**
+     * --------------------------------------------------------------------------- ! compute the (closest) orientation
+     * from a 4x4 ijk->xyz tranformation matrix
+     *
+     * <pre>
        Input:  4x4 matrix that transforms (i,j,k) indexes to (x,y,z) coordinates,
                where +x=Right, +y=Anterior, +z=Superior.
                (Only the upper-left 3x3 corner of R is used herein.)
@@ -2228,178 +2193,333 @@ public class FileNIFTI extends FileBase {
          *jcod = NIFTI_P2A   (j axis is mostly Posterior to Anterior)
          *kcod = NIFTI_I2S   (k axis is mostly Inferior to Superior)
        </pre>
+     *
+     * \see "QUATERNION REPRESENTATION OF ROTATION MATRIX" in nifti1.h \see nifti_quatern_to_mat44,
+     * nifti_mat44_to_quatern, nifti_make_orthog_mat44
+     * -------------------------------------------------------------------------
+     *
+     * @param   mat  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int[] getAxisOrientation(TransMatrix mat) {
+        int[] axisOrientation = new int[3];
+        double[][] array;
+        double xi, xj, xk, yi, yj, yk, zi, zj, zk, val, detQ, detP;
+        Matrix P, Q, M;
+        int i, j, k = 0, p, q, r, ibest, jbest, kbest, pbest, qbest, rbest;
+        double vbest;
 
-       \see "QUATERNION REPRESENTATION OF ROTATION MATRIX" in nifti1.h
+        /* load column vectors for each (i,j,k) direction from matrix */
 
-       \see nifti_quatern_to_mat44, nifti_mat44_to_quatern,
-            nifti_make_orthog_mat44
-    *//*-------------------------------------------------------------------------*/
-    private int[] getAxisOrientation( TransMatrix mat)
-    {  int[] axisOrientation = new int[3];
-       double[][] array;
-       double xi,xj,xk , yi,yj,yk , zi,zj,zk , val,detQ,detP ;
-       Matrix P , Q , M ;
-       int i,j,k=0,p,q,r , ibest,jbest,kbest,pbest,qbest,rbest ;
-       double vbest ;
+        /*-- i axis --*/
+        /*-- j axis --*/
+        /*-- k axis --*/
+        array = mat.getMatrix(0, 2, 0, 2).getArray();
+        xi = array[0][0];
+        xj = array[0][1];
+        xk = array[0][2];
+        yi = array[1][0];
+        yj = array[1][1];
+        yk = array[1][2];
+        zi = array[2][0];
+        zj = array[2][1];
+        zk = array[2][2];
 
-       /* load column vectors for each (i,j,k) direction from matrix */
+        /* normalize column vectors to get unit vectors along each ijk-axis */
 
-       /*-- i axis --*/ /*-- j axis --*/ /*-- k axis --*/
-       array = mat.getMatrix(0, 2, 0, 2).getArray();
-       xi = array[0][0] ; xj = array[0][1] ; xk = array[0][2] ;
-       yi = array[1][0] ; yj = array[1][1] ; yk = array[1][2] ;
-       zi = array[2][0] ; zj = array[2][1] ; zk = array[2][2] ;
+        /* normalize i axis */
+        axisOrientation[0] = FileInfoBase.ORI_UNKNOWN_TYPE;
+        val = Math.sqrt((xi * xi) + (yi * yi) + (zi * zi));
 
-       /* normalize column vectors to get unit vectors along each ijk-axis */
+        if (val == 0.0) {
+            return axisOrientation; /* stupid input */
+        }
 
-       /* normalize i axis */
-       axisOrientation[0] = FileInfoBase.ORI_UNKNOWN_TYPE;
-       val = Math.sqrt( xi*xi + yi*yi + zi*zi ) ;
-       if( val == 0.0 ) return axisOrientation;                 /* stupid input */
-       xi /= val ; yi /= val ; zi /= val ;
+        xi /= val;
+        yi /= val;
+        zi /= val;
 
-       /* normalize j axis */
+        /* normalize j axis */
 
-       val = Math.sqrt( xj*xj + yj*yj + zj*zj ) ;
-       if( val == 0.0 ) return axisOrientation;                 /* stupid input */
-       xj /= val ; yj /= val ; zj /= val ;
+        val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj));
 
-       /* orthogonalize j axis to i axis, if needed */
+        if (val == 0.0) {
+            return axisOrientation; /* stupid input */
+        }
 
-       val = xi*xj + yi*yj + zi*zj ;    /* dot product between i and j */
-       if( Math.abs(val) > 1.e-4 ){
-         xj -= val*xi ; yj -= val*yi ; zj -= val*zi ;
-         val = Math.sqrt( xj*xj + yj*yj + zj*zj ) ;  /* must renormalize */
-         if( val == 0.0 ) return axisOrientation;              /* j was parallel to i? */
-         xj /= val ; yj /= val ; zj /= val ;
-       }
+        xj /= val;
+        yj /= val;
+        zj /= val;
 
-       /* normalize k axis; if it is zero, make it the cross product i x j */
+        /* orthogonalize j axis to i axis, if needed */
 
-       val = Math.sqrt( xk*xk + yk*yk + zk*zk ) ;
-       if( val == 0.0 ){ xk = yi*zj-zi*yj; yk = zi*xj-zj*xi ; zk=xi*yj-yi*xj ; }
-       else            { xk /= val ; yk /= val ; zk /= val ; }
+        val = (xi * xj) + (yi * yj) + (zi * zj); /* dot product between i and j */
 
-       /* orthogonalize k to i */
+        if (Math.abs(val) > 1.e-4) {
+            xj -= val * xi;
+            yj -= val * yi;
+            zj -= val * zi;
+            val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj)); /* must renormalize */
 
-       val = xi*xk + yi*yk + zi*zk ;    /* dot product between i and k */
-       if( Math.abs(val) > 1.e-4 ){
-         xk -= val*xi ; yk -= val*yi ; zk -= val*zi ;
-         val = Math.sqrt( xk*xk + yk*yk + zk*zk ) ;
-         if( val == 0.0 ) return axisOrientation;      /* bad */
-         xk /= val ; yk /= val ; zk /= val ;
-       }
+            if (val == 0.0) {
+                return axisOrientation; /* j was parallel to i? */
+            }
 
-       /* orthogonalize k to j */
+            xj /= val;
+            yj /= val;
+            zj /= val;
+        }
 
-       val = xj*xk + yj*yk + zj*zk ;    /* dot product between j and k */
-       if( Math.abs(val) > 1.e-4 ){
-         xk -= val*xj ; yk -= val*yj ; zk -= val*zj ;
-         val = Math.sqrt( xk*xk + yk*yk + zk*zk ) ;
-         if( val == 0.0 ) return axisOrientation;      /* bad */
-         xk /= val ; yk /= val ; zk /= val ;
-       }
+        /* normalize k axis; if it is zero, make it the cross product i x j */
 
-       Q = new Matrix(3,3);
-       
-       Q.set(0, 0, xi); Q.set(0, 1, xj); Q.set(0, 2, xk);
-       Q.set(1, 0, yi); Q.set(1, 1, yj); Q.set(1, 2, yk);
-       Q.set(2, 0, zi); Q.set(2, 1, zj); Q.set(2, 2, zk);
+        val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
 
-       /* at this point, Q is the rotation matrix from the (i,j,k) to (x,y,z) axes */
+        if (val == 0.0) {
+            xk = (yi * zj) - (zi * yj);
+            yk = (zi * xj) - (zj * xi);
+            zk = (xi * yj) - (yi * xj);
+        } else {
+            xk /= val;
+            yk /= val;
+            zk /= val;
+        }
 
-       detQ = Q.det();
+        /* orthogonalize k to i */
 
-       if (detQ == 0.0) {
-           MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
+        val = (xi * xk) + (yi * yk) + (zi * zk); /* dot product between i and k */
 
-           return axisOrientation;
-       }
-       
-       P = new Matrix(3,3);
-       /* Build and test all possible +1/-1 coordinate permutation matrices P;
-          then find the P such that the rotation matrix M=PQ is closest to the
-          identity, in the sense of M having the smallest total rotation angle. */
+        if (Math.abs(val) > 1.e-4) {
+            xk -= val * xi;
+            yk -= val * yi;
+            zk -= val * zi;
+            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
 
-       /* Despite the formidable looking 6 nested loops, there are
-          only 3*3*3*2*2*2 = 216 passes, which will run very quickly. */
+            if (val == 0.0) {
+                return axisOrientation; /* bad */
+            }
 
-       vbest = -666.0 ; ibest=pbest=qbest=rbest=1 ; jbest=2 ; kbest=3 ;
-       for( i=1 ; i <= 3 ; i++ ){     /* i = column number to use for row #1 */
-        for( j=1 ; j <= 3 ; j++ ){    /* j = column number to use for row #2 */
-         if( i == j ) continue ;
-          for( k=1 ; k <= 3 ; k++ ){  /* k = column number to use for row #3 */
-           if( i == k || j == k ) continue ;
-           P.set(0, 0, 0.0); P.set(0, 1, 0.0); P.set(0, 2, 0.0);
-           P.set(1, 0, 0.0); P.set(1, 1, 0.0); P.set(1, 2, 0.0);
-           P.set(2, 0, 0.0); P.set(2, 1, 0.0); P.set(2, 2, 0.0);
-           for( p=-1 ; p <= 1 ; p+=2 ){    /* p,q,r are -1 or +1      */
-            for( q=-1 ; q <= 1 ; q+=2 ){   /* and go into rows #1,2,3 */
-             for( r=-1 ; r <= 1 ; r+=2 ){
-               P.set(0, i-1, p);
-               P.set(1, j-1, q);
-               P.set(2, k-1, r);
-               detP = P.det();           /* sign of permutation */
-               if( detP * detQ <= 0.0 ) continue ;  /* doesn't match sign of Q */
-               M = P.times(Q) ;
+            xk /= val;
+            yk /= val;
+            zk /= val;
+        }
 
-               /* angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))       */
-               /* we want largest trace(M) == smallest angle == M nearest to I */
+        /* orthogonalize k to j */
 
-               val = M.get(0,0) + M.get(1,1) + M.get(2,2); /* trace */
-               if( val > vbest ){
-                 vbest = val ;
-                 ibest = i ; jbest = j ; kbest = k ;
-                 pbest = p ; qbest = q ; rbest = r ;
-               }
-       }}}}}}
+        val = (xj * xk) + (yj * yk) + (zj * zk); /* dot product between j and k */
 
-       /* At this point ibest is 1 or 2 or 3; pbest is -1 or +1; etc.
+        if (Math.abs(val) > 1.e-4) {
+            xk -= val * xj;
+            yk -= val * yj;
+            zk -= val * zj;
+            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
 
-          The matrix P that corresponds is the best permutation approximation
-          to Q-inverse; that is, P (approximately) takes (x,y,z) coordinates
-          to the (i,j,k) axes.
+            if (val == 0.0) {
+                return axisOrientation; /* bad */
+            }
 
-          For example, the first row of P (which contains pbest in column ibest)
-          determines the way the i axis points relative to the anatomical
-          (x,y,z) axes.  If ibest is 2, then the i axis is along the y axis,
-          which is direction P2A (if pbest > 0) or A2P (if pbest < 0).
+            xk /= val;
+            yk /= val;
+            zk /= val;
+        }
 
-          So, using ibest and pbest, we can assign the output code for
-          the i axis.  Mutatis mutandis for the j and k axes, of course. */
+        Q = new Matrix(3, 3);
 
-       switch( ibest*pbest ){
-         case  1: i = FileInfoBase.ORI_L2R_TYPE ; break ;
-         case -1: i = FileInfoBase.ORI_R2L_TYPE ; break ;
-         case  2: i = FileInfoBase.ORI_P2A_TYPE ; break ;
-         case -2: i = FileInfoBase.ORI_A2P_TYPE ; break ;
-         case  3: i = FileInfoBase.ORI_I2S_TYPE ; break ;
-         case -3: i = FileInfoBase.ORI_S2I_TYPE ; break ;
-       }
+        Q.set(0, 0, xi);
+        Q.set(0, 1, xj);
+        Q.set(0, 2, xk);
+        Q.set(1, 0, yi);
+        Q.set(1, 1, yj);
+        Q.set(1, 2, yk);
+        Q.set(2, 0, zi);
+        Q.set(2, 1, zj);
+        Q.set(2, 2, zk);
 
-       switch( jbest*qbest ){
-           case  1: j = FileInfoBase.ORI_L2R_TYPE ; break ;
-           case -1: j = FileInfoBase.ORI_R2L_TYPE ; break ;
-           case  2: j = FileInfoBase.ORI_P2A_TYPE ; break ;
-           case -2: j = FileInfoBase.ORI_A2P_TYPE ; break ;
-           case  3: j = FileInfoBase.ORI_I2S_TYPE ; break ;
-           case -3: j = FileInfoBase.ORI_S2I_TYPE ; break ;
-           default: j = 1;
-       }
+        /* at this point, Q is the rotation matrix from the (i,j,k) to (x,y,z) axes */
 
-       switch( kbest*rbest ){
-           case  1: k = FileInfoBase.ORI_L2R_TYPE ; break ;
-           case -1: k = FileInfoBase.ORI_R2L_TYPE ; break ;
-           case  2: k = FileInfoBase.ORI_P2A_TYPE ; break ;
-           case -2: k = FileInfoBase.ORI_A2P_TYPE ; break ;
-           case  3: k = FileInfoBase.ORI_I2S_TYPE ; break ;
-           case -3: k = FileInfoBase.ORI_S2I_TYPE ; break ;  
-       }
+        detQ = Q.det();
 
-       axisOrientation[0] = i ; 
-       axisOrientation[1] = j ;
-       axisOrientation[2] = k ; 
-       return axisOrientation;
+        if (detQ == 0.0) {
+            MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
+
+            return axisOrientation;
+        }
+
+        P = new Matrix(3, 3);
+        /* Build and test all possible +1/-1 coordinate permutation matrices P;
+         * then find the P such that the rotation matrix M=PQ is closest to theidentity, in the sense of M having the
+         * smallest total rotation angle. */
+
+        /* Despite the formidable looking 6 nested loops, there are
+         *only 3*3*3*2*2*2 = 216 passes, which will run very quickly. */
+
+        vbest = -666.0;
+        ibest = pbest = qbest = rbest = 1;
+        jbest = 2;
+        kbest = 3;
+
+        for (i = 1; i <= 3; i++) { /* i = column number to use for row #1 */
+
+            for (j = 1; j <= 3; j++) { /* j = column number to use for row #2 */
+
+                if (i == j) {
+                    continue;
+                }
+
+                for (k = 1; k <= 3; k++) { /* k = column number to use for row #3 */
+
+                    if ((i == k) || (j == k)) {
+                        continue;
+                    }
+
+                    P.set(0, 0, 0.0);
+                    P.set(0, 1, 0.0);
+                    P.set(0, 2, 0.0);
+                    P.set(1, 0, 0.0);
+                    P.set(1, 1, 0.0);
+                    P.set(1, 2, 0.0);
+                    P.set(2, 0, 0.0);
+                    P.set(2, 1, 0.0);
+                    P.set(2, 2, 0.0);
+
+                    for (p = -1; p <= 1; p += 2) { /* p,q,r are -1 or +1      */
+
+                        for (q = -1; q <= 1; q += 2) { /* and go into rows #1,2,3 */
+
+                            for (r = -1; r <= 1; r += 2) {
+                                P.set(0, i - 1, p);
+                                P.set(1, j - 1, q);
+                                P.set(2, k - 1, r);
+                                detP = P.det(); /* sign of permutation */
+
+                                if ((detP * detQ) <= 0.0) {
+                                    continue; /* doesn't match sign of Q */
+                                }
+
+                                M = P.times(Q);
+
+                                /* angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))       */
+                                /* we want largest trace(M) == smallest angle == M nearest to I */
+
+                                val = M.get(0, 0) + M.get(1, 1) + M.get(2, 2); /* trace */
+
+                                if (val > vbest) {
+                                    vbest = val;
+                                    ibest = i;
+                                    jbest = j;
+                                    kbest = k;
+                                    pbest = p;
+                                    qbest = q;
+                                    rbest = r;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /* At this point ibest is 1 or 2 or 3; pbest is -1 or +1; etc.
+         *
+         * The matrix P that corresponds is the best permutation approximation to Q-inverse; that is, P (approximately)
+         * takes (x,y,z) coordinates to the (i,j,k) axes.
+         *
+         * For example, the first row of P (which contains pbest in column ibest) determines the way the i axis points
+         * relative to the anatomical (x,y,z) axes.  If ibest is 2, then the i axis is along the y axis, which is
+         * direction P2A (if pbest > 0) or A2P (if pbest < 0).
+         *
+         * So, using ibest and pbest, we can assign the output code forthe i axis.  Mutatis mutandis for the j and k axes,
+         * of course. */
+
+        switch (ibest * pbest) {
+
+            case 1:
+                i = FileInfoBase.ORI_L2R_TYPE;
+                break;
+
+            case -1:
+                i = FileInfoBase.ORI_R2L_TYPE;
+                break;
+
+            case 2:
+                i = FileInfoBase.ORI_P2A_TYPE;
+                break;
+
+            case -2:
+                i = FileInfoBase.ORI_A2P_TYPE;
+                break;
+
+            case 3:
+                i = FileInfoBase.ORI_I2S_TYPE;
+                break;
+
+            case -3:
+                i = FileInfoBase.ORI_S2I_TYPE;
+                break;
+        }
+
+        switch (jbest * qbest) {
+
+            case 1:
+                j = FileInfoBase.ORI_L2R_TYPE;
+                break;
+
+            case -1:
+                j = FileInfoBase.ORI_R2L_TYPE;
+                break;
+
+            case 2:
+                j = FileInfoBase.ORI_P2A_TYPE;
+                break;
+
+            case -2:
+                j = FileInfoBase.ORI_A2P_TYPE;
+                break;
+
+            case 3:
+                j = FileInfoBase.ORI_I2S_TYPE;
+                break;
+
+            case -3:
+                j = FileInfoBase.ORI_S2I_TYPE;
+                break;
+
+            default:
+                j = 1;
+        }
+
+        switch (kbest * rbest) {
+
+            case 1:
+                k = FileInfoBase.ORI_L2R_TYPE;
+                break;
+
+            case -1:
+                k = FileInfoBase.ORI_R2L_TYPE;
+                break;
+
+            case 2:
+                k = FileInfoBase.ORI_P2A_TYPE;
+                break;
+
+            case -2:
+                k = FileInfoBase.ORI_A2P_TYPE;
+                break;
+
+            case 3:
+                k = FileInfoBase.ORI_I2S_TYPE;
+                break;
+
+            case -3:
+                k = FileInfoBase.ORI_S2I_TYPE;
+                break;
+        }
+
+        axisOrientation[0] = i;
+        axisOrientation[1] = j;
+        axisOrientation[2] = k;
+
+        return axisOrientation;
     }
 
     /**
@@ -3116,29 +3236,29 @@ public class FileNIFTI extends FileBase {
         }
 
         fileInfo.setSourceType(sourceType);
-        
+
         LPSOrigin = new float[3];
         LPSOrigin[0] = origin[0];
         LPSOrigin[1] = origin[1];
         LPSOrigin[2] = origin[2];
+
         for (int j = 0; j < 3; j++) {
-            if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE ||
-                axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE){
+
+            if ((axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) ||
+                    (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE)) {
                 LPSOrigin[0] = origin[j];
-               
-            }
-            else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE ||
-                     axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){
+
+            } else if ((axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) ||
+                           (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE)) {
                 LPSOrigin[1] = origin[j];
-                   
-            }
-            else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE ||
-                     axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){
+
+            } else if ((axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) ||
+                           (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE)) {
                 LPSOrigin[2] = origin[j];
-                   
+
             }
         }
-        
+
         matrix = fileInfo.getMatrix();
         Preferences.debug("Matrix on write entry = " + matrix + "\n");
         getAxisOrientation(matrix);
@@ -3146,7 +3266,7 @@ public class FileNIFTI extends FileBase {
         matrix.set(1, 3, LPSOrigin[1]);
         matrix.set(2, 3, LPSOrigin[2]);
 
-        
+
         if (!isNIFTI) {
             axisOrientation = image.getFileInfo(0).getAxisOrientation();
 
@@ -3247,7 +3367,7 @@ public class FileNIFTI extends FileBase {
                 } // switch(axisOrientation[2])
 
             }
-            
+
         } // if (!isNIFTI)
 
         if (matrix != null) {
@@ -3513,7 +3633,7 @@ public class FileNIFTI extends FileBase {
             if (fileInfo.getDescription() != null) {
                 setBufferString(bufferByte, fileInfo.getDescription(), 148);
             }
-            
+
             if (fileInfo.getAuxFile() != null) {
                 setBufferString(bufferByte, fileInfo.getAuxFile(), 228);
             }
@@ -3544,31 +3664,36 @@ public class FileNIFTI extends FileBase {
 
                 // System.out.println("matrix = " + matrix.toString());
                 // srow_x
-                setBufferFloat(bufferByte, (float) (-matrix.get(0,0)), 280, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(0,1)), 284, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(0,2)), 288, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(0, 0)), 280, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(0, 1)), 284, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(0, 2)), 288, endianess);
                 setBufferFloat(bufferByte, -LPSOrigin[0], 292, endianess);
+
                 // srow_y
-                setBufferFloat(bufferByte, (float) (-matrix.get(1,0)), 296, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(1,1)), 300, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(1,2)), 304, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(1, 0)), 296, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(1, 1)), 300, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(1, 2)), 304, endianess);
                 setBufferFloat(bufferByte, LPSOrigin[1], 308, endianess);
+
                 // srow_z
-                setBufferFloat(bufferByte, (float) (matrix.get(2,0)), 312, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(2,1)), 316, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(2,2)), 320, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(2, 0)), 312, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(2, 1)), 316, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(2, 2)), 320, endianess);
                 setBufferFloat(bufferByte, LPSOrigin[2], 324, endianess);
             } else {
+
                 // srow_x
                 setBufferFloat(bufferByte, -1.0f, 280, endianess);
                 setBufferFloat(bufferByte, 0.0f, 284, endianess);
                 setBufferFloat(bufferByte, 0.0f, 288, endianess);
                 setBufferFloat(bufferByte, 0.0f, 292, endianess);
+
                 // srow_y
                 setBufferFloat(bufferByte, 0.0f, 296, endianess);
                 setBufferFloat(bufferByte, 1.0f, 300, endianess);
                 setBufferFloat(bufferByte, 0.0f, 304, endianess);
                 setBufferFloat(bufferByte, 0.0f, 308, endianess);
+
                 // srow_z
                 setBufferFloat(bufferByte, 0.0f, 312, endianess);
                 setBufferFloat(bufferByte, 0.0f, 316, endianess);
@@ -3794,31 +3919,36 @@ public class FileNIFTI extends FileBase {
 
                 // System.out.println("matrix = " + matrix.toString());
                 // srow_x
-                setBufferFloat(bufferByte, (float) (-matrix.get(0,0)), 280, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(0,1)), 284, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(0,2)), 288, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(0, 0)), 280, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(0, 1)), 284, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(0, 2)), 288, endianess);
                 setBufferFloat(bufferByte, -LPSOrigin[0], 292, endianess);
+
                 // srow_y
-                setBufferFloat(bufferByte, (float) (-matrix.get(1,0)), 296, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(1,1)), 300, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(1,2)), 304, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(1, 0)), 296, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(1, 1)), 300, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(1, 2)), 304, endianess);
                 setBufferFloat(bufferByte, LPSOrigin[1], 308, endianess);
+
                 // srow_z
-                setBufferFloat(bufferByte, (float) (matrix.get(2,0)), 312, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(2,1)), 316, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(2,2)), 320, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(2, 0)), 312, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(2, 1)), 316, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(2, 2)), 320, endianess);
                 setBufferFloat(bufferByte, LPSOrigin[2], 324, endianess);
             } else {
+
                 // srow_x
                 setBufferFloat(bufferByte, -1.0f, 280, endianess);
                 setBufferFloat(bufferByte, 0.0f, 284, endianess);
                 setBufferFloat(bufferByte, 0.0f, 288, endianess);
                 setBufferFloat(bufferByte, 0.0f, 292, endianess);
+
                 // srow_y
                 setBufferFloat(bufferByte, 0.0f, 296, endianess);
                 setBufferFloat(bufferByte, 1.0f, 300, endianess);
                 setBufferFloat(bufferByte, 0.0f, 304, endianess);
                 setBufferFloat(bufferByte, 0.0f, 308, endianess);
+
                 // srow_z
                 setBufferFloat(bufferByte, 0.0f, 312, endianess);
                 setBufferFloat(bufferByte, 0.0f, 316, endianess);

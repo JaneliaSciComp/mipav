@@ -302,7 +302,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float gravToCenter;
         float geoToEdge;
         float gravToEdge;
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         float distSqr;
         float lowestSqr;
         float highestSqr;
@@ -2066,12 +2066,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     /*lowestSqr = Float.MAX_VALUE;
                      * for (j1 = 0, y = 0; y < yDim; y++, j1 += xDim) { for (x = 0; x < xDim; x++) {     index = x + j1;
-                     *   if (boundaryArray[index] == objectID[j]) {         distSqr = (xPosGeo[j] - x) * (xPosGeo[j] -
-                     * x) *                   xRes * xRes +                   (yPosGeo[j] - y) * (yPosGeo[j] - y) *
-                     *  yRes * yRes;         if (distSqr < lowestSqr) {             lowestSqr = distSqr; xEdge = x;
-                     *        yEdge = y;         }     } } } geoToEdge = (float) Math.sqrt(lowestSqr);
-                     * UI.setDataText("\t\t" + nf.format(geoToEdge)); geoToEdge *= 100.0f /centerToFarEdge[i];
-                     * UI.setDataText("\t" + nf.format(geoToEdge));
+                     *  if (boundaryArray[index] == objectID[j]) {         distSqr = (xPosGeo[j] - x) * (xPosGeo[j] - x)
+                     *                   xRes * xRes +                   (yPosGeo[j] - y) * (yPosGeo[j] - y) * yRes *
+                     * yRes;         if (distSqr < lowestSqr) {             lowestSqr = distSqr; xEdge = x;       yEdge
+                     * = y;         }     } } } geoToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" +
+                     * nf.format(geoToEdge)); geoToEdge *= 100.0f /centerToFarEdge[i]; UI.setDataText("\t" +
+                     * nf.format(geoToEdge));
                      *
                      * lowestSqr = Float.MAX_VALUE; for (j1 = 0, y = 0; y < yDim; y++, j1 += xDim) { for (x = 0; x < xDim;
                      * x++) {     index = x + j1;     if (boundaryArray[index] == objectID[j]) {         distSqr =
@@ -2180,7 +2180,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float gravToCenter;
         float geoToEdge;
         float gravToEdge;
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         float distSqr;
         float lowestSqr;
         float highestSqr;
@@ -4442,11 +4442,11 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                      * for (k1 = 0, z = 0; z < zDim; z++, k1 += sliceLength) { for (j1 = k1, y = 0; y < yDim; y++, j1 +=
                      * xDim) {     for (x = 0; x < xDim; x++) {         index = x + j1;         if (boundaryArray[index]
                      * == objectID[j]) {             distSqr = (xPosGeo[j] - x) * (xPosGeo[j] - x) *  xRes * xRes +
-                     *            (yPosGeo[j] - y) * (yPosGeo[j] - y) * yRes * yRes + (zPosGeo[j] - z) * (zPosGeo[j] -
-                     * z) * zRes * zRes;             if (distSqr < lowestSqr) {        lowestSqr = distSqr;       xEdge
-                     * = x;                 yEdge = y;                 zEdge = z;             }         }  } } }
-                     * geoToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(geoToEdge));
-                     * geoToEdge *= 100.0f / centerToFarEdge[i]; UI.setDataText("\t" + nf.format(geoToEdge));
+                     *      (yPosGeo[j] - y) * (yPosGeo[j] - y) * yRes * yRes + (zPosGeo[j] - z) * (zPosGeo[j] - z) *
+                     * zRes * zRes;             if (distSqr < lowestSqr) {        lowestSqr = distSqr;       xEdge = x;
+                     *                yEdge = y;                 zEdge = z;             }         }  } } } geoToEdge =
+                     * (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(geoToEdge)); geoToEdge *= 100.0f
+                     * / centerToFarEdge[i]; UI.setDataText("\t" + nf.format(geoToEdge));
                      *
                      * lowestSqr = Float.MAX_VALUE; for (k1 = 0, z = 0; z < zDim; z++, k1 += sliceLength) { for (j1 = k1,
                      * y = 0; y < yDim; y++, j1 += xDim) {     for (x = 0; x < xDim; x++) {         index = x + j1;   if
@@ -4454,8 +4454,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                      * x) *                       xRes * xRes +                       (yPosGrav[j] - y) * (yPosGrav[j] -
                      * y) *                       yRes * yRes +                       (zPosGrav[j] - z) * (zPosGrav[j] -
                      * z) *                       zRes * zRes;             if (distSqr < lowestSqr) { lowestSqr =
-                     * distSqr;                 xEdge = x;                 yEdge = y;     zEdge = z;    }         }
-                     * } } } gravToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(gravToEdge));
+                     * distSqr;                 xEdge = x;                 yEdge = y;     zEdge = z;    }         } } }
+                     * } gravToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(gravToEdge));
                      * gravToEdge *= 100.0f /
                      * centerToFarEdge[i];UI.setDataText("\t" + nf.format(gravToEdge));*/
                 } // if (objectID[j] == (i+1))

@@ -270,7 +270,7 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
                 // algorithm has completed.
                 Vector imageFrames = matchImage.getImageFrameVector();
                 titles = new String[imageFrames.size()];
-                userInterface = matchImage.getUserInterface();
+                userInterface = ViewUserInterface.getReference();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
@@ -313,7 +313,7 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
     protected void setGUIFromParams() {
         matchImage = scriptParameters.retrieveImage("match_image");
         baseImage = scriptParameters.retrieveImage("base_image");
-        userInterface = matchImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = matchImage.getParentFrame();
 
         if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
@@ -437,7 +437,7 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
             displayLoc = NEW;
         }
 
-        userInterface = matchImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         String selectedName = (String) comboBoxImage.getSelectedItem();
         baseImage = userInterface.getRegisteredImageByName(selectedName);

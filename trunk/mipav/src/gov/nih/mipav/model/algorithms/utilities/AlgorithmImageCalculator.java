@@ -72,6 +72,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     /** DOCUMENT ME! */
     public static final int PROMOTE = 1; // promote image type so that the range of the result fits into
 
+
     // the new image type. ( ie. byte to short).
 
 
@@ -531,7 +532,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             }
 
             fireProgressStateChanged("Image Calculator", "Calculating image ...");
-            
+
         } catch (OutOfMemoryError e) {
             bufferA = null;
             bufferB = null;
@@ -1008,7 +1009,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     if (OK == false) {
                                         displayError("Algorithm ImageCalculator: Illegal operator expression");
                                         setCompleted(false);
-                                        
+
                                         setThreadStopped(true);
 
                                         return;
@@ -1085,7 +1086,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     } catch (IOException error) {
                         displayError("Algorithm ImageCalculator: Image(s) locked");
                         setCompleted(false);
-                        
+
                         setThreadStopped(true);
 
                         return;
@@ -1106,7 +1107,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             srcImageA.calcMinMax();
         }
 
-        
         setCompleted(true);
     }
 
@@ -1447,7 +1447,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
         }
 
-        
 
         int mod = length / 20;
 
@@ -1621,7 +1620,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     if (OK == false) {
                                         displayError("Algorithm ImageCalculator: Illegal operator expression");
                                         setCompleted(false);
-                                        
+
                                         setThreadStopped(true);
 
                                         return;
@@ -1701,7 +1700,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     } catch (IOException error) {
                         displayError("Algorithm ImageCalculator: Image(s) locked");
                         setCompleted(false);
-                        
+
                         setThreadStopped(true);
 
                         return;
@@ -1738,7 +1737,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             destImage.calcMinMax();
         }
 
-        
         setCompleted(true);
     }
 
@@ -1770,7 +1768,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         Font serif12, serif12B;
         JLabel labelA, labelB, labelP;
 
-        adOpDialog = new JDialog(srcImage.getUserInterface().getActiveImageFrame(), "Enter advanced operator", false);
+        adOpDialog = new JDialog(ViewUserInterface.getReference().getActiveImageFrame(), "Enter advanced operator",
+                                 false);
         adOpDialog.setSize(400, 450);
         adOpDialog.setLocation((Toolkit.getDefaultToolkit().getScreenSize().width / 2) -
                                (adOpDialog.getBounds().width / 2),

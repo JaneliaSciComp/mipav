@@ -404,7 +404,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
     public void runFromLUTFrame(ModelImage im, float[] red, float[] green, float[] blue, float[] fillV,
                                 boolean isInverse) {
         this.image = im;
-        this.userInterface = im.getUserInterface();
+        this.userInterface = ViewUserInterface.getReference();
 
         this.thresholdR = red;
         this.thresholdG = green;
@@ -539,7 +539,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
                 thresholdAlgoRGB.addListener(this);
 
                 createProgressBar(image.getImageName(), thresholdAlgoRGB);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -577,7 +577,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
                 thresholdAlgoRGB.addListener(this);
 
                 createProgressBar(image.getImageName(), thresholdAlgoRGB);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

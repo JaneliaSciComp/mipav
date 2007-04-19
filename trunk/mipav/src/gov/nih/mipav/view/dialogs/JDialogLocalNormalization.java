@@ -35,7 +35,7 @@ import javax.swing.*;
  * high-frequency signal. The locally normalized signal is then obtained by normalizing (ie., dividing) the detail
  * signal by the local average.</blockquote>
  *
- * References:
+ * <p>References:</p>
  *
  * <ol>
  *   <li>Local Normalization. <a href="http://bigwww.epfl.ch/demo/normalize/desc.html">
@@ -48,7 +48,8 @@ import javax.swing.*;
  * @see  JDialogFrequencyFilter
  * @see  AlgorithmLocalNormalization
  */
-public class JDialogLocalNormalization extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogLocalNormalization extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -97,6 +98,9 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
     private JTextField blurringFreqText;
 
     /** DOCUMENT ME! */
+    private JPanelColorChannels colorPanel;
+
+    /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
 
     // or if the source image is to be replaced
@@ -130,8 +134,6 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
-    private JPanelColorChannels colorPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -194,7 +196,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
                 Preferences.debug("JDialogLocalNormalization: " + "error setting variables.");
             }
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         }
     }
 
@@ -209,6 +211,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -284,54 +287,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(sourceImage);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("unsharp_scale", unsharp));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("unsharp_weight", unsharpWeight));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("blurring_freq", blurringFreq));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("blurring_diameter", blurringDiameter));
-        
-        scriptParameters.storeColorOptions(colorPanel);
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        sourceImage = scriptParameters.retrieveInputImage();
-        userInterface = sourceImage.getUserInterface();
-        parentFrame = sourceImage.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            displayLoc = NEW;
-        } else {
-            displayLoc = REPLACE;
-        }
-        
-        setUnsharp(scriptParameters.getParams().getList("unsharp_scale").getAsFloatArray());
-        setUnsharpWeight(scriptParameters.getParams().getFloat("unsharp_weight"));
-        setBlurringFreq(scriptParameters.getParams().getFloat("blurring_freq"));
-        setBlurringDiameter(scriptParameters.getParams().getInt("blurring_diameter"));
-        
-        colorPanel = new JPanelColorChannels(sourceImage);
-        scriptParameters.setColorOptionsGUI(colorPanel);
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
@@ -365,7 +321,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
      */
     public void saveDefaults() {
         String delim = ",";
-        
+
         String defaultsString = unsharp[0] + delim;
         defaultsString += unsharp[1] + delim;
         defaultsString += unsharpWeight + delim;
@@ -374,7 +330,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
         defaultsString += colorPanel.isRedProcessingRequested() + delim;
         defaultsString += colorPanel.isGreenProcessingRequested() + delim;
         defaultsString += colorPanel.isBlueProcessingRequested();
-        
+
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
@@ -525,16 +481,240 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
     }
 
     /**
+     * Once all the necessary variables are set, call the local normalization algorithm based on what type of image this
+     * is and whether or not there is a separate destination image.
+     */
+    protected void callAlgorithm() {
+        String name = makeImageName(sourceImage.getImageName(), "_LocalNormalization");
+
+        // stuff to do when working on 2-D images.
+        if (sourceImage.getNDims() == 2) { // source image is 2D
+
+            int[] destExtents = new int[2];
+            destExtents[0] = sourceImage.getExtents()[0]; // X dim
+            destExtents[1] = sourceImage.getExtents()[1]; // Y dim
+
+            // if (displayLoc == NEW) {        // (2D)
+            try {
+
+                // Make result image of float type
+                // resultImage     = new ModelImage(image.getType(), destExtents, name, userInterface);
+                resultImage = (ModelImage) sourceImage.clone();
+                resultImage.setImageName(name);
+
+                if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
+                                                                            26); // Secondary Capture SOP UID
+                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ",
+                                                                            26);
+                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
+                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                }
+
+                // Make algorithm
+                algoLocal = new AlgorithmLocalNormalization(resultImage, sourceImage, unsharp, unsharpWeight,
+                                                            blurringDiameter, blurringFreq);
+
+                // only if the src image is colour will any channel
+                // checkboxes be enabled:
+                algoLocal.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
+                                              colorPanel.isGreenProcessingRequested(),
+                                              colorPanel.isBlueProcessingRequested());
+
+                // This is very important. Adding this object as a listener
+                // allows the algorithm to notify this object when it
+                // has completed or failed. See algorithm performed event.
+                // This is made possible by implementing
+                // AlgorithmedPerformed interface
+                algoLocal.addListener(this);
+
+                createProgressBar(sourceImage.getImageName(), algoLocal);
+                setVisible(false); // Hide dialog
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish
+                    // to still have user interface work fast.
+                    if (algoLocal.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+                    algoLocal.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog LocalNormalization: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                return;
+            }
+            // }
+            /*else {  // displayLoc == REPLACE        (2D)
+             * try{ // No need to make new image space because the user has choosen to replace the source image // Make
+             * the algorithm class medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev,
+             * regionFlag); // only if the src image is colour will any channel checkboxes be enabled
+             * medianAlgo.setRGBChannelFilter(red, green, blue); // This is very important. Adding this object as a
+             * listener allows the algorithm to // notify this object when it has completed or failed. See algorithm
+             * performed event. // This is made possible by implementing AlgorithmedPerformed interface
+             * medianAlgo.addListener(this); // Hide the dialog since the algorithm is about to run. setVisible(false);
+             * // These next lines set the titles in all frames where the source image is displayed to // "locked - "
+             * image name so as to indicate that the image is now read/write locked! // The image frames are disabled
+             * and then unregisted from the userinterface until the // algorithm has completed. Vector imageFrames =
+             * image.getImageFrameVector(); titles = new String[imageFrames.size()]; for (int i = 0; i <
+             * imageFrames.size(); i++) { titles[i] = ((ViewJFrameBase)(imageFrames.elementAt(i))).getTitle();
+             * ((ViewJFrameBase)(imageFrames.elementAt(i))).setTitle("Locked: " + titles[i] );
+             * ((ViewJFrameBase)(imageFrames.elementAt(i))).setEnabled(false);
+             * userInterface.unregisterFrame((Frame)(imageFrames.elementAt(i))); } if (isRunInSeparateThread()) { //
+             * Start the thread as a low priority because we wish to still have user interface work fast. if
+             * (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false){ MipavUtil.displayError("A thread is already
+             * running on this object"); } } else { medianAlgo.run(); } } catch (OutOfMemoryError x){
+             * MipavUtil.displayError("Dialog median: unable to allocate enough memory"); return; } }*/
+        } else if (sourceImage.getNDims() == 3) {
+            int[] destExtents = new int[3];
+            destExtents[0] = sourceImage.getExtents()[0];
+            destExtents[1] = sourceImage.getExtents()[1];
+            destExtents[2] = sourceImage.getExtents()[2];
+
+            // if (displayLoc == NEW) {        //     (3D)
+            try {
+
+                // Make result image of float type
+                // resultImage     = new ModelImage(image.getType(), destExtents, name, userInterface);
+                resultImage = (ModelImage) sourceImage.clone();
+                resultImage.setImageName(name);
+
+                if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+
+                    for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
+                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
+                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                    }
+                }
+
+                // Make algorithm
+                algoLocal = new AlgorithmLocalNormalization(resultImage, sourceImage, unsharp, unsharpWeight,
+                                                            blurringDiameter, blurringFreq);
+
+                // only if the src image is colour will any channel checkboxes be enabled
+                algoLocal.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
+                                              colorPanel.isGreenProcessingRequested(),
+                                              colorPanel.isBlueProcessingRequested());
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                algoLocal.addListener(this);
+                createProgressBar(sourceImage.getImageName(), algoLocal);
+                setVisible(false); // Hide dialog
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (algoLocal.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+                    algoLocal.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog LocalNormalization: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up image memory
+                    resultImage = null;
+                }
+
+                return;
+            }
+            // }
+            /*else {  // displayLoc == REPLACE         (3D)
+             * try{ // Make algorithm medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev,
+             * image25D, regionFlag); // only if the src image is colour will any channel checkboxes be enabled
+             * medianAlgo.setRGBChannelFilter(red, green, blue); // This is very important. Adding this object as a
+             * listener allows the algorithm to // notify this object when it has completed or failed. See algorithm
+             * performed event. // This is made possible by implementing AlgorithmedPerformed interface
+             * medianAlgo.addListener(this); // Hide dialog setVisible(false); // These next lines set the titles in all
+             * frames where the source image is displayed to // "locked - " image name so as to indicate that the image
+             * is now read/write locked! // The image frames are disabled and then unregisted from the userinterface
+             * until the // algorithm has completed. Vector imageFrames = image.getImageFrameVector(); titles = new
+             * String[imageFrames.size()]; for (int i = 0; i < imageFrames.size(); i++) { titles[i] =
+             * ((ViewJFrameBase)(imageFrames.elementAt(i))).getTitle();
+             * ((ViewJFrameBase)(imageFrames.elementAt(i))).setTitle("Locked: " + titles[i] );
+             * ((ViewJFrameBase)(imageFrames.elementAt(i))).setEnabled(false);
+             * userInterface.unregisterFrame((Frame)(imageFrames.elementAt(i))); } if (isRunInSeparateThread()) { //
+             * Start the thread as a low priority because we wish to still have user interface work fast. if
+             * (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false){ MipavUtil.displayError("A thread is already
+             * running on this object"); } } else { medianAlgo.run(); } } catch (OutOfMemoryError x){
+             * MipavUtil.displayError("Dialog median: unable to allocate enough memory"); return; } }*/
+        }
+    } // end callAlgorithm()
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        sourceImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = sourceImage.getParentFrame();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+
+        setUnsharp(scriptParameters.getParams().getList("unsharp_scale").getAsFloatArray());
+        setUnsharpWeight(scriptParameters.getParams().getFloat("unsharp_weight"));
+        setBlurringFreq(scriptParameters.getParams().getFloat("blurring_freq"));
+        setBlurringDiameter(scriptParameters.getParams().getInt("blurring_diameter"));
+
+        colorPanel = new JPanelColorChannels(sourceImage);
+        scriptParameters.setColorOptionsGUI(colorPanel);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(sourceImage);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("unsharp_scale", unsharp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("unsharp_weight", unsharpWeight));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blurring_freq", blurringFreq));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blurring_diameter", blurringDiameter));
+
+        scriptParameters.storeColorOptions(colorPanel);
+    }
+
+    /**
      * part of the algorithm rests on blurring the original image.
      *
      * <p>This is the same as using as blurring filter; so, this panel is a modified JDialogFrequencyFilter, permitting
      * only a Gaussian low-pass, so only a top-end frequency input is created.</p>
      *
      * <p>The panel is returned to the caller.</p>
-     * 
+     *
      * @return  The blurring parameter panel.
      *
-     * @see  JDialogUnsharpMask
+     * @see     JDialogUnsharpMask
      */
     private JPanel buildBlurringPanel() {
         JPanel blurp = new JPanel();
@@ -600,7 +780,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
      */
     private JPanel buildOptionsPanel() {
         PanelManager manager = new PanelManager();
-        
+
         manager.addOnNextLine(buildUnsharpPanel());
         manager.addOnNextLine(buildBlurringPanel());
         manager.addOnNextLine(buildColourPanel());
@@ -615,10 +795,10 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
      * JDialogUnsharpMask.</p>
      *
      * <p>The panel is returned to the caller.</p>
-     * 
+     *
      * @return  The unsharp mask parameter panel.
      *
-     * @see  JDialogUnsharpMask
+     * @see     JDialogUnsharpMask
      */
     private JPanel buildUnsharpPanel() {
         JPanel unshrp = new JPanel();
@@ -694,178 +874,6 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
     }
 
     /**
-     * Once all the necessary variables are set, call the local normalization algorithm based on what type of image this
-     * is and whether or not there is a separate destination image.
-     */
-    protected void callAlgorithm() {
-        String name = makeImageName(sourceImage.getImageName(), "_LocalNormalization");
-
-        // stuff to do when working on 2-D images.
-        if (sourceImage.getNDims() == 2) { // source image is 2D
-
-            int[] destExtents = new int[2];
-            destExtents[0] = sourceImage.getExtents()[0]; // X dim
-            destExtents[1] = sourceImage.getExtents()[1]; // Y dim
-
-            // if (displayLoc == NEW) {        // (2D)
-            try {
-
-                // Make result image of float type
-                // resultImage     = new ModelImage(image.getType(), destExtents, name, userInterface);
-                resultImage = (ModelImage) sourceImage.clone();
-                resultImage.setImageName(name);
-
-                if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
-                                                                            26); // Secondary Capture SOP UID
-                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ",
-                                                                            26);
-                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                    ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                }
-
-                // Make algorithm
-                algoLocal = new AlgorithmLocalNormalization(resultImage, sourceImage, unsharp, unsharpWeight,
-                                                            blurringDiameter, blurringFreq);
-
-                // only if the src image is colour will any channel
-                // checkboxes be enabled:
-                algoLocal.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
-
-                // This is very important. Adding this object as a listener
-                // allows the algorithm to notify this object when it
-                // has completed or failed. See algorithm performed event.
-                // This is made possible by implementing
-                // AlgorithmedPerformed interface
-                algoLocal.addListener(this);
-                
-                createProgressBar(sourceImage.getImageName(), algoLocal);
-                setVisible(false); // Hide dialog
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish
-                    // to still have user interface work fast.
-                    if (algoLocal.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    algoLocal.run();
-                }
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog LocalNormalization: unable to allocate enough memory");
-
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up memory of result image
-                    resultImage = null;
-                }
-
-                return;
-            }
-            // }
-            /*else {  // displayLoc == REPLACE        (2D)
-             * try{ // No need to make new image space because the user has choosen to replace the source image // Make
-             * the algorithm class medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev,
-             * regionFlag); // only if the src image is colour will any channel checkboxes be enabled
-             * medianAlgo.setRGBChannelFilter(red, green, blue); // This is very important. Adding this object as a
-             * listener allows the algorithm to // notify this object when it has completed or failed. See algorithm
-             * performed event. // This is made possible by implementing AlgorithmedPerformed interface
-             * medianAlgo.addListener(this); // Hide the dialog since the algorithm is about to run. setVisible(false);
-             * // These next lines set the titles in all frames where the source image is displayed to // "locked - "
-             * image name so as to indicate that the image is now read/write locked! // The image frames are disabled
-             * and then unregisted from the userinterface until the // algorithm has completed. Vector imageFrames =
-             * image.getImageFrameVector(); titles = new String[imageFrames.size()]; for (int i = 0; i <
-             * imageFrames.size(); i++) { titles[i] = ((ViewJFrameBase)(imageFrames.elementAt(i))).getTitle();
-             * ((ViewJFrameBase)(imageFrames.elementAt(i))).setTitle("Locked: " + titles[i] );
-             * ((ViewJFrameBase)(imageFrames.elementAt(i))).setEnabled(false);
-             * userInterface.unregisterFrame((Frame)(imageFrames.elementAt(i))); } if (isRunInSeparateThread()) { // Start
-             * the thread as a low priority because we wish to still have user interface work fast. if
-             * (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false){ MipavUtil.displayError("A thread is already
-             * running on this object"); } } else { medianAlgo.run(); } } catch (OutOfMemoryError x){
-             * MipavUtil.displayError("Dialog median: unable to allocate enough memory"); return; } }*/
-        } else if (sourceImage.getNDims() == 3) {
-            int[] destExtents = new int[3];
-            destExtents[0] = sourceImage.getExtents()[0];
-            destExtents[1] = sourceImage.getExtents()[1];
-            destExtents[2] = sourceImage.getExtents()[2];
-
-            // if (displayLoc == NEW) {        //     (3D)
-            try {
-
-                // Make result image of float type
-                // resultImage     = new ModelImage(image.getType(), destExtents, name, userInterface);
-                resultImage = (ModelImage) sourceImage.clone();
-                resultImage.setImageName(name);
-
-                if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-
-                    for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                    }
-                }
-
-                // Make algorithm
-                algoLocal = new AlgorithmLocalNormalization(resultImage, sourceImage, unsharp, unsharpWeight,
-                                                            blurringDiameter, blurringFreq);
-
-                // only if the src image is colour will any channel checkboxes be enabled
-                algoLocal.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed or failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                algoLocal.addListener(this);
-                createProgressBar(sourceImage.getImageName(), algoLocal);
-                setVisible(false); // Hide dialog
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (algoLocal.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    algoLocal.run();
-                }
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog LocalNormalization: unable to allocate enough memory");
-
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up image memory
-                    resultImage = null;
-                }
-
-                return;
-            }
-            // }
-            /*else {  // displayLoc == REPLACE         (3D)
-             * try{ // Make algorithm medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev,
-             * image25D, regionFlag); // only if the src image is colour will any channel checkboxes be enabled
-             * medianAlgo.setRGBChannelFilter(red, green, blue); // This is very important. Adding this object as a
-             * listener allows the algorithm to // notify this object when it has completed or failed. See algorithm
-             * performed event. // This is made possible by implementing AlgorithmedPerformed interface
-             * medianAlgo.addListener(this); // Hide dialog setVisible(false); // These next lines set the titles in all
-             * frames where the source image is displayed to // "locked - " image name so as to indicate that the image
-             * is now read/write locked! // The image frames are disabled and then unregisted from the userinterface
-             * until the // algorithm has completed. Vector imageFrames = image.getImageFrameVector(); titles = new
-             * String[imageFrames.size()]; for (int i = 0; i < imageFrames.size(); i++) { titles[i] =
-             * ((ViewJFrameBase)(imageFrames.elementAt(i))).getTitle();
-             * ((ViewJFrameBase)(imageFrames.elementAt(i))).setTitle("Locked: " + titles[i] );
-             * ((ViewJFrameBase)(imageFrames.elementAt(i))).setEnabled(false);
-             * userInterface.unregisterFrame((Frame)(imageFrames.elementAt(i))); } if (isRunInSeparateThread()) { // Start
-             * the thread as a low priority because we wish to still have user interface work fast. if
-             * (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false){ MipavUtil.displayError("A thread is already
-             * running on this object"); } } else { medianAlgo.run(); } } catch (OutOfMemoryError x){
-             * MipavUtil.displayError("Dialog median: unable to allocate enough memory"); return; } }*/
-        }
-    } // end callAlgorithm()
-
-    /**
      * check the variables of the unsharping-mask panel as they are translated from dialog inputs (ie., <code>
      * JTextField</code>s) to more usable, native types.
      *
@@ -926,7 +934,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
      * @param   jtf  The text field to check.
      * @param   a    The minimum allowable value for the text field.
      * @param   b    The maximum allowable value for the text field.
-     * 
+     *
      * @return  The value contained within the text field.
      *
      * @throws  NullPointerException      if jtf is empty.

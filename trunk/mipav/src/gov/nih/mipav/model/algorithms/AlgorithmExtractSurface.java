@@ -290,10 +290,10 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
         // Make storage string
         if (surfaceFileName.endsWith(".sur") == false) {
-            surfaceFileName = maskImage.getUserInterface().getDefaultDirectory() + File.separator + surfaceFileName +
-                              ".sur";
+            surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator +
+                              surfaceFileName + ".sur";
         } else {
-            surfaceFileName = maskImage.getUserInterface().getDefaultDirectory() + File.separator + surfaceFileName;
+            surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator + surfaceFileName;
         }
 
         try {

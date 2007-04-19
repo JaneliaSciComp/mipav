@@ -1,6 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -17,6 +16,11 @@ import java.awt.event.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  */
 public class PlugInDialogNEISeg extends JDialogScriptableBase implements AlgorithmInterface {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -8405323073518456818L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -46,8 +50,8 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
     /**
      * Empty constructor required for dynamic instantiation during script execution.
      */
-    public PlugInDialogNEISeg() {}
-    
+    public PlugInDialogNEISeg() { }
+
     /**
      * Sets variables needed to call algorithm.
      *
@@ -70,39 +74,6 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(resultImageFinal);
-        AlgorithmParameters.storeImageInRunner(resultImageHSB_Hue);
-        AlgorithmParameters.storeImageInRunner(resultImageRGB);
-        AlgorithmParameters.storeImageInRunner(resultImageRGB_AllRatios);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-    	imageA = scriptParameters.retrieveInputImage();
-
-        userInterface = imageA.getUserInterface();
-        parentFrame = imageA.getParentFrame();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(imageA);
-        AlgorithmParameters.storeImageInRecorder(resultImageFinal);
-        AlgorithmParameters.storeImageInRecorder(resultImageHSB_Hue);
-        AlgorithmParameters.storeImageInRecorder(resultImageRGB);
-        AlgorithmParameters.storeImageInRecorder(resultImageRGB_AllRatios);
-    }
-    
-    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -150,7 +121,7 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
                 // imageA.getParentFrame().setImageB(resultImage);
             }
         }
-        
+
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
@@ -192,8 +163,8 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             eyeAlgo.addListener(this);
-            
-            createProgressBar(imageA.getImageName(), " ...", eyeAlgo );
+
+            createProgressBar(imageA.getImageName(), " ...", eyeAlgo);
 
             // Hide dialog
             setVisible(false);
@@ -215,5 +186,37 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
 
             return;
         }
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImageFinal);
+        AlgorithmParameters.storeImageInRunner(resultImageHSB_Hue);
+        AlgorithmParameters.storeImageInRunner(resultImageRGB);
+        AlgorithmParameters.storeImageInRunner(resultImageRGB_AllRatios);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage();
+
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = imageA.getParentFrame();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        AlgorithmParameters.storeImageInRecorder(resultImageFinal);
+        AlgorithmParameters.storeImageInRecorder(resultImageHSB_Hue);
+        AlgorithmParameters.storeImageInRecorder(resultImageRGB);
+        AlgorithmParameters.storeImageInRecorder(resultImageRGB_AllRatios);
     }
 }

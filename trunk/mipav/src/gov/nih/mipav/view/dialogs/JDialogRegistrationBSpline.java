@@ -34,6 +34,9 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    /** DOCUMENT ME.* */
+    String kStringDimension;
+
     /**
      * Contains names of compatible target images that can be registered to the input source image for 2D/3D
      * registration. Null reference for 2.5D registration.
@@ -124,10 +127,6 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private JRadioButton m_kRadioSliceReference; // only for 2.5D
-    
-    
-    /** DOCUMENT ME **/
-    String kStringDimension;
 
     /**
      * Reference to concrete implementation of the RegistrationMeasure abstract class which defines the particular
@@ -163,7 +162,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
                                       String[] akNamesCompatibleTargetImages) {
         super(kParentFrame, false);
         m_kImageSrc = kImageSrc;
-        m_kUI = kImageSrc.getUserInterface();
+        m_kUI = ViewUserInterface.getReference();
         m_akNamesCompatibleTargetImages = akNamesCompatibleTargetImages;
         initControls();
     }
@@ -262,20 +261,23 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             aiExtentsReg = null;
         } else if (source == cancelButton) {
             dispose();
-        }else if (source == helpButton) {
-        	if(kStringDimension.equals("3")) {
-        		if(m_kCheckMultiPass.isSelected()) {
-        			MipavUtil.showHelp("19018");
-        		}else {
-        			MipavUtil.showHelp("19016");
-        		}
-        	}else if (kStringDimension.equals("2.5")) {
-        		if(m_kCheckMultiPass.isSelected()) {
-        			MipavUtil.showHelp("19022");
-        		}else {
-        			MipavUtil.showHelp("19020");
-        		}
-        	}
+        } else if (source == helpButton) {
+
+            if (kStringDimension.equals("3")) {
+
+                if (m_kCheckMultiPass.isSelected()) {
+                    MipavUtil.showHelp("19018");
+                } else {
+                    MipavUtil.showHelp("19016");
+                }
+            } else if (kStringDimension.equals("2.5")) {
+
+                if (m_kCheckMultiPass.isSelected()) {
+                    MipavUtil.showHelp("19022");
+                } else {
+                    MipavUtil.showHelp("19020");
+                }
+            }
         }
     }
 
@@ -483,7 +485,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         m_kImageSrc = scriptParameters.retrieveInputImage();
         userSetRefImage(scriptParameters.retrieveImage("reference_image"));
 
-        m_kUI = m_kImageSrc.getUserInterface();
+        m_kUI = ViewUserInterface.getReference();
         parentFrame = m_kImageSrc.getParentFrame();
         m_akNamesCompatibleTargetImages = getNamesCompatibleTargetImages(m_kImageSrc);
 

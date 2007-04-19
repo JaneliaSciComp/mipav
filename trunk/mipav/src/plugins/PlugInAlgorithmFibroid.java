@@ -81,7 +81,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
      */
     private void calc2D() {
 
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         float xRes = srcImage.getResolutions(0)[0];
@@ -315,10 +315,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
             MipavUtil.displayError("IOException " + e);
         }
 
-        srcImage.getUserInterface().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory + File.separator +
-                                                                                    voiName);
-
-
+        ViewUserInterface.getReference().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory +
+                                                                                         File.separator + voiName);
         setCompleted(true);
     }
 
@@ -380,7 +378,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         double ellipVol;
         double normFactor;
 
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
 
         int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
         int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
@@ -907,8 +905,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
             MipavUtil.displayError("IOException " + e);
         }
 
-        srcImage.getUserInterface().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory + File.separator +
-                                                                                    voiName);
+        ViewUserInterface.getReference().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory +
+                                                                                         File.separator + voiName);
 
 
         setCompleted(true);

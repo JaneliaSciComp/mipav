@@ -340,7 +340,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
                 comboBoxCostFunct.setEnabled(false);
             }
         } else if (source == imageComboBox) {
-            UI = firstImage.getUserInterface();
+            UI = ViewUserInterface.getReference();
             secondName = (String) imageComboBox.getSelectedItem();
             secondImage = UI.getRegisteredImageByName(secondName);
 
@@ -1203,7 +1203,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
             imageComboBox = buildComboBox(firstImage);
             imageComboBox.addItemListener(this);
 
-            UI = firstImage.getUserInterface();
+            UI = ViewUserInterface.getReference();
             secondName = (String) imageComboBox.getSelectedItem();
 
             if (secondName == null) {
@@ -1588,7 +1588,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
         doOr = orButton.isSelected();
 
         if (firstImage.isColorImage()) {
-            UI = firstImage.getUserInterface();
+            UI = ViewUserInterface.getReference();
 
             if (colorsPresent == 2) { }
             else if (((redCheckBox.isSelected()) && (greenCheckBox.isSelected()) && (!blueCheckBox.isSelected())) ||
@@ -1698,7 +1698,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
             }
         } // if (firstImage.isColorImage())
         else { // not color image
-            UI = firstImage.getUserInterface();
+            UI = ViewUserInterface.getReference();
 
             String selectedName = (String) imageComboBox.getSelectedItem();
             secondImage = UI.getRegisteredImageByName(selectedName);

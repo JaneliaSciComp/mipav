@@ -5,8 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 
@@ -35,7 +33,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
 
     /** Full width at half maximum of the autocorrelation. */
     private int fwhm;
-    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -192,7 +189,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         }
 
         fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
-        
+
 
         for (deltaY = 0; deltaY < yDim; deltaY++) {
             newValue = deltaY * 100 / yDim;
@@ -324,7 +321,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             fwhm = Integer.MAX_VALUE;
         }
 
-        
         setCompleted(true);
     }
 
@@ -387,7 +383,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
 
             fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
-            
+
 
             for (deltaY = 0; deltaY < yDim; deltaY++) {
                 newValue = deltaY * 100 / (yDim * colorsPresent);
@@ -580,7 +576,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
         } // if (destImageB != null)
 
-        
         setCompleted(true);
     }
 
@@ -645,7 +640,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             return;
         }
 
-        
 
         for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
             newValue = deltaZ * 100 / zDim;
@@ -815,7 +809,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             fwhm = Integer.MAX_VALUE;
         }
 
-        
         setCompleted(true);
     }
 
@@ -880,7 +873,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
 
             fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
-            
+
 
             for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
                 newValue = deltaZ * 100 / (zDim * colorsPresent);
@@ -1142,7 +1135,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
         } // if (destImageB != null)
 
-        
         setCompleted(true);
     }
 
@@ -1163,7 +1155,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         int sliceSize = xDim * yDim;
         int volSize = sliceSize * zDim;
         int deltaX, deltaY, deltaZ, deltaT;
-        int i;
         int x, y, z, t;
         float zeroCoefficient;
         int oldValue = 0;
@@ -1185,7 +1176,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
-            
+
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -1290,7 +1281,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -1358,7 +1348,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
 
             fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
-            
+
 
             for (deltaT = 0; deltaT < tDim; deltaT++) {
                 newValue = deltaT * 100 / (tDim * colorsPresent);
@@ -1663,7 +1653,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
         } // if (destImageB != null)
 
-        
         setCompleted(true);
     }
 
@@ -1676,7 +1665,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
-
 
     /**
      * DOCUMENT ME!

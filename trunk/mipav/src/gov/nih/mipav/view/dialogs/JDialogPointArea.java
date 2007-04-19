@@ -223,42 +223,6 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
         }
 
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(srcImage);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("x_location", xLoc));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("y_location", yLoc));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("x_spacing", xSpacing));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("y_spacing", ySpacing));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_add_left_padding", leftPad));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_add_top_padding", topPad));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_threshold", useThreshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_graph", showGraph));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        srcImage = scriptParameters.retrieveInputImage();
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-        
-        setXLoc(scriptParameters.getParams().getInt("x_location"));
-        setYLoc(scriptParameters.getParams().getInt("y_location"));
-        setXSpacing(scriptParameters.getParams().getInt("x_spacing"));
-        setYSpacing(scriptParameters.getParams().getInt("y_spacing"));
-        setLeftPad(scriptParameters.getParams().getBoolean("do_add_left_padding"));
-        setTopPad(scriptParameters.getParams().getBoolean("do_add_top_padding"));
-        setUseThreshold(scriptParameters.getParams().getBoolean("do_use_threshold"));
-        setThreshold(scriptParameters.getParams().getFloat("threshold"));
-        setShowGraph(scriptParameters.getParams().getBoolean("do_show_graph"));
-    }
 
     /**
      * Accessor to set if padded with extra column on left.
@@ -352,9 +316,9 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
                                            threshold);
 
         pointAlgo.addListener(this);
-        
+
         createProgressBar(srcImage.getImageName(), pointAlgo);
-        
+
         setVisible(false); // Hide dialog
 
         if (isRunInSeparateThread()) {
@@ -366,6 +330,42 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
         } else {
             pointAlgo.run();
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = srcImage.getParentFrame();
+
+        setXLoc(scriptParameters.getParams().getInt("x_location"));
+        setYLoc(scriptParameters.getParams().getInt("y_location"));
+        setXSpacing(scriptParameters.getParams().getInt("x_spacing"));
+        setYSpacing(scriptParameters.getParams().getInt("y_spacing"));
+        setLeftPad(scriptParameters.getParams().getBoolean("do_add_left_padding"));
+        setTopPad(scriptParameters.getParams().getBoolean("do_add_top_padding"));
+        setUseThreshold(scriptParameters.getParams().getBoolean("do_use_threshold"));
+        setThreshold(scriptParameters.getParams().getFloat("threshold"));
+        setShowGraph(scriptParameters.getParams().getBoolean("do_show_graph"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("x_location", xLoc));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("y_location", yLoc));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("x_spacing", xSpacing));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("y_spacing", ySpacing));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_add_left_padding", leftPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_add_top_padding", topPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_threshold", useThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_graph", showGraph));
     }
 
     /**
@@ -591,10 +591,10 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
-     * Filter that allows only integers or floating point numbers into a textfield while monitoring the
-     * numbers themselves in order to activate/deactivate related JCheckboxes.
-     * 
-     * @author   ben link
+     * Filter that allows only integers or floating point numbers into a textfield while monitoring the numbers
+     * themselves in order to activate/deactivate related JCheckboxes.
+     *
+     * @author  ben link
      */
     public class JTextFieldFilter extends PlainDocument {
 

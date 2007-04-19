@@ -550,7 +550,7 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase implements Algo
      */
     protected void setGUIFromParams() {
         srcImage = scriptParameters.retrieveInputImage();
-        userInterface = srcImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = srcImage.getParentFrame();
 
         FRETImage = scriptParameters.retrieveImage("FRET_image");

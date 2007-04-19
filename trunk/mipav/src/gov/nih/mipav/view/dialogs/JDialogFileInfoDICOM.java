@@ -1147,7 +1147,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
     private void saveTags() {
 
         JFileChooser chooser = null;
-        ViewUserInterface UI = imageA.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         RandomAccessFile raFile;
         File file;
         int i;

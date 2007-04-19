@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -110,6 +110,11 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Empty constructor for scripting.
+     */
+    public JDialogWatershed() { }
+
+    /**
      * Creates new watershed dialog.
      *
      * @param  theParentFrame  Parent frame
@@ -122,12 +127,6 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
         init();
     }
 
-    /**
-     * Empty constructor for scripting
-     *
-     */
-    public JDialogWatershed() {}
-    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -137,7 +136,7 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-        
+
 
         if (source == buttonEnergyInput) {
 
@@ -158,86 +157,82 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
                 return;
             }
         } else if (source == OKButton) {
-        	if (setVariables()) {
-        		callAlgorithm();
-        	}
+
+            if (setVariables()) {
+                callAlgorithm();
+            }
         } else if (source == cancelButton) {
             dispose();
         }
     }
 
-    private boolean setVariables() {
-    	String tmpStr;
-    	if (choiceCheckBox.isSelected() == true) {
+    // ************************************************************************
+    // ************************** Algorithm Events ****************************
+    // ************************************************************************
+    /**
+     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
+     * has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
+     *
+     * @param  algorithm  Algorithm that caused the event.
+     */
+    public void algorithmPerformed(AlgorithmBase algorithm) {
 
-            try {
-                FileIO fileIO = new FileIO();
-                gmImage = fileIO.readImage(gmFileName, gmDirectory, false, null);
+        if (algorithm instanceof AlgorithmWatershed) {
+            System.err.println("finished algorithm");
+            image.clearMask();
 
-                if (compareDimensions(gmImage, image) == false) {
-                    MipavUtil.displayError("Images of different dimensions");
+            if ((watershedAlgo.isCompleted() == true) && (resultImage != null)) {
 
-                    return false;
+                // The algorithm has completed and produced a new image to be displayed.
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+
+                try {
+                    resultImage.setImageName("Watershed");
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
 
-                if (gmImage == null) {
-                	return false;
-                }
-            } catch (OutOfMemoryError e) {
-                MipavUtil.displayError("Out of memory!");
+                insertScriptLine();
+            } else if (resultImage == null) {
 
-                return false;
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
             }
-        } else {
-            gmImage = null; // This will force the watershed algorithm to
-
-            // calculate the gradient magnitude of the image.
         }
 
-        tmpStr = textGaussX.getText();
-
-        if (testParameter(tmpStr, 0.5, 5.0)) {
-            scaleX = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussX.requestFocus();
-            textGaussX.selectAll();
-
-            return false;
-        }
-
-        tmpStr = textGaussY.getText();
-
-        if (testParameter(tmpStr, 0.5, 5.0)) {
-            scaleY = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussY.requestFocus();
-            textGaussY.selectAll();
-
-            return false;
-        }
-
-        tmpStr = textGaussZ.getText();
-
-        if (testParameter(tmpStr, 0.0, 5.0)) {
-            scaleZ = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussZ.requestFocus();
-            textGaussZ.selectAll();
-
-            return false;
-        }
-
-        // Apply normalization if requested!
-        if (resolutionCheckbox.isSelected()) {
-            scaleZ = scaleZ * normFactor;
-        }
-
-        
-        return true;
+        dispose();
     }
-    
+
+    /**
+     * DOCUMENT ME!
+     */
     public void callAlgorithm() {
-    	if (image.getNDims() == 2) { // source image is 2D
+
+        if (image.getNDims() == 2) { // source image is 2D
 
             int[] destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
@@ -293,131 +288,27 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
 
                 return;
             }
-    
+
         }
-//    	 This is very important. Adding this object as a listener allows the algorithm to
+
+        //       This is very important. Adding this object as a listener allows the algorithm to
         // notify this object when it has completed of failed. See algorithm performed event.
         // This is made possible by implementing AlgorithmedPerformed interface
         watershedAlgo.addListener(this);
 
-//      Hide dialog
+        //      Hide dialog
         setVisible(false);
         createProgressBar(image.getImageName(), watershedAlgo);
-        
-//    	 Start the thread as a low priority because we wish to still have user interface work fast
+
+        //       Start the thread as a low priority because we wish to still have user interface work fast
         if (isRunInSeparateThread()) {
-        	if (watershedAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-        		MipavUtil.displayError("A thread is already running on this object");
+
+            if (watershedAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-        	watershedAlgo.run();
+            watershedAlgo.run();
         }
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(resultImage);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-
-        try {
-        	gmImage = scriptParameters.retrieveImage("gmImage");
-        } catch (Exception e) { //nothing, this image is not necessary
-        }
-        
-        
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        scaleX = scriptParameters.getParams().getFloat("scaleX");
-        scaleY = scriptParameters.getParams().getFloat("scaleY");
-        if (image.getNDims() == 3) {
-        	scaleZ = scriptParameters.getParams().getFloat("scaleZ");
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        if (gmImage != null) {
-        	scriptParameters.storeImage(gmImage, "gmImage");
-        }
-        scriptParameters.storeOutputImageParams(resultImage, true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX", scaleX));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY", scaleY));
-        if (image.getNDims() == 3) {
-        	scriptParameters.getParams().put(ParameterFactory.newParameter("scaleZ", scaleZ));
-        }
-    }
-    
-    // ************************************************************************
-    // ************************** Algorithm Events ****************************
-    // ************************************************************************
-    /**
-     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
-     * has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
-     */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (algorithm instanceof AlgorithmWatershed) {
-        	System.err.println("finished algorithm");
-            image.clearMask();
-
-            if ((watershedAlgo.isCompleted() == true) && (resultImage != null)) {
-
-                // The algorithm has completed and produced a new image to be displayed.
-                updateFileInfo(image, resultImage);
-                resultImage.clearMask();
-
-                try {
-                    resultImage.setImageName("Watershed");
-                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
-                insertScriptLine();
-            } else if (resultImage == null) {
-
-                // These next lines set the titles in all frames where the source image is displayed to
-                // image name so as to indicate that the image is now unlocked!
-                // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
-
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
-
-                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-                }
-
-                if (parentFrame != null) {
-                    userInterface.registerFrame(parentFrame);
-                }
-
-                image.notifyImageDisplayListeners(null, true);
-            } else if (resultImage != null) {
-
-                // algorithm failed but result image still has garbage
-                resultImage.disposeLocal(); // clean up memory
-                resultImage = null;
-            }
-        }
-
-        dispose();
     }
 
     /**
@@ -499,6 +390,55 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
 
                 buttonEnergyInput.setEnabled(false);
             }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+
+        try {
+            gmImage = scriptParameters.retrieveImage("gmImage");
+        } catch (Exception e) { // nothing, this image is not necessary
+        }
+
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        scaleX = scriptParameters.getParams().getFloat("scaleX");
+        scaleY = scriptParameters.getParams().getFloat("scaleY");
+
+        if (image.getNDims() == 3) {
+            scaleZ = scriptParameters.getParams().getFloat("scaleZ");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        if (gmImage != null) {
+            scriptParameters.storeImage(gmImage, "gmImage");
+        }
+
+        scriptParameters.storeOutputImageParams(resultImage, true);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX", scaleX));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY", scaleY));
+
+        if (image.getNDims() == 3) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("scaleZ", scaleZ));
         }
     }
 
@@ -716,5 +656,81 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private boolean setVariables() {
+        String tmpStr;
+
+        if (choiceCheckBox.isSelected() == true) {
+
+            try {
+                FileIO fileIO = new FileIO();
+                gmImage = fileIO.readImage(gmFileName, gmDirectory, false, null);
+
+                if (compareDimensions(gmImage, image) == false) {
+                    MipavUtil.displayError("Images of different dimensions");
+
+                    return false;
+                }
+
+                if (gmImage == null) {
+                    return false;
+                }
+            } catch (OutOfMemoryError e) {
+                MipavUtil.displayError("Out of memory!");
+
+                return false;
+            }
+        } else {
+            gmImage = null; // This will force the watershed algorithm to
+
+            // calculate the gradient magnitude of the image.
+        }
+
+        tmpStr = textGaussX.getText();
+
+        if (testParameter(tmpStr, 0.5, 5.0)) {
+            scaleX = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussX.requestFocus();
+            textGaussX.selectAll();
+
+            return false;
+        }
+
+        tmpStr = textGaussY.getText();
+
+        if (testParameter(tmpStr, 0.5, 5.0)) {
+            scaleY = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussY.requestFocus();
+            textGaussY.selectAll();
+
+            return false;
+        }
+
+        tmpStr = textGaussZ.getText();
+
+        if (testParameter(tmpStr, 0.0, 5.0)) {
+            scaleZ = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussZ.requestFocus();
+            textGaussZ.selectAll();
+
+            return false;
+        }
+
+        // Apply normalization if requested!
+        if (resolutionCheckbox.isSelected()) {
+            scaleZ = scaleZ * normFactor;
+        }
+
+
+        return true;
     }
 }

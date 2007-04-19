@@ -182,7 +182,7 @@ public class JDialogShowCosts extends JDialogBase {
         String tmpStr;
 
         if (source == imageComboBox) {
-            UI = firstImage.getUserInterface();
+            UI = ViewUserInterface.getReference();
 
             String selectedName = (String) imageComboBox.getSelectedItem();
             secondImage = UI.getRegisteredImageByName(selectedName);
@@ -408,7 +408,7 @@ public class JDialogShowCosts extends JDialogBase {
 
         imageComboBox = buildComboBox(firstImage);
         imageComboBox.addItemListener(this);
-        UI = firstImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         String selectedName = (String) imageComboBox.getSelectedItem();
 
@@ -529,7 +529,7 @@ public class JDialogShowCosts extends JDialogBase {
     private boolean setVariables() {
 
         /* Images */
-        UI = firstImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         String selectedName = (String) imageComboBox.getSelectedItem();
         secondImage = UI.getRegisteredImageByName(selectedName);

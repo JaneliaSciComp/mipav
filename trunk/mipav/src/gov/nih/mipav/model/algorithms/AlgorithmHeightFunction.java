@@ -5,6 +5,8 @@ import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.*;
+
 import java.io.*;
 
 import javax.vecmath.*;
@@ -202,9 +204,9 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             qMesh = new ModelQuadMesh(cVertex, cConnect, length2, length1, null, maxBox);
 
             if (surfaceFileName.endsWith(".sur") == false) {
-                surfaceFileName = srcImage.getUserInterface().getDefaultDirectory() + surfaceFileName + ".sur";
+                surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName + ".sur";
             } else {
-                surfaceFileName = srcImage.getUserInterface().getDefaultDirectory() + surfaceFileName;
+                surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName;
             }
 
             qMesh.save(surfaceFileName, getProgressChangeListener(), 90, 10);
@@ -364,9 +366,9 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             tMesh = new ModelTriangleMesh(vertex, connect);
 
             if (surfaceFileName.endsWith(".sur") == false) {
-                surfaceFileName = srcImage.getUserInterface().getDefaultDirectory() + surfaceFileName + ".sur";
+                surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName + ".sur";
             } else {
-                surfaceFileName = srcImage.getUserInterface().getDefaultDirectory() + surfaceFileName;
+                surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName;
             }
 
             tMesh.save(surfaceFileName, true, direction, startLocation, box, null);

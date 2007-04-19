@@ -322,7 +322,7 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
             try {
                 JFileChooser chooser = new JFileChooser();
 
-                UI = firstImage.getUserInterface();
+                UI = ViewUserInterface.getReference();
 
                 if (UI.getDefaultDirectory() != null) {
                     File file = new File(UI.getDefaultDirectory());
@@ -443,7 +443,7 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
                 comboBoxCostFunct.setEnabled(false);
             }
         } else if (source == imageComboBox) {
-            UI = firstImage.getUserInterface();
+            UI = ViewUserInterface.getReference();
             secondName = (String) imageComboBox.getSelectedItem();
             secondImage = UI.getRegisteredImageByName(secondName);
             componentImage2 = secondImage.getParentFrame().getComponentImage();
@@ -872,9 +872,9 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
             if (firstImage.isColorImage()) {
                 // System.err.println("Buffer len is: " + buffer.length); System.err.println(bin1 + " " + bin2 + " " +
                 // background1 + " " + background2 + " " + leftPad + " " + rightPad +                     " " +
-                //   bottomPad + " " + " " + topPad + " " + useRed + " " + useGreen + " " + useBlue + " " +
-                //    doColocWithThresholds + " "                     + entireImage + " " + register + " " + cost + " "
-                // + doSecondIteration + " " + doVOISubtraction);
+                // bottomPad + " " + " " + topPad + " " + useRed + " " + useGreen + " " + useBlue + " " +
+                // doColocWithThresholds + " "                     + entireImage + " " + register + " " + cost + " " +
+                // doSecondIteration + " " + doVOISubtraction);
 
                 colocalizationAlgo = new AlgorithmColocalizationRegression(resultImage, firstImage, mask, bin1, bin2,
                                                                            background1, background2, leftPad, rightPad,
@@ -1247,7 +1247,7 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
             imageComboBox = buildComboBox(firstImage);
             imageComboBox.addItemListener(this);
 
-            UI = firstImage.getUserInterface();
+            UI = ViewUserInterface.getReference();
             secondName = (String) imageComboBox.getSelectedItem();
 
             if (secondName == null) {
@@ -1771,7 +1771,7 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
         }
 
         if (firstImage.isColorImage()) {
-            UI = firstImage.getUserInterface();
+            UI = ViewUserInterface.getReference();
 
             if (colorsPresent == 2) { }
             else if (((redCheckBox.isSelected()) && (greenCheckBox.isSelected()) && (!blueCheckBox.isSelected())) ||
@@ -1862,7 +1862,7 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
             }
         } // if (firstImage.isColorImage())
         else { // not color image
-            UI = firstImage.getUserInterface();
+            UI = ViewUserInterface.getReference();
 
             String selectedName = (String) imageComboBox.getSelectedItem();
 

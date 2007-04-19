@@ -668,7 +668,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
             destExtents[2] = srcImage[0].getExtents()[2];
         }
 
-        userInterface = srcImage[0].getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = srcImage[0].getParentFrame();
 
         resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
@@ -1569,7 +1569,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
          * textOneSmooth.requestFocus();     textOneSmooth.selectAll();     return false; } tmpStr =
          * textTwoSmooth.getText(); if (testParameter(tmpStr,2.0e3,2.0e7) ) {     twoSmooth =
          * Float.valueOf(tmpStr).floatValue(); } else {     textTwoSmooth.requestFocus();     textTwoSmooth.selectAll();
-         *    return false; } tmpStr = textOneJacobiIter.getText(); if (testParameter(tmpStr,1.0,10.0) ) { oneJacobiIter
+         *   return false; } tmpStr = textOneJacobiIter.getText(); if (testParameter(tmpStr,1.0,10.0) ) { oneJacobiIter
          * = Integer.valueOf(tmpStr).intValue(); } else {     textOneJacobiIter.requestFocus();
          * textOneJacobiIter.selectAll();     return false; } tmpStr = textTwoJacobiIter.getText(); if
          * (testParameter(tmpStr,1.0,10.0) ) {     twoJacobiIter = Integer.valueOf(tmpStr).intValue(); } else {

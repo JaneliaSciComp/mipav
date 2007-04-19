@@ -148,7 +148,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         float colorCount;
         float regionToCenter;
         float regionToEdge;
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         float distSqr;
         float lowestSqr;
         int xEdge = -1;
@@ -935,7 +935,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
                 } else {
                     UI.setDataText("Distance to center of cell mass = " + regionToCenter + "\n");
                     //                    UI.setGlobalDataText("Distance to center of cell mass = " +
-                    //                     regionToCenter + "\n");
+                    //  regionToCenter + "\n");
                 }
 
                 UI.setDataText("Edge of cell = (" + xEdge + ", " + yEdge + ")\n");
@@ -948,8 +948,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
                 } else {
                     UI.setDataText("Distance to edge of cell = " + regionToEdge + "\n\n");
-                    //                    UI.setGlobalDataText("Distance to edge of cell = " +
-                    //              regionToEdge + "\n\n");
+                    //                    UI.setGlobalDataText("Distance to edge of cell = " +              regionToEdge
+                    // + "\n\n");
                 }
             } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
         } // for (i = 0; i < nVOIs; i++)
@@ -1168,7 +1168,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         float colorCount;
         float regionToCenter;
         float regionToEdge;
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         float distSqr;
         float lowestSqr;
         int xEdge = -1;

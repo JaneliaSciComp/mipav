@@ -804,7 +804,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         } else if (source == comboBoxImage) {
 
             String selectName = (String) (comboBoxImage.getSelectedItem());
-            resampleImage = image.getUserInterface().getRegisteredImageByName(selectName);
+            resampleImage = ViewUserInterface.getReference().getRegisteredImageByName(selectName);
 
             if (textResX != null) {
                 textResX.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[0]));

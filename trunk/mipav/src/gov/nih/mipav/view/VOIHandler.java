@@ -1213,7 +1213,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                                                    "Intensity Graph", v,
                                                                                    FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(2)));
 
-                                contourGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                                contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                                 v.setContourGraph(contourGraph);
                                 contourGraph.setVisible(true);
                                 v.setTotalIntensity(totalIntensity);
@@ -1438,7 +1438,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                                        "Intensity Graph", v,
                                                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
 
-                    contourGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                    contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                     contourGraph.setVisible(false);
                     v.setContourGraph(contourGraph);
                 } else {
@@ -1469,7 +1469,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                                            v,
                                                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
 
-                        contourGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                        contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                         contourGraph.setVisible(false);
                         v.setContourGraph(contourGraph);
                     } else {
@@ -1507,7 +1507,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     ViewJFrameGraph contourGraph = new ViewJFrameGraph(ptPosition, ptIntensity, "Intensity Graph", v,
                                                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
 
-                    contourGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                    contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                     contourGraph.setVisible(false);
                     v.setContourGraph(contourGraph);
                 } else {
@@ -1602,7 +1602,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbInten, "Intensity Graph");
 
                             contourGraph.setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                            contourGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                            contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                             contourGraph.setVisible(true);
 
                             return;
@@ -1669,7 +1669,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                     ViewJFrameGraph contourGraph = new ViewJFrameGraph(pos, inten, "Contour VOI Graph");
 
                                     contourGraph.setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                    contourGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                                    contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                                     contourGraph.setVisible(true);
 
                                     return;
@@ -5887,7 +5887,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                                    VOIs.VOIAt(voiIndex),
                                                                    FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
 
-                contourGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                 contourGraph.setVisible(true);
                 VOIs.VOIAt(voiIndex).setContourGraph(contourGraph);
                 contourGraph.setVOI(VOIs.VOIAt(voiIndex));
@@ -5921,7 +5921,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             if (VOIs.VOIAt(voiIndex).getContourGraph() == null) {
                 lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", VOIs.VOIAt(voiIndex),
                                                 FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                lineGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                 lineGraph.setVisible(true);
                 VOIs.VOIAt(voiIndex).setContourGraph(lineGraph);
                 lineGraph.setVOI(VOIs.VOIAt(voiIndex));

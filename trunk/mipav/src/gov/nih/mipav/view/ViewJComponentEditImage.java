@@ -882,7 +882,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             maskAlgo.setRunningInSeparateThread(false);
             maskAlgo.addProgressChangeListener(progressBar);
-            progressBar.setVisible(imageA.getUserInterface().isAppFrameVisible());
+            progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
             maskAlgo.calcInPlace25DCShortMask((BitSet) paintBitmap.clone(), fillColor, timeSlice);
 
         } else { // not color
@@ -902,7 +902,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             maskAlgo.setRunningInSeparateThread(false);
             maskAlgo.addProgressChangeListener(progressBar);
-            progressBar.setVisible(imageA.getUserInterface().isAppFrameVisible());
+            progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
             maskAlgo.calcInPlace25DShortMask((BitSet) paintBitmap.clone(), intensityDropper, timeSlice);
         } // not color
 
@@ -3009,29 +3009,31 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (paintBrushPrevious != null) {
             BitSet tempSet = (BitSet) paintBrushPrevious.clone();
             Dimension tempDim = (Dimension) paintBrushDimPrevious.clone();
-                       
+
             int prevWidth = paintImagePrevious.getWidth();
             int prevHeight = paintImagePrevious.getHeight();
-            
-       
+
+
             BufferedImage tempBImage = new BufferedImage(prevWidth, prevHeight, paintImagePrevious.getType());
-            
+
             for (int i = 0; i < prevWidth; i++) {
-            	for (int j = 0; j < prevHeight; j++) {
-            		tempBImage.setRGB(i, j, paintImagePrevious.getRGB(i, j));
-            	}
+
+                for (int j = 0; j < prevHeight; j++) {
+                    tempBImage.setRGB(i, j, paintImagePrevious.getRGB(i, j));
+                }
             }
-            
+
             int curWidth = paintImage.getWidth();
             int curHeight = paintImage.getHeight();
             BufferedImage tempBImageCurrent = new BufferedImage(curWidth, curHeight, paintImage.getType());
-            
+
             for (int i = 0; i < curWidth; i++) {
-            	for (int j = 0; j < curHeight; j++) {
-            		tempBImageCurrent.setRGB(i, j, paintImage.getRGB(i, j));
-            	}
+
+                for (int j = 0; j < curHeight; j++) {
+                    tempBImageCurrent.setRGB(i, j, paintImage.getRGB(i, j));
+                }
             }
-            
+
             paintBrushPrevious = (BitSet) paintBrush.clone();
             paintBrush = tempSet;
 
@@ -3040,26 +3042,27 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             paintImagePrevious.flush();
             paintImagePrevious = null;
-            
+
             paintImage.flush();
             paintImage = null;
-            
-            //switch them
+
+            // switch them
             paintImage = tempBImage;
             paintImagePrevious = tempBImageCurrent;
         } else {
             paintBrushPrevious = (BitSet) paintBrush.clone();
             paintBrushDimPrevious = (Dimension) paintBrushDim.clone();
-            
+
             int width = paintImage.getWidth();
             int height = paintImage.getHeight();
-            
+
             paintImagePrevious = new BufferedImage(width, height, paintImage.getType());
-            
+
             for (int i = 0; i < width; i++) {
-            	for (int j = 0; j < height; j++) {
-            		paintImagePrevious.setRGB(i, j, paintImage.getRGB(i, j));
-            	}
+
+                for (int j = 0; j < height; j++) {
+                    paintImagePrevious.setRGB(i, j, paintImage.getRGB(i, j));
+                }
             }
         }
 
@@ -4264,8 +4267,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (imageStatList == null) {
 
             if ((imageActive.getVOIs() != null) && (imageActive.getVOIs().size() != 0)) {
-                imageStatList = new JDialogVOIStatistics(this.getActiveImage().getUserInterface(),
-                                                         imageActive.getVOIs());
+                imageStatList = new JDialogVOIStatistics(ViewUserInterface.getReference(), imageActive.getVOIs());
                 imageStatList.setVisible(true);
                 // addVOIUpdateListener(imageStatList); // i'd rather not do it this way...
             } else {

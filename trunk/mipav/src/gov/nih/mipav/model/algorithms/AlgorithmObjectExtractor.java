@@ -1691,7 +1691,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         float[] tCoord;
         int i;
 
-        String kName = image.getUserInterface().getDefaultDirectory() + image.getImageName() + "_object.sur";
+        String kName = ViewUserInterface.getReference().getDefaultDirectory() + image.getImageName() + "_object.sur";
 
         if (image.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) {
 

@@ -476,7 +476,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             DIM = 3;
         }
 
-        UI = matchImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
         parentFrame = matchImage.getParentFrame();
     }
 
@@ -532,7 +532,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
      * @return  DOCUMENT ME!
      */
     private boolean setVariables() {
-        UI = matchImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         String selectedName = (String) comboBoxImage.getSelectedItem();
         baseImage = UI.getRegisteredImageByName(selectedName);

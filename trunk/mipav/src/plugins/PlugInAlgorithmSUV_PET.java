@@ -150,7 +150,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
      * DOCUMENT ME!
      */
     private void calc2D() {
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int sliceSize = xDim * yDim;
@@ -195,7 +195,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         ViewVOIVector VOIs = null;
         int nVOIs;
         fireProgressStateChanged("Measuring SUVs ...");
-        
+
         fileInfo = srcImage.getFileInfo();
 
         if (fileInfo[0] instanceof FileInfoDicom) {
@@ -410,7 +410,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         } catch (OutOfMemoryError err) {
             MipavUtil.displayError("Cannot allocate buffer array");
             buffer = null;
-            
+
             setCompleted(false);
 
             return;
@@ -420,7 +420,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
             srcImage.exportData(0, sliceSize, buffer);
         } catch (IOException e) {
             MipavUtil.displayError("Error on srcImage.exportData(0,sliceSize,buffer)");
-            
+
             setCompleted(false);
 
             return;
@@ -525,9 +525,9 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
             MipavUtil.displayError("IOException " + e);
         }
 
-        srcImage.getUserInterface().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory + File.separator +
-                                                                                    voiName);
-        
+        ViewUserInterface.getReference().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory +
+                                                                                         File.separator + voiName);
+
         setCompleted(true);
     }
 
@@ -589,9 +589,9 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         Vector[] contours;
         int nContours;
         BitSet mask;
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         fireProgressStateChanged("Measuring SUVs ...");
-        
+
         fileInfo = srcImage.getFileInfo();
 
         if (fileInfo[0] instanceof FileInfoDicom) {
@@ -806,7 +806,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         } catch (OutOfMemoryError err) {
             MipavUtil.displayError("Cannot allocate buffer array");
             buffer = null;
-            
+
             setCompleted(false);
 
             return;
@@ -816,7 +816,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
             srcImage.exportData(0, volSize, buffer);
         } catch (IOException e) {
             MipavUtil.displayError("Error on srcImage.exportData(0,volSize,buffer)");
-            
+
             setCompleted(false);
 
             return;
@@ -999,9 +999,9 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
             MipavUtil.displayError("IOException " + e);
         }
 
-        srcImage.getUserInterface().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory + File.separator +
-                                                                                    voiName);
-        
+        ViewUserInterface.getReference().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory +
+                                                                                         File.separator + voiName);
+
         setCompleted(true);
     }
 

@@ -278,7 +278,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
         imageA = scriptParameters.retrieveInputImage(1);
         imageB = scriptParameters.retrieveInputImage(2);
 
-        userInterface = imageA.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
 
         doOrigins = scriptParameters.getParams().getBoolean("do_match_origins");

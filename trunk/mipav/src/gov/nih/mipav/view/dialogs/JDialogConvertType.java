@@ -963,7 +963,7 @@ public class JDialogConvertType extends JDialogScriptableBase
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         if (scriptParameters.doOutputNewImage()) {

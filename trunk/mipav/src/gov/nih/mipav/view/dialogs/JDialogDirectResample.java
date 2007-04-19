@@ -71,9 +71,6 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     /** DOCUMENT ME! */
     ModelImage resultImageB = null;
-    
-    /** DOCUMENT ME! */
-    private JComboBox comboBoxInterp;
 
     /** Parent ui. */
     ViewUserInterface userInterface;
@@ -83,7 +80,10 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     /** Volume size X*Y*Z. */
     int volSize = 1;
-    
+
+    /** DOCUMENT ME! */
+    private JComboBox comboBoxInterp;
+
     /** DOCUMENT ME! */
     private int interp = 0;
 
@@ -135,17 +135,21 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         String command = event.getActionCommand();
 
         if (command.equals("OK")) {
-        	setInterp();
-        	if(dim >= 3) {
-        		if(extXOutput.getText().trim().equals("") || extYOutput.getText().trim().equals("") || extZOutput.getText().trim().equals("")) {
-        			return;
-        		}
-        	}
-        	else {
-        		if(extXOutput.getText().trim().equals("") || extYOutput.getText().trim().equals("")) {
-        			return;
-        		}
-        	}
+            setInterp();
+
+            if (dim >= 3) {
+
+                if (extXOutput.getText().trim().equals("") || extYOutput.getText().trim().equals("") ||
+                        extZOutput.getText().trim().equals("")) {
+                    return;
+                }
+            } else {
+
+                if (extXOutput.getText().trim().equals("") || extYOutput.getText().trim().equals("")) {
+                    return;
+                }
+            }
+
             volExtents[0] = dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
             newRes[0] = (float) ((extents[0]) * res[0]) / (float) (volExtents[0]);
             volExtents[1] = dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
@@ -164,6 +168,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
                     forceResample = true;
                 }
             } else {
+
                 if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1])) {
                     forceResample = false;
                 } else {
@@ -187,9 +192,8 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             int z = Integer.parseInt(extZOutput.getText());
             z = dimPowerOfTwo(z);
             extZOutput.setText(Integer.toString(z));
-        }
-        else if (command.equals("Help")) {
-        	MipavUtil.showHelp("19040");
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("19040");
         }
     }
 
@@ -245,16 +249,17 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
      * Resample images to power of 2.
      */
     public void callAlgorithm() {
+
         if (forceResample && (resultImage == null)) {
+
             // resample image
             if (dim >= 3) {
-                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), interp,
-                                                       newRes[0], newRes[1], newRes[2], volExtents[0], volExtents[1],
-                                                       volExtents[2], false, true, false);
+                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), interp, newRes[0], newRes[1],
+                                                       newRes[2], volExtents[0], volExtents[1], volExtents[2], false,
+                                                       true, false);
             } else {
-                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), interp,
-                                                       newRes[0], newRes[1], volExtents[0], volExtents[1], false, true,
-                                                       false);
+                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), interp, newRes[0], newRes[1],
+                                                       volExtents[0], volExtents[1], false, true, false);
             }
 
             algoTransform.addListener(this);
@@ -288,7 +293,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             } else {
                 algoTransform = new AlgorithmTransform(imageB, new TransMatrix(4),
 
-                    // AlgorithmTransform.CUBIC_LAGRANGIAN,
+                                                       // AlgorithmTransform.CUBIC_LAGRANGIAN,
                                                        AlgorithmTransform.BILINEAR, newRes[0], newRes[1], volExtents[0],
                                                        volExtents[1], false, true, false);
 
@@ -505,12 +510,13 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         }
 
         mainBox.add(contentBox);
-        
-        
-        //*******INTERPOLATION****************
+
+
+        // *******INTERPOLATION****************
         JPanel optionPanel = new JPanel();
         optionPanel.setForeground(Color.black);
         optionPanel.setBorder(buildTitledBorder("Options"));
+
         JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
         labelInterp.setFont(serif12);
@@ -537,7 +543,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         comboBoxInterp.setSelectedIndex(1);
         optionPanel.add(labelInterp);
         optionPanel.add(comboBoxInterp);
-    
+
         mainBox.add(optionPanel);
         mainBox.add(buildButtons());
 
@@ -576,7 +582,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
         image = scriptParameters.retrieveInputImage();
 
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         imageB = ((ViewJFrameImage) parentFrame).getImageB(); // can be null
@@ -612,7 +618,6 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     }
 
-    
 
     /**
      * Calculate the dimension value to power of 2.
@@ -661,13 +666,12 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             return 512;
         }
     }
-    
+
     /**
-     * Document ME
-     * 
+     * Document ME.
      */
     private void setInterp() {
-    	int boxIndex = comboBoxInterp.getSelectedIndex();
+        int boxIndex = comboBoxInterp.getSelectedIndex();
 
         if (boxIndex == 0) {
             interp = AlgorithmTransform.NEAREST_NEIGHBOR;

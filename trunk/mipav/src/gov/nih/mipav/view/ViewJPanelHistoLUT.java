@@ -262,7 +262,7 @@ public class ViewJPanelHistoLUT extends JPanel implements HistoLUTParent, MouseL
                 if (parent instanceof Frame) {
                     frame = (Frame) parent;
                 } else {
-                    frame = image.getUserInterface().getActiveImageFrame();
+                    frame = ViewUserInterface.getReference().getActiveImageFrame();
                 }
 
                 colorChooser = new ViewJColorChooser(frame, "Pick LUT index color", new OkColorListener(),

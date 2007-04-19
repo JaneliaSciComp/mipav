@@ -173,7 +173,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         this.signal2Index = signal2Index;
         this.backgroundIndex = backgroundIndex;
         this.numReceivers = numReceivers;
-        UI = srcImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -265,7 +265,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
             /*for (realZ = -10.0; realZ <= 10.0; realZ++) {
              *  for (imagZ = -10.0; imagZ <= 10.0; imagZ++) { cf = new ConfluentHypergeometric(-0.5, 1.0, realZ, imagZ,
-             *                                              realResult, imagResult); cf.run(); cf = new
+             *                                            realResult, imagResult); cf.run(); cf = new
              * ConfluentHypergeometric(-0.5, 0.0, 1.0, 0.0, realZ, imagZ,                                    Lnchf, ip,
              * realResult2, imagResult2); cf.run(); //result[0] = gamConstant * Math.sqrt(-x) * (1.0 +
              * (-0.5)*(0.5-numReceivers)/(-x) +         //(-0.25)*(0.5-numReceivers)*(1.5-numReceivers)/(2.0*x*x));
@@ -876,19 +876,19 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
      * double constant = Math.sqrt(Math.PI/2.0); double[] cyr = new double[1]; double[] cyi = new double[1]; int[] nz =
      * new int[1]; int[] errorFlag = new int[1]; double i0; double i1; for (i = 0; i < maxIters; i++) {     square = snr
      * snr / 2.0;     sqdiv2 = square/2.0;     Bessel i0Bessel =         new
-     * Bessel(Bessel.BESSEL_I,sqdiv2,0.0,0.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);     i0Bessel.run();
-     * i0 = cyr[0];     Bessel i1Bessel =         new
-     * Bessel(Bessel.BESSEL_I,sqdiv2,0.0,1.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);     i1Bessel.run();
-     * i1 = cyr[0];     calculatedMeanDivStdDev = constant * Math.exp(-sqdiv2) *((1.0 + square)*i0 + square*i1);     if
+     * Bessel(Bessel.BESSEL_I,sqdiv2,0.0,0.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);     i0Bessel.run(); i0 =
+     * cyr[0];     Bessel i1Bessel =         new
+     * Bessel(Bessel.BESSEL_I,sqdiv2,0.0,1.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);     i1Bessel.run(); i1 =
+     * cyr[0];     calculatedMeanDivStdDev = constant * Math.exp(-sqdiv2) *((1.0 + square)*i0 + square*i1);     if
      * (Math.abs(calculatedMeanDivStdDev - meanDivStdDev)/meanDivStdDev < 0.001) {         break;     }     if
      * (calculatedMeanDivStdDev > meanDivStdDev) {         upperBound = snr;         snr = (snr + lowerBound)/2.0;     }
-     *     else {         lowerBound = snr;         snr = (snr + upperBound)/2.0;     } } // for (i = 0; i < maxIters;
+     *    else {         lowerBound = snr;         snr = (snr + upperBound)/2.0;     } } // for (i = 0; i < maxIters;
      * i++) if (signal) {     if (i == maxIters) {         Preferences.debug("Failure to converge for signal 1 VOI SNR
      * after " + maxIters +                            " iterations\n");         UI.setDataText("Failure to converge for
      * signal 1 VOI SNR after " + maxIters +                  " iterations\n");     }     else {
      * Preferences.debug("Signal 1 VOI SNR converged after " + i + " iterations\n");     } } else {     if (i ==
      * maxIters) {         Preferences.debug("Failure to converge for signal 2 VOI SNR after " + maxIters +
-     *               " iterations\n");         UI.setDataText("Failure to converge for signal 2 VOI SNR after " +
-     * maxIters +          " iterations\n");     }     else {         Preferences.debug("Signal 2 VOI SNR converged
+     * " iterations\n");         UI.setDataText("Failure to converge for signal 2 VOI SNR after " + maxIters +
+     * " iterations\n");     }     else {         Preferences.debug("Signal 2 VOI SNR converged
      * after " + i + " iterations\n");     }    } return snr; }*/
 }
