@@ -489,7 +489,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel filterIterationsLabel = new JLabel("Iterations (0 - 5) ");
+        JLabel filterIterationsLabel = new JLabel("Iterations (1 - 5) ");
 
         filterIterationsLabel.setFont(serif12);
         filterPanel.add(filterIterationsLabel, gbc);
@@ -575,7 +575,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
         gbc.gridy = 0;
         gbc.gridwidth = 1;
 
-        JLabel closeKernelSizeLabel = new JLabel("Kernel diameter (mm) ");
+        JLabel closeKernelSizeLabel = new JLabel("Kernel diameter (0.1 - 50.0 mm) ");
         closeKernelSizeLabel.setFont(serif12);
         closePanel.add(closeKernelSizeLabel, gbc);
 
