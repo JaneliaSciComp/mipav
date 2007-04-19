@@ -892,7 +892,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         historyString = new String("EdgeLap(" + sigmaStr + String.valueOf(entireImage) + ", " +
                                    String.valueOf(image25D) + ", " + loThres + ", " + hiThres + ")\n");
 
-        if (Preferences.is(Preferences.PREF_LOG) && (zXMask.getHistoryArea() != null)) {
+        if (Preferences.is(Preferences.PREF_HISTORY) && (zXMask.getHistoryArea() != null)) {
             zXMask.getHistoryArea().append(historyString);
         }
     }

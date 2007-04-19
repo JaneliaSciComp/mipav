@@ -202,7 +202,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
                     newTagList.add(new DicomTagIdentifier(key, (FileDicomTag) hashtable.get(key)));
                 }
 
-                Preferences.setProperty("DICOMSaveDictionary", getSaveTagFilePanel().getSelectedFile().getPath());
+                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY, getSaveTagFilePanel().getSelectedFile().getPath());
             }
         } catch (NullPointerException noFile) {
 
@@ -287,7 +287,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
                                   DICOMDictionaryBuilder.SUBSET_DICTIONARY_FILENAME + "\"." + "  No file was saved.\n",
                                   2);
             } else {
-                Preferences.setProperty("DICOMSaveDictionary", getSaveTagFilePanel().getSelectedFile().getPath());
+                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY, getSaveTagFilePanel().getSelectedFile().getPath());
 
                 if (!getSaveTagFilePanel().getSelectedFile().exists()) {
 

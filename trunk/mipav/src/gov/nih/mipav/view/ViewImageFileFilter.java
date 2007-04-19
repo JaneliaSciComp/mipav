@@ -516,7 +516,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     
     /**This sets the user defined Exts String as well as the Arraay of exts from the Preferences */
     public static void setUserDefinedExtensions() {
-    	udefExtsString =Preferences.getProperty("userDefinedFileTypes");
+    	udefExtsString =Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC);
     	if (udefExtsString != null && (!(udefExtsString.trim().equals("")))) {
     		String desc = "User Defined (" + udefExtsString + ")";
     		setUdefDescription(desc);

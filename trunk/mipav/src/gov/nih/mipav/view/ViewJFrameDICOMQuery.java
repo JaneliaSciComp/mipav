@@ -2583,7 +2583,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         JPanel storagePanel;
         StringTokenizer tok;
-        String key = "Storage1";
+        String key = Preferences.PREF_DICOM_STORAGE_DIR;
         Object[] rowData;
         GridBagConstraints gbc;
         JScrollPane scrollPane;

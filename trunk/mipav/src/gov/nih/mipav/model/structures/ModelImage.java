@@ -88,6 +88,9 @@ public class ModelImage extends ModelStorageBase {
      */
     private TransMatrix matrix;
 
+    /** Holds all of the images associated matrices */
+    private MatrixHolder matrixHolder;
+    
     /** Reference to talairach transform information. */
     private TalairachTransformInfo talairach;
 
@@ -157,6 +160,8 @@ public class ModelImage extends ModelStorageBase {
         mask = new BitSet(length);
         maskBU = new BitSet(length);
 
+        this.matrixHolder = new MatrixHolder(dimExtents.length);
+        
         if (dimExtents.length == 2) {
             fileInfo = new FileInfoBase[1];
 
@@ -965,11 +970,28 @@ public class ModelImage extends ModelStorageBase {
      *
      * @return  Center of the image in millimeters (or other physical dimension).
      */
-    public Point3Df getImageCentermm() {
+    public Point3Df getImageCentermm(boolean useScanner) {
         Point3Df center;
-
+        center = new Point3Df();
+        
+        if (useScanner && getExtents().length > 2) {
+        	MipavCoordinateSystems.scannerToFile(new Point3Df(0f,0f,0f), center, this);
+        	if (center.x >= 0 && center.x <= getExtents()[0] && 
+        			center.y >= 0 && center.y <= getExtents()[1] &&
+        			center.z >= 0 && center.z <= getExtents()[2] ) {
+        		
+        		center.x *= fileInfo[0].getResolutions()[0];
+        		center.y *= fileInfo[0].getResolutions()[1];
+        		center.z *= fileInfo[0].getResolutions()[2];
+        		
+        		
+        		return center;
+        	}
+        }
+        
+        
         try {
-            center = new Point3Df();
+            
             center.x = (getExtents()[0] - 1) * fileInfo[0].getResolutions()[0] / 2f;
             center.y = (getExtents()[1] - 1) * fileInfo[0].getResolutions()[1] / 2f;
 
@@ -1122,9 +1144,13 @@ public class ModelImage extends ModelStorageBase {
      * @return  transformation matrix
      */
     public TransMatrix getMatrix() {
-        return matrix;
+        return matrixHolder.getCompositeMatrix(true);
     }
 
+    public MatrixHolder getMatrixHolder() {
+    	return matrixHolder;
+    }
+    
     /**
      * If no LUT or RGB color table is defined, this returns the packed int value for the color at iIndexs for the input
      * ModelImage kImage:
@@ -1298,7 +1324,7 @@ public class ModelImage extends ModelStorageBase {
      */
     public void getScannerCoordLPS(int x, int y, int z, float[] scannerCoord) {
 
-        if ((getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) &&
+        if ((!matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) &&
                 (getFileInfo()[0].getFileFormat() != FileUtility.XML) &&
                 (getFileInfo()[0].getFileFormat() != FileUtility.MINC) &&
                 (getFileInfo()[0].getFileFormat() != FileUtility.NIFTI) &&
@@ -1359,7 +1385,7 @@ public class ModelImage extends ModelStorageBase {
         coord[2] = coord[2] * res[2];
 
         // System.out.println("dicomMatrix = " + dicomMatrix.toString());
-        if ((getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
+        if ((matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) ||
                 (getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
 
             // System.out.println("dicomMatrix = " + dicomMatrix.toString());
@@ -1411,7 +1437,7 @@ public class ModelImage extends ModelStorageBase {
 
     public void getScannerCoordRAS(int x, int y, int z, float[] scannerCoord) {
 
-        if (getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) {
+        if (!matrixHolder.containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
             return;
         }
 
@@ -1434,15 +1460,6 @@ public class ModelImage extends ModelStorageBase {
      */
     public TalairachTransformInfo getTalairachTransformInfo() {
         return talairach;
-    }
-
-    /**
-     * Accessor to get the Transform ID for the matrix.
-     *
-     * @return  int transform ID
-     */
-    public int getTransformID() {
-        return fileInfo[0].getTransformID();
     }
 
     /**
@@ -2670,12 +2687,12 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Accessor that sets transformation matrix.
+     * Accessor that adds a matrix to the matrix holder
      *
      * @param  matrix  transformation matrix structure.
      */
     public void setMatrix(TransMatrix matrix) {
-        this.matrix = matrix;
+        matrixHolder.addMatrix(matrix);
     }
 
     /**

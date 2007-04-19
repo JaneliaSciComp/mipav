@@ -73,23 +73,23 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
             if (trimCheckbox.isSelected()) {
 
                 // Enable trim slider and set preferences to slider value
-                Preferences.setProperty("TRIM_FLAG", "true");
+                Preferences.setProperty(Preferences.PREF_TRIM_FLAG, "true");
             } else {
 
                 // Disable trim slider
-                Preferences.setProperty("TRIM_FLAG", "false");
+                Preferences.setProperty(Preferences.PREF_TRIM_FLAG, "false");
             }
         } else if (source == OKButton) {
 
             if (trimCheckbox.isSelected()) {
-                Preferences.setProperty("TRIM_FLAG", "true");
+                Preferences.setProperty(Preferences.PREF_TRIM_FLAG, "true");
             } else {
-                Preferences.setProperty("TRIM_FLAG", "false");
+                Preferences.setProperty(Preferences.PREF_TRIM_FLAG, "false");
             }
 
-            Preferences.setProperty("TRIM", String.valueOf(trimSlider.getValue() / (float) 100));
+            Preferences.setProperty(Preferences.PREF_TRIM, String.valueOf(trimSlider.getValue() / (float) 100));
         } else if (source == cancelButton) {
-            Preferences.setProperty("TRIM", String.valueOf(trimSlider.getValue() / (float) 100));
+            Preferences.setProperty(Preferences.PREF_TRIM, String.valueOf(trimSlider.getValue() / (float) 100));
             dispose();
         }
     }
@@ -116,8 +116,8 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
 
         int initialVal = 50;
 
-        if (Preferences.getProperty("TRIM") != null) {
-            initialVal = (int) (Float.valueOf(Preferences.getProperty("TRIM")).floatValue() * 100);
+        if (Preferences.getProperty(Preferences.PREF_TRIM) != null) {
+            initialVal = (int) (Float.valueOf(Preferences.getProperty(Preferences.PREF_TRIM)).floatValue() * 100);
         }
 
         trimSlider = new JSlider(JSlider.HORIZONTAL, 0, 200, initialVal);
@@ -141,9 +141,9 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
 
         boolean flag = true;
 
-        if (Preferences.getProperty("TRIM_FLAG") != null) {
+        if (Preferences.getProperty(Preferences.PREF_TRIM_FLAG) != null) {
 
-            if (Preferences.getProperty("TRIM_FLAG").equals("false")) {
+            if (Preferences.getProperty(Preferences.PREF_TRIM_FLAG).equals("false")) {
                 flag = false;
             }
         }

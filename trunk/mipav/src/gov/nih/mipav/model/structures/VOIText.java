@@ -70,12 +70,12 @@ public class VOIText extends VOIBase {
      * default constructor.
      */
     public VOIText() { 
-    	String prefColor = Preferences.getProperty("VOITextBackgroundColor");
+    	String prefColor = Preferences.getProperty(Preferences.PREF_VOI_TEXT_BACKGROUND_COLOR);
         
         if (prefColor != null) {
         	this.backgroundColor = MipavUtil.extractColor(prefColor);
         } else {
-            Preferences.setProperty("VOITextBackgroundColor", MipavUtil.makeColorString(Color.black));
+            Preferences.setProperty(Preferences.PREF_VOI_TEXT_BACKGROUND_COLOR, MipavUtil.makeColorString(Color.black));
             this.backgroundColor = Color.black;
         }
     	

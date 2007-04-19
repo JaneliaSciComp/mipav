@@ -548,11 +548,11 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                     }
                 }
 
-                matchImage.setMatrix(reg3.getTransform());
+                //BEN: Changed... add the matrix to the holder (and set as another dataset type)
+                TransMatrix resultMatrix = reg3.getTransform();
+                resultMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                matchImage.getMatrixHolder().addMatrix(resultMatrix);
 
-                for (int m = 0; m < matchImage.getExtents()[2]; m++) {
-                    matchImage.getFileInfo()[m].setTransformID(FileInfoBase.TRANSFORM_ANOTHER_DATASET);
-                }
 
                 String message = "Using cost function, " + costName;
                 message += ", the cost is " + Double.toString(reg3.getAnswer()) + ".\n";

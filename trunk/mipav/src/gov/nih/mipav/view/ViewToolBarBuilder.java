@@ -518,8 +518,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         opacityPaintButton.setActionCommand("OpacityPaint");
         paintToolBar.add(opacityPaintButton);
         
-        borderPaintButton = buildButton("ShowPaintBorder", "Display border around painted areas.", "borderpaint");
-        borderPaintButton.setName("ShowPaintBorder");
+        borderPaintButton = buildButton(Preferences.PREF_SHOW_PAINT_BORDER, "Display border around painted areas.", "borderpaint");
+        borderPaintButton.setName(Preferences.PREF_SHOW_PAINT_BORDER);
         paintToolBar.add(borderPaintButton);
         
         paintToolBar.add(makeSeparator());

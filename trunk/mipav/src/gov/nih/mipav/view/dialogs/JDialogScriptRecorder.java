@@ -317,7 +317,7 @@ public class JDialogScriptRecorder extends JDialogBase implements ScriptRecordin
             return;
         }
 
-        Preferences.setProperty("ScriptsDir", String.valueOf(chooser.getCurrentDirectory()));
+        Preferences.setProperty(Preferences.PREF_SCRIPT_DIR, String.valueOf(chooser.getCurrentDirectory()));
         // userInterface.setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar);
 
 
@@ -370,7 +370,7 @@ public class JDialogScriptRecorder extends JDialogBase implements ScriptRecordin
             return;
         }
 
-        Preferences.setProperty("ScriptsDir", String.valueOf(chooser.getCurrentDirectory()));
+        Preferences.setProperty(Preferences.PREF_SCRIPT_DIR, String.valueOf(chooser.getCurrentDirectory()));
         // userInterface.setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar);
 
         //ostream.write(scriptTextArea.getText());

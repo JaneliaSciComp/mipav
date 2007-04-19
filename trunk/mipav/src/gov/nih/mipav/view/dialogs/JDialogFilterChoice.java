@@ -117,7 +117,7 @@ public class JDialogFilterChoice extends JDialogBase {
         int filter = 0;
 
         try {
-            filter = Integer.parseInt(Preferences.getProperty("FilenameFilter"));
+            filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
         } catch (NumberFormatException nfe) {
 
             // an invalid value was set in preferences -- so don't use it!

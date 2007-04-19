@@ -592,8 +592,10 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     transform = null;
                 }
 
-                matchImage.setMatrix(reg2.getTransform());
-                matchImage.getFileInfo()[0].setTransformID(FileInfoBase.TRANSFORM_ANOTHER_DATASET);
+                TransMatrix resultMatrix = reg2.getTransform();
+                resultMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                
+                matchImage.getMatrixHolder().addMatrix(resultMatrix);
 
                 reg2.getTransform().saveMatrix(UI.getDefaultDirectory() + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mat");

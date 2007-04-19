@@ -1693,7 +1693,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
         String kName = ViewUserInterface.getReference().getDefaultDirectory() + image.getImageName() + "_object.sur";
 
-        if (image.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) {
+        if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 
             // Get the DICOM transform that describes the transformation from
             // axial to this image orientation

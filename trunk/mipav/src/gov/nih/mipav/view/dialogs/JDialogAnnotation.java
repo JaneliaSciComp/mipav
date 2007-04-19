@@ -405,10 +405,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             textVOI.setColor(colorButton.getForeground());
             vt.setBackgroundColor(backgroundColorButton.getForeground());
 
-            Preferences.setProperty("VOITextColor", MipavUtil.makeColorString(colorButton.getForeground()));
-            Preferences.setProperty("VOITextBackgroundColor",
-                                    MipavUtil.makeColorString(backgroundColorButton.getForeground()));
-
+            Preferences.setProperty(Preferences.PREF_VOI_TEXT_COLOR, MipavUtil.makeColorString(colorButton.getForeground()));
+            Preferences.setProperty(Preferences.PREF_VOI_TEXT_BACKGROUND_COLOR, MipavUtil.makeColorString(backgroundColorButton.getForeground()));
+            
             vt.setUseMarker(useMarkerBox.isSelected());
 
         } catch (Exception ex) {

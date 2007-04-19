@@ -1356,7 +1356,7 @@ public abstract class ViewJFrameBase extends JFrame
         int filter = 0;
 
         try {
-            filter = Integer.parseInt(Preferences.getProperty("FilenameFilter"));
+            filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
         } catch (NumberFormatException nfe) {
 
             // an invalid value was set in preferences -- so don't use it!
@@ -4812,7 +4812,7 @@ public abstract class ViewJFrameBase extends JFrame
             TalairachCenter.y = TalairachCenter.y * yResA;
             TalairachCenter.z = TalairachCenter.z * zResA;
 
-            Point3Df center = image.getImageCentermm();
+            Point3Df center = image.getImageCentermm(false);
 
             bufferSize = xDimB * yDimB * zDimB * tDimB;
             imgBuffer = new float[bufferSize];
@@ -5055,7 +5055,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[1] = imageAInfo.getUnitsOfMeasure()[1];
             newResUnit[2] = imageAInfo.getUnitsOfMeasure()[2];
 
-            Point3Df center = image.getImageCentermm();
+            Point3Df center = image.getImageCentermm(false);
 
             bufferSize = xDimB * yDimB * zDimB * tDimB;
             imgBuffer = new float[bufferSize];

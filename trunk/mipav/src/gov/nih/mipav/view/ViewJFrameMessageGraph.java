@@ -84,14 +84,14 @@ public class ViewJFrameMessageGraph extends JFrame implements ActionListener {
             String fileName = "", directory = "";
 
             JFileChooser chooser = new JFileChooser();
-            chooser.setCurrentDirectory(new File(Preferences.getProperty("ImageDirectory")));
+            chooser.setCurrentDirectory(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
 
             int returnValue = chooser.showSaveDialog(this);
 
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
                 directory = chooser.getCurrentDirectory().toString() + File.separatorChar;
-                Preferences.setProperty("ImageDirectory", chooser.getCurrentDirectory().toString());
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
             } else {
                 return;
             }

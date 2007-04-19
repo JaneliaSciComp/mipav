@@ -1942,7 +1942,7 @@ public class ViewJFrameGraph extends JFrame
             fields = new float[ViewJComponentGraph.MAX_NUM_FUNCTS * 2];
 
             chooser = new JFileChooser();
-            chooser.setCurrentDirectory(new File(Preferences.getProperty("ImageDirectory")));
+            chooser.setCurrentDirectory(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.PLOT)); // adds a choosable file
 
             // filter to only show plot files
@@ -1966,7 +1966,7 @@ public class ViewJFrameGraph extends JFrame
 
             instream = new FileReader(directory + fileName);
             dataStream = new BufferedReader(instream);
-            Preferences.setProperty("ImageDirectory", directory);
+            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, directory);
 
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameGraph.open");

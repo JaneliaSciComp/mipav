@@ -156,6 +156,9 @@ public class AlgorithmTransform extends AlgorithmBase {
     /** DOCUMENT ME! */
     private TransMatrix transMatrix;
 
+    /** flag for determining if the transform is for scanner anatomical (->AXIAL)*/
+    private boolean isSATransform = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -184,7 +187,11 @@ public class AlgorithmTransform extends AlgorithmBase {
         String name = JDialogBase.makeImageName(srcImage.getImageName(), "_transform");
 
         imgOrient = srcImage.getFileInfo(0).getImageOrientation();
-        axisOrient = (int[]) srcImage.getFileInfo(0).getAxisOrientation().clone();
+        
+        axisOrient = new int[srcImage.getFileInfo(0).getAxisOrientation().length];
+        for (int i = 0; i < axisOrient.length; i++) {
+        	axisOrient[i] = srcImage.getFileInfo(0).getAxisOrientation()[i];
+        }
         imgOrigin = (float[]) srcImage.getFileInfo(0).getOrigin().clone();
 
         int type = srcImage.getType();
@@ -234,12 +241,14 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
         } // end of if (srcImage.getNDims == 2)
         else if (srcImage.getNDims() == 3) {
+        	
             DIM = 3;
             do25D = true;
             iZdim = srcImage.getExtents()[2];
             oZdim = iZdim;
             startPos = imgOrigin[2]; // temporarily set origin for all slices as origin of first slice
             extents = new int[] { oXdim, oYdim, oZdim };
+            
             destResolutions = new float[] { oXres, oYres, srcImage.getFileInfo(0).getResolutions()[2] };
 
             if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
@@ -327,6 +336,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         transformVOI = tVOI;
         this.clip = clip;
         this.pad = pad;
+        
+                
+        
         this.oXres = _oXres;
         this.oYres = _oYres;
         this.oZres = _oZres;
@@ -336,7 +348,10 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         DIM = srcImage.getNDims();
         imgOrigin = (float[]) srcImage.getFileInfo(0).getOrigin().clone();
-        axisOrient = (int[]) srcImage.getFileInfo(0).getAxisOrientation();
+        axisOrient = new int[srcImage.getFileInfo(0).getAxisOrientation().length];
+        for (int i = 0; i < axisOrient.length; i++) {
+        	axisOrient[i] = srcImage.getFileInfo(0).getAxisOrientation()[i];
+        }
         imgOrient = srcImage.getFileInfo(0).getImageOrientation();
         iXres = srcImage.getFileInfo(0).getResolutions()[0];
         iYres = srcImage.getFileInfo(0).getResolutions()[1];
@@ -398,7 +413,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         extents[0] = oXdim;
         extents[1] = oYdim;
         extents[2] = oZdim;
-
+               
+        
         if (DIM == 4) {
             iTdim = srcImage.getExtents()[3];
             oTdim = iTdim;
@@ -1211,7 +1227,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         oXres = transformedImg.getFileInfo(0).getResolutions()[0];
         oYres = transformedImg.getFileInfo(0).getResolutions()[1];
 
-        updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(), trans);
+        updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(), trans, false);
 
         int mod = Math.max(1, oYdim / 50);
         int imgLength = iXdim * iYdim;
@@ -1672,7 +1688,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         float[] resolutions = new float[] { oXres, oYres };
 
-        updateFileInfo(image, transformedImg, resolutions, trans);
+        updateFileInfo(image, transformedImg, resolutions, trans, false);
 
         int roundX, roundY;
         float temp1, temp2;
@@ -3071,7 +3087,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         // int   [] extents      = new int   [] {oXdim, oYdim, oZdim};
         float[] resolutions = new float[] { oXres, oYres, oZres };
 
-        updateFileInfo(image, transformedImg, resolutions, trans);
+        updateFileInfo(image, transformedImg, resolutions, trans, false);
 
         for (i = 0; i < oXdim; i++) {
             imm = (float) i * oXres;
@@ -3569,7 +3585,10 @@ public class AlgorithmTransform extends AlgorithmBase {
             updateOrigin(this.transMatrix);
         }
 
-        updateFileInfo(srcImage, destImage, destResolutions, this.transMatrix);
+        //System.err.println("MATRIX: " + transMatrix);
+        
+        //BEN: fix this so the origin is updated correctly
+        updateFileInfo(srcImage, destImage, destResolutions, this.transMatrix, isSATransform);
 
         if (pad && !canPad) {
             MipavUtil.displayError("For padding: interpolation linear and no resampling.");
@@ -3579,9 +3598,17 @@ public class AlgorithmTransform extends AlgorithmBase {
             constructLog();
             transform();
 
+            //copy the src image's matrices into the destination image
+            destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+            
+            //add the new transform matrix to the destination image
+            transMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+            destImage.getMatrixHolder().addMatrix(transMatrix);
+            
             if (transMatrix.isIdentity()) {
-                destImage.setMatrix(transMatrix);
-                destImage.getFileInfo(0).setTransformID(srcImage.getFileInfo(0).getTransformID());
+            	//BEN: change
+                //destImage.setMatrix(transMatrix);
+                //destImage.getFileInfo(0).setTransformID(srcImage.getFileInfo(0).getTransformID());
             } else {
 
                 // srcImage Matrix * transMatrix invert * [x y z]transpose
@@ -3639,8 +3666,15 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 newTMatrix.setMatrix(newMatrix.getArray());
 
+                
+                //System.err.println("NEW MATRIX: " + newTMatrix);
+                
+                
+                
+               //replace the destination image's default (composite) matrix
+                newTMatrix.setTransformID(TransMatrix.TRANSFORM_COMPOSITE);
                 destImage.setMatrix(newTMatrix);
-                destImage.getFileInfo(0).setTransformID(srcImage.getFileInfo(0).getTransformID());
+                
             }
         }
     }
@@ -3674,6 +3708,14 @@ public class AlgorithmTransform extends AlgorithmBase {
     }
 
     /**
+     * Sets the tranform to set orientation to AXIAL (this is a scanner anatomical transform)
+     * @param useSA set to axial orientation
+     */
+    public void setUseScannerAnatomical(boolean useSA) {
+    	this.isSATransform = useSA;
+    }
+    
+    /**
      * Sets the origin flag used indicated that origin should be changed based using the supplied transformation matrix.
      *
      * @param  originFlag  if true sets the updateOrigin flag to true
@@ -3690,11 +3732,8 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param  resolutions  DOCUMENT ME!
      */
     private static void updateFileInfo(ModelImage image, ModelImage resultImage, float[] resolutions,
-    		TransMatrix matrix) {
-    	//FileInfoBase[] fileInfo = (FileInfoBase[]) (image.getFileInfo().clone());
+    		TransMatrix matrix, boolean useSATransform) {
         FileInfoBase[] fileInfo = resultImage.getFileInfo();
-
-        System.err.println("updateFileInfo");
         
         if (resultImage.getNDims() == 2) {
         	fileInfo[0] = (FileInfoBase)image.getFileInfo(0).clone();
@@ -3710,10 +3749,15 @@ public class AlgorithmTransform extends AlgorithmBase {
         	float [] coord = new float[3];
         	float [] tempPos = new float[3];
         	String orientation;
-    
-        	if (image.getFileInfo()[0].getFileFormat() == FileUtility.DICOM) {
-        		System.err.println("doing dicom trans");
+            	
+        	// if the transform was scanner anatomical, set to AXIAL
+        	if (useSATransform) {
+        		imgOrient= FileInfoBase.AXIAL;
+        		axisOrient[0] = FileInfoBase.ORI_R2L_TYPE;
+        		axisOrient[1] = FileInfoBase.ORI_A2P_TYPE;
+        		axisOrient[2] = FileInfoBase.ORI_I2S_TYPE;
         	}
+        	
         	
             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
             	if (image.getExtents()[2] > i) {
@@ -3729,7 +3773,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(imgOrient);
                 fileInfo[i].setAxisOrientation(axisOrient);
-                imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
+                
+                
+                // not sure why this was here, setting the origin per slice...should be the same
+                //imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
                 fileInfo[i].setOrigin(imgOrigin);
                 
                 if (fileInfo[i].getFileFormat() == FileUtility.DICOM) {
@@ -3799,8 +3846,6 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private static void updateOrigin(TransMatrix xfrm) {
 
-    	//xfrm.invert();
-    	
         if (xfrm.getNCols() == 3) {
             float[] tempOrigin = new float[2];
 
@@ -3809,14 +3854,14 @@ public class AlgorithmTransform extends AlgorithmBase {
             imgOrigin[1] = tempOrigin[1];
         } else {
             float[] tempOrigin = new float[3];
-
+//System.err.println("image origin: " + imgOrigin[0] + ", " + imgOrigin[1] + ", " + imgOrigin[2]);
             xfrm.transform(imgOrigin[0], imgOrigin[1], imgOrigin[2], tempOrigin);
             imgOrigin[0] = tempOrigin[0];
             imgOrigin[1] = tempOrigin[1];
             imgOrigin[2] = tempOrigin[2];
+            System.err.println("image origin after: " + imgOrigin[0] + ", " + imgOrigin[1] + ", " + imgOrigin[2]);
         }
 
-        //xfrm.invert();
         
     }
 
@@ -3866,7 +3911,6 @@ public class AlgorithmTransform extends AlgorithmBase {
             trans.setMatrix(transMatrix.getArray());
 
             if (doCenter) {
-
                 if ((do25D) || (DIM == 2)) {
                     xfrmC = new TransMatrix(3);
                 } else { // (DIM >= 3) && (!do25D)
@@ -3876,15 +3920,32 @@ public class AlgorithmTransform extends AlgorithmBase {
                 xfrmC.identity();
 
                 if ((DIM >= 3) && (!do25D)) {
-                    xfrmC.setTranslate(center.x, center.y, center.z);
+                	
+                	//must transform the center point first
+                	float [] newCenter = new float[3];
+                	transMatrix.transform(center.x, center.y, center.z, newCenter);
+                	if (newCenter[0] < 0) {
+                		newCenter[0]*=-1;
+                	}
+                	if (newCenter[1] < 0) {
+                		newCenter[1]*=-1;
+                	}
+                	if (newCenter[2] < 0) {
+                		newCenter[2]*=-1;
+                	}
+                	xfrmC.setTranslate(newCenter[0], newCenter[1], newCenter[2]);
+                	
+                	
+                    //xfrmC.setTranslate(center.x, center.y, center.z);
                 } else { // (DIM == 2) || do25D
                     xfrmC.setTranslate(center.x, center.y);
                 }
 
                 trans.setMatrix((xfrmC.times(transMatrix)).getArray());
-
+                               
+                
                 if ((DIM >= 3) && (!do25D)) {
-                    trans.setTranslate(-center.x, -center.y, -center.z);
+                   trans.setTranslate(-center.x, -center.y, -center.z);
                 } else { // (DIM == 2) || do25D
                     trans.setTranslate(-center.x, -center.y);
                 }

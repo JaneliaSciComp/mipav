@@ -292,7 +292,7 @@ public class VOIPoint extends VOIBase {
             }
 
             type = 0;
-            String typeStr = Preferences.getProperty("VOIPointDrawType");
+            String typeStr = Preferences.getProperty(Preferences.PREF_VOI_POINT_DRAW_TYPE);
             if (typeStr != null) {
                 try {
                     type = Integer.parseInt(typeStr);

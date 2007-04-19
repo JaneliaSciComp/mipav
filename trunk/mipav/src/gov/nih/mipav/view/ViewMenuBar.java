@@ -604,7 +604,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Image registry monitor", "ImageRegistryMonitor", 0,
                                                                   null, true), separator,
                                         menuBuilder.buildMenuItem("MIPAV options", "Options", 0, null, true),
-                                        menuBuilder.buildMenuItem("Shortcut editor", "Shortcuts", 0, null, true),
+                                        menuBuilder.buildMenuItem("Shortcut editor", Preferences.PREF_SHORTCUTS, 0, null, true),
                                     });
     }
 

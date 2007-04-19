@@ -377,16 +377,16 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         // all defaults for the lightbox have been moved to the defaults in the
         // Preferences class.  So can just get the initial values from the properties.
-        setRowDependent(Boolean.valueOf(Preferences.getProperty("LightBoxRowDependent")).booleanValue());
-        setGridRow(Integer.parseInt(Preferences.getProperty("LightBoxGridRow")));
-        setGridColumn(Integer.parseInt(Preferences.getProperty("LightBoxGridCol")));
-        setGridSpacing(Integer.parseInt(Preferences.getProperty("LightBoxGridSize")));
-        setGridColor(extractColor(Preferences.getProperty("LightBoxGridColor")));
-        setBorderSize(Integer.parseInt(Preferences.getProperty("LightBoxBorderSize")));
-        setBorderColor(extractColor(Preferences.getProperty("LightBoxBorderColor")));
-        setSelectedBorderColor(extractColor(Preferences.getProperty("LightBoxSelectedBorderColor")));
-        setSelectedBorderSize(Integer.parseInt(Preferences.getProperty("LightBoxSelectedBorderSize")));
-        setMagnification(Float.parseFloat(Preferences.getProperty("LightBoxMagnification")));
+        setRowDependent(Boolean.valueOf(Preferences.getProperty(Preferences.PREF_LB_ROW_DEPENDENT)).booleanValue());
+        setGridRow(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_GRID_ROW)));
+        setGridColumn(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_GRID_COL)));
+        setGridSpacing(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_GRID_SIZE)));
+        setGridColor(extractColor(Preferences.getProperty(Preferences.PREF_LB_GRID_COLOR)));
+        setBorderSize(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_BORDER_SIZE)));
+        setBorderColor(extractColor(Preferences.getProperty(Preferences.PREF_LB_BORDER_COLOR)));
+        setSelectedBorderColor(extractColor(Preferences.getProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR)));
+        setSelectedBorderSize(Integer.parseInt(Preferences.getProperty(Preferences.PREF_LB_SELECTED_BORDER_SIZE)));
+        setMagnification(Float.parseFloat(Preferences.getProperty(Preferences.PREF_LB_MAG)));
 
         String singleTString = Preferences.getProperty("LightBoxIndividualTSlice");
 
@@ -1961,21 +1961,21 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      * <p>into the MipavPreferences file.</p>
      */
     public void storeToDefaults() {
-        Preferences.setProperty("LightBoxRowDependent", new Boolean(row_dependent).toString());
-        Preferences.setProperty("LightBoxGridRow", new Integer(gridRow).toString());
-        Preferences.setProperty("LightBoxGridCol", new Integer(gridColumn).toString());
-        Preferences.setProperty("LightBoxGridSize", new Integer(gridSpacing).toString());
-        Preferences.setProperty("LightBoxGridColor", this.makeColorString(gridColor));
-        Preferences.setProperty("LightBoxBorderSize", new Integer(borderSize).toString());
-        Preferences.setProperty("LightBoxBorderColor", this.makeColorString(borderColor));
-        Preferences.setProperty("LightBoxSelectedBorderColor", this.makeColorString(selectedBorderColor));
-        Preferences.setProperty("LightBoxMagnification", new Float(magnification).toString());
+        Preferences.setProperty(Preferences.PREF_LB_ROW_DEPENDENT, new Boolean(row_dependent).toString());
+        Preferences.setProperty(Preferences.PREF_LB_GRID_ROW, new Integer(gridRow).toString());
+        Preferences.setProperty(Preferences.PREF_LB_GRID_COL, new Integer(gridColumn).toString());
+        Preferences.setProperty(Preferences.PREF_LB_GRID_SIZE, new Integer(gridSpacing).toString());
+        Preferences.setProperty(Preferences.PREF_LB_GRID_COLOR, this.makeColorString(gridColor));
+        Preferences.setProperty(Preferences.PREF_LB_BORDER_SIZE, new Integer(borderSize).toString());
+        Preferences.setProperty(Preferences.PREF_LB_BORDER_COLOR, this.makeColorString(borderColor));
+        Preferences.setProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR, this.makeColorString(selectedBorderColor));
+        Preferences.setProperty(Preferences.PREF_LB_MAG, new Float(magnification).toString());
 
         // location: a bad location will be trapped when loading the preferences, so store it anyway:
-        Preferences.setProperty("LightBoxLocation", this.getLocation().x + "," + this.getLocation().y);
+        Preferences.setProperty(Preferences.PREF_LB_LOCATION, this.getLocation().x + "," + this.getLocation().y);
 
         if (selectIndividualTSlices != null) {
-            Preferences.setProperty("LightBoxIndividualTSlice", new Boolean(singleTSlice).toString());
+            Preferences.setProperty(Preferences.PREF_LB_TSLICE, new Boolean(singleTSlice).toString());
         }
 
     }
@@ -3435,7 +3435,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         pack(); // let the system calculate its own size based on component preferred sizes
         setVisible(true);
 
-        updateLightBoxLocation(Preferences.getProperty("LightBoxLocation"));
+        updateLightBoxLocation(Preferences.getProperty(Preferences.PREF_LB_LOCATION));
         updatePaint.setState(true);
         updateImages(true);
         updatePaint.setState(false);

@@ -8,6 +8,8 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
+import gov.nih.mipav.MipavMath;
+
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -161,6 +163,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JRadioButton storedMatrix, noTransform, userDefinedMatrix, fileMatrix;
 
+    private JComboBox storedMatrixBox;
+    
     /** DOCUMENT ME! */
     private JTextField textResX, textResY, textResZ, textDimX, textDimY, textDimZ;
 
@@ -189,6 +193,17 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JCheckBox xyAspectRatio, xyzAspectRatio, fieldOfView, addPixels;
 
+    /** checkbox telling the algorithm to use the scanner coordinate center rather than the image center */
+    private JCheckBox useSACenterBox;
+
+    private boolean useSACenter = false;
+    
+    /** Tabbed pane*/
+    private JTabbedPane tabbedPane = null;
+    
+    /** is this a scanner anatomical transform (->AXIAL)*/
+    private boolean isSATransform = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -591,7 +606,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
                 rotCenter.setEnabled(false);
                 rotOrigin.setEnabled(false);
-
+                useSACenterBox.setEnabled(false);
+                
                 padValTxt.setEnabled(false);
                 padLabel.setEnabled(false);
 
@@ -629,7 +645,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         if (source == userDefinedMatrix) {
             matrixFName.setText(" ");
-
+            storedMatrixBox.setEnabled(false);
             if (userDefinedMatrix.isSelected()) {
                 invertCheckbox.setSelected(false);
                 invertCheckbox.setEnabled(false);
@@ -696,26 +712,32 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 if (matrixFile == null) {
                     storedMatrix.setSelected(true);
                 }
+                storedMatrixBox.setEnabled(false);
             }
         } else if (source == storedMatrix) {
             matrixFName.setText(" ");
 
             if (storedMatrix.isSelected()) {
                 invertCheckbox.setEnabled(true);
+                storedMatrixBox.setEnabled(true);
             }
         } else if (source == noTransform) {
+        	
             matrixFName.setText(" ");
-
+            storedMatrixBox.setEnabled(false);
+            tabbedPane.setEnabledAt(1, noTransform.isSelected());
             if (noTransform.isSelected()) {
                 invertCheckbox.setSelected(false);
                 invertCheckbox.setEnabled(false);
                 rotCenter.setEnabled(false);
                 rotOrigin.setEnabled(false);
+                useSACenterBox.setEnabled(false);
                 padRadio.setEnabled(false);
                 cropRadio.setEnabled(false);
             } else {
                 rotCenter.setEnabled(true);
                 rotOrigin.setEnabled(true);
+                useSACenterBox.setEnabled(true);
                 padRadio.setEnabled(true);
                 cropRadio.setEnabled(true);
             }
@@ -817,6 +839,10 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                     textDimZ.setText(String.valueOf(Math.round(resampleImage.getExtents()[2])));
                 }
             }
+        } else if (source == rotCenter) {
+        	useSACenterBox.setEnabled(rotCenter.isSelected());
+        } else if (source == rotOrigin) {
+        	useSACenterBox.setEnabled(rotCenter.isSelected());
         }
     }
 
@@ -1134,10 +1160,13 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                                                doClip, doPad);
             algoTrans.setPadValue(padValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+            algoTrans.setUseScannerAnatomical(isSATransform);
         }
 
         if (doRotateCenter) { // rotate about center of image
-            center = resampleImage.getImageCentermm();
+        	//System.err.println("use SA Center: " + useSACenter);
+            center = resampleImage.getImageCentermm(useSACenter);
+            //System.err.println("using and setting center to: " + center);
             algoTrans.setDoCenter(true);
             algoTrans.setCenter(center);
         }
@@ -1412,9 +1441,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     private JPanel buildMatrixPanel() {
 
         JPanel matrixPanel = new JPanel();
+        matrixPanel.setBorder(buildTitledBorder("Transform"));
         matrixPanel.setLayout(new BoxLayout(matrixPanel, BoxLayout.Y_AXIS));
         matrixPanel.setForeground(Color.black);
-        matrixPanel.setBorder(buildTitledBorder("Transformation matrix"));
 
         matrixDeterminationGroup = new ButtonGroup();
         noTransform = new JRadioButton("No Transformation", true);
@@ -1465,14 +1494,39 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             talPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         } // if (tInfo != null)
 
+        JPanel imageMatrixPanel = new JPanel(new BorderLayout());        
+        imageMatrixPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
         storedMatrix = new JRadioButton("Use image's associated matrix", false);
         storedMatrix.setFont(serif12);
         storedMatrix.setEnabled(true);
         matrixDeterminationGroup.add(storedMatrix);
         storedMatrix.setAlignmentX(Component.LEFT_ALIGNMENT);
-        matrixPanel.add(storedMatrix);
+        imageMatrixPanel.add(storedMatrix, BorderLayout.WEST);
         storedMatrix.addItemListener(this);
 
+        storedMatrixBox = new JComboBox();
+        storedMatrixBox.setFont(MipavUtil.font12);
+        storedMatrixBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        storedMatrixBox.setEnabled(false);
+        MatrixHolder mHolder = image.getMatrixHolder();
+    	Set matrixKeys = mHolder.getMatrixMap().keySet();
+    	Iterator iter = matrixKeys.iterator();
+    	
+    	//storedMatrixBox.addItem("Composite");
+    	
+    	while(iter.hasNext()) {
+    		storedMatrixBox.addItem(iter.next());
+    	}  	
+    	
+    	if (storedMatrixBox.getItemCount() > 1) {
+    		storedMatrixBox.insertItemAt("Composite", 0);
+    	}
+    	
+        imageMatrixPanel.add(storedMatrixBox);
+        matrixPanel.add(imageMatrixPanel);
+        
+        
         JPanel filePanel = new JPanel(new BorderLayout());
         filePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -1826,10 +1880,10 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         image25DCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        updateOriginCheckbox = new JCheckBox("Update orgin.");
+        updateOriginCheckbox = new JCheckBox("Update origin.");
         updateOriginCheckbox.setFont(serif12);
         optionPanel.add(updateOriginCheckbox);
-        updateOriginCheckbox.setSelected(false);
+        updateOriginCheckbox.setSelected(true);
         updateOriginCheckbox.addItemListener(this);
         updateOriginCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -1858,22 +1912,33 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         optionPanel.add(labelOrigin);
         // labelOrigin.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        JPanel rotateOptionPanel = new JPanel();
+        
+        
         rotationAxisGroup = new ButtonGroup();
-        rotOrigin = new JRadioButton("Origin", true);
+        rotOrigin = new JRadioButton("Origin", false);
         rotOrigin.setFont(serif12);
         rotOrigin.setEnabled(false);
         rotationAxisGroup.add(rotOrigin);
-        optionPanel.add(rotOrigin);
+        
+        rotateOptionPanel.add(rotOrigin);
+        //optionPanel.add(rotOrigin);
         rotOrigin.addItemListener(this);
         // rotOrigin.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        rotCenter = new JRadioButton("Center", false);
+        rotCenter = new JRadioButton("Center", true);
         rotCenter.setFont(serif12);
         rotCenter.setEnabled(false);
         rotationAxisGroup.add(rotCenter);
         rotCenter.addItemListener(this);
         // rotCenter.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+        rotateOptionPanel.add(rotCenter);
+        
+        useSACenterBox = new JCheckBox("Use scanner center", false);
+        useSACenterBox.setFont(serif12);
+        useSACenterBox.setSelected(true);
+        useSACenterBox.setEnabled(false);
+        
         optionPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -1896,10 +1961,13 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         gbc.gridwidth = 1;
         optionPanel.add(labelOrigin, gbc);
         gbc.gridx = 2;
-        optionPanel.add(rotOrigin, gbc);
+        optionPanel.add(rotateOptionPanel, gbc);
         gbc.gridx = 3;
-        optionPanel.add(rotCenter, gbc);
+        optionPanel.add(useSACenterBox, gbc);
+      //  optionPanel.add(rotCenter, gbc);
 
+        
+        
         gbc.gridx = 2;
         gbc.gridy = 2;
         optionPanel.add(cropRadio, gbc);
@@ -2334,7 +2402,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                     fileInfo[i].setExtents(tInfo.getOrigDim());
                     fileInfo[i].setAxisOrientation(tInfo.getOrigOrientLabels());
                     fileInfo[i].setImageOrientation(tInfo.getOrigImageOrientLabel());
-                    fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
+                    
+                    //BEN
+                   // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
                 }
 
                 resultImage.setFileInfo(fileInfo);
@@ -2363,7 +2433,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                     fileInfo[i].setExtents(tInfo.getAcpcDim());
                     fileInfo[i].setAxisOrientation(orient);
                     fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
-                    fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
+                    
+                    //BEN
+                   // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
                 }
 
                 resultImage.setFileInfo(fileInfo);
@@ -2391,7 +2463,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                     fileInfo[i].setExtents(tInfo.getTlrcDim());
                     fileInfo[i].setAxisOrientation(orient);
                     fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
-                    fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
+                    
+                    //BEN
+                   // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
                 }
 
                 resultImage.setFileInfo(fileInfo);
@@ -2822,19 +2896,20 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         leftPanel.add(matrixPanel);
         leftPanel.add(optionPanel, BorderLayout.SOUTH);
 
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(MipavUtil.font12B);
+        tabbedPane.addTab("Transform", leftPanel);
+        
+        tabbedPane.addTab("Resample", resamplePanel);
+        
+        tabbedPane.addChangeListener(this);
+        
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.add(leftPanel, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.VERTICAL;
-        gbc.weightx = 1.5;
-        mainPanel.add(resamplePanel, gbc);
-
+                
         JPanel buttonPanel = new JPanel();
 
         buildOKButton();
@@ -2842,7 +2917,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
 
-        getContentPane().add(mainPanel);
+        getContentPane().add(tabbedPane);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         comboBoxInterp.setSelectedIndex(1);
@@ -2890,8 +2965,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             // 0  0 -1  0
             // 0  0  0  1
 
-            Point3Df cPt = image.getImageCentermm();
-            Point3Df cPtRS = resampleImage.getImageCentermm();
+            Point3Df cPt = image.getImageCentermm(false);
+            Point3Df cPtRS = resampleImage.getImageCentermm(false);
 
             if ((wcSystem == true) && (leftHandSystem == true)) {
 
@@ -3058,6 +3133,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         oXres = oYres = oZres = oXdim = oYdim = oZdim = 1; // initialize
 
+        
+        if (noTransform.isSelected()) {
+        
         // RESAMPLE INFO
         if (resampletoImage.isSelected()) {
             String selectName = (String) (comboBoxImage.getSelectedItem());
@@ -3180,15 +3258,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 oZres = image.getFileInfo(0).getResolutions()[2];
             }
         }
-
+        } //end if (noTransform.isSelected())
+      
+        
+        
         // TRANSFORMATION MATRIX INFO
-        /*if (rotCenter.isSelected()) { // rotate about center of image
-         *  Note that when rotation around the center is selected, this operation now occurs in
-         * AlgorithmTransform.transform(). center = resampleImage.getImageCentermm();
-         *
-         * if ((image.getNDims() >= 3) && (!do25D)) {     xfrm.setTranslate(center.x, center.y, center.z); } else { //
-         * (image.getNDims() == 2) || do25D     xfrm.setTranslate(center.x, center.y); }}*/
-
+        
         if (fileMatrix.isSelected()) { // read matrix from file
 
             // xfrm.timesEquals(readTransformMatrixFile(matrixFile));
@@ -3345,11 +3420,23 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         else if (storedMatrix.isSelected()) { // use image's stored matrix
             Preferences.debug("Image's stored matrix = \n" + image.getMatrix());
 
+            if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+            	isSATransform = true;
+            }
+            
+            TransMatrix imageMatrix = null;
+          
+            if (storedMatrixBox.getSelectedItem().equals("Composite")) {
+            	imageMatrix = image.getMatrix();
+            } else {
+            	imageMatrix = (TransMatrix)image.getMatrixHolder().getMatrixMap().get(storedMatrixBox.getSelectedItem());
+            }
+                                    
             if (!do25D) {
-                xfrm.timesEquals(image.getMatrix());
+                xfrm.timesEquals(imageMatrix);
             } else {
                 TransMatrix xfrmB = new TransMatrix(4);
-                xfrmB = image.getMatrix();
+                xfrmB = imageMatrix;
 
                 double[][] matB = new double[4][4];
                 matB = xfrmB.getMatrix();
@@ -3373,6 +3460,87 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             xfrm.identity();
         }
 
+        //if a transform matrix is to be used (NOT resampling)
+        //  must adjust the result extents and resolutions
+        if (!noTransform.isSelected()) {
+        	
+        	oXres = image.getFileInfo()[0].getResolutions()[0];
+        	oYres = image.getFileInfo()[0].getResolutions()[1];
+        	
+        	oXdim = image.getExtents()[0];
+        	oYdim = image.getExtents()[1];
+        	
+        	if (image.getNDims() > 2) {
+        		oZres = image.getFileInfo()[0].getResolutions()[2];
+            	oZdim = image.getExtents()[2];
+            	
+            	float [] res = new float[3];
+            	float [] dim = new float[3];
+            	
+            	xfrm.transform(oXres, oYres, oZres, res);
+            	xfrm.transform(oXdim, oYdim, oZdim, dim);
+            	
+            	 if (res[0] < 0) {
+            		 res[0]*=-1;
+                 }
+                 if (res[1] < 0) {
+                	 res[1]*=-1;
+                 }
+                 if (res[2] < 0) {
+                	 res[2]*=-1;
+                 }
+                 
+                 if (dim[0] < 0) {
+                	 dim[0]*=-1;
+                 }
+                 if (dim[1] < 0) {
+                	 dim[1]*=-1;
+                 }
+                 if (dim[2] < 0) {
+                	 dim[2]*=-1;
+                 }
+            	
+            	oXres = res[0];
+            	oYres = res[1];
+            	oZres = res[2];
+            	
+            	oXdim = MipavMath.round(dim[0]);
+            	oYdim = MipavMath.round(dim[1]);
+            	oZdim = MipavMath.round(dim[2]);
+        	} else {
+        		
+        		float [] res = new float[2];
+        		float [] dim = new float[2];
+        		
+        		xfrm.transform(oXdim, oYdim, dim);
+        		xfrm.transform(oXres, oYres, res);
+        		
+        		 if (dim[0] < 0) {
+                	 dim[0]*=-1;
+                 }
+                 if (dim[1] < 0) {
+                	 dim[1]*=-1;
+                 }
+        		
+        		if (res[0] < 0) {
+           		 res[0]*=-1;
+                }
+                if (res[1] < 0) {
+               	 res[1]*=-1;
+                }
+        		
+                oXres = res[0];
+                oYres = res[1];
+                oXdim = MipavMath.round(dim[0]);
+                oYdim = MipavMath.round(dim[1]);
+                
+        	}
+        	
+        	
+        	
+        }
+        
+        
         // if ((no transformation) OR (user input transformation))
         // AND (total image size !=), then scale
         if ((noTransform.isSelected() || userDefinedMatrix.isSelected())) {
@@ -3406,14 +3574,17 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         /*if (rotCenter.isSelected()) { // rotate about center of image
          *  Note that when rotation around the center is selected, this operation now occurs in
          * AlgorithmTransform.transform(). if ((image.getNDims() >= 3) && (!do25D)) {     center =
-         * image.getImageCentermm();     xfrm.setTranslate(-center.x, -center.y, -center.z); } else { //
-         * ((image.getNDims() ==2) || (do25D))     center = image.getImageCentermm();     xfrm.setTranslate(-center.x,
+         * image.getImageCentermm(false);     xfrm.setTranslate(-center.x, -center.y, -center.z); } else { //
+         * ((image.getNDims() ==2) || (do25D))     center = image.getImageCentermm(false);     xfrm.setTranslate(-center.x,
          * -center.y); }}*/
 
         Preferences.debug(xfrm + "\n");
 
         doRotateCenter = rotCenter.isSelected();
-
+        if (doRotateCenter) {
+        	useSACenter = useSACenterBox.isSelected();
+        }
+        
         return true;
     }
 }

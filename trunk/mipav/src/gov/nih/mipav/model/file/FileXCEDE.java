@@ -235,7 +235,7 @@ public class FileXCEDE implements DocumentFactory, XMLFactory {
         /**
          * Sets up the current directory of the JFileChooser.
          */
-        String defaultDirectory = Preferences.getProperty("ImageDirectory");
+        String defaultDirectory = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
         if (defaultDirectory != null) {
             File file = new File(defaultDirectory);
 
@@ -266,7 +266,7 @@ public class FileXCEDE implements DocumentFactory, XMLFactory {
             File selectedFile = fileChooser.getSelectedFile();
             fileName = selectedFile.getName();
             String currentDirectory = String.valueOf(fileChooser.getCurrentDirectory()) + File.separatorChar;
-            Preferences.setProperty("ImageDirectory", currentDirectory);
+            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, currentDirectory);
             createDocument(activeImageFrame.getActiveImage());
             saveXML(document, selectedFile);
         }
@@ -281,7 +281,7 @@ public class FileXCEDE implements DocumentFactory, XMLFactory {
         /**
          * Sets up the current directory of the JFileChooser.
          */
-        String defaultDirectory = Preferences.getProperty("ImageDirectory");
+        String defaultDirectory = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
         if (defaultDirectory != null) {
             File file = new File(defaultDirectory);
 
@@ -312,7 +312,7 @@ public class FileXCEDE implements DocumentFactory, XMLFactory {
             File selectedFile = fileChooser.getSelectedFile();
             fileName = selectedFile.getName();
             String currentDirectory = String.valueOf(fileChooser.getCurrentDirectory()) + File.separatorChar;
-            Preferences.setProperty("ImageDirectory", currentDirectory);
+            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, currentDirectory);
             return open(selectedFile);
         }
         return null;

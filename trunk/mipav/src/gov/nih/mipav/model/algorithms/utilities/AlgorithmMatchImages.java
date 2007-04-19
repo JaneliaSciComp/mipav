@@ -784,6 +784,62 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     }
 
     /**
+<<<<<<< .mine
+     * Update fileInfoBase.
+     *
+     * @param  image  DOCUMENT ME!
+     * @param  dim    DOCUMENT ME!
+     * @param  res    DOCUMENT ME!
+     * @param  start  DOCUMENT ME!
+     * @param  tID    DOCUMENT ME!
+     */
+    private void updateFileInfo(ModelImage image, int[] dim, double[] res, double[] start) {
+        int[] tempI3 = new int[nDims];
+        float[] tempF3 = new float[nDims];
+        float slicePos;
+        int lastSlice;
+        FileInfoBase fileInfoB;
+
+        if (nDims == 3) {
+            lastSlice = dim[2];
+            slicePos = (float) start[2];
+        } else {
+            lastSlice = 1;
+            slicePos = 0.0f;
+        }
+
+        // Set file properties of result image.
+        for (int i = 0; i < nDims; i++) {
+            tempI3[i] = dim[i];
+        }
+
+        for (int i = 0; i < nDims; i++) {
+            tempF3[i] = (float) res[i];
+        }
+
+        image.setExtents(tempI3);
+
+        for (int i = 0; i < lastSlice; i++) {
+            fileInfoB = (FileInfoBase) image.getFileInfo(i);
+            fileInfoB.setResolutions(tempF3);
+
+            if (nDims == 3) {
+                fileInfoB.setSliceThickness(tempF3[2]);
+            }
+
+            fileInfoB.setOrigin((float) start[0], 0);
+            fileInfoB.setOrigin((float) start[1], 1);
+            fileInfoB.setOrigin(slicePos, 2);
+
+            if (nDims == 3) {
+                slicePos += (float) (sign2LPS_A[2] * res[2]);
+            } // if (nDims == 3)
+        }
+    }
+
+    /**
+=======
+>>>>>>> .r1767
      * DOCUMENT ME!
      */
     private void constructLog() {
@@ -1939,7 +1995,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             }
 
             resultImgA.setImageName("tempA");
-            tIDA = resultImgA.getFileInfo(0).getTransformID();
             matA = resultImgA.getMatrix();
 
             if (nDims == 3) {
@@ -1979,7 +2034,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
             // update file info
             resultImgA.setMatrix(matA);
-            updateFileInfo(resultImgA, dimA, resA, origLPS_A, tIDA);
+            updateFileInfo(resultImgA, dimA, resA, origLPS_A);
         }
 
         if (newDimB) {
@@ -1989,8 +2044,9 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 newB = true;
             }
 
+            //BEN: change
+            
             resultImgB.setImageName("tempB");
-            tIDB = resultImgB.getFileInfo(0).getTransformID();
             matB = resultImgB.getMatrix();
 
             if (nDims == 3) {
@@ -2030,7 +2086,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
             // update file info
             resultImgB.setMatrix(matB);
-            updateFileInfo(resultImgB, dimB, resB, origLPS_B, tIDB);
+            updateFileInfo(resultImgB, dimB, resB, origLPS_B);
         }
     }
 
@@ -2278,8 +2334,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         } // else nDims == 2
 
         // Update file info for result images.
-        tID = sourceImgA.getFileInfo(0).getTransformID();
-        updateFileInfo(resultImgB, dimB, resB, origLPS_B, tID);
+        updateFileInfo(resultImgB, dimB, resB, origLPS_B);
     }
 
     /**
@@ -2401,7 +2456,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 } // else nDims == 2
 
                 // resultImgA.setImageName("tempA");
-                tID = resultImgA.getFileInfo(0).getTransformID();
                 tMatBkp = resultImgA.getMatrix();
 
                 if (nDims == 3) {
@@ -2454,7 +2508,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                     } // switch(axisOrientA[i])
                 }
 
-                updateFileInfo(resultImgA, dimA, resA, origLPS_A, tID);
+                updateFileInfo(resultImgA, dimA, resA, origLPS_A);
             }
 
             if (newOriginB) {
@@ -2480,7 +2534,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 } // else nDims == 2
 
                 resultImgB.setImageName("tempB");
-                tID = resultImgB.getFileInfo(0).getTransformID();
                 tMatBkp = resultImgB.getMatrix();
 
                 if (nDims == 3) {
@@ -2532,7 +2585,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                     } // switch(axisOrientB[i])
                 }
 
-                updateFileInfo(resultImgB, dimB, resB, origLPS_B, tID);
+                updateFileInfo(resultImgB, dimB, resB, origLPS_B);
             }
         }
     }
@@ -2630,8 +2683,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 origLPS_A[i] = (double) resultImgA.getFileInfo(0).getOrigin(i);
             }
 
-            tIDA = sourceImgA.getFileInfo(0).getTransformID();
-            updateFileInfo(resultImgA, dimA, resA, origLPS_A, tIDA);
+            updateFileInfo(resultImgA, dimA, resA, origLPS_A);
         } else {
             Preferences.debug("No need to resample imageA.  Already at minimum resolution.\n");
         }
@@ -2643,7 +2695,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 newB = true;
             }
 
-            tIDB = resultImgB.getFileInfo(0).getTransformID();
             tMatBkp = resultImgB.getMatrix();
             resultImgB.setImageName("tempB");
 
@@ -2694,7 +2745,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 origLPS_B[i] = (double) resultImgB.getFileInfo(0).getOrigin(i);
             }
 
-            updateFileInfo(resultImgB, dimB, resB, origLPS_B, tIDB);
+            updateFileInfo(resultImgB, dimB, resB, origLPS_B);
         } else {
             Preferences.debug("No need to resample imageB.  Already at minimum resolution.\n\n");
         }
@@ -2746,7 +2797,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             fileInfoB.setOrigin((float) start[0], 0);
             fileInfoB.setOrigin((float) start[1], 1);
             fileInfoB.setOrigin(slicePos, 2);
-            fileInfoB.setTransformID(tID);
 
             if (nDims == 3) {
                 slicePos += (float) (sign2LPS_A[2] * res[2]);

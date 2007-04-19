@@ -193,7 +193,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         int filter = 0;
 
         try {
-            filter = Integer.parseInt(Preferences.getProperty("FilenameFilter"));
+            filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
         } catch (NumberFormatException nfe) {
 
             // an invalid value was set in preferences -- so don't use it!
@@ -286,7 +286,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 image = fileIO.readImage(fileName, directory, multiFile, null);
 
                 if (image == null) {
-                    System.err.println("ViewOpenFileUI: image = null");
+                    //System.err.println("ViewOpenFileUI: image = null");
 
                     return null;
                 }

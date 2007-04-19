@@ -3438,14 +3438,14 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 newTextVOI.importCurve(x, y, z, sliceNum);
                 newTextVOI.setUID(newTextVOI.hashCode());
 
-                String prefColor = Preferences.getProperty("VOITextColor");
+                String prefColor = Preferences.getProperty(Preferences.PREF_VOI_TEXT_COLOR);
                 Color textColor;
 
                 if (prefColor != null) {
                     textColor = MipavUtil.extractColor(prefColor);
                     newTextVOI.setColor(textColor);
                 } else {
-                    Preferences.setProperty("VOITextColor", MipavUtil.makeColorString(Color.white));
+                    Preferences.setProperty(Preferences.PREF_VOI_TEXT_COLOR, MipavUtil.makeColorString(Color.white));
                     newTextVOI.setColor(Color.white);
                 }
 
@@ -5677,8 +5677,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 } else {
                     return resultStr + "little endian";
                 }
-            } else if (attribString.equals(atts[21])) {
-                return resultStr + FileInfoBase.getTransformIDStr(inf.getTransformID());
             }
 
             return null;

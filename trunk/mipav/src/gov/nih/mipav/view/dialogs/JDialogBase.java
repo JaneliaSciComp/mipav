@@ -247,7 +247,6 @@ public abstract class JDialogBase extends JDialog
             fileInfo[0].setMin(resultImage.getMin());
             fileInfo[0].setImageOrientation(image.getImageOrientation());
             fileInfo[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation());
-            fileInfo[0].setTransformID(image.getFileInfo()[0].getTransformID());
             fileInfo[0].setOrigin(image.getFileInfo()[0].getOrigin());
             fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
             fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
@@ -269,7 +268,6 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(image.getImageOrientation());
                 fileInfo[i].setAxisOrientation(image.getFileInfo()[j].getAxisOrientation());
-                fileInfo[i].setTransformID(image.getFileInfo()[j].getTransformID());
                 fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
                 fileInfo[i].setPixelPadValue(image.getFileInfo()[j].getPixelPadValue());
                 fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());
@@ -288,7 +286,6 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(image.getImageOrientation());
                 fileInfo[i].setAxisOrientation(image.getFileInfo()[i].getAxisOrientation());
-                fileInfo[i].setTransformID(image.getFileInfo()[i].getTransformID());
                 fileInfo[i].setOrigin(image.getFileInfo()[i].getOrigin());
                 fileInfo[i].setPixelPadValue(image.getFileInfo()[i].getPixelPadValue());
                 fileInfo[i].setPhotometric(image.getFileInfo()[i].getPhotometric());
@@ -522,7 +519,6 @@ public abstract class JDialogBase extends JDialog
             fileInfo[0].setMin(resultImage.getMin());
             fileInfo[0].setImageOrientation(image.getImageOrientation());
             fileInfo[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation());
-            fileInfo[0].setTransformID(image.getFileInfo()[0].getTransformID());
             fileInfo[0].setOrigin(image.getFileInfo()[0].getOrigin());
             fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
             fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
@@ -544,7 +540,6 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(image.getImageOrientation());
                 fileInfo[i].setAxisOrientation(image.getFileInfo()[j].getAxisOrientation());
-                fileInfo[i].setTransformID(image.getFileInfo()[j].getTransformID());
                 fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
                 fileInfo[i].setPixelPadValue(image.getFileInfo()[j].getPixelPadValue());
                 fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());
@@ -563,7 +558,6 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(image.getImageOrientation());
                 fileInfo[i].setAxisOrientation(image.getFileInfo()[i].getAxisOrientation());
-                fileInfo[i].setTransformID(image.getFileInfo()[i].getTransformID());
                 fileInfo[i].setOrigin(image.getFileInfo()[i].getOrigin());
                 fileInfo[i].setPixelPadValue(image.getFileInfo()[i].getPixelPadValue());
                 fileInfo[i].setPhotometric(image.getFileInfo()[i].getPhotometric());
@@ -594,7 +588,6 @@ public abstract class JDialogBase extends JDialog
             fileInfo[0].setMin(resultImage.getMin());
             fileInfo[0].setImageOrientation(image.getImageOrientation());
             fileInfo[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation());
-            fileInfo[0].setTransformID(image.getFileInfo()[0].getTransformID());
             fileInfo[0].setOrigin(image.getFileInfo()[0].getOrigin());
             fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
             fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
@@ -616,7 +609,6 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(image.getImageOrientation());
                 fileInfo[i].setAxisOrientation(image.getFileInfo()[j].getAxisOrientation());
-                fileInfo[i].setTransformID(image.getFileInfo()[j].getTransformID());
                 fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
                 fileInfo[i].setPixelPadValue(image.getFileInfo()[j].getPixelPadValue());
                 fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());
@@ -635,7 +627,6 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(image.getImageOrientation());
                 fileInfo[i].setAxisOrientation(image.getFileInfo()[i].getAxisOrientation());
-                fileInfo[i].setTransformID(image.getFileInfo()[i].getTransformID());
                 fileInfo[i].setOrigin(image.getFileInfo()[i].getOrigin());
                 fileInfo[i].setPixelPadValue(image.getFileInfo()[i].getPixelPadValue());
                 fileInfo[i].setPhotometric(image.getFileInfo()[i].getPhotometric());

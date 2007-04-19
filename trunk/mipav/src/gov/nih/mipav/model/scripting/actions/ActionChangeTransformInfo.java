@@ -62,7 +62,7 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
         try {
             parameters.put(createInputImageParameter());
             parameters.put(ParameterFactory.newParameter(TRANSFORM_MATRIX, tMat));
-            parameters.put(ParameterFactory.newParameter(TRANSFORM_ID, recordingInputImage.getTransformID()));
+          //  parameters.put(ParameterFactory.newParameter(TRANSFORM_ID, recordingInputImage.getTransformID()));
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered while recording " + getActionName() + " script action:\n" + pe);
             return;
@@ -90,9 +90,10 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
         		matrix[i][j] = tMat[index];
         	}
         }
-        
+       
+        //BEN
         for (int i = 0; i < inputImage.getFileInfo().length; i++) {
-        	inputImage.getFileInfo()[i].setTransformID(transformID);
+        //	inputImage.getFileInfo()[i].setTransformID(transformID);
         }
     }
 }

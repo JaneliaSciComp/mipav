@@ -92,25 +92,25 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
 
 
             for (i = 1; i < 100; i++) {
-                plugInName = Preferences.getProperty("PlugInAlgorithm" + i);
+                plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_ALGORITHM + i);
 
                 if (plugInName == null) {
                     break;
                 } else if (selectedPluginName.equals(plugInName)) {
                     plugInFound = true;
-                    Preferences.removeProperty("PlugInAlgorithm" + i); // removes the property from the Preference file
+                    Preferences.removeProperty(Preferences.PREF_PLUGIN_ALGORITHM + i); // removes the property from the Preference file
 
                     for (j = i + 1; j < 100; j++) {
 
                         // check whether plugin with a higher number needs to be changed and makes proper adjustments
-                        plugInName = Preferences.getProperty("PlugInAlgorithm" + j);
+                        plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_ALGORITHM + j);
 
                         if (plugInName == null) {
                             break;
                         }
 
-                        Preferences.setProperty("PlugInAlgorithm" + (j - 1), plugInName);
-                        Preferences.removeProperty("PlugInAlgorithm" + j);
+                        Preferences.setProperty(Preferences.PREF_PLUGIN_ALGORITHM + (j - 1), plugInName);
+                        Preferences.removeProperty(Preferences.PREF_PLUGIN_ALGORITHM + j);
                     }
 
                     Preferences.save();
@@ -122,26 +122,26 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
             if (!plugInFound) {
 
                 for (i = 1; i < 100; i++) {
-                    plugInName = Preferences.getProperty("PlugInFile" + i);
+                    plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_FILE + i);
 
                     if (plugInName == null) {
                         break;
                     } else if (selectedPluginName.equals(plugInName)) {
                         plugInFound = true;
-                        Preferences.removeProperty("PlugInFile" + i);
+                        Preferences.removeProperty(Preferences.PREF_PLUGIN_FILE + i);
 
                         for (j = i + 1; j < 100; j++) {
 
                             // check whether plugin with a higher number needs to be changed and makes proper
                             // adjustments
-                            plugInName = Preferences.getProperty("PlugInFile" + j);
+                            plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_FILE + j);
 
                             if (plugInName == null) {
                                 break;
                             }
 
-                            Preferences.setProperty("PlugInFile" + (j - 1), plugInName);
-                            Preferences.removeProperty("PlugInFile" + j);
+                            Preferences.setProperty(Preferences.PREF_PLUGIN_FILE + (j - 1), plugInName);
+                            Preferences.removeProperty(Preferences.PREF_PLUGIN_FILE + j);
                         }
 
                         Preferences.save();
@@ -154,7 +154,7 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
             if (!plugInFound) {
 
                 for (i = 1; i < 100; i++) {
-                    plugInName = Preferences.getProperty("PlugInView" + i);
+                    plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_VIEW + i);
 
                     if (plugInName == null) {
                         break;
@@ -162,17 +162,17 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
 
                         // check whether plugin with a higher number needs to be changed and makes proper adjustments
                         plugInFound = true;
-                        Preferences.removeProperty("PlugInView" + i);
+                        Preferences.removeProperty(Preferences.PREF_PLUGIN_VIEW + i);
 
                         for (j = i + 1; j < 100; j++) {
-                            plugInName = Preferences.getProperty("PlugInView" + j);
+                            plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_VIEW + j);
 
                             if (plugInName == null) {
                                 break;
                             }
 
-                            Preferences.setProperty("PlugInView" + (j - 1), plugInName);
-                            Preferences.removeProperty("PlugInView" + j);
+                            Preferences.setProperty(Preferences.PREF_PLUGIN_VIEW + (j - 1), plugInName);
+                            Preferences.removeProperty(Preferences.PREF_PLUGIN_VIEW + j);
                         }
 
                         Preferences.save();
@@ -230,7 +230,7 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
         // obtains all 3 types of plugins from the Preferences File
         // and adds them to a vector
         for (i = 1; i < 100; i++) {
-            plugInName = Preferences.getProperty("PlugInAlgorithm" + i);
+            plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_ALGORITHM + i);
 
             if (plugInName == null) {
                 break;
@@ -240,7 +240,7 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
         }
 
         for (i = 1; i < 100; i++) {
-            plugInName = Preferences.getProperty("PlugInFile" + i);
+            plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_FILE + i);
 
             if (plugInName == null) {
                 break;
@@ -250,7 +250,7 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
         }
 
         for (i = 1; i < 100; i++) {
-            plugInName = Preferences.getProperty("PlugInView" + i);
+            plugInName = Preferences.getProperty(Preferences.PREF_PLUGIN_VIEW + i);
 
             if (plugInName == null) {
                 break;

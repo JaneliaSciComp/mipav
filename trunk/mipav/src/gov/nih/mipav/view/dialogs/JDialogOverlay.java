@@ -40,7 +40,7 @@ public class JDialogOverlay extends JDialogBase {
         "Dimension 0", "Dimension 1", "Dimension 2", "Dimension 3", "Type", "Min", "Max", "Orientation",
         "Axis X Orientation", "Axis Y Orientation", "Axis Z Orientation", "Pixel resolution 0", "Pixel resolution 1",
         "Pixel resolution 2", "Pixel resolution 3", "Slice thickness", "Origin 0", "Origin 1", "Origin 2", "Origin 3",
-        "Endianess", "Transform ID"
+        "Endianess"
     };
 
     //~ Instance fields ------------------------------------------------------------------------------------------------

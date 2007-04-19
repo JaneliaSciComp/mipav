@@ -770,7 +770,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         DateFormat df1 = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 
         // write to the history area
-        if (Preferences.is(Preferences.PREF_LOG) && completed) {
+        if (Preferences.is(Preferences.PREF_HISTORY) && completed) {
 
             if (destImage != null) {
 

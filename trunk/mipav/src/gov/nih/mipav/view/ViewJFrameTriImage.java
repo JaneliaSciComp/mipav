@@ -728,17 +728,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
 
             triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-        } else if (command.equals("ShowPaintBorder")) {
+        } else if (command.equals(Preferences.PREF_SHOW_PAINT_BORDER)) {
 
             // swap the border painting
-            Preferences.setProperty("ShowPaintBorder",
+            Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER,
                                     String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
 
             for (int i = 0; i < controls.paintToolBar.getComponentCount(); i++) {
 
                 if (controls.paintToolBar.getComponent(i).getName() != null) {
 
-                    if (controls.paintToolBar.getComponent(i).getName().equals("ShowPaintBorder")) {
+                    if (controls.paintToolBar.getComponent(i).getName().equals(Preferences.PREF_SHOW_PAINT_BORDER)) {
                         ((JButton) (controls.paintToolBar.getComponent(i))).setSelected(!((JButton)
                                                                                               (controls.paintToolBar.getComponent(i)))
                                                                                             .isSelected());
@@ -1575,7 +1575,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             case KeyEvent.VK_B:
 
                 // swap the border painting
-                Preferences.setProperty("ShowPaintBorder",
+                Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER,
                                         String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
                 triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                 if (triImage[AXIAL_B] != null) {
@@ -2703,8 +2703,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         JSeparator separator = new JSeparator();
 
-        int id = imageA.getFileInfo()[0].getTransformID();
-        this.showTalairachPosition = ((id == FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX) &&
+        this.showTalairachPosition = ((imageA.getMatrixHolder().containsType(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX)) &&
                                           (imageA.getTalairachTransformInfo() != null));
 
         menuObj = new ViewMenuBuilder(this);
@@ -3121,7 +3120,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         paintToolBar.add(colorPaintButton);
         paintToolBar.add(toolbarBuilder.buildTextButton("Opacity", "Change opacity of paint", "OpacityPaint"));
-        paintToolBar.add(toolbarBuilder.buildButton("ShowPaintBorder", "Show border around painted areas.",
+        paintToolBar.add(toolbarBuilder.buildButton(Preferences.PREF_SHOW_PAINT_BORDER, "Show border around painted areas.",
                                                     "borderpaint"));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
         paintToolBar.add(toolbarBuilder.buildButton("CommitPaint", "Changes image where painted inside",

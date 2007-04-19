@@ -1533,7 +1533,7 @@ public class ViewOpenImageSequence extends JFrame
                 srsPath = new File(home);
             }
         } else {
-            srsPath = new File(Preferences.getProperty("ImageDirectory"));
+            srsPath = new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR));
 
             if ((srsPath.exists() == false) || (srsPath.canRead() == false)) {
                 srsPath = new File(System.getProperty("user.home"));

@@ -297,7 +297,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
 
             // Build surface extractor class
             // Build surface extractor class
-            if (srcImage.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) {
+            if (srcImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
 
                 // Get the DICOM transform that describes the transformation from
                 // axial to this image orientation

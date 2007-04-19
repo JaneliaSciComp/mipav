@@ -582,8 +582,7 @@ public class FileSurface {
                         akVertex[j].z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[j].z;
 
                         if (isSur &&
-                                (kImage.getFileInfo()[0].getTransformID() ==
-                                     FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL)) {
+                                (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))) {
 
                             // Get the DICOM transform that describes the transformation from
                             // axial to this image orientation
@@ -614,7 +613,7 @@ public class FileSurface {
                 if (isSur == true) {
                     double[][] inverseDicomArray = null;
 
-                    if (kImage.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) {
+                    if (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
                         TransMatrix inverseDicomMatrix = (TransMatrix) (kImage.getMatrix().clone());
                         inverseDicomMatrix.invert();
                         inverseDicomArray = inverseDicomMatrix.getMatrix();

@@ -121,6 +121,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Whether the mipav GUI should be shown; set by the -hide command line option. */
     private boolean isAppFrameVisible = true;
 
+    /** Matrix for copy/paste actions in image's or between image's matrix edit panel */
+    private TransMatrix clippedMatrix = null;
+    
     /** DOCUMENT ME! */
     private boolean isClippedVOI2D = true;
 
@@ -346,7 +349,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             if (source instanceof JCheckBoxMenuItem) {
 
                 if (((JCheckBoxMenuItem) source).isSelected()) {
-                    Preferences.setProperty("EnableDICOMReceiver", "true");
+                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
@@ -355,7 +358,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     DICOMcatcher = new DICOM_Receiver();
                     menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 } else {
-                    Preferences.setProperty("EnableDICOMReceiver", "false");
+                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
@@ -379,7 +382,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                 !menuBuilder.isMenuItemSelected("Enable DICOM receiver"));
 
                 if (menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
-                    Preferences.setProperty("EnableDICOMReceiver", "true");
+                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
@@ -388,7 +391,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     DICOMcatcher = new DICOM_Receiver();
                     menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 } else {
-                    Preferences.setProperty("EnableDICOMReceiver", "false");
+                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
@@ -451,7 +454,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         // wanting the pacs to always start. the user
                         // must still explictly enable its auto-start
 
-                        // Preferences.setProperty("EnableDICOMReceiver", "true");
+                        // Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
                     }
 
                     return;
@@ -1135,7 +1138,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public String getDefaultDirectory() {
 
-        String str = Preferences.getProperty("ImageDirectory");
+        String str = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
 
         if (str != null) {
             return str;
@@ -1151,12 +1154,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public String getDefaultScriptDirectory() {
 
-        String str = Preferences.getProperty("ScriptDirectory");
+        String str = Preferences.getProperty(Preferences.PREF_SCRIPT_DIR);
 
         if (str != null) {
             return str;
         } else {
-            str = Preferences.getProperty("ImageDirectory");
+            str = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
 
             if (str != null) {
                 return str;
@@ -1233,7 +1236,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @return  LastScript
      */
     public String getLastScript() {
-        return Preferences.getProperty("LastScript");
+        return Preferences.getProperty(Preferences.PREF_LAST_SCRIPT);
     }
 
     /**
@@ -1634,12 +1637,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         int filter = ViewImageFileFilter.TECH;
 
         try {
-            filter = Integer.parseInt(Preferences.getProperty("FilenameFilter"));
+            filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
         } catch (NumberFormatException nfe) {
 
             // an invalid value was set in preferences -- so fix it!
             filter = ViewImageFileFilter.TECH;
-            Preferences.setProperty("FilenameFilter", Integer.toString(filter));
+            Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, Integer.toString(filter));
         }
 
         openFile.setFilterType(filter);
@@ -2281,19 +2284,27 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         imageFrameVector.removeElementAt(index + 1); // Remove second copy
     }
 
-    /**
-     * Sets the application title in the preference file.
-     *
-     * @param  appTitle  the application title
-     */
-    public void setAppTitle(String appTitle) {
-        Preferences.setProperty("ApplicationTitle", appTitle);
-    }
-
     // *****
     // end of initialize() sub-methods.
     // *****
 
+    
+    /**
+     * Sets the clipped matrix for copy/paste actions
+     *  @param tMat transmatrix for copy/paste
+     */
+    public void setClippedMatrix(TransMatrix tMat) {
+    	this.clippedMatrix = tMat;
+    }
+    
+    /**
+     * Retrieves the clipped matrix for paste action
+     * @return clippedMatrix
+     */
+    public TransMatrix getClippedMatrix() {
+    	return this.clippedMatrix;
+    }
+    
     /**
      * Sets the menu for the main frame.
      */
@@ -2320,7 +2331,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param  defaultDirectory  Directory to set it to.
      */
     public void setDefaultDirectory(String defaultDirectory) {
-        Preferences.setProperty("ImageDirectory", defaultDirectory);
+        Preferences.setProperty(Preferences.PREF_IMAGE_DIR, defaultDirectory);
     }
 
     /**
@@ -2329,7 +2340,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param  dir  Directory to set the script directory to.
      */
     public void setDefaultScriptDirectory(String dir) {
-        Preferences.setProperty("ScriptDirectory", dir);
+        Preferences.setProperty(Preferences.PREF_SCRIPT_DIR, dir);
     }
 
     /**
@@ -2368,7 +2379,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param  script  Script to set the LastScript to.
      */
     public void setLastScript(String script) {
-        Preferences.setProperty("LastScript", script);
+        Preferences.setProperty(Preferences.PREF_LAST_SCRIPT, script);
     }
 
     /**
@@ -3134,12 +3145,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     protected void initPrefsTrim() {
 
-        if (Preferences.getProperty("TRIM") == null) {
-            Preferences.setProperty("TRIM", "0.3");
+        if (Preferences.getProperty(Preferences.PREF_TRIM) == null) {
+            Preferences.setProperty(Preferences.PREF_TRIM, "0.3");
         }
 
-        if (Preferences.getProperty("TRIM_FLAG") == null) {
-            Preferences.setProperty("TRIM_FLAG", "true");
+        if (Preferences.getProperty(Preferences.PREF_TRIM_FLAG) == null) {
+            Preferences.setProperty(Preferences.PREF_TRIM_FLAG, "true");
         }
     }
 
@@ -3183,7 +3194,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     protected void initSetTitles(String mainFrameTitle, String appTitle) {
         mainFrame.setTitle(mainFrameTitle);
-        setAppTitle(appTitle);
     }
 
     /**
@@ -3223,7 +3233,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             checkLaxAgainstPreferences();
         }
 
-        if (Preferences.getProperty("ImageDirectory") == null) {
+        if (Preferences.getProperty(Preferences.PREF_IMAGE_DIR) == null) {
             setDefaultDirectory(System.getProperties().getProperty("user.dir"));
         }
 
@@ -3307,8 +3317,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             File laxFile = JDialogMemoryAllocation.getStartupFile(this);
             String[] mems = JDialogMemoryAllocation.readStartupFile(laxFile);
 
-            if (!Preferences.getProperty("StartingHeapSize").equals(mems[0]) ||
-                    !Preferences.getProperty("MaximumHeapSize").equals(mems[1])) {
+            if (!Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE).equals(mems[0]) ||
+                    !Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE).equals(mems[1])) {
 
                 MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n" +
                                          "those in the Preferences file.\n" +

@@ -764,7 +764,7 @@ public class JDialogTalairach extends JDialogBase {
          * center.y + Sy*dy2 dy2 = (pcie.y - (ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC)*Sy
          * - center.y)/Sy
          */
-        center = image.getImageCentermm();
+        center = image.getImageCentermm(false);
         oXres = vlength;
         oYres = vlength;
         oZres = vlength;
