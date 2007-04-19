@@ -1609,22 +1609,8 @@ public class FileNIFTI extends FileBase {
                     fileInfo.setImageOrientation(FileInfoBase.AXIAL);
                 }
 
-                /*origin = new float[3];
-                 * for (j = 0; j < 3; j++) {
-                 *
-                 * if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE){     origin[j] = -Math.abs(LPSOrigin[0]); } else
-                 * if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {     origin[j] = Math.abs(LPSOrigin[0]); } else
-                 * if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){     origin[j] = -Math.abs(LPSOrigin[1]);      }
-                 * else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {     origin[j] = Math.abs(LPSOrigin[1]); }
-                 * else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){     origin[j] = -Math.abs(LPSOrigin[2]);
-                 * } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {     origin[j] = Math.abs(LPSOrigin[2]);
-                 * } }
-                 *
-                 *
-                 * fileInfo.setOrigin(origin); matrix.setMatrix((double) origin[0], 0, 3); matrix.setMatrix((double)
-                 * origin[1], 1, 3);matrix.setMatrix((double) origin[2], 2, 3);*/
+                
                 Preferences.debug("matrix = \n" + matrix + "\n");
-                // fileInfo.setMatrix(matrix);
 
                 Preferences.debug("quatern_a = " + quatern_a + "\n");
                 Preferences.debug("quatern_b = " + quatern_b + "\n");
@@ -1712,19 +1698,8 @@ public class FileNIFTI extends FileBase {
                     fileInfo.setImageOrientation(FileInfoBase.AXIAL);
                 }
 
-                /*origin = new float[3];
-                 * for (j = 0; j < 3; j++) {
-                 *
-                 * if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE ||     axisOrientation[j] ==
-                 * FileInfoBase.ORI_R2L_TYPE){     origin[j] = LPSOrigin[0];     } else if (axisOrientation[j] ==
-                 * FileInfoBase.ORI_P2A_TYPE ||          axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){     origin[j]
-                 * = LPSOrigin[1];         } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE ||
-                 * axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){     origin[j] = LPSOrigin[2];         } }
-                 *
-                 * fileInfo.setOrigin(origin); matrix.setMatrix((double) origin[0], 0, 3); matrix.setMatrix((double)
-                 * origin[1], 1, 3);matrix.setMatrix((double) origin[2], 2, 3);*/
+                
                 Preferences.debug("matrix = \n" + matrix + "\n");
-                // fileInfo.setMatrix(matrix);
 
                 Preferences.debug("srow_x = " + srow_x[0] + "  " + srow_x[1] + "  " + srow_x[2] + "  " + srow_x[3] +
                                   "\n");
@@ -2790,25 +2765,12 @@ public class FileNIFTI extends FileBase {
 
         int i;
         boolean isNIFTI = true;
-        boolean isDicom = true;
-        boolean isMinc = true;
-        boolean isXML = true;
-        boolean isAfni = true;
-        String orientationStr;
         boolean endianess;
         String fileHeaderName;
         int nDims;
         int[] extents;
         FileInfoBase myFileInfo;
-        FileInfoDicom fileInfoDicom = null;
-        FileInfoMinc fileInfoMinc = null;
-        FileInfoXML fileInfoXML = null;
-        FileInfoAfni fileInfoAfni = null;
         int[] niftiExtents;
-        short statCode;
-        float intentP1;
-        float intentP2;
-        float intentP3;
         double r00, r01, r02, r10, r11, r12, r20, r21, r22;
         int imageMin, imageMax;
         byte dim_info;
@@ -2827,7 +2789,7 @@ public class FileNIFTI extends FileBase {
         Matrix Q;
         Matrix P;
         double a, b, c, d;
-        boolean increaseResol;
+        float niftiOrigin[] = new float[3];
 
         myFileInfo = image.getFileInfo(0); // A safeguard in case the file is not NIFTI
         endianess = myFileInfo.getEndianess();
@@ -2839,30 +2801,6 @@ public class FileNIFTI extends FileBase {
             // and make a new fileInfo
             fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
             isNIFTI = false; // Write the header without all the NIFTI info
-        }
-
-        try { // In this case, the file must be Dicom
-            fileInfoDicom = (FileInfoDicom) image.getFileInfo(0);
-        } catch (ClassCastException e) { // If it isn't, catch the exception
-            isDicom = false;
-        }
-
-        try { // In this case, the file must be XML
-            fileInfoXML = (FileInfoXML) image.getFileInfo(0);
-        } catch (ClassCastException e) { // If it isn't, catch the exception
-            isXML = false;
-        }
-
-        try { // In this case, the file must be Afni
-            fileInfoAfni = (FileInfoAfni) image.getFileInfo(0);
-        } catch (ClassCastException e) { // If it isn't, catch the exception
-            isAfni = false;
-        }
-
-        try { // In this case, the file must be Minc
-            fileInfoMinc = (FileInfoMinc) image.getFileInfo(0);
-        } catch (ClassCastException e) { // If it isn't, catch the exception
-            isMinc = false;
         }
 
         if (oneFile) {
@@ -3232,150 +3170,23 @@ public class FileNIFTI extends FileBase {
 
         fileInfo.setSourceType(sourceType);
 
-        LPSOrigin = new float[3];
-        LPSOrigin[0] = origin[0];
-        LPSOrigin[1] = origin[1];
-        LPSOrigin[2] = origin[2];
-
-        for (int j = 0; j < 3; j++) {
-
-            if ((axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) ||
-                    (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE)) {
-                LPSOrigin[0] = origin[j];
-
-            } else if ((axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) ||
-                           (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE)) {
-                LPSOrigin[1] = origin[j];
-
-            } else if ((axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) ||
-                           (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE)) {
-                LPSOrigin[2] = origin[j];
-
-            }
-        }
-
-        matrix = fileInfo.getMatrix();
+        matrix = image.getMatrix();
         Preferences.debug("Matrix on write entry = " + matrix + "\n");
-        getAxisOrientation(matrix);
-        matrix.set(0, 3, -LPSOrigin[0]);
-        matrix.set(1, 3, LPSOrigin[1]);
-        matrix.set(2, 3, LPSOrigin[2]);
-
-
-        if (!isNIFTI) {
-            axisOrientation = image.getFileInfo(0).getAxisOrientation();
-
-            // System.out.println("axisOrientation = " + axisOrientation[0] + ", " +
-            // axisOrientation[1] + ", " + axisOrientation[2]);
-            if ((axisOrientation != null) && (axisOrientation[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
-                    (axisOrientation[1] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
-                    (axisOrientation[2] != FileInfoBase.ORI_UNKNOWN_TYPE)) {
-                matrix.set(0, 0, 0.0);
-                matrix.set(0, 1, 0.0);
-                matrix.set(0, 2, 0.0);
-                matrix.set(1, 0, 0.0);
-                matrix.set(1, 1, 0.0);
-                matrix.set(1, 2, 0.0);
-                matrix.set(2, 0, 0.0);
-                matrix.set(2, 1, 0.0);
-                matrix.set(2, 2, 0.0);
-
-                switch (axisOrientation[0]) {
-
-                    case FileInfoBase.ORI_R2L_TYPE:
-                        matrix.set(0, 0, resols[0]);
-                        break;
-
-                    case FileInfoBase.ORI_L2R_TYPE:
-                        matrix.set(0, 0, -resols[0]);
-                        break;
-
-                    case FileInfoBase.ORI_A2P_TYPE:
-                        matrix.set(1, 0, resols[0]);
-                        break;
-
-                    case FileInfoBase.ORI_P2A_TYPE:
-                        matrix.set(1, 0, -resols[0]);
-                        break;
-
-                    case FileInfoBase.ORI_I2S_TYPE:
-                        matrix.set(2, 0, resols[0]);
-                        break;
-
-                    case FileInfoBase.ORI_S2I_TYPE:
-                        matrix.set(2, 0, -resols[0]);
-                        break;
-                } // switch(axisOrientation[0])
-
-                switch (axisOrientation[1]) {
-
-                    case FileInfoBase.ORI_R2L_TYPE:
-                        matrix.set(0, 1, resols[1]);
-                        break;
-
-                    case FileInfoBase.ORI_L2R_TYPE:
-                        matrix.set(0, 1, -resols[1]);
-                        break;
-
-                    case FileInfoBase.ORI_A2P_TYPE:
-                        matrix.set(1, 1, resols[1]);
-                        break;
-
-                    case FileInfoBase.ORI_P2A_TYPE:
-                        matrix.set(1, 1, -resols[1]);
-                        break;
-
-                    case FileInfoBase.ORI_I2S_TYPE:
-                        matrix.set(2, 1, resols[1]);
-                        break;
-
-                    case FileInfoBase.ORI_S2I_TYPE:
-                        matrix.set(2, 1, -resols[1]);
-                        break;
-                } // switch(axisOrientation[1])
-
-                switch (axisOrientation[2]) {
-
-                    case FileInfoBase.ORI_R2L_TYPE:
-                        matrix.set(0, 2, resols[2]);
-                        break;
-
-                    case FileInfoBase.ORI_L2R_TYPE:
-                        matrix.set(0, 2, -resols[2]);
-                        break;
-
-                    case FileInfoBase.ORI_A2P_TYPE:
-                        matrix.set(1, 2, resols[2]);
-                        break;
-
-                    case FileInfoBase.ORI_P2A_TYPE:
-                        matrix.set(1, 2, -resols[2]);
-                        break;
-
-                    case FileInfoBase.ORI_I2S_TYPE:
-                        matrix.set(2, 2, resols[2]);
-                        break;
-
-                    case FileInfoBase.ORI_S2I_TYPE:
-                        matrix.set(2, 2, -resols[2]);
-                        break;
-                } // switch(axisOrientation[2])
-
-            }
-
-        } // if (!isNIFTI)
-
         if (matrix != null) {
-            r00 = -matrix.get(0, 0);
-            r01 = matrix.get(0, 1);
-            r02 = -matrix.get(0, 2);
-            r10 = -matrix.get(1, 0);
-            r11 = matrix.get(1, 1);
-            r12 = -matrix.get(1, 2);
-            r20 = matrix.get(2, 0);
-            r21 = -matrix.get(2, 1);
-            r22 = matrix.get(2, 2);
-        } else {
+            r00 = -matrix.get(0,0)/resols[0];
+            r01 = matrix.get(0,1)/resols[1];
+            r02 = -matrix.get(0,2)/resols[2];
+            r10 = -matrix.get(1,0)/resols[0];
+            r11 = matrix.get(1,1)/resols[1];
+            r12 = -matrix.get(1,2)/resols[2];
+            r20 = matrix.get(2,0)/resols[0];
+            r21 = -matrix.get(2,1)/resols[1];
+            r22 = matrix.get(2,2)/resols[2];
+            niftiOrigin[0] = (float)-matrix.get(0, 3);
+            niftiOrigin[1] = (float)matrix.get(1,3);
+            niftiOrigin[2] = (float)matrix.get(2,3);
+        }
+        else {
             r00 = -1.0;
             r01 = 0.0;
             r02 = 0.0;
@@ -3384,7 +3195,7 @@ public class FileNIFTI extends FileBase {
             r12 = 0.0;
             r20 = 0.0;
             r21 = 0.0;
-            r22 = 1.0;
+            r22 = 1.0;   
         }
 
         // Compute lengths of each column; these determine grid spacings
@@ -3647,13 +3458,13 @@ public class FileNIFTI extends FileBase {
             setBufferFloat(bufferByte, quatern_d, 264, endianess);
 
             // qoffset_x
-            setBufferFloat(bufferByte, -LPSOrigin[0], 268, endianess);
+            setBufferFloat(bufferByte, niftiOrigin[0], 268, endianess);
 
             // qoffset_y
-            setBufferFloat(bufferByte, LPSOrigin[1], 272, endianess);
+            setBufferFloat(bufferByte, niftiOrigin[1], 272, endianess);
 
             // qoffset_z
-            setBufferFloat(bufferByte, LPSOrigin[2], 276, endianess);
+            setBufferFloat(bufferByte, niftiOrigin[2], 276, endianess);
 
             if (matrix != null) {
 
@@ -3662,19 +3473,19 @@ public class FileNIFTI extends FileBase {
                 setBufferFloat(bufferByte, (float) (-matrix.get(0, 0)), 280, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(0, 1)), 284, endianess);
                 setBufferFloat(bufferByte, (float) (-matrix.get(0, 2)), 288, endianess);
-                setBufferFloat(bufferByte, -LPSOrigin[0], 292, endianess);
+                setBufferFloat(bufferByte, niftiOrigin[0], 292, endianess);
 
                 // srow_y
                 setBufferFloat(bufferByte, (float) (-matrix.get(1, 0)), 296, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(1, 1)), 300, endianess);
                 setBufferFloat(bufferByte, (float) (-matrix.get(1, 2)), 304, endianess);
-                setBufferFloat(bufferByte, LPSOrigin[1], 308, endianess);
+                setBufferFloat(bufferByte, niftiOrigin[1], 308, endianess);
 
                 // srow_z
                 setBufferFloat(bufferByte, (float) (matrix.get(2, 0)), 312, endianess);
                 setBufferFloat(bufferByte, (float) (-matrix.get(2, 1)), 316, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(2, 2)), 320, endianess);
-                setBufferFloat(bufferByte, LPSOrigin[2], 324, endianess);
+                setBufferFloat(bufferByte, niftiOrigin[2], 324, endianess);
             } else {
 
                 // srow_x
@@ -3902,13 +3713,13 @@ public class FileNIFTI extends FileBase {
             setBufferFloat(bufferByte, quatern_d, 264, endianess);
 
             // qoffset_x
-            setBufferFloat(bufferByte, -LPSOrigin[0], 268, endianess);
+            setBufferFloat(bufferByte, niftiOrigin[0], 268, endianess);
 
             // qoffset_y
-            setBufferFloat(bufferByte, LPSOrigin[1], 272, endianess);
+            setBufferFloat(bufferByte, niftiOrigin[1], 272, endianess);
 
             // qoffset_z
-            setBufferFloat(bufferByte, LPSOrigin[2], 276, endianess);
+            setBufferFloat(bufferByte, niftiOrigin[2], 276, endianess);
 
             if (matrix != null) {
 
@@ -3917,19 +3728,19 @@ public class FileNIFTI extends FileBase {
                 setBufferFloat(bufferByte, (float) (-matrix.get(0, 0)), 280, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(0, 1)), 284, endianess);
                 setBufferFloat(bufferByte, (float) (-matrix.get(0, 2)), 288, endianess);
-                setBufferFloat(bufferByte, -LPSOrigin[0], 292, endianess);
+                setBufferFloat(bufferByte, niftiOrigin[0], 292, endianess);
 
                 // srow_y
                 setBufferFloat(bufferByte, (float) (-matrix.get(1, 0)), 296, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(1, 1)), 300, endianess);
                 setBufferFloat(bufferByte, (float) (-matrix.get(1, 2)), 304, endianess);
-                setBufferFloat(bufferByte, LPSOrigin[1], 308, endianess);
+                setBufferFloat(bufferByte, niftiOrigin[1], 308, endianess);
 
                 // srow_z
                 setBufferFloat(bufferByte, (float) (matrix.get(2, 0)), 312, endianess);
                 setBufferFloat(bufferByte, (float) (-matrix.get(2, 1)), 316, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(2, 2)), 320, endianess);
-                setBufferFloat(bufferByte, LPSOrigin[2], 324, endianess);
+                setBufferFloat(bufferByte, niftiOrigin[2], 324, endianess);
             } else {
 
                 // srow_x
