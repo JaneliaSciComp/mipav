@@ -4,7 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -369,7 +369,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 validate();
             }
         } else if (command.equals("loadTal")) {
-            JFileChooser chooser = new JFileChooser(image.getUserInterface().getDefaultDirectory());
+            JFileChooser chooser = new JFileChooser(ViewUserInterface.getReference().getDefaultDirectory());
             chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             chooser.setDialogTitle("Select talairach transform file");
 
@@ -390,7 +390,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
 
         } else if (command.equals("saveTal")) {
-            JFileChooser chooser = new JFileChooser(image.getUserInterface().getDefaultDirectory());
+            JFileChooser chooser = new JFileChooser(ViewUserInterface.getReference().getDefaultDirectory());
             chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             chooser.setDialogTitle("Select talairach transform file");
 
@@ -425,8 +425,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             JFileChooser chooser = new JFileChooser();
 
-            if (image.getUserInterface().getDefaultDirectory() != null) {
-                chooser.setCurrentDirectory(new File(image.getUserInterface().getDefaultDirectory()));
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             } else {
                 chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
@@ -436,7 +436,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
                 directory = chooser.getCurrentDirectory().toString() + File.separatorChar;
-                image.getUserInterface().setDefaultDirectory(chooser.getCurrentDirectory().toString());
+                ViewUserInterface.getReference().setDefaultDirectory(chooser.getCurrentDirectory().toString());
             } else {
                 return;
             }
@@ -971,8 +971,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             String path = ((FileInfoImageXML) image.getFileInfo(0)).getLinkedImagePath();
 
-            if (path != null  && !path.equals("")) {
-System.err.println("linked image path: " + path);
+            if ((path != null) && !path.equals("")) {
+                System.err.println("linked image path: " + path);
+
                 if (new File(path).exists()) {
                     linkedImageField.setText(path);
                 } else {
@@ -2020,8 +2021,7 @@ System.err.println("linked image path: " + path);
         tabbedPane.addTab("Talairach", null, buildTalairachPanel());
 
         /**
-         *      if (((String)transformIDBox.getSelectedItem()).equals("Talairach Tournoux")) { showTalairachTab(true);
-         * }
+         *      if (((String)transformIDBox.getSelectedItem()).equals("Talairach Tournoux")) { showTalairachTab(true); }
          */
         mainDialogPanel.add(tabbedPane);
 
@@ -2960,9 +2960,9 @@ System.err.println("linked image path: " + path);
                 fileInfo[i].setAxisOrientation(orientAxis);
             }
         }
-        
+
         if (tabbedPane.getSelectedIndex() == 2) {
-//        	if script recording, show the change of image orientation/axis orientations
+            //          if script recording, show the change of image orientation/axis orientations
             ScriptRecorder.getReference().addLine(new ActionChangeOrientations(image));
         }
     }
@@ -3016,10 +3016,10 @@ System.err.println("linked image path: " + path);
                 origin[2] = tmp;
             }
         }
-              
+
         // add to script recorder if we are on the origin tab
         if (tabbedPane.getSelectedIndex() == 3) {
-        	ScriptRecorder.getReference().addLine(new ActionChangeOrigin(image));
+            ScriptRecorder.getReference().addLine(new ActionChangeOrigin(image));
         }
     }
 
@@ -3113,11 +3113,12 @@ System.err.println("linked image path: " + path);
             if (!resolutionBox.isSelected()) {
                 fileInfo[resIndex].setResolutions(resolutions);
             }
-        }      
-        
-        //add the new script action
-        ScriptRecorder.getReference().addLine(new ActionChangeResolutions(image, resolutionBox.isSelected(), resIndex, sliceThickness));
-        
+        }
+
+        // add the new script action
+        ScriptRecorder.getReference().addLine(new ActionChangeResolutions(image, resolutionBox.isSelected(), resIndex,
+                                                                          sliceThickness));
+
         ScriptRecorder.getReference().addLine(new ActionChangeUnits(image));
     }
 
@@ -3192,11 +3193,11 @@ System.err.println("linked image path: " + path);
             }
 
             image.setTalairachTransformInfo(tInfo);
-            
+
             if (tabbedPane.getSelectedIndex() == 6) {
-            	ScriptRecorder.getReference().addLine(new ActionChangeTalairachInfo(image));
+                ScriptRecorder.getReference().addLine(new ActionChangeTalairachInfo(image));
             }
-            
+
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -3233,9 +3234,9 @@ System.err.println("linked image path: " + path);
                 fileInfo[i].setTransformID(transformID);
             }
         }
-        
+
         if (tabbedPane.getSelectedIndex() == 4) {
-        	ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image));
+            ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image));
         }
     }
 

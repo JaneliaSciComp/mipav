@@ -38,7 +38,7 @@ public class PlugInAlgorithmBrainStatistics extends AlgorithmBase {
      */
     public PlugInAlgorithmBrainStatistics(ModelImage img) {
         brainImage = img;
-        UI = img.getUserInterface();
+        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ public class PlugInAlgorithmBrainStatistics extends AlgorithmBase {
             }
 
             fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
-           
+
         }
 
         brainImage.releaseLock();
@@ -213,7 +213,7 @@ public class PlugInAlgorithmBrainStatistics extends AlgorithmBase {
         UI.setDataText(dataString);
         UI.setGlobalDataText(dataString);
 
-        
+
         setCompleted(true);
         imgBuffer = null;
         histoBuffer = null;

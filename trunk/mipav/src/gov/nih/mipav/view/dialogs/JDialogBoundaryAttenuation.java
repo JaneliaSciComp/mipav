@@ -88,7 +88,7 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
 
         srcImage = im;
 
-        userInterface = srcImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         init();
 

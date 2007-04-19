@@ -240,7 +240,7 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
      */
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage();
-        userInterface = imageA.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
     }
 

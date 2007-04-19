@@ -128,7 +128,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         }
 
         int mod = length / 100; // mod is 1 percent of length
-        
+
 
         // Fat:  -190 to -30
         // Low density muscle:  0 to 30
@@ -178,19 +178,20 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
         float area = srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1];
 
-        destImage.getUserInterface().getMessageFrame().append("Number of Fat pixels = " + fat, ViewJFrameMessage.DATA);
-        destImage.getUserInterface().getMessageFrame().append("  Area = " + (fat * area) + " mm^2\n",
-                                                              ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("Number of Fat pixels = " + fat,
+                                                                  ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (fat * area) + " mm^2\n",
+                                                                  ViewJFrameMessage.DATA);
 
-        destImage.getUserInterface().getMessageFrame().append("Number of LDM pixels = " + ldMuscle,
-                                                              ViewJFrameMessage.DATA);
-        destImage.getUserInterface().getMessageFrame().append("  Area = " + (ldMuscle * area) + " mm^2\n",
-                                                              ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("Number of LDM pixels = " + ldMuscle,
+                                                                  ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (ldMuscle * area) + " mm^2\n",
+                                                                  ViewJFrameMessage.DATA);
 
-        destImage.getUserInterface().getMessageFrame().append("Number of HDM pixels = " + hdMuscle,
-                                                              ViewJFrameMessage.DATA);
-        destImage.getUserInterface().getMessageFrame().append("  Area = " + (hdMuscle * area) + " mm^2\n",
-                                                              ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("Number of HDM pixels = " + hdMuscle,
+                                                                  ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (hdMuscle * area) + " mm^2\n",
+                                                                  ViewJFrameMessage.DATA);
 
         destImage.calcMinMax();
         setCompleted(true);
@@ -230,7 +231,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         int totFat = 0;
         int totLdMuscle = 0;
         int totHdMuscle = 0;
-        
+
 
         for (int i = 0; (i < srcImage.getExtents()[2]) && !threadStopped; i++) {
             int fat = 0;
@@ -262,22 +263,23 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
                 }
             }
 
-            destImage.getUserInterface().getMessageFrame().append("\n\n ***************** Slice " + i +
-                                                                  " totals ***************\n", ViewJFrameMessage.DATA);
-            destImage.getUserInterface().getMessageFrame().append("Number of fat pixels = " + fat,
-                                                                  ViewJFrameMessage.DATA);
-            destImage.getUserInterface().getMessageFrame().append("  Volume = " + (fat * vol) + " mm^3\n",
-                                                                  ViewJFrameMessage.DATA);
+            ViewUserInterface.getReference().getMessageFrame().append("\n\n ***************** Slice " + i +
+                                                                      " totals ***************\n",
+                                                                      ViewJFrameMessage.DATA);
+            ViewUserInterface.getReference().getMessageFrame().append("Number of fat pixels = " + fat,
+                                                                      ViewJFrameMessage.DATA);
+            ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (fat * vol) + " mm^3\n",
+                                                                      ViewJFrameMessage.DATA);
 
-            destImage.getUserInterface().getMessageFrame().append("Number of LDM pixels = " + ldMuscle,
-                                                                  ViewJFrameMessage.DATA);
-            destImage.getUserInterface().getMessageFrame().append("  Volume = " + (ldMuscle * vol) + " mm^3\n",
-                                                                  ViewJFrameMessage.DATA);
+            ViewUserInterface.getReference().getMessageFrame().append("Number of LDM pixels = " + ldMuscle,
+                                                                      ViewJFrameMessage.DATA);
+            ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (ldMuscle * vol) + " mm^3\n",
+                                                                      ViewJFrameMessage.DATA);
 
-            destImage.getUserInterface().getMessageFrame().append("Number of HDM pixels = " + hdMuscle,
-                                                                  ViewJFrameMessage.DATA);
-            destImage.getUserInterface().getMessageFrame().append("  Volume = " + (hdMuscle * vol) + " mm^3\n",
-                                                                  ViewJFrameMessage.DATA);
+            ViewUserInterface.getReference().getMessageFrame().append("Number of HDM pixels = " + hdMuscle,
+                                                                      ViewJFrameMessage.DATA);
+            ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (hdMuscle * vol) + " mm^3\n",
+                                                                      ViewJFrameMessage.DATA);
         }
 
         destImage.releaseLock();
@@ -288,25 +290,25 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
             return;
         }
 
-        destImage.getUserInterface().getMessageFrame().append("\n ************************ Totals ********************\n",
-                                                              ViewJFrameMessage.DATA);
-        destImage.getUserInterface().getMessageFrame().append("Number of totFat pixels = " + totFat,
-                                                              ViewJFrameMessage.DATA);
-        destImage.getUserInterface().getMessageFrame().append("  Volume = " + (totFat * vol) + " mm^3\n",
-                                                              ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("\n ************************ Totals ********************\n",
+                                                                  ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("Number of totFat pixels = " + totFat,
+                                                                  ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (totFat * vol) + " mm^3\n",
+                                                                  ViewJFrameMessage.DATA);
 
-        destImage.getUserInterface().getMessageFrame().append("Number of LDM pixels = " + totLdMuscle,
-                                                              ViewJFrameMessage.DATA);
-        destImage.getUserInterface().getMessageFrame().append("  Volume = " + (totLdMuscle * vol) + " mm^3\n",
-                                                              ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("Number of LDM pixels = " + totLdMuscle,
+                                                                  ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (totLdMuscle * vol) + " mm^3\n",
+                                                                  ViewJFrameMessage.DATA);
 
-        destImage.getUserInterface().getMessageFrame().append("Number of HDM pixels = " + totHdMuscle,
-                                                              ViewJFrameMessage.DATA);
-        destImage.getUserInterface().getMessageFrame().append("  Volume = " + (totHdMuscle * vol) + " mm^3\n",
-                                                              ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("Number of HDM pixels = " + totHdMuscle,
+                                                                  ViewJFrameMessage.DATA);
+        ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (totHdMuscle * vol) + " mm^3\n",
+                                                                  ViewJFrameMessage.DATA);
 
         destImage.calcMinMax();
-        
+
         setCompleted(true);
     }
 

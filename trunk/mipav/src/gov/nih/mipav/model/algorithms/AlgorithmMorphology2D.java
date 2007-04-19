@@ -784,8 +784,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             return;
         }
 
-        srcImage.getUserInterface().getMessageFrame().getData().append("\nIdentified " + objects.size() +
-                                                                       " objects. \n");
+        ViewUserInterface.getReference().getMessageFrame().getData().append("\nIdentified " + objects.size() +
+                                                                            " objects. \n");
 
         String mStr;
         int measure;
@@ -815,14 +815,15 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             mStr = "Unknown";
         }
 
-        srcImage.getUserInterface().getMessageFrame().getData().append(" Object \t# of pixels\tArea(" + mStr + ")\n");
+        ViewUserInterface.getReference().getMessageFrame().getData().append(" Object \t# of pixels\tArea(" + mStr +
+                                                                            ")\n");
 
         for (int i = 0; i < objects.size(); i++) {
             area = ((intObject) (objects.elementAt(i))).size * srcImage.getFileInfo(0).getResolutions()[0] *
                        srcImage.getFileInfo(0).getResolutions()[1];
-            srcImage.getUserInterface().getMessageFrame().getData().append("    " + (i + 1) + "\t" + +((intObject)
-                                                                                                           (objects.elementAt(i))).size +
-                                                                           "\t" + area + "\n");
+            ViewUserInterface.getReference().getMessageFrame().getData().append("    " + (i + 1) + "\t" + +((intObject)
+                                                                                                                (objects.elementAt(i))).size +
+                                                                                "\t" + area + "\n");
         }
 
         if (returnFlag == true) {
@@ -1383,8 +1384,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         /*
-         *      Preferences.debug( "pixArray : " );     for ( int k = 0; k < pixArray.length; k++ ) {
-         * Preferences.debug( k + " = " + pixArray[k] );     }
+         *      Preferences.debug( "pixArray : " );     for ( int k = 0; k < pixArray.length; k++ ) { Preferences.debug(
+         * k + " = " + pixArray[k] );     }
          */
         // if THREAD stopped already, then dump out!
         if (threadStopped) {

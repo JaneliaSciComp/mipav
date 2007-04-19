@@ -149,6 +149,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmRGBConcat) {
 
             if ((mathAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -195,7 +196,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         mathAlgo = null;
         dispose();
     }
-    
+
     /**
      * Accessor that returns the image.
      *
@@ -203,47 +204,6 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeImage(imageR, "red_image");
-        scriptParameters.storeImage(imageG, "green_image");
-        scriptParameters.storeImage(imageB, "blue_image");
-        
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_remap_values", remapMode));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        imageR = scriptParameters.retrieveImage("red_image");
-        userInterface = imageR.getUserInterface();
-        parentFrame = imageR.getParentFrame();
-        setGreenImage(scriptParameters.retrieveImage("green_image"));
-        setBlueImage(scriptParameters.retrieveImage("blue_image"));
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setRemapMode(scriptParameters.getParams().getBoolean("do_remap_values"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 
     /**
@@ -289,6 +249,148 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
     }
 
     /**
+     * Once all the necessary variables are set, call the RGBConcat algorithm based on what type of image this is and
+     * whether or not there is a separate destination image.
+     */
+    protected void callAlgorithm() {
+
+        if (displayLoc == NEW) {
+
+            try {
+                System.gc();
+                resultImage = new ModelImage(ModelImage.ARGB, imageR.getExtents(),
+                                             makeImageName(imageR.getImageName(), "_rgb"));
+
+                // Make algorithm
+                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                mathAlgo.addListener(this);
+
+                createProgressBar(imageR.getImageName(), mathAlgo);
+
+                // Hide dialog
+                setVisible(false);
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (mathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+                    mathAlgo.run();
+                }
+
+            } catch (OutOfMemoryError x) {
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                System.gc();
+                MipavUtil.displayError("Dialog RGB concat: unable to allocate enough memory");
+
+                return;
+            }
+        } // if (displayLoc == NEW)
+        else { // displayLoc == REPLACE
+
+            try {
+                System.gc();
+
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+                // Make algorithm
+                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, remapMode);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                mathAlgo.addListener(this);
+
+                createProgressBar(imageR.getImageName(), mathAlgo);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                /*Vector imageFrames = imageR.getImageFrameVector();
+                 *
+                 * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i] = (
+                 * (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
+                 * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled( false );
+                 * userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) );}*/
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (mathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+                    mathAlgo.run();
+                }
+
+            } catch (OutOfMemoryError x) {
+                System.gc();
+                MipavUtil.displayError("Dialog RGBConcat: unable to allocate enough memory");
+
+                return;
+            }
+
+        } // else displayLoc == REPLACE
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageR = scriptParameters.retrieveImage("red_image");
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = imageR.getParentFrame();
+        setGreenImage(scriptParameters.retrieveImage("green_image"));
+        setBlueImage(scriptParameters.retrieveImage("blue_image"));
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setRemapMode(scriptParameters.getParams().getBoolean("do_remap_values"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeImage(imageR, "red_image");
+        scriptParameters.storeImage(imageG, "green_image");
+        scriptParameters.storeImage(imageB, "blue_image");
+
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_remap_values", remapMode));
+    }
+
+    /**
      * Builds a list of images to register to the template image.
      *
      * @param  channel  RED, GREEN, or BLUE
@@ -299,7 +401,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         ViewUserInterface UI;
         Enumeration names;
 
-        UI = imageR.getUserInterface();
+        UI = ViewUserInterface.getReference();
         names = UI.getRegisteredImageNames();
 
         // decide now which comboBox to build
@@ -376,106 +478,6 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         }
 
     } // end buildComboBoxImage()
-
-    /**
-     * Once all the necessary variables are set, call the RGBConcat algorithm based on what type of image this is and
-     * whether or not there is a separate destination image.
-     */
-    protected void callAlgorithm() {
-
-        if (displayLoc == NEW) {
-
-            try {
-                System.gc();
-                resultImage = new ModelImage(ModelImage.ARGB, imageR.getExtents(),
-                                             makeImageName(imageR.getImageName(), "_rgb"));
-
-                // Make algorithm
-                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                mathAlgo.addListener(this);
-
-                createProgressBar(imageR.getImageName(), mathAlgo);
-                
-                // Hide dialog
-                setVisible(false);
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (mathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    mathAlgo.run();
-                }
-
-            } catch (OutOfMemoryError x) {
-
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up memory of result image
-                    resultImage = null;
-                }
-
-                System.gc();
-                MipavUtil.displayError("Dialog RGB concat: unable to allocate enough memory");
-
-                return;
-            }
-        } // if (displayLoc == NEW)
-        else { // displayLoc == REPLACE
-
-            try {
-                System.gc();
-
-                // No need to make new image space because the user has choosen to replace the source image
-                // Make the algorithm class
-                // Make algorithm
-                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, remapMode);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                mathAlgo.addListener(this);
-
-                createProgressBar(imageR.getImageName(), mathAlgo);
-                
-                // Hide the dialog since the algorithm is about to run.
-                setVisible(false);
-
-                // These next lines set the titles in all frames where the source image is displayed to
-                // "locked - " image name so as to indicate that the image is now read/write locked!
-                // The image frames are disabled and then unregisted from the userinterface until the
-                // algorithm has completed.
-                /*Vector imageFrames = imageR.getImageFrameVector();
-                 *
-                 * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i] = (
-                 * (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
-                 * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled( false );
-                 * userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) );}*/
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (mathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    mathAlgo.run();
-                }
-
-            } catch (OutOfMemoryError x) {
-                System.gc();
-                MipavUtil.displayError("Dialog RGBConcat: unable to allocate enough memory");
-
-                return;
-            }
-
-        } // else displayLoc == REPLACE
-    }
 
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
@@ -593,7 +595,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
-        
+
         setVisible(true);
     }
 
@@ -604,7 +606,6 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
      */
     private boolean setVariables() {
         String tmpStr;
-        ViewUserInterface UI;
         blank = new ModelImage(ModelImage.SHORT, imageR.getExtents(), makeImageName(imageR.getImageName(), ""));
 
         if (replaceImage.isSelected()) {
@@ -619,13 +620,11 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
             remapMode = false;
         }
 
-        UI = imageR.getUserInterface();
-
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
-            ModelImage img = UI.getRegisteredImageByName(name);
+            ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
 
             tmpStr = (String) comboBoxImageRed.getSelectedItem();
 

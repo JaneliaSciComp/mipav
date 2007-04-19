@@ -5,7 +5,6 @@ import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-//import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -314,8 +313,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         FitSingleExponentialModel fsem = null;
         FitSingleExponentialNoWholeModel fsemnw = null;
         boolean haveHalf;
-        float a = 0.0f;
-        float b = 0.0f;
         double afterBeforeRatio = 1.0;
         double s1, s2;
         double kdD;
@@ -1013,7 +1010,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
         photoBleachedWidthY = Math.abs(newResY * (yBounds[1] - yBounds[0]));
         photoBleachedWidth = Math.min(photoBleachedWidthX, photoBleachedWidthY);
         Preferences.debug("photobleached region width = " + photoBleachedWidth + " microns\n");
-        ViewUserInterface.getReference().setDataText("photobleached region width = " + nf.format(photoBleachedWidth) + " microns\n");
+        ViewUserInterface.getReference().setDataText("photobleached region width = " + nf.format(photoBleachedWidth) +
+                                                     " microns\n");
         dataString += "photobleached region width = " + nf.format(photoBleachedWidth) + " microns\n";
 
         if (wholeOrganIndex >= 0) {
@@ -1026,7 +1024,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             }
 
             Preferences.debug("whole organ length = " + wholeOrganLength + " microns\n");
-            ViewUserInterface.getReference().setDataText("whole organ length = " + nf.format(wholeOrganLength) + " microns\n");
+            ViewUserInterface.getReference().setDataText("whole organ length = " + nf.format(wholeOrganLength) +
+                                                         " microns\n");
             dataString += "whole organ length = " + nf.format(wholeOrganLength) + " microns\n";
         } // if (wholeOrganIndex >= 0)
 
@@ -1104,7 +1103,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             backgroundConstant = backgroundIntensity / backgroundCount;
             Preferences.debug("Background constant = " + backgroundConstant + "\n");
-            ViewUserInterface.getReference().setDataText("background constant = " + nf.format(backgroundConstant) + "\n");
+            ViewUserInterface.getReference().setDataText("background constant = " + nf.format(backgroundConstant) +
+                                                         "\n");
             dataString += "background constant = " + nf.format(backgroundConstant) + "\n";
         } // if (backgroundIndex >= 0)
 
@@ -1202,7 +1202,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             ViewUserInterface.getReference().setDataText("The ratio of the whole organ region fluorescence after\n");
             dataString += "The ratio of the whole organ region fluorescence after\n";
-            ViewUserInterface.getReference().setDataText("bleaching to before bleaching = " + nf.format(afterBeforeRatio) + "\n");
+            ViewUserInterface.getReference().setDataText("bleaching to before bleaching = " +
+                                                         nf.format(afterBeforeRatio) + "\n");
             dataString += "bleaching to before bleaching = " + nf.format(afterBeforeRatio) + "\n";
             Preferences.debug("The ratio of the whole organ region fluorescence after\n");
             Preferences.debug("bleaching to before bleaching = " + afterBeforeRatio + "\n");
@@ -1432,12 +1433,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
             }
 
             ViewUserInterface.getReference().setDataText("In the recovery curve\n" +
-                           "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
+                                                         "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
             dataString += "In the recovery curve\n" +
                           "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n";
-            ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
-                           nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
-                           nf.format(params[0]) + "\n");
+            ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " +
+                                                         nf.format(span) + "\n" + "alpha = " + nf.format(params[1]) +
+                                                         " beta = " + nf.format(params[2]) + " gamma = " +
+                                                         nf.format(params[0]) + "\n");
             dataString += "bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
                           nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                           nf.format(params[0]) + "\n";
@@ -1498,7 +1500,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             Preferences.debug("Dissociation rate = " + kd + "\n");
             Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n");
             Deff = Dt * photoBleachedWidth * (wholeOrganLength - photoBleachedWidth) / 4.0;
-            ViewUserInterface.getReference().setDataText("Effective diffusion constant = " + nf.format(Deff) + " um**2/sec\n\n");
+            ViewUserInterface.getReference().setDataText("Effective diffusion constant = " + nf.format(Deff) +
+                                                         " um**2/sec\n\n");
             dataString += "Effective diffusion constant = " + nf.format(Deff) + " um**2/sec\n\n";
             Preferences.debug("Effective diffusion constant = " + Deff + " um**2/sec\n\n");
 
@@ -1705,7 +1708,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                   Math.pow(400.0, 0.005) + "\n");
                 Preferences.debug("from 1/20 * original alpha and beta to 20 * original alpha and beta\n");
                 ViewUserInterface.getReference().setDataText("alpha and beta are incremented in multiplicative factors of " +
-                               nf.format(Math.pow(400.0, 0.005)) + "\n");
+                                                             nf.format(Math.pow(400.0, 0.005)) + "\n");
                 dataString += "alpha and beta are incremented in multiplicative factors of " +
                               nf.format(Math.pow(400.0, 0.005)) + "\n";
                 ViewUserInterface.getReference().setDataText("from 1/20 * original alpha and beta to 20 * original alpha and beta\n");
@@ -1716,7 +1719,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 if (indexmin != indexOriginal) {
                     Preferences.debug("sse original parameters = " + buffer[indexOriginal] + "\n");
-                    ViewUserInterface.getReference().setDataText("sse original parameters = " + buffer[indexOriginal] + "\n");
+                    ViewUserInterface.getReference().setDataText("sse original parameters = " + buffer[indexOriginal] +
+                                                                 "\n");
                     dataString += "sse original parameters = " + buffer[indexOriginal] + "\n";
                 } // if (indexmin != indexOriginal)
 
@@ -1726,21 +1730,24 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 alphaScale = 0.05 * Math.pow(400.0, 0.005 * xmin);
                 Preferences.debug("x = " + xmin + " or new alpha = " + alphaScale + " * original alpha = " +
                                   (alphaScale * params[1]) + "\n");
-                ViewUserInterface.getReference().setDataText("x = " + xmin + " or new alpha = " + nf.format(alphaScale) + " * original alpha = " +
-                               nf.format(alphaScale * params[1]) + "\n");
+                ViewUserInterface.getReference().setDataText("x = " + xmin + " or new alpha = " +
+                                                             nf.format(alphaScale) + " * original alpha = " +
+                                                             nf.format(alphaScale * params[1]) + "\n");
                 dataString += "x = " + xmin + " or new alpha = " + nf.format(alphaScale) + " * original alpha = " +
                               nf.format(alphaScale * params[1]) + "\n";
                 betaScale = 0.05 * Math.pow(400.0, 0.005 * ymin);
                 Preferences.debug("y = " + ymin + " or new beta = " + betaScale + " * original beta = " +
                                   (betaScale * params[2]) + "\n");
-                ViewUserInterface.getReference().setDataText("y = " + ymin + " or new beta = " + nf.format(betaScale) + " * original beta = " +
-                               nf.format(betaScale * params[2]) + "\n");
+                ViewUserInterface.getReference().setDataText("y = " + ymin + " or new beta = " + nf.format(betaScale) +
+                                                             " * original beta = " + nf.format(betaScale * params[2]) +
+                                                             "\n");
                 dataString += "y = " + ymin + " or new beta = " + nf.format(betaScale) + " * original beta = " +
                               nf.format(betaScale * params[2]) + "\n";
                 Preferences.debug("slice = " + (zmin + 1) + " or new gamma = " + nf.format(0.01 * zmin) +
                                   " while original gamma = " + params[0] + "\n\n");
-                ViewUserInterface.getReference().setDataText("slice = " + (zmin + 1) + " or new gamma = " + nf.format(0.01 * zmin) +
-                               " while original gamma = " + nf.format(params[0]) + "\n\n");
+                ViewUserInterface.getReference().setDataText("slice = " + (zmin + 1) + " or new gamma = " +
+                                                             nf.format(0.01 * zmin) + " while original gamma = " +
+                                                             nf.format(params[0]) + "\n\n");
                 dataString += "slice = " + (zmin + 1) + " or new gamma = " + nf.format(0.01 * zmin) +
                               " while original gamma = " + nf.format(params[0]) + "\n\n";
 
@@ -1755,7 +1762,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         dataString += "1 local minimum was located at:\n";
                     } else {
                         Preferences.debug(localMinNumber + " local minima were located at:\n");
-                        ViewUserInterface.getReference().setDataText(localMinNumber + " local minima were located at:\n");
+                        ViewUserInterface.getReference().setDataText(localMinNumber +
+                                                                     " local minima were located at:\n");
                         dataString += localMinNumber + " local minima were located at:\n";
                     }
 
@@ -1770,21 +1778,24 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         alphaScale = 0.05 * Math.pow(400.0, 0.005 * x);
                         Preferences.debug("x = " + x + " or new alpha = " + alphaScale + " * original alpha = " +
                                           (alphaScale * params[1]) + "\n");
-                        ViewUserInterface.getReference().setDataText("x = " + x + " or new alpha = " + nf.format(alphaScale) +
-                                       " * original alpha = " + nf.format(alphaScale * params[1]) + "\n");
+                        ViewUserInterface.getReference().setDataText("x = " + x + " or new alpha = " +
+                                                                     nf.format(alphaScale) + " * original alpha = " +
+                                                                     nf.format(alphaScale * params[1]) + "\n");
                         dataString += "x = " + x + " or new alpha = " + nf.format(alphaScale) + " * original alpha = " +
                                       nf.format(alphaScale * params[1]) + "\n";
                         betaScale = 0.05 * Math.pow(400.0, 0.005 * y);
                         Preferences.debug("y = " + y + " or new beta = " + betaScale + " * original beta = " +
                                           (betaScale * params[2]) + "\n");
-                        ViewUserInterface.getReference().setDataText("y = " + y + " or new beta = " + nf.format(betaScale) + " * original beta = " +
-                                       nf.format(betaScale * params[2]) + "\n");
+                        ViewUserInterface.getReference().setDataText("y = " + y + " or new beta = " +
+                                                                     nf.format(betaScale) + " * original beta = " +
+                                                                     nf.format(betaScale * params[2]) + "\n");
                         dataString += "y = " + y + " or new beta = " + nf.format(betaScale) + " * original beta = " +
                                       nf.format(betaScale * params[2]) + "\n";
                         Preferences.debug("slice = " + (z + 1) + " or new gamma = " + (0.01 * z) +
                                           " while original gamma = " + params[0] + "\n\n");
-                        ViewUserInterface.getReference().setDataText("slice = " + (z + 1) + " or new gamma = " + (0.01 * z) +
-                                       " while original gamma = " + nf.format(params[0]) + "\n\n");
+                        ViewUserInterface.getReference().setDataText("slice = " + (z + 1) + " or new gamma = " +
+                                                                     (0.01 * z) + " while original gamma = " +
+                                                                     nf.format(params[0]) + "\n\n");
                         dataString += "slice = " + (z + 1) + " or new gamma = " + (0.01 * z) +
                                       " while original gamma = " + nf.format(params[0]) + "\n\n";
                     } // for (i = 0; i < localMinNumber; i++)
@@ -1863,7 +1874,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 errorFrame.updateImages();
                 errorImage.getFileInfo()[0].setFileDirectory(srcImage.getFileInfo(0).getFileDirectory());
                 errorFrame.saveAllVOIs();
-                errorImage.getUserInterface().getMessageFrame().getData().setText(dataString);
+                ViewUserInterface.getReference().getMessageFrame().getData().setText(dataString);
             } // if (paramVary)
         } // if (model == NARROW_BAND_2D)
         else if (model == CIRCLE_2D) {
@@ -2125,7 +2136,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 if (indexmin != indexOriginal) {
                     Preferences.debug("sse original parameters = " + sses[indexOriginal] + "\n");
-                    ViewUserInterface.getReference().setDataText("sse original parameters = " + sses[indexOriginal] + "\n");
+                    ViewUserInterface.getReference().setDataText("sse original parameters = " + sses[indexOriginal] +
+                                                                 "\n");
                     dataString += "sse original parameters = " + sses[indexOriginal] + "\n";
                 } // if (indexmin != indexOriginal)
 
@@ -2135,15 +2147,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 konScale = 0.02 * Math.pow(2500.0, 0.005 * xmin);
                 Preferences.debug("x = " + xmin + " or new kon = " + konScale + " * original kon = " +
                                   (konScale * params[0]) + "\n");
-                ViewUserInterface.getReference().setDataText("x = " + xmin + " or new kon = " + nf.format(konScale) + " * original kon = " +
-                               nf.format(konScale * params[0]) + "\n");
+                ViewUserInterface.getReference().setDataText("x = " + xmin + " or new kon = " + nf.format(konScale) +
+                                                             " * original kon = " + nf.format(konScale * params[0]) +
+                                                             "\n");
                 dataString += "x = " + xmin + " or new kon = " + nf.format(konScale) + " * original kon = " +
                               nf.format(konScale * params[0]) + "\n";
                 koffScale = 0.02 * Math.pow(2500.0, 0.005 * ymin);
                 Preferences.debug("y = " + ymin + " or new koff = " + koffScale + " * original koff = " +
                                   (koffScale * params[1]) + "\n");
-                ViewUserInterface.getReference().setDataText("y = " + ymin + " or new koff = " + nf.format(koffScale) + " * original koff = " +
-                               nf.format(koffScale * params[1]) + "\n");
+                ViewUserInterface.getReference().setDataText("y = " + ymin + " or new koff = " + nf.format(koffScale) +
+                                                             " * original koff = " + nf.format(koffScale * params[1]) +
+                                                             "\n");
                 dataString += "y = " + ymin + " or new koff = " + nf.format(koffScale) + " * original koff = " +
                               nf.format(koffScale * params[1]) + "\n";
 
@@ -2158,7 +2172,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         dataString += "1 local minimum was located at:\n";
                     } else {
                         Preferences.debug(localMinNumber + " local minima were located at:\n");
-                        ViewUserInterface.getReference().setDataText(localMinNumber + " local minima were located at:\n");
+                        ViewUserInterface.getReference().setDataText(localMinNumber +
+                                                                     " local minima were located at:\n");
                         dataString += localMinNumber + " local minima were located at:\n";
                     }
 
@@ -2172,15 +2187,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         konScale = 0.02 * Math.pow(2500.0, 0.005 * x);
                         Preferences.debug("x = " + x + " or new kon = " + konScale + " * original kon = " +
                                           (konScale * params[0]) + "\n");
-                        ViewUserInterface.getReference().setDataText("x = " + x + " or new kon = " + nf.format(konScale) + " * original kon = " +
-                                       nf.format(konScale * params[0]) + "\n");
+                        ViewUserInterface.getReference().setDataText("x = " + x + " or new kon = " +
+                                                                     nf.format(konScale) + " * original kon = " +
+                                                                     nf.format(konScale * params[0]) + "\n");
                         dataString += "x = " + x + " or new kon = " + nf.format(konScale) + " * original kon = " +
                                       nf.format(konScale * params[0]) + "\n";
                         koffScale = 0.02 * Math.pow(2500.0, 0.005 * y);
                         Preferences.debug("y = " + y + " or new koff = " + koffScale + " * original koff = " +
                                           (koffScale * params[1]) + "\n");
-                        ViewUserInterface.getReference().setDataText("y = " + y + " or new koff = " + nf.format(koffScale) + " * original koff = " +
-                                       nf.format(koffScale * params[1]) + "\n");
+                        ViewUserInterface.getReference().setDataText("y = " + y + " or new koff = " +
+                                                                     nf.format(koffScale) + " * original koff = " +
+                                                                     nf.format(koffScale * params[1]) + "\n");
                         dataString += "y = " + y + " or new koff = " + nf.format(koffScale) + " * original koff = " +
                                       nf.format(koffScale * params[1]) + "\n";
                     } // for (i = 0; i < localMinNumber; i++)
@@ -2258,7 +2275,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 errorFrame.updateImages();
                 errorImage.getFileInfo()[0].setFileDirectory(srcImage.getFileInfo(0).getFileDirectory());
                 errorFrame.saveAllVOIs();
-                errorImage.getUserInterface().getMessageFrame().getData().setText(dataString);
+                ViewUserInterface.getReference().getMessageFrame().getData().setText(dataString);
             } // if (paramVary)
 
 
@@ -2363,8 +2380,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 /*chiSquared = fp1DNW.getChiSquared();
                  * if (Double.isNaN(chiSquared)) { MipavUtil.displayError( "Fit pure 1D no no whole diffusion failed -
-                 * Chi-squared was not a valid number\n"); if  {  }
-                 * setCompleted(false);
+                 * Chi-squared was not a valid number\n"); if  {  } setCompleted(false);
                  *
                  * return; }*/
                 params = fp1DNW.getParameters();
@@ -2464,14 +2480,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                   "\n");
                 Preferences.debug("from 1/20 * original D/w**2 to 20 * original D/w**2\n");
                 ViewUserInterface.getReference().setDataText("D/w**2 is incremented in multiplicative factors of " +
-                               nf.format(Math.pow(400.0, 0.005)) + "\n");
+                                                             nf.format(Math.pow(400.0, 0.005)) + "\n");
                 ViewUserInterface.getReference().setDataText("from 1/20 * original D/w**2 to 20 * original D/w**2\n");
                 Preferences.debug("ssemin = " + ssemin + " found at new D/w**2 = " +
                                   (0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original D/w**2 = " +
                                   (0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
                 ViewUserInterface.getReference().setDataText("ssemin = " + ssemin + " found at new D/w**2 = " +
-                               nf.format(0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original D/w**2 = " +
-                               nf.format(0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
+                                                             nf.format(0.05 * Math.pow(400.0, 0.005 * xmin)) +
+                                                             " * original D/w**2 = " +
+                                                             nf.format(0.05 * params[0] * Math.pow(400.0,
+                                                                                                       0.005 * xmin)) +
+                                                             "\n");
 
             } // if (paramVary)
         } // else if (model == PURE1D)
@@ -2635,20 +2654,24 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     }
 
                     Preferences.debug("thalf = " + thalf + " sse = " + sse + "\n");
-                    ViewUserInterface.getReference().setDataText("thalf = " + nf.format(thalf) + " sse = " + sse + "\n");
+                    ViewUserInterface.getReference().setDataText("thalf = " + nf.format(thalf) + " sse = " + sse +
+                                                                 "\n");
                 } // for (x = 0; x <= 200; x++)
 
                 Preferences.debug("thalf is incremented in multiplicative factors of " + Math.pow(400.0, 0.005) + "\n");
                 Preferences.debug("from 1/20 * original thalf to 20 * original thalf\n");
                 ViewUserInterface.getReference().setDataText("thalf is incremented in multiplicative factors of " +
-                               nf.format(Math.pow(400.0, 0.005)) + "\n");
+                                                             nf.format(Math.pow(400.0, 0.005)) + "\n");
                 ViewUserInterface.getReference().setDataText("from 1/20 * original thalf to 20 * original thalf\n");
                 Preferences.debug("ssemin = " + ssemin + " found at new thalf = " +
                                   (0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original thalf = " +
                                   (0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
                 ViewUserInterface.getReference().setDataText("ssemin = " + ssemin + " found at new thalf = " +
-                               nf.format(0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original thalf = " +
-                               nf.format(0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
+                                                             nf.format(0.05 * Math.pow(400.0, 0.005 * xmin)) +
+                                                             " * original thalf = " +
+                                                             nf.format(0.05 * params[0] * Math.pow(400.0,
+                                                                                                       0.005 * xmin)) +
+                                                             "\n");
 
             } // if (paramVary)
         } // else model == SINGLE_EXPONENTIAL
@@ -3070,8 +3093,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             initial[0] = 2.0 * 0.01;
             initial[1] = 0.5 * 0.01;
-            ViewUserInterface.getReference().setDataText("initial kon = " + initial[0] + " is twice the actual value\n");
-            ViewUserInterface.getReference().setDataText("initial koff = " + initial[1] + " is half the actual value\n");
+            ViewUserInterface.getReference().setDataText("initial kon = " + initial[0] +
+                                                         " is twice the actual value\n");
+            ViewUserInterface.getReference().setDataText("initial koff = " + initial[1] +
+                                                         " is half the actual value\n");
             Preferences.debug("initial kon = " + initial[0] + " is twice the actual value\n");
             Preferences.debug("initial koff = " + initial[1] + " is half the actual value\n");
             // lmod2 = new FitFullModel2(tValues, abscissa, relEps, absEps, result, estErr, evaluations, errStatus,
@@ -3110,8 +3135,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // nlinmod7 = new FitWholeNL3Modelqd(tValues.length, tValues, pIntensity, initial); nlinmod7.driver();
             // nlinmod7.dumpResults(); params = nlinmod7.getParameters();
             /*time = System.currentTimeMillis();
-             * nlinmod9 = new FitWholeNL3ModelWeeks(tValues.length, tValues,
-             * pIntensity, initial, nLaguerre,                                  sig0, sigmax, bmax, tols, tolb);
+             * nlinmod9 = new FitWholeNL3ModelWeeks(tValues.length, tValues, pIntensity, initial, nLaguerre,
+             *         sig0, sigmax, bmax, tols, tolb);
              * nlinmod9.driver(); nlinmod9.dumpResults();params = nlinmod9.getParameters();*/
 
             ViewUserInterface.getReference().setDataText("MATLAB nonlinear fit\n");
@@ -3133,8 +3158,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // nlinmod2.driver();
             // nlinmod2.dumpResults();
             // params = nlinmod2.getParameters();
-            //          nlinmod4 = new FitWholeNLConModel2(tValues.length, tValues, pIntensity,
-            //                                             //initial, abscissa, relEps, absEps,
+            // nlinmod4 = new FitWholeNLConModel2(tValues.length, tValues, pIntensity,
+            // //initial, abscissa, relEps, absEps,
             // result, estErr, evaluations,
             // errStatus);
             // nlinmod4.driver();
@@ -3153,9 +3178,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // nlinmod8 = new FitWholeNLConModelqd(tValues.length, tValues, pIntensity, initial); nlinmod8.driver();
             // nlinmod8.dumpResults(); params = nlinmod8.getParameters();
             /*time = System.currentTimeMillis();
-             * nlinmod10 = new FitWholeNLConModelWeeks(tValues.length, tValues,
-             * pIntensity, initial, nLaguerre,                                     sig0, sigmax, bmax,
-             *                   tols, tolb); nlinmod10.driver(); nlinmod10.dumpResults();params =
+             * nlinmod10 = new FitWholeNLConModelWeeks(tValues.length, tValues, pIntensity, initial, nLaguerre,
+             *                  sig0, sigmax, bmax,                  tols, tolb); nlinmod10.driver();
+             * nlinmod10.dumpResults();params =
              * nlinmod10.getParameters();*/
 
             ViewUserInterface.getReference().setDataText("ELSUNC nonlinear fit\n");
@@ -3191,17 +3216,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
              * fitR[j] = timeFunction[j] - pIntensity[j];     sses[index] = sses[index] + fitR[j]*fitR[j];   } // for (i
              * = 0; i < timeFunction.length; i++)   if ( sses[index] < ssemin ) {       ssemin = sses[index];       xmin
              * = x;       ymin = y;       indexmin = index;   } // if (sse < ssemin)   if ( sses[index] > ssemax ) {
-             *   ssemax = sses[index];   } } // for (x = 0; x <= 200; x++) } // for (y = 0; y <= 200; y++)
+             * ssemax = sses[index];   } } // for (x = 0; x <= 200; x++) } // for (y = 0; y <= 200; y++)
              *
              * for ( y = 2; y <= 398; y++ ) {   indexY = 401 * y;   for ( x = 2; x <= 398; x++ ) {     index = indexY + x;
-             *     if ( index != indexmin ) {       localFound = true;       for ( j = index - 2 * 401; localFound && (
-             * j <= index + 2 * 401 ); j += 401 ) {         for ( p = j - 2; localFound && ( p <= j + 2 ); p++ ) {
-             *     if ( p != index ) {             if ( 1.000001*sses[index] >= sses[p] ) {               localFound =
-             * false;             }           } // if (i != index)         } // for (i = j-2; localFound && (i <= j+2);
-             * i++)       } // for (j = index-2*201; localFound && (j <= index+2*201); j+= 201)       if ( localFound )
-             * {         localMinNumber++;         if ( localMinNumber <= 1000 ) {
-             * localMinIndex[localMinNumber - 1] = index;         }       } // if (localFound)     } // if (index !=
-             * indexmin)   } // for (x = 2; x <= 198; x++) } // for (y = 2; y <= 198; y++)
+             *   if ( index != indexmin ) {       localFound = true;       for ( j = index - 2 * 401; localFound && ( j
+             * <= index + 2 * 401 ); j += 401 ) {         for ( p = j - 2; localFound && ( p <= j + 2 ); p++ ) {    if (
+             * p != index ) {             if ( 1.000001*sses[index] >= sses[p] ) {               localFound = false;
+             *    }           } // if (i != index)         } // for (i = j-2; localFound && (i <= j+2); i++) } // for (j
+             * = index-2*201; localFound && (j <= index+2*201); j+= 201)       if ( localFound ) { localMinNumber++;
+             *     if ( localMinNumber <= 1000 ) { localMinIndex[localMinNumber - 1] = index;   }       } // if
+             * (localFound)     } // if (index != indexmin)   } // for (x = 2; x <= 198; x++) } // for (y = 2; y <= 198;
+             * y++)
              *
              *
              * Preferences.debug( "sse global min = " + ssemin + "\n" ); UI.setDataText( "sse global min = " + ssemin +
@@ -3215,7 +3240,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
              * addition to the global minimum\n");   dataString += "In addition to the global minimum\n";   if
              * (localMinNumber == 1) {     Preferences.debug("1 local minimum was located at:\n");     UI.setDataText("1
              * local minimum was located at:\n");     dataString += "1 local minimum was located at:\n";   }   else {
-             *  Preferences.debug(localMinNumber +                       " local minima were located at:\n");
+             * Preferences.debug(localMinNumber +                       " local minima were located at:\n");
              * UI.setDataText(localMinNumber + " local minima were located at:\n");     dataString += localMinNumber + "
              * local minima were located at:\n";   }   for (j = 0; j < localMinNumber; j++) {     index =
              * localMinIndex[j];     y = index / 401;     x = index % 401;     Preferences.debug("sse local min  = " +
@@ -3245,12 +3270,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
              * (globalPtVOI.getCurves()[0].elementAt(0))).setActive(true);
              *
              * if (localMinNumber > 0) {   localPtVOI = new VOI[localMinNumber]; } for (j = 0; j < localMinNumber; j++) {
-             *  try {     voiID = (short) (j + 1);     localPtVOI[j] = new VOI(voiID,
-             * "pointLocalMin" + String.valueOf(j + 1) +                             ".voi",
-             * 1, VOI.POINT,                             -1.0f);     index = localMinIndex[j];     zPt[0] = 0.0f;
-             * yPt[0] = index / 401;     xPt[0] = index % 401;     localPtVOI[j].importCurve(xPt, yPt, zPt, 0);   }
-             * catch (OutOfMemoryError error) {     System.gc();     MipavUtil.displayError("Out of memory on
-             * localPtVOI" + (j + 1) +                            " creation");     setCompleted(false);     return;   }
+             * try {     voiID = (short) (j + 1);     localPtVOI[j] = new VOI(voiID, "pointLocalMin" + String.valueOf(j
+             * + 1) +                             ".voi", 1, VOI.POINT,                             -1.0f);     index =
+             * localMinIndex[j];     zPt[0] = 0.0f; yPt[0] = index / 401;     xPt[0] = index % 401;
+             * localPtVOI[j].importCurve(xPt, yPt, zPt, 0);   } catch (OutOfMemoryError error) {     System.gc();
+             * MipavUtil.displayError("Out of memory on localPtVOI" + (j + 1) +                            " creation");
+             *    setCompleted(false);     return;   }
              *
              * errorImage.registerVOI(localPtVOI[j]);   localPtVOI[j].setActive(true);   ( (VOIPoint)
              * (localPtVOI[j].getCurves()[0].elementAt(0))).       setActive(true); } // for (j = 0; j < localMinNumber;
@@ -3758,8 +3783,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 /*chiSquared = fp1DNW.getChiSquared();
                  * if (Double.isNaN(chiSquared)) { MipavUtil.displayError( "Fit pure 1D no no whole diffusion failed -
-                 * Chi-squared was not a valid number\n"); if  {  }
-                 * setCompleted(false);
+                 * Chi-squared was not a valid number\n"); if  {  } setCompleted(false);
                  *
                  * return; }*/
                 params = fp1DNW.getParameters();
@@ -3892,12 +3916,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 }
 
                 ViewUserInterface.getReference().setDataText("In the recovery curve\n" +
-                               "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
+                                                             "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
                 dataString += "In the recovery curve\n" +
                               "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n";
-                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
-                               nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
-                               nf.format(params[0]) + "\n");
+                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " +
+                                                             nf.format(span) + "\n" + "alpha = " +
+                                                             nf.format(params[1]) + " beta = " + nf.format(params[2]) +
+                                                             " gamma = " + nf.format(params[0]) + "\n");
                 dataString += "bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
                               nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                               nf.format(params[0]) + "\n";
@@ -3931,7 +3956,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 dataString += "Association rate = " + nf.format(ka) + "\n";
                 ViewUserInterface.getReference().setDataText("Dissociation rate = " + nf.format(kd) + "\n");
                 dataString += "Dissociation rate = " + nf.format(kd) + "\n";
-                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n");
+                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) +
+                                                             "\n\n");
                 dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n";
                 Preferences.debug("Association rate = " + ka + "\n");
                 Preferences.debug("Dissociation rate = " + kd + "\n");
@@ -3963,12 +3989,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 }
 
                 ViewUserInterface.getReference().setDataText("In the recovery curve\n" +
-                               "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
+                                                             "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
                 dataString += "In the recovery curve\n" +
                               "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n";
-                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
-                               nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
-                               nf.format(params[0]) + "\n");
+                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " +
+                                                             nf.format(span) + "\n" + "alpha = " +
+                                                             nf.format(params[1]) + " beta = " + nf.format(params[2]) +
+                                                             " gamma = " + nf.format(params[0]) + "\n");
                 dataString += "bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
                               nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                               nf.format(params[0]) + "\n";
@@ -4002,7 +4029,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 dataString += "Association rate = " + nf.format(ka) + "\n";
                 ViewUserInterface.getReference().setDataText("Dissociation rate = " + nf.format(kd) + "\n");
                 dataString += "Dissociation rate = " + nf.format(kd) + "\n";
-                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n");
+                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) +
+                                                             "\n\n");
                 dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n";
                 Preferences.debug("Association rate = " + ka + "\n");
                 Preferences.debug("Dissociation rate = " + kd + "\n");
@@ -4029,12 +4057,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 }
 
                 ViewUserInterface.getReference().setDataText("In the recovery curve\n" +
-                               "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
+                                                             "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
                 dataString += "In the recovery curve\n" +
                               "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n";
-                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
-                               nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
-                               nf.format(params[0]) + "\n");
+                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " +
+                                                             nf.format(span) + "\n" + "alpha = " +
+                                                             nf.format(params[1]) + " beta = " + nf.format(params[2]) +
+                                                             " gamma = " + nf.format(params[0]) + "\n");
                 dataString += "bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
                               nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                               nf.format(params[0]) + "\n";
@@ -4068,7 +4097,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 dataString += "Association rate = " + nf.format(ka) + "\n";
                 ViewUserInterface.getReference().setDataText("Dissociation rate = " + nf.format(kd) + "\n");
                 dataString += "Dissociation rate = " + nf.format(kd) + "\n";
-                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n");
+                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) +
+                                                             "\n\n");
                 dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n";
                 Preferences.debug("Association rate = " + ka + "\n");
                 Preferences.debug("Dissociation rate = " + kd + "\n");
@@ -4093,7 +4123,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
-
 
     /**
      * DOCUMENT ME!

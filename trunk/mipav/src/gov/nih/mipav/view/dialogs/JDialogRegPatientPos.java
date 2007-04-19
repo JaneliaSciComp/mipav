@@ -70,7 +70,7 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
     public JDialogRegPatientPos(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         imageB = im;
-        UI = imageB.getUserInterface();
+        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -214,7 +214,7 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
      */
     protected void setGUIFromParams() {
         imageB = scriptParameters.retrieveInputImage();
-        UI = imageB.getUserInterface();
+        UI = ViewUserInterface.getReference();
         parentFrame = imageB.getParentFrame();
 
         if (imageB.getNDims() != 3) {

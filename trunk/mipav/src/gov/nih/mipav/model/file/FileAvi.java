@@ -2573,7 +2573,7 @@ public class FileAvi extends FileBase {
             // must have 24 bit uncompressed RGB
             compression = 0;
 
-            JDialogAVIChoice choice = new JDialogAVIChoice(imageA.getUserInterface().getMainFrame(), true);
+            JDialogAVIChoice choice = new JDialogAVIChoice(ViewUserInterface.getReference().getMainFrame(), true);
 
             if (!choice.okayPressed()) {
                 return false;
@@ -2600,7 +2600,7 @@ public class FileAvi extends FileBase {
             // in one LUTa and another index in LUT
 
             if ((compression != 0) && (compression != 1)) {
-                JDialogAVIChoice choice = new JDialogAVIChoice(imageA.getUserInterface().getMainFrame(), false);
+                JDialogAVIChoice choice = new JDialogAVIChoice(ViewUserInterface.getReference().getMainFrame(), false);
 
                 if (!choice.okayPressed()) {
 

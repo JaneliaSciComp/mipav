@@ -204,7 +204,7 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage();
 
-        userInterface = imageA.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
 
         doBrown = scriptParameters.getParams().getBoolean("doBrown");

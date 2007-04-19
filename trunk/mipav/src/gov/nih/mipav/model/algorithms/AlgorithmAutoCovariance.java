@@ -5,8 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 
@@ -272,9 +270,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
         }
 
-       
         fireProgressStateChanged(100);
-       
+
         for (y = 0; y < yDim; y++) {
             yPos = y * xDim;
             invert = (yDim - 1 - y) * xDim;
@@ -405,7 +402,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         int newValue = 0;
         int lastValue = 0;
         int colorsPresent = 0;
-        int colorsDone = 0;
         int nPoints = 0;
         double[] params;
         FitCovarianceModel fcm = null;
@@ -469,7 +465,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             for (deltaY = 0; deltaY < yDim; deltaY++) {
                 newValue = deltaY * 100 / yPresent;
 
-                if ( (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -504,8 +500,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 }
             }
 
-                fireProgressStateChanged(100 / colorsPresent);
-           
+            fireProgressStateChanged(100 / colorsPresent);
+
             for (y = 0; y < yDim; y++) {
                 yPos = y * xDim;
                 invert = (yDim - 1 - y) * xDim;
@@ -609,7 +605,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmR = " + fwhmR);
                 Preferences.debug("Auto covariance full width red at half maximum = " + fwhmR + "\n");
-                ViewUserInterface.getReference().setDataText("Auto covariance full width red at half maximum = " + fwhmR + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width red at half maximum = " +
+                                                             fwhmR + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width red at half maximum\n");
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width red at half maximum");
@@ -638,7 +635,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             for (deltaY = 0; deltaY < yDim; deltaY++) {
                 newValue = lastValue + (deltaY * 100 / yPresent);
 
-                if (  (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -673,9 +670,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 }
             }
 
-            
-                fireProgressStateChanged(lastValue + (100 / colorsPresent));
-          
+            fireProgressStateChanged(lastValue + (100 / colorsPresent));
+
 
             for (y = 0; y < yDim; y++) {
                 yPos = y * xDim;
@@ -780,7 +776,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmG = " + fwhmG);
                 Preferences.debug("Auto covariance full width green at half maximum = " + fwhmG + "\n");
-                ViewUserInterface.getReference().setDataText("Auto covariance full width green at half maximum = " + fwhmG + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width green at half maximum = " +
+                                                             fwhmG + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width green at half maximum\n");
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width green at half maximum\n");
@@ -809,7 +806,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             for (deltaY = 0; deltaY < yDim; deltaY++) {
                 newValue = lastValue + (deltaY * 100 / yPresent);
 
-                if (  (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -843,8 +840,9 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                     resultBuffer[resultPos] -= 1.0f;
                 }
             }
+
             fireProgressStateChanged(100);
-	           
+
             for (y = 0; y < yDim; y++) {
                 yPos = y * xDim;
                 invert = (yDim - 1 - y) * xDim;
@@ -946,7 +944,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmB = " + fwhmB);
                 Preferences.debug("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
-                ViewUserInterface.getReference().setDataText("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width blue at half maximum = " +
+                                                             fwhmB + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width blue at half maximum\n");
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width blue at half maximum\n");
@@ -1008,7 +1007,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             buffer = new float[volSize];
             resultBuffer = new float[volSize];
             srcImage.exportData(0, volSize, buffer); // locks and releases lock
-            
+
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -1027,7 +1026,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
             newValue = deltaZ * 100 / zDim;
 
-            if ( (newValue > oldValue)) {
+            if ((newValue > oldValue)) {
                 fireProgressStateChanged(newValue);
             }
 
@@ -1072,8 +1071,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
         }
 
-            fireProgressStateChanged(100);
-    
+        fireProgressStateChanged(100);
+
         for (z = 0; z < zDim; z++) {
             zPos = z * sliceSize;
 
@@ -1236,7 +1235,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         int newValue = 0;
         int lastValue = 0;
         int colorsPresent = 0;
-        int colorsDone = 0;
         int nPoints = 0;
         double[] params;
         FitCovarianceModel fcm = null;
@@ -1254,7 +1252,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         int yPos, zPos, invert, z2;
         int zPresent;
 
-        
 
         if (destImageR != null) {
             colorsPresent++;
@@ -1303,7 +1300,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
                 newValue = deltaZ * 100 / zPresent;
 
-                if ( (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -1348,8 +1345,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 }
             }
 
-                fireProgressStateChanged(100 / colorsPresent);
-        
+            fireProgressStateChanged(100 / colorsPresent);
+
             for (z = 0; z < zDim; z++) {
                 zPos = z * sliceSize;
 
@@ -1483,7 +1480,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmR = " + fwhmR);
                 Preferences.debug("Auto covariance full width red at half maximum = " + fwhmR + "\n");
-                ViewUserInterface.getReference().setDataText("Auto covariance full width red at half maximum = " + fwhmR + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width red at half maximum = " +
+                                                             fwhmR + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width red at half maximum\n");
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width red at half maximum\n");
@@ -1509,7 +1507,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
                 newValue = lastValue + (deltaZ * 100 / zPresent);
 
-                if ( (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -1554,8 +1552,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 }
             }
 
-                fireProgressStateChanged(lastValue + (100 / colorsPresent));
-         
+            fireProgressStateChanged(lastValue + (100 / colorsPresent));
+
             for (z = 0; z < zDim; z++) {
                 zPos = z * sliceSize;
 
@@ -1689,7 +1687,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmG = " + fwhmG);
                 Preferences.debug("Auto covariance full width green at half maximum = " + fwhmG + "\n");
-                ViewUserInterface.getReference().setDataText("Auto covariance full width green at half maximum = " + fwhmG + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width green at half maximum = " +
+                                                             fwhmG + "\n");
             } else {
                 Preferences.debug("Cannot find auto covarinace full width green at half maximum\n");
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width green at half maximum\n");
@@ -1716,7 +1715,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
                 newValue = lastValue + (deltaZ * 100 / zPresent);
 
-                if ( (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -1761,8 +1760,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 }
             }
 
-                fireProgressStateChanged(100);
-          
+            fireProgressStateChanged(100);
+
             for (z = 0; z < zDim; z++) {
                 zPos = z * sliceSize;
 
@@ -1894,7 +1893,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmB = " + fwhmB);
-                ViewUserInterface.getReference().setDataText("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width blue at half maximum = " +
+                                                             fwhmB + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width blue at half maximum\n");
                 ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width blue at half maximum\n");
@@ -1948,7 +1948,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             // image length is length in 4 dims
             buffer = new float[timeSize];
             srcImage.exportData(0, timeSize, buffer); // locks and releases lock
-            
+
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -1980,7 +1980,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         for (deltaT = 0; deltaT < tDim; deltaT++) {
             newValue = deltaT * 100 / tDim;
 
-            if ( (newValue > oldValue)) {
+            if ((newValue > oldValue)) {
                 fireProgressStateChanged(newValue);
             }
 
@@ -2035,8 +2035,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
         }
 
-            fireProgressStateChanged(100);
-       
+        fireProgressStateChanged(100);
+
         for (t = 0; t < tDim; t++) {
             tPos = t * volSize;
 
@@ -2108,8 +2108,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         int tPresent;
 
 
-        
-
         if (destImageR != null) {
             colorsPresent++;
         }
@@ -2156,7 +2154,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             for (deltaT = 0; deltaT < tDim; deltaT++) {
                 newValue = deltaT * 100 / tPresent;
 
-                if ( (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -2211,8 +2209,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 }
             }
 
-                fireProgressStateChanged(100 / colorsPresent);
-            
+            fireProgressStateChanged(100 / colorsPresent);
+
             for (t = 0; t < tDim; t++) {
                 tPos = t * volSize;
 
@@ -2268,7 +2266,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             for (deltaT = 0; deltaT < tDim; deltaT++) {
                 newValue = lastValue + (deltaT * 100 / (tDim * colorsPresent));
 
-                if ( (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -2323,8 +2321,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 }
             }
 
-                fireProgressStateChanged(lastValue + (100 / colorsPresent));
-         
+            fireProgressStateChanged(lastValue + (100 / colorsPresent));
+
             for (t = 0; t < tDim; t++) {
                 tPos = t * volSize;
 
@@ -2380,7 +2378,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             for (deltaT = 0; deltaT < tDim; deltaT++) {
                 newValue = lastValue + (deltaT * 100 / tPresent);
 
-                if ( (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -2435,8 +2433,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 }
             }
 
-                fireProgressStateChanged(100);
-           
+            fireProgressStateChanged(100);
+
             for (t = 0; t < tDim; t++) {
                 tPos = t * volSize;
 

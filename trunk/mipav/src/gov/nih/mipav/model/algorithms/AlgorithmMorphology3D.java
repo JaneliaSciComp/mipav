@@ -354,13 +354,13 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                 //                try {
                 //
-                //                  if (isProgressBarVisible()) { fireProgressStateChanged(Math.round(((float) s) /
+                //                 if (isProgressBarVisible()) { fireProgressStateChanged(Math.round(((float) s) /
                 // ((float) (imgSize - 1)) * 100)); }                } catch (NullPointerException npe) {
 
                 //                    if (threadStopped) {                        Preferences.debug("somehow you managed
                 // to cancel the algorithm and dispose the progressbar between checking for threadStopping and using
                 // it.",                                          Preferences.DEBUG_ALGORITHM);                    }
-                //        }
+                //    }
 
                 for (pix = s; pix < (s + sliceSize); pix++) {
 
@@ -511,16 +511,17 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         float vol;
 
         mStr = srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-        srcImage.getUserInterface().getMessageFrame().getData().append(" Object \t# of pixels\tVolume(" + mStr + ")\n");
+        ViewUserInterface.getReference().getMessageFrame().getData().append(" Object \t# of pixels\tVolume(" + mStr +
+                                                                            ")\n");
 
         for (int i = 0; i < objects.size(); i++) {
             vol = ((intObject) (objects.elementAt(i))).size * srcImage.getFileInfo(0).getResolutions()[0] *
                       srcImage.getFileInfo(0).getResolutions()[1] * srcImage.getFileInfo(0).getResolutions()[2];
 
             // UI.setDataText(
-            srcImage.getUserInterface().getMessageFrame().getData().append("    " + (i + 1) + "\t" + +((intObject)
-                                                                                                           (objects.elementAt(i))).size +
-                                                                           "\t" + vol + "\n");
+            ViewUserInterface.getReference().getMessageFrame().getData().append("    " + (i + 1) + "\t" + +((intObject)
+                                                                                                                (objects.elementAt(i))).size +
+                                                                                "\t" + vol + "\n");
         }
 
         if (returnFlag == true) {
@@ -603,13 +604,12 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         /*
          *      try {
          *
-         *    if  {             progressBar.setMessage("Pruning image ...");         }
+         * if  {             progressBar.setMessage("Pruning image ...");         }
          *
-         *    if  {             fireProgressStateChanged(0);         }     } catch (NullPointerException npe) {
+         * if  {             fireProgressStateChanged(0);         }     } catch (NullPointerException npe) {
          *
-         *    if (threadStopped) {             Preferences.debug("somehow you managed to cancel the algorithm and
-         * dispose the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM);
-         *     }     }
+         * if (threadStopped) {             Preferences.debug("somehow you managed to cancel the algorithm and dispose
+         * the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM);    }     }
          */
         for (slice = 0; slice < zDim; slice++) {
 
@@ -618,9 +618,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
              * fireProgressStateChanged(Math.round(((float) slice) / ((float) zDim) * 100));         } catch
              * (NullPointerException npe) {
              *
-             *        if (threadStopped) {                 Preferences.debug("somehow you managed to cancel the
-             * algorithm and dispose the progressbar between checking for threadStopping and using it.",
-             *  Preferences.DEBUG_ALGORITHM);             }         }
+             *     if (threadStopped) {                 Preferences.debug("somehow you managed to cancel the algorithm
+             * and dispose the progressbar between checking for threadStopping and using it.",
+             * Preferences.DEBUG_ALGORITHM);             }         }
              */
             // sets the intensity of border points to 0
             for (pix = (slice * sliceSize); pix < ((slice * sliceSize) + xDim); pix++) {
@@ -1751,13 +1751,12 @@ kernelLoop:
                     /*
                      *                  try {
                      *
-                     *                if (((pix % mod) == 0)) { fireProgressStateChanged(Math.round((pix + 1) / ((float)
+                     *             if (((pix % mod) == 0)) { fireProgressStateChanged(Math.round((pix + 1) / ((float)
                      * volSize) * 100));                     }               } catch (NullPointerException npe) {
                      *
-                     *                if (threadStopped) {                         Preferences.debug("somehow you
-                     * managed to cancel the algorithm and dispose the progressbar between checking for threadStopping
-                     * and using it.",                                           Preferences.DEBUG_ALGORITHM);
-                     * }                 }
+                     *             if (threadStopped) {                         Preferences.debug("somehow you managed
+                     * to cancel the algorithm and dispose the progressbar between checking for threadStopping and using
+                     * it.",                                           Preferences.DEBUG_ALGORITHM); }                 }
                      */
                     if (entireImage || mask.get(pix)) {
 
@@ -1874,13 +1873,12 @@ kernelLoop:
         /*
          *      try {
          *
-         *    if  {             fireProgressStateChanged("Eroding image ...");         }
+         * if  {             fireProgressStateChanged("Eroding image ...");         }
          *
-         *    if  {             fireProgressStateChanged(0);         }     } catch (NullPointerException npe) {
+         * if  {             fireProgressStateChanged(0);         }     } catch (NullPointerException npe) {
          *
-         *    if (threadStopped) {             Preferences.debug("somehow you managed to cancel the algorithm and
-         * dispose the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM);
-         *     }     }
+         * if (threadStopped) {             Preferences.debug("somehow you managed to cancel the algorithm and dispose
+         * the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM);    }     }
          */
         for (pix = 0; pix < imgSize; pix++) {
             processBuffer[pix] = 0;
@@ -1898,12 +1896,12 @@ kernelLoop:
                 /*
                  *              try {
                  *
-                 *            if ((((tmpSize + pix) % mod) == 0)) {             }             } catch
-                 * (NullPointerException npe) {
+                 *         if ((((tmpSize + pix) % mod) == 0)) {             }             } catch (NullPointerException
+                 * npe) {
                  *
-                 *            if (threadStopped) {                     Preferences.debug("somehow you managed to cancel
-                 * the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                 *                             Preferences.DEBUG_ALGORITHM);                 }             }
+                 *         if (threadStopped) {                     Preferences.debug("somehow you managed to cancel the
+                 * algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                 *                Preferences.DEBUG_ALGORITHM);                 }             }
                  */
                 if (entireImage || mask.get(pix)) {
                     value = imgBuffer[pix];

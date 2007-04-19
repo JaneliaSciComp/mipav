@@ -321,7 +321,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         Font serif12, serif12B;
         JLabel labelNumber;
 
-        pNumberDialog = new JDialog(srcImage.getUserInterface().getActiveImageFrame(), "Select number", false);
+        pNumberDialog = new JDialog(ViewUserInterface.getReference().getActiveImageFrame(), "Select number", false);
         pNumberDialog.setLocation((Toolkit.getDefaultToolkit().getScreenSize().width / 2) -
                                   (pNumberDialog.getBounds().width / 2),
                                   (Toolkit.getDefaultToolkit().getScreenSize().height / 2) -

@@ -488,7 +488,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
         float[] imgBuffer;
         int slice;
-        float baseEnergy = 0, energy, tempEnergy;
         int baseNPts, nPts;
         Polygon tempGon;
         Polygon baseGon;
@@ -501,7 +500,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         Polygon resultGon = null;
         Polygon[] gons = null;
         Vector[] contours;
-        int nVOI, nContours;
+        int nContours;
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -794,7 +793,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         Polygon resultGon = null;
         Polygon[] gons = null;
         Vector[] contours;
-        int nVOI, nContours;
+        int nContours;
 
         int i;
 
@@ -908,20 +907,9 @@ public class AlgorithmAGVF extends AlgorithmBase {
     private void calc3D() {
 
         float[] imgBuffer;
-        int slice;
-        int baseNPts, nPts;
-        Polygon tempGon;
-        Polygon baseGon;
-        float[] xPoints, yPoints;
         float[] xB, yB, zB;
         int i;
         int sliceNum;
-        int slicesDone = 0;
-
-        Polygon resultGon = null;
-        Polygon[] gons = null;
-        Vector[] contours;
-        int nVOI, nContours;
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -2257,30 +2245,5 @@ public class AlgorithmAGVF extends AlgorithmBase {
         yPoints[gon.npoints + 1] = gon.ypoints[0];
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    /**
-     * Simple structure to use in the AlgorithmBSnake for special purpose.
-     */
-    private class PointGM {
-
-        /** DOCUMENT ME! */
-        public float gradMag;
-
-        /** DOCUMENT ME! */
-        public int index;
-
-        /**
-         * Creates a new PointGM object.
-         *
-         * @param  i         DOCUMENT ME!
-         * @param  _gradMag  DOCUMENT ME!
-         */
-        public PointGM(int i, float _gradMag) {
-            index = i;
-            gradMag = _gradMag;
-
-        }
-    }
 
 }

@@ -2,11 +2,16 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
+
 import java.io.*;
+
 import java.util.*;
+
 import javax.vecmath.*;
 
 
@@ -126,7 +131,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     protected Point3f m_kCenter = new Point3f();
 
     /** Edge map. */
-    protected HashMap m_kEMap; 
+    protected HashMap m_kEMap;
 
     /** Used to rotate the initial mesh into the same orientation as the data. */
     protected Matrix3f m_kRotate;
@@ -220,9 +225,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         box[0] = (m_iXBound - 1) * m_fXDelta;
         box[1] = (m_iYBound - 1) * m_fYDelta;
         box[2] = (m_iZBound - 1) * m_fZDelta;
-        
-        
+
+
         srcImage = srcImg;
+
         /* Read the direction vector from the MipavCoordinateSystems class: */
         direction = MipavCoordinateSystems.getModelDirections(srcImg);
 
@@ -2405,7 +2411,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         float[] tCoord;
         int i;
 
-        String kName = srcImage.getUserInterface().getDefaultDirectory() + srcImage.getImageName() + "_brain.sur";
+        String kName = ViewUserInterface.getReference().getDefaultDirectory() + srcImage.getImageName() + "_brain.sur";
 
         if (srcImage.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) {
 

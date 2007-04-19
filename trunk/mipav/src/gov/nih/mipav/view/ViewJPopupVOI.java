@@ -169,8 +169,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                 voiHandler.graph25VOI_CalcInten(false, false, 0);
             } else if (event.getActionCommand().equals("totalIntensityThreshold")) {
                 new JDialogIntensityThreshold(voiHandler.getComponentImage().getFrame(),
-                                              voiHandler.getComponentImage().getActiveImage().getUserInterface(),
-                                              voiHandler.getComponentImage(), false);
+                                              ViewUserInterface.getReference(), voiHandler.getComponentImage(), false);
             } else if (event.getActionCommand().equals("avgIntensityThreshold")) {
                 new JDialogIntensityThreshold(voiHandler.getComponentImage().getFrame(),
                                               ViewUserInterface.getReference(), voiHandler.getComponentImage(), true);

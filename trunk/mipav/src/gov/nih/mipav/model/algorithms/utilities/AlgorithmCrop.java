@@ -8,8 +8,6 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 
@@ -280,7 +278,6 @@ public class AlgorithmCrop extends AlgorithmBase {
         float[] buffer;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
         int[] dimExtents;
         int j, k, offset;
         int count;
@@ -556,7 +553,7 @@ public class AlgorithmCrop extends AlgorithmBase {
      */
     private void calcStoreInPlace2D() {
 
-        int i, n;
+        int i;
         int length;
         float[] buffer;
         float[] destBuffer;
@@ -729,7 +726,6 @@ public class AlgorithmCrop extends AlgorithmBase {
             ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0020,0013", Short.toString((short) (1)),
                                                                  Short.toString((short) (1)).length()); // instance number
 
-            int imgOrient = ((FileInfoDicom) (srcImage.getFileInfo(0))).getImageOrientation();
 
             startPos = originImgOrd[2];
             originImgOrd[2] = startPos + (direct[2] * z[0] * resols[2]);
@@ -770,7 +766,6 @@ public class AlgorithmCrop extends AlgorithmBase {
         float[] destBuffer;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
-        int zDim = srcImage.getExtents()[2];
         int[] dimExtents;
         int[] destExtents;
         int j, k, offset;
@@ -781,7 +776,6 @@ public class AlgorithmCrop extends AlgorithmBase {
         int start = Math.min(z[0], z[1]);
         int dataType = srcImage.getType();
         String imageName = srcImage.getImageName();
-        ViewUserInterface userInterface = srcImage.getUserInterface();
         float[] resols;
         int[] axisOrient;
         int[] direct;
@@ -989,7 +983,6 @@ public class AlgorithmCrop extends AlgorithmBase {
                 ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0020,0013", Short.toString((short) (1)),
                                                                      Short.toString((short) (1)).length()); // instance number
 
-                int imgOrient = ((FileInfoDicom) (srcImage.getFileInfo(0))).getImageOrientation();
 
                 startPos = originImgOrd[2];
                 originImgOrd[2] = startPos + (direct[2] * z[0] * resols[2]);
@@ -1082,7 +1075,6 @@ public class AlgorithmCrop extends AlgorithmBase {
         int start = Math.min(z[0], z[1]);
         int dataType = srcImage.getType();
         String imageName = srcImage.getImageName();
-        ViewUserInterface userInterface = srcImage.getUserInterface();
         float[] resols;
         int[] axisOrient;
         int[] direct;

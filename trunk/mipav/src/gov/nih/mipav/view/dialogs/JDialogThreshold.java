@@ -399,7 +399,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     public void runFromLUTFrame(ModelImage im, float lowerThres, float upperThres, float fillV, int output_type,
                                 boolean inverseFlag) {
         this.image = im;
-        this.userInterface = im.getUserInterface();
+        this.userInterface = ViewUserInterface.getReference();
         this.thres1 = lowerThres;
         this.thres2 = upperThres;
         this.fillValue = fillV;

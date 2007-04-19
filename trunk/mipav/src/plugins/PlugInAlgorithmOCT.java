@@ -2,6 +2,8 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.ViewUserInterface;
+
 import java.io.*;
 
 
@@ -69,8 +71,8 @@ public class PlugInAlgorithmOCT extends AlgorithmBase {
         // call algorithm histogram and get threshold
         boolean adaptiveSize = false;
         int maximumSize = 0;
-        AlgorithmMedian algoMedian = new AlgorithmMedian(srcImage, 1, 3, AlgorithmMedian.SQUARE_KERNEL, 0,
-                                                         adaptiveSize, maximumSize, true);
+        AlgorithmMedian algoMedian = new AlgorithmMedian(srcImage, 1, 3, AlgorithmMedian.SQUARE_KERNEL, 0, adaptiveSize,
+                                                         maximumSize, true);
         algoMedian.run();
 
         int[] dimExtent = new int[1];
@@ -100,7 +102,8 @@ public class PlugInAlgorithmOCT extends AlgorithmBase {
 
         // Threshold image
         int threshold = histo.getModelHistogram().getOtsuThreshold();
-        srcImage.getUserInterface().setGlobalDataText(srcImage.getImageName() + " Threshold = " + threshold + "\n");
+        ViewUserInterface.getReference().setGlobalDataText(srcImage.getImageName() + " Threshold = " + threshold +
+                                                           "\n");
 
         for (int i = 0; i < buffer.length; i++) {
 
@@ -142,8 +145,8 @@ public class PlugInAlgorithmOCT extends AlgorithmBase {
         // calc length in pixels of each vertical line
         // calc avg length of line and report it.
         // System.out.println( "Average length = " + avgLength );
-        srcImage.getUserInterface().setGlobalDataText(srcImage.getImageName() + " Average length = " + avgLength +
-                                                      "\n");
+        ViewUserInterface.getReference().setGlobalDataText(srcImage.getImageName() + " Average length = " + avgLength +
+                                                           "\n");
         setCompleted(true);
     }
 

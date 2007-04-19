@@ -1,6 +1,7 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.util.*;
 
@@ -225,22 +226,19 @@ public class PlugInAlgorithmNCISeg extends AlgorithmBase {
 
         System.err.println("Average: " + average);
 
-        srcImage.getUserInterface().setDataText("Image name: " + srcImage.getImageName() + "\n");
-        srcImage.getUserInterface().setDataText("\tNumber of pixels included: " + counter + "\n");
-        srcImage.getUserInterface().setDataText("\tArea: " + area + " " +
+        ViewUserInterface.getReference().setDataText("Image name: " + srcImage.getImageName() + "\n");
+        ViewUserInterface.getReference().setDataText("\tNumber of pixels included: " + counter + "\n");
+        ViewUserInterface.getReference().setDataText("\tArea: " + area + " " +
                                                 FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getFileInfo(0).getUnitsOfMeasure(0)) +
                                                 "^2\n");
 
         if (doBrown) {
-            srcImage.getUserInterface().setDataText("\tTotal brown: " + totalBrowness + "\n");
+            ViewUserInterface.getReference().setDataText("\tTotal brown: " + totalBrowness + "\n");
         } else {
-            srcImage.getUserInterface().setDataText("\tTotal blue: " + totalBlue + "\n");
+            ViewUserInterface.getReference().setDataText("\tTotal blue: " + totalBlue + "\n");
         }
 
-        srcImage.getUserInterface().setDataText("\tAverage: " + average + "\n");
-
-
-        
+        ViewUserInterface.getReference().setDataText("\tAverage: " + average + "\n");
 
         destBuffer = null;
         srcBuffer = null;

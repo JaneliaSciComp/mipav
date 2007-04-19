@@ -259,7 +259,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
         String tmpStr;
 
         if (source == imageComboBox) {
-            userInterface = firstImage.getUserInterface();
+            userInterface = ViewUserInterface.getReference();
 
             String selectedName = (String) imageComboBox.getSelectedItem();
             secondImage = userInterface.getRegisteredImageByName(selectedName);
@@ -552,7 +552,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
         ParameterImage secondImageParameter = scriptParameters.getParams().getImageParameter(AlgorithmParameters.getInputImageLabel(2));
 
         firstImage = firstImageParameter.getImage();
-        userInterface = firstImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = firstImage.getParentFrame();
 
         // only set the second image if it isn't the same as the first one..
@@ -932,7 +932,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
             imageComboBox = buildComboBox(firstImage);
             imageComboBox.addItemListener(this);
 
-            userInterface = firstImage.getUserInterface();
+            userInterface = ViewUserInterface.getReference();
 
             String selectedName = (String) imageComboBox.getSelectedItem();
 
@@ -1091,7 +1091,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
         doLogResult = resultCheckbox.isSelected();
 
         if (firstImage.isColorImage()) {
-            userInterface = firstImage.getUserInterface();
+            userInterface = ViewUserInterface.getReference();
 
             if (((redCheckBox.isSelected()) && (greenCheckBox.isSelected()) && (!blueCheckBox.isSelected())) ||
                     ((redCheckBox.isSelected()) && (!greenCheckBox.isSelected()) && (blueCheckBox.isSelected())) ||
@@ -1180,7 +1180,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
             }
         } // if (firstImage.isColorImage())
         else { // not color image
-            userInterface = firstImage.getUserInterface();
+            userInterface = ViewUserInterface.getReference();
 
             String selectedName = (String) imageComboBox.getSelectedItem();
             secondImage = userInterface.getRegisteredImageByName(selectedName);

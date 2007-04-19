@@ -119,6 +119,13 @@ public class JDialogFrameLinker extends JDialogBase {
 
 
     /**
+     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
+     * and whether or not there is a separate destination image.
+     */
+    protected void callAlgorithm() { }
+
+
+    /**
      * Builds a list of images to operate on from the template image.
      */
     private void buildComboBoxImage() {
@@ -130,7 +137,7 @@ public class JDialogFrameLinker extends JDialogBase {
         comboBoxImage.setFont(serif12);
         comboBoxImage.setBackground(Color.white);
 
-        UI = imageA.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -164,13 +171,6 @@ public class JDialogFrameLinker extends JDialogBase {
             }
         }
     }
-
-
-    /**
-     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
-     * and whether or not there is a separate destination image.
-     */
-    protected void callAlgorithm() { }
 
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.

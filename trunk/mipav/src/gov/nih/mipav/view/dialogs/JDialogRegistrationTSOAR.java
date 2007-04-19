@@ -195,7 +195,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
                     ViewJFrameGraph rotGraph = new ViewJFrameGraph(posR, rot, "Rotations", "Slice number", "Degrees");
                     rotGraph.makeRangeSymmetric();
                     rotGraph.showXYZLegends();
-                    rotGraph.setDefaultDirectory(image.getUserInterface().getDefaultDirectory());
+                    rotGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                     rotGraph.setVisible(true);
                     trans = algoReg.getTrans();
                     posT = new float[3][image.getExtents()[3]];
@@ -211,7 +211,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
                                                                      FileInfoBase.getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0)));
                     transGraph.makeRangeSymmetric();
                     transGraph.showXYZLegends();
-                    transGraph.setDefaultDirectory(image.getUserInterface().getDefaultDirectory());
+                    transGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                     transGraph.setVisible(true);
                 } // if (doGraph)
             }
@@ -270,56 +270,6 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (getResultImage() != null));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_avg_volume_as_reference", reference));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("reference_volume_num", refImageNum));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_norm_cross_correlation_sinc", sincNormalizedCrossCorrelation));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_graph_transform", doGraph));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_final_reg_at_level_2", finalRegistrationAtLevel2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        UI = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
-        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
-        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
-        setUseAverageVolumeRef(scriptParameters.getParams().getBoolean("do_use_avg_volume_as_reference"));
-        setRefImageNum(scriptParameters.getParams().getInt("reference_volume_num"));
-        setFinalCostXCorrSinc(scriptParameters.getParams().getBoolean("do_use_norm_cross_correlation_sinc"));
-        setGraph(scriptParameters.getParams().getBoolean("do_graph_transform"));
-        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
-        setFinalRegistrationAtLevel2(scriptParameters.getParams().getBoolean("do_final_reg_at_level_2"));
-        setDisplayResult(scriptParameters.getParams().getBoolean("do_display_transform"));
-        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (getResultImage() != null) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 
     /**
@@ -469,7 +419,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         algoReg.addListener(this);
 
         createProgressBar(image.getImageName(), algoReg);
-        
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -479,8 +429,61 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         } else {
             algoReg.run();
         }
-        
+
         dispose();
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (getResultImage() != null) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        UI = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
+        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
+        setUseAverageVolumeRef(scriptParameters.getParams().getBoolean("do_use_avg_volume_as_reference"));
+        setRefImageNum(scriptParameters.getParams().getInt("reference_volume_num"));
+        setFinalCostXCorrSinc(scriptParameters.getParams().getBoolean("do_use_norm_cross_correlation_sinc"));
+        setGraph(scriptParameters.getParams().getBoolean("do_graph_transform"));
+        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
+        setFinalRegistrationAtLevel2(scriptParameters.getParams().getBoolean("do_final_reg_at_level_2"));
+        setDisplayResult(scriptParameters.getParams().getBoolean("do_display_transform"));
+        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (getResultImage() != null));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_avg_volume_as_reference", reference));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reference_volume_num", refImageNum));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_norm_cross_correlation_sinc",
+                                                                       sincNormalizedCrossCorrelation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_graph_transform", doGraph));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_final_reg_at_level_2",
+                                                                       finalRegistrationAtLevel2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
     }
 
     /**
@@ -768,7 +771,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
             case 6:
                 interp = AlgorithmTransform.WSINC;
                 break;
-                //          case 7:  interp = AlgorithmTransform.NEAREST_NEIGHBOR;   break;
+                // case 7:  interp = AlgorithmTransform.NEAREST_NEIGHBOR;   break;
 
             default:
                 interp = AlgorithmTransform.TRILINEAR;

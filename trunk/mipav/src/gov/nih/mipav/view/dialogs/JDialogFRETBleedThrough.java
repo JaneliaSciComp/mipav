@@ -305,62 +305,12 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmFRETBleedThrough) {
+
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
 
             dispose();
-        }
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(srcImage);
-        scriptParameters.storeImage(FRETImage, "FRET_image");
-        scriptParameters.storeImage(FP2Image, "FP2_image");
-        
-        scriptParameters.storeColorOptions(useRed, useGreen, useBlue);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("is_acceptor_dye_only", acceptorRun));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        srcImage = scriptParameters.retrieveInputImage();
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-        
-        FRETImage = scriptParameters.retrieveImage("FRET_image");
-        FP2Image = scriptParameters.retrieveImage("FP2_image");
-        
-        if (srcImage.isColorImage()) {
-            doColor = true;
-            useRed = true;
-            useBlue = false;
-            useGreen = false;
-        } else {
-            doColor = false;
-            useRed = false;
-            useBlue = false;
-            useGreen = false;
-        }
-        
-        boolean[] rgb = scriptParameters.getParams().getList(AlgorithmParameters.DO_PROCESS_RGB).getAsBooleanArray();
-        setRed(rgb[0]);
-        setGreen(rgb[1]);
-        setBlue(rgb[2]);
-        
-        setAcceptorRun(scriptParameters.getParams().getBoolean("is_acceptor_dye_only"));
-        
-        if (!checkImage(FRETImage)) {
-            return;
-        }
-
-        if (!checkImage(FP2Image)) {
-            return;
         }
     }
 
@@ -415,7 +365,7 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
      *
      * @param  evt  Event that caused this method to fire.
      */
-    public void valueChanged(ListSelectionEvent evt) {  }
+    public void valueChanged(ListSelectionEvent evt) { }
 
     /**
      * Once all the necessary variables are set, call AlgorithmFRETBleedThrough.
@@ -457,6 +407,57 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
             return;
         }
 
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = srcImage.getParentFrame();
+
+        FRETImage = scriptParameters.retrieveImage("FRET_image");
+        FP2Image = scriptParameters.retrieveImage("FP2_image");
+
+        if (srcImage.isColorImage()) {
+            doColor = true;
+            useRed = true;
+            useBlue = false;
+            useGreen = false;
+        } else {
+            doColor = false;
+            useRed = false;
+            useBlue = false;
+            useGreen = false;
+        }
+
+        boolean[] rgb = scriptParameters.getParams().getList(AlgorithmParameters.DO_PROCESS_RGB).getAsBooleanArray();
+        setRed(rgb[0]);
+        setGreen(rgb[1]);
+        setBlue(rgb[2]);
+
+        setAcceptorRun(scriptParameters.getParams().getBoolean("is_acceptor_dye_only"));
+
+        if (!checkImage(FRETImage)) {
+            return;
+        }
+
+        if (!checkImage(FP2Image)) {
+            return;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        scriptParameters.storeImage(FRETImage, "FRET_image");
+        scriptParameters.storeImage(FP2Image, "FP2_image");
+
+        scriptParameters.storeColorOptions(useRed, useGreen, useBlue);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_acceptor_dye_only", acceptorRun));
     }
 
     /**

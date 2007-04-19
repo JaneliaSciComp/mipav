@@ -421,7 +421,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
      */
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage(1);
-        userInterface = imageA.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
         isColor = imageA.isColorImage();
 
@@ -463,7 +463,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         comboBoxImage.setFont(serif12);
         comboBoxImage.setBackground(Color.white);
 
-        UI = imageA.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -657,9 +657,8 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
             clipMode = AlgorithmImageCalculator.PROMOTE;
         }
 
-        ViewUserInterface UI = imageA.getUserInterface();
         String selectedName = (String) comboBoxImage.getSelectedItem();
-        imageB = UI.getRegisteredImageByName(selectedName);
+        imageB = ViewUserInterface.getReference().getRegisteredImageByName(selectedName);
 
         return true;
     }

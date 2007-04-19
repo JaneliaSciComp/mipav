@@ -246,7 +246,7 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
      */
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage();
-        userInterface = imageA.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = imageA.getParentFrame();
     }
 

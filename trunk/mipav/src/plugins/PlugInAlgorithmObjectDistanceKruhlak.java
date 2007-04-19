@@ -117,7 +117,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         int nVOIs;
         short[] shortMask;
         int index;
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
         int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
         String unitsString = null;
@@ -159,7 +159,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Processing image ...");
-        
+
         VOIs = srcImage.getVOIs();
         nVOIs = VOIs.size();
         shortMask = new short[length];
@@ -207,8 +207,9 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
                 yPos1 /= count1;
                 xPos2 /= count2;
                 yPos2 /= count2;
-                centerToCenter = (float) Math.sqrt(((xPos1 - xPos2) * (xPos1 - xPos2) * xRes * xRes) +
-                                                   ((yPos1 - yPos2) * (yPos1 - yPos2) * yRes * yRes));
+                centerToCenter = (float)
+                                     Math.sqrt(((xPos1 - xPos2) * (xPos1 - xPos2) * xRes * xRes) +
+                                               ((yPos1 - yPos2) * (yPos1 - yPos2) * yRes * yRes));
 
                 if (useRed) {
                     UI.setDataText("VOI ID = " + i + " with red weighted voi center of mass = " + "(" + xPos1 + ", " +
@@ -242,7 +243,6 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -275,7 +275,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         int nVOIs;
         short[] shortMask;
         int index;
-        ViewUserInterface UI = srcImage.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         int xUnits = srcImage.getUnitsOfMeasure()[0];
         int yUnits = srcImage.getUnitsOfMeasure()[1];
         int zUnits = srcImage.getUnitsOfMeasure()[2];
@@ -317,7 +317,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Processing image ...");
-        
+
         VOIs = srcImage.getVOIs();
         nVOIs = VOIs.size();
         shortMask = new short[totLength];
@@ -374,9 +374,10 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
                 xPos2 /= count2;
                 yPos2 /= count2;
                 zPos2 /= count2;
-                centerToCenter = (float) Math.sqrt(((xPos1 - xPos2) * (xPos1 - xPos2) * xRes * xRes) +
-                                                   ((yPos1 - yPos2) * (yPos1 - yPos2) * yRes * yRes) +
-                                                   ((zPos1 - zPos2) * (zPos1 - zPos2) * zRes * zRes));
+                centerToCenter = (float)
+                                     Math.sqrt(((xPos1 - xPos2) * (xPos1 - xPos2) * xRes * xRes) +
+                                               ((yPos1 - yPos2) * (yPos1 - yPos2) * yRes * yRes) +
+                                               ((zPos1 - zPos2) * (zPos1 - zPos2) * zRes * zRes));
 
                 if (useRed) {
                     UI.setDataText("VOI ID = " + i + " with red weighted voi center of mass = " + "(" + xPos1 + ", " +
@@ -411,7 +412,6 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 

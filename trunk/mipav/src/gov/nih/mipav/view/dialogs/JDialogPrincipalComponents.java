@@ -101,7 +101,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
         userInterface = ViewUserInterface.getReference();
         init();
     }
-    
+
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -194,6 +194,51 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
         pComponentAlgo.finalize();
         pComponentAlgo = null;
         dispose();
+    }
+
+    /**
+     * Accessor that returns the result image.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public ModelImage[] getResultImage() {
+        return resultImage;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  displayAndAsk  DOCUMENT ME!
+     */
+    public void setDisplayAndAsk(boolean displayAndAsk) {
+        this.displayAndAsk = displayAndAsk;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  doAveraging  DOCUMENT ME!
+     */
+    public void setDoAveraging(boolean doAveraging) {
+        this.doAveraging = doAveraging;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  doFilter  DOCUMENT ME!
+     */
+    public void setDoFilter(boolean doFilter) {
+        this.doFilter = doFilter;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  pNumber  DOCUMENT ME!
+     */
+    public void setPNumber(int pNumber) {
+        this.pNumber = pNumber;
     }
 
     /**
@@ -293,7 +338,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
             pComponentAlgo.addListener(this);
 
             createProgressBar(srcImage.getImageName(), pComponentAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -327,87 +372,43 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
     }
 
     /**
-     * Accessor that returns the result image.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public ModelImage[] getResultImage() {
-        return resultImage;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(srcImage);
-        
-        for (int i = 0; i < getResultImage().length; i++) {
-            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_filter", doFilter));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_averaging", doAveraging));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_and_ask", displayAndAsk));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_components", pNumber));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        srcImage = scriptParameters.retrieveInputImage();
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-        
-        setDoFilter(scriptParameters.getParams().getBoolean("do_filter"));
-        setDoAveraging(scriptParameters.getParams().getBoolean("do_averaging"));
-        setDisplayAndAsk(scriptParameters.getParams().getBoolean("do_display_and_ask"));
-        setPNumber(scriptParameters.getParams().getInt("num_components"));
-    }
-    
-    /**
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
+
         for (int i = 0; i < getResultImage().length; i++) {
             AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
         }
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param  displayAndAsk  DOCUMENT ME!
+     * {@inheritDoc}
      */
-    public void setDisplayAndAsk(boolean displayAndAsk) {
-        this.displayAndAsk = displayAndAsk;
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = srcImage.getParentFrame();
+
+        setDoFilter(scriptParameters.getParams().getBoolean("do_filter"));
+        setDoAveraging(scriptParameters.getParams().getBoolean("do_averaging"));
+        setDisplayAndAsk(scriptParameters.getParams().getBoolean("do_display_and_ask"));
+        setPNumber(scriptParameters.getParams().getInt("num_components"));
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param  doAveraging  DOCUMENT ME!
+     * {@inheritDoc}
      */
-    public void setDoAveraging(boolean doAveraging) {
-        this.doAveraging = doAveraging;
-    }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  doFilter  DOCUMENT ME!
-     */
-    public void setDoFilter(boolean doFilter) {
-        this.doFilter = doFilter;
-    }
+        for (int i = 0; i < getResultImage().length; i++) {
+            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
+        }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  pNumber  DOCUMENT ME!
-     */
-    public void setPNumber(int pNumber) {
-        this.pNumber = pNumber;
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_filter", doFilter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_averaging", doAveraging));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_and_ask", displayAndAsk));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_components", pNumber));
     }
 
     /**
@@ -471,7 +472,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
         labelNumber.setFont(serif12);
         labelNumber.setEnabled(false);
         optionsPanel.add(labelNumber, gbc);
-        
+
         gbc.gridx = 1;
         gbc.gridy = 3;
         textNumber = new JTextField(5);

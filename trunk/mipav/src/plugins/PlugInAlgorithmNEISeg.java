@@ -160,7 +160,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
         float[] bufferDest_HSB_Hue;
         float[] bufferDest_final;
         fireProgressStateChanged("Calculating VOI Means...");
-        
+
 
         int xDim = srcImage.getExtents()[0];
 
@@ -318,22 +318,23 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Eye Segmentation: Output Image(s) locked");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        srcImage.getUserInterface().setDataText(" Image name: " + srcImage.getImageName() + "\n");
-        srcImage.getUserInterface().setDataText(" Number of contours excluded: " + numExclude + ", included: " +
-                                                numInclude + "\n");
-        srcImage.getUserInterface().setDataText(" Number of punctate pixels in RGB method: " + numPixels[0] + "\n");
-        srcImage.getUserInterface().setDataText(" Number of punctate pixels in RGB All Ratios method: " + numPixels[1] +
-                                                "\n");
-        srcImage.getUserInterface().setDataText(" Number of punctate pixels in HSB - Hue method: " + numPixels[2] +
-                                                "\n");
-        srcImage.getUserInterface().setDataText(" Number of punctate pixels in 2-out-of-3 (voting) method: " +
-                                                numPixels[3] + "\n\n");
-        
+        ViewUserInterface.getReference().setDataText(" Image name: " + srcImage.getImageName() + "\n");
+        ViewUserInterface.getReference().setDataText(" Number of contours excluded: " + numExclude + ", included: " +
+                                                     numInclude + "\n");
+        ViewUserInterface.getReference().setDataText(" Number of punctate pixels in RGB method: " + numPixels[0] +
+                                                     "\n");
+        ViewUserInterface.getReference().setDataText(" Number of punctate pixels in RGB All Ratios method: " +
+                                                     numPixels[1] + "\n");
+        ViewUserInterface.getReference().setDataText(" Number of punctate pixels in HSB - Hue method: " + numPixels[2] +
+                                                     "\n");
+        ViewUserInterface.getReference().setDataText(" Number of punctate pixels in 2-out-of-3 (voting) method: " +
+                                                     numPixels[3] + "\n\n");
+
         setCompleted(true);
     }
 

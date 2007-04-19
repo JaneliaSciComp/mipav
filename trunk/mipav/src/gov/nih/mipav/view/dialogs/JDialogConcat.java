@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -43,7 +43,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private boolean do3D = true;
-    
+
     /** DOCUMENT ME! */
     private ModelImage imageA; // source image
 
@@ -114,51 +114,6 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
         }
     }
 
-    // ************************************************************************
-    // ************************** Algorithm Events ****************************
-    // ************************************************************************
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(imageA);
-        scriptParameters.storeInputImage(imageB);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_3D_concat", do3D));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        imageA = scriptParameters.retrieveInputImage(1);
-        imageB = scriptParameters.retrieveInputImage(2);
-        
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = imageA.getParentFrame();
-        
-        if (scriptParameters.doOutputNewImage()) {
-            setDisplayLocNew();
-        } else {
-            // replace processing not supported..
-            //setDisplayLocReplace();
-            setDisplayLocNew();
-        }
-        
-        do3D = scriptParameters.getParams().getBoolean("do_3D_concat");
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
@@ -189,7 +144,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                     // image name so as to indicate that the image is now unlocked!
                     // The image frames are enabled and then registed to the userinterface.
                     resultImage = mathAlgo.getResultImage();
-                    
+
                     Vector imageFrames = imageA.getImageFrameVector();
 
                     for (int i = 0; i < imageFrames.size(); i++) {
@@ -220,6 +175,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
 
                     // Not so sure about this.
                     if (imageA.getLightBoxFrame() != null) {
+
                         try {
                             pt = imageA.getLightBoxFrame().getLocation();
                             imageA.getLightBoxFrame().close();
@@ -229,8 +185,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                                                    imageFrame.getComponentImage().getLUTb(),
                                                    imageFrame.getComponentImage().getResolutionX(),
                                                    imageFrame.getComponentImage().getResolutionY(),
-                                                   new Dimension(pt.x, pt.y),
-                                                   imageFrame.getControls());
+                                                   new Dimension(pt.x, pt.y), imageFrame.getControls());
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open new frame");
                         }
@@ -269,7 +224,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-        
+
         mathAlgo.finalize();
         mathAlgo = null;
         dispose();
@@ -312,7 +267,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
     public ModelImage getResultImage() {
         return resultImage;
     }
- 
+
     /**
      * DOCUMENT ME!
      *
@@ -360,50 +315,6 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
      */
     public void setImageB(ModelImage im) {
         imageB = im;
-    }
-
-    /**
-     * Builds a list of images to concatenate to image A.
-     */
-    private void buildComboBoxImage() {
-        ViewUserInterface UI;
-
-        comboBoxImage = new JComboBox();
-        comboBoxImage.setFont(serif12);
-        comboBoxImage.setBackground(Color.white);
-
-        UI = imageA.getUserInterface();
-
-        Enumeration names = UI.getRegisteredImageNames();
-
-        // Add images from user interface that have the same correct dimensionality
-        // Possibilities: 2D-2D,2D-3D,3D-2D,3D-3D,3D-4D,4D-3D,4D-4D
-        // Note that 3D-3D could create a 3D or a 4D image.
-        while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
-            ModelImage img = UI.getRegisteredImageByName(name);
-
-            if (UI.getFrameContainingImage(img) != null) {
-
-                if (!imageA.getImageName().equals(name)) {
-
-                    if (imageA.isColorImage() == img.isColorImage()) {
-
-                        if (((imageA.getNDims() == 2) || (imageA.getNDims() == 3)) &&
-                                ((img.getNDims() == 2) || (img.getNDims() == 3)) &&
-                                (imageA.getExtents()[0] == img.getExtents()[0]) &&
-                                (imageA.getExtents()[1] == img.getExtents()[1])) {
-                            comboBoxImage.addItem(name);
-                        } else if (((imageA.getNDims() == 4) || (img.getNDims() == 4)) && (imageA.getNDims() >= 3) &&
-                                       (img.getNDims() >= 3) && (imageA.getExtents()[0] == img.getExtents()[0]) &&
-                                       (imageA.getExtents()[1] == img.getExtents()[1]) &&
-                                       (imageA.getExtents()[2] == img.getExtents()[2])) {
-                            comboBoxImage.addItem(name);
-                        }
-                    } // if (imageA.isColorImage() == img.isColorImage())
-                } // if (!imageA.getImageName().equals(name))
-            } // if (UI.getFrameContainingImage(img) != null)
-        } // while (names.hasMoreElements())
     }
 
     /**
@@ -477,7 +388,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                 mathAlgo.addListener(this);
 
                 createProgressBar(imageA.getImageName(), mathAlgo);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -506,7 +417,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                     }
 
                 } else {
-                  
+
                     mathAlgo.run();
 
                 }
@@ -517,6 +428,97 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage(1);
+        imageB = scriptParameters.retrieveInputImage(2);
+
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = imageA.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+
+            // replace processing not supported..
+            // setDisplayLocReplace();
+            setDisplayLocNew();
+        }
+
+        do3D = scriptParameters.getParams().getBoolean("do_3D_concat");
+    }
+
+    // ************************************************************************
+    // ************************** Algorithm Events ****************************
+    // ************************************************************************
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        scriptParameters.storeInputImage(imageB);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_3D_concat", do3D));
+    }
+
+    /**
+     * Builds a list of images to concatenate to image A.
+     */
+    private void buildComboBoxImage() {
+        ViewUserInterface UI;
+
+        comboBoxImage = new JComboBox();
+        comboBoxImage.setFont(serif12);
+        comboBoxImage.setBackground(Color.white);
+
+        UI = ViewUserInterface.getReference();
+
+        Enumeration names = UI.getRegisteredImageNames();
+
+        // Add images from user interface that have the same correct dimensionality
+        // Possibilities: 2D-2D,2D-3D,3D-2D,3D-3D,3D-4D,4D-3D,4D-4D
+        // Note that 3D-3D could create a 3D or a 4D image.
+        while (names.hasMoreElements()) {
+            String name = (String) names.nextElement();
+            ModelImage img = UI.getRegisteredImageByName(name);
+
+            if (UI.getFrameContainingImage(img) != null) {
+
+                if (!imageA.getImageName().equals(name)) {
+
+                    if (imageA.isColorImage() == img.isColorImage()) {
+
+                        if (((imageA.getNDims() == 2) || (imageA.getNDims() == 3)) &&
+                                ((img.getNDims() == 2) || (img.getNDims() == 3)) &&
+                                (imageA.getExtents()[0] == img.getExtents()[0]) &&
+                                (imageA.getExtents()[1] == img.getExtents()[1])) {
+                            comboBoxImage.addItem(name);
+                        } else if (((imageA.getNDims() == 4) || (img.getNDims() == 4)) && (imageA.getNDims() >= 3) &&
+                                       (img.getNDims() >= 3) && (imageA.getExtents()[0] == img.getExtents()[0]) &&
+                                       (imageA.getExtents()[1] == img.getExtents()[1]) &&
+                                       (imageA.getExtents()[2] == img.getExtents()[2])) {
+                            comboBoxImage.addItem(name);
+                        }
+                    } // if (imageA.isColorImage() == img.isColorImage())
+                } // if (!imageA.getImageName().equals(name))
+            } // if (UI.getFrameContainingImage(img) != null)
+        } // while (names.hasMoreElements())
     }
 
     /**

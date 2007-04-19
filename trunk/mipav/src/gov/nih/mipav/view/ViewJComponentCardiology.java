@@ -527,7 +527,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                                                                                VOIs.VOIAt(i),
                                                                                                FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
 
-                                            contourGraph.setDefaultDirectory(getActiveImage().getUserInterface().getDefaultDirectory());
+                                            contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                                             contourGraph.setVisible(true);
                                             VOIs.VOIAt(i).setContourGraph(contourGraph);
                                             contourGraph.setVOI(VOIs.VOIAt(i));
@@ -561,7 +561,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                         if (VOIs.VOIAt(i).getContourGraph() == null) {
                                             lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", VOIs.VOIAt(i),
                                                                             FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
-                                            lineGraph.setDefaultDirectory(imageActive.getUserInterface().getDefaultDirectory());
+                                            lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                                             lineGraph.setVisible(true);
                                             VOIs.VOIAt(i).setContourGraph(lineGraph);
                                             lineGraph.setVOI(VOIs.VOIAt(i));

@@ -7,8 +7,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -509,8 +507,6 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         float coarseBegin = -3.0f;
         float coarseEnd = 3.0f;
         float coarseRate = 2.0f;
-        float fineBegin = -3.0f;
-        float fineEnd = 3.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
         AlgorithmTransform transform;
@@ -947,7 +943,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                                          min2, max2, scale1, scale2, leftPad, rightPad, bottomPad,
                                                          topPad, mean, halfMajor, halfMinor, theta);
 
-        
+
         setCompleted(true);
     }
 
@@ -971,8 +967,6 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         float coarseBegin = -3.0f;
         float coarseEnd = 3.0f;
         float coarseRate = 2.0f;
-        float fineBegin = -3.0f;
-        float fineEnd = 3.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
         AlgorithmTransform transform;
@@ -1459,7 +1453,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                                          destImage, controlFrame, useRed, useGreen, useBlue, min1, max1,
                                                          min2, max2, scale1, scale2, leftPad, rightPad, bottomPad,
                                                          topPad, mean, halfMajor, halfMinor, theta);
-        
+
         setCompleted(true);
     }
 
@@ -1482,8 +1476,6 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         float coarseBegin = -3.0f;
         float coarseEnd = 3.0f;
         float coarseRate = 2.0f;
-        float fineBegin = -3.0f;
-        float fineEnd = 3.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
         AlgorithmTransform transform;
@@ -2021,7 +2013,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                                          max2, scale1, scale2, leftPad, rightPad, bottomPad, topPad,
                                                          mean, halfMajor, halfMinor, theta);
 
-        
+
         setCompleted(true);
     }
 
@@ -2045,8 +2037,6 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         float coarseBegin = -3.0f;
         float coarseEnd = 3.0f;
         float coarseRate = 2.0f;
-        float fineBegin = -3.0f;
-        float fineEnd = 3.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
         AlgorithmTransform transform;
@@ -2627,7 +2617,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                                          controlFrame, useRed, useGreen, useBlue, min1, max1, min2,
                                                          max2, scale1, scale2, leftPad, rightPad, bottomPad, topPad,
                                                          mean, halfMajor, halfMinor, theta);
-        
+
         setCompleted(true);
     }
 
@@ -2649,7 +2639,6 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         int iter;
         double[] initVar = new double[2];
         double denom;
-        double sum;
         double[] initMean = new double[2];
         double[] initStd = new double[2];
         double lambda1, lambda2;

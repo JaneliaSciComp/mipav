@@ -263,7 +263,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
         originalImage = scriptParameters.retrieveInputImage();
         psfImage = scriptParameters.retrieveImage("psf_image");
 
-        userInterface = originalImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = originalImage.getParentFrame();
 
         windowLowerLimit = scriptParameters.getParams().getInt("window_lower_limit");
@@ -373,7 +373,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
         imageComboBox = buildComboBox(originalImage);
         imageComboBox.addItemListener(this);
 
-        userInterface = originalImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         String selectedName = (String) imageComboBox.getSelectedItem();
 
@@ -627,7 +627,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
     private boolean setVariables() {
         String tmpStr;
 
-        userInterface = originalImage.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         String selectedName = (String) imageComboBox.getSelectedItem();
         psfImage = userInterface.getRegisteredImageByName(selectedName);
