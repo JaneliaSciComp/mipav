@@ -116,12 +116,11 @@ public class FileImageXML extends FileXML {
     /**
      * Constructs new file object.
      *
-     * @param  _UI    User interface.
      * @param  fName  File name.
      * @param  fDir   File directory.
      */
-    public FileImageXML(ViewUserInterface _UI, String fName, String fDir) {
-        super(_UI, fName, fDir);
+    public FileImageXML(String fName, String fDir) {
+        super(fName, fDir);
         fileInfo = new FileInfoImageXML(fName, fDir, FileUtility.XML);
     }
 

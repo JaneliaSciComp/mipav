@@ -584,8 +584,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                     if (imageA.isColorImage() == false) {
 
                         try {
-                            histogramDialog = new JDialogHistogramLUT(this, componentImage, imageA, imageB, LUTa, LUTb,
-                                                                      userInterface);
+                            histogramDialog = new JDialogHistogramLUT(this, componentImage, imageA, imageB, LUTa, LUTb);
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }
@@ -594,7 +593,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                         try {
                             histogramDialog = new JDialogHistogramLUT(this, componentImage, imageA, imageB,
                                                                       componentImage.getRGBTA(),
-                                                                      componentImage.getRGBTB(), userInterface);
+                                                                      componentImage.getRGBTB());
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }
@@ -2155,10 +2154,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /**
      * Make a scroll frame and puts an image component into it.
-     *
-     * @param  ui  user interface
      */
-    private void buildScrollPanes(ViewUserInterface ui) {
+    private void buildScrollPanes() {
         JPanel innerPanel, innerPanelA, innerPanelB;
 
 
@@ -2628,7 +2625,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         xfrmA = new float[3][3];
 
         // builds image panel and puts it into a scrollpane
-        buildScrollPanes(userInterface);
+        buildScrollPanes();
         setActiveImage(IMAGE_A);
 
         /* componentY is added so that the previous software for ViewJFrameImage can be

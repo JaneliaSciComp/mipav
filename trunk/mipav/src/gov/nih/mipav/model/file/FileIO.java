@@ -2897,7 +2897,7 @@ public class FileIO {
      */
     public XCEDEElement readXCEDE(String fileName, String directory) {
         FileXCEDEXML xcedeFile;
-        xcedeFile = new FileXCEDEXML(UI, fileName, directory);
+        xcedeFile = new FileXCEDEXML(fileName, directory);
 
         return xcedeFile.parse();
     }
@@ -2911,7 +2911,7 @@ public class FileIO {
      * @return  FileImageXML containing thumbnail or null
      */
     public FileImageXML readXMLThumbnail(String name, String directory) {
-        FileImageXML xmlTemp = new FileImageXML(UI, name, directory);
+        FileImageXML xmlTemp = new FileImageXML(name, directory);
         float[][] res = null;
 
         try {
@@ -3741,7 +3741,7 @@ public class FileIO {
         boolean doRead = true;
 
         try {
-            imageFile = new FileAfni(UI, fileName, fileDir, loadB, doRead);
+            imageFile = new FileAfni(fileName, fileDir, loadB, doRead);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -4145,7 +4145,7 @@ public class FileIO {
         ModelImage image = null;
 
         try {
-            imageFile = new FileAvi(UI, fileName, fileDir);
+            imageFile = new FileAvi(fileName, fileDir);
             imageFile.setReadQT(readQT);
             // imageFile.setProgressBar(pInterface);
 
@@ -4262,7 +4262,7 @@ public class FileIO {
 
         try {
             fileName = "d3proc";
-            imageFile = new FileBRUKER(UI, fileName, fileDir); // read in files
+            imageFile = new FileBRUKER(fileName, fileDir); // read in files
             imageFile.readd3proc();
         } catch (IOException error) {
 
@@ -4381,7 +4381,7 @@ public class FileIO {
         FileCheshire imageFile;
 
         try {
-            imageFile = new FileCheshire(UI, fileName, fileDir, true);
+            imageFile = new FileCheshire(fileName, fileDir, true);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
         } catch (IOException error) {
@@ -4447,7 +4447,7 @@ public class FileIO {
         try {
             origName = fileName;
             fileName = trimCOR(fileName) + ".info"; // allow user to click on any file in set
-            imageFile = new FileCOR(UI, fileName, fileDir); // read in files
+            imageFile = new FileCOR(fileName, fileDir); // read in files
             imageFile.readInfoImage();
         } catch (IOException error) {
             tryAgain = true;
@@ -4465,7 +4465,7 @@ public class FileIO {
 
             try {
                 fileName = trimCOR(origName) + ".info~";
-                imageFile = new FileCOR(UI, fileName, fileDir); // read in files
+                imageFile = new FileCOR(fileName, fileDir); // read in files
                 imageFile.readInfoImage();
             } catch (IOException error) {
                 tryAgain = true;
@@ -4483,7 +4483,7 @@ public class FileIO {
 
             try {
                 fileName = origName;
-                imageFile = new FileCOR(UI, fileName, fileDir); // read in files
+                imageFile = new FileCOR(fileName, fileDir); // read in files
                 imageFile.readInfoImage();
             } catch (IOException error) {
 
@@ -4542,7 +4542,7 @@ public class FileIO {
         image.setFileInfo(myFileInfo, 0);
 
         try {
-            imageFile = new FileCOR(UI, fileList[0], fileDir);
+            imageFile = new FileCOR(fileList[0], fileDir);
         } catch (IOException error) {
 
 
@@ -4648,7 +4648,7 @@ public class FileIO {
         FileDM3 imageFile;
 
         try {
-            imageFile = new FileDM3(UI, fileName, fileDir);
+            imageFile = new FileDM3(fileName, fileDir);
             image = imageFile.readImage(one);
             // LUT      = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -4701,7 +4701,7 @@ public class FileIO {
         FileFits imageFile;
 
         try {
-            imageFile = new FileFits(UI, fileName, fileDir);
+            imageFile = new FileFits(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
             // LUT      = imageFile.getModelLUT();
@@ -5225,7 +5225,7 @@ public class FileIO {
         FileICS imageFile;
 
         try {
-            imageFile = new FileICS(UI, fileName, fileDir);
+            imageFile = new FileICS(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
@@ -5279,7 +5279,7 @@ public class FileIO {
         FileInterfile imageFile;
 
         try {
-            imageFile = new FileInterfile(UI, fileName, fileDir);
+            imageFile = new FileInterfile(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
             // LUT      = imageFile.getModelLUT();
@@ -5520,7 +5520,7 @@ public class FileIO {
         FileLSM imageFile;
 
         try {
-            imageFile = new FileLSM(UI, fileName, fileDir, secondAddress);
+            imageFile = new FileLSM(fileName, fileDir, secondAddress);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
@@ -5596,7 +5596,7 @@ public class FileIO {
                 return readLSM(fileName, fileDir, 0, false);
             }
 
-            imageFile = new FileLSM(UI, fileName, fileDir, secondAddress); // read in files
+            imageFile = new FileLSM(fileName, fileDir, secondAddress); // read in files
             imageFile.setFileName(fileList[0]);
             imageFile.readImage(true, false);
         } catch (IOException error) {
@@ -5693,7 +5693,7 @@ public class FileIO {
         image.setFileInfo(myFileInfo, 0);
 
         try {
-            imageFile = new FileLSM(UI, fileList[0], fileDir, secondAddress);
+            imageFile = new FileLSM(fileList[0], fileDir, secondAddress);
         } catch (IOException error) {
 
 
@@ -6151,7 +6151,7 @@ public class FileIO {
         }
 
         try {
-            imageFile = new FileMap(UI, fileName, fileDir, fileInfo, FileBase.READ);
+            imageFile = new FileMap(fileName, fileDir, fileInfo, FileBase.READ);
             createProgressBar(imageFile, fileName, FILE_READ);
             imageFile.readImage(image, mapIODialog.getOffset());
         } catch (IOException error) {
@@ -6201,7 +6201,7 @@ public class FileIO {
         FileMedVision imageFile;
 
         try {
-            imageFile = new FileMedVision(UI, fileName, fileDir);
+            imageFile = new FileMedVision(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
         } catch (IOException error) {
@@ -6254,7 +6254,7 @@ public class FileIO {
         FileMGH imageFile;
 
         try {
-            imageFile = new FileMGH(UI, fileName, fileDir);
+            imageFile = new FileMGH(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
         } catch (IOException error) {
@@ -6307,7 +6307,7 @@ public class FileIO {
         FileInfoMicroCat fileInfoMicro;
 
         try {
-            imageFile = new FileMicroCat(UI, fileName, fileDir);
+            imageFile = new FileMicroCat(fileName, fileDir);
 
             if (fileName.endsWith(".ct")) {
                 int i;
@@ -6448,7 +6448,7 @@ public class FileIO {
         FileMRC imageFile;
 
         try {
-            imageFile = new FileMRC(UI, fileName, fileDir);
+            imageFile = new FileMRC(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
@@ -6502,7 +6502,7 @@ public class FileIO {
         FileNIFTI imageFile;
 
         try {
-            imageFile = new FileNIFTI(UI, fileName, fileDir);
+            imageFile = new FileNIFTI(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
         } catch (IOException error) {
@@ -6598,7 +6598,7 @@ public class FileIO {
         // if one of the images has the wrong extents, the following must be changed.
         // (ei., too many images!)
         // for simplicity of setup, read in the first file hdr
-        imageFile = new FileNIFTI(UI, fileList[0], fileDir);
+        imageFile = new FileNIFTI(fileList[0], fileDir);
 
         try {
 
@@ -6650,7 +6650,7 @@ public class FileIO {
             try {
                 progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
-                imageFile = new FileNIFTI(UI, fileList[i], fileDir);
+                imageFile = new FileNIFTI(fileList[i], fileDir);
 
                 if (!((FileNIFTI) imageFile).readHeader(fileList[i], fileDir)) {
                     throw (new IOException(" NIFTI header file error"));
@@ -6837,7 +6837,7 @@ public class FileIO {
         FileNRRD imageFile;
 
         try {
-            imageFile = new FileNRRD(UI, fileName, fileDir);
+            imageFile = new FileNRRD(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
         } catch (IOException error) {
@@ -7135,7 +7135,7 @@ public class FileIO {
         FileOSM imageFile;
 
         try {
-            imageFile = new FileOSM(UI, fileName, fileDir);
+            imageFile = new FileOSM(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
@@ -7537,7 +7537,7 @@ public class FileIO {
         FileSPM imageFile;
 
         try {
-            imageFile = new FileSPM(UI, fileName, fileDir);
+            imageFile = new FileSPM(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
         } catch (IOException error) {
@@ -7589,7 +7589,7 @@ public class FileIO {
         FileSTK imageFile;
 
         try {
-            imageFile = new FileSTK(UI, fileName, fileDir);
+            imageFile = new FileSTK(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
@@ -7884,7 +7884,7 @@ public class FileIO {
         FileTMG imageFile;
 
         try {
-            imageFile = new FileTMG(UI, fileName, fileDir);
+            imageFile = new FileTMG(fileName, fileDir);
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
@@ -7941,7 +7941,7 @@ public class FileIO {
 
 
         try {
-            imageFile = new FileImageXML(UI, fileName, fileDir);
+            imageFile = new FileImageXML(fileName, fileDir);
 
             if (!(fileName.equals("splash.xml") || (one == true))) {
                 createProgressBar(imageFile, fileName, FILE_READ);
@@ -8044,7 +8044,7 @@ public class FileIO {
         // for simplicity of setup, read in the first file hdr
         float[][] res = null;
 
-        imageFile = new FileImageXML(UI, fileList[0], fileDir);
+        imageFile = new FileImageXML(fileList[0], fileDir);
 
         try {
             TalairachTransformInfo talairach = new TalairachTransformInfo();
@@ -8400,7 +8400,7 @@ public class FileIO {
             boolean loadB = false;
             boolean doRead = false;
 
-            afniFile = new FileAfni(UI, options.getFileName(), options.getFileDirectory(), loadB, doRead);
+            afniFile = new FileAfni(options.getFileName(), options.getFileDirectory(), loadB, doRead);
             afniFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -8436,7 +8436,7 @@ public class FileIO {
             FileImageXML xmlFile;
 
             try {
-                xmlFile = new FileImageXML(UI, options.getFileName(), options.getFileDirectory());
+                xmlFile = new FileImageXML(options.getFileName(), options.getFileDirectory());
 
                 String fBase, fName = options.getFileName();
                 int index = fName.lastIndexOf(".");
@@ -8504,7 +8504,7 @@ public class FileIO {
         FileAvi aviFile = null;
 
         try {
-            aviFile = new FileAvi(UI, fileName, options.getFileDirectory());
+            aviFile = new FileAvi(fileName, options.getFileDirectory());
 
             if (fileName.endsWith(".mov") || fileName.endsWith(".MOV")) {
                 aviFile.setWriteQT(true);
@@ -8601,7 +8601,7 @@ public class FileIO {
                 return false;
             }
 
-            corFile = new FileCOR(UI, options.getFileName(), options.getFileDirectory());
+            corFile = new FileCOR(options.getFileName(), options.getFileDirectory());
             corFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9030,7 +9030,7 @@ public class FileIO {
         FileFits fitsFile;
 
         try { // Construct a new file object
-            fitsFile = new FileFits(UI, options.getFileName(), options.getFileDirectory());
+            fitsFile = new FileFits(options.getFileName(), options.getFileDirectory());
             createProgressBar(fitsFile, options.getFileName(), FILE_WRITE);
             fitsFile.writeImage(image, options);
         } catch (IOException error) {
@@ -9065,7 +9065,7 @@ public class FileIO {
 
         try { // Construct a new file object
 
-            ICSFile = new FileICS(UI, options.getFileName(), options.getFileDirectory());
+            ICSFile = new FileICS(options.getFileName(), options.getFileDirectory());
             createProgressBar(ICSFile, options.getFileName(), FILE_WRITE);
             ICSFile.writeImage(image, options);
         } catch (IOException error) {
@@ -9099,7 +9099,7 @@ public class FileIO {
         FileInterfile interfileFile;
 
         try { // Construct a new file object
-            interfileFile = new FileInterfile(UI, options.getFileName(), options.getFileDirectory());
+            interfileFile = new FileInterfile(options.getFileName(), options.getFileDirectory());
             createProgressBar(interfileFile, options.getFileName(), FILE_WRITE);
             interfileFile.writeImage(image, options);
         } catch (IOException error) {
@@ -9182,7 +9182,7 @@ public class FileIO {
         FileMGH mghFile;
 
         try { // Construct a new file object
-            mghFile = new FileMGH(UI, options.getFileName(), options.getFileDirectory());
+            mghFile = new FileMGH(options.getFileName(), options.getFileDirectory());
             createProgressBar(mghFile, options.getFileName(), FILE_WRITE);
             mghFile.writeImage(image, options);
         } catch (IOException error) {
@@ -9279,7 +9279,7 @@ public class FileIO {
         FileMRC mrcFile;
 
         try { // Construct a new file object
-            mrcFile = new FileMRC(UI, options.getFileName(), options.getFileDirectory());
+            mrcFile = new FileMRC(options.getFileName(), options.getFileDirectory());
             createProgressBar(mrcFile, options.getFileName(), FILE_WRITE);
             mrcFile.writeImage(image, options);
         } catch (IOException error) {
@@ -9313,7 +9313,7 @@ public class FileIO {
         FileNIFTI NIFTIFile;
 
         try { // Construct a new file object
-            NIFTIFile = new FileNIFTI(UI, options.getFileName(), options.getFileDirectory());
+            NIFTIFile = new FileNIFTI(options.getFileName(), options.getFileDirectory());
             createProgressBar(NIFTIFile, options.getFileName(), FILE_WRITE);
             NIFTIFile.writeImage(image, options);
         } catch (IOException error) {
@@ -9347,7 +9347,7 @@ public class FileIO {
         FileOSM osmFile;
 
         try { // Construct a new file object
-            osmFile = new FileOSM(UI, options.getFileName(), options.getFileDirectory());
+            osmFile = new FileOSM(options.getFileName(), options.getFileDirectory());
             createProgressBar(osmFile, options.getFileName(), FILE_READ);
             osmFile.writeImage(image, options);
         } catch (IOException error) {
@@ -9417,7 +9417,7 @@ public class FileIO {
         FileSPM spmFile;
 
         try { // Construct a new file object
-            spmFile = new FileSPM(UI, options.getFileName(), options.getFileDirectory());
+            spmFile = new FileSPM(options.getFileName(), options.getFileDirectory());
             createProgressBar(spmFile, options.getFileName(), FILE_WRITE);
             spmFile.writeImage(image, options);
         } catch (IOException error) {
@@ -9494,7 +9494,7 @@ public class FileIO {
         FileImageXML xmlFile;
 
         try {
-            xmlFile = new FileImageXML(UI, options.getFileName(), options.getFileDirectory());
+            xmlFile = new FileImageXML(options.getFileName(), options.getFileDirectory());
             createProgressBar(xmlFile, options.getFileName(), FILE_WRITE);
 
             /**

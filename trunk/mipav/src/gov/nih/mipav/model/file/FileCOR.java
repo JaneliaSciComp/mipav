@@ -3,10 +3,6 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
-import java.awt.*;
-
 import java.io.*;
 
 
@@ -69,23 +65,18 @@ public class FileCOR extends FileBase {
     /** DOCUMENT ME! */
     private int[] orient = new int[3];
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * COR reader/writer constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileCOR(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
+    public FileCOR(String fileName, String fileDir) throws IOException {
 
-        UI = _UI;
         this.fileName = fileName;
         this.fileDir = fileDir;
     }
@@ -537,7 +528,7 @@ public class FileCOR extends FileBase {
 
         lastHyphen = fileName.lastIndexOf("-");
         fileBase = fileName.substring(0, lastHyphen + 1);
-      
+
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
             sEnd = options.getEndSlice();
@@ -942,7 +933,7 @@ public class FileCOR extends FileBase {
             raFile.close();
         }
 
-        
+
     }
 
     /**

@@ -67,9 +67,6 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
     private JTextField textMipPlaneWidth, textMipPlaneHeight, textMipStepSize;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private JRadioButton viewMipImage, viewAccumulatorImage;
 
     /** DOCUMENT ME! */
@@ -94,7 +91,7 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
         }
 
         srcImage = im;
-        userInterface = ViewUserInterface.getReference();
+
         init();
     } // end JDialogVSMIP(...)
 
@@ -441,31 +438,31 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
      * public void algorithmPerformed(AlgorithmBase algorithm) { if (algorithm instanceof AlgorithmVSMIP) {   if
      * (vsMIPAlgo.isCompleted() == true) {
      *
-     *   if (viewMIP) {       float[] mipBuffer;       int mipLength;       try {         mipLength =
+     * if (viewMIP) {       float[] mipBuffer;       int mipLength;       try {         mipLength =
      * mipImage.getSliceSize();         mipBuffer = new float[mipLength];         mipImage.exportData(0, mipLength,
      * mipBuffer);       } catch (IOException error) {         mipBuffer = null;
      * MipavUtil.displayError("AlgorithmVSMIP::run()  could NOT export source image");         return;       } catch
      * (OutOfMemoryError e){         mipBuffer = null;         MipavUtil.displayError("AlgorithmVSMIP::run()  Out of
      * memory when creating image buffer");         return;       } // end try{}-catch{}-catch{}
      *
-     *     // make the mip image       for(int i = 0; i < mipLength; i++) {         mipBuffer[i] = mipInfo[i].intensity;
-     *       }
+     *  // make the mip image       for(int i = 0; i < mipLength; i++) {         mipBuffer[i] = mipInfo[i].intensity;
+     *   }
      *
      *
-     *     try { mipImage.importData(0, mipBuffer, true);  }       catch (IOException error) {         mipBuffer = null;
-     *         MipavUtil.displayError("AlgorithmVSMIP::run()  Could NOT import destBuffer to the image");
-     * return;       } // end try{}-catch{}
+     *  try { mipImage.importData(0, mipBuffer, true);  }       catch (IOException error) {         mipBuffer = null;
+     *     MipavUtil.displayError("AlgorithmVSMIP::run()  Could NOT import destBuffer to the image"); return;       } //
+     * end try{}-catch{}
      *
      *
-     *     try {         mipFrame = new ViewJFrameImage(mipImage, null,                                      new
+     *  try {         mipFrame = new ViewJFrameImage(mipImage, null,                                      new
      * Dimension(610, 200),                                        userInterface);       } catch (OutOfMemoryError
      * error) {         System.gc();         MipavUtil.displayError("Out of memory: unable to open new frame");       }
-     *    } // end if(viewMIP)     if (accumulatorFrame == null && viewAccumulator) {       try {
-     * accumulatorFrame = new ViewJFrameImage(resultImage, null,                                         new
-     * Dimension(610, 200),                                         userInterface);       } catch (OutOfMemoryError
-     * error) {         System.gc();         MipavUtil.displayError("Out of memory: unable to open new frame");       }
-     *    } else if (accumulatorFrame != null) {       accumulatorFrame.updateImages(true);     }   } // end if
-     * (vsMIPAlgo.isCompleted() ...) } // end if (algorithm ...) } // end algorithmPerformed(...)
+     *  } // end if(viewMIP)     if (accumulatorFrame == null && viewAccumulator) {       try { accumulatorFrame = new
+     * ViewJFrameImage(resultImage, null,                                         new Dimension(610, 200),
+     *                           userInterface);       } catch (OutOfMemoryError error) {         System.gc();
+     * MipavUtil.displayError("Out of memory: unable to open new frame");       }   } else if (accumulatorFrame != null)
+     * {       accumulatorFrame.updateImages(true);     }   } // end if (vsMIPAlgo.isCompleted() ...) } // end if
+     * (algorithm ...) } // end algorithmPerformed(...)
      */
 
     /*
@@ -473,13 +470,13 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
      * instanceof AlgorithmVSMIP) {     image.clearMask();     if (vsMIPAlgo.isCompleted() == true && resultImage !=
      * null) {       //The algorithm has completed and produced a new image to be displayed.
      *
-     *     // updateFileInfo fails if the resultImage has a different number of dimensions than image       if
+     *  // updateFileInfo fails if the resultImage has a different number of dimensions than image       if
      * (image.getNDims() == resultImage.getNDims()) {         updateFileInfo(image, resultImage);       }
      * resultImage.clearMask();       try {         //resultImage.setImageName("Median: "+image.getImageName());
      * imageFrame = new ViewJFrameImage(resultImage, null,                                         new Dimension(610,
      * 200),                                         userInterface);       }       catch (OutOfMemoryError error) {
-     *    System.gc();         MipavUtil.displayError("Out of memory: unable to open new frame");       }     } // end
-     * if (vsMIPAlgo.isCompleted() ...)   } // end if (algorithm ...) } // end algorithmPerformed(...)
+     * System.gc();         MipavUtil.displayError("Out of memory: unable to open new frame");       }     } // end if
+     * (vsMIPAlgo.isCompleted() ...)   } // end if (algorithm ...) } // end algorithmPerformed(...)
      */
 
 

@@ -1007,7 +1007,6 @@ public class FileAfni extends FileBase {
     /**
      * Afni reader constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      * @param      loadB     flag indicating if this is a B image
@@ -1015,13 +1014,13 @@ public class FileAfni extends FileBase {
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileAfni(ViewUserInterface _UI, String fileName, String fileDir, boolean loadB, boolean doRead)
+    public FileAfni(String fileName, String fileDir, boolean loadB, boolean doRead)
             throws IOException {
         int s, t;
         String viewString;
         String suffix;
 
-        UI = _UI;
+        UI = ViewUserInterface.getReference();
         this.fileName = fileName;
         originalFileName = fileName;
         this.fileDir = fileDir;

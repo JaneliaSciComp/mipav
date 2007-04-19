@@ -79,9 +79,6 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private JTextField textNumber;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -98,7 +95,6 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
     public JDialogPrincipalComponents(Frame theParentFrame, ModelImage image) {
         super(theParentFrame, true);
         srcImage = image;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -386,7 +382,6 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
      */
     protected void setGUIFromParams() {
         srcImage = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = srcImage.getParentFrame();
 
         setDoFilter(scriptParameters.getParams().getBoolean("do_filter"));

@@ -233,7 +233,8 @@ public class JPanelMouse extends JPanelRendererBase
      *   <li>Stop button - changes the mode to STOP_MODE and causes play(boolean, boolean) to return.</li>
      * </ul>
      *
-     * List buttons:<br>
+     * <p>List buttons:<br>
+     * </p>
      *
      * <ul>
      *   <li>Add current - brings up a dialog asking the user for a name for the view, then adds it to the list and the
@@ -243,7 +244,8 @@ public class JPanelMouse extends JPanelRendererBase
      *     views left in the list.</li>
      * </ul>
      *
-     * Menu events:<br>
+     * <p>Menu events:<br>
+     * </p>
      *
      * <ul>
      *   <li>Load mouse file - loads in an object file previously saved with the "Save mouse file" command. Displays the
@@ -1264,8 +1266,7 @@ public class JPanelMouse extends JPanelRendererBase
         }
 
         try {
-            recorderToAVI = new RecordMouse(subSample, frameRate,
-                                            new FileAvi(ViewUserInterface.getReference(), fileName, directory));
+            recorderToAVI = new RecordMouse(subSample, frameRate, new FileAvi(fileName, directory));
             recorderToAVI.start();
             recorderToAVI = null;
         } catch (OutOfMemoryError e) {

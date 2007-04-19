@@ -164,17 +164,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
             });
     }
 
-    /**
-     * builds and packs the frame. does <i>not</I> set it visible.
-     *
-     * <p>install the panels of source directory, destination directory, the checkbox for approving the
-     * translation-table file and the panel containing the ok and cancel buttons. Installs the checkbox panel.</p>
-     *
-     * @param  ui  DOCUMENT ME!
-     */
-    public JDialogVOIStatistics(ViewUserInterface ui) {
-        this(ui, ui.getActiveImageFrame().getComponentImage().getActiveImage().getVOIs());
-    }
 
     /**
      * builds and packs the frame. does <i>not</I> set it visible.
@@ -182,18 +171,17 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      * <p>install the panels of source directory, destination directory, the checkbox for approving the
      * translation-table file and the panel containing the ok and cancel buttons. Installs the checkbox panel.</p>
      *
-     * @param  ui       DOCUMENT ME!
      * @param  voiList  DOCUMENT ME!
      */
-    public JDialogVOIStatistics(ViewUserInterface ui, VOIVector voiList) {
-        super(ui.getMainFrame(), false);
-        
-        
+    public JDialogVOIStatistics(VOIVector voiList) {
+        super(ViewUserInterface.getReference().getMainFrame(), false);
+
+
         setTitle("Calculate Statistics on VOI groups");
         setJMenuBar(buildMenuEntries());
         buildToolBar();
-        this.userInterface = ui;
-        image = ui.getActiveImageFrame().getComponentImage().getActiveImage();
+        this.userInterface = ViewUserInterface.getReference();
+        image = ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage();
         xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
         yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
         zUnits = FileInfoBase.UNKNOWN_MEASURE;
@@ -213,7 +201,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         checkBoxPanel = new JPanelStatisticsList();
         outputOptionsPanel = new JPanelStatisticsOptions();
 
-        if (ui.getActiveImageFrame().getComponentImage().getActiveImage().getNDims() == 2) {
+        if (ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage().getNDims() ==
+                2) {
             outputOptionsPanel.setBySliceEnabled(false);
         }
 
@@ -300,6 +289,32 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         System.gc(); // to reclaim lost land.
     }
 
+
+    /**
+     * Refreshes the list of available and selected VOIs.
+     *
+     * @param  VOIlist  imageActive's current VOIVector
+     */
+    public void refreshVOIList(VOIVector VOIlist) {
+        selectedList.setListData(new Vector());
+
+        Vector volumesVector = new Vector();
+        highlighter = new VOIHighlighter();
+
+        for (int i = 0; i < VOIlist.size(); i++) {
+
+            if (VOIlist.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                volumesVector.add(VOIlist.elementAt(i));
+
+                // add a listener to each VOI so we know about selection.
+                VOIlist.VOIAt(i).addVOIListener(highlighter);
+            }
+        }
+
+        volumesList.setListData(volumesVector);
+
+    }
+
     /**
      * resets the volumes list to the current VOIVector. removes the highlighter from the removed VOI.
      *
@@ -345,30 +360,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      */
     public void vectorSelected(VOIVectorEvent voiEvent) { }
 
-    
-    /**
-     * Refreshes the list of available and selected VOIs
-     * @param VOIlist imageActive's current VOIVector
-     */
-    public void refreshVOIList(VOIVector VOIlist) {
-    	selectedList.setListData(new Vector());
-    	
-    	 Vector volumesVector = new Vector();
-         highlighter = new VOIHighlighter();
-
-         for (int i = 0; i < VOIlist.size(); i++) {
-
-             if (VOIlist.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                 volumesVector.add(VOIlist.elementAt(i));
-
-                 // add a listener to each VOI so we know about selection.
-                 VOIlist.VOIAt(i).addVOIListener(highlighter);
-             }
-         }
-
-         volumesList.setListData(volumesVector);
-    	
-    }
     /**
      * Once all the necessary variables are set, call the VOI Props algorithm to run the statistic calculation.
      */
@@ -378,7 +369,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         calculator.addListener(this);
 
         createProgressBar(image.getImageName(), calculator);
-        
+
         calculator.setVOIList(selectedList.getModel());
         calculator.setShowTotals(showTotals);
         // da.addTextUpdateListener(this);   // unimplemented -- meant to permit messaging between running thread and
@@ -494,6 +485,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
                                         logTotalData[count] = properties.getProperty(statisticDescription[k] + "Total");
                                     }
                                 }
+
                                 count++;
                             }
                         } // end for each column
@@ -575,6 +567,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
                 }
             }
         }
+
         writeStatisticFile();
     }
 
@@ -591,10 +584,11 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         VOIVector voiVec = image.getVOIs();
 
         if (voiVec.size() < 1) {
-        	this.dispose();
-        	return;
+            this.dispose();
+
+            return;
         }
-        
+
         for (int i = 0; i < voiVec.size(); i++) {
             voiVec.VOIAt(i).setAllActive(true);
         }
@@ -628,7 +622,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         checkList = scriptParameters.getParams().getList("stat_checklist").getAsBooleanArray();
 
         logFileText = new StringBuffer(createNewLogfile());
-        
+
         tableDestinationUsage = scriptParameters.getParams().getInt("output_writing_behavior");
         tableDestination = new File(image.getFileInfo(0).getFileDirectory() + File.separator + image.getImageName() +
                                     ".table");
@@ -1140,7 +1134,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         cancelButton.setEnabled(false);
         OKButton.setEnabled(false);
 
-        
 
         return true;
     }

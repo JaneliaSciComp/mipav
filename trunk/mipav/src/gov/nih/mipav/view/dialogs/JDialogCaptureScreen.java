@@ -87,11 +87,10 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
      * that we can draw on the frame to delineate a bounding box for a capture.
      *
      * @param  parent  Parent frame of this dialog.
-     * @param  UI      User interface, needed for saving TIFF image.
      */
-    public JDialogCaptureScreen(JFrame parent, ViewUserInterface UI) {
+    public JDialogCaptureScreen(JFrame parent) {
         super(parent, false);
-        userInterface = UI;
+        userInterface = ViewUserInterface.getReference();
         save = true;
         mode = NONE;
 

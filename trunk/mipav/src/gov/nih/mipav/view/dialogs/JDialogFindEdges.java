@@ -53,6 +53,12 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JRadioButton outerEdging;
 
+    /**
+     * Contains radio buttons used to indicate whether the whole image/just VOI regions should be processed, and whether
+     * a new image should be produced.
+     */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
@@ -61,11 +67,6 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
-    /**
-     * Contains radio buttons used to indicate whether the whole image/just VOI regions should be processed, and whether a new image should be produced.
-     */
-    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -73,6 +74,28 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
     public JDialogFindEdges() { }
+
+    /**
+     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
+     * up info and result image will be stored here.
+     *
+     * @param  im  Source image.
+     */
+    public JDialogFindEdges(ModelImage im) {
+        super();
+
+        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
+                (im.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        userInterface = ViewUserInterface.getReference();
+        image = im;
+        parentFrame = image.getParentFrame();
+    }
 
     /**
      * Creates new dialog to find edges.
@@ -94,29 +117,6 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogFindEdges(ViewUserInterface UI, ModelImage im) {
-        super();
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -151,6 +151,7 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -262,48 +263,6 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
-        
-        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("edging_type", edgingType));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) && (image.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-        
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        
-        setEdgingType(scriptParameters.getParams().getInt("edging_type"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Accessor that sets the Edging Type.
@@ -326,7 +285,7 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
             int[] destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
-            
+
             if (outputPanel.isOutputNewImageSet()) {
 
                 try {
@@ -350,7 +309,7 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                     findEdgesAlgo2D.addListener(this);
 
                     createProgressBar(image.getImageName(), findEdgesAlgo2D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -393,7 +352,7 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                     findEdgesAlgo2D.addListener(this);
 
                     createProgressBar(image.getImageName(), findEdgesAlgo2D);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -456,7 +415,7 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                     findEdgesAlgo3D.addListener(this);
 
                     createProgressBar(image.getImageName(), findEdgesAlgo3D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -498,7 +457,7 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                     findEdgesAlgo3D.addListener(this);
 
                     createProgressBar(image.getImageName(), findEdgesAlgo2D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -535,6 +494,50 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
     }
 
     /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        setEdgingType(scriptParameters.getParams().getInt("edging_type"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("edging_type", edgingType));
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -568,12 +571,13 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
         edgingTypePanel.add(outerEdging, gbc);
         gbc.gridy = 1;
         edgingTypePanel.add(innerEdging, gbc);
-        
+
         outputPanel = new JPanelAlgorithmOutputOptions(image);
+
         if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
             outputPanel.setOutputNewImage(true);
         }
-        
+
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -585,7 +589,7 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(outputPanel, gbc);
-        
+
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);

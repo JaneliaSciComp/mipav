@@ -117,10 +117,6 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-    // private     int zSlice; // to be deleted
-
-    /** DOCUMENT ME! */
     private Color voiColor;
 
     /** DOCUMENT ME! */
@@ -136,7 +132,6 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
      */
     public JDialogGVF(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        userInterface = ViewUserInterface.getReference();
 
         VOIs = im.getVOIs();
 
@@ -309,7 +304,7 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                     gvfAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), gvfAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -324,7 +319,8 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                         titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                                                                                          (imageFrames.elementAt(i)));
                     }
 
                     if (isRunInSeparateThread()) {
@@ -392,7 +388,7 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                     gvfAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), gvfAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -407,7 +403,8 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                         titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                         ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                                                                                          (imageFrames.elementAt(i)));
                     }
 
                     if (isRunInSeparateThread()) {

@@ -107,23 +107,15 @@ public class FileSPM extends FileBase {
     /** DOCUMENT ME! */
     private ModelImage image;
 
-    /** DOCUMENT ME! */
-
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructs new file object.
      *
-     * @param  _UI    User interface.
      * @param  fName  File name.
      * @param  fDir   File directory.
      */
-    public FileSPM(ViewUserInterface _UI, String fName, String fDir) {
-        UI = _UI;
+    public FileSPM(String fName, String fDir) {
         fileName = fName;
         fileDir = fDir;
     }

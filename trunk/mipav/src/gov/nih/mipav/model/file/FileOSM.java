@@ -80,23 +80,18 @@ public class FileOSM extends FileBase {
     /** DOCUMENT ME! */
     private ViewJProgressBar progressBar = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * OSM reader/writer constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileOSM(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
+    public FileOSM(String fileName, String fileDir) throws IOException {
 
-        UI = _UI;
         this.fileName = fileName;
         this.fileDir = fileDir;
     }

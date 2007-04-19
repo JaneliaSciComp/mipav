@@ -1,7 +1,7 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 
 import java.awt.*;
@@ -25,8 +25,9 @@ import javax.swing.event.*;
  *   <li>in line-graph providing history information.</li>
  * </ul>
  *
- * The memory usage is sampled at a rate which is user-specified. The frame will allow the user to adjust how frequently
- * the memory size will be sampled. For efficiency, no sampling will occur if the frame has been minimized.
+ * <p>The memory usage is sampled at a rate which is user-specified. The frame will allow the user to adjust how
+ * frequently the memory size will be sampled. For efficiency, no sampling will occur if the frame has been minimized.
+ * </p>
  *
  * <p>The memory frame provides direct user access to the function Runtime.getRuntime.gc() via a "Garbage Collector"
  * button.</p>
@@ -71,9 +72,6 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
     /** DOCUMENT ME! */
     private JLabel total;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     /** test notification of memory used. */
     private JLabel used;
 
@@ -81,12 +79,10 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
 
     /**
      * Constructor.
-     *
-     * @param  _UI  DOCUMENT ME!
      */
-    public ViewJFrameMemory(ViewUserInterface _UI) {
+    public ViewJFrameMemory() {
         super();
-        UI = _UI;
+
         setTitle("Memory Monitor");
 
         try {
@@ -321,6 +317,7 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
         } else if (source == sampleRate) { }
         else if (source == callGCbutton) { // call the garbage collector
             Runtime.getRuntime().gc();
+
             // Runtime.getRuntime().runFinalization();
             if (paused) {
                 surf.stop(); // should update the display & memory values

@@ -480,7 +480,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         gbcTP.weighty = 100;
         topPanel.add(statusPanel, gbcTP);
         getContentPane().add(topPanel, "North");
-        buildScrollPane(userInterface);
+        buildScrollPane();
 
         componentImage.setPosition(originalX, originalY);
 
@@ -575,7 +575,7 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
                 JDialogHistogramLUT histogramDialog = null;
 
                 try {
-                    histogramDialog = new JDialogHistogramLUT(this, destImage, null, LUTdest, null, userInterface);
+                    histogramDialog = new JDialogHistogramLUT(this, destImage, null, LUTdest, null);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                 }
@@ -651,8 +651,9 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         removeComponentListener(this);
 
         width = (int) Math.round(Math.max(getSize().width - (2 * getInsets().left), minimumToolBarWidth));
-        height = (int) Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom,
-                                           minimumHeight));
+        height = (int)
+                     Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom,
+                                         minimumHeight));
 
         scrollPane.setSize(width, height);
         scrollPane.setPreferredSize(new Dimension(width, height));
@@ -1438,10 +1439,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
     /**
      * Make a scroll frame and puts an image component into it.
-     *
-     * @param  ui  main user interface frame
      */
-    private void buildScrollPane(ViewUserInterface ui) {
+    private void buildScrollPane() {
 
         try {
             innerPanel = new JPanel();
@@ -1718,13 +1717,12 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
          * labelLineFunction = new JLabel("Green = " + slope + "*red - " +                         Math.abs(offset)); }
          * } else if ((useRed) && (useBlue)) { if (offset >= 0) {     labelLineFunction = new JLabel("Blue = " + slope +
          * "*red + " + offset); } else {     labelLineFunction = new JLabel("Blue = " + slope + "*red - " +
-         *            Math.abs(offset)); } } else if ((useGreen) && (useBlue)) { if (offset >= 0) {
-         * labelLineFunction = new JLabel("Blue = " + slope + "*green + "     + offset); } else {     labelLineFunction
-         * = new JLabel("Blue = " + slope + "*green - " +     Math.abs(offset)); } } else { if (offset >= 0) {
-         * labelLineFunction = new JLabel(imageB.getImageName() + " = " + slope +                             "*" +
-         * imageA.getImageName() + " + " + offset); } else {     labelLineFunction = new JLabel(imageB.getImageName() +
-         * " = " + slope +                             "*" + imageA.getImageName() + " - " +
-         * Math.abs(offset)); } } labelLineFunction.setForeground(Color.black);
+         * Math.abs(offset)); } } else if ((useGreen) && (useBlue)) { if (offset >= 0) { labelLineFunction = new
+         * JLabel("Blue = " + slope + "*green + "     + offset); } else {     labelLineFunction = new JLabel("Blue = " +
+         * slope + "*green - " +     Math.abs(offset)); } } else { if (offset >= 0) { labelLineFunction = new
+         * JLabel(imageB.getImageName() + " = " + slope +                             "*" + imageA.getImageName() + " +
+         * " + offset); } else {     labelLineFunction = new JLabel(imageB.getImageName() + " = " + slope + "*" +
+         * imageA.getImageName() + " - " + Math.abs(offset)); } } labelLineFunction.setForeground(Color.black);
          * labelLineFunction.setFont(MipavUtil.font12); labelLineFunction.setEnabled(true);
          * addStatusPanel(labelLineFunction, cpGBC, 0, 0, 3, 1);
          */

@@ -40,9 +40,6 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
     private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private int xDim;
 
     /** DOCUMENT ME! */
@@ -63,6 +60,17 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Creates a new JDialogCircleToRectangle object.
+     *
+     * @param  image  DOCUMENT ME!
+     */
+    public JDialogCircleToRectangle(ModelImage image) {
+        super();
+        this.image = image;
+        parentFrame = image.getParentFrame();
+    }
+
+    /**
      * Creates new dialog.
      *
      * @param  theParentFrame  Parent frame
@@ -72,19 +80,6 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
         super(theParentFrame, false);
         image = im;
         init();
-    }
-
-    /**
-     * Creates a new JDialogCircleToRectangle object.
-     *
-     * @param  UI     DOCUMENT ME!
-     * @param  image  DOCUMENT ME!
-     */
-    public JDialogCircleToRectangle(ViewUserInterface UI, ModelImage image) {
-        super();
-        this.UI = UI;
-        this.image = image;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

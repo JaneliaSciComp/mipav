@@ -182,6 +182,19 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
      */
     public JDialogFrequencyFilter() { }
 
+    /**
+     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
+     * up info and result image will be stored here.
+     *
+     * @param  im  Source image.
+     */
+    public JDialogFrequencyFilter(ModelImage im) {
+        super();
+        userInterface = ViewUserInterface.getReference();
+        image = im;
+        parentFrame = image.getParentFrame();
+    }
+
     // or if the source image is to be replaced
     /**
      * Creates a new JDialogFrequencyFilter object.
@@ -194,20 +207,6 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogFrequencyFilter(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -258,7 +257,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (source == helpButton) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         }
     }
 

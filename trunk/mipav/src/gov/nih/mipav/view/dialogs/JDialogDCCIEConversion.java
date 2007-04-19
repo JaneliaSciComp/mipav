@@ -88,12 +88,10 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
 
     /**
      * Constructor for running the DICOM to AVI algorithm.
-     *
-     * @param  ui  User Interface
      */
-    public JDialogDCCIEConversion(ViewUserInterface ui) {
+    public JDialogDCCIEConversion() {
         super(false);
-        this.userInterface = ui;
+        this.userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -187,8 +185,8 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
         Preferences.debug("Using AVI output directory: " + aviField.getText() + "\n");
         Preferences.debug("Using " + (String) compressionBox.getSelectedItem() + " compression" + "\n");
 
-        AlgorithmDCCIEConversion algoConvert = new AlgorithmDCCIEConversion(userInterface, dirField.getText(),
-                                                                            aviField.getText(), compression,
+        AlgorithmDCCIEConversion algoConvert = new AlgorithmDCCIEConversion(dirField.getText(), aviField.getText(),
+                                                                            compression,
                                                                             ((String) inputBox.getSelectedItem())
                                                                                 .equals("DICOM"));
 
@@ -202,7 +200,7 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
         algoConvert.addListener(this);
 
         createProgressBar(dirField.getText(), algoConvert);
-        
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -210,7 +208,7 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-           
+
             algoConvert.run();
         }
 

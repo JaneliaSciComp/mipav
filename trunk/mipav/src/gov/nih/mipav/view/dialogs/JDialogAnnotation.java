@@ -4,12 +4,13 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
-import gov.nih.mipav.view.components.*;
+
 
 /**
  * Dialog for creating new/editing existing on-screen annotations. This allows writing text and choosing the font style,
@@ -30,6 +31,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** The image that contains the VOI text. */
     private ModelImage activeImage;
 
+    /** button to bring up the background color chooser. */
+    private JButton backgroundColorButton;
+
     /** checkbox for bold style. */
     private JCheckBox boldBox;
 
@@ -39,9 +43,6 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** button to bring up color chooser. */
     private JButton colorButton;
 
-    /** button to bring up the background color chooser */
-    private JButton backgroundColorButton;
-    
     /** color chooser to select text color. */
     private ViewJColorChooser colorChooser;
 
@@ -60,8 +61,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** combobox to hold the names of all available fonts. */
     private JComboBox fontTypeBox;
 
-    private JCheckBox useMarkerBox;
-    
+    /** toggle between background and text color changing. */
+    private boolean isBackground = false;
+
     /** whether this is an existing or new VOIText (isRegistered = existing). */
     private boolean isRegistered;
 
@@ -83,12 +85,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** the VOI that contains the VOIText. */
     private VOI textVOI;
 
-    /** the user interface. */
-    private ViewUserInterface userInterface;
+    /** DOCUMENT ME! */
+    private JCheckBox useMarkerBox;
 
-    /** toggle between background and text color changing*/
-    private boolean isBackground = false;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -110,10 +109,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         this.slice = slice;
         this.isRegistered = isRegistered;
-        userInterface = ViewUserInterface.getReference();
         init("Annotation");
-
-
         setVisible(true);
         setResizable(false);
     }
@@ -149,18 +145,20 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
                 }
             }
         } else if (command.equals("ChooseColor")) {
-        	isBackground = false;
+            isBackground = false;
+
             // open up a color chooser dialog
             colorChooser = new ViewJColorChooser(this.parentFrame, "Pick text color", new OkColorListener(),
                                                  new CancelListener());
 
         } else if (command.equals("ChooseBackgroundColor")) {
-        	isBackground = true;
+            isBackground = true;
+
             // open up a color chooser dialog
             colorChooser = new ViewJColorChooser(this.parentFrame, "Pick background color", new OkColorListener(),
                                                  new CancelListener());
 
-        }else if (command.equals("Cancel")) {
+        } else if (command.equals("Cancel")) {
             windowClosing(null);
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("102572");
@@ -192,8 +190,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         } else if (event.getSource() == fontTypeBox) {
             textField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
                                        Integer.parseInt(fontSizeField.getText())));
-        } 
-        
+        }
+
         pack();
     }
 
@@ -284,9 +282,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         backgroundColorButton.setActionCommand("ChooseBackgroundColor");
         backgroundColorButton.setSize(24, 24);
         backgroundColorButton.setMaximumSize(new Dimension(24, 24));
-        
+
         textField.setBackground(vt.getBackgroundColor());
-        
+
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
@@ -321,10 +319,10 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         gbc.gridwidth = 1;
         gbc.weightx = 0;
         fontPanel.add(colorButton, gbc);
-        
+
         gbc.gridx = 7;
         fontPanel.add(backgroundColorButton, gbc);
-        
+
         fontPanel.setBorder(buildTitledBorder("Font options"));
 
         return fontPanel;
@@ -344,7 +342,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         buttonPanel = this.buildButtons();
 
         textField = new JTextField(30);
-        
+
         scrollPane = new JScrollPane(textField, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
@@ -363,14 +361,14 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         JPanel markerPanel = new JPanel();
         markerPanel.setBorder(buildTitledBorder("Marker options"));
-        
+
         useMarkerBox = WidgetFactory.buildCheckBox("Use arrow marker", false, this);
-          
+
         markerPanel.add(useMarkerBox);
-        
+
         boolean useMarker = vt.useMarker();
         useMarkerBox.setSelected(useMarker);
-        
+
         mainDialogPanel.setLayout(layout);
 
         JPanel centerPanel = new JPanel(new BorderLayout());
@@ -406,12 +404,13 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             vt.setColor(colorButton.getForeground());
             textVOI.setColor(colorButton.getForeground());
             vt.setBackgroundColor(backgroundColorButton.getForeground());
-            
+
             Preferences.setProperty("VOITextColor", MipavUtil.makeColorString(colorButton.getForeground()));
-            Preferences.setProperty("VOITextBackgroundColor", MipavUtil.makeColorString(backgroundColorButton.getForeground()));
-            
+            Preferences.setProperty("VOITextBackgroundColor",
+                                    MipavUtil.makeColorString(backgroundColorButton.getForeground()));
+
             vt.setUseMarker(useMarkerBox.isSelected());
-            
+
         } catch (Exception ex) {
             return false;
         }
@@ -470,14 +469,15 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
          */
         public void actionPerformed(ActionEvent e) {
             Color color = colorChooser.getColor();
+
             if (isBackground) {
-            	backgroundColorButton.setForeground(color);
-            	backgroundColorButton.setBackground(color);
-            	textField.setBackground(color);
+                backgroundColorButton.setForeground(color);
+                backgroundColorButton.setBackground(color);
+                textField.setBackground(color);
             } else {
-            	colorButton.setForeground(color);
-            	colorButton.setBackground(color);
-            	textField.setForeground(color);
+                colorButton.setForeground(color);
+                colorButton.setBackground(color);
+                textField.setForeground(color);
             }
         }
     }

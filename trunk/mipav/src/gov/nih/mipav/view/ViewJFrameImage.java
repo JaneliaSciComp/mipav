@@ -478,9 +478,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("QueryDatabase")) {
 
             if (userInterface.getDICOMQueryFrame() == null) {
-                userInterface.setDICOMQueryFrame(new ViewJFrameDICOMQuery(userInterface));
+                userInterface.setDICOMQueryFrame(new ViewJFrameDICOMQuery());
             }
-            // ViewJFrameDICOMQuery DICOMQuery = new ViewJFrameDICOMQuery(userInterface);
+            // ViewJFrameDICOMQuery DICOMQuery = new ViewJFrameDICOMQuery();
         } else if (command.equals("AnonymizeDirectory")) {
             userInterface.buildAnonDirectoryDialog();
         } else if (command.equals("RecordScript") || command.equals("ToolbarScriptRecord")) {
@@ -773,13 +773,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Exit")) {
             userInterface.windowClosing(null);
         } else if (command.equals("dccieconvert")) {
-            new JDialogDCCIEConversion(userInterface);
+            new JDialogDCCIEConversion();
         } else if (command.equals("convertXML")) {
             ViewDirectoryChooser chooser = new ViewDirectoryChooser();
             String dir = chooser.getImageDirectory();
 
             if (dir != null) {
-                AlgorithmConvertOldXML algo = new AlgorithmConvertOldXML(userInterface, dir);
+                AlgorithmConvertOldXML algo = new AlgorithmConvertOldXML(dir);
 
                 algo.run();
             }
@@ -1053,9 +1053,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("avgIntensity")) {
             componentImage.getVOIHandler().graph25VOI_CalcInten(false, false, 0);
         } else if (command.equals("totalIntensityThreshold")) {
-            new JDialogIntensityThreshold(this, userInterface, componentImage, false);
+            new JDialogIntensityThreshold(this, componentImage, false);
         } else if (command.equals("avgIntensityThreshold")) {
-            new JDialogIntensityThreshold(this, userInterface, componentImage, true);
+            new JDialogIntensityThreshold(this, componentImage, true);
         } else if (command.equals("GroupVOIs")) {
 
             if (displayMode == IMAGE_A) {
@@ -2001,7 +2001,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("TransformNL")) {
             new JDialogTransformBSpline(this, getActiveImage());
         } else if (command.equals("Transform to power of 2")) {
-            new JDialogDirectResample(imageA, imageB, userInterface);
+            new JDialogDirectResample(imageA, imageB);
         } else if (command.equals("TransformNL")) {
             new JDialogTransformNL(this, getActiveImage());
         }
@@ -2353,7 +2353,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         try {
                             histogramDialog = new JDialogHistogramLUT(this, imageA, imageB, componentImage.getLUTa(),
-                                                                      componentImage.getLUTb(), userInterface);
+                                                                      componentImage.getLUTb());
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }
@@ -2361,7 +2361,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         try {
                             histogramDialog = new JDialogHistogramLUT(this, imageA, imageB, componentImage.getRGBTA(),
-                                                                      componentImage.getRGBTB(), userInterface);
+                                                                      componentImage.getRGBTB());
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }
@@ -2674,7 +2674,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
         } else if (command.equals("InstallPlugin")) {
-            JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(this, userInterface);
+            JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(this);
 
             instPlugin.setVisible(true);
 
@@ -2687,12 +2687,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.getMainFrame().pack();
 
         } else if (command.equals("CaptureTiff")) {
-            JDialogCaptureScreen screenCapture = new JDialogCaptureScreen(this, userInterface);
+            JDialogCaptureScreen screenCapture = new JDialogCaptureScreen(this);
 
             screenCapture.setVisible(true);
 
         } else if (command.equals("CaptureTiffs")) {
-            JDialogCaptureScreens screenCapture = new JDialogCaptureScreens(this, userInterface);
+            JDialogCaptureScreens screenCapture = new JDialogCaptureScreens(this);
 
             screenCapture.actionPerformed(new ActionEvent(this, 0, "Script"));
             screenCapture.dispose();

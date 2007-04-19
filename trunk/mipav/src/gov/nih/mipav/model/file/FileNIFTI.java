@@ -238,9 +238,6 @@ public class FileNIFTI extends FileBase {
     private float tOffset;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private float vox_offset = 0.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -248,12 +245,10 @@ public class FileNIFTI extends FileBase {
     /**
      * Constructs new file object.
      *
-     * @param  _UI    User interface.
      * @param  fName  File name.
      * @param  fDir   File directory.
      */
-    public FileNIFTI(ViewUserInterface _UI, String fName, String fDir) {
-        UI = _UI;
+    public FileNIFTI(String fName, String fDir) {
         fileName = fName;
         fileDir = fDir;
     }
@@ -1622,8 +1617,8 @@ public class FileNIFTI extends FileBase {
                  * if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){     origin[j] = -Math.abs(LPSOrigin[1]);      }
                  * else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {     origin[j] = Math.abs(LPSOrigin[1]); }
                  * else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){     origin[j] = -Math.abs(LPSOrigin[2]);
-                 *   } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {     origin[j] =
-                 * Math.abs(LPSOrigin[2]); } }
+                 * } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {     origin[j] = Math.abs(LPSOrigin[2]);
+                 * } }
                  *
                  *
                  * fileInfo.setOrigin(origin); matrix.setMatrix((double) origin[0], 0, 3); matrix.setMatrix((double)
@@ -2194,9 +2189,9 @@ public class FileNIFTI extends FileBase {
          *kcod = NIFTI_I2S   (k axis is mostly Inferior to Superior)
        </pre>
      *
-     * \see "QUATERNION REPRESENTATION OF ROTATION MATRIX" in nifti1.h \see nifti_quatern_to_mat44,
+     * <p>\see "QUATERNION REPRESENTATION OF ROTATION MATRIX" in nifti1.h \see nifti_quatern_to_mat44,
      * nifti_mat44_to_quatern, nifti_make_orthog_mat44
-     * -------------------------------------------------------------------------
+     * -------------------------------------------------------------------------</p>
      *
      * @param   mat  DOCUMENT ME!
      *

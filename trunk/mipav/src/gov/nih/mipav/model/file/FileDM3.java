@@ -176,9 +176,6 @@ public class FileDM3 extends FileBase {
     private int sourceType = ModelStorageBase.USHORT;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private int unitsIndex = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -186,15 +183,13 @@ public class FileDM3 extends FileBase {
     /**
      * DM3 reader constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileDM3(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
+    public FileDM3(String fileName, String fileDir) throws IOException {
 
-        UI = _UI;
         this.fileName = fileName;
         this.fileDir = fileDir;
     }

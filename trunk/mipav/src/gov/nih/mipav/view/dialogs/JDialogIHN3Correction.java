@@ -132,9 +132,6 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
     private float threshold;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private boolean useScript = false;
 
     /** DOCUMENT ME! */
@@ -166,7 +163,6 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
             return;
         }
 
-        userInterface = ViewUserInterface.getReference();
         initVars();
         init();
     }
@@ -458,7 +454,6 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         setRegionFlag(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));

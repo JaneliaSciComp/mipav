@@ -192,15 +192,14 @@ public class FileAvi extends FileBase {
     /**
      * Avi reader/writer constructor.
      *
-     * @param      _UI       User interface reference.
      * @param      fileName  File name.
      * @param      fileDir   File directory.
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileAvi(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
+    public FileAvi(String fileName, String fileDir) throws IOException {
 
-        UI = _UI;
+        UI = ViewUserInterface.getReference();
         this.fileName = fileName;
         this.fileDir = fileDir;
     }

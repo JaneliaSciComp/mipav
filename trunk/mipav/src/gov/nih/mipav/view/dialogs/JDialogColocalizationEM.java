@@ -238,6 +238,18 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
      */
     public JDialogColocalizationEM() { }
 
+    /**
+     * Creates a new JDialogColocalizationEM object.
+     *
+     * @param  firstImage  DOCUMENT ME!
+     */
+    public JDialogColocalizationEM(ModelImage firstImage) {
+        super();
+        this.UI = ViewUserInterface.getReference();
+        this.firstImage = firstImage;
+        parentFrame = firstImage.getParentFrame();
+    }
+
 
     /**
      * Creates new dialog.
@@ -249,19 +261,6 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
         super(theParentFrame, true);
         firstImage = im;
         init();
-    }
-
-    /**
-     * Creates a new JDialogColocalizationEM object.
-     *
-     * @param  UI          DOCUMENT ME!
-     * @param  firstImage  DOCUMENT ME!
-     */
-    public JDialogColocalizationEM(ViewUserInterface UI, ModelImage firstImage) {
-        super();
-        this.UI = UI;
-        this.firstImage = firstImage;
-        parentFrame = firstImage.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

@@ -74,9 +74,6 @@ public class JDialogOverlay extends JDialogBase {
     /** DOCUMENT ME! */
     private JDialogChooseOverlay tagDialog;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -90,7 +87,6 @@ public class JDialogOverlay extends JDialogBase {
         super(theParentFrame, false);
 
         this.isDicom = isDicom;
-        userInterface = ViewUserInterface.getReference();
         this.headerString = headerStr;
         init();
     }

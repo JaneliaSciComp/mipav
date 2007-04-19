@@ -66,9 +66,6 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
     /** DOCUMENT ME! */
     private ModelImage resultImage = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface = null;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -81,7 +78,6 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         super(frame, false);
 
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     } // end JDialogHessian(...)
 
@@ -195,7 +191,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
                 imgHessianAlgor.addListener(this);
 
                 createProgressBar(image.getImageName(), imgHessianAlgor);
-                
+
                 if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.

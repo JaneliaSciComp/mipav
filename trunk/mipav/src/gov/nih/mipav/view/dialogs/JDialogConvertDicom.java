@@ -83,12 +83,10 @@ public class JDialogConvertDicom extends JDialogBase implements AlgorithmInterfa
 
     /**
      * Constructor for running the DICOM to AVI algorithm.
-     *
-     * @param  ui  User Interface
      */
-    public JDialogConvertDicom(ViewUserInterface ui) {
+    public JDialogConvertDicom() {
         super(false);
-        this.userInterface = ui;
+        this.userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -117,7 +115,7 @@ public class JDialogConvertDicom extends JDialogBase implements AlgorithmInterfa
             if (dir != null) {
 
                 if (e.getSource() == browseButton) {
-                    userInterface.setDefaultDirectory(dir);
+                    ViewUserInterface.getReference().setDefaultDirectory(dir);
                     dirField.setText(dir + File.separator);
 
                     if (outputBox.getSelectedItem().equals("AVI")) {
@@ -224,8 +222,8 @@ public class JDialogConvertDicom extends JDialogBase implements AlgorithmInterfa
         Preferences.debug("Using file output directory: " + outputField.getText() + "\n");
         Preferences.debug("Using " + (String) compressionBox.getSelectedItem() + " compression" + "\n");
 
-        AlgorithmConvertDicom algoDicomConvert = new AlgorithmConvertDicom(dirField.getText(),
-                                                                           outputField.getText(), compression);
+        AlgorithmConvertDicom algoDicomConvert = new AlgorithmConvertDicom(dirField.getText(), outputField.getText(),
+                                                                           compression);
 
         /**
          * Only set quality for MJPEG compression
@@ -237,7 +235,7 @@ public class JDialogConvertDicom extends JDialogBase implements AlgorithmInterfa
         algoDicomConvert.addListener(this);
 
         createProgressBar(dirField.getText(), algoDicomConvert);
-        
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -245,7 +243,7 @@ public class JDialogConvertDicom extends JDialogBase implements AlgorithmInterfa
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-        	algoDicomConvert.run();
+            algoDicomConvert.run();
         }
 
     }

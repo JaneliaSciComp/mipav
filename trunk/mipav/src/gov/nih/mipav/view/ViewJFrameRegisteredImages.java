@@ -87,12 +87,10 @@ public class ViewJFrameRegisteredImages extends JFrame
 
     /**
      * Constructor.
-     *
-     * @param  _UI  DOCUMENT ME!
      */
-    public ViewJFrameRegisteredImages(ViewUserInterface _UI) {
+    public ViewJFrameRegisteredImages() {
         super();
-        UI = _UI;
+        UI = ViewUserInterface.getReference();
         setTitle("Image Registry Monitor");
 
         try {
@@ -356,8 +354,8 @@ public class ViewJFrameRegisteredImages extends JFrame
      * @param  event  DOCUMENT ME!
      */
     public void valueChanged(ListSelectionEvent event) {
-        //        if (event.getValueIsAdjusting()) {            System.out.println("...is adjusting...."); return;
-        //  }        JList list = (JList)event.getSource();        System.out.println("value changed.");      if
+        //        if (event.getValueIsAdjusting()) {            System.out.println("...is adjusting...."); return;  }
+        //     JList list = (JList)event.getSource();        System.out.println("value changed.");      if
         // (list.isSelectionEmpty()) {            return;        }        String selectedName = (String)
         // list.getSelectedValue();        imageToFront(selectedName);        System.out.println("ValueChanged");
     }

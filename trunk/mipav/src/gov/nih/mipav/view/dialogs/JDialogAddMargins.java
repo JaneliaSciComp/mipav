@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -132,9 +132,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     private int topSide;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private JRadioButton usingBuffer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -160,7 +157,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             colorFactor = 4;
         }
 
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -197,6 +193,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmAddMargins) {
 
             if ((imageMarginsAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -354,6 +351,226 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     }
 
     /**
+     * Once all the necessary variables are set, call the Image Margins algorithm based on what type of image this is
+     * and whether or not there is a separate destination image.
+     */
+    protected void callAlgorithm() {
+
+        if (displayLoc == NEW) {
+            int[] destExtents = null; // length along an axis of the destination image
+
+            if (image.getNDims() == 2) {
+
+                try {
+                    destExtents = new int[2];
+                    destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
+                    destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
+
+                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
+                    resultImage.setMatrix(image.getMatrix());
+
+                    // resultImage.
+                    if (colorFactor == 1) {
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, leftSide,
+                                                                   rightSide, topSide);
+                    } else {
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue,
+                                                                   leftSide, rightSide, topSide);
+                    }
+
+                    // when using the local-buffer method of the algorithm.  false is default
+                    // imageMarginsAlgo.performCopiesWithBuffers(usingBuffer.isSelected());
+                    imageMarginsAlgo.performCopiesWithBuffers(false);
+
+                    // Listen to the algorithm so we get notified when it is succeeded or failed.
+                    // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
+                    imageMarginsAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+                    setVisible(false); // Hide dialog
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
+                        }
+                    } else {
+
+                        imageMarginsAlgo.run();
+                    }
+                } catch (OutOfMemoryError oome) {
+
+                    if (resultImage != null) {
+                        resultImage.disposeLocal(); // Clean up image memory
+                        resultImage = null;
+                    }
+
+                    MipavUtil.displayError("AddMargins reports: unable to allocate enough memory");
+
+                    return;
+                }
+            } else if ((image.getNDims() == 3) || (image.getNDims() == 4)) {
+
+                try {
+
+                    if (image.getNDims() == 3) {
+                        destExtents = new int[3];
+                        destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
+                        destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
+                        destExtents[2] = image.getExtents()[2] + front + back;
+                    } else {
+                        destExtents = new int[4];
+                        destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
+                        destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
+                        destExtents[2] = image.getExtents()[2] + front + back;
+                        destExtents[3] = image.getExtents()[3];
+                    }
+
+                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
+                    resultImage.setMatrix(image.getMatrix());
+
+                    // preload this image with the minimum of the source image
+                    // resultImage.
+                    if (colorFactor == 1) {
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, leftSide,
+                                                                   rightSide, topSide, front, back);
+                    } else {
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue,
+                                                                   leftSide, rightSide, topSide, front, back);
+                    }
+
+                    // when using the local-buffer method of the algorithm,  false is default
+                    // imageMarginsAlgo.performCopiesWithBuffers(usingBuffer.isSelected());
+                    imageMarginsAlgo.performCopiesWithBuffers(false);
+
+                    // Listen to the algorithm so we get notified when it is succeeded or failed.
+                    // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
+                    imageMarginsAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+
+                    setVisible(false); // Hide dialog
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
+                        }
+                    } else {
+
+                        imageMarginsAlgo.run();
+                    }
+                } catch (OutOfMemoryError oome) {
+
+                    if (resultImage != null) {
+                        resultImage.disposeLocal(); // Clean up image memory
+                        resultImage = null;
+                    }
+
+                    MipavUtil.displayError("AddMargins reports: unable to allocate enough memory");
+
+                    return;
+                }
+            }
+        } // if (displayLoc == NEW)
+        else { // displayLoc == REPLACE
+
+            if (image.getNDims() == 2) {
+
+                try {
+
+                    if (colorFactor == 1) {
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, leftSide, rightSide, topSide,
+                                                                   bottomSide);
+                    } else {
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, leftSide,
+                                                                   rightSide, topSide, bottomSide);
+                    }
+
+                    imageMarginsAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+
+                    // Hide the dialog since the algorithm is about to run.
+                    setVisible(false);
+
+                    // These next lines set the titles in all frames where the source image is displayed to
+                    // "locked - " image name so as to indicate that the image is now read/write locked!
+                    // The image frames are disabled and then unregisted from the userinterface until the
+                    // algorithm has completed.
+                    /*Vector imageFrames = image.getImageFrameVector();
+                     *
+                     * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i]
+                     * = ( (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
+                     * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled(
+                     * false ); userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }*/
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+
+                        imageMarginsAlgo.run();
+                    }
+                } catch (OutOfMemoryError oome) {
+                    MipavUtil.displayError("AddMargins reports: unable to allocate enough memory");
+
+                    return;
+                }
+            } // if (image.getNDims() == 2)
+            else if ((image.getNDims() == 3) || (image.getNDims() == 4)) {
+
+                try {
+
+                    if (colorFactor == 1) {
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, leftSide, rightSide, topSide,
+                                                                   bottomSide, front, back);
+                    } else {
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, leftSide,
+                                                                   rightSide, topSide, bottomSide, front, back);
+                    }
+
+                    imageMarginsAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+
+                    // Hide the dialog since the algorithm is about to run.
+                    setVisible(false);
+
+                    // These next lines set the titles in all frames where the source image is displayed to
+                    // "locked - " image name so as to indicate that the image is now read/write locked!
+                    // The image frames are disabled and then unregisted from the userinterface until the
+                    // algorithm has completed.
+                    /*Vector imageFrames = image.getImageFrameVector();
+                     *
+                     * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i]
+                     * = ( (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
+                     * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled(
+                     * false ); userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }*/
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+
+                        imageMarginsAlgo.run();
+                    }
+                } catch (OutOfMemoryError oome) {
+                    MipavUtil.displayError("AddMargins reports: unable to allocate enough memory");
+
+                    return;
+                }
+            } // else if ((image.getNDims == 3) || (image.getNDims() == 4))
+
+        } // else displayLoc == REPLACE
+
+    }
+
+    /**
      * When one of the text inputs has been left blank, trying to convert them to ints results in throwing a null
      * pointer exception. This method determines which one of the JTextFields threw the null pointer Exception.
      *
@@ -410,285 +627,66 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     /**
      * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("left_side", leftSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("right_side", rightSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("top_side", topSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("bottom_side", bottomSide));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("front", front));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value", defaultValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value_rgb", new double[] {redValue, greenValue, blueValue}));
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
     }
 
     /**
      * {@inheritDoc}
      */
-    protected void setGUIFromParams(){
+    protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
-        
+
         if (scriptParameters.doOutputNewImage()) {
             setDisplayLocNew();
         } else {
             setDisplayLocReplace();
         }
-        
+
         if (image.isColorImage() == false) {
             colorFactor = 1;
         } else {
             colorFactor = 4;
         }
-        
+
         rightSide = scriptParameters.getParams().getInt("right_side");
         leftSide = scriptParameters.getParams().getInt("left_side");
         topSide = scriptParameters.getParams().getInt("top_side");
         bottomSide = scriptParameters.getParams().getInt("bottom_side");
-        
+
         front = scriptParameters.getParams().getInt("front");
         back = scriptParameters.getParams().getInt("back");
-        
+
         defaultValue = scriptParameters.getParams().getDouble("margin_value");
-        
+
         double[] rgb = scriptParameters.getParams().getList("margin_value_rgb").getAsDoubleArray();
         redValue = rgb[0];
         greenValue = rgb[1];
         blueValue = rgb[2];
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
-    /**
-     * Once all the necessary variables are set, call the Image Margins algorithm based on what type of image this is
-     * and whether or not there is a separate destination image.
-     */
-    protected void callAlgorithm() {
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
 
-        if (displayLoc == NEW) {
-            int[] destExtents = null; // length along an axis of the destination image
+        scriptParameters.getParams().put(ParameterFactory.newParameter("left_side", leftSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("right_side", rightSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("top_side", topSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bottom_side", bottomSide));
 
-            if (image.getNDims() == 2) {
+        scriptParameters.getParams().put(ParameterFactory.newParameter("front", front));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
 
-                try {
-                    destExtents = new int[2];
-                    destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
-                    destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
-
-                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
-                    resultImage.setMatrix(image.getMatrix());
-
-                    // resultImage.
-                    if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, leftSide,
-                                                                   rightSide, topSide);
-                    } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue,
-                                                                   leftSide, rightSide, topSide);
-                    }
-
-                    // when using the local-buffer method of the algorithm.  false is default
-                    // imageMarginsAlgo.performCopiesWithBuffers(usingBuffer.isSelected());
-                    imageMarginsAlgo.performCopiesWithBuffers(false);
-
-                    // Listen to the algorithm so we get notified when it is succeeded or failed.
-                    // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
-                    imageMarginsAlgo.addListener(this);
-                    createProgressBar(image.getImageName(), imageMarginsAlgo);
-                    setVisible(false); // Hide dialog
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
-                        }
-                    } else {
-                      
-                        imageMarginsAlgo.run();
-                    }
-                } catch (OutOfMemoryError oome) {
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
-                    MipavUtil.displayError("AddMargins reports: unable to allocate enough memory");
-
-                    return;
-                }
-            } else if ((image.getNDims() == 3) || (image.getNDims() == 4)) {
-
-                try {
-
-                    if (image.getNDims() == 3) {
-                        destExtents = new int[3];
-                        destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
-                        destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
-                        destExtents[2] = image.getExtents()[2] + front + back;
-                    } else {
-                        destExtents = new int[4];
-                        destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
-                        destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
-                        destExtents[2] = image.getExtents()[2] + front + back;
-                        destExtents[3] = image.getExtents()[3];
-                    }
-
-                    resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
-                    resultImage.setMatrix(image.getMatrix());
-
-                    // preload this image with the minimum of the source image
-                    // resultImage.
-                    if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, leftSide,
-                                                                   rightSide, topSide, front, back);
-                    } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue,
-                                                                   leftSide, rightSide, topSide, front, back);
-                    }
-
-                    // when using the local-buffer method of the algorithm,  false is default
-                    // imageMarginsAlgo.performCopiesWithBuffers(usingBuffer.isSelected());
-                    imageMarginsAlgo.performCopiesWithBuffers(false);
-
-                    // Listen to the algorithm so we get notified when it is succeeded or failed.
-                    // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
-                    imageMarginsAlgo.addListener(this);
-                    createProgressBar(image.getImageName(), imageMarginsAlgo);
-                    
-                    setVisible(false); // Hide dialog
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
-                        }
-                    } else {
-                       
-                        imageMarginsAlgo.run();
-                    }
-                } catch (OutOfMemoryError oome) {
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
-                    MipavUtil.displayError("AddMargins reports: unable to allocate enough memory");
-
-                    return;
-                }
-            }
-        } // if (displayLoc == NEW)
-        else { // displayLoc == REPLACE
-
-            if (image.getNDims() == 2) {
-
-                try {
-
-                    if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, leftSide, rightSide, topSide,
-                                                                   bottomSide);
-                    } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, leftSide,
-                                                                   rightSide, topSide, bottomSide);
-                    }
-
-                    imageMarginsAlgo.addListener(this);
-                    createProgressBar(image.getImageName(), imageMarginsAlgo);
-                    
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    /*Vector imageFrames = image.getImageFrameVector();
-                     *
-                     * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i]
-                     * = ( (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
-                     * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled(
-                     * false ); userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }*/
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                    
-                        imageMarginsAlgo.run();
-                    }
-                } catch (OutOfMemoryError oome) {
-                    MipavUtil.displayError("AddMargins reports: unable to allocate enough memory");
-
-                    return;
-                }
-            } // if (image.getNDims() == 2)
-            else if ((image.getNDims() == 3) || (image.getNDims() == 4)) {
-
-                try {
-
-                    if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, leftSide, rightSide, topSide,
-                                                                   bottomSide, front, back);
-                    } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, leftSide,
-                                                                   rightSide, topSide, bottomSide, front, back);
-                    }
-
-                    imageMarginsAlgo.addListener(this);
-                    createProgressBar(image.getImageName(), imageMarginsAlgo);
-                    
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    /*Vector imageFrames = image.getImageFrameVector();
-                     *
-                     * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i]
-                     * = ( (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
-                     * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled(
-                     * false ); userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }*/
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                      
-                        imageMarginsAlgo.run();
-                    }
-                } catch (OutOfMemoryError oome) {
-                    MipavUtil.displayError("AddMargins reports: unable to allocate enough memory");
-
-                    return;
-                }
-            } // else if ((image.getNDims == 3) || (image.getNDims() == 4))
-
-        } // else displayLoc == REPLACE
-
+        scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value", defaultValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value_rgb",
+                                                                       new double[] { redValue, greenValue, blueValue }));
     }
 
     /**

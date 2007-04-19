@@ -305,9 +305,6 @@ public class FileTiff extends FileBase {
     private double tRes = 1.0;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private int xDim = 0;
 
     /** DOCUMENT ME! */
@@ -327,7 +324,6 @@ public class FileTiff extends FileBase {
      * @exception  IOException  if there is an error making the file
      */
     public FileTiff(String fileName, String fileDir) throws IOException {
-        UI = ViewUserInterface.getReference();
         this.fileName = fileName;
         this.fileDir = fileDir;
     }

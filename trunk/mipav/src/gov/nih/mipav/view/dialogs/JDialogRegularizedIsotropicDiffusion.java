@@ -55,9 +55,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
     /** DOCUMENT ME! */
     private JTextField textNumberIterations, textGaussian, textContrast;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface = null;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -76,7 +73,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
         super(frame, false);
 
         srcImage = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     } // end JDialogDiffusion(...)
 
@@ -237,7 +233,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
      */
     protected void setGUIFromParams() {
         srcImage = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = srcImage.getParentFrame();
 
         setDo25D(scriptParameters.doProcess3DAs25D());

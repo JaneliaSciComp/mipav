@@ -52,9 +52,6 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
     /** DOCUMENT ME! */
     private JPanelSigmas sigmaPanel;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -71,7 +68,6 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
     public JDialogEdgeNMSuppression(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -304,7 +300,6 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         sigmaPanel = new JPanelSigmas(image);

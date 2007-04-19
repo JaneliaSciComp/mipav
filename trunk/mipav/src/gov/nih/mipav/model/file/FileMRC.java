@@ -82,22 +82,17 @@ public class FileMRC extends FileBase {
     /** DOCUMENT ME! */
     private ViewJProgressBar progressBar = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * MRC reader/writer constructor.
      *
-     * @param      _UI       user interface reference
      * @param      fileName  file name
      * @param      fileDir   file directory
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileMRC(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
-        UI = _UI;
+    public FileMRC(String fileName, String fileDir) throws IOException {
         this.fileName = fileName;
         this.fileDir = fileDir;
     }

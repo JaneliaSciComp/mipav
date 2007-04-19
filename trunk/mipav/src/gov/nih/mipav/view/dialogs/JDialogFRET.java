@@ -132,6 +132,19 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Creates a new JDialogFRET object.
+     *
+     * @param  image  DOCUMENT ME!
+     */
+    public JDialogFRET(ModelImage image) {
+        super();
+        this.UI = ViewUserInterface.getReference();
+        this.image = image;
+        parentFrame = image.getParentFrame();
+        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
+    }
+
+    /**
      * Creates new dialog.
      *
      * @param  theParentFrame  Parent frame
@@ -143,20 +156,6 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
         UI = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Creates a new JDialogFRET object.
-     *
-     * @param  UI     DOCUMENT ME!
-     * @param  image  DOCUMENT ME!
-     */
-    public JDialogFRET(ViewUserInterface UI, ModelImage image) {
-        super();
-        this.UI = UI;
-        this.image = image;
-        parentFrame = image.getParentFrame();
-        componentImage = ((ViewJFrameImage) parentFrame).getComponentImage();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -355,6 +354,52 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
     }
 
     /**
+     * DOCUMENT ME!
+     */
+    protected void callAlgorithm() {
+
+        try {
+
+            if (image.getNDims() == 2) {
+                componentPostImage.getVOIHandler().setPresetHue(-1.0f);
+            } else {
+                componentImage.getVOIHandler().setPresetHue(-1.0f);
+            }
+            // Make algorithm
+
+            fretAlgo = new AlgorithmFRETAcceptorPhotobleach(image, postImage, useRed, useGreen, useBlue, donorIndex,
+                                                            backgroundIndex, signalIndex, register, cost,
+                                                            createRegImage);
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed of failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            fretAlgo.addListener(this);
+
+            createProgressBar(image.getImageName(), fretAlgo);
+
+            // Hide dialog
+            setVisible(false);
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (fretAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                fretAlgo.run();
+            }
+        } catch (OutOfMemoryError x) {
+
+            System.gc();
+            MipavUtil.displayError("Dialog FRET: unable to allocate enough memory");
+
+            return;
+        }
+    }
+
+    /**
      * Builds a list of images. Returns combobox. List must be all color or all black and white.
      *
      * @param   image  DOCUMENT ME!
@@ -402,52 +447,6 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
         }
 
         return comboBox;
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    protected void callAlgorithm() {
-
-        try {
-
-            if (image.getNDims() == 2) {
-                componentPostImage.getVOIHandler().setPresetHue(-1.0f);
-            } else {
-                componentImage.getVOIHandler().setPresetHue(-1.0f);
-            }
-            // Make algorithm
-
-            fretAlgo = new AlgorithmFRETAcceptorPhotobleach(image, postImage, useRed, useGreen, useBlue, donorIndex,
-                                                            backgroundIndex, signalIndex, register, cost,
-                                                            createRegImage);
-
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed of failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            fretAlgo.addListener(this);
-
-            createProgressBar(image.getImageName(), fretAlgo);
-            
-            // Hide dialog
-            setVisible(false);
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (fretAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-                fretAlgo.run();
-            }
-        } catch (OutOfMemoryError x) {
-
-            System.gc();
-            MipavUtil.displayError("Dialog FRET: unable to allocate enough memory");
-
-            return;
-        }
     }
 
 

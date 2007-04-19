@@ -6,8 +6,6 @@ import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.zip.*;
@@ -259,7 +257,7 @@ public class FileNRRD extends FileBase {
 
 
     /** DOCUMENT ME! */
-    
+
 
     /** DOCUMENT ME! */
     private int skippedBytes = 0;
@@ -298,9 +296,6 @@ public class FileNRRD extends FileBase {
     private double[] thicknesses = null;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private int versionNumber;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -308,13 +303,10 @@ public class FileNRRD extends FileBase {
     /**
      * Constructs new file object.
      *
-     * @param  _UI    User interface.
      * @param  fName  File name.
      * @param  fDir   File directory.
-     * @param  show   Flag for showing the progress bar.
      */
-    public FileNRRD(ViewUserInterface _UI, String fName, String fDir) {
-        UI = _UI;
+    public FileNRRD(String fName, String fDir) {
         fileName = fName;
         fileDir = fDir;
     }
@@ -2276,7 +2268,7 @@ public class FileNRRD extends FileBase {
 
                 if (gunzip) {
                     int totalBytesRead = 0;
-                    
+
                     fireProgressStateChanged("Uncompressing GZIP file ...");
                     fis = new FileInputStream(file);
                     fis.skip(offset1);
@@ -2373,7 +2365,7 @@ public class FileNRRD extends FileBase {
 
             if (gunzip) {
                 int totalBytesRead = 0;
-                
+
                 fireProgressStateChanged("Uncompressing GZIP file ...");
                 fis = new FileInputStream(file);
                 fis.skip(offset1);
@@ -2483,8 +2475,7 @@ public class FileNRRD extends FileBase {
             try { // Construct a FileRaw to actually read the image.
 
                 FileRaw rawFile;
-                rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
-                                      FileBase.READ);
+                rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
                 if (image.isColorImage()) {
                     rawFile.setPlanarConfig(planarConfig);
@@ -2500,7 +2491,6 @@ public class FileNRRD extends FileBase {
                     }
                 }
 
-                
                 fireProgressStateChanged("Reading in data ...");
                 rawFile.readImage(image, offset);
                 rawFile.close();

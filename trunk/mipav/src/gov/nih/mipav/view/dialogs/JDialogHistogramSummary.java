@@ -83,9 +83,6 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
     /** DOCUMENT ME! */
     private int RGBOffset = RED_OFFSET;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -103,7 +100,6 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
         super(theParentFrame, false);
 
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -126,7 +122,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            // MipavUtil.showHelp("");
         } else if ((source == redButton) || (source == greenButton) || (source == blueButton)) {
 
             switch (image.getType()) {

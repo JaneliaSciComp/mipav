@@ -28,7 +28,8 @@ import javax.swing.event.*;
  * @see      JDialogBase
  * @see      AlgorithmInterface
  */
-public class JDialogPowerPaint extends JDialogBase implements MouseListener, MouseWheelListener, KeyListener, ChangeListener {
+public class JDialogPowerPaint extends JDialogBase
+        implements MouseListener, MouseWheelListener, KeyListener, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -58,15 +59,15 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
     /** DOCUMENT ME! */
     private static int XY = 0;
-	//private static int XY = ViewJComponentBase.AXIAL;
+    // private static int XY = ViewJComponentBase.AXIAL;
 
     /** DOCUMENT ME! */
     private static int XZ = 1;
-    //private static int XZ = ViewJComponentBase.CORONAL;
+    // private static int XZ = ViewJComponentBase.CORONAL;
 
     /** DOCUMENT ME! */
     private static int ZY = 2;
-    //private static int ZY = ViewJComponentBase.SAGITTAL;
+    // private static int ZY = ViewJComponentBase.SAGITTAL;
 
     /** autosave elements. */
     private static int delay = 10;
@@ -119,6 +120,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     private JButton buttonRmObjects;
 
     /** DOCUMENT ME! */
+    private JToggleButton buttonShortkeys;
+
+    /** DOCUMENT ME! */
     private JButton buttonShowAdvancedPaintControls;
 
     /** DOCUMENT ME! */
@@ -129,6 +133,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
     /** DOCUMENT ME! */
     private JCheckBox checkSave;
+
+    /** handling of intensity threshold. */
+    private JCheckBox checkThreshold;
 
     /** DOCUMENT ME! */
     private JCheckBox checkWheel;
@@ -144,9 +151,6 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
     /** DOCUMENT ME! */
     private JComboBox comboStructureType;
-
-    /** DOCUMENT ME! */
-    private JToggleButton buttonShortkeys;
 
     /** DOCUMENT ME! */
     private String connectType = "6/26";
@@ -204,6 +208,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /** DOCUMENT ME! */
     private JLabel labelStructuring;
 
+    /** handling of intensity threshold. */
+    private float lowerThreshold = 0.5f;
+
     /** dialog elements. */
     private JPanel mainPanel;
 
@@ -221,6 +228,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
     /** DOCUMENT ME! */
     private JPanel objectPanel;
+
+    /** DOCUMENT ME! */
+    private JPanel panelThreshold;
 
     /** internal objects. */
     private BitSet previous; // previous mask
@@ -276,6 +286,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /** DOCUMENT ME! */
     private BitSet se2xy, se2yz, se2xz, se3; // structuring elements
 
+    /** handling of intensity threshold. */
+    private JSlider slideLower;
+
+    /** DOCUMENT ME! */
+    private JSlider slideUpper;
+
     /** DOCUMENT ME! */
     private float structureSize = 5.0f;
 
@@ -283,7 +299,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     private String structureType = "ball";
 
     /** DOCUMENT ME! */
-    private String[] structureTypes = { "ball", "diamond", "cube"};
+    private String[] structureTypes = { "ball", "diamond", "cube" };
 
     /** DOCUMENT ME! */
     private JTextField textSave;
@@ -291,18 +307,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /** DOCUMENT ME! */
     private JTextField textStructuring;
 
-	/** handling of intensity threshold */
-	private 	float 		upperThreshold  =       1.0f;
-	/** handling of intensity threshold */
-	private 	float 		lowerThreshold  =       0.5f;
-	/** handling of intensity threshold */
-	private 	JCheckBox	checkThreshold;
-	/** handling of intensity threshold */
-	private		JSlider		slideLower;
-	private 	JSlider  	slideUpper;
-	private		JPanel		panelThreshold;
-	
-	
+    /** handling of intensity threshold. */
+    private float upperThreshold = 1.0f;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -447,44 +454,42 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 saver = null;
             }
         } /*else if (command.equals("show advanced")) {
-
-            if (multiPaintDialog == null) {
-                multiPaintDialog = new JDialogMultiPaint(parentFrame, image);
-            } else {
-                MipavUtil.centerOnScreen(multiPaintDialog);
-                multiPaintDialog.setVisible(true);
-            }
-        } */
+           *
+           * if (multiPaintDialog == null) {   multiPaintDialog = new JDialogMultiPaint(parentFrame, image); } else {
+           * MipavUtil.centerOnScreen(multiPaintDialog);   multiPaintDialog.setVisible(true); }} */
         else if (command.equals("Shortkeys")) {
-			if (buttonShortkeys.isSelected()) {
-				setFocusable(true);
-				addKeyListener(this);
-				requestFocusInWindow();
-				image.getParentFrame().getComponentImage().setFocusable(true);
-				image.getParentFrame().getComponentImage().addKeyListener(this);
-				image.getParentFrame().getComponentImage().requestFocusInWindow();
-			} else {
-				removeKeyListener(this);
-				image.getParentFrame().getComponentImage().removeKeyListener(this);
-			}
-		} 
-		else if (command.equals("Threshold")) {
-			if (checkThreshold.isSelected()) {
-				image.getParentFrame().getComponentImage().addMouseListener(this);
-				if (image.getTriImageFrame() != null) {
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseListener(this);
-				}
-			} else {
-				image.getParentFrame().getComponentImage().removeMouseListener(this);
-				if (image.getTriImageFrame() != null) {
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseListener(this);
-					image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseListener(this);
-				}
-			}				
-		}
+
+            if (buttonShortkeys.isSelected()) {
+                setFocusable(true);
+                addKeyListener(this);
+                requestFocusInWindow();
+                image.getParentFrame().getComponentImage().setFocusable(true);
+                image.getParentFrame().getComponentImage().addKeyListener(this);
+                image.getParentFrame().getComponentImage().requestFocusInWindow();
+            } else {
+                removeKeyListener(this);
+                image.getParentFrame().getComponentImage().removeKeyListener(this);
+            }
+        } else if (command.equals("Threshold")) {
+
+            if (checkThreshold.isSelected()) {
+                image.getParentFrame().getComponentImage().addMouseListener(this);
+
+                if (image.getTriImageFrame() != null) {
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseListener(this);
+                }
+            } else {
+                image.getParentFrame().getComponentImage().removeMouseListener(this);
+
+                if (image.getTriImageFrame() != null) {
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseListener(this);
+                    image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseListener(this);
+                }
+            }
+        }
     }
 
     /**
@@ -494,6 +499,44 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
      */
     public ModelImage getResultImage() {
         return resultImage;
+    }
+
+    /**
+     * Handle the key pressed event.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void keyPressed(KeyEvent e) { }
+
+    /**
+     * Handle the key released event.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void keyReleased(KeyEvent e) {
+        System.out.print("kr-");
+    }
+
+    /**
+     * Handle the key typed event.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void keyTyped(KeyEvent e) {
+        String key = Character.toString(e.getKeyChar());
+        System.out.println("key: " + key);
+
+        if (key.equals("d")) {
+            actionPerformed(new ActionEvent(this, 0, "Dilate"));
+        } else if (key.equals("e")) {
+            actionPerformed(new ActionEvent(this, 0, "Erode"));
+        } else if (key.equals("g")) {
+            actionPerformed(new ActionEvent(this, 0, "GrowRegion"));
+        } else if (key.equals("f")) {
+            actionPerformed(new ActionEvent(this, 0, "Background"));
+        } else if (key.equals("r")) {
+            actionPerformed(new ActionEvent(this, 0, "RmObject"));
+        }
     }
 
     /**
@@ -520,56 +563,80 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             zS = image.getParentFrame().getComponentImage().getSlice();
             sliceDir = XY;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))) {
+
             // triplanar image : XY panel
             int slice = image.getTriImageFrame().getAxialComponentSlice();
             Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).ScreenToLocal( new Point3Df(  mouseEvent.getX(),
-                                                                                                           mouseEvent.getY(),
-                                                                                                           slice ),
-                                                                                            patientMousePoint );
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+                                                                                                        mouseEvent.getY(),
+                                                                                                        slice),
+                                                                                           patientMousePoint);
+
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.patientToFile( patientMousePoint, pt, image, FileInfoBase.AXIAL );
-            xS = (int)pt.x;
-            yS = (int)pt.y;
-            zS = (int)pt.z;
+            MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.AXIAL);
+            xS = (int) pt.x;
+            yS = (int) pt.y;
+            zS = (int) pt.z;
+
             int origDir = image.getImageOrientation();
-			if (origDir == FileInfoBase.AXIAL) sliceDir = XY;
-			else if (origDir == FileInfoBase.CORONAL) sliceDir = XZ;
-			else if  (origDir == FileInfoBase.SAGITTAL) sliceDir = XZ;
+
+            if (origDir == FileInfoBase.AXIAL) {
+                sliceDir = XY;
+            } else if (origDir == FileInfoBase.CORONAL) {
+                sliceDir = XZ;
+            } else if (origDir == FileInfoBase.SAGITTAL) {
+                sliceDir = XZ;
+            }
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))) {
+
             // triplanar image : XZ panel
             int slice = image.getTriImageFrame().getCoronalComponentSlice();
             Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).ScreenToLocal( new Point3Df(  mouseEvent.getX(),
-                                                                                                             mouseEvent.getY(),
-                                                                                                             slice ),
-                                                                                              patientMousePoint );
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+                                                                                                          mouseEvent.getY(),
+                                                                                                          slice),
+                                                                                             patientMousePoint);
+
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.patientToFile( patientMousePoint, pt, image, FileInfoBase.CORONAL );
-            xS = (int)pt.x;
-            yS = (int)pt.y;
-            zS = (int)pt.z;
-			int origDir = image.getImageOrientation();
-			if (origDir == FileInfoBase.AXIAL) sliceDir = XZ;
-			else if (origDir == FileInfoBase.CORONAL) sliceDir = XY;
-			else if  (origDir == FileInfoBase.SAGITTAL) sliceDir = ZY;
+            MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.CORONAL);
+            xS = (int) pt.x;
+            yS = (int) pt.y;
+            zS = (int) pt.z;
+
+            int origDir = image.getImageOrientation();
+
+            if (origDir == FileInfoBase.AXIAL) {
+                sliceDir = XZ;
+            } else if (origDir == FileInfoBase.CORONAL) {
+                sliceDir = XY;
+            } else if (origDir == FileInfoBase.SAGITTAL) {
+                sliceDir = ZY;
+            }
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))) {
+
             // triplanar image : ZY panel
             int slice = image.getTriImageFrame().getSagittalComponentSlice();
             Point3Df patientMousePoint = new Point3Df();
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).ScreenToLocal( new Point3Df(  mouseEvent.getX(),
-                                                                                                              mouseEvent.getY(),
-                                                                                                              slice ),
-                                                                                               patientMousePoint );
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).ScreenToLocal(new Point3Df(mouseEvent.getX(),
+                                                                                                           mouseEvent.getY(),
+                                                                                                           slice),
+                                                                                              patientMousePoint);
+
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.patientToFile( patientMousePoint, pt, image, FileInfoBase.SAGITTAL );
-            xS = (int)pt.x;
-            yS = (int)pt.y;
-            zS = (int)pt.z;
-			int origDir = image.getImageOrientation();
-			if (origDir == FileInfoBase.AXIAL) sliceDir = ZY;
-			else if (origDir == FileInfoBase.CORONAL) sliceDir = ZY;
-			else if  (origDir == FileInfoBase.SAGITTAL) sliceDir = XY;
+            MipavCoordinateSystems.patientToFile(patientMousePoint, pt, image, FileInfoBase.SAGITTAL);
+            xS = (int) pt.x;
+            yS = (int) pt.y;
+            zS = (int) pt.z;
+
+            int origDir = image.getImageOrientation();
+
+            if (origDir == FileInfoBase.AXIAL) {
+                sliceDir = ZY;
+            } else if (origDir == FileInfoBase.CORONAL) {
+                sliceDir = ZY;
+            } else if (origDir == FileInfoBase.SAGITTAL) {
+                sliceDir = XY;
+            }
         }
 
         Preferences.debug("<" + xS + ", " + yS + ", " + zS + " :" + sliceDir + ">", Preferences.DEBUG_MINOR);
@@ -626,78 +693,82 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mouseEntered(MouseEvent mouseEvent) { 
-	}
+    public void mouseEntered(MouseEvent mouseEvent) { }
 
     /**
      * DOCUMENT ME!
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mouseExited(MouseEvent mouseEvent) { 
-	}
+    public void mouseExited(MouseEvent mouseEvent) { }
 
     /**
      * DOCUMENT ME!
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mousePressed(MouseEvent mouseEvent) { 
-	}
+    public void mousePressed(MouseEvent mouseEvent) { }
 
     /**
      * DOCUMENT ME!
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mouseReleased(MouseEvent mouseEvent) { 
-		if (image.getParentFrame().getComponentImage().getCursorMode()==ViewJComponentEditImage.PAINT_VOI) {
-		//if (image.getParentFrame().getComponentImage().getMode()==ViewJComponentEditImage.PAINT_VOI) {
-			if (checkThreshold.isSelected()) {
-				//System.out.print("1-");
-				if ( mouseEvent.getComponent().equals(image.getParentFrame().getComponentImage() ) 
-					|| ( image.getTriImageFrame() != null && 
-						(  mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
-						|| mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))
-						|| mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A)) ) ) ) {
+    public void mouseReleased(MouseEvent mouseEvent) {
 
-					//System.out.print("2-");
-			
-					BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-					if (obj == null) {
-						MipavUtil.displayError("paint mask not found");
-			
-						return;
-					}
-					//System.out.print("3-");
-			
-					double min = image.getMin() + lowerThreshold*(image.getMax()-image.getMin());
-					double max = image.getMin() + upperThreshold*(image.getMax()-image.getMin());
-	
-					//System.out.print("4-");
-			
-					for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
-						// check the previous paint first: no change there
-						if (!previous.get(index)) {
-							double val =  image.getDouble(index);
-							if ( (val<min) || (val>max) )
-								obj.set(index,false);
-						}
-					}
-					//System.out.print("5-");
-					
-					// save it to previous
-					previous = (BitSet) obj.clone();
+        if (image.getParentFrame().getComponentImage().getCursorMode() == ViewJComponentEditImage.PAINT_VOI) {
 
-					refreshImagePaint(image,obj);
-				
-					//System.out.print("6-");
-				
-				}
-				
-			}
-		}
-	}
+            // if (image.getParentFrame().getComponentImage().getMode()==ViewJComponentEditImage.PAINT_VOI) {
+            if (checkThreshold.isSelected()) {
+
+                // System.out.print("1-");
+                if (mouseEvent.getComponent().equals(image.getParentFrame().getComponentImage()) ||
+                        ((image.getTriImageFrame() != null) &&
+                             (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A)) ||
+                                  mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A)) ||
+                                  mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))))) {
+
+                    // System.out.print("2-");
+
+                    BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+                    if (obj == null) {
+                        MipavUtil.displayError("paint mask not found");
+
+                        return;
+                    }
+                    // System.out.print("3-");
+
+                    double min = image.getMin() + (lowerThreshold * (image.getMax() - image.getMin()));
+                    double max = image.getMin() + (upperThreshold * (image.getMax() - image.getMin()));
+
+                    // System.out.print("4-");
+
+                    for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
+
+                        // check the previous paint first: no change there
+                        if (!previous.get(index)) {
+                            double val = image.getDouble(index);
+
+                            if ((val < min) || (val > max)) {
+                                obj.set(index, false);
+                            }
+                        }
+                    }
+                    // System.out.print("5-");
+
+                    // save it to previous
+                    previous = (BitSet) obj.clone();
+
+                    refreshImagePaint(image, obj);
+
+                    // System.out.print("6-");
+
+                }
+
+            }
+        }
+    }
 
     /**
      * DOCUMENT ME!
@@ -736,38 +807,25 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
     }
 
-	/** Handle the key typed event */
-    public void keyTyped(KeyEvent e) {
-		String key = Character.toString(e.getKeyChar());
-		System.out.println("key: "+key);
-		if (key.equals("d")) actionPerformed(new ActionEvent(this, 0, "Dilate"));
-		else if (key.equals("e")) actionPerformed(new ActionEvent(this, 0, "Erode"));
-		else if (key.equals("g")) actionPerformed(new ActionEvent(this, 0, "GrowRegion"));
-		else if (key.equals("f")) actionPerformed(new ActionEvent(this, 0, "Background"));
-		else if (key.equals("r")) actionPerformed(new ActionEvent(this, 0, "RmObject"));
-    }
+    /**
+     * state change listener for the sliders.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void stateChanged(ChangeEvent e) {
 
-    /** Handle the key pressed event */
-    public void keyPressed(KeyEvent e) {
-    }
+        if (e.getSource().equals(slideLower)) {
 
-    /** Handle the key released event */
-    public void keyReleased(KeyEvent e) {
-		System.out.print("kr-");
-    }
+            if (!slideLower.getValueIsAdjusting()) {
+                lowerThreshold = (float) (slideLower.getValue() / 1000.0f);
+            }
+        } else if (e.getSource().equals(slideUpper)) {
 
-	/** state change listener for the sliders */
-	public void stateChanged(ChangeEvent e) {
-		if (e.getSource().equals(slideLower)) {
-			if (!slideLower.getValueIsAdjusting()) {
-				lowerThreshold = (float)(slideLower.getValue() / 1000.0f);
-			}
-		} else if (e.getSource().equals(slideUpper)) {
-			if (!slideUpper.getValueIsAdjusting()) {
-				lowerThreshold = (float)(slideUpper.getValue() / 1000.0f);
-			}
-		}
-	}
+            if (!slideUpper.getValueIsAdjusting()) {
+                lowerThreshold = (float) (slideUpper.getValue() / 1000.0f);
+            }
+        }
+    }
 
     /**
      * 3D images: 18-neighborhood.
@@ -1544,16 +1602,28 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 }
             }
         } else if (structureType.equals("cube")) {
-			for (int i=0;i<dmx;i++) for (int j=0;j<dmy;j++) {
-				se2xy.set( i + dmx*j, true);
-			}
-			for (int i=0;i<dmx;i++) for (int j=0;j<dmz;j++) {
-				se2xz.set( i + dmx*j, true);
-			}
-			for (int i=0;i<dmy;i++) for (int j=0;j<dmz;j++) {
-				se2yz.set( i + dmy*j, true);
-			}
-		}
+
+            for (int i = 0; i < dmx; i++) {
+
+                for (int j = 0; j < dmy; j++) {
+                    se2xy.set(i + (dmx * j), true);
+                }
+            }
+
+            for (int i = 0; i < dmx; i++) {
+
+                for (int j = 0; j < dmz; j++) {
+                    se2xz.set(i + (dmx * j), true);
+                }
+            }
+
+            for (int i = 0; i < dmy; i++) {
+
+                for (int j = 0; j < dmz; j++) {
+                    se2yz.set(i + (dmy * j), true);
+                }
+            }
+        }
 
         return;
     }
@@ -1629,10 +1699,17 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 }
             }
         } else if (structureType.equals("cube")) {
-			for (int i=0;i<dmx;i++) for (int j=0;j<dmy;j++) for (int k=0;k<dmz;k++) {
-				se3.set( i + dmx*j + dmx*dmy*k, true);
-			}
-		}
+
+            for (int i = 0; i < dmx; i++) {
+
+                for (int j = 0; j < dmy; j++) {
+
+                    for (int k = 0; k < dmz; k++) {
+                        se3.set(i + (dmx * j) + (dmx * dmy * k), true);
+                    }
+                }
+            }
+        }
 
         return;
     }
@@ -1641,7 +1718,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
      * dilation.
      */
     private void dilateImage() {
-		System.out.println("dilate");
+        System.out.println("dilate");
 
         if (image == null) {
             System.gc();
@@ -2153,10 +2230,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * background filling algorithm.
      *
-     * @param  xS  ModelImage-Space x coordinate
-     * @param  yS  ModelImage-Space y coordinate
-     * @param  zS  ModelImage-Space z coordinate
-     * @param  sliceDir (XY, XZ, ZY)
+     * @param  xS        ModelImage-Space x coordinate
+     * @param  yS        ModelImage-Space y coordinate
+     * @param  zS        ModelImage-Space z coordinate
+     * @param  sliceDir  (XY, XZ, ZY)
      */
     private void fillAllBackgrounds(int xS, int yS, int zS, int sliceDir) {
 
@@ -2329,10 +2406,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * background filling algorithm.
      *
-     * @param  xS  ModelImage-Space x coordinate
-     * @param  yS  ModelImage-Space y coordinate
-     * @param  zS  ModelImage-Space z coordinate
-     * @param  sliceDir (XY, XZ, ZY)
+     * @param  xS        ModelImage-Space x coordinate
+     * @param  yS        ModelImage-Space y coordinate
+     * @param  zS        ModelImage-Space z coordinate
+     * @param  sliceDir  (XY, XZ, ZY)
      */
     private void fillBackground(int xS, int yS, int zS, int sliceDir) {
 
@@ -2366,7 +2443,8 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
         // find main object
         if ((backgroundDim == 2) && (sliceDir == XY)) {
-			System.out.println("XY");
+            System.out.println("XY");
+
             int[][] label;
 
             // extract the slice and invert
@@ -2398,6 +2476,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             }
         } else if ((backgroundDim == 2) && (sliceDir == XZ)) {
             System.out.println("XZ");
+
             int[][] label;
 
             // extract the slice and invert
@@ -2429,6 +2508,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             }
         } else if ((backgroundDim == 2) && (sliceDir == ZY)) {
             System.out.println("ZY");
+
             int[][] label;
 
             // extract the slice and invert
@@ -2504,10 +2584,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * region growing algorithm.
      *
-     * @param  xS  ModelImage-Space x coordinate
-     * @param  yS  ModelImage-Space y coordinate
-     * @param  zS  ModelImage-Space z coordinate
-     * @param  sliceDir (XY, XZ, ZY)
+     * @param  xS        ModelImage-Space x coordinate
+     * @param  yS        ModelImage-Space y coordinate
+     * @param  zS        ModelImage-Space z coordinate
+     * @param  sliceDir  (XY, XZ, ZY)
      */
     private void growRegion(int xS, int yS, int zS, int sliceDir) {
 
@@ -2749,9 +2829,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
         createStructuringElement2D();
         createStructuringElement3D();
-		
-		// remember current paint
-		previous = image.getParentFrame().getComponentImage().getPaintMask();
+
+        // remember current paint
+        previous = image.getParentFrame().getComponentImage().getPaintMask();
 
         // object processing
         buttonGrowRegion = new JButton("Grow Region");
@@ -2947,66 +3027,66 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         buttonRevert.addActionListener(this);
         buttonRevert.setActionCommand("Revert");
         buttonRevert.setFont(serif12);
-        
+
         /*
-        buttonShowAdvancedPaintControls = new JButton("Show advanced paint controls");
-        buttonShowAdvancedPaintControls.addActionListener(this);
-        buttonShowAdvancedPaintControls.setActionCommand("show advanced");
-        buttonShowAdvancedPaintControls.setFont(serif12);
-        buttonShowAdvancedPaintControls.setEnabled(!image.isColorImage());
-        */
-        
+         * buttonShowAdvancedPaintControls = new JButton("Show advanced paint controls");
+         * buttonShowAdvancedPaintControls.addActionListener(this);
+         * buttonShowAdvancedPaintControls.setActionCommand("show advanced");
+         * buttonShowAdvancedPaintControls.setFont(serif12);
+         * buttonShowAdvancedPaintControls.setEnabled(!image.isColorImage());
+         */
+
         buttonShortkeys = new JToggleButton("Use shortkeys");
         buttonShortkeys.addActionListener(this);
         buttonShortkeys.setActionCommand("Shortkeys");
         buttonShortkeys.setFont(serif12);
         buttonShortkeys.setToolTipText("Use shortkeys for all commands: g: grow, f: fill, r: remove, d: dilate, e:erode");
 
-		checkThreshold = new JCheckBox("Threshold");
+        checkThreshold = new JCheckBox("Threshold");
         checkThreshold.addActionListener(this);
         checkThreshold.setActionCommand("Threshold");
         checkThreshold.setToolTipText("Enable the use of intensity thresholds when painting");
 
         slideLower = new JSlider(0, 1000, 0);
         slideLower.setMajorTickSpacing(200);
-		slideLower.setMinorTickSpacing(100);
-		slideLower.setPaintTicks(true);
-		slideLower.setPaintLabels(false);
-		slideLower.addChangeListener(this);
-		slideLower.setToolTipText("Minimum relative intensity for painting");
+        slideLower.setMinorTickSpacing(100);
+        slideLower.setPaintTicks(true);
+        slideLower.setPaintLabels(false);
+        slideLower.addChangeListener(this);
+        slideLower.setToolTipText("Minimum relative intensity for painting");
 
-		slideUpper = new JSlider(0, 1000, 1000);
+        slideUpper = new JSlider(0, 1000, 1000);
         slideUpper.setMajorTickSpacing(250);
-		slideUpper.setMinorTickSpacing(100);
-		slideUpper.setPaintTicks(true);
-		slideUpper.setPaintLabels(false);
+        slideUpper.setMinorTickSpacing(100);
+        slideUpper.setPaintTicks(true);
+        slideUpper.setPaintLabels(false);
         slideUpper.addChangeListener(this);
-		slideUpper.setToolTipText("Maximum relative intensity for painting");
+        slideUpper.setToolTipText("Maximum relative intensity for painting");
 
-		
-		GridBagConstraints gbc = new GridBagConstraints();
+
+        GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 2, 2, 2);
 
         panelThreshold = new JPanel(new GridBagLayout());
-		panelThreshold.setForeground(Color.black);
-		
-		gbc.gridx = 0;
+        panelThreshold.setForeground(Color.black);
+
+        gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelThreshold.add(checkThreshold, gbc);
-		gbc.gridx = 0;
+        gbc.gridx = 0;
         gbc.gridy = 1;
-        panelThreshold.add(slideLower,gbc);
-		gbc.gridx = 0;
+        panelThreshold.add(slideLower, gbc);
+        gbc.gridx = 0;
         gbc.gridy = 2;
-        panelThreshold.add(slideUpper,gbc);
-		
+        panelThreshold.add(slideUpper, gbc);
+
         objectPanel = new JPanel(new GridBagLayout());
         objectPanel.setBorder(buildTitledBorder("Object Processing"));
 
@@ -3106,7 +3186,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(comboConnectType, gbc);
-		gbc.gridx = 0;
+        gbc.gridx = 0;
         gbc.gridy = 7;
         gbc.weightx = 1;
         gbc.gridwidth = 3;
@@ -3196,7 +3276,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridy = 1;
         exportPanel.add(buttonImportFromMask, gbc);
 
-		mainPanel = new JPanel(new GridBagLayout());
+        mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
 
         gbc.gridx = 0;
@@ -3216,9 +3296,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         mainPanel.add(movePanel, gbc);
         gbc.gridy = 4;
         mainPanel.add(exportPanel, gbc);
-        //gbc.gridy = 5;
-        //gbc.insets = new Insets(2, 2, 2, 2);
-        //mainPanel.add(buttonShowAdvancedPaintControls, gbc);
+
+        // gbc.gridy = 5;
+        // gbc.insets = new Insets(2, 2, 2, 2);
+        // mainPanel.add(buttonShowAdvancedPaintControls, gbc);
         gbc.gridy = 6;
         mainPanel.add(buttonShortkeys, gbc);
 
@@ -3394,10 +3475,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * object removal algorithm.
      *
-     * @param  xS  ModelImage-Space x coordinate
-     * @param  yS  ModelImage-Space y coordinate
-     * @param  zS  ModelImage-Space z coordinate
-     * @param  sliceDir (XY, XZ, ZY)
+     * @param  xS        ModelImage-Space x coordinate
+     * @param  yS        ModelImage-Space y coordinate
+     * @param  zS        ModelImage-Space z coordinate
+     * @param  sliceDir  (XY, XZ, ZY)
      */
     private void removeAllObjects(int xS, int yS, int zS, int sliceDir) {
 
@@ -3566,10 +3647,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * object removal algorithm.
      *
-     * @param  xS  ModelImage-Space x coordinate
-     * @param  yS  ModelImage-Space y coordinate
-     * @param  zS  ModelImage-Space z coordinate
-     * @param  sliceDir (XY, XZ, ZY)
+     * @param  xS        ModelImage-Space x coordinate
+     * @param  yS        ModelImage-Space y coordinate
+     * @param  zS        ModelImage-Space z coordinate
+     * @param  sliceDir  (XY, XZ, ZY)
      */
     private void removeObject(int xS, int yS, int zS, int sliceDir) {
 
@@ -3805,8 +3886,7 @@ class PaintAutoSave extends TimerTask {
         try {
             tmp.importData(0, image.getParentFrame().getComponentImage().getPaintMask(), true);
 
-            FileImageXML file = new FileImageXML(image.getParentFrame().getUserInterface(), "paint_autosave",
-                                                 image.getFileInfo(0).getFileDirectory());
+            FileImageXML file = new FileImageXML("paint_autosave", image.getFileInfo(0).getFileDirectory());
             file.writeHeader(tmp, null, "paint_autosave", image.getFileInfo(0).getFileDirectory(), true);
 
             FileWriteOptions opt = new FileWriteOptions(true);
@@ -3825,5 +3905,3 @@ class PaintAutoSave extends TimerTask {
         tmp = null;
     }
 }
-
-

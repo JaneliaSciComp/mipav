@@ -77,9 +77,6 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
     private JCheckBox topPadBox;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private boolean useThreshold = false;
 
     /** DOCUMENT ME! */
@@ -117,7 +114,6 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
     public JDialogPointArea(Frame theParentFrame, ModelImage image, boolean showGraph) {
         super(theParentFrame, false);
         srcImage = image;
-        userInterface = ViewUserInterface.getReference();
         this.showGraph = showGraph;
         init();
     }
@@ -134,7 +130,6 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
     public JDialogPointArea(Frame theParentFrame, ModelImage image, int xLoc, int yLoc, boolean showGraph) {
         super(theParentFrame, false);
         setSeparateThread(false);
-        userInterface = ViewUserInterface.getReference();
 
         // setLocation(xLoc, yLoc);
         setXLoc(xLoc);
@@ -337,7 +332,6 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
      */
     protected void setGUIFromParams() {
         srcImage = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = srcImage.getParentFrame();
 
         setXLoc(scriptParameters.getParams().getInt("x_location"));

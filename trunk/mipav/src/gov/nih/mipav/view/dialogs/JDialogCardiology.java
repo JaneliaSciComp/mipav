@@ -63,9 +63,6 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
     /** DOCUMENT ME! */
     private int outerVOIIndex = -1;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -77,7 +74,6 @@ public class JDialogCardiology extends JDialogBase implements ActionListener {
     public JDialogCardiology(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
 
         if (image.isColorImage()) {
             MipavUtil.displayError("Color images not supported.  Convert to grayscale");
