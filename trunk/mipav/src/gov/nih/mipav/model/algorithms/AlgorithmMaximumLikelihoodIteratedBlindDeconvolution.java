@@ -87,18 +87,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /** Show the deconvolved image in progress every m_iNumberProgress steps:. */
     private int m_iNumberProgress;
     
-    /** The new extents if resample is true otherwise contains the original extents. Used only if resample is true. */
-    private int[] m_iExtents;
-    
     /** The new resolutions in each dimension if resample is true. Used only if resample is true. */
     private float[] m_fNewRes;
     
-    /** The interpolation method. Used only if resample is true. */
-    private int interp = 0;
-    
-    /** Boolean to resample original image to the power of 2. */
-    private boolean m_bResample = false;
-
     /** DOCUMENT ME! */
     private ModelImage m_kCalcResult1;
 
@@ -125,9 +116,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
     /** source image to be reconstructed! */
     private ModelImage m_kOriginalSourceImage;
-
-    /** Progress bar (no cancel). */
-    private ViewJProgressBar m_kPBar = null;
 
     /** point spread function image:. */
     private ModelImage m_kPSFImage;
@@ -217,8 +205,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
          * new ViewJFrameImage((ModelImage)(m_kPSFImage.clone()), null, new Dimension(610, 200));
          */
         /* Initialize progress bar: */
-        m_kPBar = new ViewJProgressBar("Blind Deconvolution", "computing iterative blind deconvolution...", 0, 100,
-                                       false, null, null);
+        //fireProgressStateChanged(0,"Blind Deconvolution", "Computing iterative blind deconvolution...");
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -334,7 +321,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             }
         }
 
-        m_kPBar.updateValue(100);
+        fireProgressStateChanged(100);
 
         cleanUp();
         setCompleted(true);
@@ -398,8 +385,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             m_kSourceBlue = null;
         }
 
-        m_kPBar.dispose();
-        m_kPBar = null;
     }
 
     /**
@@ -988,7 +973,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             }
 
             if (m_bUpdatePBar) {
-                m_kPBar.updateValue((int) (100 * ((float) i / (float) (m_iNumberIterations + 1))));
+                fireProgressStateChanged((int) (100 * ((float) i / (float) (m_iNumberIterations + 1))));
             }
         }
 
