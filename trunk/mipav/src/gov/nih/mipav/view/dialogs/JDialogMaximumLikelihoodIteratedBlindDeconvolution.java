@@ -1,7 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
@@ -69,30 +68,9 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 	 */
 	private boolean useMicroscopeSettings = true;
 
-	/** The original X extent of the image */
-	private int originalExtentX;
-
-	/** The original Y extent of the image */
-	private int originalExtentY;
-
-	/** The original Z extent of the image */
-	private int originalExtentZ;
-
-	/** The expected X extent of the image */
-	private int expectedExtentX;
-
-	/** The expected Y extent of the image */
-	private int expectedExtentY;
-
-	/** The expected Z extent of the image */
-	private int expectedExtentZ;
-
 	/** The original data image to be reconstructed: */
 	private ModelImage originalImage;
 	
-	/** The resampled data image to be reconstructed: */
-	private ModelImage resampledImage;
-
 	/** The extents of original image */
 	private int[] extents;
 
@@ -242,7 +220,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 			updateFileInfo(originalImage, psfImage);
 			psfImage.clearMask();
 
-			/* Display the result:
+			/* Display PSF image; for testing purposes.
 			try {
 				new ViewJFrameImage(psfImage, null, new Dimension(610, 220));
 			} catch (OutOfMemoryError error) {
@@ -313,8 +291,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 			// interface
 			ibdAlgor.addListener(this);
 
-			// createProgressBar(originalImage.getImageName(), ibdAlgor); Not
-			// necessary
+			createProgressBar("Blind Deconvolution", "Computing iterative blind deconvolution...", ibdAlgor);
 
 			if (isRunInSeparateThread()) {
 
@@ -497,7 +474,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 		textExpectedExtentZ.setHorizontalAlignment(JTextField.RIGHT);
 		textExpectedExtentZ.setText(Integer.toString(newExtents[2]));
 		textExpectedExtentZ.setFont(serif12);
-		if (!doResample) {
+		if (!doResample || dim < 3)  {
 			textExpectedExtentZ.setEnabled(false);
 		}
 
@@ -702,8 +679,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 	/**
 	 * Calculate the dimension value to power of 2.
 	 * 
-	 * @param dimValue
-	 *            dimension value
+	 * @param dimValue     dimension value
 	 * 
 	 * @return newDimValue dimension value in power of 2.
 	 */
@@ -718,7 +694,9 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 		binaryStr = Integer.toBinaryString(dimValue);
 		indexMSBtoLSB = binaryStr.indexOf('1');
 		indexLSBtoMSB = binaryStr.length() - indexMSBtoLSB - 1;
-
+		
+		// Find the nearest power of 2. Find the MSB k that is "1" from the binary representation of dimValue.
+		// k = 0 is LSB. If bit k-1 is zero, the result is 2^k. Otherwise the result is 2^(k+1).
 		if (indexLSBtoMSB == 0) {
 			newDimValue = 1;
 		} else if (binaryStr.charAt(indexMSBtoLSB + 1) == '1') {
