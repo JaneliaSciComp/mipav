@@ -9274,7 +9274,7 @@ loop9:
         double ad32L;
         double an;
         double anorm;
-        double[] aout = new double[1];
+        double[] hout = new double[1];
         double ascale;
         double atol;
         double[] b11 = new double[1];
@@ -9289,7 +9289,7 @@ loop9:
         double b2r;
         double bn;
         double bnorm;
-        double[] bout = new double[1];
+        double[] tout = new double[1];
         double bscale;
         double btol;
         double[] c = new double[1];
@@ -9319,7 +9319,7 @@ loop9:
         double[] sr = new double[1];
         double szi;
         double szr;
-        double t;
+        double t1;
         double[] tau = new double[1];
         double[] temp = new double[1];
         double[] temp2 = new double[1];
@@ -9602,7 +9602,7 @@ loop7:                           {
                                             } // if (!ilazro)
 
                                             // If both tests pass (1 & 2), i.e., the leading
-                                            // diagonal of B in the block is zero, split a 1x1
+                                            // diagonal of T in the block is zero, split a 1x1
                                             // block off at the top. (i.e., at the (j-1)-th
                                             // row/column)  The leading diagonal element of
                                             // the remainder can also be zero, so this may have
@@ -9612,8 +9612,8 @@ loop7:                           {
 
                                                 for (jch = j; jch <= (ilast - 1); jch++) {
                                                     temp[0] = H[jch - 1][jch - 1];
-                                                    dlartg(temp[0], H[jch][jch - 1], c, s, aout);
-                                                    H[jch - 1][jch - 1] = aout[0];
+                                                    dlartg(temp[0], H[jch][jch - 1], c, s, hout);
+                                                    H[jch - 1][jch - 1] = hout[0];
                                                     H[jch][jch - 1] = 0.0;
                                                     dx = new double[ilastm - jch];
                                                     dy = new double[ilastm - jch];
@@ -9690,8 +9690,8 @@ loop7:                           {
                                                 // T[ilast-1][ilast-1] = 0
                                                 for (jch = j; jch <= (ilast - 1); jch++) {
                                                     temp[0] = T[jch - 1][jch];
-                                                    dlartg(temp[0], T[jch][jch], c, s, bout);
-                                                    T[jch - 1][jch] = bout[0];
+                                                    dlartg(temp[0], T[jch][jch], c, s, tout);
+                                                    T[jch - 1][jch] = tout[0];
                                                     T[jch][jch] = 0.0;
 
                                                     if (jch < (ilastm - 1)) {
@@ -9744,8 +9744,8 @@ loop7:                           {
                                                     } // if (ilq)
 
                                                     temp[0] = H[jch][jch - 1];
-                                                    dlartg(temp[0], H[jch][jch - 2], c, s, aout);
-                                                    H[jch][jch - 1] = aout[0];
+                                                    dlartg(temp[0], H[jch][jch - 2], c, s, hout);
+                                                    H[jch][jch - 1] = hout[0];
                                                     H[jch][jch - 2] = 0.0;
                                                     dx = new double[jch + 1 - ifrstm];
                                                     dy = new double[jch + 1 - ifrstm];
@@ -9814,13 +9814,13 @@ loop7:                           {
 
                                     return;
 
-                                    // B[ilast-1][ilast-1] = 0 -- Clear H[ilast-1][ilast-2]
+                                    // T[ilast-1][ilast-1] = 0 -- Clear H[ilast-1][ilast-2]
                                     // to split off a 1x1 block.
                                 } // loop7
 
                                 temp[0] = H[ilast - 1][ilast - 1];
-                                dlartg(temp[0], H[ilast - 1][ilast - 2], c, s, aout);
-                                H[ilast - 1][ilast - 1] = aout[0];
+                                dlartg(temp[0], H[ilast - 1][ilast - 2], c, s, hout);
+                                H[ilast - 1][ilast - 1] = hout[0];
                                 H[ilast - 1][ilast - 2] = 0.0;
                                 dx = new double[ilast - ifrstm];
                                 dy = new double[ilast - ifrstm];
@@ -9919,7 +9919,7 @@ loop7:                           {
 
                         // QZ step
                         // This iteration only involves rows/columns ifirst-1:ilast-1.
-                        // We assume ifirst < ilast, and that the diagonal of B is
+                        // We assume ifirst < ilast, and that the diagonal of T is
                         // nonzero.
                         iiter = iiter + 1;
 
@@ -10024,8 +10024,8 @@ loop8:                   {
 
                             if (j > istart) {
                                 temp[0] = H[j - 1][j - 2];
-                                dlartg(temp[0], H[j][j - 2], c, s, aout);
-                                H[j - 1][j - 2] = aout[0];
+                                dlartg(temp[0], H[j][j - 2], c, s, hout);
+                                H[j - 1][j - 2] = hout[0];
                                 H[j][j - 2] = 0.0;
                             } // if (j > istart)
 
@@ -10048,8 +10048,8 @@ loop8:                   {
                             } // if (ilq)
 
                             temp[0] = T[j][j];
-                            dlartg(temp[0], T[j][j - 1], c, s, bout);
-                            T[j][j] = bout[0];
+                            dlartg(temp[0], T[j][j - 1], c, s, tout);
+                            T[j][j] = tout[0];
                             T[j][j - 1] = 0.0;
 
                             for (jr = ifrstm; jr <= Math.min(j + 2, ilast); jr++) {
@@ -10086,9 +10086,9 @@ loop8:                   {
 
                         // Special case -- 2x2 block with complex eigenvalues
                         // Step 1: Standardize, that is, rotate so that
-                        // ( T11   0  )
+                        //      ( T11   0  )
                         // T =  (          ) with T11 non-negative.
-                        // (  0   T22 )
+                        //      (  0   T22 )
                         dlasv2(T[ilast - 2][ilast - 2], T[ilast - 2][ilast - 1], T[ilast - 1][ilast - 1], b22, b11, sr,
                                cr, sL, cL);
 
@@ -10250,7 +10250,7 @@ loop8:                   {
                         // Compute complex Givens rotation on right
                         // (Assume come element of C = (sA - wB) > unfl)
                         // (sA - wB)(CZ comp(-SZ))
-                        // (SZ       CZ )
+                        //          (SZ       CZ )
                         c11r = (s1[0] * a11) - (wr[0] * b11[0]);
                         c11i = -wi[0] * b11[0];
                         c12 = s1[0] * a12;
@@ -10260,10 +10260,10 @@ loop8:                   {
 
                         if ((Math.abs(c11r) + Math.abs(c11i) + Math.abs(c12)) >
                                 (Math.abs(c21) + Math.abs(c22r) + Math.abs(c22i))) {
-                            t = dlapy3(c12, c11r, c11i);
-                            cz = c12 / t;
-                            szr = -c11r / t;
-                            szi = -c11i / t;
+                            t1 = dlapy3(c12, c11r, c11i);
+                            cz = c12 / t1;
+                            szr = -c11r / t1;
+                            szi = -c11i / t1;
                         } // if (Math.abs(c11r)+Math.abs(c11i)+Math.abs(c12) >
                         else {
                             cz = dlapy2(c22r, c22i);
@@ -10276,16 +10276,16 @@ loop8:                   {
                             else {
                                 tempr[0] = c22r / cz;
                                 tempi = c22i / cz;
-                                t = dlapy2(cz, c21);
-                                cz = cz / t;
-                                szr = -c21 * tempr[0] / t;
-                                szi = c21 * tempi / t;
+                                t1 = dlapy2(cz, c21);
+                                cz = cz / t1;
+                                szr = -c21 * tempr[0] / t1;
+                                szi = c21 * tempi / t1;
                             } // else
                         } // else
 
                         // Compute Givens rotation on left
                         // ( CQ        SQ)
-                        // (             )  A or B
+                        // (             )  H or T
                         // (comp(-SQ)  CQ)
                         an = Math.abs(a11) + Math.abs(a12) + Math.abs(a21) + Math.abs(a22);
                         bn = Math.abs(b11[0]) + Math.abs(b22[0]);
@@ -10316,10 +10316,10 @@ loop8:                   {
                             } // else
                         } // else
 
-                        t = dlapy3(cq, sqr, sqi);
-                        cq = cq / t;
-                        sqr = sqr / t;
-                        sqi = sqi / t;
+                        t1 = dlapy3(cq, sqr, sqi);
+                        cq = cq / t1;
+                        sqr = sqr / t1;
+                        sqi = sqi / t1;
 
                         // Compute diagonal elements of QBZ
                         tempr[0] = (sqr * szr) - (sqi * szi);
@@ -10365,7 +10365,7 @@ loop8:                   {
                         // double-shift
 
                         // Eigenvalue equation is w**2 - cw + d = 0,
-                        // so compute 1st column of (ABInverse)**2 - c H TInverse + d
+                        // so compute 1st column of (HTInverse)**2 - c H TInverse + d
                         // using the formula in QZIT (from EISPACK)
 
                         // We assume the block is at least 3x3
@@ -10523,9 +10523,9 @@ loop3:                       {
                             } // if (ilpivt)
 
                             // Compute Householder vector
-                            t = Math.sqrt((scale * scale) + (u1 * u1) + (u2 * u2));
-                            tau[0] = 1.0 + (scale / t);
-                            vs = -1.0 / (scale + t);
+                            t1 = Math.sqrt((scale * scale) + (u1 * u1) + (u2 * u2));
+                            tau[0] = 1.0 + (scale / t1);
+                            vs = -1.0 / (scale + t1);
                             v[0] = 1.0;
                             v[1] = vs * u1;
                             v[2] = vs * u2;
@@ -10566,8 +10566,8 @@ loop3:                       {
                         // Rotations from the left
                         j = ilast - 1;
                         temp[0] = H[j - 1][j - 2];
-                        dlartg(temp[0], H[j][j - 2], c, s, aout);
-                        H[j - 1][j - 2] = aout[0];
+                        dlartg(temp[0], H[j][j - 2], c, s, hout);
+                        H[j - 1][j - 2] = hout[0];
                         H[j][j - 2] = 0.0;
 
                         for (jc = j; jc <= ilastm; jc++) {
@@ -10590,8 +10590,8 @@ loop3:                       {
 
                         // Rotations from the right
                         temp[0] = T[j][j];
-                        dlartg(temp[0], T[j][j - 1], c, s, bout);
-                        T[j][j] = bout[0];
+                        dlartg(temp[0], T[j][j - 1], c, s, tout);
+                        T[j][j] = tout[0];
                         T[j][j - 1] = 0.0;
 
                         for (jr = ifrstm; jr <= ilast; jr++) {
