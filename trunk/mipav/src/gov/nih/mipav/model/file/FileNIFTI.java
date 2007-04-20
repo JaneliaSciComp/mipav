@@ -73,9 +73,6 @@ public class FileNIFTI extends FileBase {
     private int[] axisOrientation;
 
     /** DOCUMENT ME! */
-    private short bitpix;
-
-    /** DOCUMENT ME! */
     private byte[] bufferByte = null;
 
     /** DOCUMENT ME! */
@@ -115,9 +112,6 @@ public class FileNIFTI extends FileBase {
     private float[] LPSOrigin;
 
     /** DOCUMENT ME! */
-    private char[] magic = new char[4];
-
-    /** DOCUMENT ME! */
     private TransMatrix matrix = new TransMatrix(4);
 
     /** DOCUMENT ME! */
@@ -125,9 +119,6 @@ public class FileNIFTI extends FileBase {
 
     /** DOCUMENT ME! */
     private double newMin;
-
-    /** DOCUMENT ME! */
-    private float[] newOrigin = new float[3];
 
     /** DOCUMENT ME! */
     private TransMatrix niftiMatrix = new TransMatrix(4);
@@ -1515,7 +1506,8 @@ public class FileNIFTI extends FileBase {
                 	matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
                     Preferences.debug("Unknown coord_code = " + coord_code);
             }
-
+            
+            
             if (qform_code > 0) {
                 quatern_b = getBufferFloat(bufferByte, 256, endianess);
                 b = quatern_b;
@@ -1572,7 +1564,6 @@ public class FileNIFTI extends FileBase {
                 niftiMatrix.setMatrix(qoffset_x, 0, 3);
                 niftiMatrix.setMatrix(-qoffset_y, 1, 3);
                 niftiMatrix.setMatrix(qoffset_z, 2, 3);
-                fileInfo.setMatrix(niftiMatrix);
                 LPSOrigin = new float[3];
                 LPSOrigin[0] = -qoffset_x;
                 LPSOrigin[1] = qoffset_y;
@@ -1661,7 +1652,6 @@ public class FileNIFTI extends FileBase {
                 niftiMatrix.setMatrix((double) -srow_z[1], 2, 1);
                 matrix.setMatrix((double) srow_z[2], 2, 2);
                 niftiMatrix.setMatrix((double) srow_z[2], 2, 2);
-                fileInfo.setMatrix(niftiMatrix);
                 LPSOrigin = new float[3];
                 LPSOrigin[0] = -srow_x[3];
                 LPSOrigin[1] = srow_y[3];
@@ -1714,6 +1704,8 @@ public class FileNIFTI extends FileBase {
                 Preferences.debug("srow_z = " + srow_z[0] + "  " + srow_z[1] + "  " + srow_z[2] + "  " + srow_z[3] +
                                   "\n");
             } // else if (sform_code > 0)
+            
+            
         } // if (numDims >= 3)
 
         intentName = (new String(bufferByte, 328, 16));
