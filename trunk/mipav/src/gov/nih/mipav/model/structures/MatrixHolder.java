@@ -77,6 +77,11 @@ public class MatrixHolder {
 		
 	}
 	
+	/**
+	 * Gets the composite (dynamically built) matrix made by multiplying in reverse order the image's matrices
+	 * @param useDICOM whether to include the scanner anatomical matrix (if avaiable)
+	 * @return the composite TransMatrix
+	 */
 	public TransMatrix getCompositeMatrix(boolean useDICOM) {
 		
 		//here we will dynamically create the composite matrix, with or without DICOM (scanner anatomical) if present
@@ -107,7 +112,7 @@ public class MatrixHolder {
 	 * @param newMatrix the new matrix
 	 */
 	public void replaceMatrix(Object key, TransMatrix newMatrix) {
-		if (!((String)key).contains(TransMatrix.getTransformIDStr(newMatrix.getTransformID()))) {
+		if (((String)key).indexOf(TransMatrix.getTransformIDStr(newMatrix.getTransformID())) == -1) {
 			//we are replacing via key something of the wrong type.  key and tID do not match
 			System.err.println("Replacing wrong type, aborting replaceMatrix()");
 			return;
@@ -178,7 +183,7 @@ public class MatrixHolder {
 		Iterator iter = matrixMap.keySet().iterator();
 		
 		while(iter.hasNext()) {
-			if ( ((String)iter.next()).contains(TransMatrix.getTransformIDStr(type))) {
+			if ( ((String)iter.next()).indexOf(TransMatrix.getTransformIDStr(type)) != -1) {
 				return true;
 			}
 		}

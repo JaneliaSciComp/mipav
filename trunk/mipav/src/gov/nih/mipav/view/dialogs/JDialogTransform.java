@@ -1212,7 +1212,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         doClip = scriptParameters.getParams().getBoolean("do_clip_output");
         doRotateCenter = scriptParameters.getParams().getBoolean("do_rotate_about_center");
         doTalairach = scriptParameters.getParams().getBoolean("do_talairach_transform");
-
+        useSACenter = scriptParameters.getParams().getBoolean("use_scanner_center");
+        isSATransform = scriptParameters.getParams().getBoolean("is_scanner_transform");
+        
+        
+        System.err.println("doCenter: " + doRotateCenter);
+        
         if (doTalairach) {
             tInfo = new TalairachTransformInfo();
             tInfo.isAcpc(true);
@@ -1271,8 +1276,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             padValue = scriptParameters.getParams().getInt("pad_value");
 
             double[][] xMat = null;
-            xMat = xfrm.getMatrix();
+            
+            //following makes no sense... xfrm is null!?
+            //xMat = xfrm.getMatrix();
 
+            xMat = new double[image.getNDims()+1][image.getNDims()+1];
+            
             if ((image.getNDims() == 2) || do25D) {
                 transMat = new TransMatrix(3);
 
@@ -1310,8 +1319,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             }
 
             transMat.setMatrix(xMat);
-
+            xfrm = transMat;
         } // else not Talairach
+        
     }
 
     /**
@@ -1326,7 +1336,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_clip_output", doClip));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_rotate_about_center", doRotateCenter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_talairach_transform", doTalairach));
-
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_scanner_center", this.useSACenter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_scanner_transform", this.isSATransform));
+        
         if (doTalairach) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("transform_type", transformType));
 

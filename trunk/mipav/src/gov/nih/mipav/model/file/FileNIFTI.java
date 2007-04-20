@@ -1488,25 +1488,31 @@ public class FileNIFTI extends FileBase {
 
                 case FileInfoNIFTI.NIFTI_XFORM_UNKNOWN:
                     Preferences.debug("Arbitrary X,Y,Z coordinate system\n", 2);
+                    matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT:
                     Preferences.debug("Scanner based anatomical coordinates\n", 2);
+                    matrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT:
                     Preferences.debug("Coordinates aligned to another file's or to anatomical truth\n", 2);
+                    matrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_TALAIRACH:
                     Preferences.debug("Talairach X,Y,Z coordinate system\n", 2);
+                    matrix.setTransformID(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_MNI_152:
+                	matrix.setTransformID(TransMatrix.TRANSFORM_MNI_152);
                     Preferences.debug("MNI 152 normalized X,Y,Z coordinates\n", 2);
                     break;
 
                 default:
+                	matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
                     Preferences.debug("Unknown coord_code = " + coord_code);
             }
 

@@ -3854,12 +3854,10 @@ public class AlgorithmTransform extends AlgorithmBase {
             imgOrigin[1] = tempOrigin[1];
         } else {
             float[] tempOrigin = new float[3];
-//System.err.println("image origin: " + imgOrigin[0] + ", " + imgOrigin[1] + ", " + imgOrigin[2]);
             xfrm.transform(imgOrigin[0], imgOrigin[1], imgOrigin[2], tempOrigin);
             imgOrigin[0] = tempOrigin[0];
             imgOrigin[1] = tempOrigin[1];
             imgOrigin[2] = tempOrigin[2];
-            System.err.println("image origin after: " + imgOrigin[0] + ", " + imgOrigin[1] + ", " + imgOrigin[2]);
         }
 
         
