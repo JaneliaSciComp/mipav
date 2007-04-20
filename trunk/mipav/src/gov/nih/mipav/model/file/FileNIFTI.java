@@ -120,7 +120,10 @@ public class FileNIFTI extends FileBase {
     /** DOCUMENT ME! */
     private double newMin;
 
-    /** DOCUMENT ME! */
+    /** niftiMatrix is used solely to obtain the axis orientation from the 
+     *  getAxisOrientation routine. This routine expects the NIFTI
+     *  standards of RAS as positive as opposed to the usual
+     *  MIPAV standards of LPS as positive */
     private TransMatrix niftiMatrix = new TransMatrix(4);
 
     /** DOCUMENT ME! */
@@ -2150,6 +2153,8 @@ public class FileNIFTI extends FileBase {
        Input:  4x4 matrix that transforms (i,j,k) indexes to (x,y,z) coordinates,
                where +x=Right, +y=Anterior, +z=Superior.
                (Only the upper-left 3x3 corner of R is used herein.)
+               Note that this routine uses the NIFTI RAS convention as
+               opposed to the MIPAV LPS convention.
        Output: 3 orientation codes that correspond to the closest "standard"
                anatomical orientation of the (i,j,k) axes.
        Method: Find which permutation of (x,y,z) has the smallest angle to the
