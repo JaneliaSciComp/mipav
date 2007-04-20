@@ -367,9 +367,6 @@ public class FileInfoNIFTI extends FileInfoBase {
     /** DOCUMENT ME! */
     private float intentP3;
 
-    /** Transformation matrix. */
-    private TransMatrix matrix = new TransMatrix(4);
-
     /** DOCUMENT ME! */
     private byte orient = -1;
 
@@ -1060,15 +1057,6 @@ public class FileInfoNIFTI extends FileInfoBase {
      *
      * @return  DOCUMENT ME!
      */
-    public TransMatrix getMatrix() {
-        return this.matrix;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
     public int getPhaseDim() {
         return phase_dim;
     }
@@ -1305,15 +1293,6 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public void setIntentP3(float intentP3) {
         this.intentP3 = intentP3;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  matrix  DOCUMENT ME!
-     */
-    public void setMatrix(TransMatrix matrix) {
-        this.matrix = matrix;
     }
 
     /**
