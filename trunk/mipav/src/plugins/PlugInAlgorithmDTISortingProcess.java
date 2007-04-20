@@ -129,8 +129,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		long begTime = System.currentTimeMillis();
 		
 		
-		Preferences.debug("** Beginning Algorithm v1.6...\n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("** Beginning Algorithm v1.6...\n");
+		Preferences.debug("** Beginning Algorithm v1.9...\n", Preferences.DEBUG_ALGORITHM);
+		outputTextArea.append("** Beginning Algorithm v1.9...\n");
 
 		
 		Preferences.debug("* The study path is " + studyPath + " \n", Preferences.DEBUG_ALGORITHM);
@@ -146,6 +146,12 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		outputTextArea.append("* Parsing");
 		try {
 			success = parse(studyPathRoot);
+		}
+		catch (OutOfMemoryError e) {
+			e.printStackTrace();
+			e.getCause().toString();
+			finalize();
+			return;
 		}
 		catch (IOException e) {
 			finalize();
@@ -270,7 +276,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	 * @param file
 	 * @return
 	 */
-	public boolean parse(File file) throws IOException{
+	public boolean parse(File file) throws IOException, OutOfMemoryError{
 
 		imageFilter = new ViewImageFileFilter(new String[] { "dcm", "DCM", "ima", "IMA" });
 
@@ -302,11 +308,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 							continue;
 						}
 					} catch (IOException error) {
-						Preferences.debug("\n! ERROR: " + error.toString() + "\n", Preferences.DEBUG_ALGORITHM);
-						Preferences.debug("! ERROR: Unable to read file, " + children[i] + ", to parse.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-						outputTextArea.append("\n! ERROR: " + error.toString() + "\n");
-						outputTextArea.append("! ERROR: Unable to read file, " + children[i] + ", to parse.....exiting algorithm \n");
-						throw error;
+						error.printStackTrace();
+						System.gc();
+						i--;
+						continue;
+
 					}
 					
 					FileInfoDicom fileInfoDicom = (FileInfoDicom) imageFile.getFileInfo();
