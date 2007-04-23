@@ -88,12 +88,16 @@ public class TransMatrix extends Matrix // implements TableModelListener
     /** MNI 152 transform ID. */
     public static final int TRANSFORM_MNI_152 = 4;
     
-    /** */
+    /** Composite, dynamically generated matrix type */
     public static final int TRANSFORM_COMPOSITE = 5;
+    
+    /** Scanner anatomical matrix associated with NIFTI type */
+    public static final int TRANSFORM_NIFTI_SCANNER_ANATOMICAL = 6;
     
     /** Array of transform ID strings. */
     private static final String[] transformIDStr = {
-        "Unknown", "Scanner Anatomical", "Another Dataset", "Talairach Tournoux", "MNI 152", "Composite"
+        "Unknown", "Scanner Anatomical", "Another Dataset", "Talairach Tournoux", "MNI 152", "Composite",
+        "NIFTI Scanner Anatomical"
     };
     
     /** DOCUMENT ME! */

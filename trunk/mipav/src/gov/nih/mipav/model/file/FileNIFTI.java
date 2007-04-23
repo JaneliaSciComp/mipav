@@ -1480,7 +1480,7 @@ public class FileNIFTI extends FileBase {
 
                 case FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT:
                     Preferences.debug("Scanner based anatomical coordinates\n", 2);
-                    matrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
+                    matrix.setTransformID(TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL);
                     break;
 
                 case FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT:
