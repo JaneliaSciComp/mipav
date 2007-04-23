@@ -12,7 +12,7 @@ import java.util.*;
  *
  * @author  linkb
  */
-public class MatrixHolder implements Cloneable, Serializable {
+public class MatrixHolder extends ModelSerialCloneable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -87,6 +87,17 @@ public class MatrixHolder implements Cloneable, Serializable {
         matrixMap.clear();
     }
 
+    /**
+     * Copies the object.
+     *
+     * @return  Object A copy of the file info.
+     */
+    public Object clone() {
+        Object base = super.clone();
+
+        return (base);
+    }
+    
     /**
      * Determines if the map contains a matrix of the given type (checks for String.contains()).
      *
