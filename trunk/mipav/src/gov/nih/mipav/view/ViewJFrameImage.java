@@ -5375,25 +5375,21 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else {
             setLocation(loc.width, loc.height);
         }
-
-
         // build the shortcuts that will fire when CTRL/SHIFT/ALT keys are pressed with another key
-
 
         updateImages(true);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         pack();
 
+        // User interface will have list of frames
+        userInterface.registerFrame(this);
+
         if (userInterface.isAppFrameVisible()) {
             setVisible(true);
         } else {
             setVisible(false);
         }
-
-
-        // User interface will have list of frames
-        userInterface.registerFrame(this);
 
         /*
          * The addComponentListener statement was moved from earlier in the code to the end because of a bug found on
@@ -5404,9 +5400,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          * Nathan Pollack (Contractor - SSAI)  June 19, 2006
          */
         addComponentListener(this);
-
-
-        // validate(); not really needed because pack does a validate.
 
 
     } // end init()
