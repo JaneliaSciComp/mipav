@@ -67,9 +67,6 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
     /** DOCUMENT ME! */
     private JToolBar tBar;
 
-    /** Reference to the ViewUserInterface Object. */
-    private ViewUserInterface UI;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -80,7 +77,6 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
     public ViewJFrameMessage(String title) {
         super(title);
 
-        UI = ViewUserInterface.getReference();
         setResizable(true);
         init(title);
     }
@@ -100,8 +96,8 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
 
             JFileChooser chooser = new JFileChooser();
 
-            if (UI.getDefaultDirectory() != null) {
-                chooser.setCurrentDirectory(new File(UI.getDefaultDirectory()));
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             } else {
                 chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
@@ -111,7 +107,7 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
                 directory = chooser.getCurrentDirectory().toString() + File.separatorChar;
-                UI.setDefaultDirectory(chooser.getCurrentDirectory().toString());
+                ViewUserInterface.getReference().setDefaultDirectory(chooser.getCurrentDirectory().toString());
             } else {
                 return;
             }
@@ -286,9 +282,9 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
         if (index >= 0) {
 
             try {
-                BufferedWriter br = new BufferedWriter(new FileWriter(UI.getDefaultDirectory() + File.separator +
-                                                                      tabName + "_" + System.currentTimeMillis() +
-                                                                      ".txt"));
+                BufferedWriter br = new BufferedWriter(new FileWriter(ViewUserInterface.getReference().getDefaultDirectory() +
+                                                                      File.separator + tabName + "_" +
+                                                                      System.currentTimeMillis() + ".txt"));
                 ((ScrollTextArea) tabbedPane.getComponentAt(index)).getTextArea().write(br);
                 br.flush();
                 br.close();
@@ -455,7 +451,7 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
 
         this.addWindowListener(new WindowAdapter() {
                 public void windowClosing(WindowEvent we) {
-                    UI.actionPerformed(new ActionEvent(this, 0, "ShowOutput"));
+                    ViewUserInterface.getReference().actionPerformed(new ActionEvent(this, 0, "ShowOutput"));
                 }
             });
 
