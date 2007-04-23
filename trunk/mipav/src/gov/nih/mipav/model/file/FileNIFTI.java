@@ -120,12 +120,6 @@ public class FileNIFTI extends FileBase {
     /** DOCUMENT ME! */
     private double newMin;
 
-    /** niftiMatrix is used solely to obtain the axis orientation from the 
-     *  getAxisOrientation routine. This routine expects the NIFTI
-     *  standards of RAS as positive as opposed to the usual
-     *  MIPAV standards of LPS as positive */
-    private TransMatrix niftiMatrix = new TransMatrix(4);
-
     /** DOCUMENT ME! */
     private boolean oneFile;
 
@@ -335,7 +329,6 @@ public class FileNIFTI extends FileBase {
             int nBuffers;
             int bufferSize;
             float[] buffer = null;
-            float[] resultBuffer = null;
 
             if (image.getNDims() > 1) {
                 bufferSize = image.getSliceSize();
@@ -1510,7 +1503,7 @@ public class FileNIFTI extends FileBase {
                     Preferences.debug("Unknown coord_code = " + coord_code);
             }
             
-            
+            qform_code = 0;
             if (qform_code > 0) {
                 quatern_b = getBufferFloat(bufferByte, 256, endianess);
                 b = quatern_b;
@@ -1536,43 +1529,31 @@ public class FileNIFTI extends FileBase {
 
                 r00 = (a * a) + (b * b) - (c * c) - (d * d);
                 matrix.setMatrix(-r00 * resolutions[0], 0, 0);
-                niftiMatrix.setMatrix(r00 * resolutions[0], 0, 0);
                 r01 = 2.0 * ((b * c) - (a * d));
                 matrix.setMatrix(r01 * resolutions[1], 0, 1);
-                niftiMatrix.setMatrix(-r01 * resolutions[1], 0, 1);
                 r02 = 2.0 * ((b * d) + (a * c));
                 matrix.setMatrix(-r02 * qfac * resolutions[2], 0, 2);
-                niftiMatrix.setMatrix(r02 * qfac * resolutions[2], 0, 2);
                 r10 = 2.0 * ((b * c) + (a * d));
                 matrix.setMatrix(-r10 * resolutions[0], 1, 0);
-                niftiMatrix.setMatrix(r10 * resolutions[0], 1, 0);
                 r11 = (a * a) + (c * c) - (b * b) - (d * d);
                 matrix.setMatrix(r11 * resolutions[1], 1, 1);
-                niftiMatrix.setMatrix(-r11 * resolutions[1], 1, 1);
                 r12 = 2.0 * ((c * d) - (a * b));
                 matrix.setMatrix(-r12 * qfac * resolutions[2], 1, 2);
-                niftiMatrix.setMatrix(r12 * qfac * resolutions[2], 1, 2);
                 r20 = 2.0 * ((b * d) - (a * c));
                 matrix.setMatrix(r20 * resolutions[0], 2, 0);
-                niftiMatrix.setMatrix(r20 * resolutions[0], 2, 0);
                 r21 = 2.0 * ((c * d) + (a * b));
                 matrix.setMatrix(-r21 * resolutions[1], 2, 1);
-                niftiMatrix.setMatrix(-r21 * resolutions[1], 2, 1);
                 r22 = (a * a) + (d * d) - (c * c) - (b * b);
                 matrix.setMatrix(r22 * qfac * resolutions[2], 2, 2);
-                niftiMatrix.setMatrix(r22 * qfac * resolutions[2], 2, 2);
                 qoffset_x = getBufferFloat(bufferByte, 268, endianess);
                 qoffset_y = getBufferFloat(bufferByte, 272, endianess);
                 qoffset_z = getBufferFloat(bufferByte, 276, endianess);
-                niftiMatrix.setMatrix(qoffset_x, 0, 3);
-                niftiMatrix.setMatrix(-qoffset_y, 1, 3);
-                niftiMatrix.setMatrix(qoffset_z, 2, 3);
                 LPSOrigin = new float[3];
                 LPSOrigin[0] = -qoffset_x;
                 LPSOrigin[1] = qoffset_y;
                 LPSOrigin[2] = qoffset_z;
 
-                axisOrientation = getAxisOrientation(niftiMatrix);
+                axisOrientation = getAxisOrientation(matrix);
                 Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
                                   axisOrientation[2] + "\n");
                 fileInfo.setAxisOrientation(axisOrientation);
@@ -1638,29 +1619,20 @@ public class FileNIFTI extends FileBase {
                 srow_z[2] = getBufferFloat(bufferByte, 320, endianess);
                 srow_z[3] = getBufferFloat(bufferByte, 324, endianess);
                 matrix.setMatrix((double) -srow_x[0], 0, 0);
-                niftiMatrix.setMatrix((double) srow_x[0], 0, 0);
-                matrix.setMatrix((double) -srow_x[1], 0, 1);
-                niftiMatrix.setMatrix((double) srow_x[1], 0, 1);
+                matrix.setMatrix((double) srow_x[1], 0, 1);
                 matrix.setMatrix((double) -srow_x[2], 0, 2);
-                niftiMatrix.setMatrix((double) srow_x[2], 0, 2);
                 matrix.setMatrix((double) -srow_y[0], 1, 0);
-                niftiMatrix.setMatrix((double) srow_y[0], 1, 0);
                 matrix.setMatrix((double) srow_y[1], 1, 1);
-                niftiMatrix.setMatrix((double) -srow_y[1], 1, 1);
                 matrix.setMatrix((double) -srow_y[2], 1, 2);
-                niftiMatrix.setMatrix((double) srow_y[2], 1, 2);
                 matrix.setMatrix((double) srow_z[0], 2, 0);
-                niftiMatrix.setMatrix((double) srow_z[0], 2, 0);
                 matrix.setMatrix((double) -srow_z[1], 2, 1);
-                niftiMatrix.setMatrix((double) -srow_z[1], 2, 1);
                 matrix.setMatrix((double) srow_z[2], 2, 2);
-                niftiMatrix.setMatrix((double) srow_z[2], 2, 2);
                 LPSOrigin = new float[3];
                 LPSOrigin[0] = -srow_x[3];
                 LPSOrigin[1] = srow_y[3];
                 LPSOrigin[2] = srow_z[3];
 
-                axisOrientation = getAxisOrientation(niftiMatrix);
+                axisOrientation = getAxisOrientation(matrix);
                 Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
                                   axisOrientation[2] + "\n");
                 fileInfo.setAxisOrientation(axisOrientation);
@@ -1966,7 +1938,6 @@ public class FileNIFTI extends FileBase {
             int nBuffers;
             int bufferSize;
             float[] buffer = null;
-            float[] resultBuffer = null;
 
             if (image.getNDims() > 1) {
                 bufferSize = image.getSliceSize();
@@ -2069,9 +2040,6 @@ public class FileNIFTI extends FileBase {
             oneFile = choice.getOneFile();
         }
 
-        int beginSlice = options.getBeginSlice();
-        int endSlice = options.getEndSlice();
-
         index = fileName.lastIndexOf(".");
 
         if (index != -1) {
@@ -2145,26 +2113,24 @@ public class FileNIFTI extends FileBase {
         // With extents from rawFile
     }
 
+    
     /**
      * --------------------------------------------------------------------------- ! compute the (closest) orientation
      * from a 4x4 ijk->xyz tranformation matrix
      *
      * <pre>
        Input:  4x4 matrix that transforms (i,j,k) indexes to (x,y,z) coordinates,
-               where +x=Right, +y=Anterior, +z=Superior.
+               where +x=Left, +y=Posterior, +z=Superior.
                (Only the upper-left 3x3 corner of R is used herein.)
-               Note that this routine uses the NIFTI RAS convention as
-               opposed to the MIPAV LPS convention.
+               Note that this routine uses the MIPAV LPS convention as
+               opposed to the NIFTI RAS convention.
        Output: 3 orientation codes that correspond to the closest "standard"
                anatomical orientation of the (i,j,k) axes.
        Method: Find which permutation of (x,y,z) has the smallest angle to the
                (i,j,k) axes directions, which are the columns of the R matrix.
        Errors: The codes returned will be zero.
 
-       For example, an axial volume might get return values of
-         *icod = NIFTI_R2L   (i axis is mostly Right to Left)
-         *jcod = NIFTI_P2A   (j axis is mostly Posterior to Anterior)
-         *kcod = NIFTI_I2S   (k axis is mostly Inferior to Superior)
+       
        </pre>
      *
      * <p>\see "QUATERNION REPRESENTATION OF ROTATION MATRIX" in nifti1.h \see nifti_quatern_to_mat44,
@@ -2407,19 +2373,19 @@ public class FileNIFTI extends FileBase {
         switch (ibest * pbest) {
 
             case 1:
-                i = FileInfoBase.ORI_L2R_TYPE;
-                break;
-
-            case -1:
                 i = FileInfoBase.ORI_R2L_TYPE;
                 break;
 
+            case -1:
+                i = FileInfoBase.ORI_L2R_TYPE;
+                break;
+
             case 2:
-                i = FileInfoBase.ORI_P2A_TYPE;
+                i = FileInfoBase.ORI_A2P_TYPE;
                 break;
 
             case -2:
-                i = FileInfoBase.ORI_A2P_TYPE;
+                i = FileInfoBase.ORI_P2A_TYPE;
                 break;
 
             case 3:
@@ -2434,19 +2400,19 @@ public class FileNIFTI extends FileBase {
         switch (jbest * qbest) {
 
             case 1:
-                j = FileInfoBase.ORI_L2R_TYPE;
-                break;
-
-            case -1:
                 j = FileInfoBase.ORI_R2L_TYPE;
                 break;
 
+            case -1:
+                j = FileInfoBase.ORI_L2R_TYPE;
+                break;
+
             case 2:
-                j = FileInfoBase.ORI_P2A_TYPE;
+                j = FileInfoBase.ORI_A2P_TYPE;
                 break;
 
             case -2:
-                j = FileInfoBase.ORI_A2P_TYPE;
+                j = FileInfoBase.ORI_P2A_TYPE;
                 break;
 
             case 3:
@@ -2464,19 +2430,19 @@ public class FileNIFTI extends FileBase {
         switch (kbest * rbest) {
 
             case 1:
-                k = FileInfoBase.ORI_L2R_TYPE;
-                break;
-
-            case -1:
                 k = FileInfoBase.ORI_R2L_TYPE;
                 break;
 
+            case -1:
+                k = FileInfoBase.ORI_L2R_TYPE;
+                break;
+
             case 2:
-                k = FileInfoBase.ORI_P2A_TYPE;
+                k = FileInfoBase.ORI_A2P_TYPE;
                 break;
 
             case -2:
-                k = FileInfoBase.ORI_A2P_TYPE;
+                k = FileInfoBase.ORI_P2A_TYPE;
                 break;
 
             case 3:
