@@ -108,10 +108,11 @@ public class MatrixHolder extends ModelSerialCloneable {
     public boolean containsType(int type) {
 
         Iterator iter = matrixMap.keySet().iterator();
-
+        String nextKey = null;
         while (iter.hasNext()) {
-
-            if (((String) iter.next()).indexOf(TransMatrix.getTransformIDStr(type)) != -1) {
+        	nextKey = (String)iter.next();
+        	
+            if (nextKey.startsWith(TransMatrix.getTransformIDStr(type))) {
                 return true;
             }
         }
@@ -139,7 +140,9 @@ public class MatrixHolder extends ModelSerialCloneable {
         for (int i = keys.length - 1; i >= 0; i--) {
             tempMatrix = (TransMatrix) matrixMap.get(keys[i]);
 
-            if ((tempMatrix.getTransformID() != TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) || useDICOM) {
+            //do not include a nifti "scanner anatomical type" in the composite under any circumstances
+            if (((tempMatrix.getTransformID() != TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) || useDICOM)
+            		&& (tempMatrix.getTransformID() != TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL)) {
                 compositeMatrix.setMatrix((tempMatrix).times(compositeMatrix).getArray());
             }
         }
