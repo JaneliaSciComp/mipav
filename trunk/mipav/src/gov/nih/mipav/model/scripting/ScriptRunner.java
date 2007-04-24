@@ -166,6 +166,59 @@ public class ScriptRunner {
 
         return true;
     }
+    
+    
+    
+    
+    
+    
+    /**
+     * Execute a script....no  images or vois
+     *
+     * @param   file           The path to the script file we want to run.
+     *
+     * @return  <code>True</code> if execution of the script was successful, <code>false</code> otherwise.
+     */
+    public synchronized boolean runScript(String file) {
+
+        if (isRunning()) {
+            MipavUtil.displayError("A script is already being executed.");
+
+            return false;
+        }
+
+        Preferences.debug("script runner:\tStarting script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
+
+        setRunning(true);
+
+        scriptFile = file;
+
+
+        // ScriptThread thread;
+
+        try {
+
+            // thread = new ScriptThread(scriptFile);
+            // thread.start();
+
+            Parser.runScript(scriptFile);
+
+            setRunning(false);
+        } catch (ParserException pe) {
+            handleParserException(pe);
+
+            return false;
+        }
+
+        return true;
+    }
+    
+    
+    
+    
+    
+    
+    
 
     /**
      * Convenience method used to store the name of an image in the image table being used by the current script.

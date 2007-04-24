@@ -119,6 +119,9 @@ public class JDialogRunScriptView implements ActionListener {
 
     /** Keep a reference to the VOI List to turn on and off if multiple images are selected. */
     private JList voiList = null;
+    
+    /** Document me  **/
+    private int scriptNodeChildCount = -1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -476,8 +479,17 @@ public class JDialogRunScriptView implements ActionListener {
     public JList getVOIList() {
         return this.voiList;
     }
-
+    
+    
     /**
+     * Returns the number of child nodes the script node has
+     * @return
+     */
+    public int getScriptNodeChildCount() {
+		return scriptNodeChildCount;
+	}
+
+	/**
      * DOCUMENT ME!
      */
     public void update() {
@@ -521,6 +533,11 @@ public class JDialogRunScriptView implements ActionListener {
 
 
         int numImagePlaceHolders = scriptNode.getChildCount();
+        scriptNodeChildCount = scriptNode.getChildCount();
+        if(numImagePlaceHolders == 0) {
+        	return true;
+        }
+        
         int[] numImages = new int[numImagePlaceHolders];
 
         ScriptTreeNode imagePHNode = null;

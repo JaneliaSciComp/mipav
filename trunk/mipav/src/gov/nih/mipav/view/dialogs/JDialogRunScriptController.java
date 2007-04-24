@@ -437,7 +437,7 @@ public class JDialogRunScriptController implements ActionListener {
      */
     private void runScript() {
 
-        if (view.isTreeReadyForScriptExecution()) {
+        if (view.isTreeReadyForScriptExecution() && view.getScriptNodeChildCount() != 0) {
             view.getFrame().setVisible(false);
 
             String[] scriptVars = model.getScriptImageVars();
@@ -501,6 +501,16 @@ public class JDialogRunScriptController implements ActionListener {
             }
 
             view.getFrame().dispose();
+        }
+        else if (view.isTreeReadyForScriptExecution() && view.getScriptNodeChildCount() == 0) {
+        	view.getFrame().setVisible(false);
+        	if (ScriptRunner.getReference().runScript(model.getScriptFile())) {
+
+            } else {
+                Preferences.debug("run dialog:\tError during script execution \n",
+                                  Preferences.DEBUG_SCRIPTING);
+            }
+        	System.gc();
         }
     }
 }
