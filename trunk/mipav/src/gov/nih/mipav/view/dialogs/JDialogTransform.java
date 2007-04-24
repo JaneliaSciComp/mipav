@@ -204,6 +204,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     /** is this a scanner anatomical transform (->AXIAL)*/
     private boolean isSATransform = false;
     
+    private boolean enableSATransform = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -737,7 +739,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             } else {
                 rotCenter.setEnabled(true);
                 rotOrigin.setEnabled(true);
-                useSACenterBox.setEnabled(true);
+                useSACenterBox.setEnabled(true && enableSATransform);
                 padRadio.setEnabled(true);
                 cropRadio.setEnabled(true);
             }
@@ -840,9 +842,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 }
             }
         } else if (source == rotCenter) {
-        	useSACenterBox.setEnabled(rotCenter.isSelected());
+        	useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
         } else if (source == rotOrigin) {
-        	useSACenterBox.setEnabled(rotCenter.isSelected());
+        	useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
         }
     }
 
@@ -1143,7 +1145,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         
         // Hide dialog
         setVisible(false);
-
         if (doTalairach) {
             callTalAlgorithm();
 
@@ -1167,9 +1168,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         }
 
         if (doRotateCenter) { // rotate about center of image
-        	//System.err.println("use SA Center: " + useSACenter);
             center = resampleImage.getImageCentermm(useSACenter);
-            //System.err.println("using and setting center to: " + center);
             algoTrans.setDoCenter(true);
             algoTrans.setCenter(center);
         }
@@ -1217,9 +1216,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         doTalairach = scriptParameters.getParams().getBoolean("do_talairach_transform");
         useSACenter = scriptParameters.getParams().getBoolean("use_scanner_center");
         isSATransform = scriptParameters.getParams().getBoolean("is_scanner_transform");
-        
-        
-        System.err.println("doCenter: " + doRotateCenter);
         
         if (doTalairach) {
             tInfo = new TalairachTransformInfo();
@@ -1529,6 +1525,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     	Iterator iter = matrixKeys.iterator();
     	
     	//storedMatrixBox.addItem("Composite");
+    	
+    	enableSATransform = image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
     	
     	while(iter.hasNext()) {
     		storedMatrixBox.addItem(iter.next());
@@ -1951,7 +1949,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         
         useSACenterBox = new JCheckBox("Use scanner center", false);
         useSACenterBox.setFont(serif12);
-        useSACenterBox.setSelected(true);
+        useSACenterBox.setSelected(false);
         useSACenterBox.setEnabled(false);
         
         optionPanel.setLayout(new GridBagLayout());
@@ -3489,80 +3487,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         	if (image.getNDims() > 2) {
         		oZres = image.getFileInfo()[0].getResolutions()[2];
             	oZdim = image.getExtents()[2];
-            	
-            	System.err.println("OLD dim: " + oXdim + "," + oYdim + "," + oZdim);
-            	
-            	float [] res = new float[3];
-            	float [] dim = new float[3];
-            	
-            	xfrm.transform(oXres, oYres, oZres, res);
-            	xfrm.transform(oXdim, oYdim, oZdim, dim);
-            	
-            	 if (res[0] < 0) {
-            		 res[0]*=-1;
-                 }
-                 if (res[1] < 0) {
-                	 res[1]*=-1;
-                 }
-                 if (res[2] < 0) {
-                	 res[2]*=-1;
-                 }
-                 
-                 if (dim[0] < 0) {
-                	 dim[0]*=-1;
-                 }
-                 if (dim[1] < 0) {
-                	 dim[1]*=-1;
-                 }
-                 if (dim[2] < 0) {
-                	 dim[2]*=-1;
-                 }
-            	
-            	oXres = res[0];
-            	oYres = res[1];
-            	oZres = res[2];
-            	
-            	oXdim = MipavMath.round(dim[0]);
-            	oYdim = MipavMath.round(dim[1]);
-            	oZdim = MipavMath.round(dim[2]);
-            	System.err.println("NEW dim: " + oXdim + "," + oYdim + "," + oZdim);
-        	} else {
-        		
-        		float [] res = new float[2];
-        		float [] dim = new float[2];
-        		
-        		xfrm.transform(oXdim, oYdim, dim);
-        		xfrm.transform(oXres, oYres, res);
-        		
-        		 if (dim[0] < 0) {
-                	 dim[0]*=-1;
-                 }
-                 if (dim[1] < 0) {
-                	 dim[1]*=-1;
-                 }
-        		
-        		if (res[0] < 0) {
-           		 res[0]*=-1;
-                }
-                if (res[1] < 0) {
-               	 res[1]*=-1;
-                }
-        		
-                oXres = res[0];
-                oYres = res[1];
-                oXdim = MipavMath.round(dim[0]);
-                oYdim = MipavMath.round(dim[1]);
-                
-        	}
-        	
-        	
-        	
+        	} 
         }
-        //System.err.println("NOW XFRM IS: " + xfrm);
         
         // if ((no transformation) OR (user input transformation))
         // AND (total image size !=), then scale
-        if (noTransform.isSelected()) {
+        if (noTransform.isSelected() || userDefinedMatrix.isSelected()) {
 
             if ((image.getNDims() >= 3) && (!do25D)) {
 
@@ -3584,20 +3514,11 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 }
             }
         }
-
-       // System.err.println("maybe we scaled, xfrm is: " + xfrm);
         
         if (Preferences.debugLevel(Preferences.DEBUG_MINOR) && (image.getNDims() == 3)) {
             Preferences.debug("oDim = " + oXdim + ", " + oYdim + ", " + oZdim);
             Preferences.debug("oRes = " + oXres + ", " + oYres + ", " + oZres);
         }
-
-        /*if (rotCenter.isSelected()) { // rotate about center of image
-         *  Note that when rotation around the center is selected, this operation now occurs in
-         * AlgorithmTransform.transform(). if ((image.getNDims() >= 3) && (!do25D)) {     center =
-         * image.getImageCentermm(false);     xfrm.setTranslate(-center.x, -center.y, -center.z); } else { //
-         * ((image.getNDims() ==2) || (do25D))     center = image.getImageCentermm(false);     xfrm.setTranslate(-center.x,
-         * -center.y); }}*/
 
         Preferences.debug(xfrm + "\n");
 
