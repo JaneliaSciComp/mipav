@@ -129,13 +129,15 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		long begTime = System.currentTimeMillis();
 		
 		
-		Preferences.debug("** Beginning Algorithm v1.9...\n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("** Beginning Algorithm v1.9...\n");
-
+		Preferences.debug("** Beginning Algorithm v1.10...\n", Preferences.DEBUG_ALGORITHM);
+		if(outputTextArea != null) {
+			outputTextArea.append("** Beginning Algorithm v1.10...\n");
+		}
 		
 		Preferences.debug("* The study path is " + studyPath + " \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* The study path is " + studyPath + " \n");
-
+		if(outputTextArea != null) {
+			outputTextArea.append("* The study path is " + studyPath + " \n");
+		}
 		
 		// first create a File object based upon the study path
 		File studyPathRoot = new File(studyPath);
@@ -143,7 +145,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		
 		// parse the directory
 		Preferences.debug("* Parsing", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Parsing");
+		if(outputTextArea != null) {
+			outputTextArea.append("* Parsing");
+		}
 		try {
 			success = parse(studyPathRoot);
 		}
@@ -163,8 +167,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		}
 		System.gc();
 		Preferences.debug("\n* Number of image slices in study dir is " + totalImageSlices + " \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("\n* Number of image slices in study dir is " + totalImageSlices + " \n");
-
+		if(outputTextArea != null) {
+			outputTextArea.append("\n* Number of image slices in study dir is " + totalImageSlices + " \n");
+		}
 		
 		
 		//set initial info
@@ -178,7 +183,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		
 		//create proc dir
 		Preferences.debug("* Creating proc dir \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Creating proc dir \n");
+		if(outputTextArea != null) {
+			outputTextArea.append("* Creating proc dir \n");
+		}
 		success = createProcDir();
 		if (success == false) {
 			finalize();
@@ -188,7 +195,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		
 		// create path file
 		Preferences.debug("* Creating path file \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Creating path file \n");
+		if(outputTextArea != null) {
+			outputTextArea.append("* Creating path file \n");
+		}
 		success = createPathFile();
 		if (success == false) {
 			finalize();
@@ -198,7 +207,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		
 		//create list file
 		Preferences.debug("* Creating list file \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("* Creating list file \n");
+		if(outputTextArea != null) {
+			outputTextArea.append("* Creating list file \n");
+		}
 		success = createListFile();
 		if (success == false) {
 			finalize();
@@ -211,7 +222,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			
 			//read gradient file
 			Preferences.debug("* Reading gradient file \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("* Reading gradient file \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("* Reading gradient file \n");
+			}
 			success = readGradientFile();
 			if (success == false) {
 				finalize();
@@ -220,7 +233,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			
 			//obtain b-values
 			Preferences.debug("* Obtaining b-values \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("* Obtaining b-values \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("* Obtaining b-values \n");
+			}
 			success = obtainBValues();
 			if (success == false) {
 				finalize();
@@ -229,7 +244,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			
 			//create b matrix file
 			Preferences.debug("* Creating b-matrix file \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("* Creating b-matrix file \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("* Creating b-matrix file \n");
+			}
 			success = createBMatrixFile();
 			if (success == false) {
 				finalize();
@@ -241,7 +258,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			
 			//copy and rename b-matrix file
 			Preferences.debug("* b-matrix file provided \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("* b-matrix file provided \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("* b-matrix file provided \n");
+			}
 			success = copyBMatrixFile();
 			if (success == false) {
 				finalize();
@@ -251,7 +270,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		
 		
 		Preferences.debug("** Ending Algorithm \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("** Ending Algorithm \n");
+		if(outputTextArea != null) {
+			outputTextArea.append("** Ending Algorithm \n");
+		}
 		
 		
 		finalize();
@@ -262,7 +283,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		float seconds = ((float)diffTime)/1000;
 		
 		Preferences.debug("** Algorithm took " + seconds + " seconds \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
+		if(outputTextArea != null) {
+			outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
+		}
+		
+		setCompleted(true);
 	}
 	
 
@@ -329,8 +354,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 					String instanceNo = ((String) fileInfoDicom.getValue("0020,0013")).trim();
 					if(instanceNo.trim().equals("")) {
 						Preferences.debug("! ERROR: instance number dicom field is empty.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-						outputTextArea.append("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
-						return false;
+						if(outputTextArea != null) {
+							outputTextArea.append("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
+						}
+							return false;
 					}
 					
 					
@@ -350,8 +377,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
                         
                     } else {
 						Preferences.debug("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-						outputTextArea.append("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
-						return false;
+						if(outputTextArea != null) {
+							outputTextArea.append("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
+						}
+							return false;
                     }
 					String absPath = fileInfoDicom.getFileDirectory();
 					String fileName = fileInfoDicom.getFileName();
@@ -409,7 +438,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 					imageFile = null;
 					if(totalImageSlices % 100 == 0) {
 						Preferences.debug(".", Preferences.DEBUG_ALGORITHM);
-						outputTextArea.append(".");
+						if(outputTextArea != null) {
+							outputTextArea.append(".");
+						}
 					}
 					if(totalImageSlices % 500 == 0) {
 						System.gc();
@@ -453,11 +484,15 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			if(privateTag0019109C != null && privateTag0019109C.toLowerCase().indexOf("edti") != -1) {
 				isEDTI = true;
 				Preferences.debug("* eDTI data set \n", Preferences.DEBUG_ALGORITHM);
-				outputTextArea.append("* eDTI data set \n");
+				if(outputTextArea != null) {
+					outputTextArea.append("* eDTI data set \n");
+				}
 			}
 			else {
 				Preferences.debug("* DTI data set \n", Preferences.DEBUG_ALGORITHM);
-				outputTextArea.append("* DTI data set \n");		
+				if(outputTextArea != null) {
+					outputTextArea.append("* DTI data set \n");	
+				}
 			}
 		}
 		catch(NullPointerException e) {
@@ -465,11 +500,15 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			if(publicTag0008103E != null && publicTag0008103E.toLowerCase().indexOf("edti") != -1) {
 				isEDTI = true;
 				Preferences.debug("* eDTI data set \n", Preferences.DEBUG_ALGORITHM);
-				outputTextArea.append("* eDTI data set \n");
+				if(outputTextArea != null) {
+					outputTextArea.append("* eDTI data set \n");
+				}
 			}
 			else {
 				Preferences.debug("* DTI data set \n", Preferences.DEBUG_ALGORITHM);
-				outputTextArea.append("* DTI data set \n");		
+				if(outputTextArea != null) {
+					outputTextArea.append("* DTI data set \n");	
+				}
 			}
 		}
 		
@@ -482,17 +521,23 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			isGE = true;
 			isSiemens = false;
 			Preferences.debug("* Manufacturer : GE \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("* Manufacturer : GE \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("* Manufacturer : GE \n");
+			}
 			//getting software version for GE if regular DTI and not eDTI
 			if(!isEDTI) {
 				String softwareVersion = ((String) firstFileInfoDicom.getValue("0018,1020")).trim();
 				try {
 					geSoftwareVersion = new Integer(softwareVersion).intValue();
 					Preferences.debug("* Software Version : " + geSoftwareVersion + " \n", Preferences.DEBUG_ALGORITHM);
-					outputTextArea.append("* Software Version : " + geSoftwareVersion + " \n");
+					if(outputTextArea != null) {
+						outputTextArea.append("* Software Version : " + geSoftwareVersion + " \n");
+					}
 				}catch(NumberFormatException e ) {
 					Preferences.debug("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-					outputTextArea.append("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
+					if(outputTextArea != null) {
+						outputTextArea.append("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
+					}
 					return false;
 				}
 			}
@@ -501,7 +546,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			isSiemens = true;
 			isGE = false;
 			Preferences.debug("* Manufacturer : SIEMENS \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("* Manufacturer : SIEMENS \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("* Manufacturer : SIEMENS \n");
+			}
 		}
 		return true;
 	}
@@ -522,7 +569,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			boolean success = new File(studyPath + "_proc").mkdir();
 			if (!success) {
 				Preferences.debug("! ERROR: Creation of proc directory failed....exiting algorithm \n",Preferences.DEBUG_ALGORITHM);
-				outputTextArea.append("! ERROR: Creation of proc directory failed....exiting algorithm \n");
+				if(outputTextArea != null) {
+					outputTextArea.append("! ERROR: Creation of proc directory failed....exiting algorithm \n");
+				}
 				return false;
 			}
 		} else {
@@ -539,7 +588,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		}
 		
 		Preferences.debug(" - proc dir created : " + studyPath + "_proc \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append(" - proc dir created : " + studyPath + "_proc \n");
+		if(outputTextArea != null) {
+			outputTextArea.append(" - proc dir created : " + studyPath + "_proc \n");
+		}
 		isProcDirCreated = true;
 		return true;
 	}
@@ -596,8 +647,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			for(int i=1;i<numSlicesCheckList.size();i++) {
 				if(((Integer)numSlicesCheckList.get(0)).intValue() != numSlicesPerVolume) {
 					Preferences.debug("! ERROR: There are not equal number of image slices in all volumes of this study....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-					outputTextArea.append("! ERROR: There are not equal number of image slices in all volumes of this study....exiting algorithm \n");
-					return false;
+					if(outputTextArea != null) {
+						outputTextArea.append("! ERROR: There are not equal number of image slices in all volumes of this study....exiting algorithm \n");
+					}
+						return false;
 				}
 			}
 			
@@ -621,14 +674,18 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 			}
 			outputStream.close();
 			Preferences.debug(" - path file created : " + studyPath + "_proc" + File.separator + studyName + ".path" + " \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append(" - path file created : " + studyPath + "_proc" + File.separator + studyName + ".path" + " \n");
+			if(outputTextArea != null) {
+				outputTextArea.append(" - path file created : " + studyPath + "_proc" + File.separator + studyName + ".path" + " \n");
+			}
 			return true;
 		}
 		catch(Exception e) {
 			Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("! ERROR: Creation of path file failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("! ERROR: " + e.toString() + "\n");
-			outputTextArea.append("! ERROR: Creation of path file failed....exiting algorithm \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("! ERROR: " + e.toString() + "\n");
+				outputTextArea.append("! ERROR: Creation of path file failed....exiting algorithm \n");
+			}
 			e.printStackTrace();
 			return false;
 		}
@@ -748,14 +805,18 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		} catch (Exception e) {
 			Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("! ERROR: Creation of list file failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("! ERROR: " + e.toString() + "\n");
-			outputTextArea.append("! ERROR: Creation of list file failed....exiting algorithm \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("! ERROR: " + e.toString() + "\n");
+				outputTextArea.append("! ERROR: Creation of list file failed....exiting algorithm \n");
+			}
 			return false;
 		}
 
 		
 		Preferences.debug(" - list file created : " + studyPath + "_proc" + File.separator + studyName + ".list" + " \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append(" - list file created : " + studyPath + "_proc" + File.separator + studyName + ".list" + " \n");
+		if(outputTextArea != null) {
+			outputTextArea.append(" - list file created : " + studyPath + "_proc" + File.separator + studyName + ".list" + " \n");
+		}
 		return true;
 	}
 
@@ -849,14 +910,18 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		catch(Exception e) {
 			Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("! ERROR: reading of gradient file failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("! ERROR: " + e.toString() + "\n");
-			outputTextArea.append("! ERROR: reading of gradient file failed....exiting algorithm \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("! ERROR: " + e.toString() + "\n");
+				outputTextArea.append("! ERROR: reading of gradient file failed....exiting algorithm \n");
+			}
 			return false;
 		}
 		
 		
 		Preferences.debug(" - gradient file read \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append(" - gradient file read \n");
+		if(outputTextArea != null) {
+			outputTextArea.append(" - gradient file read \n");
+		}
 		return true;
 	}
 	
@@ -886,7 +951,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		Iterator iter = ketSet.iterator();
 
 		Preferences.debug(" - b-values :\n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append(" - b-values :\n");
+		if(outputTextArea != null) {
+			outputTextArea.append(" - b-values :\n");
+		}
 		while (iter.hasNext()) {
 			TreeSet seriesFITS = (TreeSet) seriesFileInfoTreeMap.get(iter.next());
 			int seriesFITSSize = seriesFITS.size();
@@ -918,7 +985,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 							}
 							if(bValueString.equals("") || bValueString == null) {
 								Preferences.debug("! ERROR: No b-value found in private tag 0018,0024....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-								outputTextArea.append("! ERROR: No b-value found in private tag 0018,0024....exiting algorithm \n");
+								if(outputTextArea != null) {
+									outputTextArea.append("! ERROR: No b-value found in private tag 0018,0024....exiting algorithm \n");
+								}
 								return false;
 							}
 							bValue = new Float(bValueString);
@@ -927,8 +996,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 						}
 						else {
 							Preferences.debug("! ERROR: No b-value found in private tag 0018,0024....if dataset is interleaved, b-matrix file must be provided....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-							outputTextArea.append("! ERROR: No b-value found in private tag 0018,0024....if dataset is interleaved, b-matrix file must be provided....exiting algorithm \n");
-							return false;
+							if(outputTextArea != null) {
+								outputTextArea.append("! ERROR: No b-value found in private tag 0018,0024....if dataset is interleaved, b-matrix file must be provided....exiting algorithm \n");
+							}
+								return false;
 						}
 					}	
 				}
@@ -939,7 +1010,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 							bValueString = bValueString_privTag_001910B9.trim();
 							if(bValueString.equals("") || bValueString == null) {
 								Preferences.debug("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-								outputTextArea.append("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
+								if(outputTextArea != null) {
+									outputTextArea.append("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
+								}
 								return false;
 							}
 							bValue = new Float(bValueString);
@@ -948,7 +1021,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 						}
 						else {
 							Preferences.debug("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-							outputTextArea.append("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
+							if(outputTextArea != null) {
+								outputTextArea.append("! ERROR: No b-value found in private tag 0019,10B9....exiting algorithm \n");
+							}
 							return false;						
 						}
 					}
@@ -958,7 +1033,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 						}
 						else {
 							Preferences.debug("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-							outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
+							if(outputTextArea != null) {
+								outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
+							}
 							return false;
 						}
 						if (bValueLongString_privTag_0043 != null && (!bValueLongString_privTag_0043.trim().equals(""))) {	
@@ -971,13 +1048,17 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 							}
 							else {
 								Preferences.debug("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-								outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
+								if(outputTextArea != null) {
+									outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
+								}
 								return false;
 							}
 						}
 						else {
 							Preferences.debug("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-							outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
+							if(outputTextArea != null) {
+								outputTextArea.append("! ERROR: No b-value found in private tag 0043,1039....exiting algorithm \n");
+							}
 							return false;
 						}
 					}
@@ -987,20 +1068,28 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		
 		//lets output the b-values to screen:
 		Preferences.debug(" - [  ", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append(" - [  ");
+		if(outputTextArea != null) {
+			outputTextArea.append(" - [  ");
+		}
 		for (int i = 0; i < bValuesArrayList.size(); i++) {
 			float b = ((Float)bValuesArrayList.get(i)).floatValue();
 			Preferences.debug(String.valueOf(b) + "   ", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append(String.valueOf(b) + "   ");
+			if(outputTextArea != null) {
+				outputTextArea.append(String.valueOf(b) + "   ");
+			}
 		}
 		Preferences.debug("] \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("] \n");
+		if(outputTextArea != null) {
+			outputTextArea.append("] \n");
+		}
 		
 		//check that num of b-values and num vols in gradient file are same
 		if(bValuesArrayList.size() != direction.length) {
 			Preferences.debug("! ERROR: the num of b values obtained, " +  bValuesArrayList.size() + ", and the number of vols in the gradient file, " + direction.length + ", are not the same....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("! ERROR: the num of b values obtained, " +  bValuesArrayList.size() + ", and the number of vols in the gradient file, " + direction.length + ", are not the same....exiting algorithm \n");
-			return false;
+			if(outputTextArea != null) {
+				outputTextArea.append("! ERROR: the num of b values obtained, " +  bValuesArrayList.size() + ", and the number of vols in the gradient file, " + direction.length + ", are not the same....exiting algorithm \n");
+			}
+				return false;
 		}
 		
 		return true;
@@ -1135,14 +1224,18 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		catch (Exception e) {
 			Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("! ERROR: Creation of b-matrix file failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("! ERROR: " + e.toString() + "\n");
-			outputTextArea.append("! ERROR: Creation of b-matrix file failed....exiting algorithm \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("! ERROR: " + e.toString() + "\n");
+				outputTextArea.append("! ERROR: Creation of b-matrix file failed....exiting algorithm \n");
+			}
 			return false;
 		}
 		
 		
 		Preferences.debug(" - b-matrix file created : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" + " \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append(" - b-matrix file created : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" + " \n");
+		if(outputTextArea != null) {
+			outputTextArea.append(" - b-matrix file created : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" + " \n");
+		}
 		return true;
 	}
 	
@@ -1175,8 +1268,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		catch (Exception e) {
 			Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
 			Preferences.debug("! ERROR: copying of b-matrix to proc dir failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
-			outputTextArea.append("! ERROR: " + e.toString() + "\n");
-			outputTextArea.append("! ERROR: copying of b-matrix to proc dir failed....exiting algorithm \n");
+			if(outputTextArea != null) {
+				outputTextArea.append("! ERROR: " + e.toString() + "\n");
+				outputTextArea.append("! ERROR: copying of b-matrix to proc dir failed....exiting algorithm \n");
+			}
 			return false;
 		}
 		finally {
@@ -1198,8 +1293,10 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		}
 			
 		Preferences.debug(" - b-matrix file copied and renamed to : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" + " \n", Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append(" - b-matrix file copied and renamed to  : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" + " \n");
-		return true;
+		if(outputTextArea != null) {
+			outputTextArea.append(" - b-matrix file copied and renamed to  : " + studyPath + "_proc" + File.separator + studyName + ".BMTXT" + " \n");
+		}
+			return true;
 	}
 	
 	
