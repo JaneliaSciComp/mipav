@@ -3918,23 +3918,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 xfrmC.identity();
 
                 if ((DIM >= 3) && (!do25D)) {
-                	
-                	//must transform the center point first
-                	float [] newCenter = new float[3];
-                	transMatrix.transform(center.x, center.y, center.z, newCenter);
-                	if (newCenter[0] < 0) {
-                		newCenter[0]*=-1;
-                	}
-                	if (newCenter[1] < 0) {
-                		newCenter[1]*=-1;
-                	}
-                	if (newCenter[2] < 0) {
-                		newCenter[2]*=-1;
-                	}
-                	xfrmC.setTranslate(newCenter[0], newCenter[1], newCenter[2]);
-                	
-                	
-                    //xfrmC.setTranslate(center.x, center.y, center.z);
+                    xfrmC.setTranslate(center.x, center.y, center.z);
                 } else { // (DIM == 2) || do25D
                     xfrmC.setTranslate(center.x, center.y);
                 }
