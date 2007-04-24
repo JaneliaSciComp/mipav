@@ -23,10 +23,13 @@ import javax.swing.border.LineBorder;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 /**
  * @author pandyan
@@ -34,7 +37,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
  * This is the main dialog for the DTI Sorting Process Plug-In
  *
  */
-public class PlugInDialogDTISortingProcess extends JDialogBase implements
+public class PlugInDialogDTISortingProcess extends JDialogScriptableBase implements
 		AlgorithmInterface {
 	
 	
@@ -91,9 +94,25 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
     
     /** comment for interleaved dataset needing to provide b-matrix file**/
     private JLabel interleavedLabel;
+    
+    /** study path **/
+    private String studyPath;
+    
+    /** gradient path **/
+    private String gradientPath;
+    
+    /** bmatrix path**/
+    private String bmatrixPath;
 
 
 	
+    /**
+     * Default Constructor
+     */
+    public PlugInDialogDTISortingProcess() {
+    	
+    }
+    
 	/**
 	 * Constructor
 	 * @param modal
@@ -109,7 +128,7 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("DTI Sorting Process " + " v1.9");
+        setTitle("DTI Sorting Process " + " v1.10");
         
         GridBagLayout mainPanelGridBagLayout = new GridBagLayout();
         GridBagConstraints mainPanelConstraints = new GridBagConstraints();
@@ -250,20 +269,31 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 	 * algorithm performed
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		alg = null;
-		OKButton.setEnabled(true);
-		studyPathBrowseButton.setEnabled(true);
-		gradFileRadio.setEnabled(true);
-		bmtxtFileRadio.setEnabled(true);
-		if(gradFileRadio.isSelected()) {
-			gradientFileBrowseButton.setEnabled(true);
+		if(alg.isCompleted()) {
+			alg = null;
+			//if OKButton is not null, then the rest are not null
+			//we don't want to do these if this algoritm was done via a script
+			if(OKButton != null) {
+				OKButton.setEnabled(true);
+				studyPathBrowseButton.setEnabled(true);
+				gradFileRadio.setEnabled(true);
+				bmtxtFileRadio.setEnabled(true);
+				if(gradFileRadio.isSelected()) {
+					gradientFileBrowseButton.setEnabled(true);
+				}
+				else {
+					bmtxtFileBrowseButton.setEnabled(true);
+				}
+				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				outputTextArea.append("*** End DTI Sorting Process *** \n");
+			}
+			
+			insertScriptLine();
+			Preferences.debug("*** End DTI Sorting Process *** \n",Preferences.DEBUG_ALGORITHM);
+			
+			
+
 		}
-		else {
-			bmtxtFileBrowseButton.setEnabled(true);
-		}
-		setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-		Preferences.debug("*** End DTI Sorting Process *** \n",Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("*** End DTI Sorting Process *** \n");
 
 	}
 
@@ -358,6 +388,10 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 			bmtxtFileBrowseButton.setEnabled(false);
 			gradFileRadio.setEnabled(false);
 			bmtxtFileRadio.setEnabled(false);
+			setStudyPath(studyPathTextField.getText().trim());
+			setGradientPath(gradientFilePathTextField.getText().trim());
+			setBmtxtPath(bmtxtFilePathTextField.getText().trim());
+			setCursor(new Cursor(Cursor.WAIT_CURSOR));
 			callAlgorithm();
 		}
 
@@ -396,11 +430,14 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 	 * call algorithm
 	 */
 	protected void callAlgorithm() {
-		setCursor(new Cursor(Cursor.WAIT_CURSOR));
-		Preferences.debug("*** Beginning DTI Sorting Process *** \n",Preferences.DEBUG_ALGORITHM);
-		outputTextArea.append("*** Beginning DTI Sorting Process *** \n");
 		
-		alg = new PlugInAlgorithmDTISortingProcess(studyPathTextField.getText().trim(), studyName, gradientFilePathTextField.getText().trim(), bmtxtFilePathTextField.getText().trim(), outputTextArea);
+		Preferences.debug("*** Beginning DTI Sorting Process *** \n",Preferences.DEBUG_ALGORITHM);
+		
+		if(outputTextArea != null) {
+			outputTextArea.append("*** Beginning DTI Sorting Process *** \n");
+		}
+		
+		alg = new PlugInAlgorithmDTISortingProcess(studyPath, studyName, gradientPath, bmatrixPath, outputTextArea);
 		
 		alg.addListener(this);
 		
@@ -422,6 +459,74 @@ public class PlugInDialogDTISortingProcess extends JDialogBase implements
 		}
 
 		dispose();
+	}
+	
+	
+	
+	
+	
+	/**
+	 * 
+	 * @param bmtxtPath
+	 */
+	public void setBmtxtPath(String bmatrixPath) {
+		this.bmatrixPath = bmatrixPath;
+	}
+
+	/**
+	 * 
+	 * @param gradientPath
+	 */
+	public void setGradientPath(String gradientPath) {
+		this.gradientPath = gradientPath;
+	}
+	
+	/**
+	 * 
+	 * @param studyPath
+	 */
+	public void setStudyPath(String studyPath) {
+		this.studyPath = studyPath;
+	}
+
+	/**
+	 * 
+	 * @param studyPath
+	 */
+	public void setStudyName(String studyName) {
+		this.studyName = studyName;
+	}
+	
+	
+	/**
+	 * Document me
+	 *
+	 */
+	public void storeParamsFromGUI() throws ParserException{
+		scriptParameters.getParams().put(ParameterFactory.newParameter("study_path", studyPath));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("study_name", studyName));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("gradient_path", gradientPath));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("bmatrix_path", bmatrixPath));
+	}
+	
+	
+	/**
+	 * Document me
+	 *
+	 */
+	public void setGUIFromParams() {
+		setStudyPath(scriptParameters.getParams().getString("study_path"));
+		setStudyName(scriptParameters.getParams().getString("study_name"));
+		String grPth = scriptParameters.getParams().getString("gradient_path");
+		if(grPth == null) {
+			grPth = "";
+		}
+		setGradientPath(grPth);
+		String bmtPth = scriptParameters.getParams().getString("bmatrix_path");
+		if(bmtPth == null) {
+			bmtPth = "";
+		}
+		setBmtxtPath(bmtPth);
 	}
 	
 	
