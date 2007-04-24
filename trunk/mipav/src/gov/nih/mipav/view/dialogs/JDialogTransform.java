@@ -3429,7 +3429,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 xfrm.setSkew(SKx, SKy);
                 xfrm.setZoom(Sx, Sy);
             }
-            System.err.println("xfrm in setVariables(): " + xfrm);
         } // if (userDefinedMatrix.isSelected())
         else if (storedMatrix.isSelected()) { // use image's stored matrix
             Preferences.debug("Image's stored matrix = \n" + image.getMatrix());

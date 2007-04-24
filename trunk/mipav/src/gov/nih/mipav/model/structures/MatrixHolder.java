@@ -243,13 +243,6 @@ public class MatrixHolder extends ModelSerialCloneable {
             return;
         }
 
-        System.err.println("replaceMatrix before: total #: " + matrixMap.keySet().size());
-
-        if (matrixMap.containsKey(key)) {
-            System.err.println("putting it in @ same key... replacing");
-        }
-
         matrixMap.put(key, newMatrix);
-        System.err.println("replaceMatrix after: total #: " + matrixMap.keySet().size());
     }
 }
