@@ -225,6 +225,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     /** DOCUMENT ME! */
     private JComboBox transformIDBox;
 
+    /** Add as New/Replace button (depending on selected matrix type)*/
+    private JButton addReplaceMatrix;
+    
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
@@ -426,7 +429,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
 
         } else if (command.equals("Save")) {
-            image.saveTransformMatrix(); // opens dialog
+        	if (setVariables()) {
+        		TransMatrix newMatrix = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
+        		updateTransformInfo(newMatrix);
+        		 image.saveTransformMatrix(newMatrix); // opens dialog
+        	}
         } else if (command.equals("SaveHistory")) {
             String fileName = "", directory = "";
 
@@ -480,22 +487,17 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             validate();
         } else if (command.equals("Identity")) {
-            image.getMatrix().identity();
+        	TransMatrix newMatrix = new TransMatrix(image.getNDims() + 1);
+        	
+        	newMatrix.identity();
 
-            double[][] mat = image.getMatrix().getMatrix();
-
-            for (int i = 0; i < mat.length; i++) {
-
-                for (int j = 0; j < mat[0].length; j++) {
-                    textMatrix[i][j].setText(Double.toString(mat[i][j]));
-                }
-            }
+        	updateMatrixFields(newMatrix);
 
             validate();
         } else if (command.equals("Composite")) {
-            image.readTransformMatrix(true);
+        	try {
 
-            double[][] mat = image.getMatrix().getMatrix();
+            double[][] mat = image.readTransformMatrix(true).getMatrix();
 
             for (int i = 0; i < mat.length; i++) {
 
@@ -506,9 +508,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
 
             validate();
+        	} catch (Exception e) {
+        		//do nothing
+        	}
         } else if (command.equals("Decompose")) {
-
-            TransMatrix m = image.getMatrix();
+            TransMatrix m = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
+    		updateTransformInfo(m);
+            
+            
             m.decomposeMatrix(m);
             ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("\n\nRotation X: " + m.getRotateX() +
                                                                                  "   Rotation Y: " + m.getRotateY() +
@@ -523,8 +530,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                                                                                  m.getTranslateZ());
         } else if (command.equals("Close")) {
             dispose();
-        } else if (command.equals("Add as New")) {
+        } else if (command.equals("addReplaceMatrix")) {
         	//add this matrix to the list of matrices (matrix holder) and update the combo box
+        	// or if it is Scanner Anatomical and image already contains one, replace it
         	int transformID = transformIDBox.getSelectedIndex();
         	
         	TransMatrix nMatrix = new TransMatrix(matrix.length, transformID);
@@ -538,7 +546,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         } else if (command.equals("Remove")) {
         	image.getMatrixHolder().removeMatrix(matrixBox.getSelectedItem());
         	updateMatrixBox(true);
-        	System.err.println("removed matrix");
         } else if (command.equals("CopyMatrix")) {
         	//build a TransMatrix to pass to the UserInterface
         	
@@ -594,6 +601,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     		
     		TransMatrix newMatrix = (TransMatrix)image.getMatrixHolder().getMatrixMap().get(matrixBox.getSelectedItem());
     		updateMatrixFields(newMatrix);
+    	} else if (e.getSource().equals(transformIDBox)) {
+    		if (transformIDBox.getSelectedIndex() == TransMatrix.TRANSFORM_SCANNER_ANATOMICAL &&
+    				image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+    			addReplaceMatrix.setText("Replace");
+    		} else {
+    			addReplaceMatrix.setText("Add as New");
+    		}
+    		validate();
     	}
     	
     	
@@ -619,6 +634,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
         }
         transformIDBox.setSelectedIndex(newMatrix.getTransformID());
+        
+        int tID =  newMatrix.getTransformID();
+        if (tID == TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) {
+        	addReplaceMatrix.setText("Replace");
+        } else {
+        	addReplaceMatrix.setText("Add as New");
+        }
+        
         validate();
     	}
     }
@@ -1202,10 +1225,19 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         //BEN: change
         transformIDBox.setSelectedIndex(defaultMatrix.getTransformID());
 
-        JButton addNewMatrix = new JButton("Add as New");
-        addNewMatrix.addActionListener(this);
-        addNewMatrix.setPreferredSize(new Dimension(80,20));
-        addNewMatrix.setFont(serif12B);
+        addReplaceMatrix = new JButton();
+        addReplaceMatrix.addActionListener(this);
+        addReplaceMatrix.setActionCommand("addReplaceMatrix");
+        addReplaceMatrix.setPreferredSize(new Dimension(80,20));
+        addReplaceMatrix.setFont(serif12B);
+        int tID =  defaultMatrix.getTransformID();
+        if (tID == TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) {
+        	addReplaceMatrix.setText("Replace");
+        } else {
+        	addReplaceMatrix.setText("Add as New");
+        }
+        
+        transformIDBox.addItemListener(this);
         
         JButton removeMatrix = new JButton("Remove");
         removeMatrix.addActionListener(this);
@@ -1234,7 +1266,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         tPanel.add(matrixBox, gbc);
         
         gbc.gridx++;
-        tPanel.add(addNewMatrix, gbc);
+        tPanel.add(addReplaceMatrix, gbc);
         gbc.gridx++;
         tPanel.add(removeMatrix, gbc);
         
