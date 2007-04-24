@@ -81,13 +81,7 @@ public class ModelImage extends ModelStorageBase {
 
     /** Backup of mask for undoing. */
     private BitSet maskBU;
-
-    /**
-     * Reference to a transformation matix that can be applied to the image and tranform (warp) the image in some
-     * manner.
-     */
-    private TransMatrix matrix;
-
+  
     /** Holds all of the images associated matrices */
     private MatrixHolder matrixHolder;
     
@@ -171,9 +165,7 @@ public class ModelImage extends ModelStorageBase {
             fileInfo[0].setResolutions(resolutions);
             fileInfo[0].setUnitsOfMeasure(units);
             fileInfo[0].setDataType(type);
-            matrix = new TransMatrix(3);
         } else if (dimExtents.length == 3) {
-            matrix = new TransMatrix(4);
             fileInfo = new FileInfoBase[dimExtents[2]];
 
             for (i = 0; i < dimExtents[2]; i++) {
@@ -186,7 +178,6 @@ public class ModelImage extends ModelStorageBase {
                 fileInfo[i].setDataType(type);
             }
         } else if (dimExtents.length == 4) {
-            matrix = new TransMatrix(4);
             fileInfo = new FileInfoBase[dimExtents[2] * dimExtents[3]];
 
             for (i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
@@ -600,7 +591,7 @@ public class ModelImage extends ModelStorageBase {
             ((JDialogFileInfoDICOM) dialog).displayAboutInfo(this, (FileInfoDicom) fileInfo[index]);
         } else if (xml) {
             dialog.setTitle(dialog.getTitle() + ": " + (index + 1));
-            fileInfo[index].displayAboutInfo((JDialogFileInfoXML) dialog, matrix);
+            fileInfo[index].displayAboutInfo((JDialogFileInfoXML) dialog, getMatrix());
         } else {
 
             try {
@@ -609,9 +600,9 @@ public class ModelImage extends ModelStorageBase {
                 // System.out.println(" +++++++++++++++++++++++++++++  z  = " + i);
                 // System.out.println(" fileInfo = " + fileInfo[i]);
                 dialog.setTitle(dialog.getTitle() + ": " + (index + 1));
-                fileInfo[index].displayAboutInfo((JDialogFileInfo) dialog, matrix);
+                fileInfo[index].displayAboutInfo((JDialogFileInfo) dialog, getMatrix());
             } catch (ClassCastException cce) {
-                fileInfo[index].displayAboutInfo((JDialogText) dialog, matrix);
+                fileInfo[index].displayAboutInfo((JDialogText) dialog, getMatrix());
             }
         }
     }
@@ -2250,8 +2241,8 @@ public class ModelImage extends ModelStorageBase {
      * @param  composite  if true make a composite matrix of the by multipling this matrix with the one to be read from
      *                    the file. If false replace this object matrix with a new matrix read from the file.
      */
-    public void readTransformMatrix(boolean composite) {
-
+    public TransMatrix readTransformMatrix(boolean composite) {
+    	TransMatrix newMatrix = new TransMatrix(getNDims() + 1);
         String fileName, directory;
         JFileChooser chooser;
 
@@ -2274,51 +2265,26 @@ public class ModelImage extends ModelStorageBase {
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 UI.setDefaultDirectory(directory);
             } else {
-                return;
+                return null;
             }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ModelImage.readTransformMatrix");
 
-            return;
+            return null;
         }
 
         try {
             File file = new File(UI.getDefaultDirectory() + fileName);
             RandomAccessFile raFile = new RandomAccessFile(file, "r");
 
-            matrix.readMatrix(raFile, composite);
+            newMatrix.readMatrix(raFile, composite);
             raFile.close();
         } catch (IOException error) {
             MipavUtil.displayError("Matrix read error");
 
-            return;
+            return null;
         }
-    }
-
-    /**
-     * Read matrix from a file.
-     *
-     * @param  fileName   name of the matrix file.
-     * @param  composite  if true make a composite matrix of the by multipling this matrix with the one to be read from
-     *                    the file. If false replace this object matrix with a new matrix read from the file.
-     */
-    public void readTransformMatrix(String fileName, boolean composite) {
-
-        if (fileName == null) {
-            return;
-        }
-
-        try {
-            File file = new File(UI.getDefaultDirectory() + fileName);
-            RandomAccessFile raFile = new RandomAccessFile(file, "r");
-
-            matrix.readMatrix(raFile, composite);
-            raFile.close();
-        } catch (IOException error) {
-            MipavUtil.displayError("Matrix read error");
-
-            return;
-        }
+        return newMatrix;
     }
 
     /**
@@ -2439,7 +2405,7 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Saves the transformation matrix to file.
      */
-    public void saveTransformMatrix() {
+    public void saveTransformMatrix(TransMatrix matrix) {
 
         String fileName, directory;
         JFileChooser chooser;
@@ -2489,7 +2455,7 @@ public class ModelImage extends ModelStorageBase {
      *
      * @param  fileName  - fileName of transformation matrix
      */
-    public void saveTransformMatrix(String fileName) {
+    public void saveTransformMatrix(String fileName, TransMatrix matrix) {
 
         if (fileName == null) {
             return;
@@ -3359,7 +3325,8 @@ public class ModelImage extends ModelStorageBase {
             voiVector = null;
         } // if ( voiVector != null )
 
-        matrix = null;
+        
+        matrixHolder = null;
         mask = null;
         maskBU = null;
         imageName = null;

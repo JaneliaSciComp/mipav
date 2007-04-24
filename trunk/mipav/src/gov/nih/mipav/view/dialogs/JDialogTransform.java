@@ -1138,6 +1138,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             xfrm.invert();
         }
 
+      //  System.err.println("matrix: " + xfrm);
+      //  System.err.println("matrix inverse: " + xfrm.inverse());
+        
         // Hide dialog
         setVisible(false);
 
@@ -3428,6 +3431,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 xfrm.setSkew(SKx, SKy);
                 xfrm.setZoom(Sx, Sy);
             }
+            System.err.println("xfrm in setVariables(): " + xfrm);
         } // if (userDefinedMatrix.isSelected())
         else if (storedMatrix.isSelected()) { // use image's stored matrix
             Preferences.debug("Image's stored matrix = \n" + image.getMatrix());
@@ -3486,6 +3490,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         		oZres = image.getFileInfo()[0].getResolutions()[2];
             	oZdim = image.getExtents()[2];
             	
+            	System.err.println("OLD dim: " + oXdim + "," + oYdim + "," + oZdim);
+            	
             	float [] res = new float[3];
             	float [] dim = new float[3];
             	
@@ -3519,6 +3525,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             	oXdim = MipavMath.round(dim[0]);
             	oYdim = MipavMath.round(dim[1]);
             	oZdim = MipavMath.round(dim[2]);
+            	System.err.println("NEW dim: " + oXdim + "," + oYdim + "," + oZdim);
         	} else {
         		
         		float [] res = new float[2];
@@ -3551,11 +3558,11 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         	
         	
         }
-        
+        //System.err.println("NOW XFRM IS: " + xfrm);
         
         // if ((no transformation) OR (user input transformation))
         // AND (total image size !=), then scale
-        if ((noTransform.isSelected() || userDefinedMatrix.isSelected())) {
+        if (noTransform.isSelected()) {
 
             if ((image.getNDims() >= 3) && (!do25D)) {
 
@@ -3578,6 +3585,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             }
         }
 
+       // System.err.println("maybe we scaled, xfrm is: " + xfrm);
+        
         if (Preferences.debugLevel(Preferences.DEBUG_MINOR) && (image.getNDims() == 3)) {
             Preferences.debug("oDim = " + oXdim + ", " + oYdim + ", " + oZdim);
             Preferences.debug("oRes = " + oXres + ", " + oYres + ", " + oZres);

@@ -123,7 +123,7 @@ public class MatrixHolder extends ModelSerialCloneable {
     /**
      * Gets the composite (dynamically built) matrix made by multiplying in reverse order the image's matrices.
      *
-     * @param   useDICOM  whether to include the scanner anatomical matrix (if avaiable)
+     * @param   useDICOM  whether to include the scanner anatomical matrix (if available)
      *
      * @return  the composite TransMatrix
      */
@@ -153,6 +153,22 @@ public class MatrixHolder extends ModelSerialCloneable {
         return compositeMatrix;
     }
 
+    /**
+     * Accessor that gets a matrix based on the key (for the linkedhashmap)
+     * @param key key to the matrix
+     * @return the matrix associated with the key, null otherwise
+     */
+    public TransMatrix getMatrix(Object key) {
+    	TransMatrix mat = null;
+    	try {
+    		mat = (TransMatrix)matrixMap.get(key);
+    	} catch (Exception e) {
+    	}
+    	
+    	
+    	return mat;
+    }
+    
     /**
      * Gets a cloned copy of the image's matrices stored in a vector.
      *
@@ -184,7 +200,7 @@ public class MatrixHolder extends ModelSerialCloneable {
     }
 
     /**
-     * Safe method for removing matrices from the image (will not allow default/composite to be removed).
+     * Safe method for removing matrices from the image
      *
      * @param  key  DOCUMENT ME!
      */
