@@ -164,6 +164,12 @@ public class TransMatrix extends Matrix // implements TableModelListener
     
     private boolean isNIFTI = false;
     
+    /** If true, nifti matrix codes for a qform matrix
+     *  If false, nifti matrix codes for a sform matrix 
+     *  Value has no effect if not a nifti matrix 
+     */
+    private boolean isQform = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -176,14 +182,15 @@ public class TransMatrix extends Matrix // implements TableModelListener
     }
 
     public TransMatrix(int dim, int id) {
-    	this(dim, id, false);
+    	this(dim, id, false, false);
     }
     
-    public TransMatrix(int dim, int id, boolean is_nifti) {
+    public TransMatrix(int dim, int id, boolean is_nifti, boolean isQform) {
     	super(dim, dim);
     	identity();
     	this.transformID = id;
     	this.isNIFTI = is_nifti;
+        this.isQform = isQform;
     }
     
     
@@ -775,6 +782,23 @@ public class TransMatrix extends Matrix // implements TableModelListener
      */
     public void setIsNIFTI(boolean isNIFTI) {
         this.isNIFTI = isNIFTI;
+    }
+    
+    /**
+     * Tells whether a NIFTI matrix is a qform matrix or a sform matrix
+     * @return
+     */
+    public boolean isQform() {
+        return this.isQform;
+    }
+    
+    /**
+     * Accessor that sets whether a nifti matrix is a qform matrix or a 
+     * sform matrix.
+     * @param isQform
+     */
+    public void setIsQform(boolean isQform) {
+        this.isQform = isQform;
     }
     
     /**
