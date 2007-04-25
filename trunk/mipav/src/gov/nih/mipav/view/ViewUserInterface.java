@@ -3304,7 +3304,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 	        }
         }
         else {
-        	ScriptRunner.getReference().runScript(scriptFile);
+        	if (scriptFile != null) {
+        		ScriptRunner.getReference().runScript(scriptFile);
+        	}
         }
     }
 
