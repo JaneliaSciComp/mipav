@@ -81,6 +81,32 @@ public class MatrixHolder extends ModelSerialCloneable {
 
     }
 
+    /**
+     * Returns up to two composite TransMatrices that are NIFTI specific
+     * @return 0,1, or 2 TransMatrices (related to NIFTI)
+     */
+    public TransMatrix [] getNIFTICompositeMatrices() {
+    	TransMatrix [] composites = new TransMatrix[2];
+    	
+    	 Iterator iter = matrixMap.keySet().iterator();
+         String nextKey = null;
+         
+         TransMatrix tempMatrix = null;
+         
+         int idx = 0;
+         while (iter.hasNext()) {
+         	nextKey = (String)iter.next();
+         	tempMatrix = (TransMatrix)matrixMap.get(nextKey);
+         	if (tempMatrix.isNIFTI() && idx < 2) {
+         		composites[idx] = (TransMatrix)tempMatrix.clone();
+         		composites[idx].setMatrix(getCompositeMatrix(true).times(tempMatrix).getArray());
+         		idx++;
+         	}
+         }
+    	
+    	return composites;
+    }
+    
 
     /**
      * Removes all matrices from the map.
@@ -142,9 +168,9 @@ public class MatrixHolder extends ModelSerialCloneable {
         for (int i = keys.length - 1; i >= 0; i--) {
             tempMatrix = (TransMatrix) matrixMap.get(keys[i]);
 
-            //do not include a nifti "scanner anatomical type" in the composite under any circumstances
+            //do not include a nifti associated matrices (matrices loaded w\ a NIFTI image)
             if (((tempMatrix.getTransformID() != TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) || useDICOM)
-            		&& (tempMatrix.getTransformID() != TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL)) {
+            		&& (!tempMatrix.isNIFTI())) {
                 compositeMatrix.setMatrix((tempMatrix).times(compositeMatrix).getArray());
             }
         }
