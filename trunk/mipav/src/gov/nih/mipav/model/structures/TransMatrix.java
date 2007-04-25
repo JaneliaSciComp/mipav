@@ -770,6 +770,14 @@ public class TransMatrix extends Matrix // implements TableModelListener
     }
     
     /**
+     * Accessor that sets whether or not the matrix is a NIFTI matrix.
+     * @param isNIFTI
+     */
+    public void setIsNIFTI(boolean isNIFTI) {
+        this.isNIFTI = isNIFTI;
+    }
+    
+    /**
      * Multiplies two matrices together. General in nature for two-dimensional matrices but specifically used here to
      * concatenate matrices.
      *
