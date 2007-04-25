@@ -5361,7 +5361,7 @@ public class FileIO {
                 if (!loaded || (image == null)) {
 
                     try {
-                        image = (Image) ImageIO.read(new File(fileDir + fileName)); // if JIMI fails, try this
+                        image = (Image) ImageIO.read(new File(fileDir + fileList[j])); // if JIMI fails, try this
 
                         // String[] readTypes = ImageIO.getReaderFormatNames();
 
@@ -5472,7 +5472,7 @@ public class FileIO {
                     i += 4;
                 }
             }
-
+            image = null;
         }
 
         if (extents[2] == 1) {
