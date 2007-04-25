@@ -3256,51 +3256,55 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected void runCmdLine(String scriptFile, Vector imageList, Vector voiList) {
         ViewOpenFileUI fileOpener = new ViewOpenFileUI(false);
         Vector imageNames = new Vector();
-
-        for (int i = 0; i < imageList.size(); i++) {
-            OpenFileInfo file = (OpenFileInfo) imageList.elementAt(i);
-            String fileName = file.getFullFileName();
-            boolean isMulti = file.isMulti();
-
-            Preferences.debug("cmd line image file: " + fileName + "\n", Preferences.DEBUG_MINOR);
-            fileOpener.open(fileName, isMulti, null);
-
-            imageNames.addElement(fileOpener.getImage().getImageName());
-
-            this.setDefaultDirectory(new File(fileName).getParent());
-
-            Preferences.debug("Default dir: " + this.getDefaultDirectory() + "\n", Preferences.DEBUG_MINOR);
-
-            try {
-                VOI[] voi;
-                FileVOI fileVOI;
-                ModelImage image = fileOpener.getImage();
-
-                if ((voiList.size() >= 1) && (voiList.elementAt(i) != null)) {
-
-                    for (int x = 0; x < ((Vector) (voiList.elementAt(i))).size(); x++) {
-                        String fileNameIn = (String) (((Vector) (voiList.elementAt(i))).elementAt(x));
-                        int index = fileNameIn.lastIndexOf(File.separatorChar);
-
-                        String directory = fileNameIn.substring(0, index + 1);
-                        String voiFileName = fileNameIn.substring(index + 1, fileNameIn.length());
-                        fileVOI = new FileVOI(voiFileName, directory, image);
-                        voi = fileVOI.readVOI(false);
-
-                        for (int y = 0; y < voi.length; y++) {
-                            image.registerVOI(voi[y]);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                MipavUtil.displayError("Command line executing VOI error, check file names.");
-
-                return;
-            }
+        if(imageList.size() > 0) {
+	        for (int i = 0; i < imageList.size(); i++) {
+	            OpenFileInfo file = (OpenFileInfo) imageList.elementAt(i);
+	            String fileName = file.getFullFileName();
+	            boolean isMulti = file.isMulti();
+	
+	            Preferences.debug("cmd line image file: " + fileName + "\n", Preferences.DEBUG_MINOR);
+	            fileOpener.open(fileName, isMulti, null);
+	
+	            imageNames.addElement(fileOpener.getImage().getImageName());
+	
+	            this.setDefaultDirectory(new File(fileName).getParent());
+	
+	            Preferences.debug("Default dir: " + this.getDefaultDirectory() + "\n", Preferences.DEBUG_MINOR);
+	
+	            try {
+	                VOI[] voi;
+	                FileVOI fileVOI;
+	                ModelImage image = fileOpener.getImage();
+	
+	                if ((voiList.size() >= 1) && (voiList.elementAt(i) != null)) {
+	
+	                    for (int x = 0; x < ((Vector) (voiList.elementAt(i))).size(); x++) {
+	                        String fileNameIn = (String) (((Vector) (voiList.elementAt(i))).elementAt(x));
+	                        int index = fileNameIn.lastIndexOf(File.separatorChar);
+	
+	                        String directory = fileNameIn.substring(0, index + 1);
+	                        String voiFileName = fileNameIn.substring(index + 1, fileNameIn.length());
+	                        fileVOI = new FileVOI(voiFileName, directory, image);
+	                        voi = fileVOI.readVOI(false);
+	
+	                        for (int y = 0; y < voi.length; y++) {
+	                            image.registerVOI(voi[y]);
+	                        }
+	                    }
+	                }
+	            } catch (Exception e) {
+	                MipavUtil.displayError("Command line executing VOI error, check file names.");
+	
+	                return;
+	            }
+	        }
+	
+	        if (scriptFile != null) {
+	            ScriptRunner.getReference().runScript(scriptFile, imageNames, new Vector());
+	        }
         }
-
-        if (scriptFile != null) {
-            ScriptRunner.getReference().runScript(scriptFile, imageNames, new Vector());
+        else {
+        	ScriptRunner.getReference().runScript(scriptFile);
         }
     }
 
