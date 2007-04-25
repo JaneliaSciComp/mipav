@@ -1464,10 +1464,7 @@ public class FileNIFTI extends FileBase {
 
             // Both methods 2 and 3 could be present
             // MIPAV can handle 2 different transformation matrices
-            // for the same image unless both are scanner anatomical.
-            // Method 2 should be the normal case, so give
-            // it priority over method 3 if two scanner anatomical matrices
-            // are present.
+            // for the same image.
             Preferences.debug("qform_code = " + qform_code + "\n");
             Preferences.debug("sform_code = " + sform_code + "\n");
 
@@ -1511,9 +1508,7 @@ public class FileNIFTI extends FileBase {
                     Preferences.debug("Unknown coord_code = " + coord_code);
             }
             
-            if ((qform_code > 0) && (sform_code > 0) &&
-                ((qform_code != FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT) ||
-                 (sform_code != FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT))) {
+            if ((qform_code > 0) && (sform_code > 0)) {
                 matrix2 = new TransMatrix(4);
                 switch (sform_code) {
 
@@ -1724,7 +1719,7 @@ public class FileNIFTI extends FileBase {
                                   "\n");
             } // else if (sform_code > 0)
             
-            if (matrix2 != null) { // sform_code > 0 and 2 matrices, with at least one not being scanner anatomical
+            if (matrix2 != null) { // sform_code > 0 and 2 matrices
                 srow_x = new float[4];
                 srow_y = new float[4];
                 srow_z = new float[4];
