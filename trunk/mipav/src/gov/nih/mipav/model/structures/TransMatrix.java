@@ -162,6 +162,8 @@ public class TransMatrix extends Matrix // implements TableModelListener
     /** Transform ID associated with the matrix. */
     private int transformID = TRANSFORM_COMPOSITE;
     
+    private boolean isNIFTI = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -170,13 +172,18 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @param  dim  should be 3 or 4 (square matrix)
      */
     public TransMatrix(int dim) {
-       this(dim, TRANSFORM_COMPOSITE);
+       this(dim, TRANSFORM_ANOTHER_DATASET);
     }
 
     public TransMatrix(int dim, int id) {
+    	this(dim, id, false);
+    }
+    
+    public TransMatrix(int dim, int id, boolean is_nifti) {
     	super(dim, dim);
     	identity();
     	this.transformID = id;
+    	this.isNIFTI = is_nifti;
     }
     
     
@@ -752,6 +759,16 @@ public class TransMatrix extends Matrix // implements TableModelListener
         return isId;
     }
 
+    /**
+     * Tells whether this matrix is associated with a NIFTI image
+     * this only matters when the matrix is being saved/when the composite matrix is
+     * being generated in MatrixHolder
+     * @return is this a nifti matrix
+     */
+    public boolean isNIFTI() {
+    	return this.isNIFTI;
+    }
+    
     /**
      * Multiplies two matrices together. General in nature for two-dimensional matrices but specifically used here to
      * concatenate matrices.
