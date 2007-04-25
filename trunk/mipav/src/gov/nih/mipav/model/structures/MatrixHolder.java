@@ -62,7 +62,7 @@ public class MatrixHolder extends ModelSerialCloneable {
 
         String key = TransMatrix.getTransformIDStr(mat.getTransformID());
 
-        if ((tID != TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) && (tID != TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX)) {
+        if (tID != TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) {
 
             // check to see how many of this type of matrix there is in the linkedhashmap
             int index = 0;
