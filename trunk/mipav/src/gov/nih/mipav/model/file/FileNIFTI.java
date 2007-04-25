@@ -71,6 +71,8 @@ public class FileNIFTI extends FileBase {
 
     /** DOCUMENT ME! */
     private int[] axisOrientation;
+    
+    private int[] axisOrientation2;
 
     /** DOCUMENT ME! */
     private byte[] bufferByte = null;
@@ -110,9 +112,13 @@ public class FileNIFTI extends FileBase {
 
     /** DOCUMENT ME! */
     private float[] LPSOrigin;
+    
+    private float[] LPSOrigin2;
 
     /** DOCUMENT ME! */
     private TransMatrix matrix = new TransMatrix(4);
+    
+    private TransMatrix matrix2 = null;
 
     /** DOCUMENT ME! */
     private double newMax;
@@ -1457,9 +1463,11 @@ public class FileNIFTI extends FileBase {
             }
 
             // Both methods 2 and 3 could be present
-            // However, MIPAV cannot handle 2 different transformation matrices
-            // for the same image.  Method 2 should be the normal case, so give
-            // it priority over method 3.
+            // MIPAV can handle 2 different transformation matrices
+            // for the same image unless both are scanner anatomical.
+            // Method 2 should be the normal case, so give
+            // it priority over method 3 if two scanner anatomical matrices
+            // are present.
             Preferences.debug("qform_code = " + qform_code + "\n");
             Preferences.debug("sform_code = " + sform_code + "\n");
 
@@ -1503,7 +1511,43 @@ public class FileNIFTI extends FileBase {
                     Preferences.debug("Unknown coord_code = " + coord_code);
             }
             
-            qform_code = 0;
+            if ((qform_code > 0) && (sform_code > 0) &&
+                ((qform_code != FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT) ||
+                 (sform_code != FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT))) {
+                matrix2 = new TransMatrix(4);
+                switch (sform_code) {
+
+                    case FileInfoNIFTI.NIFTI_XFORM_UNKNOWN:
+                        Preferences.debug("Matrix 2 arbitrary X,Y,Z coordinate system\n", 2);
+                        matrix2.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
+                        break;
+
+                    case FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT:
+                        Preferences.debug("Matrix 2 scanner based anatomical coordinates\n", 2);
+                        matrix2.setTransformID(TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL);
+                        break;
+
+                    case FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT:
+                        Preferences.debug("Matrix 2 coordinates aligned to another file's or to anatomical truth\n", 2);
+                        matrix2.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                        break;
+
+                    case FileInfoNIFTI.NIFTI_XFORM_TALAIRACH:
+                        Preferences.debug("Matrix 2 Talairach X,Y,Z coordinate system\n", 2);
+                        matrix2.setTransformID(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX);
+                        break;
+
+                    case FileInfoNIFTI.NIFTI_XFORM_MNI_152:
+                        matrix2.setTransformID(TransMatrix.TRANSFORM_MNI_152);
+                        Preferences.debug("Matrix 2 MNI 152 normalized X,Y,Z coordinates\n", 2);
+                        break;
+
+                    default:
+                        matrix2.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
+                        Preferences.debug("Unknown sform_code = " + sform_code);
+                }
+            }
+            
             if (qform_code > 0) {
                 quatern_b = getBufferFloat(bufferByte, 256, endianess);
                 b = quatern_b;
@@ -1602,7 +1646,7 @@ public class FileNIFTI extends FileBase {
                 Preferences.debug("qoffset_z = " + qoffset_z + "\n");
 
             } // if (qform_code > 0)
-            else if (sform_code > 0) {
+            else if (sform_code > 0) { // qform_code = 0, so only 1 matrix
                 srow_x = new float[4];
                 srow_y = new float[4];
                 srow_z = new float[4];
@@ -1680,6 +1724,73 @@ public class FileNIFTI extends FileBase {
                                   "\n");
             } // else if (sform_code > 0)
             
+            if (matrix2 != null) { // sform_code > 0 and 2 matrices, with at least one not being scanner anatomical
+                srow_x = new float[4];
+                srow_y = new float[4];
+                srow_z = new float[4];
+                srow_x[0] = getBufferFloat(bufferByte, 280, endianess);
+                srow_x[1] = getBufferFloat(bufferByte, 284, endianess);
+                srow_x[2] = getBufferFloat(bufferByte, 288, endianess);
+                srow_x[3] = getBufferFloat(bufferByte, 292, endianess);
+                srow_y[0] = getBufferFloat(bufferByte, 296, endianess);
+                srow_y[1] = getBufferFloat(bufferByte, 300, endianess);
+                srow_y[2] = getBufferFloat(bufferByte, 304, endianess);
+                srow_y[3] = getBufferFloat(bufferByte, 308, endianess);
+                srow_z[0] = getBufferFloat(bufferByte, 312, endianess);
+                srow_z[1] = getBufferFloat(bufferByte, 316, endianess);
+                srow_z[2] = getBufferFloat(bufferByte, 320, endianess);
+                srow_z[3] = getBufferFloat(bufferByte, 324, endianess);
+                matrix2.setMatrix((double) -srow_x[0], 0, 0);
+                matrix2.setMatrix((double) srow_x[1], 0, 1);
+                matrix2.setMatrix((double) -srow_x[2], 0, 2);
+                matrix2.setMatrix((double) -srow_y[0], 1, 0);
+                matrix2.setMatrix((double) srow_y[1], 1, 1);
+                matrix2.setMatrix((double) -srow_y[2], 1, 2);
+                matrix2.setMatrix((double) srow_z[0], 2, 0);
+                matrix2.setMatrix((double) -srow_z[1], 2, 1);
+                matrix2.setMatrix((double) srow_z[2], 2, 2);
+                LPSOrigin2 = new float[3];
+                LPSOrigin2[0] = -srow_x[3];
+                LPSOrigin2[1] = srow_y[3];
+                LPSOrigin2[2] = srow_z[3];
+
+                axisOrientation2 = getAxisOrientation(matrix);
+                Preferences.debug("axisOrientation2 = " + axisOrientation2[0] + "  " + axisOrientation2[1] + "  " +
+                                  axisOrientation2[2] + "\n");
+
+                for (j = 0; j < 3; j++) {
+
+                    if (axisOrientation2[j] == FileInfoBase.ORI_R2L_TYPE) {
+                        LPSOrigin2[0] = -Math.abs(LPSOrigin2[0]);
+                    } else if (axisOrientation2[j] == FileInfoBase.ORI_L2R_TYPE) {
+                        LPSOrigin2[0] = Math.abs(LPSOrigin2[0]);
+                    } else if (axisOrientation2[j] == FileInfoBase.ORI_A2P_TYPE) {
+                        LPSOrigin2[1] = -Math.abs(LPSOrigin2[1]);
+                    } else if (axisOrientation2[j] == FileInfoBase.ORI_P2A_TYPE) {
+                        LPSOrigin2[1] = Math.abs(LPSOrigin2[1]);
+                    } else if (axisOrientation2[j] == FileInfoBase.ORI_I2S_TYPE) {
+                        LPSOrigin2[2] = -Math.abs(LPSOrigin2[2]);
+                    } else if (axisOrientation2[j] == FileInfoBase.ORI_S2I_TYPE) {
+                        LPSOrigin2[2] = Math.abs(LPSOrigin2[2]);
+                    }
+                }
+
+                matrix2.setMatrix((double) LPSOrigin2[0], 0, 3);
+                matrix2.setMatrix((double) LPSOrigin2[1], 1, 3);
+                matrix2.setMatrix((double) LPSOrigin2[2], 2, 3);
+
+               
+
+                
+                Preferences.debug("matrix2 = \n" + matrix2 + "\n");
+
+                Preferences.debug("srow_x = " + srow_x[0] + "  " + srow_x[1] + "  " + srow_x[2] + "  " + srow_x[3] +
+                                  "\n");
+                Preferences.debug("srow_y = " + srow_y[0] + "  " + srow_y[1] + "  " + srow_y[2] + "  " + srow_y[3] +
+                                  "\n");
+                Preferences.debug("srow_z = " + srow_z[0] + "  " + srow_z[1] + "  " + srow_z[2] + "  " + srow_z[3] +
+                                  "\n");    
+            } // if (matrix2 != null)
             
         } // if (numDims >= 3)
 
@@ -1738,6 +1849,9 @@ public class FileNIFTI extends FileBase {
         updateUnitsOfMeasure(fileInfo, image);
         updateorigins(image.getFileInfo());
         image.setMatrix(matrix);
+        if (matrix2 != null) {
+            image.getMatrixHolder().addMatrix(matrix2);
+        }
 
         try { // Construct a FileRaw to actually read the image.
 
