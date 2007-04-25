@@ -523,12 +523,18 @@ public class AlgorithmRotate extends AlgorithmBase {
             destImage.setFileInfo(newFileInfo);
 
             if (srcImage.getNDims() >= 3) {
-                TransMatrix tMat = (TransMatrix) srcImage.getMatrix().clone();
+            	System.err.println("doing new matrix operation");
+            	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+            	
+                TransMatrix tMat = new TransMatrix(rotMatrix.getColumnDimension());
+                tMat.identity();
+                tMat.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
                 tMat.timesEquals(rotMatrix);
                 tMat.setMatrix(newFileInfo[0].getOrigin()[0], 0, 3);
                 tMat.setMatrix(newFileInfo[0].getOrigin()[1], 1, 3);
                 tMat.setMatrix(newFileInfo[0].getOrigin()[2], 2, 3);
-                destImage.setMatrix(tMat);
+                System.err.println("new matrix added: " + tMat); 
+                destImage.getMatrixHolder().addMatrix(tMat);
             }
         } else { // If file is DICOM...
 
@@ -624,12 +630,17 @@ public class AlgorithmRotate extends AlgorithmBase {
             destImage.setFileInfo(newDicomInfo);
 
             if (srcImage.getNDims() >= 3) {
-                TransMatrix tMat = (TransMatrix) srcImage.getMatrix().clone();
+            	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+            	
+                TransMatrix tMat = new TransMatrix(rotMatrix.getColumnDimension());
+                tMat.identity();
+                tMat.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
                 tMat.timesEquals(rotMatrix);
                 tMat.setMatrix(newDicomInfo[0].getOrigin()[0], 0, 3);
                 tMat.setMatrix(newDicomInfo[0].getOrigin()[1], 1, 3);
                 tMat.setMatrix(newDicomInfo[0].getOrigin()[2], 2, 3);
-                destImage.setMatrix(tMat);
+                System.err.println("new matrix added: " + tMat); 
+                destImage.getMatrixHolder().addMatrix(tMat);
             }
         }
 

@@ -4,6 +4,7 @@ package gov.nih.mipav.model.structures;
 import java.io.*;
 
 import java.util.*;
+import gov.nih.mipav.view.MipavUtil;
 
 
 /**
@@ -57,6 +58,7 @@ public class MatrixHolder extends ModelSerialCloneable {
 
         // do not allow adding of Composite type
         if (tID == TransMatrix.TRANSFORM_COMPOSITE) {
+        	MipavUtil.displayWarning("Composite matrices can not be added, they are generated dynamically");
             return;
         }
 
@@ -245,4 +247,20 @@ public class MatrixHolder extends ModelSerialCloneable {
 
         matrixMap.put(key, newMatrix);
     }
+    
+    public String toString() {
+    	String desc = new String("MatrixHolder: ");
+    	desc += "\n\tNumber of matrices: " + matrixMap.size();
+    	 Iterator iter = matrixMap.keySet().iterator();
+         TransMatrix tempM = null;
+
+         int count = 0;
+         while (iter.hasNext()) {
+        	 desc+= "\n\t\t" + count + ": " + matrixMap.get(iter.next());
+         }
+    	
+    	
+    	return desc;
+    }
+    
 }
