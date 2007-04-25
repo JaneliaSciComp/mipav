@@ -1954,6 +1954,16 @@ public class TransMatrix extends Matrix // implements TableModelListener
         transformID = t_id;
     }
     
+    /**
+     * ToString method that includes the matrix printout as well as the transform ID of the transmatrix
+     */
+    public String toString() {
+    	String desc = new String("TransMatrix: ");
+    	desc+="\n\ttransform id: " + TransMatrix.getTransformIDStr(this.transformID);
+    	desc+=super.toString();
+    	
+    	return desc;
+    }
     
     /**
      * Decodes the line in the matrix file.

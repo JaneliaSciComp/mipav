@@ -473,19 +473,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         } else if (command.equals("Paste")) {
             image.getHistoryArea().paste();
         } else if (command.equals("Invert")) {
-            image.getMatrix().invert();
-
-            double[][] mat = image.getMatrix().getMatrix();
-
-            for (int i = 0; i < mat.length; i++) {
-
-                for (int j = 0; j < mat[0].length; j++) {
-                    textMatrix[i][j].setText(Double.toString(mat[i][j]));
-                    textMatrix[i][j].setCaretPosition(0);
-                }
-            }
-
-            validate();
+        	
+        	TransMatrix invertedMatrix = new TransMatrix(image.getNDims() + 1, transformIDBox.getSelectedIndex());
+        	if (setVariables()) {
+        		updateTransformInfo(invertedMatrix);
+        		invertedMatrix.invert();
+        		updateMatrixFields(invertedMatrix);
+        		validate();
+        	}
         } else if (command.equals("Identity")) {
         	TransMatrix newMatrix = new TransMatrix(image.getNDims() + 1);
         	
@@ -497,17 +492,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         } else if (command.equals("Composite")) {
         	try {
 
-            double[][] mat = image.readTransformMatrix(true).getMatrix();
+        		TransMatrix newMatrix = image.readTransformMatrix(true);
+        		
+        		updateMatrixFields(newMatrix);
+        			
 
-            for (int i = 0; i < mat.length; i++) {
-
-                for (int j = 0; j < mat[0].length; j++) {
-                    textMatrix[i][j].setText(Double.toString(mat[i][j]));
-                    textMatrix[i][j].setCaretPosition(0);
-                }
-            }
-
-            validate();
+        		validate();
         	} catch (Exception e) {
         		//do nothing
         	}
