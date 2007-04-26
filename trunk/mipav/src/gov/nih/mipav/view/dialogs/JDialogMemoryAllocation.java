@@ -163,12 +163,14 @@ public class JDialogMemoryAllocation extends JDialogBase {
     /**
      * strictly reads the memory settings from the LAX-file.
      *
-     * @param  checkOnPreferences  DOCUMENT ME!
+     * @param  ui                  A reference to the VUI. Must be passed in since this dialog may be called while the
+     *                             VUI is still being constructed (can't use VUI.getReference()).
+     * @param  checkOnPreferences  Whether this is a preferences-vs-lax file check.
      */
-    public JDialogMemoryAllocation(boolean checkOnPreferences) {
-        super(ViewUserInterface.getReference().getMainFrame(), true); // enforce modality
+    public JDialogMemoryAllocation(ViewUserInterface ui, boolean checkOnPreferences) {
+        super(ui.getMainFrame(), true); // enforce modality
 
-        userInterface = ViewUserInterface.getReference();
+        userInterface = ui;
 
         if (checkOnPreferences) {
             setTitle("Check java-runtime Memory Allocation");
@@ -178,7 +180,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
         // determine the file name based on the application name
         try {
-            startupFile = getStartupFile(ViewUserInterface.getReference());
+            startupFile = getStartupFile(ui);
         } catch (FileNotFoundException fnf) {
             MipavUtil.displayError(fnf.getLocalizedMessage());
 

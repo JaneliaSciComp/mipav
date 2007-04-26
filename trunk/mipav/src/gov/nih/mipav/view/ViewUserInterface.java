@@ -87,6 +87,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Initial menubar for MIPAV. */
     protected JMenuBar openingMenuBar;
 
+    /** Matrix for copy/paste actions in image's or between image's matrix edit panel. */
+    private TransMatrix clippedMatrix = null;
+
     /** DOCUMENT ME! */
     private Vector clippedScannerVectors = new Vector();
 
@@ -121,9 +124,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Whether the mipav GUI should be shown; set by the -hide command line option. */
     private boolean isAppFrameVisible = true;
 
-    /** Matrix for copy/paste actions in image's or between image's matrix edit panel */
-    private TransMatrix clippedMatrix = null;
-    
     /** DOCUMENT ME! */
     private boolean isClippedVOI2D = true;
 
@@ -1105,6 +1105,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
+     * Retrieves the clipped matrix for paste action.
+     *
+     * @return  clippedMatrix
+     */
+    public TransMatrix getClippedMatrix() {
+        return this.clippedMatrix;
+    }
+
+    /**
      * DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
@@ -1468,7 +1477,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @see  #buildMenu()
      * @see  #setControls()
      * @see  #initMacintoshJDKversionCheck()
-     * @see  DICOMDictionaryBuilder#getDicomTagTable()
      * @see  #initCreateMessageField(String)
      * @see  #initSetTitles(String, String)
      */
@@ -1491,7 +1499,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         initMacintoshJDKversionCheck();
 
-        DICOMDictionaryBuilder.getDicomTagTable();
         initCreateMessageBar();
         initSetTitles("Medical Image Processing, Analysis & Visualization (MIPAV)", "MIPAV: ");
         initDicomReceiver();
@@ -2288,23 +2295,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     // end of initialize() sub-methods.
     // *****
 
-    
+
     /**
-     * Sets the clipped matrix for copy/paste actions
-     *  @param tMat transmatrix for copy/paste
+     * Sets the clipped matrix for copy/paste actions.
+     *
+     * @param  tMat  transmatrix for copy/paste
      */
     public void setClippedMatrix(TransMatrix tMat) {
-    	this.clippedMatrix = tMat;
+        this.clippedMatrix = tMat;
     }
-    
-    /**
-     * Retrieves the clipped matrix for paste action
-     * @return clippedMatrix
-     */
-    public TransMatrix getClippedMatrix() {
-    	return this.clippedMatrix;
-    }
-    
+
     /**
      * Sets the menu for the main frame.
      */
@@ -3256,57 +3256,59 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected void runCmdLine(String scriptFile, Vector imageList, Vector voiList) {
         ViewOpenFileUI fileOpener = new ViewOpenFileUI(false);
         Vector imageNames = new Vector();
-        if(imageList.size() > 0) {
-	        for (int i = 0; i < imageList.size(); i++) {
-	            OpenFileInfo file = (OpenFileInfo) imageList.elementAt(i);
-	            String fileName = file.getFullFileName();
-	            boolean isMulti = file.isMulti();
-	
-	            Preferences.debug("cmd line image file: " + fileName + "\n", Preferences.DEBUG_MINOR);
-	            fileOpener.open(fileName, isMulti, null);
-	
-	            imageNames.addElement(fileOpener.getImage().getImageName());
-	
-	            this.setDefaultDirectory(new File(fileName).getParent());
-	
-	            Preferences.debug("Default dir: " + this.getDefaultDirectory() + "\n", Preferences.DEBUG_MINOR);
-	
-	            try {
-	                VOI[] voi;
-	                FileVOI fileVOI;
-	                ModelImage image = fileOpener.getImage();
-	
-	                if ((voiList.size() >= 1) && (voiList.elementAt(i) != null)) {
-	
-	                    for (int x = 0; x < ((Vector) (voiList.elementAt(i))).size(); x++) {
-	                        String fileNameIn = (String) (((Vector) (voiList.elementAt(i))).elementAt(x));
-	                        int index = fileNameIn.lastIndexOf(File.separatorChar);
-	
-	                        String directory = fileNameIn.substring(0, index + 1);
-	                        String voiFileName = fileNameIn.substring(index + 1, fileNameIn.length());
-	                        fileVOI = new FileVOI(voiFileName, directory, image);
-	                        voi = fileVOI.readVOI(false);
-	
-	                        for (int y = 0; y < voi.length; y++) {
-	                            image.registerVOI(voi[y]);
-	                        }
-	                    }
-	                }
-	            } catch (Exception e) {
-	                MipavUtil.displayError("Command line executing VOI error, check file names.");
-	
-	                return;
-	            }
-	        }
-	
-	        if (scriptFile != null) {
-	            ScriptRunner.getReference().runScript(scriptFile, imageNames, new Vector());
-	        }
-        }
-        else {
-        	if (scriptFile != null) {
-        		ScriptRunner.getReference().runScript(scriptFile);
-        	}
+
+        if (imageList.size() > 0) {
+
+            for (int i = 0; i < imageList.size(); i++) {
+                OpenFileInfo file = (OpenFileInfo) imageList.elementAt(i);
+                String fileName = file.getFullFileName();
+                boolean isMulti = file.isMulti();
+
+                Preferences.debug("cmd line image file: " + fileName + "\n", Preferences.DEBUG_MINOR);
+                fileOpener.open(fileName, isMulti, null);
+
+                imageNames.addElement(fileOpener.getImage().getImageName());
+
+                this.setDefaultDirectory(new File(fileName).getParent());
+
+                Preferences.debug("Default dir: " + this.getDefaultDirectory() + "\n", Preferences.DEBUG_MINOR);
+
+                try {
+                    VOI[] voi;
+                    FileVOI fileVOI;
+                    ModelImage image = fileOpener.getImage();
+
+                    if ((voiList.size() >= 1) && (voiList.elementAt(i) != null)) {
+
+                        for (int x = 0; x < ((Vector) (voiList.elementAt(i))).size(); x++) {
+                            String fileNameIn = (String) (((Vector) (voiList.elementAt(i))).elementAt(x));
+                            int index = fileNameIn.lastIndexOf(File.separatorChar);
+
+                            String directory = fileNameIn.substring(0, index + 1);
+                            String voiFileName = fileNameIn.substring(index + 1, fileNameIn.length());
+                            fileVOI = new FileVOI(voiFileName, directory, image);
+                            voi = fileVOI.readVOI(false);
+
+                            for (int y = 0; y < voi.length; y++) {
+                                image.registerVOI(voi[y]);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    MipavUtil.displayError("Command line executing VOI error, check file names.");
+
+                    return;
+                }
+            }
+
+            if (scriptFile != null) {
+                ScriptRunner.getReference().runScript(scriptFile, imageNames, new Vector());
+            }
+        } else {
+
+            if (scriptFile != null) {
+                ScriptRunner.getReference().runScript(scriptFile);
+            }
         }
     }
 
@@ -3329,14 +3331,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n" +
                                          "those in the Preferences file.\n" +
                                          "Memory Allocation will display so you can " + "ensure this is correct.");
-                new JDialogMemoryAllocation(true);
+                new JDialogMemoryAllocation(this, true);
             }
             // else sizes match; there are no problems
         } catch (NullPointerException npe) { // prefs not found/invalid strings
             MipavUtil.displayWarning("Heap size settings in the " + "environment startup file either do not match \n" +
                                      "those in the Preferences file, or are non-existant.\n" +
                                      "Memory Allocation will display so you can " + "ensure this is correct.");
-            new JDialogMemoryAllocation(true);
+            new JDialogMemoryAllocation(this, true);
         } catch (FileNotFoundException fnf) { // LAX not found
             Preferences.debug(fnf.getLocalizedMessage() + "\n");
             MipavUtil.displayWarning(fnf.getLocalizedMessage());
