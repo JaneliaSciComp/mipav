@@ -504,7 +504,7 @@ public class JDialogRunScriptController implements ActionListener {
         }
         else if (view.isTreeReadyForScriptExecution() && view.getScriptNodeChildCount() == 0) {
         	view.getFrame().setVisible(false);
-        	if (ScriptRunner.getReference().runScript(model.getScriptFile())) {
+        	if (ScriptRunner.getReference().runScript(model.getScriptFile(), new Vector(), new Vector())) {
 
             } else {
                 Preferences.debug("run dialog:\tError during script execution \n",
