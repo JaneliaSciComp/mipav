@@ -138,6 +138,7 @@ public class MipavCoordinateSystems {
             dicomMatrix.transform(new Point3Df(kInput.x * afResolutions[0], kInput.y * afResolutions[1],
                                                kInput.z * afResolutions[2]), kOutput);
         } else {
+        	//System.err.println("not dicom");
             float[] afAxialRes = kImage.getResolutions(0, FileInfoBase.AXIAL);
 
             MipavCoordinateSystems.fileToPatient(kInput, kOutput, kImage, FileInfoBase.AXIAL, false);

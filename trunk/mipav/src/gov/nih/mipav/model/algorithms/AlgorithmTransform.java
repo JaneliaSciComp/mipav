@@ -3672,8 +3672,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                 
                 
                //replace the destination image's default (composite) matrix
-                newTMatrix.setTransformID(TransMatrix.TRANSFORM_COMPOSITE);
-                destImage.setMatrix(newTMatrix);
+               // newTMatrix.setTransformID(TransMatrix.TRANSFORM_COMPOSITE);
+               // destImage.setMatrix(newTMatrix);
                 
             }
         }
@@ -3783,37 +3783,35 @@ public class AlgorithmTransform extends AlgorithmBase {
                 	
                     orientation = (String) ((FileDicomTag) ((FileInfoDicom)fileInfo[i]).getEntry("0020,0032")).getValue(true);
 
-                    if (orientation == null) {
-                        MipavUtil.displayError("Patient Position string = null");
+                    if (orientation != null) {
+
+                    	int index1 = -1, index2 = -1;
+                    
+                    	for (int k = 0; k < orientation.length(); k++) {
+
+                    		if (orientation.charAt(k) == '\\') {
+
+                    			if (index1 == -1) {
+                    				index1 = k;
+                    			} else {
+                    				index2 = k;
+                    			}
+                    		}
+                    	}
+
+                    	coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                    	coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                    	coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+                    
+
+                    	matrix.transform(coord[0], coord[1], coord[2], tempPos);
+                    
+                    	//System.err.println("transformed " + orientation + " to: " +tempPos[0] + " " + tempPos[1] + " " + tempPos[2]);
+                    
+                    	orientation = tempPos[0] + "\\" + tempPos[1] + "\\" + tempPos[2];
+                    	((FileInfoDicom)fileInfo[i]).setValue("0020,0032", orientation);                    
                     }
-
-                    int index1 = -1, index2 = -1;
-                    
-                    for (int k = 0; k < orientation.length(); k++) {
-
-                        if (orientation.charAt(k) == '\\') {
-
-                            if (index1 == -1) {
-                                index1 = k;
-                            } else {
-                                index2 = k;
-                            }
-                        }
-                    }
-
-                    coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
-                    coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
-                    coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
-                    
-
-                    matrix.transform(coord[0], coord[1], coord[2], tempPos);
-                    
-                    //System.err.println("transformed " + orientation + " to: " +tempPos[0] + " " + tempPos[1] + " " + tempPos[2]);
-                    
-                    orientation = tempPos[0] + "\\" + tempPos[1] + "\\" + tempPos[2];
-                   ((FileInfoDicom)fileInfo[i]).setValue("0020,0032", orientation);                    
                 }
-                
             }
         } else if (resultImage.getNDims() == 4) {
             for (int i = 0; i < (resultImage.getExtents()[2] * resultImage.getExtents()[3]); i++) {

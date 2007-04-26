@@ -213,7 +213,8 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             String orientation = (String) ((FileDicomTag) fileInfo.getEntry("0020,0032")).getValue(true);
 
             if (orientation == null) {
-                MipavUtil.displayError("Patient Position string = null");
+            	//BEN:  I guess DICOM doesn't necessarily have this tag...?
+                return;
             }
 
             int index1 = -1, index2 = -1;
