@@ -158,10 +158,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * This routine is an extraction from the FORTRAN program DCHKEE of the code needed to drive dchkgg in order to test
-     * dgghrd, dhgeqz, and dtgevc, routines for the nonsymmetric generalized eigenvalue problem. Numerical values were
-     * obtained from the dgg.in datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley,
-     * NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999
+     * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive dchkgg in
+     * order to run dchkgg to test the nonsymmetric generalized eigenvalue problem. Tests dgghrd, dhgeqz, and dtgevc.
+     * Numerical values were obtained from the dgg.in datafile. Orginal DCHKEE created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., January, 2007
      */
     public void dchkgg_test() {
 
@@ -336,8 +336,8 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dchkgg_test
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DCHKGK Orginal DCHKGK created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of version 3.1 LAPACK test routine DCHKGK Orginal DCHKGK created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * Sample data values obtained from the file dgbak.in dchkgk tests dggbak, a routine for backward balancing of a
      * matrix pair (A, B).
      */
@@ -841,11 +841,11 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dchkgk
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DCHKGL Orginal DCHKGL created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of version 3.1 LAPACK test routine DCHKGL Orginal DCHKGL created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * Sample data values obtained from the file dgbal.in
      *
-     * <p>dckkgl tests dggbal, a routine for balancing a matrix pair (A, B)</p>
+     * <p>dchkgl tests dggbal, a routine for balancing a matrix pair (A, B)</p>
      */
     public void dchkgl() {
         int lda = 20;
@@ -1351,11 +1351,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dchkgl
 
     /**
-     * This routine is an extraction from the FORTRAN program DCHKEE of the code needed to drive dchkst, that tests
+     * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive dchkst, that tests
      * routines used in symmetric generalized eigenvalue problem. The routines tested are dsytrd, dorgtr, dsteqr, and
      * dsterf. Numerical values were obtained from the sep.in datafile. Orginal DCHKEE created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30,
-     * 1999
+     * Univ. of California Berkeley, and NAG Ltd., January, 2007
      */
     public void dchkst_test() {
 
@@ -1512,10 +1511,9 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dckkst_test
 
     /**
-     * This routine is an extraction from the FORTRAN program DCHKEE of the code needed to drive ddrvst, that tests
+     * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive ddrvst, that tests
      * symmetric generalized eigenvalue drivers. The driver tested is dsyev. Numerical values were obtained from the
-     * sep.in datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd., Courant
-     * Institute, Argonne National Lab, and Rice University, June 30, 1999
+     * sep.in datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd., January, 2007
      */
     public void ddrvst_test() {
 
@@ -2314,10 +2312,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dggev
 
     /**
-     * This routine is an extraction from the FORTRAN program DCHKEE of the code needed to drive ddrgev in order to test
+     * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive ddrgev in order to test
      * DGGEV, that handles the nonsymmetric generalized eigenvalue problem. Numerical values were obtained from the dgv
-     * section in the dgd.in datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, NAG
-     * Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999
+     * section in the dgd.in datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG
+     * Ltd., January, 2007
      */
     public void dggev_test() {
 
@@ -2455,12 +2453,16 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dggev_test
 
     /**
-     * This is a port of the version 3.0 LAPACK DSYEV routine Orginal DSYEV created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dsyev
-     * computes all eigenvalues and, optionally, eigenvectors of a real symmetric matrix A.
+     * This is a port of the version 3.1 LAPACK DSYEV routine Orginal DSYEV created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dsyev computes all eigenvalues and, optionally, eigenvectors of a real symmetric matrix A.
      *
-     * @param  jobz   input char = 'N': Compute eigenvalues only = 'V': Compute eigenvalues and eigenvectors.
-     * @param  uplo   input char = 'U': Upper triangle of A is stored = 'L': Lower triangle of A is stored
+     * @param  jobz   input char 
+     *                = 'N': Compute eigenvalues only 
+     *                = 'V': Compute eigenvalues and eigenvectors.
+     * @param  uplo   input char 
+     *                = 'U': Upper triangle of A is stored 
+     *                = 'L': Lower triangle of A is stored
      * @param  n      input int The order of the matrix A. n >= 0.
      * @param  A      input/output double[][] of dimension lda by n On entry, the symmetric matrix A. If uplo = 'U', the
      *                leading n-by-n upper triangular part of A contains the upper triangular part of the matrix A. If
@@ -2470,7 +2472,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *                uplo = 'U') of A, including the diagonal, is destroyed.
      * @param  lda    input int The leading dimension of array A. lda >= max(1,n).
      * @param  w      output double[] of dimension n. If info = 0, the eigenvalues are in ascending order.
-     * @param  work   (workspace/output) double[] of dimension lwork. On exit, if info = 0, then work[0] returns the
+     * @param  work   (workspace/output) double[] of dimension max(1,lwork). On exit, if info = 0, then work[0] returns the
      *                optimal lwork.
      * @param  lwork  input int The length of the array work. lwork >= max(1,3*n-1). For optimal efficiency , lwork >=
      *                (nb+2)*n, where nb is the blocksize for dsytrd returned by ilaenv.
@@ -2478,8 +2480,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *                <p>If lwork = -1, then a workspace query is assumed; the routine only calculates the optimal size
      *                of the work array, returns this value as the first entry of the work array, and no error message
      *                related to lwork is issued.</p>
-     * @param  info   output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value. >
-     *                0: If info[0] = i, the algorithm failed to converge; i off- diagonal elements of an intermediate
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info[0] = -i, the i-th argument had an illegal value.
+     *                > 0: If info[0] = i, the algorithm failed to converge; i off-diagonal elements of an intermediate
      *                tridiagonal form did not converge to zero.
      */
     public void dsyev(char jobz, char uplo, int n, double[][] A, int lda, double[] w, double[] work, int lwork,
@@ -2539,9 +2543,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
             info[0] = -3;
         } else if (lda < Math.max(1, n)) {
             info[0] = -5;
-        } else if ((lwork < Math.max(1, (3 * n) - 1)) && (!lquery)) {
-            info[0] = -8;
-        }
+        } 
 
         if (info[0] == 0) {
             ch[0] = uplo;
@@ -2549,6 +2551,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
             nb = ilaenv(1, "DSYTRD", opts, n, -1, -1, -1);
             lwkopt = Math.max(1, (nb + 2) * n);
             work[0] = lwkopt;
+            
+            if ((lwork < Math.max(1, (3 * n) - 1)) && (!lquery)) {
+                info[0] = -8;
+            }
         } // if (info[0] == 0)
 
         if (info[0] != 0) {
@@ -2562,14 +2568,12 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
 
         // Quick return if possible
         if (n == 0) {
-            work[0] = 1;
-
             return;
         }
 
         if (n == 1) {
             w[0] = A[0][0];
-            work[0] = 3;
+            work[0] = 2;
 
             if (wantz) {
                 A[0][0] = 1.0;
@@ -2854,10 +2858,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
 
 
     /**
-     * This routine is an extraction from the FORTRAN program DCHKEE of the code needed to drive ddrvsg in order to test
+     * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive ddrvsg in order to test
      * DSYGV, that handles the symmetric generalized eigenvalue problem. Numerical values were obtained from the dsg.in
-     * datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd., Courant
-     * Institute, Argonne National Lab, and Rice University, June 30, 1999
+     * datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd.,
+     * January, 2007
      */
     public void dsygv_test() {
 
@@ -3205,16 +3209,16 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // daxpy
 
     /**
-     * /** This is a port of version 3.0 LAPACK test routine DCHKGG Orginal DCHKGG created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30,
-     * 1994 dchkgg checks the nonsymmetric generalized eigenvalue problem routines.
+     * /** This is a port of version 3.1 LAPACK test routine DCHKGG Orginal DCHKGG created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dchkgg checks the nonsymmetric generalized eigenvalue problem routines.
      *
-     * <p>ddghrd factors A and B as U H Vtranspose and U T Vtranspose, where H is hessenberg, T is triangular, and U and
+     * <p>dgghrd factors A and B as U H Vtranspose and U T Vtranspose, where H is hessenberg, T is triangular, and U and
      * V are orthogonal.</p>
      *
      * <p>dhgeqz factors H and T as Q S Ztranspose and Q P Ztranspose, where P is upper triangular, S is in generalized
      * Schur form (block upper triangular, with 1x1 and 2x2 blocks on the diagonal, the 2x2 blocks corresponding to
-     * complex conjugate paris of generalized eigenvalues), and Q and Z are orthogonal. It also computes the generalized
+     * complex conjugate pairs of generalized eigenvalues), and Q and Z are orthogonal. It also computes the generalized
      * eigenvalues (alpha[0], beta[0]),...,(alpha[n-1], beta[n-1]), where alpha[j] = S[j][j] and beta[j] = P[j][j] --
      * thus, w[j] = alpha[j]/beta[j] is a root of the generalized eigenvalue problem det(A - w[j] B ) = 0 and m[j] =
      * beta[j]/alpha[j] is a root of the essentially equivalent problem det(m[j] A - B ) = 0</p>
@@ -3226,47 +3230,74 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * <p>When dchkgg is called, a number of matrix "sizes" ("n's") and a number of matrix "types" are specified. For
      * each size ("n") and each type of matrix, one matrix will be generated and used to test the nonsymmetric
      * eigenroutines. For each matrix, 15 tests will be performed. The first twelve "test ratios" should be small --
-     * O(1). They will be compared with the threshold thresh: (1) | A - U H Vtrans| / ( |A| n ulp) (2) | B - U T Vtrans|
-     * / ( |B| n ulp) (3) | I - UUtrans| / (n ulp) (4) | I - VVtrans| / (n ulp) (5) | H - Q S Ztrans| / ( |H| n ulp) (6)
-     * | T - Q P Ztrans| / ( |T| n ulp) (7) | I - QQtrans| / (n ulp) (8) | I - ZZtrans| / (n ulp) (9) max over all left
-     * eigenvalue/-vector pairs (beta/alpha, L) of | L**H * (beta S - alpha P) | / (ulp max( |beta S|, |alpha P| )) (10)
-     * max over all left eigenvalue/-vector pairs (beta/alpha, L') of | L'**H * (beta H - alphatranspose T) | / (ulp
-     * max( |beta H|, |alpha T| )) where the eigenvectors L' are the result of passing Q to dtgevc and back transforming
-     * (howmny = 'B'). (11) max over all right eigenvalue/-vector pairs (beta/alpha, R) of | (beta S - alpha T) R | /
-     * (ulp max( |beta S|, |alpha T| )) (12) max over all right eigenvalue/-vector pairs (beta,alpha, R') of | (beta H -
-     * alpha T) R' | / ( ulp max( |beta H|, |alpha T| )) where the eigenvectors R' are the result of passing Z to dtgevc
-     * and back transforming (howmny = 'B'). The last three test ratios will usually be small, but there is no
-     * mathematical requirement that they be so. They are therefore compared with thresh only if tstdif is true. (13) |
-     * S(Q,Z computed) - S(Q,Z not computed) | / ( |S| ulp ) (14) | P(Q,Z computed) - P(Q,Z not computed) | / ( |P| ulp
-     * ) (15) max( |alpha(Q,Z computed) - alpha(Q,Z not computed)|/|S|, |beta(Q,Z computed) - beta(Q,Z not
-     * computed)|/|P| ) / ulp In addition, the normalization of L and R are checked, and compared with the threshold
-     * thrshn.</p>
+     * O(1). They will be compared with the threshold thresh: 
+     * (1) | A - U H Vtrans| / ( |A| n ulp)
+     * (2) | B - U T Vtrans| / ( |B| n ulp)
+     * (3) | I - UUtrans| / (n ulp)
+     * (4) | I - VVtrans| / (n ulp)
+     * (5) | H - Q S Ztrans| / ( |H| n ulp)
+     * (6) | T - Q P Ztrans| / ( |T| n ulp)
+     * (7) | I - QQtrans| / (n ulp)
+     * (8) | I - ZZtrans| / (n ulp)
+     * (9) max over all left eigenvalue/-vector pairs (beta/alpha, L) of
+     *     | L**H * (beta S - alpha P) | / (ulp max( |beta S|, |alpha P| ))
+     * (10) max over all left eigenvalue/-vector pairs (beta/alpha, L') of
+     *    | L'**H * (beta H - alphatranspose T) | / (ulp max( |beta H|, |alpha T| ))
+     *    where the eigenvectors L' are the result of passing Q to dtgevc and back transforming (howmny = 'B').
+     * (11) max over all right eigenvalue/-vector pairs (beta/alpha, R) of
+     *    | (beta S - alpha T) R | / (ulp max( |beta S|, |alpha T| ))
+     * (12) max over all right eigenvalue/-vector pairs (beta/alpha, R') of
+     *    | (beta H - alpha T) R' | / ( ulp max( |beta H|, |alpha T| )) where the eigenvectors R' are the result of
+     *    passing Z to dtgevc and back transforming (howmny = 'B').
+     * The last three test ratios will usually be small, but there is no mathematical requirement that they be so.
+     * They are therefore compared with thresh only if tstdif is true.
+     * (13) | S(Q,Z computed) - S(Q,Z not computed) | / ( |S| ulp )
+     * (14) | P(Q,Z computed) - P(Q,Z not computed) | / ( |P| ulp )
+     * (15) max( |alpha(Q,Z computed) - alpha(Q,Z not computed)|/|S|,
+     *           |beta(Q,Z computed) - beta(Q,Z not computed)|/|P| ) / ulp
+     * In addition, the normalization of L and R are checked, and compared with the threshold thrshn.</p>
      *
      * <p>Test Matrices The sizes of the test matrices are specified by an array nn[0:sizes-1]; the value of each
      * element nn[j] specifies one size. The "types" are specified by a boolean array dotype(0:ntypes-1); if dotype[j]
-     * is true, then a matrix type "j" will be generated. Currently, the list of possible types is: (1) (0, 0) (a pair
-     * of zero matrices) (2) (I, 0) (an identity and a zero matrix) (3) (0, I) (a zero and an identity matrix) (4) (I,
-     * I) (a pair of identity matrices) (5) (Jtranspose, Jtranspose) (a pair of transposed Jordan blocks) (6) (X, Y)
-     * where X = (Jtranspose 0) and Y = (I 0) (0 I)) (0 Jtranspose) and I is a k by k identity and J a (k+1) by (k+1)
-     * Jordan block; k = (N-1)/2 (7) (D, I) where D is diag(0, 1,..., N-1) (a diagonal matrix with those diagonal
-     * entries.) (8) (I, D) (9) (big*D, small*I) where "big" is near overflow and small = 1/big (10) (small*D, big*I)
-     * (11) (big*I, small*D) (12) (small*I, big*D) (13) (big*D, big*I) (14) (small*D, small*I) (15) (D1, D2) where D1 is
-     * diag(0, 0, 1, ..., N-3, 0) and D2 is diag(0, N-3, N-4,..., 1, 0, 0) (16) U (Jtranspose, Jtranspose) V where U and
-     * V are random orthogonal matrices. (17) U (T1, T2) V where T1 and T2 are upper triangular matrices with random
-     * O(1) entries above the diagonal and diagonal entries diag(T1) = (0, 0, 1, ..., N-3, 0) and diag(T2) = (0, N-3,
-     * N-4, ..., 1, 0, 0) (18) U (T1, T2) V diag(T1) = (0, 0, 1, 1, s, ..., s, 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0) s =
-     * machine precision (19) U (T1, T2) V diag(T1) = (0,0,1,1, 1-d, ..., 1 - (N-5)*d=s, 0) diag(T2) = (0, 1, 0, 1, ...,
-     * 1, 0) (20) U (T1, T2) V diag(T1) = (0,0,1,1,a, ..., a**(N-5)=s, 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0, 0) (21) U
-     * (T1, T2) V diag(T1) = (0, 0, 1, r1, r2, ..., r(N-4), 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0, 0) where r1, ...,
-     * r(N-4) are random. (22) U (big*T1, small*T2) V diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0)
-     * (23) U (small*T1, big*T2) V diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0) (24) U (small*T1,
-     * small*T2) V diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0) (25) U (big*T1, big*T2) V diag(T1)
-     * = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0) (26) U(T1, T2) V where T1 and T2 are random
-     * upper-triangular matrices.</p>
+     * is true, then a matrix type "j" will be generated. Currently, the list of possible types is:
+     * (1) (0, 0) (a pair of zero matrices)
+     * (2) (I, 0) (an identity and a zero matrix)
+     * (3) (0, I) (a zero and an identity matrix)
+     * (4) (I, I) (a pair of identity matrices)
+     * (5) (Jtranspose, Jtranspose) (a pair of transposed Jordan blocks)
+     * (6) (X, Y)
+     * where X = (Jtranspose 0) and Y = (I      0    ) 
+     *           (0          I)         (0 Jtranspose)
+     * and I is a k by k identity and J a (k+1) by (k+1) Jordan block; k = (N-1)/2
+     * (7) (D, I) where D is diag(0, 1,..., N-1) (a diagonal matrix with those diagonal entries.)
+     * (8) (I, D)
+     * (9) (big*D, small*I) where "big" is near overflow and small = 1/big
+     * (10) (small*D, big*I)
+     * (11) (big*I, small*D) 
+     * (12) (small*I, big*D)
+     * (13) (big*D, big*I)
+     * (14) (small*D, small*I) 
+     * (15) (D1, D2) where D1 is diag(0, 0, 1, ..., N-3, 0) and D2 is diag(0, N-3, N-4,..., 1, 0, 0)
+     * (16) U (Jtranspose, Jtranspose) V where U and V are random orthogonal matrices.
+     * (17) U (T1, T2) V where T1 and T2 are upper triangular matrices with random
+     *      O(1) entries above the diagonal and diagonal entries diag(T1) = (0, 0, 1, ..., N-3, 0)
+     *     and diag(T2) = (0, N-3, N-4, ..., 1, 0, 0)
+     * (18) U (T1, T2) V diag(T1) = (0, 0, 1, 1, s, ..., s, 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0)
+     *      s = machine precision
+     * (19) U (T1, T2) V diag(T1) = (0,0,1,1, 1-d, ..., 1 - (N-5)*d=s, 0)
+     *                   diag(T2) = (0, 1, 0, 1, ..., 1, 0)
+     * (20) U (T1, T2) V diag(T1) = (0,0,1,1,a, ..., a**(N-5)=s, 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0, 0)
+     * (21) U (T1, T2) V diag(T1) = (0, 0, 1, r1, r2, ..., r(N-4), 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0, 0)
+     *                 where r1, ..., r(N-4) are random.
+     * (22) U (big*T1, small*T2) V diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0)
+     * (23) U (small*T1, big*T2) V diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0)
+     * (24) U (small*T1, small*T2) V diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0)
+     * (25) U (big*T1, big*T2) V diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0)
+     * (26) U(T1, T2) V where T1 and T2 are random upper-triangular matrices.</p>
      *
      * @param  nsizes  input int The number of sizes of matrices to use. If it is zero, dchkgg does nothing. It must be
      *                 at least zero.
-     * @param  nn      input int[] o fdimension (nsizes) An array containing the sizes to be used for matrices. Zero
+     * @param  nn      input int[] of dimension (nsizes) An array containing the sizes to be used for matrices. Zero
      *                 values will be skipped. The values must be at least zero.
      * @param  ntypes  input int The number of elements in dotype. If it is zero, dchkgg does nothing. It must be at
      *                 least zero. If it is maxtyp+1 and nsizes is 1, then an additional type, maxtyp+1 is defined,
@@ -3286,9 +3317,9 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *                 thresh. Note that the error is scaled to be O(1), so thresh should be a reasonably small multiple
      *                 of 1, e.g., 10 or 100. In particular, it should not depend on the precision (single vs. double)
      *                 or the size of the matrix. It must be at least zero.
-     * @param  tstdif  input boolean Specifies whether the ratios 13-15 will be computed and compared with thresh. =
-     *                 false: Only test ratios 1-12 will be computed and tested. Ratios 13-15 will be set to zero. =
-     *                 true: All the test ratios 1-15 will be computed and tested.
+     * @param  tstdif  input boolean Specifies whether the ratios 13-15 will be computed and compared with thresh.
+     *                 = false: Only test ratios 1-12 will be computed and tested. Ratios 13-15 will be set to zero.
+     *                 = true: All the test ratios 1-15 will be computed and tested.
      * @param  thrshn  input double Threshold for reporting eigenvector normalization error. If the normalization of any
      *                 eigenvector differs from one by nore than thrshn*ulp, then a special error message will be
      *                 printed. (This is handled separately from the other tests, since only a compiler or programming
@@ -3297,7 +3328,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *                 as input only if ntypes = maxtyp+1, dotype[0:maxtyp-1] = false, and dotype[maxtyp] = true.
      * @param  lda     input int The leaeding dimension of A, B, H, T, S1, P1, S2, and P2. It must be at least 1 and at
      *                 least max(nn).
-     * @param  B       (input/workspace) double[][] of dimension (lda, max(nn)) Used to hjold the original B matrix.
+     * @param  B       (input/workspace) double[][] of dimension (lda, max(nn)) Used to hold the original B matrix.
      *                 Used as input only if ntypes= maxtyp+1, dotype[0:maxtyp-1] = false, and dotype[maxtyp] = true.
      * @param  H       (workspace) double[][] of dimension (lda, max(nn)) The upper Hessenberg matrix computed from A by
      *                 dgghrd.
@@ -3339,9 +3370,11 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param  llwork  (workspace) boolean[] of dimension max(nn))
      * @param  result  (output) double[] of dimension (15) The values computed by the tests described above. The values
      *                 are currently limited to 1/ulp, to avoid overflow.
-     * @param  info    (output) int[] = 0: successful exit < 0: If info[0] == -i, then i-th argument had an illegal
-     *                 value. > 0: A routine returned an error code. info is the absolute value of the info value
-     *                 returned.
+     * @param  info    (output) int[] 
+     *                          = 0: successful exit 
+     *                          < 0: If info[0] == -i, then i-th argument had an illegal value.
+     *                          > 0: A routine returned an error code. info is the absolute value of the info value
+     *                               returned.
      */
     private void dchkgg(int nsizes, int[] nn, int ntypes, boolean[] dotype, int[] iseed, double thresh, boolean tstdif,
                         double thrshn, double[][] A, int lda, double[][] B, double[][] H, double[][] T, double[][] S1,
@@ -4228,10 +4261,10 @@ loop1:           {
                             UI.setDataText(" 6 = | T - Q P Z' | / ( |T| n ulp )\n");
                             UI.setDataText(" 7 = | I - QQ' | / ( n ulp )\n");
                             UI.setDataText(" 8 = | I - ZZ' | / ( n ulp )\n");
-                            UI.setDataText(" 9 = max | L**H * (b S - a P) | / const\n");
-                            UI.setDataText("10 = max | L'**H * (b H - a' T) | / const\n");
-                            UI.setDataText("11 = max | (b S - a T) R | / const\n");
-                            UI.setDataText("12 = max | (b H - a T) R' | / const\n");
+                            UI.setDataText(" 9 = max | (b S - a P)' | / const\n");
+                            UI.setDataText("10 = max | (b H - a T)' | / const\n");
+                            UI.setDataText("11 = max | (b S - a P) R | / const\n");
+                            UI.setDataText("12 = max | (b H' - a T) R' | / const\n");
                         } // if (nerrs == 0)
 
                         nerrs = nerrs + 1;
@@ -4259,47 +4292,63 @@ loop1:           {
     } // dchkgg
 
     /**
-     * This is a port of the porions of LAPACK version 3.0 test routine DCHKST used to test the symmetric eigenvalue
+     * This is a port of the porions of LAPACK version 3.1 test routine DCHKST used to test the symmetric eigenvalue
      * routines dsytrd, dorgtr, dsteqr, dsterf, and dsteqr. Orginal DCHKST created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999
+     * California Berkeley, and NAG Ltd., November, 2006
      *
      * <p>dsytrd factors A as U S U', where ' means transpose, S is symmetric diagonal, and U is orthogonal. dsytrd can
      * use either just the lower or just the upper triangle of A; dchkst checks both cases. U is represented as a
      * product of the Householder transformations, whose vectors are stored in the first n-1 columns of V, and whose
-     * scale factors are scaled in TAU.</p>
+     * scale factors are in TAU.</p>
      *
      * <p>dorgtr constructs the matrix U from the contents of V and TAU.</p>
      *
      * <p>dsteqr factors S as Z D1 Z', where Z is the orthogonal matrix of eigenvectors and D1 is a diagonal matrix with
-     * the eigenvectors on the diagonal. D2 is the matrix of eigenvalues computed when Z is not computed.</p>
+     * the eigenvalues on the diagonal. D2 is the matrix of eigenvalues computed when Z is not computed.</p>
      *
      * <p>dsterf computes D3, the matrix of eigenvalues, by the PWK method, which does not yield eigenvectors</p>
      *
      * <p>When dchkst is called, a number of matrix "sizes" ("n's") and a number of matrix "types" are specified. For
      * each size ("n") and each type of matrix, one matrix will be generated and used to test the symmetric
-     * eigenroutines. For each matrix, a number of tests will be performed: (1) | A - V S V' | / ( |A| n ulp ) dsytrd(
-     * uplo = 'U', ... ) (2) | I - UV' | / ( n ulp ) dorgtr( uplo = 'U', ... ) (3) | A - V S V' | / ( |A| n ulp )
-     * dsytrd( uplo = 'L', ... ) (4) | I - UV' | / ( n ulp ) dorgtr( uplo = 'L', ... ) (5) | S - Z D Z' | / ( |S| n ulp
-     * ) dsteqr('V', ...) (6) | I - ZZ' | / ( n ulp ) dsteqr('V', ...) (7) | D1 - D2 | / ( |D1| ulp ) dsteqr('N', ...)
-     * (8) | D1 - D3 | / ( |D1| ulp ) dsterf (9) 0 if the true eigenvalues (computed by sturm count) of S are within
-     * thresh of those in D1. 2*thresh if they are not. (Tested using dstech) The "sizes" are specified by an array
-     * nn(0:nsizes-1); the value of each element nn[j] specifies one size. The "types" are specified by a boolean array
-     * dotype(0:ntypes-1); if dotype[j] is true, then the matrix type "j" will be generated. Currently, the list of
-     * possible types is: (1) The zero matrix. (2) The identity matrix. (3) A diagonal matrix with evenly spaced entries
-     * 1, ..., ulp and random signs. (ulp = (first number larger than 1) - 1 ) (4) A diagonal matrix with geomtrically
-     * spaced entries 1, ..., ulp and random signs. (5) A diagonal matrix with "clustered" entries 1, ulp, ..., ulp and
-     * random signs. (6) Same as (4), but multiplied by sqrt( overflow threshold ) (7) Same as (4), but multiplied by
-     * sqrt( underflow threshold ) (8) A matrix of the form U' D U, where U is orthogonal and D has evenly spaced
-     * entries 1, ..., ulp with random signs on the diagonal. (9) A matrix of the form U' D U, where U is orthogonal and
-     * D has geometrically spaced entries 1, ..., ulp with random signs on the diagonal. (10) A matrix of the form U' D
-     * U, where U is orthogonal and D has "clustered" entries 1, ulp, ..., ulp with random signs on the diagonal. (11)
-     * Same as (8), but multiplied by sqrt( overflow threshold) (12) Same as (8), but multiplied by sqrt( underflow
-     * threshold) (13) Symmetric matrix with random entries chosen from (-1,1). (14) Same as (13), but multiplied by
-     * sqrt( overflow threshold) (15) Same as (13), but multiplied by sqrt( underflow threshold) (16) Same as (8), but
-     * diagonal elements are all positive. (17) Same as (9), but diagonal elements are all positive. (18) Same as (10),
-     * but diagonal elements are all positive. (19) Same as (16), but multiplied by sqrt( overflow threshold) (20) Same
-     * as (16), but multiplied by sqrt( underflow threshold) (21) A diagonally dominant tridiagonal matrix with
-     * geometrically spaced diagonal entries 1, ..., ulp.</p>
+     * eigenroutines. For each matrix, a number of tests will be performed:
+     * (1) | A - V S V' | / ( |A| n ulp ) dsytrd(uplo = 'U', ... )
+     * (2) | I - UV' | / ( n ulp ) dorgtr( uplo = 'U', ... )
+     * (3) | A - V S V' | / ( |A| n ulp ) dsytrd( uplo = 'L', ... )
+     * (4) | I - UV' | / ( n ulp ) dorgtr( uplo = 'L', ... ) 
+     * (5) | S - Z D Z' | / ( |S| n ulp) dsteqr('V', ...)
+     * (6) | I - ZZ' | / ( n ulp ) dsteqr('V', ...)
+     * (7) | D1 - D2 | / ( |D1| ulp ) dsteqr('N', ...)
+     * (8) | D1 - D3 | / ( |D1| ulp ) dsterf
+     * (9) 0 if the true eigenvalues (computed by sturm count) of S are within
+     * thresh of those in D1. 2*thresh if they are not. (Tested using dstech)
+     * The "sizes" are specified by an array nn(0:nsizes-1); the value of each element nn[j] specifies one size. 
+     * The "types" are specified by a boolean array dotype(0:ntypes-1); if dotype[j] is true, then the matrix type
+     * "j" will be generated. Currently, the list of possible types is:
+     * (1) The zero matrix.
+     * (2) The identity matrix.
+     * (3) A diagonal matrix with evenly spaced entries 1, ..., ulp and random signs.
+     *    (ulp = (first number larger than 1) - 1 )
+     * (4) A diagonal matrix with geomtrically spaced entries 1, ..., ulp and random signs. 
+     * (5) A diagonal matrix with "clustered" entries 1, ulp, ..., ulp and random signs.
+     * (6) Same as (4), but multiplied by sqrt( overflow threshold )
+     * (7) Same as (4), but multiplied by sqrt( underflow threshold )
+     * (8) A matrix of the form U' D U, where U is orthogonal and D has evenly spaced
+     *     entries 1, ..., ulp with random signs on the diagonal.
+     * (9) A matrix of the form U' D U, where U is orthogonal and D has geometrically spaced entries 1, ..., ulp
+     *     with random signs on the diagonal. 
+     * (10) A matrix of the form U' D U, where U is orthogonal and D has "clustered" entries 1, ulp, ..., ulp
+     *      with random signs on the diagonal.
+     * (11) Same as (8), but multiplied by sqrt( overflow threshold)
+     * (12) Same as (8), but multiplied by sqrt( underflow threshold)
+     * (13) Symmetric matrix with random entries chosen from (-1,1).
+     * (14) Same as (13), but multiplied by sqrt( overflow threshold)
+     * (15) Same as (13), but multiplied by sqrt( underflow threshold)
+     * (16) Same as (8), but diagonal elements are all positive.
+     * (17) Same as (9), but diagonal elements are all positive.
+     * (18) Same as (10), but diagonal elements are all positive. 
+     * (19) Same as (16), but multiplied by sqrt( overflow threshold)
+     * (20) Same as (16), but multiplied by sqrt( underflow threshold)
+     * (21) A diagonally dominant tridiagonal matrix with geometrically spaced diagonal entries 1, ..., ulp.</p>
      *
      * @param  nsizes  (input) int The number of sizes of matrices to use. If it is zero, dchkst does nothing. It must
      *                 be at least zero.
@@ -4365,10 +4414,16 @@ loop1:           {
      * @param  liwork  (input) int length of iwork
      * @param  result  (output) double[] of dimension (26) The values computed by the tests described above. The values
      *                 are currently limited to 1/ulp, to avoid overflow.
-     * @param  info    (output) int[] If 0, then everything ran OK. -1: nsizes < 0 -2: Some nn[j] < 0 -3: ntypes < 0 -5:
-     *                 thresh < 0 -9: lda < 1 or lda < nmax, where nmax is max(nn[j]) -23: ldu < 1 or ldu < nmax -29:
-     *                 lwork too small. If dlatmr, dlatms, dsytrd, dorgtr, dsteqr, ssterf, or dormc2 returns an error
-     *                 code, the absolute value of it is returned.
+     * @param  info    (output) int[] If 0, then everything ran OK.
+     *                                -1: nsizes < 0 
+     *                                -2: Some nn[j] < 0
+     *                                -3: ntypes < 0 
+     *                                -5: thresh < 0
+     *                                -9: lda < 1 or lda < nmax, where nmax is max(nn[j])
+     *                                -23: ldu < 1 or ldu < nmax
+     *                                -29: lwork too small.
+     * If dlatmr, dlatms, dsytrd, dorgtr, dsteqr, ssterf, or dormc2 returns an error code,
+     * the absolute value of it is returned.
      */
     private void dchkst(int nsizes, int[] nn, int ntypes, boolean[] dotype, int[] iseed, double thresh, double[][] A,
                         int lda, double[] AP, double[] SD, double[] SE, double[] D1, double[] D2, double[] D3,
@@ -4435,7 +4490,7 @@ loop1:           {
         // The order of magnitude ( O(1), O(overflow^(1/2), O(underflow^(1/2) )
         int[] kmagn = new int[] { 1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 2, 3, 1, 2, 3, 1, 1, 1, 2, 3, 1 };
 
-        // The mode value to be passed to the generator for type "j".
+        // The mode value to be passed to the matrix generator for type "j".
         int[] kmode = new int[] { 0, 0, 4, 3, 1, 4, 4, 4, 3, 1, 4, 4, 0, 0, 0, 4, 3, 1, 4, 4, 3 };
         double[] dumma = new double[1];
         String name;
@@ -4559,15 +4614,23 @@ loop1:           {
                 // Compute "A"
                 // Control parameters:
                 /*         kmagn  kmode        ktype
-                 *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential (none)
-                 * = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
-                 * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8 random
-                 * symmetric   = 9                      positive definite   = 10 diagonally dominant tridiagonal
+                 *    = 1  O(1)   clustered 1  zero
+                 *    = 2  large  clustered 2  identity
+                 *    = 3  small  exponential (none)
+                 *    = 4         arithmetic   diagonal, (w/ eigenvalues)
+                 *    = 5         random log   symmetric, w/ eigenvalues  
+                 *    = 6         random       (none)  
+                 *    = 7                      random diagonal   
+                 *    = 8                      random symmetric   
+                 *    = 9                      positive definite
+                 *    = 10                     diagonally dominant tridiagonal
                  */
 
                 if (mtypes <= maxtyp) {
                     itype = ktype[jtype - 1];
                     imode = kmode[jtype - 1];
+                    
+                    // Compute norm
 
                     if (kmagn[jtype - 1] == 1) {
                         anorm = 1.0;
@@ -4711,8 +4774,8 @@ loop1:           {
                     dsyt21(3, 'U', n, 1, A, lda, SD, SE, U, ldu, V, ldu, tau, work, res);
                     result[1] = res[0];
 
-                    // Call dsytrd and corgtr to compute S and U from
-                    // lower trinagle, do tests.
+                    // Call dsytrd and dorgtr to compute S and U from
+                    // lower triangle, do tests.
                     dlacpy('L', n, n, A, lda, V, ldu);
 
                     ntest = 3;
@@ -5051,9 +5114,9 @@ loop1:           {
     } // ddot
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DDRGEV Orginal DDRGEV created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 ddrgev
-     * checks the nonsymmetric generalized eigenvalue problem driver routine dggev.
+     * This is a port of version 3.1 LAPACK test routine DDRGEV Orginal DDRGEV created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2007 
+     * ddrgev checks the nonsymmetric generalized eigenvalue problem driver routine dggev.
      *
      * <p>dggev computes for a pair of n-by-n nonsymmetric matrices (A,B) the generalized eigenvalues and, optionally,
      * the left and right eigenvectors.</p>
@@ -5070,38 +5133,67 @@ loop1:           {
      * each size ("n") and each type of matrix, a pair of matrices (A, B) will be generated and used for testing. For
      * each matrix pair, the following tests will be performed and compared with the threshold thresh.</p>
      *
-     * <p>Results from dggev: (1) max over all left eigenvalue/-vector pairs (alpha/beta, 1) of | VL**H * (beta A -
-     * alpha B) |/ (ulp max(|beta A|, |alpha B|)) where VL**H is the conjugate-transpose of VL. (2) | |VL(i)| - 1 | /
-     * ulp and whether largest component real VL(i) denotes the i-th column of VL. (3) max over all left
-     * eigenvalue/-vector pairs (alpha/beta, r) of | (beta A - alpha B) * VR | / ( ulp max(|beta A|, |alpha B|) ) (4) |
-     * |VR(i) - 1 | / ulp and whether largest component real VR(i) denotes the i-th column of VR. (5) W(full) =
-     * W(partial) W(full) denotes the eigenvalues computed when both L and r are also computed, and W(partial) denotes
-     * the eigenvalues computed when only W, only W and r, or only W and L are computed. (6) VL(full) = VL(partial)
-     * VL(full) denotes the left eigenvectors computed when both L and r are computed, and VL(partial) denotes the
-     * result when only L is computed. (7) VR(full) = VR(partial) VR(full) denotes the right eigenvectors computed when
-     * both L and r are also computed, and VR(partial) denotes the result when only L is computed.</p>
+     * <p>Results from dggev: 
+     * (1) max over all left eigenvalue/-vector pairs (alpha/beta, L) of
+     *   | VL**H * (beta A - alpha B) |/ (ulp max(|beta A|, |alpha B|))
+     *   where VL**H is the conjugate-transpose of VL.
+     * (2) | |VL(i)| - 1 | / ulp and whether largest component real VL(i) denotes the i-th column of VL.
+     * (3) max over all right eigenvalue/-vector pairs (alpha/beta, r) of
+     *     | (beta A - alpha B) * VR | / ( ulp max(|beta A|, |alpha B|) )
+     * (4) | |VR(i) - 1 | / ulp and whether largest component real VR(i) denotes the i-th column of VR.
+     * (5) W(full) = W(partial)
+     *     W(full) denotes the eigenvalues computed when both L and r are also computed, and W(partial) denotes
+     *     the eigenvalues computed when only W, only W and r, or only W and L are computed.
+     * (6) VL(full) = VL(partial)
+     *     VL(full) denotes the left eigenvectors computed when both L and r are computed, and VL(partial) denotes the
+     *     result when only L is computed.
+     * (7) VR(full) = VR(partial)
+     *     VR(full) denotes the right eigenvectors computed when both L and r are also computed, and VR(partial)
+     *     denotes the result when only r is computed.</p>
      *
-     * <p>Test Matrices: The sizes of the test matrices are specified by an array nn(0:nsizes-1); the value of each
+     * <p>Test Matrices:
+     * The sizes of the test matrices are specified by an array nn(0:nsizes-1); the value of each
      * element nn[j] specifies one size. The "types" are specified by a boolean array dotype(0:ntypes-1); if dotype[j]
-     * is true, then a matrix type "j" will be generated. Currently, the list of possible types is: (1) (0, 0) (a pair
-     * of zero matrices) (2) (I, 0) (an identity and a zero matrix) (3) (0, I) (a zero and an identity matrix) (4) (I,
-     * I) (a pair of identity matrices) (5) (Jtranspose, Jtranspose) (a pair of transposed Jordan blocks) (6) (X, Y)
-     * where X = (Jtranspose 0) and Y = (I 0) (0 I)) (0 Jtranspose) and I is a k by k identity and J a (k+1) by (k+1)
-     * Jordan block; k = (N-1)/2 (7) (D, I) where D is diag(0, 1,..., N-1) (a diagonal matrix with those diagonal
-     * entries.) (8) (I, D) (9) (big*D, small*I) where "big" is near overflow and small = 1/big (10) (small*D, big*I)
-     * (11) (big*I, small*D) (12) (small*I, big*D) (13) (big*D, big*I) (14) (small*D, small*I) (15) (D1, D2) where D1 is
-     * diag(0, 0, 1, ..., N-3, 0) and D2 is diag(0, N-3, N-4,..., 1, 0, 0) (16) Q (Jtranspose, Jtranspose) Z where Q and
-     * Z are random orthogonal matrices. (17) Q (T1, T2) Z where T1 and T2 are upper triangular matrices with random
-     * O(1) entries above the diagonal and diagonal entries diag(T1) = (0, 0, 1, ..., N-3, 0) and diag(T2) = (0, N-3,
-     * N-4, ..., 1, 0, 0) (18) Q (T1, T2) Z diag(T1) = (0, 0, 1, 1, s, ..., s, 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0) s =
-     * machine precision (19) Q (T1, T2) Z diag(T1) = (0,0,1,1, 1-d, ..., 1 - (N-5)*d=s, 0) diag(T2) = (0, 1, 0, 1, ...,
-     * 1, 0) (20) Q (T1, T2) Z diag(T1) = (0,0,1,1,a, ..., a**(N-5)=s, 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0, 0) (21) Q
-     * (T1, T2) Z diag(T1) = (0, 0, 1, r1, r2, ..., r(N-4), 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0, 0) where r1, ...,
-     * r(N-4) are random. (22) Q (big*T1, small*T2) Z diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0)
-     * (23) Q (small*T1, big*T2) Z diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0) (24) Q (small*T1,
-     * small*T2) Z diag(T1) = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0) (25) Q (big*T1, big*T2) Z diag(T1)
-     * = (0, 0, 1, ..., N-3, 0) diag(T2) = (0, 1, ..., 1, 0, 0) (26) Q(T1, T2) Z where T1 and T2 are random
-     * upper-triangular matrices.</p>
+     * is true, then a matrix type "j" will be generated. Currently, the list of possible types is:
+     * (1) (0, 0) (a pair of zero matrices)
+     * (2) (I, 0) (an identity and a zero matrix)
+     * (3) (0, I) (a zero and an identity matrix)
+     * (4) (I, I) (a pair of identity matrices)
+     * (5) (Jtranspose, Jtranspose) (a pair of transposed Jordan blocks)
+     * (6) (X, Y) where X = (Jtranspose 0) and Y = (I       0   ) 
+     *                      (0          I)         (0 Jtranspose)
+     *     and I is a k by k identity and J a (k+1) by (k+1) Jordan block; k = (N-1)/2
+     * (7) (D, I) where D is diag(0, 1,..., N-1) (a diagonal matrix with those diagonal entries.)
+     * (8) (I, D)
+     * (9) (big*D, small*I) where "big" is near overflow and small = 1/big 
+     * (10) (small*D, big*I)
+     * (11) (big*I, small*D)
+     * (12) (small*I, big*D)
+     * (13) (big*D, big*I)
+     * (14) (small*D, small*I)
+     * (15) (D1, D2) where D1 is diag(0, 0, 1, ..., N-3, 0) and D2 is diag(0, N-3, N-4,..., 1, 0, 0)
+     * (16) Q (Jtranspose, Jtranspose) Z where Q and Z are random orthogonal matrices.
+     * (17) Q (T1, T2) Z where T1 and T2 are upper triangular matrices with random
+     *      O(1) entries above the diagonal and diagonal entries diag(T1) = (0, 0, 1, ..., N-3, 0) and
+     *      diag(T2) = (0, N-3, N-4, ..., 1, 0, 0)
+     * (18) Q (T1, T2) Z   diag(T1) = (0, 0, 1, 1, s, ..., s, 0) diag(T2) = (0, 1, 0, 1, ..., 1, 0)
+     *      s = machine precision 
+     * (19) Q (T1, T2) Z   diag(T1) = (0,0,1,1, 1-d, ..., 1 - (N-5)*d=s, 0)
+     *                     diag(T2) = (0, 1, 0, 1, ..., 1, 0)
+     * (20) Q (T1, T2) Z   diag(T1) = (0,0,1,1,a, ..., a**(N-5)=s, 0)
+     *                     diag(T2) = (0, 1, 0, 1, ..., 1, 0, 0)
+     * (21) Q (T1, T2) Z   diag(T1) = (0, 0, 1, r1, r2, ..., r(N-4), 0) 
+     *                     diag(T2) = (0, 1, 0, 1, ..., 1, 0, 0)
+     *                     where r1, ..., r(N-4) are random.
+     * (22) Q (big*T1, small*T2) Z   diag(T1) = (0, 0, 1, ..., N-3, 0)
+     *                               diag(T2) = (0, 1, ..., 1, 0, 0)
+     * (23) Q (small*T1, big*T2) Z   diag(T1) = (0, 0, 1, ..., N-3, 0)
+     *                               diag(T2) = (0, 1, ..., 1, 0, 0)
+     * (24) Q (small*T1, small*T2) Z     diag(T1) = (0, 0, 1, ..., N-3, 0) 
+     *                                   diag(T2) = (0, 1, ..., 1, 0, 0)
+     * (25) Q (big*T1, big*T2) Z         diag(T1) = (0, 0, 1, ..., N-3, 0)
+     *                                   diag(T2) = (0, 1, ..., 1, 0, 0)
+     * (26) Q(T1, T2) Z where T1 and T2 are random upper-triangular matrices.</p>
      *
      * @param  nsizes  input int The number of sizes of matrices to use. If it is zero, ddrgev does nothing. nsizes >=
      *                 0.
@@ -5137,8 +5229,8 @@ loop1:           {
      * @param  Q       workspace double[][] of dimension (ldq, max(nn)) The (left) eigenvectors matrix computed by
      *                 dggev.
      * @param  ldq     input int The leading dimension of Q and Z. It must be at least 1 and at least max(nn).
-     * @param  Z       Z double[][] of dimension (ldq, max(nn)) The (right) orthogonal matrix computed by dggev.
-     * @param  QE      QE double[][] of dimension (ldqe, max(nn)) QE holds the computed right or left eigenvectors.
+     * @param  Z       Z (workspace) double[][] of dimension (ldq, max(nn)) The (right) orthogonal matrix computed by dggev.
+     * @param  QE      QE (workspace) double[][] of dimension (ldqe, max(nn)) QE holds the computed right or left eigenvectors.
      * @param  ldqe    input int The leading dimension of QE. ldqe >= max(1,max(nn))
      * @param  alphar  workspace double[] of dimension (max(nn))
      * @param  alphai  workspace double[] of dimension (max(nn))
@@ -5151,10 +5243,12 @@ loop1:           {
      *                 i.e. not the eigenvalues and left and right eigenvectors.
      * @param  work    workspace double[] of dimension (lwork)
      * @param  lwork   input int The nuber of entries in work. lwork >= max(8*N, N*(N+1)).
-     * @param  result  output double[] of dimension (7) The values are computed by the tests described above. The values
+     * @param  result  output double[] of dimension (2) The values are computed by the tests described above. The values
      *                 are currently limited to 1/ulp, to avoid overflow.
-     * @param  info    output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value. >
-     *                 0: A routine returned an error code.
+     * @param  info    output int[] 
+     *                 = 0: successful exit
+     *                 < 0: If info[0] = -i, the i-th argument had an illegal value.
+     *                 > 0: A routine returned an error code.
      */
     private void ddrgev(int nsizes, int[] nn, int ntypes, boolean[] dotype, int[] iseed, double thresh, double[][] A,
                         int lda, double[][] B, double[][] S, double[][] T, double[][] Q, int ldq, double[][] Z,
@@ -5247,7 +5341,7 @@ loop1:           {
         if ((info[0] == 0) && (lwork >= 1)) {
             minwrk = Math.max(1, 8 * nmax);
             minwrk = Math.max(minwrk, nmax * (nmax + 1));
-            name = new String("DGERQF");
+            name = new String("DGEQRF");
             opts = new String(" ");
             maxwrk = (7 * nmax) + (nmax * ilaenv(1, name, opts, nmax, 1, nmax, 0));
             maxwrk = Math.max(maxwrk, nmax * (nmax + 1));
@@ -5791,34 +5885,50 @@ loop1:           {
     } // ddrgev
 
     /**
-     * This is a port of that portion of the version 3.0 LAPACK test routine DDRVSG that tests the DSYGV that computes
-     * all eigenvalues and, optionally, eigenvectors of a real symmetric-definite generalized eigenproblem. Orginal
-     * DDRVSG created by Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National
-     * Lab, and Rice University, June 30, 1999 When ddrvsg is called, a number of matrix "sizes" ("n's") and a number of
-     * matrix "types" are specified. For each size ("n") and each type of matrix, one matrix A of the given type will be
-     * generated; a random well- conditioned matrix B is also generated and the pair (A,B) is used to test the drivers.
-     * For each pair (A,B), the following tests are performed. (1) dsygv with itype = 1 and uplo = 'U': |A Z - B Z D | /
-     * (|A| |Z| n ulp) (2) dysgv with itype = 1 and uplo = 'L' (3) dsygv with itype = 2 and uplo = 'U' |A B Z - Z D |/
-     * (|A| |Z| n ulp) (4) dsygv with itype = 2 and uplo = 'L' (5) dsygv with itype = 3 and uplo = 'U' | B A Z - Z D | /
-     * ( |A| |Z| n ulp) (6) dsygv with itype = 3 and uplo = 'L'
+     * This is a port of that portion of the version 3.1 LAPACK test routine DDRVSG that tests the DSYGV that computes
+     * all eigenvalues and, optionally, eigenvectors of a real symmetric-definite generalized eigenproblem. Original
+     * DDRVSG created by Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * When ddrvsg is called, a number of matrix "sizes" ("n's") and a number of matrix "types" are specified.
+     * For each size ("n") and each type of matrix, one matrix A of the given type will be generated; a random
+     * well- conditioned matrix B is also generated and the pair (A,B) is used to test the drivers.
+     * 
+     * For each pair (A,B), the following tests are performed:
+     * (1) dsygv with itype = 1 and uplo = 'U': |A Z - B Z D | / (|A| |Z| n ulp)
+     * (2) dysgv with itype = 1 and uplo = 'L'
+     * (3) dsygv with itype = 2 and uplo = 'U' |A B Z - Z D |/ (|A| |Z| n ulp)
+     * (4) dsygv with itype = 2 and uplo = 'L'
+     * (5) dsygv with itype = 3 and uplo = 'U' | B A Z - Z D | / ( |A| |Z| n ulp)
+     * (6) dsygv with itype = 3 and uplo = 'L'
      *
      * <p>The "sizes" are specified by an array nn(0:nsizes-1); the value of each element nn[j] specifies one size. The
      * "types" are specified by a logical array dotype(0:ntypes-1); if dotype[j] is true, then matrix type "j" will be
      * generated. This type is used for the matrix A which has half-bandwidth ka. B is generated as a well-conditioned
-     * positive definite matrix with half-bandwidth kb (<= ka). Currently, the list of possible types for A is: (1) The
-     * zero matrix. (2) The identity matrix. (3) A diagonal matrix sith evenly spaced entries 1, ..., ulp and random
-     * signs. (ulp = (first number larger than 1) - 1) (4) A diagonal matrix with geometrically spaced entries 1, ...,
-     * ulp and random signs. (5) A diagonal matrix with "clustered" entries 1, ulp, ... , ulp and random signs. (6) Same
-     * as (4), but multiplied by sqrt(overflow threshold) (7) Same as (4), but multiplied by sqrt(underflow threshold)
+     * positive definite matrix with half-bandwidth kb (<= ka). Currently, the list of possible types for A is:
+     * (1) The zero matrix.
+     * (2) The identity matrix.
+     * (3) A diagonal matrix with evenly spaced entries 1, ..., ulp and random signs. 
+     *     (ulp = (first number larger than 1) - 1)
+     * (4) A diagonal matrix with geometrically spaced entries 1, ..., ulp and random signs. 
+     * (5) A diagonal matrix with "clustered" entries 1, ulp, ... , ulp and random signs.
+     * (6) Same as (4), but multiplied by sqrt(overflow threshold)
+     * (7) Same as (4), but multiplied by sqrt(underflow threshold)
      * (8) A matrix of the form U* D U, where U is orthogonal and D has evenly spaced entries 1, ..., ulp with random
-     * signs on the diagonal. (9) A matrix of the form U* D U, where U is orthogonal and D has geometrically spaced
-     * entries 1, ..., ulp with random signs on the diagonal. (10) A matrix of the form U* D U, where U is orthgonal and
-     * D has "clustered" entries 1, ulp, ..., ulp with random signs on the diagonal. (11) Same as (8), but multiplied by
-     * sqrt(overflow threshold) (12) Same as (8), but multiplied by sqrt(underflow threshold) (13) Symmetric matrix,
-     * with random entries chosen from (-1,1). (14) Same as (13), but multiplied by sqrt(overflow threshold). (15) Same
-     * as (13), but multiplied by sqrt(underflow threshold). (16) Same as (8), but with ka = 1 and kb = 1. (17) Same as
-     * (8), but with ka = 2 and kb = 1. (18) Same as (8), but with ka = 2 and kb = 2. (19) Same as (8), but with ka = 3
-     * and kb = 1. (20) Same as (8), but with ka = 3 and kb = 2. (21) Same as (8), but with ka = 3 and kb = 3.</p>
+     *     signs on the diagonal.
+     * (9) A matrix of the form U* D U, where U is orthogonal and D has geometrically spaced entries 1, ..., ulp with
+     *     random signs on the diagonal.
+     * (10) A matrix of the form U* D U, where U is orthgonal and D has "clustered" entries 1, ulp, ..., ulp with random
+     *      signs on the diagonal.
+     * (11) Same as (8), but multiplied by sqrt(overflow threshold)
+     * (12) Same as (8), but multiplied by sqrt(underflow threshold)
+     * (13) Symmetric matrix, with random entries chosen from (-1,1).
+     * (14) Same as (13), but multiplied by sqrt(overflow threshold).
+     * (15) Same as (13), but multiplied by sqrt(underflow threshold).
+     * (16) Same as (8), but with ka = 1 and kb = 1.
+     * (17) Same as (8), but with ka = 2 and kb = 1.
+     * (18) Same as (8), but with ka = 2 and kb = 2. 
+     * (19) Same as (8), but with ka = 3 and kb = 1.
+     * (20) Same as (8), but with ka = 3 and kb = 2.
+     * (21) Same as (8), but with ka = 3 and kb = 3.</p>
      *
      * @param  nsizes  input int The number of sizes of matrices to use. If it is zero, ddrvsg does nothing. It must be
      *                 at least zero.
@@ -5845,7 +5955,7 @@ loop1:           {
      * @param  A       input/output double[][] of dimension lda by max(nn). Used to hold the matrix whose eigenvalues
      *                 are to be computed. On exit, A contains the last matrix actually used.
      * @param  lda     input int The leading dimension of A and AB. It must be at least 1 and at least max(nn).
-     * @param  B       input/output double[][] of dimension ldb by max(nn). Used to hold the symmetric psoitive definite
+     * @param  B       input/output double[][] of dimension ldb by max(nn). Used to hold the symmetric positive definite
      *                 matrix for the generalized problem. On exit, B contains the last matrix actually used.
      * @param  ldb     input int The leading dimension of B and BB. It must be at least 1 and at least max(nn).
      * @param  D       input/output double[] of dimension max(nn). The eigenvalues of A. On exit, the eigevalues in D
@@ -5860,12 +5970,18 @@ loop1:           {
      * @param  nwork   input int The number of entries in work. This must be at least 1 + 5*n + 2*n*lg(n) + 3*n**2 where
      *                 n = max(nn[j]) and lg(n) = smallest integer k such that 2**k >= n.
      * @param  iwork   workspace int[] of dimension liwork.
-     * @param  liwork  input int The nuber of entries in iwork. This must be at least 6*n.
-     * @param  result  output double[] of dimension 500. The values computed by the tests described above.
-     * @param  info    output int[] If 0, then everything ran OK. -1: nsizes < 0. -2: Some nn[j] < 0. -3: ntypes < 0.
-     *                 -5: thresh < 0. -9: lda < 1 or lda < nmax, where nmax is max(nn[j]) -16: ldz < 1 or ldz < nmax.
-     *                 -21: nwork too small. -23: liwork too small. If dsygv returns an error code, the absolute value
-     *                 of it is returned.
+     * @param  liwork  input int The number of entries in iwork. This must be at least 6*n.
+     * @param  result  output double[] of dimension 70. The values computed by the tests described above.
+     * @param  info    output int[] If 0, then everything ran OK.
+     *                                 -1: nsizes < 0
+     *                                 -2: Some nn[j] < 0
+     *                                 -3: ntypes < 0
+     *                                 -5: thresh < 0
+     *                                 -9: lda < 1 or lda < nmax, where nmax is max(nn[j]).
+     *                                 -16: ldz < 1 or ldz < nmax.
+     *                                 -21: nwork too small.
+     *                                 -23: liwork too small. 
+     *                                 If dsygv returns an error code, the absolute value of it is returned.
      */
     private void ddrvsg(int nsizes, int[] nn, int ntypes, boolean[] dotype, int[] iseed, double thresh, double[][] A,
                         int lda, double[][] B, int ldb, double[] D, double[][] Z, int ldz, double[][] AB, double[][] BB,
@@ -5916,7 +6032,7 @@ loop1:           {
         // Square root of unfl
         double rtunfl;
 
-        // The folowing four arrays decode jtype:
+        // The folowing three arrays decode jtype:
         // The general type (1-10) for type "j"
         int[] ktype = new int[] { 1, 2, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 8, 8, 8, 9, 9, 9, 9, 9, 9 };
 
@@ -6289,37 +6405,52 @@ loop1:           {
     } // ddrvsg
 
     /**
-     * This is a port of the part of version 3.0 LAPACK test routine DDRVST used to test dsyev. Orginal DDRVST created
-     * by Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice
-     * University, April 4, 2000 ddrvst checks the symmetric eigenvalue problem driver dsyev. dsyev computes all
-     * eigenvalues and, optionally, eigenvectors of a real symmetric matrix.
+     * This is a port of the part of version 3.1 LAPACK test routine DDRVST used to test dsyev. Orginal DDRVST created
+     * by Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * ddrvst checks the symmetric eigenvalue problem driver dsyev. dsyev computes all eigenvalues and, optionally,
+     * eigenvectors of a real symmetric matrix.
      *
      * <p>When ddrvst is called, a number of matrix "sizes" ("n's") and a number of matrix "types" are specified. For
      * each size ("n") and each type of matrix, one matrix will be generated and used to test the dsyev driver. For each
-     * marix, the following tests will be performed: (1) | A - Z D Z' | / ( |A| n ulp ) (2) | I - Z Z' | / ( n ulp ) (3)
-     * | D1 - D2 | / ( |D1| ulp ) where Z is the matrix of eigenvectors returned when the eigenvector option is given
-     * and D1 and D2 are the eigenvalues returned with and without the eigenvector option.</p>
+     * matrix, the following tests will be performed:
+     * (1) | A - Z D Z' | / ( |A| n ulp )
+     * (2) | I - Z Z' | / ( n ulp ) 
+     * (3) | D1 - D2 | / ( |D1| ulp )
+     * where Z is the matrix of eigenvectors returned when the eigenvector option is given and D1 and D2 are the eigenvalues
+     * returned with and without the eigenvector option.</p>
      *
      * <p>The "sizes" are specified by an array nn(0:nsizes-1); the value of each element nn[j] specifies one size. The
      * "types" are specified by a boolean array dotype(0:ntypes-1); if dotype[j] is true, then matrix type "j" will be
-     * generated. Currently, the list of possible types is: (1) The zero matrix. (2) The identity matrix. (3) A diagonal
-     * matrix with evenly spaced eigenvalues 1, ..., ulp and random signs. (ulp = (first number larger than 1) - 1) (4)
-     * A diagonal matrix with geometrically spaced eigenvalues 1, ..., ulp and random signs. (5) A diagonal matrix with
-     * "clustered" eigenvalues 1, ulp, ..., ulp and random signs. (6) Same as (4), but multiplied by sqrt(overflow
-     * threshold) (7) Same as (4), but multiplied by sqrt(underflow threshold) (8) A matrix of the form U' D U, where U
-     * is orthogonal and D has evenly spaced entries 1, ..., ulp with random signs on the diagonal. (9) A matrix of the
-     * form U' D U, where U is orthogonal and D has geometrically spaced entries 1, ..., ulp with random signs on the
-     * diagonal. (10) A matrix of the form U' D U, where U is orthogonal and D has "clustered" entries 1, ulp, ..., ulp
-     * with random signs on the diagonal. (11) Same as (8), but multiplied by sqrt( overflow threshold) (12) Same as
-     * (8), but multiplied by sqrt( underflow threshold) (13) Symmetric matrix with random entries chosen from (-1,1).
-     * (14) Same as (13), but multiplied by sqrt( overflow threshold) (15) Same as (13), but multiplied by sqrt(
-     * underflow threshold) (16) A band matrix with half bandwidth randomly chosen between 0 and n-1, with evenly spaced
-     * eigenvalues 1, ..., ulp with random signs. (17) Same as (16), but multiplied by sqrt(overflow threshold) (18)
-     * Same as (16), but multiplied by sqrt(underflow threshold)</p>
+     * generated. Currently, the list of possible types is:
+     * (1) The zero matrix.
+     * (2) The identity matrix.
+     * (3) A diagonal matrix with evenly spaced eigenvalues 1, ..., ulp and random signs.
+     *     (ulp = (first number larger than 1) - 1)
+     * (4) A diagonal matrix with geometrically spaced eigenvalues 1, ..., ulp and random signs.
+     * (5) A diagonal matrix with "clustered" eigenvalues 1, ulp, ..., ulp and random signs.
+     * (6) Same as (4), but multiplied by sqrt(overflow threshold)
+     * (7) Same as (4), but multiplied by sqrt(underflow threshold)
+     * (8) A matrix of the form U' D U, where U is orthogonal and D has evenly spaced entries 1, ..., ulp with random
+     *     signs on the diagonal.
+     * (9) A matrix of the form U' D U, where U is orthogonal and D has geometrically spaced entries 1, ..., ulp
+     *     with random signs on the diagonal.
+     * (10) A matrix of the form U' D U, where U is orthogonal and D has "clustered" entries 1, ulp, ..., ulp
+     *      with random signs on the diagonal.
+     * (11) Same as (8), but multiplied by sqrt( overflow threshold)
+     * (12) Same as (8), but multiplied by sqrt( underflow threshold)
+     * (13) Symmetric matrix with random entries chosen from (-1,1).
+     * (14) Same as (13), but multiplied by sqrt( overflow threshold)
+     * (15) Same as (13), but multiplied by sqrt(underflow threshold)
+     * (16) A band matrix with half bandwidth randomly chosen between 0 and n-1, with evenly spaced
+     *      eigenvalues 1, ..., ulp with random signs.
+     * (17) Same as (16), but multiplied by sqrt(overflow threshold)
+     * (18) Same as (16), but multiplied by sqrt(underflow threshold)</p>
      *
-     * <p>The tests performed are: (1) | A - U S U' | / ( |A| n ulp ) dsyev('L', 'V', ... ) (2) | I - U U' | / ( n ulp )
-     * dsyev('L', 'V', ... ) (3) |D(with Z) - D(w/o Z)| / (|D| ulp) dsyev('L', 'N', ... ) Tests 1 through 3 are repeated
-     * with uplo = 'U'</p>
+     * <p>The tests performed are:
+     * (1) | A - U S U' | / ( |A| n ulp )     dsyev('L', 'V', ... )
+     * (2) | I - U U' | / ( n ulp )           dsyev('L', 'V', ... )
+     * (3) |D(with Z) - D(w/o Z)| / (|D| ulp) dsyev('L', 'N', ... )
+     * Tests 1 through 3 are repeated with uplo = 'U'</p>
      *
      * @param  nsizes  (input) int The number of sizes of matrices to use. If it is zero, ddrvst does nothing. It must
      *                 be at least zero.
@@ -6369,14 +6500,21 @@ loop1:           {
      * @param  work    (workspace/output) double[] of dimension (lwork)
      * @param  lwork   (input) int The number of entries in work. This must be at least 1 + 4*nmax + 2 * nmax * lg nmax
      *                 + 4 * nmax**2 where nmax = max(nn[j], 2) and lg = log base 2.
-     * @param  iwork   DOCUMENT ME!
+     * @param  iwork   workspace int[] of dim (6 + 6*nmax + 5* nmax * lg nmax) where nmax = max(nn[j], 2) and
+     *                 lg = log base 2.
      * @param  liwork  (input) int length of iwork
-     * @param  result  (output) double[] of dimension (6) The values computed by the tests described above. The values
+     * @param  result  (output) double[] of dimension (105) The values computed by the tests described above. The values
      *                 are currently limited to 1/ulp, to avoid overflow.
-     * @param  info    (output) int[] If 0, then everything ran OK. -1: nsizes < 0 -2: Some nn[j] < 0 -3: ntypes < 0 -5:
-     *                 thresh < 0 -9: lda < 1 or lda < nmax, where nmax is max(nn[j]) -16: ldu < 1 or ldu < nmax -21:
-     *                 lwork too small. If dlatmr, dlatms, dsytrd, dorgtr, dsteqr, ssterf, or dormtr returns an error
-     *                 code, the absolute value of it is returned.
+     * @param  info    (output) int[] If 0, then everything ran OK.
+     *                                   -1: nsizes < 0 
+     *                                   -2: Some nn[j] < 0 
+     *                                   -3: ntypes < 0
+     *                                   -5: thresh < 0 
+     *                                   -9: lda < 1 or lda < nmax, where nmax is max(nn[j])
+     *                                   -16: ldu < 1 or ldu < nmax
+     *                                   -21: lwork too small.
+     * If dlatmr, dlatms, dsytrd, dorgtr, dsteqr, dsterf, or dormtr returns an error code,
+     * the absolute value of it is returned.
      */
     private void ddrvst(int nsizes, int[] nn, int ntypes, boolean[] dotype, int[] iseed, double thresh, double[][] A,
                         int lda, double[] D1, double[] D2, double[] D3, double[] D4, double[] eveigs, double[] WA1,
@@ -6390,7 +6528,7 @@ loop1:           {
         int ihbw;
         int[] iinfo = new int[1];
         int iL;
-        int imode; // Value to be passed to the matrix generator
+        int imode; // Value to be passed to the matrix generators
         int indx;
         int irow;
         int itemp;
@@ -6413,8 +6551,7 @@ loop1:           {
         int mtypes;
         int n;
         int[] nerrs = new int[1]; // The number of tests which have exceeded thresh
-
-        // so far (computed by dlafts).
+                                  // so far (computed by dlafts).
         int nmats; // The number of matrices generated so far.
         int nmax; // Largest value in nn.
         int ntest; // The number of tests performed, or which can
@@ -6443,7 +6580,7 @@ loop1:           {
         // The order of magnitude (O(1), O(overflow^(1/2)), O(underflow^(1/2))
         int[] kmagn = new int[] { 1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 2, 3, 1, 2, 3, 1, 2, 3 };
 
-        // The mode value to be passed to the generator for type "j".
+        // The mode value to be passed to the matrix generator for type "j".
         int[] kmode = new int[] { 0, 0, 4, 3, 1, 4, 4, 4, 3, 1, 4, 4, 0, 0, 0, 4, 4, 4 };
 
         // The general type (1-10) for type "j".
@@ -6531,11 +6668,11 @@ loop1:           {
                 }
 
                 lwedc = 1 + (4 * n) + (2 * n * lgn) + (4 * n * n);
-                liwedc = 6 + (6 * n) + (5 * n * lgn);
+                liwedc = 3 + 5 * n;
             } // if (n > 0)
             else { // n == 0
                 lwedc = 9;
-                liwedc = 12;
+                liwedc = 8;
             } // else n == 0
 
             aninv = 1.0 / (double) Math.max(1, n);
@@ -6562,15 +6699,22 @@ loop1:           {
                 // Compute "A"
                 // Control parameters:
                 /*         kmagn  kmode        ktype
-                 *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential (none)
-                 * = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
-                 * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8 random
-                 * symmetric   = 9                      band symmetric, w/ eigenvalues
+                 *    = 1  O(1)   clustered 1  zero   
+                 *    = 2  large  clustered 2  identity   
+                 *    = 3  small  exponential (none)
+                 *    = 4         arithmetic   diagonal, (w/ eigenvalues)   
+                 *    = 5         random log   symmetric, w/ eigenvalues   
+                 *    = 6         random       (none)   
+                 *    = 7                      random diagonal   
+                 *    = 8                      random symmetric   
+                 *    = 9                      band symmetric, w/ eigenvalues
                  */
 
                 if (mtypes <= maxtyp) {
                     itype = ktype[jtype - 1];
                     imode = kmode[jtype - 1];
+                    
+                    // Compute norm
 
                     if (kmagn[jtype - 1] == 1) {
                         anorm = 1.0;
@@ -10670,18 +10814,18 @@ loop3:                       {
     } // dhgeqz
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLABAD Orginal DLABAD created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlabad takes as input the values computed by dlamch for underflow and overflow, and returns the square root
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLABAD Orginal DLABAD created by Univ. of Tennessee,
+     * Univ. of California Berkeley,  and NAG Ltd., November, 2006
+     * dlabad takes as input the values computed by dlamch for underflow and overflow, and returns the square root
      * of each of these values if the log of large is sufficiently big. This routine is intended to identify machines
      * with a large exponent range, such as the Crays, and redefine the underflow and overflow limits to be the square
      * roots fo the values computed by dlamch. This subroutine is needed because dlamch does not compensate for poor
      * arithmetic in the upper half of the exponent range, as is found on a Cray.
      *
      * @param  small  input/ouptut double[] On entry, the underflow threshold as computed by dlamch. On exit, if
-     *                log10(large) is sufficiently big, the square of small, otherwise unchanged.
+     *                log10(large) is sufficiently large, the square root of small, otherwise unchanged.
      * @param  large  input/output double[] On entry, the overflow threshold as computed by dlamch. On exit, if
-     *                log10(large) is sufficiently big, the square root of large, otherwise unchanged.
+     *                log10(large) is sufficiently large, the square root of large, otherwise unchanged.
      */
     private void dlabad(double[] small, double[] large) {
 
@@ -10696,18 +10840,20 @@ loop3:                       {
     } // dlabad
 
     /**
-     * This is a port of LAPACK version 3.0 auxiliary routine DLACPY. Orginal DLACPY created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
-     * 29, 1992 dlacpy copies all or part of a two-dimensional matrix A to another matrix B.
+     * This is a port of LAPACK version 3.1 auxiliary routine DLACPY. Orginal DLACPY created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlacpy copies all or part of a two-dimensional matrix A to another matrix B.
      *
-     * @param  uplo  input char Specifies the part of the matrix A to be copied to B. = 'U': Upper triangular part =
-     *               'L': Lower triangular part Otherwise: All of the matrix A
+     * @param  uplo  input char Specifies the part of the matrix A to be copied to B. 
+     *               = 'U': Upper triangular part
+     *               = 'L': Lower triangular part
+     *               Otherwise: All of the matrix A
      * @param  m     input int The number of rows of the matrix A. m >= 0.
      * @param  n     input int The number of columns of the matrix A. n >= 0.
      * @param  A     input double[][] of dimension (lda,n). Has m by n matrix A. If uplo = 'U', only the upper triangle
      *               or trapezoid is accessed; if uplo = 'L', only the lower triangle or trapezoid is accessed.
      * @param  lda   input int The leading dimension of the array A. lda >= max(1,m).
-     * @param  B     output double[][] of dimension (ldb,n). On exit, B = A in locations specified by uplo.
+     * @param  B     output double[][] of dimension (ldb,n). On exit, B = A in the locations specified by uplo.
      * @param  ldb   input int The leading dimension of the array B. ldb >= max(1,m).
      */
     private void dlacpy(char uplo, int m, int n, double[][] A, int lda, double[][] B, int ldb) {
@@ -10743,8 +10889,8 @@ loop3:                       {
     } // dlacpy
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLADIV Orginal DLADIV created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLADIV Orginal DLADIV created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dladiv performs complex division in real arithmetic p + i*q = (a + i*b) / (c + i*d) The algorithm is due to
      * Robert L. Smith and can be found in D. Knuth, The Art of Computer Programming, Vol. 2, p.195.
      *
@@ -10775,21 +10921,24 @@ loop3:                       {
     } // dladiv
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLAE2 Orginal DLAE2 created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlae2 computes the eigenvalues of a 2-by-2 symmetric matrix [ A B ] [ B C ] On return, rt1[0] is the
-     * eigenvalue of the larger absolute value, and rt2[0] is the eigenvalue of the smaller absolute value.
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLAE2 Orginal DLAE2 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlae2 computes the eigenvalues of a 2-by-2 symmetric matrix
+     *       [ A B ]
+     *       [ B C ]
+     * On return, rt1[0] is the eigenvalue of the larger absolute value,
+     * and rt2[0] is the eigenvalue of the smaller absolute value.
      *
      * @param  a    input double The 0,0 element of the 2-by-2 matrix.
      * @param  b    input double The 0,1 and 1,0 elements of the 2-by-2 matrix.
      * @param  c    input double The 1,1 element of the 2-by-2 matrix.
      * @param  rt1  output double[] The eigenvalue of the larger absolute value.
-     * @param  rt2  output double[] The eigenvalue of the smaller absolute value. Further Details: rt1 is accurate to a
-     *              few ulps barring over/underflow. rt2 may be inaccurate if there is massive cancellation in the
-     *              determinant A*C - B*B; higher precision or correctly rounded or correctly truncated arithmetic would
-     *              be needed to compute rt2 accurately in all cases. Overflow is possible only if rt1 is within a
-     *              factor of 5 of overflow. Underflow is harmless if the input data is 0 or exceeds underflow_threshold
-     *              / macheps.
+     * @param  rt2  output double[] The eigenvalue of the smaller absolute value.
+     * Further Details: rt1 is accurate to a few ulps barring over/underflow.
+     *              rt2 may be inaccurate if there is massive cancellation in the determinant A*C - B*B;
+     *              higher precision or correctly rounded or correctly truncated arithmetic would be needed to compute
+     *              rt2 accurately in all cases. Overflow is possible only if rt1 is within a factor of 5 of overflow.
+     *              Underflow is harmless if the input data is 0 or exceeds underflow_threshold / macheps.
      */
     private void dlae2(double a, double b, double c, double[] rt1, double[] rt2) {
         double ab;
@@ -10846,12 +10995,15 @@ loop3:                       {
     } // dlae2
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLAEV2 Orginal DLAEV2 created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
-     * dlaev2 computes the eigendecomposition of a 2-by-2 symmetric matrix [ a b ] [ b c ] On return rt1[0] is the
-     * eigenvalue of the larger absolute value, rt2[0] is the eigenvalue of the smaller absolute value, and (cs1, sn1)
-     * is the unit right eigenvector for rt1[0], giving the docomposition [ cs1 sn1 ] [ a b ] [cs1 -sn1] = [rt1 0 ]
-     * [-sn1 cs1 ] [ b c ] [sn1 cs1] [ 0 rt2 ]
+     * This is a port of version 3.1 LAPACK auxiliary routine DLAEV2 Orginal DLAEV2 created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dlaev2 computes the eigendecomposition of a 2-by-2 symmetric matrix
+     *  [ a b ]
+     *  [ b c ]
+     * On return rt1[0] is the eigenvalue of the larger absolute value, rt2[0] is the eigenvalue of the smaller
+     * absolute value, and (cs1, sn1) is the unit right eigenvector for rt1[0], giving the decomposition
+     *  [ cs1 sn1 ] [ a b ] [cs1 -sn1] = [rt1 0 ]
+     *  [-sn1 cs1 ] [ b c ] [sn1  cs1]   [ 0 rt2]
      *
      * @param  a    input double The (0,0) element of the 2-by-2 matrix
      * @param  b    input double The (0,1) element and the conjugate of the (1,0) element of the 2-by-2 matrix.
@@ -10859,7 +11011,8 @@ loop3:                       {
      * @param  rt1  output double[] The eigenvalue of larger absolute value.
      * @param  rt2  output double[] The eigenvalue of smaller absolute value.
      * @param  cs1  output double[]
-     * @param  sn1  output double[] The vector (cs1, sn1) is a unit right eigenvector for rt1[0]. Further details:
+     * @param  sn1  output double[] The vector (cs1, sn1) is a unit right eigenvector for rt1[0].
+     *              Further details:
      *              rt1[0] is accurate to a few ulps barring over/underflow. rt2[0] may be inaccurate if there is
      *              massive cancellation in the determinant a*c - b*b; higher precision or correctly rounded or
      *              correctly truncated arithmetic would be needed to compute rt2[0] accurately in all cases. cs1[0] and
@@ -10964,9 +11117,9 @@ loop3:                       {
     } // dlaev2
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary test routine DLAFTS Orginal DLAFTS created by Univ. of
-     * Tennessee, Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University,
-     * June 30, 1999 dlafts tests the result vector against the threshold value to see which tests for this matrix type
+     * This is a port of the version 3.1 LAPACK auxiliary test routine DLAFTS Orginal DLAFTS created by Univ. of
+     * Tennessee, Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlafts tests the result vector against the threshold value to see which tests for this matrix type
      * failed to pass the threshold.
      *
      * @param  type    input String On entry, type specifies the matrix type to be used in the printed messages
@@ -10980,7 +11133,7 @@ loop3:                       {
      *                 performed in the calling program.
      * @param  iseed   input int[] of dimension 4. Contains the random seed that generated the matrix used for the tests
      *                 whose ratios are in result.
-     * @param  thresh  input double On entry, thresh speicifies the acceptable threshold of the test ratios. if
+     * @param  thresh  input double On entry, thresh specifies the acceptable threshold of the test ratios. if
      *                 result[k-1] > thresh, then the k-th test did not pass the threshold and a message will be
      *                 printed.
      * @param  ie      input/output int[] On entry, ie contains the number of tests which have failed to pass the
@@ -11035,9 +11188,9 @@ loop3:                       {
     } // dlafts
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLAG2 Orginal DLAG2 created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, March 31,
-     * 1993 dlag2 computes eigenvalues of a 2 x 2 generalized eigenvalue problem A - w B, with scaling as necessary to
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLAG2 Orginal DLAG2 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlag2 computes eigenvalues of a 2 x 2 generalized eigenvalue problem A - w B, with scaling as necessary to
      * avoid over-/underflow.
      *
      * <p>The scaling factor "s" results in a modified eigenvalue equation s A - w B where s is a nonnegative scaling
@@ -11260,7 +11413,7 @@ loop3:                       {
         // c2 implements the condition w B must never overflow.
         // c3, with c2, implement the condition that s A - w B must never
         // overflow.
-        // c4 implements the conditions s should not underflow.
+        // c4 implements the condition s should not underflow.
         // c5 implements the condition max(s,|w|) should be at least 2.
         c1 = bsize * (safmin * Math.max(1.0, ascale));
         c2 = safmin * Math.max(1.0, bnorm);
@@ -12051,8 +12204,8 @@ loop3:                       {
     } // dlahd2
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLALN2 Orginal DLALN2 created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLALN2 Orginal DLALN2 created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dlaln2 solves a system of the form (ca A - w D) X = s B or (ca A' - w D) X = s B with possible scaling ("s") and
      * perturbation of A. (A' means A-transpose.)
      *
@@ -12075,8 +12228,10 @@ loop3:                       {
      *
      * <p>Note: All input quantities are assumed to be smaller than overflow by a reasonable factor. (See bignum.)</p>
      *
-     * @param  ltrans  input boolean = true: A-transpose will be used. = false: A will be used (not transposed.)
-     * @param  na      input int Ths size of the matrix A. It may (only) be 1 or 2.
+     * @param  ltrans  input boolean 
+     *                 = true: A-transpose will be used. 
+     *                 = false: A will be used (not transposed.)
+     * @param  na      input int The size of the matrix A. It may (only) be 1 or 2.
      * @param  nw      input int 1 if "w" is real, 2 if "w" is complex. It may only be 1 or 2.
      * @param  smin    input double The desired lower bound on the singular values of A. This should be a safe distance
      *                 away from underflow or overflow, say, between (underflow/machine precision) and (machine
@@ -12101,9 +12256,10 @@ loop3:                       {
      * @param  xnorm   output double[] The infinity-norm of X, when X is regarded as an na by nw real matrix.
      * @param  info    output int[] An error flag. It will be set to zero if no error occurs, a negative number if an
      *                 argument is in error, or a positive number if ca A - w D had to be perturbed. The possible values
-     *                 are: = 0: No error occurred, and (ca A - w D) did not have to be perturbed. = 1: (ca A - w D) had
-     *                 to be perturbed to make its smallest (or only) singular value greater than smin. Note: In the
-     *                 interests of speed, this routine does not check the inputs for errors.
+     *                 are: 
+     *                 = 0: No error occurred, and (ca A - w D) did not have to be perturbed.
+     *                 = 1: (ca A - w D) had to be perturbed to make its smallest (or only) singular value greater than smin.
+     * Note: In the interests of speed, this routine does not check the inputs for errors.
      */
     private void dlaln2(boolean ltrans, int na, int nw, double smin, double ca, double[][] A, int lda, double d1,
                         double d2, double[][] B, int ldb, double wr, double wi, double[][] X, int ldx, double[] scale,
@@ -23075,17 +23231,23 @@ loop4:
     } // dscal
 
     /**
-     * This is a port of the version 3.0 LAPACK test routine DSGT01 Orginal DSGT01 created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999
+     * This is a port of the version 3.1 LAPACK test routine DSGT01 Orginal DSGT01 created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dsgt01 checks a decomposition of the form A Z = B Z D or A B Z = Z D or B A Z = Z D where A is a symmetric
      * matrix, B is symmetric positive definite, Z is orthogonal, and D is diagonal. One of the following test ratios is
-     * computed: itype = 1: result[0] = | A Z - B Z D | / ( |A| |Z| n ulp ) itype = 2: result[0] = | A B Z - Z D | / (
-     * |A| |Z| n ulp ) itype = 3: result[0] = | B A Z - Z D | / ( |A| |Z| n ulp )
+     * computed:
+     * itype = 1: result[0] = | A Z - B Z D | / ( |A| |Z| n ulp )
+     * itype = 2: result[0] = | A B Z - Z D | / ( |A| |Z| n ulp )
+     * itype = 3: result[0] = | B A Z - Z D | / ( |A| |Z| n ulp )
      *
-     * @param  itype   input int The form of the symmetric generalized eigenproblem. = 1: A*Z = (lambda)*B*Z = 2: A*B*Z
-     *                 = (lambda)*Z = 3: B*A*Z = (lambda)*Z
+     * @param  itype   input int The form of the symmetric generalized eigenproblem.
+     *                 = 1: A*Z = (lambda)*B*Z 
+     *                 = 2: A*B*Z = (lambda)*Z
+     *                 = 3: B*A*Z = (lambda)*Z
      * @param  uplo    input char Specifies whether the upper or lower triangular part of the symmetric matrices A and B
-     *                 is stored. = 'U': Upper triangular = 'L': Lower triangular
+     *                 is stored. 
+     *                 = 'U': Upper triangular
+     *                 = 'L': Lower triangular
      * @param  n       input int The order of the matrix A. n >= 0.
      * @param  m       input int The number of eigenvalues found. 0 <= m <= n.
      * @param  A       input double[][] of dimension (lda,n). The original symmetric matrix A.
