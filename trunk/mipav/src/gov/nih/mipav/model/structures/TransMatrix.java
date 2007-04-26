@@ -202,7 +202,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
      * @return  a TransMatrix object.
      */
     public Object clone() {
-        TransMatrix tMat = new TransMatrix(this.mRow, transformID);
+        TransMatrix tMat = new TransMatrix(this.mRow, transformID, isNIFTI, isQform);
         tMat.matrix = this.getArrayCopy();
 
         return tMat;
