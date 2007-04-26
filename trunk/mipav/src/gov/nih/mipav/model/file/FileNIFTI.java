@@ -581,6 +581,7 @@ public class FileNIFTI extends FileBase {
         int unitMeasure;
         int spatialDims;
         double a, b, c, d;
+        boolean isQform = true;
 
         bufferByte = new byte[headerSize];
 
@@ -1470,46 +1471,54 @@ public class FileNIFTI extends FileBase {
 
             if (qform_code > 0) {
                 coord_code = qform_code;
+                isQform = true;
             } else if (sform_code > 0) {
                 coord_code = sform_code;
+                isQform = false;
             }
-
             fileInfo.setCoordCode(coord_code);
 
-            switch (coord_code) {
-
-                case FileInfoNIFTI.NIFTI_XFORM_UNKNOWN:
-                    Preferences.debug("Arbitrary X,Y,Z coordinate system\n", 2);
-                    matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
-                    break;
-
-                case FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT:
-                    Preferences.debug("Scanner based anatomical coordinates\n", 2);
-                    matrix.setTransformID(TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL);
-                    break;
-
-                case FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT:
-                    Preferences.debug("Coordinates aligned to another file's or to anatomical truth\n", 2);
-                    matrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
-                    break;
-
-                case FileInfoNIFTI.NIFTI_XFORM_TALAIRACH:
-                    Preferences.debug("Talairach X,Y,Z coordinate system\n", 2);
-                    matrix.setTransformID(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX);
-                    break;
-
-                case FileInfoNIFTI.NIFTI_XFORM_MNI_152:
-                	matrix.setTransformID(TransMatrix.TRANSFORM_MNI_152);
-                    Preferences.debug("MNI 152 normalized X,Y,Z coordinates\n", 2);
-                    break;
-
-                default:
-                	matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
-                    Preferences.debug("Unknown coord_code = " + coord_code);
-            }
+            if (coord_code > 0) {
+            
+                matrix.setIsNIFTI(true);
+                matrix.setIsQform(isQform);
+                switch (coord_code) {
+    
+                    case FileInfoNIFTI.NIFTI_XFORM_UNKNOWN:
+                        Preferences.debug("Arbitrary X,Y,Z coordinate system\n", 2);
+                        matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
+                        break;
+    
+                    case FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT:
+                        Preferences.debug("Scanner based anatomical coordinates\n", 2);
+                        matrix.setTransformID(TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL);
+                        break;
+    
+                    case FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT:
+                        Preferences.debug("Coordinates aligned to another file's or to anatomical truth\n", 2);
+                        matrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                        break;
+    
+                    case FileInfoNIFTI.NIFTI_XFORM_TALAIRACH:
+                        Preferences.debug("Talairach X,Y,Z coordinate system\n", 2);
+                        matrix.setTransformID(TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX);
+                        break;
+    
+                    case FileInfoNIFTI.NIFTI_XFORM_MNI_152:
+                    	matrix.setTransformID(TransMatrix.TRANSFORM_MNI_152);
+                        Preferences.debug("MNI 152 normalized X,Y,Z coordinates\n", 2);
+                        break;
+    
+                    default:
+                    	matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
+                        Preferences.debug("Unknown coord_code = " + coord_code);
+                }
+            } // if (coord_code > 0)
             
             if ((qform_code > 0) && (sform_code > 0)) {
                 matrix2 = new TransMatrix(4);
+                matrix2.setIsNIFTI(true);
+                matrix2.setIsQform(false);
                 switch (sform_code) {
 
                     case FileInfoNIFTI.NIFTI_XFORM_UNKNOWN:
@@ -2868,6 +2877,16 @@ public class FileNIFTI extends FileBase {
         Matrix P;
         double a, b, c, d;
         float niftiOrigin[] = new float[3];
+        float niftiOriginS[] = null;
+        MatrixHolder matHolder = null;
+        TransMatrix matrixArray[] = null;
+        TransMatrix matrixQ = null;
+        TransMatrix matrixS = null;
+        int transformIDQ = TransMatrix.TRANSFORM_UNKNOWN;
+        int transformIDS = TransMatrix.TRANSFORM_UNKNOWN;
+        int qform_code = 0;
+        int sform_code = 0;
+        int j;
 
         myFileInfo = image.getFileInfo(0); // A safeguard in case the file is not NIFTI
         endianess = myFileInfo.getEndianess();
@@ -3248,158 +3267,271 @@ public class FileNIFTI extends FileBase {
 
         fileInfo.setSourceType(sourceType);
 
-        matrix = image.getMatrix();
-        Preferences.debug("Matrix on write entry = " + matrix + "\n");
-        if (matrix != null) {
-            r00 = -matrix.get(0,0)/resols[0];
-            r01 = matrix.get(0,1)/resols[1];
-            r02 = -matrix.get(0,2)/resols[2];
-            r10 = -matrix.get(1,0)/resols[0];
-            r11 = matrix.get(1,1)/resols[1];
-            r12 = -matrix.get(1,2)/resols[2];
-            r20 = matrix.get(2,0)/resols[0];
-            r21 = -matrix.get(2,1)/resols[1];
-            r22 = matrix.get(2,2)/resols[2];
-            niftiOrigin[0] = (float)-matrix.get(0, 3);
-            niftiOrigin[1] = (float)matrix.get(1,3);
-            niftiOrigin[2] = (float)matrix.get(2,3);
+        matHolder = image.getMatrixHolder();
+        if (matHolder != null) {
+          matrixArray = matHolder.getNIFTICompositeMatrices(); 
+          if (matrixArray != null) {
+              if (matrixArray.length >= 1) {
+                  if (matrixArray[0] != null) {
+                      if (matrixArray[0].isQform()) {
+                          matrixQ = matrixArray[0];
+                          transformIDQ = matrixArray[0].getTransformID();
+                      }
+                      else {
+                          matrixS = matrixArray[0];
+                          transformIDS = matrixArray[0].getTransformID();
+                      }
+                  } // if (matrixArray[0] != null)
+              } // if (matrixArray.length >= 1)
+              if (matrixArray.length >= 2) {
+                  if (matrixArray[1] != null) {
+                      if (matrixArray[1].isQform()) {
+                          matrixQ = matrixArray[1];
+                          transformIDQ = matrixArray[1].getTransformID();
+                      }
+                      else {
+                          matrixS = matrixArray[1];
+                          transformIDS = matrixArray[1].getTransformID();
+                      }
+                  } // if (matrixArray[1] != null)
+              } // if (matrixArray.length >= 2)
+          } // if (matrixArray != null)
+        } // if (matHolder != null)
+        if ((matrixQ == null) && (matrixS == null)) {
+            matrixQ = image.getMatrix();
+            transformIDQ = matrixQ.getTransformID();
         }
-        else {
-            r00 = -1.0;
-            r01 = 0.0;
-            r02 = 0.0;
-            r10 = 0.0;
-            r11 = 1.0;
-            r12 = 0.0;
-            r20 = 0.0;
-            r21 = 0.0;
-            r22 = 1.0;   
-        }
-
-        // Compute lengths of each column; these determine grid spacings
-        xd = Math.sqrt((r00 * r00) + (r10 * r10) + (r20 * r20));
-        yd = Math.sqrt((r01 * r01) + (r11 * r11) + (r21 * r21));
-        zd = Math.sqrt((r02 * r02) + (r12 * r12) + (r22 * r22));
-
-        // If a column length is zero, patch the trouble
-        if (xd == 0.0) {
-            r00 = 1.0;
-            r10 = 0.0;
-            r20 = 0.0;
-            xd = 1.0;
-        }
-
-        if (yd == 0.0) {
-            r01 = 0.0;
-            r11 = 1.0;
-            r21 = 0.0;
-            yd = 1.0;
-        }
-
-        if (zd == 0.0) {
-            r02 = 0.0;
-            r12 = 0.0;
-            r22 = 1.0;
-            zd = 1.0;
-        }
-
-        // Normalize the columns
-        r00 /= xd;
-        r10 /= xd;
-        r20 /= xd;
-        r01 /= yd;
-        r11 /= yd;
-        r21 /= yd;
-        r02 /= zd;
-        r12 /= zd;
-        r22 /= zd;
-
-        // At this point the matrix has normal columns, but the matrix may not have
-        // normal columns.  So find the orthogonal matrix closest to the current matrix
-
-        // One reason for using the polar decomposition to get this orthogonal matrix,
-        // rather than just directly orthogonalizing the columns, is so that inputting
-        // the inverse matrix to R will result in the inverse orthogonal matrix at this
-        // point.  If we just orhtogonalized the columns, this wouldn't necessarily hold.
-
-        Q = new Matrix(3, 3);
-        Q.set(0, 0, r00);
-        Q.set(0, 1, r01);
-        Q.set(0, 2, r02);
-        Q.set(1, 0, r10);
-        Q.set(1, 1, r11);
-        Q.set(1, 2, r12);
-        Q.set(2, 0, r20);
-        Q.set(2, 1, r21);
-        Q.set(2, 2, r22);
-
-        P = mat33_polar(Q);
-
-        // Now the matrix is orthogonal
-        r00 = P.get(0, 0);
-        r01 = P.get(0, 1);
-        r02 = P.get(0, 2);
-        r10 = P.get(1, 0);
-        r11 = P.get(1, 1);
-        r12 = P.get(1, 2);
-        r20 = P.get(2, 0);
-        r21 = P.get(2, 1);
-        r22 = P.get(2, 2);
-
-        // Compute the determinant to determine if it is proper
-        zd = P.det();
-
-        if (zd > 0) { // proper
-            qfac = 1.0f;
-        } else {
-            qfac = -1.0f;
-            r02 = -r02;
-            r12 = -r12;
-            r22 = -r22;
-        }
-
-        // Now compute the quaternion parameters
-        a = r00 + r11 + r22 + 1.0;
-
-        if (a > 0.5) {
-            a = 0.5 * Math.sqrt(a);
-            b = 0.25 * (r21 - r12) / a;
-            c = 0.25 * (r02 - r20) / a;
-            d = 0.25 * (r10 - r01) / a;
-        } else {
-            xd = 1.0 + r00 - (r11 + r22);
-            yd = 1.0 + r11 - (r00 + r22);
-            zd = 1.0 + r22 - (r00 + r11);
-
-            if (xd > 1.0) {
-                b = 0.5 * Math.sqrt(xd);
-                c = 0.25 * (r01 + r10) / b;
-                d = 0.25 * (r02 + r20) / b;
-                a = 0.25 * (r21 - r12) / b;
-            } else if (yd > 1.0) {
-                c = 0.5 * Math.sqrt(yd);
-                b = 0.25 * (r01 + r10) / c;
-                d = 0.25 * (r12 + r21) / c;
-                a = 0.25 * (r02 - r20) / c;
+        
+        if ((matrixQ != null) || ((matrixQ == null) && (matrixS == null))) {
+            if (matrixQ != null) {
+                Preferences.debug("matrixQ on write entry = " + matrixQ + "\n");
+                // To use matrixQ information must have qform_code > 0,
+                // so cannot have qform_code equal to FileInfoNIFTI.NIFTI_XFORM_UNKNOWN.
+                switch (transformIDQ) {
+                    case TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL:
+                        qform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
+                        break;
+                    case TransMatrix.TRANSFORM_ANOTHER_DATASET:
+                        qform_code = FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT;
+                        break;
+                    case TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX:
+                        qform_code = FileInfoNIFTI.NIFTI_XFORM_TALAIRACH;
+                        break;
+                    case TransMatrix.TRANSFORM_MNI_152:
+                        qform_code = FileInfoNIFTI.NIFTI_XFORM_MNI_152;
+                        break;
+                    default: qform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
+                }
+                axisOrientation = getAxisOrientation(matrixQ);
+                r00 = -matrixQ.get(0,0)/resols[0];
+                r01 = matrixQ.get(0,1)/resols[1];
+                r02 = -matrixQ.get(0,2)/resols[2];
+                r10 = -matrixQ.get(1,0)/resols[0];
+                r11 = matrixQ.get(1,1)/resols[1];
+                r12 = -matrixQ.get(1,2)/resols[2];
+                r20 = matrixQ.get(2,0)/resols[0];
+                r21 = -matrixQ.get(2,1)/resols[1];
+                r22 = matrixQ.get(2,2)/resols[2];
+                niftiOrigin[0] = (float)-matrixQ.get(0, 3);
+                niftiOrigin[1] = (float)matrixQ.get(1,3);
+                niftiOrigin[2] = (float)matrixQ.get(2,3);
+                for (j = 0; j < 3; j++) {
+    
+                    if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
+                        niftiOrigin[0] = -Math.abs(niftiOrigin[0]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
+                        niftiOrigin[0] = Math.abs(niftiOrigin[0]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
+                        niftiOrigin[1] = -Math.abs(niftiOrigin[1]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
+                        niftiOrigin[1] = Math.abs(niftiOrigin[1]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
+                        niftiOrigin[2] = -Math.abs(niftiOrigin[2]);
+                    } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
+                        niftiOrigin[2] = Math.abs(niftiOrigin[2]);
+                    }
+                }
+            }
+            else {
+                qform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
+                r00 = -1.0;
+                r01 = 0.0;
+                r02 = 0.0;
+                r10 = 0.0;
+                r11 = 1.0;
+                r12 = 0.0;
+                r20 = 0.0;
+                r21 = 0.0;
+                r22 = 1.0;   
+            }
+    
+            // Compute lengths of each column; these determine grid spacings
+            xd = Math.sqrt((r00 * r00) + (r10 * r10) + (r20 * r20));
+            yd = Math.sqrt((r01 * r01) + (r11 * r11) + (r21 * r21));
+            zd = Math.sqrt((r02 * r02) + (r12 * r12) + (r22 * r22));
+    
+            // If a column length is zero, patch the trouble
+            if (xd == 0.0) {
+                r00 = 1.0;
+                r10 = 0.0;
+                r20 = 0.0;
+                xd = 1.0;
+            }
+    
+            if (yd == 0.0) {
+                r01 = 0.0;
+                r11 = 1.0;
+                r21 = 0.0;
+                yd = 1.0;
+            }
+    
+            if (zd == 0.0) {
+                r02 = 0.0;
+                r12 = 0.0;
+                r22 = 1.0;
+                zd = 1.0;
+            }
+    
+            // Normalize the columns
+            r00 /= xd;
+            r10 /= xd;
+            r20 /= xd;
+            r01 /= yd;
+            r11 /= yd;
+            r21 /= yd;
+            r02 /= zd;
+            r12 /= zd;
+            r22 /= zd;
+    
+            // At this point the matrix has normal columns, but the matrix may not have
+            // normal columns.  So find the orthogonal matrix closest to the current matrix
+    
+            // One reason for using the polar decomposition to get this orthogonal matrix,
+            // rather than just directly orthogonalizing the columns, is so that inputting
+            // the inverse matrix to R will result in the inverse orthogonal matrix at this
+            // point.  If we just orhtogonalized the columns, this wouldn't necessarily hold.
+    
+            Q = new Matrix(3, 3);
+            Q.set(0, 0, r00);
+            Q.set(0, 1, r01);
+            Q.set(0, 2, r02);
+            Q.set(1, 0, r10);
+            Q.set(1, 1, r11);
+            Q.set(1, 2, r12);
+            Q.set(2, 0, r20);
+            Q.set(2, 1, r21);
+            Q.set(2, 2, r22);
+    
+            P = mat33_polar(Q);
+    
+            // Now the matrix is orthogonal
+            r00 = P.get(0, 0);
+            r01 = P.get(0, 1);
+            r02 = P.get(0, 2);
+            r10 = P.get(1, 0);
+            r11 = P.get(1, 1);
+            r12 = P.get(1, 2);
+            r20 = P.get(2, 0);
+            r21 = P.get(2, 1);
+            r22 = P.get(2, 2);
+    
+            // Compute the determinant to determine if it is proper
+            zd = P.det();
+    
+            if (zd > 0) { // proper
+                qfac = 1.0f;
             } else {
-                d = 0.5 * Math.sqrt(zd);
-                b = 0.25 * (r02 + r20) / d;
-                c = 0.25 * (r12 + r21) / d;
-                a = 0.25 * (r10 - r01) / d;
+                qfac = -1.0f;
+                r02 = -r02;
+                r12 = -r12;
+                r22 = -r22;
             }
-
-            if (a < 0.0) {
-                a = -a;
-                b = -b;
-                c = -c;
-                d = -d;
+    
+            // Now compute the quaternion parameters
+            a = r00 + r11 + r22 + 1.0;
+    
+            if (a > 0.5) {
+                a = 0.5 * Math.sqrt(a);
+                b = 0.25 * (r21 - r12) / a;
+                c = 0.25 * (r02 - r20) / a;
+                d = 0.25 * (r10 - r01) / a;
+            } else {
+                xd = 1.0 + r00 - (r11 + r22);
+                yd = 1.0 + r11 - (r00 + r22);
+                zd = 1.0 + r22 - (r00 + r11);
+    
+                if (xd > 1.0) {
+                    b = 0.5 * Math.sqrt(xd);
+                    c = 0.25 * (r01 + r10) / b;
+                    d = 0.25 * (r02 + r20) / b;
+                    a = 0.25 * (r21 - r12) / b;
+                } else if (yd > 1.0) {
+                    c = 0.5 * Math.sqrt(yd);
+                    b = 0.25 * (r01 + r10) / c;
+                    d = 0.25 * (r12 + r21) / c;
+                    a = 0.25 * (r02 - r20) / c;
+                } else {
+                    d = 0.5 * Math.sqrt(zd);
+                    b = 0.25 * (r02 + r20) / d;
+                    c = 0.25 * (r12 + r21) / d;
+                    a = 0.25 * (r10 - r01) / d;
+                }
+    
+                if (a < 0.0) {
+                    a = -a;
+                    b = -b;
+                    c = -c;
+                    d = -d;
+                }
             }
-        }
+    
+            quatern_a = (float) a;
+            quatern_b = (float) b;
+            quatern_c = (float) c;
+            quatern_d = (float) d;
+        } // if ((matrixQ != null) || ((matrixQ == null) && (matrixS == null)))
+        
+        if (matrixS != null) {
+            Preferences.debug("matrixS on write entry = " + matrixS + "\n");
+            // To use matrixS information must have sform_code > 0,
+            // so cannot have sform_code equal to FileInfoNIFTI.NIFTI_XFORM_UNKNOWN.
+            switch (transformIDS) {
+                case TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL:
+                    sform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
+                    break;
+                case TransMatrix.TRANSFORM_ANOTHER_DATASET:
+                    sform_code = FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT;
+                    break;
+                case TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX:
+                    sform_code = FileInfoNIFTI.NIFTI_XFORM_TALAIRACH;
+                    break;
+                case TransMatrix.TRANSFORM_MNI_152:
+                    sform_code = FileInfoNIFTI.NIFTI_XFORM_MNI_152;
+                    break;
+                default: sform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
+            } 
+            niftiOriginS = new float[3];
+            axisOrientation = getAxisOrientation(matrixS);
+            niftiOriginS[0] = (float)-matrixS.get(0, 3);
+            niftiOriginS[1] = (float)matrixS.get(1,3);
+            niftiOriginS[2] = (float)matrixS.get(2,3);
+            for (j = 0; j < 3; j++) {
 
-        quatern_a = (float) a;
-        quatern_b = (float) b;
-        quatern_c = (float) c;
-        quatern_d = (float) d;
+                if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
+                    niftiOriginS[0] = -Math.abs(niftiOriginS[0]);
+                } else if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
+                    niftiOriginS[0] = Math.abs(niftiOriginS[0]);
+                } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
+                    niftiOriginS[1] = -Math.abs(niftiOriginS[1]);
+                } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
+                    niftiOriginS[1] = Math.abs(niftiOriginS[1]);
+                } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
+                    niftiOriginS[2] = -Math.abs(niftiOriginS[2]);
+                } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
+                    niftiOriginS[2] = Math.abs(niftiOriginS[2]);
+                }
+            }
+        } // if (matrixS != null)
 
         if (isNIFTI) { // Must be a NIFTI file, can set all NIFTI information based on fileInfo
             setBufferInt(bufferByte, fileInfo.getSizeOfHeader(), 0, endianess);
@@ -3524,66 +3656,49 @@ public class FileNIFTI extends FileBase {
 
             // Write out info for both method 2 and method 3
             // qform_code
-            setBufferShort(bufferByte, fileInfo.getCoordCode(), 252, endianess);
+            setBufferShort(bufferByte, (short)qform_code, 252, endianess);
 
             // sform_code
-            setBufferShort(bufferByte, fileInfo.getCoordCode(), 254, endianess);
-            Preferences.debug("Writing quatern_b = " + quatern_b + "\n");
-            setBufferFloat(bufferByte, quatern_b, 256, endianess);
-            Preferences.debug("Writing quatern_c = " + quatern_c + "\n");
-            setBufferFloat(bufferByte, quatern_c, 260, endianess);
-            Preferences.debug("Writing quatern_d = " + quatern_d + "\n");
-            setBufferFloat(bufferByte, quatern_d, 264, endianess);
+            setBufferShort(bufferByte, (short)sform_code, 254, endianess);
+            if (qform_code > 0) {
+                Preferences.debug("Writing quatern_b = " + quatern_b + "\n");
+                setBufferFloat(bufferByte, quatern_b, 256, endianess);
+                Preferences.debug("Writing quatern_c = " + quatern_c + "\n");
+                setBufferFloat(bufferByte, quatern_c, 260, endianess);
+                Preferences.debug("Writing quatern_d = " + quatern_d + "\n");
+                setBufferFloat(bufferByte, quatern_d, 264, endianess);
+    
+                // qoffset_x
+                setBufferFloat(bufferByte, niftiOrigin[0], 268, endianess);
+    
+                // qoffset_y
+                setBufferFloat(bufferByte, niftiOrigin[1], 272, endianess);
+    
+                // qoffset_z
+                setBufferFloat(bufferByte, niftiOrigin[2], 276, endianess);
+            }
 
-            // qoffset_x
-            setBufferFloat(bufferByte, niftiOrigin[0], 268, endianess);
-
-            // qoffset_y
-            setBufferFloat(bufferByte, niftiOrigin[1], 272, endianess);
-
-            // qoffset_z
-            setBufferFloat(bufferByte, niftiOrigin[2], 276, endianess);
-
-            if (matrix != null) {
+            if (matrixS != null) {
 
                 // System.out.println("matrix = " + matrix.toString());
                 // srow_x
-                setBufferFloat(bufferByte, (float) (-matrix.get(0, 0)), 280, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(0, 1)), 284, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(0, 2)), 288, endianess);
-                setBufferFloat(bufferByte, niftiOrigin[0], 292, endianess);
+                setBufferFloat(bufferByte, (float) (-matrixS.get(0, 0)), 280, endianess);
+                setBufferFloat(bufferByte, (float) (matrixS.get(0, 1)), 284, endianess);
+                setBufferFloat(bufferByte, (float) (-matrixS.get(0, 2)), 288, endianess);
+                setBufferFloat(bufferByte, niftiOriginS[0], 292, endianess);
 
                 // srow_y
-                setBufferFloat(bufferByte, (float) (-matrix.get(1, 0)), 296, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(1, 1)), 300, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(1, 2)), 304, endianess);
-                setBufferFloat(bufferByte, niftiOrigin[1], 308, endianess);
+                setBufferFloat(bufferByte, (float) (-matrixS.get(1, 0)), 296, endianess);
+                setBufferFloat(bufferByte, (float) (matrixS.get(1, 1)), 300, endianess);
+                setBufferFloat(bufferByte, (float) (-matrixS.get(1, 2)), 304, endianess);
+                setBufferFloat(bufferByte, niftiOriginS[1], 308, endianess);
 
                 // srow_z
-                setBufferFloat(bufferByte, (float) (matrix.get(2, 0)), 312, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(2, 1)), 316, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(2, 2)), 320, endianess);
-                setBufferFloat(bufferByte, niftiOrigin[2], 324, endianess);
-            } else {
-
-                // srow_x
-                setBufferFloat(bufferByte, -1.0f, 280, endianess);
-                setBufferFloat(bufferByte, 0.0f, 284, endianess);
-                setBufferFloat(bufferByte, 0.0f, 288, endianess);
-                setBufferFloat(bufferByte, 0.0f, 292, endianess);
-
-                // srow_y
-                setBufferFloat(bufferByte, 0.0f, 296, endianess);
-                setBufferFloat(bufferByte, 1.0f, 300, endianess);
-                setBufferFloat(bufferByte, 0.0f, 304, endianess);
-                setBufferFloat(bufferByte, 0.0f, 308, endianess);
-
-                // srow_z
-                setBufferFloat(bufferByte, 0.0f, 312, endianess);
-                setBufferFloat(bufferByte, 0.0f, 316, endianess);
-                setBufferFloat(bufferByte, 1.0f, 320, endianess);
-                setBufferFloat(bufferByte, 0.0f, 324, endianess);
-            }
+                setBufferFloat(bufferByte, (float) (matrixS.get(2, 0)), 312, endianess);
+                setBufferFloat(bufferByte, (float) (-matrixS.get(2, 1)), 316, endianess);
+                setBufferFloat(bufferByte, (float) (matrixS.get(2, 2)), 320, endianess);
+                setBufferFloat(bufferByte, niftiOriginS[2], 324, endianess);
+            } 
 
             if (fileInfo.getIntentName() != null) {
                 setBufferString(bufferByte, fileInfo.getIntentName(), 328);
@@ -3778,10 +3893,10 @@ public class FileNIFTI extends FileBase {
             setBufferString(bufferByte, " ", 228);
 
             // qform_code
-            setBufferShort(bufferByte, FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT, 252, endianess);
+            setBufferShort(bufferByte, (short)qform_code, 252, endianess);
 
             // sform_code
-            setBufferShort(bufferByte, FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT, 254, endianess);
+            setBufferShort(bufferByte, (short)0, 254, endianess);
 
             Preferences.debug("Writing quatern_b = " + quatern_b + "\n");
             setBufferFloat(bufferByte, quatern_b, 256, endianess);
@@ -3799,46 +3914,7 @@ public class FileNIFTI extends FileBase {
             // qoffset_z
             setBufferFloat(bufferByte, niftiOrigin[2], 276, endianess);
 
-            if (matrix != null) {
-
-                // System.out.println("matrix = " + matrix.toString());
-                // srow_x
-                setBufferFloat(bufferByte, (float) (-matrix.get(0, 0)), 280, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(0, 1)), 284, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(0, 2)), 288, endianess);
-                setBufferFloat(bufferByte, niftiOrigin[0], 292, endianess);
-
-                // srow_y
-                setBufferFloat(bufferByte, (float) (-matrix.get(1, 0)), 296, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(1, 1)), 300, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(1, 2)), 304, endianess);
-                setBufferFloat(bufferByte, niftiOrigin[1], 308, endianess);
-
-                // srow_z
-                setBufferFloat(bufferByte, (float) (matrix.get(2, 0)), 312, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(2, 1)), 316, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(2, 2)), 320, endianess);
-                setBufferFloat(bufferByte, niftiOrigin[2], 324, endianess);
-            } else {
-
-                // srow_x
-                setBufferFloat(bufferByte, -1.0f, 280, endianess);
-                setBufferFloat(bufferByte, 0.0f, 284, endianess);
-                setBufferFloat(bufferByte, 0.0f, 288, endianess);
-                setBufferFloat(bufferByte, 0.0f, 292, endianess);
-
-                // srow_y
-                setBufferFloat(bufferByte, 0.0f, 296, endianess);
-                setBufferFloat(bufferByte, 1.0f, 300, endianess);
-                setBufferFloat(bufferByte, 0.0f, 304, endianess);
-                setBufferFloat(bufferByte, 0.0f, 308, endianess);
-
-                // srow_z
-                setBufferFloat(bufferByte, 0.0f, 312, endianess);
-                setBufferFloat(bufferByte, 0.0f, 316, endianess);
-                setBufferFloat(bufferByte, 1.0f, 320, endianess);
-                setBufferFloat(bufferByte, 0.0f, 324, endianess);
-            }
+            // Don't write sform information matrix if not a NIFTI file
 
             // intent_name
             setBufferString(bufferByte, " ", 328);
@@ -3852,22 +3928,6 @@ public class FileNIFTI extends FileBase {
         } else {
             setBufferString(bufferByte, "ni1\0", 344);
         }
-
-        qoffset_x = getBufferFloat(bufferByte, 268, endianess);
-        qoffset_y = getBufferFloat(bufferByte, 272, endianess);
-        qoffset_z = getBufferFloat(bufferByte, 276, endianess);
-        Preferences.debug("qoffset_x = " + qoffset_x + "\n");
-        Preferences.debug("qoffset_y = " + qoffset_y + "\n");
-        Preferences.debug("qoffset_z = " + qoffset_z + "\n");
-
-        float sx3 = getBufferFloat(bufferByte, 292, endianess);
-        Preferences.debug("sx3 = " + sx3 + "\n");
-
-        float sy3 = getBufferFloat(bufferByte, 308, endianess);
-        Preferences.debug("sy3 = " + sy3 + "\n");
-
-        float sz3 = getBufferFloat(bufferByte, 324, endianess);
-        Preferences.debug("sz3 = " + sz3 + "\n");
 
         raFile.write(bufferByte);
         raFile.close();
