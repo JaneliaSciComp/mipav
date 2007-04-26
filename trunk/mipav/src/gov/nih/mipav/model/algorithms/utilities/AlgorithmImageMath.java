@@ -60,8 +60,10 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int PROMOTE = 1; // promote image type so that the range of the result fits into
-
-    // the new image type. ( ie. byte to short).
+    									// the new image type. ( ie. byte to short).
+    
+    /** DOCUMENT ME! */
+    public static final int CONVERT_FLOAT = 2; // Convert the result image to type float.
 
     /** DOCUMENT ME! */
     private static final String[] opString = {
@@ -83,6 +85,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                           CLIP          = 0;   clamp result data to the bounds of the input image type
                           PROMOTE       = 1;   promote image type so that the range of the result fits into
                                                the new image type. ( ie. byte to short).
+                          FLOAT         = 2;   Convert image to float                     
      *                   </pre>
      */
     private int clipMode = PROMOTE;
@@ -293,6 +296,66 @@ public class AlgorithmImageMath extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        } else if (clipMode == CONVERT_FLOAT) {
+        	
+        	int newType = ModelStorageBase.FLOAT;
+        	bestMin = min;
+        	bestMax = max;
+        	
+        	switch (opType) {
+        	
+        		case ADD:
+        			bestMin = min + value;
+        			bestMax = max + value;
+        			break;
+        			
+        		case SUBTRACT:
+        			bestMin = min - value;
+        			bestMax = max - value;
+        			break;
+        			
+        		case MULTIPLY:
+        			bestMin = java.lang.Math.min(min * value, max * value);
+                    bestMax = java.lang.Math.max(min * value, max * value);
+                    break;
+                    
+        		case DIVIDE:
+        			bestMin = java.lang.Math.min(min / value, max / value);
+                    bestMax = java.lang.Math.max(min / value, max / value);
+                    break;
+                    
+        		case SQUARE:
+        			bestMin = min * min;
+        			bestMax = max * max;
+        			break;
+        			
+        		case CONSTANT:
+        			if (value < min) {
+        				bestMin = value;
+        				bestMax = max;
+        			} else if (value > max) {
+        				bestMin = min;
+        				bestMax = max;
+        			} else {
+        				bestMin = min;
+        				bestMax = max;
+        			}
+        			break;
+        			
+        	}
+        	
+        	AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, bestMin, bestMax,
+                    													false);
+        	changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
+        	changeTypeAlgo.run();
+
+ 			// if the change algo is halted,
+        	if (!changeTypeAlgo.isCompleted()) {
+
+ 			// halt the rest of this processing.
+ 			setThreadStopped(true);
+        	}
+        	
         } else {
             int newType = srcImage.getType();
 
@@ -349,7 +412,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     default:
                         break;
                 }
-
+               
                 if (newType != srcImage.getType()) {
                     AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
                                                                                  false);
@@ -862,6 +925,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        } else if (clipMode == CONVERT_FLOAT) {
+        	destImage.reallocate(ModelStorageBase.FLOAT);
         } else {
             int newType = srcImage.getType();
 
