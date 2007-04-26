@@ -56,9 +56,7 @@ public class Preferences {
     
     public static final String PREF_DEFAULT_FRAME_RATE = "DefaultFrameRate";
     
-    /**
-     * Constant that indicates if the last used parameters for algorithm dialogs should be used when they are opened.
-     */
+    /** Constant that indicates if the last used parameters for algorithm dialogs should be used when they are opened.*/
     public static final String PREF_SAVE_DEFAULTS = "SaveDefaults";
 
     /** Constant that indicates if a prompt should be shown before an image file is overwritten. */
@@ -97,7 +95,11 @@ public class Preferences {
     /** Constant indicating if the VOI Toolbar is on by default. */
     public static final String PREF_VOI_TOOLBAR_ON = "VOIToolbar";
 
+    /** Constant indicating the application shortcuts (user defined)*/
     public static final String PREF_SHORTCUTS = "Shortcuts";
+    
+    /** Constant indicating the DICOM browser configuration*/
+    public static final String PREF_DICOM_BROWSER_CONFIG = "DICOMBrowserConfig";
     
     /**
      * Constant that indicates whether the triplanar frame should wait for a mouse released event before repainting all
@@ -120,51 +122,52 @@ public class Preferences {
     /** Constant that indicates whether the triplanar frame should use the old 2x2 layout or the newer 3x1 layout. */
     public static final String PREF_TRIPLANAR_2X2_LAYOUT = "TriPlanar2x2Layout";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the menu font*/
     public static final String PREF_MENU_FONT = "MenuFont";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the menu font size*/
     public static final String PREF_MENU_FONT_SIZE = "MenuFontSize";
 
+    /** Constant that indicates the menu font color */
     public static final String PREF_MENU_FONT_COLOR = "MenuFontColor";
     
-    /** DOCUMENT ME! */
+    /** Constant that indicates whether to show the VOI name*/
     public static final String PREF_SHOW_VOI_NAME = "DrawVOIName";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates whether to show output*/
     public static final String PREF_SHOW_OUTPUT = "ShowOutput";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the last stack flag*/
     public static final String PREF_LAST_STACK_FLAG = "LastStackFlag";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates whether to use VOI XOR'ing*/
     public static final String PREF_USE_VOI_XOR = "UseVOIXOR";
 
     /** Constants that indicate the SRB server login properties. */
     public static final String PREF_USERNAME_SRB = "userNameSRB";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the SRB server host */
     public static final String PREF_SERVER_HOST_SRB = "serverHostSRB";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the SRB server domain*/
     public static final String PREF_SERVER_DOMAIN_SRB = "serverDomainSRB";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the SRB */
     public static final String PREF_SERVER_PORT_SRB = "serverPortSRB";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the SRB server authentication size*/
     public static final String PREF_SERVER_AUTHENTICATION_SRB = "serverAuthenticationSRB";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the default SRB storage resource*/
     public static final String PREF_STORAGE_RESOURCE_SRB = "defaultStorageResource";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the SRB version*/
     public static final String PREF_SRB_VERSION = "srbVersion";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the SRB transfer mode*/
     public static final String PREF_SRB_TRANSFER_MODE = "srbTransferMode";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the SRB temp directory*/
     public static final String PREF_SRB_TEMP_DIR = "srbTempDir";
 
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
@@ -221,8 +224,10 @@ public class Preferences {
     /** Constant that indicates the crosshair cursor to be used */
     public static final String PREF_CROSSHAIR_CURSOR = "CrosshairCursor";
     
+    /** Constant that indicates the VOI Trim level variable*/
     public static final String PREF_TRIM = "TRIM";
     
+    /** Constant that indicates the VOI Trim flag*/
     public static final String PREF_TRIM_FLAG = "TRIM_FLAG";
     
     /** Constant indicating the VOI Thickness */
@@ -258,30 +263,67 @@ public class Preferences {
     /** The maximum heap size*/
     public static final String PREF_MAX_HEAP_SIZE = "MaximumHeapSize";
     
-    
+    /** Constant that indicates the default raw image extents*/
     public static final String PREF_RAW_EXTENTS = "RawImageExtents";
+    
+    /** Constant that indicates the default raw image big endian*/
     public static final String PREF_RAW_BIG_ENDIAN = "RawImageBigEndianByteOrder";
+    
+    /** Constant that indicates the default raw image resolutions*/
     public static final String PREF_RAW_RESOLUTIONS = "RawImageResolutions";
+    
+    /** Constant that indicates the default raw image units*/
     public static final String PREF_RAW_UNITS = "RawImageUnits";
+    
+    /** Constant that indicates the default raw image type*/
     public static final String PREF_RAW_TYPE  = "RawImageType";
+    
+    /** Constant that indicates the default raw image data offset*/
     public static final String PREF_RAW_DATA_OFFSET ="RawImageDataOffset";
     
+    /** Constant that indicates the LightBox row dependant variable*/
     public static final String PREF_LB_ROW_DEPENDENT = "LightBoxRowDependent";
+    
+    /** Constant that indicates the LightBox grid row variable*/
     public static final String PREF_LB_GRID_ROW = "LightBoxGridRow";
+    
+    /** Constant that indicates the LightBox grid column variable*/
     public static final String PREF_LB_GRID_COL = "LightBoxGridCol";
+    
+    /** Constant that indicates the LightBox grid size variable*/
     public static final String PREF_LB_GRID_SIZE = "LightBoxGridSize";
+   
+    /** Constant that indicates the LightBox grid color variable*/
     public static final String PREF_LB_GRID_COLOR = "LightBoxGridColor";
+   
+    /** Constant that indicates the LightBox border size variable*/
     public static final String PREF_LB_BORDER_SIZE = "LightBoxBorderSize";
+    
+    /** Constant that indicates the LightBox border color variable*/
     public static final String PREF_LB_BORDER_COLOR = "LightBoxBorderColor";
+    
+    /** Constant that indicates the LightBox selected border size variable*/
     public static final String PREF_LB_SELECTED_BORDER_SIZE = "LightBoxSelectedBorderSize";
+    
+    /** Constant that indicates the LightBox selected border color variable*/
     public static final String PREF_LB_SELECTED_BORDER_COLOR = "LightBoxSelectedBorderColor";
+    
+    /** Constant that indicates the LightBox magnification variable*/
     public static final String PREF_LB_MAG = "LightBoxMagnification";
+    
+    /** Constant that indicates the LightBox location variable*/
     public static final String PREF_LB_LOCATION = "LightBoxLocation";
+    
+    /** Constant that indicates the LightBox individual t-slice variable*/
     public static final String PREF_LB_TSLICE = "LightBoxIndividualTSlice";
     
+    /** Constant that indicates the application title */
     public static final String PREF_APP_TITLE = "ApplicationTitle";
+    
+    /** Constant that indicates the application icon */
     public static final String PREF_APP_ICON = "ApplicationIcon";
     
+    /** Constant that indicates whether to show image overlays */
     public static final String PREF_SHOW_OVERLAYS = "ShowOverlays";
     
     /** plugin of algorithm type*/
@@ -601,7 +643,7 @@ public class Preferences {
      */
     public static final boolean debugLevel(int level) {
 
-        String str = getProperty("DEBUG");
+        String str = getProperty(Preferences.PREF_DEBUG);
 
         if (str == null) {
             return false;
@@ -647,7 +689,7 @@ public class Preferences {
     public static final boolean[] getDebugLevels() {
         boolean[] levels = new boolean[5];
 
-        String str = Preferences.getProperty("DEBUG");
+        String str = Preferences.getProperty(Preferences.PREF_DEBUG);
         StringTokenizer st = new StringTokenizer(str, ",");
         int index = 0;
 
@@ -804,7 +846,7 @@ public class Preferences {
             read();
         }
 
-        String configStr = getProperty("DICOMBrowserConfig");
+        String configStr = getProperty(PREF_DICOM_BROWSER_CONFIG);
 
         if (configStr == null) {
             return null;
@@ -2350,7 +2392,7 @@ public class Preferences {
             configStr += (String) newConfiguration.elementAt(i) + "|";
         }
 
-        return setProperty("DICOMBrowserConfig", configStr);
+        return setProperty(PREF_DICOM_BROWSER_CONFIG, configStr);
     }
 
     /**
