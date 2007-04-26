@@ -37,6 +37,9 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private int clipMode = AlgorithmImageMath.CLIP;
+    
+    /** DOCUMENT ME! */
+    private int floatMode = AlgorithmImageMath.CONVERT_FLOAT;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxOperator;
@@ -76,6 +79,10 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private JRadioButton radioPromote;
+    
+    /** DOCUMENT ME! */
+    private JRadioButton radioFloat;
+    
 
     /** DOCUMENT ME! */
     private float realValue;
@@ -317,6 +324,12 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         outputPanel.setOutputImageOptionsEnabled(true);
         radioClip.setEnabled(true);
         radioPromote.setEnabled(true);
+        if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.DOUBLE) {
+        	radioFloat.setEnabled(false);
+        } else {
+        	radioFloat.setEnabled(true);
+        }
+        
 
         int index = 0;
 
@@ -333,12 +346,14 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 opType = AlgorithmImageMath.DIVIDE;
             } else if (index == AlgorithmImageMath.SQUARE) {
                 textValue.setEnabled(false);
+                radioFloat.setEnabled(false);
                 opType = AlgorithmImageMath.SQUARE;
             } else if (index == AlgorithmImageMath.SQRT) {
                 textValue.setEnabled(false);
                 opType = AlgorithmImageMath.SQRT;
             } else if (index == AlgorithmImageMath.LOG) {
                 textValue.setEnabled(false);
+                radioFloat.setEnabled(false);
                 opType = AlgorithmImageMath.LOG;
             } else if (index == AlgorithmImageMath.CONSTANT) {
                 opType = AlgorithmImageMath.CONSTANT;
@@ -400,8 +415,10 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
                 if (mode == AlgorithmImageMath.CLIP) {
                     radioClip.setSelected(true);
+                } else if (mode == AlgorithmImageMath.CONVERT_FLOAT) {
+                	radioFloat.setSelected(true);
                 } else {
-                    radioPromote.setSelected(true);
+                	radioPromote.setSelected(true);
                 }
 
                 outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
@@ -462,7 +479,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
+     * Once all the necessary variables are set, call the Image Math algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
@@ -686,6 +703,10 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         radioPromote = new JRadioButton("Promote image type", false);
         radioPromote.setFont(serif12);
         group.add(radioPromote);
+        
+        radioFloat = new JRadioButton("Convert to float", false);
+        radioFloat.setFont(serif12);
+        group.add(radioFloat);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
@@ -737,6 +758,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         inputPanel.add(radioClip, gbc);
         gbc.gridy = yPos++;
         inputPanel.add(radioPromote, gbc);
+        gbc.gridy = yPos++;
+        inputPanel.add(radioFloat, gbc);
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
 
@@ -766,6 +789,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         radioClip.setSelected(true);
         radioClip.setEnabled(false);
         radioPromote.setEnabled(false);
+        radioFloat.setEnabled(false);
 
 
         pack();
@@ -808,6 +832,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             clipMode = AlgorithmImageMath.CLIP;
         } else if (radioPromote.isSelected()) {
             clipMode = AlgorithmImageMath.PROMOTE;
+        } else if (radioFloat.isSelected()) {
+        	clipMode = AlgorithmImageMath.CONVERT_FLOAT;
         }
 
         return true;
