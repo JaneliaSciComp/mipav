@@ -4975,7 +4975,7 @@ public class FileIO {
             }
         } // for (i = 0; i < nImages; i++)
 
-        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
+        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
 
 
         return image;
@@ -5209,7 +5209,7 @@ public class FileIO {
             }
         } // for (i = 0; i < nImages; i++)
 
-        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
+        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
 
 
         return image;
@@ -6092,7 +6092,7 @@ public class FileIO {
             return null;
         }
 
-        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
+        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
 
 
         return image;
@@ -6938,7 +6938,7 @@ public class FileIO {
             myFileInfo = imageFile.getFileInfo();
             myFileInfo.setExtents(extents);
             image.setFileInfo(myFileInfo, 0);
-            image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
+            image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
             image.importData(0, buffer, false);
         } catch (OutOfMemoryError error) {
 
@@ -7028,7 +7028,7 @@ public class FileIO {
             myFileInfo = imageFile.getFileInfo();
             myFileInfo.setExtents(extents);
             image.setFileInfo(myFileInfo, 0);
-            image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
+            image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
             image.importData(0, buffer, false);
         } catch (OutOfMemoryError error) {
 
@@ -7088,7 +7088,7 @@ public class FileIO {
             imageFile.readImage(buffer);
             myFileInfo.setExtents(extents);
             image.setFileInfo(myFileInfo, 0);
-            image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
+            image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
             image.importData(0, buffer, false);
             imageFile.close();
         } catch (IOException error) {
