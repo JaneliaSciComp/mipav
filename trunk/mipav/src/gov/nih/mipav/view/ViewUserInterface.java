@@ -3257,8 +3257,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         ViewOpenFileUI fileOpener = new ViewOpenFileUI(false);
         Vector imageNames = new Vector();
 
-        if (imageList.size() > 0) {
-
+        if (imageList.size() >= 0) {
             for (int i = 0; i < imageList.size(); i++) {
                 OpenFileInfo file = (OpenFileInfo) imageList.elementAt(i);
                 String fileName = file.getFullFileName();
@@ -3303,11 +3302,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             if (scriptFile != null) {
                 ScriptRunner.getReference().runScript(scriptFile, imageNames, new Vector());
-            }
-        } else {
-
-            if (scriptFile != null) {
-                ScriptRunner.getReference().runScript(scriptFile);
             }
         }
     }
