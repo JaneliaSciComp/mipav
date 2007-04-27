@@ -533,6 +533,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public static final String[] getScannerPositionLabels(ModelImage image, Point3Df position) {
         DecimalFormat nf = new DecimalFormat("#####0.0##");
         Point3Df kOut = new Point3Df();
+        if (image.getNDims() < 3) {
+        	return null;
+        }
         MipavCoordinateSystems.fileToScanner(position, kOut, image);
 
         float[] tCoord = new float[3];

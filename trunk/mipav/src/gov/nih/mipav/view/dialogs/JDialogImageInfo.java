@@ -1400,7 +1400,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             dim3.setEnabled(false);
         }
 
-        JLabel dim4 = new JLabel("4th dim.");
+        JLabel dim4 = new JLabel("4th dimension:");
         dim4.setFont(serif12);
         dim4.setForeground(Color.black);
 
