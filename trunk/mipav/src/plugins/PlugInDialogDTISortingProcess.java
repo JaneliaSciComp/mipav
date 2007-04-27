@@ -128,7 +128,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("DTI Sorting Process " + " v1.10");
+        setTitle("DTI Sorting Process " + " v2.0");
         
         GridBagLayout mainPanelGridBagLayout = new GridBagLayout();
         GridBagConstraints mainPanelConstraints = new GridBagConstraints();
@@ -290,7 +290,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 			
 			insertScriptLine();
 			Preferences.debug("*** End DTI Sorting Process *** \n",Preferences.DEBUG_ALGORITHM);
-			
+			System.out.println("*** End DTI Sorting Process *** \n");
 			
 
 		}
@@ -432,18 +432,26 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 	protected void callAlgorithm() {
 		
 		Preferences.debug("*** Beginning DTI Sorting Process *** \n",Preferences.DEBUG_ALGORITHM);
-		
 		if(outputTextArea != null) {
 			outputTextArea.append("*** Beginning DTI Sorting Process *** \n");
 		}
+		System.out.println("*** Beginning DTI Sorting Process *** \n");
 		
 		alg = new PlugInAlgorithmDTISortingProcess(studyPath, studyName, gradientPath, bmatrixPath, outputTextArea);
 		
 		alg.addListener(this);
 		
-		if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-            MipavUtil.displayError("A thread is already running on this object");
-        }
+	
+		if (isRunInSeparateThread()) {
+
+			// Start the thread as a low priority because we wish to still
+			// have user interface work fast.
+			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+				MipavUtil.displayError("A thread is already running on this object");
+			}
+		} else {
+			alg.run();
+		}
 		
 		
 	}
