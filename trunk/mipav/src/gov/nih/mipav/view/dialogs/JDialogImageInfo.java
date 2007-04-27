@@ -314,13 +314,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 }
 
                 // only update (save) talairach info if ON THE TALAIRACH TAB
-                if (tabbedPane.getSelectedIndex() == 6) {
+                if (tabbedPane.getSelectedIndex() == 5) {
                     updateTalairachInfo();
                 }
 
                 updateOriginInfo();
                 
-                if (tabbedPane.getSelectedIndex() == 4) {
+                if (tabbedPane.getSelectedIndex() == 3) {
                 	updateMatrixInfo();
                 }
                 //updateTransformInfo();
@@ -1346,8 +1346,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * @return  The panel on which the user can edit the name of the image.
      */
     private JPanel buildOrientPanel() {
-        JLabel orientIconLabel = new JLabel("Image origin is in the upper left hand corner. Righthand coordinate system.",
-                                            MipavUtil.getIcon("orient.gif"), JLabel.LEFT);
+    	String orientText =
+            "<html>Image origin is in the upper left hand corner (first slice)." +
+            "<P>" + "Righthand coordinate system.</html>";
+        JLabel orientIconLabel = new JLabel(orientText, MipavUtil.getIcon("orient.gif"), JLabel.LEFT);
+               
         orientIconLabel.setFont(serif12);
         orientIconLabel.setForeground(Color.black);
 
@@ -1379,35 +1382,79 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientBox.setFont(serif12);
         orientBox.addFocusListener(this);
 
+        int nDims = image.getNDims();
+
+        JLabel dim1 = new JLabel("X-axis origin:");
+        dim1.setFont(serif12);
+        dim1.setForeground(Color.black);
+
+        JLabel dim2 = new JLabel("Y-axis origin:");
+        dim2.setFont(serif12);
+        dim2.setForeground(Color.black);
+
+        JLabel dim3 = new JLabel("Z-axis origin:");
+        dim3.setFont(serif12);
+        dim3.setForeground(Color.black);
+
+        if (nDims < 3) {
+            dim3.setEnabled(false);
+        }
+
+        JLabel dim4 = new JLabel("4th dim.");
+        dim4.setFont(serif12);
+        dim4.setForeground(Color.black);
+
+        if (nDims < 4) {
+            dim4.setEnabled(false);
+        }
+
+        // JLabel dim5 = new JLabel("5th dim.");
+        // dim5.setFont(serif12);
+        // dim5.setForeground(Color.black);
+        // if (nDims < 5) dim5.setEnabled(false);
+
+        textSt1 = new JTextField(5);
+        textSt1.setText(String.valueOf(image.getFileInfo()[0].getOrigin(0)));
+        textSt1.setFont(serif12);
+        textSt1.addFocusListener(this);
+
+        textSt2 = new JTextField(5);
+        textSt2.setText(String.valueOf(image.getFileInfo()[0].getOrigin(1)));
+        textSt2.setFont(serif12);
+        textSt2.addFocusListener(this);
+
+        textSt3 = new JTextField(5);
+        textSt3.setText("1");
+        textSt3.setFont(serif12);
+        textSt3.addFocusListener(this);
+
+        if (nDims < 3) {
+            textSt3.setEnabled(false);
+        } else {
+            textSt3.setText(String.valueOf(image.getFileInfo()[0].getOrigin(2)));
+        }
+
+        textSt4 = new JTextField(5);
+        textSt4.setText("1");
+        textSt4.setFont(serif12);
+        textSt4.addFocusListener(this);
+
+        if (nDims < 4) {
+            textSt4.setEnabled(false);
+        } else {
+            textSt4.setText(String.valueOf(image.getFileInfo()[0].getOrigin(3)));
+        }
+        
+        
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(0, 5, 0, 5);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        orientPanel.add(orientIconLabel, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridwidth = 1;
-        gbc.weightx = 1;
-        orientPanel.add(orientLabel, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.weightx = 1;
-        orientPanel.add(orientBox, gbc);
 
         String[] orients = {
             "Unknown", "Patient Right to Left", "Patient Left to Right", "Patient Posterior to Anterior",
             "Patient Anterior to Posterior", "Patient Inferior to Superior", "Patient Superior to Inferior"
         };
 
-        JLabel orientLabelX = new JLabel("X-axis orientation (image left to right) corresponds to:");
+        JLabel orientLabelX = new JLabel("X-axis orientation (image left to right):");
         orientLabelX.setFont(serif12);
         orientLabelX.setForeground(Color.black);
 
@@ -1417,20 +1464,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         int[] axisOrient = image.getFileInfo()[0].getAxisOrientation();
         orientationBox1.setSelectedIndex(axisOrient[0]);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridwidth = 1;
-        gbc.weightx = 1;
-        orientPanel.add(orientLabelX, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.weightx = 1;
-        orientPanel.add(orientationBox1, gbc);
-
-        JLabel orientLabelY = new JLabel("Y-axis orientation (image top to bottom) corresponds to:");
+        
+        JLabel orientLabelY = new JLabel("Y-axis orientation (image top to bottom):");
         orientLabelY.setFont(serif12);
         orientLabelY.setForeground(Color.black);
 
@@ -1439,19 +1474,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientationBox2.setFont(MipavUtil.font12);
         orientationBox2.setSelectedIndex(axisOrient[1]);
 
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        orientPanel.add(orientLabelY, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.weightx = 1;
-        orientPanel.add(orientationBox2, gbc);
-
-        JLabel orientLabelZ = new JLabel("Z-axis orientation (into the screen) corresponds to:");
+        JLabel orientLabelZ = new JLabel("Z-axis orientation (into the screen):");
         orientLabelZ.setFont(serif12);
         orientLabelZ.setForeground(Color.black);
 
@@ -1459,19 +1482,61 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientationBox3.setBackground(Color.white);
         orientationBox3.setFont(MipavUtil.font12);
         orientationBox3.setSelectedIndex(axisOrient[2]);
-
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        orientPanel.add(orientLabelZ, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        
+        gbc.anchor = gbc.NORTHWEST;
+        gbc.fill = gbc.BOTH;
         gbc.weightx = 1;
-        orientPanel.add(orientationBox3, gbc);
+        gbc.weighty = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 2;
+        orientPanel.add(orientIconLabel,gbc);
 
+        gbc.anchor = gbc.WEST;
+        gbc.fill = gbc.NONE;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        
+        orientPanel.add(orientLabel, gbc);
+        gbc.gridy++;
+        orientPanel.add(orientLabelX, gbc);
+        gbc.gridy++;
+        orientPanel.add(orientLabelY, gbc);
+        gbc.gridy++;
+        orientPanel.add(orientLabelZ, gbc);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        orientPanel.add(orientBox, gbc);
+        gbc.gridy++;
+        orientPanel.add(orientationBox1, gbc);
+        gbc.gridy++;
+        orientPanel.add(orientationBox2, gbc);
+        gbc.gridy++;
+        orientPanel.add(orientationBox3, gbc);
+        
+        gbc.gridx = 2;
+        gbc.gridy = 3;
+        orientPanel.add(dim1, gbc);
+        gbc.gridy++;
+        orientPanel.add(dim2, gbc);
+        gbc.gridy++;
+        orientPanel.add(dim3, gbc);
+        gbc.gridy++;
+        orientPanel.add(dim4, gbc);
+        
+        gbc.gridx = 3;
+        gbc.gridy = 3;
+        orientPanel.add(textSt1, gbc);
+        gbc.gridy++;
+        orientPanel.add(textSt2, gbc);
+        gbc.gridy++;
+        orientPanel.add(textSt3, gbc);
+        gbc.gridy++;
+        orientPanel.add(textSt4, gbc);
+        
         return orientPanel;
     }
 
@@ -2221,8 +2286,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         setTitle("Image Attributes: " + image.getImageName() + " " + addTitle);
         tabbedPane.addTab("General", null, buildGeneralPanel());
         tabbedPane.addTab("Resolutions", null, buildResolutionPanel());
-        tabbedPane.addTab("Orientations", null, buildOrientPanel());
-        tabbedPane.addTab("Dataset Origin", null, buildStartLocationsPanel());
+        tabbedPane.addTab("Orientations\\Origin", null, buildOrientPanel());
         tabbedPane.addTab("Transform matrix", null, buildMatrixPanel());
         tabbedPane.addTab("History", null, buildHistoryPanel());
         tabbedPane.addTab("Talairach", null, buildTalairachPanel());
@@ -3225,7 +3289,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         }
 
         // add to script recorder if we are on the origin tab
-        if (tabbedPane.getSelectedIndex() == 3) {
+        if (tabbedPane.getSelectedIndex() == 2) {
             ScriptRecorder.getReference().addLine(new ActionChangeOrigin(image));
         }
     }
@@ -3401,7 +3465,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             image.setTalairachTransformInfo(tInfo);
 
-            if (tabbedPane.getSelectedIndex() == 6) {
+            if (tabbedPane.getSelectedIndex() == 5) {
                 ScriptRecorder.getReference().addLine(new ActionChangeTalairachInfo(image));
             }
 
@@ -3421,7 +3485,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     	updateTransformInfo(tMat);
     	image.getMatrixHolder().replaceMatrix(matrixBox.getSelectedItem(), tMat);
         
-        if (tabbedPane.getSelectedIndex() == 4) {
+        if (tabbedPane.getSelectedIndex() == 3) {
         	//ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image));
         }
     }
