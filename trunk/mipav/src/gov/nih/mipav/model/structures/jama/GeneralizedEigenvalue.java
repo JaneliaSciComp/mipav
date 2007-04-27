@@ -160,7 +160,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     /**
      * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive dchkgg in
      * order to run dchkgg to test the nonsymmetric generalized eigenvalue problem. Tests dgghrd, dhgeqz, and dtgevc.
-     * Numerical values were obtained from the dgg.in datafile. Orginal DCHKEE created by Univ. of Tennessee,
+     * Numerical values were obtained from the dgg.in datafile. Original DCHKEE created by Univ. of Tennessee,
      * Univ. of California Berkeley, and NAG Ltd., January, 2007
      */
     public void dchkgg_test() {
@@ -336,7 +336,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dchkgg_test
 
     /**
-     * This is a port of version 3.1 LAPACK test routine DCHKGK Orginal DCHKGK created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.1 LAPACK test routine DCHKGK Original DCHKGK created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2006
      * Sample data values obtained from the file dgbak.in dchkgk tests dggbak, a routine for backward balancing of a
      * matrix pair (A, B).
@@ -841,7 +841,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dchkgk
 
     /**
-     * This is a port of version 3.1 LAPACK test routine DCHKGL Orginal DCHKGL created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.1 LAPACK test routine DCHKGL Original DCHKGL created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2006
      * Sample data values obtained from the file dgbal.in
      *
@@ -1353,7 +1353,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     /**
      * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive dchkst, that tests
      * routines used in symmetric generalized eigenvalue problem. The routines tested are dsytrd, dorgtr, dsteqr, and
-     * dsterf. Numerical values were obtained from the sep.in datafile. Orginal DCHKEE created by Univ. of Tennessee,
+     * dsterf. Numerical values were obtained from the sep.in datafile. Original DCHKEE created by Univ. of Tennessee,
      * Univ. of California Berkeley, and NAG Ltd., January, 2007
      */
     public void dchkst_test() {
@@ -1513,7 +1513,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     /**
      * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive ddrvst, that tests
      * symmetric generalized eigenvalue drivers. The driver tested is dsyev. Numerical values were obtained from the
-     * sep.in datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd., January, 2007
+     * sep.in datafile. Original DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd., January, 2007
      */
     public void ddrvst_test() {
 
@@ -1659,7 +1659,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // ddrvst_test
 
     /**
-     * This is a port of the version 3.1 LAPACK driver routine DGGEV Orginal DGGEV created by Univ. of Tennessee, Univ.
+     * This is a port of the version 3.1 LAPACK driver routine DGGEV Original DGGEV created by Univ. of Tennessee, Univ.
      * of California Berkeley, and NAG Ltd., November, 2006 dggev computes for a pair of n by n real nonsymmetric
      * matrices (A,B) the generalized eigenvalues, and optionally, the left and/or right generalized eigenvectors.
      *
@@ -2314,7 +2314,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     /**
      * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive ddrgev in order to test
      * DGGEV, that handles the nonsymmetric generalized eigenvalue problem. Numerical values were obtained from the dgv
-     * section in the dgd.in datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG
+     * section in the dgd.in datafile. Original DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG
      * Ltd., January, 2007
      */
     public void dggev_test() {
@@ -2453,7 +2453,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dggev_test
 
     /**
-     * This is a port of the version 3.1 LAPACK DSYEV routine Orginal DSYEV created by Univ. of Tennessee, Univ. of
+     * This is a port of the version 3.1 LAPACK DSYEV routine Original DSYEV created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2006
      * dsyev computes all eigenvalues and, optionally, eigenvectors of a real symmetric matrix A.
      *
@@ -2671,17 +2671,22 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dsyev
 
     /**
-     * DYSGV is ported from the version 3.0 LAPACK driver routine Orginal DSYGV created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 DSYGV
-     * computes all the eigenvalues, and optionally, the eigenvectors of a real generalized symmetric-definite
+     * DYSGV is ported from the version 3.1 LAPACK driver routine Original DSYGV created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * DSYGV computes all the eigenvalues, and optionally, the eigenvectors of a real generalized symmetric-definite
      * eigenproblem, of the form A*x = (lambda)*B*x, A*Bx = (lambda)*x, or B*A*x = (lambda)*x. Here A and B are assumed
      * to be symmetric and B is also positive definite
      *
-     * @param  itype  input integer specifies the problem type to be solved: = 1: A*x = (lambda)*B*x = 2: A*B*x =
-     *                (lambda)*x = 3: B*A*x = (lambda)*x
-     * @param  jobz   input char = 'N': Compute eigenvalues only = 'V': Compute eigenvalues and eigenvectors
-     * @param  uplo   input char = 'U': Upper triangles of A and B are stored = 'L': Lower triangles of A and B are
-     *                stored
+     * @param  itype  input integer specifies the problem type to be solved: 
+     *         = 1: A*x = (lambda)*B*x 
+     *         = 2: A*B*x = (lambda)*x '
+     *         = 3: B*A*x = (lambda)*x
+     * @param  jobz   input char 
+     *         = 'N': Compute eigenvalues only 
+     *         = 'V': Compute eigenvalues and eigenvectors
+     * @param  uplo   input char 
+     *         = 'U': Upper triangles of A and B are stored 
+     *         = 'L': Lower triangles of A and B are stored
      * @param  n      input integer The order of matrices A and B. n >= 0.
      * @param  A      (input/output) double[][], dimension lda by n On entry, the symmetric matrix A. If uplo = 'U', the
      *                leading n by n upper triangular part of A contains the upper triangular part of the matrix A. If
@@ -2689,8 +2694,10 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *                the matrix A.
      *
      *                <p>On exit, if jobz = 'V', then if info[0] = 0, A contains the matrix Z of eigenvectors. The
-     *                eigenvectors are normalized as follows: If itype = 1 or 2, Z'*B*Z = I; If itype = 3, Z'*inv(B)*Z =
-     *                I. If jobz = 'N', then on exit the upper triangle (if uplo = 'U') or the lower triangle (if uplo =
+     *                eigenvectors are normalized as follows:
+     *                If itype = 1 or 2, Z**T*B*Z = I;
+     *                If itype = 3, Z**T*inv(B)*Z = I.
+     *                If jobz = 'N', then on exit the upper triangle (if uplo = 'U') or the lower triangle (if uplo =
      *                'L') of A, including the diagonal, is destroyed.</p>
      * @param  lda    input integer The leading dimension of array A. lda >= max(1,n).
      * @param  B      (input/output) double[][], dimension ldb by n On entry, the symmetric positive definite matrix B.
@@ -2699,22 +2706,25 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *                triangular part of the matrix B.
      *
      *                <p>On exit, if info <= n, the part of B containing the matrix is overwritten by the triangular
-     *                factor U or L from the Cholesky factorization B = U'*U or B = L*L'.</p>
+     *                factor U or L from the Cholesky factorization B = U**T*U or B = L*L**T.</p>
      * @param  ldb    input integer The leading dimension of the array B. ldb >= max(1,n).
      * @param  w      output double[] of dimension n If info = 0, the eigenvalues in ascending order.
-     * @param  work   (workspace/output) double[] of dimension lwork On exit, if info = 0, work[0] returns the optimal
-     *                lwork.
+     * @param  work   (workspace/output) double[] of dimension max(1,lwork)
+     *                On exit, if info = 0, work[0] returns the optimal lwork.
      * @param  lwork  input integer The length of the array work. lwork >= max(1,3*n-1). For optimal efficiency, lwork
      *                >= (nb+2)*n, where nb is the blocksize for dsytrd returned by ilaenv.
      *
      *                <p>If lwork = -1, then a workspace query is assumed; the routine only calculates the optimal size
      *                of the work array, returns this value as the first entry of the work array, and no error message
      *                related to lwork is issued.</p>
-     * @param  info   output integer[] = 0: successful exit < 0: if info = -i, the i-th argument had an illegal value >
-     *                0: dpotrf or dsyev returned an error code: <= n: If info = i, dsyev failed to converge; i
-     *                off-diagonal elements of an intermediate tridiagonal form did not converge to zero; > n: If info =
-     *                n + i, for 1 <= i <= n, then the leading minor of order i of B is not positive definite. The
-     *                factorization of B could not be completed and no eigenvalues or eigenvectors were computed.
+     * @param  info   output integer[] 
+     *                = 0: successful exit 
+     *                < 0: if info = -i, the i-th argument had an illegal value
+     *                > 0: dpotrf or dsyev returned an error code: 
+     *                   <= n: If info = i, dsyev failed to converge; i off-diagonal elements of an intermediate
+     *                         tridiagonal form did not converge to zero; 
+     *                   > n: If info = n + i, for 1 <= i <= n, then the leading minor of order i of B is not positive definite. The
+     *                        factorization of B could not be completed and no eigenvalues or eigenvectors were computed.
      */
     public void dsygv(int itype, char jobz, char uplo, int n, double[][] A, int lda, double[][] B, int ldb, double[] w,
                       double[] work, int lwork, int[] info) {
@@ -2728,6 +2738,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         int lwkopt = 0;
         int neig;
         char trans;
+        int lwkmin;
 
         // Test the input statements
         if ((jobz == 'V') || (jobz == 'v')) {
@@ -2762,17 +2773,19 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
             info[0] = -6;
         } else if (ldb < Math.max(1, n)) {
             info[0] = -8;
-        } else if ((lwork < Math.max(1, (3 * n) - 1)) && (!lquery)) {
-            info[0] = -11;
-        }
+        } 
 
         if (info[0] == 0) {
+            lwkmin = Math.max(1, 3*n-1);
             name = new String("DSYTRD");
             optsChar[0] = uplo;
             opts = new String(optsChar);
             nb = ilaenv(1, name, opts, n, -1, -1, -1);
-            lwkopt = (nb + 2) * n;
+            lwkopt = Math.max(lwkmin,(nb + 2) * n);
             work[0] = lwkopt;
+            if ((lwork < lwkmin) && (!lquery)) {
+                info[0] = -11;
+            }
         }
 
         if (info[0] != 0) {
@@ -2860,7 +2873,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     /**
      * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive ddrvsg in order to test
      * DSYGV, that handles the symmetric generalized eigenvalue problem. Numerical values were obtained from the dsg.in
-     * datafile. Orginal DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd.,
+     * datafile. Original DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd.,
      * January, 2007
      */
     public void dsygv_test() {
@@ -3209,7 +3222,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // daxpy
 
     /**
-     * /** This is a port of version 3.1 LAPACK test routine DCHKGG Orginal DCHKGG created by Univ. of Tennessee, Univ.
+     * /** This is a port of version 3.1 LAPACK test routine DCHKGG Original DCHKGG created by Univ. of Tennessee, Univ.
      * of California Berkeley, and NAG Ltd., November, 2006
      * dchkgg checks the nonsymmetric generalized eigenvalue problem routines.
      *
@@ -4293,7 +4306,7 @@ loop1:           {
 
     /**
      * This is a port of the porions of LAPACK version 3.1 test routine DCHKST used to test the symmetric eigenvalue
-     * routines dsytrd, dorgtr, dsteqr, dsterf, and dsteqr. Orginal DCHKST created by Univ. of Tennessee, Univ. of
+     * routines dsytrd, dorgtr, dsteqr, dsterf, and dsteqr. Original DCHKST created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2006
      *
      * <p>dsytrd factors A as U S U', where ' means transpose, S is symmetric diagonal, and U is orthogonal. dsytrd can
@@ -5114,7 +5127,7 @@ loop1:           {
     } // ddot
 
     /**
-     * This is a port of version 3.1 LAPACK test routine DDRGEV Orginal DDRGEV created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.1 LAPACK test routine DDRGEV Original DDRGEV created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2007 
      * ddrgev checks the nonsymmetric generalized eigenvalue problem driver routine dggev.
      *
@@ -6405,7 +6418,7 @@ loop1:           {
     } // ddrvsg
 
     /**
-     * This is a port of the part of version 3.1 LAPACK test routine DDRVST used to test dsyev. Orginal DDRVST created
+     * This is a port of the part of version 3.1 LAPACK test routine DDRVST used to test dsyev. Original DDRVST created
      * by Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd., November, 2006
      * ddrvst checks the symmetric eigenvalue problem driver dsyev. dsyev computes all eigenvalues and, optionally,
      * eigenvectors of a real symmetric matrix.
@@ -7368,7 +7381,7 @@ loop1:               {
     } // dgemv
 
     /**
-     * This is a port of the version 3.1 LAPACK routine DGEQR2 Orginal DGEQR2 created by Univ. of Tennessee, Univ. of
+     * This is a port of the version 3.1 LAPACK routine DGEQR2 Original DGEQR2 created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd. November, 2006 dgeqr2 computes a QR factorization of a real m by n matrix A: A = Q
      * * R
      *
@@ -7474,7 +7487,7 @@ loop1:               {
     } // dgeqr2
 
     /**
-     * This is a port of version 3.1 LAPACK routine DGEQRF Orginal DGEQRF created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.1 LAPACK routine DGEQRF Original DGEQRF created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., Noovember, 2006 dgeqrf computes a QR factorization of a real m by n matrix A:
      * A = Q * R.
      *
@@ -7798,13 +7811,16 @@ loop1:               {
     } // dger
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DGET51 Orginal DGET51 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, March 31, 1993
+     * This is a port of version 3.1 LAPACK test routine DGET51 Original DGET51 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dget51 generally checks a decomposition of the form A = U B V' where ' means transpose and U and V are
-     * orthogonal. Specifically, if itype = 1 result = | A - U B V' | / ( |A| n ulp ) If itype = 2, then: result = | A -
-     * B | / ( |A| n ulp ) If itype = 3, then: result = | I - UU' | / ( n ulp )
+     * orthogonal. Specifically, if itype = 1 result = | A - U B V' | / ( |A| n ulp ) If itype = 2, then:
+     * result = | A - B | / ( |A| n ulp ) If itype = 3, then: result = | I - UU' | / ( n ulp )
      *
      * @param  itype   input int Specifies the type of tests to be performed.
+     *         = 1: result = | A - U B V' | / ( |A| n ulp )
+     *         = 2: result = | A - B | / ( |A| n ulp )
+     *         = 3: result = | I - UU' | / ( n ulp )
      * @param  n       input int The size of the matrix. If it is zero, dget51 does nothing. It must be at least zero.
      * @param  A       (input) double[][] of dimension (lda, n) The original (unfactored) matrix.
      * @param  lda     (input) int The leading dimension fo A. It must be at least 1 and at least n.
@@ -7905,29 +7921,37 @@ loop1:               {
     } // dget51
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DGET52 Orginal DGET52 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of version 3.1 LAPACK test routine DGET52 Original DGET52 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dget52 does an eigenvector check for the generalized eigenvalue problem.
      *
-     * <p>The basic test for right eigenvectors is: | b[j] A E[j] - a[j] B E[j] | result[0] = max
-     * ------------------------------- j n ulp max( |b[j] A|, |a[j] B| using the 1-norm. Here a[j]/b[j] = w is the
-     * (j+1)-th generalized eigenvalue of A - w B, or, equivalently, b[j]/a[j] = m is the (j+1)-st generalized
-     * eigenvalue of m A - B.</p>
+     * <p>The basic test for right eigenvectors is:   | b[j] A E[j] - a[j] B E[j] |
+     *                              result[0] = max   -------------------------------
+     *                                           j    n ulp max( |b[j] A|, |a[j] B|
+     * using the 1-norm. Here a[j]/b[j] = w is the (j+1)-th generalized eigenvalue of A - w B, or, equivalently,
+     * b[j]/a[j] = m is the (j+1)-st generalized eigenvalue of m A - B.</p>
      *
      * <p>For real eigenvalues, the test is straightforward. For complex eigenvalues, E[j] and a[j] are complex,
-     * represented by Er[j] + i*Ei[j] and ar[j] + i*ai[j], respectively, so the test for that eigenvector becomes max(
-     * |Wr|, |Wi| ) ---------------------------------------------- n ulp max( |b[j] A|, (|ar[j]| + |ai[j]|) |B| ) where
-     * Wr = b[j] A Er[j] - ar[j] B Er[j] + ai[j] B Ei[j] Wi = b[j] A Ei[j] - ai[j] B Er[j] - ar[j] B Ei[j] T T _ For
-     * left eigenvectors, A , B , a, and b are used.</p>
+     * represented by Er[j] + i*Ei[j] and ar[j] + i*ai[j], respectively, so the test for that eigenvector becomes
+     *                             max(|Wr|, |Wi| )
+     *               ---------------------------------------------- 
+     *               n ulp max( |b[j] A|, (|ar[j]| + |ai[j]|) |B| )
+     * where
+     *                       Wr = b[j] A Er[j] - ar[j] B Er[j] + ai[j] B Ei[j]
+     *                       Wi = b[j] A Ei[j] - ai[j] B Er[j] - ar[j] B Ei[j]
+     *                                                    T   T  _ 
+     *                            For left eigenvectors, A , B , a, and b are used.</p>
      *
      * <p>dget52 also tests the normalization of E. Each eigenvector is supposed to be normalized so that the maximum
      * "absolute value" of its elements is 1, where in this case, "absolute value" of a complex value x is |Re(x)| +
      * |Im(x)|; let us call this maximum "absolute value" norm of a vector v M(v). If a[j] = b[j] = 0, then the
-     * eigenvector is set to be the (j+1)-st coordinate vector. The normalization test is: result[1] = max | M(v[j]) - 1
-     * | / (n ulp) eigenvectors v[j]</p>
+     * eigenvector is set to be the (j+1)-st coordinate vector. The normalization test is:
+     *                                       result[1] = max          | M(v[j]) - 1| / (n ulp)
+     *                                              eigenvectors v[j]</p>
      *
-     * @param  left    input boolean = true: The eigenvectors in the columns of E are assumed to be*left* eigenvectors.
-     *                 = false: The eigenvectors in the columns of E are assumed to be*right* eigenvectors.
+     * @param  left    input boolean 
+     *         = true: The eigenvectors in the columns of E are assumed to be*left* eigenvectors.
+     *         = false: The eigenvectors in the columns of E are assumed to be*right* eigenvectors.
      * @param  n       input int The size of the matrices. If it is zero, dget52 does nothing. It must be at least zero.
      * @param  A       input double[][] of dimension (lda, n) The matrix A.
      * @param  lda     input int The leading dimension of A. It must be at least 1 and at least n.
@@ -8188,7 +8212,7 @@ loop1:               {
     } // dget52
 
     /**
-     * This is a port of version 3.1 LAPACK routine DGGBAK Orginal DGGBAK created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.1 LAPACK routine DGGBAK Original DGGBAK created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2006 dggbak forms the right or left eigenvectors of a real
      * generalized eigenvalue problem A*x = lambda*B*x, by backward transformation on the computed eigenvectors of the
      * balanced pair of matrices output by dggbal.
@@ -8409,7 +8433,7 @@ loop1:               {
     } // dggbak
 
     /**
-     * This is a port of the version 3.1 LAPACK routine DGGBAL Orginal DGGBAL created by Univ. of Tennessee, Univ. of
+     * This is a port of the version 3.1 LAPACK routine DGGBAL Original DGGBAL created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2006 dggbal balances a pair of general real matrices (A,B). This
      * involves, first, permuting A and B by similarity transformations to isolate eigenvalues in the first 1 to ilo-1
      * and last ihi+1 to n elements on the diagonal; and second, applying a diagonal similarity transformation to rows
@@ -9015,7 +9039,7 @@ loop9:
     } // dggbal
 
     /**
-     * This is a port of version 3.1 LAPACK routine DGGHRD Orginal DGGHRD created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.1 LAPACK routine DGGHRD Original DGGHRD created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2006 dgghrd reduces a pair of real matrices (A,B) to generalized
      * upper Hessenberg form using orthogonal transformations, where A is a general matrix and B is upper triangular.
      * The form of the generalized eigenvalue problem is A*x = lambda*B*x and B is typically made upper triangular by
@@ -9278,7 +9302,7 @@ loop9:
     } // dgghrd
 
     /**
-     * This is a port of version 3.1 LAPACK routine DHGEQZ Orginal DHGEQZ created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.1 LAPACK routine DHGEQZ Original DHGEQZ created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2006 dhgeqz computes the eigenvalues of a real matrix pair (H,T),
      * where H is an upper Hessenberg matrix and T is upper triangular, using the double-shift QZ method. Matrix pairs
      * of this type are produced by the reduction to generalized upper Hessenberg form of a real matrix pair (A, B); A =
@@ -10814,7 +10838,7 @@ loop3:                       {
     } // dhgeqz
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLABAD Orginal DLABAD created by Univ. of Tennessee,
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLABAD Original DLABAD created by Univ. of Tennessee,
      * Univ. of California Berkeley,  and NAG Ltd., November, 2006
      * dlabad takes as input the values computed by dlamch for underflow and overflow, and returns the square root
      * of each of these values if the log of large is sufficiently big. This routine is intended to identify machines
@@ -10840,7 +10864,7 @@ loop3:                       {
     } // dlabad
 
     /**
-     * This is a port of LAPACK version 3.1 auxiliary routine DLACPY. Orginal DLACPY created by Univ. of Tennessee,
+     * This is a port of LAPACK version 3.1 auxiliary routine DLACPY. Original DLACPY created by Univ. of Tennessee,
      * Univ. of California Berkeley, and NAG Ltd., November, 2006
      * dlacpy copies all or part of a two-dimensional matrix A to another matrix B.
      *
@@ -10889,7 +10913,7 @@ loop3:                       {
     } // dlacpy
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLADIV Orginal DLADIV created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.1 LAPACK auxiliary routine DLADIV Original DLADIV created by Univ. of Tennessee, Univ.
      * of California Berkeley, and NAG Ltd., November, 2006
      * dladiv performs complex division in real arithmetic p + i*q = (a + i*b) / (c + i*d) The algorithm is due to
      * Robert L. Smith and can be found in D. Knuth, The Art of Computer Programming, Vol. 2, p.195.
@@ -10921,7 +10945,7 @@ loop3:                       {
     } // dladiv
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLAE2 Orginal DLAE2 created by Univ. of Tennessee,
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLAE2 Original DLAE2 created by Univ. of Tennessee,
      * Univ. of California Berkeley, and NAG Ltd., November, 2006
      * dlae2 computes the eigenvalues of a 2-by-2 symmetric matrix
      *       [ A B ]
@@ -10995,7 +11019,7 @@ loop3:                       {
     } // dlae2
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLAEV2 Orginal DLAEV2 created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.1 LAPACK auxiliary routine DLAEV2 Original DLAEV2 created by Univ. of Tennessee, Univ.
      * of California Berkeley, and NAG Ltd., November, 2006
      * dlaev2 computes the eigendecomposition of a 2-by-2 symmetric matrix
      *  [ a b ]
@@ -11117,7 +11141,7 @@ loop3:                       {
     } // dlaev2
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary test routine DLAFTS Orginal DLAFTS created by Univ. of
+     * This is a port of the version 3.1 LAPACK auxiliary test routine DLAFTS Original DLAFTS created by Univ. of
      * Tennessee, Univ. of California Berkeley, and NAG Ltd., November, 2006
      * dlafts tests the result vector against the threshold value to see which tests for this matrix type
      * failed to pass the threshold.
@@ -11188,7 +11212,7 @@ loop3:                       {
     } // dlafts
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLAG2 Orginal DLAG2 created by Univ. of Tennessee,
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLAG2 Original DLAG2 created by Univ. of Tennessee,
      * Univ. of California Berkeley, and NAG Ltd., November, 2006
      * dlag2 computes eigenvalues of a 2 x 2 generalized eigenvalue problem A - w B, with scaling as necessary to
      * avoid over-/underflow.
@@ -11485,9 +11509,9 @@ loop3:                       {
     } // dlag2
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLAGGE Orginal DLAGGE created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
-     * 29, 1992 dlagge generates a real general m by n matrix A, by pre- and post- multiplying a real diagonal matrix D
+     * This is a port of version 3.1 LAPACK auxiliary test routine DLAGGE Original DLAGGE created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlagge generates a real general m by n matrix A, by pre- and post- multiplying a real diagonal matrix D
      * with random orthogonal matrices: A = U*D*V. The lower and upper bandwidths may then be reduced to kl and ku by
      * additional orthogonal transformations.
      *
@@ -11501,7 +11525,9 @@ loop3:                       {
      * @param  iseed  input/output int[] of dimension 4 On entry, the seed of the random number generator; the array
      *                elements must be between 0 and 4095, and iseed[3] must be odd. On exit, the seed is updated.
      * @param  work   workspace double[] of dimension (m+n)
-     * @param  info   output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
+     * @param  info   output int[] 
+     *         = 0: successful exit 
+     *         < 0: If info = -i, the i-th argument had an illegal value
      */
     private void dlagge(int m, int n, int kl, int ku, double[] D, double[][] A, int lda, int[] iseed, double[] work,
                         int[] info) {
@@ -11795,7 +11821,7 @@ loop3:                       {
                 // annihilate superdiagonal elements first (necessary if ku = 0)
                 if (i <= Math.min(n - 1 - ku, m)) {
 
-                    // generate reflection to annihilate A(i-1:ku+i:n-1)
+                    // generate reflection to annihilate A(i-1,ku+i:n-1)
                     x = new double[n - ku - i + 1];
 
                     for (j = 0; j < (n - ku - i + 1); j++) {
@@ -11925,9 +11951,9 @@ loop3:                       {
     } // dlagge
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine dlagsy Orginal DLAGSY created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
-     * 29, 1992 dlagsy generates a real symmetric matrix A, by pre- and post- multiplying a real diagonal matrix D with
+     * This is a port of version 3.1 LAPACK auxiliary test routine dlagsy Original DLAGSY created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlagsy generates a real symmetric matrix A, by pre- and post- multiplying a real diagonal matrix D with
      * a random orthogonal matrix: A = U*D*U'. The semi-bandwidth may then be reduced to k by additional orthogonal
      * transformations.
      *
@@ -11940,7 +11966,9 @@ loop3:                       {
      * @param  iseed  input/output int[] of dimension 4 On entry, the seed of the random number generator; the array
      *                elements must be between 0 and 4095, and iseed[3] must be odd. On exit, the seed is updated.
      * @param  work   workspace double[] of dimension (2*n)
-     * @param  info   output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value
+     * @param  info   output int[] 
+     *         = 0: successful exit 
+     *         < 0: If info[0] = -i, the i-th argument had an illegal value
      */
     private void dlagsy(int n, int k, double[] D, double[][] A, int lda, int[] iseed, double[] work, int[] info) {
         int i;
@@ -12149,9 +12177,9 @@ loop3:                       {
     } // dlagsy
 
     /**
-     * Port of some code contained in the version 2.0 LAPACK auxiliary test routine DLAHD2 Orginal DLAHD2 created by
-     * Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice
-     * University, September 30, 1994 dlahd2 prints header information for the different test paths
+     * Port of some code contained in the version 2.0 LAPACK auxiliary test routine DLAHD2 Original DLAHD2 created by
+     * Univ. of Tennessee, Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlahd2 prints header information for the different test paths
      *
      * @param  path  String Name of the path for which the header information is to be printed. DSG real symmetric
      *               generalized eigenvalue problem
@@ -12204,7 +12232,7 @@ loop3:                       {
     } // dlahd2
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLALN2 Orginal DLALN2 created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.1 LAPACK auxiliary routine DLALN2 Original DLALN2 created by Univ. of Tennessee, Univ.
      * of California Berkeley, and NAG Ltd., November, 2006
      * dlaln2 solves a system of the form (ca A - w D) X = s B or (ca A' - w D) X = s B with possible scaling ("s") and
      * perturbation of A. (A' means A-transpose.)
@@ -12670,7 +12698,7 @@ loop3:                       {
     } // dlaln2
 
     /**
-     * Port of version 3.0 LAPACK auxiliary routine DLAMC1 Orginal DLAMC1 created by Univ. of Tennessee, Univ. of
+     * Port of version 3.0 LAPACK auxiliary routine DLAMC1 Original DLAMC1 created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dlamc1 determines the machine parameters given by beta, t, rnd, and ieee1.
      *
@@ -12792,7 +12820,7 @@ loop3:                       {
     } // dlamc1
 
     /**
-     * Port of LAPACK version 3.0 auxiliary routine DLAMC2 Orginal DLAMC2 created by Univ. of Tennessee, Univ. of
+     * Port of LAPACK version 3.0 auxiliary routine DLAMC2 Original DLAMC2 created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * Determines machine parameters 3 globals are determined: 1.) eps double The smallest positive number such that
      * computed value(1.0 - eps) < 1.0 2.) rmin double The smallest normalized number for the machine, given by
@@ -12987,7 +13015,7 @@ loop3:                       {
     } // dlamc2
 
     /**
-     * This is a port of the LAPACK version 3.0 auxiliary routine DLAMC3 Orginal DLAMC3 created by Univ. of Tennessee,
+     * This is a port of the LAPACK version 3.0 auxiliary routine DLAMC3 Original DLAMC3 created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
      * 1992 dlamc3 is intended to force a and b to be stored prior to doing the addition of a and b, for use in
      * situations where optimizers might hold one of these in a register
@@ -13004,7 +13032,7 @@ loop3:                       {
     }
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLAMC4 Orginal DLAMC4 created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLAMC4 Original DLAMC4 created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dlamc4 is a service routine for dlamc2
      *
@@ -13061,7 +13089,7 @@ loop3:                       {
     }
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLAMC5 Orginal DLAMC5 created by Univ. of Tennessee,
+     * This is a port of the version 3.0 LAPACK auxiliary routine DLAMC5 Original DLAMC5 created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
      * 1992 dlamc5 attempts to compute rmax, the largest machine floating-point number, without overflow. If assumes
      * that emax + abs(emin) sum approximately to a power of 2. It will fail on machines where this assumption does not
@@ -13185,7 +13213,7 @@ loop3:                       {
     }
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLAMCH Orginal DLAMCH created by Univ. of Tennessee,
+     * This is a port of the version 3.0 LAPACK auxiliary routine DLAMCH Original DLAMCH created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
      * 1992 dlamch determines double precision machine parameters.
      *
@@ -13264,7 +13292,7 @@ loop3:                       {
     } // dlamch
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLANGB Orginal DLANGB created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLANGB Original DLANGB created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dlangb returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of largest
      * absolute value of an n by n band matrix A, with k1 sub-diagonals and ku super-diagonals.
@@ -13371,7 +13399,7 @@ loop3:                       {
     }
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLANGE Orginal DLANGE created by Univ. of Tennessee,
+     * This is a port of the version 3.0 LAPACK auxiliary routine DLANGE Original DLANGE created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
      * 1992 dlange returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of the
      * largest absolute value of a real matrix A.
@@ -13470,7 +13498,7 @@ loop3:                       {
     } // dlange
 
     /**
-     * This is a port the the version 3.0 LAPACK auxiliary routine DLANHS Orginal DLANHS created by Univ. of Tennessee,
+     * This is a port the the version 3.0 LAPACK auxiliary routine DLANHS Original DLANHS created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
      * 1992 dlanhs returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
      * largest absolute value of a Hessenberg matrix A.
@@ -13568,7 +13596,7 @@ loop3:                       {
     } // dlanhs
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLANSB Orginal DLANSB created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLANSB Original DLANSB created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dlansb retruns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of largest
      * absolute value of an n by n symmetric band matrix A, with k super-diagonals.
@@ -13729,7 +13757,7 @@ loop3:                       {
     } // dlansb
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLANSP Orginal DLANSP created by Univ. of Tennessee,
+     * This is a port of the version 3.0 LAPACK auxiliary routine DLANSP Original DLANSP created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
      * 1992 dlansp returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
      * largest absolute value of a real symmetric matrix A, supplied in packed form.
@@ -13908,7 +13936,7 @@ loop3:                       {
     } // dlansp
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLANST Orginal DLANST created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLANST Original DLANST created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dlanst returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of the
      * largest absolute value of a real symmetric tridiagonal matrix A
@@ -13975,7 +14003,7 @@ loop3:                       {
     } // dlanst
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLANSY. Orginal DLANSY created by Univ. of Tennessee,
+     * This is a port of the version 3.0 LAPACK auxiliary routine DLANSY. Original DLANSY created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
      * 1992 dlansy returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
      * largest absolute value of a real symmetric matrix A.
@@ -14123,7 +14151,7 @@ loop3:                       {
     } // dlansy
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLAPY2 Orginal DLAPY2 created by Univ. of Tennessee,
+     * This is a port of the version 3.0 LAPACK auxiliary routine DLAPY2 Original DLAPY2 created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
      * 1992 dlapy2 returns sqrt(x**2 + y**2), taking care not to cause unnecessary overflow.
      *
@@ -14154,7 +14182,7 @@ loop3:                       {
     } // dlapy2
 
     /**
-     * dlapy3 is a port of hte version 3.0 LAPLACK auxiliary routine DLAPY3 Orginal DLAPY3 created by Univ. of
+     * dlapy3 is a port of hte version 3.0 LAPLACK auxiliary routine DLAPY3 Original DLAPY3 created by Univ. of
      * Tennessee, Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University,
      * October 31, 1992 dlapy3 returns sqrt(x**2+y**2+z**2), taking care not to cause unnecessary overflow.
      *
@@ -14190,7 +14218,7 @@ loop3:                       {
     } // dlapy3
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARAN Orginal DLAAN created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLARAN Original DLAAN created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dlaran returns a random real number from a uniform (0,1) distribution This routine uses a multiplicative
      * congruential method with modulus 2**48 and multiplier 33952834046453 (see G. S. Fishman, "Multiplicative
@@ -14241,7 +14269,7 @@ loop3:                       {
     } // dlaran
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLARF Orginal DLARF created by Univ. of Tennessee,
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLARF Original DLARF created by Univ. of Tennessee,
      * Univ. of California Berkeley, and NAG Ltd., November, 2006 dlarf applies a real elementary reflector H to a real
      * m by n matrix C, from either the left or right. H is represented in the form H = I - tau * v * v' where tau is a
      * real scalar and v is a real vector If tau = 0, then H is taken to be the unit matrix.
@@ -14290,7 +14318,7 @@ loop3:                       {
     } // dlarf
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARFB Orginal DLARFB created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLARFB Original DLARFB created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dlarfb applies a real block reflector H or its transpose H' to a real m by n matrix C, from either the left or
      * the right.
@@ -14953,7 +14981,7 @@ loop3:                       {
     } // dlarfb
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLARFG Orginal DLARFG created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.1 LAPACK auxiliary routine DLARFG Original DLARFG created by Univ. of Tennessee, Univ.
      * of California Berkeley, and NAG Ltd., November, 2006 dlarfg generates a real elementary reflector H of order n,
      * such that H * (alpha) = (beta), H' * H = I. ( x ) ( 0 ) where alpha and beta are scalars, and x is an
      * (n-1)-element real vector. H is represented in the form H = I - tau * (1) * (1 v'), (v) where tau is a real
@@ -15041,7 +15069,7 @@ loop3:                       {
     } // dlarfg
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLARFT Orginal DLARFT created by Univ. of Tennessee,
+     * This is a port of the version 3.0 LAPACK auxiliary routine DLARFT Original DLARFT created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
      * 29, 1992 dlarft forms the triangular factor T of a real block reflector H of order n, which is defined as the
      * product of k elementary reflectors. If direct = 'F', H = H[0] H[1] ... H[k-1] and T is upper triangular. If
@@ -15300,7 +15328,7 @@ loop3:                       {
     } // dlarft
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLARFY Orginal DLARFY created by Univ. of Tennessee,
+     * This is a port of version 3.0 LAPACK auxiliary test routine DLARFY Original DLARFY created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
      * 29, 1992 dlarfy applies an elementary reflector, or Householder matrix, H, to an n by n symmetric matrix C, from
      * both the left and the right. H is represented in the form H = I - tau * v * v' where tau is a scalar and v is a
@@ -15336,7 +15364,7 @@ loop3:                       {
     } // dlarfy
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARND Orginal DLARND created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLARND Original DLARND created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30,
      * 1994 dlarnd returns a random real number from a uniform or normal distribution. This routine calls the auxiliary
      * routine dlaran to generate a random real number from a uniform (0,1) distribution. The Box-Muller method is used
@@ -15376,7 +15404,7 @@ loop3:                       {
     } // dlarnd
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARNV Orginal DLARNV created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLARNV Original DLARNV created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30,
      * 1994 dlarnv returns a vector of n random real numbers from a uniform or normal distribution
      *
@@ -15439,7 +15467,7 @@ loop3:                       {
     } // dlarnv
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLAROT Orginal DLAROT created by Univ. of Tennessee,
+     * This is a port of version 3.0 LAPACK auxiliary test routine DLAROT Original DLAROT created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
      * 29, 1992 dlarot applies a (Givens) rotation to two adjacent rows or columns, where one element of the first
      * and/or last column/row may be a separate variable. This is specifically intended for use on matrices stored in
@@ -15614,7 +15642,7 @@ loop3:                       {
     } // dlarot
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARTG Orginal DLARTG created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLARTG Original DLARTG created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30,
      * 1994 dlartg generates a plane rotation so that [ cs sn ] . [ f ] = [ r ] where cs*cs + sn*sn = 1. [ -sn cs ] [ g
      * ] [ 0 ] If g = 0, then cs = 1 and sn = 0. If f = 0 and g != 0, then cs = 0 and sn = 1. If f exceeds g in
@@ -15708,7 +15736,7 @@ loop3:                       {
     } // dlartg
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARUV Orginal DLARUV created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLARUV Original DLARUV created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dlaruv returns a vector of n random real numbers from a uniform (0,1) distribution (n <= 128). This is an
      * auxiliary routine called by dlarnv.
@@ -16288,7 +16316,7 @@ loop3:                       {
     } // dlaruv
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLASCL Orginal DLASCL created by Univ. of Tennessee,
+     * This is a port of the version 3.0 LAPACK auxiliary routine DLASCL Original DLASCL created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
      * 29, 1992 dlascl multiplies the m by n real matrix A by the real scalar cto/cfrom. This is done without
      * over/underflow as long as the final result cto*A[i][j]/cfrom does not over/underflow. type specifies that A may
@@ -16496,7 +16524,7 @@ loop3:                       {
     } // dlascl
 
     /**
-     * This is a port of version 3.0 auxiliary routine DLASET. Orginal DLASET created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 auxiliary routine DLASET. Original DLASET created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dlaset initializes an m-by-n matrix A to beta on the diagonal and alpha on the offdiagonals.
      *
@@ -16559,7 +16587,7 @@ loop3:                       {
     } // dlaset
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLASR Orginal DLASR created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLASR Original DLASR created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dlasr performs the transformation A = p*A, when side = 'L' or 'l' (Left-hand side) A = A*p', when side = 'R' or
      * 'r' (right-hand side) where A is an m by n real matrix and p is an orthogonal matrix, consisting of a sequence of
@@ -16849,7 +16877,7 @@ loop3:                       {
     } // dlasr
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLASRT Orginal DLASRT created by Univ. of Tennessee,
+     * This is a port of the version 3.0 LAPACK auxiliary routine DLASRT Original DLASRT created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
      * 30, 1994 dlasrt sorts the numbers in d in increasing order if id == 'I' or in decreasing order if id == 'D'. Use
      * quick sort, reverting to insertion sort on arrays of size <= 20. Dimension of stack limits n to about 2**32.
@@ -17083,7 +17111,7 @@ loop4:
     } // dlasrt
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLASSQ Orginal DLASSQ created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLASSQ Original DLASSQ created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999
      * dlassq returns the values scl and smsq such that (scl**2)*smsq = x[0]**2 + x[incx]**2 + ... + x[(n-1)*incx]**2 +
      * (scale**2)*sumsq The value of sumsq is assumed to be non-negative and scl returns the value scl =
@@ -17128,7 +17156,7 @@ loop4:
     } // dlassq
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLASV2 Orginal DLASV2 created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLASV2 Original DLASV2 created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dlasv2 comnputes the singular value decomposition of a 2-by-2 triangular matrix [ f g ] [ 0 h ]. On return,
      * abs(ssmax[0]) is the larger singular value, abs(ssmin[0]) is the smaller singular value, and (csl[0],snl[0]) and
@@ -17401,7 +17429,7 @@ loop4:
     } // dlasv2
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLATM1 Orginal DLATM1 created by Univ. of Tennessee,
+     * This is a port of version 3.0 LAPACK auxiliary test routine DLATM1 Original DLATM1 created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
      * 30, 1994 dlatm1 computes the entries of D[0...n-1] as specified by mode, cond, and irsign. idist and iseed
      * determine the generation of random numbers. dlatm1 is called by dlatmr to generate random test matrices for
@@ -17561,7 +17589,7 @@ loop4:
     } // dlatm1
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLATM2 Orginal DLATM2 created by Univ. of Tennessee,
+     * This is a port of version 3.0 LAPACK auxiliary test routine DLATM2 Original DLATM2 created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
      * 29, 1992 dlatm2 returns the (i,j) entry of a random matrix of dimension (m,n) described by the other parameters.
      * It is called by the dlatmr routine in order to build random test matrices. No error checking on parameters is
@@ -17682,7 +17710,7 @@ loop4:
     } // dlatm2
 
     /**
-     * This is the port of the version 3.0 LAPACK auxiliary test routine DLATM3 Orginal DLATM3 created by Univ. of
+     * This is the port of the version 3.0 LAPACK auxiliary test routine DLATM3 Original DLATM3 created by Univ. of
      * Tennessee, Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University,
      * February 29, 1992 dlatm3 returns the (isub, jsub) entry of a random matrix of dimension (m,n) described by the
      * other parameters. (isub, jsub) is the final position of the (i,j) entry after pivoting according to ipvtng and
@@ -17809,7 +17837,7 @@ loop4:
     } // dlatm3
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLATM4 Orginal DLATM4 created by Univ. of Tennessee,
+     * This is a port of version 3.0 LAPACK auxiliary test routine DLATM4 Original DLATM4 created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
      * 30, 1994 dlatm4 generates basic square matrices, which may later be multiplied by others in order to produce test
      * matrices. It is intended mainly to be used to test the generalized eigenvalue routines.
@@ -18115,7 +18143,7 @@ loop4:
 
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DLATMR Orginal DLATMR created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK test routine DLATMR Original DLATMR created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dlatmr generates random matrices of various types for testing LAPACK programs. dlatmr operates by applying the
      * following sequence of operations: 1.) Generate a matrix A with random entries of distribution dist which is
@@ -19040,7 +19068,7 @@ loop4:
     } // dlatmr
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DLATMS Orginal DLATMS created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK test routine DLATMS Original DLATMS created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
      * dlatms generates random matrices with specified singular values (or symmetric/hermitian with specified
      * eigenvalues) for testing LAPACK programs.
@@ -20526,7 +20554,7 @@ loop4:
     } // dlatms
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLATRD Orginal DLATRD created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.0 LAPACK auxiliary routine DLATRD Original DLATRD created by Univ. of Tennessee, Univ.
      * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dlatrd reduces nb rows and columns of a real symmetric matrix A to symmetric tridiagonal form by an orthogonal
      * similarity transformation Q'*A*Q, and returns the matrices V and W which are needed to apply the transformation
@@ -21023,7 +21051,7 @@ loop4:
     } // dnrm2
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORG2L Orginal DORG2L created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK routine DORG2L Original DORG2L created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dorg2l generates an m by n matrix Q with orthonormal columns, which is defined as the last n columns of a product
      * of k elementary reflectors of order m Q = H[k-1] ... H[1] H[0] as returned by dgeqlf
@@ -21118,7 +21146,7 @@ loop4:
     } // dorg2l
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORG2R Orginal DORG2R created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK routine DORG2R Original DORG2R created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dorg2r generates an m by n real matrix Q with orthonormal columns, which is defined as the first n columns of a
      * product of k elementary reflectors of order m Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
@@ -21235,7 +21263,7 @@ loop4:
     } // dorg2r
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DORGQL Orginal DORGQL created by Univ. of Tennessee, Univ. of
+     * This is a port of the version 3.0 LAPACK routine DORGQL Original DORGQL created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dorgql
      * generates the m-by-n real matrix Q with orthonormal columns, which is defined as the last n columns of a product
      * of k elementary reflectors of order m Q = H[k-1] ... H[1] H[0] as returned by dgeqlf.
@@ -21447,7 +21475,7 @@ loop4:
     } // dorgql
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORGQR Orginal DORGQR created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK routine DORGQR Original DORGQR created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dorgqr
      * generates an m-by-n real matrix Q with orthonormal columns, which is defined as the first n columns of a product
      * of k elementary reflectors of order m Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
@@ -21704,7 +21732,7 @@ loop4:
     } // dorgqr
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORGTR Orginal DORGTR created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK routine DORGTR Original DORGTR created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dorgtr
      * generates a real orthogonal matrix Q which is defined as the product of n-1 elementary reflectors of order N, as
      * returned by dsytrd: If uplo = 'U', Q = H[n-2] ... H[1] H[0] If uplo = 'L', Q = H[0] H[1] ... H[n-2]
@@ -21863,7 +21891,7 @@ loop4:
     } // dorgtr
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DORM2L Orginal DORM2L created by Univ. of Tennessee, Univ. of
+     * This is a port of the version 3.0 LAPACK routine DORM2L Original DORM2L created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dorm2l overwrites the general real m by n matrix C with Q * C if side == 'L' and trans == 'N', or Q' * C if side
      * == 'L' and trans == 'T', or C * Q if side == 'R' and trans == 'N', or C * Q' if side == 'R' and trans == 'T'
@@ -22038,7 +22066,7 @@ loop4:
     } // dorm2l
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DORM2R Orginal DORM2R created by Univ. of Tennessee, Univ. of
+     * This is a port of the version 3.0 LAPACK routine DORM2R Original DORM2R created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dorm2r overwrites the general real m by n matrix C with Q * C if side = 'L' and trans = 'N' Q'* C if side = 'L'
      * and trans = 'T' C * Q if side = 'R' and trans = 'N' C * Q' if side = 'R' and trans = 'T' where Q is a real
@@ -22270,7 +22298,7 @@ loop4:
     } // dorm2r
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORMQR Orginal DORMQR created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK routine DORMQR Original DORMQR created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dormqr
      * overwrites the general real m by n matrix C with side = 'L' side = 'R' trans = 'N': Q * C C * Q trans = 'T': Q**T
      * * C C * Q**T where Q is a real orthogonal matrix defined as the product of k elementary reflectors Q = H(1) H(2)
@@ -22621,7 +22649,7 @@ loop4:
     } // dormqr
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DPOTF2 Orginal DPOTF2 created by Univ. of Tennessee, Univ. of
+     * This is a port of the version 3.0 LAPACK routine DPOTF2 Original DPOTF2 created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dpotf2 computes the Cholesky factorization of a real symmetric positive matrix A.
      *
@@ -22819,7 +22847,7 @@ loop4:
     } // dpotf2
 
     /**
-     * This is a port of the DPOTRF version 3.0 LAPACK routine Orginal DPOTRF created by Univ. of Tennessee, Univ. of
+     * This is a port of the DPOTRF version 3.0 LAPACK routine Original DPOTRF created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, March 31, 1993
      * dpotrf computes the Cholesky factorization of a real symmetric positive definite matrix A
      *
@@ -23231,7 +23259,7 @@ loop4:
     } // dscal
 
     /**
-     * This is a port of the version 3.1 LAPACK test routine DSGT01 Orginal DSGT01 created by Univ. of Tennessee, Univ.
+     * This is a port of the version 3.1 LAPACK test routine DSGT01 Original DSGT01 created by Univ. of Tennessee, Univ.
      * of California Berkeley, and NAG Ltd., November, 2006
      * dsgt01 checks a decomposition of the form A Z = B Z D or A B Z = Z D or B A Z = Z D where A is a symmetric
      * matrix, B is symmetric positive definite, Z is orthogonal, and D is diagonal. One of the following test ratios is
@@ -23357,7 +23385,7 @@ loop4:
     } // dsgt01
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DSTECH Orginal DSTECH created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK test routine DSTECH Original DSTECH created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University February 29, 1992 Let
      * T be the tridiagonal matrix with diagonal entries A[0] ,..., A[n-1] and offdiagonal entries B[0] ,..., B[n-2]).
      * dstech checks to see if eig[0], ..., eig[n-1] are indeed accurate eigenvalues of T. It does this by expanding
@@ -23498,7 +23526,7 @@ loop4:
     } // dstech
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DSTECT Orginal DSTECT created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK test routine DSTECT Original DSTECT created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * dstect counts the number num of eigenvalues of a tridiagonal matrix T which are less than or equal to shift. T
      * has diagonal entries A[0], ... , A[n-1], and offdiagonal entries B[0], ..., B[n-1]. See W. Kahan "Accurate
@@ -23608,7 +23636,7 @@ loop4:
     } // dstect
 
     /**
-     * This is a port of version 3.0 LAPACK routine DSTEQR Orginal DSTEQR created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK routine DSTEQR Original DSTEQR created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
      * dsteqr computes all eigenvalues and, optionally, eigenvectors of a symmetric tridiagonal matrix using the
      * implicit QL or QR method. The eigenvectors of a full or band symmetric matrix can also be found if dsytrd or
@@ -24340,7 +24368,7 @@ set11:                           {
     } // dsteqr
 
     /**
-     * This is a port of version 3.0 LAPACK routine DSTERF Orginal DSTERF created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK routine DSTERF Original DSTERF created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dsterf
      * computes all the eigenvalues of a symmetric tridiagonal matrix using the Pal-Walker-Kahan variant of the QL or QR
      * algorithm.
@@ -24812,7 +24840,7 @@ loop6:                   {
     } // dsterf
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DSTT21 Orginal DSTT21 created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK test routine DSTT21 Original DSTT21 created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
      * dstt21 checks a decomposition of the form A = U S U' where ' means transpose, A is symmetric tridiagonal, U is
      * orthogonal, and S is diagonal (if kband == 0) or symmetric tridagonal (if kband == 1). Two tests are performed:
@@ -24982,7 +25010,7 @@ loop6:                   {
     } // dstt21
 
     /**
-     * This is a port of the LAPACK version 3.0 DSYGS2 routine Orginal DSYGS2 created by Univ. of Tennessee, Univ. of
+     * This is a port of the LAPACK version 3.0 DSYGS2 routine Original DSYGS2 created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
      * DSYGS2 reduces a real symmetric-definite generalized eigenproblem to standard form.
      *
@@ -25297,7 +25325,7 @@ loop6:                   {
     } // dsygs2
 
     /**
-     * This routine is a port of the version 3.0 LAPACK routine DSYGST Orginal DSYGST created by Univ. of Tennessee,
+     * This routine is a port of the version 3.0 LAPACK routine DSYGST Original DSYGST created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
      * 30, 1994 dsygst reduces a real symmetric-definite generalized eigenproblem to standard form.
      *
@@ -27147,7 +27175,7 @@ loop6:                   {
     } // dsyrk
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DSYT21 Orginal DSYT21 created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK test routine DSYT21 Original DSYT21 created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
      * dsyt21 generally checks a decomposition of the form A = U S U' where ' means transpose, A is symmetric, U is
      * orthogonal, and S is diagonal (if kband == 0) or symmetric tridiagonal (if kband == 1).
@@ -27668,7 +27696,7 @@ loop6:                   {
     } // dsyt21
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DSYTD2 Orginal DSYTD2 created by Univ. of Tennessee, Univ. of
+     * This is a port of the version 3.0 LAPACK routine DSYTD2 Original DSYTD2 created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
      * dsytd2 reduces a real symmetric matrix A to symmetric tridiagonal form T by an orthogonal similarity
      * transformation: Q' * A * Q = T.
@@ -27892,7 +27920,7 @@ loop6:                   {
     } // dsytd2
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DSYTRD Orginal DSYTRD created by Univ. of Tennessee, Univ. of
+     * This is a port of the version 3.0 LAPACK routine DSYTRD Original DSYTRD created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dsytrd
      * reduces a real symmetric matrix A to a real symmetric tridiagonal form T by an orthogonal similarity
      * transformation. Q'*A*Q = T.
@@ -28207,7 +28235,7 @@ loop6:                   {
     } // dsytrd
 
     /**
-     * This is a port of version 3.0 LAPACK routine DTGEVC Orginal DTGEVC created by Univ. of Tennessee, Univ. of
+     * This is a port of version 3.0 LAPACK routine DTGEVC Original DTGEVC created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dtgevc
      * computes some or all of the right and/or left generalized eigenvectors of a pair of real upper triangular
      * matrices (A,B).
@@ -30634,7 +30662,7 @@ loop6:                   {
     }
 
     /**
-     * Version 3.0 auxiliary routine ported form LAPACK Orginal IEEECK created by Univ. of Tennessee, Univ. of
+     * Version 3.0 auxiliary routine ported form LAPACK Original IEEECK created by Univ. of Tennessee, Univ. of
      * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1998 ieeeck
      * is called form the ilaenv routine to verify that infinity and possibly NaN arithmetic is safe (i.e. will not
      * trap)
@@ -30753,7 +30781,7 @@ loop6:                   {
     } // ieeeck
 
     /**
-     * ilaenv is ported from the version 3.0 LAPACK auxiliary routine Orginal ILAENV created by Univ. of Tennessee,
+     * ilaenv is ported from the version 3.0 LAPACK auxiliary routine Original ILAENV created by Univ. of Tennessee,
      * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30,
      * 1999
      *
