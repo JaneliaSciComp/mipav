@@ -1055,6 +1055,7 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
+        /*
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
@@ -1064,7 +1065,7 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
         gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        erodePanel.add(textErode, gbc);
+        erodePanel.add(textErode, gbc); */
 
         image25D = new JCheckBox("Process image in 2.5D", false);
         image25D.setFont(serif12);
@@ -1095,10 +1096,14 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
         gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(maskPanelOpen, gbc);
 
-        /*
-         * gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2; gbc.weightx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; mainPanel.add(
-         * maskPanelClose, gbc );
-         */
+        
+         gbc.gridx = 0;
+         gbc.gridy = 1;
+         gbc.gridwidth = 2;
+         gbc.weightx = 1;
+         gbc.fill = GridBagConstraints.HORIZONTAL; mainPanel.add(
+         maskPanelClose, gbc );
+         
 
         gbc.gridx = 0;
         gbc.gridy = 1;
