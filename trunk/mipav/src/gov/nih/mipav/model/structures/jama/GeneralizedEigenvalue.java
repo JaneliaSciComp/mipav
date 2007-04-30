@@ -12698,17 +12698,22 @@ loop3:                       {
     } // dlaln2
 
     /**
-     * Port of version 3.0 LAPACK auxiliary routine DLAMC1 Original DLAMC1 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * Port of version 3.1 LAPACK auxiliary routine DLAMC1 Original DLAMC1 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dlamc1 determines the machine parameters given by beta, t, rnd, and ieee1.
      *
      * @param  beta   output int[] The base of the machine.
      * @param  t      output int[] The number of (beta) digits in the mantissa
-     * @param  rnd    output boolean[] Specifies whether rounding (rnd = true) or chopping (rnd = false) occurs in
+     * @param  rnd    output boolean[] Specifies whether proper rounding (rnd = true) or chopping (rnd = false) occurs in
      *                addition. This may not be a reliable guide to the way in which the machine performs its
      *                arithmetic.
      * @param  ieee1  output boolean[] Specifies whether rounding appears to be done in the IEEE 'round to nearest'
      *                style.
+     * This routine is based on the routine ENVRON by Malcolm and incorporates suggestions by Gentleman and Marovich. See
+     * Malcolm, M. A. (1972) Algorithms to reveal properties of floating-point arithmetic.  Comms. of the ACM, 15,
+     * pp. 949-951.
+     * Gentleman, W. M. and Marovich S. B. (1974) More on algorithms that reveal properties of floating point
+     * arithmetic units.  Comms. of the ACM, 17, pp. 276-277.
      */
     private void dlamc1(int[] beta, int[] t, boolean[] rnd, boolean[] ieee1) {
         boolean lieee1;
@@ -12820,8 +12825,8 @@ loop3:                       {
     } // dlamc1
 
     /**
-     * Port of LAPACK version 3.0 auxiliary routine DLAMC2 Original DLAMC2 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * Port of LAPACK version 3.1 auxiliary routine DLAMC2 Original DLAMC2 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, nad NAG Ltd., November, 2006
      * Determines machine parameters 3 globals are determined: 1.) eps double The smallest positive number such that
      * computed value(1.0 - eps) < 1.0 2.) rmin double The smallest normalized number for the machine, given by
      * base**(emin - 1), where base is the floating point value of beta. 3.) rmax double The largest positive number for
@@ -12833,6 +12838,7 @@ loop3:                       {
      *               addition. This may not be a reliable guide to the way in which the machine performs its arithmetic
      * @param  emin  output int[] The minimum exponent before (gradual) underflow occurs
      * @param  emax  output int[] The maximum exponent before overflow occurs
+     * The computation of EPS is based on a routine PARANOIA by W. Kahan of the University of California at Berkeley.
      */
     private void dlamc2(int[] beta, int[] t, boolean[] rnd, int[] emin, int[] emax) {
         boolean ieee;
@@ -13015,9 +13021,9 @@ loop3:                       {
     } // dlamc2
 
     /**
-     * This is a port of the LAPACK version 3.0 auxiliary routine DLAMC3 Original DLAMC3 created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlamc3 is intended to force a and b to be stored prior to doing the addition of a and b, for use in
+     * This is a port of the LAPACK version 3.1 auxiliary routine DLAMC3 Original DLAMC3 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlamc3 is intended to force a and b to be stored prior to doing the addition of a and b, for use in
      * situations where optimizers might hold one of these in a register
      *
      * @param   a  double
@@ -13032,8 +13038,8 @@ loop3:                       {
     }
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLAMC4 Original DLAMC4 created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLAMC4 Original DLAMC4 created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dlamc4 is a service routine for dlamc2
      *
      * @param  emin   output int[] The minimum exponent before (gradual) underflow, computed by setting a = start and
@@ -13089,9 +13095,9 @@ loop3:                       {
     }
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLAMC5 Original DLAMC5 created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlamc5 attempts to compute rmax, the largest machine floating-point number, without overflow. If assumes
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLAMC5 Original DLAMC5 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlamc5 attempts to compute rmax, the largest machine floating-point number, without overflow. It assumes
      * that emax + abs(emin) sum approximately to a power of 2. It will fail on machines where this assumption does not
      * hold, for example, the Cyber 205 (emin = -28625, emax = 28718). It will also fail if the value supplied for emin
      * is too large (i.e. too close to zero), probably with overflow
@@ -13213,18 +13219,21 @@ loop3:                       {
     }
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLAMCH Original DLAMCH created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlamch determines double precision machine parameters.
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLAMCH Original DLAMCH created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlamch determines double precision machine parameters.
      *
-     * @param   cmach  input char Specifies the value to be returned by dlamch = 'E' or 'e', returns eps, relative
-     *                 machine precision = 'S' or 's', returns sfmin, safe minimum, such that 1/sfmin does not overflow
-     *                 = 'B' or 'b', returns base, base of the machine = 'P' or 'p', returns prec = eps*base = 'N' or
-     *                 'n', returns t, number of (base) digits in the mantissa = 'R' or 'r', returns rnd = 1.0 when
-     *                 rounding occurs in addition, 0.0 otherwise = 'M' or 'm', returns emin, minimum exponent before
-     *                 (gradual) underflow = 'U' or 'u', returns rmin, underflow threshold = base**(emin-1) = 'L' or
-     *                 'l', emax, largest exponent before overflow = 'O' or 'o', rmax, overflow threshold =
-     *                 (base**emax)*(1-eps)
+     * @param   cmach  input char Specifies the value to be returned by dlamch
+     *                 = 'E' or 'e', returns eps, relative machine precision 
+     *                 = 'S' or 's', returns sfmin, safe minimum, such that 1/sfmin does not overflow
+     *                 = 'B' or 'b', returns base, base of the machine
+     *                 = 'P' or 'p', returns prec = eps*base
+     *                 = 'N' or 'n', returns t, number of (base) digits in the mantissa
+     *                 = 'R' or 'r', returns rnd = 1.0 when rounding occurs in addition, 0.0 otherwise 
+     *                 = 'M' or 'm', returns emin, minimum exponent before (gradual) underflow 
+     *                 = 'U' or 'u', returns rmin, underflow threshold = base**(emin-1)
+     *                 = 'L' or 'l', emax, largest exponent before overflow 
+     *                 = 'O' or 'o', rmax, overflow threshold = (base**emax)*(1-eps)
      *
      * @return  double
      */
@@ -13292,25 +13301,27 @@ loop3:                       {
     } // dlamch
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLANGB Original DLANGB created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLANGB Original DLANGB created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dlangb returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of largest
-     * absolute value of an n by n band matrix A, with k1 sub-diagonals and ku super-diagonals.
+     * absolute value of an n by n band matrix A, with kl sub-diagonals and ku super-diagonals.
      *
-     * @param   norm  input char Specifies the value to be returned as: = 'M' or 'm', returns max(abs(A[i][j])), which
-     *                is not a matrix norm. = '1', 'O', or 'o', returns norm1(A), where norm1 denotes the one norm of a
-     *                matrix (maximum column sum) = 'I' or 'i', returns normI(A), the infinity norm of a matrix (maximum
-     *                row sum) = 'F', 'f', 'E', or 'e', returns normF(A), the Frobenius norm of a matrix (square root of
-     *                sum of squares)
+     * @param   norm  input char Specifies the value to be returned as: 
+     *                = 'M' or 'm', returns max(abs(A[i][j])), which is not a matrix norm. 
+     *                = '1', 'O', or 'o', returns norm1(A), where norm1 denotes the one norm of a matrix
+     *                                   (maximum column sum) 
+     *                = 'I' or 'i', returns normI(A), the infinity norm of a matrix (maximum row sum) 
+     *                = 'F', 'f', 'E', or 'e', returns normF(A), the Frobenius norm of a matrix (square root of
+     *                                         sum of squares)
      * @param   n     input int The order of the matrix A. n >= 0. When n = 0, dlangb returns zero.
      * @param   kl    input int The number of sub-diagonals of the matrix A. kl >= 0.
      * @param   ku    input int The number of super-diagonals of the matrix A. ku >= 0.
-     * @param   ab    input double[][] of dimension (ldab,n) The band matrix A, stored in rows 1 to kl + ku + 1. The
+     * @param   ab    input double[][] of dimension (ldab,n) The band matrix A, stored in rows 0 to kl + ku. The
      *                j-th column of A is stored in the j-th column of the array ab as follows: ab[ku+1+i-j][j] =
      *                A[i][j] for max(0,j-ku) <= i <= min(n-1,j+kl)
      * @param   ldab  input int The leading dimension of the array ab. ldab >= kl + ku + 1
-     * @param   work  workspace double[] of dimension lwork, where lwork >= n when norm = 'I'; otherwise work is not
-     *                referenced.
+     * @param   work  workspace double[] of dimension max(1, lwork), where lwork >= n when norm = 'I';
+     *                otherwise work is notreferenced.
      *
      * @return  double
      */
@@ -13399,22 +13410,24 @@ loop3:                       {
     }
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLANGE Original DLANGE created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlange returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of the
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLANGE Original DLANGE created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlange returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of the
      * largest absolute value of a real matrix A.
      *
-     * @param   norm  input char Specifies the value to be returned from dlange as: = 'M' or 'm' returns
-     *                max(abs(A[i][j])). Note that this is not a matrix norm. = '1', 'O' or 'o' returns norm1(A), where
-     *                norm1 denotes the one norm of a matrix (maximum column sum) = 'I' or 'i' returns normI(A), where
-     *                normI denotes the infinity norm of a matrix (maximum row sum) = 'F', 'f', 'E', or 'e' returns
-     *                normF(A), where normF denotes the Frobenius norm of a matrix (square root of sum of squares).
+     * @param   norm  input char Specifies the value to be returned from dlange as:
+     *                = 'M' or 'm' returns max(abs(A[i][j])). Note that this is not a matrix norm. 
+     *                = '1', 'O' or 'o' returns norm1(A), where norm1 denotes the one norm of a matrix
+     *                                 (maximum column sum) 
+     *                = 'I' or 'i' returns normI(A), where normI denotes the infinity norm of a matrix (maximum row sum)
+     *                = 'F', 'f', 'E', or 'e' returns normF(A), where normF denotes the Frobenius norm of a matrix
+     *                                       (square root of sum of squares).
      * @param   m     input int The number of rows of the matrix A. m >= 0. When m = 0, dlange returns zero.
      * @param   n     input int The number of columns of the matrix A. n >= 0. When n = 0, dlange returns zero.
      * @param   A     input double[][] array of dimension (lda,n). Contains the m by n matrix A.
      * @param   lda   input int The leading dimension of the array A. lda >= max(1,m).
-     * @param   work  workspace double[] of dimension lwork, where lwork >= m when norm = 'I'; otherwise, work is not
-     *                referenced.
+     * @param   work  workspace double[] of dimension max(1, lwork), where lwork >= m when norm = 'I';
+     *                otherwise, work is not referenced.
      *
      * @return  double
      */
@@ -13498,21 +13511,22 @@ loop3:                       {
     } // dlange
 
     /**
-     * This is a port the the version 3.0 LAPACK auxiliary routine DLANHS Original DLANHS created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlanhs returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
+     * This is a port the the version 3.1 LAPACK auxiliary routine DLANHS Original DLANHS created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlanhs returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
      * largest absolute value of a Hessenberg matrix A.
      *
-     * @param   norm  norm char Specifies the value to be returned in dlanhs as: = 'M' or 'm', max(abs(A[i][j])), which
-     *                is not a matrix norm = '1', 'O', or 'o', norm1(A), the one norm of a matrix (maximum column sum) =
-     *                'I' or 'i', normI(A), the infinity norm of a matrix (maximum row sum) = 'F', 'f', 'E', or 'e',
-     *                normF(A), the Frobenius norm of a matrix (square root of sum of squares)
+     * @param   norm  norm char Specifies the value to be returned in dlanhs as: 
+     *                = 'M' or 'm', max(abs(A[i][j])), which is not a matrix norm 
+     *                = '1', 'O', or 'o', norm1(A), the one norm of a matrix (maximum column sum) 
+     *                = 'I' or 'i', normI(A), the infinity norm of a matrix (maximum row sum) 
+     *                = 'F', 'f', 'E', or 'e', normF(A), the Frobenius norm of a matrix (square root of sum of squares)
      * @param   n     input int The order of the matrix A. n >= 0. When n = 0, dlanhs returns 0.0.
      * @param   A     input double[][] of dimension (lda,n) The n by n upper Hessenberg matrix A; the part of A below
      *                the first subdiagonal is not referenced.
      * @param   lda   input int The leading dimension of the array A. lda >= max(n,1).
-     * @param   work  workspace double[] of dimension (lwork) where lwork >= n when norm = 'I'; otherwise, work is not
-     *                referenced.
+     * @param   work  workspace double[] of dimension max(1, lwork) where lwork >= n when norm = 'I';
+     *                otherwise, work is not referenced.
      *
      * @return  double
      */
@@ -13596,27 +13610,30 @@ loop3:                       {
     } // dlanhs
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLANSB Original DLANSB created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLANSB Original DLANSB created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dlansb retruns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of largest
      * absolute value of an n by n symmetric band matrix A, with k super-diagonals.
      *
-     * @param   norm  input char Specifies the value to be returned as: = 'M' or 'm', returns max(abs(A[i][j])), which
-     *                is not a matrix norm = '1', 'O', or 'o', returns norm1(A), the one norm of a matrix (maximum
-     *                column sum) = 'I' or 'i', returns normI(A), the inifinity norm of a matrix (maximum row sum) =
-     *                'F', 'f', 'E', or 'e', returns normF(A), the Frobenius norm of a matrix (square root of sum of
-     *                squares)
-     * @param   uplo  input char Specifies whether the upper or lower triangular part of the band matrix A is supplied =
-     *                'U': Upper triangular part is supplied. = 'L': Lower triangular part is supplied.
+     * @param   norm  input char Specifies the value to be returned as: 
+     *                = 'M' or 'm', returns max(abs(A[i][j])), which is not a matrix norm 
+     *                = '1', 'O', or 'o', returns norm1(A), the one norm of a matrix (maximum column sum) 
+     *                = 'I' or 'i', returns normI(A), the inifinity norm of a matrix (maximum row sum) 
+     *                = 'F', 'f', 'E', or 'e', returns normF(A), the Frobenius norm of a matrix
+     *                  (square root of sum of squares)
+     * @param   uplo  input char Specifies whether the upper or lower triangular part of the band matrix A is supplied 
+     *                = 'U': Upper triangular part is supplied. 
+     *                = 'L': Lower triangular part is supplied.
      * @param   n     input int The order of the matrix A. n >= 0. When n = 0, dlansb returns zero.
      * @param   k     input int The number of super-diagonals or sub-diagonals of the band matrix A. k >= 0.
-     * @param   ab    input double[][] of dimension (ldab,n) The upper of lower triangle of the symmetric band matrix A,
+     * @param   ab    input double[][] of dimension (ldab,n) The upper or lower triangle of the symmetric band matrix A,
      *                stored in the first k+1 rows of ab. The j-th column of A is stored in the j-th column of the array
-     *                ab as follows: If uplo = 'U', ab[k+1+i-j][j] = A[i][j] for max(0,j-k)<= i <= j If uplo = 'L',
-     *                ab[1+i-j][j] = A[i][j] for j <= i <= min(n-1,j+k)
+     *                ab as follows:
+     *                If uplo = 'U', ab[k+1+i-j][j] = A[i][j] for max(0,j-k) <= i <= j
+     *                If uplo = 'L', ab[1+i-j][j] = A[i][j] for j <= i <= min(n-1,j+k)
      * @param   ldab  input int The leading dimension of array ab. ldab >= k + 1.
-     * @param   work  workspace double[] of dimension lwork, where lwork >= n when norm = 'I' or '1' or 'O'; otherwise,
-     *                work is not referenced.
+     * @param   work  workspace double[] of dimension max(1, lwork), where lwork >= n when norm = 'I' or '1' or 'O';
+     *                otherwise, work is not referenced.
      *
      * @return  DOCUMENT ME!
      */
@@ -13757,26 +13774,28 @@ loop3:                       {
     } // dlansb
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLANSP Original DLANSP created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlansp returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLANSP Original DLANSP created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlansp returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
      * largest absolute value of a real symmetric matrix A, supplied in packed form.
      *
-     * @param   norm  input char Specifies the value to be returned as: = 'M' or 'm' , max(abs(A[i,j])) Note that this
-     *                is not a matrix norm. = '1', 'O', or 'o', norm1(A) where norm1 denotes the one norm of a matrix
-     *                (maximum column sum) = 'I' or 'i', normI(A) where normI denotes the infinity norm of a matrix
-     *                (maximum row sum) = 'F', 'f', 'E', or 'e', normF(A) where normF denotes the Frobenius norm of a
-     *                matrix (square root of sum of squares)
+     * @param   norm  input char Specifies the value to be returned as: 
+     *                = 'M' or 'm' , max(abs(A[i,j])) Note that this is not a matrix norm. 
+     *                = '1', 'O', or 'o', norm1(A) where norm1 denotes the one norm of a matrix (maximum column sum) 
+     *                = 'I' or 'i', normI(A) where normI denotes the infinity norm of a matrix (maximum row sum) 
+     *                = 'F', 'f', 'E', or 'e', normF(A) where normF denotes the Frobenius norm of a matrix 
+     *                  (square root of sum of squares)
      * @param   uplo  input char Specifies whether the upper or lower triangular part of the symmetric matrix A is
-     *                supplied. = 'U': Upper triangular part of A is supplied = 'L': Lower triangular part of A is
-     *                supplied
+     *                supplied. 
+     *                = 'U': Upper triangular part of A is supplied 
+     *                = 'L': Lower triangular part of A is supplied
      * @param   n     input int The order of the matrix A. n >= 0. When n = 0, dlansp is set to zero.
      * @param   ap    input double[] of dimension (n*(n+1)/2) The upper or lower triangle of the symmetric matrix A,
-     *                packed columnwise in a linear array. The j-th column of A is stored in the array AP as follows: If
-     *                uplo = 'U', ap[i + (j-1)*j/2] = A[i][j] for 0 <= i <= j If uplo = 'L', ap[i + (j-1)*(2n-j)/2] =
-     *                A[i][j] for j <= i <= n-1.
-     * @param   work  workspace double[] of dimension lwork, where lwork >= n when norm = 'I' or '1' or 'O'; otherwise
-     *                work is not referenced.
+     *                packed columnwise in a linear array. The j-th column of A is stored in the array AP as follows:
+     *                If uplo = 'U', ap[i + (j-1)*j/2] = A[i][j] for 0 <= i <= j
+     *                If uplo = 'L', ap[i + (j-1)*(2n-j)/2] = A[i][j] for j <= i <= n-1.
+     * @param   work  workspace double[] of dimension max(1, lwork), where lwork >= n when norm = 'I' or '1' or 'O';
+     *                otherwise work is not referenced.
      *
      * @return  double
      */
@@ -13936,16 +13955,18 @@ loop3:                       {
     } // dlansp
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLANST Original DLANST created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLANST Original DLANST created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dlanst returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of the
      * largest absolute value of a real symmetric tridiagonal matrix A
      *
-     * @param   norm  input char Specifies the value to be returned as: = 'M' or 'm', max(abs(A[i][j])). This is not a
-     *                matrix norm. = '1', 'O', or 'o', norm1(A), the one norm of a matrix (maximum column sum). = 'I' or
-     *                'i', normI(A), the infinity norm of a matrix (maximum row sum). = 'F', 'f', 'E', or 'e', normF(A),
-     *                the Frobenius norm of a matrix (square root of sum of squares).
-     * @param   n     input int The order of the matrix A. n >= 0. When n = 0, dlanst is set to zero.
+     * @param   norm  input char Specifies the value to be returned as: 
+     *                = 'M' or 'm', max(abs(A[i][j])). This is not a matrix norm. 
+     *                = '1', 'O', or 'o', norm1(A), the one norm of a matrix (maximum column sum). 
+     *                = 'I' or 'i', normI(A), the infinity norm of a matrix (maximum row sum).
+     *                = 'F', 'f', 'E', or 'e', normF(A), the Frobenius norm of a matrix 
+     *                (square root of sum of squares).
+     * @param   n     input int The order of the matrix A. n >= 0. When n = 0, zero is returned.
      * @param   d     input double[] of dimension n. The diagonal elements of A.
      * @param   e     input double[] of dimension n-1. The (n-1) sub-diagonal or super-diagonal elements of A.
      *
@@ -14003,19 +14024,21 @@ loop3:                       {
     } // dlanst
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLANSY. Original DLANSY created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlansy returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLANSY. Original DLANSY created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlansy returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
      * largest absolute value of a real symmetric matrix A.
      *
-     * @param   norm  input char Specifies the value to be returned by dlansy as follows: = 'M' or 'm',
-     *                max(abs(A[i][j])); this is not a matrix norm. = '1', 'O', or 'o', norm1(A), where norm1 denotes
-     *                the one norm of a matrix (maximum column sum) = 'I' or 'i', normI(A), where normI denotes the
-     *                infinity norm of a matrix (maximum row sum) = 'F', 'f', 'E', or 'e', normF(A) , where normF
-     *                denotes the Frobenius norm of a matrix (square root of sum of squares)
+     * @param   norm  input char Specifies the value to be returned by dlansy as follows: 
+     *                = 'M' or 'm', max(abs(A[i][j])); this is not a matrix norm. 
+     *                = '1', 'O', or 'o', norm1(A), where norm1 denotes the one norm of a matrix (maximum column sum) 
+     *                = 'I' or 'i', normI(A), where normI denotes the infinity norm of a matrix (maximum row sum) 
+     *                = 'F', 'f', 'E', or 'e', normF(A) , where normF denotes the Frobenius norm of a matrix
+     *                  (square root of sum of squares)
      * @param   uplo  input char Specifies whether the upper or lower triangular part of the symmetric matrix A is to be
-     *                referenced. = 'U': Upper triangular part of A is referenced = 'L': Lower triangular part of A is
-     *                referenced
+     *                referenced.
+     *                = 'U': Upper triangular part of A is referenced 
+     *                = 'L': Lower triangular part of A is referenced
      * @param   n     input int The order of the matrix A. n >= 0. When n = 0, the answer returned by dlansy is zero.
      * @param   A     input double[][] of dimension lda by n. The symmetric matrix A. If uplo = 'U', the leading n by n
      *                upper triangular part of A contains the upper triangular part of the matrix A, and the strictly
@@ -14023,7 +14046,7 @@ loop3:                       {
      *                part of A contains the lower triangular part of the matrix A, and the strictly upper triangular
      *                part of A is not referenced.
      * @param   lda   input int The leading dimension of the array A. lda >= max(n,1).
-     * @param   work  workspace double[] of dimension lwork, used with one norm or infinity norm where lwork >= n;
+     * @param   work  workspace double[] of dimension max(1, lwork), where lwork >= n when used with one norm or infinity norm;
      *                otherwise work is not referenced.
      *
      * @return  double
@@ -14065,7 +14088,7 @@ loop3:                       {
         } // else if ((norm == 'M') || (norm == 'm'))
         else if ((norm == 'I') || (norm == 'i') || (norm == 'O') || (norm == 'o') || (norm == '1')) {
 
-            // Form normI(A) (== norm1(A), since A is symmetric).
+            // Find normI(A) (== norm1(A), since A is symmetric).
             value = 0.0;
 
             if ((uplo == 'U') || (uplo == 'u')) {
@@ -14151,9 +14174,9 @@ loop3:                       {
     } // dlansy
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLAPY2 Original DLAPY2 created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31,
-     * 1992 dlapy2 returns sqrt(x**2 + y**2), taking care not to cause unnecessary overflow.
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLAPY2 Original DLAPY2 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlapy2 returns sqrt(x**2 + y**2), taking care not to cause unnecessary overflow.
      *
      * @param   x  input double
      * @param   y  input double
@@ -14182,9 +14205,9 @@ loop3:                       {
     } // dlapy2
 
     /**
-     * dlapy3 is a port of hte version 3.0 LAPLACK auxiliary routine DLAPY3 Original DLAPY3 created by Univ. of
-     * Tennessee, Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University,
-     * October 31, 1992 dlapy3 returns sqrt(x**2+y**2+z**2), taking care not to cause unnecessary overflow.
+     * dlapy3 is a port of hte version 3.1 LAPLACK auxiliary routine DLAPY3 Original DLAPY3 created by Univ. of
+     * Tennessee, Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlapy3 returns sqrt(x**2+y**2+z**2), taking care not to cause unnecessary overflow.
      *
      * @param   x  input double
      * @param   y  input double
@@ -14206,7 +14229,9 @@ loop3:                       {
         w = Math.max(w, zabs);
 
         if (w == 0.0) {
-            result = 0.0;
+            // w can be zero for max(0, NaN, 0)
+            // Adding all three entries together will make sure NaN will not disappear
+            result = xabs + yabs + zabs;
         } else {
             xabs = xabs / w;
             yabs = yabs / w;
@@ -14218,8 +14243,8 @@ loop3:                       {
     } // dlapy3
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARAN Original DLAAN created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLARAN Original DLAAN created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dlaran returns a random real number from a uniform (0,1) distribution This routine uses a multiplicative
      * congruential method with modulus 2**48 and multiplier 33952834046453 (see G. S. Fishman, "Multiplicative
      * congruential random number generators with modulus 2**b: an exhaustive analysis for b = 32 and a partial analysis
@@ -14244,7 +14269,9 @@ loop3:                       {
         int it2;
         int it3;
         int it4;
+        double rndout = 1.0;
 
+        while (rndout == 1.0) {
         // Multiply the seed by the multiplier module 2**48
         it4 = iseed[3] * m4;
         it3 = it4 / ipw2;
@@ -14265,7 +14292,14 @@ loop3:                       {
         iseed[3] = it4;
 
         // Convert 48-bit integer to a real number in the interval (0,1)
-        return r * (it1 + (r * (it2 + (r * (it3 + (r * it4))))));
+        rndout =  r * (it1 + (r * (it2 + (r * (it3 + (r * it4))))));
+        // If a real number has n bits of precision, and the first n bits of the 48-bit integer above happen
+        // to be all 1 (which will occur about once every 2**n calls), then rndout will be rounded to exactly 1.0
+        // Since dlaran is not supposed to return exactly 0.0 or 1.0, the statistically correct thing to do in
+        // this situation is simply to iterate again.  
+        // N.B. The case rndout = 0.0 should not be possible.
+        } // while (rndout == 1.0)
+        return rndout;
     } // dlaran
 
     /**
