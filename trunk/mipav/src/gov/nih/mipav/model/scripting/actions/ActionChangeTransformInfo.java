@@ -3,8 +3,8 @@ package gov.nih.mipav.model.scripting.actions;
 
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.model.structures.*;
 
 
 /**
@@ -22,6 +22,7 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
      */
     private static final String TRANSFORM_ID = "transform_id";
     
+    private TransMatrix transMatrix = null;
     
     /**
      * Constructor for the dynamic instantiation and execution of the script action.
@@ -34,8 +35,9 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
      * Main constructor with parameters for changing the transform information
      * @param image
      */
-    public ActionChangeTransformInfo(ModelImage image) {
+    public ActionChangeTransformInfo(ModelImage image, TransMatrix tMat) {
         super(image);
+        this.transMatrix = tMat;
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -44,7 +46,7 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
      * {@inheritDoc}
      */
     public void insertScriptLine() {
-    	double [][] matrix = recordingInputImage.getMatrix().getMatrix();
+    	double [][] matrix = transMatrix.getMatrix();
     	
     	int len = matrix.length;
     	double [] tMat = new double [len * len];
@@ -62,7 +64,7 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
         try {
             parameters.put(createInputImageParameter());
             parameters.put(ParameterFactory.newParameter(TRANSFORM_MATRIX, tMat));
-          //  parameters.put(ParameterFactory.newParameter(TRANSFORM_ID, recordingInputImage.getTransformID()));
+            parameters.put(ParameterFactory.newParameter(TRANSFORM_ID, transMatrix.getTransformID()));
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered while recording " + getActionName() + " script action:\n" + pe);
             return;
@@ -82,7 +84,9 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
         
         int nDims = inputImage.getNDims();
         
-        double[][] matrix = inputImage.getMatrix().getMatrix();
+        transMatrix = new TransMatrix(nDims+1, transformID);
+        
+        double[][] matrix = transMatrix.getMatrix();
         int index = 0;
         
         for (int i = 0; i < (nDims+1); i++) {
@@ -90,10 +94,6 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
         		matrix[i][j] = tMat[index];
         	}
         }
-       
-        //BEN
-        for (int i = 0; i < inputImage.getFileInfo().length; i++) {
-        //	inputImage.getFileInfo()[i].setTransformID(transformID);
-        }
+       inputImage.getMatrixHolder().addMatrix(transMatrix);
     }
 }

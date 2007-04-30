@@ -532,6 +532,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         		image.getMatrixHolder().addMatrix(nMatrix);
         	        	
         		updateMatrixBox(true);
+        		ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, nMatrix));
         	}
         } else if (command.equals("Remove")) {
         	image.getMatrixHolder().removeMatrix(matrixBox.getSelectedItem());
@@ -3477,7 +3478,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     }
 
     /**
-     * Updates the transform ID for all file infos.
+     * Updates the image with the new Matrix information (for matrix replacement)
      */
     private void updateMatrixInfo() {
 
@@ -3485,9 +3486,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     	updateTransformInfo(tMat);
     	image.getMatrixHolder().replaceMatrix(matrixBox.getSelectedItem(), tMat);
         
-        if (tabbedPane.getSelectedIndex() == 3) {
-        	//ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image));
-        }
+    	//script line if recording
+    	ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, tMat));
+        
     }
 
     /**
