@@ -273,10 +273,11 @@ public class JDialogConvertType extends JDialogScriptableBase
             if ((changeTypeAlgo.isCompleted() == true) && (resultImage != null)) {
                 updateFileInfo(image, resultImage);
 
-                for (int n = 0; n < resultImage.getExtents()[2]; n++) {
-                    resultImage.getFileInfo(n).setEndianess(endianess);
-                }
-
+                if (resultImage.getNDims() == 3) {
+                	for (int n = 0; n < resultImage.getExtents()[2]; n++) {
+                        resultImage.getFileInfo(n).setEndianess(endianess);
+                	}
+                } 
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
