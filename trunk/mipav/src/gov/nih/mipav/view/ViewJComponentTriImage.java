@@ -237,6 +237,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     /** DOCUMENT ME! */
     private Color[] zColor = { Color.red, Color.green, Color.yellow };
 
+    /** the gap (in one direction) between the center of the crosshair and the actual crosshair line*/
+    private int crosshairPixelGap = 0;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -307,6 +310,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         /* localImageExtents is ordered based on orientation: */
         localImageExtents = imageActive.getExtents(orientation);
 
+        try {
+        	crosshairPixelGap = Integer.parseInt(Preferences.getProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP));
+        } catch (Exception e) {
+        	Preferences.setProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP, "0");
+        }
+        
         removeMouseWheelListener(this); // remove listener from superclass
         addMouseWheelListener((ViewJComponentTriImage) this);
     }
@@ -1753,6 +1762,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         cornerToCrop();
     }
 
+    /** 
+     * Sets the pixel gap to be used by the crosshair (in one direction away from the center)
+     * @param newGap the new gap value
+     */
+    public void setCrosshairPixelGap(int newGap) {
+    	this.crosshairPixelGap = newGap;
+    }
+    
     /**
      * DOCUMENT ME!
      *
@@ -2281,16 +2298,16 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  offscreenGraphics2d  Graphics2D
      */
     private void drawCrosshairLines(Graphics2D offscreenGraphics2d) {
-
+    	
         // This snaps the crosshair to the voxel boundary
         offscreenGraphics2d.setColor(xColor[orientation]);
-        offscreenGraphics2d.drawLine((int) crosshairPt.x, 0, (int) crosshairPt.x, (int) crosshairPt.y - 10);
+        offscreenGraphics2d.drawLine((int) crosshairPt.x, 0, (int) crosshairPt.x, (int) crosshairPt.y - crosshairPixelGap);
         offscreenGraphics2d.drawLine((int) crosshairPt.x, getSize().height, (int) crosshairPt.x,
-                                     (int) crosshairPt.y + 10);
+                                     (int) crosshairPt.y + crosshairPixelGap);
 
         offscreenGraphics2d.setColor(yColor[orientation]);
-        offscreenGraphics2d.drawLine(0, (int) crosshairPt.y, (int) crosshairPt.x - 10, (int) crosshairPt.y);
-        offscreenGraphics2d.drawLine(getSize().width, (int) crosshairPt.y, (int) crosshairPt.x + 10,
+        offscreenGraphics2d.drawLine(0, (int) crosshairPt.y, (int) crosshairPt.x - crosshairPixelGap, (int) crosshairPt.y);
+        offscreenGraphics2d.drawLine(getSize().width, (int) crosshairPt.y, (int) crosshairPt.x + crosshairPixelGap,
                                      (int) crosshairPt.y);
     }
 

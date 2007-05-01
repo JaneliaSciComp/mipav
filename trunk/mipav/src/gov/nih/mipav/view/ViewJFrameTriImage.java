@@ -258,6 +258,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Spinner component for the paint intensity. */
     protected JSpinner intensitySpinner;
 
+    /** Spinner component for the crosshair gap size*/
+    protected JSpinner crosshairSpinner;
+    
     /** Label the Talairach position x value in the image volume. */
     protected JTextField labelXTal;
 
@@ -2488,6 +2491,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     triImage[i].setIntensityDropper(paintIntensity);
                 }
             }
+        } else if (source == crosshairSpinner) {
+        	int crosshairPixelGap = ((SpinnerNumberModel) crosshairSpinner.getModel()).getNumber().intValue();
+        	for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+                if (triImage[i] != null) {
+                    triImage[i].setCrosshairPixelGap(crosshairPixelGap);
+                }
+                Preferences.setProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP, Integer.toString(crosshairPixelGap));
+                this.updateImages();
+            }
         }
     }
 
@@ -2982,6 +2995,23 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(toolbarBuilder.buildTextButton("Crop", "Crops image delineated by the bounding cube",
                                                         "cropVolume"));
 
+        
+        int crosshairPixelGap = 0;
+        try {
+        	crosshairPixelGap = Integer.parseInt(Preferences.getProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP));
+        } catch (Exception e) {
+        	Preferences.setProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP, "0");
+        }
+        
+        imageToolBar.add(ViewToolBarBuilder.makeSeparator());
+        crosshairSpinner = new JSpinner(new SpinnerNumberModel(crosshairPixelGap, 0, 25, 1));
+        crosshairSpinner.setMaximumSize(new Dimension(56, 24)); // 56 pixlls wide, 24 tall
+        crosshairSpinner.setPreferredSize(new Dimension(56, 24)); // 56 pixlls wide, 24 tall
+        crosshairSpinner.addChangeListener(this);
+        crosshairSpinner.setToolTipText("Crosshair pixel gap"); // bug in API prevents this from working
+        
+        imageToolBar.add(crosshairSpinner);
+        
         panelToolbar.add(imageToolBar, gbc);
 
         // Paint toolbar

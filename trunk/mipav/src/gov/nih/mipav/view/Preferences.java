@@ -122,6 +122,9 @@ public class Preferences {
     /** Constant that indicates whether the triplanar frame should use the old 2x2 layout or the newer 3x1 layout. */
     public static final String PREF_TRIPLANAR_2X2_LAYOUT = "TriPlanar2x2Layout";
 
+    /** Constant that indicates the pixel gap away from the center of the crosshair (in one direction) actual gap is 2x*/
+    public static final String PREF_CROSSHAIR_PIXEL_GAP = "CrosshairPixelGap";
+    
     /** Constant that indicates the menu font*/
     public static final String PREF_MENU_FONT = "MenuFont";
 
