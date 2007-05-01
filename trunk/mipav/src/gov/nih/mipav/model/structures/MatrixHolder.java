@@ -167,7 +167,14 @@ public class MatrixHolder extends ModelSerialCloneable {
 
         for (int i = keys.length - 1; i >= 0; i--) {
             tempMatrix = (TransMatrix) matrixMap.get(keys[i]);
-
+                     
+            //if the composite matrix is not the same size as the matrix stored, change the composite matrix to be 
+            //   the correct size
+            if (compositeMatrix.getNCols() != tempMatrix.getNCols()) {
+            	compositeMatrix = new TransMatrix(tempMatrix.getNCols(), TransMatrix.TRANSFORM_COMPOSITE);
+            	compositeMatrix.identity();
+            }
+            
             //do not include a nifti associated matrices (matrices loaded w\ a NIFTI image)
             if (((tempMatrix.getTransformID() != TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) || useDICOM)
             		&& (!tempMatrix.isNIFTI())) {
