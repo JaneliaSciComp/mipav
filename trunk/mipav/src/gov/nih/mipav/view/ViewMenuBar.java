@@ -823,6 +823,9 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Convert 4D to 3D",
                                                                                            "Convert4Dto3D", 0, null,
                                                                                            false),
+                                                                 menuBuilder.buildMenuItem("Convert 4D to RGB",
+                                                                                           "Convert4DtoRGB", 0, null,
+                                                                                            false),
                                                                  menuBuilder.buildMenuItem("Extract 3D subset from 4D",
                                                                                            "Subset", 0, null, false),
                                                                  menuBuilder.buildMenuItem("Remove time volumes", null,
@@ -1232,6 +1235,7 @@ public class ViewMenuBar {
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
+            menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             menuBuilder.setMenuItemEnabled("Denoising BLS GSM", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
@@ -1249,6 +1253,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Anonymize face (BET)", false);
             menuBuilder.setMenuItemEnabled("Cine (movie)", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
+            menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             menuBuilder.setMenuItemEnabled("Evolve surface", false);
             menuBuilder.setMenuItemEnabled("Extract slices / volumes", false);
             menuBuilder.setMenuItemEnabled("Replace slice", false);
