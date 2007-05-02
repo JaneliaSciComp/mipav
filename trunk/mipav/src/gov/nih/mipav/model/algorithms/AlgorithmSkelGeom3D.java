@@ -14,7 +14,7 @@ import java.util.*;
 
 
 /**
- * DOCUMENT ME!
+ * This was the start of an unsuccessful port attempt of Power Crust software by Nina Amenta, Sunghee Choi, amnd Ravi Krishna Kolluri.
  */
 public class AlgorithmSkelGeom3D extends AlgorithmBase {
 
