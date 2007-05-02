@@ -111,7 +111,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
-        if (command.equals("Remove")) {
+        if (command.equals("Extract")) {
 
             if (setVariables()) {
                 callAlgorithm();
@@ -446,7 +446,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
          * buttonPanel.add(cancelButton);
          */
         buttonPanel.add(buildButtons());
-        OKButton.setText("Remove");
+        OKButton.setText("Extract");
 
 
         JPanel panel = new JPanel(new BorderLayout());
