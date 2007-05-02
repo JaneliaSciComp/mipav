@@ -12,7 +12,7 @@ import java.util.*;
 
 
 /**
- * <p>N3 Inhomogeneity correction This is based on code which is John G. Sled, McConnell Brain Imaging Centre, Montreal
+ * <p>N3 Inhomogeneity correction This is based on code by John G. Sled, McConnell Brain Imaging Centre, Montreal
  * Neurological Institute, McGill University Information may be found at: http://www.bic.mni.mcgill.ca/software/N3/
  * Bibliography:</p>
  *
