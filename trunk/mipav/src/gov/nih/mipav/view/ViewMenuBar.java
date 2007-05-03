@@ -1232,6 +1232,9 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
             menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
+            if (ModelImage.isColorImage(type)) {
+            	menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
+            }
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
