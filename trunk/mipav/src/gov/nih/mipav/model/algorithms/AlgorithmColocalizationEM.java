@@ -51,7 +51,9 @@ import java.util.*;
  * <p>The calculated data is passed to ViewJFrameColocalization.</p>
  *
  * <p>References: 1.) Expectation Maximization Algorithm by Ismet Bayraktaroglu
- * http://www-cse.ucsd.edu/users/ibayrakt/java/em</p>
+ * Code for circles was originally found at 
+ * http://www-cse.ucsd.edu/users/ibayrakt/java/em
+ * but this site is no longer available.</p>
  *
  * <p>2.) Neural Networks for Pattern Recognition by Christopher M. Bishop, Oxford University Press, 1995, Section 2.6.2
  * The EM algorithm, pp. 65 - 72.</p>
