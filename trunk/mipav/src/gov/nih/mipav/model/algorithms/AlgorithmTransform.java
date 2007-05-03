@@ -141,6 +141,8 @@ public class AlgorithmTransform extends AlgorithmBase {
     /** DOCUMENT ME! */
     private float oXres, oYres, oZres;
 
+    private int [] oUnits;
+    
     /** DOCUMENT ME! */
     private boolean pad = true;
 
@@ -161,23 +163,9 @@ public class AlgorithmTransform extends AlgorithmBase {
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    /**
-     * 2D constructor for transformation algorithm. Also used for 2.5D algorithms on 3D and 4D images.
-     *
-     * @param  srcImage  ModelImage to be transformed
-     * @param  xfrm      Transformation matrix to be applied
-     * @param  interp    Type of interpolation (NEAREST_NEIGHBOR, BILINEAR, BSPLINE3, BSPLINE4, etc)
-     * @param  oXres     X resolution of output image
-     * @param  oYres     Y resolution of output image
-     * @param  oXdim     X dimension of output image
-     * @param  oYdim     Y dimension of output image
-     * @param  tVOI      if <code>true</code> the VOI should be transformed with the volume
-     * @param  clip      if <code>true</code> output range is clipped to input range
-     * @param  pad       if <code>true</code> output image is padded so that none of the image is clipped
-     */
     public AlgorithmTransform(ModelImage srcImage, TransMatrix xfrm, int interp, float oXres, float oYres, int oXdim,
-                              int oYdim, boolean tVOI, boolean clip, boolean pad) {
-        super(null, srcImage);
+            int oYdim, int [] units, boolean tVOI, boolean clip, boolean pad) {
+    	super(null, srcImage);
         transformVOI = tVOI;
         this.srcImage = srcImage;
         this.clip = clip;
@@ -239,6 +227,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             } else {
                 destImage = new ModelImage(type, extents, name);
             }
+            
         } // end of if (srcImage.getNDims == 2)
         else if (srcImage.getNDims() == 3) {
         	
@@ -304,32 +293,14 @@ public class AlgorithmTransform extends AlgorithmBase {
         this.oYres = oYres;
         this.oXdim = oXdim;
         this.oYdim = oYdim;
+        this.oUnits = units;
         this.interp = interp;
-
-     //   updateFileInfo(srcImage, destImage, destResolutions);
     }
-
-    /**
-     * 3D constructor for transformation algorithm. Also used for 3D algorithms on 4D images.
-     *
-     * @param  _srcImage  ModelImage to be transformed
-     * @param  xfrm       Transformation matrix to be applied
-     * @param  interp     Type of interpolation (NEAREST_NEIGHBOR, TRILINEAR, BSPLINE3, BSPLINE4, etc)
-     * @param  _oXres     X resolution of output image
-     * @param  _oYres     Y resolution of output image
-     * @param  _oZres     Z resolution of output image
-     * @param  _oXdim     X dimension of output image
-     * @param  _oYdim     Y dimension of output image
-     * @param  _oZdim     Z dimension of output image
-     * @param  tVOI       if <code>true</code> the VOI should be transformed with the volume
-     * @param  clip       if <code>true</code> output range is clipped to input range
-     * @param  pad        if <code>true</code> output image is padded so that none of the image is clipped
-     */
+    
     public AlgorithmTransform(ModelImage _srcImage, TransMatrix xfrm, int interp, float _oXres, float _oYres,
-                              float _oZres, int _oXdim, int _oYdim, int _oZdim, boolean tVOI, boolean clip,
-                              boolean pad) {
-
-        super(null, _srcImage);
+            float _oZres, int _oXdim, int _oYdim, int _oZdim, int[] units, boolean tVOI, boolean clip,
+            boolean pad) {
+    	super(null, _srcImage);
         this.interp = interp;
         this.srcImage = _srcImage;
         this.transMatrix = xfrm;
@@ -346,6 +317,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         this.oYdim = _oYdim;
         this.oZdim = _oZdim;
 
+        this.oUnits = units;
+        
         DIM = srcImage.getNDims();
         imgOrigin = (float[]) srcImage.getFileInfo(0).getOrigin().clone();
         axisOrient = new int[srcImage.getFileInfo(0).getAxisOrientation().length];
@@ -456,6 +429,53 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         destImage = new ModelImage(type, extents, name);
       //  updateFileInfo(srcImage, destImage, destResolutions);
+    }
+    
+    /**
+     * 2D constructor for transformation algorithm. Also used for 2.5D algorithms on 3D and 4D images.
+     *
+     * @param  srcImage  ModelImage to be transformed
+     * @param  xfrm      Transformation matrix to be applied
+     * @param  interp    Type of interpolation (NEAREST_NEIGHBOR, BILINEAR, BSPLINE3, BSPLINE4, etc)
+     * @param  oXres     X resolution of output image
+     * @param  oYres     Y resolution of output image
+     * @param  oXdim     X dimension of output image
+     * @param  oYdim     Y dimension of output image
+     * @param  tVOI      if <code>true</code> the VOI should be transformed with the volume
+     * @param  clip      if <code>true</code> output range is clipped to input range
+     * @param  pad       if <code>true</code> output image is padded so that none of the image is clipped
+     */
+    public AlgorithmTransform(ModelImage srcImage, TransMatrix xfrm, int interp, float oXres, float oYres, int oXdim,
+                              int oYdim, boolean tVOI, boolean clip, boolean pad) {
+    	this(srcImage, xfrm, interp, oXres, oYres, oXdim, oYdim, 
+    			new int[]{srcImage.getUnitsOfMeasure(0), srcImage.getUnitsOfMeasure(1)},tVOI, clip, pad);
+    }
+
+    /**
+     * 3D constructor for transformation algorithm. Also used for 3D algorithms on 4D images.
+     *
+     * @param  _srcImage  ModelImage to be transformed
+     * @param  xfrm       Transformation matrix to be applied
+     * @param  interp     Type of interpolation (NEAREST_NEIGHBOR, TRILINEAR, BSPLINE3, BSPLINE4, etc)
+     * @param  _oXres     X resolution of output image
+     * @param  _oYres     Y resolution of output image
+     * @param  _oZres     Z resolution of output image
+     * @param  _oXdim     X dimension of output image
+     * @param  _oYdim     Y dimension of output image
+     * @param  _oZdim     Z dimension of output image
+     * @param  tVOI       if <code>true</code> the VOI should be transformed with the volume
+     * @param  clip       if <code>true</code> output range is clipped to input range
+     * @param  pad        if <code>true</code> output image is padded so that none of the image is clipped
+     */
+    public AlgorithmTransform(ModelImage _srcImage, TransMatrix xfrm, int interp, float _oXres, float _oYres,
+                              float _oZres, int _oXdim, int _oYdim, int _oZdim, boolean tVOI, boolean clip,
+                              boolean pad) {
+    	this(_srcImage, xfrm, interp, _oXres, _oYres, _oZres, _oXdim, _oYdim, _oZdim ,
+    			new int[]{_srcImage.getUnitsOfMeasure(0), _srcImage.getUnitsOfMeasure(1), _srcImage.getUnitsOfMeasure(2)},
+    			tVOI, clip, pad);
+    	
+    	
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1227,7 +1247,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         oXres = transformedImg.getFileInfo(0).getResolutions()[0];
         oYres = transformedImg.getFileInfo(0).getResolutions()[1];
 
-        updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(), trans, false);
+        updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(), 
+        		image.getFileInfo()[0].getUnitsOfMeasure(), trans, false);
 
         int mod = Math.max(1, oYdim / 50);
         int imgLength = iXdim * iYdim;
@@ -1688,7 +1709,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         float[] resolutions = new float[] { oXres, oYres };
 
-        updateFileInfo(image, transformedImg, resolutions, trans, false);
+        updateFileInfo(image, transformedImg, resolutions, 
+        		image.getFileInfo()[0].getUnitsOfMeasure(), trans, false);
 
         int roundX, roundY;
         float temp1, temp2;
@@ -3087,7 +3109,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         // int   [] extents      = new int   [] {oXdim, oYdim, oZdim};
         float[] resolutions = new float[] { oXres, oYres, oZres };
 
-        updateFileInfo(image, transformedImg, resolutions, trans, false);
+        updateFileInfo(image, transformedImg, resolutions, 
+        		image.getFileInfo()[0].getUnitsOfMeasure(), trans, false);
 
         for (i = 0; i < oXdim; i++) {
             imm = (float) i * oXres;
@@ -3588,7 +3611,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         //System.err.println("MATRIX: " + transMatrix);
         
         //BEN: fix this so the origin is updated correctly
-        updateFileInfo(srcImage, destImage, destResolutions, this.transMatrix, isSATransform);
+        updateFileInfo(srcImage, destImage, destResolutions, 
+        		oUnits, this.transMatrix, isSATransform);
 
         if (pad && !canPad) {
             MipavUtil.displayError("For padding: interpolation linear and no resampling.");
@@ -3731,10 +3755,9 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param  resultImage  Resultant image.
      * @param  resolutions  DOCUMENT ME!
      */
-    private static void updateFileInfo(ModelImage image, ModelImage resultImage, float[] resolutions,
+    private static void updateFileInfo(ModelImage image, ModelImage resultImage, float[] resolutions, int[] units,
     		TransMatrix matrix, boolean useSATransform) {
         FileInfoBase[] fileInfo = resultImage.getFileInfo();
-        
         if (resultImage.getNDims() == 2) {
         	fileInfo[0] = (FileInfoBase)image.getFileInfo(0).clone();
             fileInfo[0].setDataType(resultImage.getType());
@@ -3745,6 +3768,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             fileInfo[0].setImageOrientation(imgOrient);
             fileInfo[0].setAxisOrientation(axisOrient);
             fileInfo[0].setOrigin(imgOrigin);
+            fileInfo[0].setUnitsOfMeasure(units);
         } else if (resultImage.getNDims() == 3) {
         	float [] coord = new float[3];
         	float [] tempPos = new float[3];
@@ -3773,7 +3797,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(imgOrient);
                 fileInfo[i].setAxisOrientation(axisOrient);
-                
+                fileInfo[i].setUnitsOfMeasure(units);
                 
                 // not sure why this was here, setting the origin per slice...should be the same
                 //imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);

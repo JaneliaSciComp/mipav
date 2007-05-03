@@ -311,10 +311,14 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
 
                     // 3d
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.TRILINEAR, res[0], res[1],
-                                                   res[2], newXDim, newYDim, newZDim, false, false, false);
+                                                   res[2], newXDim, newYDim, newZDim, 
+                                                   false, false, false);
                 } else {
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.BILINEAR, res[0], res[1],
-                                                   newXDim, newYDim, false, false, false);
+                                                   newXDim, newYDim, 
+                                                   adjImage.getUnitsOfMeasure(0),
+                                                   adjImage.getUnitsOfMeasure(1),
+                                                   false, false, false);
                 }
 
                 trans.setRunningInSeparateThread(runningInSeparateThread);
@@ -332,10 +336,14 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                 // next transform the reference image
                 if (refNewZDim) {
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.TRILINEAR, res[0], res[1],
-                                                   res[2], newXDim, newYDim, newZDim, false, false, false);
+                                                   res[2], newXDim, newYDim, newZDim, 
+                                                   false, false, false);
                 } else {
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.BILINEAR, res[0], res[1],
-                                                   newXDim, newYDim, false, false, false);
+                                                   newXDim, newYDim, 
+                                                   newAdjImage.getUnitsOfMeasure(0),
+                                                   newAdjImage.getUnitsOfMeasure(1),
+                                                   false, false, false);
                 }
 
                 trans.setRunningInSeparateThread(runningInSeparateThread);
@@ -355,10 +363,14 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
 
                     // 3d
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.TRILINEAR, res[0], res[1],
-                                                   res[2], newXDim, dims[1], newZDim, false, false, false);
+                                                   res[2], newXDim, dims[1], newZDim, 
+                                                   false, false, false);
                 } else {
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.BILINEAR, res[0], res[1],
-                                                   newXDim, dims[1], false, false, false);
+                                                   newXDim, dims[1], 
+                                                   newRefImage.getUnitsOfMeasure(0),
+                                                   newRefImage.getUnitsOfMeasure(1),
+                                                   false, false, false);
                 }
 
                 trans.setRunningInSeparateThread(runningInSeparateThread);
@@ -376,10 +388,13 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                 // next transform the reference image
                 if (refNewZDim) {
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.TRILINEAR, res[0], res[1],
-                                                   res[2], newXDim, dims[1], newZDim, false, false, false);
+                                                   res[2], newXDim, dims[1], newZDim, 
+                                                   false, false, false);
                 } else {
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.BILINEAR, res[0], res[1],
-                                                   newXDim, dims[1], false, false, false);
+                                                   newXDim, dims[1],  newAdjImage.getUnitsOfMeasure(0),
+                                                   newAdjImage.getUnitsOfMeasure(1),
+                                                   false, false, false);
                 }
 
                 trans.setRunningInSeparateThread(runningInSeparateThread);
@@ -403,10 +418,14 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
 
                     // 3d
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.TRILINEAR, res[0], res[1],
-                                                   res[2], dims[0], newYDim, newZDim, false, false, false);
+                                                   res[2], dims[0], newYDim, newZDim, 
+                                                   false, false, false);
                 } else {
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.BILINEAR, res[0], res[1],
-                                                   dims[0], newYDim, false, false, false);
+                                                   dims[0], newYDim, 
+                                                   adjImage.getUnitsOfMeasure(0),
+                                                   adjImage.getUnitsOfMeasure(1),
+                                                   false, false, false);
                 }
 
                 trans.setRunningInSeparateThread(runningInSeparateThread);
@@ -425,10 +444,14 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
 
                 if (refNewZDim) {
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.TRILINEAR, res[0], res[1],
-                                                   res[2], dims[0], newYDim, newXDim, false, false, false);
+                                                   res[2], dims[0], newYDim, newXDim, 
+                                                   false, false, false);
                 } else {
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.BILINEAR, res[0], res[1],
-                                                   dims[0], newYDim, false, false, false);
+                                                   dims[0], newYDim, 
+                                                   refImage.getUnitsOfMeasure(0),
+                                                   refImage.getUnitsOfMeasure(1),
+                                                   false, false, false);
                 }
 
                 trans.setRunningInSeparateThread(runningInSeparateThread);
@@ -447,10 +470,14 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                 if (adjNewZDim) {
 
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.TRILINEAR, res[0], res[1],
-                                                   res[2], dims[0], dims[1], newZDim, false, false, false);
+                                                   res[2], dims[0], dims[1], newZDim, 
+                                                   false, false, false);
                 } else {
                     trans = new AlgorithmTransform(adjImage, xfrmAdj, AlgorithmTransform.BILINEAR, res[0], res[1],
-                                                   dims[0], dims[1], false, false, false);
+                                                   dims[0], dims[1], 
+                                                   adjImage.getUnitsOfMeasure(0),
+                                                   adjImage.getUnitsOfMeasure(1),
+                                                   false, false, false);
                 }
 
                 trans.setRunningInSeparateThread(runningInSeparateThread);
@@ -469,7 +496,8 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
 
                 if (refNewZDim) {
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.TRILINEAR, res[0], res[1],
-                                                   res[2], dims[0], dims[1], newZDim, false, false, false);
+                                                   res[2], dims[0], dims[1], newZDim,
+                                                   false, false, false);
                     trans.setRunningInSeparateThread(runningInSeparateThread);
                     trans.run();
 

@@ -166,7 +166,8 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
         float[] res = srcImage.getFileInfo(0).getResolutions();
         int[] ext = srcImage.getExtents();
         AlgorithmTransform transformAlgo = new AlgorithmTransform(srcImage, trans, AlgorithmTransform.TRILINEAR, res[0],
-                                                                  res[1], res[2], ext[0], ext[1], ext[2], false, false,
+                                                                  res[1], res[2], ext[0], ext[1], ext[2], 
+                                                                  false, false,
                                                                   false);
         transformAlgo.setRunningInSeparateThread(false);
         linkProgressToAlgorithm(transformAlgo);

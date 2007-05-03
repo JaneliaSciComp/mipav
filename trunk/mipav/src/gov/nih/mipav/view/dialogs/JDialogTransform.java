@@ -142,6 +142,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private float oXres, oYres, oZres, cXres, cYres, cZres;
 
+    private int [] units;
+    
     /** DOCUMENT ME! */
     private JTextField padValTxt;
 
@@ -1155,13 +1157,13 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             Preferences.debug("oXres, oYres = " + oXres + ", " + oYres);
             Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
             System.out.println(xfrm);
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, doVOI, doClip, doPad);
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip, doPad);
             algoTrans.setPadValue(padValue);
         } else { // ((image.getNDims() >= 3) && (!do25D))
             Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
             Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, doVOI,
-                                               doClip, doPad);
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, 
+            	units, doVOI, doClip, doPad);
             algoTrans.setPadValue(padValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
             algoTrans.setUseScannerAnatomical(isSATransform);
@@ -1274,10 +1276,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             doPad = scriptParameters.getParams().getBoolean("do_pad");
             padValue = scriptParameters.getParams().getInt("pad_value");
 
-            double[][] xMat = null;
+            boolean useImageMatrix = scriptParameters.getParams().getBoolean("use_image_matrix");
             
-            //following makes no sense... xfrm is null!?
-            //xMat = xfrm.getMatrix();
+            double[][] xMat = null;
 
             xMat = new double[image.getNDims()+1][image.getNDims()+1];
             
@@ -1292,10 +1293,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 oXdim = outputDim[0];
                 oYdim = outputDim[1];
 
-                xMat = new double[3][3];
+                if (!useImageMatrix) {
+                	xMat = new double[3][3];
 
-                for (int i = 0; i < 3; i++) {
-                    xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                	for (int i = 0; i < 3; i++) {
+                		xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                	}
                 }
             } else {
                 transMat = new TransMatrix(4);
@@ -1310,15 +1313,20 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 oYdim = outputDim[1];
                 oZdim = outputDim[2];
 
-                xMat = new double[4][4];
+                if (!useImageMatrix) {
+                	xMat = new double[4][4];
 
-                for (int i = 0; i < 4; i++) {
-                    xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                	for (int i = 0; i < 4; i++) {
+                		xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                	}
                 }
             }
-
-            transMat.setMatrix(xMat);
-            xfrm = transMat;
+            if (!useImageMatrix) {
+            	transMat.setMatrix(xMat);
+            	xfrm = transMat;
+            } else {
+            	xfrm = image.getMatrix();
+            }
         } // else not Talairach
         
     }
@@ -1408,8 +1416,14 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
                                                                                new int[] { oXdim, oYdim, oZdim }));
 
-                for (int i = 0; i < 4; i++) {
-                    scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xMat[i]));
+                //if this is set to use image's associated matrices, then do not store matrix
+                
+                scriptParameters.getParams().put(ParameterFactory.newParameter("use_image_matrix", storedMatrix.isSelected()));
+                
+                if (!storedMatrix.isSelected()) {
+                	for (int i = 0; i < 4; i++) {
+                		scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xMat[i]));
+                	}
                 }
             }
         } // else not Talairach
@@ -3085,6 +3099,13 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         doVOI = voiCheckbox.isSelected();
         doClip = clipCheckbox.isSelected();
 
+        
+        //set the units.  will be reset if image is being resampled to another image's size
+        units = new int[image.getUnitsOfMeasure().length];
+        for (int i = 0; i < units.length; i++) {
+        	units[i] = image.getUnitsOfMeasure(i);
+        }
+        
         if ((computeTImage != null) && computeTImage.isSelected()) {
             transformType = comboBoxTalTransform.getSelectedIndex();
 
@@ -3159,7 +3180,15 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             // assign output resolutions and dims to those of image selected in comboBox
             oXres = selectedImg.getFileInfo(0).getResolutions()[0];
             oYres = selectedImg.getFileInfo(0).getResolutions()[1];
-
+            
+            //get the units now
+            units[0] = selectedImg.getUnitsOfMeasure(0);
+            units[1] = selectedImg.getUnitsOfMeasure(1);
+            
+            System.err.println("units of original image: " + image.getUnitsOfMeasure(0));
+            System.err.println("setting units: " + units[0]);
+            
+            
             if (addPix) {
                 fovX = iXres * iXdim;
                 fovY = iYres * iYdim;
@@ -3172,7 +3201,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
             if ((image.getNDims() >= 3) && (!do25D)) {
                 oZres = selectedImg.getFileInfo(0).getResolutions()[2];
-
+                units[2] = selectedImg.getUnitsOfMeasure(2);
                 if (addPix) {
                     fovZ = iZres * iZdim;
                     oZdim = (int) (fovZ / oZres);
