@@ -2644,7 +2644,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 // Call AlgorithmTransform with padding.
                 algoTransform = new AlgorithmTransform(resultImgA, identMatrix, AlgorithmTransform.TRILINEAR,
                                                        (float) resA[0], (float) resA[1], (float) resA[2], dimA[0],
-                                                       dimA[1], dimA[2], false, false, true);
+                                                       dimA[1], dimA[2],
+                                                       false, false, true);
             } // if (nDims == 3)
             else { // nDims == 2
                 Preferences.debug("Creating new version of Image A with resolutions: " + (float) resA[0] + ", " +
@@ -2652,7 +2653,10 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
                 // Call AlgorithmTransform with padding.
                 algoTransform = new AlgorithmTransform(resultImgA, identMatrix, AlgorithmTransform.BILINEAR,
-                                                       (float) resA[0], (float) resA[1], dimA[0], dimA[1], false, false,
+                                                       (float) resA[0], (float) resA[1], dimA[0], dimA[1], 
+                                                       sourceImgA.getUnitsOfMeasure(0),
+                                                       sourceImgA.getUnitsOfMeasure(1),
+                                                       false, false,
                                                        true);
             }
 
@@ -2706,7 +2710,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 // Call AlgorithmTransform with padding.
                 algoTransform = new AlgorithmTransform(resultImgB, identMatrix, AlgorithmTransform.TRILINEAR,
                                                        (float) resB[0], (float) resB[1], (float) resB[2], dimB[0],
-                                                       dimB[1], dimB[2], false, false, true);
+                                                       dimB[1], dimB[2], 
+                                                       false, false, true);
             } // if (nDims == 3)
             else { // nDims == 2
                 Preferences.debug("Creating new version of Image B with resolutions: " + (float) resB[0] + ", " +
@@ -2714,7 +2719,10 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
                 // Call AlgorithmTransform with padding.
                 algoTransform = new AlgorithmTransform(resultImgB, identMatrix, AlgorithmTransform.BILINEAR,
-                                                       (float) resB[0], (float) resB[1], dimB[0], dimB[1], false, false,
+                                                       (float) resB[0], (float) resB[1], dimB[0], dimB[1], 
+                                                       sourceImgB.getUnitsOfMeasure(0),
+                                                       sourceImgB.getUnitsOfMeasure(1),
+                                                       false, false,
                                                        true);
             } // else nDims == 2
 

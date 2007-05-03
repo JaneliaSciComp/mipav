@@ -886,7 +886,10 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         } else{
         	algoTransform = new AlgorithmTransform(kImage, new TransMatrix(4), AlgorithmTransform.BILINEAR,
 					 m_fNewRes[0], m_fNewRes[1],
-					 newExtents[0], newExtents[1], false, true, false);
+					 newExtents[0], newExtents[1], 
+					 kImage.getUnitsOfMeasure(0),
+					 kImage.getUnitsOfMeasure(1),
+					 false, true, false);
         	
         }
         	
