@@ -12,7 +12,7 @@ import java.util.*;
 
 
 /**
- * This code is derived from the Turbo Registration code of Phillipe Thevenaz, speicifcally code from the module
+ * This code is derived from the Turbo Registration code of Phillipe Thevenaz, specifically code from the module
  * TurboReg_.java. The work is based on the paper: P. Thevenaz, U.E. Ruttimann, M. Unser A Pyramid Approach to Subpixel
  * Registration Based on Intensity IEEE Transactions on Image Processing vol. 7, no. 1, pp. 27-41, January, 1998. This
  * paper is available at: http://bigwww.epfl.ch/publications/thevenaz9801.html Dialog to get user input The user selects
