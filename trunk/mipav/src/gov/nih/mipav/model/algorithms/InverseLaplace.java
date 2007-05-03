@@ -6,7 +6,7 @@ import gov.nih.mipav.view.*;
 
 /**
  * This is a port of the MATLAB INVLAP.M, a numerical inverse Laplace transform using the de Hoog algorithm,
- * copyright by Karl Hollenbeck on November, 22, 1996, Department of Hydrodynamics and Water Resources,
+ * copyright by Karl Hollenbeck on November 22, 1996, Department of Hydrodynamics and Water Resources,
  * Technical University of Denmark, DK-2800 Lyngby email:karl@isv16.isva.dtu.dk
  * Downloaded from MATLAB central in ECP1 Software.zip.
  *
