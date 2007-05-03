@@ -12,7 +12,7 @@ import gov.nih.mipav.view.*;
  */
 public class FFTUtility extends AlgorithmBase {
     // This code is a port of a FORTRAN 77 subroutine written by R. C. Singleton.
-    // The code was obtained from http://michaelgellis.tripod.com/dsp/prg08.html.
+    // The code was obtained from http://michaelgellis.tripod.com/dsp/pgm08.html.
     // This code is a revised version of a 1968 program by R. C. Singleton.
     // The code appeared in Programs for Digital Signal Processing, 1979,
     // ISBN 0-87942-127-4 (an IEEE Press Book)
