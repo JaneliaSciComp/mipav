@@ -5,9 +5,10 @@ import gov.nih.mipav.view.*;
 
 
 /**
- * This is a port of the MATLAB numerical inverse Laplace transform found in Hollenbeck, K. J. (1998) INVLAP.M : A
- * matlab function for numerical inversion of Laplace transforms by the de Hoog algorithm,
- * http://www.isva.dtu.dk/staff/karl/invlap.htm
+ * This is a port of the MATLAB INVLAP.M, a numerical inverse Laplace transform using the de Hoog algorithm,
+ * copyright by Karl Hollenbeck on November, 22, 1996, Department of Hydrodynamics and Water Resources,
+ * Technical University of Denmark, DK-2800 Lyngby email:karl@isv16.isva.dtu.dk
+ * Downloaded from MATLAB central in ECP1 Software.zip.
  *
  * <p>The algorithm used is deHoog et al's quotient difference method with accelerated convergence for the continued
  * fraction expansion published in "An improved method for numerical inversion of Laplace transforms" by F. R. de Hoog,
