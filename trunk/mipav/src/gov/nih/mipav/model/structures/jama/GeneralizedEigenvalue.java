@@ -14352,25 +14352,33 @@ loop3:                       {
     } // dlarf
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARFB Original DLARFB created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLARFB Original DLARFB created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dlarfb applies a real block reflector H or its transpose H' to a real m by n matrix C, from either the left or
      * the right.
      *
-     * @param  side    input char = 'L': apply H or H' from the left = 'R': apply H or H' from the right
-     * @param  trans   input char = 'N': Apply H (No transpose) = 'T': Apply H' (Transpose)
-     * @param  direct  input char Indicates how H is formed from a product of elementary reflectors = 'F': H = H[0] H[1]
-     *                 ... H[k-1] (Forward) = 'B': H = H[k-1] ... H[1] H[0] (Backward)
-     * @param  storev  input char Indicates how the vectors which define the elementary reflectors are stored: = 'C':
-     *                 Columnwise = 'R': Rowwise
+     * @param  side    input char 
+     *                 = 'L': apply H or H' from the left 
+     *                 = 'R': apply H or H' from the right
+     * @param  trans   input char 
+     *                 = 'N': Apply H (No transpose) 
+     *                 = 'T': Apply H' (Transpose)
+     * @param  direct  input char Indicates how H is formed from a product of elementary reflectors 
+     *                 = 'F': H = H[0] H[1] ... H[k-1] (Forward) 
+     *                 = 'B': H = H[k-1] ... H[1] H[0] (Backward)
+     * @param  storev  input char Indicates how the vectors which define the elementary reflectors are stored: 
+     *                 = 'C': Columnwise 
+     *                 = 'R': Rowwise
      * @param  m       input int The number of rows of the matrix C.
      * @param  n       input int The number of columns of the matrix C.
      * @param  k       input int The order of the matrix T (= the number of elementary reflectors whose product defines
      *                 the block reflector).
      * @param  V       input double[][] If storev = 'C', dimensions are ldv by k. If storev = 'R' and side = 'L',
      *                 dimensions are ldv by m. If storev = 'R' and side = 'R', dimensions are ldv by n.
-     * @param  ldv     input int The leading dimension of the array V. If storev = 'C' and side = 'L', ldv >= max(1,m).
-     *                 If storev = 'C' and side = 'R', ldv >= max(1,n). If storev = 'R', ldv >= k.
+     * @param  ldv     input int The leading dimension of the array V. 
+     *                 If storev = 'C' and side = 'L', ldv >= max(1,m).
+     *                 If storev = 'C' and side = 'R', ldv >= max(1,n). 
+     *                 If storev = 'R', ldv >= k.
      * @param  T       input double[][] of dimensions ldt by k The triangular k by k matrix T in the representation of
      *                 the block reflector.
      * @param  ldt     input int The leading dimension of the array T. ldt >= k.
@@ -14378,8 +14386,9 @@ loop3:                       {
      *                 overwritten by H*C or H'*C or C*H or C*H'.
      * @param  ldc     input int The leading dimension of the array C. ldc >= max(1,m).
      * @param  work    workspace double[][] of dimensions ldwork by k
-     * @param  ldwork  input int The leading dimension of the array work. If side = 'L', ldwork >= max(1,n). If side =
-     *                 'R', ldwork >= max(1,m).
+     * @param  ldwork  input int The leading dimension of the array work. 
+     *                 If side = 'L', ldwork >= max(1,n). 
+     *                 If side = 'R', ldwork >= max(1,m).
      */
     private void dlarfb(char side, char trans, char direct, char storev, int m, int n, int k, double[][] V, int ldv,
                         double[][] T, int ldt, double[][] C, int ldc, double[][] work, int ldwork) {
@@ -14407,12 +14416,12 @@ loop3:                       {
             if ((direct == 'F') || (direct == 'f')) {
 
                 // Let V = (V1)  (first k rows)
-                // (V2)
+                //         (V2)
                 // where V1 is unit lower triangular
                 if ((side == 'L') || (side == 'l')) {
 
                     // Form H * C or H' * C where C = ( C1 )
-                    // ( C2 )
+                    //                                ( C2 )
                     // W = C' * V = (C1'*V1 + C2'*V2) (stored in work)
                     // W = C1'
                     for (j = 0; j < k; j++) {
@@ -14427,7 +14436,7 @@ loop3:                       {
 
                     if (m > k) {
 
-                        // W = W + C2'*V2
+                        // W = W + C2'* V2
                         array1 = new double[m - k][n];
 
                         for (p = 0; p < (m - k); p++) {
@@ -14584,12 +14593,12 @@ loop3:                       {
             else { // ((direct == 'B') || (direct == 'b'))
 
                 // Let V =  ( V1 )
-                // ( V2 )  (last k rows)
+                //          ( V2 )  (last k rows)
                 // where V2 is unit upper triangular.
                 if ((side == 'L') || (side == 'l')) {
 
                     // Form H * C or H' * C where C = ( C1 )
-                    // ( C2 )
+                    //                                ( C2 )
                     // W = C' * V = (C1'*V1 + C2'*V2) (stored in work)
                     // W = C2'
                     for (j = 0; j < k; j++) {
@@ -14716,7 +14725,7 @@ loop3:                       {
                 if ((side == 'L') || (side == 'l')) {
 
                     // Form H * C or H' * C where C = ( C1 )
-                    // ( C2 )
+                    //                                ( C2 )
                     // W = C' * V' = (C1'*V1' + C2'V2') (stored in work)
                     // W = C1'
                     for (j = 0; j < k; j++) {
@@ -14892,7 +14901,7 @@ loop3:                       {
                 if ((side == 'L') || (side == 'l')) {
 
                     // Form H * C or H' * C where C = ( C1 )
-                    // ( C2 )
+                    //                                ( C2 )
                     // W = C' * V' = (C1'*V1' + C2'*V2') (stored in work)
                     // W = C2'
                     for (j = 0; j < k; j++) {
@@ -14942,7 +14951,7 @@ loop3:                       {
 
                     dtrmm('R', 'L', 'N', 'U', n, k, 1.0, array1, k, work, ldwork);
 
-                    // C2 = C2 - w"
+                    // C2 = C2 - W'
                     for (j = 0; j < k; j++) {
 
                         for (i = 0; i < n; i++) {
@@ -15103,24 +15112,31 @@ loop3:                       {
     } // dlarfg
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLARFT Original DLARFT created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
-     * 29, 1992 dlarft forms the triangular factor T of a real block reflector H of order n, which is defined as the
-     * product of k elementary reflectors. If direct = 'F', H = H[0] H[1] ... H[k-1] and T is upper triangular. If
-     * direct = 'B', H = H[k-1] ... H[1] H[0] and T is lower triangular. If storev = 'C', the vector which defines the
-     * elementary reflector H[i] is stored in the i-th column of the array V, and H = I - V * T * V' If storev = 'R',
-     * the vector which defines the elementary reflector H[i] is stored in the i-th row of the array V, and H = I - V' *
-     * T * V.
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLARFT Original DLARFT created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlarft forms the triangular factor T of a real block reflector H of order n, which is defined as the
+     * product of k elementary reflectors. 
+     * If direct = 'F', H = H[0] H[1] ... H[k-1] and T is upper triangular. 
+     * If direct = 'B', H = H[k-1] ... H[1] H[0] and T is lower triangular. 
+     * If storev = 'C', the vector which defines the elementary reflector H[i] is stored in the i-th column of the array V, and
+     *     H = I - V * T * V' 
+     * If storev = 'R', the vector which defines the elementary reflector H[i] is stored in the i-th row of the array V, and 
+     *     H = I - V' * T * V.
      *
      * @param  direct  input char Specifies the order in which the elementary reflectors are multiplied to form the
-     *                 block reflector: = 'F': H = H[0] H[1] ... H[k-1] (forward) = 'B': H = H[k-1] ... H[1] H[0]
-     *                 (Backward)
+     *                 block reflector: 
+     *                 = 'F': H = H[0] H[1] ... H[k-1] (forward) 
+     *                 = 'B': H = H[k-1] ... H[1] H[0] (Backward)
      * @param  storev  input char Specifies how the vectors which define the elementary reflectors are stored (see also
-     *                 Further Details): = 'C': columnwise = 'R': rowwise
+     *                 Further Details): 
+     *                 = 'C': columnwise 
+     *                 = 'R': rowwise
      * @param  n       input int The order of the block reflector H. n >= 0.
      * @param  k       input int The order of the triangular factor T ( = the number of elementary reflectors). k >= 1.
-     * @param  V       (input/output) double[][] If storev = 'C', dimension = ldv by k. If storev = 'R', dimension = ldv
-     *                 by n. See further details.
+     * @param  V       (input/output) double[][] 
+     *                 If storev = 'C', dimension = ldv by k. 
+     *                 If storev = 'R', dimension = ldv by n. 
+     *                 See further details.
      * @param  ldv     input int The leading dimension of the array V. If storev = 'C', ldv >= max(1,n). If storev =
      *                 'R', ldv >= k.
      * @param  tau     input double[] of dimension k. tau[i] must contain the scalar factor of the elementary reflector
@@ -15133,10 +15149,27 @@ loop3:                       {
      *                 <p>Further Details: The shape of the matrix V and the storage of the vectors which define the
      *                 H[i] is best illustrated by the following example with n = 5 and k = 3. The elements equal to 1
      *                 are not stored; the corresponding array elements are modified but restored on exit. The rest of
-     *                 the array is not used. direct = 'F' and storev = 'C': V = ( 1 ) (v1 v1 ) (v1 v2 1 ) (v1 v2 v3 )
-     *                 (v1 v2 v3 ) direct = 'F' and storev = 'R': V = ( 1 v1 v1 v1 v1 ) ( 1 v2 v2 v2 ) ( 1 v3 v3 )
-     *                 direct = 'B' and storev = 'C': V = ( v1 v2 v3 ) ( v1 v2 v3 ) ( 1 v2 v3 ) ( 1 v3 ) ( 1 ) direct =
-     *                 'B' and storev = 'R': V = ( v1 v1 1 ) ( v2 v2 v2 1 ) ( v3 v3 v3 v3 1 )</p>
+     *                 the array is not used. 
+     *                 direct = 'F' and storev = 'C': 
+     *                 V = ( 1       )
+     *                     (v1  1    ) 
+     *                     (v1 v2  1 )
+     *                     (v1 v2 v3 )
+     *                     (v1 v2 v3 ) 
+     *                 direct = 'F' and storev = 'R': 
+     *                 V = ( 1 v1 v1 v1 v1 ) 
+     *                     (    1 v2 v2 v2 ) 
+     *                     (       1 v3 v3 )
+     *                 direct = 'B' and storev = 'C': 
+     *                 V = ( v1 v2 v3 ) 
+     *                     ( v1 v2 v3 ) 
+     *                     (  1 v2 v3 ) 
+     *                     (     1 v3 ) 
+     *                     (        1 ) 
+     *                 direct = 'B' and storev = 'R': 
+     *                 V = ( v1 v1  1      ) 
+     *                     ( v2 v2 v2  1   ) 
+     *                     ( v3 v3 v3 v3 1 )</p>
      */
     private void dlarft(char direct, char storev, int n, int k, double[][] V, int ldv, double[] tau, double[][] T,
                         int ldt) {
@@ -15299,6 +15332,8 @@ loop3:                       {
                             for (p = 0; p < (k - i); p++) {
                                 T[p + i][i - 1] = vector2[p];
                             }
+                            
+                            V[n - k + i - 1][i - 1] = vii;
                         } // if ((storev == 'C') || (storev == 'c'))
                         else { // ((storev == 'R') || (storev == 'r'))
                             vii = V[i - 1][n - k + i - 1];
@@ -15362,14 +15397,15 @@ loop3:                       {
     } // dlarft
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLARFY Original DLARFY created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
-     * 29, 1992 dlarfy applies an elementary reflector, or Householder matrix, H, to an n by n symmetric matrix C, from
+     * This is a port of version 3.1 LAPACK auxiliary test routine DLARFY Original DLARFY created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlarfy applies an elementary reflector, or Householder matrix, H, to an n by n symmetric matrix C, from
      * both the left and the right. H is represented in the form H = I - tau * v * v' where tau is a scalar and v is a
      * vector. If tau is zero, then H is taken to be the unit vector
      *
-     * @param  uplo  (input) char Specifies whether the upper or lower triangular part of the matrix C is stored. = 'U':
-     *               Upper triangle = 'L': Lower triangle
+     * @param  uplo  (input) char Specifies whether the upper or lower triangular part of the matrix C is stored. 
+     *                = 'U': Upper triangle 
+     *                = 'L': Lower triangle
      * @param  n     (input) int The number of rows and columns of the matrix C. n >= 0.
      * @param  v     (input) double[] of dimension (1 + (n-1)*abs(incv))
      * @param  incv  (input) int The increment between succesive elements of v. incv must not be zero.
@@ -15398,14 +15434,16 @@ loop3:                       {
     } // dlarfy
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARND Original DLARND created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30,
-     * 1994 dlarnd returns a random real number from a uniform or normal distribution. This routine calls the auxiliary
+     * This is a port of version 3.1 LAPACK auxiliary routine DLARND Original DLARND created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dlarnd returns a random real number from a uniform or normal distribution. This routine calls the auxiliary
      * routine dlaran to generate a random real number from a uniform (0,1) distribution. The Box-Muller method is used
      * to transform numbers from a uniform to a normal distribution.
      *
-     * @param   idist  input int Specifies the distribution of the random numbers: = 1: uniform (0,1) = 2: uniform
-     *                 (-1,1) = 3: normal (0,1)
+     * @param   idist  input int Specifies the distribution of the random numbers: 
+     *                 = 1: uniform (0,1) 
+     *                 = 2: uniform (-1,1) 
+     *                 = 3: normal (0,1)
      * @param   iseed  (input/output) int[] of dimension 4 On entry, the seed of the random number generator; the array
      *                 elements must be between 0 and 4095, and iseed[3] must be odd. On exit, the seed is updated.
      *
@@ -15438,19 +15476,22 @@ loop3:                       {
     } // dlarnd
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARNV Original DLARNV created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30,
-     * 1994 dlarnv returns a vector of n random real numbers from a uniform or normal distribution
+     * This is a port of version 3.1 LAPACK auxiliary routine DLARNV Original DLARNV created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dlarnv returns a vector of n random real numbers from a uniform or normal distribution
      *
-     * @param  idist  input int Specifies the distribution of the random numbers: = 1: uniform (0,1) = 2: uniform (-1,1)
+     * @param  idist  input int Specifies the distribution of the random numbers: 
+     *                = 1: uniform (0,1) 
+     *                = 2: uniform (-1,1)
      *                = 3: normal (0,1)
      * @param  iseed  input/output int[] of dimension 4. On entry, the seed of the random number generator; the array
      *                elements must be between 0 and 4095, and iseed[3] must be odd. On exit, the seed is updated
      * @param  n      input int The number of random numbers to be generated.
-     * @param  x      output double[] of dimension n. The random generated numbers. The routine calls the auxiliary
-     *                routine dlaruv to generate random real numbers from a uniform (0,1) distribution, in batches of up
-     *                to 128 using vectorizable code. The Box-Muller method is used to transform numbers from a uniform
-     *                to a normal distribution.
+     * @param  x      output double[] of dimension n. The random generated numbers.
+     * 
+     * The routine calls the auxiliary routine dlaruv to generate random real numbers from a uniform (0,1) distribution,
+     * in batches of up to 128 using vectorizable code. The Box-Muller method is used to transform numbers from a uniform
+     * to a normal distribution.
      */
     private void dlarnv(int idist, int[] iseed, int n, double[] x) {
         int lv = 128;
@@ -15501,22 +15542,27 @@ loop3:                       {
     } // dlarnv
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLAROT Original DLAROT created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
-     * 29, 1992 dlarot applies a (Givens) rotation to two adjacent rows or columns, where one element of the first
+     * This is a port of version 3.1 LAPACK auxiliary test routine DLAROT Original DLAROT created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlarot applies a (Givens) rotation to two adjacent rows or columns, where one element of the first
      * and/or last column/row may be a separate variable. This is specifically intended for use on matrices stored in
      * some format other than GE, so that elements of the matrix may be used or modified for which no array element is
      * provided.
      *
      * <p>One example is a symmetric matrix in SB format (bandwidth=4), for which uplo = 'L': Two adjacent rows will
-     * have the format: row j: * * * * * . . . . row j+1: * * * * * . . . .'*' indicates elements for which storage is
-     * provided, '.' indicates elements for which no storage is provided, but are not necessrily zero; their values are
-     * determined by symmetry. ' ' indicatres elements which are mecessarily zero, and have no storage provided.</p>
+     * have the format: 
+     * row j:      * * * * * . . . . 
+     * row j+1:      * * * * * . . . .
+     * '*' indicates elements for which storage is provided, 
+     * '.' indicates elements for which no storage is provided, but are not necessrily zero; their values are
+     *     determined by symmetry. 
+     * ' ' indicatres elements which are mecessarily zero, and have no storage provided.</p>
      *
      * <p>Those columns which have two '*'s can be handled by drot. Those columns which have no '*'s can be ignored,
      * since as long as the Givens rotations are carefully applied to preserve symmetry, their values are determined.
-     * Those columns which have one '*' have to be handled separately, by using separate variables "p" and "q": row j: *
-     * * * * * p . . . row j+1: q * * * * * . . . .</p>
+     * Those columns which have one '*' have to be handled separately, by using separate variables "p" and "q": 
+     * row j:          * * * * * p . . . 
+     * row j+1:        q * * * * * . . . .</p>
      *
      * <p>The element p would have to be set correctly, then that column is rotated, setting p to its new value. The
      * next call to dlarot would rotate columns j and j+1, using p, and restore symmetry. The element q would start out
@@ -15565,7 +15611,8 @@ loop3:                       {
      *                 lleft and lright are true must be at least zero; if not, an error message will be output.
      * @param  c       input double
      * @param  s       input double c and s specify the Givens rotation to be applied. If lrows is true, then the matrix
-     *                 ( c s ) (-s c ) is applied from the left; if false, then the transpose thereof is applied from
+     *                 ( c s )
+     *                 (-s c ) is applied from the left; if false, then the transpose thereof is applied from
      *                 the right. For a Givens rotation, c**2 + s**2 should be 1, but this is not checked.
      * @param  A       input/output double[] The array containing the rows/columns to be rotated. The first element of A
      *                 should be the upper left element to be rotated.
@@ -15580,7 +15627,7 @@ loop3:                       {
      *                 otherwise it must be at least nl minus the number of true values in xleft and xright.
      * @param  xleft   input/output double[] If lleft is true, then xleft will be used and modified instead of A[1][0]
      *                 (if lrows = true) or A[0][1] (if lrows = false).
-     * @param  xright  input/output double[] If lright is true, then xright will be used an modified instead of
+     * @param  xright  input/output double[] If lright is true, then xright will be used and modified instead of
      *                 A[0][nl-1] (if lrows = true) or A[nl-1][0] (if lrows = false).
      */
     private void dlarot(boolean lrows, boolean lleft, boolean lright, int nl, double c, double s, double[] A, int lda,
@@ -15676,11 +15723,14 @@ loop3:                       {
     } // dlarot
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARTG Original DLARTG created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30,
-     * 1994 dlartg generates a plane rotation so that [ cs sn ] . [ f ] = [ r ] where cs*cs + sn*sn = 1. [ -sn cs ] [ g
-     * ] [ 0 ] If g = 0, then cs = 1 and sn = 0. If f = 0 and g != 0, then cs = 0 and sn = 1. If f exceeds g in
-     * magnitude, then cs will be positive.
+     * This is a port of version 3.1 LAPACK auxiliary routine DLARTG Original DLARTG created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dlartg generates a plane rotation so that 
+     * [  cs  sn ] . [ f ] = [ r ] where cs*cs + sn*sn = 1.
+     * [ -sn  cs ]   [ g ]   [ 0 ] 
+     * If g = 0, then cs = 1 and sn = 0. 
+     * If f = 0 and g != 0, then cs = 0 and sn = 1 without doing any floating point operations. 
+     * If f exceeds g in magnitude, then cs will be positive.
      *
      * @param  f   input double The first component of the vector to be rotated.
      * @param  g   input double The second component of the vector to be rotated.
@@ -15770,20 +15820,22 @@ loop3:                       {
     } // dlartg
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLARUV Original DLARUV created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLARUV Original DLARUV created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dlaruv returns a vector of n random real numbers from a uniform (0,1) distribution (n <= 128). This is an
      * auxiliary routine called by dlarnv.
      *
      * @param  iseed  input/output int[] of dimension 4 On entry, the seed of the random number generator; the array
      *                elements must be between 0 and 4095, and iseed[3] must be odd. On exit, the seed is updated.
      * @param  n      input int The number of random numbers to be generated. n <= 128.
-     * @param  x      output double[] of dimension n. The generated random numbers. This routine uses a multiplicative
-     *                congruential method with modulus 2**48 and multiplier 33952834046453 (see G.S. Fishman,
-     *                "Multiplicative congruential random number generators with modulus 2**b: an exhaustive analysis
-     *                for b = 32 and a partial analysis for b = 48", Math. Comp. 189, pp. 331-344, 1990). 48-bit
-     *                integers are stored in 4 integer array elements with 12 bits per element. Hence the routine is
-     *                portable across machines with integers of 32 bits or more.
+     * @param  x      output double[] of dimension n. The generated random numbers.
+     * 
+     * This routine uses a multiplicative congruential method with modulus 2**48 and multiplier 33952834046453
+     * (see G.S. Fishman, "Multiplicative congruential random number generators with modulus 2**b: an exhaustive analysis
+     * for b = 32 and a partial analysis for b = 48", Math. Comp. 189, pp. 331-344, 1990).
+     * 
+     * 48-bit integers are stored in 4 integer array elements with 12 bits per element. Hence the routine is
+     * portable across machines with integers of 32 bits or more.
      */
     private void dlaruv(int[] iseed, int n, double[] x) {
         int lv = 128;
@@ -16320,24 +16372,39 @@ loop3:                       {
         i4 = iseed[3];
 
         for (i = 0; i < Math.min(n, lv); i++) {
-
             // Multiply the seed by the (i+1)-th power of the multiplier modulo
             // 2**48
-            it4 = i4 * mm[i][3];
-            it3 = it4 / ipw2;
-            it4 = it4 - (ipw2 * it3);
-            it3 = it3 + (i3 * mm[i][3]) + (i4 * mm[i][2]);
-            it2 = it3 / ipw2;
-            it3 = it3 - (ipw2 * it2);
-            it2 = it2 + (i2 * mm[i][3]) + (i3 * mm[i][2]) + (i4 * mm[i][1]);
-            it1 = it2 / ipw2;
-            it2 = it2 - (ipw2 * it1);
-            it1 = it1 + (i1 * mm[i][3]) + (i2 * mm[i][2]) + (i3 * mm[i][1]) + (i4 * mm[i][0]);
-            it1 = it1 % ipw2;
-
-            // Convert 48-bit integer to a real number in the interval (0,1)
-
-            x[i] = r * (it1 + (r * (it2 + (r * (it3 + (r * it4))))));
+            while (true) {
+                it4 = i4 * mm[i][3];
+                it3 = it4 / ipw2;
+                it4 = it4 - (ipw2 * it3);
+                it3 = it3 + (i3 * mm[i][3]) + (i4 * mm[i][2]);
+                it2 = it3 / ipw2;
+                it3 = it3 - (ipw2 * it2);
+                it2 = it2 + (i2 * mm[i][3]) + (i3 * mm[i][2]) + (i4 * mm[i][1]);
+                it1 = it2 / ipw2;
+                it2 = it2 - (ipw2 * it1);
+                it1 = it1 + (i1 * mm[i][3]) + (i2 * mm[i][2]) + (i3 * mm[i][1]) + (i4 * mm[i][0]);
+                it1 = it1 % ipw2;
+    
+                // Convert 48-bit integer to a real number in the interval (0,1)
+    
+                x[i] = r * (it1 + (r * (it2 + (r * (it3 + (r * it4))))));
+                if (x[i] != 1.0) {
+                    break;    
+                } // if (x[i] != 1.0)
+                // x[i] == 1.0
+                // If a real number has n bits of precision, and the first n bits of the 48-bit integer
+                // happen all to be 1 (which will occur about once every 2**n calls), then x[i] will be
+                // rounded to exactly 1.0
+                // Since x[i] is not supposed to return exactly 0.0 or 1.0, the statistically correct 
+                // thing to do in this situation is simply to iterate again.
+                // N.B. The case x[i] = 0.0 should not be possible.
+                i1 = i1 + 2;
+                i2 = i2 + 2;
+                i3 = i3 + 2;
+                i4 = i4 + 2;
+            } // while(true)
         } // for (i = 0; i < Math.min(n,lv); i++)
 
         // Return final value of seed
@@ -16350,18 +16417,22 @@ loop3:                       {
     } // dlaruv
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLASCL Original DLASCL created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
-     * 29, 1992 dlascl multiplies the m by n real matrix A by the real scalar cto/cfrom. This is done without
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLASCL Original DLASCL created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlascl multiplies the m by n real matrix A by the real scalar cto/cfrom. This is done without
      * over/underflow as long as the final result cto*A[i][j]/cfrom does not over/underflow. type specifies that A may
      * be full, upper triangular, lower triangular, upper Hessenberg, or banded.
      *
-     * @param  type   input char type indicates the storage type of the input matrix. = 'G': A is a full matrix. = 'L':
-     *                A is a lower triangular matrix. = 'U': A is an upper triangular matrix. = 'H': A is an upper
-     *                Hessenberg matrix. = 'B': A is a symmetric band matrix with lower bandwidth kl and upper bandwidth
-     *                ku and with only the lower half stored. = 'Q': A is a symmetric band matrix with lower bandwidth
-     *                kl and upper bandwidth ku and with only the upper half stored. = 'Z': A is a band matrix with
-     *                lower bandwith kl and upper bandwidth ku
+     * @param  type   input char type indicates the storage type of the input matrix. 
+     *                = 'G': A is a full matrix. 
+     *                = 'L': A is a lower triangular matrix. 
+     *                = 'U': A is an upper triangular matrix. 
+     *                = 'H': A is an upper Hessenberg matrix. 
+     *                = 'B': A is a symmetric band matrix with lower bandwidth kL and upper bandwidth
+     *                       ku and with only the lower half stored. 
+     *                = 'Q': A is a symmetric band matrix with lower bandwidth kL and upper bandwidth
+     *                       ku and with only the upper half stored. 
+     *                = 'Z': A is a band matrix with lower bandwith kL and upper bandwidth ku
      * @param  kL     input int The lower bandwidth of A. Referenced only if type = 'B', 'Q', or 'Z'.
      * @param  ku     input int The upper bandwidth of A. Referenced only if type = 'B', 'Q', or 'Z'.
      * @param  cfrom  input double
@@ -16372,7 +16443,9 @@ loop3:                       {
      * @param  n      input int The number of columns of the matrix A. n >= 0.
      * @param  A      input/output double[][] of dimension lda by n. The matrix to be multiplied by cto/cfrom.
      * @param  lda    input int The leading dimension of the array A. lda >= max(1,m).
-     * @param  info   output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info = -i, the i-th argument had an illegal value
      */
     private void dlascl(char type, int kL, int ku, double cfrom, double cto, int m, int n, double[][] A, int lda,
                         int[] info) {
@@ -16558,21 +16631,24 @@ loop3:                       {
     } // dlascl
 
     /**
-     * This is a port of version 3.0 auxiliary routine DLASET. Original DLASET created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * This is a port of version 3.1 auxiliary routine DLASET. Original DLASET created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dlaset initializes an m-by-n matrix A to beta on the diagonal and alpha on the offdiagonals.
      *
-     * @param  uplo   input char Specifies the part of the matrix to be set. = 'U': Upper triangular part is set; the
-     *                strictly lower triangular part of A is not changed. = 'L': Lower triangular part is set; the
-     *                strictly upper triangular part of A is not changed: Otherwise: All of the matrix A is set.
+     * @param  uplo   input char Specifies the part of the matrix to be set. 
+     *                = 'U': Upper triangular part is set; the strictly lower triangular part of A is not changed. 
+     *                = 'L': Lower triangular part is set; the strictly upper triangular part of A is not changed.
+     *                Otherwise: All of the matrix A is set.
      * @param  m      input int The number of rows of the matrix A. m >= 0.
-     * @param  n      input int The nuber of columns of the matrix A. n >= 0.
+     * @param  n      input int The number of columns of the matrix A. n >= 0.
      * @param  alpha  input double The constant to which the offdiagonal elements are to be set.
      * @param  beta   input double The constant to which the diagonal elements are to be set.
      * @param  A      input/output double[][] of dimension lda by n. On exit, the leading m-by-n submatrix of A is set
-     *                as follows: If uplo = 'U', A(i,j) = alpha, 0 <= i <= j-1, 0 <= j <= n-1, If uplo = 'L', A(i,j) =
-     *                alpha, j+1 <= i <= m-1, 0 <= j <= n-1, Otherwise, A(i,j) = alpha, 0 <= i <= m-1, 0 <= j <= n-1, i
-     *                != j and, for all uplo, A(i,i) = beta, 0 <= i <= min(m-1,n-1).
+     *                as follows: 
+     *                If uplo = 'U', A(i,j) = alpha, 0 <= i <= j-1, 0 <= j <= n-1,
+     *                If uplo = 'L', A(i,j) = alpha, j+1 <= i <= m-1, 0 <= j <= n-1, 
+     *                Otherwise, A(i,j) = alpha, 0 <= i <= m-1, 0 <= j <= n-1, i!= j
+     *                and, for all uplo, A(i,i) = beta, 0 <= i <= min(m-1,n-1).
      * @param  lda    input int The leading dimension of the array A. lda >= max(1,m).
      */
     private void dlaset(char uplo, int m, int n, double alpha, double beta, double[][] A, int lda) {
@@ -16621,31 +16697,79 @@ loop3:                       {
     } // dlaset
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLASR Original DLASR created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
-     * dlasr performs the transformation A = p*A, when side = 'L' or 'l' (Left-hand side) A = A*p', when side = 'R' or
-     * 'r' (right-hand side) where A is an m by n real matrix and p is an orthogonal matrix, consisting of a sequence of
-     * plane rotations determined by the parameters pivot and direct as follows (z = m when side = 'L' or 'l' and z = n
-     * when side = 'R' or 'r'): When direct = 'F' or 'f' (Forward sequence) then P = P[z-2] *...* P[1]*P[0], and when
-     * direct = 'B' or 'b' (Backward sequence) then P = P[0]*P[1]*...*P[z-2], where P[k] is a plane rotation matrix for
-     * the following planes: when pivot = 'V' or 'v' (Variable pivot), the plane (k,k+1) when pivot = 'T' or 't' (top
-     * pivot), the plane (1,k+1) when pivot = 'B' or 'b' (Bottom pivot), the plane (k,z) c[k] and s[k] must contain the
-     * cosine and sine that define the matrix P[k]. The two by two plane rotation part of the marix P[k], R[k], is
-     * assumed to be of the form R[k] = ( c[k] s[k]) (-s[k] c[k]) This version vectorizes across rows of the array A
-     * when side = 'L'.
+     * This is a port of version 3.1 LAPACK auxiliary routine DLASR Original DLASR created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dlasr applies a sequence of plane rotations to a real matrix A, from either the left or the right.
+     * when side = 'L', the transformation takes the form
+     *     A = P * A
+     * and when side = 'R', the transformation takes the form
+     *     A = A * P**T
+     * where P is an orthogonal matrix consisting of a sequence of z plane rotations, with z = m when side = 'L' and
+     * z = n when side = 'R', and P**T is the transpose of P.
+     * 
+     * When direct = 'F' (Forward sequence), then
+     *     P = P(z-2) * ... * P(1) * P(0)
+     * and when dired = 'B' (Backward sequence), then
+     *     P = P(0) * P(1) * ... * P(z-2)
+     * where P(k) is a plane rotation matrix defined by the 2-by-2 rotation
+     *     R(k) = (  c(k)  s(k)  )
+     *            ( -s(k)  c(k)  )
+     *  
+     *  When pivot = 'V' (Variable pivot), the rotation is performed for the plane (k,k+1), i.e., P(k) has the form
+     *     P(k) = (  1                                                )
+     *            (       ...                                         )
+     *            (                1                                  )
+     *            (                     c(k)   s(k)                   )
+     *            (                    -s(k)   c(k)                   )
+     *            (                                   1               )
+     *            (                                         ...       )
+     *            (                                                1  )
+     *  where R(k) appears as a rank-2 modification to the identity matrix in rows and columns k and k+1.
+     *  
+     *  When pivot = 'T' (Top pivot), the rotation is performed for the plane (1,k+1), so P(k) has the form
+     *      P(k) = (  c(k)                    s(k)                  )
+     *             (        1                                       )
+     *             (             ...                                )
+     *             (                     1                          )
+     *             ( -s(k)                    c(k)                  )
+     *             (                                 1              )
+     *             (                                     ...        )
+     *             (                                             1  )
+     * where R(k) appears in rows and column 1 and k+1
+     * 
+     * 
+     * Similarly, when pivot = 'B' (Bottom pivot), the rotation is performed for the plane (k,z), giving 
+     * P(k) the form
+     *     P(k) = (  1                                          )
+     *            (      ...                                    )
+     *            (             1                               )
+     *            (                  c(k)                  s(k) )
+     *            (                        1                    )
+     *            (                            ...              )
+     *            (                                   1         )
+     *            (                 -s(k)                  c(k) )
+     * where R(k) appears in rows and columns k and z.  The rotations are performed without ever forming
+     * P(k) explicitly.
+     *             
      *
      * @param  side    input char Specifies whether the plane rotation matrix P is applied to A on the left or the
-     *                 right. = 'L': Left, compute A = P*A = 'R': Right, compute A = A*P'
-     * @param  pivot   input char Specifies the plane for which p[k] is a plane rotation matrix. = 'V': Variable pivot,
-     *                 the plane (k,k+1) = 'T': Top pivot, the plane (1,k+1) = 'B': Bottom pivot, the plane (k,z)
-     * @param  direct  input char Specifies whether P is a forward or backward sequence of plane rotations. = 'F':
-     *                 Forward, p = p[z-2]*...*p[1]*p[0] = 'B': Backward, p = p[0]*p[1]*...*p[z-2]
+     *                 right. 
+     *                 = 'L': Left, compute A = P*A 
+     *                 = 'R': Right, compute A = A*P'
+     * @param  pivot   input char Specifies the plane for which p[k] is a plane rotation matrix. 
+     *                            = 'V': Variable pivot, the plane (k,k+1) 
+     *                            = 'T': Top pivot, the plane (1,k+1) 
+     *                            = 'B': Bottom pivot, the plane (k,z)
+     * @param  direct  input char Specifies whether P is a forward or backward sequence of plane rotations. 
+     *                            = 'F': Forward, p = p[z-2]*...*p[1]*p[0] 
+     *                            = 'B': Backward, p = p[0]*p[1]*...*p[z-2]
      * @param  m       input int The number of rows of the matrix A. If m <= 1, an immediate return is effected.
      * @param  n       input int The number of columns of the matrix A. If n <= 1, an immediate return is effected.
      * @param  c       input double[]
      * @param  s       input double[] c and s are dimension (m-1) if side = 'L', (n-1) if side = 'R' c[k] and s[k]
      *                 contain the cosine and sine that define the matrix p[k]. The two by two plane rotation part of
-     *                 the matrix p[k], R[k], is assumed to be of the form R[k] = ( c[k] s[k]) (-s[k] c[k])
+     *                 the matrix p[k], R[k], has the form R[k] = ( c[k] s[k])
+     *                                                            (-s[k] c[k])
      * @param  A       input/output double[][] of dimension lda by n. On entry, the m by n matrix A. On exit, A is
      *                 overwritten by P*A if side = 'L' or by A*P' if side = 'R'.
      * @param  lda     input int The leading dimension of the array A. lda >= max(1,m).
