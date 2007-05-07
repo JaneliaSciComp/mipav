@@ -515,7 +515,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         /* create the WindowLevel controller: */
         m_kWinLevel = new WindowLevel();
 
-        loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
+        if (!(_frame instanceof ViewJFrameLightBox)) {
+        	loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
+        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -2741,7 +2743,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 paintMagComponent(offscreenGraphics2d);
             } else if (cursorMode == DEFAULT) {
 
-                if (!(this instanceof ViewJComponentSingleRegistration)) {
+                if (!(this instanceof ViewJComponentSingleRegistration) &&
+                		!(frame instanceof ViewJFrameLightBox)) {
 
                     if (intensityLabel) {
 
