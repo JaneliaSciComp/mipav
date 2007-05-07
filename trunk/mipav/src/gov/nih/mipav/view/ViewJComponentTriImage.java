@@ -2358,68 +2358,81 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                    orientation, offscreenGraphics2d);
         }
     }
-
+    
     /**
      * Convenience method called by paintComponent(). Inserted here for simplicity's sake.
      *
      * @param  offscreenGraphics2d  Graphics2D
      */
     private void drawTalairachGrid_AXIAL(Graphics2D offscreenGraphics2d) {
+        
+        // we should check if we're inside the box first
+        
         Stroke defaultStroke = offscreenGraphics2d.getStroke();
         Stroke dashedStroke = getDashedStroke();
 
-        // slice separating right from left is always put ViewJFrameTriImage.ATLAS_BBOX_LAT or 80 mm. from
+        // slice separating right from left is always put ViewJFrameTriImage.ATLAS_BBOX_LAT. from
         // x = 0 at the right of the image
         int xSliceT = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX);
-        int x14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX / 4);
-        int x24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX / 2);
-        int x34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX * 3 / 4);
-        int x54 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX * 5 / 4);
-        int x64 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX * 3 / 2);
-        int x74 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX * 7 / 4);
+        
+        // new coordinates: middle -/+ Talairach dimensions
+        int x04 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX - ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 4 / 4);
+        int x14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX - ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 3 / 4);
+        int x24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX - ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 2 / 4);
+        int x34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX - ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 1 / 4);
+        int x54 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX + ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 1 / 4);
+        int x64 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX + ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 2 / 4);
+        int x74 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX + ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 3 / 4);
+        int x84 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX + ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 4 / 4);
 
-        // slice separating anterior from median is always put ViewJFrameTriImage.ATLAS_BBOX_ANT or 80 mm. from y = 0 at
+        // slice separating anterior from median is always put ViewJFrameTriImage.ATLAS_BBOX_ANT. from y = 0 at
         // the anterior of image slice separating median from posterior is always put ViewJFrameTriImage.ATLAS_BBOX_ANT
-        // + ViewJFrameTriImage.ATLAS_AC_TO_PC or 103 mm. from the anterior of the image
+        // + ViewJFrameTriImage.ATLAS_AC_TO_PC from the anterior of the image
         int ySliceT = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY);
-        int yA14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY / 4);
-        int yA24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY / 2);
-        int yA34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY * 3 / 4);
         int ySliceT2 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY);
-        int yP14 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC +
-                                    ((ViewJFrameTriImage.ATLAS_BBOX_POS - ViewJFrameTriImage.ATLAS_AC_TO_PC) / 4)) *
-                                       zoomY);
-        int yP24 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC +
-                                    ((ViewJFrameTriImage.ATLAS_BBOX_POS - ViewJFrameTriImage.ATLAS_AC_TO_PC) / 2)) *
-                                       zoomY);
-        int yP34 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC +
-                                    ((ViewJFrameTriImage.ATLAS_BBOX_POS - ViewJFrameTriImage.ATLAS_AC_TO_PC) * 3 / 4)) *
-                                       zoomY);
-
+        
+        // new coordinates: middle -/+ Talairach dimensions
+        int yA04 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_ANT * zoomY * 4 / 4);
+        int yA14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_ANT * zoomY * 3 / 4);
+        int yA24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_ANT * zoomY * 2 / 4);
+        int yA34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_ANT * zoomY * 1 / 4);
+        
+        int yP14 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY
+                                    + ViewJFrameTriImage.ATLAS_PC_TO_POS * zoomY * 1 / 4);
+        int yP24 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY
+                                    + ViewJFrameTriImage.ATLAS_PC_TO_POS * zoomY * 2 / 4);
+        int yP34 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY
+                                    + ViewJFrameTriImage.ATLAS_PC_TO_POS * zoomY * 3 / 4);
+        int yP44 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY
+                                    + ViewJFrameTriImage.ATLAS_PC_TO_POS * zoomY * 4 / 4);
+        
+        int yAP13 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_PC  * zoomY * 1 / 3);
+        int yAP23 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_PC  * zoomY * 2 / 3);
+                                    
+        // major axes
         offscreenGraphics2d.setColor(talairachMajorLineColor);
-        offscreenGraphics2d.drawLine(xSliceT, 0, xSliceT, getSize().height);
-        offscreenGraphics2d.drawLine(0, ySliceT, getSize().width, ySliceT);
-        offscreenGraphics2d.drawLine(0, ySliceT2, getSize().width, ySliceT2);
+        offscreenGraphics2d.drawLine(xSliceT, yA04, xSliceT, yP44);
+        offscreenGraphics2d.drawLine(x04, ySliceT, x84, ySliceT);
+        offscreenGraphics2d.drawLine(x04, ySliceT2, x84, ySliceT2);
 
-        // at pilou's request, this logic draws two lines, evenly spaced through the e-box of the talairach display
-        int eBoxOneThird = (int) ((ySliceT2 - ySliceT) * 0.33) + ySliceT;
-        int eBoxTwoThirds = (int) ((ySliceT2 - ySliceT) * 0.67) + ySliceT;
+        // graduation lines
         offscreenGraphics2d.setColor(talairachMinorLineColor);
         offscreenGraphics2d.setStroke(dashedStroke);
-        offscreenGraphics2d.drawLine(0, eBoxOneThird, getSize().width, eBoxOneThird);
-        offscreenGraphics2d.drawLine(0, eBoxTwoThirds, getSize().width, eBoxTwoThirds);
+        offscreenGraphics2d.drawLine(x04, yAP13, x84, yAP13);
+        offscreenGraphics2d.drawLine(x04, yAP23, x84, yAP23);
 
-        // gray lines
-        offscreenGraphics2d.drawLine(x14, 0, x14, getSize().height);
-        offscreenGraphics2d.drawLine(x24, 0, x24, getSize().height);
-        offscreenGraphics2d.drawLine(x34, 0, x34, getSize().height);
-        offscreenGraphics2d.drawLine(x54, 0, x54, getSize().height);
-        offscreenGraphics2d.drawLine(x64, 0, x64, getSize().height);
-        offscreenGraphics2d.drawLine(x74, 0, x74, getSize().height);
+        offscreenGraphics2d.drawLine(x04, yA04, x04, yP44);
+        offscreenGraphics2d.drawLine(x14, yA04, x14, yP44);
+        offscreenGraphics2d.drawLine(x24, yA04, x24, yP44);
+        offscreenGraphics2d.drawLine(x34, yA04, x34, yP44);
+        offscreenGraphics2d.drawLine(x54, yA04, x54, yP44);
+        offscreenGraphics2d.drawLine(x64, yA04, x64, yP44);
+        offscreenGraphics2d.drawLine(x74, yA04, x74, yP44);
+        offscreenGraphics2d.drawLine(x84, yA04, x84, yP44);
 
-        verticalTalGridPts = new int[] { 0, x14, x24, x34, xSliceT, x54, x64, x74, Integer.MAX_VALUE };
+        verticalTalGridPts = new int[] { x04, x14, x24, x34, xSliceT, x54, x64, x74, x84 };
         horizontalTalGridPts = new int[] {
-                                   0, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34, Integer.MAX_VALUE
+                                   yA04, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34, yP44
                                };
 
         if (showTalairachGridmarkers) {
@@ -2438,18 +2451,20 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         offscreenGraphics2d.setColor(talairachMinorLineColor);
         offscreenGraphics2d.setStroke(dashedStroke);
-        offscreenGraphics2d.drawLine(0, yA14, getSize().width, yA14);
-        offscreenGraphics2d.drawLine(0, yA24, getSize().width, yA24);
-        offscreenGraphics2d.drawLine(0, yA34, getSize().width, yA34);
-        offscreenGraphics2d.drawLine(0, yP14, getSize().width, yP14);
-        offscreenGraphics2d.drawLine(0, yP24, getSize().width, yP24);
-        offscreenGraphics2d.drawLine(0, yP34, getSize().width, yP34);
+        offscreenGraphics2d.drawLine(x04, yA04, x84, yA04);
+        offscreenGraphics2d.drawLine(x04, yA14, x84, yA14);
+        offscreenGraphics2d.drawLine(x04, yA24, x84, yA24);
+        offscreenGraphics2d.drawLine(x04, yA34, x84, yA34);
+        offscreenGraphics2d.drawLine(x04, yP14, x84, yP14);
+        offscreenGraphics2d.drawLine(x04, yP24, x84, yP24);
+        offscreenGraphics2d.drawLine(x04, yP34, x84, yP34);
+        offscreenGraphics2d.drawLine(x04, yP44, x84, yP44);
 
         offscreenGraphics2d.setStroke(defaultStroke);
 
         if (showTalairachGridmarkers) {
             offscreenGraphics2d.setColor(talairachMajorLineColor);
-            drawStringBW("A", offscreenGraphics2d, getSize().width - 9, yA14 / 2);
+            drawStringBW("A", offscreenGraphics2d, getSize().width - 9, ((yA14 - yA04) / 2) + yA04);
             drawStringBW("B", offscreenGraphics2d, getSize().width - 9, ((yA24 - yA14) / 2) + yA14);
             drawStringBW("C", offscreenGraphics2d, getSize().width - 9, ((yA34 - yA24) / 2) + yA24);
             drawStringBW("D", offscreenGraphics2d, getSize().width - 9, ((ySliceT - yA34) / 2) + yA34);
@@ -2457,7 +2472,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             drawStringBW("F", offscreenGraphics2d, getSize().width - 9, ((yP14 - ySliceT2) / 2) + ySliceT2);
             drawStringBW("G", offscreenGraphics2d, getSize().width - 9, ((yP24 - yP14) / 2) + yP14);
             drawStringBW("H", offscreenGraphics2d, getSize().width - 9, ((yP34 - yP24) / 2) + yP24);
-            drawStringBW("I", offscreenGraphics2d, getSize().width - 9, ((getSize().height - yP34) / 2) + yP34);
+            drawStringBW("I", offscreenGraphics2d, getSize().width - 9, ((yP44 - yP34) / 2) + yP34);
         }
     }
 
@@ -2467,122 +2482,72 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  offscreenGraphics2d  Graphics2D
      */
     private void drawTalairachGrid_CORONAL(Graphics2D offscreenGraphics2d) {
+       
+        // we should check if we're inside the box first
+        
         Stroke defaultStroke = offscreenGraphics2d.getStroke();
         Stroke dashedStroke = getDashedStroke();
 
-        // slice separating right from left is always put ViewJFrameTriImage.ATLAS_BBOX_LAT or 80 mm. from
+        // slice separating right from left is always put ViewJFrameTriImage.ATLAS_AC_TO_LAT or 68 mm. from
         // x = 0 at the right of the image
         int xSliceT = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX);
-        int zSliceT;
+        
+        // new coordinates: middle -/+ Talairach dimensions
+        int x04 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX - ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 4 / 4);
+        int x14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX - ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 3 / 4);
+        int x24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX - ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 2 / 4);
+        int x34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX - ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 1 / 4);
+        int x54 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX + ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 1 / 4);
+        int x64 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX + ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 2 / 4);
+        int x74 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX + ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 3 / 4);
+        int x84 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX + ViewJFrameTriImage.ATLAS_AC_TO_LAT * zoomX * 4 / 4);
 
-        int x14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX / 4);
-        int x24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX / 2);
-        int x34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX * 3 / 4);
-        int x54 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX * 5 / 4);
-        int x64 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX * 3 / 2);
-        int x74 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_LAT * zoomX * 7 / 4);
-
-        int zI04, zI14, zI24, zI34;
-        int zS18, zS28, zS38, zS48, zS58, zS68, zS78;
-
-        // slice separating inferior from superior is usually put ViewJFrameTriImage.ATLAS_BBOX_INF_NEW or 65 mm. from z
-        // = 0 at the inferior of the image. In case the z dimension = (ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-        // ViewJFrameTriImage.ATLAS_BBOX_SUP + 1)/resZ Sometimes it is put ViewJFrameTriImage.ATLAS_BBOX_INF or 55. mm
-        // from z = 0 at the inferior of the image. In this case the z dimension = (ViewJFrameTriImage.ATLAS_BBOX_INF +
-        // ViewJFrameTriImage.ATLAS_BBOX_SUP + 1)/resZ
-        if ((imageActive.getExtents()[2] * imageActive.getFileInfo(0).getResolutions()[2]) >
-                (ViewJFrameTriImage.ATLAS_BBOX_INF + ViewJFrameTriImage.ATLAS_BBOX_SUP + 6)) {
-            zSliceT = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                      (ViewJFrameTriImage.ATLAS_BBOX_INF_NEW * zoomY));
-            zI04 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW - ViewJFrameTriImage.ATLAS_BBOX_INF) *
-                                        zoomY));
-            zI14 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW - ViewJFrameTriImage.ATLAS_BBOX_INF +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_INF / 4)) * zoomY));
-            zI24 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW - ViewJFrameTriImage.ATLAS_BBOX_INF +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_INF / 2)) * zoomY));
-            zI34 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW - ViewJFrameTriImage.ATLAS_BBOX_INF +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_INF * 3 / 4)) * zoomY));
-            zS18 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 8)) *
-                                        zoomY));
-            zS28 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 4)) *
-                                        zoomY));
-            zS38 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_SUP * 3 / 8)) * zoomY));
-            zS48 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 2)) *
-                                        zoomY));
-            zS58 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_SUP * 5 / 8)) * zoomY));
-            zS68 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_SUP * 3 / 4)) * zoomY));
-            zS78 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_SUP * 7 / 8)) * zoomY));
-        } else {
-            zSliceT = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                      (ViewJFrameTriImage.ATLAS_BBOX_INF * zoomY));
-            zI04 = -1;
-            zI14 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   (ViewJFrameTriImage.ATLAS_BBOX_INF * zoomY / 4));
-            zI24 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   (ViewJFrameTriImage.ATLAS_BBOX_INF * zoomY / 2));
-            zI34 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   (ViewJFrameTriImage.ATLAS_BBOX_INF * zoomY * 3 / 4));
-            zS18 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 8)) *
-                                        zoomY));
-            zS28 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 4)) *
-                                        zoomY));
-            zS38 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP * 3 / 8)) *
-                                        zoomY));
-            zS48 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 2)) *
-                                        zoomY));
-            zS58 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP * 5 / 8)) *
-                                        zoomY));
-            zS68 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP * 3 / 4)) *
-                                        zoomY));
-            zS78 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP * 7 / 8)) *
-                                        zoomY));
-        }
-
+        // slice separating inferior from superior is usually put ViewJFrameTriImage.ATLAS_AC_TO_INF or 42 mm. from z
+        // = 0 at the inferior of the image. In case the z dimension = (ViewJFrameTriImage.ATLAS_AC_TO_INF +
+        // ViewJFrameTriImage.ATLAS_AC_TO_SUP + 1)/resZ Sometimes it is put ViewJFrameTriImage.ATLAS_AC_TO_INF or 42 mm
+        // from z = 0 at the inferior of the image. In this case the z dimension = (ViewJFrameTriImage.ATLAS_AC_TO_INF +
+        // ViewJFrameTriImage.ATLAS_AC_TO_SUP + 1)/resZ
+        int zSliceT = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY);
+            
+        int zS08 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 8 / 8);
+        int zS18 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 7 / 8);
+        int zS28 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 6 / 8);
+        int zS38 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 5 / 8);
+        int zS48 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 4 / 8);
+        int zS58 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 3 / 8);
+        int zS68 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 2 / 8);
+        int zS78 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 1 / 8);
+        
+        int zI14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 1 / 4);
+        int zI24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 2 / 4);
+        int zI34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 3 / 4);
+        int zI44 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 4 / 4);
+        int zI54 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 5 / 4);
+        
         offscreenGraphics2d.setColor(talairachMajorLineColor);
-        offscreenGraphics2d.drawLine(xSliceT, 0, xSliceT, getSize().height);
-        offscreenGraphics2d.drawLine(0, zSliceT, getSize().width, zSliceT);
+        offscreenGraphics2d.drawLine(xSliceT, zS08, xSliceT, zI54);
+        offscreenGraphics2d.drawLine(x04, zSliceT, x84, zSliceT);
 
         offscreenGraphics2d.setColor(talairachMinorLineColor);
         offscreenGraphics2d.setStroke(dashedStroke);
-        offscreenGraphics2d.drawLine(x14, 0, x14, getSize().height);
-        offscreenGraphics2d.drawLine(x24, 0, x24, getSize().height);
-        offscreenGraphics2d.drawLine(x34, 0, x34, getSize().height);
-        offscreenGraphics2d.drawLine(x54, 0, x54, getSize().height);
-        offscreenGraphics2d.drawLine(x64, 0, x64, getSize().height);
-        offscreenGraphics2d.drawLine(x74, 0, x74, getSize().height);
+        offscreenGraphics2d.drawLine(x04, zS08, x04, zI54);
+        offscreenGraphics2d.drawLine(x14, zS08, x14, zI54);
+        offscreenGraphics2d.drawLine(x24, zS08, x24, zI54);
+        offscreenGraphics2d.drawLine(x34, zS08, x34, zI54);
+        offscreenGraphics2d.drawLine(x54, zS08, x54, zI54);
+        offscreenGraphics2d.drawLine(x64, zS08, x64, zI54);
+        offscreenGraphics2d.drawLine(x74, zS08, x74, zI54);
+        offscreenGraphics2d.drawLine(x84, zS08, x84, zI54);
 
-        verticalTalGridPts = new int[] { 0, x14, x24, x34, xSliceT, x54, x64, x74, Integer.MAX_VALUE };
+        verticalTalGridPts = new int[] { x04, x14, x24, x34, xSliceT, x54, x64, x74, x84 };
         horizontalTalGridPts = new int[] {
-                                   0, zS78, zS68, zS58, zS48, zS38, zS28, zS18, zSliceT, zI34, zI24, zI14, zI04,
-                                   Integer.MAX_VALUE
-                               };
+                                   zS08, zS18, zS28, zS38, zS48, zS58, zS68, zS78, zSliceT, zI14, zI24, zI34, zI44, zI54
+                                };
 
         if (showTalairachGridmarkers) {
             offscreenGraphics2d.setColor(talairachMajorLineColor);
             offscreenGraphics2d.setStroke(defaultStroke);
-            drawStringBW("d", offscreenGraphics2d, x14 / 2, getSize().height - 2);
+            drawStringBW("d", offscreenGraphics2d, ((x14 - x04) / 2) + x04, getSize().height - 2);
             drawStringBW("c", offscreenGraphics2d, ((x24 - x14) / 2) + x14, getSize().height - 2);
             drawStringBW("b", offscreenGraphics2d, ((x34 - x24) / 2) + x24, getSize().height - 2);
             drawStringBW("a", offscreenGraphics2d, ((xSliceT - x34) / 2) + x34, getSize().height - 2);
@@ -2590,48 +2555,45 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             drawStringBW("a", offscreenGraphics2d, ((x54 - xSliceT) / 2) + xSliceT, getSize().height - 2);
             drawStringBW("b", offscreenGraphics2d, ((x64 - x54) / 2) + x54, getSize().height - 2);
             drawStringBW("c", offscreenGraphics2d, ((x74 - x64) / 2) + x64, getSize().height - 2);
-            drawStringBW("d", offscreenGraphics2d, ((getSize().width - x74) / 2) + x74, getSize().height - 2);
+            drawStringBW("d", offscreenGraphics2d, ((x84 - x74) / 2) + x74, getSize().height - 2);
         }
 
         offscreenGraphics2d.setColor(talairachMinorLineColor);
         offscreenGraphics2d.setStroke(dashedStroke);
 
-        if (zI04 >= 0) {
-            offscreenGraphics2d.drawLine(0, zI04, getSize().width, zI04);
-        }
-
-        offscreenGraphics2d.drawLine(0, zI14, getSize().width, zI14);
-        offscreenGraphics2d.drawLine(0, zI24, getSize().width, zI24);
-        offscreenGraphics2d.drawLine(0, zI34, getSize().width, zI34);
-        offscreenGraphics2d.drawLine(0, zS18, getSize().width, zS18);
-        offscreenGraphics2d.drawLine(0, zS28, getSize().width, zS28);
-        offscreenGraphics2d.drawLine(0, zS38, getSize().width, zS38);
-        offscreenGraphics2d.drawLine(0, zS48, getSize().width, zS48);
-        offscreenGraphics2d.drawLine(0, zS58, getSize().width, zS58);
-        offscreenGraphics2d.drawLine(0, zS68, getSize().width, zS68);
-        offscreenGraphics2d.drawLine(0, zS78, getSize().width, zS78);
-
+        offscreenGraphics2d.drawLine(x04, zS08, x84, zS08);
+        offscreenGraphics2d.drawLine(x04, zS18, x84, zS18);
+        offscreenGraphics2d.drawLine(x04, zS28, x84, zS28);
+        offscreenGraphics2d.drawLine(x04, zS38, x84, zS38);
+        offscreenGraphics2d.drawLine(x04, zS48, x84, zS48);
+        offscreenGraphics2d.drawLine(x04, zS58, x84, zS58);
+        offscreenGraphics2d.drawLine(x04, zS68, x84, zS68);
+        offscreenGraphics2d.drawLine(x04, zS78, x84, zS78);
+        
+        offscreenGraphics2d.drawLine(x04, zI14, x84, zI14);
+        offscreenGraphics2d.drawLine(x04, zI24, x84, zI24);
+        offscreenGraphics2d.drawLine(x04, zI34, x84, zI34);
+        offscreenGraphics2d.drawLine(x04, zI44, x84, zI44);
+        offscreenGraphics2d.drawLine(x04, zI54, x84, zI54);
+        
         offscreenGraphics2d.setStroke(defaultStroke);
 
         if (showTalairachGridmarkers) {
 
-            if (zI04 >= 0) {
-                offscreenGraphics2d.setColor(talairachMajorLineColor);
-                drawStringBW("13", offscreenGraphics2d, getSize().width - 13,
-                             ((getSize().height - zI04) / 2) + zI04 + 6);
-                drawStringBW("12", offscreenGraphics2d, getSize().width - 13, ((zI04 - zI14) / 2) + zI14 + 6);
-                drawStringBW("11", offscreenGraphics2d, getSize().width - 13, ((zI14 - zI24) / 2) + zI24 + 6);
-                drawStringBW("10", offscreenGraphics2d, getSize().width - 13, ((zI24 - zI34) / 2) + zI34 + 6);
-                drawStringBW("9", offscreenGraphics2d, getSize().width - 9, ((zI34 - zSliceT) / 2) + zSliceT + 6);
-                drawStringBW("8", offscreenGraphics2d, getSize().width - 9, ((zSliceT - zS18) / 2) + zS18 + 6);
-                drawStringBW("7", offscreenGraphics2d, getSize().width - 9, ((zS18 - zS28) / 2) + zS28 + 6);
-                drawStringBW("6", offscreenGraphics2d, getSize().width - 9, ((zS28 - zS38) / 2) + zS38 + 6);
-                drawStringBW("5", offscreenGraphics2d, getSize().width - 9, ((zS38 - zS48) / 2) + zS48 + 6);
-                drawStringBW("4", offscreenGraphics2d, getSize().width - 9, ((zS48 - zS58) / 2) + zS58 + 6);
-                drawStringBW("3", offscreenGraphics2d, getSize().width - 9, ((zS58 - zS68) / 2) + zS68 + 6);
-                drawStringBW("2", offscreenGraphics2d, getSize().width - 9, ((zS68 - zS78) / 2) + zS78 + 6);
-                drawStringBW("1", offscreenGraphics2d, getSize().width - 9, (zS78 / 2) + 6);
-            }
+            offscreenGraphics2d.setColor(talairachMajorLineColor);
+            drawStringBW("13", offscreenGraphics2d, getSize().width - 13, ((zI54 - zI44) / 2) + zI44 + 6);
+            drawStringBW("12", offscreenGraphics2d, getSize().width - 13, ((zI44 - zI34) / 2) + zI34 + 6);
+            drawStringBW("11", offscreenGraphics2d, getSize().width - 13, ((zI34 - zI24) / 2) + zI24 + 6);
+            drawStringBW("10", offscreenGraphics2d, getSize().width - 13, ((zI24 - zI14) / 2) + zI14 + 6);
+            drawStringBW("9", offscreenGraphics2d, getSize().width - 9, ((zI14 - zSliceT) / 2) + zSliceT + 6);
+            drawStringBW("8", offscreenGraphics2d, getSize().width - 9, ((zSliceT - zS78) / 2) + zS78 + 6);
+            drawStringBW("7", offscreenGraphics2d, getSize().width - 9, ((zS78 - zS68) / 2) + zS68 + 6);
+            drawStringBW("6", offscreenGraphics2d, getSize().width - 9, ((zS68 - zS58) / 2) + zS58 + 6);
+            drawStringBW("5", offscreenGraphics2d, getSize().width - 9, ((zS58 - zS48) / 2) + zS48 + 6);
+            drawStringBW("4", offscreenGraphics2d, getSize().width - 9, ((zS48 - zS38) / 2) + zS38 + 6);
+            drawStringBW("3", offscreenGraphics2d, getSize().width - 9, ((zS38 - zS28) / 2) + zS28 + 6);
+            drawStringBW("2", offscreenGraphics2d, getSize().width - 9, ((zS28 - zS18) / 2) + zS18 + 6);
+            drawStringBW("1", offscreenGraphics2d, getSize().width - 9, ((zS18 - zS08) / 2) + zS08 + 6);
         }
     }
 
@@ -2641,183 +2603,125 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  offscreenGraphics2d  Graphics2D
      */
     private void drawTalairachGrid_SAGITTAL(Graphics2D offscreenGraphics2d) {
+        
+        // we should check if we're inside the box first
+        
         Stroke defaultStroke = offscreenGraphics2d.getStroke();
         Stroke dashedStroke = getDashedStroke();
 
-        int ySliceT;
-        int ySliceT2;
-        int zSliceT;
-        int yA14, yA24, yA34;
-        int yP14, yP24, yP34;
-        int zI04, zI14, zI24, zI34;
-        int zS18, zS28, zS38, zS48, zS58, zS68, zS78;
-
-        // slice separating inferior from superior is usually put ViewJFrameTriImage.ATLAS_BBOX_INF_NEW or 65 mm. from z
-        // = 0 at the inferior of the image. In case the z dimension = (ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-        // ViewJFrameTriImage.ATLAS_BBOX_SUP + 1)/resZ Sometimes it is put ViewJFrameTriImage.ATLAS_BBOX_INF or 55. mm
-        // from z = 0 at the inferior of the image. In this case the z dimension = (ViewJFrameTriImage.ATLAS_BBOX_INF +
-        // ViewJFrameTriImage.ATLAS_BBOX_SUP + 1)/resZ
-        if ((imageActive.getExtents()[2] * imageActive.getFileInfo(0).getResolutions()[2]) >
-                (ViewJFrameTriImage.ATLAS_BBOX_INF + ViewJFrameTriImage.ATLAS_BBOX_SUP + 6)) {
-            zSliceT = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                      (ViewJFrameTriImage.ATLAS_BBOX_INF_NEW * zoomY));
-            zI04 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW - ViewJFrameTriImage.ATLAS_BBOX_INF) *
-                                        zoomY));
-            zI14 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW - ViewJFrameTriImage.ATLAS_BBOX_INF +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_INF / 4)) * zoomY));
-            zI24 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW - ViewJFrameTriImage.ATLAS_BBOX_INF +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_INF / 2)) * zoomY));
-            zI34 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW - ViewJFrameTriImage.ATLAS_BBOX_INF +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_INF * 3 / 4)) * zoomY));
-            zS18 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 8)) *
-                                        zoomY));
-            zS28 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 4)) *
-                                        zoomY));
-            zS38 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_SUP * 3 / 8)) * zoomY));
-            zS48 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 2)) *
-                                        zoomY));
-            zS58 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_SUP * 5 / 8)) * zoomY));
-            zS68 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_SUP * 3 / 4)) * zoomY));
-            zS78 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF_NEW +
-                                     (ViewJFrameTriImage.ATLAS_BBOX_SUP * 7 / 8)) * zoomY));
-        } else {
-            zSliceT = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                      (ViewJFrameTriImage.ATLAS_BBOX_INF * zoomY));
-            zI04 = -1;
-            zI14 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   (ViewJFrameTriImage.ATLAS_BBOX_INF * zoomY / 4));
-            zI24 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   (ViewJFrameTriImage.ATLAS_BBOX_INF * zoomY / 2));
-            zI34 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   (ViewJFrameTriImage.ATLAS_BBOX_INF * zoomY * 3 / 4));
-            zS18 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 8)) *
-                                        zoomY));
-            zS28 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 4)) *
-                                        zoomY));
-            zS38 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP * 3 / 8)) *
-                                        zoomY));
-            zS48 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP / 2)) *
-                                        zoomX));
-            zS58 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP * 5 / 8)) *
-                                        zoomY));
-            zS68 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP * 3 / 4)) *
-                                        zoomY));
-            zS78 = MipavMath.round(((imageActive.getExtents()[2] - 1) * zoomY * resolutionY) -
-                                   ((ViewJFrameTriImage.ATLAS_BBOX_INF + (ViewJFrameTriImage.ATLAS_BBOX_SUP * 7 / 8)) *
-                                        zoomY));
-        }
-
-        // slice separating anterior from median is always put ViewJFrameTriImage.ATLAS_BBOX_ANT or 80 mm. from y = 0 at
-        // the anterior of image slice separating median from posterior is always put ViewJFrameTriImage.ATLAS_BBOX_ANT
-        // + ViewJFrameTriImage.ATLAS_AC_TO_PC or 103 mm. from the anterior of the image
-        ySliceT = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomX);
-        yA14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomX / 4);
-        yA24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomX / 2);
-        yA34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomX * 3 / 4);
-        ySliceT2 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomX);
-        yP14 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC +
-                                ((ViewJFrameTriImage.ATLAS_BBOX_POS - ViewJFrameTriImage.ATLAS_AC_TO_PC) / 4)) * zoomX);
-        yP24 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC +
-                                ((ViewJFrameTriImage.ATLAS_BBOX_POS - ViewJFrameTriImage.ATLAS_AC_TO_PC) / 2)) * zoomX);
-        yP34 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC +
-                                ((ViewJFrameTriImage.ATLAS_BBOX_POS - ViewJFrameTriImage.ATLAS_AC_TO_PC) * 3 / 4)) *
-                                   zoomX);
-
-        // at pilou's request, this logic draws two lines, evenly spaced through the e-box of the talairach display
-        int eBoxOneThird = (int) ((ySliceT2 - ySliceT) * 0.33f) + ySliceT;
-        int eBoxTwoThirds = (int) ((ySliceT2 - ySliceT) * 0.67f) + ySliceT;
-
-        offscreenGraphics2d.setColor(talairachMinorLineColor);
-        offscreenGraphics2d.setStroke(dashedStroke);
-        offscreenGraphics2d.drawLine(eBoxOneThird, 0, eBoxOneThird, getSize().height);
-        offscreenGraphics2d.drawLine(eBoxTwoThirds, 0, eBoxTwoThirds, getSize().height);
+        // slice separating inferior from superior is usually put ViewJFrameTriImage.ATLAS_AC_TO_INF or 42 mm. from z
+        // = 0 at the inferior of the image. In case the z dimension = (ViewJFrameTriImage.ATLAS_AC_TO_INF +
+        // ViewJFrameTriImage.ATLAS_AC_TO_SUP + 1)/resZ Sometimes it is put ViewJFrameTriImage.ATLAS_AC_TO_INF or 42 mm
+        // from z = 0 at the inferior of the image. In this case the z dimension = (ViewJFrameTriImage.ATLAS_AC_TO_INF +
+        // ViewJFrameTriImage.ATLAS_AC_TO_SUP + 1)/resZ
+        int zSliceT = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY);
+            
+        int zS08 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 8 / 8);
+        int zS18 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 7 / 8);
+        int zS28 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 6 / 8);
+        int zS38 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 5 / 8);
+        int zS48 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 4 / 8);
+        int zS58 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 3 / 8);
+        int zS68 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 2 / 8);
+        int zS78 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_SUP * zoomY * 1 / 8);
+        
+        int zI14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 1 / 4);
+        int zI24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 2 / 4);
+        int zI34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 3 / 4);
+        int zI44 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 4 / 4);
+        int zI54 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_SUP * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_INF * zoomY * 5 / 4);
+        
+        // slice separating anterior from median is always put ViewJFrameTriImage.ATLAS_AC_TO_ANT or 68 mm. from y = 0 at
+        // the anterior of image slice separating median from posterior is always put ViewJFrameTriImage.ATLAS_AC_TO_ANT
+        // + ViewJFrameTriImage.ATLAS_AC_TO_PC or 93 mm. from the anterior of the image
+        int ySliceT = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY);
+        int ySliceT2 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY);
+        
+        // new coordinates: middle -/+ Talairach dimensions
+        int yA04 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_ANT * zoomY * 4 / 4);
+        int yA14 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_ANT * zoomY * 3 / 4);
+        int yA24 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_ANT * zoomY * 2 / 4);
+        int yA34 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY - ViewJFrameTriImage.ATLAS_AC_TO_ANT * zoomY * 1 / 4);
+        
+        int yP14 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY
+                                    + ViewJFrameTriImage.ATLAS_PC_TO_POS * zoomY * 1 / 4);
+        int yP24 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY
+                                    + ViewJFrameTriImage.ATLAS_PC_TO_POS * zoomY * 2 / 4);
+        int yP34 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY
+                                    + ViewJFrameTriImage.ATLAS_PC_TO_POS * zoomY * 3 / 4);
+        int yP44 = MipavMath.round((ViewJFrameTriImage.ATLAS_BBOX_ANT + ViewJFrameTriImage.ATLAS_AC_TO_PC) * zoomY
+                                    + ViewJFrameTriImage.ATLAS_PC_TO_POS * zoomY * 4 / 4);
+        
+        int yAP13 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_PC  * zoomY * 1 / 3);
+        int yAP23 = MipavMath.round(ViewJFrameTriImage.ATLAS_BBOX_ANT * zoomY + ViewJFrameTriImage.ATLAS_AC_TO_PC  * zoomY * 2 / 3);
 
         offscreenGraphics2d.setColor(talairachMajorLineColor);
         offscreenGraphics2d.setStroke(defaultStroke);
-        offscreenGraphics2d.drawLine(0, zSliceT, getSize().width, zSliceT);
-        offscreenGraphics2d.drawLine(ySliceT, 0, ySliceT, getSize().height);
-        offscreenGraphics2d.drawLine(ySliceT2, 0, ySliceT2, getSize().height);
+        offscreenGraphics2d.drawLine(yA04, zSliceT, yP44, zSliceT);
+        offscreenGraphics2d.drawLine(ySliceT, zS08, ySliceT, zI54);
+        offscreenGraphics2d.drawLine(ySliceT2, zS08, ySliceT2, zI54);
 
         offscreenGraphics2d.setColor(talairachMinorLineColor);
         offscreenGraphics2d.setStroke(dashedStroke);
 
-        if (zI04 >= 0) {
-            offscreenGraphics2d.drawLine(0, zI04, getSize().width, zI04);
-        }
-
-        offscreenGraphics2d.drawLine(0, zI14, getSize().width, zI14);
-        offscreenGraphics2d.drawLine(0, zI24, getSize().width, zI24);
-        offscreenGraphics2d.drawLine(0, zI34, getSize().width, zI34);
-        offscreenGraphics2d.drawLine(0, zS18, getSize().width, zS18);
-        offscreenGraphics2d.drawLine(0, zS28, getSize().width, zS28);
-        offscreenGraphics2d.drawLine(0, zS38, getSize().width, zS38);
-        offscreenGraphics2d.drawLine(0, zS48, getSize().width, zS48);
-        offscreenGraphics2d.drawLine(0, zS58, getSize().width, zS58);
-        offscreenGraphics2d.drawLine(0, zS68, getSize().width, zS68);
-        offscreenGraphics2d.drawLine(0, zS78, getSize().width, zS78);
-
-        verticalTalGridPts = new int[] { 0, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34, Integer.MAX_VALUE };
+        offscreenGraphics2d.drawLine(yA04, zS08, yP44, zS08);
+        offscreenGraphics2d.drawLine(yA04, zS18, yP44, zS18);
+        offscreenGraphics2d.drawLine(yA04, zS28, yP44, zS28);
+        offscreenGraphics2d.drawLine(yA04, zS38, yP44, zS38);
+        offscreenGraphics2d.drawLine(yA04, zS48, yP44, zS48);
+        offscreenGraphics2d.drawLine(yA04, zS58, yP44, zS58);
+        offscreenGraphics2d.drawLine(yA04, zS68, yP44, zS68);
+        offscreenGraphics2d.drawLine(yA04, zS78, yP44, zS78);
+        
+        offscreenGraphics2d.drawLine(yA04, zI14, yP44, zI14);
+        offscreenGraphics2d.drawLine(yA04, zI24, yP44, zI24);
+        offscreenGraphics2d.drawLine(yA04, zI34, yP44, zI34);
+        offscreenGraphics2d.drawLine(yA04, zI44, yP44, zI44);
+        offscreenGraphics2d.drawLine(yA04, zI54, yP44, zI54);
+        
+        
+        verticalTalGridPts = new int[] { yA04, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34, yP44 };
         horizontalTalGridPts = new int[] {
-                                   0, zS78, zS68, zS58, zS48, zS38, zS28, zS18, zSliceT, zI34, zI24, zI14, zI04,
-                                   Integer.MAX_VALUE
-                               };
+                                      zS08, zS18, zS28, zS38, zS48, zS58, zS68, zS78, zSliceT, zI14, zI24, zI34, zI44, zI54
+                                    };
 
         if (showTalairachGridmarkers) {
 
-            if (zI04 >= 0) {
-                offscreenGraphics2d.setColor(talairachMajorLineColor);
-                offscreenGraphics2d.setStroke(defaultStroke);
-                drawStringBW("13", offscreenGraphics2d, getSize().width - 13,
-                             ((getSize().height - zI04) / 2) + zI04 + 6);
-                drawStringBW("12", offscreenGraphics2d, getSize().width - 13, ((zI04 - zI14) / 2) + zI14 + 6);
-                drawStringBW("11", offscreenGraphics2d, getSize().width - 13, ((zI14 - zI24) / 2) + zI24 + 6);
-                drawStringBW("10", offscreenGraphics2d, getSize().width - 13, ((zI24 - zI34) / 2) + zI34 + 6);
-                drawStringBW("9", offscreenGraphics2d, getSize().width - 9, ((zI34 - zSliceT) / 2) + zSliceT + 6);
-                drawStringBW("8", offscreenGraphics2d, getSize().width - 9, ((zSliceT - zS18) / 2) + zS18 + 6);
-                drawStringBW("7", offscreenGraphics2d, getSize().width - 9, ((zS18 - zS28) / 2) + zS28 + 6);
-                drawStringBW("6", offscreenGraphics2d, getSize().width - 9, ((zS28 - zS38) / 2) + zS38 + 6);
-                drawStringBW("5", offscreenGraphics2d, getSize().width - 9, ((zS38 - zS48) / 2) + zS48 + 6);
-                drawStringBW("4", offscreenGraphics2d, getSize().width - 9, ((zS48 - zS58) / 2) + zS58 + 6);
-                drawStringBW("3", offscreenGraphics2d, getSize().width - 9, ((zS58 - zS68) / 2) + zS68 + 6);
-                drawStringBW("2", offscreenGraphics2d, getSize().width - 9, ((zS68 - zS78) / 2) + zS78 + 6);
-                drawStringBW("1", offscreenGraphics2d, getSize().width - 9, (zS78 / 2) + 6);
-            }
+            offscreenGraphics2d.setColor(talairachMajorLineColor);
+            offscreenGraphics2d.setStroke(defaultStroke);
+            drawStringBW("13", offscreenGraphics2d, getSize().width - 13, ((zI54 - zI44) / 2) + zI44 + 6);
+            drawStringBW("12", offscreenGraphics2d, getSize().width - 13, ((zI44 - zI34) / 2) + zI34 + 6);
+            drawStringBW("11", offscreenGraphics2d, getSize().width - 13, ((zI34 - zI24) / 2) + zI24 + 6);
+            drawStringBW("10", offscreenGraphics2d, getSize().width - 13, ((zI24 - zI14) / 2) + zI14 + 6);
+            drawStringBW("9", offscreenGraphics2d, getSize().width - 9, ((zI14 - zSliceT) / 2) + zSliceT + 6);
+            drawStringBW("8", offscreenGraphics2d, getSize().width - 9, ((zSliceT - zS78) / 2) + zS78 + 6);
+            drawStringBW("7", offscreenGraphics2d, getSize().width - 9, ((zS78 - zS68) / 2) + zS68 + 6);
+            drawStringBW("6", offscreenGraphics2d, getSize().width - 9, ((zS68 - zS58) / 2) + zS58 + 6);
+            drawStringBW("5", offscreenGraphics2d, getSize().width - 9, ((zS58 - zS48) / 2) + zS48 + 6);
+            drawStringBW("4", offscreenGraphics2d, getSize().width - 9, ((zS48 - zS38) / 2) + zS38 + 6);
+            drawStringBW("3", offscreenGraphics2d, getSize().width - 9, ((zS38 - zS28) / 2) + zS28 + 6);
+            drawStringBW("2", offscreenGraphics2d, getSize().width - 9, ((zS28 - zS18) / 2) + zS18 + 6);
+            drawStringBW("1", offscreenGraphics2d, getSize().width - 9, ((zS18 - zS08) / 2) + zS08 + 6);
         }
 
         offscreenGraphics2d.setColor(talairachMinorLineColor);
         offscreenGraphics2d.setStroke(dashedStroke);
-        offscreenGraphics2d.drawLine(yA14, 0, yA14, getSize().height);
-        offscreenGraphics2d.drawLine(yA24, 0, yA24, getSize().height);
-        offscreenGraphics2d.drawLine(yA34, 0, yA34, getSize().height);
-        offscreenGraphics2d.drawLine(yP14, 0, yP14, getSize().height);
-        offscreenGraphics2d.drawLine(yP24, 0, yP24, getSize().height);
-        offscreenGraphics2d.drawLine(yP34, 0, yP34, getSize().height);
-
+        offscreenGraphics2d.drawLine(yA04, zS08, yA04, zI54);
+        offscreenGraphics2d.drawLine(yA14, zS08, yA14, zI54);
+        offscreenGraphics2d.drawLine(yA24, zS08, yA24, zI54);
+        offscreenGraphics2d.drawLine(yA34, zS08, yA34, zI54);
+        offscreenGraphics2d.drawLine(yP14, zS08, yP14, zI54);
+        offscreenGraphics2d.drawLine(yP24, zS08, yP24, zI54);
+        offscreenGraphics2d.drawLine(yP34, zS08, yP34, zI54);
+        offscreenGraphics2d.drawLine(yP44, zS08, yP44, zI54);
+        offscreenGraphics2d.drawLine(yAP13, zS08, yAP13, zI54);
+        offscreenGraphics2d.drawLine(yAP23, zS08, yAP23, zI54);
+        
         offscreenGraphics2d.setStroke(defaultStroke);
 
         if (showTalairachGridmarkers) {
             offscreenGraphics2d.setColor(talairachMajorLineColor);
-            drawStringBW("A", offscreenGraphics2d, yA14 / 2, getSize().height - 2);
+            drawStringBW("A", offscreenGraphics2d, ((yA14 - yA04) / 2) + yA04, getSize().height - 2);
             drawStringBW("B", offscreenGraphics2d, ((yA24 - yA14) / 2) + yA14, getSize().height - 2);
             drawStringBW("C", offscreenGraphics2d, ((yA34 - yA24) / 2) + yA24, getSize().height - 2);
             drawStringBW("D", offscreenGraphics2d, ((ySliceT - yA34) / 2) + yA34, getSize().height - 2);
@@ -2825,9 +2729,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             drawStringBW("F", offscreenGraphics2d, ((yP14 - ySliceT2) / 2) + ySliceT2, getSize().height - 2);
             drawStringBW("G", offscreenGraphics2d, ((yP24 - yP14) / 2) + yP14, getSize().height - 2);
             drawStringBW("H", offscreenGraphics2d, ((yP34 - yP24) / 2) + yP24, getSize().height - 2);
-            drawStringBW("I", offscreenGraphics2d, ((getSize().width - yP34) / 2) + yP34, getSize().height - 2);
+            drawStringBW("I", offscreenGraphics2d, ((yP44 - yP34) / 2) + yP34, getSize().height - 2);
         }
     }
+
 
     /**
      * The following is a utlity method for drawing VOIs during this object's paintComponent method. It was factored out
