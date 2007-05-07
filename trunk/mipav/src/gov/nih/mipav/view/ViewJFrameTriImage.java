@@ -132,6 +132,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Dimensions used for Talairach view clipping box - inferior new. 3/06/96: extra 10 mm for cerebellum . */
     public static final float ATLAS_BBOX_INF_NEW = 65.0f;
+    
+    /** Dimensions used for Talairach coordinates - lateral. */
+    public static final float ATLAS_AC_TO_LAT = 68.0f;
+
+    /** Dimensions used for Talairach coordinates - anterior. */
+    public static final float ATLAS_AC_TO_ANT = 70.0f;
+
+    /** Dimensions used for Talairach coordinates - posterior. */
+    public static final float ATLAS_PC_TO_POS = 79.0f;
+
+    /** Dimensions used for Talairach coordinates - inferior. */
+    public static final float ATLAS_AC_TO_INF = 42.0f;
+
+    /** Dimensions used for Talairach coordinates - superior. */
+    public static final float ATLAS_AC_TO_SUP = 74.0f;
 
     /** AC to PC dimension. */
     public static final float ATLAS_AC_TO_PC = 23.0f;
