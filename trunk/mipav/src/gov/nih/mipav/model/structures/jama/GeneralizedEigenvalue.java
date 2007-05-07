@@ -17035,17 +17035,21 @@ loop3:                       {
     } // dlasr
 
     /**
-     * This is a port of the version 3.0 LAPACK auxiliary routine DLASRT Original DLASRT created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
-     * 30, 1994 dlasrt sorts the numbers in d in increasing order if id == 'I' or in decreasing order if id == 'D'. Use
+     * This is a port of the version 3.1 LAPACK auxiliary routine DLASRT Original DLASRT created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlasrt sorts the numbers in d in increasing order if id == 'I' or in decreasing order if id == 'D'. Use
      * quick sort, reverting to insertion sort on arrays of size <= 20. Dimension of stack limits n to about 2**32.
      *
-     * @param  id    input char = 'I': sort d in increasing order = 'D': sort d in decreasing order
+     * @param  id    input char 
+     *               = 'I': sort d in increasing order 
+     *               = 'D': sort d in decreasing order
      * @param  n     input int The length of the array d.
      * @param  d     input/output double[] of dimension n. On entry, the array to be sorted. On exit, d has been sorted
      *               into increasing order (d[0] <= ... <= d[n-1]) or into decreasing order (d[0] >= ... >= d[n-1]),
      *               depending on id.
-     * @param  info  output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
+     * @param  info  output int[] 
+     *               = 0: successful exit 
+     *               < 0: If info = -i, the i-th argument had an illegal value
      */
     private void dlasrt(char id, int n, double[] d, int[] info) {
         int select = 20;
@@ -17140,7 +17144,7 @@ loop2:
             } // if (((endd - start) <= select) && ((endd - start) > 0))
             else if ((endd - start) > select) {
 
-                // Partition d(start:endd) and stack parts, largest one frist
+                // Partition d(start:endd) and stack parts, largest one first
                 // Choose partition entry as median of 3
                 d1 = d[start];
                 d2 = d[endd];
@@ -17269,11 +17273,13 @@ loop4:
     } // dlasrt
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLASSQ Original DLASSQ created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999
-     * dlassq returns the values scl and smsq such that (scl**2)*smsq = x[0]**2 + x[incx]**2 + ... + x[(n-1)*incx]**2 +
-     * (scale**2)*sumsq The value of sumsq is assumed to be non-negative and scl returns the value scl =
-     * max(scale,abs(x[i])). scale and sumsq refer to the original supplied values in scale[] and sumsq[]. scl and smsq
+     * This is a port of version 3.1 LAPACK auxiliary routine DLASSQ Original DLASSQ created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dlassq returns the values scl and smsq such that
+     *  (scl**2)*smsq = x[0]**2 + x[incx]**2 + ... + x[(n-1)*incx]**2 + (scale**2)*sumsq 
+     * The value of sumsq is assumed to be non-negative and scl returns the value 
+     *  scl =  max(scale,abs(x[i])). 
+     * scale and sumsq refer to the original supplied values in scale[] and sumsq[]. scl and smsq
      * are the returned values in scale[] and sumsq[]. This routine makes only one pass through the vector x.
      *
      * @param  n      input int The number of elements to be used from the vector x
@@ -17314,12 +17320,16 @@ loop4:
     } // dlassq
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLASV2 Original DLASV2 created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
-     * dlasv2 comnputes the singular value decomposition of a 2-by-2 triangular matrix [ f g ] [ 0 h ]. On return,
-     * abs(ssmax[0]) is the larger singular value, abs(ssmin[0]) is the smaller singular value, and (csl[0],snl[0]) and
-     * (csr[0],snr[0]) are the left and right singular vectors for abs(ssmax[0]), giving the decomposition [ csl snl] [
-     * f g ] [ csr -snr] = [ ssmax 0 ] [-snl csl] [ 0 h ] [ snr csr] [ 0 ssmin ].
+     * This is a port of version 3.1 LAPACK auxiliary routine DLASV2 Original DLASV2 created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dlasv2 computes the singular value decomposition of a 2-by-2 triangular matrix 
+     *  [ f g ]
+     *  [ 0 h ]. 
+     * On return, abs(ssmax[0]) is the larger singular value, abs(ssmin[0]) is the smaller singular value,
+     * and (csl[0],snl[0]) and (csr[0],snr[0]) are the left and right singular vectors for abs(ssmax[0]),
+     * giving the decomposition
+     *  [ csl snl] [f  g ] [ csr -snr] = [ ssmax 0 ] 
+     *  [-snl csl] [0  h ] [ snr csr]    [ 0 ssmin ].
      *
      * @param  f      input double The (0,0) element of a 2-by-2 matrix.
      * @param  g      input double The (0,1) element of a 2-by-2 matrix.
@@ -17331,19 +17341,20 @@ loop4:
      *                abs(ssmax[0]).
      * @param  snl    output double[]
      * @param  csl    output double[] The vector (csl[0],snl[0]) is a unit left singular vector for the singular value
-     *                abs(ssmax[0]). Further details: Any input parameter may be aliased with any output parameter.
+     *                abs(ssmax[0]).
+     * Further details: Any input parameter may be aliased with any output parameter.
      *
-     *                <p>Barring over/underflow and assuming a guard digit in subtraction, all output quantities are
-     *                correct to within a few units in the last place (ulps).</p>
+     * <p>Barring over/underflow and assuming a guard digit in subtraction, all output quantities are
+     *    correct to within a few units in the last place (ulps).</p>
      *
-     *                <p>In IEEE arithmetic, the code works correctly if one matrix element is infinite.</p>
+     * <p>In IEEE arithmetic, the code works correctly if one matrix element is infinite.</p>
      *
-     *                <p>Overflow will not occur unless the largest singular value itself overflows or is within a few
-     *                ulps of overflow. (On machines with partial overflow, like the Cray, overflow may occur if the
-     *                largest singular value is within a factor of 2 of overflow.)</p>
+     * <p>Overflow will not occur unless the largest singular value itself overflows or is within a few
+     *    ulps of overflow. (On machines with partial overflow, like the Cray, overflow may occur if the
+     *    largest singular value is within a factor of 2 of overflow.)</p>
      *
-     *                <p>Underflow is harmless if underflow is gradual. Otherwise, results may correspond to a matrix
-     *                modified by perturbations of size near the underflow threshold.</p>
+     * <p>Underflow is harmless if underflow is gradual. Otherwise, results may correspond to a matrix
+     *    modified by perturbations of size near the underflow threshold.</p>
      */
     private void dlasv2(double f, double g, double h, double[] ssmin, double[] ssmax, double[] snr, double[] csr,
                         double[] snl, double[] csl) {
@@ -17458,7 +17469,7 @@ loop4:
                 tt = t * t;
                 s = Math.sqrt(tt + mm);
 
-                // Noate that 1 <= s <= 1 + 1/macheps
+                // Note that 1 <= s <= 1 + 1/macheps
                 if (L == 0.0) {
                     r = Math.abs(m);
                 } else {
@@ -17587,24 +17598,31 @@ loop4:
     } // dlasv2
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLATM1 Original DLATM1 created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
-     * 30, 1994 dlatm1 computes the entries of D[0...n-1] as specified by mode, cond, and irsign. idist and iseed
+     * This is a port of version 3.1 LAPACK auxiliary test routine DLATM1 Original DLATM1 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlatm1 computes the entries of D[0...n-1] as specified by mode, cond, and irsign. idist and iseed
      * determine the generation of random numbers. dlatm1 is called by dlatmr to generate random test matrices for
      * LAPACK programs.
      *
-     * @param  mode    input int On entry describes how D is to be computed: = 0 means do not change D. = 1 sets D[0] =
-     *                 1 and D[1:n-1] = 1.0/cond. = 2 sets D[0:n-2] = 1 and D[n-1] = 1.0/cond. = 3 sets D[i-1] =
-     *                 cond**(-(i-1)/(n-1)) = 4 sets D[i-1] = 1 - (i-1)/(n-1)*(1 - 1/cond) = 5 sets D to random numbers
-     *                 in the range (1/cond, 1) such that their logarithms are uniformly distributed. = 6 sets D to
-     *                 random numbers from the same distribution as the rest of the matrix. < 0 has the same meaning as
-     *                 abs(mode), except that the order of the elements of D is reversed. Thus if mode is positive, D
-     *                 has entries ranging from 1 to 1/cond. If negative, from 1/cond to 1.
+     * @param  mode    input int On entry describes how D is to be computed: 
+     *                 = 0 means do not change D. 
+     *                 = 1 sets D[0] = 1 and D[1:n-1] = 1.0/cond. 
+     *                 = 2 sets D[0:n-2] = 1 and D[n-1] = 1.0/cond. 
+     *                 = 3 sets D[i] = cond**(-(i)/(n-1)) 
+     *                 = 4 sets D[i] = 1 - (i)/(n-1)*(1 - 1/cond) 
+     *                 = 5 sets D to random numbers in the range (1/cond, 1) such that their logarithms are uniformly distributed.
+     *                 = 6 sets D to random numbers from the same distribution as the rest of the matrix. 
+     *                 < 0 has the same meaning as abs(mode), except that the order of the elements of D is reversed.
+     *                    Thus if mode is positive, D has entries ranging from 1 to 1/cond. If negative, from 1/cond to 1.
      * @param  cond    input double On entry, used as described under mode above. If used, it must be >= 1.
-     * @param  irsign  input int On entry, if mode neither -6, 0, or 6, determines sign of entries of D. 0 => leave
-     *                 entries of D unchanged 1 => multiply each entry of D by 1 or -1 with probability 0.5
+     * @param  irsign  input int On entry, if mode neither -6, 0, or 6, determines sign of entries of D. 
+     *                 0 => leave entries of D unchanged 
+     *                 1 => multiply each entry of D by 1 or -1 with probability 0.5
      * @param  idist   input int On entry, idist specifies the type of distribution to be used to generate a random
-     *                 matrix. 1 => uniform(0,1) 2 => uniform(-1,1) 3 => normal(0,1)
+     *                 matrix. 
+     *                 1 => uniform(0,1) 
+     *                 2 => uniform(-1,1) 
+     *                 3 => normal(0,1)
      * @param  iseed   input/output int[] On entry iseed specifies the seed of the random number generator. The random
      *                 number generator uses a linear congruential sequence limited to small integers, and so should
      *                 produce machine independent random numbers. The values of iseed are changed on exit, and can be
@@ -17612,9 +17630,13 @@ loop4:
      * @param  D       input/output double[] of dimension min(m,n). Array to be computed according to mode, cond, and
      *                 irsign. May be changed on exit if mode is nonzero.
      * @param  n       input int The number of entries of D.
-     * @param  info    output int[] 0 => normal termination -1 => if mode not in range -6 to 6. -2 => if mode neither
-     *                 -6, 0, or 6, and irsign neither 0 nor 1 -3 => if mode neither -6, 0, or 6 and cond less than 1 -4
-     *                 => if mode equals 6 or -6 and idist not in range 1 to 3 -7 => if n negative
+     * @param  info    output int[] 
+     *                 0 => normal termination 
+     *                 -1 => if mode not in range -6 to 6. 
+     *                 -2 => if mode neither -6, 0, or 6, and irsign neither 0 nor 1 
+     *                 -3 => if mode neither -6, 0, or 6 and cond less than 1 
+     *                 -4 => if mode equals 6 or -6 and idist not in range 1 to 3
+     *                 -7 => if n negative
      */
     private void dlatm1(int mode, double cond, int irsign, int idist, int[] iseed, double[] D, int n, int[] info) {
         int i;
@@ -17719,7 +17741,7 @@ loop4:
                     break;
             } // switch(Math.abs(mode))
 
-            // If mode neither -6, 0, or 6, and irsign = 1, assign random
+            // If mode neither -6, nor 0, or nor 6, and irsign = 1, assign random
             // signs to D
             if ((mode != -6) && (mode != 0) && (mode != 6) && (irsign == 1)) {
 
@@ -17747,9 +17769,9 @@ loop4:
     } // dlatm1
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLATM2 Original DLATM2 created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February
-     * 29, 1992 dlatm2 returns the (i,j) entry of a random matrix of dimension (m,n) described by the other parameters.
+     * This is a port of version 3.1 LAPACK auxiliary test routine DLATM2 Original DLATM2 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlatm2 returns the (i,j) entry of a random matrix of dimension (m,n) described by the other parameters.
      * It is called by the dlatmr routine in order to build random test matrices. No error checking on parameters is
      * done, because this routine is called in a tight loop by dlatmr which has already checked the parameters.
      *
@@ -17785,17 +17807,26 @@ loop4:
      * @param   kl      input int Lower bandwidth.
      * @param   ku      input int Upper bandwidth.
      * @param   idist   input int On entry, idist specifies the type of distribution to be used to generate a random
-     *                  matrix. 1 => uniform(0,1) 2 => uniform(-1,1) 3 => normal(0,1)
+     *                  matrix. 
+     *                  1 => uniform(0,1) 
+     *                  2 => uniform(-1,1) 
+     *                  3 => normal(0,1)
      * @param   iseed   input/output int[] of dimension 4 Seed for random number generator. Changed on exit.
      * @param   D       input double[] of dimension min(i,j) Diagonal entries of matrix.
-     * @param   igrade  input int Specifies grading of matrix as follows: 0 => no grading 1 => matrix premultiplied by
-     *                  diag(dl) 2 => matrix postmultiplied by diag(dr) 3 => matrix premultiplied by diag(dl) and
-     *                  postmultiplied by diag(dr) 4 => matrix premultiplied by diag(dl) and postmultiplied by
-     *                  inv(diag(dl)) 5 => matrix premultiplied by diag(dl) and postmultiplied by diag(dl)
+     * @param   igrade  input int Specifies grading of matrix as follows: 
+     *                  0 => no grading 
+     *                  1 => matrix premultiplied by diag(dl) 
+     *                  2 => matrix postmultiplied by diag(dr) 
+     *                  3 => matrix premultiplied by diag(dl) and postmultiplied by diag(dr) 
+     *                  4 => matrix premultiplied by diag(dl) and postmultiplied by inv(diag(dl)) 
+     *                  5 => matrix premultiplied by diag(dl) and postmultiplied by diag(dl)
      * @param   dl      input double[] of dimension i or j, as appropriate Left scale factors for grading matrix.
      * @param   dr      input double[] of dimension i or j, as appropriate Right scale factors for grading matrix.
-     * @param   ipvtng  input int On entry specifies pivoting permutations as follows: 0 => none. 1 => row pivoting. 2
-     *                  => column pivoting. 3 => full pivoting, i.e., on both sides
+     * @param   ipvtng  input int On entry specifies pivoting permutations as follows: 
+     *                  0 => none. 
+     *                  1 => row pivoting. 
+     *                  2 => column pivoting. 
+     *                  3 => full pivoting, i.e., on both sides
      * @param   iwork   input int[] of dimension i or j, as appropriate This array specifies the permutation used. The
      *                  row (or column) in position k was originally in position iwork[k-1]. This differs from iwork for
      *                  dlatm3.
@@ -17868,9 +17899,9 @@ loop4:
     } // dlatm2
 
     /**
-     * This is the port of the version 3.0 LAPACK auxiliary test routine DLATM3 Original DLATM3 created by Univ. of
-     * Tennessee, Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University,
-     * February 29, 1992 dlatm3 returns the (isub, jsub) entry of a random matrix of dimension (m,n) described by the
+     * This is the port of the version 3.1 LAPACK auxiliary test routine DLATM3 Original DLATM3 created by Univ. of
+     * Tennessee, Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlatm3 returns the (isub, jsub) entry of a random matrix of dimension (m,n) described by the
      * other parameters. (isub, jsub) is the final position of the (i,j) entry after pivoting according to ipvtng and
      * iwork. dlatm3 is called by the dlatmr routine in order to build random test matrices. No error checking is done,
      * because this routine is called in a tight loop by dlatmr which has already checked the parameters.
@@ -17910,18 +17941,26 @@ loop4:
      * @param   kl      input int Lower bandwidth
      * @param   ku      input int Upper bandwidth
      * @param   idist   input int On entry, idist specifies the type of distribution to be used to generate a random
-     *                  matrix. 1 => uniform (0,1) 2 => uniform (-1,1) 3 => normal (0,1)
+     *                  matrix. 
+     *                  1 => uniform (0,1) 
+     *                  2 => uniform (-1,1) 
+     *                  3 => normal (0,1)
      * @param   iseed   input/output int[] of dimension 4 Seed for random number generator. Changed on exit.
      * @param   D       input double[] of dimension min(i,j). Diagonal entries of matrix.
-     * @param   igrade  input int Specifies the grading of the matrix as follows: 0 => no grading 1 => matrix
-     *                  premultiplied by diag (dl) 2 => matrix postmultiplied by diag (dr) 3 => matrix premultiplied by
-     *                  diag (dl) and postmultiplied by diag (dr) 4 => matrix premultiplied by diag (dl) and
-     *                  postmultiplied by inv(diag(dl)) 5 => matrix premultiplied by diag(dl) and postmultiplied by
-     *                  diag(dl)
+     * @param   igrade  input int Specifies the grading of the matrix as follows: 
+     *                  0 => no grading 
+     *                  1 => matrix premultiplied by diag (dl) 
+     *                  2 => matrix postmultiplied by diag (dr) 
+     *                  3 => matrix premultiplied by diag (dl) and postmultiplied by diag (dr) 
+     *                  4 => matrix premultiplied by diag (dl) and postmultiplied by inv(diag(dl)) 
+     *                  5 => matrix premultiplied by diag(dl) and postmultiplied by diag(dl)
      * @param   dl      input double[] of dimension i or j, as appropriate Left scale factors for grading matrix.
      * @param   dr      input double[] of dimension i or j, as appropriate Right scale factors for grading matrix.
-     * @param   ipvtng  input int On entry specifies the pivoting permutations as follows: 0 => none 1 => row pivoting 2
-     *                  => column pivoting 3 => full pivoting, i.e., on both sides
+     * @param   ipvtng  input int On entry specifies the pivoting permutations as follows: 
+     *                  0 => none 
+     *                  1 => row pivoting 
+     *                  2 => column pivoting 
+     *                  3 => full pivoting, i.e., on both sides
      * @param   iwork   input int[] of dimension i or j, as appropriate This array specifies the permutation used. The
      *                  row (or column) originally in position k is in position iwork[k-1] after pivoting. This differs
      *                  from iwork for dlatm2.
@@ -17995,9 +18034,9 @@ loop4:
     } // dlatm3
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary test routine DLATM4 Original DLATM4 created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
-     * 30, 1994 dlatm4 generates basic square matrices, which may later be multiplied by others in order to produce test
+     * This is a port of version 3.1 LAPACK auxiliary test routine DLATM4 Original DLATM4 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlatm4 generates basic square matrices, which may later be multiplied by others in order to produce test
      * matrices. It is intended mainly to be used to test the generalized eigenvalue routines.
      *
      * <p>It first generates the diagonal and (possibly) subdiagonal, according to the value of itype, nz1, nz2, isign,
@@ -18005,32 +18044,42 @@ loop4:
      *
      * @param  itype   input int The "type" of matrix on the diagonal and sub-diagonal. If itype < 0, then type
      *                 abs(itype) is generated and then swapped end for end (A[i][j] := A'([n-1-j][n-1-i].) See also the
-     *                 description of amagn and isign. Special types: = 0: the zero matrix. = 1: the identity = 2: a
-     *                 transposed Jordan block. = 3: If n is odd, then a k+1 by k+1 transposed Jordan block followed by
-     *                 a k by k identity block, where k = (n-1)/2. If n is even, then k = (n-2)/2, and a zero diagonal
-     *                 entry is tacked onto the end.
+     *                 description of amagn and isign. Special types: 
+     *                 = 0: the zero matrix. 
+     *                 = 1: the identity 
+     *                 = 2: a transposed Jordan block. 
+     *                 = 3: If n is odd, then a k+1 by k+1 transposed Jordan block followed by
+                            a k by k identity block, where k = (n-1)/2. If n is even, then k = (n-2)/2,
+                            and a zero diagona entry is tacked onto the end.
      *
      *                 <p>Diagonal types. The diagonal consists of nz1 zeros, then k = n-nz1-nz2 nonzeros. The
-     *                 subdiagonal is zero. itype specifies the nonzero diagonal entries as follows: = 4: 1, ..., k = 5:
-     *                 1, rcond, ..., rcond = 6: 1, ..., 1, rcond = 7: 1, a, a**2, ..., a**(k-1) = rcond = 8: 1, 1-d,
-     *                 1-2*d, ..., 1-(k-1)*d = rcond = 9: random numbers chosen from (rcond,1) = 10: random numbers with
-     *                 distribution idist (see dlarnd.)</p>
+     *                 subdiagonal is zero. itype specifies the nonzero diagonal entries as follows: 
+     *                 = 4: 1, ..., k 
+     *                 = 5: 1, rcond, ..., rcond 
+     *                 = 6: 1, ..., 1, rcond 
+     *                 = 7: 1, a, a**2, ..., a**(k-1) = rcond 
+     *                 = 8: 1, 1-d, 1-2*d, ..., 1-(k-1)*d = rcond 
+     *                 = 9: random numbers chosen from (rcond,1) 
+     *                 = 10: random numbers with distribution idist (see dlarnd.)</p>
      * @param  n       input int The order of the matrix.
      * @param  nz1     input int If abs(itype) > 3, then the first nz1 diagonal entries will be zero.
      * @param  nz2     input int If the abs(itype) > 3, the the last nz2 diagonal entries will be zero.
-     * @param  isign   input int = 0: The sign of the diagonal and subdiagonal entries will be left unchanged. = 1: The
-     *                 diagonal and subdiagonal entries will have their sign changed at random. = 2: If itype is 2 or 3,
-     *                 then the same as isign = 1. Otherwise, with probability 0.5, even-odd pairs of diagonal entries
-     *                 A[2*j][2*j], A[2*j+1][2*j+1] will be converted to a 2 by 2 block by pre- and post-multiplying by
-     *                 distinct random orthogonal rotations. The remaining diagonal entries will have their sign changed
-     *                 at random.
+     * @param  isign   input int 
+     *                 = 0: The sign of the diagonal and subdiagonal entries will be left unchanged. 
+     *                 = 1: The diagonal and subdiagonal entries will have their sign changed at random. 
+     *                 = 2: If itype is 2 or 3, then the same as isign = 1. Otherwise, with probability 0.5,
+     *                      even-odd pairs of diagonal entries A[2*j][2*j], A[2*j+1][2*j+1] will be converted
+     *                      to a 2 by 2 block by pre- and post-multiplying by distinct random orthogonal rotations.
+     *                      The remaining diagonal entries will have their sign changed at random.
      * @param  amagn   input double The diagonal and subdiagonal entries will be multiplied by amagn.
      * @param  rcond   input double If abs(itype) > 4, then the smallest diagonal entry will be rcond. rcond must be
      *                 between 0 and 1.
      * @param  triang  input double The entries above the diagonal will be random numbers with magnitude bounded by
      *                 triang (i.e., random numbers multiplied by triang.)
-     * @param  idist   input int Specifies the type of distribution to be used to generate a random matrix. = 1: uniform
-     *                 (0, 1) = 2: uniform (-1, 1) = 3: normal (0, 1)
+     * @param  idist   input int Specifies the type of distribution to be used to generate a random matrix. 
+     *                 = 1: uniform (0, 1) 
+     *                 = 2: uniform (-1, 1) 
+     *                 = 3: normal (0, 1)
      * @param  iseed   (input/output) int[] of dimension 4 On entry iseed specifies the seed of the random number
      *                 generator. The values of iseed are changed on exit, and can be used in the next call to dlatm4 to
      *                 continue the same random number sequence. Note: iseed[3] should be odd, for the random number
@@ -18301,8 +18350,8 @@ loop4:
 
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DLATMR Original DLATMR created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
+     * This is a port of version 3.1 LAPACK test routine DLATMR Original DLATMR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dlatmr generates random matrices of various types for testing LAPACK programs. dlatmr operates by applying the
      * following sequence of operations: 1.) Generate a matrix A with random entries of distribution dist which is
      * symmetric if sym = 'S' and nonsymmetric if sym = 'N'. 2.) Set the diagonal to D, where D may be input or computed
@@ -18312,10 +18361,10 @@ loop4:
      * random entries to zero, if desired, to get a random sparse matrix as specified by sparse. 6.) Make A a band
      * matrix, if desired, by zeroing out the matrix outside a band of lower bandwidth kl and upper bandwidth ku. 7.)
      * Scale A, if desired, to have maximum entry anorm 8.) Pack the matrix if desired. Options specified by pack are:
-     * no packing zero out upper half (if symmetric) zero out lower half (if symmetric) store the upper half columnwise
-     * (if symmetric or square upper triangular) store the lower half columnwise (if symmetric or square lower
-     * triangular) same as upper half rowwise if symmetric store the lower triangle in banded format (if symmetric)
-     * store the upper triangle if banded format (if symmetric) store the entire matrix in banded format
+     * no packing, zero out upper half (if symmetric), zero out lower half (if symmetric), store the upper half columnwise
+     * (if symmetric or square upper triangular), store the lower half columnwise (if symmetric or square lower
+     * triangular), same as upper half rowwise if symmetric, store the lower triangle in banded format (if symmetric),
+     * store the upper triangle if banded format (if symmetric), and store the entire matrix in banded format
      *
      * <p>Note: If two calls to dlatmr differ only in the pack parameter, they will generate mathematically equivalent
      * matrices.</p>
@@ -18328,38 +18377,48 @@ loop4:
      * @param  m       input int Number of rows of A.
      * @param  n       input int Number of columns of A.
      * @param  dist    input char On entry, dist specifies the type of distribution to be used to generate a random
-     *                 matrix. 'U' => uniform(0,1) ('U' for uniform) 'S' => uniform(-1,1) ('S' for symmetric) 'N' =>
-     *                 normal(0,1) ('N' for normal)
+     *                 matrix. 
+     *                 'U' => uniform(0,1) ('U' for uniform) 
+     *                 'S' => uniform(-1,1) ('S' for symmetric) 
+     *                 'N' => normal(0,1) ('N' for normal)
      * @param  iseed   input/output int[] of dimension 4 On entry iseed specifies the seed of the random number
      *                 generator. They should lie between 0 and 4095 inclusive, and iseed[3] should be odd. The random
      *                 number generator uses a linear congruential sequence limited to small integers, and so should
      *                 produce machine independent random numbers. The values of iseed are changed on exit, and can be
      *                 used in the next call to dlatmr to continue the same random number sequence.
-     * @param  sym     input char If sym = 'S' or 'H', generated matrix is symmetric. If sym = 'N', generated matrix is
-     *                 nonsymmetric.
+     * @param  sym     input char 
+     *                 If sym = 'S' or 'H', generated matrix is symmetric. 
+     *                 If sym = 'N', generated matrix is nonsymmetric.
      * @param  D       (input/output) double[] of dimension (min(m,n)) On entry this array specifies the diagonal
      *                 entries of the diagonal of A. D may either be specified on entry, or set according to mode and
      *                 cond as described below. May be changed on exit if mode is nonzero.
-     * @param  mode    input int On entry describes how D is to be used: = 0 means use D as input = 1 sets D[0] = 1 and
-     *                 D[1:n-1] = 1.0/cond = 2 sets D[0:n-2] = 1 and D[n-1] = 1.0/cond = 3 sets D[i-1] =
-     *                 cond**(-(i-1)/(n-1)) = 4 sets D[i-1] = 1 - (i-1)/(n-1)*(1 - 1/cond) = 5 sets D to random numbers
-     *                 in the range (1/cond, 1) such that their logarithms are uniformly distributed. = 6 sets D to
-     *                 random numbers from the same distribution as the rest of the matrix. < 0 has the same meaning as
-     *                 abs(mode), except that the order of the elements of D is reversed. Thus, if mode is positive, D
-     *                 has entries ranging from 1 to 1/cond, and if negative, from 1/cond to 1.
+     * @param  mode    input int On entry describes how D is to be used: 
+     *                 = 0 means use D as input 
+     *                 = 1 sets D[0] = 1 and D[1:n-1] = 1.0/cond 
+     *                 = 2 sets D[0:n-2] = 1 and D[n-1] = 1.0/cond 
+     *                 = 3 sets D[i] = cond**(-(i)/(n-1)) 
+     *                 = 4 sets D[i] = 1 - (i)/(n-1)*(1 - 1/cond) 
+     *                 = 5 sets D to random numbers in the range (1/cond, 1) such that their logarithms are uniformly distributed.
+     *                 = 6 sets D to random numbers from the same distribution as the rest of the matrix. 
+     *                 < 0 has the same meaning as abs(mode), except that the order of the elements of D is reversed.
+     *                    Thus, if mode is positive, D has entries ranging from 1 to 1/cond, and if negative, from 1/cond to 1.
      * @param  cond    input double On entry, used as described under mode above. If used, it must be >= 1.
-     * @param  dmax    input double If mode is neither -6, 0, or 6, the diagonal is scaled by dmax/max(abs(D[i])), so
+     * @param  dmax    input double If mode is neither -6, 0, nor 6, the diagonal is scaled by dmax/max(abs(D[i])), so
      *                 that maximum absolute entry of diagonal is abs(dmax). If dmax is negative (or zero), diagonal
      *                 will be scaled by a negative number (or zero).
-     * @param  rsign   input char If mode is neither -6, 0, or 6, specifies sign of diagonal as follows: 'T' => diagonal
-     *                 entries are multiplied by 1 or -1 with probability 0.5. 'F' => diagonal unchanged
-     * @param  grade   input char Specifies grading of matrix as follows: 'N' => no grading 'L' => matrix premultiplied
-     *                 by diag(dl) (only if matrix nonsymmetric) 'R' => matrix postmultiplied by diag(dr) (only if
-     *                 matrix nonsymmetric) 'B' => matrix premultiplied by diag(dl) and postmultiplied by diag(dr) (only
-     *                 if matrix nonsymmetric) 'S' or 'H' => matrix premultiplied by diag(dl) and postmultiplied by
-     *                 diag(dl) ('S' for symmetric, or 'H' for Hermitian) 'E' => matrix premultiplied for diag(dl) and
-     *                 postmultiplied by inv(diag(dl)) ( 'E' for eigenvalue invariance) (only if matrix nonsymmetric)
-     *                 Note: If grade = 'E', then m must equal n.
+     * @param  rsign   input char If mode is neither -6, 0, nor 6, specifies sign of diagonal as follows: 
+     *                 'T' => diagonal entries are multiplied by 1 or -1 with probability 0.5. 
+     *                 'F' => diagonal unchanged
+     * @param  grade   input char Specifies grading of matrix as follows: 
+     *                 'N' => no grading 
+     *                 'L' => matrix premultiplied by diag(dl) (only if matrix nonsymmetric) 
+     *                 'R' => matrix postmultiplied by diag(dr) (only if matrix nonsymmetric) 
+     *                 'B' => matrix premultiplied by diag(dl) and postmultiplied by diag(dr) (only if matrix nonsymmetric)
+     *                 'S' or 'H' => matrix premultiplied by diag(dl) and postmultiplied by diag(dl) 
+     *                              ('S' for symmetric, or 'H' for Hermitian)
+     *                 'E' => matrix premultiplied for diag(dl) and postmultiplied by inv(diag(dl))
+     *                        ( 'E' for eigenvalue invariance) (only if matrix nonsymmetric)
+     *                        Note: If grade = 'E', then m must equal n.
      * @param  dl      input/output double[] of dimension m If model = 0, then on entry this array specifies the
      *                 diagonal entries of a diagonal matrix used as described under grade above. If model is not zero,
      *                 then dl will be set according to model and condl, analagous to the way D is set according to mode
@@ -18376,10 +18435,13 @@ loop4:
      * @param  moder   input int This specifies how the diagonal array dr is to be computed, just as mode specifies how
      *                 D is to be computed.
      * @param  condr   input double While moder is not zero, this specifies the condition number of the computed dr.
-     * @param  pivtng  input char On entry specifies the pivoting permutations as follows: 'N' or ' ' => none 'L' =>
-     *                 left or row pivoting (matrix must be nonsymmetric). 'R' => right or column pivoting (matrix must
-     *                 be nonsymmetric). 'B' or 'F' => both or full pivoting, i.e., on both sides. In this case, m must
-     *                 equal n. If two calls to dlatmr both have full bandwidth (kl = m-1 and ku = n-1), and differ only
+     * @param  pivtng  input char On entry specifies the pivoting permutations as follows:
+     *                 'N' or ' ' => none 
+     *                 'L' => left or row pivoting (matrix must be nonsymmetric). 
+     *                 'R' => right or column pivoting (matrix must be nonsymmetric). 
+     *                 'B' or 'F' => both or full pivoting, i.e., on both sides. In this case, m must equal n.]
+     *                 
+     *                 If two calls to dlatmr both have full bandwidth (kl = m-1 and ku = n-1), and differ only
      *                 in the pivtng and pack parameters, then the matrices generated will differ only in the order of
      *                 the rows and/or the columns, and otherwise contain the same data. This consistency cannot be
      *                 maintained with less than full bandwidth.
@@ -18391,8 +18453,8 @@ loop4:
      *                 rightmost cycle is applied first. This is the *inverse* of the effect of pivoting in LINPACK. The
      *                 idea is that factoring (with pivoting) an identity matrix which has been inverse-pivoted in this
      *                 way should result in a pivot vector identical to ipivot. Not referenced if pivtng = 'N'.
-     * @param  kl      input int On entry, specifies the lower bandwidth of the matrix. For example, kl = 0 implies the
-     *                 upper triangular, kl = 1 implies the upper Hessenberg, and kl at least m-1 implies the matrix is
+     * @param  kl      input int On entry, specifies the lower bandwidth of the matrix. For example, kl = 0 implies
+     *                 upper triangular, kl = 1 implies upper Hessenberg, and kl at least m-1 implies the matrix is
      *                 not banded. Must equal ku if matrix is symmetric.
      * @param  ku      input int On entry specifies the upper bandwidth of the matrix. For example, ku = 0 implies lower
      *                 triangular, ku = 1 implies lower Hessenberg, and ku at least n-1 implies the matrix is not
@@ -18405,43 +18467,66 @@ loop4:
      * @param  anorm   input double On entry specifies the maximum entry of output matrix (output matrix will be
      *                 multiplied by a constant so that its largest absolute entry equals anorm) if anorm is
      *                 nonnegative. If anorm is negative, no scaling is done.
-     * @param  pack    input char On entry specifies packing of matrix as follows: 'N' => no packing 'U' => zero out all
-     *                 subdiagonal entries (if symmetric) 'L' => zero out all superdiagonal entries (if symmetric) 'C'
-     *                 => store the upper triangle columnwise (only if matrix symmetric or square upper triangular) 'R'
-     *                 => store the lower triangle columnwise (only if matrix symmetric or square lower triangular)
-     *                 (same as upper half rowwise if symmetric) 'B' => store the lower triangle in band storage scheme
-     *                 (only if matrix symmetric) 'Q' => store the upper triangle in band storage scheme (only if matrix
-     *                 symmetric) 'Z' => store the entire matrix in band storage scheme (pivoting can be provided for by
-     *                 using this option to store A in the trailing rows of the allocated storage) Using these options,
-     *                 the various LAPACK packed and banded storage schemes can be obtained: GB - use 'Z' PB, SB, or TB
-     *                 - use 'B' or 'Q' PP, SP, or TP - use 'C' or 'R' If two calls to dlatmr differ only in the pack
-     *                 parameter, they will generate mathematically equivalent matrices.
+     * @param  pack    input char On entry specifies packing of matrix as follows: 
+     *                 'N' => no packing 
+     *                 'U' => zero out all subdiagonal entries (if symmetric) 
+     *                 'L' => zero out all superdiagonal entries (if symmetric) 
+     *                 'C' => store the upper triangle columnwise (only if matrix symmetric or square upper triangular) 
+     *                 'R' => store the lower triangle columnwise (only if matrix symmetric or square lower triangular)
+     *                       (same as upper half rowwise if symmetric)
+     *                 'B' => store the lower triangle in band storage scheme (only if matrix symmetric)
+     *                 'Q' => store the upper triangle in band storage scheme (only if matrix symmetric) 
+     *                 'Z' => store the entire matrix in band storage scheme (pivoting can be provided for by
+     *                        using this option to store A in the trailing rows of the allocated storage)
+     *                        
+     *                 Using these options, the various LAPACK packed and banded storage schemes can be obtained: 
+     *                 GB - use 'Z' 
+     *                 PB, SB, or TB - use 'B' or 'Q' 
+     *                 PP, SP, or TP - use 'C' or 'R' 
+     *                 
+     *                 If two calls to dlatmr differ only in the pack parameter, they will generate mathematically
+     *                 equivalent matrices.
      * @param  A       output double[][] of dimension (lda, n) On exit A is the desired test matrix. Only those entries
      *                 of A which are significant on output will be referenced (even if A is in packed or band storage
      *                 format). The 'unoccupied corners' of A in band format will be zeroed out.
-     * @param  lda     input int On entry lda specifies the first dimension of A as declared in the calling program. If
-     *                 pack = 'N', 'U', or 'L', lda must be at least max(1,m). If pack = 'C' or 'R', lda must be at
-     *                 least 1. If pack = 'B' or 'Q', lda must be at least min (ku+1,n). If pack = 'Z', lda must be at
-     *                 least kuu+kll+1, where kuu = min(ku,n-1) and kll = min(kl,n-1).
+     * @param  lda     input int On entry lda specifies the first dimension of A as declared in the calling program. 
+     *                 If pack = 'N', 'U', or 'L', lda must be at least max(1,m). 
+     *                 If pack = 'C' or 'R', lda must be at least 1. 
+     *                 If pack = 'B' or 'Q', lda must be at least min (ku+1,n).
+     *                 If pack = 'Z', lda must be at least kuu+kll+1, where kuu = min(ku,n-1) and kll = min(kl,n-1).
      * @param  iwork   workspace int[] of dimension m or n Not referenced if pivtng = 'N'.
-     * @param  info    output int[] Error parameter on exit: 0 => normal return -1 => m negative or unequal to n and sym
-     *                 = 'S' or 'H' -2 => n negative -3 => dist illegal string -5 => sym illegal string -7 => mode not
-     *                 in range -6 to 6 -8 => cond less than 1.0, and mode neither -6, 0, or 6 -10 => mode neither -6,
-     *                 0, or 6 and rsign illegal string -11 => grade illegal string, or grade = 'E' and m not equal to
-     *                 n, or grade = 'L', 'R', 'B', or 'E', and sym = 'S' or 'H' -12 => grade = 'E' and dl contains zero
-     *                 -13 => model not in range -6 to 6 and grade = 'L', 'B', 'H', 'S', or 'E' -14 => condl less than
-     *                 1.0, grade = 'L', 'B', 'H', 'S', or 'E', and model neither -6, 0, or 6. -16 => moder not in range
-     *                 -6 to 6 and grade = 'R' or 'B' -17 => condr less than 1.0, grade = 'R' or 'B', and moder neither
-     *                 -6, 0, nor 6. -18 => pivtng illegal string, or pivtng = 'B' or 'F' and m not equal to n, or
-     *                 pivtng = 'L' or 'R' and sym = 'S' or 'H'. -19 => ipivot contains out of range number and pivtng
-     *                 not equal to 'N' -20 => kl negative -21 => ku negative, or sym = 'S' or 'H' and ku not equal to
-     *                 kl -22 => sparse not in range 0 to 1. -24 => pack illegal string, or pack = 'U', 'L', 'B', or 'Q'
-     *                 and sym = 'N', or pack = 'C' and sym = 'N' and either kl not equal to 0 or n not equal to m, or
-     *                 pack = 'R' and sym = 'N', and either ku not equal to 0 or n not equal to m. -26 => lda too small
-     *                 1 => Error return from dlatm1 (computing D) 2 => Cannot scale diagonal to dmax (max. entry is 0)
-     *                 3 => Error return from dlatm1 (computing dl) 4 => Error return form dlatm1 (computing dr) 5 =>
-     *                 anorm is positive, but matrix, constructed prior to attempting to scale it to have norm anorm, is
-     *                 zero.
+     * @param  info    output int[] Error parameter on exit: 
+     *                 0 => normal return 
+     *                 -1 => m negative or unequal to n and sym = 'S' or 'H' 
+     *                 -2 => n negative 
+     *                 -3 => dist illegal string 
+     *                 -5 => sym illegal string 
+     *                 -7 => mode not in range -6 to 6 
+     *                 -8 => cond less than 1.0, and mode neither -6, 0, nor 6 
+     *                 -10 => mode neither -6, 0, nor 6 and rsign illegal string 
+     *                 -11 => grade illegal string, or grade = 'E' and m not equal to
+     *                        n, or grade = 'L', 'R', 'B', or 'E', and sym = 'S' or 'H'
+     *                 -12 => grade = 'E' and dl contains zero
+     *                 -13 => model not in range -6 to 6 and grade = 'L', 'B', 'H', 'S', or 'E'
+     *                 -14 => condl less than 1.0, grade = 'L', 'B', 'H', 'S', or 'E', and model neither -6, 0, nor 6. 
+     *                 -16 => moder not in range -6 to 6 and grade = 'R' or 'B' 
+     *                 -17 => condr less than 1.0, grade = 'R' or 'B', and moder neither -6, 0, nor 6. 
+     *                 -18 => pivtng illegal string, or pivtng = 'B' or 'F' and m not equal to n, or
+     *                        pivtng = 'L' or 'R' and sym = 'S' or 'H'. 
+     *                 -19 => ipivot contains out of range number and pivtng not equal to 'N' 
+     *                 -20 => kl negative 
+     *                 -21 => ku negative, or sym = 'S' or 'H' and ku not equal to kl 
+     *                 -22 => sparse not in range 0 to 1. 
+     *                 -24 => pack illegal string, or pack = 'U', 'L', 'B', or 'Q' and sym = 'N', 
+     *                        or pack = 'C' and sym = 'N' and either kl not equal to 0 or n not equal to m, or
+     *                        pack = 'R' and sym = 'N', and either ku not equal to 0 or n not equal to m. 
+     *                 -26 => lda too small
+     *                 1 => Error return from dlatm1 (computing D) 
+     *                 2 => Cannot scale diagonal to dmax (max. entry is 0)
+     *                 3 => Error return from dlatm1 (computing dl) 
+     *                 4 => Error return form dlatm1 (computing dr) 
+     *                 5 => anorm is positive, but matrix, constructed prior to attempting to scale it to have
+     *                      norm anorm, is zero.
      */
     private void dlatmr(int m, int n, char dist, int[] iseed, char sym, double[] D, int mode, double cond, double dmax,
                         char rsign, char grade, double[] dl, int model, double condl, double[] dr, int moder,
@@ -19222,6 +19307,68 @@ loop4:
             } // else
         } // if (anorm >= 0.0)
 
+        if (ipack == 3) {
+            isub[0] = 0;
+            jsub[0] = 1;
+
+            for (j = 1; j <= n; j++) {
+
+                for (i = 1; i <= j; i++) {
+                    isub[0] = isub[0] + 1;
+
+                    if (isub[0] > lda) {
+                        isub[0] = 1;
+                        jsub[0] = jsub[0] + 1;
+                    }
+
+                    k = isub[0] + (lda * (jsub[0] - 1));
+                    A[isub[0] - 1][jsub[0] - 1] = ap[k - 1];
+                }
+            }
+        } // else if (ipack == 3)
+        else if (ipack == 4) {
+
+            if (isym == 0) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= j; i++) {
+
+                        // Compute k = location of (i,j) entry in packed
+                        // array
+                        if (i == 1) {
+                            k = j;
+                        } else {
+                            k = (n * (n + 1) / 2) - ((n - i + 1) * (n - i + 2) / 2) + j - i + 1;
+                        }
+
+                        // Convert k to (isub,jsub) location
+                        jsub[0] = ((k - 1) / lda) + 1;
+                        isub[0] = k - (lda * (jsub[0] - 1));
+                        A[isub[0] - 1][jsub[0] - 1] = ap[k - 1];
+                    }
+                }
+            } // if (isym == 0)
+            else { // isym != 0
+                isub[0] = 0;
+                jsub[0] = 1;
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = j; i <= m; i++) {
+                        isub[0] = isub[0] + 1;
+
+                        if (isub[0] > lda) {
+                            isub[0] = 1;
+                            jsub[0] = jsub[0] + 1;
+                        }
+
+                        k = isub[0] + (lda * (jsub[0] - 1));
+                        A[isub[0] - 1][jsub[0] - 1] = ap[k - 1];
+                    }
+                }
+            } // else isym != 0
+        } // else if (ipack == 4)
         return;
     } // dlatmr
 
