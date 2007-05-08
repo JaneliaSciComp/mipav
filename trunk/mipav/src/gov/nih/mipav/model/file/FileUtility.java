@@ -1028,7 +1028,12 @@ public class FileUtility {
             }
         }
 
-        String[] assoc = Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).split(Preferences.ITEM_SEPARATOR);
+        String strFileType = Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC);
+        String[] assoc = new String[0];
+
+        if (strFileType != null) {
+            assoc = strFileType.split(Preferences.ITEM_SEPARATOR);
+        }
 
         // check to see if there are any user defined associations
         for (int k = 0; k < assoc.length; k++) {
