@@ -754,9 +754,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
         // 0019,10B9...the b-value is the number after ep_b 3. If GE and if Software Version is > 8, then extract
         // b-value from private tag 0043,1039....the b-value is the first number in the string
 
-        // For eDTI: 1. If Siemens, then extract b-value from public tag 0018,0024...the b-value is the number after ep_b
-        // and before #   2. If GE, then extract b-value from private tag 0043,1039....the b-value is the first number
-        // in the string
+        // For eDTI: 1. If Siemens, then extract b-value from public tag 0018,0024...the b-value is the number after
+        // ep_b and before #   2. If GE, then extract b-value from private tag 0043,1039....the b-value is the first
+        // number in the string
 
         Set ketSet = seriesFileInfoTreeMap.keySet();
         Iterator iter = ketSet.iterator();
@@ -1000,169 +1000,172 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
         File[] children = file.listFiles();
         FileDicom imageFile = null;
 
+        try {
 
-        boolean success = false;
+            for (int i = 0; i < children.length; i++) {
 
-        for (int i = 0; i < children.length; i++) {
+                if (isThreadStopped()) {
+                    return false;
+                }
 
-            if (isThreadStopped()) {
-                return false;
-            }
+                if (children[i].isDirectory()) {
+                    parse(children[i]);
+                } else if (!children[i].isDirectory()) {
 
-            if (children[i].isDirectory()) {
-                parse(children[i]);
-            } else if (!children[i].isDirectory()) {
+                    try {
 
-                try {
+                        if (imageFile == null) {
+                            imageFile = new FileDicom(children[i].getName(),
+                                                      children[i].getParent() + File.separatorChar);
+                        } else {
+                            imageFile.setFileName(children[i], firstFileInfoDicom);
+                        }
 
-                    if (imageFile == null) {
-                        imageFile = new FileDicom(children[i].getName(), children[i].getParent() + File.separatorChar);
-                    } else {
-                        imageFile.setFileName(children[i], firstFileInfoDicom);
-                    }
+                        if (imageFilter.accept(children[i])) {
+                            success = imageFile.readHeader(true);
+                        } else {
+                            continue;
+                        }
+                    } catch (IOException error) {
+                        error.printStackTrace();
+                        System.gc();
+                        i--;
 
-                    if (imageFilter.accept(children[i])) {
-                        success = imageFile.readHeader(true, false);
-                    } else {
                         continue;
-                    }
-                } catch (IOException error) {
-                    error.printStackTrace();
-                    System.gc();
-                    i--;
 
-                    continue;
-
-                }
-
-                FileInfoDicom fileInfoDicom = (FileInfoDicom) imageFile.getFileInfo();
-
-                if (totalImageSlices == 0) {
-
-                    // we need the first file info dicom handle so we can use it for the list file
-                    firstFileInfoDicom = fileInfoDicom;
-                }
-
-
-                // get relevant info from fileinfodicom and place it in array that is then sorted by
-                // instance number and vol in its appropriate series list
-                dicomInfo = new String[7];
-
-                String instanceNo = ((String) fileInfoDicom.getTagTable().getValue("0020,0013")).trim();
-
-                if (instanceNo.trim().equals("")) {
-                    Preferences.debug("! ERROR: instance number dicom field is empty.....exiting algorithm \n",
-                                      Preferences.DEBUG_ALGORITHM);
-
-                    if (outputTextArea != null) {
-                        outputTextArea.append("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
                     }
 
-                    System.out.println("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
+                    FileInfoDicom fileInfoDicom = (FileInfoDicom) imageFile.getFileInfo();
 
-                    return false;
-                }
+                    if (totalImageSlices == 0) {
 
-
-                TransMatrix matrix = null;
-                float[] tPt = new float[3];
-                matrix = fileInfoDicom.getPatientOrientation();
-
-                if (matrix != null) {
-
-                    /* transform the x location, y location, and z location, found
-                     * from the Image Position tag, by the matrix.  The tPt array now has the three numbers arranged as
-                     * if this image had been transformed.  The third place in the array holds the number that the axis
-                     * is being sliced along. xlocation, ylocation, zlocation are from the DICOM tag 0020,0032 patient
-                     * location.....in other words tPt[2] is the slice location;
-                     */
-                    matrix.transform(fileInfoDicom.xLocation, fileInfoDicom.yLocation, fileInfoDicom.zLocation, tPt);
-
-                } else {
-                    Preferences.debug("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n",
-                                      Preferences.DEBUG_ALGORITHM);
-
-                    if (outputTextArea != null) {
-                        outputTextArea.append("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
+                        // we need the first file info dicom handle so we can use it for the list file
+                        firstFileInfoDicom = fileInfoDicom;
                     }
 
-                    System.out.println("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
 
-                    return false;
-                }
+                    // get relevant info from fileinfodicom and place it in array that is then sorted by
+                    // instance number and vol in its appropriate series list
+                    dicomInfo = new String[7];
 
-                String absPath = fileInfoDicom.getFileDirectory();
-                String fileName = fileInfoDicom.getFileName();
-                String publicTag00180024 = ((String) fileInfoDicom.getTagTable().getValue("0018,0024"));
-                String privateTag00431039 = null;
-                String privateTag001910B9 = null;
+                    String instanceNo = ((String) fileInfoDicom.getTagTable().getValue("0020,0013")).trim();
 
-                try {
+                    if (instanceNo.trim().equals("")) {
+                        Preferences.debug("! ERROR: instance number dicom field is empty.....exiting algorithm \n",
+                                          Preferences.DEBUG_ALGORITHM);
 
-                    if (fileInfoDicom.getTagTable().getValue("0043,1039") != null) {
-                        privateTag00431039 = (String) fileInfoDicom.getTagTable().getValue("0043,1039");
-                    }
-                } catch (NullPointerException e) {
-                    privateTag00431039 = null;
-                }
+                        if (outputTextArea != null) {
+                            outputTextArea.append("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
+                        }
 
+                        System.out.println("! ERROR: instance number dicom field is empty.....exiting algorithm \n");
 
-                try {
-
-                    if (fileInfoDicom.getTagTable().getValue("0019,10B9") != null) {
-                        privateTag001910B9 = (String) fileInfoDicom.getTagTable().getValue("0019,10B9");
-                    }
-                } catch (NullPointerException e) {
-                    privateTag001910B9 = null;
-                }
-
-                dicomInfo[0] = instanceNo;
-                dicomInfo[1] = String.valueOf(tPt[2]);
-                dicomInfo[2] = absPath;
-                dicomInfo[3] = fileName;
-                dicomInfo[4] = publicTag00180024;
-                dicomInfo[5] = privateTag00431039;
-                dicomInfo[6] = privateTag001910B9;
-
-                String seriesNumber_String = ((String) fileInfoDicom.getTagTable().getValue("0020,0011")).trim();
-
-                if ((seriesNumber_String == null) || seriesNumber_String.equals("")) {
-                    seriesNumber_String = "0";
-                }
-
-                Integer seriesNumber = new Integer(seriesNumber_String);
-
-                if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
-                    seriesFileInfoTreeSet = new TreeSet(new InstanceNumberVolComparator());
-                    seriesFileInfoTreeSet.add(dicomInfo);
-                    seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
-                } else {
-                    seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
-                    seriesFileInfoTreeSet.add(dicomInfo);
-                    seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
-                }
-
-                dicomInfo = null;
-                fileInfoDicom = null;
-                imageFile.finalize();
-                imageFile = null;
-
-                if ((totalImageSlices % 100) == 0) {
-                    Preferences.debug(".", Preferences.DEBUG_ALGORITHM);
-
-                    if (outputTextArea != null) {
-                        outputTextArea.append(".");
+                        return false;
                     }
 
-                    System.out.print(".");
-                }
 
-                if ((totalImageSlices % 500) == 0) {
-                    System.gc();
-                }
+                    TransMatrix matrix = null;
+                    float[] tPt = new float[3];
+                    matrix = fileInfoDicom.getPatientOrientation();
 
-                totalImageSlices++;
+                    if (matrix != null) {
+
+                        /* transform the x location, y location, and z location, found
+                         * from the Image Position tag, by the matrix.  The tPt array now has the three numbers arranged
+                         * as if this image had been transformed.  The third place in the array holds the number that
+                         * the axis is being sliced along. xlocation, ylocation, zlocation are from the DICOM tag
+                         * 0020,0032 patient location.....in other words tPt[2] is the slice location;
+                         */
+                        matrix.transform(fileInfoDicom.xLocation, fileInfoDicom.yLocation, fileInfoDicom.zLocation,
+                                         tPt);
+
+                    } else {
+                        Preferences.debug("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n",
+                                          Preferences.DEBUG_ALGORITHM);
+
+                        if (outputTextArea != null) {
+                            outputTextArea.append("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
+                        }
+
+                        System.out.println("! ERROR: unable to obtain image orientation matrix.....exiting algorithm \n");
+
+                        return false;
+                    }
+
+                    String absPath = fileInfoDicom.getFileDirectory();
+                    String fileName = fileInfoDicom.getFileName();
+                    String publicTag00180024 = ((String) fileInfoDicom.getTagTable().getValue("0018,0024"));
+                    String privateTag00431039 = null;
+                    String privateTag001910B9 = null;
+
+                    try {
+
+                        if (fileInfoDicom.getTagTable().getValue("0043,1039") != null) {
+                            privateTag00431039 = (String) fileInfoDicom.getTagTable().getValue("0043,1039");
+                        }
+                    } catch (NullPointerException e) {
+                        privateTag00431039 = null;
+                    }
+
+
+                    try {
+
+                        if (fileInfoDicom.getTagTable().getValue("0019,10B9") != null) {
+                            privateTag001910B9 = (String) fileInfoDicom.getTagTable().getValue("0019,10B9");
+                        }
+                    } catch (NullPointerException e) {
+                        privateTag001910B9 = null;
+                    }
+
+                    dicomInfo[0] = instanceNo;
+                    dicomInfo[1] = String.valueOf(tPt[2]);
+                    dicomInfo[2] = absPath;
+                    dicomInfo[3] = fileName;
+                    dicomInfo[4] = publicTag00180024;
+                    dicomInfo[5] = privateTag00431039;
+                    dicomInfo[6] = privateTag001910B9;
+
+                    String seriesNumber_String = ((String) fileInfoDicom.getTagTable().getValue("0020,0011")).trim();
+
+                    if ((seriesNumber_String == null) || seriesNumber_String.equals("")) {
+                        seriesNumber_String = "0";
+                    }
+
+                    Integer seriesNumber = new Integer(seriesNumber_String);
+
+                    if (seriesFileInfoTreeMap.get(seriesNumber) == null) {
+                        seriesFileInfoTreeSet = new TreeSet(new InstanceNumberVolComparator());
+                        seriesFileInfoTreeSet.add(dicomInfo);
+                        seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
+                    } else {
+                        seriesFileInfoTreeSet = (TreeSet) seriesFileInfoTreeMap.get(seriesNumber);
+                        seriesFileInfoTreeSet.add(dicomInfo);
+                        seriesFileInfoTreeMap.put(seriesNumber, seriesFileInfoTreeSet);
+                    }
+
+                    dicomInfo = null;
+                    fileInfoDicom = null;
+
+                    if ((totalImageSlices % 100) == 0) {
+                        Preferences.debug(".", Preferences.DEBUG_ALGORITHM);
+
+                        if (outputTextArea != null) {
+                            outputTextArea.append(".");
+                        }
+
+                        System.out.print(".");
+                    }
+
+                    if ((totalImageSlices % 500) == 0) {
+                        System.gc();
+                    }
+
+                    totalImageSlices++;
+                }
             }
+        } finally {
+            imageFile.finalize();
+            imageFile = null;
         }
 
         return true;
@@ -1783,8 +1786,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
      *  public int compare(Object oA, Object oB) {     String[] aA = (String[]) oA;     String[] aB = (String[]) oB;
      * String instancNoA_String = ((String)aA[0]).trim();     if (instancNoA_String == null) {         instancNoA_String
      * = "";     }     String instancNoB_String = ((String)aB[0]).trim();     if (instancNoB_String == null) {
-     * instancNoB_String = "";     }     if ((!instancNoA_String.equals("")) && (!instancNoB_String.equals(""))) {
-     *   int instanceNoA = new Integer(instancNoA_String).intValue();         int instanceNoB = new
+     * instancNoB_String = "";     }     if ((!instancNoA_String.equals("")) && (!instancNoB_String.equals(""))) {  int
+     * instanceNoA = new Integer(instancNoA_String).intValue();         int instanceNoB = new
      * Integer(instancNoB_String).intValue();         if (instanceNoA < instanceNoB) {             return -1;         }
      *        if (instanceNoA > instanceNoB) {             return 1;         }     }     return 0; }}**/
 
