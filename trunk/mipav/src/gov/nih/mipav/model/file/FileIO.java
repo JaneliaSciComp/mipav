@@ -377,7 +377,7 @@ public class FileIO {
             // use the selectedFileName as the reference slice for the file info tag tables
             imageFile = new FileDicom(selectedFileName, fileDir);
             imageFile.setQuiet(quiet); // if we want quiet, we tell the reader, too.
-            imageFile.readHeader(true, true); // can we read the header?
+            imageFile.readHeader(true); // can we read the header?
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -539,7 +539,7 @@ public class FileIO {
 
                     if (!fileList[i].equals(selectedFileName)) {
                         imageFile.setFileName(fileList[i], refFileInfo);
-                        imageFile.readHeader(true, true);
+                        imageFile.readHeader(true);
                         fileInfoTemp = (FileInfoDicom) imageFile.getFileInfo();
                     } else {
                         fileInfoTemp = refFileInfo;

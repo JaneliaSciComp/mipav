@@ -404,7 +404,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                         pre_and_fullData.endIndex = preambleBuffer.length + compData.length();
                         fileDicom.setTagBuffer(pre_and_fullData.data);
 
-                        if (fileDicom.readHeader(false, true) == false) {
+                        if (fileDicom.readHeader(false) == false) {
 
                             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                                 Preferences.debug(DICOM_Util.timeStamper() +

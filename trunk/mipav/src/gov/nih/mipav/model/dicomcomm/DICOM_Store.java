@@ -211,7 +211,7 @@ public class DICOM_Store implements Runnable {
         try {
             fileDICOM = new FileDicom(fileName);
 
-            if (fileDICOM.readHeader(true, true)) {
+            if (fileDICOM.readHeader(true)) {
                 fInfoDicom = (FileInfoDicom) (fileDICOM.getFileInfo());
                 transferSyntax = (String) (fInfoDicom.getTagTable().getValue("0002,0010"));
                 classUID = (String) (fInfoDicom.getTagTable().getValue("0008,0016"));

@@ -1508,9 +1508,9 @@ outerLoop:
                         }
 
                         if (imageFilter.accept(children[i])) {
-                            success = imageFile.readHeader(true, false);
+                            success = imageFile.readHeader(true);
                         } else if (imageFile.isDICOM()) {
-                            success = imageFile.readHeader(true, false);
+                            success = imageFile.readHeader(true);
                         } else {
                             continue;
                         }
@@ -1521,16 +1521,15 @@ outerLoop:
                         return;
                     }
 
-                    referenceFileInfo = (FileInfoDicom) imageFile.getFileInfo();
-
-                    fileInfoVector.addElement(referenceFileInfo);
-
-                    if (success) {
-                        addStudyData(referenceFileInfo);
+                    if (referenceFileInfo == null) {
+                        referenceFileInfo = (FileInfoDicom) imageFile.getFileInfo();
                     }
 
-                    imageFile.finalize();
-                    imageFile = null;
+                    fileInfoVector.addElement(imageFile.getFileInfo());
+
+                    if (success) {
+                        addStudyData((FileInfoDicom) imageFile.getFileInfo());
+                    }
                 }
             }
         } catch (Exception err) {
@@ -1538,6 +1537,11 @@ outerLoop:
             MipavUtil.displayError("DICOM parser error: " + err);
         } finally {
             setCursor(Cursor.getDefaultCursor());
+
+            if (imageFile != null) {
+                imageFile.finalize();
+                imageFile = null;
+            }
         }
 
         Preferences.debug("Parse took: " + ((System.currentTimeMillis() - time) / 1000f) + "\n");
