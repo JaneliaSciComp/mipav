@@ -2695,10 +2695,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             screenCapture.setVisible(true);
 
         } else if (command.equals("CaptureTiffs")) {
-            JDialogCaptureScreens screenCapture = new JDialogCaptureScreens(this);
-
-            screenCapture.actionPerformed(new ActionEvent(this, 0, "Script"));
-            screenCapture.dispose();
+            new JDialogCaptureScreens(this);
         } else if (command.equals("CorrectSpace")) {
             new JDialogCorrectSpacing(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("ToggleImageIntensities")) {

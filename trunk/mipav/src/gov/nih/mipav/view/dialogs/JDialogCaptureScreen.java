@@ -79,6 +79,13 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 
     /** Button for selecting window mode. */
     private JRadioButton windowButton;
+    
+    /** The parent image frame. */
+    private ViewJFrameImage imageFrame;
+    
+    
+    /** Active frame **/
+    private ViewJFrameImage activeFrame;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -88,8 +95,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
      *
      * @param  parent  Parent frame of this dialog.
      */
-    public JDialogCaptureScreen(JFrame parent) {
+    public JDialogCaptureScreen(ViewJFrameImage parent) {
         super(parent, false);
+        this.imageFrame = parent;
         userInterface = ViewUserInterface.getReference();
         save = true;
         mode = NONE;
@@ -156,18 +164,23 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
                     (currentRectangle.x > -1) && (currentRectangle.y > -1)) {
 
                 if (writeImage()) {
+                	
+                	//commented the code below out in order to leave dialog up so that you can 
+                	//select multiple regions one after the other
+                	
+                    //for (int i = 0; i < oldFrames.length; i++) {
+                    //   myGlassPanes[i].setVisible(false);
+                    //   oldFrames[i].setGlassPane(oldPanes[i]);
+                    //   oldFrames[i].removeWindowListener(this);
+                    //   oldFrames[i].removeMouseListener(this);
+                    //   myGlassPanes[i] = null;
+                    //}
 
-                    for (int i = 0; i < oldFrames.length; i++) {
-                        myGlassPanes[i].setVisible(false);
-                        oldFrames[i].setGlassPane(oldPanes[i]);
-                        oldFrames[i].removeWindowListener(this);
-                        oldFrames[i].removeMouseListener(this);
-                        myGlassPanes[i] = null;
-                    }
-
-                    myGlassPanes = null;
-                    dispose();
-                    System.gc();
+                    //myGlassPanes = null;
+                    //dispose();
+                    //System.gc();
+                	
+                	currentRectangle = null;
                 }
             } else {
                 MipavUtil.displayError("You must choose a region or window to capture.");
@@ -181,7 +194,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
                 oldFrames[i].removeMouseListener(this);
                 myGlassPanes[i] = null;
             }
-
+            
             myGlassPanes = null;
             dispose();
             System.gc();
@@ -267,41 +280,51 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
      * @param  event  Event that triggered this method.
      */
     public void windowActivated(WindowEvent event) {
-
         // not in window mode
-        if (mode != WINDOW) {
-            return;
+        if (mode == REGION) {
+        	if(event.getWindow() instanceof ViewJFrameImage) {
+	        	ViewJFrameImage frame = (ViewJFrameImage) event.getWindow();
+	            activeFrame = frame;
+
+	            return;
+        	}
+        	else {
+        		return;
+        	}
         }
+        
+        if(mode == WINDOW) {
+	        // don't save the dialog as the screen capture -
+	        // and the dialog will be the last window activated
+	        if (event.getWindow().equals(this)) {
+	            return;
+	        } else {
+	
+	            try {
+	                ViewJFrameImage frame = (ViewJFrameImage) event.getWindow();
+	                activeFrame = frame;
 
-        // don't save the dialog as the screen capture -
-        // and the dialog will be the last window activated
-        if (event.getWindow().equals(this)) {
-            return;
-        } else {
-
-            try {
-                JFrame frame = (JFrame) event.getWindow();
-
-                Point p = new Point();
-                // These ought to have been (0,0) in all cases
-                // but sometimes were not.  As a result the
-                // window mode sometimes looked wrong (offset
-                // vertically).  Hardcoding it to (0,0) fixed
-                // this problem.
-                // p.x = frame.getContentPane().getX();
-                // p.y = frame.getContentPane().getY();
-
-                p.x = 0;
-                p.y = 0;
-                SwingUtilities.convertPointToScreen(p, frame.getContentPane());
-                p.x++; // must correct this slightly
-                p.y++; // ""
-
-                Dimension d = new Dimension();
-                d.width = frame.getContentPane().getWidth() - 3; // the -3 is a correction
-                d.height = frame.getContentPane().getHeight() - 3; // ""
-                currentRectangle = new Rectangle(p, d);
-            } catch (ClassCastException error) { }
+	                Point p = new Point();
+	                // These ought to have been (0,0) in all cases
+	                // but sometimes were not.  As a result the
+	                // window mode sometimes looked wrong (offset
+	                // vertically).  Hardcoding it to (0,0) fixed
+	                // this problem.
+	                // p.x = frame.getContentPane().getX();
+	                // p.y = frame.getContentPane().getY();
+	
+	                p.x = 0;
+	                p.y = 0;
+	                SwingUtilities.convertPointToScreen(p, frame.getContentPane());
+	                p.x++; // must correct this slightly
+	                p.y++; // ""
+	
+	                Dimension d = new Dimension();
+	                d.width = frame.getContentPane().getWidth() - 3; // the -3 is a correction
+	                d.height = frame.getContentPane().getHeight() - 3; // ""
+	                currentRectangle = new Rectangle(p, d);
+	            } catch (ClassCastException error) { }
+	        }
         }
     }
 
@@ -431,7 +454,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             int[] extents = new int[2];
             extents[0] = xDim; // RGB
             extents[1] = yDim;
-            testImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture");
+
+            testImage = new ModelImage(ModelStorageBase.ARGB, extents, activeFrame.getImageNameA() + "_screen_capture");
+            testImage.getFileInfo()[0].setFileDirectory(activeFrame.getImageA().getFileInfo(0).getFileDirectory());
             buffer = new short[bufferSize];
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("JDialogScreenCapture: unable to allocate enough memory for RGB image");
@@ -463,12 +488,14 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 
             JFileChooser chooser = new JFileChooser();
 
-            if (userInterface.getDefaultDirectory() != null) {
-                chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
-            } else {
-                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-            }
+            //if (userInterface.getDefaultDirectory() != null) {
+             //   chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
+            //} else {
+            //    chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            //}
 
+            chooser.setSelectedFile(new File(testImage.getFileInfo(0).getFileDirectory() + testImage.getImageFileName()));
+            
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
 
             int returnVal = chooser.showSaveDialog(this);
@@ -480,6 +507,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
                 fileIO.writeImage(testImage, new FileWriteOptions(fileName, directory, true));
                 userInterface.setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar);
             } else {
+
                 return false;
             }
         } else {
@@ -488,6 +516,24 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 
         return true;
     }
+    
+    
+    /** 
+	 * window closing
+	 */
+	public void windowClosing(WindowEvent event) {
+		for (int i = 0; i < oldFrames.length; i++) {
+            myGlassPanes[i].setVisible(false);
+            oldFrames[i].setGlassPane(oldPanes[i]);
+            oldFrames[i].removeWindowListener(this);
+            oldFrames[i].removeMouseListener(this);
+            myGlassPanes[i] = null;
+        }
+        
+        myGlassPanes = null;
+        dispose();
+        System.gc();
+	}
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
@@ -588,6 +634,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             glassPane.repaint();
         }
 
+        
+        
+        
     }
 
     /**
