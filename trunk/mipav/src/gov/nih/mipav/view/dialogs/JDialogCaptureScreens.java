@@ -50,11 +50,15 @@ public class JDialogCaptureScreens extends JDialogBase {
 
         if (imageFrame.getImageA().getExtents().length < 3) {
             MipavUtil.displayError("JDialogCaptureScreens is for 3D and 4D images only");
-
+     
             return;
         }
 
         this.numSlices = imageFrame.getImageA().getExtents()[2];
+        
+        writeImage();
+        
+        dispose();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -115,7 +119,8 @@ public class JDialogCaptureScreens extends JDialogBase {
             extents[2] = numSlices;
             pixels = new int[extents[0] * extents[1]];
             bufferSize = 4 * extents[0] * extents[1];
-            testImage = new ModelImage(ModelStorageBase.ARGB, extents, "Screen capture");
+            testImage = new ModelImage(ModelStorageBase.ARGB, extents, imageFrame.getImageNameA() + "_screen_capture");
+            testImage.getFileInfo()[0].setFileDirectory(imageFrame.getImageA().getFileInfo(0).getFileDirectory());
             buffer = new short[bufferSize];
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("JDialogScreenCapture: unable to allocate enough memory for RGB image");
