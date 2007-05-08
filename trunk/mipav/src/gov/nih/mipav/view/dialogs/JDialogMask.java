@@ -180,7 +180,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 FileInfoBase fileInfo;
 
                 for (int i = 0; i < image.getFileInfo().length; i++) {
-                    fileInfo = (FileInfoBase) (image.getFileInfo(i).cloneItself());
+                    fileInfo = (FileInfoBase) (image.getFileInfo(i).clone());
                     resultImage.setFileInfo(fileInfo, i);
                 }
 

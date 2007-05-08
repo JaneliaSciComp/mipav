@@ -59,6 +59,9 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
     private AlgorithmMode modeAlgo = null;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
@@ -69,8 +72,6 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
 
     /** DOCUMENT ME! */
     private JRadioButton wholeVolume;
-    
-    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -163,6 +164,7 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMode) {
             System.err.println("Mode Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
@@ -174,7 +176,8 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                 resultImage.clearMask();
 
                 try {
-                    //             resultImage.setImageName("Mode: "+image.getImageName());
+
+                    // resultImage.setImageName("Mode: "+image.getImageName());
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -227,53 +230,6 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        
-        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
-        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if ((image.getType() != ModelImage.BYTE) && (image.getType() != ModelImage.UBYTE) &&
-                (image.getType() != ModelImage.SHORT) && (image.getType() != ModelImage.USHORT) &&
-                (image.getType() != ModelImage.INTEGER) && (image.getType() != ModelImage.UINTEGER)) {
-            MipavUtil.displayError("Source Image must be an BYTE, SHORT, or INTEGER");
-            dispose();
-
-            return;
-        }
-        
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
-        setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Accessor that sets the slicing flag.
@@ -303,48 +259,6 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
     }
 
     /**
-     * Creates the combo-box that allows user to select the shape of the kernel (mask).
-     *
-     * @param  singleSlices  DOCUMENT ME!
-     */
-    private void buildKernelShapeComboBox(boolean singleSlices) {
-
-        if (singleSlices) {
-            comboBoxKernelShape.addItem("Square");
-            comboBoxKernelShape.addItem("Cross (+)");
-            comboBoxKernelShape.addItem("Corner-to-corner (x)");
-            comboBoxKernelShape.addItem("Horizontal");
-            comboBoxKernelShape.addItem("Vertical");
-        } else {
-            comboBoxKernelShape.addItem("Cube");
-            comboBoxKernelShape.addItem("Axis");
-            comboBoxKernelShape.addItem("Corner-to-corner");
-        }
-    }
-
-    /**
-     * Creates the combo-box that allows user to select the size of the kernel (mask).
-     *
-     * @param  singleSlices  DOCUMENT ME!
-     */
-    private void buildKernelSizeComboBox(boolean singleSlices) {
-
-        if (singleSlices) {
-            comboBoxKernelSize.addItem("3x3");
-            comboBoxKernelSize.addItem("5x5");
-            comboBoxKernelSize.addItem("7x7");
-            comboBoxKernelSize.addItem("9x9");
-            comboBoxKernelSize.addItem("11x11");
-        } else {
-            comboBoxKernelSize.addItem("3x3x3");
-            comboBoxKernelSize.addItem("5x5x5");
-            comboBoxKernelSize.addItem("7x7x7");
-            comboBoxKernelSize.addItem("9x9x9");
-            comboBoxKernelSize.addItem("11x11x11");
-        }
-    }
-
-    /**
      * Once all the necessary variables are set, call the median algorithm based on what type of image this is and
      * whether or not there is a separate destination image.
      */
@@ -364,24 +278,20 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                     resultImage.setImageName(name);
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
                     }
 
                     // Make algorithm
-                    modeAlgo = new AlgorithmMode(resultImage, image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet());
+                    modeAlgo = new AlgorithmMode(resultImage, image, kernelSize, kernelShape,
+                                                 outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     modeAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), modeAlgo);
-                    
+
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -417,7 +327,7 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                     modeAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), modeAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -464,14 +374,7 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                         for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17",
-                                                                                    16); // bogus Implementation UID
-                                                                                         // made up by Matt
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
                         }
                     }
 
@@ -483,9 +386,9 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     modeAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), modeAlgo);
-                    
+
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -512,13 +415,14 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                 try {
 
                     // Make algorithm
-                    modeAlgo = new AlgorithmMode(image, kernelSize, kernelShape, image25D, outputPanel.isProcessWholeImageSet());
+                    modeAlgo = new AlgorithmMode(image, kernelSize, kernelShape, image25D,
+                                                 outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     modeAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), modeAlgo);
 
                     // Hide dialog
@@ -553,6 +457,96 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                     return;
                 }
             }
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BYTE) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.SHORT) && (image.getType() != ModelImage.USHORT) &&
+                (image.getType() != ModelImage.INTEGER) && (image.getType() != ModelImage.UINTEGER)) {
+            MipavUtil.displayError("Source Image must be an BYTE, SHORT, or INTEGER");
+            dispose();
+
+            return;
+        }
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
+        setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
+    }
+
+    /**
+     * Creates the combo-box that allows user to select the shape of the kernel (mask).
+     *
+     * @param  singleSlices  DOCUMENT ME!
+     */
+    private void buildKernelShapeComboBox(boolean singleSlices) {
+
+        if (singleSlices) {
+            comboBoxKernelShape.addItem("Square");
+            comboBoxKernelShape.addItem("Cross (+)");
+            comboBoxKernelShape.addItem("Corner-to-corner (x)");
+            comboBoxKernelShape.addItem("Horizontal");
+            comboBoxKernelShape.addItem("Vertical");
+        } else {
+            comboBoxKernelShape.addItem("Cube");
+            comboBoxKernelShape.addItem("Axis");
+            comboBoxKernelShape.addItem("Corner-to-corner");
+        }
+    }
+
+    /**
+     * Creates the combo-box that allows user to select the size of the kernel (mask).
+     *
+     * @param  singleSlices  DOCUMENT ME!
+     */
+    private void buildKernelSizeComboBox(boolean singleSlices) {
+
+        if (singleSlices) {
+            comboBoxKernelSize.addItem("3x3");
+            comboBoxKernelSize.addItem("5x5");
+            comboBoxKernelSize.addItem("7x7");
+            comboBoxKernelSize.addItem("9x9");
+            comboBoxKernelSize.addItem("11x11");
+        } else {
+            comboBoxKernelSize.addItem("3x3x3");
+            comboBoxKernelSize.addItem("5x5x5");
+            comboBoxKernelSize.addItem("7x7x7");
+            comboBoxKernelSize.addItem("9x9x9");
+            comboBoxKernelSize.addItem("11x11x11");
         }
     }
 
@@ -690,6 +684,7 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+
         // associate kernel size with selectBox choice.
         this.determineKernelSize();
 

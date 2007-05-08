@@ -15,11 +15,7 @@ import java.util.*;
 /**
  * Recursively traverses a directory and its subfolders, converting all 3D DICOM or uncompressed AVI files to AVI with
  * MP42 Compression.
- *
- * @author   Ben Link
- * @version  1.0
  */
-
 public class AlgorithmDCCIEConversion extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -37,10 +33,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
     private boolean inputDICOM = true;
 
     /** Output path to build new tree. */
-    private String outputPath; //
-
-    /** DOCUMENT ME! */
-    // private ViewJProgressBar progressBar = null;
+    private String outputPath;
 
     /** DOCUMENT ME! */
     private float quality;
@@ -234,8 +227,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
 
                 try {
                     patientID = (String)
-                                    ((FileDicomTag) ((FileInfoDicom) inputImage.getFileInfo(0)).getEntry("0010,0020"))
-                                        .getValue(false);
+                                    ((FileInfoDicom) inputImage.getFileInfo(0)).getTagTable().get("0010,0020").getValue(false);
                     // System.err.println("patient id is: " + patientID);
                 } catch (Exception ex) { // do nothing
                 }
@@ -285,9 +277,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
 
                     try {
                         patientID = (String)
-                                        ((FileDicomTag)
-                                             ((FileInfoDicom) inputImage.getFileInfo(0)).getEntry("0010,0020"))
-                                            .getValue(false);
+                                        ((FileInfoDicom) inputImage.getFileInfo(0)).getTagTable().get("0010,0020").getValue(false);
                         // System.err.println("patient id is: " + patientID);
                     } catch (Exception ex) { // do nothing
                     }
@@ -381,7 +371,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
                     }
 
                     if (aviFile.writeImage(inputImage, null, lutA, null, null, null, 0, 0, 0, 0, 0,
-                                               inputImage.getMask(), compression)) {
+                                           inputImage.getMask(), compression)) {
                         Preferences.debug("Successfully transcoded " + " to compressed AVI" + "\n");
                     } else {
                         Preferences.debug("Error transcoding " + " to compressed AVI" + "\n");

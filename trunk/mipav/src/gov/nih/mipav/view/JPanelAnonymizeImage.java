@@ -89,7 +89,7 @@ public class JPanelAnonymizeImage extends JPanelChecklist {
 
             try {
                 FileDicomKey dicomKey = new FileDicomKey(FileInfoDicom.anonymizeTagIDs[i]);
-                String tmpStr = DICOMDictionaryBuilder.getName(dicomKey);
+                String tmpStr = DicomDictionary.getName(dicomKey);
 
                 if (tmpStr != null) {
                     list[i] = new String(tmpStr); // just uses name
@@ -130,7 +130,7 @@ public class JPanelAnonymizeImage extends JPanelChecklist {
 
             try {
 
-                if (dicomInfo.getValue(FileInfoDicom.anonymizeTagIDs[i]) != null) {
+                if (dicomInfo.getTagTable().getValue(FileInfoDicom.anonymizeTagIDs[i]) != null) {
 
                     // only make a tag visible if it exists in the file info
                     setVisibleList(i, true); // visibleTags[i] = true; // if the tag exists, then let the model of

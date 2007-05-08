@@ -54,6 +54,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     /** DOCUMENT ME! */
     private JTextField acpcResField;
 
+    /** Add as New/Replace button (depending on selected matrix type). */
+    private JButton addReplaceMatrix;
+
     /** DOCUMENT ME! */
     private JButton applyButton;
 
@@ -113,6 +116,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private double[][] matrix;
+
+    /** Box to hold the matrices parsed from the MatrixHolder. */
+    private JComboBox matrixBox;
 
     /** DOCUMENT ME! */
     private String matrixFile;
@@ -219,15 +225,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     /** DOCUMENT ME! */
     private JTextField[] tlrcResFields;
 
-    /** Box to hold the matrices parsed from the MatrixHolder */
-    private JComboBox matrixBox;
-    
     /** DOCUMENT ME! */
     private JComboBox transformIDBox;
 
-    /** Add as New/Replace button (depending on selected matrix type)*/
-    private JButton addReplaceMatrix;
-    
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
@@ -319,12 +319,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 }
 
                 updateOriginInfo();
-                
+
                 if (tabbedPane.getSelectedIndex() == 3) {
-                	updateMatrixInfo();
+                    updateMatrixInfo();
                 }
-                //updateTransformInfo();
-                
+                // updateTransformInfo();
+
 
                 if (linkedImageField != null) {
                     updateXMLLinkedFile();
@@ -429,11 +429,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
 
         } else if (command.equals("Save")) {
-        	if (setVariables()) {
-        		TransMatrix newMatrix = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
-        		updateTransformInfo(newMatrix);
-        		 image.saveTransformMatrix(newMatrix); // opens dialog
-        	}
+
+            if (setVariables()) {
+                TransMatrix newMatrix = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
+                updateTransformInfo(newMatrix);
+                image.saveTransformMatrix(newMatrix); // opens dialog
+            }
         } else if (command.equals("SaveHistory")) {
             String fileName = "", directory = "";
 
@@ -473,39 +474,39 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         } else if (command.equals("Paste")) {
             image.getHistoryArea().paste();
         } else if (command.equals("Invert")) {
-        	
-        	TransMatrix invertedMatrix = new TransMatrix(image.getNDims() + 1, transformIDBox.getSelectedIndex());
-        	if (setVariables()) {
-        		updateTransformInfo(invertedMatrix);
-        		invertedMatrix.invert();
-        		updateMatrixFields(invertedMatrix);
-        		validate();
-        	}
-        } else if (command.equals("Identity")) {
-        	TransMatrix newMatrix = new TransMatrix(image.getNDims() + 1);
-        	
-        	newMatrix.identity();
 
-        	updateMatrixFields(newMatrix);
+            TransMatrix invertedMatrix = new TransMatrix(image.getNDims() + 1, transformIDBox.getSelectedIndex());
+
+            if (setVariables()) {
+                updateTransformInfo(invertedMatrix);
+                invertedMatrix.invert();
+                updateMatrixFields(invertedMatrix);
+                validate();
+            }
+        } else if (command.equals("Identity")) {
+            TransMatrix newMatrix = new TransMatrix(image.getNDims() + 1);
+
+            newMatrix.identity();
+
+            updateMatrixFields(newMatrix);
 
             validate();
         } else if (command.equals("Composite")) {
-        	try {
 
-        		TransMatrix newMatrix = image.readTransformMatrix(true);
-        		
-        		updateMatrixFields(newMatrix);
-        			
+            try {
+                TransMatrix newMatrix = image.readTransformMatrix(true);
 
-        		validate();
-        	} catch (Exception e) {
-        		//do nothing
-        	}
+                updateMatrixFields(newMatrix);
+
+                validate();
+            } catch (Exception e) {
+                // do nothing
+            }
         } else if (command.equals("Decompose")) {
             TransMatrix m = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
-    		updateTransformInfo(m);
-            
-            
+            updateTransformInfo(m);
+
+
             m.decomposeMatrix(m);
             ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("\n\nRotation X: " + m.getRotateX() +
                                                                                  "   Rotation Y: " + m.getRotateY() +
@@ -521,34 +522,35 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         } else if (command.equals("Close")) {
             dispose();
         } else if (command.equals("addReplaceMatrix")) {
-        	//add this matrix to the list of matrices (matrix holder) and update the combo box
-        	// or if it is Scanner Anatomical and image already contains one, replace it
-        	int transformID = transformIDBox.getSelectedIndex();
-        	
-        	TransMatrix nMatrix = new TransMatrix(matrix.length, transformID);
-        	
-        	if (setVariables()) {
-        		updateTransformInfo(nMatrix);
-        		image.getMatrixHolder().addMatrix(nMatrix);
-        	        	
-        		updateMatrixBox(true);
-        		ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, nMatrix));
-        	}
+
+            // add this matrix to the list of matrices (matrix holder) and update the combo box
+            // or if it is Scanner Anatomical and image already contains one, replace it
+            int transformID = transformIDBox.getSelectedIndex();
+
+            TransMatrix nMatrix = new TransMatrix(matrix.length, transformID);
+
+            if (setVariables()) {
+                updateTransformInfo(nMatrix);
+                image.getMatrixHolder().addMatrix(nMatrix);
+
+                updateMatrixBox(true);
+                ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, nMatrix));
+            }
         } else if (command.equals("Remove")) {
-        	image.getMatrixHolder().removeMatrix(matrixBox.getSelectedItem());
-        	updateMatrixBox(true);
+            image.getMatrixHolder().removeMatrix(matrixBox.getSelectedItem());
+            updateMatrixBox(true);
         } else if (command.equals("CopyMatrix")) {
-        	//build a TransMatrix to pass to the UserInterface
-        	
-        	if (setVariables()) {
-        		TransMatrix newMatrix = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
-        		updateTransformInfo(newMatrix);
-        		ViewUserInterface.getReference().setClippedMatrix(newMatrix);
-        	}
-        	
-        	
+            // build a TransMatrix to pass to the UserInterface
+
+            if (setVariables()) {
+                TransMatrix newMatrix = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
+                updateTransformInfo(newMatrix);
+                ViewUserInterface.getReference().setClippedMatrix(newMatrix);
+            }
+
+
         } else if (command.equals("PasteMatrix")) {
-        	updateMatrixFields(ViewUserInterface.getReference().getClippedMatrix());
+            updateMatrixFields(ViewUserInterface.getReference().getClippedMatrix());
         }
     }
 
@@ -585,98 +587,32 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         System.gc();
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
     public void itemStateChanged(ItemEvent e) {
-    	
-    	//change the matrix listing based on the currently selected matrix
-    	if (e.getSource().equals(matrixBox)) {
-    		
-    		TransMatrix newMatrix = (TransMatrix)image.getMatrixHolder().getMatrixMap().get(matrixBox.getSelectedItem());
-    		updateMatrixFields(newMatrix);
-    	} else if (e.getSource().equals(transformIDBox)) {
-    		if (transformIDBox.getSelectedIndex() == TransMatrix.TRANSFORM_SCANNER_ANATOMICAL &&
-    				image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-    			addReplaceMatrix.setText("Replace");
-    		} else {
-    			addReplaceMatrix.setText("Add as New");
-    		}
-    		validate();
-    	}
-    	
-    	
-    }
-    
-    /**
-     * Updates the matrix fields (transform ID, jtextfields)
-     * @param newMatrix new matrix to use in the update
-     */
-    private void updateMatrixFields(TransMatrix newMatrix) {
-    	if (newMatrix != null) {
-		double[][] mat = newMatrix.getMatrix();
 
-		if (mat.length != textMatrix.length) {
-			return;
-		}
-		
-        for (int i = 0; i < mat.length; i++) {
+        // change the matrix listing based on the currently selected matrix
+        if (e.getSource().equals(matrixBox)) {
 
-            for (int j = 0; j < mat[0].length; j++) {
-                textMatrix[i][j].setText(Double.toString(newMatrix.get(i, j)));
-                textMatrix[i][j].setCaretPosition(0);
+            TransMatrix newMatrix = (TransMatrix)
+                                        image.getMatrixHolder().getMatrixMap().get(matrixBox.getSelectedItem());
+            updateMatrixFields(newMatrix);
+        } else if (e.getSource().equals(transformIDBox)) {
+
+            if ((transformIDBox.getSelectedIndex() == TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) &&
+                    image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+                addReplaceMatrix.setText("Replace");
+            } else {
+                addReplaceMatrix.setText("Add as New");
             }
-        }
-        transformIDBox.setSelectedIndex(newMatrix.getTransformID());
-        
-        int tID =  newMatrix.getTransformID();
-        if (tID == TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) {
-        	addReplaceMatrix.setText("Replace");
-        } else {
-        	addReplaceMatrix.setText("Add as New");
-        }
-        
-        validate();
-    	}
-    }
-    
-    /**
-     * Refreshes the matrix combo box with the list of available matrices within the image
-     * @param refreshFields whether or not to refresh the matrix fields (not done in init() bc of order of operations)
-     */
-    private void updateMatrixBox(boolean refreshFields) {
-    	matrixBox.removeItemListener(this);
-    	matrixBox.removeAllItems();
-    	
-    	MatrixHolder mHolder = image.getMatrixHolder();
-    	Set matrixKeys = mHolder.getMatrixMap().keySet();
-    	Iterator iter = matrixKeys.iterator();
-    	
-    	while(iter.hasNext()) {
-    		matrixBox.addItem(iter.next());
-    	}
 
-    	//set it to the last matrix
-    	if (matrixBox.getItemCount() > 0) {
-    		matrixBox.setSelectedIndex(0);
-    	}
-    	if (refreshFields) {
-    		
-    		TransMatrix newMatrixSelection = null;
-    		
-    		if (image.getMatrixHolder().getMatrixMap().keySet().size() > 0) {
-    			newMatrixSelection = (TransMatrix)image.getMatrixHolder().getMatrixMap().get(matrixBox.getSelectedItem());
-    		} else {
-    			int dim = 3;
-        		if (image.getNDims() > 2) {
-        			dim++;
-        		}
-    			newMatrixSelection = new TransMatrix(dim);
-    		}
-    		
-    		updateMatrixFields(newMatrixSelection);
-    	}
-    	matrixBox.addItemListener(this);
-    	validate();
+            validate();
+        }
     }
-    
+
     /**
      * Allows the user to select matrix file.
      *
@@ -1170,25 +1106,28 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * @return  The newly created matrix panel.
      */
     private JPanel buildMatrixPanel() {
-    	
-    	
-    	matrixBox = new JComboBox();
-    	updateMatrixBox(false);
-    	
-    	matrixBox.setFont(MipavUtil.font12);
-    	
-    	TransMatrix defaultMatrix = null;
-    	if (image.getMatrixHolder().getMatrixMap().keySet().size() > 0) {
-    		defaultMatrix = (TransMatrix)image.getMatrixHolder().getMatrixMap().get(matrixBox.getItemAt(0));
-    	} else {
-    		int dim = 3;
-    		if (image.getNDims() > 2) {
-    			dim++;
-    		}
-    		defaultMatrix = new TransMatrix(dim);
-    	}
-    	
-    	
+
+
+        matrixBox = new JComboBox();
+        updateMatrixBox(false);
+
+        matrixBox.setFont(MipavUtil.font12);
+
+        TransMatrix defaultMatrix = null;
+
+        if (image.getMatrixHolder().getMatrixMap().keySet().size() > 0) {
+            defaultMatrix = (TransMatrix) image.getMatrixHolder().getMatrixMap().get(matrixBox.getItemAt(0));
+        } else {
+            int dim = 3;
+
+            if (image.getNDims() > 2) {
+                dim++;
+            }
+
+            defaultMatrix = new TransMatrix(dim);
+        }
+
+
         double[][] mat = defaultMatrix.getMatrix();
 
         textMatrix = new JTextField[mat.length][mat[0].length];
@@ -1205,63 +1144,65 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         JLabel matrixLabel = new JLabel("Matrix:");
         matrixLabel.setFont(serif12);
-        
-        
+
+
         JLabel transformIDLabel = new JLabel("Transform ID:");
         transformIDLabel.setFont(serif12);
         transformIDBox = new JComboBox(TransMatrix.getTransformIDStr());
         transformIDBox.setBackground(Color.white);
         transformIDBox.setFont(MipavUtil.font12);
-        
-        //BEN: change
+
+        // BEN: change
         transformIDBox.setSelectedIndex(defaultMatrix.getTransformID());
 
         addReplaceMatrix = new JButton();
         addReplaceMatrix.addActionListener(this);
         addReplaceMatrix.setActionCommand("addReplaceMatrix");
-        addReplaceMatrix.setPreferredSize(new Dimension(80,20));
+        addReplaceMatrix.setPreferredSize(new Dimension(80, 20));
         addReplaceMatrix.setFont(serif12B);
-        int tID =  defaultMatrix.getTransformID();
+
+        int tID = defaultMatrix.getTransformID();
+
         if (tID == TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) {
-        	addReplaceMatrix.setText("Replace");
+            addReplaceMatrix.setText("Replace");
         } else {
-        	addReplaceMatrix.setText("Add as New");
+            addReplaceMatrix.setText("Add as New");
         }
-        
+
         transformIDBox.addItemListener(this);
-        
+
         JButton removeMatrix = new JButton("Remove");
         removeMatrix.addActionListener(this);
-        removeMatrix.setPreferredSize(new Dimension(80,20));
+        removeMatrix.setPreferredSize(new Dimension(80, 20));
         removeMatrix.setFont(serif12B);
-        
+
         JButton copyMatrix = new JButton("Copy");
         copyMatrix.addActionListener(this);
         copyMatrix.setActionCommand("CopyMatrix");
-        copyMatrix.setPreferredSize(new Dimension(80,20));
+        copyMatrix.setPreferredSize(new Dimension(80, 20));
         copyMatrix.setFont(serif12B);
-        
+
         JButton pasteMatrix = new JButton("Paste");
         pasteMatrix.addActionListener(this);
         pasteMatrix.setActionCommand("PasteMatrix");
-        pasteMatrix.setPreferredSize(new Dimension(80,20));
+        pasteMatrix.setPreferredSize(new Dimension(80, 20));
         pasteMatrix.setFont(serif12B);
-        
-        
-        //first add the matrix combo box
+
+
+        // first add the matrix combo box
         gbc.gridx = 0;
         gbc.gridy = 0;
         tPanel.add(matrixLabel, gbc);
-        
+
         gbc.gridx++;
         tPanel.add(matrixBox, gbc);
-        
+
         gbc.gridx++;
         tPanel.add(addReplaceMatrix, gbc);
         gbc.gridx++;
         tPanel.add(removeMatrix, gbc);
-        
-        
+
+
         // add the transform ID here
         gbc.gridx = 0;
         gbc.gridy++;
@@ -1275,7 +1216,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         tPanel.add(copyMatrix, gbc);
         gbc.gridx++;
         tPanel.add(pasteMatrix, gbc);
-        
+
         gbc.gridwidth = 1;
 
         for (int i = 0; i < mat.length; i++) {
@@ -1294,9 +1235,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         transformPanel.add(tPanel, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel();
-        
-        Dimension buttonDim = new Dimension(100,20);
-        
+
+        Dimension buttonDim = new Dimension(100, 20);
+
         JButton loadFromFile = new JButton("Load");
         loadFromFile.addActionListener(this);
         loadFromFile.setPreferredSize(buttonDim);
@@ -1333,9 +1274,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         decomposeMatrix.setFont(serif12B);
         buttonPanel.add(decomposeMatrix);
 
-        
-        
-        
+
         transformPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         return transformPanel;
@@ -1347,11 +1286,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * @return  The panel on which the user can edit the name of the image.
      */
     private JPanel buildOrientPanel() {
-    	String orientText =
-            "<html>Image origin is in the upper left hand corner (first slice)." +
-            "<P>" + "Righthand coordinate system.</html>";
+        String orientText = "<html>Image origin is in the upper left hand corner (first slice)." + "<P>" +
+                            "Righthand coordinate system.</html>";
         JLabel orientIconLabel = new JLabel(orientText, MipavUtil.getIcon("orient.gif"), JLabel.LEFT);
-               
+
         orientIconLabel.setFont(serif12);
         orientIconLabel.setForeground(Color.black);
 
@@ -1445,8 +1383,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         } else {
             textSt4.setText(String.valueOf(image.getFileInfo()[0].getOrigin(3)));
         }
-        
-        
+
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(0, 5, 0, 5);
 
@@ -1465,7 +1403,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         int[] axisOrient = image.getFileInfo()[0].getAxisOrientation();
         orientationBox1.setSelectedIndex(axisOrient[0]);
-        
+
         JLabel orientLabelY = new JLabel("Y-axis orientation (image top to bottom):");
         orientLabelY.setFont(serif12);
         orientLabelY.setForeground(Color.black);
@@ -1483,7 +1421,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientationBox3.setBackground(Color.white);
         orientationBox3.setFont(MipavUtil.font12);
         orientationBox3.setSelectedIndex(axisOrient[2]);
-        
+
         gbc.anchor = gbc.NORTHWEST;
         gbc.fill = gbc.BOTH;
         gbc.weightx = 1;
@@ -1492,14 +1430,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.gridheight = 2;
-        orientPanel.add(orientIconLabel,gbc);
+        orientPanel.add(orientIconLabel, gbc);
 
         gbc.anchor = gbc.WEST;
         gbc.fill = gbc.NONE;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        
+
         orientPanel.add(orientLabel, gbc);
         gbc.gridy++;
         orientPanel.add(orientLabelX, gbc);
@@ -1507,7 +1445,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientPanel.add(orientLabelY, gbc);
         gbc.gridy++;
         orientPanel.add(orientLabelZ, gbc);
-        
+
         gbc.gridx = 1;
         gbc.gridy = 2;
         orientPanel.add(orientBox, gbc);
@@ -1517,7 +1455,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientPanel.add(orientationBox2, gbc);
         gbc.gridy++;
         orientPanel.add(orientationBox3, gbc);
-        
+
         gbc.gridx = 2;
         gbc.gridy = 3;
         orientPanel.add(dim1, gbc);
@@ -1527,7 +1465,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientPanel.add(dim3, gbc);
         gbc.gridy++;
         orientPanel.add(dim4, gbc);
-        
+
         gbc.gridx = 3;
         gbc.gridy = 3;
         orientPanel.add(textSt1, gbc);
@@ -1537,7 +1475,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         orientPanel.add(textSt3, gbc);
         gbc.gridy++;
         orientPanel.add(textSt4, gbc);
-        
+
         return orientPanel;
     }
 
@@ -3234,9 +3172,97 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         }
 
         if (tabbedPane.getSelectedIndex() == 2) {
-            //          if script recording, show the change of image orientation/axis orientations
+
+            // if script recording, show the change of image orientation/axis orientations
             ScriptRecorder.getReference().addLine(new ActionChangeOrientations(image));
         }
+    }
+
+    /**
+     * Refreshes the matrix combo box with the list of available matrices within the image.
+     *
+     * @param  refreshFields  whether or not to refresh the matrix fields (not done in init() bc of order of operations)
+     */
+    private void updateMatrixBox(boolean refreshFields) {
+        matrixBox.removeItemListener(this);
+        matrixBox.removeAllItems();
+
+        MatrixHolder mHolder = image.getMatrixHolder();
+        Set matrixKeys = mHolder.getMatrixMap().keySet();
+        Iterator iter = matrixKeys.iterator();
+
+        while (iter.hasNext()) {
+            matrixBox.addItem(iter.next());
+        }
+
+        // set it to the last matrix
+        if (matrixBox.getItemCount() > 0) {
+            matrixBox.setSelectedIndex(0);
+        }
+
+        if (refreshFields) {
+
+            TransMatrix newMatrixSelection = null;
+
+            if (image.getMatrixHolder().getMatrixMap().keySet().size() > 0) {
+                newMatrixSelection = (TransMatrix)
+                                         image.getMatrixHolder().getMatrixMap().get(matrixBox.getSelectedItem());
+            } else {
+                int dim = 3;
+
+                if (image.getNDims() > 2) {
+                    dim++;
+                }
+
+                newMatrixSelection = new TransMatrix(dim);
+            }
+
+            updateMatrixFields(newMatrixSelection);
+        }
+
+        matrixBox.addItemListener(this);
+        validate();
+    }
+
+    /**
+     * Updates the matrix fields (transform ID, jtextfields).
+     *
+     * @param  newMatrix  new matrix to use in the update
+     */
+    private void updateMatrixFields(TransMatrix newMatrix) {
+
+        if (newMatrix != null) {
+            double[][] mat = newMatrix.getMatrix();
+
+            if (mat.length != textMatrix.length) {
+                return;
+            }
+
+            for (int i = 0; i < mat.length; i++) {
+
+                for (int j = 0; j < mat[0].length; j++) {
+                    textMatrix[i][j].setText(Double.toString(newMatrix.get(i, j)));
+                    textMatrix[i][j].setCaretPosition(0);
+                }
+            }
+
+            transformIDBox.setSelectedIndex(newMatrix.getTransformID());
+            validate();
+        }
+    }
+
+    /**
+     * Updates the image with the new Matrix information (for matrix replacement).
+     */
+    private void updateMatrixInfo() {
+
+        TransMatrix tMat = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
+        updateTransformInfo(tMat);
+        image.getMatrixHolder().replaceMatrix(matrixBox.getSelectedItem(), tMat);
+
+        // script line if recording
+        ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, tMat));
+
     }
 
     /**
@@ -3309,7 +3335,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
                 String s = String.valueOf(resolutions[0]) + "\\" + String.valueOf(resolutions[1]);
-                ((FileInfoDicom) (fileInfo[0])).setValue("0028,0030", s, s.length());
+                ((FileInfoDicom) (fileInfo[0])).getTagTable().setValue("0028,0030", s, s.length());
             }
         } else if (image.getNDims() == 3) {
             fileInfo = image.getFileInfo();
@@ -3328,18 +3354,21 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
                 if (fileInfo[i].getFileFormat() == FileUtility.DICOM) {
 
-                    if (((FileInfoDicom) (fileInfo[i])).getValue("0018,0088") != null) {
-                        ((FileInfoDicom) (fileInfo[i])).setValue("0018,0088", String.valueOf(resolutions[2]),
-                                                                 String.valueOf(resolutions[2]).length());
+                    if (((FileInfoDicom) (fileInfo[i])).getTagTable().getValue("0018,0088") != null) {
+                        ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0018,0088",
+                                                                               String.valueOf(resolutions[2]),
+                                                                               String.valueOf(resolutions[2]).length());
                     }
 
-                    if (((FileInfoDicom) (fileInfo[i])).getValue("0018,0050") != null) {
-                        ((FileInfoDicom) (fileInfo[i])).setValue("0018,0050", String.valueOf(resolutions[2]),
-                                                                 String.valueOf(resolutions[2]).length());
+                    if ((((FileInfoDicom) (fileInfo[i])).getTagTable().getValue("0018,0050") != null) &&
+                            (sliceThickness > 0)) {
+                        ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0018,0050",
+                                                                               String.valueOf(sliceThickness),
+                                                                               String.valueOf(sliceThickness).length());
                     }
 
                     String s = String.valueOf(resolutions[0]) + "\\" + String.valueOf(resolutions[1]);
-                    ((FileInfoDicom) (fileInfo[i])).setValue("0028,0030", s, s.length());
+                    ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0028,0030", s, s.length());
                 }
             }
 
@@ -3478,22 +3507,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     }
 
     /**
-     * Updates the image with the new Matrix information (for matrix replacement)
-     */
-    private void updateMatrixInfo() {
-
-    	TransMatrix tMat = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
-    	updateTransformInfo(tMat);
-    	image.getMatrixHolder().replaceMatrix(matrixBox.getSelectedItem(), tMat);
-        
-    	//script line if recording
-    	ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, tMat));
-        
-    }
-
-    /**
      * Applies the values in the JTabbedPane "Transform" to the transform matrix in the image. Note that there are no
      * visual changes made to the image itself.
+     *
+     * @param  tMat  DOCUMENT ME!
      */
     private void updateTransformInfo(TransMatrix tMat) {
         double[][] mat = tMat.getMatrix();

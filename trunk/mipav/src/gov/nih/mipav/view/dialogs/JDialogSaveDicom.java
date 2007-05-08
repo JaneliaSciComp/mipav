@@ -221,15 +221,14 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JTabbedPane tabPane;
-    
-    
+
 
     /**
      * DICOM tags extracted from the image we want to save. Example: dicom_0xNNNN el_0xNNNN tags stored in MINC headers.
      */
     private Hashtable tagsImportedFromNonDicomImage;
 
-    /** The additional tags list is a list of tags the DTI group has requested */
+    /** The additional tags list is a list of tags the DTI group has requested. */
     private Hashtable tagsList, additionalTagsList;
 
     /** DOCUMENT ME! */
@@ -240,12 +239,13 @@ public class JDialogSaveDicom extends JDialogBase {
     /**
      * Creates dialog for setting tag information for DICOM image.
      *
-     * @param  theParentFrame  Parent frame.
-     * @param  _fileInfo       File info object to get initialization info from.
-     * @param  dicomInfo       Dicom file info object.
-     * @param  isScriptRunning Whether this dialog is being instantiated as part of the running of a script.
+     * @param  theParentFrame   Parent frame.
+     * @param  _fileInfo        File info object to get initialization info from.
+     * @param  dicomInfo        Dicom file info object.
+     * @param  isScriptRunning  Whether this dialog is being instantiated as part of the running of a script.
      */
-    public JDialogSaveDicom(Frame theParentFrame, FileInfoBase _fileInfo, FileInfoDicom dicomInfo, boolean isScriptRunning) {
+    public JDialogSaveDicom(Frame theParentFrame, FileInfoBase _fileInfo, FileInfoDicom dicomInfo,
+                            boolean isScriptRunning) {
         super(theParentFrame, true);
 
         UI = ViewUserInterface.getReference();
@@ -290,7 +290,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
         pack();
         validate();
-        
+
         setModalityChooser(fileInfo.getModality());
 
         // try to extract out dicom-converted tags which may be buried in the minc header
@@ -302,21 +302,24 @@ public class JDialogSaveDicom extends JDialogBase {
             // into the dicom fileinfo later..
             Enumeration keys = tagsImportedFromNonDicomImage.keys();
             String tag;
+
             while (keys.hasMoreElements()) {
                 tag = (String) keys.nextElement();
 
                 // handle chooser fields differently
                 if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
                         tag.equals("(0018,5100)")) {
+
                     // don't blindly import tags which are in the GUI
                     tagsImportedFromNonDicomImage.remove(tag);
                 } else if (tagsList.get(tag) != null) {
+
                     // don't blindly import tags which are in the GUI
                     tagsImportedFromNonDicomImage.remove(tag);
                 }
             }
         }
-        
+
         // if we are running a script, auto-fill the required tags and skip the dialog
         if (isScriptRunning) {
             autofillRequiredFields();
@@ -365,38 +368,43 @@ public class JDialogSaveDicom extends JDialogBase {
                     String tag;
                     String value;
                     Object[] valueArray;
-                    
+
                     while (keys.hasMoreElements()) {
                         tag = (String) keys.nextElement();
                         value = (String) tagsImportedFromNonDicomImage.get(tag);
                         tag = tag.replaceAll("[()]", "");
                         tag = tag.toUpperCase();
-                        
-                        // special case for a US tag with VM 4 (0018,1310) which the minc people convert to a strange format
-                        // "0x80, 0, 0, 0, 0, 0, 0x80, 0" -> "128, 0, 0, 128"
+
+                        // special case for a US tag with VM 4 (0018,1310) which the minc people convert to a strange
+                        // format "0x80, 0, 0, 0, 0, 0, 0x80, 0" -> "128, 0, 0, 128"
                         if (tag.equals("0018,1310")) {
                             String[] vals = value.split(", ");
                             valueArray = new Short[vals.length / 2];
-                            
+
                             try {
                                 valueArray[0] = Short.decode(vals[0]);
                             } catch (NumberFormatException nfe) {
-                                MipavUtil.displayError("Error parsing short values from minc-stored dicom tag (0018,1310): " + vals[0]);
+                                MipavUtil.displayError("Error parsing short values from minc-stored dicom tag (0018,1310): " +
+                                                       vals[0]);
                             }
-                            
+
                             for (int i = 1; i < vals.length; i++) {
+
                                 if ((i % 2) == 0) {
+
                                     try {
                                         valueArray[i / 2] = Short.decode(vals[i]);
                                     } catch (NumberFormatException nfe) {
-                                        MipavUtil.displayError("Error parsing short values from minc-stored dicom tag (0018,1310): " + vals[i]);
+                                        MipavUtil.displayError("Error parsing short values from minc-stored dicom tag (0018,1310): " +
+                                                               vals[i]);
+
                                         break;
                                     }
                                 }
                             }
-                            
+
                             try {
-                                dicomFileInfo.setValue(tag, valueArray);
+                                dicomFileInfo.getTagTable().setValue(tag, valueArray);
                             } catch (Exception e) {
                                 Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
                                                   Preferences.DEBUG_FILEIO);
@@ -404,8 +412,9 @@ public class JDialogSaveDicom extends JDialogBase {
                                 Preferences.debug("\terror: " + e.getMessage() + "\n", Preferences.DEBUG_FILEIO);
                             }
                         } else {
+
                             try {
-                                dicomFileInfo.setValue(tag, value);
+                                dicomFileInfo.getTagTable().setValue(tag, value);
                             } catch (Exception e) {
                                 Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
                                                   Preferences.DEBUG_FILEIO);
@@ -417,474 +426,511 @@ public class JDialogSaveDicom extends JDialogBase {
                 }
 
                 // dicomFileInfo.setVRType(dicomFileInfo.EXPLICIT);
-                dicomFileInfo.setValue("0002,0000", new Integer(152), 4);
+                dicomFileInfo.getTagTable().setValue("0002,0000", new Integer(152), 4);
 
                 Byte[] version = new Byte[2];
                 version[0] = new Byte((byte) 1);
                 version[1] = new Byte((byte) 0);
-                dicomFileInfo.setValue("0002,0001", version, 2);
-                dicomFileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                dicomFileInfo.setValue("0002,0003", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
-                dicomFileInfo.setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian transfer syntax
-                dicomFileInfo.setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                dicomFileInfo.setValue("0002,0013", "MIPAV--NIH", 10); //
+                dicomFileInfo.getTagTable().setValue("0002,0001", version, 2);
+                dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
+                dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
+                dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian transfer
+                                                                                             // syntax
+                dicomFileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID
+                                                                                           // made up by Matt
+                dicomFileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
-                dicomFileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture UID
-                dicomFileInfo.setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
+                dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture UID
+                dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
 
                 // all secondary capture info is installed by FileDicom.writeImage(), under the assumption that all
                 // saves must have been modified (and need that stuff)
-                dicomFileInfo.setValue("0010,0010", patientName.getText(), patientName.getText().length());
-                dicomFileInfo.setValue("0010,0020", patientID.getText(), patientID.getText().length());
-                dicomFileInfo.setValue("0010,0030", patientBirthDate.getText(), patientBirthDate.getText().length());
-                dicomFileInfo.setValue("0010,0032", patientBirthTime.getText(), patientBirthTime.getText().length());
-                dicomFileInfo.setValue("0010,1000", patientOtherIDs.getText(), patientOtherIDs.getText().length());
-                dicomFileInfo.setValue("0010,1001", patientOtherNames.getText(), patientOtherNames.getText().length());
-                dicomFileInfo.setValue("0010,2160", patientEthnicGroup.getText(),
-                                       patientEthnicGroup.getText().length());
-                dicomFileInfo.setValue("0010,4000", patientComments.getText(), patientComments.getText().length());
-                dicomFileInfo.setValue("0020,0020", patientOrientation.getText(),
-                                       patientOrientation.getText().length());
-                dicomFileInfo.setValue("0020,000D", studyUID.getText(), studyUID.getText().length());
-                dicomFileInfo.setValue("0020,0010", studyID.getText(), studyID.getText().length());
-                dicomFileInfo.setValue("0008,0020", studyDate.getText(), studyDate.getText().length());
-                dicomFileInfo.setValue("0008,0030", studyTime.getText(), studyTime.getText().length());
-                dicomFileInfo.setValue("0008,0050", studyAccNumber.getText(), studyAccNumber.getText().length());
-                dicomFileInfo.setValue("0008,1030", studyDescrip.getText(), studyDescrip.getText().length());
-                dicomFileInfo.setValue("0008,0090", studyRefPhy.getText(), studyRefPhy.getText().length());
-                dicomFileInfo.setValue("0008,1048", studyPhyRec.getText(), studyPhyRec.getText().length());
-                dicomFileInfo.setValue("0008,1060", studyPhyRead.getText(), studyPhyRead.getText().length());
-                dicomFileInfo.setValue("0008,1080", studyDiag.getText(), studyDiag.getText().length());
-                dicomFileInfo.setValue("0010,1010", studyAge.getText(), studyAge.getText().length());
-                dicomFileInfo.setValue("0010,1030", studyWeight.getText(), studyWeight.getText().length());
-                dicomFileInfo.setValue("0010,1020", studySize.getText(), studySize.getText().length());
-                dicomFileInfo.setValue("0010,2180", studyOcc.getText(), studyOcc.getText().length());
-                dicomFileInfo.setValue("0010,21B0", studyHist.getText(), studyHist.getText().length());
-                dicomFileInfo.setValue("0020,000E", seriesUID.getText(), seriesUID.getText().length());
-                dicomFileInfo.setValue("0020,0011", seriesNo.getText(), seriesNo.getText().length());
-                dicomFileInfo.setValue("0008,0021", seriesDate.getText(), seriesDate.getText().length());
-                dicomFileInfo.setValue("0008,0031", seriesTime.getText(), seriesTime.getText().length());
-                dicomFileInfo.setValue("0008,1050", seriesPerfPhy.getText(), seriesPerfPhy.getText().length());
-                dicomFileInfo.setValue("0018,1030", seriesProtocol.getText(), seriesProtocol.getText().length());
-                dicomFileInfo.setValue("0008,103E", seriesDescrip.getText(), seriesDescrip.getText().length());
-                dicomFileInfo.setValue("0008,1070", seriesOp.getText(), seriesOp.getText().length());
-                
-                //additional tags that DTI folk requested...importing from another DICOM
-                if(additionalTagsList != null) {
-	                if(additionalTagsList.get("(0008,0008)") != null) {
-	                	String value = (String)additionalTagsList.get("(0008,0008)");
-	                	dicomFileInfo.setValue("0008,0008", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0008,0032)") != null) {
-	                	String value = (String)additionalTagsList.get("(0008,0032)");
-	                	dicomFileInfo.setValue("0008,0032", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0008,0070)") != null) {
-	                	String value = (String)additionalTagsList.get("(0008,0070)");
-	                	dicomFileInfo.setValue("0008,0070", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0008,1090)") != null) {
-	                	String value = (String)additionalTagsList.get("(0008,1090)");
-	                	dicomFileInfo.setValue("0008,1090", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0018,0080)") != null) {
-	                	String value = (String)additionalTagsList.get("(0018,0080)");
-	                	dicomFileInfo.setValue("0018,0080", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0018,0081)") != null) {
-	                	String value = (String)additionalTagsList.get("(0018,0081)");
-	                	dicomFileInfo.setValue("0018,0081", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0018,0082)") != null) {
-	                	String value = (String)additionalTagsList.get("(0018,0082)");
-	                	dicomFileInfo.setValue("0018,0082", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0018,0087)") != null) {
-	                	String value = (String)additionalTagsList.get("(0018,0087)");
-	                	dicomFileInfo.setValue("0018,0087", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0018,1100)") != null) {
-	                	String value = (String)additionalTagsList.get("(0018,1100)");
-	                	dicomFileInfo.setValue("0018,1100", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0018,1310)") != null) {
-	                	boolean test = true;
-	                	String value = (String)additionalTagsList.get("(0018,1310)");
-	                	Object[] valueArray;
-	                	String[] vals = value.split(", ");
-	                	valueArray = new Short[vals.length];
-	                	for (int i = 0; i < vals.length; i++) {
-	                		try {
-	                			valueArray[i] = Short.decode(vals[i]);
-	                		} catch (NumberFormatException nfe) {
-	                			test = false;
-	                			MipavUtil.displayError("Error parsing short values from dicom tag (0018,1310): " + vals[i]);
-	                			break;
-	                		}
+                dicomFileInfo.getTagTable().setValue("0010,0010", patientName.getText(),
+                                                     patientName.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,0020", patientID.getText(), patientID.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,0030", patientBirthDate.getText(),
+                                                     patientBirthDate.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,0032", patientBirthTime.getText(),
+                                                     patientBirthTime.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,1000", patientOtherIDs.getText(),
+                                                     patientOtherIDs.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,1001", patientOtherNames.getText(),
+                                                     patientOtherNames.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,2160", patientEthnicGroup.getText(),
+                                                     patientEthnicGroup.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,4000", patientComments.getText(),
+                                                     patientComments.getText().length());
+                dicomFileInfo.getTagTable().setValue("0020,0020", patientOrientation.getText(),
+                                                     patientOrientation.getText().length());
+                dicomFileInfo.getTagTable().setValue("0020,000D", studyUID.getText(), studyUID.getText().length());
+                dicomFileInfo.getTagTable().setValue("0020,0010", studyID.getText(), studyID.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,0020", studyDate.getText(), studyDate.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,0030", studyTime.getText(), studyTime.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,0050", studyAccNumber.getText(),
+                                                     studyAccNumber.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,1030", studyDescrip.getText(),
+                                                     studyDescrip.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,0090", studyRefPhy.getText(),
+                                                     studyRefPhy.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,1048", studyPhyRec.getText(),
+                                                     studyPhyRec.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,1060", studyPhyRead.getText(),
+                                                     studyPhyRead.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,1080", studyDiag.getText(), studyDiag.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,1010", studyAge.getText(), studyAge.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,1030", studyWeight.getText(),
+                                                     studyWeight.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,1020", studySize.getText(), studySize.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,2180", studyOcc.getText(), studyOcc.getText().length());
+                dicomFileInfo.getTagTable().setValue("0010,21B0", studyHist.getText(), studyHist.getText().length());
+                dicomFileInfo.getTagTable().setValue("0020,000E", seriesUID.getText(), seriesUID.getText().length());
+                dicomFileInfo.getTagTable().setValue("0020,0011", seriesNo.getText(), seriesNo.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,0021", seriesDate.getText(), seriesDate.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,0031", seriesTime.getText(), seriesTime.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,1050", seriesPerfPhy.getText(),
+                                                     seriesPerfPhy.getText().length());
+                dicomFileInfo.getTagTable().setValue("0018,1030", seriesProtocol.getText(),
+                                                     seriesProtocol.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,103E", seriesDescrip.getText(),
+                                                     seriesDescrip.getText().length());
+                dicomFileInfo.getTagTable().setValue("0008,1070", seriesOp.getText(), seriesOp.getText().length());
 
-	                	}
-	                	if(test) {
-	                		dicomFileInfo.setValue("0018,1310", valueArray);
-	                	}
-	                }
-	                if(additionalTagsList.get("(0018,1312)") != null) {
-	                	String value = (String)additionalTagsList.get("(0018,1312)");
-	                	dicomFileInfo.setValue("0018,1312", value, value.length());
-	                }
-	                if(additionalTagsList.get("(0018,1314)") != null) {
-	                	String value = (String)additionalTagsList.get("(0018,1314)");
-	                	dicomFileInfo.setValue("0018,1314", value, value.length());
-	                }
+                // additional tags that DTI folk requested...importing from another DICOM
+                if (additionalTagsList != null) {
+
+                    if (additionalTagsList.get("(0008,0008)") != null) {
+                        String value = (String) additionalTagsList.get("(0008,0008)");
+                        dicomFileInfo.getTagTable().setValue("0008,0008", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0008,0032)") != null) {
+                        String value = (String) additionalTagsList.get("(0008,0032)");
+                        dicomFileInfo.getTagTable().setValue("0008,0032", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0008,0070)") != null) {
+                        String value = (String) additionalTagsList.get("(0008,0070)");
+                        dicomFileInfo.getTagTable().setValue("0008,0070", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0008,1090)") != null) {
+                        String value = (String) additionalTagsList.get("(0008,1090)");
+                        dicomFileInfo.getTagTable().setValue("0008,1090", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0018,0080)") != null) {
+                        String value = (String) additionalTagsList.get("(0018,0080)");
+                        dicomFileInfo.getTagTable().setValue("0018,0080", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0018,0081)") != null) {
+                        String value = (String) additionalTagsList.get("(0018,0081)");
+                        dicomFileInfo.getTagTable().setValue("0018,0081", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0018,0082)") != null) {
+                        String value = (String) additionalTagsList.get("(0018,0082)");
+                        dicomFileInfo.getTagTable().setValue("0018,0082", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0018,0087)") != null) {
+                        String value = (String) additionalTagsList.get("(0018,0087)");
+                        dicomFileInfo.getTagTable().setValue("0018,0087", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0018,1100)") != null) {
+                        String value = (String) additionalTagsList.get("(0018,1100)");
+                        dicomFileInfo.getTagTable().setValue("0018,1100", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0018,1310)") != null) {
+                        boolean test = true;
+                        String value = (String) additionalTagsList.get("(0018,1310)");
+                        Object[] valueArray;
+                        String[] vals = value.split(", ");
+                        valueArray = new Short[vals.length];
+
+                        for (int i = 0; i < vals.length; i++) {
+
+                            try {
+                                valueArray[i] = Short.decode(vals[i]);
+                            } catch (NumberFormatException nfe) {
+                                test = false;
+                                MipavUtil.displayError("Error parsing short values from dicom tag (0018,1310): " +
+                                                       vals[i]);
+
+                                break;
+                            }
+
+                        }
+
+                        if (test) {
+                            dicomFileInfo.getTagTable().setValue("0018,1310", valueArray);
+                        }
+                    }
+
+                    if (additionalTagsList.get("(0018,1312)") != null) {
+                        String value = (String) additionalTagsList.get("(0018,1312)");
+                        dicomFileInfo.getTagTable().setValue("0018,1312", value, value.length());
+                    }
+
+                    if (additionalTagsList.get("(0018,1314)") != null) {
+                        String value = (String) additionalTagsList.get("(0018,1314)");
+                        dicomFileInfo.getTagTable().setValue("0018,1314", value, value.length());
+                    }
                 }
-                
-                
 
-                
+
                 if (seriesSmall.getText().length() > 0) {
-                    dicomFileInfo.setValue("0028,0108", Short.valueOf(seriesSmall.getText()), 2);
+                    dicomFileInfo.getTagTable().setValue("0028,0108", Short.valueOf(seriesSmall.getText()), 2);
                 }
 
                 if (seriesLarge.getText().length() > 0) {
-                    dicomFileInfo.setValue("0028,0109", Short.valueOf(seriesLarge.getText()), 2);
+                    dicomFileInfo.getTagTable().setValue("0028,0109", Short.valueOf(seriesLarge.getText()), 2);
                 }
 
-                dicomFileInfo.setValue("0040,0253", seriesStepID.getText(), seriesStepID.getText().length());
-                dicomFileInfo.setValue("0040,0244", seriesStepDate.getText(), seriesStepDate.getText().length());
-                dicomFileInfo.setValue("0040,0245", seriesStepTime.getText(), seriesStepTime.getText().length());
-                dicomFileInfo.setValue("0040,0254", seriesStepDescrip.getText(), seriesStepDescrip.getText().length());
+                dicomFileInfo.getTagTable().setValue("0040,0253", seriesStepID.getText(),
+                                                     seriesStepID.getText().length());
+                dicomFileInfo.getTagTable().setValue("0040,0244", seriesStepDate.getText(),
+                                                     seriesStepDate.getText().length());
+                dicomFileInfo.getTagTable().setValue("0040,0245", seriesStepTime.getText(),
+                                                     seriesStepTime.getText().length());
+                dicomFileInfo.getTagTable().setValue("0040,0254", seriesStepDescrip.getText(),
+                                                     seriesStepDescrip.getText().length());
 
                 switch (patientSex.getSelectedIndex()) {
 
                     case 0:
-                        dicomFileInfo.setValue("0010,0040", "", 0);
+                        dicomFileInfo.getTagTable().setValue("0010,0040", "", 0);
                         break;
 
                     case 1:
-                        dicomFileInfo.setValue("0010,0040", "M ", 2);
+                        dicomFileInfo.getTagTable().setValue("0010,0040", "M ", 2);
                         break;
 
                     case 2:
-                        dicomFileInfo.setValue("0010,0040", "F ", 2);
+                        dicomFileInfo.getTagTable().setValue("0010,0040", "F ", 2);
                         break;
 
                     case 3:
-                        dicomFileInfo.setValue("0010,0040", "O ", 2);
+                        dicomFileInfo.getTagTable().setValue("0010,0040", "O ", 2);
                         break;
                 }
 
                 switch (seriesMod.getSelectedIndex()) {
 
                     case 0:
-                        dicomFileInfo.setValue("0008,0060", "BI", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "BI", 2);
                         break;
 
                     case 1:
-                        dicomFileInfo.setValue("0008,0060", "CD", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "CD", 2);
                         break;
 
                     case 2:
-                        dicomFileInfo.setValue("0008,0060", "CR", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "CR", 2);
                         break;
 
                     case 3:
-                        dicomFileInfo.setValue("0008,0060", "CT", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "CT", 2);
                         break;
 
                     case 4:
-                        dicomFileInfo.setValue("0008,0060", "DD", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "DD", 2);
                         break;
 
                     case 5:
-                        dicomFileInfo.setValue("0008,0060", "DG", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "DG", 2);
                         break;
 
                     case 6:
-                        dicomFileInfo.setValue("0008,0060", "DX", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "DX", 2);
                         break;
 
                     case 7:
-                        dicomFileInfo.setValue("0008,0060", "ES", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "ES", 2);
                         break;
 
                     case 8:
-                        dicomFileInfo.setValue("0008,0060", "GM", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "GM", 2);
                         break;
 
                     case 9:
-                        dicomFileInfo.setValue("0008,0060", "HC", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "HC", 2);
                         break;
 
                     case 10:
-                        dicomFileInfo.setValue("0008,0060", "IO", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "IO", 2);
                         break;
 
                     case 11:
-                        dicomFileInfo.setValue("0008,0060", "LS", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "LS", 2);
                         break;
 
                     case 12:
-                        dicomFileInfo.setValue("0008,0060", "MA", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "MA", 2);
                         break;
 
                     case 13:
-                        dicomFileInfo.setValue("0008,0060", "MG", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "MG", 2);
                         break;
 
                     case 14:
-                        dicomFileInfo.setValue("0008,0060", "MR", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "MR", 2);
                         break;
 
                     case 15:
-                        dicomFileInfo.setValue("0008,0060", "MS", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "MS", 2);
                         break;
 
                     case 16:
-                        dicomFileInfo.setValue("0008,0060", "NM", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "NM", 2);
                         break;
 
                     case 17:
-                        dicomFileInfo.setValue("0008,0060", "OT", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "OT", 2);
                         break;
 
                     case 18:
-                        dicomFileInfo.setValue("0008,0060", "PT", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "PT", 2);
                         break;
 
                     case 19:
-                        dicomFileInfo.setValue("0008,0060", "PX", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "PX", 2);
                         break;
 
                     case 20:
-                        dicomFileInfo.setValue("0008,0060", "RF", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "RF", 2);
                         break;
 
                     case 21:
-                        dicomFileInfo.setValue("0008,0060", "RG", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "RG", 2);
                         break;
 
                     case 22:
-                        dicomFileInfo.setValue("0008,0060", "RTDOSE", 6);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "RTDOSE", 6);
                         break;
 
                     case 23:
-                        dicomFileInfo.setValue("0008,0060", "RTIMAGE ", 8);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "RTIMAGE ", 8);
                         break;
 
                     case 24:
-                        dicomFileInfo.setValue("0008,0060", "RTPLAN", 6);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "RTPLAN", 6);
                         break;
 
                     case 25:
-                        dicomFileInfo.setValue("0008,0060", "RTRECORD", 8);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "RTRECORD", 8);
                         break;
 
                     case 26:
-                        dicomFileInfo.setValue("0008,0060", "RTSTRUCT", 8);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "RTSTRUCT", 8);
                         break;
 
                     case 27:
-                        dicomFileInfo.setValue("0008,0060", "SM", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "SM", 2);
                         break;
 
                     case 28:
-                        dicomFileInfo.setValue("0008,0060", "ST", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "ST", 2);
                         break;
 
                     case 29:
-                        dicomFileInfo.setValue("0008,0060", "TG", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "TG", 2);
                         break;
 
                     case 30:
-                        dicomFileInfo.setValue("0008,0060", "US", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "US", 2);
                         break;
 
                     case 31:
-                        dicomFileInfo.setValue("0008,0060", "XA", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "XA", 2);
                         break;
 
                     case 32:
-                        dicomFileInfo.setValue("0008,0060", "XC", 2);
+                        dicomFileInfo.getTagTable().setValue("0008,0060", "XC", 2);
                         break;
                 }
 
                 switch (laterality.getSelectedIndex()) {
 
                     case 1:
-                        dicomFileInfo.setValue("0020,0060", "L ", 2);
+                        dicomFileInfo.getTagTable().setValue("0020,0060", "L ", 2);
                         break;
 
                     case 2:
-                        dicomFileInfo.setValue("0020,0060", "R ", 2);
+                        dicomFileInfo.getTagTable().setValue("0020,0060", "R ", 2);
                         break;
                 }
 
                 switch (seriesBody.getSelectedIndex()) {
 
                     case 1:
-                        dicomFileInfo.setValue("0018,0015", "SKULL ", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "SKULL ", 6);
                         break;
 
                     case 2:
-                        dicomFileInfo.setValue("0018,0015", "CSPINE", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "CSPINE", 6);
                         break;
 
                     case 3:
-                        dicomFileInfo.setValue("0018,0015", "TSPINE", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "TSPINE", 6);
                         break;
 
                     case 4:
-                        dicomFileInfo.setValue("0018,0015", "LSPINE", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "LSPINE", 6);
                         break;
 
                     case 5:
-                        dicomFileInfo.setValue("0018,0015", "SSPINE", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "SSPINE", 6);
                         break;
 
                     case 6:
-                        dicomFileInfo.setValue("0018,0015", "COCCYX", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "COCCYX", 6);
                         break;
 
                     case 7:
-                        dicomFileInfo.setValue("0018,0015", "CHEST ", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "CHEST ", 6);
                         break;
 
                     case 8:
-                        dicomFileInfo.setValue("0018,0015", "CLAVICLE", 8);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "CLAVICLE", 8);
                         break;
 
                     case 9:
-                        dicomFileInfo.setValue("0018,0015", "BREAST", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "BREAST", 6);
                         break;
 
                     case 10:
-                        dicomFileInfo.setValue("0018,0015", "ABDOMEN ", 8);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "ABDOMEN ", 8);
                         break;
 
                     case 11:
-                        dicomFileInfo.setValue("0018,0015", "PELVIS", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "PELVIS", 6);
                         break;
 
                     case 12:
-                        dicomFileInfo.setValue("0018,0015", "HIP ", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "HIP ", 4);
                         break;
 
                     case 13:
-                        dicomFileInfo.setValue("0018,0015", "SHOULDER", 8);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "SHOULDER", 8);
                         break;
 
                     case 14:
-                        dicomFileInfo.setValue("0018,0015", "ELBOW ", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "ELBOW ", 6);
                         break;
 
                     case 15:
-                        dicomFileInfo.setValue("0018,0015", "KNEE", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "KNEE", 4);
                         break;
 
                     case 16:
-                        dicomFileInfo.setValue("0018,0015", "ANKLE ", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "ANKLE ", 6);
                         break;
 
                     case 17:
-                        dicomFileInfo.setValue("0018,0015", "HAND", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "HAND", 4);
                         break;
 
                     case 18:
-                        dicomFileInfo.setValue("0018,0015", "FOOT", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "FOOT", 4);
                         break;
 
                     case 19:
-                        dicomFileInfo.setValue("0018,0015", "EXTREMITY ", 10);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "EXTREMITY ", 10);
                         break;
 
                     case 20:
-                        dicomFileInfo.setValue("0018,0015", "HEAD", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "HEAD", 4);
                         break;
 
                     case 21:
-                        dicomFileInfo.setValue("0018,0015", "HEART ", 6);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "HEART ", 6);
                         break;
 
                     case 22:
-                        dicomFileInfo.setValue("0018,0015", "NECK", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "NECK", 4);
                         break;
 
                     case 23:
-                        dicomFileInfo.setValue("0018,0015", "LEG ", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "LEG ", 4);
                         break;
 
                     case 24:
-                        dicomFileInfo.setValue("0018,0015", "ARM ", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "ARM ", 4);
                         break;
 
                     case 25:
-                        dicomFileInfo.setValue("0018,0015", "JAW ", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,0015", "JAW ", 4);
                         break;
                 }
 
                 switch (seriesPos.getSelectedIndex()) {
 
                     case 1:
-                        dicomFileInfo.setValue("0018,5100", "HFP ", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,5100", "HFP ", 4);
                         break;
 
                     case 2:
-                        dicomFileInfo.setValue("0018,5100", "HFS ", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,5100", "HFS ", 4);
                         break;
 
                     case 3:
-                        dicomFileInfo.setValue("0018,5100", "FFP ", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,5100", "FFP ", 4);
                         break;
 
                     case 4:
-                        dicomFileInfo.setValue("0018,5100", "FFS ", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,5100", "FFS ", 4);
                         break;
 
                     case 5:
-                        dicomFileInfo.setValue("0018,5100", "HFDR", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,5100", "HFDR", 4);
                         break;
 
                     case 6:
-                        dicomFileInfo.setValue("0018,5100", "HFDL", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,5100", "HFDL", 4);
                         break;
 
                     case 7:
-                        dicomFileInfo.setValue("0018,5100", "FFDR", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,5100", "FFDR", 4);
                         break;
 
                     case 8:
-                        dicomFileInfo.setValue("0018,5100", "FFDL", 4);
+                        dicomFileInfo.getTagTable().setValue("0018,5100", "FFDL", 4);
                         break;
                 }
 
                 // Some of these tags seem to be hard coded - why ??
-                if (dicomFileInfo.getValue("0020,0013") == null) {
-                    dicomFileInfo.setValue("0020,0013", "1 ", 2); // Instance number, reset in FileIO
+                if (dicomFileInfo.getTagTable().getValue("0020,0013") == null) {
+                    dicomFileInfo.getTagTable().setValue("0020,0013", "1 ", 2); // Instance number, reset in FileIO
                 }
 
                 Short samples = new Short((short) 1);
 
                 // These next two tags may  change with RGB DICOM images !!!!
-                dicomFileInfo.setValue("0028,0002", samples, 2);
-                dicomFileInfo.setValue("0028,0004", "MONOCHROME2 ", 12);
+                dicomFileInfo.getTagTable().setValue("0028,0002", samples, 2);
+                dicomFileInfo.getTagTable().setValue("0028,0004", "MONOCHROME2 ", 12);
 
                 // Column and row
-                dicomFileInfo.setValue("0028,0011", new Short((short) fileInfo.getExtents()[0]), 2);
-                dicomFileInfo.setValue("0028,0010", new Short((short) fileInfo.getExtents()[1]), 2);
+                dicomFileInfo.getTagTable().setValue("0028,0011", new Short((short) fileInfo.getExtents()[0]), 2);
+                dicomFileInfo.getTagTable().setValue("0028,0010", new Short((short) fileInfo.getExtents()[1]), 2);
 
                 // Pixel spacing
                 String s = String.valueOf(fileInfo.getResolutions()[0]) + "\\" +
                            String.valueOf(fileInfo.getResolutions()[1]);
-                dicomFileInfo.setValue("0028,0030", s, s.length());
+                dicomFileInfo.getTagTable().setValue("0028,0030", s, s.length());
 
                 // Slice thickness and spacing
                 if (fileInfo.getResolutions().length >= 3) {
                     s = String.valueOf(fileInfo.getResolutions()[2]);
-                    dicomFileInfo.setValue("0018,0088", s, s.length()); // spacing between slices
-                    
+                    dicomFileInfo.getTagTable().setValue("0018,0088", s, s.length()); // spacing between slices
+
                     if (fileInfo.getSliceThickness() != 0) {
                         s = String.valueOf(fileInfo.getSliceThickness());
                     }
-                    dicomFileInfo.setValue("0018,0050", s, s.length()); // slice thickness
+
+                    dicomFileInfo.getTagTable().setValue("0018,0050", s, s.length()); // slice thickness
                 }
 
                 cancelFlag = false;
@@ -1601,8 +1647,8 @@ public class JDialogSaveDicom extends JDialogBase {
         studyOcc = setTextField("", studyPanel, 1, 6, 1, 1);
         createLabel("Additional Patient's History (0010,21B0):", studyPanel, 2, 6, 1, 1);
         studyHist = setTextField("", studyPanel, 3, 6, 1, 1);
-       
-        
+
+
     }
 
     /**
@@ -1763,45 +1809,33 @@ public class JDialogSaveDicom extends JDialogBase {
                         ((JTextField) (tagsList.get(tag))).setText(s);
                         resetSize((JTextField) (tagsList.get(tag)));
                     }
-                } 
-                //dti tags
+                }
+                // dti tags
                 else if (tag.equals("(0008,0008)")) {
-                	additionalTagsList.put("(0008,0008)", value);	
-                }
-                else if (tag.equals("(0008,0032)")) {
-                	additionalTagsList.put("(0008,0032)", value);	
-                }
-                else if (tag.equals("(0008,0070)")) {
-                	additionalTagsList.put("(0008,0070)", value);	
-                }
-                else if (tag.equals("(0008,1090)")) {
-                	additionalTagsList.put("(0008,1090)", value);	
-                }
-                else if (tag.equals("(0018,0080)")) {
-                	additionalTagsList.put("(0018,0080)", value);	
-                }
-                else if (tag.equals("(0018,0081)")) {
-                	additionalTagsList.put("(0018,0081)", value);	
-                }
-                else if (tag.equals("(0018,0082)")) {
-                	additionalTagsList.put("(0018,0082)", value);	
-                }
-                else if (tag.equals("(0018,0087)")) {
-                	additionalTagsList.put("(0018,0087)", value);	
-                }
-                else if (tag.equals("(0018,1100)")) {
-                	additionalTagsList.put("(0018,1100)", value);	
-                }
-                else if (tag.equals("(0018,1310)")) {
-                	additionalTagsList.put("(0018,1310)", value);	
-                }
-                else if (tag.equals("(0018,1312)")) {
-                	additionalTagsList.put("(0018,1312)", value);	
-                }
-                else if (tag.equals("(0018,1314)")) {
-                	additionalTagsList.put("(0018,1314)", value);	
-                }
-                else if (tagsList.get(tag) != null) {
+                    additionalTagsList.put("(0008,0008)", value);
+                } else if (tag.equals("(0008,0032)")) {
+                    additionalTagsList.put("(0008,0032)", value);
+                } else if (tag.equals("(0008,0070)")) {
+                    additionalTagsList.put("(0008,0070)", value);
+                } else if (tag.equals("(0008,1090)")) {
+                    additionalTagsList.put("(0008,1090)", value);
+                } else if (tag.equals("(0018,0080)")) {
+                    additionalTagsList.put("(0018,0080)", value);
+                } else if (tag.equals("(0018,0081)")) {
+                    additionalTagsList.put("(0018,0081)", value);
+                } else if (tag.equals("(0018,0082)")) {
+                    additionalTagsList.put("(0018,0082)", value);
+                } else if (tag.equals("(0018,0087)")) {
+                    additionalTagsList.put("(0018,0087)", value);
+                } else if (tag.equals("(0018,1100)")) {
+                    additionalTagsList.put("(0018,1100)", value);
+                } else if (tag.equals("(0018,1310)")) {
+                    additionalTagsList.put("(0018,1310)", value);
+                } else if (tag.equals("(0018,1312)")) {
+                    additionalTagsList.put("(0018,1312)", value);
+                } else if (tag.equals("(0018,1314)")) {
+                    additionalTagsList.put("(0018,1314)", value);
+                } else if (tagsList.get(tag) != null) {
                     ((JTextField) (tagsList.get(tag))).setText(value);
                     resetSize((JTextField) (tagsList.get(tag)));
                 }
@@ -2077,6 +2111,20 @@ public class JDialogSaveDicom extends JDialogBase {
     }
 
     /**
+     * Sets the modality chooser box based on the file info modality (the modality indexes should match up with the
+     * ordering of the chooser).
+     *
+     * @param  modality  The image modality.
+     */
+    private void setModalityChooser(int modality) {
+
+        // avoid unknown modalities and modalities not supported by the chooser
+        if ((modality > 0) && ((modality - 1) < seriesMod.getItemCount())) {
+            seriesMod.setSelectedIndex(modality - 1);
+        }
+    }
+
+    /**
      * Makes a text field and adds it to the panel.
      *
      * @param   initial  the initial string in the text field
@@ -2102,17 +2150,5 @@ public class JDialogSaveDicom extends JDialogBase {
         panel.add(field);
 
         return field;
-    }
-    
-    /**
-     * Sets the modality chooser box based on the file info modality (the modality indexes should match up with the ordering of the chooser).
-     * 
-     * @param  modality  The image modality.
-     */
-    private void setModalityChooser(int modality) {
-        // avoid unknown modalities and modalities not supported by the chooser
-        if (modality > 0 && modality - 1 < seriesMod.getItemCount()) {
-            seriesMod.setSelectedIndex(modality - 1);
-        }
     }
 }

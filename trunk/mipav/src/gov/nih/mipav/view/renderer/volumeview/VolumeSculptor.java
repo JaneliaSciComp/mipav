@@ -184,7 +184,9 @@ public class VolumeSculptor extends Sculptor {
                                      kRenderImageXY.getRayTracerA().getAxis(0).z,
 
 
-        kRenderImageXY.getRayTracerA().getAxis(1).x, kRenderImageXY.getRayTracerA().getAxis(1).y,
+
+
+            kRenderImageXY.getRayTracerA().getAxis(1).x, kRenderImageXY.getRayTracerA().getAxis(1).y,
                                      kRenderImageXY.getRayTracerA().getAxis(1).z,
                                      kRenderImageXY.getRayTracerA().getAxis(2).x,
                                      kRenderImageXY.getRayTracerA().getAxis(2).y,
@@ -626,11 +628,8 @@ public class VolumeSculptor extends Sculptor {
         FileInfoBase[] fileInfo = img.getFileInfo();
 
         if (suffix == null) {
-            FileIO fileIO = new FileIO();
-
-            suffix = fileIO.getSuffixFrom(fileName);
-            fileType = fileIO.getFileType(fileName, directory);
-            fileIO = null;
+            suffix = FileUtility.getExtension(fileName);
+            fileType = FileUtility.getFileType(fileName, directory, false);
         }
 
         // now, get rid of any numbers at the end of the name (these

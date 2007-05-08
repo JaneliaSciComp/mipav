@@ -717,14 +717,14 @@ public class AlgorithmCrop extends AlgorithmBase {
         srcImage.setMatrix(mat);
 
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26);
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0028,0011", new Short((short) dimExtents[0]), 2); // columns
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0028,0010", new Short((short) dimExtents[1]), 2); // rows
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0020,0013", Short.toString((short) (1)),
-                                                                 Short.toString((short) (1)).length()); // instance number
+            ((FileInfoDicom) (srcImage.getFileInfo(0))).setSecondaryCaptureTags();
+            ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0028,0011",
+                                                                               new Short((short) dimExtents[0]), 2); // columns
+            ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0028,0010",
+                                                                               new Short((short) dimExtents[1]), 2); // rows
+            ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0020,0013", Short.toString((short)
+                                                                                                           (1)),
+                                                                               Short.toString((short) (1)).length()); // instance number
 
 
             startPos = originImgOrd[2];
@@ -733,10 +733,10 @@ public class AlgorithmCrop extends AlgorithmBase {
             value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
                     Float.toString(newImgOriginLPS[2]);
 
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0020,0032", value, value.length());
+            ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0020,0032", value, value.length());
 
             value = String.valueOf(originImgOrd[2]);
-            ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0020,1041", value, value.length());
+            ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0020,1041", value, value.length());
         } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileUtility.DICOM )
 
         try {
@@ -974,14 +974,16 @@ public class AlgorithmCrop extends AlgorithmBase {
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             if (nDims == 2) {
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0028,0011", new Short((short) destExtents[0]), 2); // columns
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0028,0010", new Short((short) destExtents[1]), 2); // rows
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0020,0013", Short.toString((short) (1)),
-                                                                     Short.toString((short) (1)).length()); // instance number
+                ((FileInfoDicom) (srcImage.getFileInfo(0))).setSecondaryCaptureTags();
+                ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0028,0011",
+                                                                                   new Short((short) destExtents[0]),
+                                                                                   2); // columns
+                ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0028,0010",
+                                                                                   new Short((short) destExtents[1]),
+                                                                                   2); // rows
+                ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0020,0013",
+                                                                                   Short.toString((short) (1)),
+                                                                                   Short.toString((short) (1)).length()); // instance number
 
 
                 startPos = originImgOrd[2];
@@ -990,31 +992,31 @@ public class AlgorithmCrop extends AlgorithmBase {
                 value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
                         Float.toString(newImgOriginLPS[2]);
 
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0020,0032", value, value.length());
+                ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0020,0032", value, value.length());
 
                 value = String.valueOf(originImgOrd[2]);
-                ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0020,1041", value, value.length());
+                ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0020,1041", value, value.length());
             } // if (nDims = 2)
             else { // nDims == 3
 
                 for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0028,0011", new Short((short) destExtents[0]),
-                                                                         2); // columns
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0028,0010", new Short((short) destExtents[1]),
-                                                                         2); // rows
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0020,0013", Short.toString((short) (n + 1)),
-                                                                         Short.toString((short) (n + 1)).length()); // instance number
+                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setSecondaryCaptureTags();
+                    ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
+                                                                                       new Short((short) destExtents[0]),
+                                                                                       2); // columns
+                    ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0010",
+                                                                                       new Short((short) destExtents[1]),
+                                                                                       2); // rows
+                    ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0020,0013",
+                                                                                       Short.toString((short) (n + 1)),
+                                                                                       Short.toString((short) (n + 1)).length()); // instance number
                     dicomInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(slc - z[0]);
 
                     // change the slice number ("0020,0013"):
                     // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
                     value = Integer.toString(slc - (int) z[0] + 1);
-                    dicomInfoBuffer.setValue("0020,0013", value, value.length());
+                    dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
 
                     // change the image start position ("0020, 0032")
                     startPos = originImgOrd[2];
@@ -1022,11 +1024,11 @@ public class AlgorithmCrop extends AlgorithmBase {
                     newImgOriginLPS = originImg2LPS(originImgOrd, srcImage);
                     value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
                             Float.toString(newImgOriginLPS[2]);
-                    dicomInfoBuffer.setValue("0020,0032", value, value.length());
+                    dicomInfoBuffer.getTagTable().setValue("0020,0032", value, value.length());
 
                     // readjust the slice location ("0020,1041")
                     value = String.valueOf(originImgOrd[2]);
-                    dicomInfoBuffer.setValue("0020,1041", value, value.length());
+                    dicomInfoBuffer.getTagTable().setValue("0020,1041", value, value.length());
                 } // for ( n = 0, slc = z[0]; slc <= z[1]; n++, slc++ )
             } // else nDims == 3
         } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileUtility.DICOM )
@@ -1290,22 +1292,22 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                 for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0028,0011", new Short((short) destExtents[0]),
-                                                                         2); // columns
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0028,0010", new Short((short) destExtents[1]),
-                                                                         2); // rows
-                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setValue("0020,0013", Short.toString((short) (n + 1)),
-                                                                         Short.toString((short) (n + 1)).length()); // instance number
+                    ((FileInfoDicom) (srcImage.getFileInfo(n))).setSecondaryCaptureTags();
+                    ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
+                                                                                       new Short((short) destExtents[0]),
+                                                                                       2); // columns
+                    ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0010",
+                                                                                       new Short((short) destExtents[1]),
+                                                                                       2); // rows
+                    ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0020,0013",
+                                                                                       Short.toString((short) (n + 1)),
+                                                                                       Short.toString((short) (n + 1)).length()); // instance number
                     dicomInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(slc - z[0]);
 
                     // change the slice number ("0020,0013"):
                     // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
                     value = Integer.toString(slc - (int) z[0] + 1);
-                    dicomInfoBuffer.setValue("0020,0013", value, value.length());
+                    dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
 
                     // change the image start position ("0020, 0032")
                     startPos = originImgOrd[2];
@@ -1313,11 +1315,11 @@ public class AlgorithmCrop extends AlgorithmBase {
                     newImgOriginLPS = originImg2LPS(originImgOrd, srcImage);
                     value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
                             Float.toString(newImgOriginLPS[2]);
-                    dicomInfoBuffer.setValue("0020,0032", value, value.length());
+                    dicomInfoBuffer.getTagTable().setValue("0020,0032", value, value.length());
 
                     // readjust the slice location ("0020,1041")
                     value = String.valueOf(originImgOrd[2]);
-                    dicomInfoBuffer.setValue("0020,1041", value, value.length());
+                    dicomInfoBuffer.getTagTable().setValue("0020,1041", value, value.length());
                 } // for ( n = 0, slc = z[0]; slc <= z[1]; n++, slc++ )
             } // if (nDims == 3)
         } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileUtility.DICOM )
@@ -1446,20 +1448,19 @@ public class AlgorithmCrop extends AlgorithmBase {
             }
         }
 
-
         if ((destImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             if ((destImage.getNDims() == 2) || (z[0] == z[1])) {
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0028,0011", new Short((short) destExtents[0]),
-                                                                      2); // columns
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0028,0010", new Short((short) destExtents[1]),
-                                                                      2); // rows
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0020,0013", Short.toString((short) (1)),
-                                                                      Short.toString((short) (1)).length()); // instance number
+                ((FileInfoDicom) (destImage.getFileInfo(0))).setSecondaryCaptureTags();
+                ((FileInfoDicom) (destImage.getFileInfo(0))).getTagTable().setValue("0028,0011",
+                                                                                    new Short((short) destExtents[0]),
+                                                                                    2); // columns
+                ((FileInfoDicom) (destImage.getFileInfo(0))).getTagTable().setValue("0028,0010",
+                                                                                    new Short((short) destExtents[1]),
+                                                                                    2); // rows
+                ((FileInfoDicom) (destImage.getFileInfo(0))).getTagTable().setValue("0020,0013",
+                                                                                    Short.toString((short) (1)),
+                                                                                    Short.toString((short) (1)).length()); // instance number
 
                 // int imgOrient = ((FileInfoDicom) (destImage.getFileInfo(0))).getImageOrientation();
 
@@ -1469,10 +1470,10 @@ public class AlgorithmCrop extends AlgorithmBase {
                 value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
                         Float.toString(newImgOriginLPS[2]);
 
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0020,0032", value, value.length());
+                ((FileInfoDicom) (destImage.getFileInfo(0))).getTagTable().setValue("0020,0032", value, value.length());
 
                 value = String.valueOf(originImgOrd[2]);
-                ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0020,1041", value, value.length());
+                ((FileInfoDicom) (destImage.getFileInfo(0))).getTagTable().setValue("0020,1041", value, value.length());
             } else if (destImage.getNDims() == 3) {
                 // int imgOrient = dicomInfoBuffer.getImageOrientation();
 
@@ -1484,24 +1485,22 @@ public class AlgorithmCrop extends AlgorithmBase {
                 // System.err.println("Original file origin: " + originVOI);
                 for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
-                    ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
-                                                                          26); // Secondary Capture SOP UID
-                    ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ",
-                                                                          26);
-                    ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                    ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                    ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0028,0011",
-                                                                          new Short((short) destExtents[0]), 2); // columns
-                    ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0028,0010",
-                                                                          new Short((short) destExtents[1]), 2); // rows
-                    ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0020,0013", Short.toString((short) (n + 1)),
-                                                                          Short.toString((short) (n + 1)).length()); // instance number
+                    ((FileInfoDicom) (destImage.getFileInfo(n))).setSecondaryCaptureTags();
+                    ((FileInfoDicom) (destImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
+                                                                                        new Short((short) destExtents[0]),
+                                                                                        2); // columns
+                    ((FileInfoDicom) (destImage.getFileInfo(n))).getTagTable().setValue("0028,0010",
+                                                                                        new Short((short) destExtents[1]),
+                                                                                        2); // rows
+                    ((FileInfoDicom) (destImage.getFileInfo(n))).getTagTable().setValue("0020,0013",
+                                                                                        Short.toString((short) (n + 1)),
+                                                                                        Short.toString((short) (n + 1)).length()); // instance number
                     dicomInfoBuffer = (FileInfoDicom) destImage.getFileInfo(n);
 
                     // change the slice number ("0020,0013"):
                     // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
                     value = Integer.toString(slc - (int) z[0] + 1);
-                    dicomInfoBuffer.setValue("0020,0013", value, value.length());
+                    dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
 
                     // change the image start position ("0020, 0032")
 
@@ -1511,11 +1510,11 @@ public class AlgorithmCrop extends AlgorithmBase {
                     value = Float.toString(originLPS.x) + "\\" + Float.toString(originLPS.y) + "\\" +
                             Float.toString(originLPS.z);
 
-                    dicomInfoBuffer.setValue("0020,0032", value, value.length());
+                    dicomInfoBuffer.getTagTable().setValue("0020,0032", value, value.length());
 
                     // readjust the slice location ("0020,1041")
                     value = String.valueOf(originImgOrd[2]);
-                    dicomInfoBuffer.setValue("0020,1041", value, value.length());
+                    dicomInfoBuffer.getTagTable().setValue("0020,1041", value, value.length());
                 }
             }
         }

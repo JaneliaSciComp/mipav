@@ -2,19 +2,20 @@ package gov.nih.mipav.model.dicomcomm;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.util.Observable;
+import gov.nih.mipav.model.util.Observer;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
-import java.util.Vector;
 
 import java.net.*;
 
+import java.util.*;
+
 import javax.swing.*;
 
-import gov.nih.mipav.model.util.Observable;
-import gov.nih.mipav.model.util.Observer;
 
 /**
  * This is the DICOM server class that hangs a listener on a given port for incoming image store requests from a remote
@@ -37,8 +38,23 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
     /** Flag to indicate if the receive process should be cancelled. Cancel if true. */
     private boolean cancelled = false;
 
+    /** DOCUMENT ME! */
+    private boolean changed = false;
+
+    /** DOCUMENT ME! */
+    private String defaultStorageDir;
+
+    /** DOCUMENT ME! */
+    private Vector fileNameList = new Vector();
+
+    /** DOCUMENT ME! */
+    private Vector observerList = new Vector();
+
     /** Port number used to accept data. */
     private int port = 3100;
+
+    /** DOCUMENT ME! */
+    private ByteBuffer pre_and_fullData = null;
 
     /** DICOM part 10 preample buffer. */
     private byte[] preambleBuffer;
@@ -52,13 +68,6 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
     /** Reference to the DICOM verification object. */
     private DICOM_Verification verification;
 
-    private ByteBuffer pre_and_fullData = null;
-    
-    private String defaultStorageDir;
-    private Vector fileNameList = new Vector();
-    private Vector observerList = new Vector();
-    private boolean changed = false;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -73,6 +82,82 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * The implementation of the Observable interface.
+     *
+     * @param  o  DOCUMENT ME!
+     */
+    /**
+     * @see  Observable#addObserver(Observer)
+     */
+    public void addObserver(Observer o) {
+
+        if (!observerList.contains(o)) {
+            observerList.add(o);
+        }
+    }
+
+    /**
+     * @see  Observable#clearChanged()
+     */
+    public void clearChanged() {
+        changed = false;
+    }
+
+    /**
+     * @see  Observable#countObservers()
+     */
+    public int countObservers() {
+        return observerList.size();
+    }
+
+    /**
+     * @see  Observable#deleteObserver(Observer)
+     */
+    public void deleteObserver(Observer o) {
+
+        if ((o != null) && observerList.contains(o)) {
+            observerList.remove(o);
+        }
+    }
+
+    /**
+     * @see  Observable#deleteObservers()
+     */
+    public void deleteObservers() {
+        observerList.clear();
+        clearChanged();
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void finalize() {
+
+        if (pre_and_fullData != null) {
+            pre_and_fullData.finalize();
+        }
+
+        preambleBuffer = null;
+        super.finalize();
+    }
+
+    /**
+     * Returns the default storage directory for the received dicom files.
+     *
+     * @return  the default storage directory for the received dicom files.
+     */
+    public String getDefaultStorageDir() {
+        return defaultStorageDir;
+    }
+
+    /**
+     * @see  Observable#hasChanged()
+     */
+    public boolean hasChanged() {
+        return changed;
+    }
+
+    /**
      * Checks to see if the thread controlling the receivers execution is alive.
      *
      * @return  flag indicating whether or not the thread is alive
@@ -81,21 +166,6 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         return runner.isAlive();
     }
 
-    public void finalize() {
-        if (pre_and_fullData != null){
-            pre_and_fullData.finalize();
-        }
-        preambleBuffer = null;
-        super.finalize();
-    }
-    
-    /**
-     * Returns the default storage directory for the received dicom files.
-     * @return the default storage directory for the received dicom files.
-     */
-    public String getDefaultStorageDir(){
-        return defaultStorageDir;
-    }
     /**
      * Starts the DICOM image receiver.
      */
@@ -186,10 +256,10 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
             /**
              * Notifies the observers that this object has changed.
              */
-            if(hasChanged()){
+            if (hasChanged()) {
                 notifyObservers(fileNameList);
             }
-            
+
         }
 
         // cleanup
@@ -217,6 +287,19 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
     }
 
     /**
+     * @see  Observable#notifyObservers(Object)
+     */
+    public void notifyObservers(Object obj) {
+
+        for (int i = 0; i < countObservers(); i++) {
+            Observer observer = (Observer) observerList.get(i);
+            observer.update(this, obj);
+        }
+
+        clearChanged();
+    }
+
+    /**
      * Routine to Process a DICOM Store Request.
      *
      * @param  socket  this is a socket
@@ -230,7 +313,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
          * Clear the file name list
          */
         fileNameList.clear();
-        
+
         DICOM_CResponse cStoreRSP = new DICOM_CResponse(DICOM_Constants.COMMAND_CStoreRSP);
 
         JDialogText receivedImageDialog = null;
@@ -310,22 +393,24 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                         fileDicom = new FileDicom("temp.dcm");
                         addPreambleAndGroupTwoTags(dco); // Build DICOM part 10 preample.
 
-                        if (pre_and_fullData == null ||
-                            pre_and_fullData.length() < preambleBuffer.length + compData.length()) {
+                        if ((pre_and_fullData == null) ||
+                                (pre_and_fullData.length() < (preambleBuffer.length + compData.length()))) {
                             pre_and_fullData = new ByteBuffer(preambleBuffer.length + compData.length());
                         }
-                        
+
                         System.arraycopy(preambleBuffer, 0, pre_and_fullData.data, 0, preambleBuffer.length);
-                        System.arraycopy(compData.data, 0, pre_and_fullData.data, preambleBuffer.length, compData.length());
+                        System.arraycopy(compData.data, 0, pre_and_fullData.data, preambleBuffer.length,
+                                         compData.length());
                         pre_and_fullData.endIndex = preambleBuffer.length + compData.length();
                         fileDicom.setTagBuffer(pre_and_fullData.data);
-                        
-                        if (fileDicom.readHeader(false) == false) {
+
+                        if (fileDicom.readHeader(false, true) == false) {
 
                             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                                 Preferences.debug(DICOM_Util.timeStamper() +
                                                   " DICOMReceiver.recieverClient: Failure reading DICOM image. \n");
                             }
+
                             break; // Should do something more expressive reporting
                         }
                     } catch (IOException ioe) {
@@ -355,7 +440,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     }
 
                     // read patient name, remove all delimiters and trim all spaces
-                    String patientName = (String) (fileInfo.getValue("0010,0010"));
+                    String patientName = (String) (fileInfo.getTagTable().getValue("0010,0010"));
                     patientName.trim();
 
                     // Matt and Dave patientID = might be better  or UID
@@ -367,23 +452,24 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                         patientName = patientName.trim();
                     }
 
-                    String modality = ((String) (fileInfo.getValue("0008,0060"))).trim();
-                    String studyNo = ((String) (fileInfo.getValue("0020,000D"))).trim();
-                    String imageNo = ((String) (fileInfo.getValue("0020,0013"))).trim();
-                    String seriesNo = ((String) (fileInfo.getValue("0020,0011"))).trim();
+                    String modality = ((String) (fileInfo.getTagTable().getValue("0008,0060"))).trim();
+                    String studyNo = ((String) (fileInfo.getTagTable().getValue("0020,000D"))).trim();
+                    String imageNo = ((String) (fileInfo.getTagTable().getValue("0020,0013"))).trim();
+                    String seriesNo = ((String) (fileInfo.getTagTable().getValue("0020,0011"))).trim();
 
                     if ((studyNo == null) || (studyNo.length() == 0)) {
-                        studyNo = (String) (fileInfo.getValue("0008,1030"));
+                        studyNo = (String) (fileInfo.getTagTable().getValue("0008,1030"));
                         studyNo.trim();
                     }
 
                     if ((seriesNo == null) || (seriesNo.length() == 0)) {
-                        seriesNo = (String) (fileInfo.getValue("0008,103E"));
+                        seriesNo = (String) (fileInfo.getTagTable().getValue("0008,103E"));
                         studyNo.trim();
                     }
 
                     defaultStorageDir = parseServerInfo(Preferences.getProperty(Preferences.getDefaultStorageKey()))[2] +
-                                      File.separatorChar;
+                                        File.separatorChar;
+
                     String filePath = defaultStorageDir;
                     String fileName = new String("");
 
@@ -468,7 +554,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     // Save image (with preample appended) data to file
                     saveImageToFile(pre_and_fullData, filePath + fileName);
                     fileNameList.add(filePath + fileName);
-                    //preambleBuffer = null;
+                    // preambleBuffer = null;
 
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() +
@@ -490,7 +576,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     } else if ((dicomMessageDisplayer == null) && (receivedImageDialog == null)) {
 
                         // make non-modal message frame
-                       JFrame parent = new JFrame();
+                        JFrame parent = new JFrame();
 
                         try {
                             parent.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
@@ -510,7 +596,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
                         receivedImageDialog.append("From: " + new String(super.getAAssociateRQ().getCallingAppTitle()) +
                                                    ": " + filePath + fileName + "\n");
-                    
+
                     } else if ((dicomMessageDisplayer == null) && (receivedImageDialog != null)) {
 
                         // Update message with name of newly arrived image
@@ -531,12 +617,13 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
             dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.ERROR);
             showMessage("" + e);
         }
+
         System.gc();
-        
+
         /**
          * Marks this object as having been changed.
          */
-        if(fileNameList.size() > 0){
+        if (fileNameList.size() > 0) {
             setChanged();
         }
     }
@@ -586,6 +673,13 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
      */
     public void setCancelled(boolean flag) {
         cancelled = flag;
+    }
+
+    /**
+     * @see  Observable#setChanged()
+     */
+    public void setChanged() {
+        changed = true;
     }
 
     /**
@@ -667,7 +761,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         instanceUID = dco.getStr(DICOM_RTC.DD_AffectedSOPInstanceUID);
         implementationClassUID = getImplementationClassUID();
         transferSyntaxUID = getTransferSyntaxID();
-       
+
 
         int classUIDLength = classUID.length();
 
@@ -697,9 +791,10 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         int length = 132 + 12 + 10 + 8 + classUIDLength + 8 + instanceUIDLength + 8 + transferSyntaxUIDLength + 8 +
                      implementationClassUIDLength;
 
-        if (preambleBuffer == null || preambleBuffer.length != length) {
+        if ((preambleBuffer == null) || (preambleBuffer.length != length)) {
             preambleBuffer = new byte[length];
         }
+
         byte[] byteArray = null;
 
         preambleBuffer[128] = 0x44; // D
@@ -868,74 +963,5 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         public void setStop() {
             keepGoing = false;
         }
-    }
-
-    /**
-     * The implementation of the Observable interface.
-     */
-    /**
-     * @see Observable#addObserver(Observer)
-     */
-    public void addObserver(Observer o){
-        if(!observerList.contains(o)){
-            observerList.add(o);
-        }
-    }
-    
-    /**
-     * @see Observable#clearChanged()
-     */
-    public void clearChanged(){
-        changed = false;
-    }
-    
-    /**
-     * @see Observable#countObservers()
-     */
-    public int countObservers(){
-        return observerList.size();
-    }
-    
-    /**
-     * @see Observable#deleteObserver(Observer)
-     */
-    public void deleteObserver(Observer o){
-        if(o != null && observerList.contains(o)){
-            observerList.remove(o);
-        }
-    }
-    
-    /**
-     * @see Observable#deleteObservers()
-     */
-    public void deleteObservers(){
-        observerList.clear();
-        clearChanged();
-    }
-    
-    /**
-     * @see Observable#hasChanged()
-     */
-    public boolean hasChanged(){
-        return changed;
-    }
-    
-    /**
-     * @see Observable#notifyObservers(Object)
-     */
-    public void notifyObservers(Object obj){
-        for(int i = 0; i < countObservers(); i++){
-            Observer observer = (Observer)observerList.get(i);
-            observer.update(this, obj);
-        }
-        clearChanged();
-    }
-    
-    /**
-     * @see Observable#setChanged()
-     *
-     */
-    public void setChanged(){
-        changed = true;
     }
 }

@@ -5,11 +5,10 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
 
 import com.sun.j3d.utils.behaviors.mouse.*;
-import com.sun.j3d.utils.geometry.Sphere;
+import com.sun.j3d.utils.geometry.*;
 import com.sun.j3d.utils.picking.*;
 
 import java.awt.*;
@@ -22,6 +21,7 @@ import java.util.*;
 import javax.media.j3d.*;
 
 import javax.swing.*;
+import javax.swing.Box;
 import javax.swing.event.*;
 
 import javax.vecmath.*;
@@ -87,7 +87,7 @@ public class JPanelClip extends JPanelRendererBase
     /** X,Y,Z inverse clipping plane check box. */
     private JCheckBox boundingCheckXInv, boundingCheckYInv, boundingCheckZInv;
 
-    /**  Static and static inverse, arbitrary clipping plane check box. */
+    /** Static and static inverse, arbitrary clipping plane check box. */
     private JCheckBox boxStatic, boxStaticInv, boxA;
 
     /** Check boxes that turn the image plane and the sliders on and off. */
@@ -383,12 +383,14 @@ public class JPanelClip extends JPanelRendererBase
             ModelImage img = renderBase.getImageA();
             float[] plane = img.getPlane(pts[0], pts[1], pts[2], pts[3]);
 
-            int length = (int) Math.round(Math.sqrt(((pts[2].x - pts[0].x) * (pts[2].x - pts[0].x)) +
-                                                    ((pts[2].y - pts[0].y) * (pts[2].y - pts[0].y)) +
-                                                    ((pts[2].z - pts[0].z) * (pts[2].z - pts[0].z))));
-            int width = (int) Math.round(Math.sqrt(((pts[1].x - pts[0].x) * (pts[1].x - pts[0].x)) +
-                                                   ((pts[1].y - pts[0].y) * (pts[1].y - pts[0].y)) +
-                                                   ((pts[1].z - pts[0].z) * (pts[1].z - pts[0].z))));
+            int length = (int)
+                             Math.round(Math.sqrt(((pts[2].x - pts[0].x) * (pts[2].x - pts[0].x)) +
+                                                  ((pts[2].y - pts[0].y) * (pts[2].y - pts[0].y)) +
+                                                  ((pts[2].z - pts[0].z) * (pts[2].z - pts[0].z))));
+            int width = (int)
+                            Math.round(Math.sqrt(((pts[1].x - pts[0].x) * (pts[1].x - pts[0].x)) +
+                                                 ((pts[1].y - pts[0].y) * (pts[1].y - pts[0].y)) +
+                                                 ((pts[1].z - pts[0].z) * (pts[1].z - pts[0].z))));
 
             int[] ext = new int[2];
 
@@ -621,8 +623,8 @@ public class JPanelClip extends JPanelRendererBase
                 setASliderEnabled(true);
                 disableClipPlanes();
                 updateClipSliceA();
-                colorButtonA.setEnabled( true );
-                enableClipArbiBehavior( false );
+                colorButtonA.setEnabled(true);
+                enableClipArbiBehavior(false);
             }
         } else if (command.equals("EYE")) {
 
@@ -2765,7 +2767,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get x negative slider.
      *
-     * @return  get X inverse clipping slider value. 
+     * @return  get X inverse clipping slider value.
      */
     public JSlider getSliderXInv() {
         return sliderXInv;
@@ -2774,7 +2776,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get y slider.
      *
-     * @return  get Y clipping slider value. 
+     * @return  get Y clipping slider value.
      */
     public JSlider getSliderY() {
         return clipSliderY;
@@ -2783,7 +2785,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get y negative slider.
      *
-     * @return  get y inverse clipping slider value. 
+     * @return  get y inverse clipping slider value.
      */
     public JSlider getSliderYInv() {
         return sliderYInv;
@@ -2792,7 +2794,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get z slider.
      *
-     * @return  get z clipping slider value. 
+     * @return  get z clipping slider value.
      */
     public JSlider getSliderZ() {
         return clipSliderZ;
@@ -2801,7 +2803,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get z negative slider.
      *
-     * @return  get z inverse clipping slider value.  
+     * @return  get z inverse clipping slider value.
      */
     public JSlider getSliderZInv() {
         return sliderZInv;
@@ -3609,7 +3611,7 @@ public class JPanelClip extends JPanelRendererBase
      * Resizig the control panel with ViewJFrameVolumeView's frame width and height.
      *
      * @param  panelWidth   panel width
-     * @param  frameHeight  parent frame height. 
+     * @param  frameHeight  parent frame height.
      */
     public void resizePanel(int panelWidth, int frameHeight) {
         scroller.setPreferredSize(new Dimension(panelWidth, frameHeight));
@@ -3836,11 +3838,8 @@ public class JPanelClip extends JPanelRendererBase
         FileInfoBase[] fileInfo = img.getFileInfo();
 
         if (suffix == null) {
-            FileIO fileIO = new FileIO();
-
-            suffix = fileIO.getSuffixFrom(fileName);
-            fileType = fileIO.getFileType(fileName, directory);
-            fileIO = null;
+            suffix = FileUtility.getExtension(fileName);
+            fileType = FileUtility.getFileType(fileName, directory, false);
         }
 
         // now, get rid of any numbers at the end of the name (these
@@ -4578,21 +4577,20 @@ public class JPanelClip extends JPanelRendererBase
             mcArbiTG.setTransform(mcArbiTrans3D);
             arbiTG.setTransform(arbiTrans3d);
 
-            
+
             eqnA = new Vector4d(1.0, 0.0, 0.0, (xBox - (2 * ((float) aSlice / (xDim - 1)) * xBox) - 0.001));
             updateClipPlanesEqn();
             mcArbi.setPlanes(eqnPlanesArbi);
             mcArbi.setEnable(0, true);
             mcArbi.setInfluencingBounds(renderBase.getBound());
 
-            clipSliceA.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox), maxBox,
-                                 maxBox, ViewJComponentBoxSlice.A_CLIPSLICE);
+            clipSliceA.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox), maxBox, maxBox,
+                                 ViewJComponentBoxSlice.A_CLIPSLICE);
 
-            clipSliceAIndicator.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox),
-                                          maxBox, maxBox,
+            clipSliceAIndicator.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox), maxBox, maxBox,
                                           ViewJComponentBoxSlice.A_CLIPSLICE);
-           
-           
+
+
             displayAClipPlanePts();
         }
     }
@@ -5133,7 +5131,7 @@ public class JPanelClip extends JPanelRendererBase
         /**
          * Wrapper to repaint the panel.
          *
-         * @param  g  graphics reference. 
+         * @param  g  graphics reference.
          */
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -5147,13 +5145,13 @@ public class JPanelClip extends JPanelRendererBase
      */
     class OkColorListener implements ActionListener {
 
-        /** Button reference.  */
+        /** Button reference. */
         JButton button;
 
         /**
          * Creates a new OkColorListener object.
          *
-         * @param  _button  button reference. 
+         * @param  _button  button reference.
          */
         OkColorListener(JButton _button) {
             super();

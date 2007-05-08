@@ -104,12 +104,14 @@ public class FilePARREC extends FileBase {
             // completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[1];
             for (int k = 0; k < imgEXTENSIONS.length; k++) {
 
-            	if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
-            		completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
-            			FilePARREC.imgEXTENSIONS[k];
-            	} else {
-            		completeFileNameList[1] = absolutePath;
-            	}
+                if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+                    completeFileNameList[1] = absolutePath.substring(0,
+                                                                     absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
+                                              FilePARREC.imgEXTENSIONS[k];
+                } else {
+                    completeFileNameList[1] = absolutePath;
+                }
+
                 completeFileNameList[1] = absolutePath.replaceAll(FileUtility.getExtension((absolutePath)),
                                                                   FilePARREC.imgEXTENSIONS[k]);
 
@@ -124,15 +126,17 @@ public class FilePARREC extends FileBase {
 
             // Try all extensions until one has a file that exists
             // completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[0];
-            for(int k=0;k<hdrEXTENSIONS.length;k++) {
-            	
-            	if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
-            		completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
-            			FilePARREC.hdrEXTENSIONS[k];
-            	} else {
-            		completeFileNameList[0] = absolutePath;
-            	}
-            }        
+            for (int k = 0; k < hdrEXTENSIONS.length; k++) {
+
+                if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+                    completeFileNameList[0] = absolutePath.substring(0,
+                                                                     absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
+                                              FilePARREC.hdrEXTENSIONS[k];
+                } else {
+                    completeFileNameList[0] = absolutePath;
+                }
+            }
+
             for (int k = 0; k < hdrEXTENSIONS.length; k++) {
                 completeFileNameList[0] = absolutePath.replaceAll(FileUtility.getExtension((absolutePath)),
                                                                   FilePARREC.hdrEXTENSIONS[k]);
@@ -147,7 +151,7 @@ public class FilePARREC extends FileBase {
             completeFileNameList = null;
         }
 
-        
+
         return completeFileNameList;
     }
 
@@ -307,8 +311,115 @@ public class FilePARREC extends FileBase {
         return image;
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   absolutePath  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public String[] getCompleteFileNameListDefault(String absolutePath) {
+        String[] completeFileNameList = new String[2];
 
-    
+        if (FilePARREC.isHeaderFile(absolutePath)) {
+            completeFileNameList[0] = absolutePath;
+
+            String ext = FileUtility.getExtension((absolutePath));
+            int k, k0;
+
+            if ((ext.compareTo(hdrEXTENSIONS[0]) == 0) || (ext.compareTo(hdrEXTENSIONS[0]) == 2)) { // lower case
+
+                if (outInfo.getDataType() == ModelStorageBase.FLOAT) {
+
+                    // frec, lower case
+                    k = 2;
+                    k0 = 2;
+                } else {
+
+                    // rec, lower case
+                    k = 0;
+                    k0 = 2;
+                }
+
+            } else { // upper case
+
+                if (outInfo.getDataType() == ModelStorageBase.FLOAT) {
+
+                    // fREC, upper case
+                    k = 3;
+                    k0 = 3;
+                } else {
+
+                    // REC, upper case
+                    k = 1;
+                    k0 = 3;
+                }
+            }
+
+            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+                completeFileNameList[1] = absolutePath.substring(0,
+                                                                 absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
+                                          "." + FilePARREC.imgEXTENSIONS[k];
+                completeFileNameList[0] = absolutePath.substring(0,
+                                                                 absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
+                                          "." + FilePARREC.hdrEXTENSIONS[k0];
+            }
+
+
+        } else if (FilePARREC.isImageFile(absolutePath)) {
+            completeFileNameList[1] = absolutePath;
+
+            // public static final String[] hdrEXTENSIONS = { ".par", ".PAR", ".parv2", ".PARv2" };
+            // public static final String[] imgEXTENSIONS = { ".rec", ".REC", ".frec", ".fREC" };
+
+            String ext = FileUtility.getExtension((absolutePath));
+            int k, k0;
+
+            if ((ext.compareTo(imgEXTENSIONS[0]) == 0) || (ext.compareTo(imgEXTENSIONS[0]) == 2)) {
+
+                if (outInfo.getDataType() == ModelStorageBase.FLOAT) {
+
+                    // frec, lower case
+                    k = 2;
+                    k0 = 2;
+                } else {
+
+                    // rec, lower case
+                    k = 2;
+                    k0 = 0;
+                }
+
+            } else { // upper case
+
+                if (outInfo.getDataType() == ModelStorageBase.FLOAT) {
+
+                    // fREC, upper case
+                    k = 3;
+                    k0 = 3;
+                } else {
+
+                    // REC, upper case
+                    k = 3;
+                    k0 = 1;
+                }
+            }
+
+            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+                completeFileNameList[0] = absolutePath.substring(0,
+                                                                 absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
+                                          FilePARREC.hdrEXTENSIONS[k];
+                completeFileNameList[1] = absolutePath.substring(0,
+                                                                 absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
+                                          FilePARREC.imgEXTENSIONS[k0];
+            }
+        } else {
+            completeFileNameList = null;
+        }
+
+
+        return completeFileNameList;
+    }
+
 
     /**
      * Returns the FileInfoAnalyze read from the file.
@@ -320,7 +431,7 @@ public class FilePARREC extends FileBase {
     }
 
     /**
-     * <<<<<<< .working Returns the header file.
+     * Returns the header file.
      *
      * @return  DOCUMENT ME!
      */
@@ -667,7 +778,7 @@ public class FilePARREC extends FileBase {
                 if (numVolumes > 1) {
                     fileInfo.setResolutions(1, 3);
                 }
-                //                fileInfo.setSliceThickness(fov2/numSlices);
+                // fileInfo.setSliceThickness(fov2/numSlices);
 
                 break;
 
@@ -702,7 +813,7 @@ public class FilePARREC extends FileBase {
                 if (numVolumes > 1) {
                     fileInfo.setResolutions(1, 3);
                 }
-                //                fileInfo.setSliceThickness(fov1/numSlices);
+                // fileInfo.setSliceThickness(fov1/numSlices);
 
                 break;
 
@@ -776,7 +887,7 @@ public class FilePARREC extends FileBase {
         // if vox units defines the units of measure, then use that instead
         // clones the file info
         updateUnitsOfMeasure(fileInfo, image);
-        //        updateStartLocations(image.getFileInfo());
+        // updateStartLocations(image.getFileInfo());
 
 
         try { // Construct a FileRaw to actually read the image.
@@ -1070,7 +1181,8 @@ public class FilePARREC extends FileBase {
         map.put("#  maximum RR-interval (in ms)              (integer)", new Integer(1));
         map.put("#  TURBO factor  <0=no turbo>               (integer)", new Integer(1));
         map.put("#  Inversion delay (in ms)                  (float)", new Integer(1));
-        //... % new columns for December 29, 2006 (release 2.1)
+
+        // ... % new columns for December 29, 2006 (release 2.1)
         map.put("#  diffusion b value number    (imagekey!)  (integer)", new Integer(1));
         map.put("#  gradient orientation number (imagekey!)  (integer)", new Integer(1));
         map.put("#  contrast type                            (string)", new Integer(1));
@@ -1127,13 +1239,15 @@ public class FilePARREC extends FileBase {
         map.put(".    Diffusion         <0=no 1=yes> ?", "diffusion_diffusion");
         map.put(".    Diffusion echo time [msec]", "diffusion_diffusion_echo");
         map.put(".    Inversion delay [msec]", "special_inversion_delay");
-        //... % Variables for May 31, 2005
+
+        // ... % Variables for May 31, 2005
         map.put(".    Series Type", "scn_series_type");
         map.put(".    Patient position", "orient_patient_pos");
         map.put(".    Preparation direction", "orient_prep_dir");
         map.put(".    Repetition time [ms]", "scn_rep_time");
         map.put(".    Diffusion echo time [ms]", "special_diffusion_echo_time");
-        //... % Variables for December 29, 2006 (release 2.1)
+
+        // ... % Variables for December 29, 2006 (release 2.1)
         map.put(".    Max. number of diffusion values", "special_max_num_diffusion_values");
         map.put(".    Max. number of gradient orients", "special_max_num_gradient_orients");
 
@@ -1246,7 +1360,7 @@ public class FilePARREC extends FileBase {
         int[] extents = fileInfo.getExtents();
 
         // if vox units defines the units of measure, then use that instead
-        //Only mm supported in PAR/REC
+        // Only mm supported in PAR/REC
         int units = FileInfoBase.MILLIMETERS; // FileInfoBase.getUnitsOfMeasureFromStr(fileInfo.getVoxUnits());
 
         if (image.getNDims() == 2) {
@@ -1297,89 +1411,10 @@ public class FilePARREC extends FileBase {
                 image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
             }
         }
-        //        System.out.println("NDIMS:"+image.getNDims());
+        // System.out.println("NDIMS:"+image.getNDims());
         // image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
 
     } // end updateUnitsOfMeasure()
 
-    public String[] getCompleteFileNameListDefault(String absolutePath) {
-        String[] completeFileNameList = new String[2];
 
-        if (FilePARREC.isHeaderFile(absolutePath)) {
-            completeFileNameList[0] = absolutePath;
-
-            String ext = FileUtility.getExtension((absolutePath));
-            int k,k0;
-
-            if(ext.compareTo(hdrEXTENSIONS[0])==0 || ext.compareTo(hdrEXTENSIONS[0])==2) { //lower case
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // frec, lower case
-                    k=2;
-                    k0=2;
-                } else {
-                    // rec, lower case
-                    k=0;
-                    k0=2;
-                }
-
-            } else {//upper case
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // fREC, upper case
-                    k=3;
-                    k0=3;
-                } else {
-                    // REC, upper case
-                    k=1;
-                    k0=3;
-                }
-            }
-            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
-            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.imgEXTENSIONS[k];
-                completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.hdrEXTENSIONS[k0];
-            }
-            
-            
-        } else if (FilePARREC.isImageFile(absolutePath)) {
-            completeFileNameList[1] = absolutePath;
-
-            //public static final String[] hdrEXTENSIONS = { ".par", ".PAR", ".parv2", ".PARv2" };
-            //public static final String[] imgEXTENSIONS = { ".rec", ".REC", ".frec", ".fREC" };
-
-            String ext = FileUtility.getExtension((absolutePath));
-            int k,k0;
-            if(ext.compareTo(imgEXTENSIONS[0])==0 || ext.compareTo(imgEXTENSIONS[0])==2) {
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // frec, lower case
-                    k=2;
-                    k0=2;
-                } else {
-                    // rec, lower case
-                    k=2;
-                    k0=0;
-                }
-
-            } else {//upper case
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // fREC, upper case
-                    k=3;
-                    k0=3;
-                } else {
-                    // REC, upper case
-                    k=3;
-                    k0=1;
-                }
-            }
-            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
-            	completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.hdrEXTENSIONS[k];
-            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.imgEXTENSIONS[k0];
-            }
-        } else {
-            completeFileNameList = null;
-        }
-
-        
-        return completeFileNameList;
-    }
-
-    
 }

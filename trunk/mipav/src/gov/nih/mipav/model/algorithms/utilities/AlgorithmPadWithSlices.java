@@ -280,32 +280,35 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                                                                                // it in the new filebuffer
 
                             if (z == 0) {
-                                fileInfoBuffer.setValue("0020,0032",
-                                                        (imagePositionCoords[0] +
-                                                         ((currentSlices - j) *
-                                                              (imagePositionCoords[0] - nextPositionCoords[0]))) +
-                                                        "\\" +
-                                                        (imagePositionCoords[1] +
-                                                         ((currentSlices - j) *
-                                                              (imagePositionCoords[1] - nextPositionCoords[1]))) +
-                                                        "\\" +
-                                                        (imagePositionCoords[2] +
-                                                         ((currentSlices - j) *
-                                                              (imagePositionCoords[2] - nextPositionCoords[2]))),
-                                                        ((FileDicomTag) fileInfoBuffer.getEntry("0020,0032"))
-                                                            .getLength());
+                                fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                      (imagePositionCoords[0] +
+                                                                       ((currentSlices - j) *
+                                                                            (imagePositionCoords[0] -
+                                                                                 nextPositionCoords[0]))) + "\\" +
+                                                                      (imagePositionCoords[1] +
+                                                                       ((currentSlices - j) *
+                                                                            (imagePositionCoords[1] -
+                                                                                 nextPositionCoords[1]))) + "\\" +
+                                                                      (imagePositionCoords[2] +
+                                                                       ((currentSlices - j) *
+                                                                            (imagePositionCoords[2] -
+                                                                                 nextPositionCoords[2]))),
+                                                                      fileInfoBuffer.getTagTable().get("0020,0032").getLength());
                             } else if (z == oldZdim) {
-                                fileInfoBuffer.setValue("0020,0032",
-                                                        (imagePositionCoords[0] +
-                                                         ((j + 1) * (imagePositionCoords[0] - lastPositionCoords[0]))) +
-                                                        "\\" +
-                                                        (imagePositionCoords[1] +
-                                                         ((j + 1) * (imagePositionCoords[1] - lastPositionCoords[1]))) +
-                                                        "\\" +
-                                                        (imagePositionCoords[2] +
-                                                         ((j + 1) * (imagePositionCoords[2] - lastPositionCoords[2]))),
-                                                        ((FileDicomTag) fileInfoBuffer.getEntry("0020,0032"))
-                                                            .getLength());
+                                fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                      (imagePositionCoords[0] +
+                                                                       ((j + 1) *
+                                                                            (imagePositionCoords[0] -
+                                                                                 lastPositionCoords[0]))) + "\\" +
+                                                                      (imagePositionCoords[1] +
+                                                                       ((j + 1) *
+                                                                            (imagePositionCoords[1] -
+                                                                                 lastPositionCoords[1]))) + "\\" +
+                                                                      (imagePositionCoords[2] +
+                                                                       ((j + 1) *
+                                                                            (imagePositionCoords[2] -
+                                                                                 lastPositionCoords[2]))),
+                                                                      fileInfoBuffer.getTagTable().get("0020,0032").getLength());
                             }
 
 
@@ -335,7 +338,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                             // same change as image position above:
                             // Do an average here
                             if (z == 0) {
-                                value = ((FileInfoDicom) (srcImage.getFileInfo(z + 1))).getValue("0020,1041");
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z + 1))).getTagTable().getValue("0020,1041");
                                 s = ((String) value).trim();
 
                                 try {
@@ -346,7 +349,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                                     nextSliceLocation = 0;
                                 }
 
-                                value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getValue("0020,1041");
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041");
                                 s = ((String) value).trim();
 
                                 try {
@@ -359,9 +362,9 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                                 sliceLocation = sliceLocation +
                                                 ((currentSlices - j) * (sliceLocation - nextSliceLocation));
                                 s = nf.format(sliceLocation);
-                                fileInfoBuffer.setValue("0020,1041", s, s.length());
+                                fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
                             } else if (z == oldZdim) {
-                                value = ((FileInfoDicom) (srcImage.getFileInfo(z - 2))).getValue("0020,1041");
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z - 2))).getTagTable().getValue("0020,1041");
                                 s = ((String) value).trim();
 
                                 try {
@@ -372,7 +375,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                                     lastSliceLocation = 0;
                                 }
 
-                                value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getValue("0020,1041");
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getTagTable().getValue("0020,1041");
                                 s = ((String) value).trim();
 
                                 try {
@@ -385,13 +388,13 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
 
                                 sliceLocation = sliceLocation + ((j + 1) * (sliceLocation - lastSliceLocation));
                                 s = nf.format(sliceLocation);
-                                fileInfoBuffer.setValue("0020,1041", s, s.length());
+                                fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
                             }
 
                             // change the instance number ("0020,0013"):
                             // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-                            fileInfoBuffer.setValue("0020,0013", String.valueOf(Z + 1),
-                                                    ((FileDicomTag) fileInfoBuffer.getEntry("0020,0013")).getLength()); // Reset the image (slice) number with the new number ordering
+                            fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(Z + 1),
+                                                                  fileInfoBuffer.getTagTable().get("0020,0013").getLength()); // Reset the image (slice) number with the new number ordering
 
                             destImage.setFileInfo(fileInfoBuffer, Z);
                         } else { // not a DICOM image, so these can be processed similarly
@@ -491,8 +494,8 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
 
                         // change the slice number ("0020,0013"):
                         // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-                        fileInfoBuffer.setValue("0020,0013", String.valueOf(Z + 1),
-                                                ((FileDicomTag) fileInfoBuffer.getEntry("0020,0013")).getLength()); // Reset the image (slice) number with the new number ordering
+                        fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(Z + 1),
+                                                              fileInfoBuffer.getTagTable().get("0020,0013").getLength()); // Reset the image (slice) number with the new number ordering
 
                         destImage.setFileInfo(fileInfoBuffer, Z);
                     } else { // not a DICOM image, so these can be processed similarly

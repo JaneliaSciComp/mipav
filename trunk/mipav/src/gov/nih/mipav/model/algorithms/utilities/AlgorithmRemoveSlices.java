@@ -155,7 +155,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Remove Slices: Source Image Locked.");
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
@@ -164,7 +164,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             displayError("Algorithm Remove Slices reports: Out of memory");
             srcImage.releaseLock();
             setCompleted(false);
-            
+
 
             return;
         }
@@ -172,7 +172,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         srcImage.releaseLock();
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        
+
 
         // get the axis of change
         try {
@@ -181,7 +181,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             MipavUtil.displayError(err.getMessage());
             srcImage.releaseLock();
             setCompleted(false);
-            
+
 
             return;
         }
@@ -231,7 +231,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                         displayError("Algorithm RemoveSlices reports: " + error.getMessage());
                         error.printStackTrace();
                         setCompleted(false);
-                        
+
 
                         return;
                     }
@@ -264,7 +264,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             resultImage = null;
             srcImage.releaseLock();
             finalize();
-            
+
 
             return;
         }
@@ -319,7 +319,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             displayError("Algorithm Remove Slices reports: Out of memory getting results.");
             srcImage.releaseLock();
             setCompleted(false);
-            
+
 
             return;
         } catch (IOException e2) {
@@ -329,7 +329,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             displayError(e2.getMessage());
             srcImage.releaseLock();
             setCompleted(false);
-            
+
 
             return;
         }
@@ -347,7 +347,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         resultImage.disposeLocal(); // this was not here before... MEMORY LEAK!
 
         resultImage = null; // after all, this was only temporary
-        
+
         setCompleted(true);
     } // end calcInPlace()
 
@@ -383,20 +383,20 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Remove Slices reports: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        
+
 
         // get the axis of change
         try { // axisOfChange = getAxisOfChange();
         } catch (Exception err) {
             MipavUtil.displayWarning("Failed to get axis orientation." + err.getMessage());
             setCompleted(false);
-            
+
 
             return;
         }
@@ -434,7 +434,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm RemoveSlices reports: " + error.getMessage());
                         setCompleted(false);
-                        
+
 
                         return;
                     }
@@ -466,7 +466,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         if (threadStopped) {
             imageBuffer = null;
             finalize();
-            
+
 
             return;
         }
@@ -474,7 +474,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         destImage.calcMinMax(); // calculate the minimum & maximum intensity values for the destImage-image
 
         // Clean up and let the calling dialog know that algorithm did its job
-        
+
         setCompleted(true);
     } // end calcStoreInDest()
 
@@ -708,8 +708,11 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
 
             // change the slice number ("0020,0013"):
             // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-            fileInfoBuffer.setValue("0020,0013", String.valueOf(destSlice + 1),
-                                    ((FileDicomTag) fileInfoBuffer.getEntry("0020,0013")).getLength()); // Reset the image (slice) number with the new number ordering
+            fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(destSlice + 1),
+                                                  fileInfoBuffer.getTagTable().get("0020,0013").getLength()); // Reset the image
+                                                                                                              // (slice) number with
+                                                                                                              // the new number
+                                                                                                              // ordering
 
             return fileInfoBuffer;
         }

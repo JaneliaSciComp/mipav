@@ -1440,30 +1440,32 @@ public class FileInfoGESigna5X extends FileInfoBase {
         //
         // set a bunch of variables from GE to DICOM ....
 
-        // fileInfo.setValue("0002,0001", version, 2);
-        // fileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-        fileInfo.setValue("0002,0003", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
-        fileInfo.setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian transfer syntax
-        fileInfo.setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-        fileInfo.setValue("0002,0013", "MIPAV--NIH", 10); //
+        // fileInfo.getTagTable().setValue("0002,0001", version, 2);
+        // fileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
+        fileInfo.getTagTable().setValue("0002,0003", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
+        fileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian transfer syntax
+        fileInfo.getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by
+                                                                              // Matt
+        fileInfo.getTagTable().setValue("0002,0013", "MIPAV--NIH", 10); //
 
         fileInfo.setEndianess(FileBase.LITTLE_ENDIAN); // ??
         fileInfo.setRescaleIntercept(getRescaleIntercept()); // ??
         fileInfo.setRescaleSlope(getRescaleSlope()); // ??
 
         // Column and row
-        fileInfo.setValue("0028,0011", new Short((short) getExtents()[0]), 2);
-        fileInfo.setValue("0028,0010", new Short((short) getExtents()[1]), 2);
+        fileInfo.getTagTable().setValue("0028,0011", new Short((short) getExtents()[0]), 2);
+        fileInfo.getTagTable().setValue("0028,0010", new Short((short) getExtents()[1]), 2);
 
-        fileInfo.setValue("0028,0100", new Short((short) 16), 2);
-        fileInfo.setValue("0028,0101", new Short((short) 16), 2);
-        fileInfo.setValue("0028,0102", new Short((short) 15), 2);
-        fileInfo.setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
-        fileInfo.setValue("0028,0004", new String("MONOCHROME2 "), 12); // photometric
-        fileInfo.setValue("0028,0103", new Short((short) 1), 2);
+        fileInfo.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
+        fileInfo.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
+        fileInfo.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
+        fileInfo.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+        fileInfo.getTagTable().setValue("0028,0004", new String("MONOCHROME2 "), 12); // photometric
+        fileInfo.getTagTable().setValue("0028,0103", new Short((short) 1), 2);
 
         // Instance number
-        fileInfo.setValue("0020,0013", String.valueOf(i + 1).trim(), String.valueOf(i + 1).trim().length());
+        fileInfo.getTagTable().setValue("0020,0013", String.valueOf(i + 1).trim(),
+                                        String.valueOf(i + 1).trim().length());
 
         // Pixel resolutions X, and Y.
         String s = String.valueOf(pixelResX) + "\\" + String.valueOf(pixelResY);
@@ -1471,30 +1473,32 @@ public class FileInfoGESigna5X extends FileInfoBase {
         String ddStr;
         String hhStr;
         String ssStr;
-        fileInfo.setValue("0028,0030", s, s.length());
+        fileInfo.getTagTable().setValue("0028,0030", s, s.length());
 
         // Slice thickness
         s = String.valueOf(sliceThickness);
-        fileInfo.setValue("0018,0050", s, s.length()); // slice thickness
+        fileInfo.getTagTable().setValue("0018,0050", s, s.length()); // slice thickness
         s = String.valueOf(scanSpacing);
-        fileInfo.setValue("0018,0088", s, s.length()); // spacing between slices
+        fileInfo.getTagTable().setValue("0018,0088", s, s.length()); // spacing between slices
 
         if (examType.trim().equals("CT")) {
-            fileInfo.setValue("0008,0060", "CT", 2);
-            fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.2", 25);
-            fileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.2", 25);
+            fileInfo.getTagTable().setValue("0008,0060", "CT", 2);
+            fileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.2", 25);
+            fileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.2", 25);
         } else {
-            fileInfo.setValue("0008,0060", "MR", 2);
-            fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.4", 25);
-            fileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.4", 25);
+            fileInfo.getTagTable().setValue("0008,0060", "MR", 2);
+            fileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.4", 25);
+            fileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.4", 25);
         }
 
-        // fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture UID
-        fileInfo.setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID all secondary
-                                                                          // capture info is installed by
-                                                                          // FileDicom.writeImage(), under the
-                                                                          // assumption that all saves must have been
-                                                                          // modified (and need that stuff)
+        // fileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture UID
+        fileInfo.getTagTable().setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID all
+                                                                                        // secondary capture info is
+                                                                                        // installed by
+                                                                                        // FileDicom.writeImage(), under
+                                                                                        // the assumption that all saves
+                                                                                        // must have been modified (and
+                                                                                        // need that stuff)
 
         secs2date(exDateTime);
 
@@ -1511,7 +1515,7 @@ public class FileInfoGESigna5X extends FileInfoBase {
         }
 
         s = year + mmStr + ddStr;
-        fileInfo.setValue("0008,0020", s, s.length()); // Study date
+        fileInfo.getTagTable().setValue("0008,0020", s, s.length()); // Study date
 
         if (hour < 10) {
             hhStr = "0" + hour;
@@ -1532,7 +1536,7 @@ public class FileInfoGESigna5X extends FileInfoBase {
         }
 
         s = hhStr + mmStr + ssStr + ".0";
-        fileInfo.setValue("0008,0030", s, s.length()); // Study time
+        fileInfo.getTagTable().setValue("0008,0030", s, s.length()); // Study time
 
         secs2date(seDateTime);
 
@@ -1549,7 +1553,7 @@ public class FileInfoGESigna5X extends FileInfoBase {
         }
 
         s = year + mmStr + ddStr;
-        fileInfo.setValue("0008,0021", s, s.length()); // Series date
+        fileInfo.getTagTable().setValue("0008,0021", s, s.length()); // Series date
 
         if (hour < 10) {
             hhStr = "0" + hour;
@@ -1570,7 +1574,7 @@ public class FileInfoGESigna5X extends FileInfoBase {
         }
 
         s = hhStr + mmStr + ssStr + ".0";
-        fileInfo.setValue("0008,0031", s, s.length()); // Series time
+        fileInfo.getTagTable().setValue("0008,0031", s, s.length()); // Series time
 
         secs2date(actualDateTime);
 
@@ -1587,7 +1591,7 @@ public class FileInfoGESigna5X extends FileInfoBase {
         }
 
         s = year + mmStr + ddStr;
-        fileInfo.setValue("0008,0023", s, s.length()); // Image date
+        fileInfo.getTagTable().setValue("0008,0023", s, s.length()); // Image date
 
         if (hour < 10) {
             hhStr = "0" + hour;
@@ -1608,45 +1612,48 @@ public class FileInfoGESigna5X extends FileInfoBase {
         }
 
         s = hhStr + mmStr + ssStr + ".0";
-        fileInfo.setValue("0008,0033", s, s.length()); // Image time
+        fileInfo.getTagTable().setValue("0008,0033", s, s.length()); // Image time
 
-        fileInfo.setValue("0008,0050", "123456", 6);
-        fileInfo.setValue("0008,0080", hospName.trim(), hospName.trim().length()); // Institution name
-        fileInfo.setValue("0008,1030", exDesc.trim(), exDesc.trim().length()); // Study description
-        fileInfo.setValue("0008,103E", seDesc.trim(), seDesc.trim().length()); // Series description
+        fileInfo.getTagTable().setValue("0008,0050", "123456", 6);
+        fileInfo.getTagTable().setValue("0008,0080", hospName.trim(), hospName.trim().length()); // Institution name
+        fileInfo.getTagTable().setValue("0008,1030", exDesc.trim(), exDesc.trim().length()); // Study description
+        fileInfo.getTagTable().setValue("0008,103E", seDesc.trim(), seDesc.trim().length()); // Series description
 
-        fileInfo.setValue("0010,0010", patientName.trim(), patientName.trim().length());
-        fileInfo.setValue("0010,0020", patientID.trim(), patientID.trim().length());
-        fileInfo.setValue("0010,1010", "0" + String.valueOf(patientAge), String.valueOf(patientAge).length() + 1);
-        fileInfo.setValue("0010,21B0", hist.trim(), hist.trim().length());
+        fileInfo.getTagTable().setValue("0010,0010", patientName.trim(), patientName.trim().length());
+        fileInfo.getTagTable().setValue("0010,0020", patientID.trim(), patientID.trim().length());
+        fileInfo.getTagTable().setValue("0010,1010", "0" + String.valueOf(patientAge),
+                                        String.valueOf(patientAge).length() + 1);
+        fileInfo.getTagTable().setValue("0010,21B0", hist.trim(), hist.trim().length());
 
         RandomNumberGen randomNum = new RandomNumberGen();
         randomNum.genUniformRandomNum(1, 100000);
         s = "1.2.840.34379.17.139875.234.455." + randomNum.genUniformRandomNum(1, 100000);
-        fileInfo.setValue("0020,000D", s, s.length()); // study UID
+        fileInfo.getTagTable().setValue("0020,000D", s, s.length()); // study UID
         s = "1.2.840.34379.17.139875.234.456." + randomNum.genUniformRandomNum(1, 100000);
-        fileInfo.setValue("0020,000E", s, s.length()); // series UID
+        fileInfo.getTagTable().setValue("0020,000E", s, s.length()); // series UID
 
 
         // study Number  (SH  short string)
-        fileInfo.setValue("0020,0010", String.valueOf((short) examNum), String.valueOf((short) examNum).length());
+        fileInfo.getTagTable().setValue("0020,0010", String.valueOf((short) examNum),
+                                        String.valueOf((short) examNum).length());
 
         // series Number (IS integer string)
-        fileInfo.setValue("0020,0011", String.valueOf((int) seriesNum), String.valueOf((int) seriesNum).length());
+        fileInfo.getTagTable().setValue("0020,0011", String.valueOf((int) seriesNum),
+                                        String.valueOf((int) seriesNum).length());
 
         s = -imgTLHC_R + "\\" + -imgTLHC_A + "\\" + imgTLHC_S;
 
         // s = imgTLHC_R + "\\" + imgTLHC_A + "\\" + imgTLHC_S;
-        fileInfo.setValue("0020,0032", s, s.length()); // image position Right center .....
+        fileInfo.getTagTable().setValue("0020,0032", s, s.length()); // image position Right center .....
 
 
         // This will depend on MR or CT
-        // fileInfo.setValue("0020,0037", ,   );  // image orientation
+        // fileInfo.getTagTable().setValue("0020,0037", ,   );  // image orientation
         if (examType.trim().equals("CT")) {
 
             // axial
             s = "1.0" + "\\" + "0.0" + "\\" + "0.0" + "\\" + "0.0" + "\\" + "1.0" + "\\" + "0.0";
-            fileInfo.setValue("0020,0037", s, s.length()); // image orientation
+            fileInfo.getTagTable().setValue("0020,0037", s, s.length()); // image orientation
         } else {
 
             // int[] orients = getAxisOrientation();
@@ -1704,11 +1711,11 @@ public class FileInfoGESigna5X extends FileInfoBase {
             }
 
             s += dicomOrients[5];
-            fileInfo.setValue("0020,0037", s, s.length()); // image orientation
+            fileInfo.getTagTable().setValue("0020,0037", s, s.length()); // image orientation
         }
 
         s = String.valueOf(imgLoc);
-        fileInfo.setValue("0020,1041", s, s.length()); // slice location
+        fileInfo.getTagTable().setValue("0020,1041", s, s.length()); // slice location
 
         return fileInfo;
     }
@@ -2295,6 +2302,15 @@ public class FileInfoGESigna5X extends FileInfoBase {
     }
 
     /**
+     * Returns the image name which should be used for the image this file info is attached to (studyNum_seriesNum).
+     *
+     * @return  The name to give to this file info's image.
+     */
+    public String getImageNameFromInfo() {
+        return examNum + "_" + seriesNum;
+    }
+
+    /**
      * Gets the origin of a particular slice; resets for the z dimension.
      *
      * @return  New start locations
@@ -2434,14 +2450,5 @@ public class FileInfoGESigna5X extends FileInfoBase {
         seconds = (int) (longSeconds - (minute * secondsPerMinute));
 
         return;
-    }
-
-    /**
-     * Returns the image name which should be used for the image this file info is attached to (studyNum_seriesNum).
-     * 
-     * @return  The name to give to this file info's image.
-     */
-    public String getImageNameFromInfo() {
-        return examNum + "_" + seriesNum;
     }
 }

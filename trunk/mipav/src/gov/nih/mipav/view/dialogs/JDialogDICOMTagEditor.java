@@ -36,19 +36,16 @@ public class JDialogDICOMTagEditor extends JDialogBase {
     private JPanelEdit[] newInputPanel;
 
     /** DOCUMENT ME! */
-    private boolean okay; // check for if input fields are okay to send back
-
-    /** DOCUMENT ME! */
     private JTextField originalTextField;
 
     /** DOCUMENT ME! */
     private boolean struckOkayButton = false; // if the user hit the OKAY button set to true
 
     /** DOCUMENT ME! */
-    private FileDicomTag tag;
-
-    /** DOCUMENT ME! */
     private String tagKey;
+
+    /** A reference to the tag table containing the tag we will be editing. */
+    private FileDicomTagTable tagTable;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -56,18 +53,17 @@ public class JDialogDICOMTagEditor extends JDialogBase {
      * builds a dialog box with as many input panels as is needed to allow changing each value (when there are more than
      * one values (vm > 1). as in "v1\v2\v3") independantly of any other value in the tag.
      *
-     * @param  parent   DICOM key (gggg,eeee) for this tag (as might be stored in a hashtable.
-     * @param  _tagKey  the owner of the JDialog. Sets the imageIcon.
-     * @param  _tag     -- the DicomTag to edit.
-     * @param  modal    -- force this dialog to stay on top (when true)
+     * @param  parent     DICOM key (gggg,eeee) for this tag (as might be stored in a hashtable.
+     * @param  _tagKey    the owner of the JDialog. Sets the imageIcon.
+     * @param  _tagTable  the tag table containing the tag to edit.
+     * @param  modal      force this dialog to stay on top (when true)
      */
-    public JDialogDICOMTagEditor(Dialog parent, String _tagKey, FileDicomTag _tag, boolean modal) {
+    public JDialogDICOMTagEditor(Dialog parent, String _tagKey, FileDicomTagTable _tagTable, boolean modal) {
         super(parent, modal);
 
-        okay = false;
-        this.tag = _tag;
+        this.tagTable = _tagTable;
         this.tagKey = _tagKey;
-        setTitle("Edit tag (" + tagKey + "): " + tag.getName());
+        setTitle("Edit tag (" + tagKey + "): " + tagTable.get(tagKey).getName());
 
         Box mainBox = new Box(BoxLayout.Y_AXIS);
         Box editBox = new Box(BoxLayout.Y_AXIS);
@@ -76,7 +72,7 @@ public class JDialogDICOMTagEditor extends JDialogBase {
         JPanel originalValuePanel = new JPanel();
         originalValuePanel.setBorder(buildTitledBorder("Original Tag Value"));
 
-        originalTextField = new JTextField(this.tag.getValue(true).toString());
+        originalTextField = new JTextField(tagTable.getValue(tagKey).toString());
         originalTextField.setColumns(32);
         originalTextField.setEditable(false);
         originalTextField.setBackground(Color.lightGray);
@@ -89,7 +85,7 @@ public class JDialogDICOMTagEditor extends JDialogBase {
         // Build editing panels.
         int i = 0;
         String editString;
-        StringTokenizer val = new StringTokenizer(this.tag.getValue(true).toString(), "\\");
+        StringTokenizer val = new StringTokenizer(tagTable.getValue(tagKey).toString(), "\\");
 
         if (val.countTokens() == 0) {
             newInputPanel = new JPanelEdit[1];
@@ -147,7 +143,6 @@ public class JDialogDICOMTagEditor extends JDialogBase {
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
         int i;
-        boolean okay;
 
         if (source == OKButton) {
 
@@ -166,8 +161,6 @@ public class JDialogDICOMTagEditor extends JDialogBase {
                 }
             }
 
-            okay = true;
-
             // build panel value
             StringBuffer newValue = new StringBuffer();
             int numValues = newInputPanel.length - 1;
@@ -178,7 +171,7 @@ public class JDialogDICOMTagEditor extends JDialogBase {
             }
 
             newValue.append(newInputPanel[i].getPanelValue());
-            tag.setValue(newValue.toString());
+            tagTable.setValue(tagKey, newValue.toString());
 
             // hide & set flags
             setVisible(false);
@@ -245,8 +238,8 @@ public class JDialogDICOMTagEditor extends JDialogBase {
      *
      * @return  DOCUMENT ME!
      */
-    public Object returnTag() {
-        return tag;
+    public FileDicomTag returnTag() {
+        return tagTable.get(tagKey);
     }
 
     /**
@@ -292,11 +285,11 @@ public class JDialogDICOMTagEditor extends JDialogBase {
     private JPanelEdit makeAppropriateInputPanel(String editString) {
         JPanelEdit inputPanel;
 
-        if (tag.getVR().equals("DA")) {
+        if (tagTable.get(tagKey).getValueRepresentation().equals("DA")) {
             inputPanel = new JPanelEditDate(editString, false);
-        } else if (tag.getVR().equals("TM")) {
+        } else if (tagTable.get(tagKey).getValueRepresentation().equals("TM")) {
             inputPanel = new JPanelEditTime(editString, false);
-        } else if (tag.getKeyword().equals("PatientSex")) {
+        } else if (tagTable.get(tagKey).getKeyword().equals("PatientSex")) {
             inputPanel = new JPanelEditSex(editString);
         } else {
             inputPanel = new JPanelEditDefault(editString);

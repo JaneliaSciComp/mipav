@@ -330,13 +330,10 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
                 resultImage.resetVOIs();
 
                 /*if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM){
-                 *  ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
-                 * 26); // Secondary Capture SOP UID ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0008,0016",
-                 * "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                 * ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus
-                 * Implementation UID made up by Matt
-                 * ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                 *  } */
+                 *  ((FileInfoDicom)(resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                 *}
+                 */
+                
                 // Make algorithm
                 emAlgo = new AlgorithmEntropyMinimization(resultImage, image, thresholdSelected, thresholdLevel,
                                                           subsample, noiseType);

@@ -1307,11 +1307,11 @@ public class ViewImageDirectory extends JFrame
             int a_int;
             int b_int;
 
-            if (!(FileIO.trim(a).equals(FileIO.trim(b)))) {
+            if (!(FileUtility.trimNumbersAndSpecial(a).equals(FileUtility.trimNumbersAndSpecial(b)))) {
                 return a.compareTo(b);
             } else {
-                a_int = FileIO.getFileIndex(a);
-                b_int = FileIO.getFileIndex(b);
+                a_int = FileUtility.getFileIndex(a);
+                b_int = FileUtility.getFileIndex(b);
             }
 
             if (a_int > b_int) {

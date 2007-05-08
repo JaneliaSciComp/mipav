@@ -26,7 +26,8 @@ import javax.swing.*;
  * @author   William Gandler
  * @see      AlgorithmMRIShadingCorrection
  */
-public class JDialogMRIShadingCorrection extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogMRIShadingCorrection extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -187,6 +188,7 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMRIShadingCorrection) {
             image.clearMask();
 
@@ -252,52 +254,6 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("normalization_const", norm));
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.SIGMAS, new float[] {scaleX, scaleY}));
-        scriptParameters.storeNumIterations(iters);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_periphery_threshold", thresholdSelected));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("periphery_threshold_level", thresholdLevel));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.doOutputNewImage()) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setNorm(scriptParameters.getParams().getFloat("normalization_const"));
-        float[] sigmas = scriptParameters.getUnnormalizedSigmas();
-        setScaleX(sigmas[0]);
-        setScaleY(sigmas[1]);
-        setIters(scriptParameters.getNumIterations());
-        setThresholdSelected(scriptParameters.getParams().getBoolean("do_periphery_threshold"));
-        setThresholdLevel(scriptParameters.getParams().getFloat("periphery_threshold_level"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Loads the default settings from Preferences to set up the dialog.
@@ -345,7 +301,7 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
      */
     public void saveDefaults() {
         String delim = ",";
-        
+
         String defaultsString = norm + delim;
         defaultsString += scaleX + delim;
         defaultsString += scaleY + delim;
@@ -445,12 +401,7 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
                 resultImage.resetVOIs();
 
                 /*if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM){
-                 *  ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
-                 * 26); // Secondary Capture SOP UID ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0008,0016",
-                 * "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                 * ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus
-                 * Implementation UID made up by Matt
-                 * ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                 *  ((FileInfoDicom)(resultImage.getFileInfo(0))).setSecondaryCaptureTags();
                  *  } */
                 // Make algorithm
                 mAlgo = new AlgorithmMRIShadingCorrection(resultImage, image, norm, scaleX, scaleY, iters,
@@ -462,7 +413,7 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
                 mAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), mAlgo);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -500,7 +451,7 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
                 mAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), mAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -534,6 +485,55 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
             }
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setNorm(scriptParameters.getParams().getFloat("normalization_const"));
+
+        float[] sigmas = scriptParameters.getUnnormalizedSigmas();
+        setScaleX(sigmas[0]);
+        setScaleY(sigmas[1]);
+        setIters(scriptParameters.getNumIterations());
+        setThresholdSelected(scriptParameters.getParams().getBoolean("do_periphery_threshold"));
+        setThresholdLevel(scriptParameters.getParams().getFloat("periphery_threshold_level"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("normalization_const", norm));
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.SIGMAS,
+                                                                       new float[] { scaleX, scaleY }));
+        scriptParameters.storeNumIterations(iters);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_periphery_threshold", thresholdSelected));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("periphery_threshold_level", thresholdLevel));
     }
 
     /**

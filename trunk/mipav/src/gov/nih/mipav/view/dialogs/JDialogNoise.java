@@ -58,6 +58,9 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     private JLabel imageRangeLabel;
 
     /** DOCUMENT ME! */
+    private double maximumNoise;
+
+    /** DOCUMENT ME! */
     private double min, max;
 
     /** DOCUMENT ME! */
@@ -98,8 +101,6 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
-    private double maximumNoise;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -279,12 +280,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     resultImage.setImageName(name);
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
                     }
 
                     // Make algorithm
@@ -385,14 +381,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                         for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17",
-                                                                                    16); // bogus Implementation UID
-                                                                                         // made up by Matt
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
                         }
                     }
 
@@ -545,7 +534,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         textStart.setFont(serif12);
         textStart.addFocusListener(this);
         optPanel.add(textStart);
-        
+
         JLabel gaussLabel = new JLabel("Maximum noise for Gaussian is at 4 standard deviations");
         gaussLabel.setFont(serif12);
         gaussLabel.setForeground(Color.black);

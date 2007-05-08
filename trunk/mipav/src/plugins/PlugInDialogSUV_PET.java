@@ -333,11 +333,12 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
          */
 
         if (fileInfo[0] instanceof FileInfoDicom) {
+            FileDicomTagTable firstSliceTagTable = ((FileInfoDicom) fileInfo[0]).getTagTable();
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0010,0040") != null) {
-                    sex = (String) (((FileInfoDicom) fileInfo[0]).getValue("0010,0040"));
+                if (firstSliceTagTable.getValue("0010,0040") != null) {
+                    sex = (String) firstSliceTagTable.getValue("0010,0040");
 
                     if (sex.length() != 0) {
 
@@ -363,8 +364,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0010,1020") != null) {
-                    heightStr = (String) (((FileInfoDicom) fileInfo[0]).getValue("0010,1020"));
+                if (firstSliceTagTable.getValue("0010,1020") != null) {
+                    heightStr = (String) firstSliceTagTable.getValue("0010,1020");
 
                     try {
                         height = Float.valueOf(heightStr).floatValue();
@@ -387,8 +388,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0010,1030") != null) {
-                    weightStr = (String) (((FileInfoDicom) fileInfo[0]).getValue("0010,1030"));
+                if (firstSliceTagTable.getValue("0010,1030") != null) {
+                    weightStr = (String) firstSliceTagTable.getValue("0010,1030");
 
                     try {
                         weight = Float.valueOf(weightStr).floatValue();
@@ -411,12 +412,10 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getTagsList().get("0054,0016") != null) {
+                if (firstSliceTagTable.get("0054,0016") != null) {
 
-                    if (((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true) !=
-                            null) {
-                        sq = (FileDicomSQ)
-                                 ((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true);
+                    if (firstSliceTagTable.getValue("0054,0016") != null) {
+                        sq = (FileDicomSQ) firstSliceTagTable.getValue("0054,0016");
                         display = sq.getSequenceDisplay();
                         doseStr = "";
                         found = false;
@@ -466,8 +465,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0054,1102") != null) {
-                    decayString = (String) (((FileInfoDicom) fileInfo[0]).getValue("0054,1102"));
+                if (firstSliceTagTable.getValue("0054,1102") != null) {
+                    decayString = (String) firstSliceTagTable.getValue("0054,1102");
                     decayString = decayString.trim();
 
                     if (decayString.equalsIgnoreCase("NONE")) {
@@ -492,12 +491,10 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getTagsList().get("0054,0016") != null) {
+                if (firstSliceTagTable.get("0054,0016") != null) {
 
-                    if (((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true) !=
-                            null) {
-                        sq = (FileDicomSQ)
-                                 ((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true);
+                    if (firstSliceTagTable.getValue("0054,0016") != null) {
+                        sq = (FileDicomSQ) firstSliceTagTable.getValue("0054,0016");
                         display = sq.getSequenceDisplay();
                         radStartStr = "";
                         found = false;
@@ -612,8 +609,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0008,0032") != null) {
-                    acqTimeStr = (String) (((FileInfoDicom) fileInfo[0]).getValue("0008,0032"));
+                if (firstSliceTagTable.getValue("0008,0032") != null) {
+                    acqTimeStr = (String) firstSliceTagTable.getValue("0008,0032");
                     acqTimeStr = acqTimeStr.trim();
                     Preferences.debug("Acqusition Start Time = " + acqTimeStr + "\n");
                     firstColIndex = -1;
@@ -704,12 +701,10 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getTagsList().get("0054,0016") != null) {
+                if (firstSliceTagTable.get("0054,0016") != null) {
 
-                    if (((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true) !=
-                            null) {
-                        sq = (FileDicomSQ)
-                                 ((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true);
+                    if (firstSliceTagTable.getValue("0054,0016") != null) {
+                        sq = (FileDicomSQ) firstSliceTagTable.getValue("0054,0016");
                         display = sq.getSequenceDisplay();
                         halfLifeStr = "";
                         found = false;

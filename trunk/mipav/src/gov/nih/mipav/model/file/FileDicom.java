@@ -20,7 +20,7 @@ import javax.imageio.*;
  * This class reads and writes DICOM files. The DICOM file format consists of header information marked by tags, with
  * the pixel data as the last tag. Each tag has a length field that contains the length of the tag, so it is possible to
  * skip over tags that are unrecognized. This class is entirely based on DICOM version 3.0 published by ACR/NEMA and so
- * tests for all the tags in the Data Dictionary (DICOM v. 3.0 Part 6). It stores these in a Hashtable found in
+ * tests for all the tags in the Data Dictionary (DICOM v. 3.0 Part 6). It stores these in a table found in
  * FileInfoDicom.
  *
  * <p>The Hashtable is based upon the default DICOM dictionary which contains all possible standard DICOM tags. It also
@@ -43,21 +43,28 @@ public class FileDicom extends FileDicomBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /**
-     * used in reading; if the preferences are at this level or higher than dicomDebugOutputValue get sent to the debug
-     * panel. This is used strictly in readHeader, as the comparison statements are there for speed enhancement (as
-     * opposed to relying on the settings in Preferences.debug(String, int)). Only used for informational statements and
-     * not used in failure statements, where the original values are left as they were (around level 3).
-     */
-    private static final int dicomDebugOutputValue = 5;
+    /** The tag marking the start of the image data. */
+    public static final String IMAGE_TAG = "7FE0,0010";
+
+    /** The tag marking the beginning of a dicom sequence. */
+    public static final String SEQ_ITEM_BEGIN = "FFFE,E000";
+
+    /** The tag marking the end of a dicom sequence. */
+    public static final String SEQ_ITEM_END = "FFFE,E00D";
+
+    /** The tag marking the end of an undefined length dicom sequence. */
+    public static final String SEQ_ITEM_UNDEF_END = "FFFE,E0DD";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Length of the value field of data element. */
     private int elementLength;
 
+    /** Second number (DICOM element in a group) in ordered pair of numbers that uniquely identifies a data element. */
+    private int elementWord;
+
     /**
-     * when dicom image data is 'encapsulated,' it may be in pieces, or 'fragments.' don't know quite why, or if pieces
+     * When dicom image data is 'encapsulated,' it may be in pieces, or 'fragments.' don't know quite why, or if pieces
      * should be kept together. If in fragments, the image data may span several slices, called a 'frame.'
      */
     private boolean encapsulated = false;
@@ -68,31 +75,25 @@ public class FileDicom extends FileDicomBase {
     /** File object of the image. */
     private File fileHeader;
 
-
     /** Meta data structure in which to save all the DICOM tags. */
     private FileInfoDicom fileInfo;
-
 
     /** Name of the file to be read in. */
     private String fileName;
 
-    /** location of first element. */
-    private final int FIRST_ELEMENT = 132; //
+    /** Location of first element. */
+    private final int FIRST_ELEMENT = 132;
 
     /** First number (DICOM group) in ordered pair of numbers that uniquely identifies a data element. */
     private int groupWord;
-    
-    /** Second number (DICOM element in a group) in ordered pair of numbers that uniquely 
-     * identifies a data element. */
-    private int elementWord;
 
     /** True if the DICOM image header has been read. */
     private boolean hasHeaderBeenRead = false;
 
-    /** location of "DICM". */
+    /** Location of 'DICM'. */
     private final int ID_OFFSET = 128;
 
-    /** illegal element length. */
+    /** Illegal element length. */
     private final int ILLEGAL_LENGTH = -1;
 
     /** Reference to the image read into the application. */
@@ -122,7 +123,7 @@ public class FileDicom extends FileDicomBase {
     private String nameSQ = "";
 
     /**
-     * if the file is <i>quiet</i> no user-interaction is performed. Useful for determining whether or not to display
+     * If the file is <i>quiet</i> no user-interaction is performed. Useful for determining whether or not to display
      * the MipavUtil.displayError() is to be called. This allows the option of leaving the user-interaction and
      * notification of an error to occur here or to be handled somewhere else (as in, when an IOException is thrown but
      * we'd prefer to notify the user once, rather than for each exception.) based on programming preferences or
@@ -130,11 +131,10 @@ public class FileDicom extends FileDicomBase {
      */
     private boolean quiet = false;
 
-
     /** DOCUMENT ME! */
     private FileRaw rawFile;
 
-    /** undefined element length. */
+    /** Undefined element length. */
     private final int UNDEFINED_LENGTH = -2;
 
     /** Value Representation - see FileInfoDicom. */
@@ -152,8 +152,6 @@ public class FileDicom extends FileDicomBase {
      * @exception  IOException  if there is an error constructing the files.
      */
     public FileDicom(String fDirPlusName) throws IOException {
-
-        FileIO.getFileIndex("a");
 
         try {
             fileHeader = new File(fDirPlusName);
@@ -177,52 +175,10 @@ public class FileDicom extends FileDicomBase {
             }
 
             fileInfo = new FileInfoDicom(null, null, FileUtility.DICOM);
-            fileInfo.resetDictionary();
             fileInfo.setEndianess(LITTLE_ENDIAN);
 
         } catch (NullPointerException npe) {
             npe.printStackTrace();
-        } catch (OutOfMemoryError e) {
-            MipavUtil.displayError("Out of memory in FileDicom constructor.");
-            throw new IOException();
-        }
-    }
-
-
-    /**
-     * DICOM reader/writer constructor. Creates the access files and ensures that the files are opened for read-write
-     * access; it will fall back to read-only if read-write access to the image file is not granted. The file info gets
-     * the DICOM dictionary set, as well as the endianess property is set. The image itself is not read.
-     *
-     * @param      ifile  an image file to read.
-     *
-     * @exception  IOException  if there is an error constructing the files.
-     */
-    public FileDicom(File ifile) throws IOException {
-        fileName = ifile.getName();
-        fileDir = ifile.getParent() + File.separator;
-
-        try {
-            fileHeader = ifile;
-
-            if (raFile != null) {
-
-                try {
-                    raFile.close();
-                } catch (IOException ex) { }
-            }
-
-            try {
-                raFile = new RandomAccessFile(fileHeader, "rw");
-            } catch (IOException e) {
-                raFile = new RandomAccessFile(fileHeader, "r");
-            }
-
-            fileInfo = new FileInfoDicom(fileName, fileDir, FileUtility.DICOM);
-            fileInfo.resetDictionary();
-            fileInfo.setEndianess(LITTLE_ENDIAN);
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
-
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory in FileDicom constructor.");
             throw new IOException();
@@ -264,7 +220,6 @@ public class FileDicom extends FileDicomBase {
             }
 
             fileInfo = new FileInfoDicom(fileName, fileDir, FileUtility.DICOM);
-            fileInfo.resetDictionary();
             fileInfo.setEndianess(LITTLE_ENDIAN);
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
         } catch (NullPointerException npe) {
@@ -297,23 +252,29 @@ public class FileDicom extends FileDicomBase {
         fileName = null;
         fileDir = null;
         fileHeader = null;
-        
+
         fileInfo = null;
         image = null;
         vr = null;
 
         if (rawFile != null) {
+
             try {
                 rawFile.close();
-            } catch (IOException ex) { }
+            } catch (IOException ex) {
+                // closing.. ignore errors
+            }
 
             rawFile.finalize();
         }
 
         if (raFile != null) {
+
             try {
                 raFile.close();
-            } catch (IOException ex) { }
+            } catch (IOException ex) {
+                // closing.. ignore errors
+            }
 
             raFile = null;
         }
@@ -322,12 +283,12 @@ public class FileDicom extends FileDicomBase {
         nameSQ = null;
         jpegData = null;
 
-
         try {
             super.finalize();
-        } catch (Throwable er) { }
+        } catch (Throwable er) {
+            // ignore errors during memory cleanup..
+        }
     }
-
 
     /**
      * Accessor that returns the file info.
@@ -338,7 +299,6 @@ public class FileDicom extends FileDicomBase {
         return fileInfo;
     }
 
-
     /**
      * returns the ModelLUT, if there, which might be specified by the <code>0028,1201</code>, <code>0028,1202</code>,
      * <code>0028,1203</code> tags.
@@ -348,7 +308,6 @@ public class FileDicom extends FileDicomBase {
     public final ModelLUT getLUT() {
         return lut;
     }
-
 
     /**
      * Looks for the DICM _tag_ in the File header. If present, the image is DICOM 3.0 format.
@@ -438,7 +397,7 @@ public class FileDicom extends FileDicomBase {
      *   <li>Color Pallete for each color channel</li>
      * </ul>
      *
-     * Display type changes the modality; image length is then also recalculated.
+     * <p>Display type changes the modality; image length is then also recalculated.</p>
      *
      * @return     <code>true</code> if successful, otherwise <code>false</code>.
      *
@@ -448,7 +407,7 @@ public class FileDicom extends FileDicomBase {
      * @see        #getNextElement(boolean)
      * @see        #convertGroupElement(int, int)
      */
-    public boolean readHeader(boolean loadTagBuffer) throws IOException {
+    public boolean readHeader(boolean loadTagBuffer, boolean loadImageInfo) throws IOException {
         int[] extents;
         String type, // type of data; there are 7, see FileInfoDicom
                name; // string representing the tag
@@ -469,14 +428,15 @@ public class FileDicom extends FileDicomBase {
 
             if (!isQuiet()) {
                 MipavUtil.displayError("Out of memory in FileDicom.readHeader");
-                Preferences.debug("Out of memory in FileDicom.readHeader\n");
+                Preferences.debug("Out of memory in FileDicom.readHeader\n", Preferences.DEBUG_FILEIO);
             } else {
-                Preferences.debug("Out of memory in FileDicom.readHeader");
+                Preferences.debug("Out of memory in FileDicom.readHeader\n", Preferences.DEBUG_FILEIO);
             }
 
             throw new IOException("Out of Memory in FileDicom.readHeader");
         }
 
+        metaGroupLength = 0;
         elementLength = 0;
         fileInfo.setEndianess(endianess);
 
@@ -493,7 +453,7 @@ public class FileDicom extends FileDicomBase {
 
         fileInfo.setDataType(ModelStorageBase.SHORT); // Default file type
 
-        boolean debug = Preferences.debugLevel(Preferences.DEBUG_FILEIO);
+        FileDicomTagTable tagTable = fileInfo.getTagTable();
 
         while (flag == true) {
 
@@ -514,30 +474,39 @@ public class FileDicom extends FileDicomBase {
             // *******  Gets  the next element
             getNextElement(endianess); // gets group, element, length
             name = convertGroupElement(groupWord, elementWord);
-            
-            // if (debug) {    Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
-            // elementLength + "\n"); }
+
+            FileDicomKey key = new FileDicomKey(name);
+            int tagVM;
+
+            // Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
+            // elementLength + "\n", Preferences.DEBUG_FILEIO);
 
             if ((fileInfo.vr_type == FileInfoDicom.IMPLICIT) || (groupWord == 2)) {
 
                 // implicit VR means VR is based on tag as defined in dictionary
-                try {
-                    type = ((FileDicomTag) fileInfo.getEntry(name)).getType();
-                } catch (NullPointerException e) {
+                type = DicomDictionary.getType(key);
+                tagVM = DicomDictionary.getVM(key);
+
+                // the tag was not found in the dictionary..
+                if (type == null) {
                     type = "typeUnknown";
+                    tagVM = 0;
                 }
             } else { // Explicit VR
-                type = FileDicomTag.getType(new String(vr));
+                type = FileDicomTagInfo.getType(new String(vr));
 
-                if ((FileDicomTag) fileInfo.getEntry(name) == null) {
+                if (!DicomDictionary.containsTag(key)) {
+                    tagVM = 0;
 
                     // put private tags with explicit VRs in file info hashtable
-                    fileInfo.putTag(name, new FileDicomTag(groupWord, elementWord, null));
+                    tagTable.putPrivateTagValue(new FileDicomTagInfo(key, new String(vr), tagVM, "PrivateTag",
+                                                                     "Private Tag"));
+                } else {
+                    FileDicomTagInfo info = (FileDicomTagInfo) DicomDictionary.getInfo(key);
+                    tagTable.putPrivateTagValue(info);
+                    tagVM = info.getValueMultiplicity();
+                    tagTable.get(key).setValueRepresentation(new String(vr));
                 }
-            }
-
-            if ((fileInfo.vr_type == FileInfoDicom.EXPLICIT) && (groupWord != 2)) {
-                ((FileDicomTag) fileInfo.getEntry(name)).setVR(new String(vr));
             }
 
             if ((elementWord == 0) && (elementLength == 0)) { // End of file
@@ -564,19 +533,16 @@ public class FileDicom extends FileDicomBase {
 
                 if (type.equals("typeString")) {
                     strValue = getString(elementLength);
-                    fileInfo.setValue(new FileDicomKey(name), strValue, elementLength);
+                    tagTable.setValue(key, strValue, elementLength);
 
-                    if (debug) {
-                        Preferences.debug(((FileDicomTag) (fileInfo.getEntry(name))).getName() + "\t\t(" + name +
-                                          ");\t" + type + "; value = " + strValue + "; element length = " +
-                                          elementLength + "\n");
-                    }
+                    Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t" + type + "; value = " +
+                                      strValue + "; element length = " + elementLength + "\n",
+                                      Preferences.DEBUG_FILEIO);
                 } else if (type.equals("otherByteString")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
 
-                    if (!name.equals("7FE0,0010")) {
+                    if (!name.equals(IMAGE_TAG)) {
                         data = getByte(tagVM, elementLength, endianess);
-                        fileInfo.setValue(new FileDicomKey(name), data, elementLength);
+                        tagTable.setValue(key, data, elementLength);
 
                         if (tagVM == 1) {
                             // if ( debug >= dicomDebugOutputValue)    Preferences.debug(
@@ -586,106 +552,83 @@ public class FileDicom extends FileDicomBase {
                     }
                 } else if (type.equals("otherWordString") && !name.equals("0028,1201") && !name.equals("0028,1202") &&
                                !name.equals("0028,1203")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
 
-                    if (!name.equals("7FE0,0010")) {
+                    if (!name.equals(IMAGE_TAG)) {
                         data = getByte(tagVM, elementLength, endianess);
-                        fileInfo.setValue(new FileDicomKey(name), data, elementLength);
+                        tagTable.setValue(key, data, elementLength);
 
                         if (tagVM == 1) {
-                            // if ( debug >= dicomDebugOutputValue)    Preferences.debug(
-                            // ((FileDicomTag)(fileInfo.getEntry(name))).getName() +        "\t\t(" + name + ");\t
-                            // (byte) value = " + ((Byte)(data)).byteValue() +        " element length = 2" + "\n", 2);
+                            // Preferences.debug(((FileDicomTag)(fileInfo.getEntry(name))).getName() +        "\t\t(" +
+                            // name + ");\t (byte) value = " + ((Byte)(data)).byteValue() +        " element length = 2"
+                            // + "\n", Preferences.DEBUG_FILEIO);
                         }
                     }
                 } else if (type.equals("typeShort")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
                     data = getShort(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
+                    tagTable.setValue(key, data, elementLength);
 
                     if (tagVM == 1) {
-
-                        if (debug) {
-                            Preferences.debug(((FileDicomTag) (fileInfo.getEntry(name))).getName() + "\t\t(" + name +
-                                              ");\t (short) value = " + ((Short) (data)).shortValue() +
-                                              " element length = 2" + "\n");
-                        }
+                        Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (short) value = " +
+                                          ((Short) (data)).shortValue() + " element length = 2" + "\n",
+                                          Preferences.DEBUG_FILEIO);
                     }
                 } else if (type.equals("typeInt")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
                     data = getInteger(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
+                    tagTable.setValue(key, data, elementLength);
 
                     if (tagVM == 1) {
 
-                        if (debug) {
-                            Preferences.debug(((FileDicomTag) (fileInfo.getEntry(name))).getName() + "\t\t(" + name +
-                                              ");\t (int) value = " + ((Integer) (data)).intValue() +
-                                              " element length = 4" + "\n");
-                        }
+                        Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (int) value = " +
+                                          ((Integer) (data)).intValue() + " element length = 4" + "\n",
+                                          Preferences.DEBUG_FILEIO);
                     }
                 } else if (type.equals("typeFloat")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
                     data = getFloat(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
+                    tagTable.setValue(key, data, elementLength);
 
                     if (tagVM == 1) {
-
-                        if (debug) {
-                            Preferences.debug(((FileDicomTag) (fileInfo.getEntry(name))).getName() + "\t\t(" + name +
-                                              ");\t (float) value = " + ((Float) (data)).floatValue() +
-                                              " element length = 4" + "\n");
-                        }
+                        Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (float) value = " +
+                                          ((Float) (data)).floatValue() + " element length = 4" + "\n",
+                                          Preferences.DEBUG_FILEIO);
                     }
                 } else if (type.equals("typeDouble")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
                     data = getDouble(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
+                    tagTable.setValue(key, data, elementLength);
 
                     if (tagVM == 1) {
-
-                        if (debug) {
-                            Preferences.debug(((FileDicomTag) (fileInfo.getEntry(name))).getName() + "\t\t(" + name +
-                                              ");\t (double) value = " + ((Double) (data)).doubleValue() +
-                                              " element length = 8" + "\n");
-                        }
+                        Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (double) value = " +
+                                          ((Double) (data)).doubleValue() + " element length = 8" + "\n",
+                                          Preferences.DEBUG_FILEIO);
                     }
                 }
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
                 else if (type.equals("typeSequence") || ((type == "typeUnknown") && (elementLength == -1))) {
-                    int gr = groupWord;
-                    int el = elementWord;
                     int len = elementLength;
 
                     // save these values because they'll change as the sequence is read in below.
-                    if (debug) {
-                        Preferences.debug("Sequence Tags: (" + name + "); length = " + len + "\n");
-                    }
+                    Preferences.debug("Sequence Tags: (" + name + "); length = " + len + "\n",
+                                      Preferences.DEBUG_FILEIO);
 
                     Object sq = getSequence(endianess, len);
                     // System.err.print( "SEQUENCE DONE: Sequence Tags: (" + name + "); length = " +
                     // Integer.toString(len, 0x10) + "\n");
 
                     try {
-                        fileInfo.setValue(new FileDicomKey(name), sq, elementLength);
+                        tagTable.setValue(key, sq, elementLength);
                     } catch (NullPointerException e) {
-                        System.err.println("Null pointer exception while " + "setting value.  Trying to put " +
-                                           "new tag.");
-                        fileInfo.putTag(name, new FileDicomTag(gr, el, sq));
+                        System.err.println("Null pointer exception while setting value.  Trying to put new tag.");
                     }
 
                     // fileInfo.setLength(name, len);
-                    if (debug) {
-                        Preferences.debug("Finished sequence tags.\n\n");
-                    }
+                    Preferences.debug("Finished sequence tags.\n\n", Preferences.DEBUG_FILEIO);
                 }
             } catch (OutOfMemoryError e) {
 
                 if (!isQuiet()) {
                     MipavUtil.displayError("Out of memory in FileDicom.readHeader");
-                    Preferences.debug("Out of memory in FileDicom.readHeader\n");
+                    Preferences.debug("Out of memory in FileDicom.readHeader\n", Preferences.DEBUG_FILEIO);
                 } else {
-                    Preferences.debug("Out of memory in FileDicom.readHeader\n");
+                    Preferences.debug("Out of memory in FileDicom.readHeader\n", Preferences.DEBUG_FILEIO);
                 }
 
                 throw new IOException();
@@ -697,9 +640,8 @@ public class FileDicom extends FileDicomBase {
                     metaGroupLength = ((Integer) (data)).intValue();
                 }
 
-                if (debug) {
-                    Preferences.debug("metalength = " + metaGroupLength + " location " + getFilePointer() + "\n");
-                }
+                Preferences.debug("metalength = " + metaGroupLength + " location " + getFilePointer() + "\n",
+                                  Preferences.DEBUG_FILEIO);
             } else if (name.equals("0018,602C")) {
                 fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 0);
             } else if (name.equals("0018,602E")) {
@@ -715,41 +657,29 @@ public class FileDicom extends FileDicomBase {
                 // 1.2.840.10008.1.2.4.57   Lossless JPEG Non-hierarchical (JPEG Coding Process 14)
                 // we should bounce out if we don't support this transfer syntax
                 if (strValue.trim().equals("1.2.840.10008.1.2")) {
-
-                    if (debug) {
-                        Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue +
-                                          " Implicit VR - Little Endian \n");
-                    }
+                    Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue +
+                                      " Implicit VR - Little Endian \n", Preferences.DEBUG_FILEIO);
 
                     fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
                     fileInfo.vr_type = FileInfoDicom.IMPLICIT;
                     encapsulated = false;
                 } else if (strValue.trim().equals("1.2.840.10008.1.2.1")) {
-
-                    if (debug) {
-                        Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue +
-                                          " Explicit VR - Little Endian \n");
-                    }
+                    Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue +
+                                      " Explicit VR - Little Endian \n", Preferences.DEBUG_FILEIO);
 
                     fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
                     fileInfo.vr_type = FileInfoDicom.EXPLICIT;
                     encapsulated = false;
                 } else if (strValue.trim().equals("1.2.840.10008.1.2.2")) {
-
-                    if (debug) {
-                        Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue +
-                                          " Explicit VR - Big Endian \n");
-                    }
+                    Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue +
+                                      " Explicit VR - Big Endian \n", Preferences.DEBUG_FILEIO);
 
                     fileInfo.setEndianess(FileBase.BIG_ENDIAN);
                     fileInfo.vr_type = FileInfoDicom.EXPLICIT;
                     encapsulated = false;
                 } else if (strValue.trim().startsWith("1.2.840.10008.1.2.4.")) { // JPEG
-
-                    if (debug) {
-                        Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue +
-                                          " Implicit VR - Little Endian \n");
-                    }
+                    Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue +
+                                      " Implicit VR - Little Endian \n", Preferences.DEBUG_FILEIO);
 
                     fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
                     fileInfo.vr_type = FileInfoDicom.EXPLICIT;
@@ -765,10 +695,8 @@ public class FileDicom extends FileDicomBase {
                         lossy = true;
                     }
                 } else {
-
-                    if (debug) {
-                        Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue + " unknown!\n");
-                    }
+                    Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue + " unknown!\n",
+                                      Preferences.DEBUG_FILEIO);
 
                     if (!isQuiet()) {
                         MipavUtil.displayError("MIPAV does not support transfer syntax:\n" + strValue);
@@ -779,10 +707,10 @@ public class FileDicom extends FileDicomBase {
                     return false; // couldn't read it!
                 }
             } else if (name.equals("0028,0010")) { // Set the extents, used for reading the image
-                extents[1] = ((Short) fileInfo.getValue(name)).intValue();
+                extents[1] = ((Short) tagTable.getValue(name)).intValue();
                 // fileInfo.columns = extents[1];
             } else if (name.equals("0028,0011")) {
-                extents[0] = ((Short) fileInfo.getValue(name)).intValue();
+                extents[0] = ((Short) tagTable.getValue(name)).intValue();
                 // fileInfo.rows = extents[0];
             } else if (name.equals("0028,1201")) { // LUT for red-channel
 
@@ -816,7 +744,7 @@ public class FileDicom extends FileDicomBase {
                     // " storeColorPallete throws iae when something other than"+
                     // " 0028,120[1|2|3] is used.");
                 }
-            } else if (name.equals("7FE0,0010")) { // && elementLength!=0) { // The image.
+            } else if (name.equals(IMAGE_TAG) && loadImageInfo) { // && elementLength!=0) { // The image.
 
                 // This complicated code determines whether or not the offset is correct for the image.
                 // For that to be true, (height * width * pixel spacing) + the present offset should equal
@@ -825,18 +753,17 @@ public class FileDicom extends FileDicomBase {
 
                 int imageLength = extents[0] * extents[1] * fileInfo.bitsAllocated / 8;
 
-                if (debug) {
-                    Preferences.debug("File Dicom: readHeader - Data tag = " + "7FE0,0010\n");
-                    Preferences.debug("File Dicom: readHeader - imageLength = " + imageLength + "\n");
-                    Preferences.debug("File Dicom: readHeader - getFilePointer = " + getFilePointer() + "\n");
-                }
+                Preferences.debug("File Dicom: readHeader - Data tag = " + IMAGE_TAG + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("File Dicom: readHeader - imageLength = " + imageLength + "\n",
+                                  Preferences.DEBUG_FILEIO);
+                Preferences.debug("File Dicom: readHeader - getFilePointer = " + getFilePointer() + "\n",
+                                  Preferences.DEBUG_FILEIO);
 
-                if (fileInfo.getModality() == fileInfo.POSITRON_EMISSION_TOMOGRAPHY) {
+                if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
                     fileInfo.displayType = ModelStorageBase.FLOAT;
                 } else {
                     fileInfo.displayType = fileInfo.getDataType();
                 }
-
 
                 if (!encapsulated) {
                     // System.err.println( "\n" +
@@ -853,7 +780,7 @@ public class FileDicom extends FileDicomBase {
                     }
 
                     if ((imageLength + getFilePointer()) <= fileEnd) {
-                        fileInfo.setOffset ((int) getFilePointer()); // Mark where the image is
+                        fileInfo.setOffset((int) getFilePointer()); // Mark where the image is
                     }
                     // I think the extra 4 bytes is for explicit tags!!
                     // see Part 5 page 27 1998
@@ -879,229 +806,230 @@ public class FileDicom extends FileDicomBase {
 
                 try {
 
-                    if (fileInfo.getEntry(name) != null) {
-                        fileInfo.setValue(name, readUnknownData(), elementLength);
+                    // set the value if the tag is in the dictionary (which means it isn't private..) or has already
+                    // been put into the tag table without a value (private tag with explicit vr)
+                    if (DicomDictionary.containsTag(key) || tagTable.containsTag(key)) {
+                        tagTable.setValue(key, readUnknownData(), elementLength);
                     } else {
-                        fileInfo.putTag(name, new FileDicomTag(groupWord, elementWord, readUnknownData()));
-                        ((FileDicomTag) fileInfo.getEntry(name)).setLength(elementLength);
+                        tagTable.putPrivateTagValue(new FileDicomTagInfo(key, null, tagVM, "PrivateTag",
+                                                                         "Private Tag"));
 
-                        if (debug) {
-                            Preferences.debug("Group = " + groupWord + " element = " + elementWord + " Type unknown" +
-                                              "; value = " + strValue + "; element length = " + elementLength + "\n");
-                        }
+                        tagTable.setValue(key, readUnknownData(), elementLength);
+
+                        Preferences.debug("Group = " + groupWord + " element = " + elementWord + " Type unknown" +
+                                          "; value = " + strValue + "; element length = " + elementLength + "\n",
+                                          Preferences.DEBUG_FILEIO);
                     }
                 } catch (OutOfMemoryError e) {
 
                     if (!isQuiet()) {
                         MipavUtil.displayError("Out of memory error while reading \"" + fileName +
                                                "\".\nThis may not be a DICOM image.");
-                        Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n");
+                        Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n",
+                                          Preferences.DEBUG_FILEIO);
                     } else {
-                        Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n");
+                        Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n",
+                                          Preferences.DEBUG_FILEIO);
                     }
 
                     throw new IOException("Out of memory storing unknown tags in FileDicom.readHeader");
                 } catch (NullPointerException npe) {
                     System.err.println("name: " + name);
                     System.err.print("no hashtable? ");
-                    System.err.println(fileInfo.getTagsList() == null);
+                    System.err.println(tagTable == null);
                     throw npe;
                 }
             }
         }
         // Done reading tags
 
+        if (loadImageInfo) {
+            String photometricInterp = null;
 
-        String photometricInterp = null;
-
-        if (fileInfo.getValue("0028,0004") != null) {
-            fileInfo.photometricInterp = ((String) (fileInfo.getValue("0028,0004"))).trim();
-            photometricInterp = fileInfo.photometricInterp.trim();
-        }
-
-        if (photometricInterp == null) { // Default to MONOCROME2 and hope for the best
-            photometricInterp = new String("MONOCHROME2");
-        }
-
-        if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
-                (fileInfo.pixelRepresentation == 0) && (fileInfo.bitsAllocated == 8)) {
-            fileInfo.setDataType(ModelStorageBase.UBYTE);
-            fileInfo.displayType = ModelStorageBase.UBYTE;
-            fileInfo.bytesPerPixel = 1;
-        } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
-                       (fileInfo.pixelRepresentation == 1) && (fileInfo.bitsAllocated == 8)) {
-            fileInfo.setDataType(ModelStorageBase.BYTE);
-            fileInfo.displayType = ModelStorageBase.BYTE;
-            fileInfo.bytesPerPixel = 1;
-        } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
-                       (fileInfo.pixelRepresentation == 0) && (fileInfo.bitsAllocated > 8)) {
-
-            if (fileInfo.getModality() == FileInfoBase.COMPUTED_TOMOGRAPHY) {
-
-                // Found an CT that was incorrectly label pixelRepresentation = 0 (unsigned when
-                // in fact all CT images are signed!
-                fileInfo.setDataType(ModelStorageBase.SHORT);
-                fileInfo.displayType = ModelStorageBase.SHORT;
-                fileInfo.bytesPerPixel = 2;
-            } else {
-                fileInfo.setDataType(ModelStorageBase.USHORT);
-                fileInfo.displayType = ModelStorageBase.USHORT;
-                fileInfo.bytesPerPixel = 2;
+            if (tagTable.getValue("0028,0004") != null) {
+                fileInfo.photometricInterp = ((String) (tagTable.getValue("0028,0004"))).trim();
+                photometricInterp = fileInfo.photometricInterp.trim();
             }
 
-        } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
-                       (fileInfo.pixelRepresentation == 1) && (fileInfo.bitsAllocated > 8)) {
-            fileInfo.setDataType(ModelStorageBase.SHORT);
-            fileInfo.displayType = ModelStorageBase.SHORT;
-            fileInfo.bytesPerPixel = 2;
-        }
-        // add something for RGB DICOM images  - search on this !!!!
-        else if (photometricInterp.equals("RGB") && (fileInfo.bitsAllocated == 8)) {
-            fileInfo.setDataType(ModelStorageBase.ARGB);
-            fileInfo.displayType = ModelStorageBase.ARGB;
-            fileInfo.bytesPerPixel = 3;
-
-            if (fileInfo.getValue("0028,0006") != null) {
-                fileInfo.planarConfig = ((Short) (fileInfo.getValue("0028,0006"))).shortValue();
-            } else {
-                fileInfo.planarConfig = 0; // rgb, rgb, rgb
-            }
-        } else if (photometricInterp.equals("YBR_FULL_422") && (fileInfo.bitsAllocated == 8) && encapsulated) {
-            fileInfo.setDataType(ModelStorageBase.ARGB);
-            fileInfo.displayType = ModelStorageBase.ARGB;
-            fileInfo.bytesPerPixel = 3;
-
-            if (fileInfo.getValue("0028,0006") != null) {
-                fileInfo.planarConfig = ((Short) (fileInfo.getValue("0028,0006"))).shortValue();
-            } else {
-                fileInfo.planarConfig = 0; // rgb, rgb, rgb
-            }
-        } else if (photometricInterp.equals("PALETTE COLOR") && (fileInfo.pixelRepresentation == 0) &&
-                       (fileInfo.bitsAllocated == 8)) {
-            fileInfo.setDataType(ModelStorageBase.UBYTE);
-            fileInfo.displayType = ModelStorageBase.UBYTE;
-            fileInfo.bytesPerPixel = 1;
-
-            int[] dimExtents = new int[2];
-            dimExtents[0] = 4;
-            dimExtents[1] = 256;
-            lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
-
-            for (int q = 0; q < dimExtents[1]; q++) {
-                lut.set(0, q, 1); // the alpha channel is preloaded.
-            }
-            // sets the LUT to exist; we wait for the pallete tags to
-            // describe what the lut should actually look like.
-        } else {
-
-            if (debug) {
-                Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation");
+            if (photometricInterp == null) { // Default to MONOCROME2 and hope for the best
+                photometricInterp = new String("MONOCHROME2");
             }
 
-            if (raFile != null) {
-                raFile.close();
-            }
-
-            return false;
-        }
-
-        if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
-            fileInfo.displayType = ModelStorageBase.FLOAT;
-            // a bit of a hack - indicates Model image should be reallocated to float for PET image the data is stored
-            // as 2 bytes (short) but is "normalized" using the slope parameter required for PET images (intercept
-            // always 0 for PET).
-        }
-
-        if (((fileInfo.getDataType() == ModelStorageBase.UBYTE) ||
-                 (fileInfo.getDataType() == ModelStorageBase.USHORT)) && (fileInfo.getRescaleIntercept() < 0)) { // if image originally was unsigned and rescale makes a negative, change
-
-            // display type so image shows up properly
-            if (fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-                fileInfo.displayType = ModelStorageBase.BYTE;
+            if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
+                    (fileInfo.pixelRepresentation == 0) && (fileInfo.bitsAllocated == 8)) {
+                fileInfo.setDataType(ModelStorageBase.UBYTE);
+                fileInfo.displayType = ModelStorageBase.UBYTE;
+                fileInfo.bytesPerPixel = 1;
+            } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
+                           (fileInfo.pixelRepresentation == 1) && (fileInfo.bitsAllocated == 8)) {
                 fileInfo.setDataType(ModelStorageBase.BYTE);
-            } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                fileInfo.displayType = ModelStorageBase.SHORT;
+                fileInfo.displayType = ModelStorageBase.BYTE;
+                fileInfo.bytesPerPixel = 1;
+            } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
+                           (fileInfo.pixelRepresentation == 0) && (fileInfo.bitsAllocated > 8)) {
+
+                if (fileInfo.getModality() == FileInfoBase.COMPUTED_TOMOGRAPHY) {
+
+                    // Found an CT that was incorrectly label pixelRepresentation = 0 (unsigned when
+                    // in fact all CT images are signed!
+                    fileInfo.setDataType(ModelStorageBase.SHORT);
+                    fileInfo.displayType = ModelStorageBase.SHORT;
+                    fileInfo.bytesPerPixel = 2;
+                } else {
+                    fileInfo.setDataType(ModelStorageBase.USHORT);
+                    fileInfo.displayType = ModelStorageBase.USHORT;
+                    fileInfo.bytesPerPixel = 2;
+                }
+            } else if ((photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2")) &&
+                           (fileInfo.pixelRepresentation == 1) && (fileInfo.bitsAllocated > 8)) {
                 fileInfo.setDataType(ModelStorageBase.SHORT);
+                fileInfo.displayType = ModelStorageBase.SHORT;
+                fileInfo.bytesPerPixel = 2;
             }
-        }
+            // add something for RGB DICOM images  - search on this !!!!
+            else if (photometricInterp.equals("RGB") && (fileInfo.bitsAllocated == 8)) {
+                fileInfo.setDataType(ModelStorageBase.ARGB);
+                fileInfo.displayType = ModelStorageBase.ARGB;
+                fileInfo.bytesPerPixel = 3;
 
-
-        if (fileInfo.getValue("0028,1201") != null) {
-
-            // red channel LUT
-            FileDicomTag tag = (FileDicomTag) fileInfo.getTagsList().get(new FileDicomKey("0028,1201"));
-            Object[] values = tag.getValueList();
-            int lutVals = values.length;
-
-            // load LUT.
-            if (values instanceof Byte[]) {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(1, qq, ((Byte) values[qq]).intValue());
+                if (tagTable.getValue("0028,0006") != null) {
+                    fileInfo.planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+                } else {
+                    fileInfo.planarConfig = 0; // rgb, rgb, rgb
                 }
+            } else if (photometricInterp.equals("YBR_FULL_422") && (fileInfo.bitsAllocated == 8) && encapsulated) {
+                fileInfo.setDataType(ModelStorageBase.ARGB);
+                fileInfo.displayType = ModelStorageBase.ARGB;
+                fileInfo.bytesPerPixel = 3;
+
+                if (tagTable.getValue("0028,0006") != null) {
+                    fileInfo.planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+                } else {
+                    fileInfo.planarConfig = 0; // rgb, rgb, rgb
+                }
+            } else if (photometricInterp.equals("PALETTE COLOR") && (fileInfo.pixelRepresentation == 0) &&
+                           (fileInfo.bitsAllocated == 8)) {
+                fileInfo.setDataType(ModelStorageBase.UBYTE);
+                fileInfo.displayType = ModelStorageBase.UBYTE;
+                fileInfo.bytesPerPixel = 1;
+
+                int[] dimExtents = new int[2];
+                dimExtents[0] = 4;
+                dimExtents[1] = 256;
+                lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
+
+                for (int q = 0; q < dimExtents[1]; q++) {
+                    lut.set(0, q, 1); // the alpha channel is preloaded.
+                }
+                // sets the LUT to exist; we wait for the pallete tags to
+                // describe what the lut should actually look like.
             } else {
+                Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation",
+                                  Preferences.DEBUG_FILEIO);
 
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(1, qq, ((Short) values[qq]).intValue());
+                if (raFile != null) {
+                    raFile.close();
                 }
+
+                return false;
             }
-        }
 
-        if (fileInfo.getValue("0028,1202") != null) {
-
-            // green channel LUT
-            FileDicomTag tag = (FileDicomTag) fileInfo.getTagsList().get(new FileDicomKey("0028,1202"));
-            Object[] values = tag.getValueList();
-            int lutVals = values.length;
-
-            // load LUT.
-            if (values instanceof Byte[]) {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(2, qq, ((Byte) values[qq]).intValue());
-                }
-            } else {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(2, qq, ((Short) values[qq]).intValue());
-                }
+            if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
+                fileInfo.displayType = ModelStorageBase.FLOAT;
+                // a bit of a hack - indicates Model image should be reallocated to float for PET image the data is
+                // stored as 2 bytes (short) but is "normalized" using the slope parameter required for PET images
+                // (intercept always 0 for PET).
             }
-        }
 
+            if (((fileInfo.getDataType() == ModelStorageBase.UBYTE) ||
+                     (fileInfo.getDataType() == ModelStorageBase.USHORT)) && (fileInfo.getRescaleIntercept() < 0)) { // if image originally was unsigned and rescale makes a negative, change
 
-        if (fileInfo.getValue("0028,1203") != null) {
-
-            // blue channel LUT
-            FileDicomTag tag = (FileDicomTag) fileInfo.getTagsList().get(new FileDicomKey("0028,1203"));
-            Object[] values = tag.getValueList();
-            int lutVals = values.length;
-
-            // load LUT.
-            if (values instanceof Byte[]) {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(3, qq, ((Byte) values[qq]).intValue());
-                }
-            } else {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(3, qq, ((Short) values[qq]).intValue());
+                // display type so image shows up properly
+                if (fileInfo.getDataType() == ModelStorageBase.UBYTE) {
+                    fileInfo.displayType = ModelStorageBase.BYTE;
+                    fileInfo.setDataType(ModelStorageBase.BYTE);
+                } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
+                    fileInfo.displayType = ModelStorageBase.SHORT;
+                    fileInfo.setDataType(ModelStorageBase.SHORT);
                 }
             }
 
-            // here we make the lut indexed because we know that
-            // all the LUT tags are in the LUT.
-            lut.makeIndexedLUT(null);
+
+            if (tagTable.getValue("0028,1201") != null) {
+
+                // red channel LUT
+                FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1201"));
+                Object[] values = tag.getValueList();
+                int lutVals = values.length;
+
+                // load LUT.
+                if (values instanceof Byte[]) {
+
+                    for (int qq = 0; qq < lutVals; qq++) {
+                        lut.set(1, qq, ((Byte) values[qq]).intValue());
+                    }
+                } else {
+
+                    for (int qq = 0; qq < lutVals; qq++) {
+                        lut.set(1, qq, ((Short) values[qq]).intValue());
+                    }
+                }
+            }
+
+            if (tagTable.getValue("0028,1202") != null) {
+
+                // green channel LUT
+                FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1202"));
+                Object[] values = tag.getValueList();
+                int lutVals = values.length;
+
+                // load LUT.
+                if (values instanceof Byte[]) {
+
+                    for (int qq = 0; qq < lutVals; qq++) {
+                        lut.set(2, qq, ((Byte) values[qq]).intValue());
+                    }
+                } else {
+
+                    for (int qq = 0; qq < lutVals; qq++) {
+                        lut.set(2, qq, ((Short) values[qq]).intValue());
+                    }
+                }
+            }
+
+            if (tagTable.getValue("0028,1203") != null) {
+
+                // blue channel LUT
+                FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1203"));
+                Object[] values = tag.getValueList();
+                int lutVals = values.length;
+
+                // load LUT.
+                if (values instanceof Byte[]) {
+
+                    for (int qq = 0; qq < lutVals; qq++) {
+                        lut.set(3, qq, ((Byte) values[qq]).intValue());
+                    }
+                } else {
+
+                    for (int qq = 0; qq < lutVals; qq++) {
+                        lut.set(3, qq, ((Short) values[qq]).intValue());
+                    }
+                }
+
+                // here we make the lut indexed because we know that
+                // all the LUT tags are in the LUT.
+                lut.makeIndexedLUT(null);
+            }
+
+            hasHeaderBeenRead = true;
         }
 
         if ((loadTagBuffer == true) && (raFile != null)) {
             raFile.close();
         }
 
-        hasHeaderBeenRead = true;
-
         return true;
-
     }
 
     /**
@@ -1130,7 +1058,7 @@ public class FileDicom extends FileDicomBase {
         // Read in header info, if something goes wrong, print out error
         if (hasHeaderBeenRead == false) {
 
-            if (!readHeader(true)) {
+            if (!readHeader(true, true)) {
                 throw (new IOException("DICOM header file error"));
             }
         }
@@ -1218,12 +1146,12 @@ public class FileDicom extends FileDicomBase {
 
         double slope = fileInfo.getRescaleSlope();
         double intercept = fileInfo.getRescaleIntercept();
-        
+
         if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
             slope = 1;
             intercept = 0;
         }
-        
+
         for (int i = 0; i < buffer.length; i++) {
             tmp = buffer[i];
 
@@ -1297,7 +1225,7 @@ public class FileDicom extends FileDicomBase {
         // Read in header info, if something goes wrong, print out error
         if (hasHeaderBeenRead == false) {
 
-            if (!readHeader(true)) {
+            if (!readHeader(true, true)) {
                 throw (new IOException("DICOM header file error"));
             }
         }
@@ -1383,8 +1311,8 @@ public class FileDicom extends FileDicomBase {
 
         float slope = (float) fileInfo.getRescaleSlope();
         float intercept = (float) fileInfo.getRescaleIntercept();
-        
-        if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE){
+
+        if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
             slope = 1;
             intercept = 0;
         }
@@ -1432,341 +1360,6 @@ public class FileDicom extends FileDicomBase {
         // End of Matt changes for 2/2003
     }
 
-
-    /**
-     * Reads in all the tags available in the file and stores them in the Hashtable in FileInfoDicom. This method
-     * handles the various tags that are present at the beginning of a DICOM image file. It also sets the important File
-     * Info variables based on what it finds.
-     *
-     * <p>The method will return with a failure code if it finds the tag &quot;0000,0000&quot; or it mis-reads the
-     * header and starts reading from an odd byte.</p>
-     *
-     * <p>As the reader runs through the tags in the header, it reads them based on the type. There are 7 types:</p>
-     *
-     * <ul>
-     *   <li>typeString</li>
-     *   <li>typeShort</li>
-     *   <li>typeInt</li>
-     *   <li>typeFloat</li>
-     *   <li>typeDouble</li>
-     *   <li>typeSequence</li>
-     *   <li>typeUnknown</li>
-     * </ul>
-     *
-     * <p>Any special handling based on type occurs for each tag (@see FileInfoDicom), then it is added to the DICOM
-     * tags table. Each tag is checked against a small list of individual tags, as some tags have an effect on the way
-     * the following tags are interpreted.</p>
-     *
-     * <p>This method also affects some of the properties of the FileInfoDicom.</p>
-     *
-     * <ul>
-     *   <li>MetaGroupLength</li>
-     *   <li>Units of Measure</li>
-     *   <li>Transfer Syntax</li>
-     *   <li>Extents</li>
-     * </ul>
-     *
-     * Display type changes the modality; image length is then also recalculated.
-     *
-     * @return     <code>true</code> if successful, otherwise <code>false</code>.
-     *
-     * @exception  IOException  if there is an error reading the file
-     *
-     * @see        FileInfoDicom
-     * @see        #getNextElement(boolean)
-     * @see        #convertGroupElement(int, int)
-     */
-    public boolean readParserHeader() throws IOException {
-        int[] extents;
-        String type, // type of data; there are 7, see FileInfoDicom
-               name; // string representing the tag
-
-        boolean endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian
-        boolean flag = true;
-
-        loadTagBuffer();
-
-        String strValue = null;
-        Object data = null;
-
-        try {
-            extents = new int[2];
-        } catch (OutOfMemoryError e) {
-
-            if (!isQuiet()) {
-                MipavUtil.displayError("Out of memory in FileDicom.readHeader");
-            }
-
-            throw new IOException();
-        }
-
-        metaGroupLength = 0;
-        elementLength = 0;
-        fileInfo.setEndianess(endianess);
-
-        skipBytes(ID_OFFSET); // Find "DICM" tag
-
-        // In v. 3.0, within the ID_OFFSET is general header information that
-        // is not encoded into data elements and not present in DICOM v. 2.0.
-        // However, it is optional.
-
-        if (!getString(4).equals("DICM")) {
-            fileInfo.containsDICM = false;
-            seek(0); // set file pointer to zero
-        }
-
-        fileInfo.setDataType(ModelStorageBase.SHORT); // Default file type
-
-        while (flag == true) {
-
-            if (fileInfo.containsDICM) {
-
-                // endianess is defined in a tag and set here, after the transfer
-                // syntax group has been read in
-                if (getFilePointer() >= (ID_OFFSET + metaGroupLength)) {
-                    endianess = fileInfo.getEndianess();
-                }
-            } else {
-
-                if (getFilePointer() >= metaGroupLength) {
-                    endianess = fileInfo.getEndianess();
-                }
-            }
-
-            getNextElement(endianess); // gets group, element, length
-            name = convertGroupElement(groupWord, elementWord);
-
-            // Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " + elementLength +
-            // "\n");
-            if ((fileInfo.vr_type == FileInfoDicom.IMPLICIT) || (groupWord == 2)) {
-
-                // implicit VR means VR is based on tag as defined in dictionary
-                try {
-                    type = ((FileDicomTag) fileInfo.getEntry(name)).getType();
-                } catch (NullPointerException e) {
-                    type = "typeUnknown";
-                }
-            } else { // Explicit VR
-                type = FileDicomTag.getType(new String(vr));
-
-                if ((FileDicomTag) fileInfo.getEntry(name) == null) {
-
-                    // put private tags with explicit VRs in file info hashtable
-                    fileInfo.putTag(name, new FileDicomTag(groupWord, elementWord, null));
-                }
-            }
-
-            if ((fileInfo.vr_type == FileInfoDicom.EXPLICIT) && (groupWord != 2)) {
-                ((FileDicomTag) fileInfo.getEntry(name)).setVR(new String(vr));
-            }
-
-            if ((elementWord == 0) && (elementLength == 0)) { // End of file
-
-                if (!isQuiet()) {
-                    MipavUtil.displayError("Error:  Unexpected end of file.  Unable to load image.");
-                }
-
-                throw new IOException("Error while reading header");
-            }
-
-            if ((getFilePointer() & 1) != 0) { // The location is at an odd byte number
-
-                if (!isQuiet()) {
-                    MipavUtil.displayError("Error:  Input file corrupted.  Unable to load image.");
-                }
-
-                throw new IOException("Error while reading header");
-            }
-
-            try {
-
-                if (type.equals("typeString")) {
-                    strValue = getString(elementLength);
-                    fileInfo.setValue(new FileDicomKey(name), strValue, elementLength);
-                } else if (type.equals("otherByteString")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
-
-                    data = getByte(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
-                } else if (type.equals("otherWordString") && !name.equals("0028,1201") && !name.equals("0028,1202") &&
-                               !name.equals("0028,1203") && !name.equals("7FE0,0010")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
-
-                    data = getByte(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
-                } else if (type.equals("typeShort")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
-                    data = getShort(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
-
-                } else if (type.equals("typeInt")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
-                    data = getInteger(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
-
-                } else if (type.equals("typeFloat")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
-                    data = getFloat(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
-
-                } else if (type.equals("typeDouble")) {
-                    int tagVM = ((FileDicomTag) fileInfo.getEntry(name)).getVM();
-                    data = getDouble(tagVM, elementLength, endianess);
-                    fileInfo.setValue(new FileDicomKey(name), data, elementLength);
-
-                } else if (type.equals("typeSequence") || ((type == "typeUnknown") && (elementLength == -1))) {
-                    int gr = groupWord;
-                    int el = elementWord;
-                    int len = elementLength;
-
-                    // save these values because they'll change as the sequence is read in below.
-                    Object sq = getSequence(endianess, len);
-
-                    try {
-                        fileInfo.setValue(new FileDicomKey(name), sq, elementLength);
-                    } catch (NullPointerException e) {
-                        fileInfo.putTag(name, new FileDicomTag(gr, el, sq));
-                    }
-                    // Preferences.debug("Finished sequence tags.\n", 2);
-                }
-            } catch (OutOfMemoryError e) {
-
-                if (!isQuiet()) {
-                    MipavUtil.displayError("Out of memory in FileDicom.readHeader");
-                }
-
-                throw new IOException();
-            }
-
-            if (name.equals("0002,0000")) { // length of the transfer syntax group
-
-                if (data != null) {
-                    metaGroupLength = ((Integer) (data)).intValue();
-                }
-            } else if (name.equals("0002,0010")) {
-
-                // Transfer Syntax UID: DICOM part 10 page 13, part 5 p. 42-48, Part 6 p. 53
-                // 1.2.840.10008.1.2        Implicit VR Little Endian (Default)
-                // 1.2.840.10008.1.2.1      Explicit VR Little Endian
-                // 1.2.840.10008.1.2.2      Explicit VR Big Endian
-                // 1.2.840.10008.1.2.4.50   8-bit Lossy JPEG (JPEG Coding Process 1)
-                // 1.2.840.10008.1.2.4.51   12-bit Lossy JPEG (JPEG Coding Process 4)
-                // we should bounce out if we don't support this transfer syntax
-                if (strValue.trim().equals("1.2.840.10008.1.2")) {
-                    fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
-                    fileInfo.vr_type = FileInfoDicom.IMPLICIT;
-                    encapsulated = false;
-                } else if (strValue.trim().equals("1.2.840.10008.1.2.1")) {
-                    fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
-                    fileInfo.vr_type = FileInfoDicom.EXPLICIT;
-                    encapsulated = false;
-                } else if (strValue.trim().equals("1.2.840.10008.1.2.2")) {
-                    fileInfo.setEndianess(FileBase.BIG_ENDIAN);
-                    fileInfo.vr_type = FileInfoDicom.EXPLICIT;
-                    encapsulated = false;
-                } else if (strValue.trim().startsWith("1.2.840.10008.1.2.4.")) { // JPEG
-                    fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
-                    fileInfo.vr_type = FileInfoDicom.EXPLICIT;
-                    encapsulated = true;
-
-                    if (strValue.trim().equals("1.2.840.10008.1.2.4.57") ||
-                            strValue.trim().equals("1.2.840.10008.1.2.4.58") ||
-                            strValue.trim().equals("1.2.840.10008.1.2.4.65") ||
-                            strValue.trim().equals("1.2.840.10008.1.2.4.66") ||
-                            strValue.trim().equals("1.2.840.10008.1.2.4.70")) {
-                        lossy = false;
-                    } else {
-                        lossy = true;
-                    }
-                } else {
-
-                    if (!isQuiet()) {
-                        MipavUtil.displayError("MIPAV does not support transfer syntax:\n" + strValue);
-                    }
-
-                    flag = false; // break loop
-
-                    return false; // couldn't read it!
-                }
-            } else if (name.equals("0028,0010")) { // Set the extents, used for reading the image
-                extents[1] = ((Short) fileInfo.getValue(name)).intValue();
-            } else if (name.equals("0028,0011")) {
-                extents[0] = ((Short) fileInfo.getValue(name)).intValue();
-            } else if (name.equals("0028,0010")) { // Set the extents, used for reading the image
-                extents[1] = ((Short) fileInfo.getValue(name)).intValue();
-                // fileInfo.columns = extents[1];
-            } else if (name.equals("0028,0011")) {
-                extents[0] = ((Short) fileInfo.getValue(name)).intValue();
-                // fileInfo.rows = extents[0];
-            } else if (name.equals("0028,1201")) { // LUT for red-channel
-
-                // red channel LUT
-                try {
-                    getColorPallete(new FileDicomKey(name));
-                } catch (IllegalArgumentException iae) {
-                    // System.err.println("Dude.  You screwed up somewhere!  "+
-                    // " storeColorPallete throws iae when something other than"+
-                    // " 0028,120[1|2|3] is used.");
-                }
-            } else if (name.equals("0028,1202")) { // LUT for red-channel
-
-                // blue channel LUT
-                try {
-                    getColorPallete(new FileDicomKey(name));
-                } catch (IllegalArgumentException iae) {
-                    // System.err.println("Dude.  You screwed up somewhere!  "+
-                    // " storeColorPallete throws iae when something other than"+
-                    // " 0028,120[1|2|3] is used.");
-                }
-            } else if (name.equals("0028,1203")) { // LUT for red-channel
-
-                // green channel LUT
-                try {
-                    getColorPallete(new FileDicomKey(name));
-                } catch (IllegalArgumentException iae) {
-                    // storeColorPallete throws iae when something other than
-                    // 0028,120[1|2|3] is used.
-                    // System.err.println("Dude.  You screwed up somewhere!  "+
-                    // " storeColorPallete throws iae when something other than"+
-                    // " 0028,120[1|2|3] is used.");
-                }
-            } else if (name.equals("7FE0,0010")) {
-                fileInfo.setExtents(extents);
-                flag = false; // break loop
-            } else if (type.equals("typeUnknown")) { // Private tag, may not be reading in correctly.
-
-                try {
-
-                    if (fileInfo.getEntry(name) != null) {
-                        fileInfo.setValue(name, readUnknownData(), elementLength);
-                    } else {
-                        fileInfo.putTag(name, new FileDicomTag(groupWord, elementWord, readUnknownData()));
-                    }
-                } catch (OutOfMemoryError e) {
-
-                    if (!isQuiet()) {
-                        MipavUtil.displayError("Out of memory error while reading \"" + fileName +
-                                               "\".\nThis may not be a DICOM image.");
-                    } else {
-                        Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n");
-                    }
-
-                    throw new IOException("Out of memory storing unknown tags in FileDicom.readHeader");
-                } catch (NullPointerException npe) {
-                    System.err.println("name: " + name);
-                    System.err.print("no hashtable? ");
-                    System.err.println(fileInfo.getTagsList() == null);
-                    throw npe;
-                }
-            }
-        }
-
-        raFile.close();
-
-        return true;
-
-    }
-
     /**
      * Sets the file info and sets the hasHeaderBeenRead to true.
      *
@@ -1786,12 +1379,13 @@ public class FileDicom extends FileDicomBase {
      *
      * <p>Should an out-of-memory condition occur an IOException will be thrown.</p>
      *
-     * @param      fName  File name for the image file.
+     * @param      fName    File name for the image file.
+     * @param      refInfo  The reference file info, containing the reference tag table.
      *
      * @exception  IOException  if there is an error constructing the files.
      */
-    public final void setFileName(String fName) throws IOException {
-        this.setFileName(new File(fileDir + fName));
+    public final void setFileName(String fName, FileInfoDicom refInfo) throws IOException {
+        this.setFileName(new File(fileDir + fName), refInfo);
     }
 
     /**
@@ -1803,11 +1397,12 @@ public class FileDicom extends FileDicomBase {
      *
      * <p>Should an out-of-memory condition occur an IOException will be thrown.</p>
      *
-     * @param      f  image file to point to.
+     * @param      f        image file to point to.
+     * @param      refInfo  The reference file info, containing the reference tag table.
      *
      * @exception  IOException  if there is an error constructing the files.
      */
-    public void setFileName(File f) throws IOException {
+    public void setFileName(File f, FileInfoDicom refInfo) throws IOException {
         fileName = f.getName();
         fileDir = f.getParent() + File.separator;
         fileHeader = f;
@@ -1822,8 +1417,7 @@ public class FileDicom extends FileDicomBase {
             }
 
             raFile = new RandomAccessFile(fileHeader, "r");
-            fileInfo = new FileInfoDicom(fileName, fileDir, FileUtility.DICOM);
-            fileInfo.resetDictionary();
+            fileInfo = new FileInfoDicom(fileName, fileDir, FileUtility.DICOM, refInfo);
         } catch (OutOfMemoryError e) {
 
             if (!quiet) {
@@ -1845,13 +1439,14 @@ public class FileDicom extends FileDicomBase {
      *
      * <p>Should an out-of-memory condition occur an IOException will be thrown.</p>
      *
-     * @param      fName  File name for the image file.
-     * @param      fDir   Directory to locate the image file.
+     * @param      fName    File name for the image file.
+     * @param      fDir     Directory to locate the image file.
+     * @param      refInfo  The reference file info, containing the reference tag table.
      *
      * @exception  IOException  if there is an error constructing the files.
      */
-    public final void setFileName(String fName, String fDir) throws IOException {
-        this.setFileName(new File(fDir + fName));
+    public final void setFileName(String fName, String fDir, FileInfoDicom refInfo) throws IOException {
+        this.setFileName(new File(fDir + fName), refInfo);
     }
 
     /**
@@ -2028,7 +1623,7 @@ public class FileDicom extends FileDicomBase {
         fileInfo = (FileInfoDicom) image.getFileInfo(0);
 
         String nFramesStr = String.valueOf(end - start + 1);
-        fileInfo.setValue("0028,0008", nFramesStr, nFramesStr.length());
+        fileInfo.getTagTable().setValue("0028,0008", nFramesStr, nFramesStr.length());
 
         // store that this DICOM has been saved/modified since original capture:
         stampSecondaryCapture(fileInfo);
@@ -2039,7 +1634,7 @@ public class FileDicom extends FileDicomBase {
         try {
             writeHeader(raFile, fileInfo);
 
-            if (fileInfo.getModality() == fileInfo.POSITRON_EMISSION_TOMOGRAPHY) {
+            if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
                 float[] data = new float[imageSize];
 
                 // if the data type isn't short, this will be majorly screwed up
@@ -2077,7 +1672,6 @@ public class FileDicom extends FileDicomBase {
         }
     }
 
-
     /**
      * Converts the integer values of the group word and element word into a string that is the hexadecimal
      * representation of group word and element word, separated by a comma.
@@ -2107,7 +1701,6 @@ public class FileDicom extends FileDicomBase {
 
         return (first + "," + second); // name is the hex string of the tag
     }
-
 
     /**
      * Starts with image tag. goes with OB/OW. image file must be open, file ptr: raFile.
@@ -2140,13 +1733,13 @@ public class FileDicom extends FileDicomBase {
 
         initializeFullRead();
         seek(fileInfo.getOffset());
-        
+
         boolean endianess = fileInfo.getEndianess();
         getNextElement(endianess); // gets group, element, length
-        
+
         String name = convertGroupElement(groupWord, elementWord);
 
-        if (!name.equals("7FE0,0010")) {
+        if (!name.equals(IMAGE_TAG)) {
 
             if (!isQuiet()) {
                 MipavUtil.displayError("FileDicom: Image Data tag not found.  Cannot extract encapsulated image data.");
@@ -2175,7 +1768,7 @@ public class FileDicom extends FileDicomBase {
 
         Vector v = new Vector();
 
-        while (name.equals("FFFE,E000")) {
+        while (name.equals(SEQ_ITEM_BEGIN)) {
             byte[] imageFrag = new byte[elementLength]; // temp buffer
 
             for (int i = 0; i < imageFrag.length; i++) {
@@ -2187,7 +1780,7 @@ public class FileDicom extends FileDicomBase {
             name = convertGroupElement(groupWord, elementWord);
         }
 
-        if (!name.equals("FFFE,E0DD")) {
+        if (!name.equals(SEQ_ITEM_END)) {
 
             if (!isQuiet()) {
                 MipavUtil.displayWarning("End tag not present.  Image may have been corrupted.");
@@ -2406,7 +1999,7 @@ public class FileDicom extends FileDicomBase {
             // get channel lut specification.
             String specKey = palleteKey.getGroup() + "," +
                              Integer.toString(Integer.parseInt(palleteKey.getElement()) - 100);
-            FileDicomTag palletSpec = (FileDicomTag) fileInfo.getEntry(specKey);
+            FileDicomTag palletSpec = fileInfo.getTagTable().get(specKey);
 
             // values are now loaded, try loading the LUT
             int numberOfLUTValues = (((Short) (palletSpec.getValueList()[0])).intValue() == 0)
@@ -2432,15 +2025,15 @@ public class FileDicom extends FileDicomBase {
                 data = getShort(numberOfLUTValues, elementLength, true);
             }
 
-            fileInfo.setValue(palleteKey.getKey(), data, numberOfLUTValues);
+            fileInfo.getTagTable().setValue(palleteKey.getKey(), data, numberOfLUTValues);
         } catch (NullPointerException npe) {
-            FileDicomTag t = ((FileDicomTag) fileInfo.getEntry(palleteKey));
+            FileDicomTag t = fileInfo.getTagTable().get(palleteKey);
             MipavUtil.displayError("This image carries " + t.getName() + ", but specifies it incorrectly.\n" +
                                    "The channel will be ignored.");
             Preferences.debug("FileDicom: Error Creating " + t.getName() + "(" + palleteKey.getKey() + ")" +
                               "; it will be ignored.\n");
         } catch (ArrayStoreException ase) {
-            FileDicomTag t = ((FileDicomTag) fileInfo.getEntry(palleteKey));
+            FileDicomTag t = fileInfo.getTagTable().get(palleteKey);
             MipavUtil.displayError(t.getName() + "; " + ase.getLocalizedMessage() + "\n" +
                                    "This channel will be ignored.");
             Preferences.debug("FileDicom: Error creating " + t.getName() + "; " + ase.getLocalizedMessage() + "\n");
@@ -2500,41 +2093,54 @@ public class FileDicom extends FileDicomBase {
         // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n");
 
         // either there's an "item end" or we've read the entire element length
-        while (!nameSQ.equals("FFFE,E00D") && ((getFilePointer() - startfptr) < itemLength)) {
+        while (!nameSQ.equals(SEQ_ITEM_END) && ((getFilePointer() - startfptr) < itemLength)) {
             // The following is almost exactly the same as the code in readHeader.  The main difference is the
             // information is stored in a hashtable in DicomItem that is initially empty.
 
-            if (fileInfo.vr_type == FileInfoDicom.IMPLICIT) {
-
-                try {
-                    type = ((FileDicomTag) fileInfo.getEntry(nameSQ)).getType();
-                } catch (NullPointerException e) {
-                    type = "typeUnknown";
-                }
-            } else if (fileInfo.VR.equals("SQ")) {
-                type = "typeSequence";
-            } else {
-                type = FileDicomTag.getType(new String(vr));
-            }
-
             FileDicomTag entry;
 
-            try {
-                entry = (FileDicomTag) ((FileDicomTag) (fileInfo.getEntry(nameSQ))).clone();
-            } catch (NullPointerException e) {
-                entry = new FileDicomTag(groupWord, elementWord, null);
-                nullEntry = true;
-            }
+            if (fileInfo.vr_type == FileInfoDicom.IMPLICIT) {
 
-            if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
-                entry.setVR(new String(vr));
+                if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
+                    entry = new FileDicomTag(DicomDictionary.getInfo(new FileDicomKey(groupWord, elementWord)));
+                    type = entry.getType();
+                } else {
+
+                    // the tag was not found in the dictionary..
+                    entry = new FileDicomTag(new FileDicomTagInfo(new FileDicomKey(groupWord, elementWord), null, 0,
+                                                                  "PrivateTag", "Private tag"));
+                    type = "typeUnknown";
+                }
+            } else {
+                FileDicomTagInfo info;
+
+                if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
+                    info = (FileDicomTagInfo) DicomDictionary.getInfo(new FileDicomKey(groupWord, elementWord)).clone();
+                    entry = new FileDicomTag(info);
+                    entry.setValueRepresentation(new String(vr));
+                } else {
+                    info = new FileDicomTagInfo(new FileDicomKey(groupWord, elementWord), new String(vr), 0,
+                                                "PrivateTag", "Private tag");
+                    entry = new FileDicomTag(info);
+                }
+
+                if (fileInfo.isCurrentTagSQ) {
+                    type = "typeSequence";
+                } else {
+                    type = entry.getType();
+                }
+
+                nullEntry = true;
             }
 
             try {
 
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
                 if (type.equals("typeUnknown") && (elementLength != -1)) {
-                    entry = new FileDicomTag(groupWord, elementWord, readUnknownData());
+                    FileDicomTagInfo info = entry.getInfo();
+
+                    entry = new FileDicomTag(info, readUnknownData());
+
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
                 } else if (type.equals("typeString") || type.equals("otherWordString")) {
@@ -2547,24 +2153,24 @@ public class FileDicom extends FileDicomBase {
                     entry.setValue(strValue, elementLength);
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("aaaaaaString Tag: (" + nameSQ + ");\t" + type + "; value = " + strValue +
-                    //             "; element length = "+ elementLength + "\n", 2);
+                    // Preferences.debug("aaaaaaString Tag: (" + nameSQ + ");\t" + type + "; value = " + strValue +   ";
+                    // element length = "+ elementLength + "\n", 2);
                 } else if (type.equals("otherByteString")) {
 
-                    if (!nullEntry && (((FileDicomTag) fileInfo.getEntry(nameSQ)).getVM() > 1)) {
+                    if (!nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
                     } else if (elementLength >= 2) {
                         entry.setValue(readUnknownData(), elementLength);
                     }
 
-                    entry.setVR("OB");
+                    entry.setValueRepresentation("OB");
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue +
-                    //  "; element length = "+ elementLength + "\n", 2);
+                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue +  "; element length
+                    // = "+ elementLength + "\n", 2);
                 } else if (type.equals("typeShort")) {
 
-                    if (!nullEntry && (((FileDicomTag) fileInfo.getEntry(nameSQ)).getVM() > 1)) {
+                    if (!nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
                     } else if (elementLength > 2) {
                         entry.setValue(readUnknownData(), elementLength);
@@ -2575,11 +2181,11 @@ public class FileDicom extends FileDicomBase {
 
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue +
-                    //  "; element length = "+ elementLength + "\n", 2);
+                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue +  "; element length
+                    // = "+ elementLength + "\n", 2);
                 } else if (type.equals("typeInt")) {
 
-                    if (!nullEntry && (((FileDicomTag) fileInfo.getEntry(nameSQ)).getVM() > 1)) {
+                    if (!nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
                     } else if (elementLength > 4) {
                         entry.setValue(readUnknownData(), elementLength);
@@ -2590,11 +2196,11 @@ public class FileDicom extends FileDicomBase {
 
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue +
-                    //  "; element length = "+ elementLength + "\n", 2);
+                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue +  "; element length
+                    // = "+ elementLength + "\n", 2);
                 } else if (type.equals("typeFloat")) {
 
-                    if (!nullEntry && (((FileDicomTag) fileInfo.getEntry(nameSQ)).getVM() > 1)) {
+                    if (!nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
                     } else if (elementLength > 4) {
                         entry.setValue(readUnknownData(), elementLength);
@@ -2605,11 +2211,11 @@ public class FileDicom extends FileDicomBase {
 
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + fValue +
-                    //  "; element length = "+ elementLength + "\n", 2);
+                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + fValue +  "; element length
+                    // = "+ elementLength + "\n", 2);
                 } else if (type.equals("typeDouble")) {
 
-                    if (!nullEntry && (((FileDicomTag) fileInfo.getEntry(nameSQ)).getVM() > 1)) {
+                    if (!nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
                         entry.setValue(readUnknownData(), elementLength);
                     } else if (elementLength > 8) {
                         entry.setValue(readUnknownData(), elementLength);
@@ -2620,8 +2226,8 @@ public class FileDicom extends FileDicomBase {
 
                     item.putTag(nameSQ, entry);
                     item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + dValue +
-                    //  "; element length = "+ elementLength + "\n", 2);
+                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + dValue +  "; element length
+                    // = "+ elementLength + "\n", 2);
                 }
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
                 else if (type.equals("typeSequence") || ((type == "typeUnknown") && (elementLength == -1))) {
@@ -2876,7 +2482,7 @@ public class FileDicom extends FileDicomBase {
     private int getLength(boolean endianess, byte b1, byte b2, byte b3, byte b4) throws IOException {
         boolean implicit = false;
 
-        if ((fileInfo.vr_type == fileInfo.IMPLICIT) || (groupWord == 2)) {
+        if ((fileInfo.vr_type == FileInfoDicom.IMPLICIT) || (groupWord == 2)) {
 
             if (fileInfo.containsDICM) {
 
@@ -2933,7 +2539,7 @@ public class FileDicom extends FileDicomBase {
             // VR =     'OB',       or       'OW'         or         'SQ'       or      'UN'
             vr[0] = (byte) b1;
             vr[1] = (byte) b2;
-            fileInfo.VR = new String(vr);
+            fileInfo.isCurrentTagSQ = new String(vr).equals("SQ");
 
             // SQ - check for length FFFFFFFF (undefined), otherwise should be 0.
             if ((b1 == 83) && (b2 == 81)) { // 'SQ'
@@ -2960,7 +2566,7 @@ public class FileDicom extends FileDicomBase {
             vr[0] = (byte) b1; // these are not VR for item tags!!!!!!!!!
             vr[1] = (byte) b2;
 
-            fileInfo.VR = new String(vr);
+            fileInfo.isCurrentTagSQ = new String(vr).equals("SQ");
 
             if (endianess == FileBase.LITTLE_ENDIAN) {
                 return ((b3 & 0xff) | ((b4 & 0xff) << 8));
@@ -2988,7 +2594,7 @@ public class FileDicom extends FileDicomBase {
         // 0x10)+" - " ); System.err.print("( just found: ) "+      Integer.toString(groupWord, 0x10) +
         // ":"+Integer.toString(elementWord, 0x10)+      " - ");
 
-        if (fileInfo.vr_type == fileInfo.EXPLICIT) {
+        if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
 
             /*  explicit tags carry an extra 4 bytes after the tag (group,
              *  element) information to describe the type of tag.  the  element dictionary describes this info, so we
@@ -2996,9 +2602,7 @@ public class FileDicom extends FileDicomBase {
              */
             String tagname = convertGroupElement(groupWord, elementWord);
 
-            if (tagname.equals("FFFE,E000") || // sequence item begin
-                    tagname.equals("FFFE,EOOD") || // sequence item end
-                    tagname.equals("FFFE,E0DD") || // undefined-length sequence end
+            if (tagname.equals(SEQ_ITEM_BEGIN) || tagname.equals(SEQ_ITEM_END) || tagname.equals(SEQ_ITEM_UNDEF_END) ||
                     tagname.equals("FFFE,EEEE")) // reserved
             {
                 elementLength = getInt(bigEndian);
@@ -3009,7 +2613,7 @@ public class FileDicom extends FileDicomBase {
             }
         } else { // this is what is standardly used.
 
-            // either IMPLICIT or group element is not (FFFE,E000)
+            // either IMPLICIT or group element is not SEQ_ITEM_BEGIN
             read(byteBuffer4);
             elementLength = getLength(bigEndian, byteBuffer4[0], byteBuffer4[1], byteBuffer4[2], byteBuffer4[3]);
         }
@@ -3059,9 +2663,9 @@ public class FileDicom extends FileDicomBase {
 
             if ((seqLength == UNDEFINED_LENGTH) || (seqLength == ILLEGAL_LENGTH)) {
 
-                while (!nameSQ.equals("FFFE,E0DD")) {
+                while (!nameSQ.equals(SEQ_ITEM_UNDEF_END)) {
 
-                    if (nameSQ.equals("FFFE,E000")) {
+                    if (nameSQ.equals(SEQ_ITEM_BEGIN)) {
 
                         // elementLength here is the length of the
                         // item as it written into the File
@@ -3071,13 +2675,14 @@ public class FileDicom extends FileDicomBase {
                         } else {
                             sq.addItem((FileDicomItem) getDataSet(elementLength, endianess));
                         }
-                    } else if (nameSQ.equals("FFFE,E00D")) {
+                    } else if (nameSQ.equals(SEQ_ITEM_END)) {
 
                         // possibility of getting here when subsequence tag length == -1
                         // end of sub-sequence tag
-                        Preferences.debug("End of sub-sequence (FFFE,E00D) found; nothing done.\n");
+                        Preferences.debug("End of sub-sequence " + SEQ_ITEM_END + " found; nothing done.\n");
                     } else { // should never get here
-                        Preferences.debug("getSequence(): sub-sequence tags not starting with FFFE,E000\n", 2);
+                        Preferences.debug("getSequence(): sub-sequence tags not starting with " + SEQ_ITEM_BEGIN + "\n",
+                                          2);
                     }
 
                     inSQ = true; // don't add the element length to the location
@@ -3102,7 +2707,7 @@ public class FileDicom extends FileDicomBase {
                     // Must make it able to read out the
                     Preferences.debug(nameSQ + "; len:" + Long.toString(getFilePointer() - seqStart, 0x10) + "\n");
 
-                    if (nameSQ.equals("FFFE,E000")) { // this should always be true
+                    if (nameSQ.equals(SEQ_ITEM_BEGIN)) { // this should always be true
 
                         // int offset = (int)raFile.getFilePointer(); // where the data set begins for this item
                         // elementLength here is the length of the
@@ -3110,7 +2715,8 @@ public class FileDicom extends FileDicomBase {
                         // System.out.println("Special ele length = " + Integer.toString(elementLength, 0x10));
                         sq.addItem((FileDicomItem) getDataSet(elementLength, endianess));
                     } else { // should never get here
-                        Preferences.debug("getSequence(): sub-sequence tags not starting with FFFE,E000\n", 2);
+                        Preferences.debug("getSequence(): sub-sequence tags not starting with " + SEQ_ITEM_BEGIN + "\n",
+                                          2);
                         // System.err.println("getSequence(): sub-sequence tags not starting with FFFE,E000");
                     }
 
@@ -3124,7 +2730,7 @@ public class FileDicom extends FileDicomBase {
                         Preferences.debug("after converting group-element: " + nameSQ + "!!!!\n");
                         inSQ = false; // may now add element length to location
 
-                        //                            System.err.println("pulled out next item of seq.  nameSQ: " +nameSQ);
+                        // System.err.println("pulled out next item of seq.  nameSQ: " +nameSQ);
                     }
                 }
             }
@@ -3239,7 +2845,7 @@ public class FileDicom extends FileDicomBase {
     private void stampSecondaryCapture(FileInfoDicom fileInfo) {
 
         // be nice: let anyone viewing this DICOM file know this image became a DICOM sometime after capture
-        fileInfo.setValue("0008,0064", "WSD", 3); // Conversion Type: Workstation
+        fileInfo.getTagTable().setValue("0008,0064", "WSD", 3); // Conversion Type: Workstation
 
         Date currentDate = new Date();
 
@@ -3247,34 +2853,23 @@ public class FileDicom extends FileDicomBase {
         // tags to figure things out (0018,1012): Date of Secondary Capture
         java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("MM'/'dd'/'yyyy");
         String temp = formatter.format(currentDate);
-        FileDicomTag tag = (FileDicomTag) fileInfo.getEntry("0018,1012");
-        tag.setValue(temp);
-        fileInfo.putTag("0018,1012", tag);
+        fileInfo.getTagTable().setValue("0018,1012", temp);
 
         // (0018,1014): Time of Secondary Capture
         formatter.applyLocalizedPattern("HH:mm:ss");
         temp = formatter.format(currentDate);
-        tag = (FileDicomTag) fileInfo.getEntry("0018,1014");
-        tag.setValue(temp);
-        fileInfo.putTag("0018,1014", tag);
+        fileInfo.getTagTable().setValue("0018,1014", temp);
 
         // (0018,1016): Secondary Capture Device manufacturer
         temp = "National Institutes of Health, Center for Information Technology";
-        tag = (FileDicomTag) fileInfo.getEntry("0018,1016");
-        tag.setValue(temp);
-        fileInfo.putTag("0018,1016", tag);
+        fileInfo.getTagTable().setValue("0018,1016", temp);
 
         // (0018,1018): Secondary Capture Device Manufacturer's Model Name
         temp = "Medical Image Processing, Analysis and Visualization (MIPAV)";
-        tag = (FileDicomTag) fileInfo.getEntry("0018,1018");
-        tag.setValue(temp);
-        fileInfo.putTag("0018,1018", tag);
+        fileInfo.getTagTable().setValue("0018,1018", temp);
 
         // (0018,1019): Secondary Capture Device Software Version(s)
-        tag = (FileDicomTag) fileInfo.getEntry("0018,1019");
-        tag.setValue(MipavUtil.getVersion());
-        fileInfo.putTag("0018,1019", tag);
-
+        fileInfo.getTagTable().setValue("0018,1019", MipavUtil.getVersion());
     }
 
     /**
@@ -3291,7 +2886,7 @@ public class FileDicom extends FileDicomBase {
 
         // all DICOM files start out as little endian
         boolean endianess = FileBase.LITTLE_ENDIAN;
-        FileDicomTag[] dicomTags = fileInfo.sortTagsList();
+        FileDicomTag[] dicomTags = FileDicomTagTable.sortTagsList(fileInfo.getTagTable().getTagList());
         int metaGroupLength = 0;
 
         if (fileInfo.containsDICM) {
@@ -3309,15 +2904,15 @@ public class FileDicom extends FileDicomBase {
 
         for (int i = 0; i < dicomTags.length; i++) {
             String type = "";
-            String vr = dicomTags[i].getVR();
+            String vr = dicomTags[i].getValueRepresentation();
 
             // System.out.println("w = " + dicomTags[i].toString());
             try {
 
-                if (fileInfo.vr_type == fileInfo.EXPLICIT) {
+                if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
 
                     // explicit VRs may be difference from implicit; in this case use the explicit
-                    type = FileDicomTag.getType(vr);
+                    type = FileDicomTagInfo.getType(vr);
                 } else {
                     type = dicomTags[i].getType();
                 }
@@ -3335,7 +2930,7 @@ public class FileDicom extends FileDicomBase {
 
             int nValues = dicomTags[i].getNumberOfValues();
 
-            int vm = dicomTags[i].getVM();
+            int vm = dicomTags[i].getValueMultiplicity();
             // Not sure if I need this - efilm adds it - also efilm has tag, 0000 lengths (meta lengths)for tag groups
             // (02, 08, ....) if (gr==2 && fileInfo.getVRType() == fileInfo.IMPLICIT){
             // fileInfo.setVRType(fileInfo.EXPLICIT); } else if (gr > 2){    fileInfo.setVRType(fileInfo.IMPLICIT); }
@@ -3364,7 +2959,7 @@ public class FileDicom extends FileDicomBase {
             writeShort((short) gr, endianess); // write group
             writeShort((short) el, endianess); // write element
 
-            if ((fileInfo.vr_type == fileInfo.EXPLICIT) && (vr != null)) {
+            if ((fileInfo.vr_type == FileInfoDicom.EXPLICIT) && (vr != null)) {
                 outputFile.writeBytes(vr); // write explicit vr
 
                 if (vr.equals("SQ")) {
@@ -3409,7 +3004,7 @@ public class FileDicom extends FileDicomBase {
                     writeInt(length, endianess); // implicit vr, 32 bit length
                 }
             }
-            //                Preferences.debug( "this is "+dicomTags[i] + "\n", 2);
+            // Preferences.debug( "this is "+dicomTags[i] + "\n", 2);
 
             // write as a string if string, unknown (private), or vm > 1
             // The VM part is consistent with how we're reading it in; hopefully
@@ -3518,24 +3113,25 @@ public class FileDicom extends FileDicomBase {
         if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
 
             // write VR and two reserved bytes
-            outputFile.writeBytes(((FileDicomTag) fileInfo.getEntry("7FE0,0010")).getVR());
+            outputFile.writeBytes(fileInfo.getTagTable().get(IMAGE_TAG).getValueRepresentation());
             outputFile.writeShort(0);
         }
 
         int samplesPerPixel = 1;
 
-        if (fileInfo.getValue("0028,0002") != null) {
-            samplesPerPixel = ((Short) fileInfo.getValue("0028,0002")).shortValue();
+        if (fileInfo.getTagTable().getValue("0028,0002") != null) {
+            samplesPerPixel = ((Short) fileInfo.getTagTable().getValue("0028,0002")).shortValue();
         }
 
-        int imageLength = image.getSliceSize() * ((Short) fileInfo.getValue("0028,0100")).shortValue() / 8 * // bits per pixel
+        int imageLength = image.getSliceSize() * ((Short) fileInfo.getTagTable().getValue("0028,0100")).shortValue() /
+                              8 * // bits per pixel
                               samplesPerPixel; // samples per pixel (i.e RGB = 3)
 
         if (fileInfo.isMultiFrame()) {
             int nImages = 1;
 
-            if (fileInfo.getValue("0028,0008") != null) {
-                nImages = Integer.valueOf(((String) (fileInfo.getValue("0028,0008"))).trim()).intValue();
+            if (fileInfo.getTagTable().getValue("0028,0008") != null) {
+                nImages = Integer.valueOf(((String) (fileInfo.getTagTable().getValue("0028,0008"))).trim()).intValue();
             }
 
             writeInt(imageLength * nImages, endianess);
@@ -3583,7 +3179,7 @@ public class FileDicom extends FileDicomBase {
                 String type = "";
                 FileDicomTag entry = dataSet[j];
 
-                String vr = entry.getVR();
+                String vr = entry.getValueRepresentation();
                 int length = entry.getLength();
 
                 // System.out.println("adadadfad length = " + length + " group = " + entry.getGroup() + " element = " +
@@ -3591,7 +3187,7 @@ public class FileDicom extends FileDicomBase {
                 try {
 
                     if ((vr_type == FileInfoDicom.EXPLICIT) && (vr != null)) {
-                        type = FileDicomTag.getType(vr);
+                        type = FileDicomTagInfo.getType(vr);
                     } else {
                         type = entry.getType();
                     }

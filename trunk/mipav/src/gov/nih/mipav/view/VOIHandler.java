@@ -2660,8 +2660,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             for (j = 0; j < nCurves; j++) {
 
                                 if (VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), j, compImage.getZoomX(),
-                                                                compImage.getResolutionX(),
-                                                                compImage.getResolutionY())) {
+                                                            compImage.getResolutionX(), compImage.getResolutionY())) {
                                     break;
                                 }
                             }
@@ -2688,7 +2687,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             return;
                         }
                     } else if (VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), compImage.getZoomX(),
-                                                           compImage.getResolutionX(), compImage.getResolutionY()) &&
+                                                       compImage.getResolutionX(), compImage.getResolutionY()) &&
                                    (VOIs.VOIAt(i).getCurveType() != VOI.POINT) &&
                                    (VOIs.VOIAt(i).getCurveType() != VOI.PROTRACTOR) &&
                                    (mouseEvent.isShiftDown() == false) && (mouseEvent.isAltDown() == false)) {
@@ -2711,8 +2710,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             for (j = 0; j < nCurves; j++) {
 
                                 if (VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), j, compImage.getZoomX(),
-                                                                compImage.getResolutionX(),
-                                                                compImage.getResolutionY())) {
+                                                            compImage.getResolutionX(), compImage.getResolutionY())) {
                                     break;
                                 }
                             }
@@ -2744,8 +2742,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         for (j = 0; j < nCurves; j++) {
 
                             if (VOIs.VOIAt(i).nearOuterPoint(x, y, compImage.getSlice(), j, compImage.getZoomX(),
-                                                                 compImage.getResolutionX(),
-                                                                 compImage.getResolutionY()) &&
+                                                             compImage.getResolutionX(), compImage.getResolutionY()) &&
                                     (mouseEvent.isShiftDown() == false) && (mouseEvent.isAltDown() == false)) {
                                 compImage.setCursorMode(ViewJComponentEditImage.MOVE_POINT);
                                 VOIs.VOIAt(i).drawSelf(compImage.getZoomX(), compImage.getZoomY(),
@@ -2864,7 +2861,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         (VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), compImage.getZoomX(),
                                                      compImage.getResolutionX(), compImage.getResolutionY()) ||
 
-                             // VOIs.VOIAt(i).nearLinePoint(
+                    // VOIs.VOIAt(i).nearLinePoint(
                              VOIs.VOIAt(i).nearLine(xS, yS, compImage.getSlice()))) {
                     compImage.setCursorMode(ViewJComponentEditImage.MOVE);
 
@@ -2981,7 +2978,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             for (j = 0; j < VOIs.VOIAt(i).getCurves()[compImage.getSlice()].size(); j++) {
 
                                 if (((VOILine) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j))).nearLine(xS,
-                                                                                                                            yS)) {
+                                                                                                                        yS)) {
 
                                     // if CTRL was held down, then print out the Line's information to the
                                     // DATA window
@@ -3069,7 +3066,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         } else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
 
                             if (VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), compImage.getZoomX(),
-                                                            compImage.getResolutionX(), compImage.getResolutionY())) {
+                                                        compImage.getResolutionX(), compImage.getResolutionY())) {
                                 compImage.addMouseListener(popupPt);
                             }
                         }
@@ -3780,8 +3777,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                 break;
                             }
                         } else if (((VOIPoint) selectedCurve).nearPoint(xR, yR, compImage.getZoomX(),
-                                                                            compImage.getResolutionX(),
-                                                                            compImage.getResolutionY())) {
+                                                                        compImage.getResolutionX(),
+                                                                        compImage.getResolutionY())) {
 
                             // points are not true curves, but we want to check if we
                             // released mouse over it. we'll at least set the point active.
@@ -5567,7 +5564,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     return null;
                 }
 
-                Object val = ((FileInfoDicom) inf).getTag(attribString).getValue(true);
+                Object val = ((FileInfoDicom) inf).getTagTable().getValue(attribString);
 
                 if (val == null) {
                     return null;

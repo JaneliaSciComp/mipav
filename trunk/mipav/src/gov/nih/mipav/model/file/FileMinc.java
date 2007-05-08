@@ -1103,7 +1103,7 @@ public class FileMinc extends FileBase {
 
         if (fileInfo instanceof FileInfoDicom) {
             FileInfoDicom dicomInfo = (FileInfoDicom) fileInfo;
-            Hashtable dicomTags = dicomInfo.getTagsList();
+            Hashtable dicomTags = dicomInfo.getTagTable().getTagList();
             Enumeration tagKeyEnum = dicomTags.keys();
 
             while (tagKeyEnum.hasMoreElements()) {
