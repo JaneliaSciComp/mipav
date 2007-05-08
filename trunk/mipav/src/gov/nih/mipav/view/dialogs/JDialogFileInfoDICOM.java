@@ -113,7 +113,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
         String name;
         FileDicomKey key;
         Object[] rowData = { "", "", "" };
-        Hashtable tagsList = DicomInfo.getTagsList();
+        Hashtable tagsList = DicomInfo.getTagTable().getTagList();
 
         // go through the hashlist, and for each element you find, copy it
         // into the table, showing full info if it was coded
@@ -127,8 +127,8 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                 rowData[0] = "(" + name + ")";
                 rowData[1] = ((FileDicomTag) tagsList.get(key)).getName();
 
-                String vr = ((FileDicomTag) tagsList.get(key)).getVR();
-                int vm = ((FileDicomTag) tagsList.get(key)).getVM();
+                String vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
+                int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
 
 
                 if (rowData[1].equals("Private Tag") || vr.equals("OB")) {
@@ -602,14 +602,13 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
 
                 // if the tag is a "Private Tag", it won't be able to be changed (without
                 // returning, starting an editor dialog crashes the program)
-                if (((FileDicomTag) DicomInfo.getEntry(tagKey)).getName().equals("Private Tag")) {
+                if (DicomInfo.getTagTable().get(tagKey).getName().equals("Private Tag")) {
                     MipavUtil.displayError("Sorry, can't change private tags!");
 
                     return;
                 }
 
-                editorDialogDicom = new JDialogDICOMTagEditor(this, tagKey, (FileDicomTag) DicomInfo.getEntry(tagKey),
-                                                              false); // make a dialog that edits that particular
+                editorDialogDicom = new JDialogDICOMTagEditor(this, tagKey, DicomInfo.getTagTable(), false); // make a dialog that edits that particular
                 editorDialogDicom.addButtonListener(this);
                 editorDialogDicom.addWindowListener(new WindowAdapter() { // listen for when the dialog comes alive
                         public void windowActivated(WindowEvent e) {
@@ -644,8 +643,6 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
 
                             tagDialog = (JDialogDICOMTagEditor) e.getSource();
 
-                            String tagID = tagDialog.getTagKey();
-
                             if (tagDialog.wasDialogOkay()) {
 
                                 if (tagDialog.applyToAllSlices()) { // apply change to all slices
@@ -653,12 +650,14 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                                     int i;
 
                                     if (imageA.getNDims() == 2) {
-                                        DicomInfo.putTag(tagID, tagDialog.returnTag());
+                                        DicomInfo.getTagTable().setValue(tagDialog.getTagKey(),
+                                                                         tagDialog.returnTag().getValue(false));
                                     } else {
 
                                         for (i = 0; i < imageA.getExtents()[2]; i++) {
                                             tempInfo = (FileInfoDicom) imageA.getFileInfo(i);
-                                            tempInfo.putTag(tagID, tagDialog.returnTag());
+                                            DicomInfo.getTagTable().setValue(tagDialog.getTagKey(),
+                                                                             tagDialog.returnTag().getValue(false));
                                             imageA.setFileInfo(tempInfo, i);
                                         }
                                     }
@@ -674,8 +673,10 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                                     setTitle(imageA.getImageName());
                                 } else { // do not apply this change to all image-info.  Apply this change to only this
                                          // slice.
-                                    DicomInfo.putTag(tagID, tagDialog.returnTag()); // place the tag back into the
-                                                                                    // DicomInfo
+
+                                    // place the tag back into the DicomInfo
+                                    DicomInfo.getTagTable().setValue(tagDialog.getTagKey(),
+                                                                     ((FileDicomTag) tagDialog.returnTag()).getValue(false));
                                 }
 
                                 if (editorDialogDicomList.size() > 0) {

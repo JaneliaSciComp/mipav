@@ -9,8 +9,8 @@ import java.io.*;
 
 
 /**
- * This is the DICOM store class that defines functions to compose and send a store request 
- * to a DICOM image file archive such as the image file server located in NIH's Clinical Center.
+ * This is the DICOM store class that defines functions to compose and send a store request to a DICOM image file
+ * archive such as the image file server located in NIH's Clinical Center.
  *
  * @version  1.0
  */
@@ -19,7 +19,7 @@ public class DICOM_Store implements Runnable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Class UID  */
+    /** Class UID. */
     private String classUID;
 
     /** File name of the image to be stored. */
@@ -28,17 +28,17 @@ public class DICOM_Store implements Runnable {
     /** Reference to the Query/Retrieve GUI object. */
     private ViewJFrameDICOMQuery frame;
 
-    /** The instance UID.  */
+    /** The instance UID. */
     private String instanceUID;
-    
-    /** The transfer syntax used when storing images */
-    private String transferSyntax = null;
 
-    /** Protocol Data Units (PDU) object */
+    /** Protocol Data Units (PDU) object. */
     private DICOM_PDUService pdu;
 
-    /** The remote Application Entity Title  */
+    /** The remote Application Entity Title. */
     private String remoteAETitle;
+
+    /** The transfer syntax used when storing images. */
+    private String transferSyntax = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -54,17 +54,22 @@ public class DICOM_Store implements Runnable {
         remoteAETitle = _remoteAETitle;
         frame = _frame;
     }
-    
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     */
     public void finalize() {
+
         if (pdu != null) {
             pdu.finalize();
         }
+
         pdu = null;
         frame = null;
-        
-    }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    }
 
     /**
      * Runs this move request in a separate thread.
@@ -77,16 +82,17 @@ public class DICOM_Store implements Runnable {
             // define an instance of the PDU_Service class to set up the connection
             // to the remote AE
             pdu = new DICOM_PDUService();
-            
-            
+
+
             // grab the first DICOM file (if directory) to see what the transfer syntax is:
-           
+
             String firstFilename = getFirstFile(fileName);
             System.err.println("firstFileName: " + firstFilename);
+
             if (firstFilename != null) {
-            	getUIDs(firstFilename);
+                getUIDs(firstFilename);
             }
-            
+
             pdu.connectClientToServer(remoteAETitle, false, transferSyntax, classUID);
 
             if (sendImages(fileName) == true) {
@@ -125,6 +131,7 @@ public class DICOM_Store implements Runnable {
 
         try {
             ddo = pdu.readDICOMDataObjectFromFile(fileName);
+
             if (ddo == null) {
                 MipavUtil.displayError("DICOMStore.sendStoreRQ(): DDO = null");
 
@@ -132,11 +139,11 @@ public class DICOM_Store implements Runnable {
             } else {
 
                 // Get UIDs  and pass it as a parameter in the next method (write. )
-            	
-            	//ben update: this has been moved to when we connect to the server so that we can tell the server
-            	//   exactly what type of file we are going to send
-            	
-                //getUIDs(fileName);
+
+                // ben update: this has been moved to when we connect to the server so that we can tell the server
+                // exactly what type of file we are going to send
+
+                // getUIDs(fileName);
                 storageSOP.write(pdu, ddo, transferSyntax, classUID, instanceUID);
                 returnVal = true;
             }
@@ -147,6 +154,48 @@ public class DICOM_Store implements Runnable {
         }
 
         return (returnVal);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   dir  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private String getFirstFile(String dir) {
+        int i;
+        File fileDir = null;
+        String[] dirList;
+
+        try {
+            fileDir = new File(dir);
+
+            if (fileDir.isFile() == true) {
+                return dir;
+            } else if (fileDir.isDirectory() == false) {
+                MipavUtil.displayError("DICOM send images: Not a directory");
+            } else {
+                dirList = fileDir.list();
+
+                String test = null;
+
+                for (i = 0; i < dirList.length; i++) {
+                    test = getFirstFile(getFirstFile(dir + File.separatorChar + dirList[i]));
+
+                    if (test != null) {
+                        return test;
+                    }
+                }
+            }
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Error opening directory:" + error);
+
+            return null;
+        }
+
+        return null;
+
     }
 
     /**
@@ -162,11 +211,11 @@ public class DICOM_Store implements Runnable {
         try {
             fileDICOM = new FileDicom(fileName);
 
-            if (fileDICOM.readHeader(true)) {
+            if (fileDICOM.readHeader(true, true)) {
                 fInfoDicom = (FileInfoDicom) (fileDICOM.getFileInfo());
-                transferSyntax = (String) (fInfoDicom.getValue("0002,0010"));
-                classUID = (String) (fInfoDicom.getValue("0008,0016"));
-                instanceUID = (String) (fInfoDicom.getValue("0008,0018"));
+                transferSyntax = (String) (fInfoDicom.getTagTable().getValue("0002,0010"));
+                classUID = (String) (fInfoDicom.getTagTable().getValue("0008,0016"));
+                instanceUID = (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
 
                 if (classUID != null) {
                     classUID = DICOM_Util.trimIgnorableChar(classUID.trim());
@@ -177,11 +226,11 @@ public class DICOM_Store implements Runnable {
                 }
 
                 if (transferSyntax != null) {
-                	transferSyntax = DICOM_Util.trimIgnorableChar(transferSyntax.trim());
+                    transferSyntax = DICOM_Util.trimIgnorableChar(transferSyntax.trim());
                 }
-                
+
                 if (classUID == null) {
-                    modality = (String) (fInfoDicom.getValue("0008,0060"));
+                    modality = (String) (fInfoDicom.getTagTable().getValue("0008,0060"));
                     modality.trim();
 
                     if (modality != null) {
@@ -254,40 +303,8 @@ public class DICOM_Store implements Runnable {
 
             return false;
         }
+
         return true;
     }
 
-    private String getFirstFile(String dir) {
-    	int i;
-        File fileDir = null;
-        String[] dirList;
-
-        try {
-            fileDir = new File(dir);
-
-            if (fileDir.isFile() == true) {
-            	return dir;
-            } else if (fileDir.isDirectory() == false) {
-                MipavUtil.displayError("DICOM send images: Not a directory");
-            } else {
-                dirList = fileDir.list();
-
-                String test = null;
-                for (i = 0; i < dirList.length; i++) {
-                	test = getFirstFile(getFirstFile(dir + File.separatorChar + dirList[i]));
-                	if (test != null) {
-                		return test;
-                	}                	                	
-                }
-            }
-        } catch (OutOfMemoryError error) {
-            MipavUtil.displayError("Error opening directory:" + error);
-            
-            return null;
-        }
-    	
-        return null;
-        
-    }
-    
 }

@@ -149,7 +149,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
         for (int i = 0; i < columnNames.size(); i++) {
             Vector newRow = new Vector();
 
-            String keyStr = DICOMDictionaryBuilder.getKeyFromTagName((String) columnNames.elementAt(i));
+            String keyStr = DicomDictionary.getKeyFromTagName((String) columnNames.elementAt(i));
 
             if (keyStr == null) {
                 newRow.addElement(CUSTOM);
@@ -179,7 +179,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
         tagsVector.addElement("Z-position");
 
         /** There are no keys associated with these tags, so CUSTOM entries are added */
-        Vector keysVector = new Vector(DICOMDictionaryBuilder.getDicomTagTable().keySet());
+        Vector keysVector = new Vector(DicomDictionary.getDicomTagTable().keySet());
         keysVector.addElement(CUSTOM);
         keysVector.addElement(CUSTOM);
         keysVector.addElement(CUSTOM);
@@ -245,7 +245,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
      * @return  DOCUMENT ME!
      */
     protected Vector getNiceDICOMTags() {
-        Hashtable tagsTable = DICOMDictionaryBuilder.getDicomTagTable();
+        Hashtable tagsTable = DicomDictionary.getDicomTagTable();
         Vector tagsVector = new Vector(tagsTable.values());
 
         for (int i = 0; i < tagsVector.size(); i++) {

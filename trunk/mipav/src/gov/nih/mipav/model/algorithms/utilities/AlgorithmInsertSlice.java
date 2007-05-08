@@ -164,7 +164,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        
+
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             tOldOffset = Xdim * Ydim * oldZdim * colorFactor * t;
@@ -523,7 +523,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         imageBuffer = null;
                         imageBuffer2 = null;
                         setCompleted(false);
-                        
+
                         finalize();
 
                         return;
@@ -544,8 +544,8 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
 
                         // change the instance number ("0020,0013"):
                         // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-                        fileInfoBuffer.setValue("0020,0013", String.valueOf(z + 1),
-                                                ((FileDicomTag) fileInfoBuffer.getEntry("0020,0013")).getLength()); // Reset the image (slice) number with the new number ordering
+                        fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(z + 1),
+                                                              fileInfoBuffer.getTagTable().get("0020,0013").getLength()); // Reset the image (slice) number with the new number ordering
 
                         // read just the image position ("0020,0032"): copy the "image position (patient)" info so that
                         // axis-position added by inserting slice (z) will change by sliding the next included slice
@@ -563,25 +563,34 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         if (z == 0) {
                             nextPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z + 1))
                                                                       .parseTagValue("0020,0032"));
-                            fileInfoBuffer.setValue("0020,0032",
-                                                    ((2.0f * imagePositionCoords[0]) - nextPositionCoords[0]) + "\\" +
-                                                    ((2.0f * imagePositionCoords[1]) - nextPositionCoords[1]) + "\\" +
-                                                    ((2.0f * imagePositionCoords[2]) - nextPositionCoords[2]),
-                                                    ((FileDicomTag) fileInfoBuffer.getEntry("0020,0032")).getLength());
+                            fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                  ((2.0f * imagePositionCoords[0]) -
+                                                                   nextPositionCoords[0]) + "\\" +
+                                                                  ((2.0f * imagePositionCoords[1]) -
+                                                                   nextPositionCoords[1]) + "\\" +
+                                                                  ((2.0f * imagePositionCoords[2]) -
+                                                                   nextPositionCoords[2]),
+                                                                  fileInfoBuffer.getTagTable().get("0020,0032").getLength());
                         } else if (z == oldZdim) {
                             lastPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z - 2))
                                                                       .parseTagValue("0020,0032"));
-                            fileInfoBuffer.setValue("0020,0032",
-                                                    ((2.0f * imagePositionCoords[0]) - lastPositionCoords[0]) + "\\" +
-                                                    ((2.0f * imagePositionCoords[1]) - lastPositionCoords[1]) + "\\" +
-                                                    ((2.0f * imagePositionCoords[2]) - lastPositionCoords[2]),
-                                                    ((FileDicomTag) fileInfoBuffer.getEntry("0020,0032")).getLength());
+                            fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                  ((2.0f * imagePositionCoords[0]) -
+                                                                   lastPositionCoords[0]) + "\\" +
+                                                                  ((2.0f * imagePositionCoords[1]) -
+                                                                   lastPositionCoords[1]) + "\\" +
+                                                                  ((2.0f * imagePositionCoords[2]) -
+                                                                   lastPositionCoords[2]),
+                                                                  fileInfoBuffer.getTagTable().get("0020,0032").getLength());
                         } else {
-                            fileInfoBuffer.setValue("0020,0032",
-                                                    ((imagePositionCoords[0] + lastPositionCoords[0]) / 2.0f) + "\\" +
-                                                    ((imagePositionCoords[1] + lastPositionCoords[1]) / 2.0f) + "\\" +
-                                                    ((imagePositionCoords[2] + lastPositionCoords[2]) / 2.0f),
-                                                    ((FileDicomTag) fileInfoBuffer.getEntry("0020,0032")).getLength());
+                            fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                  ((imagePositionCoords[0] + lastPositionCoords[0]) /
+                                                                       2.0f) + "\\" +
+                                                                  ((imagePositionCoords[1] + lastPositionCoords[1]) /
+                                                                       2.0f) + "\\" +
+                                                                  ((imagePositionCoords[2] + lastPositionCoords[2]) /
+                                                                       2.0f),
+                                                                  fileInfoBuffer.getTagTable().get("0020,0032").getLength());
                         }
 
                         float[] starts = new float[3];
@@ -610,7 +619,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         // same change as image position above:
                         // Do an average here
                         if (z == 0) {
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z + 1))).getValue("0020,1041");
+                            value = ((FileInfoDicom) (srcImage.getFileInfo(z + 1))).getTagTable().getValue("0020,1041");
                             s = ((String) value).trim();
 
                             try {
@@ -621,7 +630,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                 nextSliceLocation = 0;
                             }
 
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getValue("0020,1041");
+                            value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041");
                             s = ((String) value).trim();
 
                             try {
@@ -633,9 +642,9 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
 
                             sliceLocation = (2.0f * sliceLocation) - nextSliceLocation;
                             s = nf.format(sliceLocation);
-                            fileInfoBuffer.setValue("0020,1041", s, s.length());
+                            fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
                         } else if (z == oldZdim) {
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z - 2))).getValue("0020,1041");
+                            value = ((FileInfoDicom) (srcImage.getFileInfo(z - 2))).getTagTable().getValue("0020,1041");
                             s = ((String) value).trim();
 
                             try {
@@ -646,7 +655,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                 lastSliceLocation = 0;
                             }
 
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getValue("0020,1041");
+                            value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getTagTable().getValue("0020,1041");
                             s = ((String) value).trim();
 
                             try {
@@ -659,9 +668,9 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
 
                             sliceLocation = (2.0f * sliceLocation) - lastSliceLocation;
                             s = nf.format(sliceLocation);
-                            fileInfoBuffer.setValue("0020,1041", s, s.length());
+                            fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
                         } else {
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getValue("0020,1041");
+                            value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getTagTable().getValue("0020,1041");
                             s = ((String) value).trim();
 
                             try {
@@ -672,7 +681,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                                 lastSliceLocation = 0;
                             }
 
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getValue("0020,1041");
+                            value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041");
                             s = ((String) value).trim();
 
                             try {
@@ -684,7 +693,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
 
                             sliceLocation = (lastSliceLocation + sliceLocation) / 2.0f;
                             s = nf.format(sliceLocation);
-                            fileInfoBuffer.setValue("0020,1041", s, s.length());
+                            fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
                         }
 
                         destImage.setFileInfo(fileInfoBuffer, z);
@@ -726,7 +735,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                     imageBuffer = null;
                     imageBuffer2 = null;
                     setCompleted(false);
-                    
+
                     finalize();
 
                     return;
@@ -761,8 +770,8 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
 
                         // change the slice number ("0020,0013"):
                         // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-                        fileInfoBuffer.setValue("0020,0013", String.valueOf(Z + 1),
-                                                ((FileDicomTag) fileInfoBuffer.getEntry("0020,0013")).getLength()); // Reset the image (slice) number with the new number ordering
+                        fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(Z + 1),
+                                                              fileInfoBuffer.getTagTable().get("0020,0013").getLength()); // Reset the image (slice) number with the new number ordering
 
                         // readjust the image position ("0020,0032"): copy the "image position (patient)" info so that
                         // axis-position added by inserting slice (z) will change by sliding the next included slice
@@ -775,16 +784,16 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                             lastPositionCoords[i] = imagePositionCoords[i];
                         }
 
-                        fileInfoBuffer.setValue("0020,0032",
-                                                imagePositionCoords[0] + "\\" + imagePositionCoords[1] + "\\" +
-                                                imagePositionCoords[2],
-                                                ((FileDicomTag) fileInfoBuffer.getEntry("0020,0032")).getLength());
+                        fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                              imagePositionCoords[0] + "\\" + imagePositionCoords[1] +
+                                                              "\\" + imagePositionCoords[2],
+                                                              fileInfoBuffer.getTagTable().get("0020,0032").getLength());
 
                         // readjust the slice location ("0020,1041")
                         // same change as image position above:
-                        fileInfoBuffer.setValue("0020,1041",
-                                                ((FileInfoDicom) (srcImage.getFileInfo(z))).getValue("0020,1041"),
-                                                ((FileDicomTag) fileInfoBuffer.getEntry("0020,1041")).getLength());
+                        fileInfoBuffer.getTagTable().setValue("0020,1041",
+                                                              ((FileInfoDicom) (srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041"),
+                                                              fileInfoBuffer.getTagTable().get("0020,1041").getLength());
 
                         destImage.setFileInfo(fileInfoBuffer, Z);
                     } else { // not a DICOM image, so these can be processed similarly
@@ -805,7 +814,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
             imageBuffer = null;
             imageBuffer2 = null;
             setCompleted(false);
-            
+
             finalize();
 
             return;
@@ -814,7 +823,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
         destImage.calcMinMax(); // calculate the minimum & maximum intensity values for the destImage-image
 
         // Clean up and let the calling dialog know that algorithm did its job
-        
+
         setCompleted(true);
     }
 

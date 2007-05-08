@@ -226,13 +226,13 @@ public class TextureSculptor extends Sculptor {
                         /* If the voxel index falls inside the sculpt
                          * region: */
                         if (m_kSculptImageOpaque.getRGB(iScreenX, iScreenY) == m_iColorSculpt) {
-                        /* Testing, sculpt 101x101 square from center of
-                         * screen: */
+
+                            /* Testing, sculpt 101x101 square from center of
+                             * screen: */
                             /*
-                            if ( (iScreenX > ( m_iSculptImageWidth/2 - 50)) &&
-                                 (iScreenX < ( m_iSculptImageWidth/2 + 50)) &&
-                                 (iScreenY > ( m_iSculptImageHeight/2 - 50)) &&
-                                 (iScreenY < ( m_iSculptImageHeight/2 + 50)) ){
+                             * if ( (iScreenX > ( m_iSculptImageWidth/2 - 50)) &&  (iScreenX < ( m_iSculptImageWidth/2 +
+                             * 50)) &&  (iScreenY > ( m_iSculptImageHeight/2 - 50)) &&  (iScreenY < (
+                             * m_iSculptImageHeight/2 + 50)) ){
                              */
                             bVolumeChanged = true;
                             sculptImage(kImageAref, kImageBref, iIndex);
@@ -513,11 +513,8 @@ public class TextureSculptor extends Sculptor {
         FileInfoBase[] fileInfo = img.getFileInfo();
 
         if (suffix == null) {
-            FileIO fileIO = new FileIO();
-
-            suffix = fileIO.getSuffixFrom(fileName);
-            fileType = fileIO.getFileType(fileName, directory);
-            fileIO = null;
+            suffix = FileUtility.getExtension(fileName);
+            fileType = FileUtility.getFileType(fileName, directory, false);
         }
 
         // now, get rid of any numbers at the end of the name (these

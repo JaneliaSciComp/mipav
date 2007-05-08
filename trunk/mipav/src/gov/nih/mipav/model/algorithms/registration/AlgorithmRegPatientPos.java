@@ -122,7 +122,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
 
         if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
             FileInfoDicom fileInfo = (FileInfoDicom) (image.getFileInfo(0));
-            String orientation = (String) ((FileDicomTag) fileInfo.getEntry("0020,0037")).getValue(true);
+            String orientation = (String) fileInfo.getTagTable().getValue("0020,0037");
 
             if (orientation == null) {
                 MipavUtil.displayError("Patient Orientation string = null");
@@ -210,7 +210,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
 
         if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
             FileInfoDicom fileInfo = (FileInfoDicom) (image.getFileInfo(0));
-            String orientation = (String) ((FileDicomTag) fileInfo.getEntry("0020,0032")).getValue(true);
+            String orientation = (String) fileInfo.getTagTable().getValue("0020,0032");
 
             if (orientation == null) {
             	//BEN:  I guess DICOM doesn't necessarily have this tag...?

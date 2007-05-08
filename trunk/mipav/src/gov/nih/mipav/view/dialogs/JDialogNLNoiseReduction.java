@@ -325,12 +325,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                     resultImage.setImageName(name);
 
                     /* if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM){
-                     *   ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7
-                     * ", 26); // Secondary Capture SOP UID
-                     * ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ",
-                     * 26);  ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17",
-                     * 16); // bogus Implementation UID made up by Matt
-                     * ((FileInfoDicom)(resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                     *   ((FileInfoDicom)(resultImage.getFileInfo(0))).setSecondaryCaptureTags();
                      * }*/
                     // Make algorithm
                     nlnrAlgo = new AlgorithmNLNoiseReduction(resultImage, image, bt, maskSD, useMedian, false);
@@ -341,7 +336,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                     nlnrAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), nlnrAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -379,7 +374,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                     nlnrAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), nlnrAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -430,12 +425,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
 
                     /*if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM){
                      *             for (int i=0; i < resultImage.getExtents()[2]; i++) {
-                     * ((FileInfoDicom)(resultImage.getFileInfo(i))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
-                     * 26); // Secondary Capture SOP UID
-                     * ((FileInfoDicom)(resultImage.getFileInfo(i))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ",
-                     * 26); ((FileInfoDicom)(resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17", 16);
-                     * // bogus Implementation UID made up by Matt
-                     * ((FileInfoDicom)(resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                     * ((FileInfoDicom)(resultImage.getFileInfo(i))).setSecondaryCaptureTags();
                      *    }              }*/
                     // Make algorithm
                     nlnrAlgo = new AlgorithmNLNoiseReduction(resultImage, image, bt, maskSD, useMedian, image25D);
@@ -446,7 +436,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                     nlnrAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), nlnrAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -483,7 +473,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                     nlnrAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), nlnrAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 

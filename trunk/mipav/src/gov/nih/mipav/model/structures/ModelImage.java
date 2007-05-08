@@ -81,10 +81,10 @@ public class ModelImage extends ModelStorageBase {
 
     /** Backup of mask for undoing. */
     private BitSet maskBU;
-  
-    /** Holds all of the images associated matrices */
+
+    /** Holds all of the images associated matrices. */
     private MatrixHolder matrixHolder;
-    
+
     /** Reference to talairach transform information. */
     private TalairachTransformInfo talairach;
 
@@ -155,7 +155,7 @@ public class ModelImage extends ModelStorageBase {
         maskBU = new BitSet(length);
 
         this.matrixHolder = new MatrixHolder(dimExtents.length);
-        
+
         if (dimExtents.length == 2) {
             fileInfo = new FileInfoBase[1];
 
@@ -525,13 +525,13 @@ public class ModelImage extends ModelStorageBase {
         FileInfoBase fileInfo;
 
         for (int i = 0; i < fromImage.getFileInfo().length; i++) {
-            fileInfo = (FileInfoBase) (fromImage.getFileInfo(i).cloneItself());
+            fileInfo = (FileInfoBase) (fromImage.getFileInfo(i).clone());
             setFileInfo(fileInfo, i);
         }
 
         return;
 
-    } // end copyFileTypeInfo()
+    }
 
     /**
      * Deep copies the file type info from the fromImage to the current image object. But does not copy over image
@@ -542,8 +542,10 @@ public class ModelImage extends ModelStorageBase {
     public void copyFileTypeInfoSansBufferType(ModelImage fromImage) {
         FileInfoBase fileInfo;
 
+        // TODO: this appears to be a special-case method for mask calls from ViewJFrameImage.  remove it...
+
         for (int i = 0; i < fromImage.getFileInfo().length; i++) {
-            fileInfo = (FileInfoBase) (fromImage.getFileInfo(i).cloneItself());
+            fileInfo = (FileInfoBase) (fromImage.getFileInfo(i).clone());
             fileInfo.setDataType(getType());
             fileInfo.setFileName("Mask");
             setFileInfo(fileInfo, i);
@@ -959,30 +961,32 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Calculates translation offset for transforming image about the center of the image in the resolution space.
      *
+     * @param   useScanner  DOCUMENT ME!
+     *
      * @return  Center of the image in millimeters (or other physical dimension).
      */
     public Point3Df getImageCentermm(boolean useScanner) {
         Point3Df center;
         center = new Point3Df();
-        
-        if (useScanner && getExtents().length > 2) {
-        	MipavCoordinateSystems.scannerToFile(new Point3Df(0f,0f,0f), center, this);
-        	if (center.x >= 0 && center.x <= getExtents()[0] && 
-        			center.y >= 0 && center.y <= getExtents()[1] &&
-        			center.z >= 0 && center.z <= getExtents()[2] ) {
-        		
-        		center.x *= fileInfo[0].getResolutions()[0];
-        		center.y *= fileInfo[0].getResolutions()[1];
-        		center.z *= fileInfo[0].getResolutions()[2];
-        		
-        		
-        		return center;
-        	}
+
+        if (useScanner && (getExtents().length > 2)) {
+            MipavCoordinateSystems.scannerToFile(new Point3Df(0f, 0f, 0f), center, this);
+
+            if ((center.x >= 0) && (center.x <= getExtents()[0]) && (center.y >= 0) && (center.y <= getExtents()[1]) &&
+                    (center.z >= 0) && (center.z <= getExtents()[2])) {
+
+                center.x *= fileInfo[0].getResolutions()[0];
+                center.y *= fileInfo[0].getResolutions()[1];
+                center.z *= fileInfo[0].getResolutions()[2];
+
+
+                return center;
+            }
         }
-        
-        
+
+
         try {
-            
+
             center.x = (getExtents()[0] - 1) * fileInfo[0].getResolutions()[0] / 2f;
             center.y = (getExtents()[1] - 1) * fileInfo[0].getResolutions()[1] / 2f;
 
@@ -1138,10 +1142,15 @@ public class ModelImage extends ModelStorageBase {
         return matrixHolder.getCompositeMatrix(true);
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
     public MatrixHolder getMatrixHolder() {
-    	return matrixHolder;
+        return matrixHolder;
     }
-    
+
     /**
      * If no LUT or RGB color table is defined, this returns the packed int value for the color at iIndexs for the input
      * ModelImage kImage:
@@ -2238,11 +2247,13 @@ public class ModelImage extends ModelStorageBase {
     /**
      * Read matrix from a file.
      *
-     * @param  composite  if true make a composite matrix of the by multipling this matrix with the one to be read from
-     *                    the file. If false replace this object matrix with a new matrix read from the file.
+     * @param   composite  if true make a composite matrix of the by multipling this matrix with the one to be read from
+     *                     the file. If false replace this object matrix with a new matrix read from the file.
+     *
+     * @return  DOCUMENT ME!
      */
     public TransMatrix readTransformMatrix(boolean composite) {
-    	TransMatrix newMatrix = new TransMatrix(getNDims() + 1);
+        TransMatrix newMatrix = new TransMatrix(getNDims() + 1);
         String fileName, directory;
         JFileChooser chooser;
 
@@ -2284,6 +2295,7 @@ public class ModelImage extends ModelStorageBase {
 
             return null;
         }
+
         return newMatrix;
     }
 
@@ -2404,6 +2416,8 @@ public class ModelImage extends ModelStorageBase {
     /// Note to Matt should the matrix R/W be moved to the Matrix class ??
     /**
      * Saves the transformation matrix to file.
+     *
+     * @param  matrix  DOCUMENT ME!
      */
     public void saveTransformMatrix(TransMatrix matrix) {
 
@@ -2454,6 +2468,7 @@ public class ModelImage extends ModelStorageBase {
      * Save the images transformation matrix in the working directory with the supplied fileName.
      *
      * @param  fileName  - fileName of transformation matrix
+     * @param  matrix    DOCUMENT ME!
      */
     public void saveTransformMatrix(String fileName, TransMatrix matrix) {
 
@@ -2653,7 +2668,7 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Accessor that adds a matrix to the matrix holder
+     * Accessor that adds a matrix to the matrix holder.
      *
      * @param  matrix  transformation matrix structure.
      */
@@ -3105,8 +3120,8 @@ public class ModelImage extends ModelStorageBase {
         if (getNDims() == 2) {
 
             if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
-                ((FileInfoDicom) (fileInfo[0])).setValue("0010,0010", newImageName.trim(),
-                                                         newImageName.trim().length());
+                ((FileInfoDicom) (fileInfo[0])).getTagTable().setValue("0010,0010", newImageName.trim(),
+                                                                       newImageName.trim().length());
             } else {
                 index = fileInfo[0].getFileName().trim().lastIndexOf(".");
 
@@ -3122,8 +3137,8 @@ public class ModelImage extends ModelStorageBase {
             if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
 
                 for (int i = 0; i < getExtents()[2]; i++) {
-                    ((FileInfoDicom) (fileInfo[i])).setValue("0010,0010", newImageName.trim(),
-                                                             newImageName.trim().length());
+                    ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0010,0010", newImageName.trim(),
+                                                                           newImageName.trim().length());
                 }
             } else {
 
@@ -3146,8 +3161,8 @@ public class ModelImage extends ModelStorageBase {
             if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
 
                 for (int i = 0; i < (getExtents()[2] * getExtents()[3]); i++) {
-                    ((FileInfoDicom) (fileInfo[i])).setValue("0010,0010", newImageName.trim(),
-                                                             newImageName.trim().length());
+                    ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0010,0010", newImageName.trim(),
+                                                                           newImageName.trim().length());
                 }
             } else {
 
@@ -3170,8 +3185,8 @@ public class ModelImage extends ModelStorageBase {
             if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
 
                 for (int i = 0; i < (getExtents()[2] * getExtents()[3] * getExtents()[4]); i++) {
-                    ((FileInfoDicom) (fileInfo[i])).setValue("0010,0010", newImageName.trim(),
-                                                             newImageName.trim().length());
+                    ((FileInfoDicom) (fileInfo[i])).getTagTable().setValue("0010,0010", newImageName.trim(),
+                                                                           newImageName.trim().length());
                 }
             } else {
 
@@ -3325,7 +3340,6 @@ public class ModelImage extends ModelStorageBase {
             voiVector = null;
         } // if ( voiVector != null )
 
-        
         matrixHolder = null;
         mask = null;
         maskBU = null;

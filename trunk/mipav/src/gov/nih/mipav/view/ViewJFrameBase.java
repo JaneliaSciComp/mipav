@@ -1674,7 +1674,7 @@ public abstract class ViewJFrameBase extends JFrame
                 aviFile.setIsScript(options.isScript());
 
                 if (!aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(), getRGBTB(), red, green, blue, opacity,
-                                            alphaBlend, paintBitmap, options.getAVICompression())) {
+                                        alphaBlend, paintBitmap, options.getAVICompression())) {
 
                     System.err.println("AVI image write cancelled");
                 }
@@ -1781,17 +1781,14 @@ public abstract class ViewJFrameBase extends JFrame
         FileInfoBase[] fileInfo = img.getFileInfo();
 
         if (suffix == null) {
-            FileIO fileIO = new FileIO();
-
-            suffix = FileIO.getSuffixFrom(fileName);
+            suffix = FileUtility.getExtension(fileName);
 
             if (suffix.equals("")) {
                 fileName = options.getFileName();
-                suffix = FileIO.getSuffixFrom(fileName);
+                suffix = FileUtility.getExtension(fileName);
             }
 
-            fileType = fileIO.getFileType(fileName, directory, false);
-            fileIO = null;
+            fileType = FileUtility.getFileType(fileName, directory, false, false);
         }
 
         // now, get rid of any numbers at the end of the name (these
@@ -2097,12 +2094,8 @@ public abstract class ViewJFrameBase extends JFrame
         FileInfoBase[] fileInfo = img.getFileInfo();
 
         if (suffix == null) {
-            FileIO fileIO = new FileIO();
-
-            fileIO.setQuiet(operateQuiet);
-            suffix = FileIO.getSuffixFrom(fileName);
-            fileType = fileIO.getFileType(fileName, directory, false);
-            fileIO = null;
+            suffix = FileUtility.getExtension(fileName);
+            fileType = FileUtility.getFileType(fileName, directory, false, operateQuiet);
         }
 
         // now, get rid of any numbers at the end of the name (these
@@ -2907,7 +2900,7 @@ public abstract class ViewJFrameBase extends JFrame
                 aviFile.setIsScript(options.isScript());
 
                 if (!aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(), getRGBTB(), red, green, blue, opacity,
-                                            alphaBlend, paintBitmap, options.getAVICompression())) {
+                                        alphaBlend, paintBitmap, options.getAVICompression())) {
 
                     System.err.println("AVI image write cancelled");
                 }
@@ -3015,11 +3008,8 @@ public abstract class ViewJFrameBase extends JFrame
         FileInfoBase[] fileInfo = img.getFileInfo();
 
         if (suffix == null) {
-            FileIO fileIO = new FileIO();
-
-            suffix = FileIO.getSuffixFrom(fileName);
-            fileType = fileIO.getFileType(fileName, directory, false);
-            fileIO = null;
+            suffix = FileUtility.getExtension(fileName);
+            fileType = FileUtility.getFileType(fileName, directory, false, false);
         }
 
         // now, get rid of any numbers at the end of the name (these

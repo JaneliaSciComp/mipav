@@ -1,9 +1,9 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.structures.*;
 
-import java.io.*;
+import gov.nih.mipav.view.*;
 
 import java.util.*;
 
@@ -17,14 +17,12 @@ import java.util.*;
  * that is encoded in the private tags, then he or she needs to edit the DICOM dictionary file to include the necessary
  * private tags.
  *
- * @version  1.1 --November 1999
- * @author   Neva Cherniavsky
- * @author   David Parsons
- * @see      FileInfoDicom
- * @see      FileDicom
- * @see      CreateDICOMFiles
+ * @author  Neva Cherniavsky
+ * @author  David Parsons
+ * @see     FileInfoDicom
+ * @see     FileDicom
  */
-public class FileDicomTag implements Serializable, Cloneable {
+public class FileDicomTag extends ModelSerialCloneable {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -34,263 +32,122 @@ public class FileDicomTag implements Serializable, Cloneable {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Integer element word (in hexadecimal). */
-    int element;
-
+    private int element;
 
     /** Integer group word (in hexadecimal). */
-    int group;
-
-    /** the keyword (no spaces). */
-    String keyword;
+    private int group;
 
     /** Length of the tag. */
-    int length;
+    private int length;
 
-
-    /** The real world DICOM name. */
-    String name;
+    /** Pointer to more information about this tag, read in and contained within the dicom dictionary. */
+    private FileDicomTagInfo tagInfo;
 
     /** Actual value of the tag. */
-    Object value;
+    private Object value;
 
     /**
-     * Version of the tag. Usually "2" or "3", although some tags get strings like "GEM" or "TSH" when the tag is from a
-     * private manufacturer.
+     * Value representation for this tag, if the tags in this dicom file have explicit VRs. If the dicom tags have
+     * implicit VRs, then the DicomDictionary VR is used.
      */
-    String version;
-
-    /** value multiplicity. */
-    int vm;
-
-    /** DICOM value representation. */
-    String vr;
+    private String valueRepresentation = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Constructor that creates a DicomTag empty except for the group and element fields.
+     *
+     * @param  info  information about this tag
+     */
+    public FileDicomTag(FileDicomTagInfo info) {
+        this.tagInfo = info;
+        this.group = tagInfo.getKey().getGroupNumber();
+        this.element = tagInfo.getKey().getElementNumber();
+    }
 
     /**
      * Constructor that creates a DicomTag empty except for the name field. this is used for private tags and the name
      * field is the supposed value of the tag.
      *
-     * @param  group    the integer group word (in hexadecimal)
-     * @param  element  the integer element word (in hexadecimal)
-     * @param  value    the object to be stored
+     * @param  info   information about this tag
+     * @param  value  the object to be stored
      */
-    public FileDicomTag(int group, int element, Object value) {
-        this.group = group;
-        this.element = element;
-        this.name = "Private Tag";
+    public FileDicomTag(FileDicomTagInfo info, Object value) {
+        this.tagInfo = info;
+        this.group = tagInfo.getKey().getGroupNumber();
+        this.element = tagInfo.getKey().getElementNumber();
+
         this.value = value;
-        // this.length  = value.length;
-    }
-
-    /**
-     * Constructor that takes all the information needed about the tag except for the value and DICOM revision number
-     * (which we assume to be 3).
-     *
-     * @param  dicomKey  The group and element which uniquely define this tag
-     * @param  vr        the value representation
-     * @param  vm        the value multiplicity
-     * @param  keyword   the keyword (no spaces)
-     * @param  name      the real world name
-     */
-    public FileDicomTag(FileDicomKey dicomKey, String vr, int vm, String keyword, String name) {
-        this(dicomKey.getGroupNumber(), dicomKey.getElementNumber(), vr, vm, keyword, name);
-    }
-
-    /**
-     * Constructor that takes all the information needed about the tag except for the value and DICOM revision number
-     * (which we assume to be 3).
-     *
-     * @param  group    the integer group word (in hexadecimal)
-     * @param  element  the integer element word (in hexadecimal)
-     * @param  vr       the value representation
-     * @param  vm       the value multiplicity
-     * @param  keyword  the keyword (no spaces)
-     * @param  name     the real world name
-     */
-    public FileDicomTag(int group, int element, String vr, int vm, String keyword, String name) {
-        this.group = group;
-        this.element = element;
-        this.version = "3"; // assume this is a DICOM 3 tag
-        this.vr = vr;
-        this.vm = vm;
-        this.keyword = keyword;
-        this.name = name;
-    }
-
-    /**
-     * Constructor that takes all the information needed about the tag except for the value.
-     *
-     * @param  group    the integer group word (in hexadecimal)
-     * @param  element  the integer element word (in hexadecimal)
-     * @param  version  the DICOM revision (version) number (eg. "3" or "GEM")
-     * @param  vr       the value representation
-     * @param  vm       the value multiplicity
-     * @param  keyword  the keyword (no spaces)
-     * @param  name     the real world name
-     */
-    public FileDicomTag(int group, int element, String version, String vr, int vm, String keyword, String name) {
-        this.group = group;
-        this.element = element;
-        this.version = version;
-        this.vr = vr;
-        this.vm = vm;
-        this.keyword = keyword;
-        this.name = name;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Accessor that returns the type of tag, depending on the value representation. This allows the reader to read in
-     * the tags properly.
+     * Tests whether a tag contains the same information as this tag.
      *
-     * @param   vr  value representation
+     * @param   obj  A object (hopefully a non-null FileDicomTag, but not required).
      *
-     * @return  the type (int, double, short, String, or unknown)
+     * @return  Whether all of the tag data (group, element, tag info, value, length) in the other tag is the same as
+     *          this one. False if the tag is null or not a FileDicomTag.
      */
-    public static String getType(String vr) {
+    public boolean equals(Object obj) {
 
-        try {
+        if ((obj != null) && (obj.getClass() == this.getClass())) {
+            FileDicomTag tag = (FileDicomTag) obj;
 
-            if (vr.equals("SL") || vr.equals("UL")) { // Signed Long  || Unsigned Long
-                return "typeInt";
-            } else if (vr.equals("SS") || vr.equals("US")) { // Signed short || Unsigned short
-                return "typeShort";
-            } else if (vr.equals("SH") || // Short String
-                           vr.equals("DS") || // Decimal String
-                           vr.equals("IS") || // Integer String
-                           vr.equals("LO") || // Long String
-                           vr.equals("ST") || // Short Text
-                           vr.equals("LT") || // Long Text
-                           vr.equals("CS") || // Code String
-                           vr.equals("DA") || // Date
-                           vr.equals("DT") || // Date and Time
-                           vr.equals("TM") || // Time
-                           vr.equals("UI") || // UID
-                           vr.equals("PN") || // Person's Name
-                           vr.equals("AS") || // Age String
-                           vr.equals("AE") || // Application Entity Title
-                           vr.equals("UN") || // Unknown
-                           vr.equals("UT")) { // Unlimited Text
-                return "typeString";
-            } else if (vr.equals("FL")) { // Floating Point Single (float)
-                return "typeFloat";
-            } else if (vr.equals("FD")) { // Floating Point Double
-                return "typeDouble";
-            } else if (vr.equals("OW")) {
-                return "otherWordString";
-            } else if (vr.equals("OB")) {
-                return "otherByteString";
-            } else if (vr.equals("SQ")) {
-                return "typeSequence";
-            } else {
-                return "typeUnknown"; // unknown
+            if ((this.group == tag.group) && (this.element == tag.element) && this.tagInfo.equals(tag.getInfo())) {
+                Object thisVal = this.getValue(false);
+                Object otherVal = tag.getValue(false);
+
+                // allow for both values to be null
+                if ((thisVal == null) && (otherVal == null)) {
+                    return true;
+                }
+
+                if (this.length == tag.length) {
+
+                    if (thisVal.equals(otherVal)) {
+                        return true;
+                    } else {
+
+                        // might be an array of byte or short objects or something... we need to check
+                        if (thisVal.getClass().isArray() && otherVal.getClass().isArray()) {
+                            Object[] thisArray = (Object[]) thisVal;
+                            Object[] otherArray = (Object[]) otherVal;
+
+                            if (thisArray.length != otherArray.length) {
+                                return false;
+                            }
+
+                            for (int i = 0; i < thisArray.length; i++) {
+
+                                if (!thisArray[i].equals(otherArray[i])) {
+                                    return false;
+                                }
+                            }
+
+                            // same length and same values, the arrays are the same..
+                            return true;
+                        }
+                    }
+                }
             }
-        } catch (NullPointerException npe) {
-            return "typeUnknown";
         }
-    }
 
-    /**
-     * This allows us the copy the value of the DicomTag instead of just the reference. This is especially important
-     * when setting up the Hashtables in FileInfoDicom.
-     *
-     * @return  the new DicomTag
-     *
-     * @see     FileInfoDicom
-     */
-    public Object clone() {
-        FileDicomTag tag = new FileDicomTag(this.group, this.element, this.version, this.vr, this.vm, this.keyword,
-                                            this.name);
-
-        // tag.setLength(this.length);       //Why didn't it preset the value?
-        tag.setValue(this.value, this.length);
-
-        return tag;
+        return false;
     }
 
     /**
      * Prepares this class for cleanup.
      */
     public void finalize() {
-        version = null;
-        vr = null;
-        keyword = null;
-        name = null;
         value = null;
 
         try {
             super.finalize();
-        } catch (Throwable er) { }
-    }
-
-    /**
-     * Converts the given readable string to a DICOM compliant age string. The following limitations apply: has to start
-     * with numbers, then follow-up with the word 'days', 'months', 'years' irrespective of capitalization; a number may
-     * be no larger than 3 digits, or only the top three digits are accepted.
-     *
-     * @param   tempValue  Original (readable) string value.
-     *
-     * @return  Dicom string version of age.
-     */
-    public String fromVisibleStringToAS(String tempValue) {
-        int i;
-        StringBuffer newStr = new StringBuffer(); // newStr will be the finished DICOM product
-        int multiple = 1; // check if this token in the string can be valid for this.value multiplicity
-
-        // parse out into a buffer up to the first \ (multiple values incidently),
-        StringTokenizer strTokBackslash = new StringTokenizer(tempValue, "\\");
-
-        // string has zero or more '\' in it...zero '\', but still having tokens is a vm=1:
-        // (strTokBackslash.countTokens() = 1 on first pass indicates value multiplicity=1)
-        // no tokens at all will be copy a null string into value (but it should not ave gone this far anyway.
-        while (strTokBackslash.hasMoreTokens() && (multiple <= vm)) {
-            StringBuffer strBuf = new StringBuffer(); // temp holder for this multiplicity of  age string
-
-            // parse out into a buffer the numeric partand the unit of time part
-            StringTokenizer word = new StringTokenizer(strTokBackslash.nextToken(), " ");
-
-            if (word.countTokens() > 1) { // if there is a decimal pt in there:
-
-                String str = word.nextToken(); // parse out the number
-
-                if (str.length() > 3) {
-                    strBuf.append(str.substring(0, 3));
-                } else {
-
-                    for (i = 3; i > str.length(); i--) { // for as ahort as the string is,
-                        strBuf.insert(0, '0'); // prepend 0s to make the string
-                    } // 3 chars long
-
-                    strBuf.append(str.toString());
-                }
-
-                // allowable units: Day, Week, Month, & Year.  Also allowing for plural
-                str = word.nextToken();
-
-                if (str.equalsIgnoreCase("Day") || str.equalsIgnoreCase("Days")) {
-                    strBuf.append('D');
-                } else if (str.equalsIgnoreCase("Week") || str.equalsIgnoreCase("Weeks")) {
-                    strBuf.append('W');
-                } else if (str.equalsIgnoreCase("Month") || str.equalsIgnoreCase("Months")) {
-                    strBuf.append('M');
-                } else if (str.equalsIgnoreCase("Year") || str.equalsIgnoreCase("Years")) {
-                    strBuf.append('Y');
-                } else { // if the string was something else, to keep DICOM compliant, just
-                    strBuf.append('Y'); // append 'Y'ears
-                }
-            }
-
-            if (strTokBackslash.hasMoreTokens() && (multiple <= vm)) {
-                strBuf.append('\\'); // chk multiplicity, and if there are more, add delimiter '\'
-            }
-
-            newStr.append(strBuf.toString());
-            multiple++;
+        } catch (Throwable er) {
+            // cleaning up.. ignore errors
         }
-
-        return newStr.toString();
     }
 
     /**
@@ -303,43 +160,17 @@ public class FileDicomTag implements Serializable, Cloneable {
     public final int getDataLength() {
         int dataItems = 0;
 
-        if (getType().equalsIgnoreCase("typeString")) {
+        if (tagInfo.getType().equalsIgnoreCase("typeString")) {
             dataItems = value.toString().length();
-        } else if (getType(getVR()).equalsIgnoreCase("otherWordString")) {
+        } else if (tagInfo.getType().equalsIgnoreCase("otherWordString")) {
             dataItems = getValueList().length;
-        } else if (getType(getVR()).equalsIgnoreCase("otherByteString")) {
+        } else if (tagInfo.getType().equalsIgnoreCase("otherByteString")) {
             dataItems = getValueList().length;
         } else { // ????
             dataItems = getValueList().length;
         }
 
         return (dataItems * sizeof());
-    }
-
-
-    /**
-     * This <b>hack</b> Calculates the number of bytes that the data (the object value) takes to be stored. This method
-     * returns the number of data items times the sizeof the data type. This method will be <b>REMOVED</b> when (if) the
-     * tags are seperated out as individual classes. <i>Calls sizeof(String)</i>
-     *
-     * @param   tagType  DOCUMENT ME!
-     *
-     * @return  size of the value in bytes
-     */
-    public int getDataLength(String tagType) {
-        int dataItems = 0;
-
-        if (tagType.equalsIgnoreCase("typeString")) {
-            dataItems = value.toString().length();
-        } else if (tagType.equalsIgnoreCase("otherWordString")) {
-            dataItems = getValueList().length;
-        } else if (tagType.equalsIgnoreCase("otherByteString")) {
-            dataItems = getValueList().length;
-        } else { // ????
-            dataItems = getValueList().length;
-        }
-
-        return (dataItems * sizeof(tagType));
     }
 
     /**
@@ -361,12 +192,30 @@ public class FileDicomTag implements Serializable, Cloneable {
     }
 
     /**
-     * Returns the keyword for this tag, a word with no spaces.
+     * Return a reference to information about this tag in the dicom dictionary.
      *
-     * @return  the keyword
+     * @return  Information about this tag.
+     */
+    public final FileDicomTagInfo getInfo() {
+        return tagInfo;
+    }
+
+    /**
+     * Return the key object (group,element info) for this tag.
+     *
+     * @return  This tag's key.
+     */
+    public final FileDicomKey getKey() {
+        return tagInfo.getKey();
+    }
+
+    /**
+     * Return the keyword for this tag.
+     *
+     * @return  The tag keyword.
      */
     public final String getKeyword() {
-        return keyword;
+        return tagInfo.getKeyword();
     }
 
     /**
@@ -379,12 +228,12 @@ public class FileDicomTag implements Serializable, Cloneable {
     }
 
     /**
-     * Accessor that returns the real world name of this tag. For private tags, the name is the value.
+     * Return the name of this tag.
      *
-     * @return  the name of this tag
+     * @return  The tag name.
      */
     public final String getName() {
-        return name;
+        return tagInfo.getName();
     }
 
     /**
@@ -399,7 +248,7 @@ public class FileDicomTag implements Serializable, Cloneable {
 
         try {
 
-            if (getType().equals("typeString")) {
+            if (tagInfo.getType().equals("typeString")) {
 
                 // split by '\' separator chars--trying not to use java 1.4 req meth
                 StringTokenizer backslash = new StringTokenizer((String) value, "\\");
@@ -417,53 +266,12 @@ public class FileDicomTag implements Serializable, Cloneable {
     }
 
     /**
-     * Accessor that returns the type of tag, depending on the value representation. This allows the reader to read in
-     * the tags properly. This method will be so much simpler when (if) the tags are seperated out as individual
-     * classes.
+     * Return the type of this tag (determined from its value representation (vr)).
      *
-     * @return  the type (int, double, short, String, or unknown)
+     * @return  The tag type.
      */
     public final String getType() {
-
-        try {
-
-            if (vr.equals("SL") || vr.equals("UL")) { // Signed Long  || Unsigned Long
-                return "typeInt";
-            } else if (vr.equals("SS") || vr.equals("US")) { // Signed short || Unsigned short
-                return "typeShort";
-            } else if (vr.equals("SH") || // Short String
-                           vr.equals("DS") || // Decimal String
-                           vr.equals("IS") || // Integer String
-                           vr.equals("LO") || // Long String
-                           vr.equals("ST") || // Short Text
-                           vr.equals("LT") || // Long Text
-                           vr.equals("CS") || // Code String
-                           vr.equals("DA") || // Date
-                           vr.equals("DT") || // Date and Time
-                           vr.equals("TM") || // Time
-                           vr.equals("UI") || // UID
-                           vr.equals("PN") || // Person's Name
-                           vr.equals("AS") || // Age String
-                           vr.equals("AE") || // Application Entity Title
-                           vr.equals("UN") || // Unknown
-                           vr.equals("UT")) { // Unlimited Text
-                return "typeString";
-            } else if (vr.equals("FL")) { // Floating Point Single (float)
-                return "typeFloat";
-            } else if (vr.equals("FD")) { // Floating Point Double
-                return "typeDouble";
-            } else if (vr.equals("OW")) {
-                return "otherWordString";
-            } else if (vr.equals("OB")) {
-                return "otherByteString";
-            } else if (vr.equals("SQ")) {
-                return "typeSequence";
-            } else {
-                return "typeUnknown"; // unknown
-            }
-        } catch (NullPointerException npe) {
-            return "typeUnknown";
-        }
+        return tagInfo.getType();
     }
 
     /**
@@ -484,6 +292,9 @@ public class FileDicomTag implements Serializable, Cloneable {
      */
     public Object getValue(boolean parse) {
         Object returnValue;
+
+        String vr = getValueRepresentation();
+        String keyword = tagInfo.getKeyword();
 
         if (parse && (vr != null) && (keyword != null) && (value != null)) {
 
@@ -520,7 +331,7 @@ public class FileDicomTag implements Serializable, Cloneable {
         Object[] stuff = new Object[1];
 
         try {
-            String type = getType();
+            String type = tagInfo.getType();
 
             if (type.equals("typeString")) {
 
@@ -610,33 +421,13 @@ public class FileDicomTag implements Serializable, Cloneable {
                 }
             }
         } catch (NullPointerException npe) {
-            System.out.print("\tFileDicomTag.getValueList(): ??--" + getKeyword() + "--cannot be dealt with.\n");
-            Preferences.debug("\"" + getKeyword() + "\" cannot be found as a list;" + " this may be an error.  \n");
+            System.out.print("\tFileDicomTag.getValueList(): ??--" + tagInfo.getKeyword() +
+                             "--cannot be dealt with.\n");
+            Preferences.debug("\"" + tagInfo.getKeyword() + "\" cannot be found as a list;" +
+                              " this may be an error.  \n");
         }
 
         return stuff;
-    }
-
-    /**
-     * Accessor that returns the DICOM version of the tag. Although not needed to understand a value, it is both
-     * important to the dictionary (@see CreateDICOMFiles) .
-     *
-     * @return  the String that is the DICOM version.
-     */
-    public final String getVersion() {
-        return version;
-    }
-
-    /**
-     * Accessor to the DICOM version number for this tag. Returns it as a number so numerical comparisons (greater-than,
-     * equality, etc) can be made. Also, throws a NumberFormatException for private tags.
-     *
-     * @throws  NumberFormatException  when a tag is a Private Tag.
-     *
-     * @return  the version number.
-     */
-    public final int getVersionNumber() throws NumberFormatException {
-        return Integer.parseInt(getVersion());
     }
 
     /**
@@ -645,19 +436,42 @@ public class FileDicomTag implements Serializable, Cloneable {
      *
      * @return  the value multiplicity
      */
-    public final int getVM() {
-        return vm;
+    public final int getValueMultiplicity() {
+        return tagInfo.getValueMultiplicity();
     }
 
     /**
-     * Accessor that returns the value representation of the tag. The value representation allows the reader the read
-     * and interpret the tag properly. Because private tags are not unique, the VR is null and they may be read and/or
-     * displayed improperly.
+     * Return the value representation (vr) of this tag. If the tag VR for this dicom are implicit, then the VR is
+     * retrieved from the DicomDictionary.
      *
-     * @return  the value representation
+     * @return  The tag vr.
      */
-    public final String getVR() {
-        return vr;
+    public final String getValueRepresentation() {
+
+        // explicit VR
+        if (this.valueRepresentation != null) {
+            return this.valueRepresentation;
+        }
+
+        // implicit VR from the dicom dictionary
+        return tagInfo.getValueRepresentation();
+    }
+
+    /**
+     * Returns the unique identifier's hash code.
+     *
+     * @return  The hash code.
+     */
+    public final int hashCode() {
+
+        // TODO: this might not be a good hash code...
+        int hash = tagInfo.hashCode() + group + element + length + value.hashCode();
+
+        if (valueRepresentation != null) {
+            hash += valueRepresentation.hashCode();
+        }
+
+        return hash;
     }
 
     /**
@@ -701,13 +515,15 @@ public class FileDicomTag implements Serializable, Cloneable {
      * @param  value  the value to store
      */
     public void setValue(Object value) {
+        String vr = getValueRepresentation();
+        String keyword = tagInfo.getKeyword();
 
         // if the vr is null or has no keyword (maybe a private tag?), ignore.  Must call setValue
         if ((vr == null) || (keyword == null)) {
             return;
         }
 
-        String type = getType();
+        String type = tagInfo.getType();
 
         if (type.equals("typeString")) {
             String val;
@@ -791,12 +607,13 @@ public class FileDicomTag implements Serializable, Cloneable {
     }
 
     /**
-     * Sets the value representation; used only for explicit vr.
+     * Sets the value representation (vr) of this tag. This method should only be used when a dicom's tag VRs are
+     * explicit. Otherwise, the DicomDictionary VR should be used (implicit).
      *
-     * @param  vr  the value representation
+     * @param  vr  The tag's explicit value representation.
      */
-    public final void setVR(String vr) {
-        this.vr = vr;
+    public final void setValueRepresentation(String vr) {
+        this.valueRepresentation = vr;
     }
 
     /**
@@ -807,7 +624,7 @@ public class FileDicomTag implements Serializable, Cloneable {
      */
     public int sizeof() {
         int retval = 0;
-        String type = getType();
+        String type = tagInfo.getType();
 
         if (type.equals("typeString")) {
 
@@ -853,54 +670,6 @@ public class FileDicomTag implements Serializable, Cloneable {
     }
 
     /**
-     * This <b>HACK</b> Gets the data size in bytes of the units held in this class. This method will be <b>removed</b>
-     * when (if) the tags are seperated out as individual classes.
-     *
-     * @param   tagType  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public int sizeof(String tagType) {
-        int retval = 0;
-
-        if (tagType.equals("typeString")) {
-
-            // loop through all values in the list to find total length of all
-            // strings.... consider for other types tooo....
-            retval = 1; // one char, no?
-        } else if (tagType.equals("typeShort")) {
-            retval = 2;
-        } else if (tagType.equals("typeFloat")) {
-            retval = 4;
-        } else if (tagType.equals("typeInt")) {
-            retval = 4;
-        } else if (tagType.equals("typeDouble")) {
-            retval = 8;
-        } else if (getType(tagType).equalsIgnoreCase("otherWordString") ||
-                       getType(tagType).equalsIgnoreCase("otherByteString") ||
-                       getType(tagType).equalsIgnoreCase("typeUnknown")) {
-            Object val = getValueList();
-
-            if (val instanceof Byte[]) {
-                retval = 1;
-            } else if (val instanceof Short[]) {
-                retval = 2;
-            } else if (val instanceof Integer[]) {
-                retval = 4;
-            } else if (val instanceof Float[]) {
-                retval = 4;
-            } else if (val instanceof Double[]) {
-                retval = 8;
-            } else {
-                System.err.println("FileDicomTag. sizeof  " + val.getClass().toString());
-                retval = 1;
-            }
-        }
-
-        return retval;
-    }
-
-    /**
      * Used for debugging so that the information contained in the tag can be converted to a readable form.
      *
      * @return  The tag in readable form
@@ -909,23 +678,7 @@ public class FileDicomTag implements Serializable, Cloneable {
         String s = "";
         s = "Group: " + Integer.toString(this.group, 0x10) + " Element: " + Integer.toString(this.element, 0x10);
 
-        if (version != null) {
-            s += " VER: " + this.version;
-        }
-
-        if (vr != null) {
-            s += " VR: " + this.vr;
-        }
-
-        s += " VM: " + this.vm;
-
-        if (keyword != null) {
-            s += " Keyword: " + this.keyword;
-        }
-
-        if (name != null) {
-            s += " Name: " + this.name;
-        }
+        s += tagInfo.toString();
 
         if (value != null) {
             s += " Value: " + this.value;
@@ -952,7 +705,7 @@ public class FileDicomTag implements Serializable, Cloneable {
         // find first multiplicity
         StringTokenizer backslashTok = new StringTokenizer(value.toString(), "\\");
 
-        while (backslashTok.hasMoreTokens() && (multiple <= vm)) {
+        while (backslashTok.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
             age = backslashTok.nextToken();
 
             if ((age != null) && (age.length() > 3)) {
@@ -985,7 +738,7 @@ public class FileDicomTag implements Serializable, Cloneable {
                 }
             }
 
-            if (backslashTok.hasMoreTokens() && (multiple < vm)) {
+            if (backslashTok.hasMoreTokens() && (multiple < getValueMultiplicity())) {
                 output.append(" \\ ");
             }
 
@@ -1012,7 +765,7 @@ public class FileDicomTag implements Serializable, Cloneable {
 
         try {
 
-            while (backslashTok.hasMoreTokens() && (multiple <= vm)) {
+            while (backslashTok.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
                 tmpStr = backslashTok.nextToken().trim();
 
                 if (tmpStr.length() == 8) {
@@ -1030,7 +783,7 @@ public class FileDicomTag implements Serializable, Cloneable {
                     //
                 }
 
-                if (backslashTok.hasMoreTokens() && (multiple < vm)) {
+                if (backslashTok.hasMoreTokens() && (multiple < getValueMultiplicity())) {
                     output.append(" \\ ");
                 }
 
@@ -1144,7 +897,7 @@ public class FileDicomTag implements Serializable, Cloneable {
         // find first multiplicity
         StringTokenizer backslashTok = new StringTokenizer(value.toString(), "\\");
 
-        while (backslashTok.hasMoreTokens() && (multiple <= vm)) {
+        while (backslashTok.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
             String timeEntry = backslashTok.nextToken();
             StringTokenizer colonTok = new StringTokenizer(timeEntry, ":");
 
@@ -1187,7 +940,7 @@ public class FileDicomTag implements Serializable, Cloneable {
                 output.append(colonTok.toString()); // copy into place
             }
 
-            if (backslashTok.hasMoreTokens() && (multiple < vm)) {
+            if (backslashTok.hasMoreTokens() && (multiple < getValueMultiplicity())) {
                 output.append(" \\ ");
             }
 
@@ -1195,6 +948,74 @@ public class FileDicomTag implements Serializable, Cloneable {
         }
 
         return (output.toString());
+    }
+
+    /**
+     * Converts the given readable string to a DICOM compliant age string. The following limitations apply: has to start
+     * with numbers, then follow-up with the word 'days', 'months', 'years' irrespective of capitalization; a number may
+     * be no larger than 3 digits, or only the top three digits are accepted.
+     *
+     * @param   tempValue  Original (readable) string value.
+     *
+     * @return  Dicom string version of age.
+     */
+    private String fromVisibleStringToAS(String tempValue) {
+        int i;
+        StringBuffer newStr = new StringBuffer(); // newStr will be the finished DICOM product
+        int multiple = 1; // check if this token in the string can be valid for this.value multiplicity
+
+        // parse out into a buffer up to the first \ (multiple values incidently),
+        StringTokenizer strTokBackslash = new StringTokenizer(tempValue, "\\");
+
+        // string has zero or more '\' in it...zero '\', but still having tokens is a vm=1:
+        // (strTokBackslash.countTokens() = 1 on first pass indicates value multiplicity=1)
+        // no tokens at all will be copy a null string into value (but it should not ave gone this far anyway.
+        while (strTokBackslash.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
+            StringBuffer strBuf = new StringBuffer(); // temp holder for this multiplicity of  age string
+
+            // parse out into a buffer the numeric partand the unit of time part
+            StringTokenizer word = new StringTokenizer(strTokBackslash.nextToken(), " ");
+
+            if (word.countTokens() > 1) { // if there is a decimal pt in there:
+
+                String str = word.nextToken(); // parse out the number
+
+                if (str.length() > 3) {
+                    strBuf.append(str.substring(0, 3));
+                } else {
+
+                    for (i = 3; i > str.length(); i--) { // for as ahort as the string is,
+                        strBuf.insert(0, '0'); // prepend 0s to make the string
+                    } // 3 chars long
+
+                    strBuf.append(str.toString());
+                }
+
+                // allowable units: Day, Week, Month, & Year.  Also allowing for plural
+                str = word.nextToken();
+
+                if (str.equalsIgnoreCase("Day") || str.equalsIgnoreCase("Days")) {
+                    strBuf.append('D');
+                } else if (str.equalsIgnoreCase("Week") || str.equalsIgnoreCase("Weeks")) {
+                    strBuf.append('W');
+                } else if (str.equalsIgnoreCase("Month") || str.equalsIgnoreCase("Months")) {
+                    strBuf.append('M');
+                } else if (str.equalsIgnoreCase("Year") || str.equalsIgnoreCase("Years")) {
+                    strBuf.append('Y');
+                } else { // if the string was something else, to keep DICOM compliant, just
+                    strBuf.append('Y'); // append 'Y'ears
+                }
+            }
+
+            if (strTokBackslash.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
+                strBuf.append('\\'); // chk multiplicity, and if there are more, add delimiter '\'
+            }
+
+            newStr.append(strBuf.toString());
+            multiple++;
+        }
+
+        return newStr.toString();
     }
 
 
@@ -1214,7 +1035,7 @@ public class FileDicomTag implements Serializable, Cloneable {
         StringBuffer date = new StringBuffer();
         StringTokenizer backslashTok = new StringTokenizer(tempValue, "\\");
 
-        while (backslashTok.hasMoreTokens() && (multiple <= vm)) {
+        while (backslashTok.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
             temp = backslashTok.nextToken();
 
             StringTokenizer dotTok = new StringTokenizer(temp, ".");
@@ -1264,7 +1085,7 @@ public class FileDicomTag implements Serializable, Cloneable {
                 date.setLength(0);
             }
 
-            if (backslashTok.hasMoreTokens() && (multiple < vm)) {
+            if (backslashTok.hasMoreTokens() && (multiple < getValueMultiplicity())) {
                 date.append("\\");
             }
 
@@ -1293,7 +1114,7 @@ public class FileDicomTag implements Serializable, Cloneable {
         // string has zero or more '\' in it...zero '\', but still having tokens is a vm=1:
         // (strTokBackslash.countTokens() = 1 on first pass indicates value multiplicity=1)
         // no tokens at all will be copy a null string into value (but it should not ave gone this far anyway.
-        while (strTokBackslash.hasMoreTokens() && (multiple <= vm)) {
+        while (strTokBackslash.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
             StringBuffer strBuf = new StringBuffer(); // creating a new stringbuffer with each while
                                                       // because this version of java does not have
                                                       // stringBuffer.delete(int start, int end)
@@ -1319,7 +1140,7 @@ public class FileDicomTag implements Serializable, Cloneable {
                 strBuf.append(strTokPt.nextToken()); // string didn't represent a fractional num
             }
 
-            if (strTokBackslash.hasMoreTokens() && (multiple <= vm)) {
+            if (strTokBackslash.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
                 strBuf.append('\\'); // if there is more DS, be sure to add the delimiter '\'
             }
 
@@ -1456,7 +1277,7 @@ public class FileDicomTag implements Serializable, Cloneable {
         StringBuffer newTime = new StringBuffer();
         String timeField = new String();
 
-        while (backslashTok.hasMoreTokens() && (multiple <= vm)) {
+        while (backslashTok.hasMoreTokens() && (multiple <= getValueMultiplicity())) {
             String temp = backslashTok.nextToken();
             StringTokenizer dotTok = new StringTokenizer(temp, ".");
 
@@ -1527,7 +1348,7 @@ public class FileDicomTag implements Serializable, Cloneable {
                 newTime.append(frac);
             }
 
-            if (backslashTok.hasMoreTokens() && (multiple < vm)) {
+            if (backslashTok.hasMoreTokens() && (multiple < getValueMultiplicity())) {
                 newTime.append("\\");
             }
 

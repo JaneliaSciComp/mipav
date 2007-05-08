@@ -152,13 +152,13 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Extract Slices reports: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        
+
 
         // No DICOM 4D images
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
@@ -187,7 +187,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                     MipavUtil.displayWarning("Extract Slices does not support changes in\n" +
                                              "image position (DICOM tag 0020,0032)\n" + "in more than one dimension.");
                     setCompleted(false);
-                    
+
 
                     return;
                 }
@@ -216,7 +216,8 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                 for (zSrc = 0; (zSrc < oldZdim) && !threadStopped; zSrc++) { // for all slices in the src image
 
                     // let user know something is happening by updating the progressbar
-                    fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDimSrc * oldZdim) - 1) * 100));
+                    fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDimSrc * oldZdim) - 1) *
+                                                            100));
 
                     // if the slice has been marked for extraction, copy it all over.
                     if (extractList.contains(Integer.toString(zSrc))) {
@@ -234,7 +235,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                         } catch (IOException error) {
                             displayError("Algorithm ExtractSlices reports: " + error.getMessage());
                             setCompleted(false);
-                            
+
 
                             return;
                         }
@@ -250,8 +251,8 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
 
                             // change the slice number ("0020,0013"):
                             // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-                            fileInfoBuffer.setValue("0020,0013", String.valueOf(zDest + 1),
-                                                    ((FileDicomTag) fileInfoBuffer.getEntry("0020,0013")).getLength()); // Reset the image (slice) number with the new number ordering
+                            fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(zDest + 1),
+                                                                  fileInfoBuffer.getTagTable().get("0020,0013").getLength()); // Reset the image (slice) number with the new number ordering
 
                             // readjust the image position ("0020,0032"): copy the "image position (patient)" info so
                             // that axis-position left by extracting slices (zSrc) will change by sliding the next
@@ -269,16 +270,18 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                             // *** Only works if length of string for imagePositionCoords is the
                             // same as length for nextPositionCoords - should not need a third
                             // length parameter
-                            fileInfoBuffer.setValue("0020,0032",
-                                                    imagePositionCoords[0] + "\\" + imagePositionCoords[1] + "\\" +
-                                                    imagePositionCoords[2],
-                                                    ((FileDicomTag) fileInfoBuffer.getEntry("0020,0032")).getLength());
+                            fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                  imagePositionCoords[0] + "\\" +
+                                                                  imagePositionCoords[1] + "\\" +
+                                                                  imagePositionCoords[2],
+                                                                  fileInfoBuffer.getTagTable().get("0020,0032").getLength());
 
                             // readjust the slice location ("0020,1041")
                             // same change as image position above:
-                            fileInfoBuffer.setValue("0020,1041",
-                                                    ((FileInfoDicom) (srcImage.getFileInfo(zDest))).getValue("0020,1041"),
-                                                    ((FileDicomTag) fileInfoBuffer.getEntry("0020,1041")).getLength());
+                            fileInfoBuffer.getTagTable().setValue("0020,1041",
+                                                                  ((FileInfoDicom) (srcImage.getFileInfo(zDest)))
+                                                                      .getTagTable().getValue("0020,1041"),
+                                                                  fileInfoBuffer.getTagTable().get("0020,1041").getLength());
 
                             destImage.setFileInfo(fileInfoBuffer, zDest);
                         } else { // not a DICOM image, so these can be processed similarly
@@ -306,7 +309,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                     imageBuffer = null;
                     setCompleted(false);
                     finalize();
-                    
+
 
                     return;
                 }
@@ -347,7 +350,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                         } catch (IOException error) {
                             displayError("Algorithm ExtractSlices reports: " + error.getMessage());
                             setCompleted(false);
-                            
+
 
                             return;
                         }
@@ -365,7 +368,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-        
+
         setCompleted(true);
 
     } // end calcStoreInDest()

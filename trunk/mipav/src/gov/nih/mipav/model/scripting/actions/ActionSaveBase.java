@@ -123,8 +123,6 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
             saveSuffix = parameters.getString(SAVE_SUFFIX);
         }
 
-        FileIO fileIO = new FileIO();
-
         String saveFileName = null;
         String saveFileDir = image.getImageDirectory();
 
@@ -186,7 +184,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         } else {
 
             // not a save as action
-            String extension = FileIO.getSuffixFrom(image.getImageFileName());
+            String extension = FileUtility.getExtension(image.getImageFileName());
             saveFileName = savePrefix + image.getImageName() + saveSuffix + extension;
 
             int collisionAvoidanceIndex = 1;
@@ -210,7 +208,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         opts.setOptionsSet(true);
         opts.setIsScript(true);
 
-        int fileType = fileIO.getFileType(opts.getFileName(), opts.getFileDirectory());
+        int fileType = FileUtility.getFileType(opts.getFileName(), opts.getFileDirectory(), false);
         Preferences.debug("File type is: " + fileType + "\n", Preferences.DEBUG_SCRIPTING);
         opts.setFileType(fileType);
 
@@ -329,7 +327,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
         // if not a save as, always save the same type of file
         if (options.isSaveAs()) {
-            parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileUtility.getDefaultSuffix(options.getFileType())));
+            parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE,
+                                                      FileUtility.getDefaultSuffix(options.getFileType())));
         }
 
         if ((options.getFileType() == FileUtility.TIFF) && options.isPackBitEnabled()) {

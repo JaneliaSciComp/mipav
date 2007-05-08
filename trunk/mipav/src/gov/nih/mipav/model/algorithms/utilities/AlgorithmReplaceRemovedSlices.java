@@ -200,7 +200,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                             ignoreImagePositionCoords = true;
                         }
 
-                        obj = ((FileInfoDicom) (srcImage.getFileInfo(m))).getValue("0020,1041");
+                        obj = ((FileInfoDicom) (srcImage.getFileInfo(m))).getTagTable().getValue("0020,1041");
 
                         if (obj != null) {
                             s = ((String) obj).trim();
@@ -382,7 +382,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                         ignoreImagePositionCoords = true;
                     }
 
-                    obj = ((FileInfoDicom) (srcImage.getFileInfo(0))).getValue("0020,1041");
+                    obj = ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().getValue("0020,1041");
 
                     if (obj != null) {
                         s = ((String) obj).trim();
@@ -414,7 +414,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                             ignoreImagePositionCoords = true;
                         }
 
-                        obj = ((FileInfoDicom) (srcImage.getFileInfo(m))).getValue("0020,1041");
+                        obj = ((FileInfoDicom) (srcImage.getFileInfo(m))).getTagTable().getValue("0020,1041");
 
                         if (obj != null) {
                             s = ((String) obj).trim();
@@ -487,7 +487,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                         ignoreImagePositionCoords = true;
                     }
 
-                    obj = ((FileInfoDicom) (srcImage.getFileInfo(srcImage.getExtents()[2] - 1))).getValue("0020,1041");
+                    obj = ((FileInfoDicom) (srcImage.getFileInfo(srcImage.getExtents()[2] - 1))).getTagTable().getValue("0020,1041");
 
                     if (obj != null) {
                         s = ((String) obj).trim();
@@ -602,26 +602,29 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
 
         if (isDicom) {
             FileInfoDicom fileInfoBuffer;
-            //          fix the fileinfos to match
+
+            // fix the fileinfos to match
+
             for (i = 0; i < resultImage.getExtents()[2]; i++) {
                 fileInfoBuffer = (FileInfoDicom) srcImage.getFileInfo()[0].clone();
                 fileInfoBuffer.setOrigin(newOrg2[i], 2);
 
                 if (!ignoreImagePositionCoords) {
-                    fileInfoBuffer.setValue("0020,0032",
-                                            imagePositionCoords[i][0] + "\\" + imagePositionCoords[i][1] + "\\" +
-                                            imagePositionCoords[i][2],
-                                            ((FileDicomTag) fileInfoBuffer.getEntry("0020,0032")).getLength());
+                    fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                          imagePositionCoords[i][0] + "\\" + imagePositionCoords[i][1] +
+                                                          "\\" + imagePositionCoords[i][2],
+                                                          fileInfoBuffer.getTagTable().get("0020,0032").getLength());
                 }
 
                 // Image slice numbers start at 1; index starts at 0, so
                 // compensate by adding 1
-                fileInfoBuffer.setValue("0020,0013", String.valueOf(i + 1),
-                                        ((FileDicomTag) fileInfoBuffer.getEntry("0020,0013")).getLength());
+
+                fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(i + 1),
+                                                      fileInfoBuffer.getTagTable().get("0020,0013").getLength());
 
                 if (!ignoreSliceLocation) {
                     s = nf.format(sliceLocation[i]);
-                    fileInfoBuffer.setValue("0020,1041", s, s.length());
+                    fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
                 }
 
                 resultImage.setFileInfo(fileInfoBuffer, i);
@@ -711,49 +714,63 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
 
             if (isDicom) {
                 FileInfoDicom fileInfoBuffer;
-                //              fix the fileinfos to match
+
+                // fix the fileinfos to match
+
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
                     fileInfoBuffer = (FileInfoDicom) resultImage.getFileInfo()[i].clone();
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }
             } else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.MINC) {
                 FileInfoMinc fileInfoBuffer;
-                //              fix the fileinfos to match
+
+                // fix the fileinfos to match
+
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
                     fileInfoBuffer = (FileInfoMinc) resultImage.getFileInfo()[i].clone();
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }
             } else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
                 FileInfoAfni fileInfoBuffer;
-                //              fix the fileinfos to match
+
+                // fix the fileinfos to match
+
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
                     fileInfoBuffer = (FileInfoAfni) resultImage.getFileInfo()[i].clone();
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }
             } else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.NIFTI) {
                 FileInfoNIFTI fileInfoBuffer;
-                //              fix the fileinfos to match
+
+                // fix the fileinfos to match
+
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
                     fileInfoBuffer = (FileInfoNIFTI) resultImage.getFileInfo()[i].clone();
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }
             } else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.ANALYZE) {
                 FileInfoAnalyze fileInfoBuffer;
-                //              fix the fileinfos to match
+
+                // fix the fileinfos to match
+
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
                     fileInfoBuffer = (FileInfoAnalyze) resultImage.getFileInfo()[i].clone();
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }
             } else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.XML) {
                 FileInfoXML fileInfoBuffer;
-                //              fix the fileinfos to match
+
+                // fix the fileinfos to match
+
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
                     fileInfoBuffer = (FileInfoXML) resultImage.getFileInfo()[i].clone();
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }
             } else {
                 FileInfoBase fileInfoBuffer;
-                //              fix the fileinfos to match
+
+                // fix the fileinfos to match
+
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
                     fileInfoBuffer = (FileInfoBase) resultImage.getFileInfo()[i].clone();
                     srcImage.setFileInfo(fileInfoBuffer, i);
@@ -838,7 +855,5 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
         } catch (Exception ex) {
             System.err.println("Caught exception: " + ex.toString());
         }
-
     }
-
 }

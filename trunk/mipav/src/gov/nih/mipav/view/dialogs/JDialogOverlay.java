@@ -233,7 +233,7 @@ public class JDialogOverlay extends JDialogBase {
 
         if (isDicom) {
             title = "DICOM " + title;
-            dicomTable = DICOMDictionaryBuilder.getDicomTagTable();
+            dicomTable = DicomDictionary.getDicomTagTable();
         }
 
         tagDialog = new JDialogChooseOverlay(parentFrame);

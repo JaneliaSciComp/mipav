@@ -26,7 +26,10 @@ public class FileDicomKey extends ModelSerialCloneable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /**
+     * The dicom tag identifier in the format 'group,element'. 'x' is allowed in the group number for wildcards in the
+     * dicom dictionary. E.g., '0002,0010' or '50xx,00E1'.
+     */
     private String key;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -35,26 +38,27 @@ public class FileDicomKey extends ModelSerialCloneable {
      * Creates new key with the given String as the unique identifier. The string is checked for proper format, that it
      * specifies 2 hexadecimal strings, separated by a comma.
      *
-     * @param   s  Unique identifier.
+     * @param   keyStr  Unique identifier.
      *
      * @throws  IllegalArgumentException  if s is null, or formatted incorrectly.
      */
-    public FileDicomKey(String s) {
+    public FileDicomKey(String keyStr) {
 
-        if (verify(s)) {
-            key = s;
+        if (verify(keyStr)) {
+            key = keyStr;
         } else {
-            throw new IllegalArgumentException(s + " cannot represent a DICOM key");
+            throw new IllegalArgumentException(keyStr + " cannot represent a DICOM key");
         }
     }
 
     /**
      * Creates a Key from the given group and element numbers provided.
      *
-     * @param   group    DOCUMENT ME!
-     * @param   element  DOCUMENT ME!
+     * @param   group    Dicom tag group number.
+     * @param   element  Dicom tag element number.
      *
-     * @throws  NumberFormatException  DOCUMENT ME!
+     * @throws  NumberFormatException  If there is a problem converting the group and element numbers to hexidecimal
+     *                                 strings.
      */
     public FileDicomKey(int group, int element) throws NumberFormatException {
         String gr = Integer.toHexString(group).toUpperCase();
@@ -78,33 +82,32 @@ public class FileDicomKey extends ModelSerialCloneable {
      * in the format of &quot;[four digit Group number],[four digit element number]&quot;. The Group number must be four
      * digits, but the final 2 digits may be the character &quot;xx&quot;, which is used to represent a variable group.
      *
-     * @param   s  a String which could be a
+     * @param   keyStr  a String which is in the format 'group,element' with 'xx' possibly replacing the last 2 digits
+     *                  of the group id
      *
      * @return  true if the string input can be used to represent a DICOM key, false if it cannot.
      *
-     * @throws  IllegalArgumentException  when the inputted string cannot be used to represent a DICOM key.
+     * @throws  IllegalArgumentException  If the inputted string cannot be used to represent a DICOM key.
      */
-    public static boolean verify(String s) {
+    public static boolean verify(String keyStr) {
         // the checking we do here verifies that 's' has a valid format.
         // we won't actually change the string 's'; just throw it out if
         // it is incorrect, and use it as 'key' if it is correct.
 
-        if (s == null) {
-            throw new IllegalArgumentException("String null");
+        if (keyStr == null) {
+            throw new IllegalArgumentException("DICOM tag string is null");
         }
 
-        int commaplace = s.indexOf(',');
+        int commaplace = keyStr.indexOf(',');
 
         if (commaplace == -1) {
             throw new IllegalArgumentException("Not a DICOM tag Key");
         }
 
-        int group, element;
-
         try {
-            group = Integer.parseInt(s.substring(0, commaplace), 0x10);
+            Integer.parseInt(keyStr.substring(0, commaplace), 0x10);
         } catch (NumberFormatException badNumber) {
-            String groupString = s.substring(0, commaplace);
+            String groupString = keyStr.substring(0, commaplace);
 
             if (groupString.indexOf("xx") == -1) {
                 throw new IllegalArgumentException("Not a DICOM tag group");
@@ -112,12 +115,12 @@ public class FileDicomKey extends ModelSerialCloneable {
         }
 
         try {
-            element = Integer.parseInt(s.substring(commaplace + 1), 0x10);
+            Integer.parseInt(keyStr.substring(commaplace + 1), 0x10);
         } catch (NumberFormatException badElement) {
             throw new IllegalArgumentException("Not a DICOM element");
         }
 
-        if ((s.substring(0, commaplace).length() != 4) && (s.substring(commaplace + 1).length() != 4)) {
+        if ((keyStr.substring(0, commaplace).length() != 4) && (keyStr.substring(commaplace + 1).length() != 4)) {
             throw new IllegalArgumentException("DICOM tag Keys not valid");
         }
 
@@ -198,7 +201,9 @@ public class FileDicomKey extends ModelSerialCloneable {
 
         try {
             super.finalize();
-        } catch (Throwable er) { }
+        } catch (Throwable er) {
+            // cleaning up.. ignore errors
+        }
     }
 
     /**
@@ -211,7 +216,7 @@ public class FileDicomKey extends ModelSerialCloneable {
     }
 
     /**
-     * returns the element portion of a DICOM key as an integer.
+     * Returns the element portion of a DICOM key as an integer.
      *
      * @return  the element number as an integer of the key.
      *
@@ -270,7 +275,7 @@ public class FileDicomKey extends ModelSerialCloneable {
      *
      * @param   key  The unique identifier.
      *
-     * @throws  IllegalArgumentException  DOCUMENT ME!
+     * @throws  IllegalArgumentException  If the inputted string cannot be used to represent a DICOM key.
      */
     public final void setKey(String key) {
 

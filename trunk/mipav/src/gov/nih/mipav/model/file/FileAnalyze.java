@@ -550,7 +550,7 @@ public class FileAnalyze extends FileBase {
     }
 
     /**
-     * <<<<<<< .working Returns the header file.
+     * Returns the header file.
      *
      * @return  DOCUMENT ME!
      */

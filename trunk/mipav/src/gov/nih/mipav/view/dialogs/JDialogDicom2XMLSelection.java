@@ -38,7 +38,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
     /**
      * Creates a new instance of JDialogDicom2XMLSelection.
      */
-    public JDialogDicom2XMLSelection( /*CreateDICOMFiles dicomDictionary*/) {
+    public JDialogDicom2XMLSelection() {
         super();
         setTitle("Select DICOM tags to convert to XML");
         populateLists();
@@ -169,7 +169,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
         // build List to save to:
         selectFileB = new JPanelFileSelection(new File( /*start directory */Preferences.getDICOMSaveDictionary()),
-                                              /*title */ "DICOM Tags Dictionary File for saving to XML");
+            /*title */ "DICOM Tags Dictionary File for saving to XML");
 
         return selectFileB;
     }
@@ -183,7 +183,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
      *          tag file panel. The Vector returned is empty if the File listed by the save panel contains no tags, is
      *          non-existant, or is unspecified.
      *
-     * @see     CreateDICOMFiles
+     * @see     DicomDictionary
      * @see     #getSaveTagFilePanel()
      */
     protected Vector getSaveListData() {
@@ -194,8 +194,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
         try {
 
             if (getSaveTagFilePanel().getSelectedFile().exists()) {
-                Hashtable hashtable = DICOMDictionaryBuilder.getSubsetDicomTagTable();
-                FileDicomKey[] saveKeys = DICOMDictionaryBuilder.sortTagKeys(hashtable);
+                Hashtable hashtable = DicomDictionary.getSubsetDicomTagTable();
+                FileDicomKey[] saveKeys = DicomDictionary.sortTagKeys(hashtable);
 
                 for (int i = 0; i < saveKeys.length; i++) {
                     FileDicomKey key = (FileDicomKey) saveKeys[i];
@@ -228,12 +228,12 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
      *
      * @return  Vector An ordered list of <code>DicomTagIdentifier</code> of tags from the DICOM dictionary
      *
-     * @see     CreateDICOMFiles
+     * @see     DicomDictionary
      */
     protected Vector getSourceListData() {
         Vector dicomList = new Vector();
-        Hashtable tagsTable = DICOMDictionaryBuilder.getDicomTagTable();
-        FileDicomKey[] dictionaryKeyList = DICOMDictionaryBuilder.sortTagKeys(tagsTable);
+        Hashtable tagsTable = DicomDictionary.getDicomTagTable();
+        FileDicomKey[] dictionaryKeyList = DicomDictionary.sortTagKeys(tagsTable);
 
         for (int i = 0; i < dictionaryKeyList.length; i++) {
             FileDicomKey key = (FileDicomKey) dictionaryKeyList[i];
@@ -281,11 +281,10 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
         try {
 
-            if (getSaveTagFilePanel().getSelectedFile().getName().equals(DICOMDictionaryBuilder.DEFAULT_DICTIONARY_FILENAME)) {
+            if (getSaveTagFilePanel().getSelectedFile().getName().equals(DicomDictionary.DEFAULT_DICTIONARY_FILENAME)) {
                 Preferences.debug("Attempted to write DICOM dictionary file " +
                                   "for converting DICOM-to-XML images to the master " + "dicom dictionary, \"" +
-                                  DICOMDictionaryBuilder.SUBSET_DICTIONARY_FILENAME + "\"." + "  No file was saved.\n",
-                                  2);
+                                  DicomDictionary.SUBSET_DICTIONARY_FILENAME + "\"." + "  No file was saved.\n", 2);
             } else {
                 Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY, getSaveTagFilePanel().getSelectedFile().getPath());
 
@@ -299,9 +298,9 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
                     // save list only when there are items in the list:
                     if (getSelectedList().getModel().getSize() > 0) {
-                        DICOMDictionaryBuilder.writeFile(getSaveTagFilePanel().getSelectedFile(), getSaveTable(),
-                                                         "These tags were saved while converting a DICOM " +
-                                                         "image into MIPAV's XML format.");
+                        DicomDictionary.writeFile(getSaveTagFilePanel().getSelectedFile(), getSaveTable(),
+                                                  "These tags were saved while converting a DICOM " +
+                                                  "image into MIPAV's XML format.");
                     }
                 }
             }

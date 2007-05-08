@@ -500,7 +500,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         }
 
         fileFormat = format;
-        fileSuffix = FileIO.getSuffixFrom(name);
+        fileSuffix = FileUtility.getExtension(name);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -600,7 +600,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < axisOrientationStr.length; i++) {
 
                 if (FileInfoBase.getAxisOrientationStr(i).regionMatches(true, 0, s, 0,
-                                                                            FileInfoBase.getAxisOrientationStr(i).length())) {
+                                                                        FileInfoBase.getAxisOrientationStr(i).length())) {
                     return i;
                 }
             }
@@ -681,7 +681,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < 3; i++) {
 
                 if (FileInfoBase.getImageOrientationStr(i).regionMatches(true, 0, s, 0,
-                                                                             FileInfoBase.getImageOrientationStr(i).length())) {
+                                                                         FileInfoBase.getImageOrientationStr(i).length())) {
                     return i;
                 }
             }
@@ -725,7 +725,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < modalityStr.length; i++) {
 
                 if (FileInfoBase.getModalityStr(i).regionMatches(true, 0, s, 0,
-                                                                     FileInfoBase.getModalityStr(i).length())) {
+                                                                 FileInfoBase.getModalityStr(i).length())) {
                     return i;
                 }
             }
@@ -819,7 +819,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                 throw new IllegalArgumentException("The data type is illegal argument : " + dataType);
         }
     }
-  
+
     /**
      * Return all the abbreviated units of measure strings as an array.
      *
@@ -865,10 +865,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < allUnits.length; i++) {
 
                 if (FileInfoBase.getUnitsOfMeasureStr(i).regionMatches(true, 0, s, 0,
-                                                                           FileInfoBase.getUnitsOfMeasureStr(i).length())) {
+                                                                       FileInfoBase.getUnitsOfMeasureStr(i).length())) {
                     return i;
                 } else if (FileInfoBase.getUnitsOfMeasureAbbrevStr(i).regionMatches(true, 0, s, 0,
-                                                                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
+                                                                                    FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
                     return i;
                 }
             }
@@ -984,62 +984,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         } else {
             return false;
         }
-    }
-
-    /**
-     * Copies the object.
-     *
-     * @return  Object A copy of the file info.
-     */
-    public Object clone() {
-        Object base = super.clone();
-
-        return (base);
-    }
-
-
-    /**
-     * Copies the object.
-     *
-     * @return  Object A copy of the file info.
-     */
-    public Object cloneItself() {
-        FileInfoBase cloned = (FileInfoBase) super.cloneItself();
-        cloned.modality = modality;
-        cloned.imageOrientation = imageOrientation;
-        cloned.fileName = fileName;
-        cloned.fileSuffix = fileSuffix;
-        cloned.fileFormat = fileFormat;
-        cloned.dataType = dataType;
-
-        cloned.offset = offset;
-        cloned.endianess = endianess;
-        cloned.sliceThickness = sliceThickness;
-        cloned.min = min;
-        cloned.max = max;
-        cloned.minR = minR;
-        cloned.maxR = maxR;
-        cloned.minG = minG;
-        cloned.maxG = maxG;
-        cloned.minB = minB;
-        cloned.maxB = maxB;
-        cloned.pixelPadValue = pixelPadValue;
-        cloned.rescaleIntercept = rescaleIntercept;
-        cloned.rescaleSlope = rescaleSlope;
-        cloned.photometric = photometric;
-        cloned.multiFile = multiFile;
-        cloned.is2_5D = is2_5D;
-        cloned.compressionType = compressionType;
-        cloned.transformID = transformID;
-
-        cloned.origin = (float[]) (origin.clone());
-        cloned.axisOrientation = (int[]) (axisOrientation.clone());
-        cloned.extents = (int[]) (extents.clone());
-        cloned.unitsOfMeasure = (int[]) (unitsOfMeasure.clone());
-        cloned.dimResolutions = (float[]) (dimResolutions.clone());
-
-        return cloned;
-
     }
 
     /**
@@ -1805,9 +1749,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      *
      * @return  int transform ID
      */
-  //  public final int getTransformID() {
-   //     return transformID;
-  //  }
+    // public final int getTransformID() {
+    // return transformID;
+    // }
 
     /**
      * Returns the units of measure.
@@ -2266,11 +2210,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /**
      * Sets the transform ID for the matrix.
      *
-     * @param  t_id  transform ID
+     * @param  unitMeasure  transform ID
      */
-  //  public void setTransformID(int t_id) {
-  //      transformID = t_id;
-  //  }
+    // public void setTransformID(int t_id) {
+    // transformID = t_id;
+    // }
 
     /**
      * Sets (copies) units of measure for image.

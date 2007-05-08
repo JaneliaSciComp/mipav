@@ -581,23 +581,26 @@ public class AlgorithmRotate extends AlgorithmBase {
                 newDicomInfo[i].setResolutions(newResolutions);
                 newDicomInfo[i].setOrigin(newStartLocations);
                 newDicomInfo[i].setOrigin(newStartLocations[2] + (newResolutions[2] * i), 2);
-                newDicomInfo[i].setValue("0028,0011", new Short((short) newDimExtents[0]), 2); // columns
-                newDicomInfo[i].setValue("0028,0010", new Short((short) newDimExtents[1]), 2); // rows
-                newDicomInfo[i].setValue("0020,0013", Short.toString((short) (i + 1)),
-                                         Short.toString((short) (i + 1)).length()); // instance number
+                newDicomInfo[i].getTagTable().setValue("0028,0011", new Short((short) newDimExtents[0]), 2); // columns
+                newDicomInfo[i].getTagTable().setValue("0028,0010", new Short((short) newDimExtents[1]), 2); // rows
+                newDicomInfo[i].getTagTable().setValue("0020,0013", Short.toString((short) (i + 1)),
+                                                       Short.toString((short) (i + 1)).length()); // instance number
 
                 // if wasn't previously set, don't set it; if Z-axis rotation, don't set it
                 if (newTagPixelSpc != null) {
-                    newDicomInfo[i].setValue("0028,0030", newTagPixelSpc.toString(), newTagPixelSpc.length()); // pixel spacing
+                    newDicomInfo[i].getTagTable().setValue("0028,0030", newTagPixelSpc.toString(),
+                                                           newTagPixelSpc.length()); // pixel spacing
                 }
 
                 if (newTagSliceSpc != null) {
-                    newDicomInfo[i].setValue("0018,0050", newTagSliceSpc.toString(), newTagSliceSpc.length()); // slice thickness
-                    newDicomInfo[i].setValue("0018,0088", newTagSliceSpc.toString(), newTagSliceSpc.length()); // spacing between slices
+                    newDicomInfo[i].getTagTable().setValue("0018,0050", newTagSliceSpc.toString(),
+                                                           newTagSliceSpc.length()); // slice thickness
+                    newDicomInfo[i].getTagTable().setValue("0018,0088", newTagSliceSpc.toString(),
+                                                           newTagSliceSpc.length()); // spacing between slices
                 }
 
-                if (newDicomInfo[i].getValue("0020,0037") != null) {
-                    newDicomInfo[i].setValue("0020,0037", imageOrient, imageOrient.length());
+                if (newDicomInfo[i].getTagTable().getValue("0020,0037") != null) {
+                    newDicomInfo[i].getTagTable().setValue("0020,0037", imageOrient, imageOrient.length());
                 }
 
                 String position = null;
@@ -618,12 +621,12 @@ public class AlgorithmRotate extends AlgorithmBase {
                     sliceLocation = nf.format(fSliceLocation);
                 }
 
-                if (newDicomInfo[i].getValue("0020,1041") != null) {
-                    newDicomInfo[i].setValue("0020,1041", sliceLocation, sliceLocation.length()); // image location
+                if (newDicomInfo[i].getTagTable().getValue("0020,1041") != null) {
+                    newDicomInfo[i].getTagTable().setValue("0020,1041", sliceLocation, sliceLocation.length()); // image location
                 }
 
-                if (newDicomInfo[i].getValue("0020,0032") != null) {
-                    newDicomInfo[i].setValue("0020,0032", position, position.length());
+                if (newDicomInfo[i].getTagTable().getValue("0020,0032") != null) {
+                    newDicomInfo[i].getTagTable().setValue("0020,0032", position, position.length());
                 }
             }
 

@@ -113,7 +113,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      *
      * @param   index  index in the vector
      *
-     * @return  DOCUMENT ME!
+     * @return  The specified item from the sequence.
      */
     public final FileDicomItem getItem(int index) {
         return (FileDicomItem) sequence.elementAt(index);
@@ -122,7 +122,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
     /**
      * Gets the length as read in by the header (possibly undefined).
      *
-     * @return  the length of the sequence as read in by the header
+     * @return  The length of the sequence as read in by the header
      */
     public final int getLength() {
         return getDataLength();
@@ -131,7 +131,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
     /**
      * Gets a series of Strings that are the human readable version of the data.
      *
-     * @return  a Vector that contains the human readable form of the sequence data
+     * @return  A list that contains the human readable form of the sequence data
      */
     public Vector getSequenceDisplay() {
 
@@ -160,12 +160,11 @@ public class FileDicomSQ extends ModelSerialCloneable {
     }
 
     /**
-     * returns the word "Sequence".
+     * Returns the word 'Sequence'.
      *
-     * @return  "Sequence"
+     * @return  The string 'Sequence' (without the quotes).
      */
     public String toString() {
         return "Sequence";
     }
-
 }

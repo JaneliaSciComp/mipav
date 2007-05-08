@@ -129,8 +129,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0010,0010") != null) {
-                    patientName = (String) (((FileInfoDicom) fileInfo[0]).getValue("0010,0010"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0010,0010") != null) {
+                    patientName = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0010,0010"));
                     UI.setDataText("Patient Name = " + patientName + "\n");
                     dataString += "Patient Name = " + patientName + "\n";
                 }
@@ -141,8 +141,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0010,0020") != null) {
-                    patientID = (String) (((FileInfoDicom) fileInfo[0]).getValue("0010,0020"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0010,0020") != null) {
+                    patientID = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0010,0020"));
                     UI.setDataText("Patient ID = " + patientID + "\n");
                     dataString += "Patient ID = " + patientID + "\n";
                 }
@@ -154,8 +154,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0008,0020") != null) {
-                    studyDate = (String) (((FileInfoDicom) fileInfo[0]).getValue("0008,0020"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0008,0020") != null) {
+                    studyDate = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0008,0020"));
                     UI.setDataText("Study Date = " + studyDate + "\n");
                     dataString += "Study Date = " + studyDate + "\n";
                     UI.setDataText("Study Date = " + studyDate + "\n");
@@ -178,8 +178,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0008,0030") != null) {
-                    studyTime = (String) (((FileInfoDicom) fileInfo[0]).getValue("0008,0030"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0008,0030") != null) {
+                    studyTime = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0008,0030"));
                     UI.setDataText("Study Time = " + studyTime + "\n");
                     dataString += "Study Time = " + studyTime + "\n";
 
@@ -201,8 +201,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0008,1030") != null) {
-                    studyDescription = (String) (((FileInfoDicom) fileInfo[0]).getValue("0008,1030"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0008,1030") != null) {
+                    studyDescription = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0008,1030"));
                     UI.setDataText("Study Description = " + studyDescription + "\n");
                     dataString += "Study Description = " + studyDescription + "\n";
                 }
@@ -415,8 +415,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0010,0010") != null) {
-                    patientName = (String) (((FileInfoDicom) fileInfo[0]).getValue("0010,0010"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0010,0010") != null) {
+                    patientName = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0010,0010"));
                     UI.setDataText("Patient Name = " + patientName + "\n");
                     dataString += "Patient Name = " + patientName + "\n";
                 }
@@ -427,8 +427,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0010,0020") != null) {
-                    patientID = (String) (((FileInfoDicom) fileInfo[0]).getValue("0010,0020"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0010,0020") != null) {
+                    patientID = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0010,0020"));
                     UI.setDataText("Patient ID = " + patientID + "\n");
                     dataString += "Patient ID = " + patientID + "\n";
                 }
@@ -440,8 +440,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0008,0020") != null) {
-                    studyDate = (String) (((FileInfoDicom) fileInfo[0]).getValue("0008,0020"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0008,0020") != null) {
+                    studyDate = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0008,0020"));
                     UI.setDataText("Study Date = " + studyDate + "\n");
                     dataString += "Study Date = " + studyDate + "\n";
                     fileName = "Data";
@@ -462,8 +462,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0008,0030") != null) {
-                    studyTime = (String) (((FileInfoDicom) fileInfo[0]).getValue("0008,0030"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0008,0030") != null) {
+                    studyTime = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0008,0030"));
                     UI.setDataText("Study Time = " + studyTime + "\n");
                     dataString += "Study Time = " + studyTime + "\n";
                     fileName = fileName + "_";
@@ -487,8 +487,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
             try {
 
-                if (((FileInfoDicom) (fileInfo[0])).getValue("0008,1030") != null) {
-                    studyDescription = (String) (((FileInfoDicom) fileInfo[0]).getValue("0008,1030"));
+                if (((FileInfoDicom) (fileInfo[0])).getTagTable().getValue("0008,1030") != null) {
+                    studyDescription = (String) (((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0008,1030"));
                     UI.setDataText("Study Description = " + studyDescription + "\n");
                     dataString += "Study Description = " + studyDescription + "\n";
                 }

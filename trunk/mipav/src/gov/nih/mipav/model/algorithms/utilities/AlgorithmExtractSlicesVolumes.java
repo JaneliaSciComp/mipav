@@ -440,8 +440,11 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
             // change the slice number ("0020,0013"):
             // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-            fileInfoBuffer.setValue("0020,0013", String.valueOf(destSlice + 1),
-                                    ((FileDicomTag) fileInfoBuffer.getEntry("0020,0013")).getLength()); // Reset the image (slice) number with the new number ordering
+            fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(destSlice + 1),
+                                                  fileInfoBuffer.getTagTable().get("0020,0013").getLength()); // Reset the image
+                                                                                                              // (slice) number with
+                                                                                                              // the new number
+                                                                                                              // ordering
 
             return fileInfoBuffer;
         }

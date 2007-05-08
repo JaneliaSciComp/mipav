@@ -601,7 +601,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 for (int i = 0; i < fileInfoVector.size(); i++) {
                     FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
-                    String sliceStudyNo = (String) fileInfoDICOM.getValue("0020,0010");
+                    String sliceStudyNo = (String) fileInfoDICOM.getTagTable().getValue("0020,0010");
 
                     if (sliceStudyNo == null) {
                         sliceStudyNo = "";
@@ -627,12 +627,11 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                 key = JDialogSelectDICOMColumnHeaders.CUSTOM; // assign CUSTOM to key to indicate it is
                                                                               // non-native DICOM tag
                             } else if (key == null) {
-                                key = DICOMDictionaryBuilder.getKeyFromTagName(columnName); // might return null
+                                key = DicomDictionary.getKeyFromTagName(columnName); // might return null
                             }
 
                             if ((key != null) && columnName.equals("Instance (formerly Image) Number")) {
-                                FileDicomTag dicomTag = fileInfoDICOM.getTag(key);
-                                String instanceNumber = (String) ((FileDicomTag) dicomTag).getValue(true);
+                                String instanceNumber = (String) fileInfoDICOM.getTagTable().getValue(key);
 
                                 try {
                                     Integer integer = new Integer(Integer.parseInt(instanceNumber.trim()));
@@ -676,25 +675,25 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                              * method.
                              */
                             else if (key != null) {
-                                FileDicomTag dicomTag = fileInfoDICOM.getTag(key);
+                                FileDicomTag dicomTag = fileInfoDICOM.getTagTable().get(key);
 
                                 if (dicomTag == null) {
                                     newRow.addElement(SortingTableModel.EMPTY_CELL); // if data is not present, add
                                                                                      // empty cell
                                 } else {
+                                    String type = dicomTag.getType();
+                                    String value = (String) dicomTag.getValue(true);
 
-                                    if (dicomTag.getType().equals("SL") || dicomTag.getType().equals("UL") ||
-                                            dicomTag.getType().equals("SS") || dicomTag.getType().equals("US")) {
+                                    if (type.equals("SL") || type.equals("UL") || type.equals("SS") ||
+                                            type.equals("US")) {
 
-                                        /**
+                                        /*
                                          * Try to create a Number object out of the data. This is important because the
                                          * type of data indicates to the TableSorter how to sort, i.e. lexically or
                                          * numerically.
                                          */
                                         try {
-                                            Integer integer = new Integer(Integer.parseInt(((String)
-                                                                                            ((FileDicomTag) dicomTag)
-                                                                                                .getValue(true))));
+                                            Integer integer = new Integer(Integer.parseInt(value));
                                             imageTableModel.setColumnClass(integer.getClass(), j); // set numerical
                                                                                                    // sorting
                                             newRow.addElement(integer);
@@ -704,14 +703,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                                             // at this point, its not a number, so assume String
                                             imageTableModel.setColumnClass(new String().getClass(), j); // set lexical sorting
-                                            newRow.addElement(dicomTag.getValue(true));
+                                            newRow.addElement(value);
                                         }
-                                    } else if (dicomTag.getType().equals("FD") || dicomTag.getType().equals("FL")) {
+                                    } else if (type.equals("FD") || type.equals("FL")) {
 
                                         try {
-                                            Double doubleObj = new Double(Double.parseDouble(((String)
-                                                                                              ((FileDicomTag) dicomTag)
-                                                                                                  .getValue(true))));
+                                            Double doubleObj = new Double(Double.parseDouble(value));
                                             imageTableModel.setColumnClass(doubleObj.getClass(), j); // set numerical sorting
                                             newRow.addElement(doubleObj);
 
@@ -720,11 +717,11 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                                             // at this point, its not a number, so assume String
                                             imageTableModel.setColumnClass(new String().getClass(), j); // set lexical sorting
-                                            newRow.addElement(dicomTag.getValue(true));
+                                            newRow.addElement(value);
                                         }
                                     } else {
                                         imageTableModel.setColumnClass(new String().getClass(), j); // set lexical sorting
-                                        newRow.addElement(((FileDicomTag) dicomTag).getValue(true));
+                                        newRow.addElement(value);
                                     }
                                 }
                             } else {
@@ -1007,7 +1004,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 outerLoop:
         for (int i = 0; i < fileInfoVector.size(); i++) {
             FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
-            String sliceStudyNo = (String) fileInfoDICOM.getValue("0020,0010");
+            String sliceStudyNo = (String) fileInfoDICOM.getTagTable().getValue("0020,0010");
 
             if (sliceStudyNo == null) {
                 sliceStudyNo = "";
@@ -1016,7 +1013,7 @@ outerLoop:
             if (sliceStudyNo.equals(studyNo)) {
 
                 // Series number
-                data = (String) fileInfoDICOM.getValue("0020,0011");
+                data = (String) fileInfoDICOM.getTagTable().getValue("0020,0011");
 
                 for (int k = 0; k < seriesTableModel.getRowCount(); k++) {
                     String seriesNo = (String) (seriesTableModel.getValueAt(k, 0));
@@ -1033,7 +1030,7 @@ outerLoop:
                 }
 
                 // Series Type (PET) - why ?
-                data = (String) fileInfoDICOM.getValue("0054,1000");
+                data = (String) fileInfoDICOM.getTagTable().getValue("0054,1000");
 
                 if (data != null) {
                     seriesData[1] = data;
@@ -1042,7 +1039,7 @@ outerLoop:
                 }
 
                 // Series Time
-                data = (String) fileInfoDICOM.getValue("0008,0031");
+                data = (String) fileInfoDICOM.getTagTable().getValue("0008,0031");
 
                 if (data != null) {
                     seriesData[3] = data;
@@ -1051,7 +1048,7 @@ outerLoop:
                 }
 
                 // Modality
-                data = (String) fileInfoDICOM.getValue("0008,0060");
+                data = (String) fileInfoDICOM.getTagTable().getValue("0008,0060");
 
                 if (data != null) {
                     seriesData[4] = data;
@@ -1060,7 +1057,7 @@ outerLoop:
                 }
 
                 // Series Description
-                data = (String) fileInfoDICOM.getValue("0008,103E");
+                data = (String) fileInfoDICOM.getTagTable().getValue("0008,103E");
 
                 if (data != null) {
                     seriesData[5] = data;
@@ -1093,8 +1090,8 @@ outerLoop:
         // go through the vector and increment the appropriate counter
         for (int i = 0; i < fileInfoVector.size(); i++) {
             FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
-            String ser = (String) fileInfoDICOM.getValue("0020,0011");
-            String sliceStudyNo = (String) fileInfoDICOM.getValue("0020,0010");
+            String ser = (String) fileInfoDICOM.getTagTable().getValue("0020,0011");
+            String sliceStudyNo = (String) fileInfoDICOM.getTagTable().getValue("0020,0010");
 
             if (ser == null) {
                 ser = "";
@@ -1132,7 +1129,7 @@ outerLoop:
         String data = "";
 
         // Study ID
-        data = (String) fileInfo.getValue("0020,0010");
+        data = (String) fileInfo.getTagTable().getValue("0020,0010");
 
         for (int i = 0; i < studyTableModel.getRowCount(); i++) {
             String studyNo = (String) (studyTableModel.getValueAt(i, 2));
@@ -1145,7 +1142,7 @@ outerLoop:
         }
 
         // Patients name
-        data = (String) fileInfo.getValue("0010,0010");
+        data = (String) fileInfo.getTagTable().getValue("0010,0010");
 
         if (data != null) {
             studyData[0] = data;
@@ -1154,7 +1151,7 @@ outerLoop:
         }
 
         // Patient ID
-        data = (String) fileInfo.getValue("0010,0020");
+        data = (String) fileInfo.getTagTable().getValue("0010,0020");
 
         if (data != null) {
             studyData[1] = data;
@@ -1163,7 +1160,7 @@ outerLoop:
         }
 
         // Study ID
-        data = (String) fileInfo.getValue("0020,0010");
+        data = (String) fileInfo.getTagTable().getValue("0020,0010");
 
         if (data != null) {
             studyData[2] = data;
@@ -1172,7 +1169,7 @@ outerLoop:
         }
 
         // Study Date
-        data = (String) fileInfo.getValue("0008,0020");
+        data = (String) fileInfo.getTagTable().getValue("0008,0020");
 
         if (data != null) {
             studyData[3] = data;
@@ -1181,7 +1178,7 @@ outerLoop:
         }
 
         // Study Description
-        data = (String) fileInfo.getValue("0008,1030");
+        data = (String) fileInfo.getTagTable().getValue("0008,1030");
 
         if (data != null) {
             studyData[4] = data;
@@ -1487,9 +1484,12 @@ outerLoop:
         File[] children = file.listFiles();
         FileDicom imageFile = null;
 
+        // used to reduce the amount of replication in the tag tables we read in (maybe).  don't need to register the
+        // children with the reference tag table, since the reference tag table should not be changing (no put() calls)
+        // after it is read in initially
+        FileInfoDicom referenceFileInfo = null;
 
         try {
-
             boolean success = false;
 
             for (int i = 0; i < children.length; i++) {
@@ -1504,13 +1504,13 @@ outerLoop:
                             imageFile = new FileDicom(children[i].getName(),
                                                       children[i].getParent() + File.separatorChar);
                         } else {
-                            imageFile.setFileName(children[i]);
+                            imageFile.setFileName(children[i], referenceFileInfo);
                         }
 
                         if (imageFilter.accept(children[i])) {
-                            success = imageFile.readParserHeader();
+                            success = imageFile.readHeader(true, false);
                         } else if (imageFile.isDICOM()) {
-                            success = imageFile.readParserHeader();
+                            success = imageFile.readHeader(true, false);
                         } else {
                             continue;
                         }
@@ -1521,12 +1521,12 @@ outerLoop:
                         return;
                     }
 
-                    FileInfoDicom fileInfo = (FileInfoDicom) imageFile.getFileInfo();
+                    referenceFileInfo = (FileInfoDicom) imageFile.getFileInfo();
 
-                    fileInfoVector.addElement(fileInfo);
+                    fileInfoVector.addElement(referenceFileInfo);
 
                     if (success) {
-                        addStudyData(fileInfo);
+                        addStudyData(referenceFileInfo);
                     }
 
                     imageFile.finalize();
@@ -1541,7 +1541,6 @@ outerLoop:
         }
 
         Preferences.debug("Parse took: " + ((System.currentTimeMillis() - time) / 1000f) + "\n");
-
     }
 
     /**
@@ -1570,9 +1569,7 @@ outerLoop:
      * @return  DOCUMENT ME!
      */
     private boolean seriesNumberEqual(String seriesNumber, FileInfoDicom fileInfoDICOM) {
-        FileDicomTag tag = fileInfoDICOM.getTag("0020,0011");
-
-        Object object = tag.getValue(true);
+        Object object = fileInfoDICOM.getTagTable().getValue("0020,0011");
 
         if (object instanceof String) {
 
@@ -1664,7 +1661,7 @@ outerLoop:
                     FileInfoDicom fileInfoDICOM = (FileInfoDicom) imageTableVector.elementAt(0);
 
                     if (fileInfoDICOM != null) {
-                        String imageTableSeriesNumber = (String) fileInfoDICOM.getValue("0020,0011");
+                        String imageTableSeriesNumber = (String) fileInfoDICOM.getTagTable().getValue("0020,0011");
 
                         if (imageTableSeriesNumber.equals(seriesNumber)) {
                             return;

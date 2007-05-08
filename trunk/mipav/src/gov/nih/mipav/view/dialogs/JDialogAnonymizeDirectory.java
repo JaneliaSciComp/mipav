@@ -3,16 +3,11 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
 import java.util.*;
-
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
@@ -1189,7 +1184,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
 
         // for (i = 0; i < FileInfoDicom.anonymizeTagIDs.length; i++) {
         // if (checkBoxPanel.getSelectedList(i)) {
-        //// Dave !!                kl += "\t\t"+FileInfoDicom.anonymizeTagIDs[i]+"\t"+CreateDICOMFiles.getName(FileInfoDicom.anonymizeTagIDs[i])+"\n";
+        //// Dave !!                kl += "\t\t"+FileInfoDicom.anonymizeTagIDs[i]+"\t"+DicomDictionary.getName(FileInfoDicom.anonymizeTagIDs[i])+"\n";
         // }
         // }
         kl += "\n#\tsource-file : destination-file\n";
@@ -1596,7 +1591,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                     writeOpts.setRecalculateInstanceNumber(false);
                     writeOpts.setSaveInSubdirectory(false); // should be false by default.  we want to preserve current
                                                             // writeOpt structure
-                    ((FileInfoDicom) mi.getFileInfo(0)).setValue("0010,0010", anonymousName);
+                    ((FileInfoDicom) mi.getFileInfo(0)).getTagTable().setValue("0010,0010", anonymousName);
 
                     if (((FileInfoDicom) (mi.getFileInfo()[0])).isMultiFrame()) {
                         writeOpts.setBeginSlice(0);

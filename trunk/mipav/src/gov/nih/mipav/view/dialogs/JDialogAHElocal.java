@@ -599,26 +599,14 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                 if (resultImage.getNDims() == 2) {
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
                     }
                 } else {
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                         for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17",
-                                                                                    16); // bogus Implementation UID
-                                                                                         // made up by Matt
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
                         }
                     }
                 }
@@ -646,9 +634,9 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 aheAlgo.addListener(this);
-                
+
                 createProgressBar(image.getImageName(), aheAlgo);
-                
+
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {
@@ -701,7 +689,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                 aheAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), aheAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -726,7 +714,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                	aheAlgo.run();
+                    aheAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog AHE local: unable to allocate enough memory");

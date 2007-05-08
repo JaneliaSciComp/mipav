@@ -679,7 +679,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Add Image Margins: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -694,7 +694,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                
+
                 setCompleted(false);
 
                 return;
@@ -737,7 +737,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                
+
                 setCompleted(false);
 
                 return;
@@ -768,7 +768,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                             if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) ((z * destSliceArea) + i) / (imageLength) *
-                                                                       100));
+                                                                        100));
                             }
 
                             row = i / destWidth;
@@ -812,7 +812,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                
+
                 setCompleted(false);
 
                 return;
@@ -886,7 +886,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Add Image Margins: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -900,7 +900,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             } catch (IOException ioe) {
                 sourceSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                
+
                 setCompleted(false);
 
                 return;
@@ -928,7 +928,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                 stringForDicom = Float.toString(newOriginLPS[0]) + "\\" + Float.toString(newOriginLPS[1]) + "\\" +
                                  Float.toString(newOriginLPS[2]);
-                fileInfoDicomBuffer[0].setValue("0020,0032", stringForDicom, stringForDicom.length());
+                fileInfoDicomBuffer[0].getTagTable().setValue("0020,0032", stringForDicom, stringForDicom.length());
                 fileInfoDicomBuffer[0].setOrigin(newOriginLPS);
                 isDicom = true;
             } else { // not a DICOM image,
@@ -955,7 +955,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm Add Image Margins: Out of memory");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -1014,7 +1014,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                
+
                 setCompleted(false);
 
                 return;
@@ -1025,11 +1025,11 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                 // set image rows ("0028,0010")
                 stringForDicom = String.valueOf(newExtents[0]);
-                fileInfoDicomBuffer[0].setValue("0028,0010", stringForDicom);
+                fileInfoDicomBuffer[0].getTagTable().setValue("0028,0010", stringForDicom);
 
                 // set image columns ("0028,0011")
                 stringForDicom = String.valueOf(newExtents[1]);
-                fileInfoDicomBuffer[0].setValue("0028,0011", stringForDicom);
+                fileInfoDicomBuffer[0].getTagTable().setValue("0028,0011", stringForDicom);
 
             } else { // not a DICOM image
                 srcImage.setFileInfo(fileInfoBuffer[0], 0);
@@ -1075,7 +1075,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                                 if (((i % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (tNewOffset + (z * destSliceArea) + i) /
-                                                                           (imageLength) * 100));
+                                                                            (imageLength) * 100));
                                 }
 
                                 row = i / destWidth;
@@ -1194,8 +1194,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
                             // Reset the image (slice) number with the new number ordering
                             stringForDicom = Integer.toString(Z + 1);
-                            fileInfoDicomBuffer[(t * destDepth) + Z].setValue("0020,0013", stringForDicom,
-                                                                              stringForDicom.length());
+                            fileInfoDicomBuffer[(t * destDepth) + Z].getTagTable().setValue("0020,0013", stringForDicom,
+                                                                                            stringForDicom.length());
 
                             if (newOriginLPS != null) {
                                 originImg[2] = startLoc + (delta * Z);
@@ -1204,33 +1204,35 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                                 stringForDicom = Float.toString(newOriginLPS[0]) + "\\" +
                                                  Float.toString(newOriginLPS[1]) + "\\" +
                                                  Float.toString(newOriginLPS[2]);
-                                fileInfoDicomBuffer[(t * destDepth) + Z].setValue("0020,0032", stringForDicom,
-                                                                                  stringForDicom.length());
+                                fileInfoDicomBuffer[(t * destDepth) + Z].getTagTable().setValue("0020,0032",
+                                                                                                stringForDicom,
+                                                                                                stringForDicom.length());
                                 fileInfoDicomBuffer[(t * destDepth) + Z].setOrigin(newOriginLPS);
                             }
 
                             // readjust the slice location ("0020,1041")
                             if (imgOriginLPS != null) {
                                 stringForDicom = String.valueOf(imgOriginLPS[2]);
-                                fileInfoDicomBuffer[(t * destDepth) + Z].setValue("0020,1041", stringForDicom,
-                                                                                  stringForDicom.length());
+                                fileInfoDicomBuffer[(t * destDepth) + Z].getTagTable().setValue("0020,1041",
+                                                                                                stringForDicom,
+                                                                                                stringForDicom.length());
                             }
 
                             // set image columns ("0028,0011")
                             // stringForDicom = String.valueOf(newExtents[0]);
                             // fileInfoDicomBuffer[t*destDepth + Z].setValue("0028,0011", stringForDicom);
-                            fileInfoDicomBuffer[(t * destDepth) + Z].setValue("0028,0010",
-                                                                              new Short((short)
-                                                                                            fileInfoDicomBuffer[(t *
-                                                                                                                     destDepth) +
-                                                                                                                Z].getExtents()[1]),
-                                                                              2);
-                            fileInfoDicomBuffer[(t * destDepth) + Z].setValue("0028,0011",
-                                                                              new Short((short)
-                                                                                            fileInfoDicomBuffer[(t *
-                                                                                                                     destDepth) +
-                                                                                                                Z].getExtents()[0]),
-                                                                              2);
+                            fileInfoDicomBuffer[(t * destDepth) + Z].getTagTable().setValue("0028,0010",
+                                                                                            new Short((short)
+                                                                                                      fileInfoDicomBuffer[(t *
+                                                                                                                               destDepth) +
+                                                                                                                          Z].getExtents()[1]),
+                                                                                            2);
+                            fileInfoDicomBuffer[(t * destDepth) + Z].getTagTable().setValue("0028,0011",
+                                                                                            new Short((short)
+                                                                                                      fileInfoDicomBuffer[(t *
+                                                                                                                               destDepth) +
+                                                                                                                          Z].getExtents()[0]),
+                                                                                            2);
 
                             // set image rows ("0028,0010") stringForDicom = String.valueOf(destImage.getExtents()[1]);
                             // fileInfoBuffer.setValue("0028,0010", stringForDicom);
@@ -1273,7 +1275,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     sourceSlice = null;
                     destSlice = null;
                     MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                    
+
                     setCompleted(false);
 
                     return;
@@ -1305,7 +1307,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                
+
                 setCompleted(false);
 
                 return;
@@ -1364,7 +1366,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
         // make a location & view the progressbar; make length & increment of progressbar.
         fireProgressStateChanged(srcImage.getImageName(), "Adding image borders...");
-        
+
 
         Number[] headerFooterMargins;
         Number[] leftMargins;
@@ -1426,7 +1428,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm Add Image Margins: Out of memory");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -1449,7 +1451,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     // TOP MARGIN LATITUDES: over the top margin, copy in the default values
                     for (i = 0; (i < topMargin) && !threadStopped; i++) {
                         fireProgressStateChanged(Math.round((float) i / destHeight * 100));
-                            
+
                         destImage.importData(i * destWidth * colorFactor, headerFooterMargins, false);
                     }
 
@@ -1471,7 +1473,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     // BOTTOM MARGIN LATITUDES: over the bottom margin, copy in the default values
                     for (i = topMargin + srcHeight; (i < destHeight) && !threadStopped; i++) {
                         fireProgressStateChanged(Math.round((float) i / destHeight * 100));
-                        
+
                         destImage.importData(colorFactor * i * destWidth, headerFooterMargins, false);
                     }
 
@@ -1503,17 +1505,17 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                         stringForDicom = Float.toString(newOriginLPS[0]) + "\\" + Float.toString(newOriginLPS[1]) +
                                          "\\" + Float.toString(newOriginLPS[2]);
-                        fileInfoBuffer.setValue("0020,0032", stringForDicom, stringForDicom.length());
+                        fileInfoBuffer.getTagTable().setValue("0020,0032", stringForDicom, stringForDicom.length());
                         fileInfoBuffer.setOrigin(newOriginLPS);
                         destImage.setFileInfo(fileInfoBuffer, 0);
 
                         // set image rows ("0028,0010")
                         stringForDicom = String.valueOf(destImage.getExtents()[0]);
-                        fileInfoBuffer.setValue("0028,0010", stringForDicom);
+                        fileInfoBuffer.getTagTable().setValue("0028,0010", stringForDicom);
 
                         // set image columns ("0028,0011")
                         stringForDicom = String.valueOf(destImage.getExtents()[1]);
-                        fileInfoBuffer.setValue("0028,0011", stringForDicom);
+                        fileInfoBuffer.getTagTable().setValue("0028,0011", stringForDicom);
 
                     } else { // not a DICOM image,
 
@@ -1539,10 +1541,10 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                         for (z = 0; (z < frontMargin) && !threadStopped; z++) {
                             destPlate = z * destSliceArea;
-                            
-                            fireProgressStateChanged(Math.round(((float) ((t * destDepth) + z)) /
-                                                                   (tDim * destDepth) * 100));
-                            
+
+                            fireProgressStateChanged(Math.round(((float) ((t * destDepth) + z)) / (tDim * destDepth) *
+                                                                    100));
+
                             for (i = 0; (i < destHeight) && !threadStopped; i++) {
                                 destImage.importData(colorFactor * (tNewOffset + destPlate + (i * destWidth)),
                                                      headerFooterMargins, false);
@@ -1656,7 +1658,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                                 // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
                                 // Reset the image (slice) number with the new number ordering
                                 stringForDicom = Integer.toString(Z + 1);
-                                fileInfoBuffer.setValue("0020,0013", stringForDicom, stringForDicom.length());
+                                fileInfoBuffer.getTagTable().setValue("0020,0013", stringForDicom,
+                                                                      stringForDicom.length());
 
                                 if (newOriginLPS != null) {
                                     originImg[2] = startLoc + (delta * Z);
@@ -1665,23 +1668,27 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                                     stringForDicom = Float.toString(newOriginLPS[0]) + "\\" +
                                                      Float.toString(newOriginLPS[1]) + "\\" +
                                                      Float.toString(newOriginLPS[2]);
-                                    fileInfoBuffer.setValue("0020,0032", stringForDicom, stringForDicom.length());
+                                    fileInfoBuffer.getTagTable().setValue("0020,0032", stringForDicom,
+                                                                          stringForDicom.length());
                                     fileInfoBuffer.setOrigin(newOriginLPS);
                                 }
 
                                 // readjust the slice location ("0020,1041")
                                 if (imgOriginLPS != null) {
                                     stringForDicom = String.valueOf(imgOriginLPS[2]);
-                                    fileInfoBuffer.setValue("0020,1041", stringForDicom, stringForDicom.length());
+                                    fileInfoBuffer.getTagTable().setValue("0020,1041", stringForDicom,
+                                                                          stringForDicom.length());
                                 }
 
                                 // set image columns ("0028,0011")
                                 // stringForDicom = String.valueOf(destImage.getExtents()[0]);
                                 // fileInfoBuffer.setValue("0028,0011", stringForDicom);
-                                fileInfoBuffer.setValue("0028,0010", new Short((short) fileInfoBuffer.getExtents()[1]),
-                                                        2);
-                                fileInfoBuffer.setValue("0028,0011", new Short((short) fileInfoBuffer.getExtents()[0]),
-                                                        2);
+                                fileInfoBuffer.getTagTable().setValue("0028,0010",
+                                                                      new Short((short) fileInfoBuffer.getExtents()[1]),
+                                                                      2);
+                                fileInfoBuffer.getTagTable().setValue("0028,0011",
+                                                                      new Short((short) fileInfoBuffer.getExtents()[0]),
+                                                                      2);
 
                                 // set image rows ("0028,0010") stringForDicom =
                                 // String.valueOf(destImage.getExtents()[1]); fileInfoBuffer.setValue("0028,0010",
@@ -1725,7 +1732,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 headerFooterMargins = null;
                 values = null;
                 MipavUtil.displayError("AlgorithmAddImageMargin reports:\n" + ioe.toString());
-                
+
                 setCompleted(false);
 
                 return;
@@ -1748,7 +1755,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         // Clean up and let the calling dialog know that algorithm did its job
         headerFooterMargins = null;
         values = null;
-        
+
         setCompleted(true);
     }
 
@@ -1771,7 +1778,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
         // make a location & view the progressbar; make length & increment of progressbar.
         fireProgressStateChanged(srcImage.getImageName(), "Adding image borders...");
-        
+
 
         useLocalBufferForSource(colorFactor * srcWidth, srcHeight, colorFactor * destWidth, destHeight);
 
@@ -1782,7 +1789,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         }
 
         // Clean up and let the calling dialog know that algorithm did its job
-        
+
         setCompleted(true);
     }
 

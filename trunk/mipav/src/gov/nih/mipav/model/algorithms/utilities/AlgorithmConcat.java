@@ -5,8 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 
@@ -165,8 +163,8 @@ public class AlgorithmConcat extends AlgorithmBase {
         if ((srcImage1.getFileInfo()[0] instanceof FileInfoDicom) &&
                 (srcImage2.getFileInfo()[0] instanceof FileInfoDicom)) {
             fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2]];
-            fileInfoDicom[0] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[0]).cloneItself());
-            fileInfoDicom[1] = (FileInfoDicom) (((FileInfoDicom) srcImage2.getFileInfo()[0]).cloneItself());
+            fileInfoDicom[0] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[0]).clone());
+            fileInfoDicom[1] = (FileInfoDicom) (((FileInfoDicom) srcImage2.getFileInfo()[0]).clone());
             destImage.setFileInfo(fileInfoDicom);
         } else {
             fileInfo = destImage.getFileInfo();
@@ -245,7 +243,6 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            
 
             if (srcImage1.getNDims() > srcImage2.getNDims()) {
                 nImages = srcImage1.getExtents()[2];
@@ -317,17 +314,16 @@ public class AlgorithmConcat extends AlgorithmBase {
             if (srcImage1.getNDims() > srcImage2.getNDims()) {
 
                 for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
-                    fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
+                    fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).clone());
                 }
 
                 fileInfoDicom[srcImage1.getExtents()[2]] = (FileInfoDicom)
-                                                               (((FileInfoDicom) srcImage2.getFileInfo()[0])
-                                                                    .cloneItself());
+                                                               (((FileInfoDicom) srcImage2.getFileInfo()[0]).clone());
             } else {
-                fileInfoDicom[0] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[0]).cloneItself());
+                fileInfoDicom[0] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[0]).clone());
 
                 for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
-                    fileInfoDicom[i + 1] = (FileInfoDicom) (((FileInfoDicom) srcImage2.getFileInfo()[i]).cloneItself());
+                    fileInfoDicom[i + 1] = (FileInfoDicom) (((FileInfoDicom) srcImage2.getFileInfo()[i]).clone());
                 }
             }
 
@@ -401,7 +397,6 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
@@ -435,7 +430,7 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            
+
             nImages = srcImage1.getExtents()[2] + srcImage2.getExtents()[2];
 
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
@@ -494,13 +489,12 @@ public class AlgorithmConcat extends AlgorithmBase {
             fileInfoDicom = new FileInfoDicom[srcImage1.getExtents()[2] + srcImage2.getExtents()[2]];
 
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
-                fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
+                fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).clone());
             }
 
             for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
                 fileInfoDicom[srcImage1.getExtents()[2] + i] = (FileInfoDicom)
-                                                                   (((FileInfoDicom) srcImage2.getFileInfo()[i])
-                                                                        .cloneItself());
+                                                                   (((FileInfoDicom) srcImage2.getFileInfo()[i]).clone());
             }
 
             destImage.setFileInfo(fileInfoDicom);
@@ -553,7 +547,6 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
@@ -589,7 +582,7 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            
+
             nImages = srcImage1.getExtents()[2] + srcImage2.getExtents()[2];
 
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
@@ -653,15 +646,14 @@ public class AlgorithmConcat extends AlgorithmBase {
             fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2] * destImage.getExtents()[3]];
 
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
-                fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
+                fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).clone());
                 fileInfoDicom[i].setResolutions(resols);
                 fileInfoDicom[i].setOrigin(origins);
             }
 
             for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
                 fileInfoDicom[srcImage1.getExtents()[2] + i] = (FileInfoDicom)
-                                                                   (((FileInfoDicom) srcImage2.getFileInfo()[i])
-                                                                        .cloneItself());
+                                                                   (((FileInfoDicom) srcImage2.getFileInfo()[i]).clone());
                 fileInfoDicom[srcImage1.getExtents()[2] + i].setResolutions(resols);
                 fileInfoDicom[srcImage1.getExtents()[2] + i].setOrigin(origins);
             }
@@ -717,7 +709,6 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
@@ -755,7 +746,6 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            
 
             if (srcImage1.getNDims() > srcImage2.getNDims()) {
                 nImages = (srcImage1.getExtents()[2] * srcImage1.getExtents()[3]) + srcImage2.getExtents()[2];
@@ -855,27 +845,27 @@ public class AlgorithmConcat extends AlgorithmBase {
                 srcALength = srcImage1.getExtents()[2] * srcImage1.getExtents()[3];
 
                 for (i = 0; (i < srcALength) && !threadStopped; i++) {
-                    fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
+                    fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).clone());
                     fileInfoDicom[i].setOrigin(origins);
                 }
 
                 for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
                     fileInfoDicom[srcALength + i] = (FileInfoDicom)
-                                                        (((FileInfoDicom) srcImage2.getFileInfo()[i]).cloneItself());
+                                                        (((FileInfoDicom) srcImage2.getFileInfo()[i]).clone());
                     fileInfoDicom[srcALength + i].setOrigin(origins);
                 }
             } else {
                 srcBLength = srcImage2.getExtents()[2] * srcImage2.getExtents()[3];
 
                 for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
-                    fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
+                    fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).clone());
                     fileInfoDicom[i].setOrigin(origins);
                 }
 
                 for (i = 0; (i < srcBLength) && !threadStopped; i++) {
                     fileInfoDicom[srcImage1.getExtents()[2] + i] = (FileInfoDicom)
                                                                        (((FileInfoDicom) srcImage2.getFileInfo()[i])
-                                                                            .cloneItself());
+                                                                            .clone());
                     fileInfoDicom[srcImage1.getExtents()[2] + i].setOrigin(origins);
                 }
 
@@ -963,7 +953,6 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
@@ -999,7 +988,6 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            
 
             nImages = (srcImage1.getExtents()[2] * srcImage1.getExtents()[3]) +
                       (srcImage2.getExtents()[2] * srcImage2.getExtents()[3]);
@@ -1062,12 +1050,11 @@ public class AlgorithmConcat extends AlgorithmBase {
             srcBLength = srcImage2.getExtents()[2] * srcImage2.getExtents()[3];
 
             for (i = 0; (i < srcALength) && !threadStopped; i++) {
-                fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
+                fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).clone());
             }
 
             for (i = 0; (i < srcBLength) && !threadStopped; i++) {
-                fileInfoDicom[srcALength + i] = (FileInfoDicom)
-                                                    (((FileInfoDicom) srcImage2.getFileInfo()[i]).cloneItself());
+                fileInfoDicom[srcALength + i] = (FileInfoDicom) (((FileInfoDicom) srcImage2.getFileInfo()[i]).clone());
             }
 
             destImage.setFileInfo(fileInfoDicom);
@@ -1123,7 +1110,6 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;

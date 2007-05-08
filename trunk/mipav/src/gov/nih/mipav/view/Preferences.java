@@ -43,20 +43,24 @@ public class Preferences {
     /** Constant that indicates if logging is turned on. */
     public static final String PREF_HISTORY = "RecordHistory";
 
-    /** Constant for debug s*/
+    /** Constant for debug s. */
     public static final String PREF_DEBUG = "DEBUG";
-    
+
+    /** DOCUMENT ME! */
     public static final String PREF_LOGGING_ENABLED = "LoggingEnabled";
-    
-    /** Constant that indicates the intensity label color*/
+
+    /** Constant that indicates the intensity label color. */
     public static final String PREF_INTENSITY_LABEL_COLOR = "IntensityLabelColor";
-    
-    /** Constant that indicates the intensity label background color*/
+
+    /** Constant that indicates the intensity label background color. */
     public static final String PREF_INTENSITY_LABEL_BACKGROUND_COLOR = "IntensityLabelBackgroundColor";
-    
+
+    /** DOCUMENT ME! */
     public static final String PREF_DEFAULT_FRAME_RATE = "DefaultFrameRate";
-    
-    /** Constant that indicates if the last used parameters for algorithm dialogs should be used when they are opened.*/
+
+    /**
+     * Constant that indicates if the last used parameters for algorithm dialogs should be used when they are opened.
+     */
     public static final String PREF_SAVE_DEFAULTS = "SaveDefaults";
 
     /** Constant that indicates if a prompt should be shown before an image file is overwritten. */
@@ -88,26 +92,26 @@ public class Preferences {
 
     /** Constant indicating if the Paint Toolbar is on by default. */
     public static final String PREF_PAINT_TOOLBAR_ON = "PaintToolbar";
-    
+
     /** Constant that indicates if the Scripting toolbar should be shown by default. */
     public static final String PREF_SCRIPTING_TOOLBAR_ON = "Scripting";
 
     /** Constant indicating if the VOI Toolbar is on by default. */
     public static final String PREF_VOI_TOOLBAR_ON = "VOIToolbar";
 
-    /** Constant indicating the application shortcuts (user defined)*/
+    /** Constant indicating the application shortcuts (user defined). */
     public static final String PREF_SHORTCUTS = "Shortcuts";
-    
-    /** Constant indicating the DICOM browser configuration*/
+
+    /** Constant indicating the DICOM browser configuration. */
     public static final String PREF_DICOM_BROWSER_CONFIG = "DICOMBrowserConfig";
-    
+
     /**
      * Constant that indicates whether the triplanar frame should wait for a mouse released event before repainting all
      * 9 tri-planar images. Inserted here because repainting 9 images in real time gets to be tedious.
      */
     public static final String PREF_FAST_TRIPLANAR_REPAINT = "FastTriPlanarRepaint";
-    
-    /** Constant that indicates if triplanar protractor should snap to nearest multiple of 90 degrees */
+
+    /** Constant that indicates if triplanar protractor should snap to nearest multiple of 90 degrees. */
     public static final String PREF_TRIPLANAR_SNAP90 = "TriPlanarSnap90";
 
     /** Constant that indicates whether the angle of line VOIs should be shown on screen. */
@@ -116,228 +120,246 @@ public class Preferences {
     /** Constant that indicates whether [SHIFT] must be held down to draw continuous contours (false = hold-shift). */
     public static final String PREF_CONTINUOUS_VOI_CONTOUR = "ContinuousVOIContours";
 
-    /** Constant indicating the look of VOI Points drawn on an image*/
+    /** Constant indicating the look of VOI Points drawn on an image. */
     public static final String PREF_VOI_POINT_DRAW_TYPE = "VOIPointDrawType";
-    
+
     /** Constant that indicates whether the triplanar frame should use the old 2x2 layout or the newer 3x1 layout. */
     public static final String PREF_TRIPLANAR_2X2_LAYOUT = "TriPlanar2x2Layout";
 
-    /** Constant that indicates the pixel gap away from the center of the crosshair (in one direction) actual gap is 2x*/
+    /**
+     * Constant that indicates the pixel gap away from the center of the crosshair (in one direction) actual gap is 2x.
+     */
     public static final String PREF_CROSSHAIR_PIXEL_GAP = "CrosshairPixelGap";
-    
-    /** Constant that indicates the menu font*/
+
+    /** Constant that indicates the menu font. */
     public static final String PREF_MENU_FONT = "MenuFont";
 
-    /** Constant that indicates the menu font size*/
+    /** Constant that indicates the menu font size. */
     public static final String PREF_MENU_FONT_SIZE = "MenuFontSize";
 
-    /** Constant that indicates the menu font color */
+    /** Constant that indicates the menu font color. */
     public static final String PREF_MENU_FONT_COLOR = "MenuFontColor";
-    
-    /** Constant that indicates whether to show the VOI name*/
+
+    /** Constant that indicates whether to show the VOI name. */
     public static final String PREF_SHOW_VOI_NAME = "DrawVOIName";
 
-    /** Constant that indicates whether to show output*/
+    /** Constant that indicates whether to show output. */
     public static final String PREF_SHOW_OUTPUT = "ShowOutput";
 
-    /** Constant that indicates the last stack flag*/
+    /** Constant that indicates the last stack flag. */
     public static final String PREF_LAST_STACK_FLAG = "LastStackFlag";
 
-    /** Constant that indicates whether to use VOI XOR'ing*/
+    /** Constant that indicates whether to use VOI XOR'ing. */
     public static final String PREF_USE_VOI_XOR = "UseVOIXOR";
 
     /** Constants that indicate the SRB server login properties. */
     public static final String PREF_USERNAME_SRB = "userNameSRB";
 
-    /** Constant that indicates the SRB server host */
+    /** Constant that indicates the SRB server host. */
     public static final String PREF_SERVER_HOST_SRB = "serverHostSRB";
 
-    /** Constant that indicates the SRB server domain*/
+    /** Constant that indicates the SRB server domain. */
     public static final String PREF_SERVER_DOMAIN_SRB = "serverDomainSRB";
 
-    /** Constant that indicates the SRB */
+    /** Constant that indicates the SRB. */
     public static final String PREF_SERVER_PORT_SRB = "serverPortSRB";
 
-    /** Constant that indicates the SRB server authentication size*/
+    /** Constant that indicates the SRB server authentication size. */
     public static final String PREF_SERVER_AUTHENTICATION_SRB = "serverAuthenticationSRB";
 
-    /** Constant that indicates the default SRB storage resource*/
+    /** Constant that indicates the default SRB storage resource. */
     public static final String PREF_STORAGE_RESOURCE_SRB = "defaultStorageResource";
 
-    /** Constant that indicates the SRB version*/
+    /** Constant that indicates the SRB version. */
     public static final String PREF_SRB_VERSION = "srbVersion";
 
-    /** Constant that indicates the SRB transfer mode*/
+    /** Constant that indicates the SRB transfer mode. */
     public static final String PREF_SRB_TRANSFER_MODE = "srbTransferMode";
 
-    /** Constant that indicates the SRB temp directory*/
+    /** Constant that indicates the SRB temp directory. */
     public static final String PREF_SRB_TEMP_DIR = "srbTempDir";
 
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
 
-    /** Constant that indicates the last used paint brush so that it will be set as the default when new images are opened 
-     * or mipav is restarted */
+    /**
+     * Constant that indicates the last used paint brush so that it will be set as the default when new images are
+     * opened or mipav is restarted.
+     */
     public static final String PREF_LAST_PAINT_BRUSH = "LastPaintBrush";
-    
-    /** Constant that indicates the user defined file type associations*/
+
+    /** Constant that indicates the user defined file type associations. */
     public static final String PREF_USER_FILETYPE_ASSOC = "userDefinedFileTypeAssociations";
-    
-    /** Constant that indicates the user defined file types*/
+
+    /** Constant that indicates the user defined file types. */
     public static final String PREF_USER_FILETYPES = "userDefinedFileTypes";
-    
+
     /** ? */
     public static final String PREF_USER_FILETYPES_TEXTFIELDS = "userDefinedFileTypes_textField";
-    
-    /** Constant that indicates the filename filter */
+
+    /** Constant that indicates the filename filter. */
     public static final String PREF_FILENAME_FILTER = "FilenameFilter";
-    
-    /** Constant that indicates the current image directory */
+
+    /** Constant that indicates the current image directory. */
     public static final String PREF_IMAGE_DIR = "ImageDirectory";
-    
-    /** Constant that indicates the last used VOI text color*/
+
+    /** Constant that indicates the last used VOI text color. */
     public static final String PREF_VOI_TEXT_COLOR = "VOITextColor";
-    
-    /** Constant that indicates the last used VOI text background color*/
+
+    /** Constant that indicates the last used VOI text background color. */
     public static final String PREF_VOI_TEXT_BACKGROUND_COLOR = "VOITextBackgroundColor";
-    
-    /** Constant that indicates the default dicom storage directory*/
+
+    /** Constant that indicates the default dicom storage directory. */
     public static final String PREF_DICOM_STORAGE_DIR = "Storage1";
-    
-    /** Constant that indicates whether to enable the dicom receiver*/
+
+    /** Constant that indicates whether to enable the dicom receiver. */
     public static final String PREF_AUTOSTART_DICOM_RECEIVER = "EnableDICOMReceiver";
-    
-    /** Constant that indicates the active image color*/
+
+    /** Constant that indicates the active image color. */
     public static final String PREF_ACTIVE_IMAGE_COLOR = "ActiveImageColor";
-    
-    /** number of recently used images to store in quicklist*/
+
+    /** number of recently used images to store in quicklist. */
     public static final String PREF_QUICKLIST_NUMBER = "QuickListNumber";
-    
-    /** constant for the names of the last X number of images used to be shown in quicklist*/
+
+    /** constant for the names of the last X number of images used to be shown in quicklist. */
     public static final String PREF_LAST_X_IMAGES = "LastXImages";
-    
-    /** constant for the names of the last X number of projects used*/
+
+    /** constant for the names of the last X number of projects used. */
     public static final String PREF_LAST_X_PROJECTS = "LastXProjects";
-    
-    /** constant for warning the user when audio will be discarded from opened AVIs*/
-    public static final String PREF_WARN_AUDIO_AVI ="WarnAudioAVI";
-    
+
+    /** constant for warning the user when audio will be discarded from opened AVIs. */
+    public static final String PREF_WARN_AUDIO_AVI = "WarnAudioAVI";
+
+    /** DOCUMENT ME! */
     public static final String PREF_OVERWRITE_STATISTICS = "OverwriteStatistics";
-    
-    /** Constant that indicates the crosshair cursor to be used */
+
+    /** Constant that indicates the crosshair cursor to be used. */
     public static final String PREF_CROSSHAIR_CURSOR = "CrosshairCursor";
-    
-    /** Constant that indicates the VOI Trim level variable*/
+
+    /** DOCUMENT ME! */
+    /** Constant that indicates the VOI Trim level variable. */
     public static final String PREF_TRIM = "TRIM";
-    
-    /** Constant that indicates the VOI Trim flag*/
+
+    /** DOCUMENT ME! */
+    /** Constant that indicates the VOI Trim flag. */
     public static final String PREF_TRIM_FLAG = "TRIM_FLAG";
-    
-    /** Constant indicating the VOI Thickness */
+
+    /** Constant indicating the VOI Thickness. */
     public static final String PREF_VOI_THICKNESS = "VOIThickness";
-    
-    /** the voi draw color constant*/
+
+    /** the voi draw color constant. */
     public static final String PREF_VOI_DRAW_COLOR = "VOIDrawColor";
-    
-    /** the starting color for VOIs (first drawn)*/
+
+    /** the starting color for VOIs (first drawn). */
     public static final String PREF_VOI_START_COLOR = "VOIColor";
-    
-    /** constant for logging*/
+
+    /** constant for logging. */
     public static final String PREF_HISTORY_MODE = "Log";
-    
+
     /**
      * Constant that indicates whether .img files should always be written in analyze format (as opposed to asking
      * whether to save as nifti).
      */
     public static final String PREF_ALWAYS_SAVE_IMG_AS_ANALYZE = "AlwaysSaveImgAsAnalyze";
 
-    /** Constant that indicates the script directory*/
+    /** Constant that indicates the script directory. */
     public static final String PREF_SCRIPT_DIR = "ScriptDirectory";
-    
-    /** Constant that indicates the last script that was run*/
+
+    /** Constant that indicates the last script that was run. */
     public static final String PREF_LAST_SCRIPT = "LastScript";
-    
-    /** constant that indicates the dicom save dictionary*/
+
+    /** constant that indicates the dicom save dictionary. */
     public static final String PREF_DICOM_SAVE_DICTIONARY = "DICOMSaveDictionary";
-    
-    /** The starting heap size*/
+
+    /** The starting heap size. */
     public static final String PREF_STARTING_HEAP_SIZE = "StartingHeapSize";
-    
-    /** The maximum heap size*/
+
+    /** The maximum heap size. */
     public static final String PREF_MAX_HEAP_SIZE = "MaximumHeapSize";
-    
-    /** Constant that indicates the default raw image extents*/
+
+    /** Constant that indicates the default raw image extents. */
     public static final String PREF_RAW_EXTENTS = "RawImageExtents";
-    
-    /** Constant that indicates the default raw image big endian*/
+
+    /** Constant that indicates the default raw image big endian. */
+
+    /** DOCUMENT ME! */
     public static final String PREF_RAW_BIG_ENDIAN = "RawImageBigEndianByteOrder";
-    
-    /** Constant that indicates the default raw image resolutions*/
+
+    /** Constant that indicates the default raw image resolutions. */
     public static final String PREF_RAW_RESOLUTIONS = "RawImageResolutions";
-    
-    /** Constant that indicates the default raw image units*/
+
+    /** Constant that indicates the default raw image units. */
     public static final String PREF_RAW_UNITS = "RawImageUnits";
-    
-    /** Constant that indicates the default raw image type*/
-    public static final String PREF_RAW_TYPE  = "RawImageType";
-    
-    /** Constant that indicates the default raw image data offset*/
-    public static final String PREF_RAW_DATA_OFFSET ="RawImageDataOffset";
-    
-    /** Constant that indicates the LightBox row dependant variable*/
+
+    /** Constant that indicates the default raw image type. */
+    public static final String PREF_RAW_TYPE = "RawImageType";
+
+    /** Constant that indicates the default raw image data offset. */
+    public static final String PREF_RAW_DATA_OFFSET = "RawImageDataOffset";
+
+    /** Constant that indicates the LightBox row dependant variable. */
     public static final String PREF_LB_ROW_DEPENDENT = "LightBoxRowDependent";
-    
-    /** Constant that indicates the LightBox grid row variable*/
+
+    /** Constant that indicates the LightBox grid row variable. */
     public static final String PREF_LB_GRID_ROW = "LightBoxGridRow";
-    
-    /** Constant that indicates the LightBox grid column variable*/
+
+    /** Constant that indicates the LightBox grid column variable. */
     public static final String PREF_LB_GRID_COL = "LightBoxGridCol";
-    
-    /** Constant that indicates the LightBox grid size variable*/
+
+    /** Constant that indicates the LightBox grid size variable. */
     public static final String PREF_LB_GRID_SIZE = "LightBoxGridSize";
-   
-    /** Constant that indicates the LightBox grid color variable*/
+
+    /** Constant that indicates the LightBox grid color variable. */
     public static final String PREF_LB_GRID_COLOR = "LightBoxGridColor";
-   
-    /** Constant that indicates the LightBox border size variable*/
+
+    /** Constant that indicates the LightBox border size variable. */
     public static final String PREF_LB_BORDER_SIZE = "LightBoxBorderSize";
-    
-    /** Constant that indicates the LightBox border color variable*/
+
+    /** Constant that indicates the LightBox border color variable. */
     public static final String PREF_LB_BORDER_COLOR = "LightBoxBorderColor";
-    
-    /** Constant that indicates the LightBox selected border size variable*/
+
+    /** Constant that indicates the LightBox selected border size variable. */
     public static final String PREF_LB_SELECTED_BORDER_SIZE = "LightBoxSelectedBorderSize";
-    
-    /** Constant that indicates the LightBox selected border color variable*/
+
+    /** Constant that indicates the LightBox selected border color variable. */
     public static final String PREF_LB_SELECTED_BORDER_COLOR = "LightBoxSelectedBorderColor";
-    
-    /** Constant that indicates the LightBox magnification variable*/
+
+    /** Constant that indicates the LightBox magnification variable. */
     public static final String PREF_LB_MAG = "LightBoxMagnification";
-    
-    /** Constant that indicates the LightBox location variable*/
+
+    /** Constant that indicates the LightBox location variable. */
     public static final String PREF_LB_LOCATION = "LightBoxLocation";
-    
-    /** Constant that indicates the LightBox individual t-slice variable*/
+
+    /** Constant that indicates the LightBox individual t-slice variable. */
     public static final String PREF_LB_TSLICE = "LightBoxIndividualTSlice";
-    
-    /** Constant that indicates the application title */
+
+    /** Constant that indicates the application title. */
     public static final String PREF_APP_TITLE = "ApplicationTitle";
-    
-    /** Constant that indicates the application icon */
+
+    /** Constant that indicates the application icon. */
     public static final String PREF_APP_ICON = "ApplicationIcon";
-    
-    /** Constant that indicates whether to show image overlays */
+
+    /** Constant that indicates whether to show image overlays. */
     public static final String PREF_SHOW_OVERLAYS = "ShowOverlays";
-    
-    /** plugin of algorithm type*/
+
+    /** plugin of algorithm type. */
     public static final String PREF_PLUGIN_ALGORITHM = "PlugInAlgorithm";
-    
-    /** plugin of file type*/
+
+    /** plugin of file type. */
     public static final String PREF_PLUGIN_FILE = "PlugInFile";
-    
-    /** plugin of view type*/
+
+    /** plugin of view type. */
     public static final String PREF_PLUGIN_VIEW = "PlugInView";
-    
+
+    /** The character that separates items (such as in the user file type definitions). */
+    public static final String ITEM_SEPARATOR = ";";
+
+    /**
+     * The character that separates an item from its value in a definition or mapping (such as in the user file type
+     * definitions).
+     */
+    public static final String DEFINITION_SEPARATOR = ":";
+
     /** Operating system constant for Windows. */
     public static final int OS_WINDOWS = 2;
 
@@ -389,7 +411,6 @@ public class Preferences {
     /** DOCUMENT ME! */
     private static KeyStroke currentShortcut;
 
-
     /**
      * Static properties structure to store default MIPAV preferences.
      */
@@ -399,7 +420,8 @@ public class Preferences {
         defaultProps.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
         defaultProps.setProperty(Preferences.PREF_TRIM, "0.3");
         defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false");
-        defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, System.getProperty("user.dir") + File.separator + "mipav.log");
+        defaultProps.setProperty(Preferences.PREF_LOG_FILENAME,
+                                 System.getProperty("user.dir") + File.separator + "mipav.log");
         defaultProps.setProperty(Preferences.PREF_RAW_EXTENTS, "256,256,0,0,0");
         defaultProps.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, "true");
         defaultProps.setProperty(Preferences.PREF_RAW_RESOLUTIONS, "1.0,1.0,1.0,1.0,1.0");
@@ -439,7 +461,8 @@ public class Preferences {
         defaultProps.setProperty(Preferences.PREF_LB_SELECTED_BORDER_SIZE, "2");
         defaultProps.setProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR, "ffff00");
         defaultProps.setProperty(Preferences.PREF_LB_MAG, "45.0");
-        defaultProps.setProperty(Preferences.PREF_LB_LOCATION, "-10,-10"); // use incorrect value to compute 'best' location
+        defaultProps.setProperty(Preferences.PREF_LB_LOCATION, "-10,-10"); // use incorrect value to compute 'best'
+                                                                           // location
 
         // look and feel properties
         defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");

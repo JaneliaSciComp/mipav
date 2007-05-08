@@ -10,7 +10,6 @@ import java.io.*;
  * This class clones (copies) by serializing the object (providing it can be serialized). See page 66 of Core Java 1.1
  * Vol. II by Horstmann, Cornell.
  */
-
 public class ModelSerialCloneable implements Cloneable, Serializable {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -21,8 +20,7 @@ public class ModelSerialCloneable implements Cloneable, Serializable {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Copies the object that extends this class. Can be slow sometimes because it actually copies (streams) to the hard
-     * drive.
+     * Copies the object that extends this class through use of Serialization.
      *
      * @return  The cloned object. Null if there was an error.
      */
@@ -52,22 +50,6 @@ public class ModelSerialCloneable implements Cloneable, Serializable {
             for (int i = 0; i < e.getStackTrace().length; i++) {
                 Preferences.debug("\t" + e.getStackTrace()[i] + "\n", Preferences.DEBUG_MINOR);
             }
-
-            return null;
-        }
-    }
-
-    /**
-     * Clone itself in order to save memory.
-     *
-     * @return  Object
-     */
-    public Object cloneItself() {
-
-        try {
-            return super.clone();
-        } catch (CloneNotSupportedException e) {
-            MipavUtil.displayError("\nException reported :\n" + e + "\n        in: \n" + this.getClass().getName());
 
             return null;
         }

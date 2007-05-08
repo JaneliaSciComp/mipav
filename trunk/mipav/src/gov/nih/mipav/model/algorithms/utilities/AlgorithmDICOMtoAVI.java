@@ -184,8 +184,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
 
                 try {
                     patientID = (String)
-                                    ((FileDicomTag) ((FileInfoDicom) dicomImage.getFileInfo(0)).getEntry("0010,0020"))
-                                        .getValue(false);
+                                    ((FileInfoDicom) dicomImage.getFileInfo(0)).getTagTable().get("0010,0020").getValue(false);
                     // System.err.println("patient id is: " + patientID);
                 } catch (Exception ex) { // do nothing
                 }
@@ -233,8 +232,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
 
                 try {
                     patientID = (String)
-                                    ((FileDicomTag) ((FileInfoDicom) dicomImage.getFileInfo(0)).getEntry("0010,0020"))
-                                        .getValue(false);
+                                    ((FileInfoDicom) dicomImage.getFileInfo(0)).getTagTable().get("0010,0020").getValue(false);
                     // System.err.println("patient id is: " + patientID);
                 } catch (Exception ex) { // do nothing
                 }
@@ -325,7 +323,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                     }
 
                     if (aviFile.writeImage(dicomImage, null, lutA, null, null, null, 0, 0, 0, 0, 0,
-                                               dicomImage.getMask(), compression)) {
+                                           dicomImage.getMask(), compression)) {
                         Preferences.debug("Successfully transcoded " + " to compressed AVI" + "\n");
                     } else {
                         Preferences.debug("Error transcoding " + " to compressed AVI" + "\n");

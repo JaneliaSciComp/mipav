@@ -11,11 +11,10 @@ import java.util.*;
 
 
 /**
- * This class contains DICOM header information. It uses a Hashtable to store all the information about the tags. The
- * standard Hashtable listing all known tags with empty values is in CreateDICOMFiles. The tagsList Hashtable in this
- * file is initialized to that Hashtable. Then as the tags are read in by FileDicom, they are stored here. Also stored
- * here is the offset of the image, the image number, the resolutions, some pixel data, the bytes allocated, and the
- * dimensions of the image.
+ * <p>This class contains DICOM header information. It uses a table to store all the information about the tags. The
+ * standard Hashtable listing all known tags with empty values is in DicomDictionary. Also stored here is the offset of
+ * the image, the image number, the resolutions, some pixel data, the bytes allocated, and the dimensions of the
+ * image.</p>
  *
  * <p>This file also contains a table used for displaying the tag information. There is an option to display just the
  * standard tags or both the standard and the private tags.</p>
@@ -23,7 +22,7 @@ import java.util.*;
  * @version  1.0 Aug 1, 1999
  * @see      FileDicom
  * @see      FileDicomTag
- * @see      CreateDICOMFiles
+ * @see      FileDicomTagTable
  * @see      JDialogFileInfoDICOM
  */
 public class FileInfoDicom extends FileInfoBase {
@@ -36,7 +35,7 @@ public class FileInfoDicom extends FileInfoBase {
     /** Used to indicate that the DICOM tags are explicit (i.e they have VRs). */
     public static final boolean EXPLICIT = false;
 
-    /** Used to indicate that the DICOM tags are implicit (i.e. they use the DICOM dictionary).  */
+    /** Used to indicate that the DICOM tags are implicit (i.e. they use the DICOM dictionary). */
     public static final boolean IMPLICIT = true;
 
     /**
@@ -98,7 +97,7 @@ public class FileInfoDicom extends FileInfoBase {
         "0020,0200", // synchronization frame of reference UID
         "0020,4000", // image comments
 
-        // "0040,0275",// request attributes sequence
+    // "0040,0275",// request attributes sequence
         "0040,A124", // UID
         "0040,A730", // content sequence
 
@@ -125,6 +124,9 @@ public class FileInfoDicom extends FileInfoBase {
     /** DICOM instance number. */
     public int instanceNumber = 1;
 
+    /** Whether the tag currently being processed and read in is a sequence tag. */
+    public boolean isCurrentTagSQ = false;
+
     /** True indicates image has multiple image planes in a single file. */
     public boolean multiFrame = false;
 
@@ -141,7 +143,9 @@ public class FileInfoDicom extends FileInfoBase {
     /** Type of image - color, monochrome etc. */
     public String photometricInterp = "MONOCHROME2";
 
-    /** Pixel Padding Value (0028, 0120). Value of pixels added to non-rectangular image to pad to rectangular format. */
+    /**
+     * Pixel Padding Value (0028, 0120). Value of pixels added to non-rectangular image to pad to rectangular format.
+     */
     public Short pixelPaddingValue = null;
 
     /** Data type. */
@@ -152,9 +156,6 @@ public class FileInfoDicom extends FileInfoBase {
 
     /** DICOM slice location. */
     public float sliceLocation;
-
-    /** VR is Value Representation and specifies the data type and format of the values. */
-    public String VR = "--";
 
     /** VR type can be IMPLICIT or EXPLICIT. */
     public boolean vr_type = IMPLICIT;
@@ -168,19 +169,13 @@ public class FileInfoDicom extends FileInfoBase {
     /** DICOM z coordianate of the slice location. */
     public float zLocation = 0;
 
-
-    /**
-     * Hashtable to store all the information about the DICOM tags. The hashtable created in the class CreateDICOMFiles
-     * and is a list of all the DICOM tags where initially all the tags are empty of values. Then as the tags are read
-     * in by FileDicom and stored here the tagList hashtable.
-     */
-    private Hashtable tagsList = DICOMDictionaryBuilder.getDicomTagTable();
+    /** Stores all the information about the DICOM tags. */
+    private FileDicomTagTable tagTable;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * DICOM file information constructor. <b>Does not import the DICOM data dictionary and its associated tags
-     * list.</b>
+     * DICOM file information constructor. Used for the file info which contains the reference tag table for an image.
      *
      * @param  name       file name
      * @param  directory  file directory
@@ -188,7 +183,23 @@ public class FileInfoDicom extends FileInfoBase {
      */
     public FileInfoDicom(String name, String directory, int format) {
         super(name, directory, format);
-        tagsList = DICOMDictionaryBuilder.getDicomTagTable();
+
+        tagTable = new FileDicomTagTable(this);
+    }
+
+    /**
+     * DICOM file information constructor. Used for the file info which does NOT contain the reference tag table for an
+     * image.
+     *
+     * @param  name       file name
+     * @param  directory  file directory
+     * @param  format     format (in this case, DICOM)
+     * @param  refInfo    The reference file info, containing the reference tag table.
+     */
+    public FileInfoDicom(String name, String directory, int format, FileInfoDicom refInfo) {
+        super(name, directory, format);
+
+        tagTable = new FileDicomTagTable(this, refInfo.getTagTable());
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -222,7 +233,7 @@ public class FileInfoDicom extends FileInfoBase {
             try {
 
                 if (list[i]) {
-                    this.setValue(anonymizeTagIDs[i], "", 0);
+                    getTagTable().setValue(anonymizeTagIDs[i], "", 0);
                 }
             } catch (NullPointerException npe) { // an IllegalArgumentException is probably not right here....
                 throw new IllegalArgumentException("(" + anonymizeTagIDs[i] + ") is a required type 2 tag.");
@@ -236,44 +247,12 @@ public class FileInfoDicom extends FileInfoBase {
 
             // change each of the following tags to (empty)
             // if we are asked to anonymize this info and if the tag exists in the hashtable.
-            if ((list[i]) && (this.getValue(anonymizeTagIDs[i]) != null)) {
-                this.setValue(anonymizeTagIDs[i], "", 0);
+            if ((list[i]) && (tagTable.getValue(anonymizeTagIDs[i]) != null)) {
+                getTagTable().setValue(anonymizeTagIDs[i], "", 0);
             }
         }
         // this fileInfo is now an expurgated/sanitised version
     }
-
-    /**
-     * Clone itself in order to save memory.
-     *
-     * @return  Object
-     */
-    public Object cloneItself() {
-        FileInfoDicom cloned = (FileInfoDicom) super.cloneItself();
-        cloned.VR = VR;
-        cloned.sliceLocation = sliceLocation;
-        cloned.xLocation = xLocation;
-        cloned.yLocation = yLocation;
-        cloned.zLocation = zLocation;
-        cloned.instanceNumber = instanceNumber;
-        cloned.orientation = orientation;
-        cloned.olderVersion = olderVersion;
-        cloned.containsDICM = containsDICM;
-        cloned.pixelRepresentation = pixelRepresentation;
-        cloned.pixelPaddingValue = pixelPaddingValue;
-        cloned.bitsAllocated = bitsAllocated;
-        cloned.bytesPerPixel = bytesPerPixel;
-        cloned.photometricInterp = photometricInterp;
-        cloned.planarConfig = planarConfig;
-        cloned.multiFrame = multiFrame;
-        cloned.vr_type = vr_type;
-        cloned.displayType = displayType;
-
-        cloned.tagsList = (Hashtable) (tagsList.clone());
-
-        return cloned;
-    }
-
 
     /**
      * Super requires displayAboutInfo to be defined display of this class is held by JDialogFileInfoDICOM. Should never
@@ -295,48 +274,14 @@ public class FileInfoDicom extends FileInfoBase {
         orientation = null;
         photometricInterp = null;
 
-        if (tagsList != null) {
-            tagsList.clear();
+        if (tagTable != null) {
+            tagTable.reset();
         }
 
-        tagsList = null;
+        tagTable = null;
 
-        VR = null;
         super.finalize();
     }
-
-    /**
-     * Accessor that returns the DicomTag with a certain hexadecimal key.
-     *
-     * @throws  NullPointerException  if the Hashtable is (incorrectly) null here.
-     *
-     * @param   name  the key for this DicomTag
-     *
-     * @return  the DicomTag matching that key
-     */
-    public final Object getEntry(String name) {
-        FileDicomTag tag;
-
-        try {
-            tag = (FileDicomTag) tagsList.get(new FileDicomKey(name));
-        } catch (NullPointerException npe) {
-            throw new NullPointerException("Tag list is Null");
-        }
-
-        return tag;
-    }
-
-    /**
-     * Accessor that returns the DicomTag with a certain hexadecimal key.
-     *
-     * @param   key  the key for this DicomTag
-     *
-     * @return  the DicomTag matching that key
-     */
-    public final Object getEntry(FileDicomKey key) {
-        return tagsList.get(key);
-    }
-
 
     /**
      * This method extracts directional cosines from the DICOM image header (tag = "0020, 0037"). Since the third row of
@@ -356,7 +301,7 @@ public class FileInfoDicom extends FileInfoBase {
             dirCos = new double[4][4]; // row, col
             xfrm = new TransMatrix(4);
 
-            String orientation = (String) ((FileDicomTag) getEntry("0020,0037")).getValue(true);
+            String orientation = (String) tagTable.getValue("0020,0037");
 
             if (orientation == null) {
 
@@ -420,42 +365,12 @@ public class FileInfoDicom extends FileInfoBase {
     }
 
     /**
-     * Gets the tag using keyName as the key into the hashtable.
+     * Returns a reference to the tag table for this dicom file info.
      *
-     * @param   keyName  the key name used to index into the hashtable.
-     *
-     * @return  FileDicomTag the DICOM tag with associated information.
+     * @return  A reference to the tag table.
      */
-    public final FileDicomTag getTag(String keyName) {
-        FileDicomKey key = new FileDicomKey(keyName);
-
-        return (FileDicomTag) tagsList.get(key);
-    }
-
-    /**
-     * Accessor that returns the Hashtable.
-     *
-     * @return  the Hashtable
-     */
-    public final Hashtable getTagsList() {
-        return tagsList;
-    }
-
-    /**
-     * accessor that returns the value matching the key as a meaningful (ie., non-coded) string . This is a direct
-     * accessor to <code>getEntry(name).getValue(true)</code>.
-     *
-     * @param   name  the key to search for
-     *
-     * @return  the value that this key matches to as a String for output
-     *
-     * @see     #getEntry(String)
-     * @see     FileDicomTag#getValue(boolean)
-     */
-    public final Object getValue(String name) {
-        FileDicomKey key = new FileDicomKey(name);
-
-        return ((FileDicomTag) tagsList.get(key)).getValue(true);
+    public final FileDicomTagTable getTagTable() {
+        return tagTable;
     }
 
     /**
@@ -468,7 +383,7 @@ public class FileInfoDicom extends FileInfoBase {
     }
 
     /**
-     * parse the string for Objects seperated by "\". Uses the local method getValue to look at the Object held in the
+     * Parse the string for Objects seperated by "\". Uses the local method getValue to look at the Object held in the
      * tag and decipher it for the user class into an array of strings.
      *
      * <p>parseTagValue has not been updated for the newer versions of DicomTag</p>
@@ -480,13 +395,13 @@ public class FileInfoDicom extends FileInfoBase {
      *          of Strings in the array. NOTE: user class must convert this list to the correct type; (which does
      *          indicate user class knows what returned string is) If null then there were zero tokens in the tag
      */
-    public final String[] parseTagValue(Object tagName) {
+    public final String[] parseTagValue(String tagName) {
 
         if (tagName == null) {
             return null;
         }
 
-        String str = (String) getValue((String) tagName);
+        String str = (String) tagTable.getValue(tagName);
 
         if (str == null) {
             return null;
@@ -511,572 +426,102 @@ public class FileInfoDicom extends FileInfoBase {
     }
 
     /**
-     * Puts a new tag into the tagsList Hashtable.
-     *
-     * @param  name      key to map to in the Hashtable
-     * @param  dicomTag  the DICOM tag that matches the key
+     * After the tag table is filled, check for a number of tags to set up some fields in this file info object.
      */
-    public final void putTag(String name, Object dicomTag) {
-        FileDicomKey key = new FileDicomKey(name);
-        tagsList.put(key, dicomTag);
-    }
+    public final void setInfoFromTags() {
 
-    /**
-     * Resets the reference to the dictionary. Sets the DICOM tags table, offered by the <CODE>CreateDICOMFiles</CODE>
-     * dictionary. Setting the dictionary has the effect of wiping the tags list of its tags as well.
-     */
-    public final void resetDictionary() {
-        tagsList = DICOMDictionaryBuilder.getDicomTagTable();
-    }
-
-    /**
-     * Sets the length of the tag.
-     *
-     * @param  name    key to map to in the Hashtable
-     * @param  length  length to set
-     */
-    public final void setLength(String name, int length) {
-        FileDicomKey key = new FileDicomKey(name);
-        FileDicomTag entry = (FileDicomTag) tagsList.get(key);
-
-        if (entry != null) {
-            entry.setLength(length);
-        }
-    }
-
-
-    /**
-     * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
-     * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
-     * file information.
-     *
-     * <p>uses the DicomTag method "setValue(obj)" to automagically:</p>
-     *
-     * <ul>
-     *   <li>determine the length of the tag's value,</li>
-     *   <li>convert a "human-readable" string value into a DICOM compliant code,</li>
-     *   <li></li>
-     *   <li>and when value is a string, but the key specifies some other type of data element.</li>
-     * </ul>
-     *
-     * Private tags are ignored, as are "sequence" and "unknown" tags. Throws an exception when the value is too large
-     * for the given tag type.
-     *
-     * @param  name   the key for the DicomTag in tagsList
-     * @param  value  the value to set the DicomTag to
-     */
-    public final void setValue(String name, Object value) {
-        this.setValue(new FileDicomKey(name), value);
-    }
-
-    /**
-     * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
-     * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
-     * file information.
-     *
-     * <p>uses the DicomTag method "setValue(obj)" to automagically:</p>
-     *
-     * <ul>
-     *   <li>determine the length of the tag's value,</li>
-     *   <li>convert a "human-readable" string value into a DICOM compliant code,</li>
-     *   <li></li>
-     *   <li>and when value is a string, but the key specifies some other type of data element.</li>
-     * </ul>
-     *
-     * Private tags are ignored, as are "sequence" and "unknown" tags. Throws an exception when the value is too large
-     * for the given tag type.
-     *
-     * @param  key    the key for the DicomTag in tagsList
-     * @param  value  the value to set the DicomTag to
-     */
-    public void setValue(FileDicomKey key, Object value) {
-
-        // has problems when saving!  Don't use until this line is removed (and prob fixed)
-        // Is the above statement still valid ? 3/3/2003. It is being used by others and appears to work.
-        FileDicomTag entry = (FileDicomTag) getEntry(key);
-
-        if (entry.getType().equals("typeSequence") || entry.getType().equals("typeUnknown") ||
-                (entry.getKeyword() == null) || (entry.getVR() == null)) {
-            return;
+        // type 1
+        if (tagTable.containsTag("0008,0060")) {
+            setInfoFromTag(tagTable.get("0008,0060"));
         }
 
-        entry.setValue(value);
-        tagsList.put(key, entry);
-
-        // ordering by type 1 tags first.  Then in numerical order.
-        if (key.equals("0008,0060")) { // type 1
-            setModalityFromDicomStr(value); // setModalityFromDicomStr() covers the possibility of value == ""
-        } else if (key.equals("0028,0100")) { // type 1
-
-            if (!value.toString().equals("")) {
-                bitsAllocated = ((Short) value).shortValue();
-            } else {
-                MipavUtil.displayError("FileInfoDicom: tag (0028,0100) is missing a type 1 tag.");
-            }
-        } else if (key.equals("0028,0103")) { // type 1
-
-            if (!value.toString().equals("")) {
-                pixelRepresentation = ((Short) value).shortValue();
-            } else {
-                MipavUtil.displayError("FileInfoDicom: tag (0028,0103) is missing a type 1 tag.");
-            }
-        } else if (key.equals("0028,1052")) { // type 1
-
-            if (!value.toString().equals("")) {
-                super.setRescaleIntercept(Double.valueOf((String) value).doubleValue());
-            } // only used in CT images, so don't notify that not found
-        } else if (key.equals("0028,1053")) { // type 1
-
-            if (!value.toString().equals("")) {
-                super.setRescaleSlope(Double.valueOf((String) value).doubleValue());
-            } // only used in CT images, so don't notify that not found
+        if (tagTable.containsTag("0018,0088")) {
+            setInfoFromTag(tagTable.get("0018,0088"));
         }
 
-        // any variables whose value depends on a type 2 or type 3 tag
-        // are left to using default values when value has 0 length (ie, it is "")
-        if (!key.equals("")) {
-
-            if (key.equals("0018,0050")) { // type 2
-                setSliceThickness(Float.parseFloat(((String) value).trim()));
-            } else if (key.equals("0020,0032")) { // type 2c
-                orientation = ((String) value).trim();
-
-                int index1 = -1, index2 = -1;
-
-                for (int i = 0; i < orientation.length(); i++) {
-
-                    if (orientation.charAt(i) == '\\') {
-
-                        if (index1 == -1) {
-                            index1 = i;
-                        } else {
-                            index2 = i;
-                        }
-                    }
-                }
-
-                xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
-                yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
-                zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
-            } else if (key.equals("0020,0013")) { // type 2
-
-                try {
-                    instanceNumber = Integer.parseInt(((String) value).trim());
-                } catch (NumberFormatException e) {
-                    MipavUtil.displayError("FileInfoDicom: Number format error: Instance Number.");
-                }
-            } else if (key.equals("0020,1041")) { // type 3
-
-                String s = ((String) value).trim();
-
-                try {
-                    Float temp;
-                    temp = new Float(s);
-                    sliceLocation = temp.floatValue();
-                } catch (NumberFormatException e) {
-                    MipavUtil.displayError("Number format error: Slice Location = " + s);
-                }
-            } else if (key.equals("0028,0030") && (((FileDicomTag) (getEntry("0018,1164"))).getValue(false) == null)) { // type 2
-
-                String firstHalf, secondHalf;
-                int index = 0;
-
-                for (int i = 0; i < ((String) value).length(); i++) {
-
-                    if (((String) value).charAt(i) == '\\') {
-                        index = i;
-                    }
-                }
-
-                firstHalf = ((String) value).substring(0, index).trim();
-                secondHalf = ((String) value).substring(index + 1, ((String) value).length()).trim();
-
-                Float f1 = null;
-                Float f2 = null;
-
-                if ((firstHalf != null) && (firstHalf.length() > 0)) {
-
-                    try {
-                        f1 = new Float(firstHalf);
-                    } catch (NumberFormatException e) {
-                        setResolutions(1.0f, 0);
-                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
-                    }
-
-                    if (f1 != null) {
-                        setResolutions(f1.floatValue(), 0);
-                    }
-                } else {
-                    setResolutions(1.0f, 0);
-                }
-
-                if ((secondHalf != null) && (secondHalf.length() > 0)) {
-
-                    try {
-                        f2 = new Float(secondHalf);
-                    } catch (NumberFormatException e) {
-                        setResolutions(getResolution(0), 1);
-                    }
-                    if (f2 != null) {
-                        setResolutions(f2.floatValue(), 1);
-                    }
-                } else {
-                    setResolutions(1.0f, 1);
-                }
-            } else if (key.equals("0018,1164")) { // type 2
-
-                String firstHalf, secondHalf;
-                int index = 0;
-
-                for (int i = 0; i < ((String) value).length(); i++) {
-
-                    if (((String) value).charAt(i) == '\\') {
-                        index = i;
-                    }
-                }
-
-                firstHalf = ((String) value).substring(0, index).trim();
-                secondHalf = ((String) value).substring(index + 1, ((String) value).length()).trim();
-
-                Float f1 = null;
-                Float f2 = null;
-
-                if ((firstHalf != null) && (firstHalf.length() > 0)) {
-
-                    try {
-                        f1 = new Float(firstHalf);
-                    } catch (NumberFormatException e) {
-                        setResolutions(1.0f, 0);
-                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
-                    }
-
-                    if (f1 != null) {
-                        setResolutions(f1.floatValue(), 0);
-                    }
-                } else {
-                    setResolutions(1.0f, 0);
-                }
-
-                if ((secondHalf != null) && (secondHalf.length() > 0)) {
-
-                    try {
-                        f2 = new Float(secondHalf);
-                    } catch (NumberFormatException e) {
-                        setResolutions(getResolution(0), 1);
-                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
-                    }
-
-                    if (f2 != null) {
-                        setResolutions(f2.floatValue(), 1);
-                    }
-                } else {
-                    setResolutions(1.0f, 1);
-                }
-            } else if (key.equals("0028,0120")) { // type 3
-                pixelPaddingValue = (Short) value;
-            }
+        if (tagTable.containsTag("0028,0100")) {
+            setInfoFromTag(tagTable.get("0028,0100"));
+        } else {
+            MipavUtil.displayError("FileInfoDicom: tag (0028,0100) is missing a type 1 tag.");
         }
 
-    }
-
-    /**
-     * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
-     * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
-     * file information.
-     *
-     * @param  name    the key for the DicomTag in tagsList (Group, element)
-     * @param  value   the value to set the DicomTag to
-     * @param  length  the length of the tag
-     */
-    public final void setValue(String name, Object value, int length) {
-        this.setValue(new FileDicomKey(name), value, length);
-    }
-
-    /**
-     * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
-     * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
-     * file information.
-     *
-     * @param  key     the key for the DicomTag in tagsList
-     * @param  value   the value to set the DicomTag to
-     * @param  length  the length of the tag
-     */
-    public final void setValue(FileDicomKey key, Object value, int length) {
-
-        // Key is the hash key and can have values 60xx where xx yet undefined.
-        // However the tag defaults to 6000 until change in FileInfoDicom.setvalue()
-        FileDicomTag entry = (FileDicomTag) getEntry(key.getKey());
-
-        if (entry == null) {
-            return; // Might wish to display error message.
+        if (tagTable.containsTag("0028,0103")) {
+            setInfoFromTag(tagTable.get("0028,0103"));
+        } else {
+            MipavUtil.displayError("FileInfoDicom: tag (0028,0103) is missing a type 1 tag.");
         }
 
-        if (!key.getGroup().equals("7FE0")) {
-            String strGroup = key.getGroup(); // name.substring(0,4);
-            entry.setGroup(Integer.valueOf(strGroup, 16).intValue());
+        if (tagTable.containsTag("0028,1052")) {
+            setInfoFromTag(tagTable.get("0028,1052"));
         }
 
-        entry.setValue(value, length);
-        tagsList.put(key, entry);
-
-        // ordering by type 1 tags first.  Then in numerical order.
-        if (key.equals("0008,0060")) { // type 1
-            setModalityFromDicomStr(value); // setModalityFromDicomStr() covers the possibility of value == ""
-        } else if (key.equals("0018,0088")) { // type 1
-            super.setResolutions(Float.parseFloat((String) value), 2);
-        } else if (key.equals("0028,0100")) { // type 1
-
-            if (!value.toString().equals("")) {
-                bitsAllocated = ((Short) value).shortValue();
-            } else {
-                MipavUtil.displayError("FileInfoDicom: tag (0028,0100) is missing a type 1 tag.");
-            }
-        } else if (key.equals("0028,0103")) { // type 1
-
-            if (!value.toString().equals("")) {
-                pixelRepresentation = ((Short) value).shortValue();
-            } else {
-                MipavUtil.displayError("FileInfoDicom: tag (0028,0103) is missing a type 1 tag.");
-            }
-        } else if (key.equals("0028,1052")) { // type 1
-
-            if (!value.toString().equals("")) {
-                super.setRescaleIntercept(Double.valueOf((String) value).doubleValue());
-            } // only used in CT images, so don't notify that not found
-        } else if (key.equals("0028,1053")) { // type 1
-
-            if (!value.toString().equals("")) {
-                super.setRescaleSlope(Double.valueOf((String) value).doubleValue());
-            } // only used in CT and PET images, so don't notify that not found
+        if (tagTable.containsTag("0028,1053")) {
+            setInfoFromTag(tagTable.get("0028,1053"));
         }
 
-        // any variables whose value depends on a type 2 or type 3 tag
-        // are left to using default values when value has 0 length (ie, it is "")
-        if (length != 0) {
+        // type 2, etc
+        if (tagTable.containsTag("0018,0050")) {
+            setInfoFromTag(tagTable.get("0018,0050"));
+        }
 
-            if (key.equals("0018,0050")) { // type 2
-                setSliceThickness(Float.parseFloat(((String) value).trim()));
-            } else if (key.equals("0018,602C")) {
-                setResolutions(((Double) value).floatValue(), 0);
-            } else if (key.equals("0018,602E")) {
-                setResolutions(((Double) value).floatValue(), 1);
-            } else if (key.equals("0020,0032")) { // type 2c
-                orientation = ((String) value).trim();
+        if (tagTable.containsTag("0018,602C")) {
+            setInfoFromTag(tagTable.get("0018,602C"));
+        }
 
-                int index1 = -1, index2 = -1;
+        if (tagTable.containsTag("0018,602E")) {
+            setInfoFromTag(tagTable.get("0018,602E"));
+        }
 
-                for (int i = 0; i < orientation.length(); i++) {
+        if (tagTable.containsTag("0020,0032")) {
+            setInfoFromTag(tagTable.get("0020,0032"));
+        }
 
-                    if (orientation.charAt(i) == '\\') {
+        if (tagTable.containsTag("0020,0013")) {
+            setInfoFromTag(tagTable.get("0020,0013"));
+        }
 
-                        if (index1 == -1) {
-                            index1 = i;
-                        } else {
-                            index2 = i;
-                        }
-                    }
-                }
+        if (tagTable.containsTag("0020,1041")) {
+            setInfoFromTag(tagTable.get("0020,1041"));
+        }
 
-                xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
-                yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
-                zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
-            } else if (key.equals("0020,0013")) { // type 2
+        if (tagTable.containsTag("0028,0030")) {
+            setInfoFromTag(tagTable.get("0028,0030"));
+        }
 
-                try {
-                    instanceNumber = Integer.parseInt(((String) value).trim());
-                } catch (NumberFormatException e) {
-                    MipavUtil.displayError("FileInfoDicom: Number format error: Instance Number.");
-                }
-            } else if (key.equals("0020,1041")) { // type 3
+        if (tagTable.containsTag("0018,1164")) {
+            setInfoFromTag(tagTable.get("0018,1164"));
+        }
 
-                String s = ((String) value).trim();
-
-                try {
-                    Float temp;
-                    temp = new Float(s);
-                    sliceLocation = temp.floatValue();
-                } catch (NumberFormatException e) {
-                    MipavUtil.displayError("Number format error: Slice Location = " + s);
-                }
-            } else if (key.equals("0028,0030") && (((FileDicomTag) (getEntry("0018,1164"))).getValue(false) == null)) { // type 2
-
-                String firstHalf, secondHalf;
-                int index = 0;
-
-                for (int i = 0; i < ((String) value).length(); i++) {
-
-                    if (((String) value).charAt(i) == '\\') {
-                        index = i;
-                    }
-                }
-
-                firstHalf = ((String) value).substring(0, index).trim();
-                secondHalf = ((String) value).substring(index + 1, ((String) value).length()).trim();
-
-                Float f1 = null;
-                Float f2 = null;
-
-                if ((firstHalf != null) && (firstHalf.length() > 0)) {
-
-                    try {
-                        f1 = new Float(firstHalf);
-                    } catch (NumberFormatException e) {
-                        setResolutions(1.0f, 0);
-                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
-                    }
-
-                    if (f1 != null) {
-                        setResolutions(f1.floatValue(), 0);
-                    }
-                } else {
-                    setResolutions(1.0f, 0);
-                }
-
-                if ((secondHalf != null) && (secondHalf.length() > 0)) {
-
-                    try {
-                        f2 = new Float(secondHalf);
-                    } catch (NumberFormatException e) {
-                        setResolutions(getResolution(0), 1);
-                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
-                    }
-
-                    if (f2 != null) {
-                        setResolutions(f2.floatValue(), 1);
-                    }
-                } else {
-                    setResolutions(1.0f, 1);
-                }
-
-            } else if (key.equals("0018,1164")) { // type 2
-
-                String firstHalf, secondHalf;
-                int index = 0;
-
-                for (int i = 0; i < ((String) value).length(); i++) {
-
-                    if (((String) value).charAt(i) == '\\') {
-                        index = i;
-                    }
-                }
-
-                firstHalf = ((String) value).substring(0, index).trim();
-                secondHalf = ((String) value).substring(index + 1, ((String) value).length()).trim();
-
-                Float f1 = null;
-                Float f2 = null;
-
-                if ((firstHalf != null) && (firstHalf.length() > 0)) {
-
-                    try {
-                        f1 = new Float(firstHalf);
-                    } catch (NumberFormatException e) {
-                        setResolutions(1.0f, 0);
-                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
-                    }
-
-                    if (f1 != null) {
-                        setResolutions(f1.floatValue(), 0);
-                    }
-                } else {
-                    setResolutions(1.0f, 0);
-                }
-
-                if ((secondHalf != null) && (secondHalf.length() > 0)) {
-
-                    try {
-                        f2 = new Float(secondHalf);
-                    } catch (NumberFormatException e) {
-                        setResolutions(getResolution(0), 1);
-                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
-                    }
-
-                    if (f2 != null) {
-                        setResolutions(f2.floatValue(), 0);
-                    }
-                } else {
-                    setResolutions(1.0f, 1);
-                }
-            } else if (key.equals("0028,0120")) { // type 3
-                pixelPaddingValue = (Short) value;
-            }
+        if (tagTable.containsTag("0028,0120")) {
+            setInfoFromTag(tagTable.get("0028,0120"));
         }
     }
 
     /**
-     * Sorts the list of tags and returns it as an array in order.
-     *
-     * @return  the sorted list
+     * Changes a few dicom tags associated with a secondary capture image (marking it as having been created with
+     * mipav). This is often used after a new image is created as the result of an algorithm and the source image's file
+     * infos are copied over to the new image.
      */
-    public final FileDicomTag[] sortTagsList() {
-        Enumeration e;
-        int count = 0;
-        FileDicomTag[] dicomTags;
+    public void setSecondaryCaptureTags() {
 
-        for (e = tagsList.keys(); e.hasMoreElements();) {
-            FileDicomKey name = (FileDicomKey) e.nextElement();
+        // Secondary Capture SOP UID
+        getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26);
+        getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26);
 
-            if (((FileDicomTag) getEntry(name)).getValue(true) != null) {
-                count++;
-            }
-        }
-
-
-        try {
-            dicomTags = new FileDicomTag[count];
-        } catch (OutOfMemoryError error) {
-            MipavUtil.displayError("Out of Memory in FileInfoDicom.sortTagsList");
-
-            return null;
-        }
-
-        int i = 0;
-
-        for (e = tagsList.keys(); e.hasMoreElements();) {
-            FileDicomKey name = (FileDicomKey) e.nextElement();
-            FileDicomTag element = (FileDicomTag) getEntry(name);
-
-            if (element.getValue(true) != null) {
-                dicomTags[i] = element;
-                i++;
-            }
-        }
-
-        FileDicomTag temp;
-
-        for (int p = 1; p < dicomTags.length; p++) {
-            temp = dicomTags[p];
-
-            int gr = temp.getGroup();
-            int el = temp.getElement();
-            int j = p;
-
-            for (;
-                     (j > 0) &&
-                     ((gr < dicomTags[j - 1].getGroup()) ||
-                          ((gr == dicomTags[j - 1].getGroup()) && (el < dicomTags[j - 1].getElement()))); j--) {
-
-                dicomTags[j] = dicomTags[j - 1];
-            }
-
-            dicomTags[j] = temp;
-
-        }
-
-        return dicomTags;
+        // bogus Implementation UID made up by Matt
+        getTagTable().setValue("0002,0012", "1.2.840.34379.17", 16);
+        getTagTable().setValue("0002,0013", "MIPAV--NIH", 10);
     }
-
 
     /**
-     * Uses the DICOM tag value to set the Image modality field.
+     * Returns the MIPAV modality constant for a given DICOM modality string.
      *
-     * @param  value  - Object used is the value of DICOM tag (0008,0060)
+     * @param   value  The DICOM modality tag value.
+     *
+     * @return  The equivalent MIPAV modality constant (or UNKNOWN_MODALITY if there is no equivalent found).
      */
-    protected final void setModalityFromDicomStr(Object value) {
-        super.setModality(getModalityFromDicomStr(value));
-    }
-    
-    protected static final int getModalityFromDicomStr(Object value) {
+    protected static final int getModalityFromDicomStr(String value) {
+
         if (value.equals("BI")) {
             return BIOMAGENETIC_IMAGING;
         } else if (value.equals("CD")) {
@@ -1146,5 +591,213 @@ public class FileInfoDicom extends FileInfoBase {
         } else {
             return UNKNOWN_MODALITY;
         }
+    }
+
+    /**
+     * Sets fields in this file info based on a given tag's key and value.
+     *
+     * @param  tag  The tag to use to update the file info fields (not all tags cause field changes).
+     */
+    protected final void setInfoFromTag(FileDicomTag tag) {
+        FileDicomKey tagKey = tag.getInfo().getKey();
+
+        // skip empty values.. (e.g., bad instance number string)
+        if ((tag.getValue(false) instanceof String) && tag.getValue(false).equals("")) {
+            return;
+        }
+
+        // ordering by type 1 tags first.  Then in numerical order.
+        if (tagKey.equals("0008,0060")) {
+            // type 1
+
+            setModalityFromDicomStr((String) tag.getValue(false));
+
+            // setModalityFromDicomStr() covers the possibility of value == ""
+        } else if (tagKey.equals("0018,0088")) {
+            // type 1
+
+            super.setResolutions(Float.parseFloat((String) tag.getValue(false)), 2);
+        } else if (tagKey.equals("0028,0100")) {
+            // type 1
+
+            bitsAllocated = ((Short) tag.getValue(false)).shortValue();
+        } else if (tagKey.equals("0028,0103")) {
+            // type 1
+
+            pixelRepresentation = ((Short) tag.getValue(false)).shortValue();
+        } else if (tagKey.equals("0028,1052")) {
+            // type 1
+
+            super.setRescaleIntercept(Double.valueOf((String) tag.getValue(false)).doubleValue());
+
+            // only used in CT images, so don't notify that not found
+        } else if (tagKey.equals("0028,1053")) {
+            // type 1
+
+            super.setRescaleSlope(Double.valueOf((String) tag.getValue(false)).doubleValue());
+
+            // only used in CT and PET images, so don't notify that not found
+        }
+
+        // any variables whose value depends on a type 2 or type 3 tag
+        if (tagKey.equals("0018,0050")) {
+            // type 2
+
+            setSliceThickness(Float.parseFloat(((String) tag.getValue(false)).trim()));
+        } else if (tagKey.equals("0018,602C")) {
+            setResolutions(((Double) tag.getValue(false)).floatValue(), 0);
+        } else if (tagKey.equals("0018,602E")) {
+            setResolutions(((Double) tag.getValue(false)).floatValue(), 1);
+        } else if (tagKey.equals("0020,0032")) { // type 2c
+            orientation = ((String) tag.getValue(false)).trim();
+
+            int index1 = -1, index2 = -1;
+
+            for (int i = 0; i < orientation.length(); i++) {
+
+                if (orientation.charAt(i) == '\\') {
+
+                    if (index1 == -1) {
+                        index1 = i;
+                    } else {
+                        index2 = i;
+                    }
+                }
+            }
+
+            xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
+            yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+            zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+        } else if (tagKey.equals("0020,0013")) { // type 2
+
+            try {
+                instanceNumber = Integer.parseInt(((String) tag.getValue(false)).trim());
+            } catch (NumberFormatException e) {
+                MipavUtil.displayError("FileInfoDicom: Number format error: Instance Number.");
+            }
+        } else if (tagKey.equals("0020,1041")) { // type 3
+
+            String s = ((String) tag.getValue(false)).trim();
+
+            try {
+                Float temp;
+                temp = new Float(s);
+                sliceLocation = temp.floatValue();
+            } catch (NumberFormatException e) {
+                MipavUtil.displayError("Number format error: Slice Location = " + s);
+            }
+        } else if (tagKey.equals("0028,0030") &&
+                       ((tagTable.get("0018,1164") == null) || (tagTable.get("0018,1164").getValue(false) == null))) { // type 2
+
+            String valueStr = (String) tag.getValue(false);
+            String firstHalf, secondHalf;
+            int index = 0;
+
+            for (int i = 0; i < valueStr.length(); i++) {
+
+                if (valueStr.charAt(i) == '\\') {
+                    index = i;
+                }
+            }
+
+            firstHalf = valueStr.substring(0, index).trim();
+            secondHalf = valueStr.substring(index + 1, valueStr.length()).trim();
+
+            Float f1 = null;
+            Float f2 = null;
+
+            if ((firstHalf != null) && (firstHalf.length() > 0)) {
+
+                try {
+                    f1 = new Float(firstHalf);
+                } catch (NumberFormatException e) {
+                    setResolutions(1.0f, 0);
+                    // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
+                }
+
+                if (f1 != null) {
+                    setResolutions(f1.floatValue(), 0);
+                }
+            } else {
+                setResolutions(1.0f, 0);
+            }
+
+            if ((secondHalf != null) && (secondHalf.length() > 0)) {
+
+                try {
+                    f2 = new Float(secondHalf);
+                } catch (NumberFormatException e) {
+                    setResolutions(getResolution(0), 1);
+                    // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
+                }
+
+                if (f2 != null) {
+                    setResolutions(f2.floatValue(), 1);
+                }
+            } else {
+                setResolutions(1.0f, 1);
+            }
+        } else if (tagKey.equals("0018,1164")) { // type 2
+
+            String valueStr = (String) tag.getValue(false);
+            String firstHalf, secondHalf;
+            int index = 0;
+
+            for (int i = 0; i < valueStr.length(); i++) {
+
+                if (valueStr.charAt(i) == '\\') {
+                    index = i;
+                }
+            }
+
+            firstHalf = valueStr.substring(0, index).trim();
+            secondHalf = valueStr.substring(index + 1, valueStr.length()).trim();
+
+            Float f1 = null;
+            Float f2 = null;
+
+            if ((firstHalf != null) && (firstHalf.length() > 0)) {
+
+                try {
+                    f1 = new Float(firstHalf);
+                } catch (NumberFormatException e) {
+                    setResolutions(1.0f, 0);
+                    // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
+                }
+
+                if (f1 != null) {
+                    setResolutions(f1.floatValue(), 0);
+                }
+            } else {
+                setResolutions(1.0f, 0);
+            }
+
+            if ((secondHalf != null) && (secondHalf.length() > 0)) {
+
+                try {
+                    f2 = new Float(secondHalf);
+                } catch (NumberFormatException e) {
+                    setResolutions(getResolution(0), 1);
+                    // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
+                }
+
+                if (f2 != null) {
+                    setResolutions(f2.floatValue(), 0);
+                }
+            } else {
+                setResolutions(1.0f, 1);
+            }
+        } else if (tagKey.equals("0028,0120")) { // type 3
+            pixelPaddingValue = (Short) tag.getValue(false);
+        }
+    }
+
+    /**
+     * Uses the DICOM tag value to set the Image modality field.
+     *
+     * @param  value  Object used is the value of DICOM tag (0008,0060)
+     */
+    protected final void setModalityFromDicomStr(String value) {
+        super.setModality(getModalityFromDicomStr(value));
     }
 }

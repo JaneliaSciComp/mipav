@@ -32,14 +32,23 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -7749097890204237664L;
-    
+
+    /** DOCUMENT ME! */
     public static final int COMPONENT_FILTER = 1;
-    
+
+    /** DOCUMENT ME! */
     public static final int VECTOR_MAGNITUDE_FILTER = 2;
-    
+
+    /** DOCUMENT ME! */
     public static final int VECTOR_DIRECTION_FILTER = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private boolean adaptiveSize = false;
+
+    /** DOCUMENT ME! */
+    private JCheckBox adaptiveSizeBox;
 
     /** DOCUMENT ME! */
     private boolean blue;
@@ -55,12 +64,15 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxKernelSize;
-    
-    private JCheckBox adaptiveSizeBox;
-    
+
+    /** DOCUMENT ME! */
     private JComboBox comboBoxMaximumSize;
-    
-    private JLabel labelMaximumSize;
+
+    /** DOCUMENT ME! */
+    private JRadioButton componentButton;
+
+    /** DOCUMENT ME! */
+    private int filterType = COMPONENT_FILTER;
 
     /** DOCUMENT ME! */
     private boolean green;
@@ -82,29 +94,27 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private int kernelSize;
-    
-    private boolean adaptiveSize = false;
-    
+
+    /** DOCUMENT ME! */
+    private JLabel labelMaximumSize;
+
+    /** DOCUMENT ME! */
+    private JLabel labelSTDDeviation;
+
+    /** DOCUMENT ME! */
     private int maximumSize = 5;
 
     /** DOCUMENT ME! */
     private AlgorithmMedian medianAlgo = null;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private boolean red;
 
     /** DOCUMENT ME! */
     private JCheckBox redChannel;
-    
-    private ButtonGroup vectorGroup;
-    
-    private JRadioButton vectorMagnitudeButton;
-    
-    private JRadioButton vectorDirectionButton;
-    
-    private JRadioButton componentButton;
-    
-    private int filterType = COMPONENT_FILTER;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -117,19 +127,24 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private JTextField textSTDDeviation; // textfield to hold Standard Deviation Value.
-    
-    private JLabel labelSTDDeviation;
 
     /** DOCUMENT ME! */
     private String[] titles;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
+
+    /** DOCUMENT ME! */
+    private JRadioButton vectorDirectionButton;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup vectorGroup;
+
+    /** DOCUMENT ME! */
+    private JRadioButton vectorMagnitudeButton;
+
     /** DOCUMENT ME! */
     private JRadioButton wholeVolume;
-    
-    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -176,8 +191,9 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 callAlgorithm();
             }
         } else if ((source == vectorMagnitudeButton) || (source == vectorDirectionButton) ||
-                   (source == componentButton)) {
-            if ((vectorMagnitudeButton.isSelected()) || (vectorDirectionButton.isSelected())){
+                       (source == componentButton)) {
+
+            if ((vectorMagnitudeButton.isSelected()) || (vectorDirectionButton.isSelected())) {
                 redChannel.setSelected(true);
                 redChannel.setEnabled(false);
                 greenChannel.setSelected(true);
@@ -187,8 +203,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 labelSTDDeviation.setEnabled(false);
                 textSTDDeviation.setEnabled(false);
                 textSTDDeviation.setText("0.0");
-            }
-            else {
+            } else {
                 redChannel.setEnabled(true);
                 greenChannel.setEnabled(true);
                 blueChannel.setEnabled(true);
@@ -196,6 +211,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 textSTDDeviation.setEnabled(true);
             }
         } else if (source == adaptiveSizeBox) {
+
             if (adaptiveSizeBox.isSelected()) {
                 labelMaximumSize.setEnabled(true);
                 comboBoxMaximumSize.setEnabled(true);
@@ -207,12 +223,11 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 vectorDirectionButton.setEnabled(false);
                 vectorDirectionButton.setSelected(false);
                 componentButton.setSelected(true);
-            }
-            else {
+            } else {
                 labelMaximumSize.setEnabled(false);
                 comboBoxMaximumSize.setEnabled(false);
                 labelSTDDeviation.setEnabled(true);
-                textSTDDeviation.setEnabled(true); 
+                textSTDDeviation.setEnabled(true);
                 vectorMagnitudeButton.setEnabled(true);
                 vectorDirectionButton.setEnabled(true);
             }
@@ -223,7 +238,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             comboBoxKernelSize.removeAllItems();
             buildKernelSizeComboBox(false);
             comboBoxKernelSize.setSelectedIndex(indx); // set the new combo-box to the old selection
-            
+
             indx = comboBoxMaximumSize.getSelectedIndex(); // get the current combo-box selection
             comboBoxMaximumSize.removeAllItems();
             buildMaximumSizeComboBox(false);
@@ -242,7 +257,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             comboBoxKernelSize.removeAllItems();
             buildKernelSizeComboBox(true);
             comboBoxKernelSize.setSelectedIndex(indx); // set the new combo-box to the old selection
-            
+
             indx = comboBoxMaximumSize.getSelectedIndex();
             comboBoxMaximumSize.removeAllItems();
             buildMaximumSizeComboBox(true);
@@ -271,6 +286,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMedian) {
             System.err.println("Median Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
@@ -336,66 +352,14 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        
-        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
-        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
-        
-        scriptParameters.storeNumIterations(iters);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("std_dev", stdDev));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("adpative_size", adaptiveSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_size", maximumSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_filter_type", filterType));
-        scriptParameters.storeColorOptions(red, green, blue);
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (image.getType() == ModelImage.BOOLEAN) {
-            MipavUtil.displayError("Source Image must NOT be Boolean");
-            dispose();
 
-            return;
-        }
-        
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        
-        setImage25D(scriptParameters.doProcess3DAs25D());
-        setIters(scriptParameters.getNumIterations());
-        setStdDev(scriptParameters.getParams().getFloat("std_dev"));
-        setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
-        setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
-        setAdaptiveSize(scriptParameters.getParams().getBoolean("adaptive_size"));
-        setMaximumSize(scriptParameters.getParams().getInt("maximum_size"));
-        setFilterType(scriptParameters.getParams().getInt("rgb_filter_type"));
-        
-        boolean[] rgb = scriptParameters.doProcessRGB();
-        setRed(rgb[0]);
-        setGreen(rgb[1]);
-        setBlue(rgb[2]);
-    }
-    
     /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
+     * Accessor that sets if adaptive median filtering is being performed.
+     *
+     * @param  adaptiveSize  DOCUMENT ME!
      */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
+    public void setAdaptiveSize(boolean adaptiveSize) {
+        this.adaptiveSize = adaptiveSize;
     }
 
     /**
@@ -405,6 +369,15 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
      */
     public void setBlue(boolean flag) {
         blue = flag;
+    }
+
+    /**
+     * Accessor that sets if all colors are component filtered, vector magnitude filtered, or vector direction filtered.
+     *
+     * @param  filterType  DOCUMENT ME!
+     */
+    public void setFilterType(int filterType) {
+        this.filterType = filterType;
     }
 
     /**
@@ -451,15 +424,14 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     public void setKernelSize(int size) {
         kernelSize = size;
     }
-    
+
     /**
-     * Accessor that sets if all colors are component 
-     * filtered, vector magnitude filtered, or
-     * vector direction filtered
-     * @param filterType
+     * Accessor that sets the maximum size the kernel mask can be increased to when adaptive median filtering is used.
+     *
+     * @param  maximumSize  DOCUMENT ME!
      */
-    public void setFilterType(int filterType) {
-        this.filterType = filterType;
+    public void setMaximumSize(int maximumSize) {
+        this.maximumSize = maximumSize;
     }
 
     /**
@@ -479,22 +451,285 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     public void setStdDev(float dev) {
         stdDev = dev;
     }
-    
+
     /**
-     * Accessor that sets if adaptive median filtering is being performed
-     * @param adaptiveSize
+     * Once all the necessary variables are set, call the median algorithm based on what type of image this is and
+     * whether or not there is a separate destination image.
      */
-    public void setAdaptiveSize(boolean adaptiveSize) {
-        this.adaptiveSize = adaptiveSize;
+    protected void callAlgorithm() {
+        String name = makeImageName(image.getImageName(), "_median");
+
+        // stuff to do when working on 2-D images.
+        if (image.getNDims() == 2) { // source image is 2D
+
+            if (outputPanel.isOutputNewImageSet()) { // (2D)
+
+                try {
+
+                    // Make result image of float type
+                    // resultImage     = new ModelImage(image.getType(), destExtents, name, userInterface);
+                    resultImage = (ModelImage) image.clone();
+                    resultImage.setImageName(name);
+
+                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                    }
+
+                    // Make algorithm
+                    medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
+                                                     adaptiveSize, maximumSize, outputPanel.isProcessWholeImageSet());
+
+                    // only if the src image is colour will any channel checkboxes be enabled
+                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed or failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    medianAlgo.addListener(this);
+
+                    createProgressBar(image.getImageName(), medianAlgo);
+
+                    setVisible(false); // Hide dialog
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+
+                        medianAlgo.run();
+                    }
+                } catch (OutOfMemoryError x) {
+                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
+
+                    if (resultImage != null) {
+                        resultImage.disposeLocal(); // Clean up memory of result image
+                        resultImage = null;
+                    }
+
+                    return;
+                }
+            } else { // displayLoc == REPLACE        (2D)
+
+                try {
+
+                    // No need to make new image space because the user has choosen to replace the source image
+                    // Make the algorithm class
+                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, adaptiveSize,
+                                                     maximumSize, outputPanel.isProcessWholeImageSet());
+
+                    // only if the src image is colour will any channel checkboxes be enabled
+                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed or failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    medianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), medianAlgo);
+
+                    // Hide the dialog since the algorithm is about to run.
+                    setVisible(false);
+
+                    // These next lines set the titles in all frames where the source image is displayed to
+                    // "locked - " image name so as to indicate that the image is now read/write locked!
+                    // The image frames are disabled and then unregisted from the userinterface until the
+                    // algorithm has completed.
+                    Vector imageFrames = image.getImageFrameVector();
+                    titles = new String[imageFrames.size()];
+
+                    for (int i = 0; i < imageFrames.size(); i++) {
+                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+
+                        medianAlgo.run();
+                    }
+                } catch (OutOfMemoryError x) {
+                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
+
+                    return;
+                }
+            }
+        } else if (image.getNDims() == 3) {
+
+            if (outputPanel.isOutputNewImageSet()) { // (3D)
+
+                try {
+
+                    // Make result image of float type
+                    // resultImage     = new ModelImage(image.getType(), destExtents, name, userInterface);
+                    resultImage = (ModelImage) image.clone();
+                    resultImage.setImageName(name);
+
+                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+
+                        for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                        }
+                    }
+
+                    // Make algorithm
+                    medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
+                                                     adaptiveSize, maximumSize, image25D,
+                                                     outputPanel.isProcessWholeImageSet());
+
+                    // only if the src image is colour will any channel checkboxes be enabled
+                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed or failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    medianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), medianAlgo);
+
+                    setVisible(false); // Hide dialog
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+
+
+                        medianAlgo.run();
+                    }
+                } catch (OutOfMemoryError x) {
+                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
+
+                    if (resultImage != null) {
+                        resultImage.disposeLocal(); // Clean up image memory
+                        resultImage = null;
+                    }
+
+                    return;
+                }
+            } else { // displayLoc == REPLACE         (3D)
+
+                try {
+
+                    // Make algorithm
+                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, adaptiveSize,
+                                                     maximumSize, image25D, outputPanel.isProcessWholeImageSet());
+
+                    // only if the src image is colour will any channel checkboxes be enabled
+                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed or failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    medianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), medianAlgo);
+
+                    // Hide dialog
+                    setVisible(false);
+
+                    // These next lines set the titles in all frames where the source image is displayed to
+                    // "locked - " image name so as to indicate that the image is now read/write locked!
+                    // The image frames are disabled and then unregisted from the userinterface until the
+                    // algorithm has completed.
+                    Vector imageFrames = image.getImageFrameVector();
+                    titles = new String[imageFrames.size()];
+
+                    for (int i = 0; i < imageFrames.size(); i++) {
+                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+
+                        medianAlgo.run();
+                    }
+                } catch (OutOfMemoryError x) {
+                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
+
+                    return;
+                }
+            }
+        }
     }
-    
+
     /**
-     * Accessor that sets the maximum size the kernel mask can be increased to
-     * when adaptive median filtering is used.
-     * @param maximumSize
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    public void setMaximumSize(int maximumSize) {
-        this.maximumSize = maximumSize;
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (image.getType() == ModelImage.BOOLEAN) {
+            MipavUtil.displayError("Source Image must NOT be Boolean");
+            dispose();
+
+            return;
+        }
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        setImage25D(scriptParameters.doProcess3DAs25D());
+        setIters(scriptParameters.getNumIterations());
+        setStdDev(scriptParameters.getParams().getFloat("std_dev"));
+        setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
+        setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
+        setAdaptiveSize(scriptParameters.getParams().getBoolean("adaptive_size"));
+        setMaximumSize(scriptParameters.getParams().getInt("maximum_size"));
+        setFilterType(scriptParameters.getParams().getInt("rgb_filter_type"));
+
+        boolean[] rgb = scriptParameters.doProcessRGB();
+        setRed(rgb[0]);
+        setGreen(rgb[1]);
+        setBlue(rgb[2]);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+
+        scriptParameters.storeNumIterations(iters);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("std_dev", stdDev));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("adpative_size", adaptiveSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_size", maximumSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_filter_type", filterType));
+        scriptParameters.storeColorOptions(red, green, blue);
     }
 
     /**
@@ -538,10 +773,10 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             comboBoxKernelSize.addItem("11x11x11");
         }
     }
-    
+
     /**
-     * Creates the combo-box that allows user to select the maximum size of the kernel (mask)
-     * when adaptive median filtering is selected.
+     * Creates the combo-box that allows user to select the maximum size of the kernel (mask) when adaptive median
+     * filtering is selected.
      *
      * @param  singleSlices  DOCUMENT ME!
      */
@@ -553,245 +788,13 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             comboBoxMaximumSize.addItem("9x9");
             comboBoxMaximumSize.addItem("11x11");
             comboBoxMaximumSize.addItem("13x13");
-            
+
         } else {
             comboBoxMaximumSize.addItem("5x5x5");
             comboBoxMaximumSize.addItem("7x7x7");
             comboBoxMaximumSize.addItem("9x9x9");
             comboBoxMaximumSize.addItem("11x11x11");
             comboBoxMaximumSize.addItem("13x13x13");
-        }
-    }
-
-    /**
-     * Once all the necessary variables are set, call the median algorithm based on what type of image this is and
-     * whether or not there is a separate destination image.
-     */
-    protected void callAlgorithm() {
-        String name = makeImageName(image.getImageName(), "_median");
-
-        // stuff to do when working on 2-D images.
-        if (image.getNDims() == 2) { // source image is 2D
-
-            if (outputPanel.isOutputNewImageSet()) { // (2D)
-
-                try {
-
-                    // Make result image of float type
-                    // resultImage     = new ModelImage(image.getType(), destExtents, name, userInterface);
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                    }
-
-                    // Make algorithm
-                    medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     adaptiveSize, maximumSize,
-                                                     outputPanel.isProcessWholeImageSet());
-
-                    // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    medianAlgo.addListener(this);
-                    
-                    createProgressBar(image.getImageName(), medianAlgo);
-                    
-                    setVisible(false); // Hide dialog
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                       
-                        medianAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            } else { // displayLoc == REPLACE        (2D)
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, 
-                                                     adaptiveSize, maximumSize, outputPanel.isProcessWholeImageSet());
-
-                    // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    medianAlgo.addListener(this);
-                    createProgressBar(image.getImageName(), medianAlgo);
-
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                      
-                        medianAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
-
-                    return;
-                }
-            }
-        } else if (image.getNDims() == 3) {
-
-            if (outputPanel.isOutputNewImageSet()) { // (3D)
-
-                try {
-
-                    // Make result image of float type
-                    // resultImage     = new ModelImage(image.getType(), destExtents, name, userInterface);
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-
-                        for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17",
-                                                                                    16); // bogus Implementation UID
-                                                                                         // made up by Matt
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                        }
-                    }
-
-                    // Make algorithm
-                    medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     adaptiveSize, maximumSize,
-                                                     image25D, outputPanel.isProcessWholeImageSet());
-
-                    // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    medianAlgo.addListener(this);
-                    createProgressBar(image.getImageName(), medianAlgo);
-                    
-                    setVisible(false); // Hide dialog
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                     
-
-                        medianAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            } else { // displayLoc == REPLACE         (3D)
-
-                try {
-
-                    // Make algorithm
-                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, 
-                                                     adaptiveSize, maximumSize, image25D,
-                                                     outputPanel.isProcessWholeImageSet());
-
-                    // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    medianAlgo.addListener(this);
-                    createProgressBar(image.getImageName(), medianAlgo);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                     
-                        medianAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
-
-                    return;
-                }
-            }
         }
     }
 
@@ -812,10 +815,9 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             kernelSize = 11;
         }
     }
-    
+
     /**
-     * Associate one side of the maximum kernel size with selectBox choice
-     * when adaptive median filtering is selected
+     * Associate one side of the maximum kernel size with selectBox choice when adaptive median filtering is selected.
      */
     private void determineMaximumSize() {
 
@@ -879,6 +881,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(labelSTDDeviation, gbc);
         maskPanel.add(labelSTDDeviation); // add the instructions
+
         if (image.isColorImage()) {
             labelSTDDeviation.setEnabled(false);
         }
@@ -886,6 +889,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         textSTDDeviation = createTextField("0.0"); // make & set input
         textSTDDeviation.setColumns(3);
         textSTDDeviation.setMaximumSize(textSTDDeviation.getPreferredSize()); // don't let it get any bigger
+
         if (image.isColorImage()) {
             textSTDDeviation.setEnabled(false);
         }
@@ -940,7 +944,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         }
 
         maskPanel.add(comboBoxKernelShape); // add the combo box to the panel
-        
+
         adaptiveSizeBox = new JCheckBox("Kernel size adaptively changes", false);
         adaptiveSizeBox.setEnabled(true);
         adaptiveSizeBox.setFont(serif12);
@@ -948,7 +952,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(adaptiveSizeBox, gbc);
         maskPanel.add(adaptiveSizeBox);
-        
+
         labelMaximumSize = createLabel("Maximum kernel size:"); // make & set a label
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
@@ -980,45 +984,48 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         colourPanel.setForeground(Color.black);
         colourPanel.setBorder(buildTitledBorder("Color channel selection")); // set the border ... "Colour channel
                                                                              // Selection"
-        
+
         vectorGroup = new ButtonGroup();
         vectorMagnitudeButton = new JRadioButton("Vector filter on all colors together in magnitude domain", true);
         vectorMagnitudeButton.setFont(serif12);
         vectorGroup.add(vectorMagnitudeButton);
         gbl.setConstraints(vectorMagnitudeButton, gbc);
         colourPanel.add(vectorMagnitudeButton);
+
         if (image.isColorImage()) {
             vectorMagnitudeButton.setEnabled(true);
-        }
-        else {
+        } else {
             vectorMagnitudeButton.setEnabled(false);
         }
+
         vectorMagnitudeButton.addActionListener(this);
-        
+
         vectorDirectionButton = new JRadioButton("Vector filter on all colors together in direction domain", false);
         vectorDirectionButton.setFont(serif12);
         vectorGroup.add(vectorDirectionButton);
         gbl.setConstraints(vectorDirectionButton, gbc);
         colourPanel.add(vectorDirectionButton);
+
         if (image.isColorImage()) {
             vectorDirectionButton.setEnabled(true);
-        }
-        else {
+        } else {
             vectorDirectionButton.setEnabled(false);
         }
+
         vectorDirectionButton.addActionListener(this);
-        
+
         componentButton = new JRadioButton("Filter on each color separately", false);
         componentButton.setFont(serif12);
         vectorGroup.add(componentButton);
         gbl.setConstraints(componentButton, gbc);
         colourPanel.add(componentButton);
+
         if (image.isColorImage()) {
             componentButton.setEnabled(true);
-        }
-        else {
+        } else {
             componentButton.setEnabled(false);
         }
+
         componentButton.addActionListener(this);
 
         redChannel = new JCheckBox("Red Channel", true);
@@ -1088,7 +1095,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
      */
     private boolean setVariables() {
         String tmpStr;
-        
+
         // associate kernel size with selectBox choice.
         this.determineKernelSize();
 
@@ -1118,26 +1125,27 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
             return false;
         }
-        
+
         adaptiveSize = adaptiveSizeBox.isSelected();
-        
+
         if (adaptiveSize) {
             this.determineMaximumSize();
+
             if (maximumSize <= kernelSize) {
-               MipavUtil.displayError("Need maximum kernel size > kernel size");
-               return false;
+                MipavUtil.displayError("Need maximum kernel size > kernel size");
+
+                return false;
             }
         } // if (adaptiveSize)
 
         if (componentButton.isSelected()) {
             filterType = COMPONENT_FILTER;
-        }
-        else if (vectorMagnitudeButton.isSelected()) {
+        } else if (vectorMagnitudeButton.isSelected()) {
             filterType = VECTOR_MAGNITUDE_FILTER;
-        }
-        else {
+        } else {
             filterType = VECTOR_DIRECTION_FILTER;
         }
+
         red = redChannel.isSelected();
         green = greenChannel.isSelected();
         blue = blueChannel.isSelected();

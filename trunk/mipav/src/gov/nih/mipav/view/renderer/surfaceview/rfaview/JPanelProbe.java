@@ -9,7 +9,6 @@ import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.surfaceview.*;
 
 import java.awt.*;
-import java.awt.Color;
 import java.awt.event.*;
 
 import java.io.*;
@@ -159,11 +158,11 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
     /** Probes list. */
     private JList probeList;
 
-    /** Control the tri-planar probe nevigation mode. */
-    private JToggleButton probeTargetButton;
-
     /** Reset probe nevigation mode. */
     private JToggleButton probeResetButton;
+
+    /** Control the tri-planar probe nevigation mode. */
+    private JToggleButton probeTargetButton;
 
     /** Buring point sphere diameter. */
     private Point3f radius;
@@ -1620,7 +1619,9 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
 
                 for (int i = 0; i < surfaces.size(); i++) {
 
-                    if (((SurfaceAttributes) surfaces.get(i)).getName().equals(((SurfaceAttributes) surfaceVector.get(selectedIndex)).getName())) {
+                    if (((SurfaceAttributes) surfaces.get(i)).getName().equals(((SurfaceAttributes)
+                                                                                    surfaceVector.get(selectedIndex))
+                                                                                   .getName())) {
                         ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceList().setSelectedIndex(i);
                     }
                 }
@@ -1629,7 +1630,9 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
 
                 for (int i = 0; i < surfaces.size(); i++) {
 
-                    if (((SurfaceAttributes) surfaces.get(i)).getName().equals(((SurfaceAttributes) surfaceVector.get(selectedIndex)).getName())) {
+                    if (((SurfaceAttributes) surfaces.get(i)).getName().equals(((SurfaceAttributes)
+                                                                                    surfaceVector.get(selectedIndex))
+                                                                                   .getName())) {
                         ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceList().setSelectedIndex(i);
                     }
                 }
@@ -2369,9 +2372,8 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
                                                              "Picks a probe target point using the Tri-Planar views",
                                                              "probepoint", cursorGroup);
         toolBar.add(probeTargetButton);
-        probeResetButton = toolbarBuilder.buildToggleButton("ProbeReset",
-                                                             "Resets the Probe navigation",
-                                                             "probepoint", cursorGroup);
+        probeResetButton = toolbarBuilder.buildToggleButton("ProbeReset", "Resets the Probe navigation", "probepoint",
+                                                            cursorGroup);
         toolBar.add(probeResetButton);
         toolBar.add(ViewToolBarBuilder.makeSeparator());
         skinPresetButton = toolbarBuilder.buildButton("SkinPreset", "Skin visualization settings.", "histolut");
@@ -2843,12 +2845,14 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         openFile.setFilterType(filter);
 
         // Matt through in a _false_ to get it to compile - 12/31/2002
-        //Vector imageNames = openFile.open(false, false);
-        //This arrayLIst allows multiple selections but i am only accessing the zeroth element 
-        //to load the region map
+        // Vector imageNames = openFile.open(false, false);
+        // This arrayLIst allows multiple selections but i am only accessing the zeroth element
+        // to load the region map
         ArrayList openImagesArrayList = openFile.open(false, false);
+
         // if open failed, then imageNames will be null
-        Vector imageNames = (Vector)openImagesArrayList.get(0);
+        Vector imageNames = (Vector) openImagesArrayList.get(0);
+
         if (imageNames == null) {
             return null;
         }
@@ -3165,12 +3169,8 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         FileInfoBase[] fileInfo = img.getFileInfo();
 
         if (suffix == null) {
-            FileIO fileIO = new FileIO();
-
-            fileIO.setQuiet(operateQuiet);
-            suffix = fileIO.getSuffixFrom(fileName);
-            fileType = fileIO.getFileType(fileName, directory);
-            fileIO = null;
+            suffix = FileUtility.getExtension(fileName);
+            fileType = FileUtility.getFileType(fileName, directory, operateQuiet);
         }
 
         // now, get rid of any numbers at the end of the name (these
@@ -3288,6 +3288,9 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
      * Helper class for resizing.
      */
     public class DrawingPane extends JPanel {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 199157917084746068L;
 
         /**
          * DOCUMENT ME!
