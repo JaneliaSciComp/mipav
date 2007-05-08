@@ -4533,8 +4533,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  erase       boolean if true, paintBitmap is cleared (erased), otherwise paintBitmap is set (painted)
      */
     protected void performPaint(MouseEvent mouseEvent, boolean erase) {
-        int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-        int yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+    	
+    	int xS = (int)((mouseEvent.getX() / (zoomX * resolutionX)) + 0.5);
+    	
+        int yS = (int)((mouseEvent.getY() / (zoomY * resolutionY)) + 0.5);
 
         int brushSize = getBrushSize();
         int hBrushSize = getHBrushSize();
