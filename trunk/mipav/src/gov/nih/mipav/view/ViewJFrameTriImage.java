@@ -332,6 +332,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Flag for showing the Talairach position on the component images. */
     protected boolean showTalairachPosition = false;
 
+    /** Flag telling the crosshair movement to update slice in original image frame */
+    protected boolean scrollOriginalCrosshair = false;
+    
     /** Time dimension of the original image. */
     protected int tDim;
 
@@ -387,9 +390,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** DOCUMENT ME! */
     private JToggleButton paintCanToggleButton;
 
-    /** for use in holding down 1-9 or 0 key to change paint brush on the fly. */
-    private int previousPaintBrushIndex = 0;
-
     /** int used for quick-key painting for speedier paint brush access. */
     private int quickPaintBrushIndex = -1;
 
@@ -432,6 +432,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         this.controls = controls;
         parentFrame = parent;
 
+        try {
+        	scrollOriginalCrosshair = Preferences.is(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL);
+        } catch (Exception e) {
+        	scrollOriginalCrosshair = false;
+        }
+        
         try {
             setIconImage(MipavUtil.getIconImage("3plane_16x16.gif"));
         } catch (Exception e) { }
@@ -491,6 +497,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 }
             }
 
+            updateImages(true);
+        } else if (command.equals("ScrollOriginal")) {
+
+        	scrollOriginalCrosshair = menuObj.isMenuItemSelected("Scroll original image with crosshair");
+        	Preferences.setProperty(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL, Boolean.toString(scrollOriginalCrosshair));
             updateImages(true);
         } else if (command.equals("FastPaint")) {
             Preferences.setProperty(Preferences.PREF_FAST_TRIPLANAR_REPAINT,
@@ -1556,7 +1567,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                         paintBrushLocked = true;
                     } else {
                         quickPaintBrushIndex = index;
-                        previousPaintBrushIndex = getControls().getTools().getPaintBrush();
 
                         String name = getControls().getTools().getPaintBrushName(index);
 
@@ -1896,6 +1906,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
 
+        //BEN
+        if (scrollOriginalCrosshair) {
+        	parentFrame.setSlice(k);
+        }
+        
         fireCoordinateChange(i, j, k);
         setPositionLabels(i, j, k);
         updateImages(true);
@@ -2260,6 +2275,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         if (linkTriFrame != null) {
             linkTriFrame.setSlicesFromFrame(x, y, z);
         }
+        
+        //BEN
+        
     }
 
     /**
@@ -2508,6 +2526,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         } else if (source == crosshairSpinner) {
         	int crosshairPixelGap = ((SpinnerNumberModel) crosshairSpinner.getModel()).getNumber().intValue();
+        	//System.err.println(crosshairPixelGap);
         	for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
@@ -2745,6 +2764,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                                      new JComponent[] {
                                          menuObj.buildCheckBoxMenuItem("Show axes", "ShowAxes", true),
                                          menuObj.buildCheckBoxMenuItem("Show crosshairs", "ShowXHairs", true),
+                                         separator,
+                                         menuObj.buildCheckBoxMenuItem("Scroll original image with crosshair", "ScrollOriginal", 
+                                         scrollOriginalCrosshair),
                                          separator,
                                          menuObj.buildCheckBoxMenuItem("Fast rendering in paint mode", "FastPaint",
                                                                        Preferences.is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)),

@@ -114,6 +114,9 @@ public class Preferences {
     /** Constant that indicates if triplanar protractor should snap to nearest multiple of 90 degrees. */
     public static final String PREF_TRIPLANAR_SNAP90 = "TriPlanarSnap90";
 
+    /** Constant that indicates if the triplanar should scroll the original image*/
+    public static final String PREF_TRIPLANAR_SCROLL_ORIGINAL = "TriPlanarScrollToOriginal";
+    
     /** Constant that indicates whether the angle of line VOIs should be shown on screen. */
     public static final String PREF_SHOW_LINE_ANGLE = "ShowLineVOIAngle";
 
