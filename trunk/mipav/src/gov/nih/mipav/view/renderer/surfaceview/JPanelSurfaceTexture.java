@@ -230,6 +230,11 @@ public class JPanelSurfaceTexture extends JPanelRendererBase implements ViewImag
      */
     public void dispose() {
         mImageALink.removeImageDisplayListener(this);
+
+        if (mLUTImageA != null) {
+            mLUTImageA.disposeLocal();
+            mLUTImageA = null;
+        }
     }
 
     /**
