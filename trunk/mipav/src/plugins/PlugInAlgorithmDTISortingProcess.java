@@ -1024,6 +1024,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
                         if (imageFilter.accept(children[i])) {
                             success = imageFile.readHeader(true);
                         } else {
+                            imageFile.finalize();
+                            imageFile = null;
+
                             continue;
                         }
                     } catch (IOException error) {
