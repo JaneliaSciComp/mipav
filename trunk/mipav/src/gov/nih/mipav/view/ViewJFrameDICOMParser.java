@@ -1512,6 +1512,9 @@ outerLoop:
                         } else if (imageFile.isDICOM()) {
                             success = imageFile.readHeader(true);
                         } else {
+                            imageFile.finalize();
+                            imageFile = null;
+
                             continue;
                         }
                     } catch (IOException error) {
