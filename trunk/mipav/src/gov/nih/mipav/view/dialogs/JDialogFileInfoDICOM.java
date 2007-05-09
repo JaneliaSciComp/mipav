@@ -638,7 +638,6 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                         // @see ModelImage.setTitle
                         //
                         public void windowClosed(WindowEvent e) {
-                            FileInfoDicom tempInfo;
                             JDialogDICOMTagEditor tagDialog; // temporary tag editor dialog
 
                             tagDialog = (JDialogDICOMTagEditor) e.getSource();
@@ -653,11 +652,12 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
                                         DicomInfo.getTagTable().setValue(tagDialog.getTagKey(),
                                                                          tagDialog.returnTag().getValue(false));
                                     } else {
+                                        FileInfoDicom tempInfo;
 
                                         for (i = 0; i < imageA.getExtents()[2]; i++) {
                                             tempInfo = (FileInfoDicom) imageA.getFileInfo(i);
-                                            DicomInfo.getTagTable().setValue(tagDialog.getTagKey(),
-                                                                             tagDialog.returnTag().getValue(false));
+                                            tempInfo.getTagTable().setValue(tagDialog.getTagKey(),
+                                                                            tagDialog.returnTag().getValue(false));
                                             imageA.setFileInfo(tempInfo, i);
                                         }
                                     }
@@ -676,7 +676,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
 
                                     // place the tag back into the DicomInfo
                                     DicomInfo.getTagTable().setValue(tagDialog.getTagKey(),
-                                                                     ((FileDicomTag) tagDialog.returnTag()).getValue(false));
+                                                                     tagDialog.returnTag().getValue(false));
                                 }
 
                                 if (editorDialogDicomList.size() > 0) {
