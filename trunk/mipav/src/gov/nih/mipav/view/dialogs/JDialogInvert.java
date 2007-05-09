@@ -513,7 +513,7 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
-        if (displayLoc == NEW) {
+        if (scriptParameters.doOutputNewImage()) {
             setDisplayLocNew();
         } else {
             setDisplayLocReplace();
