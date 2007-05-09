@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
 
@@ -58,6 +59,8 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
     /** DOCUMENT ME! */
     private boolean xmlLinked = false;
 
+    private RawImageInfo rawInfo = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -459,6 +462,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
         try {
             fileIO = new FileIO();
+            fileIO.setRawImageInfo(rawInfo);
             image = fileIO.readImage(fileName, directory, multiFile, fileInfo);
             secondImage = fileIO.getSecondImage();
         } catch (OutOfMemoryError e) {
@@ -601,6 +605,14 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         this.putInFrame = putIn;
     }
 
+    public void setRawImageInfo(RawImageInfo rawInfo) {
+    	this.rawInfo = rawInfo;
+    }
+    
+    public RawImageInfo getRawImageInfo() {
+    	return this.rawInfo;
+    }
+    
     /**
      * DOCUMENT ME!
      *

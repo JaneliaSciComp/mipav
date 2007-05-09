@@ -1,8 +1,12 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.RawImageInfo;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.dialogs.ScriptImage;
 
 import gov.nih.mipav.view.*;
 
@@ -197,6 +201,28 @@ public class JDialogRunScriptController implements ActionListener {
             view.getFrame().dispose();
         } else if (command.equalsIgnoreCase("Scripting help")) {
             MipavUtil.showHelp("10715");
+        } else if (command.equals("RawInfo")) {
+        	
+        	JList imageList = view.getImageList();
+        	int numSel = imageList.getSelectedIndices().length;
+        	Object [] sel = imageList.getSelectedValues();
+        	
+        	JDialogRawIO rawIODialog = new JDialogRawIO(view.getFrame(), "Raw");
+
+            rawIODialog.setVisible(true);
+            
+            for (int i = 0; i < numSel; i++) {
+            	if (((ScriptImage)sel[i]).isOpenedByScript()) {
+            		
+            	
+            	((ScriptImage)sel[i]).setRawImageInfo(new RawImageInfo(rawIODialog.getDataType(), 
+            		rawIODialog.getExtents(),
+            		rawIODialog.getResolutions(),
+            		rawIODialog.getUnitsOfMeasure(),
+            		rawIODialog.getOffset(),
+            		rawIODialog.getEndianess()));
+            	}
+            }
         }
     }
 
@@ -208,9 +234,14 @@ public class JDialogRunScriptController implements ActionListener {
      *
      * @return  DOCUMENT ME!
      */
-    private String openImageWithFrame(String imageLocation, boolean doMulti) {
+    private String openImageWithFrame(ScriptImage scriptImage) {
+    	String imageLocation = scriptImage.getFileLocation();
+    	boolean doMulti = scriptImage.isMultiFile();
+    	
         ViewOpenFileUI openFile = new ViewOpenFileUI(true);
 
+        openFile.setRawImageInfo(scriptImage.getRawImageInfo());
+        
         String imageName = openFile.open(imageLocation, doMulti, null);
 
         // if open failed, then imageName will be null
@@ -462,7 +493,7 @@ public class JDialogRunScriptController implements ActionListener {
                     try {
                         ViewUserInterface.getReference().getRegisteredImageByName(si.getImageName());
                     } catch (IllegalArgumentException e) {
-                        String imageName = openImageWithFrame(si.getFileLocation(), si.isMultiFile());
+                        String imageName = openImageWithFrame(si);
                         imagesOpenedByDialog.addElement(ViewUserInterface.getReference().getRegisteredImageByName(imageName));
                         scriptImages.remove(j);
                         scriptImages.insertElementAt(imageName, j);

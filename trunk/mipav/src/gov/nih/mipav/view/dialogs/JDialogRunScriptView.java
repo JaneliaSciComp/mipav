@@ -16,6 +16,7 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.tree.*;
+import javax.swing.event.*;
 
 
 /**
@@ -24,7 +25,7 @@ import javax.swing.tree.*;
  * @see      JDialogRunScriptController
  * @see      JDialogRunScriptModel
  */
-public class JDialogRunScriptView implements ActionListener {
+public class JDialogRunScriptView implements ActionListener, ListSelectionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -95,7 +96,12 @@ public class JDialogRunScriptView implements ActionListener {
     /** DOCUMENT ME! */
     private MouseListener listener;
 
+    /** Menu for setting raw info*/
+    private JPopupMenu popup;
 
+    /** Listener to be added/removed depending on selection status*/
+    private PopupListener popupListener;
+    
     /** DOCUMENT ME! */
     private JDialogRunScriptModel model;
 
@@ -153,6 +159,40 @@ public class JDialogRunScriptView implements ActionListener {
         controller.actionPerformed(e);
     }
 
+    public void valueChanged(ListSelectionEvent e) {
+    	int numSel = imageList.getSelectedIndices().length;
+    	Object [] sel = imageList.getSelectedValues();
+    	int numOpenedByScript = 0;
+    	for (int i = 0; i < numSel; i++) {
+    		if (((ScriptImage)sel[i]).isOpenedByScript()) {
+    			numOpenedByScript++;
+    		}
+    	}
+    	
+    	if (numOpenedByScript < 1) {
+    		if (popupListener != null) {
+    			imageList.removeMouseListener(popupListener);
+    		}
+    		return;
+    	}
+    	
+    	if (popup == null) {
+    		popup = new JPopupMenu();
+    		JMenuItem menuItem = new JMenuItem("Set RAW opening information");
+            menuItem.setActionCommand("RawInfo");
+            menuItem.addActionListener(this);
+            popup.add(menuItem);
+            popupListener = new PopupListener();
+            imageList.addMouseListener(popupListener);
+    	} else {
+    		imageList.addMouseListener(popupListener);
+    	}
+    	
+    	
+        
+    	
+    }
+    
     /**
      * DOCUMENT ME!
      *
@@ -651,6 +691,8 @@ public class JDialogRunScriptView implements ActionListener {
 
         if (name.equalsIgnoreCase("Images List")) {
             contents = model.getAvailableImageList().toArray();
+            
+            
         } else if (name.equalsIgnoreCase("VOIs from above image List")) {
 
             if ((model.getAvailableImageList() != null) && (model.getAvailableImageList().size() > 0)) {
@@ -672,6 +714,7 @@ public class JDialogRunScriptView implements ActionListener {
 
         if (name.equalsIgnoreCase("Images List")) {
             imageList = list;
+            imageList.addListSelectionListener(this);
         } else if (name.equalsIgnoreCase("VOIs from above image List")) {
             voiList = list;
         }
@@ -686,6 +729,12 @@ public class JDialogRunScriptView implements ActionListener {
             }
         };
         scroll.setName(name + ": scroll");
+        
+        //set the popup menu
+        if (name.equalsIgnoreCase("Images List")) {
+        	
+        }
+        
         frame.getContentPane().add(scroll);
     }
 
@@ -1755,5 +1804,37 @@ public class JDialogRunScriptView implements ActionListener {
             return this;
         }
     }
+    private class PopupListener extends MouseAdapter {
 
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  e  DOCUMENT ME!
+         */
+        public void mousePressed(MouseEvent e) {
+            triggerPopup(e);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  e  DOCUMENT ME!
+         */
+        public void mouseReleased(MouseEvent e) {
+            triggerPopup(e);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  e  DOCUMENT ME!
+         */
+        private void triggerPopup(MouseEvent e) {
+
+            if (e.isPopupTrigger()) {
+                popup.show(e.getComponent(), e.getX(), e.getY());
+            }
+        }
+    }
+    
 } // class

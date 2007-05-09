@@ -72,6 +72,8 @@ public class FileIO {
     /** Reference to the user interface. */
     private ViewUserInterface UI;
 
+    private RawImageInfo rawInfo = null;
+    
     /**
      * Dialog to prompt the user to determine the correct file type. If the type of file to read is unknown (ie., the
      * suffix doesn't match one of the known types, build and display the unknown file dialog so the user can try to
@@ -1979,6 +1981,10 @@ public class FileIO {
         quiet = q;
     }
 
+    public void setRawImageInfo(RawImageInfo rawInfo) {
+    	this.rawInfo = rawInfo;
+    }
+    
     /**
      * This method sets the userDefinedFileTypes_textField preference.
      *
@@ -6380,25 +6386,36 @@ public class FileIO {
     private ModelImage readRaw(String fileName, String fileDir, FileInfoBase fileInfo) {
         ModelImage image = null;
         FileRaw imageFile;
-
         int i;
 
         if (fileInfo == null) {
-            JDialogRawIO rawIODialog = new JDialogRawIO(UI.getMainFrame(), "Raw");
+        	fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.RAW);
+        	
+        	if (rawInfo == null) {
+        		JDialogRawIO rawIODialog = new JDialogRawIO(UI.getMainFrame(), "Raw");
 
-            rawIODialog.setVisible(true);
+        		rawIODialog.setVisible(true);
 
-            if (rawIODialog.isCancelled() == true) {
-                return null;
-            }
+        		if (rawIODialog.isCancelled() == true) {
+        			return null;
+        		}
 
-            fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.RAW);
-            fileInfo.setDataType(rawIODialog.getDataType());
-            fileInfo.setExtents(rawIODialog.getExtents());
-            fileInfo.setUnitsOfMeasure(rawIODialog.getUnitsOfMeasure());
-            fileInfo.setResolutions(rawIODialog.getResolutions());
-            fileInfo.setEndianess(rawIODialog.getEndianess());
-            fileInfo.setOffset(rawIODialog.getOffset());
+        		
+        		fileInfo.setDataType(rawIODialog.getDataType());
+        		fileInfo.setExtents(rawIODialog.getExtents());
+        		fileInfo.setUnitsOfMeasure(rawIODialog.getUnitsOfMeasure());
+        		fileInfo.setResolutions(rawIODialog.getResolutions());
+        		fileInfo.setEndianess(rawIODialog.getEndianess());
+        		fileInfo.setOffset(rawIODialog.getOffset());
+        		} 
+        	else {
+        		fileInfo.setDataType(rawInfo.getDataType());
+        		fileInfo.setExtents(rawInfo.getExtents());
+        		fileInfo.setUnitsOfMeasure(rawInfo.getUnitsOfMeasure());
+        		fileInfo.setResolutions(rawInfo.getResolutions());
+        		fileInfo.setEndianess(rawInfo.getEndianess());
+        		fileInfo.setOffset(rawInfo.getOffset());
+        	}
         }
 
         try {
