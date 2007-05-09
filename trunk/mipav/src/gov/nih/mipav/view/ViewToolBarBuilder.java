@@ -10,17 +10,20 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
+
+import java.net.*;
+
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
-import java.net.*;
+
 
 /**
  * Builds the GUI toolbars for the user interface.
  */
-public class ViewToolBarBuilder implements ItemListener, ActionListener{
+public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -30,16 +33,23 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
     /** A border used for each toolbar. */
     protected static final Border etchedBorder = BorderFactory.createEtchedBorder();
 
+    /** DOCUMENT ME! */
+    protected static final int NUM_BRUSHES_INTERNAL = 5;
+
+    /** DOCUMENT ME! */
+    public static final String USER_BRUSHES = System.getProperty("user.home") + File.separator + "mipav" +
+                                              File.separator + "brushes" + File.separator;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** The button used to toggle borders around painted areas. */
+    protected JButton borderPaintButton;
 
     /** The button used to enable checker board display of two images. */
     protected JButton checkerBoardButton;
 
     /** The button used to select the color of the paint used. */
     protected JButton colorPaintButton;
-    
-    /** The button used to toggle borders around painted areas. */
-    protected JButton borderPaintButton;
 
     /** The button for presets used only for CT images. */
     protected JButton ctButton;
@@ -50,8 +60,6 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
      */
     protected JComboBox currentScriptComboBox = new JComboBox();
 
-    protected Hashtable scriptTable = new Hashtable();
-    
     /** The script currently selected in the scripting toolbar (null if no script is selected). */
     protected String currentSelectedScript = null;
 
@@ -61,6 +69,13 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
     /** The opacity of the paint, between 0 (transparent) and 1 (opaque). Set from the opacity dialog. */
     protected float opacity = 0.3f;
 
+    /** Combo box to hold all of the paint brushes. */
+    protected JComboBox paintBox;
+
+
+    /** DOCUMENT ME! */
+    protected JToggleButton paintBrushButton;
+
     /** The paint color to be used when the user paints in the image. */
     protected Color paintColor = new Color(225, 0, 0);
 
@@ -69,16 +84,13 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
      * voxel.
      */
     protected JToggleButton pointerVOIButton;
-    
-    
-    protected JToggleButton paintBrushButton;
 
     /** The button used to enable the showing of a small portion of image b near the mouse cursor. */
     protected JToggleButton regButton;
 
-    /** Combo box to hold all of the paint brushes */
-    protected JComboBox paintBox;
-    
+    /** DOCUMENT ME! */
+    protected Hashtable scriptTable = new Hashtable();
+
     /**
      * The class which wants to listen to changes made to this components of the toolbars. May have to be a
      * ActionListener, MouseListener, ChangeListener, or ViewJFrameBase depending on which toolbars are being used in a
@@ -101,16 +113,15 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
     /** The minimum value which can be chosen in the intensity spinner. */
     private double minIntensity = 0;
 
-    private String [] paintBrushNames = null;
-    
-    protected static final int NUM_BRUSHES_INTERNAL = 5;
-    
+    /** DOCUMENT ME! */
+    private String[] paintBrushNames = null;
+
+    /** DOCUMENT ME! */
     private JPopupMenu popup = null;
-    
+
+    /** DOCUMENT ME! */
     private PopupListener popupListener = null;
-    
-    public static final String USER_BRUSHES = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" + File.separator;
-    
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -152,6 +163,22 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         separator.setFocusPainted(false);
 
         return (separator);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void actionPerformed(ActionEvent e) {
+
+        if (e.getActionCommand().equals("Refresh")) {
+            refreshPaintBox(false, -1);
+
+        } else if (e.getActionCommand().equals("Delete")) {
+            int index = paintBox.getSelectedIndex();
+            refreshPaintBox(true, index);
+        }
     }
 
     /**
@@ -223,11 +250,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         tBar.add(buildButton("PrintImage", "Print image", "printer"));
         tBar.add(buildButton("CaptureTiff", "Capture image to TIFF(RGB)", "camera"));
 
-         tBar.add(makeSeparator());
+        tBar.add(makeSeparator());
 
         tBar.add(buildButton("AboutImage", "View Header", "header"));
         tBar.add(buildButton("EditImageInfo", "Edit attributes", "attributes"));
-
 
 
         tBar.add(makeSeparator());
@@ -258,8 +284,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         tBar.add(buildButton("SaveUDLUT", "Save user defined LUT", "userlutsave"));
         tBar.add(makeSeparator());
 
-        JButton leftArrowButton = buildButton("PreviousImage", "<html>" + "Decrements image slice" + "<br>" + "Hold SHIFT to sync other images" + "</html>", "leftarrow");
-        JButton rightArrowButton = buildButton("NextImage", "<html>" + "Increments image slice" + "<br>" + "Hold SHIFT to sync other images" + "</html>", "rightarrow");
+        JButton leftArrowButton = buildButton("PreviousImage",
+                                              "<html>" + "Decrements image slice" + "<br>" +
+                                              "Hold SHIFT to sync other images" + "</html>", "leftarrow");
+        JButton rightArrowButton = buildButton("NextImage",
+                                               "<html>" + "Increments image slice" + "<br>" +
+                                               "Hold SHIFT to sync other images" + "</html>", "rightarrow");
         leftArrowButton.addMouseListener((MouseListener) UI);
         rightArrowButton.addMouseListener((MouseListener) UI);
 
@@ -273,8 +303,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
 
         tBar.add(makeSeparator());
 
-        tBar.add(buildToggleButton("MagImage","<html>" + "Magnify image 2.0x" + "<br>" + "Hold SHIFT for multiple zooming" + "</html>", "zoomin", VOIGroup));
-        tBar.add(buildToggleButton("UnMagImage","<html>" + "Magnify image 0.5x" + "<br>" + "Hold SHIFT for multiple zooming" + "</html>", "zoomout", VOIGroup));
+        tBar.add(buildToggleButton("MagImage",
+                                   "<html>" + "Magnify image 2.0x" + "<br>" + "Hold SHIFT for multiple zooming" +
+                                   "</html>", "zoomin", VOIGroup));
+        tBar.add(buildToggleButton("UnMagImage",
+                                   "<html>" + "Magnify image 0.5x" + "<br>" + "Hold SHIFT for multiple zooming" +
+                                   "</html>", "zoomout", VOIGroup));
         tBar.add(buildToggleButton("MagRegion", "Magnify Region", "magregion", VOIGroup));
         regButton = buildToggleButton("WinRegion", "Window region of image B", "winregion", VOIGroup);
         regButton.setEnabled(false);
@@ -291,7 +325,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         JButton gpuButton = buildButton("GPU", "GPU rendering", "gpu");
         JButton multiButton = buildButton("MultiHisto", "Multi-histo rendering", "multihisto");
         JButton vtkButton = buildButton("VTK", "VTK rendering", "vtk");
-        
+
         if (numberOfDimensions == 2) {
             triPlanarButton.setEnabled(false);
             quadPlanarButton.setEnabled(false);
@@ -304,9 +338,11 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         tBar.add(triPlanarButton);
         tBar.add(quadPlanarButton);
         tBar.add(lightBoxButton);
-        tBar.add(gpuButton);
-        tBar.add(multiButton);
-        tBar.add(vtkButton);
+
+        // TODO: removed until we decide on a visualization system..
+        // tBar.add(gpuButton);
+        // tBar.add(multiButton);
+        // tBar.add(vtkButton);
 
         tBar.add(makeSeparator());
 
@@ -420,7 +456,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         paintToolBar.setSize(320, 30);
         paintToolBar.setBounds(0, 0, 340, 30);
 
-        //ButtonGroup paintThicknessGroup = new ButtonGroup();
+        // ButtonGroup paintThicknessGroup = new ButtonGroup();
 
         paintToolBar.add(buildButton("NewMask", "Add a blank mask.", "newmask"));
         paintToolBar.add(buildButton("OpenMask", "Open mask from a file.", "openmask"));
@@ -435,8 +471,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         paintToolBar.add(buildToggleButton("Dropper", "Picks up a color from the image.", "dropper", VOIGroup));
         paintToolBar.add(buildToggleButton("PaintCan", "Fills an area with desired color.", "paintcan", VOIGroup));
         paintToolBar.add(buildToggleButton("Eraser", "Erases paint.", "eraser", VOIGroup));
-        //using a diff icon until an icon is ready for me to use
-        
+        // using a diff icon until an icon is ready for me to use
+
         if (nDim > 2) {
             paintToolBar.add(buildButton("EraseCurrent", "Erase paint from current frame", "clearcurrent"));
         }
@@ -451,34 +487,38 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
 
         paintToolBar.add(makeSeparator());
 
-       
-        
-        //create the list of brushes
-        
-        Integer [] intArray = getPaintList();
+
+        // create the list of brushes
+
+        Integer[] intArray = getPaintList();
         paintBox = new JComboBox(intArray);
         paintBox.setFont(MipavUtil.font12);
-        
+
         String brushName = Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH);
+
         if (brushName == null) {
-        	paintBox.setSelectedIndex(2);
+            paintBox.setSelectedIndex(2);
         } else {
-        	int selectedIndex = 2;
-        	for (int i = 0; i < paintBrushNames.length; i++) {
-        		if (brushName.endsWith(paintBrushNames[i])) {
-        			selectedIndex = i;
-        			break;
-        		}
-        	}
-        	paintBox.setSelectedIndex(selectedIndex);
+            int selectedIndex = 2;
+
+            for (int i = 0; i < paintBrushNames.length; i++) {
+
+                if (brushName.endsWith(paintBrushNames[i])) {
+                    selectedIndex = i;
+
+                    break;
+                }
+            }
+
+            paintBox.setSelectedIndex(selectedIndex);
         }
-        
-        paintBox.setRenderer(new PaintBoxRenderer()); 
-     
-        paintBox.addItemListener(this);  
-        
+
+        paintBox.setRenderer(new PaintBoxRenderer());
+
+        paintBox.addItemListener(this);
+
         popup = new JPopupMenu();
-        
+
         JMenuItem menuItem = new JMenuItem("Refresh");
         menuItem.addActionListener(this);
         popup.add(menuItem);
@@ -488,17 +528,18 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         menuItem = new JMenuItem("Delete");
         menuItem.addActionListener(this);
         popup.add(menuItem);
-        
+
         popupListener = new PopupListener();
         paintBox.addMouseListener(popupListener);
-        
+
         paintToolBar.add(paintBox);
-        
+
         paintToolBar.add(buildButton("PaintBrushEditor", "Paint brush editor.", "paint_brush_editor"));
-        
+
         paintToolBar.add(makeSeparator());
 
-        intensitySpinner = new JSpinner(new SpinnerNumberModel(intensityValue, minIntensity, maxIntensity, intensityStep));
+        intensitySpinner = new JSpinner(new SpinnerNumberModel(intensityValue, minIntensity, maxIntensity,
+                                                               intensityStep));
         intensitySpinner.setMaximumSize(new Dimension(56, 24)); // 56 pixels wide, 24 tall
         intensitySpinner.setPreferredSize(new Dimension(56, 24)); // 56 pixels wide, 24 tall
         intensitySpinner.addChangeListener((ChangeListener) UI);
@@ -526,11 +567,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         opacityPaintButton.setMargin(new Insets(2, 7, 2, 7));
         opacityPaintButton.setActionCommand("OpacityPaint");
         paintToolBar.add(opacityPaintButton);
-        
-        borderPaintButton = buildButton(Preferences.PREF_SHOW_PAINT_BORDER, "Display border around painted areas.", "borderpaint");
+
+        borderPaintButton = buildButton(Preferences.PREF_SHOW_PAINT_BORDER, "Display border around painted areas.",
+                                        "borderpaint");
         borderPaintButton.setName(Preferences.PREF_SHOW_PAINT_BORDER);
         paintToolBar.add(borderPaintButton);
-        
+
         paintToolBar.add(makeSeparator());
 
         JButton commitPaintButton = buildButton("CommitPaint", "Masks the inside of the painted area.", "paintinside");
@@ -765,6 +807,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
 
         this.updateScripts(dir);
         currentScriptComboBox.setFont(MipavUtil.font12B);
+
         if (currentScriptComboBox.getItemCount() > 0) {
             currentScriptComboBox.addItemListener(this);
         }
@@ -916,23 +959,32 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         VOIToolBar.add(buildToggleButton("TextVOI", "Annotation tool", "text", VOIGroup));
         VOIToolBar.add(makeSeparator());
 
-        VOIToolBar.add(buildToggleButton("Point", "<html>" + "Draw point VOI" + "<br>" + "Hold SHIFT for multiple drawing" + "</html>", "pointROI", VOIGroup));
+        VOIToolBar.add(buildToggleButton("Point",
+                                         "<html>" + "Draw point VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
+                                         "</html>", "pointROI", VOIGroup));
 
-        JToggleButton polysliceButton = buildToggleButton( "Polyslice", "Draw inter-slice polyline", "polyframe", VOIGroup );
-        //polysliceButton.setEnabled(false);
-        polysliceButton.setEnabled( numberOfDimensions > 2);
-        VOIToolBar.add( polysliceButton );
+        JToggleButton polysliceButton = buildToggleButton("Polyslice", "Draw inter-slice polyline", "polyframe",
+                                                          VOIGroup);
 
+        // polysliceButton.setEnabled(false);
+        polysliceButton.setEnabled(numberOfDimensions > 2);
+        VOIToolBar.add(polysliceButton);
 
 
         VOIToolBar.add(buildToggleButton("Line", "Draw line VOI", "linear", VOIGroup));
         VOIToolBar.add(buildToggleButton("protractor", "Protractor tool", "protractor", VOIGroup));
-        VOIToolBar.add(buildToggleButton("RectVOI", "<html>" + "Draw rectangle VOI" + "<br>" + "Hold SHIFT for multiple drawing" + "</html>", "rect", VOIGroup));
-        VOIToolBar.add(buildToggleButton("EllipseVOI","<html>" + "Draw ellipse VOI" + "<br>" + "Hold SHIFT for multiple drawing" + "</html>", "circle", VOIGroup));
+        VOIToolBar.add(buildToggleButton("RectVOI",
+                                         "<html>" + "Draw rectangle VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
+                                         "</html>", "rect", VOIGroup));
+        VOIToolBar.add(buildToggleButton("EllipseVOI",
+                                         "<html>" + "Draw ellipse VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
+                                         "</html>", "circle", VOIGroup));
         VOIToolBar.add(buildToggleButton("Polyline", "Draw polygon/polyline VOI", "polygon", VOIGroup));
 
 
-        VOIToolBar.add(buildToggleButton("LevelSetVOI","<html>" + "Draw levelset VOI" + "<br>" + "Hold SHIFT for multiple drawing" + "</html>", "contour", VOIGroup));
+        VOIToolBar.add(buildToggleButton("LevelSetVOI",
+                                         "<html>" + "Draw levelset VOI" + "<br>" + "Hold SHIFT for multiple drawing" +
+                                         "</html>", "contour", VOIGroup));
         VOIToolBar.add(buildToggleButton("LiveWireVOI", KeyEvent.VK_L, "Live wire VOI", "livewire", VOIGroup));
 
         JToggleButton cubeVOIButton = buildToggleButton("Rect3DVOI", "3D rectangular VOI", "cube", VOIGroup);
@@ -1008,31 +1060,36 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
     }
 
     /**
-     * Returns the selected paint brush's index
-     * @return
+     * Returns the selected paint brush's index.
+     *
+     * @return  DOCUMENT ME!
      */
     public int getPaintBrush() {
-    	if (paintBox != null) {
-    		return paintBox.getSelectedIndex();
-    	} else {
-    		return 0;
-    	}
+
+        if (paintBox != null) {
+            return paintBox.getSelectedIndex();
+        } else {
+            return 0;
+        }
     }
-    
-    /** 
-     * Returns the name of the paintbrush at the given index
-     * @param index the index of the paint brush
-     * @return the name
+
+    /**
+     * Returns the name of the paintbrush at the given index.
+     *
+     * @param   index  the index of the paint brush
+     *
+     * @return  the name
      */
     public String getPaintBrushName(int index) {
-    	String name = null;
-    	if (paintBox != null &&
-    			index < paintBrushNames.length) {
-    		return paintBrushNames[index];
-    	}
-    	return name;
+        String name = null;
+
+        if ((paintBox != null) && (index < paintBrushNames.length)) {
+            return paintBrushNames[index];
+        }
+
+        return name;
     }
-    
+
     /**
      * Accessor that returns the current color of the paint.
      *
@@ -1040,6 +1097,15 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
      */
     public Color getPaintColor() {
         return paintColor;
+    }
+
+    /**
+     * Returns the full path and file name of the currently selected script file in the scripting toolbar.
+     *
+     * @return  The full path and file name of the currently selected script.
+     */
+    public String getSelectedScriptFileName() {
+        return (String) scriptTable.get((String) currentScriptComboBox.getSelectedItem());
     }
 
     // *******************************************************************
@@ -1059,22 +1125,23 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         if ((source instanceof JComboBox) && ((JComboBox) source).equals(currentScriptComboBox)) {
 
             if (state == ItemEvent.SELECTED) {
-                currentSelectedScript = (String)scriptTable.get((String) currentScriptComboBox.getSelectedItem());
+                currentSelectedScript = (String) scriptTable.get((String) currentScriptComboBox.getSelectedItem());
                 ((ViewJFrameBase) UI).getUserInterface().setLastScript(currentSelectedScript);
-                
-                
-                
-                Preferences.debug("toolbar:\tCurrent selected script is: " + currentSelectedScript + "\n", Preferences.DEBUG_SCRIPTING);
+
+
+                Preferences.debug("toolbar:\tCurrent selected script is: " + currentSelectedScript + "\n",
+                                  Preferences.DEBUG_SCRIPTING);
             }
         } else if (source.equals(paintBox)) {
-        	int index = paintBox.getSelectedIndex();
-        	if (UI instanceof ViewJFrameImage) {
-        		((ViewJFrameImage)UI).getComponentImage().loadPaintBrush(paintBrushNames[index], false);
-        		Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
-        	}
-        	
+            int index = paintBox.getSelectedIndex();
+
+            if (UI instanceof ViewJFrameImage) {
+                ((ViewJFrameImage) UI).getComponentImage().loadPaintBrush(paintBrushNames[index], false);
+                Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
+            }
+
         } else if (source instanceof AbstractButton) {
-        
+
             ((AbstractButton) source).setBorderPainted(state == ItemEvent.SELECTED);
         }
     }
@@ -1083,15 +1150,18 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
      * Method to run the script currently selected in the scripting toolbar.
      */
     public void runCurrentScript() {
+
         try {
             String scriptFile = getSelectedScriptFileName();
-            
+
             ((ViewJFrameBase) UI).getUserInterface().setLastScript(scriptFile);
+
             String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
 
             if (imageVars.length == 0) {
                 ScriptRunner.getReference().runScript(scriptFile, new Vector(), new Vector());
-            } else if (imageVars.length == 1 && Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, imageVars[0]) == 0) {
+            } else if ((imageVars.length == 1) &&
+                           (Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, imageVars[0]) == 0)) {
                 Vector imageVector = new Vector();
                 String imageName = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage().getImageName();
                 imageVector.addElement(imageName);
@@ -1102,14 +1172,6 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered running script:\n " + pe);
         }
-    }
-    
-    /**
-     * Returns the full path and file name of the currently selected script file in the scripting toolbar.
-     * @return The full path and file name of the currently selected script.
-     */
-    public String getSelectedScriptFileName() {
-        return (String)scriptTable.get((String) currentScriptComboBox.getSelectedItem());
     }
 
     /**
@@ -1161,16 +1223,28 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
     }
 
     /**
-     * Sets the index of the paintBox (to select a different paint brush)
-     * @param index index of the paint box (brush) to select
+     * Sets the index of the paintBox (to select a different paint brush).
+     *
+     * @param  index  index of the paint box (brush) to select
      */
     public void setPaintBrush(int index) {
-    	if (paintBox != null && 
-    			index < paintBrushNames.length) {
-    		paintBox.setSelectedIndex(index);
-    	}
+
+        if ((paintBox != null) && (index < paintBrushNames.length)) {
+            paintBox.setSelectedIndex(index);
+        }
     }
-    
+
+
+    /**
+     * Accessor that sets the paint brush button to selected.
+     */
+    public void setPaintBrushButtonSelected() {
+
+        if (paintBrushButton != null) {
+            paintBrushButton.setSelected(true);
+        }
+    }
+
     /**
      * Accessor that sets the color of the paint.
      *
@@ -1188,38 +1262,9 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
      * Accessor that sets the pointer button to selected.
      */
     public void setPointerSelected() {
+
         if (pointerVOIButton != null) {
             pointerVOIButton.setSelected(true);
-        }
-    }
-    
-    
-    /**
-     * Accessor that sets the paint brush button to selected.
-     */
-    public void setPaintBrushButtonSelected() {
-        if (paintBrushButton != null) {
-        	paintBrushButton.setSelected(true);
-        }
-    }
-
-
-    /**
-     * Sets the correct VOI button to be selected (based on action command)
-     * @param command String the action command of the VOI Button (easiest)
-     */
-    public void setVOIButtonSelected(String command) {
-        if ( VOIGroup != null) {
-
-            Enumeration e = VOIGroup.getElements();
-            JToggleButton tButton;
-            while (e.hasMoreElements()) {
-                tButton = (JToggleButton)e.nextElement();
-                if (tButton.getActionCommand().equalsIgnoreCase(command)) {
-                    tButton.setSelected(true);
-                    break;
-                }
-            }
         }
     }
 
@@ -1293,6 +1338,31 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         }
     }
 
+
+    /**
+     * Sets the correct VOI button to be selected (based on action command).
+     *
+     * @param  command  String the action command of the VOI Button (easiest)
+     */
+    public void setVOIButtonSelected(String command) {
+
+        if (VOIGroup != null) {
+
+            Enumeration e = VOIGroup.getElements();
+            JToggleButton tButton;
+
+            while (e.hasMoreElements()) {
+                tButton = (JToggleButton) e.nextElement();
+
+                if (tButton.getActionCommand().equalsIgnoreCase(command)) {
+                    tButton.setSelected(true);
+
+                    break;
+                }
+            }
+        }
+    }
+
     /**
      * Method to update the list of scripts in the scripting toolbar based on the directory name provided. It is assumed
      * that all scripts end with an .sct extension.
@@ -1300,14 +1370,14 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
      * @param  dirName  The name of the directory containing the scripts
      */
     public void updateScripts(String dirName) {
-    	    	
+
         File dirFile = new File(dirName);
 
         // clear the current script combo box
         currentScriptComboBox.removeAllItems();
 
         scriptTable.clear();
-        
+
         // if directory doesn't exist, or isn't a directory
         // then return
         if (!dirFile.exists() || !dirFile.isDirectory()) {
@@ -1323,7 +1393,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
         try {
             filenames = filter.listFiles(dirFile);
         } catch (Exception e) {
-            Preferences.debug("toolbar:\tUnable to access script files in " + dirName + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("toolbar:\tUnable to access script files in " + dirName + "\n",
+                              Preferences.DEBUG_SCRIPTING);
             currentScriptComboBox.setEnabled(false);
 
             return;
@@ -1338,119 +1409,128 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
 
         String name;
         // add the filenames to the script combo box
-        
+
         Arrays.sort(filenames);
-        
+
         for (int i = 0; i < filenames.length; i++) {
-        	name = filenames[i].substring(filenames[i].lastIndexOf(File.separatorChar) + 1);
-        	scriptTable.put(name, filenames[i]);
+            name = filenames[i].substring(filenames[i].lastIndexOf(File.separatorChar) + 1);
+            scriptTable.put(name, filenames[i]);
             currentScriptComboBox.addItem(name);
         }
 
         if (currentSelectedScript != null) {
-        	name = currentSelectedScript.substring(currentSelectedScript.lastIndexOf(File.separatorChar) + 1);
-        	
-        	currentScriptComboBox.setSelectedItem(name);
+            name = currentSelectedScript.substring(currentSelectedScript.lastIndexOf(File.separatorChar) + 1);
+
+            currentScriptComboBox.setSelectedItem(name);
         }
-        
+
         currentScriptComboBox.setEnabled(true);
 
     } // end updateScripts
 
-    public void actionPerformed(ActionEvent e) {
-    	if (e.getActionCommand().equals("Refresh")) {
-    		refreshPaintBox(false, -1);
-    		
-    	} else if (e.getActionCommand().equals("Delete")) {
-    		int index = paintBox.getSelectedIndex();
-    		refreshPaintBox(true, index);
-    	}
-    }
-    
-    private void refreshPaintBox(boolean doDelete, int indexOfRemoval) {
-    	JComponent parent = (JComponent)paintBox.getParent();
-		parent.setVisible(false);
-		int index = 0;
-		for (index = 0; index < parent.getComponentCount(); index++) {
-			if (parent.getComponent(index).equals(paintBox)) {
-				parent.remove(paintBox);
-				break;
-			}
-		}
-		
-		paintBox.removeItemListener(this);
-		paintBox.removeAllItems();
-		paintBox = null;
-		
-		//remove the .png here
-		if (doDelete) {
-			if (indexOfRemoval >= NUM_BRUSHES_INTERNAL) {
-				if (new File(USER_BRUSHES + File.separator + paintBrushNames[indexOfRemoval]).exists()) {
-					new File(USER_BRUSHES + File.separator + paintBrushNames[indexOfRemoval]).delete();
-				}
-			}
-		}
-		
-		Integer [] intArray = getPaintList();
-		paintBox = new JComboBox(intArray);
-		paintBox.setFont(MipavUtil.font12);
-	
-		paintBox.setRenderer(new PaintBoxRenderer()); 
-		paintBox.addItemListener(this);
-		paintBox.addMouseListener(popupListener);
-		
-		paintBox.setSelectedIndex(2);
-		
-		parent.add(paintBox, index);
-		parent.setVisible(true);
-    }
-    
-    private Integer [] getPaintList() {
-    	Integer [] intArray = null;
-		
-        int numBrushes = NUM_BRUSHES_INTERNAL; //built in... 5 so far
-        
-		File brushesDir = new File(USER_BRUSHES);
-		if (brushesDir.isDirectory()) {
-			File [] brushes = brushesDir.listFiles();
-			
-			for (int i = 0; i < brushes.length; i++) {
-				
-				if (brushes[i].getName().endsWith(".png")) {
-					numBrushes++;
-				}
-			}
-		}
-        
-		intArray = new Integer[numBrushes];
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private Integer[] getPaintList() {
+        Integer[] intArray = null;
+
+        int numBrushes = NUM_BRUSHES_INTERNAL; // built in... 5 so far
+
+        File brushesDir = new File(USER_BRUSHES);
+
+        if (brushesDir.isDirectory()) {
+            File[] brushes = brushesDir.listFiles();
+
+            for (int i = 0; i < brushes.length; i++) {
+
+                if (brushes[i].getName().endsWith(".png")) {
+                    numBrushes++;
+                }
+            }
+        }
+
+        intArray = new Integer[numBrushes];
 
         for (int i = 0; i < intArray.length; i++) {
             intArray[i] = new Integer(i);
         }
-		
+
         paintBrushNames = new String[numBrushes];
-        
+
         paintBrushNames[0] = "square 1x1.gif";
         paintBrushNames[1] = "square 4x4.gif";
         paintBrushNames[2] = "square 8x8.gif";
         paintBrushNames[3] = "square 16x16.gif";
         paintBrushNames[4] = "square 24x24.gif";
-        
+
         if (brushesDir.isDirectory()) {
-			File [] brushes = brushesDir.listFiles();
-			int brushIndex = NUM_BRUSHES_INTERNAL;
-			for (int i = 0; i < brushes.length; i++) {
-				
-				if (brushes[i].getName().endsWith(".png")) {
-					paintBrushNames[brushIndex] = brushes[i].getName();
-					brushIndex++;
-				}
-			}
-		}
-    	
-    	return intArray;
+            File[] brushes = brushesDir.listFiles();
+            int brushIndex = NUM_BRUSHES_INTERNAL;
+
+            for (int i = 0; i < brushes.length; i++) {
+
+                if (brushes[i].getName().endsWith(".png")) {
+                    paintBrushNames[brushIndex] = brushes[i].getName();
+                    brushIndex++;
+                }
+            }
+        }
+
+        return intArray;
     }
-    
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  doDelete        DOCUMENT ME!
+     * @param  indexOfRemoval  DOCUMENT ME!
+     */
+    private void refreshPaintBox(boolean doDelete, int indexOfRemoval) {
+        JComponent parent = (JComponent) paintBox.getParent();
+        parent.setVisible(false);
+
+        int index = 0;
+
+        for (index = 0; index < parent.getComponentCount(); index++) {
+
+            if (parent.getComponent(index).equals(paintBox)) {
+                parent.remove(paintBox);
+
+                break;
+            }
+        }
+
+        paintBox.removeItemListener(this);
+        paintBox.removeAllItems();
+        paintBox = null;
+
+        // remove the .png here
+        if (doDelete) {
+
+            if (indexOfRemoval >= NUM_BRUSHES_INTERNAL) {
+
+                if (new File(USER_BRUSHES + File.separator + paintBrushNames[indexOfRemoval]).exists()) {
+                    new File(USER_BRUSHES + File.separator + paintBrushNames[indexOfRemoval]).delete();
+                }
+            }
+        }
+
+        Integer[] intArray = getPaintList();
+        paintBox = new JComboBox(intArray);
+        paintBox.setFont(MipavUtil.font12);
+
+        paintBox.setRenderer(new PaintBoxRenderer());
+        paintBox.addItemListener(this);
+        paintBox.addMouseListener(popupListener);
+
+        paintBox.setSelectedIndex(2);
+
+        parent.add(paintBox, index);
+        parent.setVisible(true);
+    }
+
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
@@ -1554,7 +1634,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
             voiColor.setForeground(newColor);
         }
     }
-    
+
+    /**
+     * DOCUMENT ME!
+     */
     class PaintBoxRenderer extends JLabel implements ListCellRenderer {
 
         /** Use serialVersionUID for interoperability. */
@@ -1582,65 +1665,72 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
          * @return  DOCUMENT ME!
          */
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
-                boolean cellHasFocus) {
+                                                      boolean cellHasFocus) {
 
-        	// Get the selected index. (The index param isn't
-        	// always valid, so just use the value.)
-        	int selectedIndex = ((Integer) value).intValue();
+            // Get the selected index. (The index param isn't
+            // always valid, so just use the value.)
+            int selectedIndex = ((Integer) value).intValue();
 
-        	if (isSelected) {
-        		setBackground(list.getSelectionBackground());
-        		setForeground(list.getSelectionForeground());
-        	} else {
-        		setBackground(list.getBackground());
-        		setForeground(list.getForeground());
-        	}
+            if (isSelected) {
+                setBackground(list.getSelectionBackground());
+                setForeground(list.getSelectionForeground());
+            } else {
+                setBackground(list.getBackground());
+                setForeground(list.getForeground());
+            }
 
-        	
-        	
-        	// Set the icon and text.  If icon was null, say so.
-        	ImageIcon icon = null;
 
-        	setFont(MipavUtil.font12);
-        	if (selectedIndex < NUM_BRUSHES_INTERNAL) {
-        		icon = MipavUtil.getIcon(paintBrushNames[selectedIndex]);
-        		
-        	} else {
-        		URL res = null;
-        		try {
-        			res = new File(USER_BRUSHES + File.separator + paintBrushNames[selectedIndex]).toURL();
-        			icon = new ImageIcon(res);
-                	
-        			if (icon.getIconHeight() >= 20 || icon.getIconWidth() >= 20) {
-        				int newWidth, newHeight;
-        				if (icon.getIconHeight() < icon.getIconWidth()) {
-        					newWidth = 20;
-        					float factor = 24f/icon.getIconWidth();
-        					newHeight = (int)(icon.getIconHeight() * factor);
-        				} else {
-        					newHeight = 20;
-        					float factor = 24f/icon.getIconHeight();
-        					newWidth = (int)(icon.getIconWidth() * factor);
-        				}
-        				icon = new ImageIcon(icon.getImage().getScaledInstance(newWidth, newHeight, 0));
-        			}
-        		} catch (Exception e) {
-        			//e.printStackTrace();
-        		}
-        	}
-        	          
-            
-        	setText(paintBrushNames[selectedIndex].substring(0, paintBrushNames[selectedIndex].lastIndexOf(".")));
-        	setIcon(icon);
-        	
-        	setPreferredSize(new Dimension(90,24));
-        	setIconTextGap(10);
-        	setHorizontalTextPosition(LEFT);
-        	
-        	return this;
+            // Set the icon and text.  If icon was null, say so.
+            ImageIcon icon = null;
+
+            setFont(MipavUtil.font12);
+
+            if (selectedIndex < NUM_BRUSHES_INTERNAL) {
+                icon = MipavUtil.getIcon(paintBrushNames[selectedIndex]);
+
+            } else {
+                URL res = null;
+
+                try {
+                    res = new File(USER_BRUSHES + File.separator + paintBrushNames[selectedIndex]).toURL();
+                    icon = new ImageIcon(res);
+
+                    if ((icon.getIconHeight() >= 20) || (icon.getIconWidth() >= 20)) {
+                        int newWidth, newHeight;
+
+                        if (icon.getIconHeight() < icon.getIconWidth()) {
+                            newWidth = 20;
+
+                            float factor = 24f / icon.getIconWidth();
+                            newHeight = (int) (icon.getIconHeight() * factor);
+                        } else {
+                            newHeight = 20;
+
+                            float factor = 24f / icon.getIconHeight();
+                            newWidth = (int) (icon.getIconWidth() * factor);
+                        }
+
+                        icon = new ImageIcon(icon.getImage().getScaledInstance(newWidth, newHeight, 0));
+                    }
+                } catch (Exception e) {
+                    // e.printStackTrace();
+                }
+            }
+
+            setText(paintBrushNames[selectedIndex].substring(0, paintBrushNames[selectedIndex].lastIndexOf(".")));
+            setIcon(icon);
+
+            setPreferredSize(new Dimension(90, 24));
+            setIconTextGap(10);
+            setHorizontalTextPosition(LEFT);
+
+            return this;
         }
     }
-        
+
+    /**
+     * DOCUMENT ME!
+     */
     private class PopupListener extends MouseAdapter {
 
         /**
@@ -1673,5 +1763,5 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener{
             }
         }
     }
-    
+
 }
