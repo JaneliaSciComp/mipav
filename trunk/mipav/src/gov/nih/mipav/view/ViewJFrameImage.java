@@ -9,6 +9,10 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.util.*;
+import gov.nih.mipav.view.gpu.src.*;
+import gov.nih.mipav.view.multihisto.src.*;
+import gov.nih.mipav.view.vtk.Examples.Medical.Java.*;
+import gov.nih.mipav.view.vtk.Examples.VolumeRendering.Java.*;
 
 import gov.nih.mipav.plugins.*;
 
@@ -2192,6 +2196,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Out of memory: unable to open Tri-planar frame.");
             }
 
+        } else if (command.equals("GPU")) {
+        	Render.main(null);
+        } else if (command.equals("MultiHisto")) {
+        	// gluvvMain m = new gluvvMain();
+        	String[] args = new String[2];
+        	args[0] = "-vgh";
+        	args[1] = "bhc-xYZ-vgh.nrrd";
+        	gluvvMain.main(args);
+        } else if (command.equals("VTK")) {
+        	Medical1.main(null);
+        	Medical2.main(null);
+        	Medical3.main(null);
+        	PseudoVolumeRendering.main(null);
         } else if (command.equals("VolTriplanar")) {
 
             // 3 space representation makes no sense on a 2d image!

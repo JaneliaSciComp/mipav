@@ -724,7 +724,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
             getHistoLUTComponentA().showHistogram(LUT);
             getLUTRecorder().updateLUT(LUT);
         }
-
+        
         if (regComponent != null) {
             regComponent.setLUTa(LUT);
         }
@@ -736,7 +736,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
         if (colEMFrame != null) {
             colEMFrame.setLUTdest(LUT);
         }
-
+        
         updateFrames(false);
     }
 
@@ -843,6 +843,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
 
             if (getImageA() != null) {
                 regComponent.setLUTa(getLUTa());
+
             }
 
             if (regComponent != null) {
