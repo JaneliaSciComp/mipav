@@ -3430,6 +3430,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 } else if ((imageB != null) && (imageB == imageActive)) {
                     this.resetLUT(LUTb, imageB);
                 }
+                imageA.notifyImageDisplayListeners(null, false);
+
+                if (imageB != null) {
+                    imageB.notifyImageDisplayListeners(null, false);
+                }
+                
             } else { // RGB image
 
                 if (imageA == imageActive) {
@@ -3437,13 +3443,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 } else if ((imageB != null) && (imageB == imageActive)) {
                     this.resetRGB(RGBTB);
                 }
+                imageA.notifyImageDisplayListeners(true, 1, RGBTA);
+                if (imageB != null) {
+                	imageB.notifyImageDisplayListeners(true, 1, RGBTB);
+                }
             }
 
-            imageA.notifyImageDisplayListeners(null, false);
-
-            if (imageB != null) {
-                imageB.notifyImageDisplayListeners(null, false);
-            }
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.resetLUT");
