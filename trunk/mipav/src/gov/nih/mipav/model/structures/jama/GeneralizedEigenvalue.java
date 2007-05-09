@@ -24,13 +24,13 @@ import gov.nih.mipav.view.*;
  * repeated 5 times. ddrvst_test was implemented to test dsyev. The statement All 648 tests for ddrvst passed the
  * threshold was repeated 5 times.</p>
  *
- * <p>The nonsymmetric generalized eigenvalue driver dggev was tested with dggev_test. The resulting statement was 15
+ * <p>The nonsymmetric generalized eigenvalue driver dggev was tested with dggev_test. The resulting statement was 12
  * out of 1092 dggev tests failed to pass the threshold. dchkgl was implemented to test the dggbal balancing routine of
  * dggev. All 8 tests showed no signficant error. dchkgk was implemented to test the dggbak backward balancing routine
  * of dggev. All 8 tests showed no significant error. dchkgg_test was implemented to test the dgghrd, dhgeqz, and dtgevc
  * routines of the dggev driver. The following output statements resulted: 15 out of 2156 dchkgg tests failed to pass
- * the threshold. 18 out of 2149 dchkgg tests failed to pass the threshold. 13 out of 2142 dchkgg tests failed to pass
- * the threshold. 13 out of 2135 dchkgg tests failed to pass the threshold. The errors in the nonsymmetric case would
+ * the threshold. 20 out of 2149 dchkgg tests failed to pass the threshold. 17 out of 2163 dchkgg tests failed to pass
+ * the threshold. 20 out of 2142 dchkgg tests failed to pass the threshold. The errors in the nonsymmetric case would
  * not occur for matrix sizes of 5 or less. Following one case in parallel in the FORTRAN on the WATCOM compiler and on
  * Java revealed input variables that were identical up to about 9 signficant places yielding an output variable of
  * 7.77E-16 on the FORTRAN and -2.61E-15 on the Java. So apparently the Java failures are due to the Java 64 bit
@@ -19373,8 +19373,8 @@ loop4:
     } // dlatmr
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DLATMS Original DLATMS created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of version 3.1 LAPACK test routine DLATMS Original DLATMS created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dlatms generates random matrices with specified singular values (or symmetric/hermitian with specified
      * eigenvalues) for testing LAPACK programs.
      *
@@ -19390,7 +19390,7 @@ loop4:
      *
      * <p>Reduce the bandwidth according to kl and ku, using Householder transformations.</p>
      *
-     * <p>Method B: Convert the bandwidth-0 (i.e., diagonal) marix to a bandwidth-1 matrix using Givens rotations,
+     * <p>Method B: Convert the bandwidth-0 (i.e., diagonal) matrix to a bandwidth-1 matrix using Givens rotations,
      * "chasing" out-of-band elements back, much as in QR; then convert the bandwidth-1 to a bandwidth-2 matrix, etc.
      * Note that for reasonably samll bandwidths (relative to m and n) this requires less storage, as a dense matrix is
      * not generated. Also, for symmetric matrices, only, one triangle is generated.</p>
@@ -19399,43 +19399,52 @@ loop4:
      * a dense matrix can be stored.) Method B is chosen if the bandwidth is small ( < 1/2 n for symmetric, < .3 n+m for
      * non-symmetric), or lda is less than m and not less than the bandwidth.</p>
      *
-     * <p>Pack the matrix if desired. Options specified by pack are: no packing zero out upper half (if symmetric) zero
-     * out lower half (if symmetric) store the upper half columnwise (if symmetric or upper triangular) store the lower
-     * half columnwise (if symmetric or lower triangular) store the lower triangle in banded format (if symmetric or
-     * lower triangular) store the upper triangle in banded format (if symmetric or upper triangular) store the entire
+     * <p>Pack the matrix if desired. Options specified by pack are: no packing, zero out upper half (if symmetric), zero
+     * out lower half (if symmetric), store the upper half columnwise (if symmetric or upper triangular), store the lower
+     * half columnwise (if symmetric or lower triangular), store the lower triangle in banded format (if symmetric or
+     * lower triangular), store the upper triangle in banded format (if symmetric or upper triangular), and store the entire
      * matrix in banded format If method B is chosen, and band format is specified, then the matrix will be generated in
      * the band format, so no repacking will be necessary.</p>
      *
      * @param  m      input int The number of rows of A.
      * @param  n      input int The number of columns of A.
      * @param  dist   input char On entry, dist specifies the type of distribution to be used to generate the random
-     *                eigen-/singular values. 'U' => uniform(0,1) ('U' for uniform) 'S' => uniform(-1,1) ('S' for
-     *                symmetric) 'N' => normal(0,1) ('N' for normal)
+     *                eigen-/singular values. 
+     *                'U' => uniform(0,1) ('U' for uniform) 
+     *                'S' => uniform(-1,1) ('S' for symmetric) 
+     *                'N' => normal(0,1) ('N' for normal)
      * @param  iseed  input/output int[] of dimension 4 On entry iseed specifies the seed of the random number
      *                generator. They should lie between 0 and 4095 inclusive, and iseed[3] should be odd. The random
      *                number generator uses a linear congruential sequence limited to small integers, and so should
      *                produce machine independent random numbers. The values of iseed are changed on exit, and can be
      *                used in the next call to dlatms to continue the same random number sequence. Changed on exit.
-     * @param  sym    input char If sym = 'S' or 'H', the generated matrix is symmetric, with eigenvalues specified by
-     *                D, cond, mode, and dmax; they may be positive, negative, or zero. If sym = 'P', the generated
-     *                matrix is symmetric, with eigenvalues (= singular values) specified by D, cond, mode, and dmax;
-     *                they will not be negative. If sym = 'N', the generated matrix is nonsymmetric, with singular
-     *                values specified by D, cond, mode, and dmax; they will not be negative.
+     * @param  sym    input char 
+     *                If sym = 'S' or 'H', the generated matrix is symmetric, with eigenvalues specified by
+     *                D, cond, mode, and dmax; they may be positive, negative, or zero. 
+     *                If sym = 'P', the generated matrix is symmetric, with eigenvalues (= singular values) specified
+     *                by D, cond, mode, and dmax; they will not be negative. 
+     *                If sym = 'N', the generated matrix is nonsymmetric, with singular values specified by D, cond,
+     *                mode, and dmax; they will not be negative.
      * @param  D      input/output double[] of dimension (min(m,n)) This array is used to specify the singular values or
      *                eigenvalues of A (see sym, above.) If mode = 0, then D is assumed to contain the
      *                singular/eigenvalues, otherwise they will be computed according to mode, cond, and dmax, and
      *                placed in D. Modified if mode is nonzero.
-     * @param  mode   input int On entry this describes how the singular/ eigenvalues are to be specified: = 0 means use
-     *                D as input = 1 sets D[0] = 1 and D[1:n-1] = 1.0/cond = 2 sets D[0:n-2] = 1 and D[n-1] = 1.0/cond =
-     *                3 sets D[i-1] = cond**(-(i-1)/(n-1)) = 4 sets D[i-1] = 1 - (i-1)/(n-1)*(1 - 1/cond) = 5 sets D to
-     *                random numbers in the range (1/cond, 1) such that their logarithms are uniformly distributed = 6
-     *                sets D to random numbers from same distribution as the rest of the matrix mode < 0 has the same
-     *                meaning as abs(mode), except that the order of the elements of D is reversed. Thus, if mode is
-     *                positive, D has entries ranging from 1 to 1/cond, if negative, from 1/cond to 1. If sym = 'S' or
-     *                'H', and mode is neither 0, 6, nor -6, then the elements of D will also be multiplied by a random
-     *                sign (1.e., +1 or -1).
+     * @param  mode   input int On entry this describes how the singular/ eigenvalues are to be specified: 
+     *                = 0 means use D as input 
+     *                = 1 sets D[0] = 1 and D[1:n-1] = 1.0/cond 
+     *                = 2 sets D[0:n-2] = 1 and D[n-1] = 1.0/cond 
+     *                = 3 sets D[i] = cond**(-(i)/(n-1)) 
+     *                = 4 sets D[i] = 1 - (i)/(n-1)*(1 - 1/cond) 
+     *                = 5 sets D to random numbers in the range (1/cond, 1) such that their logarithms are
+     *                    uniformly distributed 
+     *                = 6 sets D to random numbers from same distribution as the rest of the matrix mode 
+     *                < 0 has the same meaning as abs(mode), except that the order of the elements of D is reversed.
+     *                    Thus, if mode is positive, D has entries ranging from 1 to 1/cond, if negative,
+     *                    from 1/cond to 1.
+     *                If sym = 'S' or 'H', and mode is neither 0, 6, nor -6, then the elements of D will also be
+     *                multiplied by a random sign (1.e., +1 or -1).
      * @param  cond   input double On entry, this is used as described under mode above. If used, it must be >= 1.
-     * @param  dmax   input double If mode is neither -6, 0, or 6, the contents of D, as computed according to mode and
+     * @param  dmax   input double If mode is neither -6, 0, nor 6, the contents of D, as computed according to mode and
      *                cond, will be scaled by dmax/max(abs(D[i])); thus the maximum absolute eigen- or singular value
      *                (which is to say the norm) will be abs(dmax). Note that dmax need not be positive: if dmax is
      *                negative (or zero), D will be scaled by a negative number (or zero).
@@ -19445,17 +19454,23 @@ loop4:
      * @param  ku     input int This specifies the upper bandwidth of the matrix. For example, ku = 0 implies lower
      *                triangular, ku = 1 implies lower Hessenberg, and ku being at least n-1 means that the matrix has
      *                full upper bandwidth. kl must equal ku if the matrix is symmetric.
-     * @param  pack   input char This specifies packing of the matrix as follows: 'N' => no packing 'U' => zero out all
-     *                subdiagonal entries (if symmetric) 'L' => zero out all superdiagonal entries (if symmetric) 'C' =>
-     *                store the upper triangle columnwise (only if the matrix is symmetric or upper triangular) 'R' =>
-     *                store the lower triangle columnwise (only if the matrix is symmetric or lower triangular) 'B' =>
-     *                store the lower triangle in band storage scheme (only if matrix symmetric or lower triangular) 'Q'
-     *                => store the upper triangle in band storage scheme (only if matrix symmetric or upper triangular)
+     * @param  pack   input char This specifies packing of the matrix as follows: 
+     *                'N' => no packing 
+     *                'U' => zero out all subdiagonal entries (if symmetric) 
+     *                'L' => zero out all superdiagonal entries (if symmetric) 
+     *                'C' => store the upper triangle columnwise (only if the matrix is symmetric or upper triangular) 
+     *                'R' => store the lower triangle columnwise (only if the matrix is symmetric or lower triangular)
+     *                'B' => store the lower triangle in band storage scheme (only if matrix symmetric or lower triangular) 
+     *                'Q' => store the upper triangle in band storage scheme (only if matrix symmetric or upper triangular)
      *                'Z' => store the entire matrix in band storage scheme (pivoting can be provided for by using this
-     *                option to store A in the trailing rows of the allocated storage) Using these options, the various
-     *                LAPACK packed and banded storage schemes can be obtained: GB - use 'Z' PB, SB, or TB - use 'B' or
-     *                'Q' PP, SP, or TP - use 'C' or 'R' If two calls to dlatms differ only in the pack parameter, they
-     *                will generate mathematically equivalent matrices
+     *                option to store A in the trailing rows of the allocated storage) 
+     *                
+     *                Using these options, the various LAPACK packed and banded storage schemes can be obtained: 
+     *                GB - use 'Z' 
+     *                PB, SB, or TB - use 'B' or 'Q' 
+     *                PP, SP, or TP - use 'C' or 'R' 
+     *                If two calls to dlatms differ only in the pack parameter, they will generate mathematically
+     *                equivalent matrices
      * @param  A      input/output double[][] of dimension (lda,n) On exit A is the desired test matrix. A is first
      *                generated in full (unpacked) form, and then packed, if so specified by pack. Thus, the first m
      *                elements of the first n columns will always be modified. If pack specifies a packed or banded
@@ -19466,15 +19481,23 @@ loop4:
      *                least min(kl,m-1) (which is equal to min(ku,n-1)). If pack = 'Z', lda must be large enough to hold
      *                the packed array: min(ku,n-1) + min(kl,m-1) + 1.
      * @param  work   workspace double[] of dimension (3*max(n,m))
-     * @param  info   output int[] On exit, info[0] will be set to one of the following values: 0 => normal return -1 =>
-     *                m negative or unequal to n and sym = 'S', 'H', or 'P' -2 => n negative -3 => dist illegal string
-     *                -5 => sym illegal string -7 => mode not in range -6 to 6 -8 => cond less than 1.0, and mode
-     *                neither -6, 0, nor 6 -10 => kl negative -11 => ku negative, or sym = 'S' or 'H' and ku not equal
-     *                to kl -12 => pack illegal string, or pack = 'U' or 'L', and sym = 'N'; or pack = 'C' or 'Q' and
+     * @param  info   output int[] Error code.  On exit, info[0] will be set to one of the following values:
+     *                0 => normal return 
+     *                -1 => m negative or unequal to n and sym = 'S', 'H', or 'P' 
+     *                -2 => n negative 
+     *                -3 => dist illegal string
+     *                -5 => sym illegal string 
+     *                -7 => mode not in range -6 to 6 
+     *                -8 => cond less than 1.0, and mode neither -6, 0, nor 6 
+     *                -10 => kl negative 
+     *                -11 => ku negative, or sym = 'S' or 'H' and ku not equal to kl 
+     *                -12 => pack illegal string, or pack = 'U' or 'L', and sym = 'N'; or pack = 'C' or 'Q' and
      *                sym = 'N' and kl is not zero; or pack = 'R' or 'B' and sym = 'N' and ku is not zero; or pack =
-     *                'U', 'L', 'C', 'R', 'B', or 'Q' and m != n. -14 => lda is less than m, or pack = 'Z' and lda is
-     *                less than min(ku,n-1) + min(kl,m-1) + 1. 1 => Error return from dlatm1 2 => Cannot scale to dmax
-     *                (maximum singular value is 0) 3 => Error return from dlagge or dlagsy
+     *                'U', 'L', 'C', 'R', 'B', or 'Q' and m != n. 
+     *                -14 => lda is less than m, or pack = 'Z' and lda is less than min(ku,n-1) + min(kl,m-1) + 1. 
+     *                1 => Error return from dlatm1 
+     *                2 => Cannot scale to dmax (maximum singular value is 0) 
+     *                3 => Error return from dlagge or dlagsy
      */
     private void dlatms(int m, int n, char dist, int[] iseed, char sym, double[] D, int mode, double cond, double dmax,
                         int kl, int ku, char pack, double[][] A, int lda, double[] work, int[] info) {
@@ -19709,7 +19732,7 @@ loop4:
 
         // Compute Addressing constants to cover all storage formats.  Whether
         // GE, SY, GB, or SB, upper or lower triangle or both, the (i,j)-th
-        // element is in A[i - iskew*j + ioffst][j];
+        // element is in A[i - iskew*j + ioffst - 1][j - 1];
 
         if (ipack > 4) {
             ilda = lda - 1;
@@ -20041,7 +20064,7 @@ loop4:
                 } // if (topdwn)
                 else { // !topdwn
 
-                    // Bottom-Up -- Start at bottom right.
+                    // Bottom-Up -- Start at the bottom right.
                     jkl = 0;
 
                     for (jku = 1; jku <= uub; jku++) {
@@ -20859,8 +20882,8 @@ loop4:
     } // dlatms
 
     /**
-     * This is a port of version 3.0 LAPACK auxiliary routine DLATRD Original DLATRD created by Univ. of Tennessee, Univ.
-     * of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * This is a port of version 3.1 LAPACK auxiliary routine DLATRD Original DLATRD created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
      * dlatrd reduces nb rows and columns of a real symmetric matrix A to symmetric tridiagonal form by an orthogonal
      * similarity transformation Q'*A*Q, and returns the matrices V and W which are needed to apply the transformation
      * to the unreduced part of A. If uplo = 'U', dlatrd reduces the last nb rows and columns of a matrix, of which the
@@ -20868,20 +20891,22 @@ loop4:
      * lower triangle is supplied. This is an auxiliary routine called by dsytrd.
      *
      * @param  uplo  input char Specifies whether the upper or lower triangular part of the symmetric matrix A is
-     *               stored: = 'U': Upper triangular = 'L': Lower triangular
+     *               stored: 
+     *               = 'U': Upper triangular 
+     *               = 'L': Lower triangular
      * @param  n     input int The order of the matrix A.
      * @param  nb    input int The number of rows and columns to be reduced.
      * @param  A     input/output double[][] of dimension lda by n. On entry, the symmetric matrix A. If uplo == 'U',
      *               the leading n-by-n upper triangular part of A contains the upper triangular part of matrix A, and
      *               the strictly lower triangular part of A is not referenced. If uplo = 'L', the leading n-by-n lower
      *               triangular part of A contains the lower triangular part of the matrix A, and the strictly uper
-     *               triangular part of A is not referenced. On exit: If uplo = 'U', the last nb columns have been
-     *               reduced to tridiagonal form, with the diagonal elements overwriting the diagonal elements of A; the
-     *               elements above the diagonal with the array tau represent the orthogonal matrix Q as a product of
-     *               elementary reflectors. If uplo = 'L', the first nb columns have been reduced to tridiagonal form,
-     *               with the diagonal elements overwriting the diagonal elements of A; the elements below the diagonal
-     *               with the array tau represent the orthogonal matrix Q as a product of elementary reflectors. See
-     *               Further Details.
+     *               triangular part of A is not referenced. 
+     *               On exit: If uplo = 'U', the last nb columns have been reduced to tridiagonal form, with the
+     *               diagonal elements overwriting the diagonal elements of A; the elements above the diagonal with the
+     *               array tau represent the orthogonal matrix Q as a product of elementary reflectors. 
+     *               If uplo = 'L', the first nb columns have been reduced to tridiagonal form, with the diagonal
+     *               elements overwriting the diagonal elements of A; the elements below the diagonal with the array
+     *               tau represent the orthogonal matrix Q as a product of elementary reflectors. See Further Details.
      * @param  lda   input int The leading dimension of the array A. lda >= max(1,n).
      * @param  e     output double[] of dimension n-1. If uplo = 'U', e(n-nb-1:n-2) contains the superdiagonal elements
      *               of the last nb columns of the reduced matrix. If uplo = 'L', e(0:nb-1) contains the subdiagonal
@@ -20900,12 +20925,23 @@ loop4:
      *               where tau is a real scalar, and v is a real vector with v(0:i-1) = 0 and v(i) = 1; v(i:n-1) is
      *               stored on exit in A(i:n-1,i-1),and tau in tau[i-1].</p>
      *
-     *               <p>The elements of the vectors v together form the n-by-nb matrix V which is needed with W to apply
+     *               <p>The elements of the vectors v together form the n-by-nb matrix V which is needed, with W, to apply
      *               the transformation to the unreduced part of the matrix using a symmetric rank-2k update of the
      *               form: A = A - V*W' - W*V'</p>
      *
      *               <p>The contents of A on exit are illustrated by the following examples with n = 5 and nb = 2: If
-     *               uplo = 'U': a a a v4 v5 a a v4 v5 a 1 v5 d 1 d if uplo = 'L': d 1 d v1 1 a v1 v2 a a v1 v2 a a a
+     *               uplo = 'U':
+     *               ( a a a v4 v5)
+     *               (   a a v4 v5) 
+     *               (     a  1 v5)
+     *               (        d  1)
+     *               (           d)
+     *               if uplo = 'L': 
+     *               ( d          )
+     *               ( 1  d       )
+     *               (v1  1 a     ) 
+     *               (v1 v2 a  a  )
+     *               (v1 v2 a  a a)
      *               where d denotes a diagonal element of the reduced matrix, a denotes an element of the original
      *               matrix that is unchanged, and vi denotes an element of the vector defining H(i).</p>
      */
@@ -21305,7 +21341,7 @@ loop4:
         } // else ((uplo != 'U') && (uplo != 'u'))
 
         return;
-    }
+    } // dlatrd
 
     /**
      * This is a port of the 10/14/93 DNRM2 function Original code written by Sven Hammarling, Nag Ltd. dnrm2 returns
@@ -21356,10 +21392,11 @@ loop4:
     } // dnrm2
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORG2L Original DORG2L created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
-     * dorg2l generates an m by n matrix Q with orthonormal columns, which is defined as the last n columns of a product
-     * of k elementary reflectors of order m Q = H[k-1] ... H[1] H[0] as returned by dgeqlf
+     * This is a port of version 3.1 LAPACK routine DORG2L Original DORG2L created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dorg2l generates an m by n real matrix Q with orthonormal columns, which is defined as the last n columns of a product
+     * of k elementary reflectors of order m
+     *  Q = H[k-1] ... H[1] H[0] as returned by dgeqlf
      *
      * @param  m     input int The number of rows of the matrix Q. m >= 0.
      * @param  n     input int The number of columns of the matrix Q. m >= n >= 0.
@@ -21368,10 +21405,12 @@ loop4:
      *               which defines the elementary reflector H[i], for i = 0, 1, ..., k-1, as returned by dgeqlf in the
      *               last k columns of its array argument A. On exit, the m by n matrix Q.
      * @param  lda   input int The first dimension of the array A. lda >= max(1,m).
-     * @param  tau   input double[] of dimension k tau[i] must contain the scalar factor of elementary reflector H[i],
+     * @param  tau   input double[] of dimension k tau[i] must contain the scalar factor of the elementary reflector H[i],
      *               as returned by dgeqlf.
      * @param  work  workspace double[] of dimension n.
-     * @param  info  output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
+     * @param  info  output int[] 
+     *               = 0: successful exit 
+     *               < 0: If info = -i, the i-th argument has an illegal value
      */
     private void dorg2l(int m, int n, int k, double[][] A, int lda, double[] tau, double[] work, int[] info) {
         int i;
@@ -21451,10 +21490,11 @@ loop4:
     } // dorg2l
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORG2R Original DORG2R created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
+     * This is a port of version 3.1 LAPACK routine DORG2R Original DORG2R created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dorg2r generates an m by n real matrix Q with orthonormal columns, which is defined as the first n columns of a
-     * product of k elementary reflectors of order m Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
+     * product of k elementary reflectors of order m
+     *  Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
      *
      * @param  m     input int The number of rows of the matrix Q. m >= 0.
      * @param  n     input int The number of columns of the matrix Q. m >= n >= 0.
@@ -21466,7 +21506,9 @@ loop4:
      * @param  tau   input double[] of dimension k. tau[i] must contain the scalar factor of the elementary reflector
      *               H[i], as returned by dgeqrf.
      * @param  work  workspace double[] of dimension n.
-     * @param  info  output int[] = 0: successful exit < 0: If info = -i, the i-th argument has an illegal value.
+     * @param  info  output int[] 
+     *               = 0: successful exit 
+     *               < 0: If info = -i, the i-th argument has an illegal value.
      */
     private void dorg2r(int m, int n, int k, double[][] A, int lda, double[] tau, double[] work, int[] info) {
         int i;
@@ -21568,10 +21610,11 @@ loop4:
     } // dorg2r
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DORGQL Original DORGQL created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dorgql
-     * generates the m-by-n real matrix Q with orthonormal columns, which is defined as the last n columns of a product
-     * of k elementary reflectors of order m Q = H[k-1] ... H[1] H[0] as returned by dgeqlf.
+     * This is a port of the version 3.1 LAPACK routine DORGQL Original DORGQL created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006 
+     * dorgql generates the m-by-n real matrix Q with orthonormal columns, which is defined as the last n columns of
+     * a product of k elementary reflectors of order m 
+     *  Q = H[k-1] ... H[1] H[0] as returned by dgeqlf.
      *
      * @param  m      input int The number of rows of the matrix Q. m >= 0.
      * @param  n      input int The number of columns of the matrix Q. m >= n >= 0.
@@ -21582,13 +21625,15 @@ loop4:
      * @param  lda    input int The first dimension of the array A. lda >= max(1,m).
      * @param  tau    input double[] of dimension k. tau[i] must contain the scalar factor of the elementary reflector
      *                H[i], as returned by dgeqlf.
-     * @param  work   workspace/output double[] of dimension lwork. On exit, if info[0] = 0, work[0] returns the optimal
-     *                lwork.
+     * @param  work   workspace/output double[] of dimension max(1, lwork). On exit, if info[0] = 0, work[0] returns
+     *                the optimal lwork.
      * @param  lwork  input int The dimension of the array work. lwork >= max(1,n). For optimum performance lwork >=
      *                n*nb, where nb is optimal blocksize. If lwork = -1, then a workspace query is assumed; the routine
      *                only calculates the optimal size of the work array, returns this value as the first entry of the
      *                work array, and no error message related to lwork is issued.
-     * @param  info   output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument has an illegal value
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info[0] = -i, the i-th argument has an illegal value
      */
     private void dorgql(int m, int n, int k, double[][] A, int lda, double[] tau, double[] work, int lwork,
                         int[] info) {
@@ -21602,7 +21647,7 @@ loop4:
         int L;
         int ldwork = n;
         int lwkopt;
-        int nb;
+        int nb = 1;
         int nbmin;
         int nx;
         double[][] array1;
@@ -21615,16 +21660,11 @@ loop4:
 
         // Test the input arguments
         info[0] = 0;
-        nb = ilaenv(1, "DORGQL", " ", m, n, k, -1);
-        lwkopt = Math.max(1, n) * nb;
-        work[0] = lwkopt;
-
         if (lwork == -1) {
             lquery = true;
         } else {
             lquery = false;
         }
-
         if (m < 0) {
             info[0] = -1;
         } else if ((n < 0) || (n > m)) {
@@ -21633,10 +21673,22 @@ loop4:
             info[0] = -3;
         } else if (lda < Math.max(1, m)) {
             info[0] = -5;
-        } else if ((lwork < Math.max(1, n)) && (!lquery)) {
-            info[0] = -8;
         }
-
+        
+        if (info[0] == 0) {
+            if (n == 0) {
+                lwkopt = 1;
+            }
+            else {
+                nb = ilaenv(1, "DORGQL", " ", m, n, k, -1);
+                lwkopt = n * nb;    
+            }
+            work[0] = lwkopt;
+            if ((lwork < Math.max(1, n)) && (!lquery)) {
+                info[0] = -8;
+            }
+        }
+        
         if (info[0] != 0) {
             MipavUtil.displayError("Error dorgql had info = " + info[0]);
 
@@ -21647,8 +21699,6 @@ loop4:
 
         // Quick return if possible
         if (n <= 0) {
-            work[0] = 1;
-
             return;
         }
 
@@ -21683,7 +21733,7 @@ loop4:
             // The last kk columns are handled by the block method
             kk = Math.min(k, ((k - nx + nb - 1) / nb) * nb);
 
-            // Set A(m-kk:m-1,0:n-kk-1)
+            // Set A(m-kk:m-1,0:n-kk-1) to zero.
             for (j = 0; j < (n - kk); j++) {
 
                 for (i = m - kk; i < m; i++) {
@@ -21780,27 +21830,30 @@ loop4:
     } // dorgql
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORGQR Original DORGQR created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dorgqr
-     * generates an m-by-n real matrix Q with orthonormal columns, which is defined as the first n columns of a product
-     * of k elementary reflectors of order m Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
+     * This is a port of version 3.1 LAPACK routine DORGQR Original DORGQR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dorgqr generates an m-by-n real matrix Q with orthonormal columns, which is defined as the first n columns
+     * of a product of k elementary reflectors of order m 
+     *  Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
      *
      * @param  m      input int The number of rows of the matrix Q. m >= 0.
      * @param  n      input int The number of columns of the matrix Q. m >= n >= 0.
      * @param  k      input int The number of elementary reflectors whose product defines the matrix Q. n >= k >= 0.
      * @param  A      input/output double[][] of dimensions lda by n. On entry, the i-th column must contain the vector
      *                which defines the elementary reflector H[i], for i = 0, 1, ..., k-1, as returned by dgeqrf in the
-     *                first k column of its array argument A. On exit, the m-by-n matrix Q.
+     *                first k columns of its array argument A. On exit, the m-by-n matrix Q.
      * @param  lda    input int The first dimension of the array A. lda >= max(1,m).
      * @param  tau    input double[] of dimension k. tau[i] must contain the scalar factor of the elementary reflector
      *                H[i], as returned by dgeqrf.
-     * @param  work   (worksplace/output) double[] of dimension lwork. On exit, if info[0] = 0, work[0] returns the
-     *                optimal lwork.
+     * @param  work   (worksplace/output) double[] of dimension max(1,lwork). 
+     *                On exit, if info[0] = 0, work[0] returns the optimal lwork.
      * @param  lwork  input int The dimension of the array work. lwork >= max(1,n). For optimum performance lwork >=
      *                n*nb, where nb is the optimal blocksize. If lwork = -1, then a workspace query is assumed; the
      *                routine only calculates the optimal size of the work array, returns this value as the first entry
      *                of the work array, and no error message related to lwork is issued.
-     * @param  info   output int[] = 0: successful exit < 0: If info = -i, the i-th argument has an illegal value
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info = -i, the i-th argument has an illegal value
      */
     private void dorgqr(int m, int n, int k, double[][] A, int lda, double[] tau, double[] work, int lwork,
                         int[] info) {
@@ -22037,26 +22090,31 @@ loop4:
     } // dorgqr
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORGTR Original DORGTR created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dorgtr
-     * generates a real orthogonal matrix Q which is defined as the product of n-1 elementary reflectors of order N, as
-     * returned by dsytrd: If uplo = 'U', Q = H[n-2] ... H[1] H[0] If uplo = 'L', Q = H[0] H[1] ... H[n-2]
+     * This is a port of version 3.1 LAPACK routine DORGTR Original DORGTR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dorgtr generates a real orthogonal matrix Q which is defined as the product of n-1 elementary reflectors
+     * of order N, as returned by dsytrd: 
+     * If uplo = 'U', Q = H[n-2] ... H[1] H[0] 
+     * If uplo = 'L', Q = H[0] H[1] ... H[n-2]
      *
-     * @param  uplo   input char = 'U': Upper triangle of A contains the elementary reflectors from dsytrd = 'L': Lower
-     *                triangle of A contains the elementary reflectors from dsytrd
+     * @param  uplo   input char \
+     *                = 'U': Upper triangle of A contains elementary reflectors from dsytrd 
+     *                = 'L': Lower triangle of A contains elementary reflectors from dsytrd
      * @param  n      input int The order of the matrix Q. n >= 0.
      * @param  A      input/output double[][] of dimension lda by n On entry, the vectors which define the elementary
      *                reflectors, as returned by dsytrd. On exit, the n-by-n orthogonal matrix Q.
      * @param  lda    input int The leading dimension of the array A. lda >= max(1,n).
      * @param  tau    input double[] of dimension n-1. tau[i] must contain the scalar factor of the elementary reflector
      *                H[i], as returned by dsytrd.
-     * @param  work   workspace/output double[] of dimension lwork. On exit, if info[0] = 0, work[0] returns the optimal
-     *                lwork.
+     * @param  work   workspace/output double[] of dimension max(1, lwork). 
+     *                On exit, if info[0] = 0, work[0] returns the optimal lwork.
      * @param  lwork  input int The dimension of the array work. lwork >= max(1,n-1). For optimum performance, lwork >=
      *                (n-1)*nb, where nb is the optimal blocksize. If lwork = -1, then a workspace query is assumed; the
      *                routine only caclulates the optimal size of the work array, returns this value as the first entry
      *                of the work array, and no error message related to lwork is issued.
-     * @param  info   output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info = -i, the i-th argument had an illegal value
      */
     private void dorgtr(char uplo, int n, double[][] A, int lda, double[] tau, double[] work, int lwork, int[] info) {
         boolean lquery;
