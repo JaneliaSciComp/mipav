@@ -65,8 +65,18 @@ public class FilenameSorter {
 
         substring2 = str2.substring(begin, end + 1);
 
-        Long long1 = new Long(Long.parseLong(substring1));
-        Long long2 = new Long(Long.parseLong(substring2));
+        Long long1;
+        Long long2;
+
+        try {
+            long1 = new Long(Long.parseLong(substring1));
+            long2 = new Long(Long.parseLong(substring2));
+        } catch (NumberFormatException nfe) {
+
+            // chop the string down to a size that we are sure can fit within a long variable
+            long1 = new Long(Long.parseLong(substring1.substring(substring1.length() - 18)));
+            long2 = new Long(Long.parseLong(substring2.substring(substring2.length() - 18)));
+        }
 
         return long1.compareTo(long2);
     }
