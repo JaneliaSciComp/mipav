@@ -3148,6 +3148,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         if (image.getNDims() == 2) {
             fileInfo = image.getFileInfo();
             fileInfo[0].setImageOrientation(orient);
+            fileInfo[0].setAxisOrientation(orientAxis);
         } else if (image.getNDims() == 3) {
             fileInfo = image.getFileInfo();
 
