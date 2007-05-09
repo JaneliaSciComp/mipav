@@ -2477,7 +2477,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     imageActive.notifyImageDisplayListeners(true, 1, RGBTB);
                 }
             }
-
+            
+            if ((getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
+                getActiveImage().getHistoRGBFrame().update();
+            } else if (getActiveImage().getHistoLUTFrame() != null) {
+                getActiveImage().getHistoLUTFrame().update();
+            }
+            
             if (!((mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                 setCursorMode(DEFAULT);
             }
