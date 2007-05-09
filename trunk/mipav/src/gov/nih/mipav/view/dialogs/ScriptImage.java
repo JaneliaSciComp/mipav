@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.model.file.RawImageInfo;
 
 
 public class ScriptImage {
@@ -18,6 +19,8 @@ public class ScriptImage {
 
     private ScriptVOI[] scriptVOIs;
 
+    private RawImageInfo rawInfo;
+    
     public ScriptImage(ModelImage modelImage) {
         isImageOpenedByScriptDialog = false;
         
@@ -105,6 +108,14 @@ public class ScriptImage {
     
     public boolean isMultiFile() {
     	return this.isMultiFile;
+    }
+    
+    public void setRawImageInfo(RawImageInfo rawInfo) {
+    	this.rawInfo = rawInfo;
+    }
+    
+    public RawImageInfo getRawImageInfo() {
+    	return this.rawInfo;
     }
     
 }
