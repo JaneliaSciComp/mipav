@@ -1884,12 +1884,14 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         aButton = new JButton("A");
         aButton.setFont(serif12B);
         aButton.addActionListener(al);
+        aButton.setToolTipText(srcImageA.getImageName());
         buttonPanel.add(aButton, gbc);
 
         gbc.gridx = 3;
         gbc.gridy = 0;
         bButton = new JButton("B");
         bButton.setFont(serif12B);
+        bButton.setToolTipText(srcImageB.getImageName());
         bButton.addActionListener(al);
         buttonPanel.add(bButton, gbc);
 
