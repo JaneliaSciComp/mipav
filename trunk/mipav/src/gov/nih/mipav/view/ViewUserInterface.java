@@ -2073,7 +2073,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
                     // imageFileNames.add(args[++i]);
 
-                } else if (arg.equalsIgnoreCase("-hide")) {
+                } else if (arg.equalsIgnoreCase("-r")) {
+                	//this is for specifying raw image parameters
+                	String rawString = args[++i];
+                	
+                	//set the openfileinfo's rawInfo variable (for raw instructions)
+                	((OpenFileInfo)imageList.lastElement()).setRawImageInfo(new RawImageInfo(rawString));
+                	
+                }  else if (arg.equalsIgnoreCase("-hide")) {
                     isAppFrameVisible = false;
                 } else if (arg.equalsIgnoreCase("-s")) {
 
@@ -3264,6 +3271,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 boolean isMulti = file.isMulti();
 
                 Preferences.debug("cmd line image file: " + fileName + "\n", Preferences.DEBUG_MINOR);
+                fileOpener.setRawImageInfo(file.getRawImageInfo());
                 fileOpener.open(fileName, isMulti, null);
 
                 imageNames.addElement(fileOpener.getImage().getImageName());
@@ -3388,6 +3396,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         /** Whether the file is opened as a multifile image. */
         private boolean isMulti = false;
 
+        /** Instructions for opening raw images*/
+        private RawImageInfo rawInfo = null;
+        
         /**
          * Creates a new OpenFileInfo object.
          *
@@ -3440,6 +3451,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
          */
         public boolean isMulti() {
             return isMulti;
+        }
+        
+        public RawImageInfo getRawImageInfo() {
+        	return this.rawInfo;
+        }
+        public void setRawImageInfo(RawImageInfo rI) {
+        	this.rawInfo = rI;
         }
     }
 }
