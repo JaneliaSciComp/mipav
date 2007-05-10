@@ -3108,9 +3108,16 @@ public class FileDicom extends FileDicomBase {
         writeShort((short) 0x10, endianess);
 
         if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
+            String imageTagVR;
+
+            if (fileInfo.getTagTable().get(IMAGE_TAG) != null) {
+                imageTagVR = fileInfo.getTagTable().get(IMAGE_TAG).getValueRepresentation();
+            } else {
+                imageTagVR = DicomDictionary.getVR(new FileDicomKey(IMAGE_TAG));
+            }
 
             // write VR and two reserved bytes
-            outputFile.writeBytes(fileInfo.getTagTable().get(IMAGE_TAG).getValueRepresentation());
+            outputFile.writeBytes(imageTagVR);
             outputFile.writeShort(0);
         }
 
