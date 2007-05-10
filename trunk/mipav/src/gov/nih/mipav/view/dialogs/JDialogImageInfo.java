@@ -299,17 +299,27 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             // System.err.println("image hist pane size: " + image.getHistoryPane().getSize());
             if (setVariables()) {
 
-                if (!newImageName.equals(image.getImageName())) {
-                    image.updateFileName(newImageName);
-                }
-
-                updateImageModality();
-                updateImageOrientation();
-                updateEndianess();
+            	if (tabbedPane.getSelectedIndex() == 0) {
+            		if (!newImageName.equals(image.getImageName())) {
+            			image.updateFileName(newImageName);
+            		}
+            		
+            		if (image.getFileInfo(0).getEndianess() != endianess) {
+            			updateEndianess();
+            		}
+            		if (image.getFileInfo(0).getModality() != modality) {
+            			updateImageModality();
+            		}
+            	}
+	            	
+            	
+                
+                
 
                 // only update the resolutions if the tab is selected
                 // otherwise might do an apply to all for specific slice/time resolutions
                 if (tabbedPane.getSelectedIndex() == 1) {
+                	updateImageOrientation();
                     updateResolInfo();
                 }
 
@@ -3078,35 +3088,20 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      */
     private void updateEndianess() {
 
-        int[] destExtents;
-
         if (image.getNDims() == 2) { // source image is 2D
-
-            destExtents = new int[2];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
 
             image.getFileInfo(0).setEndianess(endianess);
         } else if (image.getNDims() == 3) {
-            destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0];
-            destExtents[1] = image.getExtents()[1];
-            destExtents[2] = image.getExtents()[2];
-
             for (int n = 0; n < image.getExtents()[2]; n++) {
                 image.getFileInfo(n).setEndianess(endianess);
             }
         } else {
-            destExtents = new int[4];
-            destExtents[0] = image.getExtents()[0];
-            destExtents[1] = image.getExtents()[1];
-            destExtents[2] = image.getExtents()[2];
-            destExtents[3] = image.getExtents()[3];
 
             for (int n = 0; n < (image.getExtents()[2] * image.getExtents()[3]); n++) {
                 image.getFileInfo(n).setEndianess(endianess);
             }
         }
+        ScriptRecorder.getReference().addLine(new ActionChangeEndianess(image));
     }
 
     /**
@@ -3137,6 +3132,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 fileInfo[i].setModality(modality);
             }
         }
+        ScriptRecorder.getReference().addLine(new ActionChangeModality(image));
     }
 
     /**
@@ -3171,12 +3167,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 fileInfo[i].setAxisOrientation(orientAxis);
             }
         }
-
-        if (tabbedPane.getSelectedIndex() == 2) {
-
-            // if script recording, show the change of image orientation/axis orientations
-            ScriptRecorder.getReference().addLine(new ActionChangeOrientations(image));
-        }
+	
+        // if script recording, show the change of image orientation/axis orientations
+        ScriptRecorder.getReference().addLine(new ActionChangeOrientations(image));
     }
 
     /**
