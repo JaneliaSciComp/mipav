@@ -199,10 +199,11 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
                 for (int i = 0; i < saveKeys.length; i++) {
                     FileDicomKey key = (FileDicomKey) saveKeys[i];
-                    newTagList.add(new DicomTagIdentifier(key, (FileDicomTag) hashtable.get(key)));
+                    newTagList.add(new DicomTagIdentifier(key, (FileDicomTagInfo) hashtable.get(key)));
                 }
 
-                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY, getSaveTagFilePanel().getSelectedFile().getPath());
+                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY,
+                                        getSaveTagFilePanel().getSelectedFile().getPath());
             }
         } catch (NullPointerException noFile) {
 
@@ -237,7 +238,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
 
         for (int i = 0; i < dictionaryKeyList.length; i++) {
             FileDicomKey key = (FileDicomKey) dictionaryKeyList[i];
-            dicomList.add(new DicomTagIdentifier(key, (FileDicomTag) tagsTable.get(key)));
+            dicomList.add(new DicomTagIdentifier(key, (FileDicomTagInfo) tagsTable.get(key)));
         }
 
         return (dicomList);
@@ -286,7 +287,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
                                   "for converting DICOM-to-XML images to the master " + "dicom dictionary, \"" +
                                   DicomDictionary.SUBSET_DICTIONARY_FILENAME + "\"." + "  No file was saved.\n", 2);
             } else {
-                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY, getSaveTagFilePanel().getSelectedFile().getPath());
+                Preferences.setProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY,
+                                        getSaveTagFilePanel().getSelectedFile().getPath());
 
                 if (!getSaveTagFilePanel().getSelectedFile().exists()) {
 
@@ -331,7 +333,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
         protected FileDicomKey key;
 
         /** The Dicom Tag, held here to return the name of the tag, and when we need the value when processing. */
-        protected FileDicomTag tag;
+        protected FileDicomTagInfo tag;
 
         /**
          * Creates a new DicomTagIdentifier object.
@@ -339,7 +341,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
          * @param  k  DOCUMENT ME!
          * @param  t  DOCUMENT ME!
          */
-        DicomTagIdentifier(FileDicomKey k, FileDicomTag t) {
+        DicomTagIdentifier(FileDicomKey k, FileDicomTagInfo t) {
             key = k;
             tag = t;
         }
@@ -358,7 +360,7 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
          *
          * @return  The dicom tag with Group and Element number represented by the key.
          */
-        public FileDicomTag getTag() {
+        public FileDicomTagInfo getTag() {
             return tag;
         }
 
