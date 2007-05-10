@@ -1368,17 +1368,17 @@ public class JDialogRunScriptView implements ActionListener, ListSelectionListen
             Point pt = dtde.getLocation();
 
             if (voiList.contains(pt)) {
-                System.err.println("VOI");
+          //      System.err.println("VOI");
             } else if (imageList.contains(pt)) {
-                System.err.println("IMAGE");
+            //    System.err.println("IMAGE");
             }
 
 
             if ((dtde.getSource().equals(imageList) && (dropSource == VOI_DROP)) ||
                     (dtde.getSource().equals(voiList) && (dropSource == IMAGE_DROP))) {
-                System.err.println("different source and target");
+           //     System.err.println("different source and target");
             } else {
-                System.err.println("GOT A DROP!");
+            //    System.err.println("GOT A DROP!");
             }
 
 
