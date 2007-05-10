@@ -1,245 +1,367 @@
 package gov.nih.mipav.model.srb;
 
-import java.util.Vector;
-import java.util.List;
 
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
-import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JTextField;
-
-
-import edu.sdsc.grid.io.FileFactory;
-import edu.sdsc.grid.io.GeneralFile;
-import edu.sdsc.grid.io.GeneralFileSystem;
-import edu.sdsc.grid.io.GeneralRandomAccessFile;
-import edu.sdsc.grid.io.local.LocalFile;
-import edu.sdsc.grid.io.local.LocalFileSystem;
-import edu.sdsc.grid.io.local.LocalRandomAccessFile;
-import edu.sdsc.grid.io.srb.SRBFile;
-import edu.sdsc.grid.io.srb.SRBFileSystem;
-import edu.sdsc.grid.io.srb.SRBRandomAccessFile;
-import gov.nih.mipav.model.file.FileBase;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileWriteOptions;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.components.PanelManager;
-import gov.nih.mipav.view.components.WidgetFactory;
-import gov.nih.mipav.view.srb.JDialogLoginSRB;
-import gov.nih.mipav.view.srb.JargonFileChooser;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
+import gov.nih.mipav.view.srb.*;
+
+import edu.sdsc.grid.io.*;
+import edu.sdsc.grid.io.local.*;
+import edu.sdsc.grid.io.srb.*;
+
+import java.awt.*;
+import java.awt.event.*;
+
+import java.io.*;
+
+import java.net.*;
+
+import java.util.*;
+import java.util.List;
+
+import javax.swing.*;
+
+
+/**
+ * DOCUMENT ME!
+ */
 public class SRBFileTransferer implements FileTransferable, Runnable, ActionListener, WindowListener {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     public static final String[] SCHEMAS = { "file", "srb" };
+
+    /** DOCUMENT ME! */
     public static final String TRANSFER_MODE_SEQUENTIAL = "sequential";
-    public static final String TRANSFER_MODE_PARELLEL = "parellel";
-    
-    private static final String DEFAULT_TEMP_DIR_BASE = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "srb-temp" + File.separator;
-    
-    /**
-     * The progress bar used to indicate the progress of reading or writing.
-     */
+
+    /** DOCUMENT ME! */
+    public static final String TRANSFER_MODE_PARALLEL = "parallel";
+
+    /** DOCUMENT ME! */
+    private static final String DEFAULT_TEMP_DIR_BASE = System.getProperty("user.home") + File.separator + "mipav" +
+                                                        File.separator + "srb-temp" + File.separator;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** The progress bar used to indicate the progress of reading or writing. */
     private ViewJProgressBar progressBar;
 
-    /**
-     * The location of the progress bar.
-     */
+    /** The location of the progress bar. */
     private Point progressBarLocation;
 
-    /**
-     * The flag to indicate the visibility of the progress bar.
-     */
+    /** The flag to indicate the visibility of the progress bar. */
     private boolean progressBarVisible = true;
-    
-    /**
-     * The list of the source file names.
-     */
+
+    /** The list of the source file names. */
     private List sourceFileNameList;
-    
-    /**
-     * The source file system.
-     */
-    private GeneralFileSystem sourceFileSystem;
-    
+
+    /** DOCUMENT ME! */
     private GeneralFile[] sourceFiles;
-    
-    /**
-     * The target file system.
-     */
-    private GeneralFileSystem targetFileSystem;
-    
-    private GeneralFile[] targetFiles;
-    /**
-     * The target directory the files will be transferred to.
-     */
+
+    /** The source file system. */
+    private GeneralFileSystem sourceFileSystem;
+
+    /** The target directory the files will be transferred to. */
     private String targetDir;
-    
-    /**
-     * Used to control the transferring mode.
-     */
-   
-    private boolean threadSeperated;
+
+    /** DOCUMENT ME! */
+    private GeneralFile[] targetFiles;
+
+    /** The target file system. */
+    private GeneralFileSystem targetFileSystem;
+
+    /** DOCUMENT ME! */
     private File tempDir;
-    public SRBFileTransferer(){
+
+    /** Used to control the transferring mode. */
+
+    private boolean threadSeperated;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new SRBFileTransferer object.
+     */
+    public SRBFileTransferer() {
         threadSeperated = true;
     }
-    
-    public boolean isProgressBarVisible(){
-        return progressBarVisible;
-    }
-    
-    public void setProgressBarVisible(boolean visible){
-        this.progressBarVisible = visible;
-    }
-    
-    public void setProgressBarLocation(Point location){
-        this.progressBarLocation = location;
-    }
-    
-    public boolean isThreadSeperated(){
-        return threadSeperated;
-    }
-    
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     * Set 
-     * @param threadSeperated
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
      */
-    public void setThreadSeperated(boolean threadSeperated){
-        this.threadSeperated = threadSeperated;
+    public void actionPerformed(ActionEvent e) {
+
+        if (progressBar != null) {
+            progressBar.dispose();
+        }
     }
-    
-    /**
-     * Returns the temporary directory created randomly under the temporary
-     * base directory.
-     * 
-     * @returnthe temporary directory created randomly under the temporary
-     *            base directory.
-     */
-    public File getTempDir(){
-        return tempDir;
-    }
-    
+
     /**
      * Creates a random sub directory under the temporary base directory.
      */
-    public void createTempDir(){
+    public void createTempDir() {
         this.tempDir = SRBUtility.createRandomLocalDir(getTempDirBase());
         this.tempDir.deleteOnExit();
     }
-    
+
     /**
-     * Returns the temporary base directory which will be used to hold
-     * memory images. if the temporary base directory has been setted up,
-     * then this temporary base directory will be used. Otherwise the
-     * default temporary base directy will be used.
-     * 
-     * @return  the temporary base directory.
+     * Saves the memory image to the local temporary files and returns the file name list.
+     *
+     * @param   image  the memory image.
+     *
+     * @return  the saved file name list of this memory image.
      */
-    public File getTempDirBase(){
-        String tempDirBaseName = Preferences.getSRBTempDir();
-        if(tempDirBaseName == null){
-            tempDirBaseName = DEFAULT_TEMP_DIR_BASE;
-        }
-        File tempDirBase = new File(tempDirBaseName);
-        if(!tempDirBase.exists()){
-            tempDirBase.mkdirs();
-        }
-        return tempDirBase;
+    public GeneralFile[] getFileList(ModelImage image) {
+        this.createTempDir();
+
+        return SRBUtility.getFileList(image, this.getTempDir().getAbsolutePath());
     }
-    
+
     /**
-     * Returns the source file list.
-     */
-    public GeneralFile[] getSourceFiles(){
-        return sourceFiles;
-    }
-    
-    /**
-     * Sets the source file list to new file list. 
-     * @param sourceFiles  the new source file list.
-     */
-    public void setSourceFiles(GeneralFile[] sourceFiles){
-        this.sourceFiles = sourceFiles;
-    }
-    
-    /**
-     * Returns the target files which can't be directories.
-     */
-    public GeneralFile[] getTargetFiles(){
-        return targetFiles;
-    }
-    
-    /**
-     * Sets the target files which can not be directories.
-     * @param targetFiles   the target files.
-     */
-    public void setTargetFiles(GeneralFile[] targetFiles){
-        this.targetFiles = targetFiles;
-    }
-    
-    /**
-     * Returns the source file name list which was selected by user. 
-     * @return the source file name list which was selected by user.
+     * Returns the source file name list which was selected by user.
+     *
+     * @return  the source file name list which was selected by user.
      */
     public List getSourceFileNameList() {
         return sourceFileNameList;
     }
 
     /**
-     * Sets the source file name list which includes the directory. 
-     * @param sourceFileNameList the source file name list.
+     * Returns the source file list.
+     *
+     * @return  DOCUMENT ME!
      */
-    public void setSourceFileNameList(List sourceFileNameList){
-        this.sourceFileNameList = sourceFileNameList;
+    public GeneralFile[] getSourceFiles() {
+        return sourceFiles;
     }
-    
+
+    /**
+     * Returns the target files which can't be directories.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public GeneralFile[] getTargetFiles() {
+        return targetFiles;
+    }
+
+    /**
+     * Returns the temporary directory created randomly under the temporary base directory.
+     *
+     * @return     DOCUMENT ME!
+     *
+     * @returnthe  temporary directory created randomly under the temporary base directory.
+     */
+    public File getTempDir() {
+        return tempDir;
+    }
+
+    /**
+     * Returns the temporary base directory which will be used to hold memory images. if the temporary base directory
+     * has been setted up, then this temporary base directory will be used. Otherwise the default temporary base directy
+     * will be used.
+     *
+     * @return  the temporary base directory.
+     */
+    public File getTempDirBase() {
+        String tempDirBaseName = Preferences.getSRBTempDir();
+
+        if (tempDirBaseName == null) {
+            tempDirBaseName = DEFAULT_TEMP_DIR_BASE;
+        }
+
+        File tempDirBase = new File(tempDirBaseName);
+
+        if (!tempDirBase.exists()) {
+            tempDirBase.mkdirs();
+        }
+
+        return tempDirBase;
+    }
+
     /**
      * Returns the transfer mode while transferring files.
-     * @return the transfer mode while transferring files.
+     *
+     * @return  the transfer mode while transferring files.
      */
-    public String getTransferMode(){
+    public String getTransferMode() {
         String transferMode = Preferences.getSRBTransferMode();
-        if(transferMode == null){
+
+        if (transferMode == null) {
             transferMode = TRANSFER_MODE_SEQUENTIAL;
         }
+
         return transferMode;
     }
-    
+
     /**
-     * According to the uri schema, uses appropriate file chooser to select the
-     * source files.
-     * 
-     * @param schema  the uri schema.
-     * @return        the user selected source files.
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
      */
-    public GeneralFile[] selectSourceFiles(String schema){
-        if(schema == null ||schema.length() == 0){
+    public boolean isProgressBarVisible() {
+        return progressBarVisible;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean isThreadSeperated() {
+        return threadSeperated;
+    }
+
+    /**
+     * Recursively creates the file list according to the source file and target directory information.
+     *
+     * @param  sourceFile      the source file.
+     * @param  targetDir       the target directory.
+     * @param  sourceRootDir   the source directory equivalent to the target directory which is selected by user.
+     * @param  sourceFileList  the source file list which need to be transferred.
+     * @param  targetFileList  the target file list which will be created.
+     */
+    public void recursivelyCreateFileList(GeneralFile sourceFile, GeneralFile targetDir, GeneralFile sourceRootDir,
+                                          Vector sourceFileList, Vector targetFileList) {
+
+        if ((sourceFile == null) || (targetDir == null) || !targetDir.isDirectory()) {
+            return;
+        }
+
+        if (sourceFile.isDirectory()) {
+            GeneralFile[] childrenFiles = sourceFile.listFiles();
+
+            for (int i = 0; i < childrenFiles.length; i++) {
+
+                if (childrenFiles[i].isDirectory()) {
+                    recursivelyCreateFileList(childrenFiles[i], targetDir, sourceRootDir, sourceFileList,
+                                              targetFileList);
+                } else {
+                    sourceFileList.add(childrenFiles[i]);
+
+                    GeneralFile newTargetFile = FileFactory.newFile(targetDir,
+                                                                    childrenFiles[i].getPath().substring(sourceRootDir.getPath().length()));
+
+                    SRBUtility.recursivelyMakeDir(newTargetFile.getParentFile());
+                    targetFileList.add(newTargetFile);
+                }
+            }
+
+        } else {
+            sourceFileList.add(sourceFile);
+
+            GeneralFile newTargetFile = FileFactory.newFile(targetDir,
+                                                            sourceFile.getPath().substring(sourceRootDir.getPath().length()));
+
+            SRBUtility.recursivelyMakeDir(newTargetFile.getParentFile());
+            targetFileList.add(newTargetFile);
+        }
+    }
+
+    /**
+     * @see  Runnable#run()
+     */
+    public void run() {
+        transfer(sourceFiles, targetFiles);
+    }
+
+
+    /**
+     * Saves the memory image to the srb server, the target directory will be selected by the user.
+     *
+     * @param  image  the momery image.
+     */
+    public void saveToSRB(ModelImage image) {
+        GeneralFile targetDir = selectTargetDirectory(SRBFileTransferer.SCHEMAS[1]);
+
+        if (targetDir == null) {
+            return;
+        }
+
+        saveToSRB(image, targetDir);
+    }
+
+    /**
+     * Saves the memory image to the target directory of the SRB server.
+     *
+     * @param  image      the memory image.
+     * @param  targetDir  the target directory of the SRB server.
+     */
+    public void saveToSRB(ModelImage image, String targetDir) {
+        GeneralFile[] sourceFiles = getFileList(image);
+
+        if (sourceFiles == null) {
+            return;
+        }
+
+        /**
+         * Copies the local temporary files to the directory of the SRB server.
+         */
+        GeneralFile[] targetFiles = SRBUtility.createTargetFiles(FileFactory.newFile(JDialogLoginSRB.srbFileSystem,
+                                                                                     targetDir),
+                                                                 sourceFiles[0].getParentFile(), sourceFiles);
+
+        for (int i = 0; i < sourceFiles.length; i++) {
+            LocalFile lf = (LocalFile) sourceFiles[i];
+            lf.deleteOnExit();
+        }
+
+        setSourceFiles(sourceFiles);
+        setTargetFiles(targetFiles);
+        setThreadSeperated(true);
+        new Thread(this).start();
+    }
+
+    /**
+     * Saves the memory image to the target directory of the SRB server.
+     *
+     * @param  image      the memory image.
+     * @param  targetDir  the target directory of the SRB server.
+     */
+    public void saveToSRB(ModelImage image, GeneralFile targetDir) {
+        GeneralFile[] sourceFiles = getFileList(image);
+
+        if (sourceFiles == null) {
+            return;
+        }
+
+        /**
+         * Copies the local temporary files to the directory of the SRB server.
+         */
+        GeneralFile[] targetFiles = SRBUtility.createTargetFiles(targetDir, sourceFiles[0].getParentFile(),
+                                                                 sourceFiles);
+
+        for (int i = 0; i < sourceFiles.length; i++) {
+            LocalFile lf = (LocalFile) sourceFiles[i];
+            lf.deleteOnExit();
+        }
+
+        setSourceFiles(sourceFiles);
+        setTargetFiles(targetFiles);
+        setThreadSeperated(true);
+        new Thread(this).start();
+    }
+
+    /**
+     * According to the uri schema, uses appropriate file chooser to select the source files.
+     *
+     * @param   schema  the uri schema.
+     *
+     * @return  the user selected source files.
+     */
+    public GeneralFile[] selectSourceFiles(String schema) {
+
+        if ((schema == null) || (schema.length() == 0)) {
             return null;
         }
-        if(schema.equals(SCHEMAS[0])){
+
+        if (schema.equals(SCHEMAS[0])) {
 
             /**
              * Uses the JFileChooser to retrieve the file that the user wants to open.
@@ -253,22 +375,28 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
 
             if (returnValue == JargonFileChooser.APPROVE_OPTION) {
                 File[] files = chooser.getSelectedFiles();
-                if(files != null){
+
+                if (files != null) {
                     GeneralFile[] sourceFiles = new GeneralFile[files.length];
-                    for(int i = 0; i < files.length; i++){
+
+                    for (int i = 0; i < files.length; i++) {
                         sourceFiles[i] = new LocalFile(files[i]);
                     }
+
                     return sourceFiles;
                 }
-            }            
+            }
+
             return null;
-        }else if(schema.equals(SCHEMAS[1])){
+        } else if (schema.equals(SCHEMAS[1])) {
+
             /**
              * If the srbFileSystem was not set up, then uses the JDialogLoginSRB dialog to retrieve information to
              * construct SRBFileSystem instance.
              */
             if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
                 new JDialogLoginSRB("Connect to");
+
                 if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
                     return null;
                 }
@@ -301,23 +429,26 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
 
             if (returnValue == JargonFileChooser.APPROVE_OPTION) {
                 return chooser.getSelectedFiles();
-            }            
+            }
         }
+
         return null;
     }
-    
+
     /**
-     * According to the schema, uses appropriate file chooser to select the
-     * target directory.
-     * 
-     * @param schema   the uri schema.
-     * @return         the user selected target directory.
+     * According to the schema, uses appropriate file chooser to select the target directory.
+     *
+     * @param   schema  the uri schema.
+     *
+     * @return  the user selected target directory.
      */
     public GeneralFile selectTargetDirectory(String schema) {
-        if(schema == null ||schema.length() == 0){
+
+        if ((schema == null) || (schema.length() == 0)) {
             return null;
         }
-        if(schema.equals(SCHEMAS[0])){
+
+        if (schema.equals(SCHEMAS[0])) {
 
             /**
              * Uses the JargonFileChooser to retrieve the file that the user wants to open.
@@ -331,8 +462,9 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
 
             if (returnValue == JargonFileChooser.APPROVE_OPTION) {
                 return new LocalFile(chooser.getSelectedFile());
-            }            
-        }else if(schema.equals(SCHEMAS[1])){
+            }
+        } else if (schema.equals(SCHEMAS[1])) {
+
             /**
              * If the srbFileSystem was not set up, then uses the JDialogLoginSRB dialog to retrieve information to
              * construct SRBFileSystem instance.
@@ -371,44 +503,108 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
 
             if (returnValue == JargonFileChooser.APPROVE_OPTION) {
                 return chooser.getSelectedFile();
-            }            
+            }
         }
+
         return null;
     }
 
     /**
-     * Sets the target directory to the new directory.
-     * @param targetDir  the new directory.
+     * DOCUMENT ME!
+     *
+     * @param  location  DOCUMENT ME!
      */
-    public void setTargetDir(String targetDir){
+    public void setProgressBarLocation(Point location) {
+        this.progressBarLocation = location;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  visible  DOCUMENT ME!
+     */
+    public void setProgressBarVisible(boolean visible) {
+        this.progressBarVisible = visible;
+    }
+
+    /**
+     * Sets the source file name list which includes the directory.
+     *
+     * @param  sourceFileNameList  the source file name list.
+     */
+    public void setSourceFileNameList(List sourceFileNameList) {
+        this.sourceFileNameList = sourceFileNameList;
+    }
+
+    /**
+     * Sets the source file list to new file list.
+     *
+     * @param  sourceFiles  the new source file list.
+     */
+    public void setSourceFiles(GeneralFile[] sourceFiles) {
+        this.sourceFiles = sourceFiles;
+    }
+
+    /**
+     * Sets the target directory to the new directory.
+     *
+     * @param  targetDir  the new directory.
+     */
+    public void setTargetDir(String targetDir) {
         this.targetDir = targetDir;
     }
-    
+
+    /**
+     * Sets the target files which can not be directories.
+     *
+     * @param  targetFiles  the target files.
+     */
+    public void setTargetFiles(GeneralFile[] targetFiles) {
+        this.targetFiles = targetFiles;
+    }
+
+    /**
+     * Set.
+     *
+     * @param  threadSeperated  DOCUMENT ME!
+     */
+    public void setThreadSeperated(boolean threadSeperated) {
+        this.threadSeperated = threadSeperated;
+    }
+
     /**
      * Transfers the source file to the target file.
-     * 
-     * @param sourceFile the source file
-     * @param targetFile the target file
-     * @return true if the transfer succeeded.
+     *
+     * @param   sourceFile  the source file
+     * @param   targetFile  the target file
+     *
+     * @return  true if the transfer succeeded.
      */
     public boolean transfer(GeneralFile sourceFile, GeneralFile targetFile) {
-        if(sourceFile == null || targetFile == null){
+
+        if ((sourceFile == null) || (targetFile == null)) {
             return false;
         }
+
         GeneralFile targetDir = targetFile.getParentFile();
-        if(!targetDir.exists()){
+
+        if (!targetDir.exists()) {
             SRBUtility.recursivelyMakeDir(targetDir);
         }
-        if(getTransferMode().equals(TRANSFER_MODE_PARELLEL)){
-            try{
+
+        if (getTransferMode().equals(TRANSFER_MODE_PARALLEL)) {
+
+            try {
                 sourceFile.copyTo(targetFile);
+
                 return true;
-            }catch(IOException e){
+            } catch (IOException e) {
                 e.printStackTrace(System.err);
                 MipavUtil.displayError("File I/O error: " + e.getMessage());
+
                 return false;
             }
-        }else{
+        } else {
             GeneralRandomAccessFile sourceRandomAccessFile;
             GeneralRandomAccessFile destinationRandomAccessFile;
 
@@ -427,7 +623,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                 }
 
                 long length = sourceRandomAccessFile.length();
-                byte[] buffer = new byte[(int)length];
+                byte[] buffer = new byte[(int) length];
                 sourceRandomAccessFile.read(buffer, 0, (int) length);
                 destinationRandomAccessFile.write(buffer, 0, (int) length);
                 sourceRandomAccessFile.close();
@@ -439,7 +635,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                 MipavUtil.displayError("File I/O error: " + e.getMessage());
 
                 return false;
-            } catch(OutOfMemoryError e){
+            } catch (OutOfMemoryError e) {
                 e.printStackTrace(System.err);
                 MipavUtil.displayError("Out of memory error: " + e.getMessage());
 
@@ -447,111 +643,45 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
             }
         }
     }
-    
-    public void transferFiles(List sourceFileNames, String targetDir){
-        if(sourceFileNames == null || targetDir == null){
-            return;
-        }
-        
-        Vector sourceFileList = new Vector();
-        Vector targetFileList = new Vector();
-        
-        int index = 0;
-        for(int i = 0; i < sourceFileNames.size(); i++){
-            GeneralFile sourceFile = FileFactory.newFile(sourceFileSystem,
-                    (String) sourceFileNames.get(i));
-            if(sourceFile.isFile()){
-                sourceFileList.add(index, sourceFile);
-                GeneralFile targetFile = FileFactory.newFile(targetFileSystem, targetDir, sourceFile.getName());
-                targetFileList.add(index++, targetFile);
-            }else{
-                SRBUtility.retrieveFileList(sourceFile, sourceFileList);
-                for(int j = index; j < sourceFileList.size(); j++){
-                    String baseSourceDir = SRBUtility.getParentDirectory((String) sourceFileNames.get(i), SRBUtility.getPathSeparator(sourceFileSystem));
-                    GeneralFile targetFile = createTargetFile(targetDir, baseSourceDir, ((GeneralFile)sourceFileList.get(j)).getAbsolutePath());
-                    targetFileList.add(targetFile);
-                }
-            }
-        }
-        
-        sourceFiles = new GeneralFile[sourceFileList.size()];
-        targetFiles = new GeneralFile[targetFileList.size()];
-        for(int i = 0; i < sourceFileList.size(); i++){
-            sourceFiles[i] = (GeneralFile)sourceFileList.get(i);
-            targetFiles[i] = (GeneralFile)targetFileList.get(i);
-        }
-        new Thread(this).start();
-        
-    }
-    
+
     /**
-     * First obtains the relative file name of the source file name related to the given
-     * the source base directory name, then adjusts the path separator based on 
-     * their belonged file system, finally returns the file which used the target
-     * directory as its parent directory and uses this relative file name its
-     * file name.
-     *  
-     * @param targetDirName      the target directory name.
-     * @param baseSourceDirName  the source base directory.
-     * @param sourceFileName     the source file name.
-     * @return                   the target file consisted of the target directory
-     *                           and relative file name of the source file name related
-     *                           to the source base directory.
-     */
-    private GeneralFile createTargetFile(String targetDirName,
-            String baseSourceDirName, String sourceFileName){
-        if(targetDirName == null || baseSourceDirName == null || sourceFileName == null){
-            return null;
-        }
-        
-        if(sourceFileSystem == null || targetFileSystem == null){
-            return null;
-        }
-        
-        String sourcePathSeparator = SRBUtility.getPathSeparator(sourceFileSystem);
-        String targetPathSeparator = SRBUtility.getPathSeparator(targetFileSystem);
-        if(sourceFileName.indexOf(baseSourceDirName) != 0){
-            return null;
-        }
-        
-        String targetFileName = targetDirName + sourceFileName.substring(baseSourceDirName.length());
-        if(!sourcePathSeparator.equals(targetPathSeparator)){
-            targetFileName = SRBUtility.replacePathSeparator(targetFileName, sourcePathSeparator, targetPathSeparator);
-        }
-        return FileFactory.newFile(targetFileSystem, targetFileName);
-    }
-    
-    /**
-     * @see FileTransferable#transfer(GeneralFile[], GeneralFile[])
+     * @see  FileTransferable#transfer(GeneralFile[], GeneralFile[])
      */
     public boolean transfer(GeneralFile[] sourceFiles, GeneralFile[] targetFiles) {
         long startTime = System.currentTimeMillis();
-        if(sourceFiles == null || targetFiles == null){
+
+        if ((sourceFiles == null) || (targetFiles == null)) {
             return false;
         }
-        
-        if(sourceFiles.length != targetFiles.length){
+
+        if (sourceFiles.length != targetFiles.length) {
             return false;
         }
+
         /**
          * Builds the progress bar for the file transferring.
          */
-        if(isProgressBarVisible()){
+        if (isProgressBarVisible()) {
             buildProgressBar("Transfering " + sourceFiles[0].getName(), "Transfering files ...", 0, 100);
         }
+
         int mod = sourceFiles.length / 100;
-        if(mod < 1){
+
+        if (mod < 1) {
             mod = 1;
         }
-        
+
         initProgressBar();
-        
+
         boolean ret = true;
-        for(int i = 0; i < sourceFiles.length; i++){
+
+        for (int i = 0; i < sourceFiles.length; i++) {
+
             if ((((i) % mod) == 0)) {
                 progressBar.setTitle("Transfering " + sourceFiles[i].getName());
                 progressBar.updateValue(Math.round(((float) i / sourceFiles.length) * 100), isThreadSeperated());
             }
+
             ret |= transfer(sourceFiles[i], targetFiles[i]);
         }
 
@@ -562,92 +692,131 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         } catch (InterruptedException e) { }
 
         disposeProgressBar();
+
         long spentTime = System.currentTimeMillis() - startTime;
         Preferences.debug("The time spent on the file transfer is " + spentTime);
         System.out.println("The time spent on the file transfer is " + spentTime);
+
         return ret;
     }
 
     /**
      * A top level function to accomplish the file transfer scenarios.
      */
-    public void transferFiles(){
+    public void transferFiles() {
         new JDialogPickFiles(null);
     }
-    
-    /**
-     * @see Runnable#run()
-     */
-    public void run() {
-        transfer(sourceFiles, targetFiles);
-    }
 
     /**
-     * Saves the memory image to the target directory of the SRB server.
-     * @param image            the memory image.
-     * @param targetDir        the target directory of the SRB server.
+     * DOCUMENT ME!
+     *
+     * @param  sourceFileNames  DOCUMENT ME!
+     * @param  targetDir        DOCUMENT ME!
      */
-    public void saveToSRB(ModelImage image, String targetDir){
-        GeneralFile[] sourceFiles = getFileList(image);
-        if(sourceFiles == null){
+    public void transferFiles(List sourceFileNames, String targetDir) {
+
+        if ((sourceFileNames == null) || (targetDir == null)) {
             return;
         }
-        /**
-         * Copies the local temporary files to the directory of the SRB server.
-         */
-        GeneralFile[] targetFiles = SRBUtility.createTargetFiles(FileFactory.newFile(JDialogLoginSRB.srbFileSystem, targetDir),
-                sourceFiles[0].getParentFile(),
-                sourceFiles);
 
-        for (int i = 0; i < sourceFiles.length; i++) {
-            LocalFile lf = (LocalFile) sourceFiles[i];
-            lf.deleteOnExit();
+        Vector sourceFileList = new Vector();
+        Vector targetFileList = new Vector();
+
+        int index = 0;
+
+        for (int i = 0; i < sourceFileNames.size(); i++) {
+            GeneralFile sourceFile = FileFactory.newFile(sourceFileSystem, (String) sourceFileNames.get(i));
+
+            if (sourceFile.isFile()) {
+                sourceFileList.add(index, sourceFile);
+
+                GeneralFile targetFile = FileFactory.newFile(targetFileSystem, targetDir, sourceFile.getName());
+                targetFileList.add(index++, targetFile);
+            } else {
+                SRBUtility.retrieveFileList(sourceFile, sourceFileList);
+
+                for (int j = index; j < sourceFileList.size(); j++) {
+                    String baseSourceDir = SRBUtility.getParentDirectory((String) sourceFileNames.get(i),
+                                                                         SRBUtility.getPathSeparator(sourceFileSystem));
+                    GeneralFile targetFile = createTargetFile(targetDir, baseSourceDir,
+                                                              ((GeneralFile) sourceFileList.get(j)).getAbsolutePath());
+                    targetFileList.add(targetFile);
+                }
+            }
         }
-        setSourceFiles(sourceFiles);
-        setTargetFiles(targetFiles);
-        setThreadSeperated(true);
+
+        sourceFiles = new GeneralFile[sourceFileList.size()];
+        targetFiles = new GeneralFile[targetFileList.size()];
+
+        for (int i = 0; i < sourceFileList.size(); i++) {
+            sourceFiles[i] = (GeneralFile) sourceFileList.get(i);
+            targetFiles[i] = (GeneralFile) targetFileList.get(i);
+        }
+
         new Thread(this).start();
-    }
-    
-    /**
-     * Saves the memory image to the target directory of the SRB server.
-     * @param image            the memory image.
-     * @param targetDir        the target directory of the SRB server.
-     */
-    public void saveToSRB(ModelImage image, GeneralFile targetDir){
-        GeneralFile[] sourceFiles = getFileList(image);
-        if(sourceFiles == null){
-            return;
-        }
-        /**
-         * Copies the local temporary files to the directory of the SRB server.
-         */
-        GeneralFile[] targetFiles = SRBUtility.createTargetFiles(targetDir,
-                sourceFiles[0].getParentFile(), sourceFiles);
 
-        for (int i = 0; i < sourceFiles.length; i++) {
-            LocalFile lf = (LocalFile) sourceFiles[i];
-            lf.deleteOnExit();
-        }
-        setSourceFiles(sourceFiles);
-        setTargetFiles(targetFiles);
-        setThreadSeperated(true);
-        new Thread(this).start();
     }
-    
-    
+
     /**
-     * Saves the memory image to the srb server, the target directory will be selected
-     * by the user.
-     * @param image  the momery image.
+     * Do nothing.
+     *
+     * @param  event  the window activated event
      */
-    public void saveToSRB(ModelImage image){
-        GeneralFile targetDir = selectTargetDirectory(SRBFileTransferer.SCHEMAS[1]);
-        if(targetDir == null){
-            return;
+    public void windowActivated(WindowEvent event) { }
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window closed event
+     */
+    public void windowClosed(WindowEvent event) { }
+
+    /**
+     * Sets completed to false, disposes the progress bar and notifies all listeners that the algorithm is stopped.
+     *
+     * @param  event  event that triggered function
+     */
+    public void windowClosing(WindowEvent event) {
+
+        if (progressBar != null) {
+            progressBar.dispose();
         }
-        saveToSRB(image, targetDir);
     }
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window deactivated event
+     */
+    public void windowDeactivated(WindowEvent event) { }
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window deiconified event
+     */
+    public void windowDeiconified(WindowEvent event) { }
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window iconified event
+     */
+    public void windowIconified(WindowEvent event) { }
+
+    /**
+     * **** Window Event Listener.*****
+     *
+     * @param  event  DOCUMENT ME!
+     */
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window opened event
+     */
+    public void windowOpened(WindowEvent event) { }
+
     /**
      * Constructs progress bar.
      *
@@ -689,64 +858,45 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
             progressBar.setVisible(true);
         }
     }
-    
-    /**
-     * Saves the memory image to the local temporary files and
-     * returns the file name list.
-     * @param image the memory image.
-     * @return      the saved file name list of this memory image.
-     */
-    public GeneralFile[] getFileList(ModelImage image){
-        this.createTempDir();
-        return SRBUtility.getFileList(image, this.getTempDir().getAbsolutePath());
-    }
 
     /**
-     * Recursively creates the file list according to the source file and target directory information.
+     * First obtains the relative file name of the source file name related to the given the source base directory name,
+     * then adjusts the path separator based on their belonged file system, finally returns the file which used the
+     * target directory as its parent directory and uses this relative file name its file name.
      *
-     * @param  sourceFile      the source file.
-     * @param  targetDir       the target directory.
-     * @param  sourceRootDir   the source directory equivalent to the target directory which is selected by user.
-     * @param  sourceFileList  the source file list which need to be transferred.
-     * @param  targetFileList  the target file list which will be created.
+     * @param   targetDirName      the target directory name.
+     * @param   baseSourceDirName  the source base directory.
+     * @param   sourceFileName     the source file name.
+     *
+     * @return  the target file consisted of the target directory and relative file name of the source file name related
+     *          to the source base directory.
      */
-    public void recursivelyCreateFileList(GeneralFile sourceFile, GeneralFile targetDir,
-                                                 GeneralFile sourceRootDir, Vector sourceFileList,
-                                                 Vector targetFileList) {
+    private GeneralFile createTargetFile(String targetDirName, String baseSourceDirName, String sourceFileName) {
 
-        if ((sourceFile == null) || (targetDir == null) || !targetDir.isDirectory()) {
-            return;
+        if ((targetDirName == null) || (baseSourceDirName == null) || (sourceFileName == null)) {
+            return null;
         }
 
-        if (sourceFile.isDirectory()) {
-            GeneralFile[] childrenFiles = sourceFile.listFiles();
-
-            for (int i = 0; i < childrenFiles.length; i++) {
-                if (childrenFiles[i].isDirectory()) {
-                    recursivelyCreateFileList(childrenFiles[i], targetDir, sourceRootDir, sourceFileList,
-                                              targetFileList);
-                } else {
-                    sourceFileList.add(childrenFiles[i]);
-
-                    GeneralFile newTargetFile = FileFactory.newFile(targetDir,
-                            childrenFiles[i].getPath().substring(sourceRootDir.getPath().length()));
-                    
-                    SRBUtility.recursivelyMakeDir(newTargetFile.getParentFile());
-                    targetFileList.add(newTargetFile);
-                }
-            }
-
-        } else {
-            sourceFileList.add(sourceFile);
-
-            GeneralFile newTargetFile = FileFactory.newFile(targetDir,
-                    sourceFile.getPath().substring(sourceRootDir.getPath().length()));
-            
-            SRBUtility.recursivelyMakeDir(newTargetFile.getParentFile());
-            targetFileList.add(newTargetFile);
+        if ((sourceFileSystem == null) || (targetFileSystem == null)) {
+            return null;
         }
+
+        String sourcePathSeparator = SRBUtility.getPathSeparator(sourceFileSystem);
+        String targetPathSeparator = SRBUtility.getPathSeparator(targetFileSystem);
+
+        if (sourceFileName.indexOf(baseSourceDirName) != 0) {
+            return null;
+        }
+
+        String targetFileName = targetDirName + sourceFileName.substring(baseSourceDirName.length());
+
+        if (!sourcePathSeparator.equals(targetPathSeparator)) {
+            targetFileName = SRBUtility.replacePathSeparator(targetFileName, sourcePathSeparator, targetPathSeparator);
+        }
+
+        return FileFactory.newFile(targetFileSystem, targetFileName);
     }
-    
+
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
@@ -870,42 +1020,6 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
             setVisible(true);
         }
 
-
-
-        /**
-         * Returns whether the specified JComboBox has selected the SRB schema.
-         *
-         * @param   comboBox  the specified JComboBox object.
-         *
-         * @return  whether the specified JComboBox has selected the SRB schema.
-         */
-        public boolean isFileSchema(JComboBox comboBox) {
-            String selectedItem = (String) comboBox.getSelectedItem();
-
-            if (selectedItem.equals(SCHEMAS[0])) {
-                return true;
-            }
-
-            return false;
-        }
-
-        /**
-         * Returns whether the specified JComboBox has selected the SRB schema.
-         *
-         * @param   comboBox  the specified JComboBox object.
-         *
-         * @return  whether the specified JComboBox has selected the SRB schema.
-         */
-        public boolean isSRBSchema(JComboBox comboBox) {
-            String selectedItem = (String) comboBox.getSelectedItem();
-
-            if (selectedItem.equals(SCHEMAS[1])) {
-                return true;
-            }
-
-            return false;
-        }
-
         /**
          * **** Action Event Listener.*****
          *
@@ -928,7 +1042,6 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                     return;
                 }
 
-
                 sourceFileNameList = SRBUtility.converToFileNameList(sourceFilesField.getText());
 
 
@@ -942,18 +1055,20 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                 if ((targetDir == null) || (targetDir.length() == 0)) {
                     return;
                 }
-                
+
                 // Have to set up the source file system and target file system.
-                if(isFileSchema(sourceSchemaComboBox)){
+                if (isFileSchema(sourceSchemaComboBox)) {
                     sourceFileSystem = new LocalFileSystem();
-                }else{
+                } else {
                     sourceFileSystem = JDialogLoginSRB.srbFileSystem;
                 }
-                if(isFileSchema(targetSchemaComboBox)){
+
+                if (isFileSchema(targetSchemaComboBox)) {
                     targetFileSystem = new LocalFileSystem();
-                }else{
+                } else {
                     targetFileSystem = JDialogLoginSRB.srbFileSystem;
                 }
+
                 transferFiles(sourceFileNameList, targetDir);
                 this.dispose();
             } else if (command.equals("Cancel")) {
@@ -964,6 +1079,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
 
                     if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
                         new JDialogLoginSRB("Connect to");
+
                         if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
                             return;
                         }
@@ -1149,6 +1265,41 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
             }
         }
 
+
+        /**
+         * Returns whether the specified JComboBox has selected the SRB schema.
+         *
+         * @param   comboBox  the specified JComboBox object.
+         *
+         * @return  whether the specified JComboBox has selected the SRB schema.
+         */
+        public boolean isFileSchema(JComboBox comboBox) {
+            String selectedItem = (String) comboBox.getSelectedItem();
+
+            if (selectedItem.equals(SCHEMAS[0])) {
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * Returns whether the specified JComboBox has selected the SRB schema.
+         *
+         * @param   comboBox  the specified JComboBox object.
+         *
+         * @return  whether the specified JComboBox has selected the SRB schema.
+         */
+        public boolean isSRBSchema(JComboBox comboBox) {
+            String selectedItem = (String) comboBox.getSelectedItem();
+
+            if (selectedItem.equals(SCHEMAS[1])) {
+                return true;
+            }
+
+            return false;
+        }
+
         /**
          * **** Key Event Listener.*****
          *
@@ -1232,72 +1383,4 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         }
 
     }
-
-    /**
-     * 
-     */
-    public void actionPerformed(ActionEvent e){
-        if(progressBar != null){
-            progressBar.dispose();
-        }
-    }
-    
-    /**
-     * Do nothing.
-     *
-     * @param  event  the window activated event
-     */
-    public void windowActivated(WindowEvent event) { }
-
-    /**
-     * Do nothing.
-     *
-     * @param  event  the window closed event
-     */
-    public void windowClosed(WindowEvent event) { }
-
-    /**
-     * Sets completed to false, disposes the progress bar and notifies all listeners that the algorithm is stopped.
-     *
-     * @param  event  event that triggered function
-     */
-    public void windowClosing(WindowEvent event) {
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
-    }
-
-    /**
-     * Do nothing.
-     *
-     * @param  event  the window deactivated event
-     */
-    public void windowDeactivated(WindowEvent event) { }
-
-    /**
-     * Do nothing.
-     *
-     * @param  event  the window deiconified event
-     */
-    public void windowDeiconified(WindowEvent event) { }
-
-    /**
-     * Do nothing.
-     *
-     * @param  event  the window iconified event
-     */
-    public void windowIconified(WindowEvent event) { }
-
-    /**
-     * **** Window Event Listener.*****
-     *
-     * @param  event  DOCUMENT ME!
-     */
-
-    /**
-     * Do nothing.
-     *
-     * @param  event  the window opened event
-     */
-    public void windowOpened(WindowEvent event) { }
 }

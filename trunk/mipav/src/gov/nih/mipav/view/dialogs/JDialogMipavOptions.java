@@ -1829,7 +1829,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(transferModeLabel, gbc);
         srbPanel.add(transferModeLabel);
-        String[] transferModes = {SRBFileTransferer.TRANSFER_MODE_PARELLEL, 
+        String[] transferModes = {SRBFileTransferer.TRANSFER_MODE_PARALLEL, 
                                   SRBFileTransferer.TRANSFER_MODE_SEQUENTIAL};
         srbTransferModeComboBox = new JComboBox(transferModes);
         if(Preferences.getSRBTransferMode() != null){
