@@ -54,9 +54,6 @@ public class JDialogOverlay extends JDialogBase {
     private JButton[] buttonArray = new JButton[16];
 
     /** DOCUMENT ME! */
-    private Hashtable dicomTable = null;
-
-    /** DOCUMENT ME! */
     private String headerString = null;
 
     /** DOCUMENT ME! */
@@ -146,8 +143,8 @@ public class JDialogOverlay extends JDialogBase {
                         if (isDicom) {
                             FileDicomKey tagKey = new FileDicomKey(overlayValues[i]);
 
-                            FileDicomTag tag = (FileDicomTag) (dicomTable.get(tagKey));
-                            nameArray[i].setText(tag.getName());
+                            FileDicomTagInfo info = DicomDictionary.getInfo(tagKey);
+                            nameArray[i].setText(info.getName());
                         }
                     } else {
                         tagDialog.setButton(buttonArray[i]);
@@ -233,7 +230,6 @@ public class JDialogOverlay extends JDialogBase {
 
         if (isDicom) {
             title = "DICOM " + title;
-            dicomTable = DicomDictionary.getDicomTagTable();
         }
 
         tagDialog = new JDialogChooseOverlay(parentFrame);
@@ -412,8 +408,8 @@ public class JDialogOverlay extends JDialogBase {
                 table.getTableHeader().addMouseListener(new HeaderListener());
 
                 FileDicomKey key = null;
-                FileDicomTag tag = null;
-                Enumeration e = dicomTable.keys();
+                FileDicomTagInfo info = null;
+                Enumeration e = DicomDictionary.getDicomTagTable().keys();
 
                 model.addColumn("Tag");
                 model.addColumn("Name");
@@ -427,10 +423,12 @@ public class JDialogOverlay extends JDialogBase {
 
                 while (e.hasMoreElements()) {
                     key = (FileDicomKey) e.nextElement();
-                    tag = (FileDicomTag) dicomTable.get(key);
+                    info = DicomDictionary.getInfo(key);
 
-                    if (tag != null) {
-                        model.addRow(new String[] { "(" + key.getGroup() + "," + key.getElement() + ")", tag.getName() });
+                    if (info != null) {
+                        model.addRow(new String[] {
+                                         "(" + key.getGroup() + "," + key.getElement() + ")", info.getName()
+                                     });
                     }
                 }
 

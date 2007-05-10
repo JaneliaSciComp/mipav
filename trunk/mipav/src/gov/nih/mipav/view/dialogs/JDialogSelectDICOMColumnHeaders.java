@@ -249,7 +249,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
         Vector tagsVector = new Vector(tagsTable.values());
 
         for (int i = 0; i < tagsVector.size(); i++) {
-            FileDicomTag fileDICOMTag = (FileDicomTag) tagsVector.elementAt(i);
+            FileDicomTagInfo fileDICOMTag = (FileDicomTagInfo) tagsVector.elementAt(i);
 
             tagsVector.setElementAt(fileDICOMTag.getName(), i);
         }
