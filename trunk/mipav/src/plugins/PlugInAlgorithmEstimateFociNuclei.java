@@ -7,7 +7,7 @@ import gov.nih.mipav.view.*;
 
 import java.io.*;
 
-import java.util.*;
+//import java.util.*;
 
 /**
  * @author joshim2
@@ -88,7 +88,7 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     											float paKernelSizeClose, int paKernelClose, int idMaxSize,
     											int idMinSize) {
         super(null, srcImg);
-        nClasses = SegNClasses;
+    	nClasses = SegNClasses;
         expValue = SegExpValue;
         endTol = SegEndTol;
         maxIter = SegMaxIter;
@@ -128,20 +128,12 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
             return;
         }
 
-        if (destImage == null) {
-            displayError("Source Image is null");
-
-            return;
-        }
-        
-        if (destImage != null) {
-        	if (srcImage.getNDims() == 2) {
+        if (srcImage.getNDims() == 2) {
         		calcStoreInDest2D();
         	}
         	else {
         		displayError("This plugin supports only 2D images");
         	}
-        }
         
     }
     
@@ -154,19 +146,54 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     
     public void calcStoreInDest2D() {
     	
+    	// Progressbar ratios
+    	float[] ratios = new float[3];
+    	ratios[0] = (float) 0.05;
+    	ratios[1] = (float) 0.4;
+    	ratios[2] = (float) 0.5;
+    	
     	// Convert source RGB image to grays
     	if (!srcImage.isColorImage()) {
     		displayError("The source image must be an RGB image");
      	} else {
      		
+     		/* First save each of the red, green, and blue channels in a
+             * separate ModelImage for reconstruction. */
+            /* Determine the type of the color image: */
+            int iType = srcImage.getType();
+
+            if (iType == ModelStorageBase.ARGB) {
+                iType = ModelStorageBase.UBYTE;
+            }
+
+            if (iType == ModelStorageBase.ARGB_FLOAT) {
+                iType = ModelStorageBase.FLOAT;
+            }
+
+            if (iType == ModelStorageBase.ARGB_USHORT) {
+                iType = ModelStorageBase.USHORT;
+            }
+
+            /* Create three separate ModelImages of the same type: */
+            grayRedImage = new ModelImage(iType, srcImage.getExtents(), "GrayRed");
+            grayGreenImage = new ModelImage(iType, srcImage.getExtents(), "GrayGreen");
+            grayBlueImage = new ModelImage(iType, srcImage.getExtents(), "GrayBlue");
+            
+            fireProgressStateChanged(0, null, "Converting RGB to grays ...");
+     		
      		AlgorithmRGBtoGrays algoRGBtoGrays = new AlgorithmRGBtoGrays(grayRedImage, grayGreenImage,
      													grayBlueImage, srcImage);
+     		
+     		linkProgressToAlgorithm(algoRGBtoGrays);
+            algoRGBtoGrays.setProgressValues(generateProgressValues(0, 5));
      		/* Must not run in separate thread, since we need the results before
              * proceeding to the next step: */
      		algoRGBtoGrays.setRunningInSeparateThread(false);
      		algoRGBtoGrays.run();
      		algoRGBtoGrays.finalize();
      		algoRGBtoGrays = null;
+     		
+     		fireProgressStateChanged(5);
      	}
     	
     	// Segmentation
@@ -199,6 +226,7 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     	
     	ModelImage [] kResult = new ModelImage[1];
     	kResult[0] = (ModelImage) blueImage.clone();
+    	int i;
     	int nPyramid = 4;
     	int oneJacobiIter = 1;
     	int twoJacobiIter = 2;
@@ -208,36 +236,67 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     	int segType = 2; // Hard only
     	boolean cropBackground = false;
     	boolean regionFlag = true;
+    	float centroid[];
+    	float minimum, maximum; // For centroid estimation.
+    	
+    	// Estimate initial centroids
+    	minimum = (float) blueImage.getMin();
+    	maximum = (float) blueImage.getMax();
+    	centroid = new float[nClasses];
+    	for (i = 0; i < nClasses; i++) {
+            centroid[i] = minimum + (maximum - minimum)*(i + 1)/(nClasses + 1);
+    	}
+    	
+    	fireProgressStateChanged(5, null, "Segmenting blue channel image ...");
     	
     	AlgorithmFuzzyCMeans algoSeg = new AlgorithmFuzzyCMeans(kResult, blueImage, nClasses, nPyramid, oneJacobiIter,
     										twoJacobiIter, expValue, oneSmooth, twoSmooth, outputGainField, segType,
     										cropBackground, threshold, maxIter, endTol, regionFlag);
+    	algoSeg.setCentroids(centroid);
+    	
+    	linkProgressToAlgorithm(algoSeg);
+        algoSeg.setProgressValues(generateProgressValues(6, 40));
+        
     	algoSeg.setRunningInSeparateThread(false);
- 		algoSeg.run();
+    	algoSeg.run();
  		algoSeg.finalize();
  		algoSeg = null;
  		
+ 		fireProgressStateChanged(40);
+ 		
+ 		fireProgressStateChanged(5, null, "Subtracting 1 ...");
  		// Subtract 1 from image to make a binary image
  		AlgorithmImageMath algoSubtract = new AlgorithmImageMath(kResult[0], AlgorithmImageMath.SUBTRACT, 1, 0.0f,
  												1, true);
+ 		
+ 		linkProgressToAlgorithm(algoSubtract);
+        algoSubtract.setProgressValues(generateProgressValues(41, 45));
  		algoSubtract.setRunningInSeparateThread(false);
  		algoSubtract.run();
  		algoSubtract.finalize();
  		algoSubtract = null;
- 		 		
+ 		
+ 		fireProgressStateChanged(45);
+ 		
  		return kResult[0];
     }
     
     private void particleAnalysis(ModelImage segImage) {
     	
+    	fireProgressStateChanged(45, null, "Particle analysis ...");
+    	
     	AlgorithmMorphology2D algoMorph = new AlgorithmMorphology2D(segImage, kernelOpen, kernelSizeOpen,
     											kernelClose, kernelSizeClose, AlgorithmMorphology2D.PARTICLE_ANALYSIS_NEW,
     											itersOpen, itersClose, 0, 0, true, false);
+    	
+    	linkProgressToAlgorithm(algoMorph);
+        algoMorph.setProgressValues(generateProgressValues(46, 95));
     	algoMorph.setRunningInSeparateThread(false);
     	algoMorph.run();
     	algoMorph.finalize();
     	algoMorph = null;
     	
+    	fireProgressStateChanged(95);
     }
     
     private void findFociInNuclei(ModelImage redImage, ModelImage objImage) {
@@ -313,6 +372,7 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     	
     	// Scan red image (noise removed) and id objects image to find red pixels in cell
     	try {
+    		bufferB = new float[length];
     		idObjectsResultImage.exportData(0, length, bufferB);
     	} catch (IOException Error) {
     		bufferB = null;
@@ -342,7 +402,7 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     			}
     		}
     		avgIntensityInCell[j - 1] = totalIntensityInCell[j - 1] / nRedPixelsInCell[j - 1];
-    		fnRatio[j - 1] = nPixels[j - 1] / nRedPixelsInCell[j - 1];
+    		fnRatio[j - 1] = (float) nRedPixelsInCell[j - 1] / nPixels[j - 1];
     	}
     	
     	// Printing the results in Output window
@@ -381,10 +441,12 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     	
     	for (i = 1; i <= nObjects; i++) {
     		area = nPixels[i-1] * srcImage.getFileInfo(0).getResolution(0) * srcImage.getFileInfo(0).getResolution(1);
-    		ViewUserInterface.getReference().getMessageFrame().getData().append("    " + i + "\t" + nPixels[i-1] + "\t" +
-    							area + "\t" + nRedPixelsInCell[i-1] + "\t" + totalIntensityInCell[i-1] + "\t" +
-    							avgIntensityInCell + "\t" + fnRatio + "\n");
+    		ViewUserInterface.getReference().getMessageFrame().getData().append("    " + i + "\t" + nPixels[i-1] + "\t\t" +
+    							area + "\t\t" + nRedPixelsInCell[i-1] + "\t\t" + totalIntensityInCell[i-1] + "\t\t" +
+    							avgIntensityInCell[i-1] + "\t\t" + fnRatio[i-1] + "\n");
     	}
+    	
+    	fireProgressStateChanged(100);
     	
     }
     
