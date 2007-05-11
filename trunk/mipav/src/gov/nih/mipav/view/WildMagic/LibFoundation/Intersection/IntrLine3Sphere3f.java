@@ -1,0 +1,134 @@
+// Geometric Tools, Inc.
+// http://www.geometrictools.com
+// Copyright (c) 1998-2006.  All Rights Reserved
+//
+// The Wild Magic Version 4 Foundation Library source code is supplied
+// under the terms of the license agreement
+//     http://www.geometrictools.com/License/Wm4FoundationLicense.pdf
+// and may not be copied or disclosed except in accordance with the terms
+// of that agreement.
+//
+// Version: 4.0.0 (2006/06/28)
+
+package gov.nih.mipav.view.WildMagic.LibFoundation.Intersection;
+
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+
+public class IntrLine3Sphere3f extends Intersector
+{
+    /** Creates an IntrLine3Sphere3f object 
+     * @param rkLine, the Line to intersect with the sphere
+     * @param rkSphere, the Sphere to intersect with the line
+     */
+    public IntrLine3Sphere3f ( Line3f rkLine, Sphere3f rkSphere)
+    {
+        m_rkLine = new Line3f(rkLine);
+        m_rkSphere = new Sphere3f(rkSphere);
+        m_iQuantity = 0;
+    }
+
+    /** 
+     * object access 
+     * @return the current line
+     */
+    public Line3f GetLine ()
+    {
+        return m_rkLine;
+    }
+
+    /** 
+     * object access 
+     * @return the current sphere
+     */
+    public Sphere3f GetSphere ()
+    {
+        return m_rkSphere;
+    }
+
+    /**
+     * test-intersection query
+     * returns true if the line and sphere intersect, false otherwise
+     */
+    public boolean Test ()
+    {
+        Vector3f kDiff = m_rkLine.Origin.sub( m_rkSphere.Center );
+        float fA0 = kDiff.Dot(kDiff) - m_rkSphere.Radius*m_rkSphere.Radius;
+        float fA1 = m_rkLine.Direction.Dot(kDiff);
+        float fDiscr = fA1*fA1 - fA0;
+        return (fDiscr >= (float)0.0);
+    }
+
+    /**
+     * find-intersection query
+     * returns true if the line and sphere intersect, false otherwise
+     */
+    public boolean Find ()
+    {
+        Vector3f kDiff = m_rkLine.Origin.sub( m_rkSphere.Center );
+        float fA0 = kDiff.Dot(kDiff) - m_rkSphere.Radius*m_rkSphere.Radius;
+        float fA1 = m_rkLine.Direction.Dot(kDiff);
+        float fDiscr = fA1*fA1 - fA0;
+
+        if (fDiscr < (float)0.0)
+        {
+            m_iQuantity = 0;
+        }
+        else if (fDiscr >= Mathf.ZERO_TOLERANCE)
+        {
+            float fRoot = (float)Math.sqrt(fDiscr);
+            m_afLineT[0] = -fA1 - fRoot;
+            m_afLineT[1] = -fA1 + fRoot;
+            m_akPoint[0] = m_rkLine.Origin.add( m_rkLine.Direction.scale(m_afLineT[0]) );
+            m_akPoint[1] = m_rkLine.Origin.add( m_rkLine.Direction.scale(m_afLineT[1]) );
+            m_iQuantity = 2;
+        }
+        else
+        {
+            m_afLineT[0] = -fA1;
+            m_akPoint[0] = m_rkLine.Origin.add( m_rkLine.Direction.scale(m_afLineT[0]) );
+            m_iQuantity = 1;
+        }
+
+        return (m_iQuantity > 0);
+    }
+
+    /**
+     * Returns the number of intersections
+     * @return the number of intersections
+     */
+    public int GetQuantity ()
+    {
+        return m_iQuantity;
+    }
+
+    /**
+     * Returns the ith intersection point 
+     * @param i, the ith intersection
+     * @return the ith intersection point 
+     */
+    public Vector3f GetPoint (int i)
+    {
+        assert(0 <= i && i < m_iQuantity);
+        return m_akPoint[i];
+    }
+
+    /**
+     * Returns the ith intersection point line parameter t 
+     * @param i, the ith intersection
+     * @return the ith intersection point  line parameter t 
+     */
+    public float GetLineT (int i)
+    {
+        assert( 0 <= i && i < m_iQuantity );
+        return m_afLineT[i];
+    }
+
+    /** the objects to intersect */
+    private final Line3f m_rkLine;
+    private final Sphere3f m_rkSphere;
+
+    /** information about the intersection set */
+    private int m_iQuantity;
+    private Vector3f[] m_akPoint = new Vector3f[2];
+    private float[] m_afLineT = new float[2];
+}
