@@ -66,14 +66,15 @@ public class FileIO {
     /** Refers to whether or not the FileIO reports progress or errors. */
     private boolean quiet = false;
 
+    /** DOCUMENT ME! */
+    private RawImageInfo rawInfo = null;
+
     /** Address of second image in file. */
     private int secondImage = 0;
 
     /** Reference to the user interface. */
     private ViewUserInterface UI;
 
-    private RawImageInfo rawInfo = null;
-    
     /**
      * Dialog to prompt the user to determine the correct file type. If the type of file to read is unknown (ie., the
      * suffix doesn't match one of the known types, build and display the unknown file dialog so the user can try to
@@ -1243,13 +1244,6 @@ public class FileIO {
         imageFile = null;
         matrix = null;
 
-        // TODO: REMOVE
-        // for (int i = 0; i < nImages; i++) {
-        // System.out.println();
-        // System.out.println("##############\tslice tag table:\t" + i + "\t##############");
-        // System.out.println(((FileInfoDicom) image.getFileInfo(i)).getTagTable().toString());
-        // }
-
         return image;
     }
 
@@ -1981,10 +1975,15 @@ public class FileIO {
         quiet = q;
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  rawInfo  DOCUMENT ME!
+     */
     public void setRawImageInfo(RawImageInfo rawInfo) {
-    	this.rawInfo = rawInfo;
+        this.rawInfo = rawInfo;
     }
-    
+
     /**
      * This method sets the userDefinedFileTypes_textField preference.
      *
@@ -6389,33 +6388,31 @@ public class FileIO {
         int i;
 
         if (fileInfo == null) {
-        	fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.RAW);
-        	
-        	if (rawInfo == null) {
-        		JDialogRawIO rawIODialog = new JDialogRawIO(UI.getMainFrame(), "Raw");
+            fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.RAW);
 
-        		rawIODialog.setVisible(true);
+            if (rawInfo == null) {
+                JDialogRawIO rawIODialog = new JDialogRawIO(UI.getMainFrame(), "Raw");
 
-        		if (rawIODialog.isCancelled() == true) {
-        			return null;
-        		}
+                rawIODialog.setVisible(true);
 
-        		
-        		fileInfo.setDataType(rawIODialog.getDataType());
-        		fileInfo.setExtents(rawIODialog.getExtents());
-        		fileInfo.setUnitsOfMeasure(rawIODialog.getUnitsOfMeasure());
-        		fileInfo.setResolutions(rawIODialog.getResolutions());
-        		fileInfo.setEndianess(rawIODialog.getEndianess());
-        		fileInfo.setOffset(rawIODialog.getOffset());
-        		} 
-        	else {
-        		fileInfo.setDataType(rawInfo.getDataType());
-        		fileInfo.setExtents(rawInfo.getExtents());
-        		fileInfo.setUnitsOfMeasure(rawInfo.getUnitsOfMeasure());
-        		fileInfo.setResolutions(rawInfo.getResolutions());
-        		fileInfo.setEndianess(rawInfo.getEndianess());
-        		fileInfo.setOffset(rawInfo.getOffset());
-        	}
+                if (rawIODialog.isCancelled() == true) {
+                    return null;
+                }
+
+                fileInfo.setDataType(rawIODialog.getDataType());
+                fileInfo.setExtents(rawIODialog.getExtents());
+                fileInfo.setUnitsOfMeasure(rawIODialog.getUnitsOfMeasure());
+                fileInfo.setResolutions(rawIODialog.getResolutions());
+                fileInfo.setEndianess(rawIODialog.getEndianess());
+                fileInfo.setOffset(rawIODialog.getOffset());
+            } else {
+                fileInfo.setDataType(rawInfo.getDataType());
+                fileInfo.setExtents(rawInfo.getExtents());
+                fileInfo.setUnitsOfMeasure(rawInfo.getUnitsOfMeasure());
+                fileInfo.setResolutions(rawInfo.getResolutions());
+                fileInfo.setEndianess(rawInfo.getEndianess());
+                fileInfo.setOffset(rawInfo.getOffset());
+            }
         }
 
         try {

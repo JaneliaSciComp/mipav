@@ -120,7 +120,7 @@ public class FileInfoMinc extends FileInfoBase {
         null, // synchronization frame of reference UID
         null, // image comments
 
-        // null,// request attributes sequence
+    // null,// request attributes sequence
         null, // UID
         null, // content sequence
         null, // storage media file-set UID
@@ -248,7 +248,7 @@ public class FileInfoMinc extends FileInfoBase {
                         // getDicomTag(FileInfoDicom.anonymizeTagIDs[i])); System.out.println("found " +
                         // getVarElem(varIndex).name);
                         if (getVarElem(varIndex).name.equals("dicom_0x" +
-                                                                 getTagGroup(FileInfoDicom.anonymizeTagIDs[i]))) {
+                                                             getTagGroup(FileInfoDicom.anonymizeTagIDs[i]))) {
 
                             for (int attIndex = 0; attIndex < getVarElem(varIndex).vattArray.length; attIndex++) {
 
@@ -256,7 +256,7 @@ public class FileInfoMinc extends FileInfoBase {
                                 // getDicomElem(FileInfoDicom.anonymizeTagIDs[i])); System.out.println("found " +
                                 // getVarElem(varIndex).getVattElem(attIndex).name);
                                 if (getVarElem(varIndex).getVattElem(attIndex).name.equals("el_0x" +
-                                                                                               getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
+                                                                                           getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
 
                                     // System.out.println("want to erase " + FileInfoDicom.anonymizeTagIDs[i] + " -- "
                                     // + getVarElem(varIndex).getVattElem(attIndex).toString());
@@ -300,7 +300,7 @@ public class FileInfoMinc extends FileInfoBase {
                             // getDicomElem(FileInfoDicom.anonymizeTagIDs[i])); System.out.println("found " +
                             // getVarElem(varIndex).getVattElem(attIndex).name);
                             if (getVarElem(varIndex).getVattElem(attIndex).name.equals("el_0x" +
-                                                                                           getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
+                                                                                       getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
 
                                 // System.out.println("want to erase " + FileInfoDicom.anonymizeTagIDs[i] + " -- " +
                                 // getVarElem(varIndex).getVattElem(attIndex).toString());
@@ -412,7 +412,7 @@ public class FileInfoMinc extends FileInfoBase {
         if ((vmax - vmin) != 0) {
             return (max - min) / (vmax - vmin);
         }
-        
+
         return 1.0;
     }
 
@@ -533,10 +533,10 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * <p>DICOM positive axis is right to left; positive axis is anterior to posterior; postive axis is inferior to
      * superior</p>
-     * 
-     * <p>If the space's alignment attribute has the value 'centre', then subtract half the space's step value (doesn't 
-     * seem to apply to zspace for some reason..).  Then transform the point by the inverse of the direction_cosines
-     * matrix (extracted from the spaces).  The result then has some of the signs of its components flipped (which is
+     *
+     * <p>If the space's alignment attribute has the value 'centre', then subtract half the space's step value (doesn't
+     * seem to apply to zspace for some reason..). Then transform the point by the inverse of the direction_cosines
+     * matrix (extracted from the spaces). The result then has some of the signs of its components flipped (which is
      * determined by the image orientation) to get it from minc to dicom orientation.</p>
      *
      * @param   slice  slice to begin the start variable on.
@@ -550,7 +550,7 @@ public class FileInfoMinc extends FileInfoBase {
         double xStep = 1;
         double yStep = 1;
         double zStep = 1;
-        
+
         boolean isXCentered = false;
         boolean isYCentered = false;
         boolean isZCentered = false;
@@ -566,8 +566,9 @@ public class FileInfoMinc extends FileInfoBase {
             if (varArray[i].name.equals(spacex)) {
                 x = varArray[i].start;
                 xStep = varArray[i].step;
-                
+
                 for (int j = 0; j < varArray[i].vattArray.length; j++) {
+
                     if (varArray[i].vattArray[j].name.equals("alignment")) {
                         isXCentered = varArray[i].vattArray[j].getValueString().equals("centre");
                     }
@@ -577,8 +578,9 @@ public class FileInfoMinc extends FileInfoBase {
             if (varArray[i].name.equals(spacey)) {
                 y = varArray[i].start;
                 yStep = varArray[i].step;
-                
+
                 for (int j = 0; j < varArray[i].vattArray.length; j++) {
+
                     if (varArray[i].vattArray[j].name.equals("alignment")) {
                         isYCentered = varArray[i].vattArray[j].getValueString().equals("centre");
                     }
@@ -588,16 +590,17 @@ public class FileInfoMinc extends FileInfoBase {
             if (varArray[i].name.equals(spacez)) {
                 z = varArray[i].start;
                 zStep = varArray[i].step;
-                
+
                 for (int j = 0; j < varArray[i].vattArray.length; j++) {
+
                     if (varArray[i].vattArray[j].name.equals("alignment")) {
                         isZCentered = varArray[i].vattArray[j].getValueString().equals("centre");
                     }
                 }
             }
         }
-        
-        //System.out.println("convert: begin res:\t" + xRes + " " + yRes + " " + zRes);
+
+        // System.out.println("convert: begin res:\t" + xRes + " " + yRes + " " + zRes);
 
         double[] startLocs = new double[getExtents().length];
 
@@ -609,8 +612,8 @@ public class FileInfoMinc extends FileInfoBase {
             startLocs[1] = y;
             startLocs[2] = z + (zStep * slice);
         }
-        
-        //System.out.println("convert: locs:\t" + startLocs[0] + " " + startLocs[1] + " " + startLocs[2]);
+
+        // System.out.println("convert: locs:\t" + startLocs[0] + " " + startLocs[1] + " " + startLocs[2]);
 
         TransMatrix matrix = new TransMatrix(getExtents().length + 1);
         matrix.identity();
@@ -643,37 +646,37 @@ public class FileInfoMinc extends FileInfoBase {
                 }
             }
         }
-        
-        //System.out.println("convert: matrix:\t" + matrix.matrixToString(24, 16));
-        
+
+        // System.out.println("convert: matrix:\t" + matrix.matrixToString(24, 16));
+
         matrix.invert();
-        
-        //System.out.println("convert: invmat:\t" + matrix.matrixToString(24, 16));
+
+        // System.out.println("convert: invmat:\t" + matrix.matrixToString(24, 16));
 
         double[] transformedPt = new double[getExtents().length];
 
         if (isXCentered) {
             startLocs[0] -= (xStep / 2);
         }
-        
+
         if (isYCentered) {
             startLocs[1] -= (yStep / 2);
         }
-        
-        // TODO: mni seems not to adjust the zstart by the zstep even when xspace has the attrib alignment=centre
+
+        // mni seems not to adjust the zstart by the zstep even when xspace has the attrib alignment=centre
         /*if (isZCentered) {
-            startLocs[2] -= (zStep / 2);
-        }*/
-        
+         *  startLocs[2] -= (zStep / 2);}*/
+
         if (getExtents().length == 2) {
             matrix.transform(startLocs[0], startLocs[1], transformedPt);
         } else if (getExtents().length == 3) {
             matrix.transform(startLocs[0], startLocs[1], startLocs[2], transformedPt);
         }
-        
-        //System.out.println("convert: trans:\t" + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2]);
-        
+
+        // System.out.println("convert: trans:\t" + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2]);
+
         if (startLocs.length == 3) {
+
             if (getImageOrientation() == FileInfoBase.SAGITTAL) {
                 transformedPt[0] = -transformedPt[0];
                 transformedPt[2] = -transformedPt[2];
@@ -685,8 +688,9 @@ public class FileInfoMinc extends FileInfoBase {
                 transformedPt[2] = -transformedPt[2];
             }
         }
-        
-        //System.out.println("convert: result:\t" + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2]);
+
+        // System.out.println("convert: result:\t" + transformedPt[0] + " " + transformedPt[1] + " " +
+        // transformedPt[2]);
 
         return transformedPt;
     }
@@ -1121,12 +1125,12 @@ public class FileInfoMinc extends FileInfoBase {
             }
         }
     }
-    
+
     /**
-     * Sets the image modality based on the 
-     *
+     * Sets the image modality based on the.
      */
     public void setModality() {
+
         for (int j = 0; j < varArray.length; j++) {
 
             if (varArray[j].name.equals("study")) {
@@ -1188,9 +1192,9 @@ public class FileInfoMinc extends FileInfoBase {
                 zStep = varArray[i].step;
             }
         }
-        
+
         setSliceThickness(Math.abs((float) thickness));
-        
+
         if (getExtents().length == 2) {
             setResolutions(Math.abs((float) xStep), 0);
             setResolutions(Math.abs((float) yStep), 1);
@@ -1296,7 +1300,7 @@ public class FileInfoMinc extends FileInfoBase {
         if (index == -1) {
             return null;
         }
-        
+
         return fullTag.substring(index + 1);
     }
 
@@ -1313,7 +1317,7 @@ public class FileInfoMinc extends FileInfoBase {
         if (index == -1) {
             return null;
         }
-        
+
         return fullTag.substring(0, index);
     }
 
@@ -1833,6 +1837,29 @@ public class FileInfoMinc extends FileInfoBase {
     }
 
     /**
+     * Return the slice thickness value stored in the minc header (var = 'acquisition', attrib = 'slice_thickness').
+     *
+     * @return  The slice thickness, if it is stored in the minc header (0 otherwise).
+     */
+    private double getMincSliceThickness() {
+
+        for (int i = 0; i < varArray.length; i++) {
+
+            if (varArray[i].name.equals("acquisition")) {
+
+                for (int j = 0; j < varArray[i].vattArray.length; j++) {
+
+                    if (varArray[i].vattArray[j].name.equals("slice_thickness")) {
+                        return ((Double) varArray[i].vattArray[j].values[0]).doubleValue();
+                    }
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
      * Helper method to set the axis orientations.
      *
      * @param   space     The space - "xspace", "yspace", or "zspace".
@@ -1895,24 +1922,5 @@ public class FileInfoMinc extends FileInfoBase {
         }
 
         varArray[index].start = originCoord;
-    }
-    
-    /**
-     * Return the slice thickness value stored in the minc header (var = 'acquisition', attrib = 'slice_thickness').
-     * 
-     * @return  The slice thickness, if it is stored in the minc header (0 otherwise).
-     */
-    private double getMincSliceThickness() {
-        for (int i = 0; i < varArray.length; i++) {
-            if (varArray[i].name.equals("acquisition")) {
-                for (int j = 0; j < varArray[i].vattArray.length; j++) {
-                    if (varArray[i].vattArray[j].name.equals("slice_thickness")) {
-                        return ((Double) varArray[i].vattArray[j].values[0]).doubleValue();
-                    }
-                }
-            }
-        }
-        
-        return 0;
     }
 }
