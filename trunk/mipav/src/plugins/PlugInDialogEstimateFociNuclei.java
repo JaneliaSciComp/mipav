@@ -237,7 +237,7 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
             algoFociNuclei.addListener(this);
 
 
-            //createProgressBar(image.getImageName(), algoFociNuclei);
+            createProgressBar(image.getImageName(), algoFociNuclei);
 
             // Hide dialog
             setVisible(false);
@@ -272,7 +272,7 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
         labelNClasses.setFont(serif12);
 
         textNClasses = new JTextField(5);
-        textNClasses.setText("3");
+        textNClasses.setText("2");
         textNClasses.setFont(serif12);
         
         labelExpo = new JLabel("Desired exponent value");
@@ -374,7 +374,7 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
         labelNIterOpen.setFont(serif12);
 
         textNIterOpen = new JTextField(5);
-        textNIterOpen.setText("1");
+        textNIterOpen.setText("3");
         textNIterOpen.setFont(serif12);
 
         labelKernelOpen = new JLabel("Kernel selection");
@@ -394,13 +394,14 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
             labelKernelSizeOpen = new JLabel("Sphere diameter - " + unitString);
         }
 
+        String defKernelSize = java.lang.String.valueOf(3 * java.lang.Math.max(image.getFileInfo(0).getResolutions()[0], image.getFileInfo(0).getResolutions()[1]));
         labelKernelSizeOpen.setForeground(Color.black);
         labelKernelSizeOpen.setBounds(75, 120, 155, 25);
         labelKernelSizeOpen.setFont(serif12);
         labelKernelSizeOpen.setEnabled(false);
-
+        
         textKernelSizeOpen = new JTextField(5);
-        textKernelSizeOpen.setText("1");
+        textKernelSizeOpen.setText(defKernelSize);
         textKernelSizeOpen.setFont(serif12);
         textKernelSizeOpen.setEnabled(false);
 
@@ -450,7 +451,7 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
         labelNIterClose.setFont(serif12);
 
         textNIterClose = new JTextField(5);
-        textNIterClose.setText("1");
+        textNIterClose.setText("4");
         textNIterClose.setFont(serif12);
 
         labelKernelClose = new JLabel("Kernel selection");
@@ -490,7 +491,7 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
         labelKernelSizeClose.setEnabled(false);
 
         textKernelSizeClose = new JTextField(5);
-        textKernelSizeClose.setText("1");
+        textKernelSizeClose.setText(defKernelSize);
         textKernelSizeClose.setFont(serif12);
         textKernelSizeClose.setEnabled(false);
 
@@ -547,7 +548,7 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
         labelMax.setFont(serif12);
 
         textMax = new JTextField(5);
-        textMax.setText("5000");
+        textMax.setText("4000");
         textMax.setFont(serif12);
 
         labelMin = new JLabel("Minimum size");
@@ -555,7 +556,7 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
         labelMin.setFont(serif12);
 
         textMin = new JTextField(5);
-        textMin.setText("1");
+        textMin.setText("1000");
         textMin.setFont(serif12);
 
         GridBagConstraints gbc3 = new GridBagConstraints();
