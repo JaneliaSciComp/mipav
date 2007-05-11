@@ -22254,31 +22254,44 @@ loop4:
     } // dorgtr
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DORM2L Original DORM2L created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
-     * dorm2l overwrites the general real m by n matrix C with Q * C if side == 'L' and trans == 'N', or Q' * C if side
-     * == 'L' and trans == 'T', or C * Q if side == 'R' and trans == 'N', or C * Q' if side == 'R' and trans == 'T'
-     * where Q is a real orthogonal matrix defined as a product of k elementary reflectors Q = K[k-1] ... H[1] H[0] as
+     * This is a port of the version 3.1 LAPACK routine DORM2L Original DORM2L created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dorm2l overwrites the general real m by n matrix C with 
+     *     Q * C if side == 'L' and trans == 'N', or
+     *     Q' * C if side == 'L' and trans == 'T', or
+     *     C * Q if side == 'R' and trans == 'N', or
+     *     C * Q' if side == 'R' and trans == 'T'
+     * where Q is a real orthogonal matrix defined as a product of k elementary reflectors Q = H[k-1] ... H[1] H[0] as
      * retunred by dgeqlf. Q is of order m if side == 'L' and of order n if side == 'R'.
      *
-     * @param  side   (input) char = 'L': Apply Q or Q' from the left = 'R': Apply Q or Q' from the right
-     * @param  trans  (input) char = 'N': apply Q (no transpose) = 'T': apply Q' (Transpose)
+     * @param  side   (input) char 
+     *                = 'L': Apply Q or Q' from the left 
+     *                = 'R': Apply Q or Q' from the right
+     * @param  trans  (input) char 
+     *                = 'N': apply Q (no transpose) 
+     *                = 'T': apply Q' (Transpose)
      * @param  m      (input) int The number of rows of the matrix C. m >= 0.
      * @param  n      (input) int The number of columns of the matrix C. n >= 0.
-     * @param  k      (input) int The number of elementary reflectors whose product defines the matrix Q. If side ==
-     *                'L', m >= k >= 0. If side == 'R', n >= k >= 0.
+     * @param  k      (input) int The number of elementary reflectors whose product defines the matrix Q. 
+     *                If side == 'L', m >= k >= 0. 
+     *                If side == 'R', n >= k >= 0.
      * @param  A      (input) double[][] of dimension (lda,k) The i-th column must contain the vector which defines the
      *                elementary reflector H(i), for i = 0, 1,...,k-1, as returned by dgeqlf in the last k column of its
      *                array argument A. A is modified by the routine but restored on exit.
-     * @param  lda    (input) int The leading dimension of the array A. If side == 'L', lda >= max(1,m). If side == 'R',
-     *                lda >= max(1,n).
+     * @param  lda    (input) int The leading dimension of the array A. 
+     *                If side == 'L', lda >= max(1,m). 
+     *                If side == 'R', lda >= max(1,n).
      * @param  tau    (input) double[] of dimension (k) tau[i] must contain the scalar factor of the elementary
      *                reflector H[i], as returned by dgeqlf.
      * @param  C      (input/output) double[][]of dimension (ldc, n) On entry, the m by n matrix C. On exit, C is
      *                overwritten by Q*C or Q'*C or C*Q' or C*Q.
      * @param  ldc    (input) int The leading dimension of the array C. ldc >= max(1,m).
-     * @param  work   (workspace) double[] of dimension (n) if side == 'L', (m) if side == 'R'.
-     * @param  info   (output) int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value.
+     * @param  work   (workspace) double[] of dimension 
+     *                (n) if side == 'L', 
+     *                (m) if side == 'R'.
+     * @param  info   (output) int[] 
+     *                = 0: successful exit 
+     *                < 0: If info[0] = -i, the i-th argument had an illegal value.
      */
     private void dorm2l(char side, char trans, int m, int n, int k, double[][] A, int lda, double[] tau, double[][] C,
                         int ldc, double[] work, int[] info) {
@@ -22429,31 +22442,44 @@ loop4:
     } // dorm2l
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DORM2R Original DORM2R created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
-     * dorm2r overwrites the general real m by n matrix C with Q * C if side = 'L' and trans = 'N' Q'* C if side = 'L'
-     * and trans = 'T' C * Q if side = 'R' and trans = 'N' C * Q' if side = 'R' and trans = 'T' where Q is a real
-     * orthogonal matrix defined as the product of k elementary reflectors Q = H(1) H(2) . . . H(k) as returned by
-     * dgeqrf. Q is of order m if side = 'L' and of order n if side = 'R'.
+     * This is a port of the version 3.1 LAPACK routine DORM2R Original DORM2R created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dorm2r overwrites the general real m by n matrix C with 
+     *     Q * C if side = 'L' and trans = 'N', or 
+     *     Q'* C if side = 'L' and trans = 'T', or 
+     *     C * Q if side = 'R' and trans = 'N', or 
+     *     C * Q' if side = 'R' and trans = 'T',
+     * where Q is a real orthogonal matrix defined as the product of k elementary reflectors Q = H(0) H(1) . . . H(k-1)
+     * as returned by dgeqrf. Q is of order m if side = 'L' and of order n if side = 'R'.
      *
-     * @param  side   input char = 'L': apply Q or Q' from the left = 'R': apply Q or Q' from the right
-     * @param  trans  input char = 'N': apply Q (no transpose) = 'T': apply Q' (transpose)
+     * @param  side   input char 
+     *                = 'L': apply Q or Q' from the left 
+     *                = 'R': apply Q or Q' from the right
+     * @param  trans  input char 
+     *                = 'N': apply Q (no transpose) 
+     *                = 'T': apply Q' (transpose)
      * @param  m      input int The number of rows of the matrix C. m >= 0.
      * @param  n      input int The number of columns of the matrix C. n >= 0.
-     * @param  k      input int The number of elementary reflectors whose product defines the matrix Q. If side = 'L', m
-     *                >= k >= 0 If side = 'R', n >= k >= 0
+     * @param  k      input int The number of elementary reflectors whose product defines the matrix Q. 
+     *                If side = 'L', m >= k >= 0 
+     *                If side = 'R', n >= k >= 0
      * @param  A      input double[][] of dimension (lda, k) The i-th column must contain the vector which defines the
-     *                elementary reflector H(i), for i = 1,2,...,k, as returned by dgeqrf in the first k columns of its
-     *                array argument A. A is modified by the routine but restored on exit.
-     * @param  lda    input int The leading dimension of the array A. If side = 'L', lda >= max(1,m) If side = 'R', lda
-     *                >= max(1,n)
+     *                elementary reflector H(i), for i = 0,1,...,k-1, as returned by dgeqrf in the first k columns of
+     *                its array argument A. A is modified by the routine but restored on exit.
+     * @param  lda    input int The leading dimension of the array A. 
+     *                If side = 'L', lda >= max(1,m) 
+     *                If side = 'R', lda >= max(1,n)
      * @param  tau    input double[] of dimension (k) tau[i-1] must contain the scalar factor of the elementary
      *                reflector H(i), as returned by dgeqrf.
      * @param  C      (input/output) double[][] of dimension (ldc,n) On entry, the m by n matrix C. On exit, C is
      *                overwritten by Q*C or Q'*C or C*Q' or C*Q.
      * @param  ldc    input int The leading dimension of the array C. ldc >= max(1,m).
-     * @param  work   (workspace) double[] of dimension (n) if side = 'L' (m) if side = 'R'
-     * @param  info   output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value.
+     * @param  work   (workspace) double[] of dimension 
+     *                (n) if side = 'L' 
+     *                (m) if side = 'R'
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info[0] = -i, the i-th argument had an illegal value.
      */
     private void dorm2r(char side, char trans, int m, int n, int k, double[][] A, int lda, double[] tau, double[][] C,
                         int ldc, double[] work, int[] info) {
@@ -22548,17 +22574,17 @@ loop4:
 
                 if (left) {
 
-                    // H(i) is applied to C(i-1:m-1,0:n-1)
+                    // H(i-1) is applied to C(i-1:m-1,0:n-1)
                     mi = m - i + 1;
                     ic = i;
                 } else {
 
-                    // H(i) is applied to C(0:m-1,i-1:n-1)
+                    // H(i-1) is applied to C(0:m-1,i-1:n-1)
                     ni = n - i + 1;
                     jc = i;
                 }
 
-                // Apply H(i)
+                // Apply H(i-1)
                 aii = A[i - 1][i - 1];
                 A[i - 1][i - 1] = 1.0;
 
@@ -22605,17 +22631,17 @@ loop4:
 
                 if (left) {
 
-                    // H(i) is applied to C(i-1:m-1,0:n-1)
+                    // H(i-1) is applied to C(i-1:m-1,0:n-1)
                     mi = m - i + 1;
                     ic = i;
                 } else {
 
-                    // H(i) is applied to C(0:m-1,i-1:n-1)
+                    // H(i-1) is applied to C(0:m-1,i-1:n-1)
                     ni = n - i + 1;
                     jc = i;
                 }
 
-                // Apply H(i)
+                // Apply H(i-1)
                 aii = A[i - 1][i - 1];
                 A[i - 1][i - 1] = 1.0;
 
@@ -22661,36 +22687,51 @@ loop4:
     } // dorm2r
 
     /**
-     * This is a port of version 3.0 LAPACK routine DORMQR Original DORMQR created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dormqr
-     * overwrites the general real m by n matrix C with side = 'L' side = 'R' trans = 'N': Q * C C * Q trans = 'T': Q**T
-     * * C C * Q**T where Q is a real orthogonal matrix defined as the product of k elementary reflectors Q = H(1) H(2)
-     * . . . H(k) as returned by dgeqrf. Q is of order m if side = 'L' and of order n if side = 'R'.
+     * This is a port of version 3.1 LAPACK routine DORMQR Original DORMQR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006 
+     * dormqr overwrites the general real m by n matrix C with 
+     *                           side = 'L'          side = 'R' 
+     *           trans = 'N':      Q * C               C * Q 
+     *           trans = 'T':      Q**T * C            C * Q**T 
+     * where Q is a real orthogonal matrix defined as the product of k elementary reflectors 
+     *                    Q = H(1) H(1) . . . H(k-1)
+     * as returned by dgeqrf. Q is of order m if side = 'L' and of order n if side = 'R'.
      *
-     * @param  side   input char = 'L': apply Q or Q**T from the left = 'R': apply Q or Q**T from the right
-     * @param  trans  trans char = 'N': No transpose, apply Q = 'T': Transpose, apply Q**T
+     * @param  side   input char 
+     *                = 'L': apply Q or Q**T from the left 
+     *                = 'R': apply Q or Q**T from the right
+     * @param  trans  trans char 
+     *                = 'N': No transpose, apply Q 
+     *                = 'T': Transpose, apply Q**T
      * @param  m      input int The number of rows of matrix C. m >= 0.
      * @param  n      input int The number of columns of matrix C. n >= 0.
-     * @param  k      input int The number of elementary reflectors whose product defines the matrix Q. If side = 'L', m
-     *                >= k >= 0 If side = 'R', n >= k >= 0
+     * @param  k      input int The number of elementary reflectors whose product defines the matrix Q. 
+     *                If side = 'L', m >= k >= 0 
+     *                If side = 'R', n >= k >= 0
      * @param  A      input double[][] of dimension (lda,k) The i-th column must contain the vector which defines the
-     *                elementary reflector H(i), for i = 1,2,...,k, as returned by dgeqrf in the first k columns of its
+     *                elementary reflector H(i), for i = 0,1,...,k-1, as returned by dgeqrf in the first k columns of its
      *                array argument A. A is modified by the routine but restored on exit.
-     * @param  lda    input int The leading dimension of the array A. If side = 'L', lda >= max(1,m) If side = 'R', lda
-     *                >= max(1,n)
+     * @param  lda    input int The leading dimension of the array A. 
+     *                If side = 'L', lda >= max(1,m) 
+     *                If side = 'R', lda >= max(1,n)
      * @param  tau    input double[] of dimension k tau[i-1] must contain the scalar factor of the elementary reflector
      *                H(i), as returned by dgeqrf
-     * @param  C      (input/output) double[][] of dimension (ldc,n) On entry, the m by n matrix C. On exit, C is
-     *                overwritten by Q*C or Q**T*C or C*Q**T or C*Q.
+     * @param  C      (input/output) double[][] of dimension (ldc,n) 
+     *                On entry, the m by n matrix C. 
+     *                On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q.
      * @param  ldc    input int The leading dimension of the array C. ldc >= max(1,m).
-     * @param  work   (workspace/output) double[] of dimension (lwork). On exit, if info[0] = 0, work[0] returns the
+     * @param  work   (workspace/output) double[] of dimension max(1, lwork). On exit, if info[0] = 0, work[0] returns the
      *                optimal lwork.
-     * @param  lwork  input int The dimension of the array work. If side = 'L', work >= max(1,n). If side = 'R', work >=
-     *                max(1,m). For optimum performance lwork >= n*nb if side = 'L', and lwork >= m*nb if side = 'R',
+     * @param  lwork  input int The dimension of the array work. 
+     *                If side = 'L', work >= max(1,n). 
+     *                If side = 'R', work >= max(1,m). 
+     *                For optimum performance lwork >= n*nb if side = 'L', and lwork >= m*nb if side = 'R',
      *                where nb is optimal blocksize. If lwork = -1, then a workspace query is assumed; the routine only
      *                calculates the optimal size of the work array, returns this value as the first entry of the work
      *                array, and no error message related to lwork is output.
-     * @param  info   output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info[0] = -i, the i-th argument had an illegal value
      */
     private void dormqr(char side, char trans, int m, int n, int k, double[][] A, int lda, double[] tau, double[][] C,
                         int ldc, double[] work, int lwork, int[] info) {
@@ -22848,7 +22889,7 @@ loop4:
                     ib = Math.min(nb, k - i + 1);
 
                     // Form the triangular factor of the block reflector
-                    // H = H(i) H(i+1) .  .  .  H(i+ib-1)
+                    // H = H(i-1) H(i) .  .  .  H(i+ib-2)
                     row1 = Math.max(1, nq - i + 1);
                     array1 = new double[row1][ib];
 
@@ -22887,7 +22928,7 @@ loop4:
                     }
 
                     // Apply H or H'
-                    if (side == 'L') {
+                    if (left) {
                         row1 = Math.max(1, mi);
                     } else {
                         row1 = Math.max(1, ni);
@@ -22929,7 +22970,7 @@ loop4:
                     ib = Math.min(nb, k - i + 1);
 
                     // Form the triangular factor of the block reflector
-                    // H = H(i) H(i+1) .  .  .  H(i+ib-1)
+                    // H = H(i-1) H(i) .  .  .  H(i+ib-2)
                     row1 = Math.max(1, nq - i + 1);
                     array1 = new double[row1][ib];
 
@@ -22968,7 +23009,7 @@ loop4:
                     }
 
                     // Apply H or H'
-                    if (side == 'L') {
+                    if (left) {
                         row1 = Math.max(1, mi);
                     } else {
                         row1 = Math.max(1, ni);
@@ -23012,17 +23053,21 @@ loop4:
     } // dormqr
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DPOTF2 Original DPOTF2 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
-     * dpotf2 computes the Cholesky factorization of a real symmetric positive matrix A.
+     * This is a port of the version 3.1 LAPACK routine DPOTF2 Original DPOTF2 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dpotf2 computes the Cholesky factorization of a real symmetric positive definite matrix A.
      *
-     * <p>The factorization has the form A = U' * U, if UPLO = 'U' A = L * L', if UPLO = 'L' where U is an upper
-     * triangular matrix and L is lower triangular</p>
+     * <p>The factorization has the form 
+     *     A = U' * U, if UPLO = 'U', or
+     *     A = L * L', if UPLO = 'L',
+     * where U is an upper triangular matrix and L is lower triangular</p>
      *
-     * <p>This is an unblocked version of the algorithm</p>
+     * <p>This is the unblocked version of the algorithm, calling Level 2 BLAS.</p>
      *
      * @param  uplo  input char Specifies whether the upper or lower triangular part of the symmetric matrix A is
-     *               stored. = 'U': Upper triangular = 'L': Lower triangular
+     *               stored. 
+     *               = 'U': Upper triangular 
+     *               = 'L': Lower triangular
      * @param  n     input int The order of the matrix A. n >= 0.
      * @param  A     input/output double[][] dimension lda by n On entry, the symmetric matrix A. If UPLO = 'U', the
      *               leading n by n upper triangular part of A contains the upper triangular part of the matrix A, and
@@ -23033,9 +23078,11 @@ loop4:
      *               <p>On exit, if info[0] = 0, the factor U or L from the Cholesky factorization A = U'*U or A = L*L'.
      *               </p>
      * @param  lda   input int The leading dimension of the array A. lda >= max(1,n).
-     * @param  info  output int[] = 0: successful exit < 0: If info[0] = -k, the k-th argument had an illegal value > 0:
-     *               If info[0] = k, the leading minor of order k is not positive definite, and the factorization could
-     *               not be completed.
+     * @param  info  output int[] 
+     *               = 0: successful exit 
+     *               < 0: If info[0] = -k, the k-th argument had an illegal value 
+     *               > 0: If info[0] = k, the leading minor of order k is not positive definite,
+     *                    and the factorization could not be completed.
      */
     private void dpotf2(char uplo, int n, double[][] A, int lda, int[] info) {
         boolean upper;
@@ -23067,7 +23114,7 @@ loop4:
         }
 
         if (info[0] != 0) {
-            MipavUtil.displayError("Error in dpotf2 with info = " + info[0]);
+            MipavUtil.displayError("Error in dpotf2 with info[0] = " + info[0]);
 
             return;
         }
@@ -23210,16 +23257,20 @@ loop4:
     } // dpotf2
 
     /**
-     * This is a port of the DPOTRF version 3.0 LAPACK routine Original DPOTRF created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, March 31, 1993
+     * This is a port of the DPOTRF version 3.1 LAPACK routine Original DPOTRF created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dpotrf computes the Cholesky factorization of a real symmetric positive definite matrix A
      *
-     * <p>The factorization has the form A = U'*U, if uplo = 'U', or A = L * L', if uplo = 'L', where U is an upper
-     * triangular matrix and L is lower triangular</p>
+     * <p>The factorization has the form 
+     *        A = U'*U, if uplo = 'U', or 
+     *        A = L * L', if uplo = 'L', 
+     * where U is an upper triangular matrix and L is lower triangular</p>
      *
-     * <p>This is the block version of the algorithm</p>
+     * <p>This is the block version of the algorithm, calling Level 3 BLAS.</p>
      *
-     * @param  uplo  input char = 'U': Upper triangle of A is stored. = 'L': Lower triangle of A is stored.
+     * @param  uplo  input char 
+     *         = 'U': Upper triangle of A is stored. 
+     *         = 'L': Lower triangle of A is stored.
      * @param  n     input int The order of the matrix A. n >= 0.
      * @param  A     (input/output) double[][] dimension (lda, n) On entry, the symmetric matrix A. If uplo == 'U', the
      *               leading n-by-n upper triangular part of A contains the upper triangular part of the matrix A, and
@@ -23230,9 +23281,11 @@ loop4:
      *               <p>On exit, if info[0] = 0, the factor U or L from the Cholesky factorization A = U'*U or A = L*L'.
      *               </p>
      * @param  lda   input int The leading dimension of array A. lda >= max(1,n)
-     * @param  info  output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value > 0:
-     *               If info[0] = i, the leading minor of order i is not positive definite, and the factorization could
-     *               not be completed.
+     * @param  info  output int[] 
+     *               = 0: successful exit 
+     *               < 0: If info[0] = -i, the i-th argument had an illegal value 
+     *               > 0: If info[0] = i, the leading minor of order i is not positive definite, and the
+     *                    factorization could not be completed.
      */
     private void dpotrf(char uplo, int n, double[][] A, int lda, int[] info) {
         boolean upper;
@@ -23270,7 +23323,7 @@ loop4:
         } // else if (lda < Math.max(1,n))
 
         if (info[0] != 0) {
-            MipavUtil.displayError("Error in dpotrf with info = " + info[0]);
+            MipavUtil.displayError("Error in dpotrf with info[0] = " + info[0]);
 
             return;
         } // if (info[0] != 0)
@@ -23748,9 +23801,9 @@ loop4:
     } // dsgt01
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DSTECH Original DSTECH created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University February 29, 1992 Let
-     * T be the tridiagonal matrix with diagonal entries A[0] ,..., A[n-1] and offdiagonal entries B[0] ,..., B[n-2]).
+     * This is a port of version 3.1 LAPACK test routine DSTECH Original DSTECH created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * Let T be the tridiagonal matrix with diagonal entries A[0] ,..., A[n-1] and offdiagonal entries B[0] ,..., B[n-2]).
      * dstech checks to see if eig[0], ..., eig[n-1] are indeed accurate eigenvalues of T. It does this by expanding
      * each eig[i] into an interval [svd[i] - eps, svd[i] + eps], merging overlapping intervals if any, and using Sturm
      * sequences to count and verify whether each resulting interval has the correct number of eigenvalues (using
@@ -23764,8 +23817,10 @@ loop4:
      * @param  eig   (input) double[] of dimension (n) The purported eigenvalues to be checked.
      * @param  tol   double Error tolerance for checking, a multiple of the machine precision.
      * @param  work  (workspace) double[] of dimension (n)
-     * @param  info  (output) int[] 0 if the eigenvalues are all correct (to within 1 +- tol*mazheps*maxeig >0 if the
-     *               interval containing the info-th eigenvalue contains the incorrect number of eigenvalues.
+     * @param  info  (output) int[] 
+     *               0 if the eigenvalues are all correct (to within 1 +- tol*mazheps*maxeig 
+     *               >0 if the interval containing the info-th eigenvalue contains the incorrect
+     *                  number of eigenvalues.
      */
     private void dstech(int n, double[] A, double[] B, double[] eig, double tol, double[] work, int[] info) {
         int bpnt;
@@ -23889,8 +23944,8 @@ loop4:
     } // dstech
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DSTECT Original DSTECT created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
+     * This is a port of version 3.1 LAPACK test routine DSTECT Original DSTECT created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dstect counts the number num of eigenvalues of a tridiagonal matrix T which are less than or equal to shift. T
      * has diagonal entries A[0], ... , A[n-1], and offdiagonal entries B[0], ..., B[n-1]. See W. Kahan "Accurate
      * Eigenvalues of a Symmetric TriDiagonal Matrix", Report CS41, Computer Science Department, Stanford University,
@@ -23999,16 +24054,19 @@ loop4:
     } // dstect
 
     /**
-     * This is a port of version 3.0 LAPACK routine DSTEQR Original DSTEQR created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of version 3.1 LAPACK routine DSTEQR Original DSTEQR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dsteqr computes all eigenvalues and, optionally, eigenvectors of a symmetric tridiagonal matrix using the
      * implicit QL or QR method. The eigenvectors of a full or band symmetric matrix can also be found if dsytrd or
      * dsptrd or dsbtrd has been used to reduce this matrix to tridiagonal form.
      *
-     * @param  compz  input char = 'N': Compute eigenvalues only. = 'V': Compute eigenvalues and eigenvectors of the
-     *                original symmetric matrix. On entry, Z must contain the orthogonal matrix used to reduce the
-     *                original matrix to tridiagonal form. = 'I': Compute eigenvalues and eigenvectors of the
-     *                tridiagonal matrix. Z is initialized to the identity matrix.
+     * @param  compz  input char 
+     *                = 'N': Compute eigenvalues only. 
+     *                = 'V': Compute eigenvalues and eigenvectors of the original symmetric matrix. 
+     *                       On entry, Z must contain the orthogonal matrix used to reduce the original matrix to
+     *                       tridiagonal form. 
+     *                = 'I': Compute eigenvalues and eigenvectors of the tridiagonal matrix. 
+     *                       Z is initialized to the identity matrix.
      * @param  n      input int The order of the matrix. n >= 0.
      * @param  d      input/output double[] of dimension n. On entry, the diagonal elements of the tridiagonal matrix.
      *                On exit, if info = 0, the eigenvalues in ascending order.
@@ -24022,10 +24080,13 @@ loop4:
      * @param  ldz    input int The leading dimension of the array Z. ldz >= 1, and if eigenvectors are desired, then
      *                ldz >= max(1,n).
      * @param  work   workspace double[] of dimension max(1,2*n-2). If compz = 'N', then work is not referenced.
-     * @param  info   output int[] = 0: successful exit. < 0: If info[0] = -i, then the i-th argument had an illegal
-     *                value > 0: The algorithm failed to find all the eigenvalues in a total of 30*n iterations; if
-     *                info[0]= i, then i elements of e have not converged to zero; on exit, d and e contain the elements
-     *                of a symmetric tridiagonal matrix which is orthogonally similar to the original matrix.
+     * @param  info   output int[] 
+     *                = 0: successful exit. 
+     *                < 0: If info[0] = -i, then the i-th argument had an illegal value 
+     *                > 0: The algorithm failed to find all the eigenvalues in a total of 30*n iterations; if
+     *                     info[0]= i, then i elements of e have not converged to zero; on exit, d and e contain
+     *                     the elements of a symmetric tridiagonal matrix which is orthogonally similar to the
+     *                     original matrix.
      */
     private void dsteqr(char compz, int n, double[] d, double[] e, double[][] Z, int ldz, double[] work, int[] info) {
         int maxit = 30;
@@ -24097,7 +24158,7 @@ loop4:
         }
 
         if (info[0] != 0) {
-            MipavUtil.displayError("Error dsteqr had info = " + info[0]);
+            MipavUtil.displayError("Error dsteqr had info[0] = " + info[0]);
 
             return;
         }
@@ -24731,19 +24792,21 @@ set11:                           {
     } // dsteqr
 
     /**
-     * This is a port of version 3.0 LAPACK routine DSTERF Original DSTERF created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dsterf
-     * computes all the eigenvalues of a symmetric tridiagonal matrix using the Pal-Walker-Kahan variant of the QL or QR
-     * algorithm.
+     * This is a port of version 3.1 LAPACK routine DSTERF Original DSTERF created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dsterf computes all the eigenvalues of a symmetric tridiagonal matrix using the Pal-Walker-Kahan variant of
+     * the QL or QR algorithm.
      *
      * @param  n     input int The order of the matrix. n >= 0.
      * @param  d     input/output double[] of dimension n. On entry, the n diagonal elements of the tridiagonal matrix.
      *               On exit, if info[0] = 0, the eigenvalues in ascending order
      * @param  e     input/order double[] of dimension n-1 On entry, the (n-1) subdiagonal elements in the tridiagonal
      *               matrix. On exit, e has been destroyed.
-     * @param  info  output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value > 0:
-     *               The algorithm failed to find all of the eigenvalues in a total of 30*n iterations; if info = i,
-     *               then i elements of e have not converged to zero.
+     * @param  info  output int[] 
+     *               = 0: successful exit 
+     *               < 0: If info[0] = -i, the i-th argument had an illegal value 
+     *               > 0: The algorithm failed to find all of the eigenvalues in a total of 30*n iterations;
+     *                    if info = i, then i elements of e have not converged to zero.
      */
     private void dsterf(int n, double[] d, double[] e, int[] info) {
         int maxit = 30;
@@ -25203,11 +25266,12 @@ loop6:                   {
     } // dsterf
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DSTT21 Original DSTT21 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of version 3.1 LAPACK test routine DSTT21 Original DSTT21 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dstt21 checks a decomposition of the form A = U S U' where ' means transpose, A is symmetric tridiagonal, U is
      * orthogonal, and S is diagonal (if kband == 0) or symmetric tridagonal (if kband == 1). Two tests are performed:
-     * result[0] = | A - U S U' | / ( |A| n ulp ) result[1] = | I - UU' | / ( n ulp )
+     * result[0] = | A - U S U' | / ( |A| n ulp )
+     * result[1] = | I - UU' | / ( n ulp )
      *
      * @param  n       (input) int The size of the matrix. If it is zero, dstt21 does nothing. It must be at least zero.
      * @param  kband   (input) int The bandwidth of the matrix S. It may only be zero or one. If zero, then S is
@@ -25373,8 +25437,8 @@ loop6:                   {
     } // dstt21
 
     /**
-     * This is a port of the LAPACK version 3.0 DSYGS2 routine Original DSYGS2 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, February 29, 1992
+     * This is a port of the LAPACK version 3.1 DSYGS2 routine Original DSYGS2 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * DSYGS2 reduces a real symmetric-definite generalized eigenproblem to standard form.
      *
      * <p>If itype = 1, the problem is A*x = lambda*B*x, and A is overwritten by inv(U')*A*inv(U) or inv(L)*A*inv(L')
@@ -25385,9 +25449,13 @@ loop6:                   {
      *
      * <p>B must have been previously factorized as U'*U or L*L' by dpotrf.</p>
      *
-     * @param  itype  input int = 1: Compute inv(U')*A*inv(U) or inv(L)*A*inv(L') = 2 or 3: Compute U*A*U' or L'*A*L
+     * @param  itype  input int 
+     *         = 1: Compute inv(U')*A*inv(U) or inv(L)*A*inv(L') 
+     *         = 2 or 3: Compute U*A*U' or L'*A*L
      * @param  uplo   input char Specifies whether the upper or lower triangular part of the symmetric matrix A is
-     *                stored, and how B has been factorized. = 'U': Upper triangular = 'L': Lower triangular
+     *                stored, and how B has been factorized. 
+     *                = 'U': Upper triangular 
+     *                = 'L': Lower triangular
      * @param  n      input int The order of matrices A and B. n >= 0.
      * @param  A      input/output double[][] dimension lda by n On entry, the symmetric matrix A. If uplo = 'U', the
      *                leading n by n upper triangular part of A contains the upper triangular part of the matrix A, and
@@ -25400,7 +25468,9 @@ loop6:                   {
      * @param  B      input double[][] dimension ldb by n. The triangular factor from the Cholesky factorization of B,
      *                as returned by dpotrf.
      * @param  ldb    input int The leading dimension of array B. ldb >= max(1,n).
-     * @param  info   output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info[0] = -i, the i-th argument had an illegal value
      */
     private void dsygs2(int itype, char uplo, int n, double[][] A, int lda, double[][] B, int ldb, int[] info) {
         boolean upper;
@@ -25436,7 +25506,7 @@ loop6:                   {
         }
 
         if (info[0] != 0) {
-            MipavUtil.displayError("Error dsygs2 had info = " + info[0]);
+            MipavUtil.displayError("Error dsygs2 had info[0] = " + info[0]);
 
             return;
         }
@@ -25688,9 +25758,9 @@ loop6:                   {
     } // dsygs2
 
     /**
-     * This routine is a port of the version 3.0 LAPACK routine DSYGST Original DSYGST created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September
-     * 30, 1994 dsygst reduces a real symmetric-definite generalized eigenproblem to standard form.
+     * This routine is a port of the version 3.1 LAPACK routine DSYGST Original DSYGST created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dsygst reduces a real symmetric-definite generalized eigenproblem to standard form.
      *
      * <p>If itype = 1, the problem is A*x = lambda*B*x and A is overwritten by inv(U')*A*inv(U) or inv(L)*A*inv(L')</p>
      *
@@ -25699,9 +25769,12 @@ loop6:                   {
      *
      * <p>B must have been previously factorized as U'*U or L*L' by dpotrf</p>
      *
-     * @param  itype  input int = 1: compute inv(U')*A*inv(U) or inv(L)*A*inv(L') = 2 or 3: compute U*A*U' or L'*A*L
-     * @param  uplo   input char = 'U': Upper triangle of A is stored and B is factored as U'*U = 'L': Lower triangle of
-     *                A is stored and B is factored as L*L'
+     * @param  itype  input int 
+     *                = 1: compute inv(U')*A*inv(U) or inv(L)*A*inv(L') 
+     *                = 2 or 3: compute U*A*U' or L'*A*L
+     * @param  uplo   input char 
+     *                = 'U': Upper triangle of A is stored and B is factored as U'*U 
+     *                = 'L': Lower triangle of A is stored and B is factored as L*L'
      * @param  n      input int The order of matrices A and B. n >= 0.
      * @param  A      input/output double[][] dimension lda by n On entry, the symmetric matrix A. If uplo = 'U', the
      *                leading n-by-n upper triangular part of A contains the upper triangular part of matrix A, and the
@@ -25714,7 +25787,9 @@ loop6:                   {
      * @param  B      input double[][] dimension ldb by n. The triangular factor from the Cholesky factorization of B,
      *                as returned by dpotrf
      * @param  ldb    input int The leading dimension of array B. ldb >= max(1,n).
-     * @param  info   output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info = -i, the i-th argument had an illegal value
      */
     private void dsygst(int itype, char uplo, int n, double[][] A, int lda, double[][] B, int ldb, int[] info) {
         boolean upper;
@@ -25754,7 +25829,7 @@ loop6:                   {
         }
 
         if (info[0] != 0) {
-            MipavUtil.displayError("Error in dsygst with info = " + info[0]);
+            MipavUtil.displayError("Error in dsygst with info[0] = " + info[0]);
 
             return;
         } // if (info[0] != 0)
@@ -25911,7 +25986,7 @@ loop6:                   {
                     for (k = 1; k <= n; k += nb) {
                         kb = Math.min(n - k + 1, nb);
 
-                        // Update the lower triangle of A[k-1:n-1][k-1:n-1]
+                        // Update the lower triangle of A(k-1:n-1,k-1:n-1
                         array1 = new double[kb][kb];
                         array2 = new double[kb][kb];
 
@@ -27538,8 +27613,8 @@ loop6:                   {
     } // dsyrk
 
     /**
-     * This is a port of version 3.0 LAPACK test routine DSYT21 Original DSYT21 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, September 30, 1994
+     * This is a port of version 3.1 LAPACK test routine DSYT21 Original DSYT21 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dsyt21 generally checks a decomposition of the form A = U S U' where ' means transpose, A is symmetric, U is
      * orthogonal, and S is diagonal (if kband == 0) or symmetric tridiagonal (if kband == 1).
      *
@@ -27547,21 +27622,25 @@ loop6:                   {
      * transformations, whose vectors are stored in the array "V" and whose scaling constants are in "tau". We shall use
      * the letter "V" to refer to the product of Householder transformations (which should be equal to U).</p>
      *
-     * <p>Specifically, if itype == 1, then: result[0] = | A - U S U' | / ( |A| n ulp ) *and* result[1] = | I - UU" | /
-     * (n ulp )</p>
+     * <p>Specifically, if itype == 1, then: result[0] = | A - U S U' | / ( |A| n ulp ) *and* 
+     *                                       result[1] = | I - UU' | / (n ulp )</p>
      *
      * <p>If itype == 2, then: result[0] = | A - V S V' | / ( |A| n ulp )</p>
      *
      * <p>If itype == 3, then: result[0] = | I - VU' | / ( n ulp )</p>
      *
-     * <p>For itype > 1, the transformation U is expressed as a product V = H(1)...H(n-2), where H(j) = I - tau(j) v(j)
-     * v(j)' and each vector v(j) has its first j elements 0 and the remaining n-j elements stored in V(j:n-1,j-1).</p>
+     * <p>For itype > 1, the transformation U is expressed as a product V = H(0)...H(n-1), where H(j) = I - tau(j) v(j) v(j)'
+     *         and each vector v(j) has its first j elements 0 and the remaining n-j elements stored in V(j:n-1,j-1).</p>
      *
-     * @param  itype   (input) int Specifies the type of tests to be performed. 1: U expressed as a dense orthogonal
-     *                 matrix: result[0] = | A - U S U' | / ( |A| n ulp ) *and* result[1] = | I - UU' | / ( n ulp ) 2: U
-     *                 expressed as a product V of Householder transformations: result[0] = | A - V S V' | / ( |A| n ulp
-     *                 ) 3: U expressed both as a dense orthogonal matrix and as a product of Householder
-     *                 transformations: result[0] = | I - VU' | / ( n ulp )
+     * @param  itype   (input) int Specifies the type of tests to be performed. 
+     *                 1: U expressed as a dense orthogonal matrix: 
+     *                 result[0] = | A - U S U' | / ( |A| n ulp ) *and* 
+     *                 result[1] = | I - UU' | / ( n ulp ) 
+     *                 2: U expressed as a product V of Householder transformations:
+     *                 result[0] = | A - V S V' | / ( |A| n ulp )
+     *                 3: U expressed both as a dense orthogonal matrix and as a product of Householder
+     *                 transformations: 
+     *                 result[0] = | I - VU' | / ( n ulp )
      * @param  uplo    (input) char If uplo == 'U', the upper triangle of A and V will be used and the (strictly) lower
      *                 triangle will not be referenced. If uplo == 'L', the lower triangle of A and V will be used and
      *                 the (strictly) upper triangle will not be referenced.
@@ -27573,20 +27652,20 @@ loop6:                   {
      * @param  lda     (input) int The leading dimension of A. It must be at least 1 and at least n.
      * @param  D       (input) double[] of dimension (n) The diagonal of the (symmetric tri-) diagonal matrix.
      * @param  E       (input) double[] of dimension (n-1) The off-diagonal of the (symmetric tri-) diagonal matrix.
-     *                 E[0] is the [0][1] and [1][0], E[1] is the [1][2] and [2][1] element, etc. Not referenced if
-     *                 kband == 0.
+     *                 E[0] is the [0][1] and [1][0] element, E[1] is the [1][2] and [2][1] element, etc. Not
+     *                 referenced if kband == 0.
      * @param  U       (input) double[][] of dimension (ldu,n) If itype == 1 or 3, this contains the orthogonal matrix
      *                 in the decomposition, expressed as a dense matrix. If itype == 2, then it is not referenced.
      * @param  ldu     (input) int The leading dimension of U. ldu must be at least n and at least 1.
-     * @param  V       (input) double[][] of dimension (ldv,n) If itype == 2 or 3, the column of this array contain the
+     * @param  V       (input) double[][] of dimension (ldv,n) If itype == 2 or 3, the columns of this array contain the
      *                 Householder vectors used to describe the orthogonal matrix in the decomposition. If uplo == 'L',
-     *                 then the vectors are in the lower triangle, if uplo == 'U', then in the upper triangle.*Note* If
+     *                 then the vectors are in the lower triangle, if uplo == 'U', then in the upper triangle. *Note* If
      *                 itype == 2 or 3, V is modified and restored. The subdiagonal (if uplo == 'L') or the
      *                 superdiagonal (if uplo == 'U') is set to one, and later reset to its original value, during the
      *                 course of the calculation. If itype == 1, then it is neither referenced nor modified.
      * @param  ldv     (input) int The leading dimension of V. ldv must be at least n and at least 1.
      * @param  tau     (input) double[] of dimension (n) If itype >= 2, then tau[j] is the scalar factor of v(j) v(j)'
-     *                 in the Householder transformation H(j) of the product U = H(1)...H(n-2) If itype < 2, then tau is
+     *                 in the Householder transformation H(j) of the product U = H(0)...H(n-3) If itype < 2, then tau is
      *                 not referenced.
      * @param  work    (workspace) double[] of dimension (2*n**2)
      * @param  result  (output) double[] of dimension (2) The values computed by the two tests are described above. The
@@ -28059,13 +28138,15 @@ loop6:                   {
     } // dsyt21
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DSYTD2 Original DSYTD2 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, October 31, 1992
+     * This is a port of the version 3.1 LAPACK routine DSYTD2 Original DSYTD2 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
      * dsytd2 reduces a real symmetric matrix A to symmetric tridiagonal form T by an orthogonal similarity
      * transformation: Q' * A * Q = T.
      *
      * @param  uplo  input char Specifies whether the upper or lower triangular part of the symmetric matrix A is
-     *               stored: = 'U': Upper triangular = 'L': Lower triangular
+     *               stored: 
+     *               = 'U': Upper triangular 
+     *               = 'L': Lower triangular
      * @param  n     input int The order of the matrix A. n >= 0.
      * @param  A     input/output double[][] of dimension lda by n On entry, the symmetric matrix A. If uplo = 'U', the
      *               leading n-by-n upper triangular part of A contains the upper triangular part of the matrix A, and
@@ -28084,7 +28165,9 @@ loop6:                   {
      *               A[i][i+1] if uplo = 'U', e[i] = A[i+1][i] if uplo = 'L'
      * @param  tau   output double[] of dimension n-1. The scalar factors of the elementary reflectors (see Furtehr
      *               Details).
-     * @param  info  output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
+     * @param  info  output int[] 
+     *               = 0: successful exit 
+     *               < 0: If info = -i, the i-th argument had an illegal value
      *
      *               <p>Further Details: If uplo = 'U', the matrix Q is represented as a product of elementary
      *               reflectors Q = H[n-2] ... H[1] H[0] Each H[i] has the form H[i] = I - tau * v * v' where tau is a
@@ -28095,9 +28178,19 @@ loop6:                   {
      *               stored on exit in A(i+1:n-1,i-1), and tau in tau[i-1].</p>
      *
      *               <p>The contents of A on exit are illustrated by the following examples with n = 5: If uplo = 'U':
-     *               (d e v2 v3 v4 ) ( d e v3 v4 ) ( d e v4 ) ( d e ) ( d ) If Uplo = 'L': (d ) (e d ) (v1 e d ) (v1 v2
-     *               e d ) (v1 v2 v3 e d ) where d and e denote diagonal and off-diagonal elements of T, and vi denotes
-     *               an element of the vector defining H[i].</p>
+     *               (d e v2 v3 v4 ) 
+     *               (  d  e v3 v4 ) 
+     *               (     d  e v4 ) 
+     *               (        d  e ) 
+     *               (           d )
+     *                If Uplo = 'L': 
+     *                (d            ) 
+     *                (e   d        )
+     *                (v1  e  d     )
+     *                (v1 v2  e d   )
+     *                (v1 v2 v3 e d ) 
+     *                where d and e denote diagonal and off-diagonal elements of T, and vi denotes an element of the
+     *                vector defining H[i].</p>
      */
     private void dsytd2(char uplo, int n, double[][] A, int lda, double[] d, double[] e, double[] tau, int[] info) {
         boolean upper;
@@ -28128,7 +28221,7 @@ loop6:                   {
         }
 
         if (info[0] != 0) {
-            MipavUtil.displayError("Error dsytd2 had info = " + info[0]);
+            MipavUtil.displayError("Error dsytd2 had info[0] = " + info[0]);
 
             return;
         }
@@ -28283,12 +28376,14 @@ loop6:                   {
     } // dsytd2
 
     /**
-     * This is a port of the version 3.0 LAPACK routine DSYTRD Original DSYTRD created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dsytrd
-     * reduces a real symmetric matrix A to a real symmetric tridiagonal form T by an orthogonal similarity
+     * This is a port of the version 3.1 LAPACK routine DSYTRD Original DSYTRD created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dsytrd reduces a real symmetric matrix A to a real symmetric tridiagonal form T by an orthogonal similarity
      * transformation. Q'*A*Q = T.
      *
-     * @param  uplo   input char = 'U': Upper triangle of A is stored. = 'L': Lower triangle of A is stored.
+     * @param  uplo   input char 
+     *                = 'U': Upper triangle of A is stored. 
+     *                = 'L': Lower triangle of A is stored.
      * @param  n      input int The order of the matrix A. n >= 0.
      * @param  A      input/output double[][] of dimension lda by n On entry, the symmetric matrix A. If uplo = 'U', the
      *                leading n-by-n upper triangular part of A contains the upper triangular part of the matrix A, and
@@ -28305,15 +28400,17 @@ loop6:                   {
      * @param  d      output double[] of dimension n The diagonal elements of the tridiagonal matrix T: d[i] = A[i][i].
      * @param  e      output double[] of dimension n-1. The off-diagonal elements of the tridiagonal matrix T: e[i] =
      *                A[i][i+1] if uplo = 'U', e[i] = A[i+1][i], if uplo = 'L'.
-     * @param  tau    output double[] of dimension n-1. The scalar factors of the elementary refelctors (see Further
+     * @param  tau    output double[] of dimension n-1. The scalar factors of the elementary reflectors (see Further
      *                Details).
-     * @param  work   (workspace/output) double[] of dimension lwork. On exit, if info[0] = 0, work[0] returns the
-     *                optimal lwork.
+     * @param  work   (workspace/output) double[] of dimension max(1, lwork). 
+     *                On exit, if info[0] = 0, work[0] returns the optimal lwork.
      * @param  lwork  input int The dimension of the array work. lwork >= 1. For optimum performance lwork >= n*nb,
      *                where nb is the optimal blocksize. if lwork = -1, then a workspace query is assumed; the routine
      *                only calculates the optimal size of the work array, returns this value as the first entry of the
      *                work array, and no error message related to lwork is issued.
-     * @param  info   output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info = -i, the i-th argument had an illegal value
      *
      *                <p>Further details: If uplo = 'U', the matrix Q is represented as a product of elementary
      *                reflectors Q = H[n-2]...H[1] H[0]. Each H[i] has the form H[i] = I - tau * v * v' where tau is a
@@ -28323,10 +28420,21 @@ loop6:                   {
      *                where tau is a real scalar, and v is a real vector with v(0:i-1) = 0 and v(i) = 0; v(i+1:n-1) is
      *                stored on exit in A(i+1:n-1,i-1), and tau in tau[i-1].</p>
      *
-     *                <p>The contents of A on exit are illustrated by the following examples with n = 5: If uplo = 'U':
-     *                d e v2 v3 v4 d e v3 v4 d e v4 d e e If uplo = 'L' d e d v1 e d v1 v2 e d v1 v2 v3 e d where d and
-     *                e denote diagonal and off-diagonal elements of T, and vi denotes an element of the vector defining
-     *                H[i].</p>
+     *                <p>The contents of A on exit are illustrated by the following examples with n = 5:
+     *                If uplo = 'U':
+     *                (d e v2 v3 v4)
+     *                (  d  e v3 v4)
+     *                (     d  e v4)
+     *                (        d  e)
+     *                (           d)
+     *                If uplo = 'L':
+     *                (d           )
+     *                (e   d       )
+     *                (v1  e  d    )
+     *                (v1 v2  e d  )
+     *                (v1 v2 v3 e d) 
+     *                where d and e denote diagonal and off-diagonal elements of T, 
+     *                and vi denotes an element of the vector defining H[i].</p>
      */
     private void dsytrd(char uplo, int n, double[][] A, int lda, double[] d, double[] e, double[] tau, double[] work,
                         int lwork, int[] info) {
@@ -28390,7 +28498,7 @@ loop6:                   {
         } // if (info[0] == 0)
 
         if (info[0] != 0) {
-            MipavUtil.displayError("Error dsytrd had info = " + info[0]);
+            MipavUtil.displayError("Error dsytrd had info[0] = " + info[0]);
 
             return;
         } // if (info[0] != 0)
@@ -28598,97 +28706,127 @@ loop6:                   {
     } // dsytrd
 
     /**
-     * This is a port of version 3.0 LAPACK routine DTGEVC Original DTGEVC created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1999 dtgevc
-     * computes some or all of the right and/or left generalized eigenvectors of a pair of real upper triangular
-     * matrices (A,B).
+     * This is a port of version 3.1 LAPACK routine DTGEVC Original DTGEVC created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dtgevc computes some or all of the right and/or left eigenvectors of a pair of real eigenvectors of
+     * a pair of real matrices (S,P), where S is a quasi-triangular matrix and P is upper triangular.  Matrix 
+     * pairs of this type are produced by the generalized Schur factorization of a matrix pair (A,B):
+     *      A = Q*S*Z**T,    B = Q*P*Z**T
+     * as computed by dgghrd + dhgeqz
+     * 
+     * The right eigenvector x and the left eigenvector y of (S, P) corresponding to an eigenvalue w are
+     * defined by:
+     *     S*x = w*P*x,    (y**H)*S = w*(y**H)*P,
+     *     
+     * where y**H denotes the conjugate transpose of y.  The eigenvalues are not input to this routine,
+     * but are computed directly from the diagonal blocks of S and P.
+     * 
+     * This routine returns the matrices X and/or Y of right and left eigenvectors of (S,P), or the products
+     * Z*X and/or Q*Y, where Z and Q are input matrices.  If Q and Z are the orthogonal factors from the generalized
+     * Schur factorization of a matrix pair (A,B), then Z*X and Q*Y are the matrices of right and left
+     * eigenvectors of (A, B).
      *
-     * <p>The right generalized eigenvector x and the left generalized eigenvector y of (A,B) corresponding to a
-     * generalized eigenvalue w are defined by: (A - wB) * x = 0 and y**H * (A - wB) = 0 where y**H denotes the
-     * conjugate transpose of y.</p>
-     *
-     * <p>If an eigenvalue w is determined by zero diagonal elements of both A and B, a unit vector is returned as the
-     * corresponding eigenvector.</p>
-     *
-     * <p>If all eigenvectors are requested, the routine may either return the matrices X and/or Y of right or left
-     * eigenvectors of (A,B), or the products Z*X and/or Q*Y, where Z and Q are input orthogonal matrices. If (A,B) was
-     * obtained from the generalized real-Schr factorization of an original pair of matrices (A0,B0) =
-     * (Q*A*Z**H,Q*B*Z**H), then Z*X and Q*Y are the matrices of right or left eigenvectors of A.</p>
-     *
-     * <p>A must be block upper triangular, with 1-by-1 and 2-by-2 diagonal blocks. Corresponding to each 2-by-2
-     * diagonal block is a complex conjugate pair of eigenvalues and eigenvectors; only one eigenvector of the pair is
-     * computed, namely the one corresponding to the eigenvalue with positive imaginary part.</p>
-     *
-     * @param  side    input char = 'R': compute right eigenvectors only = 'L': compute left eigenvectors only = 'B':
-     *                 compute both right and left eigenvectors
-     * @param  howmny  input char = 'A': compute all right and/or left eigenvectors = 'B': compute all right and/or left
-     *                 eigenvectors, and backtransform them using the input matrices supplied in vr and/or vl = 'S':
-     *                 Compute selected right and/or left eigenvectors, specified by the boolean array select
+     * @param  side    input char 
+     *                 = 'R': compute right eigenvectors only 
+     *                 = 'L': compute left eigenvectors only 
+     *                 = 'B': compute both right and left eigenvectors
+     * @param  howmny  input char 
+     *                 = 'A': compute all right and/or left eigenvectors 
+     *                 = 'B': compute all right and/or left eigenvectors, 
+     *                        backtransformed by the matrices in vr and/or vl 
+     *                 = 'S': Compute selected right and/or left eigenvectors, specified by the boolean array select
      * @param  select  input boolean[] of dimension (n) If howmny = 'S', select specifies the eigenvectors to be
-     *                 computed. If howmny = 'A' or 'B', select is not referenced. To select the real eigenvector
-     *                 corresponding to the real eigenvalue w[j], select[j] must be set to true. To select the complex
-     *                 eigenvector corresponding to a complex conjugate pair w[j] and w[j+1], either select[j] or
-     *                 select[j+1] must be set to true.
-     * @param  n       input int The order of the matrices A and B. n >= 0.
-     * @param  A       input double[][] of dimension (lda,n) The upper quasi-triangular matrix A.
-     * @param  lda     input int The leading dimension of array A. lda >= max(1,n).
-     * @param  B       input double[][] of dimension (ldb,n) The upper triangular matrix B. If A has a 2-by-2 diagonal
-     *                 block, then the corresponding 2-by-2 block of B must be diagonal with positive elements.
-     * @param  ldb     input int The leading dimension of the array B. ldb >= max(1,n).
+     *                 computed. If w[j] is a real eigenvalue, the corresponding real eigenvector is computed if
+     *                 select[j] is true.  If w[j] and w[j+1] are real and imaginary parts of a complex 
+     *                 eigenvalue, the corresponding complex eigenvector is computed if either select[j] or
+     *                 select[j+1] is true, and on exit select[j] is set to true and select[j+1] is set to
+     *                 false.
+     *                 Not referenced if howmny == 'A' or 'B'.
+     * @param  n       input int The order of the matrices S and P. n >= 0.
+     * @param  S       input double[][] of dimension (lds,n) The upper quasi-triangular matrix S from a generalized 
+     *                 Schur factorization, as computd by dhgeqz,
+     * @param  lds     input int The leading dimension of array S. lds >= max(1,n).
+     * @param  P       input double[][] of dimension (ldp,n) The upper triangular matrix P from a generalized
+     *                 Schur factorization, as computed by dhgeqz.
+     *                 2-by-2 diagonal blocks of P corresponding to 2-by-2 blocks of S must be in positive
+     *                 diagonal form.
+     * @param  ldp     input int The leading dimension of the array P. ldp >= max(1,n).
      * @param  vl      (input/output) double[][] of dimension (ldvl,mm) On entry, if side = 'L' or 'B' and howmny = 'B',
      *                 vl must contain an n-by-n matrix Q (usually the orthogonal matrix Q of left Schur vectors
-     *                 returned by dhgeqz). On exit, if side = 'L' or 'B', vl contains: if howmny = 'A', the matrix Y of
-     *                 left eigenvectors of (A,B) if howmny = 'B', the matrix Q*Y if howmny = 'S', the left eigenvectors
-     *                 of (A,B) specified by select, stored consecutively in the columns of vl, in the same order as
-     *                 their eigenvalues. if side = 'R', vl is not referenced.
+     *                 returned by dhgeqz). On exit, if side = 'L' or 'B', vl contains: 
+     *                 if howmny = 'A', the matrix Y of left eigenvectors of (S,P) 
+     *                 if howmny = 'B', the matrix Q*Y 
+     *                 if howmny = 'S', the left eigenvectors of (S,P) specified by select, stored consecutively
+     *                    in the columns of vl, in the same order as their eigenvalues.
      *
      *                 <p>A complex eigenvector corresponding to a complex eigenvalue is stored in two consecutive
-     *                 columns, the first holding the real part, and the second the imaginary part.</p>
-     * @param  ldvl    input int The leading dimension of the array vl. ldvl >= max(1,n) if side = 'L' or 'B'; ldvl >= 1
-     *                 otherwise.
+     *                 columns, the first holding the real part, and the second the imaginary part.
+     *                 
+     *                 Not referenced if side == 'R'.</p>
+     * @param  ldvl    input int The leading dimension of the array vl. ldvl >= 1, and if side == 'L' or 'B',
+     *                 ldvl >= n.
      * @param  vr      (input/output) double[][] of dimension (ldvr,mm) On entry, if side = 'R' or 'B' and howmny = 'B',
-     *                 vr must contain an n-by-n matrix Q (usually the orthogonal matrix Z of right Schur vectors
-     *                 returned by dhgeqz). On exit, if side = 'R' or 'B', vr contains: if howmny = 'A', the matrix X of
-     *                 right eigenvectors of (A,B) if howmny = 'B', the matrix Z*X if howmny = 'S', the right
-     *                 eigenvectors of (A,B) specified by select, stored consecutively in the columns of vr, in the same
-     *                 order as their eigenvalues. if side = 'L', vr is not referenced.
+     *                 vr must contain an n-by-n matrix Z (usually the orthogonal matrix Z of right Schur vectors
+     *                 returned by dhgeqz). 
+     *                 
+     *                 On exit, if side = 'R' or 'B', vr contains: 
+     *                 if howmny = 'A', the matrix X of right eigenvectors of (S,P) 
+     *                 if howmny = 'B' or 'b', the matrix Z*X 
+     *                 if howmny = 'S' or 's', the right eigenvectors of (S,P) specified by select, stored consecutively
+     *                 in the columns of vr, in the same order as their eigenvalues.
      *
      *                 <p>A complex eigenvector corresponding to a complex eigenvalue is stored in two consecutive
-     *                 columns, the first holding the real part and the second holding the imaginary part.</p>
-     * @param  ldvr    input int The leading dimension of the array vr. ldvr >= max(1,n) if side = 'R' or 'B'; ldvr >= 1
-     *                 otherwise.
+     *                 columns, the first holding the real part and the second holding the imaginary part.
+     *                 
+     *                 Not referenced if side = 'L'.</p>
+     * @param  ldvr    input int The leading dimension of the array vr. ldvr >= 1, and if side == 'R' or 'B',
+     *                 ldvr >= n.
      * @param  mm      input int The number of columns in the arrays vl and/or vr. mm >= m.
      * @param  m       output int[] The number of columns in the arrys vl and/or vr actually used to store the
      *                 eigenvectors. If howmny = 'A' or 'B', m is set to n. Each selected real eigenvector occupies one
      *                 column and each selected complex eigenvector occupies two columns.
      * @param  work    workspace double[] of dimension (6*n)
-     * @param  info    output int[] = 0: successful exit < 0: if info[0] = -i, the i-th argument had an illegal value. >
-     *                 0: the 2-by-2 block (info-1:info) does not have a complex eigenvalue. Further details: Allocation
-     *                 of workspace: work[j] = 1-norm of j-th column of A, above the diagonal. work[n+j] = 1-norm of
-     *                 j-th column of B, above the diagonal. work[2*n:3*n-1] = real part of eigenvector work[3*n:4*n-1]
-     *                 = imaginary part of eigenvector work[4*n:5*n-1] = real part of back-transformed eigenvector
-     *                 work[5*n:6*n-1] = imaginary part of back-transformed eigenvector Rowwise vs. columnwise solution
-     *                 methods: Finding a generalized eigenvector consists basically of solving the singular triangular
-     *                 system (A - wB) x = 0 (for right) or: (A- wB)**H y = 0 (for left)
+     * @param  info    output int[] 
+     *                 = 0: successful exit 
+     *                 < 0: if info[0] = -i, the i-th argument had an illegal value. 
+     *                 > 0: the 2-by-2 block (info-1:info) does not have a complex eigenvalue.
+     *                 
+     * Further details: 
+     * Allocation of workspace: 
+     *     work[j] = 1-norm of j-th column of A, above the diagonal. 
+     *     work[n+j] = 1-norm of j-th column of B, above the diagonal. 
+     *     work[2*n:3*n-1] = real part of eigenvector 
+     *     work[3*n:4*n-1] = imaginary part of eigenvector 
+     *     work[4*n:5*n-1] = real part of back-transformed eigenvector
+     *     work[5*n:6*n-1] = imaginary part of back-transformed eigenvector 
+     *     
+     * Rowwise vs. columnwise solution methods: 
+     * 
+     * Finding a generalized eigenvector consists basically of solving the singular triangular system 
+     * (A - wB) x = 0 (for right) or: (A- wB)**H y = 0 (for left)
      *
-     *                 <p>Consider finding the i-th right eigenvector (assume all eigenvalues are real). The equation to
-     *                 be solved is: 0 = sum from k=j to k=n-1 of C[j][k] v[k] = sum from k=j to k=i of C[j][k] v[k] for
-     *                 j = i,...,0 where C = (A - w B) (The components v(i:n-1) are 0.)</p>
+     * <p>Consider finding the i-th right eigenvector (assume all eigenvalues are real). The equation to
+     * be solved is: 
+     *  0 = sum from k=j to k=n-1 of C[j][k] v[k] = sum from k=j to k=i of C[j][k] v[k] for
+     *  j = i,...,0 where C = (A - w B) (The components v(i+1:n-1) are 0.)</p>
      *
-     *                 <p>The "rowwise" method is: (1) v(i) := 1 for j = i-1,...,0: (2) compute s = -sum from k=j+1 to
-     *                 k=i of C[j][k] v[k] and (3) v[j] := s / C[j][j]</p>
+     * <p>The "rowwise" method is: 
+     *    (1) v(i) := 1 
+     *    for j = i-1,...,0: 
+     *    (2) compute s = -sum from k=j+1 to k=i of C[j][k] v[k] and 
+     *    (3) v[j] := s / C[j][j]</p>
      *
-     *                 <p>Step 2 is sometimes called the "dot product" step, since it is an inner product between the
-     *                 j-th row and the portion of the eigenvector that has been computed so far.</p>
+     * <p>Step 2 is sometimes called the "dot product" step, since it is an inner product between the
+     * j-th row and the portion of the eigenvector that has been computed so far.</p>
      *
-     *                 <p>The "columnwise" method consists basically in doing the sums for all the rows in parallel. As
-     *                 each v[j] is computed, the contribution of v[j] times the j-th column of C is added to the
-     *                 partial sums.</p>
+     * <p>The "columnwise" method consists basically in doing the sums for all the rows in parallel. As
+     * each v[j] is computed, the contribution of v[j] times the j-th column of C is added to the
+     * partial sums.</p>
      *
-     *                 <p>When finding left eigenvectors, the matrix in question is the transpose of the one in storage,
-     *                 so the rowwise method then actually accesses columns of A and B at each step.</p>
+     * <p>When finding left eigenvectors, the matrix in question is the transpose of the one in storage,
+     * so the rowwise method then actually accesses columns of A and B at each step.</p>
      */
-    private void dtgevc(char side, char howmny, boolean[] select, int n, double[][] A, int lda, double[][] B, int ldb,
+    private void dtgevc(char side, char howmny, boolean[] select, int n, double[][] S, int lds, double[][] P, int ldp,
                         double[][] vl, int ldvl, double[][] vr, int ldvr, int mm, int[] m, double[] work, int[] info) {
         double safety = 100.0;
         boolean compl;
@@ -28772,7 +28910,7 @@ loop6:                   {
             ihwmny = 2;
             ilall = false;
             ilback = false;
-        } else if ((howmny == 'B') || (howmny == 'b') || (howmny == 'T') || (howmny == 't')) {
+        } else if ((howmny == 'B') || (howmny == 'b')) {
             ihwmny = 3;
             ilall = true;
             ilback = true;
@@ -28808,9 +28946,9 @@ loop6:                   {
             info[0] = -2;
         } else if (n < 0) {
             info[0] = -4;
-        } else if (lda < Math.max(1, n)) {
+        } else if (lds < Math.max(1, n)) {
             info[0] = -6;
-        } else if (ldb < Math.max(1, n)) {
+        } else if (ldp < Math.max(1, n)) {
             info[0] = -8;
         }
 
@@ -28835,7 +28973,7 @@ loop6:                   {
 
                 if (j < (n - 1)) {
 
-                    if (A[j + 1][j] != 0.0) {
+                    if (S[j + 1][j] != 0.0) {
                         ilcplx = true;
                     }
                 } // if (j < (n-1))
@@ -28855,25 +28993,25 @@ loop6:                   {
             im = n;
         } // else ilall
 
-        // Check 2-by-2 diagonal blocks of A, B
+        // Check 2-by-2 diagonal blocks of S, P
         ilabad = false;
         ilbbad = false;
 
         for (j = 0; j < (n - 1); j++) {
 
-            if (A[j + 1][j] != 0.0) {
+            if (S[j + 1][j] != 0.0) {
 
-                if ((B[j][j] == 0.0) || (B[j + 1][j + 1] == 0.0) || (B[j][j + 1] != 0.0)) {
+                if ((P[j][j] == 0.0) || (P[j + 1][j + 1] == 0.0) || (P[j][j + 1] != 0.0)) {
                     ilbbad = true;
                 }
 
                 if (j < (n - 2)) {
 
-                    if (A[j + 2][j + 1] != 0.0) {
+                    if (S[j + 2][j + 1] != 0.0) {
                         ilabad = true;
                     }
                 } // if (j < n-2)
-            } // if (A[j+1][j] != 0.0)
+            } // if (S[j+1][j] != 0.0)
         } // for (j = 0; j < n-1; j++)
 
         if (ilabad) {
@@ -28912,14 +29050,14 @@ loop6:                   {
 
         // Compute the 1-norm of each column of the strictly upper triangular
         // part (i.e., excluding all elements belonging to the diagonal blocks)
-        // of A and B to check for possible overflow in the triangular solver.
-        anorm = Math.abs(A[0][0]);
+        // of S and P to check for possible overflow in the triangular solver.
+        anorm = Math.abs(S[0][0]);
 
         if (n > 1) {
-            anorm = anorm + Math.abs(A[1][0]);
+            anorm = anorm + Math.abs(S[1][0]);
         }
 
-        bnorm = Math.abs(B[0][0]);
+        bnorm = Math.abs(P[0][0]);
         work[0] = 0.0;
         work[n] = 0.0;
 
@@ -28927,23 +29065,23 @@ loop6:                   {
             temp[0] = 0.0;
             temp2[0] = 0.0;
 
-            if (A[j - 1][j - 2] == 0.0) {
+            if (S[j - 1][j - 2] == 0.0) {
                 iend = j - 1;
             } else {
                 iend = j - 2;
             }
 
             for (i = 1; i <= iend; i++) {
-                temp[0] = temp[0] + Math.abs(A[i - 1][j - 1]);
-                temp2[0] = temp2[0] + Math.abs(B[i - 1][j - 1]);
+                temp[0] = temp[0] + Math.abs(S[i - 1][j - 1]);
+                temp2[0] = temp2[0] + Math.abs(P[i - 1][j - 1]);
             }
 
             work[j - 1] = temp[0];
             work[n - 1 + j] = temp2[0];
 
             for (i = iend + 1; i <= Math.min(j + 1, n); i++) {
-                temp[0] = temp[0] + Math.abs(A[i - 1][j - 1]);
-                temp2[0] = temp2[0] + Math.abs(B[i - 1][j - 1]);
+                temp[0] = temp[0] + Math.abs(S[i - 1][j - 1]);
+                temp2[0] = temp2[0] + Math.abs(P[i - 1][j - 1]);
             }
 
             anorm = Math.max(anorm, temp[0]);
@@ -28976,10 +29114,10 @@ loop6:                   {
 
                 if (je < n) {
 
-                    if (A[je][je - 1] != 0.0) {
+                    if (S[je][je - 1] != 0.0) {
                         ilcplx = true;
                         nw = 2;
-                    } // if (A[je][je-1] !+ 0.0)
+                    } // if (S[je][je-1] != 0.0)
                 } // if (je < n)
 
                 if (ilall) {
@@ -28998,7 +29136,7 @@ loop6:                   {
                 // (c) complex eigenvalue
                 if (!ilcplx) {
 
-                    if ((Math.abs(A[je - 1][je - 1]) <= safmin[0]) && (Math.abs(B[je - 1][je - 1]) <= safmin[0])) {
+                    if ((Math.abs(S[je - 1][je - 1]) <= safmin[0]) && (Math.abs(P[je - 1][je - 1]) <= safmin[0])) {
 
                         // Singular matrix pencil -- return unit eigenvector
                         ieig = ieig + 1;
@@ -29010,7 +29148,7 @@ loop6:                   {
                         vl[ieig - 1][ieig - 1] = 1.0;
 
                         continue;
-                    } // if ((Math.abs(A[je-1][je-1]) <= safmin[0]) &&
+                    } // if ((Math.abs(S[je-1][je-1]) <= safmin[0]) &&
                 } // if (!ilcplx)
 
                 // Clear vector
@@ -29018,17 +29156,17 @@ loop6:                   {
                     work[(2 * n) + jr] = 0.0;
                 }
 
-                // Compute coefficients in (a A - b B)transpose y  = 0
+                // Compute coefficients in (a S - b B)transpose y  = 0
                 // a is acoef
                 // b is coefr + i*bcoefi
                 if (!ilcplx) {
 
                     // Real eigenvalue
-                    temp[0] = Math.max(Math.abs(A[je - 1][je - 1]) * ascale, Math.abs(B[je - 1][je - 1]) * bscale);
+                    temp[0] = Math.max(Math.abs(S[je - 1][je - 1]) * ascale, Math.abs(P[je - 1][je - 1]) * bscale);
                     temp[0] = Math.max(temp[0], safmin[0]);
                     temp[0] = 1.0 / temp[0];
-                    salfar = (temp[0] * A[je - 1][je - 1]) * ascale;
-                    sbeta = (temp[0] * B[je - 1][je - 1]) * bscale;
+                    salfar = (temp[0] * S[je - 1][je - 1]) * ascale;
+                    sbeta = (temp[0] * P[je - 1][je - 1]) * bscale;
                     acoef[0] = sbeta * ascale;
                     bcoefr[0] = salfar * bscale;
                     bcoefi[0] = 0.0;
@@ -29078,8 +29216,8 @@ loop6:                   {
                     for (p = 0; p < 2; p++) {
 
                         for (q = 0; q < 2; q++) {
-                            array1[p][q] = A[je - 1 + p][je - 1 + q];
-                            array2[p][q] = B[je - 1 + p][je - 1 + q];
+                            array1[p][q] = S[je - 1 + p][je - 1 + q];
+                            array2[p][q] = P[je - 1 + p][je - 1 + q];
                         }
                     }
 
@@ -29122,9 +29260,9 @@ loop6:                   {
                     } // if (scale != 1.0)
 
                     // Compute first two components of eigenvector
-                    temp[0] = acoef[0] * A[je][je - 1];
-                    temp2r = (acoef[0] * A[je - 1][je - 1]) - (bcoefr[0] * B[je - 1][je - 1]);
-                    temp2i = -bcoefi[0] * B[je - 1][je - 1];
+                    temp[0] = acoef[0] * S[je][je - 1];
+                    temp2r = (acoef[0] * S[je - 1][je - 1]) - (bcoefr[0] * P[je - 1][je - 1]);
+                    temp2i = -bcoefi[0] * P[je - 1][je - 1];
 
                     if (Math.abs(temp[0]) > (Math.abs(temp2r) + Math.abs(temp2i))) {
                         work[(2 * n) + je - 1] = 1.0;
@@ -29134,9 +29272,9 @@ loop6:                   {
                     } else {
                         work[(2 * n) + je] = 1.0;
                         work[(3 * n) + je] = 0.0;
-                        temp[0] = acoef[0] * A[je - 1][je];
-                        work[(2 * n) + je - 1] = ((bcoefr[0] * B[je][je]) - (acoef[0] * A[je][je])) / temp[0];
-                        work[(3 * n) + je - 1] = bcoefi[0] * B[je][je] / temp[0];
+                        temp[0] = acoef[0] * S[je - 1][je];
+                        work[(2 * n) + je - 1] = ((bcoefr[0] * P[je][je]) - (acoef[0] * S[je][je])) / temp[0];
+                        work[(3 * n) + je - 1] = bcoefi[0] * P[je][je] / temp[0];
                     }
 
                     xmax = Math.max(Math.abs(work[(2 * n) + je - 1]) + Math.abs(work[(3 * n) + je - 1]),
@@ -29146,9 +29284,9 @@ loop6:                   {
                 dmin = Math.max(ulp * acoefa * anorm, ulp * bcoefa * bnorm);
                 dmin = Math.max(dmin, safmin[0]);
 
-                // Triangular solve of (a A - b B)transpose y = 0
-                // (rowwise in (a A - b B )transpose,
-                // or columnwise in (a A - b B))
+                // Triangular solve of (a S - b P)transpose y = 0
+                // (rowwise in (a S - b P )transpose,
+                // or columnwise in (a S - b P))
                 il2by2 = false;
 
                 for (j = je + nw; j <= n; j++) {
@@ -29160,15 +29298,15 @@ loop6:                   {
                     } // if (il2by2)
 
                     na = 1;
-                    bdiag[0] = B[j - 1][j - 1];
+                    bdiag[0] = P[j - 1][j - 1];
 
                     if (j < n) {
 
-                        if (A[j][j - 1] != 0.0) {
+                        if (S[j][j - 1] != 0.0) {
                             il2by2 = true;
-                            bdiag[1] = B[j][j];
+                            bdiag[1] = P[j][j];
                             na = 2;
-                        } // if (A[j][j-1] != 0.0)
+                        } // if (S[j][j-1] != 0.0)
                     } // if (j < n)
 
                     // Check whether scaling is necessary for dot products
@@ -29196,11 +29334,11 @@ loop6:                   {
 
                     // Compute dot products
                     // SUM = sum from k = je to k = j-1 of
-                    // conjg(a * A[k-1][j-1] - b*B[k-1][j-1]) * x[k-1]
+                    // conjg(a * S[k-1][j-1] - b*P[k-1][j-1]) * x[k-1]
                     // To reduce the op count, this is done as
-                    // aconjg*conjg(sum from k=je to k=j-1 of A[k-1][j-1]*x[k-1])
-                    // - bonjg*conjg(sum from k=je to k=j-1 of B[k-1][j-1]*x[k-1])
-                    // which may cause underflow problems if A or B are close to
+                    // aconjg*conjg(sum from k=je to k=j-1 of S[k-1][j-1]*x[k-1])
+                    // - bonjg*conjg(sum from k=je to k=j-1 of P[k-1][j-1]*x[k-1])
+                    // which may cause underflow problems if S or P are close to
                     // underflow.  (e.g., less than small.)
                     for (jw = 1; jw <= nw; jw++) {
 
@@ -29210,9 +29348,9 @@ loop6:                   {
 
                             for (jr = je; jr <= (j - 1); jr++) {
                                 suma[ja - 1][jw - 1] = suma[ja - 1][jw - 1] +
-                                                       (A[jr - 1][j + ja - 2] * work[((jw + 1) * n) + jr - 1]);
+                                                       (S[jr - 1][j + ja - 2] * work[((jw + 1) * n) + jr - 1]);
                                 sumb[ja - 1][jw - 1] = sumb[ja - 1][jw - 1] +
-                                                       (B[jr - 1][j + ja - 2] * work[((jw + 1) * n) + jr - 1]);
+                                                       (P[jr - 1][j + ja - 2] * work[((jw + 1) * n) + jr - 1]);
                             } // for (jr = je; jr <= j-1; jr++)
                         } // for (ja = 1; ja <= na; ja++)
                     } // for (jw = 1; jw <= nw; jw++)
@@ -29229,14 +29367,14 @@ loop6:                   {
                         } // else !ilcplx
                     } // for (ja = 0; ja < na; ja++)
 
-                    // Solve (a A - b B)transpose y = SUM(,)
+                    // Solve (a S - b B)transpose y = SUM(,)
                     // with scaling and perturbation of the denominator
                     array1 = new double[na][na];
 
                     for (p = 0; p < na; p++) {
 
                         for (q = 0; q < na; q++) {
-                            array1[p][q] = A[j - 1 + p][j - 1 + q];
+                            array1[p][q] = S[j - 1 + p][j - 1 + q];
                         }
                     }
 
@@ -29412,10 +29550,10 @@ loop6:                   {
 
                 if (je > 1) {
 
-                    if (A[je - 1][je - 2] != 0.0) {
+                    if (S[je - 1][je - 2] != 0.0) {
                         ilcplx = true;
                         nw = 2;
-                    } // if (A[je-1][je-2] != 0.0)
+                    } // if (S[je-1][je-2] != 0.0)
                 } // if (je > 1)
 
                 if (ilall) {
@@ -29436,7 +29574,7 @@ loop6:                   {
                 // (c) complex eigenvalue.
                 if (!ilcplx) {
 
-                    if ((Math.abs(A[je - 1][je - 1]) <= safmin[0]) && (Math.abs(B[je - 1][je - 1]) <= safmin[0])) {
+                    if ((Math.abs(S[je - 1][je - 1]) <= safmin[0]) && (Math.abs(P[je - 1][je - 1]) <= safmin[0])) {
 
                         // Singular matrix pencil -- unit eigenvector
                         ieig = ieig - 1;
@@ -29448,7 +29586,7 @@ loop6:                   {
                         vr[ieig - 1][ieig - 1] = 1.0;
 
                         continue;
-                    } // if ((Math.abs(A[je-1][je-1]) <= safmin[0]) &&
+                    } // if ((Math.abs(S[je-1][je-1]) <= safmin[0]) &&
                 } // if (!ilcplx)
 
                 // Clear vector
@@ -29459,17 +29597,17 @@ loop6:                   {
                     }
                 }
 
-                // Compute coefficients in (a A - b B) x = 0
+                // Compute coefficients in (a S - b B) x = 0
                 // a is acoef[0]
                 // b is bcoefr + i*bcoefi[0]
                 if (!ilcplx) {
 
                     // Real eigenvalue
-                    temp[0] = Math.max(Math.abs(A[je - 1][je - 1]) * ascale, Math.abs(B[je - 1][je - 1]) * bscale);
+                    temp[0] = Math.max(Math.abs(S[je - 1][je - 1]) * ascale, Math.abs(P[je - 1][je - 1]) * bscale);
                     temp[0] = Math.max(temp[0], safmin[0]);
                     temp[0] = 1.0 / temp[0];
-                    salfar = (temp[0] * A[je - 1][je - 1]) * ascale;
-                    sbeta = (temp[0] * B[je - 1][je - 1]) * bscale;
+                    salfar = (temp[0] * S[je - 1][je - 1]) * ascale;
+                    sbeta = (temp[0] * P[je - 1][je - 1]) * bscale;
                     acoef[0] = sbeta * ascale;
                     bcoefr[0] = salfar * bscale;
                     bcoefi[0] = 0.0;
@@ -29512,10 +29650,10 @@ loop6:                   {
                     work[(2 * n) + je - 1] = 1.0;
                     xmax = 1.0;
 
-                    // Compute contribution from column je-1 of A and B to sum
+                    // Compute contribution from column je-1 of S and P to sum
                     // (See "Further Details" above.)
                     for (jr = 1; jr <= (je - 1); jr++) {
-                        work[(2 * n) + jr - 1] = (bcoefr[0] * B[jr - 1][je - 1]) - (acoef[0] * A[jr - 1][je - 1]);
+                        work[(2 * n) + jr - 1] = (bcoefr[0] * P[jr - 1][je - 1]) - (acoef[0] * S[jr - 1][je - 1]);
                     } // for (jr = 1; jr <= je-1; jr++)
                 } // if (!ilcplx)
                 else { // ilcplx
@@ -29527,8 +29665,8 @@ loop6:                   {
                     for (p = 0; p < 2; p++) {
 
                         for (q = 0; q < 2; q++) {
-                            array1[p][q] = A[je - 2 + p][je - 2 + q];
-                            array2[p][q] = B[je - 2 + p][je - 2 + q];
+                            array1[p][q] = S[je - 2 + p][je - 2 + q];
+                            array2[p][q] = P[je - 2 + p][je - 2 + q];
                         }
                     }
 
@@ -29571,9 +29709,9 @@ loop6:                   {
 
                     // Compute first two components of eigenvector
                     // and contribution to sums
-                    temp[0] = acoef[0] * A[je - 1][je - 2];
-                    temp2r = (acoef[0] * A[je - 1][je - 1]) - (bcoefr[0] * B[je - 1][je - 1]);
-                    temp2i = -bcoefi[0] * B[je - 1][je - 1];
+                    temp[0] = acoef[0] * S[je - 1][je - 2];
+                    temp2r = (acoef[0] * S[je - 1][je - 1]) - (bcoefr[0] * P[je - 1][je - 1]);
+                    temp2i = -bcoefi[0] * P[je - 1][je - 1];
 
                     if (Math.abs(temp[0]) >= (Math.abs(temp2r) + Math.abs(temp2i))) {
                         work[(2 * n) + je - 1] = 1.0;
@@ -29584,10 +29722,10 @@ loop6:                   {
                     else {
                         work[(2 * n) + je - 2] = 1.0;
                         work[(3 * n) + je - 2] = 0.0;
-                        temp[0] = acoef[0] * A[je - 2][je - 1];
-                        work[(2 * n) + je - 1] = ((bcoefr[0] * B[je - 2][je - 2]) - (acoef[0] * A[je - 2][je - 2])) /
+                        temp[0] = acoef[0] * S[je - 2][je - 1];
+                        work[(2 * n) + je - 1] = ((bcoefr[0] * P[je - 2][je - 2]) - (acoef[0] * S[je - 2][je - 2])) /
                                                      temp[0];
-                        work[(3 * n) + je - 1] = bcoefi[0] * B[je - 2][je - 2] / temp[0];
+                        work[(3 * n) + je - 1] = bcoefi[0] * P[je - 2][je - 2] / temp[0];
                     } // else
 
                     xmax = Math.max(Math.abs(work[(2 * n) + je - 1]) + Math.abs(work[(3 * n) + je - 1]),
@@ -29605,10 +29743,10 @@ loop6:                   {
                     cim2b = (bcoefi[0] * work[(2 * n) + je - 1]) + (bcoefr[0] * work[(3 * n) + je - 1]);
 
                     for (jr = 1; jr <= (je - 2); jr++) {
-                        work[(2 * n) + jr - 1] = (-creala * A[jr - 1][je - 2]) + (crealb * B[jr - 1][je - 2]) -
-                                                 (cre2a * A[jr - 1][je - 1]) + (cre2b * B[jr - 1][je - 1]);
-                        work[(3 * n) + jr - 1] = (-cimaga * A[jr - 1][je - 2]) + (cimagb * B[jr - 1][je - 2]) -
-                                                 (cim2a * A[jr - 1][je - 1]) + (cim2b * B[jr - 1][je - 1]);
+                        work[(2 * n) + jr - 1] = (-creala * S[jr - 1][je - 2]) + (crealb * P[jr - 1][je - 2]) -
+                                                 (cre2a * S[jr - 1][je - 1]) + (cre2b * P[jr - 1][je - 1]);
+                        work[(3 * n) + jr - 1] = (-cimaga * S[jr - 1][je - 2]) + (cimagb * P[jr - 1][je - 2]) -
+                                                 (cim2a * S[jr - 1][je - 1]) + (cim2b * P[jr - 1][je - 1]);
                     } // for (jr = 1; jr <= je-2; jr++)
                 } // else ilcplx
 
@@ -29624,18 +29762,18 @@ loop6:                   {
                     // next iteration to process it (when it will be j-1:j)
                     if ((!il2by2) && (j > 1)) {
 
-                        if (A[j - 1][j - 2] != 0.0) {
+                        if (S[j - 1][j - 2] != 0.0) {
                             il2by2 = true;
 
                             continue;
                         }
                     } // if ((!il2by2) && (j > 1))
 
-                    bdiag[0] = B[j - 1][j - 1];
+                    bdiag[0] = P[j - 1][j - 1];
 
                     if (il2by2) {
                         na = 2;
-                        bdiag[1] = B[j][j];
+                        bdiag[1] = P[j][j];
                     } else {
                         na = 1;
                     }
@@ -29646,7 +29784,7 @@ loop6:                   {
                     for (p = 0; p < na; p++) {
 
                         for (q = 0; q < na; q++) {
-                            array1[p][q] = A[j - 1 + p][j - 1 + q];
+                            array1[p][q] = S[j - 1 + p][j - 1 + q];
                         }
                     }
 
@@ -29683,7 +29821,7 @@ loop6:                   {
                         }
                     }
 
-                    // w = w + x[j-1]*(a A(*,j-1) - b B(*,j-1) with scaling
+                    // w = w + x[j-1]*(a S(*,j-1) - b P(*,j-1) with scaling
                     if (j > 1) {
 
                         // Check whether scaling is necessary for sum
@@ -29710,7 +29848,7 @@ loop6:                   {
                         } // if (temp[0] > bignum*xscale)
 
                         // Compute the contributions of the off-diagonals of
-                        // column j-1 (and j, if 2-by-2 block) of A and B to the
+                        // column j-1 (and j, if 2-by-2 block) of S and P to the
                         // sums.
 
                         for (ja = 1; ja <= na; ja++) {
@@ -29724,10 +29862,10 @@ loop6:                   {
                                          (bcoefr[0] * work[(3 * n) + j + ja - 2]);
 
                                 for (jr = 1; jr <= (j - 1); jr++) {
-                                    work[(2 * n) + jr - 1] = work[(2 * n) + jr - 1] - (creala * A[jr - 1][j + ja - 2]) +
-                                                             (crealb * B[jr - 1][j + ja - 2]);
-                                    work[(3 * n) + jr - 1] = work[(3 * n) + jr - 1] - (cimaga * A[jr - 1][j + ja - 2]) +
-                                                             (cimagb * B[jr - 1][j + ja - 2]);
+                                    work[(2 * n) + jr - 1] = work[(2 * n) + jr - 1] - (creala * S[jr - 1][j + ja - 2]) +
+                                                             (crealb * P[jr - 1][j + ja - 2]);
+                                    work[(3 * n) + jr - 1] = work[(3 * n) + jr - 1] - (cimaga * S[jr - 1][j + ja - 2]) +
+                                                             (cimagb * P[jr - 1][j + ja - 2]);
                                 } // for (jr = 1; jr <= j-1; jr++)
                             } // if (ilcplx)
                             else { // !ilcplx
@@ -29735,8 +29873,8 @@ loop6:                   {
                                 crealb = bcoefr[0] * work[(2 * n) + j + ja - 2];
 
                                 for (jr = 1; jr <= (j - 1); jr++) {
-                                    work[(2 * n) + jr - 1] = work[(2 * n) + jr - 1] - (creala * A[jr - 1][j + ja - 2]) +
-                                                             (crealb * B[jr - 1][j + ja - 2]);
+                                    work[(2 * n) + jr - 1] = work[(2 * n) + jr - 1] - (creala * S[jr - 1][j + ja - 2]) +
+                                                             (crealb * P[jr - 1][j + ja - 2]);
                                 } // for (jr = 1; jr <= j-1; jr++)
                             } // else !ilcplx
                         } // for (ja = 1; ja <= na; ja++)
@@ -30423,7 +30561,7 @@ loop6:                   {
      *                 A is assumed to be unit triangular. = 'N' or 'n' A is not assumed to be unit triangular.
      * @param  m       input int On entry, m specifies the number of rows of B. m must be at least zero.
      * @param  n       input int On entry, n specifies the number of columns of B. n must be at least zero.
-     * @param  alpha   input double Sepcified scalar. When alpha is zero then A is not referenced and B need not be set
+     * @param  alpha   input double Specified scalar. When alpha is zero then A is not referenced and B need not be set
      *                 before entry.
      * @param  A       input double[][] of dimension lda by k, where k is m when side = 'L' or 'l' and is n when side =
      *                 'R' or 'r'. Before entry with uplo = 'U' or 'u', the leading k by k upper triangular part of the
