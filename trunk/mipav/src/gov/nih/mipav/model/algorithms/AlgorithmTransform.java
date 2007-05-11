@@ -3819,13 +3819,53 @@ public class AlgorithmTransform extends AlgorithmBase {
                 axisOrient[2] = FileInfoBase.ORI_I2S_TYPE;
             }
 
-            for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+            if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+                FileInfoDicom oldDicomInfo = (FileInfoDicom) image.getFileInfo(0);
+                FileDicomTagTable[] childTagTables = new FileDicomTagTable[resultImage.getExtents()[2] - 1];
 
-                if (image.getExtents()[2] > i) {
-                    fileInfo[i] = (FileInfoBase) image.getFileInfo(i).clone();
-                } else {
-                    fileInfo[i] = (FileInfoBase) image.getFileInfo(0).clone();
+                // first create all of the new file infos (reference and children) and fill them with tags from the old
+                // file info.  some of these tag values will be overridden in the next loop
+                for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+
+                    if (i == 0) {
+
+                        // create a new reference file info
+                        fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                        oldDicomInfo.getFileFormat());
+                    } else {
+
+                        // all other slices are children of the first file info..
+                        fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                        oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
+
+                        childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
+                    }
+
+                    if (image.getExtents()[2] > i) {
+
+                        // more correct information for a Z-axis rotation, so copy the file info on a slice basis
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) image.getFileInfo(i));
+                    } else {
+
+                        // not possible for other rotations because the z-dimension is different
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags(oldDicomInfo);
+                    }
                 }
+
+                ((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+            } else {
+
+                for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+
+                    if (image.getExtents()[2] > i) {
+                        fileInfo[i] = (FileInfoBase) image.getFileInfo(i).clone();
+                    } else {
+                        fileInfo[i] = (FileInfoBase) image.getFileInfo(0).clone();
+                    }
+                }
+            }
+
+            for (int i = 0; i < resultImage.getExtents()[2]; i++) {
 
                 fileInfo[i].setDataType(resultImage.getType());
                 fileInfo[i].setResolutions(resolutions);
@@ -5986,7 +6026,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * for (i = 0; (i < oXdim) && !threadStopped; i++) {
      *
      * // transform i,j,k         value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
-     *    imm = i * oXres;         X = (j1 + (imm * T00)) * invXRes;
+     *   imm = i * oXres;         X = (j1 + (imm * T00)) * invXRes;
      *
      * if ((X > -0.5f) && (X < (iXdim - 0.5f))) {             Y = (j2 + (imm * T10)) * invYRes;
      *
@@ -6092,7 +6132,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {                     Z = (j3 + (imm * T20)) * invZRes;
      *
      * if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {                         value = Bspline.bSpline3D(0, 0, 0, X, Y, Z);
-     *         }                 }             }
+     *    }                 }             }
      *
      * destImage.set(index++, value);         }     } }
      *
@@ -6143,7 +6183,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * if ((Y >= 0) && (Y < iYdim)) {                     Z = (temp1 + (kmm * T22)) / iZres;
      *
      * if ((Z >= 0) && (Z < iZdim)) {                         value = Bspline.bSpline3DC(0, 0, 0, X, Y, Z);      }      }
-     *          }
+     *        }
      *
      * temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));             imgBuf2[temp4] = value[0]; imgBuf2[temp4 + 1] =
      * value[1];             imgBuf2[temp4 + 2] = value[2];             imgBuf2[temp4 + 3] = value[3]; counter++; } } }
@@ -6188,7 +6228,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * for (j = 0; (j < oYdim) && !threadStopped; j++) {
      *
      * // convert to mm             value = (float) srcImage.getMin(); // will remain zero if boundary conditions not met
-     *    jmm = (float) j * oYres;
+     *  jmm = (float) j * oYres;
      *
      * // transform i,j             X = (temp1 + (jmm * T01)) / iXres;
      *
@@ -6309,7 +6349,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * if ((Y >= 0) && (Y < iYdim)) {                         Z = (temp1 + (kmm * T22)) / iZres;
      *
      * if ((Z >= 0) && (Z < iZdim)) {                             value = Bspline.bSpline3D(0, 0, 0, X, Y, Z);   }
-     *             }                 }
+     *    }                 }
      *
      * destImage.set(i, j, k, l, value);                 counter++;             }         }     }
      *
@@ -6429,7 +6469,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * try {                 srcImage.exportData((l * oZdim * imgLength) + ((k + 1) * imgLength), imgLength, imgBuf);    }
      * catch (IOException error) {                 displayError("Algorithm Transform: IOException Error on exportData");
-     *              setCompleted(false);
+     *             setCompleted(false);
      *
      * return;             }         } // end if ((k < (oZdim - 1))|| (l < (oTdim - 1)))     } // end for k } // end for l
      *

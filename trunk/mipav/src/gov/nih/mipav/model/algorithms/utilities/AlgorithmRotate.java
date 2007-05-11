@@ -523,9 +523,9 @@ public class AlgorithmRotate extends AlgorithmBase {
             destImage.setFileInfo(newFileInfo);
 
             if (srcImage.getNDims() >= 3) {
-            	System.err.println("doing new matrix operation");
-            	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
-            	
+                System.err.println("doing new matrix operation");
+                destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+
                 TransMatrix tMat = new TransMatrix(rotMatrix.getColumnDimension());
                 tMat.identity();
                 tMat.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
@@ -533,7 +533,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                 tMat.setMatrix(newFileInfo[0].getOrigin()[0], 0, 3);
                 tMat.setMatrix(newFileInfo[0].getOrigin()[1], 1, 3);
                 tMat.setMatrix(newFileInfo[0].getOrigin()[2], 2, 3);
-                System.err.println("new matrix added: " + tMat); 
+                System.err.println("new matrix added: " + tMat);
                 destImage.getMatrixHolder().addMatrix(tMat);
             }
         } else { // If file is DICOM...
@@ -565,16 +565,40 @@ public class AlgorithmRotate extends AlgorithmBase {
                 imageOrient = matrixToDICOMString(rotMatrix);
             }
 
+            FileDicomTagTable[] childTagTables = new FileDicomTagTable[newDimExtents[2] - 1];
+
+            // first create all of the new file infos (reference and children) and fill them with tags from the old
+            // file info.  some of these tag values will be overridden in the next loop
             for (int i = 0; i < newDimExtents[2]; i++) {
 
-                // more correct information for a Z-axis rotation, so copy the file info on a slice basis
-                if ((rotateAxis == Z_AXIS_180) || (rotateAxis == Z_AXIS_PLUS) || (rotateAxis == Z_AXIS_MINUS)) {
-                    newDicomInfo[i] = (FileInfoDicom) srcImage.getFileInfo(i).clone();
-                } // not possible for other rotations because the z-dimension is different
-                else {
-                    newDicomInfo[i] = (FileInfoDicom) srcImage.getFileInfo(0).clone();
+                if (i == 0) {
+
+                    // create a new reference file info
+                    newDicomInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                        oldDicomInfo.getFileFormat());
+                } else {
+
+                    // all other slices are children of the first file info..
+                    newDicomInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                        oldDicomInfo.getFileFormat(), newDicomInfo[0]);
+
+                    childTagTables[i - 1] = newDicomInfo[i].getTagTable();
                 }
 
+                if ((rotateAxis == Z_AXIS_180) || (rotateAxis == Z_AXIS_PLUS) || (rotateAxis == Z_AXIS_MINUS)) {
+
+                    // more correct information for a Z-axis rotation, so copy the file info on a slice basis
+                    newDicomInfo[i].getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(i));
+                } else {
+
+                    // not possible for other rotations because the z-dimension is different
+                    newDicomInfo[i].getTagTable().importTags(oldDicomInfo);
+                }
+            }
+
+            newDicomInfo[0].getTagTable().attachChildTagTables(childTagTables);
+
+            for (int i = 0; i < newDimExtents[2]; i++) {
                 newDicomInfo[i].setExtents(newDimExtents);
                 newDicomInfo[i].setImageOrientation(orientation);
                 newDicomInfo[i].setAxisOrientation(newAxisOrients);
@@ -633,8 +657,8 @@ public class AlgorithmRotate extends AlgorithmBase {
             destImage.setFileInfo(newDicomInfo);
 
             if (srcImage.getNDims() >= 3) {
-            	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
-            	
+                destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+
                 TransMatrix tMat = new TransMatrix(rotMatrix.getColumnDimension());
                 tMat.identity();
                 tMat.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
@@ -642,7 +666,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                 tMat.setMatrix(newDicomInfo[0].getOrigin()[0], 0, 3);
                 tMat.setMatrix(newDicomInfo[0].getOrigin()[1], 1, 3);
                 tMat.setMatrix(newDicomInfo[0].getOrigin()[2], 2, 3);
-                System.err.println("new matrix added: " + tMat); 
+                System.err.println("new matrix added: " + tMat);
                 destImage.getMatrixHolder().addMatrix(tMat);
             }
         }

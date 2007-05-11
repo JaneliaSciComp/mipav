@@ -293,6 +293,33 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     }
 
     /**
+     * Sets the tags in this tag table to match the tags contained in the tag table of a dicom file info. All tags
+     * already in this table are removed (does not effect tags in its reference tag table).
+     *
+     * @param  srcDicomInfo  The dicom file info to copy tags from.
+     */
+    public final void importTags(FileInfoDicom srcDicomInfo) {
+
+        reset();
+
+        // TODO: import all of the tags from the src dicom info
+        if (isReferenceTagTable) {
+
+            // the reference table needs _all_ of the tags from the src dicom info, not just the ones unique to that
+            // slice (in case the src dicom info is non-reference).  this direct assignment works since getTagList()
+            // returns a deep copy of the tag Hashtable
+            tagTable = srcDicomInfo.getTagTable().getTagList();
+        } else {
+            Hashtable srcTagList = srcDicomInfo.getTagTable().getTagList();
+            Enumeration srcTagKeys = srcTagList.keys();
+
+            while (srcTagKeys.hasMoreElements()) {
+                put((FileDicomTag) srcTagList.get(srcTagKeys.nextElement()));
+            }
+        }
+    }
+
+    /**
      * Adds a private tag to the tag table using some dicom info.
      *
      * @param  info  information about the private dicom tag.
@@ -304,8 +331,6 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
     /**
      * Remove all of the tags from this table (does not affect reference table, if this is a non-reference table).
-     *
-     * <p>TODO: get() will still check referenceTagTable..</p>
      */
     public final void reset() {
         Enumeration keys = tagTable.keys();
@@ -553,7 +578,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
             // already
             if (childTagTables != null) {
 
-                if (containsTag(key)) {
+                if (containsTag(key) && !get(key).equals(tag)) {
                     FileDicomTag oldTag = get(key);
 
                     for (int i = 0; i < childTagTables.length; i++) {
@@ -571,19 +596,8 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
             // only add the tag if it is not in the reference table and the value we are adding is not the same as the
             // one in the reference table
             if (isTagSameAsReferenceTag(tag)) {
-
-                // TODO: REMOVE
-                // System.err.println("skipped tag:\t" + key);
-                // System.err.println("ref tag:\t" + referenceTagTable.get(key));
-                // System.err.println("put tag:\t" + tag);
-
                 return;
             }
-
-            // TODO: REMOVE
-            // System.err.println("not-skipped tag:\t" + key);
-            // System.err.println("ref tag:\t" + referenceTagTable.get(key));
-            // System.err.println("put tag:\t" + tag);
 
             tagTable.put(key, tag);
         }

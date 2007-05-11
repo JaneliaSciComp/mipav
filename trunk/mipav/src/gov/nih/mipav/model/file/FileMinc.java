@@ -1113,7 +1113,7 @@ public class FileMinc extends FileBase {
                 String group = key.getGroup();
                 String element = key.getElement();
 
-                String valueStr = getDicomValueAsString(key, tag);
+                String valueStr = getDicomValueAsString(tag);
 
                 if (valueStr != null) {
                     Preferences.debug("exported:\t" + group + "," + element + "\t" + valueStr + "\n",
@@ -1206,15 +1206,14 @@ public class FileMinc extends FileBase {
     /**
      * Returns the value of a dicom tag, represented as a string. Null tag values are ignored, as are array value types.
      *
-     * @param   key  The dicom tag key (contains the tag group and element strings). TODO: maybe remove this parameter.
      * @param   tag  The dicom tag (including its value).
      *
      * @return  the value of the given dicom tag (null if the value is null or is an array (which we don't support at
      *          the moment))
      */
-    private static String getDicomValueAsString(FileDicomKey key, FileDicomTag tag) {
-        String group = key.getGroup();
-        String element = key.getElement();
+    private static String getDicomValueAsString(FileDicomTag tag) {
+        String group = tag.getInfo().getKey().getGroup();
+        String element = tag.getInfo().getKey().getElement();
 
         // note: don't parse the dicom value into something more human-readable, just put it into the minc
         Object value = tag.getValue(false);
