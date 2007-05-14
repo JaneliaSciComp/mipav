@@ -838,6 +838,10 @@ public class FileVOI extends FileBase {
                 VOISortItem tempVOIItem = null;
                 VOIBase tempBase = null;
 
+                boolean saveAsLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE);
+                //System.err.println("SaveAsLPS: " + saveAsLPS);
+                boolean is2D = (image.getNDims() == 2);
+                
                 for (i = 0; i < pSize; i++) {
 
                     tempVOIItem = (VOISortItem) pointVector.elementAt(i);
@@ -846,7 +850,7 @@ public class FileVOI extends FileBase {
                     openTag(bw, "Contour", true);
 
                     // save old format if image dim is 2
-                    if (image.getNDims() == 2) {
+                    if (is2D || !saveAsLPS) {
                         closedTag(bw, "Slice-number", Integer.toString(tempVOIItem.getSlice()));
                     }
 
@@ -860,7 +864,7 @@ public class FileVOI extends FileBase {
 
                     tempBase.exportArrays(x, y, z);
 
-                    if (image.getNDims() > 2) {
+                    if (!is2D && saveAsLPS) {
                         Point3Df ptIn = new Point3Df();
                         Point3Df ptOut = new Point3Df();
                         int slice = tempVOIItem.getSlice();
@@ -877,7 +881,7 @@ public class FileVOI extends FileBase {
                                       Float.toString(ptOut.z));
                         }
                     } else {
-                        // image dim is 2.... save to old format
+                        // image dim is 2 (or SaveAsLPS false).... save to old format
 
                         for (m = 0; m < nPts; m++) {
                             closedTag(bw, "Pt", Float.toString(x[m]) + "," + Float.toString(y[m]));

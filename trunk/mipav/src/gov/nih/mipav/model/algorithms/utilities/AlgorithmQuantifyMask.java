@@ -43,6 +43,9 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     			srcImage.getType() != ModelStorageBase.SHORT) {
     		MipavUtil.displayError("Image type (mask) must be boolean, short, or ubyte");
     		return;
+    	} else if ((srcImage.getMax() - srcImage.getMin()) > 100) {
+    		MipavUtil.displayError("Verify that image is a mask:  image max intensity - image min intensity is greater than 100");
+    		return;
     	}
     	
     	if (srcImage.getNDims() == 2) {

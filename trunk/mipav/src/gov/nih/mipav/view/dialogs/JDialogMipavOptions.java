@@ -168,6 +168,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     private JCheckBox continuousVOIBox;
     
+    private JCheckBox saveVOILPSBox;
+    
     /** DOCUMENT ME! */
     private JCheckBox showOutputWindow;
 
@@ -250,7 +252,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
-        makeVOIContinuousOptions(gbc, gbl);
+        makeVOISaveLPSOptions(gbc, gbl);
+        makeVOIContinuousOptions(gbc, gbl);        
         makeVOILineAngleOptions(gbc, gbl);
         makeCrosshairOptions(gbc, gbl);
         makeActiveColorOptions(gbc, gbl);
@@ -416,7 +419,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_VOI_DRAW_COLOR, MipavUtil.makeColorString(voiDrawColor));
             Preferences.setProperty(Preferences.PREF_VOI_POINT_DRAW_TYPE, String.valueOf(pointVOIChoices.getSelectedIndex()));
             Preferences.setProperty(Preferences.PREF_CONTINUOUS_VOI_CONTOUR, String.valueOf(continuousVOIBox.isSelected()));
-            
+            Preferences.setProperty(Preferences.PREF_VOI_LPS_SAVE, String.valueOf(saveVOILPSBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_MENU_FONT, fontNames[fontChooser.getSelectedIndex()]);
             Preferences.setProperty(Preferences.PREF_MENU_FONT_SIZE, fontSizeField.getText());
 
@@ -1744,6 +1747,22 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices:
         continuousVOIBox.setSelected(Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR));
+    }
+    
+    protected void makeVOISaveLPSOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+    	saveVOILPSBox = new JCheckBox("Save VOIs in LPS coordinates");
+    	saveVOILPSBox.setFont(MipavUtil.font12);
+    	saveVOILPSBox.setForeground(Color.black);
+    	saveVOILPSBox.addActionListener(this);
+    	saveVOILPSBox.setToolTipText("If selected, VOIs will be saved in LPS coordinates.");
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(saveVOILPSBox, gbc);
+        displayColorPanel.add(saveVOILPSBox);
+
+        // preset the choices:
+        saveVOILPSBox.setSelected(Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
     }
     
     /**

@@ -126,6 +126,9 @@ public class Preferences {
     /** Constant indicating the look of VOI Points drawn on an image. */
     public static final String PREF_VOI_POINT_DRAW_TYPE = "VOIPointDrawType";
 
+    /** Constant indicating if VOIs should be saved as LPS or file coordinates*/
+    public static final String PREF_VOI_LPS_SAVE = "VOISaveAsLPS";
+    
     /** Constant that indicates whether the triplanar frame should use the old 2x2 layout or the newer 3x1 layout. */
     public static final String PREF_TRIPLANAR_2X2_LAYOUT = "TriPlanar2x2Layout";
 
@@ -440,7 +443,8 @@ public class Preferences {
         defaultProps.setProperty(Preferences.PREF_SCRIPTING_TOOLBAR_ON, "false");
         defaultProps.setProperty(Preferences.PREF_PAINT_TOOLBAR_ON, "false");
         defaultProps.setProperty(Preferences.PREF_SHOW_OVERLAYS, "false");
-
+        defaultProps.setProperty(Preferences.PREF_VOI_LPS_SAVE, "true");
+        
         /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head) */
         defaultProps.setProperty(Preferences.PREF_FILENAME_FILTER, "8"); // 8 = ViewImageFileFilter.TECH
         defaultProps.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, "false");
