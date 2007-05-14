@@ -35,6 +35,19 @@ import gov.nih.mipav.view.*;
  * Java revealed input variables that were identical up to about 9 signficant places yielding an output variable of
  * 7.77E-16 on the FORTRAN and -2.61E-15 on the Java. So apparently the Java failures are due to the Java 64 bit
  * arithmetic having a greater error than the FORTRAN 64 bit arithmetic.</p>
+ * 
+ * Running 7 self-tests:
+ * if (runTest) {
+            GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+            //ge.dchkgg_test();
+            ge.dchkst_test();
+            //ge.ddrvst_test();
+            //ge.dggev_test();
+            //ge.dsygv_test();
+            //ge.dchkgl();
+            //ge.dchkgk();
+            return;
+        }
  *
  * <p>There are basically 2 problems with Java precision. 1.) The Intel Pentium uses 80 bit numbers in floating point
  * registers. However, Java must round each number back to 64 bits whenever a Java variable is assigned. There used to
@@ -28890,8 +28903,8 @@ loop6:                   {
         double xscale;
         double[] bdiag = new double[2];
         double[][] sum = new double[2][2];
-        double[][] suma = new double[2][2];
-        double[][] sumb = new double[2][2];
+        double[][] sums = new double[2][2];
+        double[][] sump = new double[2][2];
         double[][] array1;
         double[][] array2;
         double[] x;
@@ -29343,13 +29356,13 @@ loop6:                   {
                     for (jw = 1; jw <= nw; jw++) {
 
                         for (ja = 1; ja <= na; ja++) {
-                            suma[ja - 1][jw - 1] = 0.0;
-                            sumb[ja - 1][jw - 1] = 0.0;
+                            sums[ja - 1][jw - 1] = 0.0;
+                            sump[ja - 1][jw - 1] = 0.0;
 
                             for (jr = je; jr <= (j - 1); jr++) {
-                                suma[ja - 1][jw - 1] = suma[ja - 1][jw - 1] +
+                                sums[ja - 1][jw - 1] = sums[ja - 1][jw - 1] +
                                                        (S[jr - 1][j + ja - 2] * work[((jw + 1) * n) + jr - 1]);
-                                sumb[ja - 1][jw - 1] = sumb[ja - 1][jw - 1] +
+                                sump[ja - 1][jw - 1] = sump[ja - 1][jw - 1] +
                                                        (P[jr - 1][j + ja - 2] * work[((jw + 1) * n) + jr - 1]);
                             } // for (jr = je; jr <= j-1; jr++)
                         } // for (ja = 1; ja <= na; ja++)
@@ -29358,12 +29371,12 @@ loop6:                   {
                     for (ja = 0; ja < na; ja++) {
 
                         if (ilcplx) {
-                            sum[ja][0] = (-acoef[0] * suma[ja][0]) + (bcoefr[0] * sumb[ja][0]) -
-                                         (bcoefi[0] * sumb[ja][1]);
-                            sum[ja][1] = (-acoef[0] * suma[ja][1]) + (bcoefr[0] * sumb[ja][1]) +
-                                         (bcoefi[0] * sumb[ja][0]);
+                            sum[ja][0] = (-acoef[0] * sums[ja][0]) + (bcoefr[0] * sump[ja][0]) -
+                                         (bcoefi[0] * sump[ja][1]);
+                            sum[ja][1] = (-acoef[0] * sums[ja][1]) + (bcoefr[0] * sump[ja][1]) +
+                                         (bcoefi[0] * sump[ja][0]);
                         } else { // if (ilcplx),  !ilcplx
-                            sum[ja][0] = (-acoef[0] * suma[ja][0]) + (bcoefr[0] * sumb[ja][0]);
+                            sum[ja][0] = (-acoef[0] * sums[ja][0]) + (bcoefr[0] * sump[ja][0]);
                         } // else !ilcplx
                     } // for (ja = 0; ja < na; ja++)
 
@@ -29753,7 +29766,7 @@ loop6:                   {
                 dmin = Math.max(ulp * acoefa * anorm, ulp * bcoefa * bnorm);
                 dmin = Math.max(dmin, safmin[0]);
 
-                // Columnwise triangular solve of (a A - b B) x = 0
+                // Columnwise triangular solve of (a S - b P) x = 0
                 il2by2 = false;
 
                 for (j = je - nw; j >= 1; j--) {
@@ -31163,19 +31176,22 @@ loop6:                   {
     }
 
     /**
-     * Version 3.0 auxiliary routine ported form LAPACK Original IEEECK created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30, 1998 ieeeck
-     * is called form the ilaenv routine to verify that infinity and possibly NaN arithmetic is safe (i.e. will not
-     * trap)
+     * Version 3.1 auxiliary routine ported form LAPACK Original IEEECK created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * ieeeck is called form the ilaenv routine to verify that infinity and possibly NaN arithmetic is safe
+     * (i.e. will not trap)
      *
      * @param   ispec  input int Specifies whether to test just for infinity arithmetic or whether to test for infinity
-     *                 and NaN arithmetic = 0: Verify infinity arithmetic only. = 1: Verify infinity and NaN aritmetic
-     * @param   zero   input double Must contain the value 0.0. This is passed to stop the compiler from optimizing away
+     *                 and NaN arithmetic 
+     *                 = 0: Verify infinity arithmetic only. 
+     *                 = 1: Verify infinity and NaN aritmetic
+     * @param   zero   input double Must contain the value 0.0. This is passed to prevent the compiler from optimizing away
      *                 this code
-     * @param   one    input double Must contain the value 1.0. This is passed to stop the compiler from optimizing away
+     * @param   one    input double Must contain the value 1.0. This is passed to prevent the compiler from optimizing away
      *                 this code.
      *
-     * @return  int = 0: Arithmetic failed to produce the correct answers = 1: Arithmetic produced the correct answers
+     * @return  int    = 0: Arithmetic failed to produce the correct answers 
+     *                 = 1: Arithmetic produced the correct answers
      */
     private int ieeeck(int ispec, double zero, double one) {
         double posinf;
@@ -31282,9 +31298,8 @@ loop6:                   {
     } // ieeeck
 
     /**
-     * ilaenv is ported from the version 3.0 LAPACK auxiliary routine Original ILAENV created by Univ. of Tennessee,
-     * Univ. of California Berkeley, NAG Ltd., Courant Institute, Argonne National Lab, and Rice University, June 30,
-     * 1999
+     * ilaenv is ported from the version 3.1.1 LAPACK auxiliary routine Original ILAENV created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., January, 2007
      *
      * <p>ilaenv is called from the LAPACK routines to choose problem-dependent parameters for the local environment.
      * See ispec for a description of the parameters.</p>
@@ -31296,20 +31311,30 @@ loop6:                   {
      * <p>This routine will not function correctly if it is converted to all lower case. Converting it to all upper case
      * is allowed.</p>
      *
-     * @param   ispec  input integer Specifies the parameter to be returned as the value of ilaenv. = 1: the optimal
-     *                 blocksize; if this value is 1, an unblocked algorithm will give the best performance. = 2: the
-     *                 minimum block size for which the block routine should be used; if the usable block size is less
-     *                 than this value, an unblocked routine should be used = 3: the crossover point ( in a block
-     *                 routine, for n less than this value, an unblocked routine should be used) = 4: the number of
-     *                 shifts, used in the nonsymmetric eigenvalue routines. = 5: the minimum column dimension for
-     *                 blocking to be used; rectangular blocks must have dimension at least k by m, where k is given by
-     *                 ilaenv(2,...) and m by ilaenv(5,...) = 6: the crossover point for the SVD (when reducing an m by
-     *                 n matrix to bidiagonal form, if max(m,n)/min(m,n) exceeds this value, a QR factorization is used
-     *                 first to reduce the matrix to a triangular form.) = 7: the number of processors = 8: the
-     *                 crossover point for the multishift QR and QZ methods for nonsymmetric eigenvalue problems. = 9:
-     *                 maximum size of the subproblems at the bottom of the computation tree in the divide-and-conquer
-     *                 algorithm (used by xgelsd and xgesdd) = 10: ieee NaN arithmetic can be trusted not to trap = 11:
-     *                 ieee infinity can be trusted not to trap
+     * @param   ispec  input integer Specifies the parameter to be returned as the value of ilaenv. 
+     *                 = 1: the optimal blocksize; if this value is 1,
+     *                      an unblocked algorithm will give the best performance. 
+     *                 = 2: the minimum block size for which the block routine should be used;
+     *                      if the usable block size is less than this value,
+     *                      an unblocked routine should be used 
+     *                 = 3: the crossover point ( in a block routine, for n less than this value,
+     *                      an unblocked routine should be used) 
+     *                 = 4: the number of shifts, used in the nonsymmetric eigenvalue routines (deprecated)
+     *                 = 5: the minimum column dimension for blocking to be used; 
+     *                      rectangular blocks must have dimension at least k by m,
+     *                      where k is given by ilaenv(2,...) and m by ilaenv(5,...) 
+     *                 = 6: the crossover point for the SVD (when reducing an m by n
+     *                      matrix to bidiagonal form, if max(m,n)/min(m,n) exceeds this value,
+     *                      a QR factorization is used first to reduce the matrix to a triangular form.)
+     *                 = 7: the number of processors 
+     *                 = 8: the crossover point for the multishift QR method for nonsymmetric
+     *                      eigenvalue problems (deprecated) 
+     *                 = 9: maximum size of the subproblems at the bottom of the computation tree in the
+     *                      divide-and-conquer algorithm (used by xgelsd and xgesdd) 
+     *                = 10: ieee NaN arithmetic can be trusted not to trap 
+     *                = 11: infinity can be trusted not to trap
+     *                12 <= ispec <= 16:
+     *                      xhseqr or one of its subroutines
      * @param   name   input String The name of the calling subroutine, in either upper case or lower case.
      * @param   opts   input String The character options to the subroutine name, concatenated into a single character
      *                 string. For example, uplo = 'U', trans = 'T', and diag = 'N' for a triangular routine would be
@@ -31324,9 +31349,10 @@ loop6:                   {
      *                 in the argument list for name. n1 is used first, n2 second, and so on, and unused problem
      *                 dimensions are passed a value of -1.
      *
-     * @return  answer output integer >= 0; the value of the parameter specified by ispec < 0: il answer = -k, the k-th
-     *          parameter had an illegal value The parameter value returned by ilaenv is checked for validity in the
-     *          calling routine.
+     * @return  answer output integer 
+     *                 >= 0; the value of the parameter specified by ispec 
+     *                 < 0: il answer = -k, the k-th parameter had an illegal value 
+     * The parameter value returned by ilaenv is checked for validity in the calling routine.
      */
     private int ilaenv(int ispec, String name, String opts, int n1, int n2, int n3, int n4) {
         String subnam;
@@ -31629,18 +31655,23 @@ loop6:                   {
         } // else if (ispec == 9)
         else if (ispec == 10) {
 
-            // Verify infinity arithmetic will not trap
+            // ieee NaN arithmetic can be trusted not to trap
             answer = ieeeck(0, 0.0, 1.0);
 
             return answer;
         } // else if (ispec == 10)
-        else { // ispec == 11
+        else if (ispec == 11){
 
-            // // Verify infinity and NaN arithmetic will not trap
+            // infinity arithmetic can be trusted not to trap
             answer = ieeeck(1, 0.0, 1.0);
 
             return answer;
         } // else ispec == 11
+        else { // 12 <= ispec <= 16
+            // answer = iparmq(ispec, name, opts, n1, n2, n3, n4);
+            
+            return -1;
+        }
     } // ilaenv
 
 }
