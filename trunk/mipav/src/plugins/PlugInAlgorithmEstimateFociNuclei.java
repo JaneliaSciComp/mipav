@@ -36,6 +36,9 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
 	/** ID Objects Result Image */
 	private ModelImage idObjectsResultImage;
 	
+	/** Result Image */
+	private ModelImage resultImage;
+	
 	/** Segmentation: Number of classes */
 	private int nClasses;
 	
@@ -87,7 +90,8 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     											float paKernelSizeOpen, int paKernelOpen, int paItersClose,
     											float paKernelSizeClose, int paKernelClose, int idMaxSize,
     											int idMinSize) {
-        super(null, srcImg);
+        //super(null, srcImg);
+    	srcImage = (ModelImage) srcImg.clone();
     	nClasses = SegNClasses;
         expValue = SegExpValue;
         endTol = SegEndTol;
@@ -114,6 +118,12 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
         destImage = null;
         srcImage = null;
         super.finalize();
+        grayRedImage.disposeLocal();
+        grayGreenImage.disposeLocal();
+        grayBlueImage.disposeLocal();
+        particleAnalysisResultImage.disposeLocal();
+        idObjectsResultImage.disposeLocal();
+               
     }
     
     /** 
@@ -255,7 +265,7 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     	algoSeg.setCentroids(centroid);
     	
     	linkProgressToAlgorithm(algoSeg);
-        algoSeg.setProgressValues(generateProgressValues(6, 40));
+    	algoSeg.setProgressValues(generateProgressValues(6, 40));
         
     	algoSeg.setRunningInSeparateThread(false);
     	algoSeg.run();
@@ -264,7 +274,7 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
  		
  		fireProgressStateChanged(40);
  		
- 		fireProgressStateChanged(5, null, "Subtracting 1 ...");
+ 		fireProgressStateChanged(5, srcImage.getImageName(), "Subtracting 1 ...");
  		// Subtract 1 from image to make a binary image
  		AlgorithmImageMath algoSubtract = new AlgorithmImageMath(kResult[0], AlgorithmImageMath.SUBTRACT, 1, 0.0f,
  												1, true);
@@ -283,7 +293,7 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     
     private void particleAnalysis(ModelImage segImage) {
     	
-    	fireProgressStateChanged(45, null, "Particle analysis ...");
+    	fireProgressStateChanged(45, srcImage.getImageName(), "Particle analysis ...");
     	
     	AlgorithmMorphology2D algoMorph = new AlgorithmMorphology2D(segImage, kernelOpen, kernelSizeOpen,
     											kernelClose, kernelSizeClose, AlgorithmMorphology2D.PARTICLE_ANALYSIS_NEW,
@@ -434,6 +444,7 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
             mStr = "Unknown";
         }
     	
+        ViewUserInterface.getReference().getMessageFrame().clear(0);
     	ViewUserInterface.getReference().getMessageFrame().getData().append("\nIdentified " + nObjects + 
     																			" objects. \n");
     	ViewUserInterface.getReference().getMessageFrame().getData().append(" Object \t# of pixels (Blue)\tArea(" + mStr +
@@ -454,7 +465,9 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
      * This method returns the result image
      */
     public ModelImage getResultImage() {
-    	return idObjectsResultImage;
+    	
+    	resultImage = (ModelImage) idObjectsResultImage.clone();
+    	return resultImage;
     }
     
 }
