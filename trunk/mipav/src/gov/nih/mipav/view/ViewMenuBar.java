@@ -876,7 +876,12 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Maximum intensity projection (MIP)",
                                                                   "maximumIntensityProjection", 0, null, false),
                                         menuBuilder.buildMenuItem("Noise", null, 0, null, false),
-                                        menuBuilder.buildMenuItem("Quantify using mask", "Quantify", 0, null, false),
+                                        menuBuilder.makeMenu("Quantify", false,
+                                                new JMenuItem[] {
+                                                    menuBuilder.buildMenuItem("Quantify using mask", "Quantify", 0, null, false),
+                                                    menuBuilder.buildMenuItem("Quantify mask(s)", "QuantifyMasks", 0, null, false),
+                                                    
+                                                }),
                                         menuBuilder.buildMenuItem("Replace pixel/voxel value", "ReplaceValue", 0, null,
                                                                   false),
                                         menuBuilder.makeMenu("Rotate", false,
