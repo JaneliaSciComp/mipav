@@ -43,6 +43,15 @@ public class ViewJProgressBar extends JFrame
     /** DOCUMENT ME! */
     public static final int PROGRESS_WINDOW_CLOSING = -2;
 
+    /** Constant indicating whether to lock the message string so that
+     * other algorithms will not change this (sub-algorithms)*/
+    public static final String LOCK_PROGRESS_MESSAGE = "LockProgressMessage";
+    
+    /**
+     * With the above variable, unlocks the message updating
+     */
+    public static final String UNLOCK_PROGRESS_MESSAGE = "UnlockProgressMessage";
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Cancel button, if applicable. */
@@ -66,6 +75,9 @@ public class ViewJProgressBar extends JFrame
     /** Title of the frame for the progress bar. */
     private String title;
 
+    /** indicates if the message string (in the progress bar) is locked so that it wont be updated*/
+    private boolean messageLocked = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -346,8 +358,17 @@ public class ViewJProgressBar extends JFrame
 
         String m = e.getMessage();
 
+                
         if ((m != null) && (m.length() > 0)) {
-            setMessage(m);
+        	
+        	if (m.equals(LOCK_PROGRESS_MESSAGE)) {
+        		messageLocked = true;
+        	} else if (m.equals(UNLOCK_PROGRESS_MESSAGE)) {
+        		messageLocked = false;
+        	}
+        	else if (!messageLocked) {
+        		setMessage(m);
+        	}
         }
 
         /** Put this in here so you can change the message without updating the value */
