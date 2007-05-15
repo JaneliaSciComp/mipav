@@ -133,7 +133,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
         String mStr = srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr();
 
         ViewUserInterface.getReference().setDataText("\n Output from image quantify based on mask. ");
-        ViewUserInterface.getReference().setDataText("\n" + " Object \t# of pixles\tTotal Intensity\tArea(" + mStr +
+        ViewUserInterface.getReference().setDataText("\n" + " Object \t# of pixels\tTotal Intensity\tArea(" + mStr +
                                                      ")\n");
 
         for (i = 1; i < objs.length; i++) {

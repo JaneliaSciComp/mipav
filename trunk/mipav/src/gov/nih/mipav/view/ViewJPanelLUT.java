@@ -643,39 +643,51 @@ public class ViewJPanelLUT extends JPanel
         } else if (event.getActionCommand().equals("otsuThreshold")) {
 
             if (isImageASelected()) {
-                int otsu = histogramA.getOtsuThreshold();
+            	int maxBin = histogramA.getOtsuThreshold();
+                
+            	double dif = panelParent.getImageA().getMax() - panelParent.getImageA().getMin();
+            	
+            	double factor = dif / histogramA.getExtents()[0];
+            	            	
+            	double otsu = ((maxBin * factor) + panelParent.getImageA().getMin());
 
                 if ((otsu > panelParent.getImageA().getMin()) && (otsu < panelParent.getImageA().getMax())) {
 
                     if (getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV) {
-                        threshLowerF.setText(Integer.toString(otsu));
+                        threshLowerF.setText(Double.toString(otsu));
                         threshUpperF.setText(Double.toString(panelParent.getImageA().getMax()));
-                        getHistoLUTComponentA().updateDualThreshold(otsu, (float) panelParent.getImageA().getMax());
+                        getHistoLUTComponentA().updateDualThreshold((float)otsu, (float) panelParent.getImageA().getMax());
                         calculateThreshold((float) otsu, (float) panelParent.getImageA().getMax());
                     } else {
-                        threshUpperF.setText(Integer.toString(otsu));
+                        threshUpperF.setText(Double.toString(otsu));
                         threshLowerF.setText(Double.toString(panelParent.getImageA().getMin()));
-                        getHistoLUTComponentA().updateDualThreshold((float) panelParent.getImageA().getMin(), otsu);
+                        getHistoLUTComponentA().updateDualThreshold((float) panelParent.getImageA().getMin(), (float)otsu);
                         calculateThreshold((float) panelParent.getImageA().getMin(), (float) otsu);
                     }
                 }
             } else {
-                int otsu = histogramB.getOtsuThreshold();
+            	int maxBin = histogramB.getOtsuThreshold();
+                
+            	double dif = panelParent.getImageB().getMax() - panelParent.getImageB().getMin();
+            	
+            	double factor = dif / histogramB.getExtents()[0];
+            	            	
+            	double otsu = ((maxBin * factor) + panelParent.getImageB().getMin());
 
                 if ((otsu > panelParent.getImageB().getMin()) && (otsu < panelParent.getImageB().getMax())) {
 
                     if (getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV) {
-                        threshLowerBF.setText(Integer.toString(otsu));
+                        threshLowerBF.setText(Double.toString(otsu));
                         threshUpperBF.setText(Double.toString(panelParent.getImageB().getMax()));
-                        getHistoLUTComponentB().updateDualThreshold(otsu, (float) panelParent.getImageB().getMax());
+                        getHistoLUTComponentB().updateDualThreshold((float)otsu, (float) panelParent.getImageB().getMax());
 
                         if (panelParent.doCalcThresholdVolume()) {
                             calculateThreshold((float) otsu, (float) panelParent.getImageA().getMax());
                         }
                     } else {
-                        threshUpperBF.setText(Integer.toString(otsu));
+                        threshUpperBF.setText(Double.toString(otsu));
                         threshLowerBF.setText(Double.toString(panelParent.getImageB().getMin()));
-                        getHistoLUTComponentB().updateDualThreshold((float) panelParent.getImageB().getMin(), otsu);
+                        getHistoLUTComponentB().updateDualThreshold((float) panelParent.getImageB().getMin(), (float)otsu);
 
                         if (panelParent.doCalcThresholdVolume()) {
                             calculateThresholdVolume((float) panelParent.getImageA().getMin(), (float) otsu);
@@ -687,22 +699,30 @@ public class ViewJPanelLUT extends JPanel
         } else if (event.getActionCommand().equals("maxEntThreshold")) {
 
             if (isImageASelected()) {
-                int ent = histogramA.getMaxEntropyThreshold();
+            	
+            	int maxBin = histogramA.getMaxEntropyThreshold();
+                
+            	double dif = panelParent.getImageA().getMax() - panelParent.getImageA().getMin();
+            	
+            	double factor = dif / histogramA.getExtents()[0];
+            	            	
+            	double ent = ((maxBin * factor) + panelParent.getImageA().getMin());
+            	
 
                 if ((ent > panelParent.getImageA().getMin()) && (ent < panelParent.getImageA().getMax())) {
 
                     if (getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV) {
-                        threshLowerF.setText(Integer.toString(ent));
+                        threshLowerF.setText(Double.toString(ent));
                         threshUpperF.setText(Double.toString(panelParent.getImageA().getMax()));
-                        getHistoLUTComponentA().updateDualThreshold(ent, (float) panelParent.getImageA().getMax());
+                        getHistoLUTComponentA().updateDualThreshold((float)ent, (float) panelParent.getImageA().getMax());
 
                         if (panelParent.doCalcThresholdVolume()) {
                             calculateThreshold((float) ent, (float) panelParent.getImageA().getMax());
                         }
                     } else {
-                        threshUpperF.setText(Integer.toString(ent));
+                        threshUpperF.setText(Double.toString(ent));
                         threshLowerF.setText(Double.toString(panelParent.getImageA().getMin()));
-                        getHistoLUTComponentA().updateDualThreshold((float) panelParent.getImageA().getMin(), ent);
+                        getHistoLUTComponentA().updateDualThreshold((float) panelParent.getImageA().getMin(), (float)ent);
 
                         if (panelParent.doCalcThresholdVolume()) {
                             calculateThreshold((float) panelParent.getImageA().getMin(), (float) ent);
@@ -711,18 +731,24 @@ public class ViewJPanelLUT extends JPanel
 
                 }
             } else {
-                int ent = histogramA.getMaxEntropyThreshold();
+            	int maxBin = histogramB.getMaxEntropyThreshold();
+                
+            	double dif = panelParent.getImageB().getMax() - panelParent.getImageB().getMin();
+            	
+            	double factor = dif / histogramB.getExtents()[0];
+            	            	
+            	double ent = ((maxBin * factor) + panelParent.getImageB().getMin());
 
                 if ((ent > panelParent.getImageB().getMin()) && (ent < panelParent.getImageB().getMax())) {
 
                     if (getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV) {
-                        threshLowerBF.setText(Integer.toString(ent));
+                        threshLowerBF.setText(Double.toString(ent));
                         threshUpperBF.setText(Double.toString(panelParent.getImageB().getMax()));
-                        getHistoLUTComponentB().updateDualThreshold(ent, (float) panelParent.getImageB().getMax());
+                        getHistoLUTComponentB().updateDualThreshold((float)ent, (float) panelParent.getImageB().getMax());
                     } else {
-                        threshUpperBF.setText(Integer.toString(ent));
+                        threshUpperBF.setText(Double.toString(ent));
                         threshLowerBF.setText(Double.toString(panelParent.getImageB().getMin()));
-                        getHistoLUTComponentB().updateDualThreshold((float) panelParent.getImageB().getMin(), ent);
+                        getHistoLUTComponentB().updateDualThreshold((float) panelParent.getImageB().getMin(), (float) ent);
                     }
                 }
             }
