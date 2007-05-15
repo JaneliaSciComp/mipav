@@ -95,18 +95,18 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     		}    		   		
     	}
     	
-    	String outputString = "QuantifyMasks: " + srcImage.getImageName() + "\n";
+    	String outputString = "\nOutput from QuantifyMasks: " + srcImage.getImageName() + "\n";
+    	
+    	outputString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getAreaUnitsOfMeasureStr() + ")"
+    		+ "\tCenter of mass\n";
     	
     	for (int i = 0; i < dif; i++) {
     		if (area[i] != 0) {
     			xCenter[i] = xCenter[i] / area[i];
     			yCenter[i] = yCenter[i] / area[i];
     	
-    			outputString += "Mask Value: " + (i + min) + "\n\t# of Voxels: " + area[i] +
-    				"\n\tArea: " +  (area[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1]) +
-    				srcImage.getFileInfo(0).getAreaUnitsOfMeasureStr() +
-    				
-    				"\n\tCenter of Mass: (" + xCenter[i] + "," + yCenter[i] + ")\n";
+    			outputString += (i + min) + "\t" + area[i] + "\t" + 
+    			(area[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1]) + "\t(" + xCenter[i] + "," + yCenter[i] + ")\n";
     			                                                                      
     			
     			System.err.println(outputString);
@@ -161,20 +161,20 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
         	}
     	}
     	
-    	String outputString = "QuantifyMasks: " + srcImage.getImageName() + "\n";
+    	String outputString = "\nOutput from QuantifyMasks: " + srcImage.getImageName() + "\n";
     	
+    	outputString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() + ")"
+    		+ "\tCenter of mass\n";
     	for (int i = 0; i < dif; i++) {
     		if (volume[i] != 0) {
     			xCenter[i] = xCenter[i] / volume[i];
     			yCenter[i] = yCenter[i] / volume[i];
     			zCenter[i] = zCenter[i] / volume[i];
     	
-    			outputString += "Mask Value: " + (i + min) + "\n\t# of Voxels: " + volume[i] +
-    				"\n\tVolume: " +  (volume[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1]) +
-    				srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() +
-    				
-    				"\n\tCenter of Mass: (" + xCenter[i] + "," + yCenter[i] + "," + zCenter[i] + ")\n";
-    			                                                                      
+    			  
+    			outputString += (i + min) + "\t" + volume[i] + "\t" + 
+    			(volume[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2]) + 
+    			"\t(" + xCenter[i] + "," + yCenter[i] + "," + zCenter[i] + ")\n";
     			
     			System.err.println(outputString);
     		}

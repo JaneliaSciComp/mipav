@@ -250,18 +250,20 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         int[] dimExtents = new int[1];
         int type = image.getType();
 
-        if ((type == ModelStorageBase.UBYTE) || (type == ModelStorageBase.BYTE)) {
-            dimExtents[0] = 256;
-        } else if ((type != ModelStorageBase.FLOAT) && (type != ModelStorageBase.DOUBLE) &&
-                       (type != ModelStorageBase.COMPLEX)) {
-            dimExtents[0] = (int) (image.getMax() - image.getMin() + 0.5) + 1;
-
-            if (dimExtents[0] < 256) {
-                dimExtents[0] = 256;
-            }
-        } else {
-            dimExtents[0] = 256;
-        }
+        dimExtents[0] = 256;
+        
+   //     if ((type == ModelStorageBase.UBYTE) || (type == ModelStorageBase.BYTE)) {
+   //         dimExtents[0] = 256;
+   //     } else if ((type != ModelStorageBase.FLOAT) && (type != ModelStorageBase.DOUBLE) &&
+   //                    (type != ModelStorageBase.COMPLEX)) {
+   //         dimExtents[0] = (int) (image.getMax() - image.getMin() + 0.5) + 1;
+//
+   //         if (dimExtents[0] < 256) {
+    //            dimExtents[0] = 256;
+   //         }
+   //     } else {
+   //         dimExtents[0] = 256;
+   //     }
 
         histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtents);
 
@@ -298,62 +300,52 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
             } else {
                 textFill.setEnabled(false);
             }
-        } else if (source == otsuCheckbox) {
+        } else if (source == otsuCheckbox || source == maxEntCheckbox) {
 
-            if (otsuCheckbox.isSelected()) {
+            if (otsuCheckbox.isSelected() || maxEntCheckbox.isSelected()) {
 
-                if (maxEntCheckbox.isSelected()) {
+                if ((source == otsuCheckbox) && maxEntCheckbox.isSelected()) {
                     maxEntCheckbox.removeItemListener(this);
                     maxEntCheckbox.setSelected(false);
                     maxEntCheckbox.addItemListener(this);
-                }
-
-                if (histogram == null) {
-                    calcHistogram();
-                }
-
-                thresholdType = OTSU;
-
-                if (inverseCheckbox.isSelected()) {
-                    textThres1.setText(new Integer(histogram.getOtsuThreshold()).toString());
-                    textThres2.setText(new Double(image.getMax()).toString());
-                } else {
-                    textThres1.setText(new Double(image.getMin()).toString());
-                    textThres2.setText(new Integer(histogram.getOtsuThreshold()).toString());
-                }
-
-                textThres1.setEnabled(false);
-                textThres2.setEnabled(false);
-            } else {
-                thresholdType = DEFAULT;
-                textThres1.setEnabled(true);
-                textThres2.setEnabled(true);
-            }
-
-            textThres1.setCaretPosition(0);
-            textThres2.setCaretPosition(0);
-        } else if (source == maxEntCheckbox) {
-
-            if (maxEntCheckbox.isSelected()) {
-
-                if (otsuCheckbox.isSelected()) {
-                    otsuCheckbox.removeItemListener(this);
+                } else if ((source == maxEntCheckbox) && otsuCheckbox.isSelected()) {
+                	otsuCheckbox.removeItemListener(this);
                     otsuCheckbox.setSelected(false);
                     otsuCheckbox.addItemListener(this);
                 }
 
+                if (maxEntCheckbox.isSelected()) {
+                	thresholdType = MAX_ENT;
+                } else if (otsuCheckbox.isSelected()) {
+                	thresholdType = OTSU;
+                }
+                
+                
                 if (histogram == null) {
                     calcHistogram();
                 }
+                
+                
 
-                thresholdType = MAX_ENT;
-
+                int maxBin = 0;
+                if (thresholdType == OTSU) {
+                	maxBin = histogram.getOtsuThreshold();
+                } else {
+                	maxBin = histogram.getMaxEntropyThreshold();
+                }
+                
+            	double dif = image.getMax() - image.getMin();
+            	
+            	double factor = dif / histogram.getExtents()[0];
+            	            	
+            	double thresVal = ((maxBin * factor) + image.getMin());
+                
                 if (inverseCheckbox.isSelected()) {
-                    textThres1.setText(new Integer(histogram.getMaxEntropyThreshold()).toString());
+                    textThres1.setText(new Double(thresVal).toString());
                     textThres2.setText(new Double(image.getMax()).toString());
                 } else {
                     textThres1.setText(new Double(image.getMin()).toString());
-                    textThres2.setText(new Integer(histogram.getMaxEntropyThreshold()).toString());
+                    textThres2.setText(new Double(thresVal).toString());
                 }
 
                 textThres1.setEnabled(false);
@@ -366,23 +358,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
             textThres1.setCaretPosition(0);
             textThres2.setCaretPosition(0);
-        } else if (source == inverseCheckbox) {
-
-            if (maxEntCheckbox.isSelected() || otsuCheckbox.isSelected()) {
-
-                if (inverseCheckbox.isSelected()) {
-                    textThres1.setText(textThres2.getText());
-                    textThres2.setText(new Double(image.getMax()).toString());
-                } else {
-                    textThres2.setText(textThres1.getText());
-                    textThres1.setText(new Double(image.getMin()).toString());
-                }
-            }
-
-            textThres1.setCaretPosition(0);
-            textThres2.setCaretPosition(0);
-        }
-
+        } 
 
     }
 
@@ -666,24 +642,25 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
             // using otsu or max entropy threshold, so calculate histogram
             calcHistogram();
-
+            int maxBin = 0;
+            if (thresholdType == OTSU) {
+            	maxBin = histogram.getOtsuThreshold();
+            } else {
+            	maxBin = histogram.getMaxEntropyThreshold();
+            }
+        	double dif = image.getMax() - image.getMin();
+        	double factor = dif / histogram.getNDims();
+        	
+        	float thresVal = (float)((maxBin * factor) + image.getMin());
+            
+            
             if (isInverse) {
-
-                if (thresholdType == OTSU) {
-                    setThres1(histogram.getOtsuThreshold());
-                } else {
-                    setThres1(histogram.getMaxEntropyThreshold());
-                }
-
+            	setThres1(thresVal);
+                
                 setThres2((float) image.getMax());
             } else {
                 setThres1((float) image.getMin());
-
-                if (thresholdType == OTSU) {
-                    setThres2(histogram.getOtsuThreshold());
-                } else {
-                    setThres2(histogram.getMaxEntropyThreshold());
-                }
+                setThres2(thresVal);
             }
         }
     }

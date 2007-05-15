@@ -268,7 +268,6 @@ public class AlgorithmHistogram extends AlgorithmBase {
             for (i = 0; i < histogram.getNDims(); i++) {
                 bins *= histogram.getExtents()[i];
             }
-
             histoBuffer = new int[bins];
             histogram.exportData(0, bins, histoBuffer); // locks and releases lock
             fireProgressStateChanged("Histogram", "Calculating histogram...");
@@ -451,8 +450,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         histogram.setMaxEntropyThreshold(entropySplit(histoBuffer));
 
         // attempt an otsu threshold
-       // histogram.setOtsuThreshold(otsuThreshold(image, histoBuffer));
-
+        histogram.setOtsuThreshold(otsuThreshold(image, histoBuffer));        
         
         setCompleted(true);
         imgBuffer = null;
