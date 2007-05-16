@@ -330,6 +330,26 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     }
 
     /**
+     * Remove a tag from this tag table (does not affect reference table, if this is a non-reference table). If this is
+     * a reference table, the removal is dumb and doesn't copy the tag to the child tag tables.
+     *
+     * @param  keyStr  the hexidecimal key to search for -- 'group,element'
+     */
+    public final void removeTag(String keyStr) {
+        removeTag(new FileDicomKey(keyStr));
+    }
+
+    /**
+     * Remove a tag from this tag table (does not affect reference table, if this is a non-reference table). If this is
+     * a reference table, the removal is dumb and doesn't copy the tag to the child tag tables.
+     *
+     * @param  key  the key to search for
+     */
+    public final void removeTag(FileDicomKey key) {
+        tagTable.remove(key);
+    }
+
+    /**
      * Remove all of the tags from this table (does not affect reference table, if this is a non-reference table).
      */
     public final void reset() {
