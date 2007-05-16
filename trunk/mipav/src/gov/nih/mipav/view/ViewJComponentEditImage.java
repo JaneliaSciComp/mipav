@@ -96,6 +96,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     protected float alphaPrime = 0.5f;
 
+    /** String representing RGB components used in applied paint*/
+    protected String rgbString = null;
+    
     /** Buffer used to store ARGB images of the image presently being displayed. */
     protected int[] cleanImageBufferA = null;
 
@@ -379,6 +382,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     private int windowedRegionSize = 100;
 
+    private boolean useRComp = true;
+    private boolean useGComp = true;
+    private boolean useBComp = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -517,6 +524,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         if (!(_frame instanceof ViewJFrameLightBox)) {
         	loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
+        	
+        	rgbString = Preferences.getProperty(Preferences.PREF_RGB_PAINT_COMPONENTS);
+        	if (rgbString == null) {
+        		Preferences.setProperty(Preferences.PREF_RGB_PAINT_COMPONENTS, "RGB");
+        		rgbString = "RGB";
+        	} else {
+        		useRComp = rgbString.indexOf("R") != -1;
+        		useGComp = rgbString.indexOf("G") != -1;
+        		useBComp = rgbString.indexOf("B") != -1;
+        	}
+        	
         }
     }
 
@@ -536,7 +554,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         DecimalFormat nf = new DecimalFormat("#####0.0##");
         Point3Df kOut = new Point3Df();
         if (image.getNDims() < 3) {
-        	return null;
+       // 	return null;
         }
         MipavCoordinateSystems.fileToScanner(position, kOut, image);
 
@@ -722,7 +740,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (imageA.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false);
                 maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
+                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString);
             } else {
 
                 if (imageA.getNDims() == 4) {
@@ -772,7 +790,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (imageB.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
                 maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
+                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString);
             } else {
 
                 if (imageA.getNDims() == 4) {
@@ -2565,6 +2583,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     }
 
+    public String getRGBPaintComponents() {
+    	return this.rgbString;
+    }
+    
+    public void setRGBPaintComponents(String rgb) {
+    	this.rgbString = rgb;
+    }
+    
     /**
      * Paints the image and calls drawSelf for all VOIs.
      *
