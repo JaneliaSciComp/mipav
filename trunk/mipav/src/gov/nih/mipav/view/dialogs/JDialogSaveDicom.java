@@ -406,6 +406,8 @@ public class JDialogSaveDicom extends JDialogBase {
                             try {
                                 dicomFileInfo.getTagTable().setValue(tag, valueArray);
                             } catch (Exception e) {
+                                dicomFileInfo.getTagTable().removeTag(tag);
+
                                 Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
                                                   Preferences.DEBUG_FILEIO);
                                 Preferences.debug("\t" + tag + " = " + value + "\n", Preferences.DEBUG_FILEIO);
@@ -416,6 +418,8 @@ public class JDialogSaveDicom extends JDialogBase {
                             try {
                                 dicomFileInfo.getTagTable().setValue(tag, value);
                             } catch (Exception e) {
+                                dicomFileInfo.getTagTable().removeTag(tag);
+
                                 Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
                                                   Preferences.DEBUG_FILEIO);
                                 Preferences.debug("\t" + tag + " = " + value + "\n", Preferences.DEBUG_FILEIO);
