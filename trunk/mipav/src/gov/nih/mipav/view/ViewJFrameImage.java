@@ -1330,6 +1330,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
                 colorChooser.setDialogVisible(true);
             }
+        } else if (command.equals("RGBPaintComponent")) {
+            new JDialogPaintRGBComponents(this, getComponentImage().getRGBPaintComponents());
         } else if (command.equals("OpacityPaint")) {
             new JDialogOpacityControls(this, controls);
         } else if (command.equals("CommitPaint")) {
@@ -5606,7 +5608,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          * @param  e  DOCUMENT ME!
          */
         public void actionPerformed(ActionEvent e) {
-            System.err.println("got here somehow:");
 
             Color color = colorChooser.getColor();
             controls.getTools().setPaintColor(color);

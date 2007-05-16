@@ -37,7 +37,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
     /** if true then fill inside the VOI. If false then fill outside */
     private boolean polarity = true;
-
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -424,7 +424,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  fillColor  color to be placed in the image where the mask is true
      * @param  tSlice     indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25DC(BitSet mask, Color fillColor, int tSlice) {
+    public void calcInPlace25DC(BitSet mask, Color fillColor, int tSlice, String rgbString) {
 
         int i, j, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -438,6 +438,9 @@ public class AlgorithmMask extends AlgorithmBase {
         green = (byte) Math.round(fillColor.getGreen());
         blue = (byte) Math.round(fillColor.getBlue());
 
+        boolean useR = rgbString.indexOf("R") != -1;
+        boolean useG = rgbString.indexOf("G") != -1;
+        boolean useB = rgbString.indexOf("B") != -1;
         try {
             paintLength = srcImage.getSliceSize();
             imgLength = 4 * paintLength;
@@ -498,9 +501,16 @@ public class AlgorithmMask extends AlgorithmBase {
                 if (((mask.get(offset + j) == true) && (polarity == true)) ||
                         ((mask.get(offset + j) == false) && (polarity == false))) {
                     buffer[i] = (byte) 255;
-                    buffer[i + 1] = red;
-                    buffer[i + 2] = green;
-                    buffer[i + 3] = blue;
+                    if (useR) {
+                    	buffer[i + 1] = red;
+                    }
+                    if (useG) {
+                    	buffer[i + 2] = green;
+                    }
+                    if (useB) {                    
+                    	buffer[i + 3] = blue;
+                
+                    }
                 }
             }
 

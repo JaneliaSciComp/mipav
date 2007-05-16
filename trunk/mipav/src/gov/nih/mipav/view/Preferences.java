@@ -262,6 +262,9 @@ public class Preferences {
     /** constant for logging. */
     public static final String PREF_HISTORY_MODE = "Log";
 
+    /** Constant indicating which channels should be used for applying paint to a RGB image*/
+    public static final String PREF_RGB_PAINT_COMPONENTS = "RGBPaintComponents";
+    
     /**
      * Constant that indicates whether .img files should always be written in analyze format (as opposed to asking
      * whether to save as nifti).

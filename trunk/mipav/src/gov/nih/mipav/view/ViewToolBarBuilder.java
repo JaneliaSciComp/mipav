@@ -559,13 +559,14 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         colorPaintButton.setBackground(paintColor);
         paintToolBar.add(colorPaintButton);
 
-        JButton opacityPaintButton = new JButton("Opacity");
-        opacityPaintButton.addActionListener((ActionListener) UI);
-        opacityPaintButton.setToolTipText("Change opacity of paint.");
-        opacityPaintButton.setFont(MipavUtil.font12B);
-        opacityPaintButton.setMinimumSize(new Dimension(20, 20));
-        opacityPaintButton.setMargin(new Insets(2, 7, 2, 7));
-        opacityPaintButton.setActionCommand("OpacityPaint");
+        JButton rgbCompButton = buildButton("RGBPaintComponent", "Choose RGB components of applied paint.", "rgbcomp");
+        paintToolBar.add(rgbCompButton);
+        if (!isColorImage) {
+        	rgbCompButton.setEnabled(false);
+        }
+        
+        
+        JButton opacityPaintButton = buildButton("OpacityPaint", "Change opacity of paint.", "opacity");
         paintToolBar.add(opacityPaintButton);
 
         borderPaintButton = buildButton(Preferences.PREF_SHOW_PAINT_BORDER, "Display border around painted areas.",

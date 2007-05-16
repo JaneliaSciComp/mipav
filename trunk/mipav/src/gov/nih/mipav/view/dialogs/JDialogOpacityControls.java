@@ -227,7 +227,6 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
             current.setText(String.valueOf(opacity));
 
             if (!opacitySlider.getValueIsAdjusting()) {
-            	System.err.println("Stopped adjusting");
                 if (controls != null) {
                     controls.getTools().setOpacity(opacity);
                 }
