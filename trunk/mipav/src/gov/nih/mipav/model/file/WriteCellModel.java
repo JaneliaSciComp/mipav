@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.*;
 
 import gov.nih.mipav.view.*;
 
@@ -144,6 +145,9 @@ public class WriteCellModel extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int TRESOLUTION = 65001;
+    
+    /** DOCUMENT ME! */
+    private static final int CZ_LSMINFO = 34412;
 
     /** DOCUMENT ME! */
     public static final int MAX_IFD_LENGTH = 4096;
@@ -179,12 +183,7 @@ public class WriteCellModel extends FileBase {
 
     /** DOCUMENT ME! */
     private ModelLUT LUT = null;
-
-    /** DOCUMENT ME! */
-    private int LUTOffset;
-
-    
-
+   
     /** DOCUMENT ME! */
     private short nDirEntries;
 
@@ -192,13 +191,7 @@ public class WriteCellModel extends FileBase {
     private int samplesPerPixel = 1;
 
     
-    /** DOCUMENT ME! */
-    private double tRes = 1.0;
-
     
-
-    /** DOCUMENT ME! */
-    private double zRes = 1.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -295,10 +288,6 @@ public class WriteCellModel extends FileBase {
         int bufferSize;
         int index;
         String prefix;
-        int ztEntries;
-        int zResCount;
-        int tResCount = 0; // set to 8 if EchoTech tResolution field present
-        int resolutionCount = 16; // xResolution = 2 * (4 bytes) + yResolution = 2 * (4 bytes)
         FileInfoBase fileInfo[];
         int type;
         int bytesPerSample;
@@ -307,11 +296,7 @@ public class WriteCellModel extends FileBase {
         // in ARGB, ARGB_USHORT, and ARGB_FLOAT
         int rgbFormat = 0; // Set to 6 for storage of 3 short sampleFormat values
 
-        // in ARGB, ARGB_USHORT, and ARGB_FLOAT
-        int intAlign = 0; // For integer data image rows must begin on integer boundaries, so set
-
-        // intAlign = 2 if ModelStorageBase.INTEGER is used so that imgOffset is
-        // always a multiple of 4.
+        
         int imgOffset;
         int nextIFD;
         int stripCount;
@@ -333,11 +318,13 @@ public class WriteCellModel extends FileBase {
         int xSquared;
         int distSquared;
         int pos;
+        RandomNumberGen randomGen = new RandomNumberGen();
+        int lsmStackLength = 224;
         
         try {
-            extents[0] = 512;
-            extents[1] = 512;
-            extents[2] = 129;
+            extents[0] = 256;
+            extents[1] = 256;
+            extents[2] = 65;
             bufferSize = extents[0] * extents[1];
             beginSlice = 0;
             endSlice = extents[2] - 1;
@@ -347,68 +334,70 @@ public class WriteCellModel extends FileBase {
             type = ModelStorageBase.ARGB;
             image =  new ModelImage(type, extents, prefix);
             fileInfo = image.getFileInfo();
-            resolutions[0] = 1.0E-5f;
-            resolutions[1] = 1.0E-5f;
-            resolutions[2] = 4.0E-5f;
-            units[0] = FileInfoBase.CENTIMETERS;
-            units[1] = FileInfoBase.CENTIMETERS;
-            units[2] = FileInfoBase.CENTIMETERS;
+            resolutions[0] = 1.0E-7f;
+            resolutions[1] = 1.0E-7f;
+            resolutions[2] = 4.0E-7f;
+            units[0] = FileInfoBase.METERS;
+            units[1] = FileInfoBase.METERS;
+            units[2] = FileInfoBase.METERS;
             for (i = 0; i < extents[2]; i++) {
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
                 fileInfo[i].setEndianess(FileBase.LITTLE_ENDIAN);
                 fileInfo[i].setCompressionType(FileInfoBase.COMPRESSION_NONE);
-                fileInfo[i].setFileFormat(FileUtility.TIFF);
+                fileInfo[i].setFileFormat(FileUtility.LSM);
                 fileInfo[i].setPhotometric((short)2);
             }
-            radiusSquared = 248 * 248;
+            radiusSquared = 124 * 124;
             buffer = new byte[4 * bufferSize * extents[2]];
             // Red chromosome 1
-            for (z = 62; z <= 66; z++) {
-                for (y = 255 - 18; y <= 255 + 18; y++) {
-                    for (x = 255 + 45; x <= 255 + 53; x++) {
+            for (z = 30; z <= 34; z++) {
+                for (y = 127 - 18; y <= 127 + 18; y++) {
+                    for (x = 127 + 45; x <= 127 + 53; x++) {
                         buffer[1 + 4*(x + extents[0]*y + bufferSize*z)] = (byte)255;
                     }
                 }
             }
             // Green chromosome 1
-            for (z = 62; z <= 66; z++) {
-                for (y = 255 - 18; y <= 255 + 18; y++) {
-                    for (x = 255 - 53; x <= 255 - 45; x++) {
+            for (z = 30; z <= 34; z++) {
+                for (y = 127 - 18; y <= 127 + 18; y++) {
+                    for (x = 127 - 53; x <= 127 - 45; x++) {
                         buffer[2 + 4*(x + extents[0]*y + bufferSize*z)] = (byte)255;
                     }
                 }
             }
             // Red chromosome 2
-            for (z = 61; z <= 67; z++) {
-                for (y = 255 + 145; y <= 255 + 165; y++) {
-                    for (x = 255 - 40; x <= 255 + 40; x++) {
+            for (z = 29; z <= 35; z++) {
+                for (y = 127 + 65; y <= 127 + 85; y++) {
+                    for (x = 127 - 40; x <= 127 + 40; x++) {
                         buffer[1 + 4*(x + extents[0]*y + bufferSize*z)] = (byte)255;
                     }
                 }
             }
             // Green chromosome 2
-            for (z = 61; z <= 67; z++) {
-                for (y = 255 - 165; y <= 255 - 145; y++) {
-                    for (x = 255 - 40; x <= 255 + 40; x++) {
+            for (z = 29; z <= 35; z++) {
+                for (y = 127 - 85; y <= 127 - 65; y++) {
+                    for (x = 127 - 40; x <= 127 + 40; x++) {
                         buffer[2 + 4*(x + extents[0]*y + bufferSize*z)] = (byte)255;
                     }
                 }
             }
             // Blue cell
-            for (z = 0; z <= 128; z++) {
-                zSquared = z - 64;
+            for (z = 0; z <= 64; z++) {
+                zSquared = z - 32;
                 zSquared = 16 * zSquared * zSquared;
-                for (y = 0; y <= 511; y++) {
-                    ySquared = y - 255;
+                for (y = 0; y <= 255; y++) {
+                    ySquared = y - 127;
                     ySquared = ySquared * ySquared;
-                    for (x = 0; x <= 511; x++) {
-                        xSquared = x - 255;
+                    for (x = 0; x <= 255; x++) {
+                        xSquared = x - 127;
                         xSquared = xSquared * xSquared;
                         distSquared  = xSquared + ySquared + zSquared;
                         if (distSquared <= radiusSquared) {
                             pos = 4*(x + extents[0]*y + bufferSize*z);
-                            if ((buffer[1 + pos] == 0) && (buffer[2 + pos] == 0)) {
+                            if ((buffer[1 + pos] != (byte)255) && (buffer[2 + pos] != (byte)255)) {
+                                buffer[1 + pos] = (byte)randomGen.genGaussianRandomNum(0,200);
+                                buffer[2 + pos] = (byte)randomGen.genGaussianRandomNum(0,200);
                                 buffer[3 + pos] = (byte)255;
                             }
                         }
@@ -421,10 +410,6 @@ public class WriteCellModel extends FileBase {
             catch (IOException error) {
                 throw error;
             }
-
-            
-            zResCount = 8;
-            ztEntries = 1;
             
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "rw");
@@ -434,17 +419,20 @@ public class WriteCellModel extends FileBase {
             
             bytesPerSample = 1; // since SamplesPerPixel is defined as 3 for RGB images
             samplesPerPixel = 3;
-            nDirEntries = (short) (14 + ztEntries);
             rgbCount = 6;
             rgbFormat = 6;
-            intAlign = 0;
             
             writeHeader();
             nextIFD = 8;
             imgOffset = 0;
 
-
                 for (k = beginSlice, m = 0; k <= endSlice; k++, m++) {
+                    if (m == 0) {
+                        nDirEntries = (short)12;
+                    }
+                    else {
+                        nDirEntries = (short)11;
+                    }
                     fireProgressStateChanged(Math.round((float) (k - beginSlice + 1) /
                                                             (endSlice - beginSlice + 1) *
                                                             100));
@@ -454,21 +442,22 @@ public class WriteCellModel extends FileBase {
 
                     if (k == endSlice) {
                         nextIFD = 0;
+                    } else if (k == 0) {
+                        nextIFD += ((2 + (nDirEntries * 12) + 4 + rgbCount + rgbFormat) +
+                                (bufferSize * bytesPerSample * samplesPerPixel) + lsmStackLength);    
                     } else {
-                        nextIFD += ((2 + (nDirEntries * 12) + resolutionCount + 4 + rgbCount + rgbFormat +
-                                     intAlign + zResCount + tResCount) +
+                        nextIFD += ((2 + (nDirEntries * 12) + 4 + rgbCount + rgbFormat) +
                                     (bufferSize * bytesPerSample * samplesPerPixel));
                     }
 
                     imgOffset = 8 +
-                                ((m + 1) *
-                                     (2 + (nDirEntries * 12) + resolutionCount + 4 + rgbCount + rgbFormat +
-                                          intAlign + zResCount + tResCount)) +
+                                 (2 + (12 * 12) + 4 + rgbCount + rgbFormat + lsmStackLength) +
+                                (m  * (2 + (11 * 12) + 4 + rgbCount + rgbFormat)) +
                                 (m * bufferSize * bytesPerSample * samplesPerPixel);
                     
 
                     Preferences.debug("Image name = " + image.getImageName() + "\n", Preferences.DEBUG_FILEIO);
-                    writeIFDs(image, imgOffset, nextIFD, k, stripCount, false);
+                    writeIFDs(image, imgOffset, nextIFD, k, stripCount);
 
                     try {
 
@@ -567,354 +556,172 @@ public class WriteCellModel extends FileBase {
      *
      * @theStripByteCounts  number of bytes in the strip
      */
-    private void writeIFDs(ModelImage image, int imageOffset, int nextIFD, int index, int theStripCount,
-                           boolean writePackBit) throws IOException {
+    private void writeIFDs(ModelImage image, int imageOffset, int nextIFD, int index, int theStripCount) throws IOException {
         boolean endianess = image.getFileInfo(0).getEndianess();
-        int type;
-        int bitsPerSample;
         int bytesPerSample = 2;
         int samplesPerPixel;
         int bitsPerSampleOffset = 0;
         int sampleFormatOffset = 0;
-        int resolutionOffset;
-        int ztEntries = 0;
-        int zResOffset = 0;
-        int tResOffset = 0;
-        int resolutionCount = 16;
-        int zResCount = 0;
-        int tResCount = 0;
-        int rgbCount = 0;
-        int resXYUnit = 0;
-        int resYUnit = 0;
-        int resZUnit = 0;
-        float xResol = (float) 0.0;
-        float yResol = (float) 0.0;
+        int lsmStackOffset = 0;
+        int lsmStackLength = 224;
+        int rgbCount;
+        int rgbFormat;
 
-        // TIFF 6.0 standard only allows 3 different units of measurement -
-        // 1 for no unit, 2 for inch, and 3 for centimeter.
-        // This unit of measurement must be applied to both the
-        // X and Y resolution.
-        resXYUnit = image.getFileInfo(index).getUnitsOfMeasure(0);
-        resYUnit = image.getFileInfo(index).getUnitsOfMeasure(1);
-        xResol = image.getFileInfo(index).getResolutions()[0];
-        yResol = image.getFileInfo(index).getResolutions()[1];
-
-        if ((resXYUnit != FileInfoBase.UNKNOWN_MEASURE) && (resXYUnit != FileInfoBase.INCHES) &&
-                (resXYUnit != FileInfoBase.CENTIMETERS) && (resXYUnit != FileInfoBase.MILLIMETERS) &&
-                (resXYUnit != FileInfoBase.METERS) && (resXYUnit != FileInfoBase.ANGSTROMS) &&
-                (resXYUnit != FileInfoBase.NANOMETERS) && (resXYUnit != FileInfoBase.MICROMETERS) &&
-                (resXYUnit != FileInfoBase.MILES) && (resXYUnit != FileInfoBase.KILOMETERS)) {
-            resXYUnit = FileInfoBase.UNKNOWN_MEASURE;
+        bytesPerSample = 1; // since SamplesPerPixel is defined as 3 for RGB images
+        samplesPerPixel = 3;
+        if (index == 0) {
+            nDirEntries = (short)(12);
+        }
+        else {
+            nDirEntries = (short)(11);
         }
 
-        if (resXYUnit == FileInfoBase.ANGSTROMS) {
-            resXYUnit = FileInfoBase.CENTIMETERS;
-            xResol = 1.0e-8f * xResol;
-        } else if (resXYUnit == FileInfoBase.NANOMETERS) {
-            resXYUnit = FileInfoBase.CENTIMETERS;
-            xResol = 1.0e-7f * xResol;
-        } else if (resXYUnit == FileInfoBase.MICROMETERS) {
-            resXYUnit = FileInfoBase.CENTIMETERS;
-            xResol = 1.0e-4f * xResol;
-        } else if (resXYUnit == FileInfoBase.MILLIMETERS) {
-            resXYUnit = FileInfoBase.CENTIMETERS;
-            xResol = 0.1f * xResol;
-        } else if (resXYUnit == FileInfoBase.METERS) {
-            resXYUnit = FileInfoBase.CENTIMETERS;
-            xResol = 100.0f * xResol;
-        } else if (resXYUnit == FileInfoBase.KILOMETERS) {
-            resXYUnit = FileInfoBase.CENTIMETERS;
-            xResol = 1.0e5f * xResol;
-        } else if (resXYUnit == FileInfoBase.MILES) {
-            resXYUnit = FileInfoBase.INCHES;
-            xResol = 63360.0f * xResol;
-        }
+        // RGB stores 8,8,8 for bitsPerSample
+        // RGB stores 1,1,1 for sampleFormat
+        bitsPerSampleOffset = (int) raFile.getFilePointer() + (2 + (nDirEntries * 12) + 4);
+        rgbCount = 6;
+        rgbFormat = 6;
+                
 
-        if (resXYUnit == FileInfoBase.CENTIMETERS) {
-
-            // Change the Y resolution units to centimeters
-            if (resYUnit == FileInfoBase.ANGSTROMS) {
-                yResol = 1.0e-8f * yResol;
-            } else if (resYUnit == FileInfoBase.NANOMETERS) {
-                yResol = 1.0e-7f * yResol;
-            } else if (resYUnit == FileInfoBase.MICROMETERS) {
-                yResol = 1.0e-4f * yResol;
-            } else if (resYUnit == FileInfoBase.MILLIMETERS) {
-                yResol = 0.1f * yResol;
-            } else if (resYUnit == FileInfoBase.INCHES) {
-                yResol = 2.54f * yResol;
-            } else if (resYUnit == FileInfoBase.METERS) {
-                yResol = 100.0f * yResol;
-            } else if (resYUnit == FileInfoBase.KILOMETERS) {
-                yResol = 1.0e5f * yResol;
-            } else if (resYUnit == FileInfoBase.MILES) {
-                yResol = 1.6093e5f * yResol;
-            }
-        } // if (resXYUnit == FileInfoBase.CENTIMETERS)
-        else if (resXYUnit == FileInfoBase.INCHES) {
-
-            // Change the Y resolution units to inches
-            if (resYUnit == FileInfoBase.ANGSTROMS) {
-                yResol = 3.937e-9f * yResol;
-            } else if (resYUnit == FileInfoBase.NANOMETERS) {
-                yResol = 3.937e-8f * yResol;
-            } else if (resYUnit == FileInfoBase.MICROMETERS) {
-                yResol = 3.937e-5f * yResol;
-            } else if (resYUnit == FileInfoBase.MILLIMETERS) {
-                yResol = 3.937e-2f * yResol;
-            } else if (resYUnit == FileInfoBase.CENTIMETERS) {
-                yResol = 3.937e-1f * yResol;
-            } else if (resYUnit == FileInfoBase.METERS) {
-                yResol = 39.37f * yResol;
-            } else if (resYUnit == FileInfoBase.KILOMETERS) {
-                yResol = 3.937e4f * yResol;
-            } else if (resYUnit == FileInfoBase.MILES) {
-                yResol = 63360.0f * yResol;
-            }
-        } // else if (resXYUnit == FileInfoBase.INCHES)
-
-        zRes = -1.0;
-
-        if ((image.getNDims() > 2) && (image.getFileInfo(index).getResolutions().length > 2)) {
-            zRes = (double) (image.getFileInfo(index).getResolutions()[2]);
-            resZUnit = image.getFileInfo(index).getUnitsOfMeasure(2);
-
-            // The EchoTech standard uses mm for the ResolutionZ field,
-            // so convert to millimeters
-            if (resZUnit == FileInfoBase.METERS) {
-                zRes = 1000.0f * zRes;
-            } else if (resZUnit == FileInfoBase.CENTIMETERS) {
-                zRes = 10.0f * zRes;
-            } else if (resZUnit == FileInfoBase.INCHES) {
-                zRes = 25.4f * zRes;
-            } else if (resZUnit == FileInfoBase.MICROMETERS) {
-                zRes = 1.0e-3f * zRes;
-            }
-        }
-
-        tRes = -1.0;
-
-        if ((image.getNDims() > 3) && (image.getFileInfo(index).getResolutions().length > 3)) {
-            tRes = (double) (image.getFileInfo(index).getResolutions()[3]);
-        }
-
-        if (zRes >= 0.0) {
-            zResCount = 8;
-            ztEntries++;
-        }
-
-        if (tRes >= 0.0) {
-            tResCount = 8;
-            ztEntries++;
-        }
-
-        type = image.getFileInfo(index).getDataType();
-
-        switch (type) {
-
-            case ModelStorageBase.BOOLEAN:
-                bitsPerSample = 1;
-                bytesPerSample = 1;
-                samplesPerPixel = 1;
-                nDirEntries = (short) (11 + ztEntries);
-                rgbCount = 0;
-                break;
-
-            case ModelStorageBase.BYTE:
-                bitsPerSample = 8;
-                bytesPerSample = 1;
-                samplesPerPixel = 1;
-                if (image.getFileInfo(index).getPhotometric() == 3) {
-                    nDirEntries = (short) (13 + ztEntries); // Add one for color map
-                } else {
-                    nDirEntries = (short) (12 + ztEntries);
-                }
-
-                rgbCount = 0;
-                break;
-
-            case ModelStorageBase.UBYTE:
-                bitsPerSample = 8;
-                bytesPerSample = 1;
-                samplesPerPixel = 1;
-                if (image.getFileInfo(index).getPhotometric() == 3) {
-                    nDirEntries = (short) (13 + ztEntries); // Add one for color map
-                } else {
-                    nDirEntries = (short) (12 + ztEntries);
-                }
-
-                rgbCount = 0;
-                break;
-
-            case ModelStorageBase.USHORT:
-            case ModelStorageBase.SHORT:
-                bytesPerSample = 2;
-                samplesPerPixel = 1;
-                bitsPerSample = 16;
-                nDirEntries = (short) (12 + ztEntries);
-                rgbCount = 0;
-                break;
-
-            case ModelStorageBase.INTEGER:
-            case ModelStorageBase.UINTEGER:
-            case ModelStorageBase.FLOAT:
-                bytesPerSample = 4;
-                samplesPerPixel = 1;
-                bitsPerSample = 32;
-                nDirEntries = (short) (12 + ztEntries);
-                rgbCount = 0;
-                break;
-
-            case ModelStorageBase.DOUBLE:
-                bytesPerSample = 8;
-                samplesPerPixel = 1;
-                bitsPerSample = 64;
-                nDirEntries = (short) (12 + ztEntries);
-                rgbCount = 0;
-                break;
-
-            case ModelStorageBase.ARGB:
-                bitsPerSample = 8;
-                bytesPerSample = 1; // since SamplesPerPixel is defined as 3 for RGB images
-                samplesPerPixel = 3;
-                nDirEntries = (short) (14 + ztEntries);
-
-                // RGB stores 8,8,8 for bitsPerSample
-                // RGB stores 1,1,1 for sampleFormat
-                bitsPerSampleOffset = (int) raFile.getFilePointer() + (2 + (nDirEntries * 12) + 4 + resolutionCount);
-                rgbCount = 6;
-                break;
-
-            case ModelStorageBase.ARGB_USHORT:
-                bitsPerSample = 16;
-                bytesPerSample = 2; // since SamplesPerPixel is defined as 3 for RGB images
-                samplesPerPixel = 3;
-                nDirEntries = (short) (14 + ztEntries);
-
-                // RGB stores 16,16,16 for bitsPerSample
-                // RGB stores 1,1,1 for sampleFormat
-                bitsPerSampleOffset = (int) raFile.getFilePointer() + (2 + (nDirEntries * 12) + 4 + resolutionCount);
-                rgbCount = 6;
-                break;
-
-            default:
-                throw new IOException("Unsupported ModelStorageBase type\n");
-        }
-
-        resolutionOffset = (int) raFile.getFilePointer() + (2 + (nDirEntries * 12) + 4);
-        zResOffset = (int) raFile.getFilePointer() + (2 + (nDirEntries * 12) + 4 + resolutionCount + rgbCount);
-        tResOffset = (int) raFile.getFilePointer() +
-                     (2 + (nDirEntries * 12) + 4 + resolutionCount + rgbCount + zResCount);
         sampleFormatOffset = (int) raFile.getFilePointer() +
-                             (2 + (nDirEntries * 12) + 4 + resolutionCount + rgbCount + zResCount + tResCount);
+                             (2 + (nDirEntries * 12) + 4 + rgbCount);
+        lsmStackOffset = (int) raFile.getFilePointer() + 
+                             (2 + (nDirEntries * 12) + 4 + rgbCount + rgbFormat);
         writeShort(nDirEntries, endianess);
         writeIFD(IMAGE_WIDTH, SHORT, 1, image.getExtents()[0], 0);
         writeIFD(IMAGE_LENGTH, SHORT, 1, image.getExtents()[1], 0);
 
-        if (type != ModelStorageBase.BOOLEAN) {
+        
+        writeIFD(BITS_PER_SAMPLE, SHORT, 3, bitsPerSampleOffset, 0);
+            
 
-            if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT)) {
-                writeIFD(BITS_PER_SAMPLE, SHORT, 3, bitsPerSampleOffset, 0);
-            } else {
-                writeIFD(BITS_PER_SAMPLE, SHORT, 1, bitsPerSample, 0);
-            }
-        }
-
-        if (writePackBit == false) {
-            writeIFD(COMPRESSION, SHORT, 1, 1, 0);
-        } else {
-            writeIFD(COMPRESSION, SHORT, 1, (short) 32773, 0);
-        }
+        writeIFD(COMPRESSION, SHORT, 1, 1, 0);
+        
 
         writeIFD(PHOTO_INTERP, SHORT, 1, image.getFileInfo(index).getPhotometric(), 0);
         writeIFD(STRIP_OFFSETS, LONG, 1, imageOffset, 0);
 
-        if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT)) {
-            writeIFD(SAMPLES_PER_PIXEL, SHORT, 1, 3, 0);
-        }
+        writeIFD(SAMPLES_PER_PIXEL, SHORT, 1, 3, 0);
 
         writeIFD(ROWS_PER_STRIP, LONG, 1, image.getExtents()[1], 0);
         writeIFD(STRIP_BYTE_COUNTS, LONG, 1, theStripCount * bytesPerSample * samplesPerPixel, 0);
-        writeIFD(XRESOLUTION, RATIONAL, 1, resolutionOffset, 0);
-        writeIFD(YRESOLUTION, RATIONAL, 1, resolutionOffset + 8, 0);
+        
 
-        if (zRes >= 0.0) {
-            writeIFD(ZRESOLUTION, DOUBLE, 1, zResOffset, 0);
+        writeIFD(PLANAR_CONFIG, SHORT, 1, 1, 0); // chucky format (rgb,rgb,rgb ...) baseline tiff
+        
+        writeIFD(SAMPLE_FORMAT, SHORT, 3, sampleFormatOffset, 0);
+        
+        if (index == 0) {
+            writeIFD(CZ_LSMINFO, BYTE, 1,  lsmStackOffset, 0);
         }
-
-        if (tRes >= 0.0) {
-            writeIFD(TRESOLUTION, DOUBLE, 1, tResOffset, 0);
-        }
-
-        if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT)) {
-            writeIFD(PLANAR_CONFIG, SHORT, 1, 1, 0); // chucky format (rgb,rgb,rgb ...) baseline tiff
-        }
-
-        writeIFD(RESOLUTION_UNIT, SHORT, 1, resXYUnit, 0);
-
-        if ((LUT != null) && ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE)) &&
-                (image.getFileInfo(index).getPhotometric() == 3)) {
-            writeIFD(COLOR_MAP, SHORT, 768, LUTOffset, 0);
-        }
-
-        if ((type == ModelStorageBase.BOOLEAN) || (type == ModelStorageBase.UBYTE) ||
-                (type == ModelStorageBase.USHORT) || (type == ModelStorageBase.UINTEGER)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 1, 1, 0);
-        } else if ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.SHORT) ||
-                       (type == ModelStorageBase.INTEGER)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 1, 2, 0);
-        } else if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 3, sampleFormatOffset, 0);
-        } else if ((type == ModelStorageBase.FLOAT) || (type == ModelStorageBase.DOUBLE)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 1, 3, 0);
-        } else if ((type == ModelStorageBase.ARGB_FLOAT)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 3, sampleFormatOffset, 0);
-        }
+        
 
         writeInt(nextIFD, endianess);
 
-        int numerator, denominator;
-        int scale;
+        
 
-        // Largest int is 2,147,483,647
-        scale = (int) Math.min(2.0e9 / xResol, 2.0e9);
-        numerator = (int) (scale * xResol);
-        denominator = scale;
-        writeInt(denominator, endianess); // xResolution - RATIONAL
-        writeInt(numerator, endianess); // xResolution - RATIONAL
-        scale = (int) Math.min(2.0e9 / yResol, 2.0e9);
-        numerator = (int) (scale * yResol);
-        denominator = scale;
-        writeInt(denominator, endianess); // yResolution - RATIONAL
-        writeInt(numerator, endianess); // yResolution - RATIONAL
-
-        if (type == ModelStorageBase.ARGB) {
-            writeShort((short) 8, endianess); // RGB bitsPerSample ( R plane)
-            writeShort((short) 8, endianess); // RGB bitsPerSample ( G plane)
-            writeShort((short) 8, endianess); // RGB bitsPerSample ( B plane)
-        } else if (type == ModelStorageBase.ARGB_USHORT) {
-            writeShort((short) 16, endianess); // RGB bitsPerSample ( R plane)
-            writeShort((short) 16, endianess); // RGB bitsPerSample ( G plane)
-            writeShort((short) 16, endianess); // RGB bitsPerSample ( B plane)
+        
+        writeShort((short) 8, endianess); // RGB bitsPerSample ( R plane)
+        writeShort((short) 8, endianess); // RGB bitsPerSample ( G plane)
+        writeShort((short) 8, endianess); // RGB bitsPerSample ( B plane)
+        
+        writeShort((short) 1, endianess);
+        writeShort((short) 1, endianess);
+        writeShort((short) 1, endianess);
+        
+        if (index == 0) {
+            // 0 -Magic number corresponding to version 1.5 to 3.0
+            writeInt(0x00400494C, endianess);
+            // 4 -The number of bytes in the CZ private tag
+            writeInt(lsmStackLength, endianess);
+            // 8
+            writeInt(image.getExtents()[0], endianess);
+            // 12
+            writeInt(image.getExtents()[1], endianess);
+            // 16
+            writeInt(image.getExtents()[2], endianess);
+            // 20 - Number of channels
+            writeInt(3, endianess);
+            // 24 -Intensity values in time direction
+            writeInt(1, endianess);
+            // 28 - Data type = Different CZ bit numbers for different channels
+            writeInt(0, endianess);
+            // 32 - Width in pixels of a thumbnail
+            writeInt(0, endianess);
+            // 36 - Height in pixels of a thumbnail
+            writeInt(0, endianess);
+            // 40 - X, Y, and Z resolutions in micrometers
+            writeDouble((double)image.getFileInfo()[0].getResolutions()[0], endianess);
+            // 48
+            writeDouble((double)image.getFileInfo()[0].getResolutions()[1], endianess);
+            // 56
+            writeDouble((double)image.getFileInfo()[0].getResolutions()[2], endianess);
+            // 64
+            writeLong(0, endianess);
+            // 72
+            writeLong(0, endianess);
+            // 80
+            writeLong(0, endianess);
+            // 88 - czScanType = Normal x-y-z-scan
+            writeShort((short)0, endianess);
+            // 90 - czSpectralScan = No spectral scan
+            writeShort((short)0, endianess);
+            // 92 - czDataType2 = Scan data
+            writeInt(0, endianess);
+            // 96 - OffsetVectorOverlay not present
+            writeInt(0, endianess);
+            // 100 - OffsetInputLut not present
+            writeInt(0, endianess);
+            // 104 - OffsetOutputLut not present
+            writeInt(0, endianess);
+            // 108 - OffsetChannelColors not present
+            writeInt(0, endianess);
+            // 112- time interval for the time series
+            writeDouble(0.0, endianess);
+            // 120 - offsetChannelDataTypes array not present
+            writeInt(0, endianess);
+            // 124 - offsetScanInformation not present
+            writeInt(0, endianess);
+            // 128 - offsetKsData not present
+            writeInt(0, endianess);
+            // 132 - offsetTimeStamps not present
+            writeInt(0, endianess);
+            // 136 - offsetEventList not present
+            writeInt(0, endianess);
+            // 140 - offsetRoi not present
+            writeInt(0, endianess);
+            // 144 - offsetBleachRoi not present
+            writeInt(0, endianess);
+            // 148 - No second image stored in this file
+            writeInt(0, endianess);
+            // 152 - displayAspectX = 0
+            writeDouble(0.0, endianess);
+            // 160 - displayAspectY = 0
+            writeDouble(0.0, endianess);
+            // 168 - displayAspectZ = 0
+            writeDouble(0.0, endianess);
+            // 176 - displayAspectTime = 0
+            writeDouble(0.0, endianess);
+            // 184 - offsetMeanOfRoisOverlay = 0
+            writeInt(0, endianess);
+            // 188 - offsetTopolsolineOverlay = 0
+            writeInt(0, endianess);
+            // 192 - offsetTopoProfileOverlay = 0
+            writeInt(0, endianess);
+            // 196 - offsetLinesscanOverlay = 0
+            writeInt(0, endianess);
+            // 200 - toolBarFlags = 0
+            writeInt(0, endianess);
+            // 204 - offsetChannelWavelength = 0
+            writeInt(0, endianess);
+            // 208 - offsetChannelFactors = 0
+            writeInt(0, endianess);
+            // 212 - objectiveSphereCorrection = 0
+            writeDouble(0.0, endianess);
+            // 220 - offsetUnmixParameters = 0
+            writeInt(0, endianess);
         }
-
-        if (zRes >= 0.0) {
-            writeDouble(zRes, endianess);
-        }
-
-        if (tRes >= 0.0) {
-            writeDouble(tRes, endianess);
-        }
-
-        if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT)) {
-            writeShort((short) 1, endianess);
-            writeShort((short) 1, endianess);
-            writeShort((short) 1, endianess);
-        } else if (type == ModelStorageBase.ARGB_FLOAT) {
-            writeShort((short) 3, endianess);
-            writeShort((short) 3, endianess);
-            writeShort((short) 3, endianess);
-        }
+        
     }
 
     
