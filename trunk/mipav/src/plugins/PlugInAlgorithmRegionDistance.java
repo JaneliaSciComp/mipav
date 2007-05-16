@@ -511,7 +511,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         fillValue = 0.0f;
         binaryFlag = true;
         thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE,
-                                                   wholeImage, true);
+                                                   wholeImage, false);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -857,7 +857,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fillValue = 0.0f;
                 binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
-                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
+                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -1146,7 +1146,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fillValue = 0.0f;
                 binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
-                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
+                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -2444,15 +2444,27 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         fillValue = 0.0f;
         binaryFlag = true;
 
-        // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        // new Dimension(600, 300), srcImage.getUserInterface());
+         /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+         new Dimension(600, 300));
+         boolean runTest = true;
+         if (runTest) {
+             setCompleted(true);
+             return;
+         }*/
 
         thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE,
-                                                   wholeImage, true);
+                                                   wholeImage, false);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
         System.gc();
+        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+        new Dimension(600, 300));
+        boolean runTest = true;
+        if (runTest) {
+            setCompleted(true);
+            return;
+        }*/
 
         // Do a slice by slice hole filling operation on the blue image
         fireProgressStateChanged("Slice by slice hole filling on blue segmented image");
@@ -2526,8 +2538,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         buffer2D = null;
         System.gc();
 
-        // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        // new Dimension(600, 300), srcImage.getUserInterface());
+        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+        new Dimension(600, 300));
+        boolean runTest = true;
+        if (runTest) {
+            setCompleted(true);
+            return;
+        }*/
 
         // Smooth with a morphological opening followed by a closing
         fireProgressStateChanged("Opening blue segmented image");
@@ -2551,8 +2568,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         openAlgo.finalize();
         openAlgo = null;
 
-        // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        // new Dimension(600, 300), srcImage.getUserInterface());
+        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+        new Dimension(600, 300));
+        boolean runTest = true;
+        if (runTest) {
+            setCompleted(true);
+            return;
+        }*/
 
         fireProgressStateChanged("Closing blue segmented image");
 
@@ -2569,6 +2591,14 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         closeAlgo.finalize();
         closeAlgo = null;
         System.gc();
+        
+        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+        new Dimension(600, 300));
+        boolean runTest = true;
+        if (runTest) {
+            setCompleted(true);
+            return;
+        }*/
 
         byteBuffer = new byte[totLength];
 
@@ -2599,8 +2629,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         erosionAlgo.finalize();
         erosionAlgo = null;
 
-        // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-        // new Dimension(600, 300), srcImage.getUserInterface());
+        /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+        new Dimension(600, 300));
+        boolean runTest = true;
+        if (runTest) {
+            setCompleted(true);
+            return;
+        }*/
 
         fireProgressStateChanged("IDing objects in blue segmented image");
 
@@ -2617,7 +2652,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         itersErosion = 0;
         idObjectsAlgo3D = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                     itersErosion, numPruningPixels, edgingType, wholeImage);
-        idObjectsAlgo3D.setMinMax(blueMin, 2000000);
+        idObjectsAlgo3D.setMinMax(blueMin, 20000000);
         idObjectsAlgo3D.run();
         idObjectsAlgo3D.finalize();
         idObjectsAlgo3D = null;
@@ -2793,8 +2828,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 algoMedian.finalize();
                 algoMedian = null;
 
-                // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-                // new Dimension(600, 300), srcImage.getUserInterface());
+                /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+                new Dimension(600, 300));
+                boolean runTest = true;
+                if (runTest) {
+                    setCompleted(true);
+                    return;
+                }*/
 
                 fireProgressStateChanged("Getting histogram info on red");
                 fireProgressStateChanged(32);
@@ -2870,8 +2910,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fcmAlgo = null;
                 System.gc();
 
-                // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-                // new Dimension(600, 300), srcImage.getUserInterface());
+                /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+                new Dimension(600, 300));
+                boolean runTest = true;
+                if (runTest) {
+                    setCompleted(true);
+                    return;
+                }*/
 
                 // Now convert the red min and max to 0 and 1
                 fireProgressStateChanged("Setting segmented red values to 0 and 1");
@@ -2883,7 +2928,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fillValue = 0.0f;
                 binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
-                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
+                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -2942,8 +2987,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 numRedObjects = (int) grayImage.getMax();
                 redIDArray = new byte[totLength];
 
-                // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
-                // new Dimension(600, 300), srcImage.getUserInterface());
+                /*ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
+                new Dimension(600, 300));
+                boolean runTest = true;
+                if (runTest) {
+                    setCompleted(true);
+                    return;
+                }*/
 
                 try {
                     grayImage.exportData(0, totLength, redIDArray);
@@ -3179,7 +3229,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fillValue = 0.0f;
                 binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
-                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
+                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, false);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
