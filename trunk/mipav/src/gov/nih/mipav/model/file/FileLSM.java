@@ -3949,7 +3949,7 @@ public class FileLSM extends FileBase {
         czDataType = getInt(endianess);
 
         if (czDataType == 0) {
-            Preferences.debug("Different CZ bit numbers for different channels");
+            Preferences.debug("Different CZ bit numbers for different channels\n");
         } else if (czDataType == 1) {
             Preferences.debug("CZ data is 8-bit unsigned integer\n");
         } else if (czDataType == 2) {
