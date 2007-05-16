@@ -3978,7 +3978,7 @@ public class FileLSM extends FileBase {
 
         if (czDimZ > 1) {
             imgResols[2] = (float) (1.0E6 * voxelSizeZ);
-            Preferences.debug("Voxel Size Z in micrometers = " + voxelSizeZ + "\n");
+            Preferences.debug("Voxel Size Z in micrometers = " + imgResols[2] + "\n");
         }
 
         raFile.seek(startCZ + 88L);
