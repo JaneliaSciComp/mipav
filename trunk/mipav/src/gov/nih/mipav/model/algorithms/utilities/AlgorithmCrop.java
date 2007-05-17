@@ -1559,7 +1559,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         }
 
         if (nDims == 2) {
-            destImage.setMatrix(srcImage.getMatrix());
+        	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
             // Copies the source's image file info.
             destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[start].clone()), 0);
@@ -1599,7 +1599,8 @@ public class AlgorithmCrop extends AlgorithmBase {
                 fileInfoBuffer.setExtents(destImage.getExtents());
             }
         } else if (nDims == 3) {
-            destImage.setMatrix(srcImage.getMatrix());
+        	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+           // destImage.setMatrix(srcImage.getMatrix());
 
 
             for (int m = 0; m <= Math.abs(z[1] - z[0]); m++) {
