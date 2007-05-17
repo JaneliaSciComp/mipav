@@ -1385,9 +1385,8 @@ public class FileIO {
         fileType = chkMultiFile(fileType, multiFile); // for multifile support...
 
         try {
-
             switch (fileType) {
-
+            
                 case FileUtility.TIFF:
                     image = readTiff(fileName, fileDir, one);
                     break;
@@ -2904,7 +2903,6 @@ public class FileIO {
     private ModelImage readAnalyze(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
         FileAnalyze imageFile;
-
         String headerFile = FileInterfile.isInterfile(fileName, fileDir);
 
         if (FileCheshire.isCheshire(fileName, fileDir)) {
@@ -2973,7 +2971,6 @@ public class FileIO {
         int[] extents;
         float[] resolutions;
         int nImages;
-
         // of proper extents (in case there is a file with the consistent filename but
         // inconsistent extents.) we do assume the 1st header is correct
 
@@ -3057,7 +3054,7 @@ public class FileIO {
         image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
 
         int imageCount = 0;
-
+        int fInfoCount = 0;
         // loop through image and store data in image model
         for (i = 0; i < nImages; i++) {
 
@@ -3070,11 +3067,9 @@ public class FileIO {
                 if (!((FileAnalyze) imageFile).readHeader(fileList[i], fileDir)) {
                     throw (new IOException(" Analyze header file error"));
                 }
-
                 // chk the extents of the image to verify it is consistent
                 // (this doesn't ensure there won't be null exceptions@)
                 fileInfo = ((FileAnalyze) imageFile).getFileInfo();
-
                 if (extents.length != fileInfo.getExtents().length) {
 
                     if (!quiet) {
@@ -3083,7 +3078,6 @@ public class FileIO {
 
                     continue;
                 } else { // the prototype image and the read-in image are of the same dimension....
-
                     switch (extents.length) { // check that they extend as far in all dimensions:
 
                         case 2:
@@ -3129,7 +3123,6 @@ public class FileIO {
                             break;
                     }
                 }
-
                 fileInfo.setExtents(imgExtents); // set image extents to proper value!
                 fileInfo.setResolutions(imgResolutions);
 
@@ -3139,9 +3132,16 @@ public class FileIO {
 
                 ((FileAnalyze) imageFile).readImage(buffer);
                 image.importData(imageCount * length, buffer, false);
-                image.setFileInfo(fileInfo, imageCount);
+                if (image.getExtents().length > 3) {
+                	for (int j = 0; j < image.getExtents()[2]; j++) {
+                		image.setFileInfo(fileInfo, fInfoCount);
+                		fInfoCount++;
+                	}
+                } else {
+                	image.setFileInfo(fileInfo, imageCount);
+                }
+                //image.setFileInfo(fileInfo, imageCount);
                 imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
-
             } catch (IOException error) {
 
 
@@ -3194,7 +3194,6 @@ public class FileIO {
         // because our basic model was that all prperly named files were good analyze images.
         // only we found one or more didn't fit.  We must now take that into account.
         // ie., we read in imageCount # of images, we expected nImages.
-
         if (imageCount < nImages) {
             FileInfoBase[] fileInfoArr = image.getFileInfo();
 
@@ -3231,7 +3230,6 @@ public class FileIO {
 
             image.setFileInfo(fileInfoArrCopy);
         }
-
 
         return image;
 

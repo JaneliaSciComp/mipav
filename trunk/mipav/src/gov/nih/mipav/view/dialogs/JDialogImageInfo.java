@@ -319,7 +319,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 // only update the resolutions if the tab is selected
                 // otherwise might do an apply to all for specific slice/time resolutions
                 if (tabbedPane.getSelectedIndex() == 1) {
-                	updateImageOrientation();
                     updateResolInfo();
                 }
 
@@ -328,7 +327,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     updateTalairachInfo();
                 }
 
-                updateOriginInfo();
+                if (tabbedPane.getSelectedIndex() == 2) {
+                	updateImageOrientation();
+                	updateOriginInfo();
+                }
 
                 if (tabbedPane.getSelectedIndex() == 3) {
                     updateMatrixInfo();
