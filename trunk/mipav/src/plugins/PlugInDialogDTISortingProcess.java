@@ -83,12 +83,6 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
     /** b-matrix file option **/
     private JRadioButton bmtxtFileRadio;
     
-    /** label  **/
-    private JLabel gradientFileLabel;
-    
-    /** label **/
-    private JLabel bmtxtFileLabel;
-    
     /** current directory  **/
     private String currDir = null;
     
@@ -104,6 +98,13 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
     /** bmatrix path**/
     private String bmatrixPath;
 
+    /** checkbox for interleaved dataset **/
+    private JCheckBox interleavedCheckbox;
+    
+    /** boolean if interleaved **/
+    private boolean isInterleaved;
+    
+    
 
 	
     /**
@@ -128,85 +129,86 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("DTI Sorting Process " + " v2.0");
+        setTitle("DTI Sorting Process " + " v2.1");
         
         GridBagLayout mainPanelGridBagLayout = new GridBagLayout();
         GridBagConstraints mainPanelConstraints = new GridBagConstraints();
+        mainPanelConstraints.anchor = GridBagConstraints.WEST;
+        
         
         JPanel mainPanel = new JPanel(mainPanelGridBagLayout);
         
-        mainPanelConstraints.gridx = 1;
+        mainPanelConstraints.gridx = 0;
 		mainPanelConstraints.gridy = 1;
-		mainPanelConstraints.insets = new Insets(15,5,30,0);
-        JLabel studyPathLabel = new JLabel("study path directory : ");
+		mainPanelConstraints.insets = new Insets(15,5,15,0);
+        JLabel studyPathLabel = new JLabel(" study path directory : ");
         mainPanel.add(studyPathLabel, mainPanelConstraints);
         
-        mainPanelConstraints.gridx = 2;
+        mainPanelConstraints.gridx = 1;
 		mainPanelConstraints.gridy = 1;
-		mainPanelConstraints.insets = new Insets(15,5,30,0);
+		mainPanelConstraints.insets = new Insets(15,5,15,0);
 		studyPathTextField = new JTextField(55);
 		mainPanel.add(studyPathTextField, mainPanelConstraints);
 		
-		mainPanelConstraints.gridx = 3;
+		mainPanelConstraints.gridx = 2;
 		mainPanelConstraints.gridy = 1;
-		mainPanelConstraints.insets = new Insets(15,5,30,5);
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		studyPathBrowseButton = new JButton("Browse");
 		studyPathBrowseButton.addActionListener(this);
 		studyPathBrowseButton.setActionCommand("studyPathBrowse");
 		mainPanel.add(studyPathBrowseButton, mainPanelConstraints);
-
+		
+		
+		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
+		interleavedCheckbox = new JCheckBox("  interleaved dataset");
+		mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.insets = new Insets(0,5,55,5);
+		mainPanel.add(interleavedCheckbox, mainPanelConstraints);
+		
+		
+		mainPanelConstraints.anchor = GridBagConstraints.WEST;
 		optionsGroup = new ButtonGroup();
 		
-		gradFileRadio = new JRadioButton();
+		gradFileRadio = new JRadioButton(" gradient file : ");
 		gradFileRadio.setSelected(true);
 		gradFileRadio.addActionListener(this);
 		gradFileRadio.setActionCommand("gradFileRadio");
 		optionsGroup.add(gradFileRadio);
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.insets = new Insets(0,5,15,0);
 		mainPanel.add(gradFileRadio, mainPanelConstraints);
 		
-		mainPanelConstraints.gridx = 1;
-		mainPanelConstraints.gridy = 2;
-		mainPanelConstraints.insets = new Insets(0,5,15,0);
-        gradientFileLabel = new JLabel("gradient file : ");
-        mainPanel.add(gradientFileLabel, mainPanelConstraints);
 		
-		mainPanelConstraints.gridx = 2;
-		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.insets = new Insets(0,5,15,0);
 		gradientFilePathTextField = new JTextField(55);
 		mainPanel.add(gradientFilePathTextField, mainPanelConstraints);
 		
-		mainPanelConstraints.gridx = 3;
-		mainPanelConstraints.gridy = 2;
+		mainPanelConstraints.gridx = 2;
+		mainPanelConstraints.gridy = 3;
 		mainPanelConstraints.insets = new Insets(0,5,15,5);
 		gradientFileBrowseButton = new JButton("Browse");
 		gradientFileBrowseButton.addActionListener(this);
 		gradientFileBrowseButton.setActionCommand("gradientFileBrowse");
 		mainPanel.add(gradientFileBrowseButton, mainPanelConstraints);
+  
 		
-		
-		
-		bmtxtFileRadio = new JRadioButton();
+		bmtxtFileRadio = new JRadioButton(" b-matrix file : ");
 		bmtxtFileRadio.setSelected(false);
 		bmtxtFileRadio.addActionListener(this);
 		bmtxtFileRadio.setActionCommand("bmtxtFileRadio");
 		optionsGroup.add(bmtxtFileRadio);
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridy = 4;
 		mainPanelConstraints.insets = new Insets(0,5,5,0);
 		mainPanel.add(bmtxtFileRadio, mainPanelConstraints);
 		
-		mainPanelConstraints.gridx = 1;
-		mainPanelConstraints.gridy = 3;
-		mainPanelConstraints.insets = new Insets(0,5,5,0);
-        bmtxtFileLabel = new JLabel("b-matrix file : ");
-        mainPanel.add(bmtxtFileLabel, mainPanelConstraints);
 		
-		mainPanelConstraints.gridx = 2;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridx = 1;
+		mainPanelConstraints.gridy = 4;
 		mainPanelConstraints.insets = new Insets(0,5,5,0);
 		bmtxtFilePathTextField = new JTextField(55);
 		bmtxtFilePathTextField.setText("");
@@ -214,27 +216,25 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 		bmtxtFilePathTextField.setEditable(false);
 		mainPanel.add(bmtxtFilePathTextField, mainPanelConstraints);
 		
-		mainPanelConstraints.gridx = 3;
-		mainPanelConstraints.gridy = 3;
+		mainPanelConstraints.gridx = 2;
+		mainPanelConstraints.gridy = 4;
 		mainPanelConstraints.insets = new Insets(0,5,5,5);
 		bmtxtFileBrowseButton = new JButton("Browse");
 		bmtxtFileBrowseButton.addActionListener(this);
 		bmtxtFileBrowseButton.setActionCommand("bmtxtFileBrowse");
 		bmtxtFileBrowseButton.setEnabled(false);
 		mainPanel.add(bmtxtFileBrowseButton, mainPanelConstraints);
-		
+
+		mainPanelConstraints.anchor = GridBagConstraints.CENTER;
 		mainPanelConstraints.gridx = 1;
-		mainPanelConstraints.gridy = 4;
-		mainPanelConstraints.gridwidth = 2;
-		mainPanelConstraints.insets = new Insets(0,5,5,5);
+		mainPanelConstraints.gridy = 5;
+		mainPanelConstraints.insets = new Insets(10,5,5,5);
 		interleavedLabel = new JLabel("* for interleaved datasets, b-matrix file is required");
 		mainPanel.add(interleavedLabel, mainPanelConstraints);
 		
-		
-		
 		mainPanelConstraints.gridx = 0;
-		mainPanelConstraints.gridy = 5;
-		mainPanelConstraints.gridwidth = 4;
+		mainPanelConstraints.gridy = 6;
+		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
 		outputTextArea = new JTextArea(15, 70);
 		outputTextArea.setEditable(false);
@@ -278,6 +278,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 				studyPathBrowseButton.setEnabled(true);
 				gradFileRadio.setEnabled(true);
 				bmtxtFileRadio.setEnabled(true);
+				interleavedCheckbox.setEnabled(true);
 				if(gradFileRadio.isSelected()) {
 					gradientFileBrowseButton.setEnabled(true);
 				}
@@ -373,6 +374,14 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 				MipavUtil.displayError("Study path and either gradient file or b matrix file are required");
 				return;
 			}
+			if(interleavedCheckbox.isSelected()) {
+				if(bmtxtFilePathTextField.getText().trim().equals("")) {
+					MipavUtil.displayError("For interleaved datasets, b-matrix file is required");
+					gradientFilePathTextField.setText("");
+					bmtxtFilePathTextField.setText("");
+					return;
+				}	
+			}
 			boolean success = validateFilePaths();
 			if(!success) {
 				MipavUtil.displayError("One or both of the paths provided is not accurate");
@@ -381,6 +390,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 				bmtxtFilePathTextField.setText("");
 				return;
 			}
+			
 			
 			OKButton.setEnabled(false);
 			studyPathBrowseButton.setEnabled(false);
@@ -392,6 +402,8 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 			setGradientPath(gradientFilePathTextField.getText().trim());
 			setBmtxtPath(bmtxtFilePathTextField.getText().trim());
 			setCursor(new Cursor(Cursor.WAIT_CURSOR));
+			setInterleaved(interleavedCheckbox.isSelected());
+			interleavedCheckbox.setEnabled(false);
 			callAlgorithm();
 		}
 
@@ -437,7 +449,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 		}
 		System.out.println("*** Beginning DTI Sorting Process *** \n");
 		
-		alg = new PlugInAlgorithmDTISortingProcess(studyPath, studyName, gradientPath, bmatrixPath, outputTextArea);
+		alg = new PlugInAlgorithmDTISortingProcess(studyPath, studyName, gradientPath, bmatrixPath, outputTextArea, isInterleaved);
 		
 		alg.addListener(this);
 		
@@ -501,20 +513,35 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 	 * 
 	 * @param studyPath
 	 */
-	public void setStudyName(String studyName) {
-		this.studyName = studyName;
+	public void setStudyName(String sPath) {
+		
+		if(String.valueOf(sPath.charAt(sPath.length() - 1)).equals(File.separator)) {
+			sPath = sPath.substring(0,sPath.length() - 1);
+	    }
+		
+		studyName = sPath.substring(sPath.lastIndexOf(File.separator) + 1, sPath.length());
+
 	}
 	
 	
+	
+	/**
+	 * 
+	 * @param isInterleaved
+	 */
+	public void setInterleaved(boolean isInterleaved) {
+		this.isInterleaved = isInterleaved;
+	}
+
 	/**
 	 * Document me
 	 *
 	 */
 	public void storeParamsFromGUI() throws ParserException{
 		scriptParameters.getParams().put(ParameterFactory.newParameter("study_path", studyPath));
-		scriptParameters.getParams().put(ParameterFactory.newParameter("study_name", studyName));
 		scriptParameters.getParams().put(ParameterFactory.newParameter("gradient_path", gradientPath));
 		scriptParameters.getParams().put(ParameterFactory.newParameter("bmatrix_path", bmatrixPath));
+		scriptParameters.getParams().put(ParameterFactory.newParameter("is_interleaved", isInterleaved));
 	}
 	
 	
@@ -524,7 +551,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 	 */
 	public void setGUIFromParams() {
 		setStudyPath(scriptParameters.getParams().getString("study_path"));
-		setStudyName(scriptParameters.getParams().getString("study_name"));
+		setStudyName(studyPath);
 		String grPth = scriptParameters.getParams().getString("gradient_path");
 		if(grPth == null) {
 			grPth = "";
@@ -535,6 +562,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 			bmtPth = "";
 		}
 		setBmtxtPath(bmtPth);
+		setInterleaved(scriptParameters.getParams().getBoolean("is_interleaved"));
 	}
 	
 	
