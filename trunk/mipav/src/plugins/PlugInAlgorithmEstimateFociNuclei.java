@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Dimension;
 import java.io.*;
 
 //import java.util.*;
@@ -90,8 +91,7 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
     											float paKernelSizeOpen, int paKernelOpen, int paItersClose,
     											float paKernelSizeClose, int paKernelClose, int idMaxSize,
     											int idMinSize) {
-        //super(null, srcImg);
-    	srcImage = (ModelImage) srcImg.clone();
+        super(null, srcImg);
     	nClasses = SegNClasses;
         expValue = SegExpValue;
         endTol = SegEndTol;
@@ -118,9 +118,6 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
         destImage = null;
         srcImage = null;
         super.finalize();
-        grayRedImage.disposeLocal();
-        grayGreenImage.disposeLocal();
-        grayBlueImage.disposeLocal();
         particleAnalysisResultImage.disposeLocal();
         idObjectsResultImage.disposeLocal();
                
@@ -185,9 +182,9 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
             }
 
             /* Create three separate ModelImages of the same type: */
-            grayRedImage = new ModelImage(iType, srcImage.getExtents(), "GrayRed");
-            grayGreenImage = new ModelImage(iType, srcImage.getExtents(), "GrayGreen");
-            grayBlueImage = new ModelImage(iType, srcImage.getExtents(), "GrayBlue");
+            grayRedImage = new ModelImage(iType, srcImage.getExtents(), srcImage.getImageName() + "_Red");
+            grayGreenImage = new ModelImage(iType, srcImage.getExtents(), srcImage.getImageName() + "_Green");
+            grayBlueImage = new ModelImage(iType, srcImage.getExtents(), srcImage.getImageName() + "_Blue");
             
             fireProgressStateChanged(0, null, "Converting RGB to grays ...");
      		
@@ -203,6 +200,28 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
      		algoRGBtoGrays.finalize();
      		algoRGBtoGrays = null;
      		
+     		// Display RGB images
+     		try {
+                new ViewJFrameImage(grayRedImage, null, new Dimension(610, 200));
+            } catch (OutOfMemoryError error) {
+                System.gc();
+                MipavUtil.displayError("Out of memory: unable to open new frame");
+            }
+     		
+            try {
+                new ViewJFrameImage(grayGreenImage, null, new Dimension(610, 200));
+            } catch (OutOfMemoryError error) {
+                System.gc();
+                MipavUtil.displayError("Out of memory: unable to open new frame");
+            }
+            
+            try {
+                new ViewJFrameImage(grayBlueImage, null, new Dimension(610, 200));
+            } catch (OutOfMemoryError error) {
+                System.gc();
+                MipavUtil.displayError("Out of memory: unable to open new frame");
+            }
+            
      		fireProgressStateChanged(5);
      	}
     	
