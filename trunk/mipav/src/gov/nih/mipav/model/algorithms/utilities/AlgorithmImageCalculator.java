@@ -264,7 +264,9 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         Object source = event.getSource();
         int len;
 
-        if (source == OKButton) {
+        if (event.getActionCommand().equals("Help")) {
+            MipavUtil.showHelp("19072");
+        } else if (source == OKButton) {
             adOpString = textOperator.getText();
             adOpDialog.dispose();
             pressedOK = true;
@@ -2126,6 +2128,14 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         cancelButton.addActionListener(al);
         OKPanel.add(cancelButton, gbc);
 
+        gbc.gridx = 4;
+        JButton helpButton = new JButton("Help");
+        helpButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        helpButton.setFont(serif12B);
+        helpButton.addActionListener(al);
+        OKPanel.add(helpButton, gbc);
+        
         adOpDialog.setResizable(true);
         adOpDialog.setVisible(true);
 
