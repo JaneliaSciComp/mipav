@@ -961,8 +961,8 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
     /**
      * DOCUMENT ME!
      *
-     * @param  lutIndexBuffer  DOCUMENT ME!
-     * @param  mode            DOCUMENT ME!
+     * @param  lutIndexBuffer  LUT index buffer for desired mode (Red, Green, Blue or All) 
+     * @param  mode            Indicates the channel for which the histogram is displayed
      */
     private void showRGB(int[] lutIndexBuffer, int mode) {
         int i, j, k;
@@ -992,11 +992,11 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
             for (i = 0; i < 256; i++) {
                 lutIndexBuffer[i] = (255 << 24) | i;
             }
-        } else if (mode == ALL) {
-            paintComponent(getGraphics());
-
-            return;
-        }
+        } //else if (mode == ALL) {                   // RGB mode does not work with linear scale if this code is present.
+           // paintComponent(getGraphics());
+            
+            // return;
+       // }
 
         int samples = Math.round(histogramBuffer.length / (float) dim.width);
 
@@ -1024,6 +1024,7 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
         if (logFlag == true) {
             histogramMaxLog = Math.log((double) (histogramMax));
         }
+        System.out.println("logFlag = " + logFlag);
 
         // Builds special buffer by remapping the data in the LUT range
         int lightGray = 0xFFAFAFAF;
@@ -1104,5 +1105,6 @@ public class ViewJComponentHistoRGB extends ViewJComponentHLUTBase implements Mo
 
         importImage(pixBuffer); // Method in parent class to import the image
         paintComponent(getGraphics());
+        
     }
 }
