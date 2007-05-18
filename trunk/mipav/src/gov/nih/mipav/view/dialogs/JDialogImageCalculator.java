@@ -133,6 +133,8 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                 opType = AlgorithmImageCalculator.ADVANCED;
                 callAlgorithm();
             }
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("19070");
         }
     }
 
@@ -628,9 +630,12 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
         advancedButton.setPreferredSize(MipavUtil.defaultButtonSize);
         advancedButton.setFont(serif12B);
         buildCancelButton();
+        
+        
         buttonPanel.add(OKButton);
         buttonPanel.add(advancedButton);
         buttonPanel.add(cancelButton);
+        buttonPanel.add(buildHelpButton());
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
