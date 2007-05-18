@@ -983,7 +983,6 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
-        //scriptParameters.getParams().put(ParameterFactory.newParameter("centroids", centroids));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size_open", kernelSizeOpen));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type_open", kernelOpen));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size_close", kernelSizeClose));
