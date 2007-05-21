@@ -21,11 +21,11 @@ public class RegistrationMeasureCorrelationRatio extends RegistrationMeasure {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    protected double[] m_adBinSum1; // sum of intensities in bin
+    /** Sum of the intensities in bin. */
+    protected double[] m_adBinSum1;
 
-    /** DOCUMENT ME! */
-    protected double[] m_adBinSum2; // sum of squared intensities in bin
+    /** Sum of the squared intensities in bin. */
+    protected double[] m_adBinSum2;
 
     /** Bins used to hold cummulative summations for computing the variances. */
     protected int[] m_aiBinSum0; // number of samples in bin
@@ -230,7 +230,7 @@ public class RegistrationMeasureCorrelationRatio extends RegistrationMeasure {
      *
      * @return  double Computed variance. Zero is returned if there are not at least two samples.
      */
-    protected static double getVariance(int N, double dSum1, double dSum2) {
+    protected static final double getVariance(int N, double dSum1, double dSum2) {
 
         if (N > 1) {
             return ((N * dSum2) - (dSum1 * dSum1)) / ((double) N * (N - 1));

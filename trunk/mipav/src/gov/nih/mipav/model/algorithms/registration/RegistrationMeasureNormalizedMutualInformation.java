@@ -244,7 +244,7 @@ public class RegistrationMeasureNormalizedMutualInformation extends Registration
     public void updateRegistration(int iIndex, float fNewValue) {
 
         // Store the new value but note the old value.
-        float fOldValue = m_kImageReg.data[iIndex];
+        //float fOldValue = m_kImageReg.data[iIndex];
         m_kImageReg.data[iIndex] = fNewValue;
 
         // Determine the bin associated with the target.
