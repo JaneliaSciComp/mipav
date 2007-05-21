@@ -127,14 +127,14 @@ public class JDialogServer extends JDialogBase {
                 try {
 
                     if ((Integer.valueOf(portField.getText()).intValue() < 1) ||
-                            (Integer.valueOf(portField.getText()).intValue() > 9999)) {
+                            (Integer.valueOf(portField.getText()).intValue() > 65535)) {
 
-                        MipavUtil.displayError("The port field must be a value between 1 and 9999.");
+                        MipavUtil.displayError("The port field must be a value between 1 and 65535.");
 
                         return;
                     }
                 } catch (NumberFormatException error) {
-                    MipavUtil.displayError("The port field must be a value between 1 and 9999.");
+                    MipavUtil.displayError("The port field must be a value between 1 and 65535.");
 
                     return;
                 }
