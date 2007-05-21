@@ -793,7 +793,6 @@ public class ModelImage extends ModelStorageBase {
         int[] extents = getExtents();
 
         if (voiVector.size() != 0) {
-System.err.println("Size not zero!");
             for (i = 0; i < voiVector.size(); i++) {
 
                 // System.out.println( "ModelImage: generateVOIMask(boolean XOR)  voi = " + i );

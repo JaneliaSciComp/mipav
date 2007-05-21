@@ -402,23 +402,15 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
      * @param  pol  DOCUMENT ME!
      */
     protected void callAlgorithmNonInteractive(boolean pol) {
-    	BitSet maskBackup = null;
     	
     	if (Preferences.is(Preferences.PREF_QUICK_MASK_NEW)) {
     		displayLoc = NEW;
-    		maskBackup = (BitSet)image.getMask().clone();
     	} else {
     		displayLoc = REPLACE;
     	}
         polarity = pol;
         value = 0;
         callAlgorithm();
-        
-        //restore the mask if this had an output image
-        if (displayLoc == NEW) {
-        	image.setMask(maskBackup);
-        }
-        
     }
 
     /**

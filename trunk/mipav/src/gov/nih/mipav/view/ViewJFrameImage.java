@@ -1684,8 +1684,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Fill image")) {
             new JDialogMask(this, getActiveImage());
         } else if (command.equals("QuickMask")) {
+        	if (getActiveImage().getVOIs().size() < 1) {
+        		MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
+        		return;
+        	}
             new JDialogMask(getActiveImage(), false, false);
         } else if (command.equals("QuickMaskReverse")) {
+        	if (getActiveImage().getVOIs().size() < 1) {
+        		MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
+        		return;
+        	}
             new JDialogMask(getActiveImage(), false, true);
         } else if (command.equals("Mean")) {
             new JDialogMean(this, getActiveImage());
