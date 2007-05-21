@@ -5006,12 +5006,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
         menuItem.addActionListener(this);
         menuItem.setActionCommand("Zoom linearly");
+        if (componentImage.zoomMode == ViewJComponentEditImage.LINEAR_ZOOM) {
+        	menuItem.setFont(MipavUtil.font12B);
+        } else {
+        	menuItem.setFont(MipavUtil.font12);
+        }
         popupMenu.add(menuItem);
 
         menuItem = new JMenuItem("Use exponential zoom increment");
 
         menuItem.addActionListener(this);
         menuItem.setActionCommand("Zoom exponentially");
+        if (componentImage.zoomMode == ViewJComponentEditImage.GEOMETRIC_ZOOM) {
+        	menuItem.setFont(MipavUtil.font12B);
+        } else {
+        	menuItem.setFont(MipavUtil.font12);
+        }
         popupMenu.add(menuItem);
 
         popupMenu.show(component, event.getX(), event.getY());

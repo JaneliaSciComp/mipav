@@ -310,10 +310,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         tBar.add(buildToggleButton("MagImage",
                                    "<html>" + "Magnify image 2.0x" + "<br>" + "Hold SHIFT for multiple zooming" +
-                                   "</html>", "zoomin", VOIGroup));
+                                   "<br>" + "[right-click for options]" + "</html>", "zoomin", VOIGroup));
         tBar.add(buildToggleButton("UnMagImage",
                                    "<html>" + "Magnify image 0.5x" + "<br>" + "Hold SHIFT for multiple zooming" +
-                                   "</html>", "zoomout", VOIGroup));
+                                   "<br>" + "[right-click for options]" + "</html>", "zoomout", VOIGroup));
         tBar.add(buildToggleButton("MagRegion", "Magnify Region", "magregion", VOIGroup));
         regButton = buildToggleButton("WinRegion", "Window region of image B", "winregion", VOIGroup);
         regButton.setEnabled(false);
@@ -581,11 +581,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         paintToolBar.add(makeSeparator());
 
-        JButton commitPaintButton = buildButton("CommitPaint", "Masks the inside of the painted area.", "paintinside");
+        JButton commitPaintButton = buildButton("CommitPaint", "<html>" + "Masks the inside of the painted area." +
+                "<br>" + "[right-click for options]" + "</html>", "paintinside");
         paintToolBar.add(commitPaintButton);
 
-        JButton commitPaintButtonExt = buildButton("CommitPaintExt", "Masks the outside of the painted area.",
-                                                   "paintoutside");
+        JButton commitPaintButtonExt = buildButton("CommitPaintExt", "<html>" + "Masks the outside of the painted area." +
+                "<br>" + "[right-click for options]" + "</html>", "paintoutside");
         paintToolBar.add(commitPaintButtonExt);
 
         paintToolBar.add(makeSeparator());
@@ -1041,8 +1042,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         VOIToolBar.add(propUpVOIButton);
 
         VOIToolBar.add(makeSeparator());
-        VOIToolBar.add(buildButton("QuickMask", "Quick AND VOI mask operation.", "quickvoimask"));
-        VOIToolBar.add(buildButton("QuickMaskReverse", "Quick NOT VOI mask operation", "quickvoimaskreverse"));
+        VOIToolBar.add(buildButton("QuickMask", "<html>" + "Quick AND VOI mask operation." +
+                "<br>" + "[right-click for options]" + "</html>", "quickvoimask"));
+        VOIToolBar.add(buildButton("QuickMaskReverse", "<html>" + "Quick NOT VOI mask operation." +
+                "<br>" + "[right-click for options]" + "</html>", "quickvoimaskreverse"));
 
         return VOIToolBar;
     }
