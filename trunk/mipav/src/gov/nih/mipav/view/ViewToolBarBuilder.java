@@ -214,6 +214,11 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         button.setActionCommand(cmd);
         button.setToolTipText(tooltip);
 
+        if ((cmd != null) & (cmd.equals("QuickMask") || cmd.equals("QuickMaskReverse") ||
+        		cmd.equals("CommitPaint") || cmd.equals("CommitPaintExt"))) {
+            button.addMouseListener((MouseListener) UI);
+        }
+        
         if (cmd != null) {
             KeyStroke k = Preferences.getShortcut(cmd);
 
