@@ -947,8 +947,9 @@ public class AlgorithmMask extends AlgorithmBase {
                 } else if (srcImage.getNDims() > 2) {
                     calcStoreInDest3DRGB();
                 }
-
-                destImage.setMatrix(srcImage.getMatrix());
+                destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+                
+                destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
             } else {
 
                 if (srcImage.getNDims() == 2) {
@@ -969,7 +970,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     calcStoreInDest3D();
                 }
 
-                destImage.setMatrix(srcImage.getMatrix());
+                destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
             } else {
 
                 if (srcImage.getNDims() == 2) {

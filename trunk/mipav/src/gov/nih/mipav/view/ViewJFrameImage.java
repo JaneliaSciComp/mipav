@@ -390,6 +390,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.zoomMode = ViewJComponentEditImage.LINEAR_ZOOM;
         } else if (command.equals("Zoom exponentially")) {
             componentImage.zoomMode = ViewJComponentEditImage.GEOMETRIC_ZOOM;
+        } else if (command.equals("MaskInPlace")) {
+        	Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "false");
+        } else if (command.equals("MaskOnNew")) {
+        	Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "true");
+        } else if (command.equals("PaintToMaskInPlace")) {
+        	Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "false");
+        } else if (command.equals("PaintToMaskOnNew")) {
+        	Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "true");
         } else if (command.equals("Dicom")) {
 
             if (((JCheckBoxMenuItem) source).isSelected()) {
@@ -1334,24 +1342,30 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogPaintRGBComponents(this, getComponentImage().getRGBPaintComponents());
         } else if (command.equals("OpacityPaint")) {
             new JDialogOpacityControls(this, controls);
-        } else if (command.equals("CommitPaint")) {
-
-            if (getActiveImage() == imageA) {
-                componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, true, null);
-            } else {
-                componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, true, null);
-            }
-
-            getActiveImage().notifyImageDisplayListeners(null, true);
-        } else if (command.equals("CommitPaintExt")) {
-
-            if (getActiveImage() == imageA) {
-                componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, false, null);
-            } else {
-                componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, false, null);
-            }
-
-            getActiveImage().notifyImageDisplayListeners(null, true);
+        } else if (command.equals("CommitPaint") ||
+        		command.equals("CommitPaintExt")) {
+        	boolean outputNew = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
+        	boolean polarity = command.equals("CommitPaint");
+        	
+        	
+        	if (outputNew == true) {
+        		ModelImage cloneImage = (ModelImage)getActiveImage().clone();
+        		ViewJFrameImage newFrame = new ViewJFrameImage(cloneImage);
+        		if (getActiveImage() == imageA) {
+        			newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null);
+        		} else {
+        			newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null);
+        		}
+        		newFrame.getActiveImage().notifyImageDisplayListeners(null, true);
+        	} else {
+        		if (getActiveImage() == imageA) {
+        			componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null);
+        		} else {
+        			componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null);
+        		}
+        		getActiveImage().notifyImageDisplayListeners(null, true);
+        	}
+            
         } else if (command.equals("UndoPaint")) {
             componentImage.undoLastPaint();
             getActiveImage().notifyImageDisplayListeners(null, true);
@@ -3712,7 +3726,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param  event  DOCUMENT ME!
      */
     public void mouseClicked(MouseEvent event) {
-
         if (event.getButton() == MouseEvent.BUTTON3) {
 
             if (event.getSource() instanceof JToggleButton) {
@@ -3722,6 +3735,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         btnSource.getActionCommand().equals("UnMagImage")) {
                     handleZoomPopupMenu(btnSource, event);
                 }
+            } else if (event.getSource() instanceof JButton) {
+            	if (((JButton)event.getSource()).getActionCommand().equals("QuickMask") ||
+            			((JButton)event.getSource()).getActionCommand().equals("QuickMaskReverse")) {
+            		handleMaskPopupMenu((Component)event.getSource(), event);
+            	} else if (((JButton)event.getSource()).getActionCommand().equals("CommitPaint") ||
+            			((JButton)event.getSource()).getActionCommand().equals("CommitPaintExt")) {
+            		handlePaintToMaskPopupMenu((Component)event.getSource(), event);
+            	}
             }
         }
 
@@ -4988,6 +5009,78 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         popupMenu.show(component, event.getX(), event.getY());
     }
 
+    /**
+     * Handles the popup menu for the Quick Mask buttons
+     *
+     * @param  component  DOCUMENT ME!
+     * @param  event      DOCUMENT ME!
+     */
+    protected void handleMaskPopupMenu(Component component, MouseEvent event) {
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        boolean currentState = Preferences.is(Preferences.PREF_QUICK_MASK_NEW);
+        
+        JMenuItem menuItem = new JMenuItem("Perform mask in place");
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand("MaskInPlace");
+        if (currentState) {
+        	menuItem.setFont(MipavUtil.font12);
+        } else {
+        	menuItem.setFont(MipavUtil.font12B);
+        }
+        
+        popupMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Perform mask into new image");
+
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand("MaskOnNew");
+        if (!currentState) {
+        	menuItem.setFont(MipavUtil.font12);
+        } else {
+        	menuItem.setFont(MipavUtil.font12B);
+        }
+        popupMenu.add(menuItem);
+
+        popupMenu.show(component, event.getX(), event.getY());
+    }
+    
+    /**
+     * Handles the pop-up menu for Paint to Mask buttons (inside/outside)
+     *
+     * @param  component  DOCUMENT ME!
+     * @param  event      DOCUMENT ME!
+     */
+    protected void handlePaintToMaskPopupMenu(Component component, MouseEvent event) {
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        boolean currentState = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
+        
+        JMenuItem menuItem = new JMenuItem("Perform paint to mask in place");
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand("PaintToMaskInPlace");
+        if (currentState) {
+        	menuItem.setFont(MipavUtil.font12);
+        } else {
+        	menuItem.setFont(MipavUtil.font12B);
+        }
+        
+        popupMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Perform paint to mask into new image");
+
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand("PaintToMaskOnNew");
+        if (!currentState) {
+        	menuItem.setFont(MipavUtil.font12);
+        } else {
+        	menuItem.setFont(MipavUtil.font12B);
+        }
+        popupMenu.add(menuItem);
+
+        popupMenu.show(component, event.getX(), event.getY());
+    }
+    
     /**
      * Creates and initializes the LUT for the first image (<code>imageA</code>) if it hasn't been already.
      *

@@ -604,6 +604,7 @@ public class ModelImage extends ModelStorageBase {
                 dialog.setTitle(dialog.getTitle() + ": " + (index + 1));
                 fileInfo[index].displayAboutInfo((JDialogFileInfo) dialog, getMatrix());
             } catch (ClassCastException cce) {
+            	cce.printStackTrace();
                 fileInfo[index].displayAboutInfo((JDialogText) dialog, getMatrix());
             }
         }
@@ -792,7 +793,7 @@ public class ModelImage extends ModelStorageBase {
         int[] extents = getExtents();
 
         if (voiVector.size() != 0) {
-
+System.err.println("Size not zero!");
             for (i = 0; i < voiVector.size(); i++) {
 
                 // System.out.println( "ModelImage: generateVOIMask(boolean XOR)  voi = " + i );
