@@ -81,9 +81,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** default = 120 pixels. */
     public int MAGR_WIDTH = 120;
 
-    /** Used to indicate the zoom mode (linear or geometric) when magnifing an image. Default = linear. */
-    public int zoomMode = LINEAR_ZOOM;
-
     /** Set to true when all contours of a VOI are active. */
     protected boolean allActive = false;
 
@@ -4901,7 +4898,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     private float getZoomMagnitude(float zoom, boolean reverse) {
 
-        if (zoomMode == LINEAR_ZOOM) {
+        if (Preferences.is(Preferences.PREF_ZOOM_LINEAR)) {
 
             if (cursorMode == ZOOMING_IN) {
 

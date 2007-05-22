@@ -1230,4 +1230,15 @@ public class MipavUtil extends JComponent {
         // System.out.println("Help set file name in jar = " + hsName);
         return hsName;
     }
+    
+    /**
+     * Static abstract class similar to mouseAdapter to allow the catching of actionevents from components without having
+     * to implement ActionListener
+     * @author linkb
+     *
+     */
+    public static abstract class ActionAdapter extends Object implements ActionListener { public ActionAdapter() { }
+
+    public abstract void actionPerformed(ActionEvent ae); }
+    
 }

@@ -44,6 +44,9 @@ public abstract class ViewJFrameBase extends JFrame
     /** Display mode image A and B. */
     public static final int IMAGE_A_B = 2;
 
+    /** DOCUMENT ME! */
+    protected int zoomMode = ViewJComponentEditImage.LINEAR_ZOOM;
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Labels for the current absolute position:. */
@@ -3577,6 +3580,144 @@ public abstract class ViewJFrameBase extends JFrame
     }
 
     /**
+     * DOCUMENT ME!
+     *
+     * @param  component  DOCUMENT ME!
+     * @param  event      DOCUMENT ME!
+     */
+    protected void handleZoomPopupMenu(Component component, MouseEvent event) {
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
+        menuItem.addActionListener(
+        		new MipavUtil.ActionAdapter() {
+                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_ZOOM_LINEAR, "true");
+                    }
+            }  
+        );
+        
+        boolean doLinear = Preferences.is(Preferences.PREF_ZOOM_LINEAR);
+        
+        if (doLinear) {
+        	menuItem.setFont(MipavUtil.font12B);
+        } else {
+        	menuItem.setFont(MipavUtil.font12);
+        }
+        popupMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Use exponential zoom increment");
+        
+        menuItem.addActionListener(
+        		new MipavUtil.ActionAdapter() {
+                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_ZOOM_LINEAR, "false");
+                    }
+            }  
+        );
+        if (!doLinear) {
+        	menuItem.setFont(MipavUtil.font12B);
+        } else {
+        	menuItem.setFont(MipavUtil.font12);
+        }
+        popupMenu.add(menuItem);
+
+        popupMenu.show(component, event.getX(), event.getY());
+    }
+
+    /**
+     * Handles the popup menu for the Quick Mask buttons
+     *
+     * @param  component  DOCUMENT ME!
+     * @param  event      DOCUMENT ME!
+     */
+    protected void handleMaskPopupMenu(Component component, MouseEvent event) {
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        boolean currentState = Preferences.is(Preferences.PREF_QUICK_MASK_NEW);
+        
+        JMenuItem menuItem = new JMenuItem("Perform mask in place");
+        
+        menuItem.addActionListener(
+        		new MipavUtil.ActionAdapter() {
+                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "false");
+                    }
+            }  
+        );
+        
+        if (currentState) {
+        	menuItem.setFont(MipavUtil.font12);
+        } else {
+        	menuItem.setFont(MipavUtil.font12B);
+        }
+        
+        
+        
+        popupMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Perform mask into new image");
+
+        menuItem.addActionListener(
+        		new MipavUtil.ActionAdapter() {
+                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "true");
+                    }
+            }  
+        );
+        
+        if (!currentState) {
+        	menuItem.setFont(MipavUtil.font12);
+        } else {
+        	menuItem.setFont(MipavUtil.font12B);
+        }
+        popupMenu.add(menuItem);
+
+        popupMenu.show(component, event.getX(), event.getY());
+    }
+    
+    /**
+     * Handles the pop-up menu for Paint to Mask buttons (inside/outside)
+     *
+     * @param  component  DOCUMENT ME!
+     * @param  event      DOCUMENT ME!
+     */
+    protected void handlePaintToMaskPopupMenu(Component component, MouseEvent event) {
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        boolean currentState = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
+        
+        JMenuItem menuItem = new JMenuItem("Perform paint to mask in place");
+        menuItem.addActionListener(
+        		new MipavUtil.ActionAdapter() {
+                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "false");
+                    }
+            }  
+        );
+        
+        if (currentState) {
+        	menuItem.setFont(MipavUtil.font12);
+        } else {
+        	menuItem.setFont(MipavUtil.font12B);
+        }
+        
+        popupMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Perform paint to mask into new image");
+
+        menuItem.addActionListener(
+        		new MipavUtil.ActionAdapter() {
+                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "true");
+                    }
+            }  
+        );
+        if (!currentState) {
+        	menuItem.setFont(MipavUtil.font12);
+        } else {
+        	menuItem.setFont(MipavUtil.font12B);
+        }
+        popupMenu.add(menuItem);
+
+        popupMenu.show(component, event.getX(), event.getY());
+    }
+    
+    /**
      * Finds the FileFilter that matches the file type.
      *
      * @param   chooser     JFileChooser
@@ -6400,5 +6541,6 @@ public abstract class ViewJFrameBase extends JFrame
             } // for (t = 0; t < tLast; t++)
         } // else doNN
     }
-
+  
+    
 }
