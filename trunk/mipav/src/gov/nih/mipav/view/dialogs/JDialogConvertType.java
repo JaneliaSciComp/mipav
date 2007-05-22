@@ -395,10 +395,17 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outMin = 0;
                 outMax = 255;
             } else if (radioARGB_USHORT.isSelected()) {
+            	System.out.println("selected");
                 outStart.setText("Starting range (0 to 65535).");
                 outEnd.setText("Ending range (0 to 65535).");
                 textOutStart.setText("0");
-                textOutEnd.setText("4095");
+                //textOutEnd.setText("4095");
+                if(image.getMax() > 65535) {
+                	textOutEnd.setText("65535");
+                }else {
+                	Short s = new Short((short)image.getMax());
+                	textOutEnd.setText(s.toString());
+                }
                 inMin = 0;
                 inMax = 65535;
                 outMin = 0;
@@ -407,7 +414,15 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outStart.setText("Starting range (-3.40 E+38 to 3.40 E+38).");
                 outEnd.setText("Ending range (-3.40 E+38 to 3.40 E+38).");
                 textOutStart.setText("0");
-                textOutEnd.setText("1023");
+                //textOutEnd.setText("1023");
+                if(image.getMax() > Float.MAX_VALUE) {
+                	textOutEnd.setText(String.valueOf(Float.MAX_VALUE));
+                }else {
+                	Float f = new Float((float)image.getMax());
+                	textOutEnd.setText(f.toString());
+                }
+                
+                textOutEnd.setText(String.valueOf(image.getMax()));
                 inMin = -Float.MAX_VALUE;
                 inMax = Float.MAX_VALUE;
                 outMin = -Float.MAX_VALUE;
@@ -448,8 +463,14 @@ public class JDialogConvertType extends JDialogScriptableBase
             } else if (radioShort.isSelected()) {
                 outStart.setText("Starting range (-32768 to 32767).");
                 outEnd.setText("Ending range (-32768 to 32767).");
-                textOutStart.setText("-1024");
-                textOutEnd.setText("3071");
+                textOutStart.setText("0");
+                //textOutEnd.setText("3071");
+                if(image.getMax() > Short.MAX_VALUE) {
+                	textOutEnd.setText("32767");
+                }else {
+                	Short s = new Short((short)image.getMax());
+                	textOutEnd.setText(s.toString());
+                }
                 inMin = -32768;
                 inMax = 32767;
                 outMin = -32768;
@@ -458,7 +479,13 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outStart.setText("Starting range (0 to 65535).");
                 outEnd.setText("Ending range (0 to 65535).");
                 textOutStart.setText("0");
-                textOutEnd.setText("4095");
+                //textOutEnd.setText("4095");
+                if(image.getMax() > 65535) {
+                	textOutEnd.setText("65535");
+                }else {
+                	Short s = new Short((short)image.getMax());
+                	textOutEnd.setText(s.toString());
+                }
                 inMin = 0;
                 inMax = 65535;
                 outMin = 0;
@@ -467,7 +494,13 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outStart.setText("Starting range (-2.147 E+9  to 2.147 E+9).");
                 outEnd.setText("Ending range (-2.147 E+9  to 2.147 E+9).");
                 textOutStart.setText("0");
-                textOutEnd.setText("4095");
+                //textOutEnd.setText("4095");
+                if(image.getMax() > Integer.MAX_VALUE) {
+                	textOutEnd.setText(String.valueOf(Integer.MAX_VALUE));
+                }else {
+                	Integer i = new Integer((int)image.getMax());
+                	textOutEnd.setText(i.toString());
+                }
                 inMin = Integer.MIN_VALUE;
                 inMax = Integer.MAX_VALUE;
                 outMin = Integer.MIN_VALUE;
@@ -476,7 +509,13 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outStart.setText("Starting range (0 to 4.29 E+9).");
                 outEnd.setText("Ending range (0 to 4.29 E+9).");
                 textOutStart.setText("0");
-                textOutEnd.setText("4095");
+                //textOutEnd.setText("4095");
+                if(image.getMax() > 4294967295L) {
+                	textOutEnd.setText("4294967295");
+                }else {
+                	Integer i = new Integer((int)image.getMax());
+                	textOutEnd.setText(i.toString());
+                }
                 inMin = 0;
                 inMax = 4294967295L;
                 outMin = 0;
@@ -485,7 +524,13 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outStart.setText("Starting range (-9.22 E+18 to 9.22 E+18).");
                 outEnd.setText("Ending range (-9.22 E+18 to 9.22 E+18).");
                 textOutStart.setText("0");
-                textOutEnd.setText("4095");
+                //textOutEnd.setText("4095");
+                if(image.getMax() > Long.MAX_VALUE) {
+                	textOutEnd.setText(String.valueOf(Long.MAX_VALUE));
+                }else {
+                	Long l = new Long((long)image.getMax());
+                	textOutEnd.setText(l.toString());
+                }
                 inMin = Long.MIN_VALUE;
                 inMax = Long.MAX_VALUE;
                 outMin = Long.MIN_VALUE;
@@ -494,7 +539,13 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outStart.setText("Starting range (-3.40 E+38 to 3.40 E+38).");
                 outEnd.setText("Ending range (-3.40 E+38 to 3.40 E+38).");
                 textOutStart.setText("0");
-                textOutEnd.setText("1023");
+                //textOutEnd.setText("1023");
+                if(image.getMax() > Float.MAX_VALUE) {
+                	textOutEnd.setText(String.valueOf(Float.MAX_VALUE));
+                }else {
+                	Float f = new Float((float)image.getMax());
+                	textOutEnd.setText(f.toString());
+                }
                 inMin = -Float.MAX_VALUE;
                 inMax = Float.MAX_VALUE;
                 outMin = -Float.MAX_VALUE;
@@ -503,7 +554,13 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outStart.setText("Starting range (-1.8 E+308 to 1.8 E+308).");
                 outEnd.setText("Ending range (-1.8 E+308 to 1.8 E+308).");
                 textOutStart.setText("0");
-                textOutEnd.setText("1023");
+                //textOutEnd.setText("1023");
+                if(image.getMax() > Double.MAX_VALUE) {
+                	textOutEnd.setText(String.valueOf(Double.MAX_VALUE));
+                }else {
+                	Double d = new Double((double)image.getMax());
+                	textOutEnd.setText(d.toString());
+                }
                 inMin = -Double.MAX_VALUE;
                 inMax = Double.MAX_VALUE;
                 outMin = -Double.MAX_VALUE;
@@ -1425,8 +1482,14 @@ public class JDialogConvertType extends JDialogScriptableBase
         } else if (image.getType() == ModelStorageBase.SHORT) {
             outStart.setText("Starting range (-32768 to 32767).");
             outEnd.setText("Ending range (-32768 to 32767).");
-            textOutStart.setText("-1024");
-            textOutEnd.setText("3071");
+            textOutStart.setText("0");
+            //textOutEnd.setText("3071");
+            if(image.getMax() > Short.MAX_VALUE) {
+            	textOutEnd.setText("32767");
+            }else {
+            	Short s = new Short((short)image.getMax());
+            	textOutEnd.setText(s.toString());
+            }
             inMin = -32768;
             inMax = 32767;
             outMin = -32768;
@@ -1436,7 +1499,13 @@ public class JDialogConvertType extends JDialogScriptableBase
             outStart.setText("Starting range (0 to 65535).");
             outEnd.setText("Ending range (0 to 65535).");
             textOutStart.setText("0");
-            textOutEnd.setText("4095");
+            //textOutEnd.setText("4095");
+            if(image.getMax() > 65535) {
+            	textOutEnd.setText("65535");
+            }else {
+            	Short s = new Short((short)image.getMax());
+            	textOutEnd.setText(s.toString());
+            }
             inMin = 0;
             inMax = 65535;
             outMin = 0;
@@ -1446,7 +1515,13 @@ public class JDialogConvertType extends JDialogScriptableBase
             outStart.setText("Starting range (-2.147 E+9 to 2.147 E+9).");
             outEnd.setText("Ending range (-2.147 E+9 to 2.147 E+9).");
             textOutStart.setText("0");
-            textOutEnd.setText("4095");
+            //textOutEnd.setText("4095");
+            if(image.getMax() > Integer.MAX_VALUE) {
+            	textOutEnd.setText(String.valueOf(Integer.MAX_VALUE));
+            }else {
+            	Integer i = new Integer((int)image.getMax());
+            	textOutEnd.setText(i.toString());
+            }
             inMin = Integer.MIN_VALUE;
             inMax = Integer.MAX_VALUE;
             outMin = Integer.MIN_VALUE;
@@ -1456,7 +1531,13 @@ public class JDialogConvertType extends JDialogScriptableBase
             outStart.setText("Starting range (0 to 4.29 E+9).");
             outEnd.setText("Ending range (0 to 4.29 E+9).");
             textOutStart.setText("0");
-            textOutEnd.setText("4095");
+            //textOutEnd.setText("4095");
+            if(image.getMax() > 4294967295L) {
+            	textOutEnd.setText("4294967295");
+            }else {
+            	Integer i = new Integer((int)image.getMax());
+            	textOutEnd.setText(i.toString());
+            }
             inMin = 0;
             inMax = 4294967295L;
             outMin = 0;
@@ -1466,7 +1547,13 @@ public class JDialogConvertType extends JDialogScriptableBase
             outStart.setText("Starting range (-9.22 E+18 to 9.22 E+18).");
             outEnd.setText("Ending range (-9.22 E+18 to 9.22 E+18).");
             textOutStart.setText("0");
-            textOutEnd.setText("4095");
+            //textOutEnd.setText("4095");
+            if(image.getMax() > Long.MAX_VALUE) {
+            	textOutEnd.setText(String.valueOf(Long.MAX_VALUE));
+            }else {
+            	Long l = new Long((long)image.getMax());
+            	textOutEnd.setText(l.toString());
+            }
             inMin = Long.MIN_VALUE;
             inMax = Long.MAX_VALUE;
             outMin = Long.MIN_VALUE;
@@ -1476,7 +1563,13 @@ public class JDialogConvertType extends JDialogScriptableBase
             outStart.setText("Starting range (-3.40 E+38  to 3.40 E+38).");
             outEnd.setText("Ending range (-3.40 E+38 to 3.40 E+38).");
             textOutStart.setText("0");
-            textOutEnd.setText("1023");
+            //textOutEnd.setText("1023");
+            if(image.getMax() > Float.MAX_VALUE) {
+            	textOutEnd.setText(String.valueOf(Float.MAX_VALUE));
+            }else {
+            	Float f = new Float((float)image.getMax());
+            	textOutEnd.setText(f.toString());
+            }
             inMin = -Float.MAX_VALUE;
             inMax = Float.MAX_VALUE;
             outMin = -Float.MAX_VALUE;
@@ -1486,7 +1579,13 @@ public class JDialogConvertType extends JDialogScriptableBase
             outStart.setText("Starting range (-1.8 E+308 to 1.8 E+308).");
             outEnd.setText("Ending range (-1.8 E+308 to 1.8 E+308).");
             textOutStart.setText("0");
-            textOutEnd.setText("1023");
+            //textOutEnd.setText("1023");
+            if(image.getMax() > Double.MAX_VALUE) {
+            	textOutEnd.setText(String.valueOf(Double.MAX_VALUE));
+            }else {
+            	Double d = new Double((double)image.getMax());
+            	textOutEnd.setText(d.toString());
+            }
             inMin = -Double.MAX_VALUE;
             inMax = Double.MAX_VALUE;
             outMin = -Double.MAX_VALUE;
@@ -1506,7 +1605,13 @@ public class JDialogConvertType extends JDialogScriptableBase
             outStart.setText("Starting range (0 to 65535).");
             outEnd.setText("Ending range (0 to 65535).");
             textOutStart.setText("0");
-            textOutEnd.setText("4095");
+            //textOutEnd.setText("4095");
+            if(image.getMax() > 65535) {
+            	textOutEnd.setText("65535");
+            }else {
+            	Short s = new Short((short)image.getMax());
+            	textOutEnd.setText(s.toString());
+            }
             inMin = 0;
             inMax = 65535;
             outMin = 0;
@@ -1516,7 +1621,14 @@ public class JDialogConvertType extends JDialogScriptableBase
             outStart.setText("Starting range (-3.40 E+38  to 3.40 E+38).");
             outEnd.setText("Ending range (-3.40 E+38 to 3.40 E+38).");
             textOutStart.setText("0");
-            textOutEnd.setText("1023");
+            //textOutEnd.setText("1023");
+            if(image.getMax() > Float.MAX_VALUE) {
+            	textOutEnd.setText(String.valueOf(Float.MAX_VALUE));
+            }else {
+            	Float f = new Float((float)image.getMax());
+            	textOutEnd.setText(f.toString());
+            }
+            textOutEnd.setText(String.valueOf(image.getMax()));
             inMin = -Float.MAX_VALUE;
             inMax = Float.MAX_VALUE;
             outMin = -Float.MAX_VALUE;
