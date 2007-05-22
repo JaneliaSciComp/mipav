@@ -386,18 +386,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.openXCEDESchema();
         } else if (command.equals("SaveXCEDESchema")) {
             userInterface.saveXCEDESchema();
-        } else if (command.equals("Zoom linearly")) {
-            componentImage.zoomMode = ViewJComponentEditImage.LINEAR_ZOOM;
-        } else if (command.equals("Zoom exponentially")) {
-            componentImage.zoomMode = ViewJComponentEditImage.GEOMETRIC_ZOOM;
-        } else if (command.equals("MaskInPlace")) {
-        	Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "false");
-        } else if (command.equals("MaskOnNew")) {
-        	Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "true");
-        } else if (command.equals("PaintToMaskInPlace")) {
-        	Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "false");
-        } else if (command.equals("PaintToMaskOnNew")) {
-        	Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "true");
         } else if (command.equals("Dicom")) {
 
             if (((JCheckBoxMenuItem) source).isSelected()) {
@@ -4994,110 +4982,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         return componentImage.getSize(null).width + scrollPane.getInsets().left + scrollPane.getInsets().right;
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  component  DOCUMENT ME!
-     * @param  event      DOCUMENT ME!
-     */
-    protected void handleZoomPopupMenu(Component component, MouseEvent event) {
-        JPopupMenu popupMenu = new JPopupMenu();
-
-        JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("Zoom linearly");
-        if (componentImage.zoomMode == ViewJComponentEditImage.LINEAR_ZOOM) {
-        	menuItem.setFont(MipavUtil.font12B);
-        } else {
-        	menuItem.setFont(MipavUtil.font12);
-        }
-        popupMenu.add(menuItem);
-
-        menuItem = new JMenuItem("Use exponential zoom increment");
-
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("Zoom exponentially");
-        if (componentImage.zoomMode == ViewJComponentEditImage.GEOMETRIC_ZOOM) {
-        	menuItem.setFont(MipavUtil.font12B);
-        } else {
-        	menuItem.setFont(MipavUtil.font12);
-        }
-        popupMenu.add(menuItem);
-
-        popupMenu.show(component, event.getX(), event.getY());
-    }
-
-    /**
-     * Handles the popup menu for the Quick Mask buttons
-     *
-     * @param  component  DOCUMENT ME!
-     * @param  event      DOCUMENT ME!
-     */
-    protected void handleMaskPopupMenu(Component component, MouseEvent event) {
-        JPopupMenu popupMenu = new JPopupMenu();
-
-        boolean currentState = Preferences.is(Preferences.PREF_QUICK_MASK_NEW);
-        
-        JMenuItem menuItem = new JMenuItem("Perform mask in place");
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("MaskInPlace");
-        if (currentState) {
-        	menuItem.setFont(MipavUtil.font12);
-        } else {
-        	menuItem.setFont(MipavUtil.font12B);
-        }
-        
-        popupMenu.add(menuItem);
-
-        menuItem = new JMenuItem("Perform mask into new image");
-
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("MaskOnNew");
-        if (!currentState) {
-        	menuItem.setFont(MipavUtil.font12);
-        } else {
-        	menuItem.setFont(MipavUtil.font12B);
-        }
-        popupMenu.add(menuItem);
-
-        popupMenu.show(component, event.getX(), event.getY());
-    }
     
-    /**
-     * Handles the pop-up menu for Paint to Mask buttons (inside/outside)
-     *
-     * @param  component  DOCUMENT ME!
-     * @param  event      DOCUMENT ME!
-     */
-    protected void handlePaintToMaskPopupMenu(Component component, MouseEvent event) {
-        JPopupMenu popupMenu = new JPopupMenu();
-
-        boolean currentState = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
-        
-        JMenuItem menuItem = new JMenuItem("Perform paint to mask in place");
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("PaintToMaskInPlace");
-        if (currentState) {
-        	menuItem.setFont(MipavUtil.font12);
-        } else {
-        	menuItem.setFont(MipavUtil.font12B);
-        }
-        
-        popupMenu.add(menuItem);
-
-        menuItem = new JMenuItem("Perform paint to mask into new image");
-
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("PaintToMaskOnNew");
-        if (!currentState) {
-        	menuItem.setFont(MipavUtil.font12);
-        } else {
-        	menuItem.setFont(MipavUtil.font12B);
-        }
-        popupMenu.add(menuItem);
-
-        popupMenu.show(component, event.getX(), event.getY());
-    }
     
     /**
      * Creates and initializes the LUT for the first image (<code>imageA</code>) if it hasn't been already.

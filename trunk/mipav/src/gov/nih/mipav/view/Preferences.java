@@ -52,6 +52,8 @@ public class Preferences {
     public static final String PREF_QUICK_MASK_NEW = "QuickMaskNew";
     
     public static final String PREF_PAINT_TO_MASK_NEW = "PaintToMaskNew";
+
+    public static final String PREF_ZOOM_LINEAR = "true";
     
     /** Constant that indicates the intensity label color. */
     public static final String PREF_INTENSITY_LABEL_COLOR = "IntensityLabelColor";
@@ -453,6 +455,8 @@ public class Preferences {
         defaultProps.setProperty(Preferences.PREF_VOI_LPS_SAVE, "true");
         defaultProps.setProperty(Preferences.PREF_QUICK_MASK_NEW, "false");
         defaultProps.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "false");
+        defaultProps.setProperty(Preferences.PREF_ZOOM_LINEAR, "true");
+        
         /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head) */
         defaultProps.setProperty(Preferences.PREF_FILENAME_FILTER, "8"); // 8 = ViewImageFileFilter.TECH
         defaultProps.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, "false");

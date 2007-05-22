@@ -186,9 +186,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     protected static final int NUM_INVISIBLE_BUTTONS = 4;
 
-    /** DOCUMENT ME! */
-    public static int zoomMode = ViewJComponentEditImage.LINEAR_ZOOM;
-
     /** Maximum number of tri-images! */
     public static final int MAX_TRI_IMAGES = 9;
 
@@ -893,7 +890,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             float newZoom = 1;
 
-            if ((zoomMode == ViewJComponentEditImage.LINEAR_ZOOM) && (triImage[AXIAL_A].getZoomX() > 1.0f)) {
+            if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[AXIAL_A].getZoomX() > 1.0f)) {
 
                 // linear zoom is prevented if getZoomX() <= 1.0
                 newZoom = triImage[AXIAL_A].getZoomX() - 1.0f;
@@ -927,7 +924,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             float newZoom = 1;
 
-            if ((zoomMode == ViewJComponentEditImage.LINEAR_ZOOM) && (triImage[AXIAL_A] != null)) {
+            if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[AXIAL_A] != null)) {
                 newZoom = triImage[AXIAL_A].getZoomX() + 1.0f;
             } else if (triImage[AXIAL_A] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
             {
@@ -1004,10 +1001,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     triImage[i].setCursor(MipavUtil.unmagnifyCursor);
                 }
             }
-        } else if (command.equals("Zoom linearly")) {
-            zoomMode = ViewJComponentEditImage.LINEAR_ZOOM;
-        } else if (command.equals("Zoom exponentially")) {
-            zoomMode = ViewJComponentEditImage.GEOMETRIC_ZOOM;
         } else if (command.equals("createTransformation")) {
             JDialogTriImageTransformation dialog;
             float originalZoom = triImage[AXIAL_A].getZoomX();
@@ -3947,28 +3940,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
-     * Builds the pop-up menu when the user right-clicks on either magnification button.
-     *
-     * @param  component  Component
-     * @param  event      MouseEvent
-     */
-    protected void handleZoomPopupMenu(Component component, MouseEvent event) {
-        JPopupMenu popupMenu = new JPopupMenu();
-
-        JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("Zoom linearly");
-        popupMenu.add(menuItem);
-
-        menuItem = new JMenuItem("Use exponential zoom increment");
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("Zoom exponentially");
-        popupMenu.add(menuItem);
-
-        popupMenu.show(component, event.getX(), event.getY());
-    }
-
-    /**
      * Initialize the the image orientations and call the frame layout method 'configureFrame()'.
      */
     protected void init() {
@@ -4732,7 +4703,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         float newZoom = 1;
 
-        if ((zoomMode == ViewJComponentEditImage.LINEAR_ZOOM) && (triImage[frame] != null)) {
+        if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[frame] != null)) {
             newZoom = triImage[frame].getZoomX() + 1.0f;
         } else if (triImage[frame] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
         {
@@ -4771,7 +4742,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         float newZoom = 1;
 
-        if ((zoomMode == ViewJComponentEditImage.LINEAR_ZOOM) && (triImage[frame].getZoomX() > 1.0f)) {
+        if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[frame].getZoomX() > 1.0f)) {
 
             // linear zoom is prevented if getZoomX() <= 1.0
             newZoom = triImage[frame].getZoomX() - 1.0f;
