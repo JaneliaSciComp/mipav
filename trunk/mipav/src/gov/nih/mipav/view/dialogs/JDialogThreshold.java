@@ -145,7 +145,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      * @param  im              Source image.
      */
     public JDialogThreshold(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
         min = (float) im.getMin();
@@ -168,8 +168,12 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
             if (setVariables()) {
                 callAlgorithm();
             }
-        } else if (command.equals("Cancel")) {
+        } 
+        else if (command.equals("Cancel")) {
             dispose();
+        }
+        else if (command.equals("Help")) {
+            //MipavUtil.showHelp("");
         }
     }
 
@@ -780,7 +784,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         textThres2.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("ENTER"), "checkValue");
         textThres2.getActionMap().put("checkValue", new CheckValueAction());
 
-        tempStr = new String("Output type:");
+        tempStr = new String("Output image type:");
 
         JLabel outputLabel = new JLabel(tempStr);
         outputLabel.setForeground(Color.black);
@@ -922,16 +926,18 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(destinationPanel, gbc);
         gbc.gridx = 1;
         mainPanel.add(imageVOIPanel, gbc);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         JPanel buttonPanel = new JPanel();
-        buildOKButton();
-        buttonPanel.add(OKButton);
-        buildCancelButton();
-        buttonPanel.add(cancelButton);
+        buttonPanel.add(buildButtons());
+        //buildOKButton();
+        //buttonPanel.add(OKButton);
+        //buildCancelButton();
+        //buttonPanel.add(cancelButton);
 
         mainDialogPanel.add(mainPanel);
         mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -975,10 +981,15 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
         tmpStr = textThres2.getText();
 
-        if (testParameter(tmpStr, thres1 - 1, max + 1)) {
-            thres2 = Float.valueOf(tmpStr).floatValue();
+        if (testParameterMin(tmpStr, thres1 - 1)) {
+        	if(Float.valueOf(tmpStr).floatValue() > max) {
+        		thres2 = max;
+        	}else {
+        		thres2 = Float.valueOf(tmpStr).floatValue();
+        	}
         } else {
-            textThres2.requestFocus();
+        	
+        	textThres2.requestFocus();
             textThres2.selectAll();
 
             return false;
