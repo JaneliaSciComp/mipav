@@ -757,7 +757,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         labelThres1.setFont(serif12);
 
         textThres1 = new JTextField(6);
-        textThres1.setText(makeString((max + min) / 3, 6));
+        //textThres1.setText(makeString((max + min) / 3, 6));
+        textThres1.setText(makeString(min, 6));
         textThres1.setFont(serif12);
         textThres1.setCaretPosition(0);
 
@@ -771,7 +772,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         labelThres2.setFont(serif12);
 
         textThres2 = new JTextField(6);
-        textThres2.setText(makeString((max + min) / 1.5f, 6));
+        //textThres2.setText(makeString((max + min) / 1.5f, 6));
+        textThres2.setText(makeString(max, 6));
         textThres2.setFont(serif12);
         textThres2.setCaretPosition(0);
 
