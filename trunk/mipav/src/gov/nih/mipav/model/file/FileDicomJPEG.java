@@ -138,7 +138,7 @@ public class FileDicomJPEG {
     /** DOCUMENT ME! */
     private static final byte M_EXP = (byte) 0xdf;
 
-    /** DOCUMENT ME! */
+    /** Required marker in this standard. */
     private static final byte M_APP0 = (byte) 0xe0;
 
     /** DOCUMENT ME! */
@@ -440,7 +440,8 @@ public class FileDicomJPEG {
             }
 
             // Add the predictor to the difference.
-            curRowBuf[0][curComp] = (short) (d + (1 << (dataPrecision - Pt - 1)));
+            short s = (short) (d + (1 << (dataPrecision - Pt - 1)));
+            curRowBuf[0][curComp] = s;
         }
 
         // the rest of the first row
@@ -1037,9 +1038,9 @@ public class FileDicomJPEG {
 
         while (index != -1) {
             index = nextMarker(index);
-
+            
             switch (image[index]) {
-
+                
                 case M_SOF0:
                 case M_SOF1:
                 case M_SOF2:
@@ -1058,7 +1059,7 @@ public class FileDicomJPEG {
                 case M_EOI:
                 case M_SOS:
                     return (index);
-
+                    
                 case M_DHT:
                     index = getDHT(index + 1);
                     break;
