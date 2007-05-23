@@ -1768,7 +1768,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * replaced calc3d(not calc 3d1)
      */
     private void oldCalc3D() {
 

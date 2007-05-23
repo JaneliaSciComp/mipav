@@ -1,21 +1,20 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.Point3D;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.dialogs.JDialogExtractBrain;
 
 import java.util.*;
 
-import javax.vecmath.*;
+import javax.vecmath.Point3f;
 
 
 /**
  * Anonymize an image of a patient's head by removing the face.
- * TODO: Speed-up
- * TODO: Clean-up
  *
  * <p>This version of of the de-facer uses BET to find the brain, the brain's location is then used to calculate a
  * plane. This plane is then used to remove the patient's face from the image.</p>
@@ -25,18 +24,6 @@ import javax.vecmath.*;
 public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-    
-    /** Denotes quadrilateral with up to two unequal lengths. */   
-    public static final int QUADRILATERAL = 4;
-    
-    /** Denotes sphere. */
-    public static final int SPHERE = 1;
-    
-    /** Denotes cube with lengths not necessarily equal. */
-    public static final int CUBE = 6;
-    
-    /** Denotes quarter cylinder. */
-    public static final int QUARTER_CYLINDER = 2;
     
     /** Eventually won't be necessary. */
     public static final int REMOVED_INTENSITY = 0;
@@ -171,7 +158,6 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
 
     /**
      * Executes the de-facing algorithm.
-     * TODO: Once completed, set image mask to BitSet of removeRegion rather than setting intensity to zero.
      */
     private void anonymizeFace()
     {
@@ -187,15 +173,15 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         
         //define region of interest
         fireProgressStateChanged(60, null, "Defining bounds...");
-        BitSet interestRegion = defineInterestRegion(CUBE);
+        BitSet interestRegion = defineInterestRegion();
 
         //define small shape
         fireProgressStateChanged(62, null, "Defining initial region...");
-        BitSet initialRegion = defineInitialRegion(SPHERE, interestRegion); 
+        BitSet initialRegion = defineInitialRegion(interestRegion); 
         
         //expand to random size shape near brain to approximate face         
         fireProgressStateChanged(64, null, "Extracting face...");
-        BitSet removeRegion = extractFace(interestRegion, initialRegion, brainMask, QUARTER_CYLINDER);
+        BitSet removeRegion = extractFace(interestRegion, initialRegion, brainMask);
         
         if(removeRegion.cardinality()>0) {
             removedFace = true;
@@ -342,92 +328,40 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
     
     /**
      * Defines the bounding region for face de-identification.
-     * TODO: Streamline orientations
      * 
-     * @param shape     Shape of bounding region for face de-identification.
      * @return          A <code>BitSet</code> of size <code>srcImage.getSize()</code> where set values are the inital shape's location.
      */
     
-    private BitSet defineInterestRegion(int shape)
+    private BitSet defineInterestRegion()
     {
         BitSetUtility bitUtil = new BitSetUtility();
-        BitSet corner = new BitSet(srcImage.getSize());
-        if(shape == CUBE) {            
-            if(faceOrientation == FACING_UP || faceOrientation == FACING_DOWN) {
-                for(int i=0; i<xDim; i++) {
-                    int cornerStep = 0, cornerStart = 0, cornerJump =0, cornerRowEnd = 0;
+        BitSet corner = new BitSet(srcImage.getSize());           
+        if(faceOrientation == FACING_UP || faceOrientation == FACING_DOWN) {
+            for(int i=0; i<xDim; i++) {
+                int cornerStep = 0, cornerStart = 0, cornerJump =0, cornerRowEnd = 0;
+                if(faceOrientation == FACING_DOWN) {
+                    cornerStart = i + sliceSize/2;
+                    cornerStep = xDim;
+                    cornerJump = sliceSize;
+                    cornerRowEnd = yDim-1;
+                }
+                if(faceOrientation == FACING_UP) {
+                    cornerStart = i;
+                    cornerStep = xDim;
+                    cornerJump = sliceSize;
+                    cornerRowEnd = yDim/2;
+                }
+                for (int j = cornerStart; (j/sliceSize)<(zDim/2); j += cornerJump) {
                     if(faceOrientation == FACING_DOWN) {
-                        cornerStart = i + sliceSize/2;
-                        cornerStep = xDim;
-                        cornerJump = sliceSize;
-                        cornerRowEnd = yDim-1;
-                    }
-                    if(faceOrientation == FACING_UP) {
-                        cornerStart = i;
-                        cornerStep = xDim;
-                        cornerJump = sliceSize;
-                        cornerRowEnd = yDim/2;
-                    }
-                    for (int j = cornerStart; (j/sliceSize)<(zDim/2); j += cornerJump) {
-                        if(faceOrientation == FACING_DOWN) {
-                            for(int k = j; k%sliceSize > xDim; k += cornerStep) { 
-                                if(bitUtil.isInScan(k)) {
-                                    corner.set(k);
-                                }
-                            }
-                        }
-                        if(faceOrientation == FACING_UP)
-                        {
-                            for(int k = j; ((k % sliceSize)/xDim) <= cornerRowEnd; k += cornerStep) {  
-                                if(bitUtil.isInScan(k)) {
-                                    corner.set(k);
-                                }
-                            }
-                        }
-                    }
-                }
-            }   
-            if(faceOrientation == FACING_INTO_SCREEN || faceOrientation == FACING_OUT_OF_SCREEN) {
-                for(int i=0; i<xDim; i++) {
-                    int cornerStep = 0, cornerStart = 0, cornerJump =0, cornerRowEnd = 0;
-                    if(faceOrientation == FACING_OUT_OF_SCREEN) {
-                        cornerStart = i + sliceSize/2;
-                        cornerStep = sliceSize;
-                        cornerJump = xDim;
-                        cornerRowEnd = zDim/2;
-                    }
-                    if(faceOrientation == FACING_INTO_SCREEN) {
-                        cornerStart = i + sliceSize/2 + volumeSize/2;
-                        cornerStep = sliceSize;
-                        cornerJump = xDim;
-                        cornerRowEnd = zDim;
-                    }
-                    for (int j = cornerStart; (j % sliceSize)/xDim < yDim && (j % sliceSize)/xDim>0; j += cornerJump) {
-                        for(int k = j; k / (sliceSize) < cornerRowEnd; k += cornerStep) {
+                        for(int k = j; k%sliceSize > xDim; k += cornerStep) { 
                             if(bitUtil.isInScan(k)) {
                                 corner.set(k);
                             }
                         }
-                    } 
-                }
-            }
-            if(faceOrientation ==  FACING_LEFT || faceOrientation == FACING_RIGHT) {
-                for(int i=0; i<zDim; i++)  {
-                    int cornerColumnEnd = 0, cornerStep = 0, cornerStart = 0, cornerJump =0;
-                    if(faceOrientation == FACING_LEFT) {
-                        cornerStart = (sliceSize)*i + sliceSize/2 - xDim;
-                        cornerColumnEnd = (sliceSize)*i + sliceSize - (xDim/2);
-                        cornerStep = 1;
-                        cornerJump = xDim;
                     }
-                    if(faceOrientation == FACING_RIGHT) {
-                        cornerStart = (sliceSize)*i + sliceSize/2 - xDim/2;
-                        cornerColumnEnd = (sliceSize)*i + sliceSize + xDim;
-                        cornerStep = 1;
-                        cornerJump = xDim;
-                    }
-                    for (int j = cornerStart; j < cornerColumnEnd; j += cornerJump) {
-                        for(int k = j; k<j+(cornerJump/2); k += cornerStep) {
+                    if(faceOrientation == FACING_UP)
+                    {
+                        for(int k = j; ((k % sliceSize)/xDim) <= cornerRowEnd; k += cornerStep) {  
                             if(bitUtil.isInScan(k)) {
                                 corner.set(k);
                             }
@@ -435,67 +369,108 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
                     }
                 }
             }
-            return corner;
+        }   
+        if(faceOrientation == FACING_INTO_SCREEN || faceOrientation == FACING_OUT_OF_SCREEN) {
+            for(int i=0; i<xDim; i++) {
+                int cornerStep = 0, cornerStart = 0, cornerJump =0, cornerRowEnd = 0;
+                if(faceOrientation == FACING_OUT_OF_SCREEN) {
+                    cornerStart = i + sliceSize/2;
+                    cornerStep = sliceSize;
+                    cornerJump = xDim;
+                    cornerRowEnd = zDim/2;
+                }
+                if(faceOrientation == FACING_INTO_SCREEN) {
+                    cornerStart = i + sliceSize/2 + volumeSize/2;
+                    cornerStep = sliceSize;
+                    cornerJump = xDim;
+                    cornerRowEnd = zDim;
+                }
+                for (int j = cornerStart; (j % sliceSize)/xDim < yDim && (j % sliceSize)/xDim>0; j += cornerJump) {
+                    for(int k = j; k / (sliceSize) < cornerRowEnd; k += cornerStep) {
+                        if(bitUtil.isInScan(k)) {
+                            corner.set(k);
+                        }
+                    }
+                } 
+            }
         }
-        else
-            return null;
+        if(faceOrientation ==  FACING_LEFT || faceOrientation == FACING_RIGHT) {
+            for(int i=0; i<zDim; i++)  {
+                int cornerColumnEnd = 0, cornerStep = 0, cornerStart = 0, cornerJump =0;
+                if(faceOrientation == FACING_LEFT) {
+                    cornerStart = (sliceSize)*i + sliceSize/2 - xDim;
+                    cornerColumnEnd = (sliceSize)*i + sliceSize - (xDim/2);
+                    cornerStep = 1;
+                    cornerJump = xDim;
+                }
+                if(faceOrientation == FACING_RIGHT) {
+                    cornerStart = (sliceSize)*i + sliceSize/2 - xDim/2;
+                    cornerColumnEnd = (sliceSize)*i + sliceSize + xDim;
+                    cornerStep = 1;
+                    cornerJump = xDim;
+                }
+                for (int j = cornerStart; j < cornerColumnEnd; j += cornerJump) {
+                    for(int k = j; k<j+(cornerJump/2); k += cornerStep) {
+                        if(bitUtil.isInScan(k)) {
+                            corner.set(k);
+                        }
+                    }
+                }
+            }
+        }
+        return corner;
     }
     
     /**
      * 
      * Defines an initial region for face de-identification.
      * 
-     * @param shape             Initial shape to use for face de-identification.
      * @param interestRegion    The bounding area of the face de-identification.
      * @return                  A <code>BitSet</code> of size <code>srcImage.getSize()</code> where set values are the inital shape's location.
      */
     
-    private BitSet defineInitialRegion(int shape, BitSet interestRegion)
+    private BitSet defineInitialRegion(BitSet interestRegion)
     {
         BitSet sphere = new BitSet(srcImage.getSize());
         BitSetUtility bitUtil = new BitSetUtility();
-        if(shape == SPHERE) {
-            int xInit = 0, yInit = 0, zInit = 0, radius = 15;
-            if(faceOrientation == FACING_LEFT) {
-                xInit = 0;
-                yInit = yDim-1;
-                zInit = zDim/2;  
-            }
-            else if(faceOrientation == FACING_RIGHT) {
-                xInit = xDim-1;
-                yInit = yDim-1;
-                zInit = zDim/2;
-            }
-            else if(faceOrientation == FACING_DOWN) {
-                xInit = xDim/2;
-                yInit = yDim;
-                zInit = 0;
-            }
-            else if(faceOrientation == FACING_UP) {
-                xInit = xDim/2;
-                yInit = 0;
-                zInit = 0;
-            }
-            else if(faceOrientation == FACING_INTO_SCREEN) {
-                xInit = xDim/2;
-                yInit = yDim-1;
-                zInit = zDim-1;
-            }
-            else if(faceOrientation == FACING_OUT_OF_SCREEN) {
-                xInit = xDim/2;
-                yInit = yDim-1;
-                zInit = 0;
-            }
-            int[] points = CircleUtility.get1DPointsInSphere(xInit, yInit, zInit, radius, xDim, yDim);
-            for(int i=0; i<points.length; i++) {
-                if(bitUtil.isInScan(points[i]) && interestRegion.get(points[i])) {
-                    sphere.set(points[i]);
-                }       
-            }
-            return sphere;
+        int xInit = 0, yInit = 0, zInit = 0, radius = 15;
+        if(faceOrientation == FACING_LEFT) {
+            xInit = 0;
+            yInit = yDim-1;
+            zInit = zDim/2;  
         }
-        else
-            return null;
+        else if(faceOrientation == FACING_RIGHT) {
+            xInit = xDim-1;
+            yInit = yDim-1;
+            zInit = zDim/2;
+        }
+        else if(faceOrientation == FACING_DOWN) {
+            xInit = xDim/2;
+            yInit = yDim;
+            zInit = 0;
+        }
+        else if(faceOrientation == FACING_UP) {
+            xInit = xDim/2;
+            yInit = 0;
+            zInit = 0;
+        }
+        else if(faceOrientation == FACING_INTO_SCREEN) {
+            xInit = xDim/2;
+            yInit = yDim-1;
+            zInit = zDim-1;
+        }
+        else if(faceOrientation == FACING_OUT_OF_SCREEN) {
+            xInit = xDim/2;
+            yInit = yDim-1;
+            zInit = 0;
+        }
+        int[] points = CircleUtility.get1DPointsInSphere(xInit, yInit, zInit, radius, xDim, yDim);
+        for(int i=0; i<points.length; i++) {
+            if(bitUtil.isInScan(points[i]) && interestRegion.get(points[i])) {
+                sphere.set(points[i]);
+            }       
+        }
+        return sphere;
     }
     
     /**
@@ -504,16 +479,14 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
      * a geometry suitable for the given shape.  For example, the approximation of a quarter cylinder is performed
      * using spheres with centers on the boundary points of the <code>initialRegion</code> with further iterations
      * on the boundary points of the resulting shape.
-     * TODO:Remove time dependence
      * 
      * @param interestRegion    The bounding area for face de-identification.
      * @param initialRegion     Initial area.
      * @param brainMask         Brain extraction derived from BET and apended by <code>this.bufferBrain(BitSet, int)</code>
-     * @param shape             Shape to approximate inside the <code>interestRegion</code> for face de-identification.
      * @return                  A <code>BitSet</code> of size <code>srcImage.getSize()</code> where set values denote face de-identification may be performed.
      */
     
-    private BitSet extractFace(BitSet interestRegion, BitSet initialRegion, BitSet brainMask, int shape)
+    private BitSet extractFace(BitSet interestRegion, BitSet initialRegion, BitSet brainMask)
     {
         BitSet brainSlice = (BitSet)interestRegion.clone();
         BitSetUtility bitUtil = new BitSetUtility();
@@ -521,7 +494,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         interestRegion.andNot(brainMask);
         BitSet removeRegion = initialRegion;
         BitSet removeInstanceRegion = new BitSet(srcImage.getSize());
-        BitSet cube = defineInterestRegion(CUBE); 
+        BitSet cube = defineInterestRegion(); 
         BitSet interestEdge = bitUtil.getEdgePoints(interestRegion);
         BitSet imageSet = new BitSet(srcImage.getSize());
         imageSet.set(0, srcImage.getSize()-1);
@@ -530,121 +503,41 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         Vector interestEdgePoints = bitUtil.convertSetToPoints(interestEdge);
         fireProgressStateChanged(65);
         Random pointPick = new Random();
-        if(shape == QUARTER_CYLINDER) {
-            int totalPointsRemoved = initialRegion.cardinality();
-            int totalArea = (int)((cube.cardinality() - brainSlice.cardinality()) * (Math.PI/4));  //cylinder inside two octants)
-            int decayedRadiusCount = 0;
-            final double time = System.currentTimeMillis();
-            final int minComplete = (int)(getProgressChangeListener().getProgressBar().getPercentComplete()*100);
-            int progress = 0;
-            while(totalPointsRemoved < totalArea && (System.currentTimeMillis()-time < 40000.0)) { 
-                int removePoint = pointPick.nextInt(srcImage.getSize());
-                if(removeRegion.get(removePoint) && bitUtil.isBoundaryPoint(removeRegion, removePoint) && !bitUtil.isBoundaryPoint(cube, removePoint)) { 
-                    int minDist = ((int)bitUtil.getMinDistance(removePoint, interestEdgePoints));
-                    if(minDist>MIN_RADIUS) {
-                        int radius = pointPick.nextInt(minDist-MIN_RADIUS) + MIN_RADIUS;
-                        double decayedRadius = ((double)radius) * Math.exp(-((double)totalPointsRemoved) / ((double)totalArea));
-                        if(((int)decayedRadius) > MIN_RADIUS) {
-                            progress = (int)(minComplete+(.3*((System.currentTimeMillis()-time)/40000.0))*100);
-                            fireProgressStateChanged(progress);
-                            int[] points = CircleUtility.get1DPointsInSphere(removePoint, ((int)decayedRadius), xDim, yDim);
-                            for(int i=0; i<points.length; i++) {
-                                if(bitUtil.isInScan(points[i]) && !brainMask.get(points[i]) && interestRegion.get(points[i])) {// && ((int)points[i]/(xDim)) == ((int)removePoint/(xDim)))
-                                    removeInstanceRegion.set(points[i]);
-                                    totalPointsRemoved++;
-                                }
+        int totalPointsRemoved = initialRegion.cardinality();
+        int totalArea = (int)((cube.cardinality() - brainSlice.cardinality()) * (Math.PI/4));  //cylinder inside two octants)
+        int decayedRadiusCount = 0;
+        final double time = System.currentTimeMillis();
+        final int minComplete = (int)(getProgressChangeListener().getProgressBar().getPercentComplete()*100);
+        int progress = 0;
+        while(totalPointsRemoved < totalArea && (System.currentTimeMillis()-time < 40000.0)) { //note time dependence 
+            int removePoint = pointPick.nextInt(srcImage.getSize());
+            if(removeRegion.get(removePoint) && bitUtil.isBoundaryPoint(removeRegion, removePoint) && !bitUtil.isBoundaryPoint(cube, removePoint)) { 
+                int minDist = ((int)bitUtil.getMinDistance(removePoint, interestEdgePoints));
+                if(minDist>MIN_RADIUS) {
+                    int radius = pointPick.nextInt(minDist-MIN_RADIUS) + MIN_RADIUS;
+                    double decayedRadius = ((double)radius) * Math.exp(-((double)totalPointsRemoved) / ((double)totalArea));
+                    if(((int)decayedRadius) > MIN_RADIUS) {
+                        progress = (int)(minComplete+(.3*((System.currentTimeMillis()-time)/40000.0))*100); 
+                        fireProgressStateChanged(progress);
+                        int[] points = CircleUtility.get1DPointsInSphere(removePoint, ((int)decayedRadius), xDim, yDim);
+                        for(int i=0; i<points.length; i++) {
+                            if(bitUtil.isInScan(points[i]) && !brainMask.get(points[i]) && interestRegion.get(points[i])) {// && ((int)points[i]/(xDim)) == ((int)removePoint/(xDim)))
+                                removeInstanceRegion.set(points[i]);
+                                totalPointsRemoved++;
                             }
-                            removeRegion.or(removeInstanceRegion);
-                            interestRegion.andNot(removeInstanceRegion);
-                            removeInstanceRegion = new BitSet(srcImage.getSize());
                         }
-                        else
-                            decayedRadiusCount++;
+                        removeRegion.or(removeInstanceRegion);
+                        interestRegion.andNot(removeInstanceRegion);
+                        removeInstanceRegion = new BitSet(srcImage.getSize());
                     }
                     else
                         decayedRadiusCount++;
                 }
-            }
-            return removeRegion;
-        }
-        /*else if(shape == CUBE)    //while this code works, it does not take advantage of the random and self-annealing processes above.
-        {
-            int removePoint = 0;
-            int numFail = 0;
-            int successPoint = 0;
-            while(numFail < 10000)
-            {
-                removePoint = pointPick.nextInt(srcImage.getSize());
-                if(interestRegion.get(removePoint))
-                {
-                    int testRemovePoint = removePoint;
-                    boolean crossedX = true, crossedY = true, crossedZUp = true, crossedZDown = true;
-                    while(testRemovePoint%xDim != 0 && (interestRegion.get(testRemovePoint) || removeRegion.get(testRemovePoint))) {
-                        testRemovePoint--;
-                    }
-                    if(testRemovePoint%xDim == 0)
-                        crossedX = false;
-                    testRemovePoint = removePoint;
-                    while(testRemovePoint%(sliceSize) > xDim && (interestRegion.get(testRemovePoint) || removeRegion.get(testRemovePoint))) {
-                        testRemovePoint = testRemovePoint + xDim;
-                        
-                    }
-                    if(testRemovePoint%(sliceSize)<=xDim)
-                        crossedY = false;
-                    testRemovePoint = removePoint;
-                    while(testRemovePoint%(volumeSize)>(sliceSize) && (interestRegion.get(testRemovePoint) || removeRegion.get(testRemovePoint))) {
-                        testRemovePoint = testRemovePoint + (sliceSize);
-                    }
-                    if(testRemovePoint%(volumeSize)<=sliceSize)
-                        crossedZUp = false;
-                    testRemovePoint = removePoint;
-                    while(testRemovePoint%(volumeSize)>sliceSize && interestRegion.get(testRemovePoint)) {
-                        testRemovePoint = testRemovePoint - (sliceSize);
-                    }
-                    if(testRemovePoint%(volumeSize)<=sliceSize)
-                        crossedZDown = false;
-                    testRemovePoint = removePoint;
-                    if((!crossedX && !crossedY && !crossedZUp)) {
-                        int i = removePoint;
-                        while(i%xDim!=0) {
-                            int j = i;
-                            while(j%(sliceSize)>xDim) {
-                                int k = j;
-                                while(k%(volumeSize)>sliceSize) {
-                                    removeRegion.set(k); 
-                                    k = k+(sliceSize);
-                                }
-                                j = j+xDim;
-                            }
-                            i--;
-                        }
-                        interestRegion.andNot(removeRegion);
-                    }
-                    if((!crossedX  && !crossedY && !crossedZDown)) {
-                        int i = removePoint;
-                        while(i%xDim!=0) {
-                            int j = i;
-                            while(j%(sliceSize)>xDim) {
-                                int k = j;
-                                while(k%(volumeSize)>sliceSize) {
-                                    removeRegion.set(k); 
-                                    k = k-(sliceSize);
-                                }
-                                j = j+xDim;
-                            }
-                            i--;
-                        }
-                        interestRegion.andNot(removeRegion);
-                        successPoint++;
-                    }             
-                }
                 else
-                    numFail++;
+                    decayedRadiusCount++;
             }
-            return removeRegion;  
-        }*/
-        else
-            return null;
+        }
+        return removeRegion;
     }
     
     /**
@@ -684,7 +577,6 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
     
     /**
      * Private utility class for generating approximations to circles and spheres.
-     * TODO: Find where in MIPAV this is already done.
      * 
      * @author senseneyj
      *
@@ -946,7 +838,6 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
     
     /**
      * Private utility class for operations on BitSets
-     * TODO: Find where in MIPAV this is already done.
      * 
      * @author senseneyj
      *
