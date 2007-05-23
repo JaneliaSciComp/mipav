@@ -2929,10 +2929,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
 
-        magButton = toolbarBuilder.buildButton("MagImage", "Magnify all frames 2.0x", "zoomin");
+        magButton = toolbarBuilder.buildButton("MagImage", "<html>" + "Magnify all frames 2.0x" + "<br>" + 
+        		"Hold SHIFT for multiple zooming" +
+                "<br>" + "[right-click for options]" + "</html>", "zoomin");
         magButton.addMouseListener(this);
         imageToolBar.add(magButton);
-        minButton = toolbarBuilder.buildButton("UnMagImage", "Magnify all frames 0.5x", "zoomout");
+        minButton = toolbarBuilder.buildButton("UnMagImage", "<html>" + "Magnify all frames 0.5x" + "<br>" + 
+        		"Hold SHIFT for multiple zooming" +
+                "<br>" + "[right-click for options]" + "</html>", "zoomout");
         minButton.addMouseListener(this);
         imageToolBar.add(minButton);
         imageToolBar.add(toolbarBuilder.buildButton("ZoomOne", "Magnify all frames 1.0x", "zoom1"));
@@ -2943,14 +2947,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         // ButtonGroup indivMagGroup = new ButtonGroup();
         indivMagButton = toolbarBuilder.buildToggleButton("IndivMagImage",
                                                           "<html>" + "Magnify individual frame 2.0x" + "<br>" +
-                                                          "Hold SHIFT for multiple zooming" + "</html>", "trizoomin",
+                                                          "Hold SHIFT for multiple zooming" +
+                                                          "<br>" + "[right-click for options]" + "</html>", "trizoomin",
                                                           VOIGroup);
         indivMagButton.addMouseListener(this);
         imageToolBar.add(indivMagButton);
 
         indivMinButton = toolbarBuilder.buildToggleButton("IndivMinImage",
                                                           "<html>" + "Magnify individual frame 0.5x" + "<br>" +
-                                                          "Hold SHIFT for multiple zooming" + "</html>", "trizoomout",
+                                                          "Hold SHIFT for multiple zooming" +
+                                                          "<br>" + "[right-click for options]" + "</html>", "trizoomout",
                                                           VOIGroup);
         indivMinButton.addMouseListener(this);
         imageToolBar.add(indivMinButton);

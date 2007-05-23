@@ -46,13 +46,16 @@ public class Preferences {
     /** Constant for debug s. */
     public static final String PREF_DEBUG = "DEBUG";
 
-    /** DOCUMENT ME! */
+    /** Constant for whether logging is enabled */
     public static final String PREF_LOGGING_ENABLED = "LoggingEnabled";
 
+    /** Constant that indicates if the Quick Mask operation should output to a new image */
     public static final String PREF_QUICK_MASK_NEW = "QuickMaskNew";
     
+    /** Constant that indicates if the Paint-to-Mask operation should output to a new image */
     public static final String PREF_PAINT_TO_MASK_NEW = "PaintToMaskNew";
 
+    /** Constant that indicates if the zoom should be linear (otherwise geometric) */
     public static final String PREF_ZOOM_LINEAR = "true";
     
     /** Constant that indicates the intensity label color. */
@@ -61,12 +64,10 @@ public class Preferences {
     /** Constant that indicates the intensity label background color. */
     public static final String PREF_INTENSITY_LABEL_BACKGROUND_COLOR = "IntensityLabelBackgroundColor";
 
-    /** DOCUMENT ME! */
+    /** Constant that indicates the default frame rate */
     public static final String PREF_DEFAULT_FRAME_RATE = "DefaultFrameRate";
 
-    /**
-     * Constant that indicates if the last used parameters for algorithm dialogs should be used when they are opened.
-     */
+    /** Constant that indicates if the last used parameters for algorithm dialogs should be used when they are opened. */
     public static final String PREF_SAVE_DEFAULTS = "SaveDefaults";
 
     /** Constant that indicates if a prompt should be shown before an image file is overwritten. */
@@ -242,17 +243,15 @@ public class Preferences {
     /** constant for warning the user when audio will be discarded from opened AVIs. */
     public static final String PREF_WARN_AUDIO_AVI = "WarnAudioAVI";
 
-    /** DOCUMENT ME! */
+    /** constant on whether to overwrite the voi statistics file automatically */
     public static final String PREF_OVERWRITE_STATISTICS = "OverwriteStatistics";
 
     /** Constant that indicates the crosshair cursor to be used. */
     public static final String PREF_CROSSHAIR_CURSOR = "CrosshairCursor";
 
-    /** DOCUMENT ME! */
     /** Constant that indicates the VOI Trim level variable. */
     public static final String PREF_TRIM = "TRIM";
 
-    /** DOCUMENT ME! */
     /** Constant that indicates the VOI Trim flag. */
     public static final String PREF_TRIM_FLAG = "TRIM_FLAG";
 
@@ -296,8 +295,6 @@ public class Preferences {
     public static final String PREF_RAW_EXTENTS = "RawImageExtents";
 
     /** Constant that indicates the default raw image big endian. */
-
-    /** DOCUMENT ME! */
     public static final String PREF_RAW_BIG_ENDIAN = "RawImageBigEndianByteOrder";
 
     /** Constant that indicates the default raw image resolutions. */
@@ -417,13 +414,13 @@ public class Preferences {
     /** The MIPAV preferences file path and name. */
     private static String preferencesFile = preferencesDir + File.separator + preferencesFileName;
 
-    /** DOCUMENT ME! */
+    /** Hashtable that holds all user-defined shortcuts */
     private static Hashtable userShortcutTable;
 
-    /** DOCUMENT ME! */
+    /** Hashtable that holds the default shortcuts */
     private static Hashtable defaultShortcutTable = buildDefaultShortcuts();
 
-    /** DOCUMENT ME! */
+    /** The current shortcut */
     private static KeyStroke currentShortcut;
 
     /**

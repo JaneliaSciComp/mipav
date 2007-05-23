@@ -201,7 +201,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-        destImage.setMatrix(srcImage.getMatrix());
+        destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
         // copy all file infos.
         float[] resols;

@@ -519,7 +519,6 @@ public class ViewJProgressBar extends JFrame
      * @param  event  event that triggered function
      */
     public void windowClosing(WindowEvent event) {
-        System.err.println("disposing");
         dispose();
     }
 
