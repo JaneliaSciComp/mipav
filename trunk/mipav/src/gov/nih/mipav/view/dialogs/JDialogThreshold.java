@@ -982,7 +982,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         tmpStr = textThres2.getText();
 
         if (testParameterMin(tmpStr, thres1 - 1)) {
-        	if(Double.valueOf(tmpStr).doubleValue() > max) {
+        	if(Float.valueOf(tmpStr).floatValue() > max) {
         		thres2 = max;
         	}else {
         		thres2 = Float.valueOf(tmpStr).floatValue();
