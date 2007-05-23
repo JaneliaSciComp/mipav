@@ -1422,7 +1422,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         FileInfoDicom dicomInfoBuffer;
 
         dicomInfoBuffer = (FileInfoDicom) destImage.getFileInfo(0);
-        destImage.setMatrix(srcImage.getMatrix());
+        destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
 
         float[] origins = new float[3];
@@ -1600,7 +1600,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             }
         } else if (nDims == 3) {
         	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
-           // destImage.setMatrix(srcImage.getMatrix());
+           // destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
 
             for (int m = 0; m <= Math.abs(z[1] - z[0]); m++) {
@@ -1668,7 +1668,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 fileInfoBuffer.setOrigin(originImgOrd);
             }
         } else {
-            destImage.setMatrix(srcImage.getMatrix());
+            destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
             int slice = 0;
 
