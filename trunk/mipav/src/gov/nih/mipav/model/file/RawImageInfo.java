@@ -5,7 +5,10 @@ import java.util.*;
 
 
 /**
- * DOCUMENT ME!
+ * Class designed to hold pre-loaded information for opening RAW images.  This is used when running scripts
+ * (either through GUI or command line)... two specific constructors meant for commandline/gui scripts
+ * @author linkb
+ *
  */
 public class RawImageInfo {
 
@@ -32,9 +35,7 @@ public class RawImageInfo {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates a new RawImageInfo object.
-     *
-     * @param  consoleString  DOCUMENT ME!
+     * Constructor used when running from command line.  Parses the command line's string into the correct variables
      */
     public RawImageInfo(String consoleString) {
         StringTokenizer tokens = new StringTokenizer(consoleString, ";");
@@ -102,14 +103,14 @@ public class RawImageInfo {
     }
 
     /**
-     * Creates a new RawImageInfo object.
+     * Constructor used when running scripts from the GUI
      *
-     * @param  type       DOCUMENT ME!
-     * @param  dims       DOCUMENT ME!
-     * @param  res        DOCUMENT ME!
-     * @param  units      DOCUMENT ME!
-     * @param  offset     DOCUMENT ME!
-     * @param  bigEndian  DOCUMENT ME!
+     * @param  type       image type
+     * @param  dims       image extents
+     * @param  res        image resolutions
+     * @param  units      image units
+     * @param  offset     image offset
+     * @param  bigEndian  image's big endian order
      */
     public RawImageInfo(int type, int[] dims, float[] res, int[] units, int offset, boolean bigEndian) {
         this.type = type;
