@@ -1062,7 +1062,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 }
             } else {
 
-                if (!testParameter(text, Float.parseFloat(textThres1.getText()), max)) {
+                if (!testParameterMin(text, Float.parseFloat(textThres1.getText()))) {
                     textThres2.requestFocus();
                     textThres2.selectAll();
                 }
