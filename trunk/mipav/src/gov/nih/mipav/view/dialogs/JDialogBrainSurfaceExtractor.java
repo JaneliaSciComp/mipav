@@ -125,8 +125,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
     public JDialogBrainSurfaceExtractor() { }
 
     /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present.
+     * Sets the appropriate variables. 
      *
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
@@ -160,16 +159,16 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
      * @param  event  event that triggers function
      */
     public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-
-        if (command.equals("OK")) {
-
+        
+        Object eventSource = event.getSource();
+        
+        if (eventSource == OKButton){
             if (setVariables()) {
                 callAlgorithm();
             }
-        } else if (command.equals("Cancel")) {
+        } else if (eventSource == cancelButton){
             dispose();
-        } else if (command.equals("Help")) {
+        } else if (eventSource == helpButton) {
             MipavUtil.showHelp("10090");
         }
     }
