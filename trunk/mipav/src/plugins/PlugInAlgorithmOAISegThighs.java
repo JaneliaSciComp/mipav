@@ -65,7 +65,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
     /** MUSCLE. */
     public static int MUSCLE_2 = 126;
-
+ 
     /** background. */
     public static int BACKGROUND_2 = 63;
 
@@ -424,15 +424,16 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      */
     public ModelImage extractedBoneMarrow(ModelImage hardSegImg) {
 
-        // PFH         ShowImage(hardSegImg, "Hard Segmentation");
+        // PFH    	ShowImage(hardSegImg, "Hard Segmentation");
 
         ModelImage bMarrow = threshold2(hardSegImg, FAT_2_A, FAT_2_B);
         // bMarrow contains all voxels labeled FAT_2_A or FAT_2_B in the C-Means segmented image (HardSeg) bMarrow is a
-        // binary image and remains binary through this method  PFH         ShowImage(bMarrow, "BMarrow");
+        // binary image and remains binary through this method
+        // PFH        ShowImage(bMarrow, "BMarrow");
 
         // find all objects in the thresholded image that have a cardinality within the specified range
         IDObjects(bMarrow, 90 * zDim, 500 * zDim);
-        // PFH         ShowImage(bMarrow, "IDObjects");
+        // PFH        ShowImage(bMarrow, "IDObjects");
 
         // find the single object closest to the center of the image
         isolatingCenterObject(bMarrow);
@@ -564,6 +565,35 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         firstFuzz.finalize();
         firstFuzz = null;
 
+        // we need to convert values in the HardSeg[0] image
+        // 1 should be converted to BACKGROUND_2 == 63
+        // 2 should be converted to MUSCLE_2 == 126
+        // 3 should be converted to FAT_2_A == 189
+        // 4 should be converted to FAT_2_B == 252
+        int sliceNum, i, j, idx;
+        for (sliceNum = 0; sliceNum < zDim; sliceNum++) {
+
+            try {
+            	HardSeg[0].exportData((sliceNum * sliceSize), sliceSize, imgBuffer2);
+            	idx = 0;
+            	for (j = 0; j < yDim; j++) {
+            		for (i = 0; i < xDim; i++) {
+            			if (imgBuffer2[idx] == 1) imgBuffer2[idx] = BACKGROUND_2;
+            			else if (imgBuffer2[idx] == 2) imgBuffer2[idx] = MUSCLE_2;
+            			else if (imgBuffer2[idx] == 3) imgBuffer2[idx ] = FAT_2_A;
+            			else imgBuffer2[idx ] = FAT_2_B;
+            			idx++;
+            		}
+            	}
+            
+            	HardSeg[0].importData((sliceNum * sliceSize), imgBuffer2, false);
+            }
+            catch (IOException ioe) {
+            	MipavUtil.displayError("blah blah blah\n" + ioe.toString());
+            }
+         } // end for(sliceNum = 0; ...)
+
+        
         return HardSeg[0];
     }
 
@@ -814,7 +844,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         ModelImage boneMarrow = extractedBoneMarrow(CMeansSeg);
         // boneMarrow is a binary image containing only the bone marrow
 
-        //  PFH      ShowImage(boneMarrow, "bone/morrow image");
+        //  PFH        ShowImage(boneMarrow, "bone/morrow image");
 
         // use the bone marrow and input thigh image to segment out the bone
         ModelImage bone = extractBone(boneMarrow, thighInputImage);
@@ -940,7 +970,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             // processedImage is the right or left thigh image
             voiMask = makeVOI(processedImage);
             // voiMask: binary image where 1's are inside the VOI otherwise values are 0's used in processHardFat(),
-            // should probably be made later!! PFH            ShowImage(voiMask, "voi  mask");
+            // should probably be made later!! 
+            // PFH            ShowImage(voiMask, "voi  mask");
 
             fireProgressStateChanged((50 * (aa - 1)) + 4);
 
@@ -970,7 +1001,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             // Fuzzy C-Means for the right/left thigh image
             ModelImage HardSeg1 = HardFuzzy(processedImage, 4);
             // HardSeg1 image contains 4 different label values  63 for background and bone  126 muscle  189 fat 1 (Bone
-            // Marrow)  252 fat 2 (Bone Marrow) PFH            ShowImage(HardSeg1,"4 class hard fuzzy segmentation");
+            // Marrow)  252 fat 2 (Bone Marrow) 
+            // PFH            ShowImage(HardSeg1,"4 class hard fuzzy segmentation");
 
             fireProgressStateChanged((50 * (aa - 1)) + 18);
 
@@ -1229,7 +1261,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         resultImage = new ModelImage(threshSourceImg.getType(), threshSourceImg.getExtents(), "threshResultImg");
 
         AlgorithmThresholdDual threshAlgo = null;
-        threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, 1, AlgorithmThresholdDual.BINARY_TYPE, true, true);
+ //       threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, 1, AlgorithmThresholdDual.BINARY_TYPE, true, true);
+        threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, 1, AlgorithmThresholdDual.BINARY_TYPE, true, false);
         threshAlgo.run();
 
         return resultImage;

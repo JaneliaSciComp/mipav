@@ -476,6 +476,32 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         firstFuzz.run();
         firstFuzz.finalize();
         firstFuzz = null;
+        
+        // we need to convert values in the HardSeg[0] image
+        // 1 should be converted to BACKGROUND == 85
+        // 2 should be converted to MUSCLE == 170
+        // 3 should be converted to FAT == 255
+        int sliceNum, i, j, idx;
+        for (sliceNum = 0; sliceNum < zDim; sliceNum++) {
+
+            try {
+            	HardSeg[0].exportData((sliceNum * sliceSize), sliceSize, imgBuffer2);
+            	idx = 0;
+            	for (j = 0; j < yDim; j++) {
+            		for (i = 0; i < xDim; i++) {
+            			if (imgBuffer2[idx] == 1) imgBuffer2[idx] = BACKGROUND;
+            			else if (imgBuffer2[idx] == 2) imgBuffer2[idx] = MUSCLE;
+            			else imgBuffer2[idx ] = FAT;
+            			idx++;
+            		}
+            	}
+            
+            	HardSeg[0].importData((sliceNum * sliceSize), imgBuffer2, false);
+            }
+            catch (IOException ioe) {
+            	MipavUtil.displayError("blah blah blah\n" + ioe.toString());
+            }
+         } // end for(sliceNum = 0; ...)
 
         return HardSeg[0];
     }
@@ -694,9 +720,9 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         } // end for (j = 0; ...)
 
         // PFH
-        // System.out.println("yMin ybound[0]: " + ybound[0] + "  yMax ybound[1]: " + ybound[1]);
-        // System.out.println("xMin xbound[0]: " + xbound[0] + "  xMax xbound[1]: " + xbound[1]);
-        // System.out.println("xMin xbound1[0]: " + xbound1[0] + "  xMax xbound1[1]: " + xbound1[1]);
+ //        System.out.println("yMin ybound[0]: " + ybound[0] + "  yMax ybound[1]: " + ybound[1]);
+ //        System.out.println("xMin xbound[0]: " + xbound[0] + "  xMax xbound[1]: " + xbound[1]);
+ //        System.out.println("xMin xbound1[0]: " + xbound1[0] + "  xMax xbound1[1]: " + xbound1[1]);
 
 
         // This just smooths out the boundaries of the mask image
