@@ -37,7 +37,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
     private JLabel authenticationLabel;
 
     /** DOCUMENT ME! */
-    private JButton cancelButton;
+    private JButton cancelButton, helpButton;
 
     /** DOCUMENT ME! */
     private final int COLUMN_COUNT = 30;
@@ -89,7 +89,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
      * @param  dialogTitle  DOCUMENT ME!
      */
     public JDialogLoginSRB(String dialogTitle) {
-        super(ViewUserInterface.getReference().getMainFrame(), dialogTitle, true);
+        super(ViewUserInterface.getReference().getMainFrame(), dialogTitle, false);
         init();
     }
 
@@ -304,6 +304,8 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
             this.dispose();
         } else if (command.equals("Cancel")) {
             this.dispose();
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("20000");
         }
     }
 
@@ -440,7 +442,12 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
 
         cancelButton = WidgetFactory.buildTextButton("Cancel", "Cancel connecting to the SRB server", "Cancel", this);
         cancelButton.setPreferredSize(new Dimension(90, 30));
+        
+        helpButton = new JButton("Help");
+        helpButton.addActionListener(this);
+        helpButton.setPreferredSize(new Dimension(90, 30));
         bottomPanel.add(cancelButton);
+        bottomPanel.add(helpButton);
         this.getContentPane().add(bottomPanel, BorderLayout.SOUTH);
         this.pack();
 
