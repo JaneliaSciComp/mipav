@@ -109,7 +109,7 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
      * @param  im              Source image
      */
     public JDialogDilate(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

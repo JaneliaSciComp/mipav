@@ -80,7 +80,7 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
      * @param  im              Source image.
      */
     public JDialogAutoCovariance(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         UI = ViewUserInterface.getReference();
         init();

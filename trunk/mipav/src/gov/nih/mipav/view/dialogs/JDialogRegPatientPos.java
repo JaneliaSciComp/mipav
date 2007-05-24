@@ -68,7 +68,7 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
      * @param  im              source image
      */
     public JDialogRegPatientPos(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         imageB = im;
         UI = ViewUserInterface.getReference();
         init();

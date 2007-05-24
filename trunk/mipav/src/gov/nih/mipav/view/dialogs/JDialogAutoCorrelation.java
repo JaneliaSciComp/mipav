@@ -80,7 +80,7 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
      * @param  im              Source image.
      */
     public JDialogAutoCorrelation(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         UI = ViewUserInterface.getReference();
         init();

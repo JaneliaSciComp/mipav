@@ -120,7 +120,7 @@ public class JDialogOpen extends JDialogScriptableBase implements AlgorithmInter
      * @param  im              source image
      */
     public JDialogOpen(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

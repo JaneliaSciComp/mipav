@@ -58,7 +58,7 @@ public class JDialogRandomizeSliceOrder extends JDialogScriptableBase implements
      * @param  im              source image
      */
     public JDialogRandomizeSliceOrder(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();

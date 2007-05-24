@@ -44,7 +44,7 @@ public class JDialogMask3D4D extends JDialogBase {
      * @param  im              Source image.
      */
     public JDialogMask3D4D(Frame theParentFrame, int slice[]) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         sliceRef = slice;
         init();
     }

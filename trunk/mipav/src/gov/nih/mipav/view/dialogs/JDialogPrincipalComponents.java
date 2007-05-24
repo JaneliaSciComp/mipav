@@ -93,7 +93,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
      * @param  image           Source image
      */
     public JDialogPrincipalComponents(Frame theParentFrame, ModelImage image) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         srcImage = image;
         init();
     }

@@ -222,7 +222,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
      * @param  im              Source image.
      */
     public JDialogTransform(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         image = im;
         resampleImage = im;

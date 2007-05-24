@@ -173,7 +173,7 @@ public class JDialogLevelSet extends JDialogBase implements AlgorithmInterface {
      * @param  im              Source image
      */
     public JDialogLevelSet(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         userInterface = ViewUserInterface.getReference();
         image = im;
 

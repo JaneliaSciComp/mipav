@@ -53,7 +53,7 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
      * @param  imA             Source image
      */
     public JDialogRGBtoHSB(Frame theParentFrame, ModelImage imA) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         imageA = imA;
     }
 

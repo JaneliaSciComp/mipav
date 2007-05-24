@@ -66,7 +66,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
      * @param  im              Source image.
      */
     public JDialogEdgeNMSuppression(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         init();
     }

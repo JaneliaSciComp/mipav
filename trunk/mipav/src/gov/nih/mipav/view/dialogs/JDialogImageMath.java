@@ -119,7 +119,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      * @param  im              Source image
      */
     public JDialogImageMath(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
 
         if ((image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {

@@ -106,7 +106,7 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
      * @param  im              Source image
      */
     public JDialogSubtractVOI(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();

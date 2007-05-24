@@ -119,7 +119,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
      * @param  im              source image
      */
     public JDialogClose(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

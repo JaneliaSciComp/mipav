@@ -85,7 +85,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
      * @param  im              source image
      */
     public JDialogDeleteObjects(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

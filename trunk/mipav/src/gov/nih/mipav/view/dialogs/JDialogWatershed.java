@@ -121,7 +121,7 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
      * @param  im              Source image
      */
     public JDialogWatershed(JFrame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();

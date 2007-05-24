@@ -209,7 +209,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
      * @param  im              Source image.
      */
     public JDialogRegistrationOAR2D(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         matchImage = im;
 
         if (matchImage.isColorImage()) {
@@ -252,7 +252,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                                     float fFineRate, boolean bDoSubsample, int iBracketBound, int iMaxIterations,
                                     int iNumMin, int iInterp2, boolean bDisplayTransform, float fRotateBF,
                                     float fXScaleBF, float fYScaleBF, int iScaleStepsBF, int iTranslationBF) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         matchImage = match;
         refImage = ref;
         UI = ViewUserInterface.getReference();

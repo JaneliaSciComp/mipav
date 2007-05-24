@@ -90,7 +90,7 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
      * @param  im              source image
      */
     public JDialogRegistrationChamfer(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         matchImage = im;
         userInterface = ViewUserInterface.getReference();
         init();

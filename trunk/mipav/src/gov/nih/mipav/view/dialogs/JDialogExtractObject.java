@@ -112,7 +112,7 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
      * @param  im              Source image.
      */
     public JDialogExtractObject(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         setForeground(Color.black);
         image = im;
         userInterface = ViewUserInterface.getReference();

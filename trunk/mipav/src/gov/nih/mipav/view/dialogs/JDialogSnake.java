@@ -129,7 +129,7 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
      * @param  im              Source image.
      */
     public JDialogSnake(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         userInterface = ViewUserInterface.getReference();
         VOIs = im.getVOIs();
 

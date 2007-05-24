@@ -104,7 +104,7 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
      * @param  im              Source image
      */
     public JDialogEntropyMinimization(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         userInterface =  ViewUserInterface.getReference();
         init();

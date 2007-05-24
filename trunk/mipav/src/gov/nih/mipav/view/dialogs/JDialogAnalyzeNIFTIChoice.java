@@ -45,7 +45,7 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
      * @param  theParentFrame  Parent frame of dialog.
      */
     public JDialogAnalyzeNIFTIChoice(Frame theParentFrame) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         init();
 
         // skip the dialog if the user has requested to not be bothered

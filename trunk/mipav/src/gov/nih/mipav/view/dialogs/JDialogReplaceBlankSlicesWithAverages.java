@@ -60,7 +60,7 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogScriptableBase
      * @param  im              Source image.
      */
     public JDialogReplaceBlankSlicesWithAverages(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         setForeground(Color.black);
         image = im;

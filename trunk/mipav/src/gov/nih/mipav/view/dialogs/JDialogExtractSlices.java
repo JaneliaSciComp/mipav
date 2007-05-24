@@ -61,7 +61,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
      * @param  eList           DOCUMENT ME!
      */
     public JDialogExtractSlices(Frame theParentFrame, ModelImage image, Vector eList) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         srcImage = image;
         extractList = eList;

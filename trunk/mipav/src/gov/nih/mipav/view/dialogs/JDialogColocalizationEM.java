@@ -258,7 +258,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
      * @param  im              Source image
      */
     public JDialogColocalizationEM(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         firstImage = im;
         init();
     }

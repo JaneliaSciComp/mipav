@@ -89,7 +89,7 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
      * @param  _zSlice         Z slice of image.
      */
     public JDialogBSmooth(Frame theParentFrame, ModelImage im, int _zSlice) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         int i;
         Vector[] contours;

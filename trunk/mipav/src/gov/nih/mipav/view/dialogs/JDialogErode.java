@@ -110,7 +110,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
      * @param  im              Source image
      */
     public JDialogErode(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

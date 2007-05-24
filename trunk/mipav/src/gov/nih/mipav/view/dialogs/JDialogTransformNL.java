@@ -116,7 +116,7 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
      * @param  im              Source image.
      */
     public JDialogTransformNL(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();

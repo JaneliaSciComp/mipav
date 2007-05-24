@@ -59,7 +59,7 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
      * @param  imA             Source image
      */
     public JDialogRGBtoGrays(Frame theParentFrame, ModelImage imA) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         imageA = imA;
     }
 

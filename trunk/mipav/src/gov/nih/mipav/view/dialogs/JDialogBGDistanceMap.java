@@ -67,7 +67,7 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
      * @param  im              Source image
      */
     public JDialogBGDistanceMap(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

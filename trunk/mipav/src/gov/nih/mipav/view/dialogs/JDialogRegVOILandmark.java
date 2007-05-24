@@ -94,7 +94,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
      * @param  im              Source image
      */
     public JDialogRegVOILandmark(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         UI = ViewUserInterface.getReference();
         init();

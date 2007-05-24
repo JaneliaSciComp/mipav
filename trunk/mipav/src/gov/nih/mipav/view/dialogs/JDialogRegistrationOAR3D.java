@@ -248,7 +248,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * @param  im              Source image.
      */
     public JDialogRegistrationOAR3D(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         matchImage = im;
 

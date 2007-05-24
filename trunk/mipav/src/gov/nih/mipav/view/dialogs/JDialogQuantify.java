@@ -68,7 +68,7 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
      * @param  im              Source image.
      */
     public JDialogQuantify(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();

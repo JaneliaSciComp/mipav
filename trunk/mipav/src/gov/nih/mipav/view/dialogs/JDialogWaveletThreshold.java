@@ -128,7 +128,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
      * @param  im              Source image
      */
     public JDialogWaveletThreshold(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();

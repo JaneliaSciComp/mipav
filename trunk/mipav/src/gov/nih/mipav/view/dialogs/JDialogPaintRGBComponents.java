@@ -44,7 +44,7 @@ public class JDialogPaintRGBComponents extends JDialogBase implements ItemListen
      * @param  isVisible       Dialog visible or not
      */
     public JDialogPaintRGBComponents(Frame theParentFrame, String rgbStr) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         init(rgbStr);
     }
 

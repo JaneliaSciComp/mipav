@@ -190,7 +190,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
      * @param  im              Source image.
      */
     public JDialogRegistrationOAR35D(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         matchImage = im;
 
         if (matchImage.isColorImage()) {

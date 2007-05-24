@@ -42,7 +42,7 @@ public class JDialogVOIExtraction extends JDialogBase implements AlgorithmInterf
      * @param  imA             Source image
      */
     public JDialogVOIExtraction(Frame theParentFrame, ModelImage imA) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         imageA = imA;
     }
 
