@@ -3105,7 +3105,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         paintBrushNames[2] = "square 8x8.gif";
         paintBrushNames[3] = "square 16x16.gif";
         paintBrushNames[4] = "square 24x24.gif";
-
+        paintBrushNames[5] = "circle 10x10.gif";
+        paintBrushNames[6] = "circle 14x14.gif";
+        paintBrushNames[7] = "circle 20x20.gif";
+        
         if (brushesDir.isDirectory()) {
             File[] brushes = brushesDir.listFiles();
             int brushIndex = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL;
