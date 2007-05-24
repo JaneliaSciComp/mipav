@@ -907,7 +907,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     public class JDialogPickFiles extends JDialog implements ActionListener, KeyListener {
 
         /** DOCUMENT ME! */
-        private JButton cancelButton = null;
+        private JButton cancelButton,helpButton;
 
         /** The default dialog title. */
         private String defaultDialogTitle = "Transfer Files";
@@ -997,12 +997,16 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                                                            "Transfer", this);
             transferButton.setPreferredSize(new Dimension(60, 30));
             transferButton.addKeyListener(this);
-            manager.add(transferButton, GridBagConstraints.CENTER);
+            manager.add(transferButton);
             cancelButton = WidgetFactory.buildTextButton("Cancel", "Cancel the file transfering", "Cancel", this);
             cancelButton.setPreferredSize(new Dimension(60, 30));
             cancelButton.setMaximumSize(new Dimension(60, 30));
             cancelButton.addKeyListener(this);
+            helpButton = new JButton("Help");
+            helpButton.addActionListener(this);
+            helpButton.setPreferredSize(new Dimension(60, 30));
             manager.add(cancelButton);
+            manager.add(helpButton);
             getContentPane().add(manager.getPanel());
 
             if (dialogTitle == null) {
@@ -1228,6 +1232,8 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                 sourceFilesField.setText("");
             } else if (command.equals("targetSchemaSelection")) {
                 targetFilesField.setText("");
+            }else if (command.equals("Help")) {
+                MipavUtil.showHelp("20010");
             }
         }
 

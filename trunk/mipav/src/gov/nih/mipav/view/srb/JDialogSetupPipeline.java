@@ -39,7 +39,7 @@ public class JDialogSetupPipeline extends JDialog implements ActionListener {
     private JButton okButton;
 
     /** DOCUMENT ME! */
-    private JButton cancelButton;
+    private JButton cancelButton,helpButton;
 
     /** DOCUMENT ME! */
     private final int COLUMN_COUNT = 30;
@@ -53,7 +53,7 @@ public class JDialogSetupPipeline extends JDialog implements ActionListener {
      * @param  dialogTitle  DOCUMENT ME!
      */
     public JDialogSetupPipeline(String dialogTitle) {
-        super(ViewUserInterface.getReference().getMainFrame(), dialogTitle, true);
+        super(ViewUserInterface.getReference().getMainFrame(), dialogTitle, false);
         init();
     }
 
@@ -140,6 +140,8 @@ public class JDialogSetupPipeline extends JDialog implements ActionListener {
                 SRBFile file = chooser.getSelectedFile();
                 targetSRBDirField.setText(file.getAbsolutePath());
             }
+        }else if (command.equals("Help")) {
+            MipavUtil.showHelp("20020");
         }
     }
 
@@ -193,7 +195,11 @@ public class JDialogSetupPipeline extends JDialog implements ActionListener {
 
         cancelButton = WidgetFactory.buildTextButton("Cancel", "Cancel the parameters for the pipeline", "Cancel", this);
         cancelButton.setPreferredSize(new Dimension(90, 30));
+        helpButton = new JButton("Help");
+        helpButton.addActionListener(this);
+        helpButton.setPreferredSize(new Dimension(90, 30));
         bottomPanel.add(cancelButton);
+        bottomPanel.add(helpButton);
         this.getContentPane().add(bottomPanel, BorderLayout.SOUTH);
         
         this.pack();
