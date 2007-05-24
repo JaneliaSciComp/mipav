@@ -102,7 +102,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
      * @param  im              Source image.
      */
     public JDialogImageCalculator(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         imageA = im;
         isColor = im.isColorImage();
         userInterface = ViewUserInterface.getReference();
