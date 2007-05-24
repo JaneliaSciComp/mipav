@@ -87,7 +87,7 @@ public class JDialogSkelGeom3D extends JDialogBase implements AlgorithmInterface
      * @param  im              Source image.
      */
     public JDialogSkelGeom3D(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         setForeground(Color.black);
         image = im;
         userInterface = ViewUserInterface.getReference();

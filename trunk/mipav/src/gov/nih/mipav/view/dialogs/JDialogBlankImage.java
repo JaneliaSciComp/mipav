@@ -72,7 +72,7 @@ public class JDialogBlankImage extends JDialogBase {
      * @param  theParentFrame  Parent frame
      */
     public JDialogBlankImage(Frame theParentFrame) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         setTitle("Load blank image");
 
         ButtonGroup group1 = new ButtonGroup();

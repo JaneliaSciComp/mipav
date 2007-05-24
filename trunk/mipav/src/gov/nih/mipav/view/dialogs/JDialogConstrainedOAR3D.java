@@ -278,7 +278,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
      * @param  im              Source image.
      */
     public JDialogConstrainedOAR3D(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         matchImage = im;
 

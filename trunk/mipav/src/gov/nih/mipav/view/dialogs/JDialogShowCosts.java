@@ -91,7 +91,7 @@ public class JDialogShowCosts extends JDialogBase {
      * @param  im              Source image
      */
     public JDialogShowCosts(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         firstImage = im;
         init();
     }

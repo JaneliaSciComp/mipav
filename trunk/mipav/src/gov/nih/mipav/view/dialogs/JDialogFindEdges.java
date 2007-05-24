@@ -104,7 +104,7 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
      * @param  im              Source image
      */
     public JDialogFindEdges(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

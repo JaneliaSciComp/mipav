@@ -81,7 +81,7 @@ public class JDialogThresholdLUT extends JDialogBase {
      * @param  upThreshold     Upper threshold bound
      */
     public JDialogThresholdLUT(Frame theParentFrame, ModelImage im, float lowThreshold, float upThreshold) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         lowerThreshold = lowThreshold;
         upperThreshold = upThreshold;

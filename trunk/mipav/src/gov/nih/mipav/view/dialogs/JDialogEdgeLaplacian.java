@@ -80,7 +80,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
      * @param  im              Source image.
      */
     public JDialogEdgeLaplacian(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         init();
     }

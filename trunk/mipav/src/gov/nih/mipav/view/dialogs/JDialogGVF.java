@@ -131,7 +131,7 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
      * @param  im              Source image
      */
     public JDialogGVF(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         VOIs = im.getVOIs();
 

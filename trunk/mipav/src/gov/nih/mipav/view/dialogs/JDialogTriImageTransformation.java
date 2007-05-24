@@ -77,7 +77,7 @@ public class JDialogTriImageTransformation extends JDialogBase {
      * @param  imB             Image B to be transformed (can be null).
      */
     public JDialogTriImageTransformation(ViewJFrameTriImage theParentFrame, ModelImage imA, ModelImage imB) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         frame = theParentFrame;
         imageA = imA;
         imageB = imB;

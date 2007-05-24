@@ -57,7 +57,7 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
      * @param  rotateAxis      Axis which image is to be rotated.
      */
     public JDialogRotate(Frame theParentFrame, ModelImage im, int rotateAxis) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         this.rotateAxis = rotateAxis;
         image = im;

@@ -71,7 +71,7 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
      * @param  im              Source image
      */
     public JDialogDistanceMap(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

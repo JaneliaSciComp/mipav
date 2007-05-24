@@ -100,7 +100,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
      * @param  im              Source image
      */
     public JDialogFillObjects(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

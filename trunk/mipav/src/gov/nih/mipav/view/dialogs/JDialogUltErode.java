@@ -80,7 +80,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
      * @param  im              source image
      */
     public JDialogUltErode(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

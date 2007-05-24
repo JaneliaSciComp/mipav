@@ -87,7 +87,7 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
      * @param  im              Source image
      */
     public JDialogIDObjects(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
                 (im.getType() != ModelImage.USHORT)) {

@@ -50,7 +50,7 @@ public class JDialogNIFTIChoice extends JDialogBase {
      * @param  theParentFrame  Parent frame of dialog.
      */
     public JDialogNIFTIChoice(Frame theParentFrame) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         init();
     }
 

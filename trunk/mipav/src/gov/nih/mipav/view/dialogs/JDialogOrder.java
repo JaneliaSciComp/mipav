@@ -36,7 +36,7 @@ public class JDialogOrder extends JDialogBase {
      * @param  orients         Axis orientation of image.
      */
     public JDialogOrder(Frame theParentFrame, int[] orients) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         init(orients);
     }
 

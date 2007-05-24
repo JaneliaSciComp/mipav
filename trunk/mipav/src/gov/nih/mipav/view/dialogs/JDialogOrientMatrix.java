@@ -53,7 +53,7 @@ public class JDialogOrientMatrix extends JDialogBase {
      * @param  _pFrame         source image
      */
     public JDialogOrientMatrix(Frame theParentFrame, JDialogBase _pFrame) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         setForeground(Color.black);
         getContentPane().setLayout(new BorderLayout());

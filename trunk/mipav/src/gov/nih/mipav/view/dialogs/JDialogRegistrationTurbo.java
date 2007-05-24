@@ -155,7 +155,7 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
      * @param  im              source image
      */
     public JDialogRegistrationTurbo(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         UI = ((ViewJFrameBase) theParentFrame).getUserInterface();
         sourceImage = im;
         init();

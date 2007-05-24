@@ -138,7 +138,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
      * @param  im              Source image
      */
     public JDialogXcosmEM(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         originalImage = im;
         userInterface = ViewUserInterface.getReference();

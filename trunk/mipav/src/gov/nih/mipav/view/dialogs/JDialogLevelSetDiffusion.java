@@ -116,7 +116,7 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
      * @param  im              Source image
      */
     public JDialogLevelSetDiffusion(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         userInterface = ViewUserInterface.getReference();
         image = im;
 

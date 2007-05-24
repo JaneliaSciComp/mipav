@@ -1252,7 +1252,6 @@ public class JDialogVOIStats extends JDialogBase
      * @param  leadBase  DOCUMENT ME!
      */
     private void updateContourPane(VOIBase leadBase) {
-
         int i = 0;
         int size = leadBase.size();
         contourTextArea.setText("VOI name: " + leadBase.getName() + "\n");
