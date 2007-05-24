@@ -992,7 +992,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
         try {
             double[] T = new double[2]; // translation parameters
-            TransMatrix xfrmb = new TransMatrix(3);
+            TransMatrix xfrmb = new TransMatrix(3, TransMatrix.TRANSFORM_ANOTHER_DATASET);
             Matrix P1 = new Matrix(2, 1);
 
             for (i = 0; i < 2; i++) {

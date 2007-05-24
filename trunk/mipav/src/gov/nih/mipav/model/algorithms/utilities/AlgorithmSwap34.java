@@ -8,6 +8,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
+import java.util.*;
 
 
 /**
@@ -101,9 +102,8 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         int[] axis;
         int imageOrientation;
         float[] startLocs;
+        Vector mats;
         TransMatrix xfrm;
-
-        int transformID;
 
         try {
 
@@ -173,7 +173,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         // The third and fourth dimensions are swapped in extents, units, and resolutions.
         extents = new int[] { xDim, yDim, tDim, zDim };
         fileInfo = srcImage.getFileInfo();
-        xfrm = srcImage.getMatrix();
+        mats = srcImage.getMatrixHolder().getMatrices();
         units = fileInfo[0].getUnitsOfMeasure();
         tempi = units[2];
         units[2] = units[3];
@@ -223,17 +223,11 @@ public class AlgorithmSwap34 extends AlgorithmBase {
             fileInfoR[i].setMin(min);
             fileInfoR[i].setPixelPadValue(pixelPadValue);
             fileInfoR[i].setPhotometric(photometric);
-            
-            //BEN
-            //fileInfoR[i].setTransformID(transformID);
-
-            if (fileInfoR[i] instanceof FileInfoXML) {
-                ((FileInfoImageXML) (fileInfoR[i])).setMatrix(xfrm);
-            }
+                       
 
         }
 
-        destImage.setMatrix(xfrm);
+        destImage.getMatrixHolder().replaceMatrices(mats);
 
         try {
             destImage.importData(0, resultBuffer, true);

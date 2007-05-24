@@ -10,6 +10,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
+import java.util.*;
 
 
 /**
@@ -1911,8 +1912,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
         int[] appendA = new int[nDims];
         int[] appendB = new int[nDims];
-        int tIDA, tIDB;
-        TransMatrix matA, matB;
         AlgorithmAddMargins algoMarginsA, algoMarginsB;
         boolean newDimA = false;
         boolean newDimB = false;
@@ -1939,7 +1938,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             }
 
             resultImgA.setImageName("tempA");
-            matA = resultImgA.getMatrix();
+            Vector mats = resultImgA.getMatrixHolder().getMatrices();
 
             if (nDims == 3) {
                 algoMarginsA = new AlgorithmAddMargins(resultImgA, padValue, 0, appendA[0], 0, appendA[1], 0,
@@ -1977,7 +1976,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             } // else nDims == 2
 
             // update file info
-            resultImgA.setMatrix(matA);
+            resultImgA.getMatrixHolder().replaceMatrices(mats);
             updateFileInfo(resultImgA, dimA, resA, origLPS_A);
         }
 
@@ -1991,7 +1990,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             // BEN: change
 
             resultImgB.setImageName("tempB");
-            matB = resultImgB.getMatrix();
+            Vector mats = resultImgB.getMatrixHolder().getMatrices();
 
             if (nDims == 3) {
                 algoMarginsB = new AlgorithmAddMargins(resultImgB, padValue, 0, appendB[0], 0, appendB[1], 0,
@@ -2029,7 +2028,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             algoMarginsB = null;
 
             // update file info
-            resultImgB.setMatrix(matB);
+            resultImgB.getMatrixHolder().replaceMatrices(mats);
             updateFileInfo(resultImgB, dimB, resB, origLPS_B);
         }
     }
@@ -2187,7 +2186,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             return;
         }
 
-        resultImgB.setMatrix(sourceImgA.getMatrix());
+        resultImgB.getMatrixHolder().replaceMatrices(sourceImgA.getMatrixHolder().getMatrices());
 
         // Get updated resolutions and dimensions.
         res = new float[nDims];
@@ -2400,8 +2399,9 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 } // else nDims == 2
 
                 // resultImgA.setImageName("tempA");
-                tMatBkp = resultImgA.getMatrix();
-
+                
+                Vector mats = resultImgA.getMatrixHolder().getMatrices();
+                
                 if (nDims == 3) {
                     algoMarginsA = new AlgorithmAddMargins(resultImgA, padValue, addA[0], 0, addA[1], 0, addA[2], 0);
                 } // if (nDims == 3)
@@ -2429,7 +2429,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 algoMarginsA.finalize();
                 algoMarginsA = null;
 
-                resultImgA.setMatrix(tMatBkp);
+                resultImgA.getMatrixHolder().replaceMatrices(mats);
 
                 for (i = 0; i < nDims; i++) {
 
@@ -2478,7 +2478,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 } // else nDims == 2
 
                 resultImgB.setImageName("tempB");
-                tMatBkp = resultImgB.getMatrix();
+                
+                Vector mats = resultImgB.getMatrixHolder().getMatrices();
 
                 if (nDims == 3) {
                     algoMarginsB = new AlgorithmAddMargins(resultImgB, padValue, addB[0], 0, addB[1], 0, addB[2], 0);
@@ -2506,7 +2507,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 algoMarginsB.finalize();
                 algoMarginsB = null;
 
-                resultImgB.setMatrix(tMatBkp);
+                resultImgB.getMatrixHolder().replaceMatrices(mats);
 
                 for (i = 0; i < nDims; i++) {
 
@@ -2625,7 +2626,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
             // Update file info for result images.
             resultImgA.setImageName(nameA);
-            resultImgA.setMatrix(sourceImgA.getMatrix());
+            resultImgA.getMatrixHolder().replaceMatrices(sourceImgA.getMatrixHolder().getMatrices());
 
             for (i = 0; i < nDims; i++) {
                 origLPS_A[i] = (double) resultImgA.getFileInfo(0).getOrigin(i);
@@ -2643,7 +2644,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 newB = true;
             }
 
-            tMatBkp = resultImgB.getMatrix();
+            Vector mats = resultImgB.getMatrixHolder().getMatrices();
             resultImgB.setImageName("tempB");
 
             if (nDims == 3) {
@@ -2691,7 +2692,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
             // Update file info for result images.
             resultImgB.setImageName(nameB);
-            resultImgB.setMatrix(tMatBkp);
+            resultImgB.getMatrixHolder().replaceMatrices(mats);
 
             for (i = 0; i < nDims; i++) {
                 origLPS_B[i] = (double) resultImgB.getFileInfo(0).getOrigin(i);

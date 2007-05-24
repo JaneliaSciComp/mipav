@@ -162,6 +162,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
     /** Transform ID associated with the matrix. */
     private int transformID = TRANSFORM_COMPOSITE;
     
+    /** boolean indicating whether this matrix is associated with a NIFTI image (special case handling)*/
     private boolean isNIFTI = false;
     
     /** If true, nifti matrix codes for a qform matrix

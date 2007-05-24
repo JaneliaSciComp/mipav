@@ -1,8 +1,6 @@
 package gov.nih.mipav.model.structures;
 
 
-import java.io.*;
-
 import java.util.*;
 import gov.nih.mipav.view.MipavUtil;
 
@@ -285,7 +283,6 @@ public class MatrixHolder extends ModelSerialCloneable {
     	String desc = new String("MatrixHolder: ");
     	desc += "\n\tNumber of matrices: " + matrixMap.size();
     	 Iterator iter = matrixMap.keySet().iterator();
-         TransMatrix tempM = null;
 
          int count = 0;
          while (iter.hasNext()) {
