@@ -461,7 +461,7 @@ public class FileDicom extends FileDicomBase {
 
                 // endianess is defined in a tag and set here, after the transfer
                 // syntax group has been read in
-                if (getFilePointer() >= (ID_OFFSET + metaGroupLength)) {
+                if (getFilePointer() >= (ID_OFFSET + 4 + metaGroupLength)) {
                     endianess = fileInfo.getEndianess();
                     Preferences.debug("endianess = " + endianess + "\n", Preferences.DEBUG_FILEIO);
                 }
@@ -638,7 +638,7 @@ public class FileDicom extends FileDicomBase {
             if (name.equals("0002,0000")) { // length of the transfer syntax group
 
                 if (data != null) {
-                    metaGroupLength = ((Integer) (data)).intValue() + 16; // 16 is the length of 0002,0000 tag
+                    metaGroupLength = ((Integer) (data)).intValue() + 12; // 12 is the length of 0002,0000 tag
                 }
 
                 Preferences.debug("metalength = " + metaGroupLength + " location " + getFilePointer() + "\n",
