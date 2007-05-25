@@ -2384,12 +2384,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  mouseEvent  event that triggered function
      */
     public void mouseReleased(MouseEvent mouseEvent) {
+    	
+    	//calling garbage collect here to clean up any memory used while getting the LPS coordinates
+    	 System.gc();
+    	
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
         if (wasDragging) {
             wasDragging = false;
-
             return;
         }
 
@@ -2408,6 +2411,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             setPixelInformationAtLocation(xS, yS);
         }
 
+       
+        
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
         if ((mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
