@@ -117,13 +117,32 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
      * @param  im              Source image
      */
     public JDialogCrop(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, false);
-        userInterface = ViewUserInterface.getReference();
-
-        image = im;
-        init();
+        this(theParentFrame, im, false);
     }
 
+    /**
+     * Constructor for doing non-interactive cropping (border will be zero)
+     * primarily used by VOI's pop-up menu
+     * @param theParentFrame the parent frame
+     * @param im the image
+     * @param noninteractive if this is true, no dialog will pop up and the algorithm will run
+     */
+    public JDialogCrop(Frame theParentFrame, ModelImage im, boolean noninteractive) {
+    	super(theParentFrame, false);
+    	userInterface = ViewUserInterface.getReference();
+    	image = im;
+    	
+    	if (noninteractive) {
+    		if (findBounds()) {
+    			callAlgorithm();
+    		}
+    	} else {
+    		init();
+    	}
+    	
+    	
+    }
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**

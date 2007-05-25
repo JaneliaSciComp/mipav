@@ -270,7 +270,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                 closeVOI();
             } else if (event.getActionCommand().equals("cropImage")) {
                 new JDialogCrop(voiHandler.getComponentImage().getActiveImage().getParentFrame(),
-                                voiHandler.getComponentImage().getActiveImage());
+                                voiHandler.getComponentImage().getActiveImage(), true);
             } else if (event.getActionCommand().equals("calcDistances")) {
                 voiHandler.calcPLineSliceDistances();
             } else if (event.getActionCommand().equals("voiSelectAll")) {
