@@ -412,7 +412,7 @@ public class FileDicom extends FileDicomBase {
         String type, // type of data; there are 7, see FileInfoDicom
                name; // string representing the tag
 
-        boolean endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian
+        boolean endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
         boolean flag = true;
 
         if (loadTagBuffer == true) {
@@ -463,6 +463,7 @@ public class FileDicom extends FileDicomBase {
                 // syntax group has been read in
                 if (getFilePointer() >= (ID_OFFSET + metaGroupLength)) {
                     endianess = fileInfo.getEndianess();
+                    Preferences.debug("endianess = " + endianess + "\n", Preferences.DEBUG_FILEIO);
                 }
             } else {
 
@@ -637,7 +638,7 @@ public class FileDicom extends FileDicomBase {
             if (name.equals("0002,0000")) { // length of the transfer syntax group
 
                 if (data != null) {
-                    metaGroupLength = ((Integer) (data)).intValue();
+                    metaGroupLength = ((Integer) (data)).intValue() + 16; // 16 is the length of 0002,0000 tag
                 }
 
                 Preferences.debug("metalength = " + metaGroupLength + " location " + getFilePointer() + "\n",
