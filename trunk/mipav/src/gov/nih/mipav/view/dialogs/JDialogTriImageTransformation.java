@@ -1,8 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.*;
-
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -11,8 +9,6 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
-import java.io.*;
 
 import javax.swing.*;
 
@@ -141,7 +137,7 @@ public class JDialogTriImageTransformation extends JDialogBase {
 
             dispose();
 
-            final SwingWorker worker = new SwingWorker() {
+            final gov.nih.mipav.SwingWorker worker = new gov.nih.mipav.SwingWorker() {
                 public Object construct() {
                     transform(imageA);
 
@@ -430,7 +426,7 @@ public class JDialogTriImageTransformation extends JDialogBase {
             } // else if (image.getNDims == 4)
 
             new ViewJFrameImage(image);
-            
+
             if (progressBar != null) {
                 progressBar.dispose();
             }
