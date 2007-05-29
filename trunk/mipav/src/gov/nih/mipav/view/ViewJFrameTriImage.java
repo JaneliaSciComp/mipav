@@ -132,7 +132,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Dimensions used for Talairach view clipping box - inferior new. 3/06/96: extra 10 mm for cerebellum . */
     public static final float ATLAS_BBOX_INF_NEW = 65.0f;
-    
+
     /** Dimensions used for Talairach coordinates - lateral. */
     public static final float ATLAS_AC_TO_LAT = 68.0f;
 
@@ -248,6 +248,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     protected Vector coordinateListeners = new Vector();
 
+    /** Spinner component for the crosshair gap size. */
+    protected JSpinner crosshairSpinner;
+
     /** The current values of the absolute position labels. */
     protected Point3D currentAbsolutePositionLabels;
 
@@ -270,9 +273,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Spinner component for the paint intensity. */
     protected JSpinner intensitySpinner;
 
-    /** Spinner component for the crosshair gap size*/
-    protected JSpinner crosshairSpinner;
-    
     /** Label the Talairach position x value in the image volume. */
     protected JTextField labelXTal;
 
@@ -323,15 +323,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Resolutions of image. */
     protected float[] resols = new float[3];
 
+    /** Flag telling the crosshair movement to update slice in original image frame. */
+    protected boolean scrollOriginalCrosshair = false;
+
     /** Flag for showing the Talairach grid on the component images. */
     protected boolean showTalairachGrid = false;
 
     /** Flag for showing the Talairach position on the component images. */
     protected boolean showTalairachPosition = false;
 
-    /** Flag telling the crosshair movement to update slice in original image frame */
-    protected boolean scrollOriginalCrosshair = false;
-    
     /** Time dimension of the original image. */
     protected int tDim;
 
@@ -390,6 +390,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** int used for quick-key painting for speedier paint brush access. */
     private int quickPaintBrushIndex = -1;
 
+    /** Flag for snapping protractor to nearest multiple of 90 degrees. */
+    private boolean snapProtractor90 = false;
+
     /** Used to setup the paint spinner. */
     private double spinnerDefaultValue = 1, spinnerMin = 0, spinnerMax = 255, spinnerStep = 1;
 
@@ -405,9 +408,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
 
-    /** Flag for snapping protractor to nearest multiple of 90 degrees. */
-    private boolean snapProtractor90 = false;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -430,11 +430,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         parentFrame = parent;
 
         try {
-        	scrollOriginalCrosshair = Preferences.is(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL);
+            scrollOriginalCrosshair = Preferences.is(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL);
         } catch (Exception e) {
-        	scrollOriginalCrosshair = false;
+            scrollOriginalCrosshair = false;
         }
-        
+
         try {
             setIconImage(MipavUtil.getIconImage("3plane_16x16.gif"));
         } catch (Exception e) { }
@@ -497,17 +497,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             updateImages(true);
         } else if (command.equals("ScrollOriginal")) {
 
-        	scrollOriginalCrosshair = menuObj.isMenuItemSelected("Scroll original image with crosshair");
-        	Preferences.setProperty(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL, Boolean.toString(scrollOriginalCrosshair));
+            scrollOriginalCrosshair = menuObj.isMenuItemSelected("Scroll original image with crosshair");
+            Preferences.setProperty(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL,
+                                    Boolean.toString(scrollOriginalCrosshair));
             updateImages(true);
         } else if (command.equals("FastPaint")) {
             Preferences.setProperty(Preferences.PREF_FAST_TRIPLANAR_REPAINT,
                                     (menuObj.isMenuItemSelected("Fast rendering in paint mode") ? "true" : "false"));
         } else if (command.equals("Snap90")) {
             Preferences.setProperty(Preferences.PREF_TRIPLANAR_SNAP90,
-                                     (menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple") ? "true" : "false"));
+                                    (menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple") ? "true"
+                                                                                                          : "false"));
 
             snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
+
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
@@ -673,9 +676,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             updateImages(true);
         } else if (command.equals("Protractor")) {
-            
+
             snapProtractor90 = menuObj.isMenuItemSelected("Snap protractor to 90 degrees multiple");
-            
+
             if (triImage[AXIAL_A].isProtractorVisible()) {
                 btnInvisible[2].setSelected(true);
             }
@@ -1899,11 +1902,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
 
-        //BEN
+        // BEN
         if (scrollOriginalCrosshair) {
-        	parentFrame.setSlice(k);
+            parentFrame.setSlice(k);
         }
-        
+
         fireCoordinateChange(i, j, k);
         setPositionLabels(i, j, k);
         updateImages(true);
@@ -2268,9 +2271,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         if (linkTriFrame != null) {
             linkTriFrame.setSlicesFromFrame(x, y, z);
         }
-        
-        //BEN
-        
+
+        // BEN
+
     }
 
     /**
@@ -2518,13 +2521,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 }
             }
         } else if (source == crosshairSpinner) {
-        	int crosshairPixelGap = ((SpinnerNumberModel) crosshairSpinner.getModel()).getNumber().intValue();
-        	//System.err.println(crosshairPixelGap);
-        	for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            int crosshairPixelGap = ((SpinnerNumberModel) crosshairSpinner.getModel()).getNumber().intValue();
+
+            // System.err.println(crosshairPixelGap);
+            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCrosshairPixelGap(crosshairPixelGap);
                 }
+
                 Preferences.setProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP, Integer.toString(crosshairPixelGap));
                 this.updateImages();
             }
@@ -2758,12 +2763,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                                          menuObj.buildCheckBoxMenuItem("Show axes", "ShowAxes", true),
                                          menuObj.buildCheckBoxMenuItem("Show crosshairs", "ShowXHairs", true),
                                          separator,
-                                         menuObj.buildCheckBoxMenuItem("Scroll original image with crosshair", "ScrollOriginal", 
-                                         scrollOriginalCrosshair),
+                                         menuObj.buildCheckBoxMenuItem("Scroll original image with crosshair",
+                                                                       "ScrollOriginal", scrollOriginalCrosshair),
                                          separator,
                                          menuObj.buildCheckBoxMenuItem("Fast rendering in paint mode", "FastPaint",
                                                                        Preferences.is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)),
-                                         menuObj.buildCheckBoxMenuItem("Snap protractor to 90 degrees multiple", "Snap90", 
+                                         menuObj.buildCheckBoxMenuItem("Snap protractor to 90 degrees multiple",
+                                                                       "Snap90",
                                                                        Preferences.is(Preferences.PREF_TRIPLANAR_SNAP90)),
                                          menuObj.buildCheckBoxMenuItem("Use 2x2 tri-planar layout", OLD_LAYOUT,
                                                                        oldLayout), separator,
@@ -2929,14 +2935,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
 
-        magButton = toolbarBuilder.buildButton("MagImage", "<html>" + "Magnify all frames 2.0x" + "<br>" + 
-        		"Hold SHIFT for multiple zooming" +
-                "<br>" + "[right-click for options]" + "</html>", "zoomin");
+        magButton = toolbarBuilder.buildButton("MagImage",
+                                               "<html>" + "Magnify all frames 2.0x" + "<br>" +
+                                               "Hold SHIFT for multiple zooming" + "<br>" +
+                                               "[right-click for options]" + "</html>", "zoomin");
         magButton.addMouseListener(this);
         imageToolBar.add(magButton);
-        minButton = toolbarBuilder.buildButton("UnMagImage", "<html>" + "Magnify all frames 0.5x" + "<br>" + 
-        		"Hold SHIFT for multiple zooming" +
-                "<br>" + "[right-click for options]" + "</html>", "zoomout");
+        minButton = toolbarBuilder.buildButton("UnMagImage",
+                                               "<html>" + "Magnify all frames 0.5x" + "<br>" +
+                                               "Hold SHIFT for multiple zooming" + "<br>" +
+                                               "[right-click for options]" + "</html>", "zoomout");
         minButton.addMouseListener(this);
         imageToolBar.add(minButton);
         imageToolBar.add(toolbarBuilder.buildButton("ZoomOne", "Magnify all frames 1.0x", "zoom1"));
@@ -2947,16 +2955,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         // ButtonGroup indivMagGroup = new ButtonGroup();
         indivMagButton = toolbarBuilder.buildToggleButton("IndivMagImage",
                                                           "<html>" + "Magnify individual frame 2.0x" + "<br>" +
-                                                          "Hold SHIFT for multiple zooming" +
-                                                          "<br>" + "[right-click for options]" + "</html>", "trizoomin",
+                                                          "Hold SHIFT for multiple zooming" + "<br>" +
+                                                          "[right-click for options]" + "</html>", "trizoomin",
                                                           VOIGroup);
         indivMagButton.addMouseListener(this);
         imageToolBar.add(indivMagButton);
 
         indivMinButton = toolbarBuilder.buildToggleButton("IndivMinImage",
                                                           "<html>" + "Magnify individual frame 0.5x" + "<br>" +
-                                                          "Hold SHIFT for multiple zooming" +
-                                                          "<br>" + "[right-click for options]" + "</html>", "trizoomout",
+                                                          "Hold SHIFT for multiple zooming" + "<br>" +
+                                                          "[right-click for options]" + "</html>", "trizoomout",
                                                           VOIGroup);
         indivMinButton.addMouseListener(this);
         imageToolBar.add(indivMinButton);
@@ -3031,23 +3039,24 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(toolbarBuilder.buildTextButton("Crop", "Crops image delineated by the bounding cube",
                                                         "cropVolume"));
 
-        
+
         int crosshairPixelGap = 0;
+
         try {
-        	crosshairPixelGap = Integer.parseInt(Preferences.getProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP));
+            crosshairPixelGap = Integer.parseInt(Preferences.getProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP));
         } catch (Exception e) {
-        	Preferences.setProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP, "0");
+            Preferences.setProperty(Preferences.PREF_CROSSHAIR_PIXEL_GAP, "0");
         }
-        
+
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
         crosshairSpinner = new JSpinner(new SpinnerNumberModel(crosshairPixelGap, 0, 25, 1));
         crosshairSpinner.setMaximumSize(new Dimension(56, 24)); // 56 pixlls wide, 24 tall
         crosshairSpinner.setPreferredSize(new Dimension(56, 24)); // 56 pixlls wide, 24 tall
         crosshairSpinner.addChangeListener(this);
         crosshairSpinner.setToolTipText("Crosshair pixel gap"); // bug in API prevents this from working
-        
+
         imageToolBar.add(crosshairSpinner);
-        
+
         panelToolbar.add(imageToolBar, gbc);
 
         // Paint toolbar
@@ -3108,7 +3117,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         paintBrushNames[5] = "circle 10x10.gif";
         paintBrushNames[6] = "circle 14x14.gif";
         paintBrushNames[7] = "circle 20x20.gif";
-        
+
         if (brushesDir.isDirectory()) {
             File[] brushes = brushesDir.listFiles();
             int brushIndex = ViewToolBarBuilder.NUM_BRUSHES_INTERNAL;
@@ -3189,8 +3198,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         paintToolBar.add(colorPaintButton);
         paintToolBar.add(toolbarBuilder.buildTextButton("Opacity", "Change opacity of paint", "OpacityPaint"));
-        paintToolBar.add(toolbarBuilder.buildButton(Preferences.PREF_SHOW_PAINT_BORDER, "Show border around painted areas.",
-                                                    "borderpaint"));
+        paintToolBar.add(toolbarBuilder.buildButton(Preferences.PREF_SHOW_PAINT_BORDER,
+                                                    "Show border around painted areas.", "borderpaint"));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
         paintToolBar.add(toolbarBuilder.buildButton("CommitPaint", "Changes image where painted inside",
                                                     "paintinside"));
@@ -3654,7 +3663,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * Method handles transformations for least squares algorithm in the tri-planar frame.
      */
     protected void handleLeastSquares() {
-        final SwingWorker worker = new SwingWorker() {
+        final gov.nih.mipav.SwingWorker worker = new gov.nih.mipav.SwingWorker() {
             public Object construct() {
                 ViewJProgressBar progressBar = null;
 
