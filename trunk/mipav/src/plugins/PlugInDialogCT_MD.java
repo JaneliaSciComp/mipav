@@ -97,7 +97,7 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
      * @param  im              Source image.
      */
     public PlugInDialogCT_MD(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() == ModelImage.BOOLEAN) || im.isColorImage()) {
             MipavUtil.displayError("Source Image must NOT be Boolean or Color");

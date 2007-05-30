@@ -53,7 +53,7 @@ public class PlugInDialogOCT extends JDialogBase implements AlgorithmInterface {
      * @param  im              Source image.
      */
     public PlugInDialogOCT(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((im.getType() == ModelImage.BOOLEAN) || im.isColorImage()) {
             MipavUtil.displayError("Source Image must NOT be Boolean or Color");

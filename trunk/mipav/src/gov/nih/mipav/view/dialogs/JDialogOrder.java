@@ -36,7 +36,7 @@ public class JDialogOrder extends JDialogBase {
      * @param  orients         Axis orientation of image.
      */
     public JDialogOrder(Frame theParentFrame, int[] orients) {
-        super(theParentFrame, false);
+        super(theParentFrame, true);
         init(orients);
     }
 
@@ -72,9 +72,9 @@ public class JDialogOrder extends JDialogBase {
         JPanel datasetPanel = new JPanel(new GridLayout(3, 1));
         datasetPanel.setBorder(buildTitledBorder("Dataset order"));
 
-        datasetPanel.add(createLabel("X " + FileInfoBase.getAxisOrientationStr( orientSpecific[0] ).toLowerCase() ) );
-        datasetPanel.add(createLabel("Y " + FileInfoBase.getAxisOrientationStr( orientSpecific[1] ).toLowerCase() ) );
-        datasetPanel.add(createLabel("Z " + FileInfoBase.getAxisOrientationStr( orientSpecific[2] ).toLowerCase() ) );
+        datasetPanel.add(createLabel("X " + FileInfoBase.getAxisOrientationStr(orientSpecific[0]).toLowerCase()));
+        datasetPanel.add(createLabel("Y " + FileInfoBase.getAxisOrientationStr(orientSpecific[1]).toLowerCase()));
+        datasetPanel.add(createLabel("Z " + FileInfoBase.getAxisOrientationStr(orientSpecific[2]).toLowerCase()));
 
         JPanel dicomPanel = new JPanel(new GridLayout(3, 1));
         dicomPanel.setBorder(buildTitledBorder("Dicom order"));

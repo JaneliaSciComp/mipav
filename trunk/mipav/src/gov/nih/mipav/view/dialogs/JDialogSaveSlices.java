@@ -126,7 +126,7 @@ public class JDialogSaveSlices extends JDialogBase {
      */
     public JDialogSaveSlices(Frame theParentFrame, int mnValue, int mxValue, FileWriteOptions options) {
 
-        super(theParentFrame, false);
+        super(theParentFrame, true);
         minValue = mnValue;
         maxValue = mxValue;
         timeEnabled = false;
@@ -152,18 +152,21 @@ public class JDialogSaveSlices extends JDialogBase {
      */
     public JDialogSaveSlices(Frame theParentFrame, int mnValue, int mxValue, int mnTimeValue, int mxTimeValue,
                              FileWriteOptions options) {
-        super(theParentFrame, false);
+        super(theParentFrame, true);
         minValue = mnValue;
         maxValue = mxValue;
         minTimeValue = mnTimeValue;
         maxTimeValue = mxTimeValue;
         timeEnabled = true;
         tiffEnabled = (options.getFileType() == FileUtility.TIFF);
-        fourDimEnabled = ((options.getFileType() == FileUtility.ANALYZE) || (options.getFileType() == FileUtility.NIFTI) ||
-                              (options.getFileType() == FileUtility.RAW) || (options.getFileType() == FileUtility.FITS) ||
+        fourDimEnabled = ((options.getFileType() == FileUtility.ANALYZE) ||
+                              (options.getFileType() == FileUtility.NIFTI) ||
+                              (options.getFileType() == FileUtility.RAW) ||
+                              (options.getFileType() == FileUtility.FITS) ||
                               (options.getFileType() == FileUtility.ICS) ||
                               (options.getFileType() == FileUtility.INTERFILE) ||
-                              (options.getFileType() == FileUtility.AFNI) || (options.getFileType() == FileUtility.XML));
+                              (options.getFileType() == FileUtility.AFNI) ||
+                              (options.getFileType() == FileUtility.XML));
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
         init();

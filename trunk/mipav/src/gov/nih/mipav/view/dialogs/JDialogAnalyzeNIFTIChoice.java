@@ -1,7 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
@@ -45,7 +45,7 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
      * @param  theParentFrame  Parent frame of dialog.
      */
     public JDialogAnalyzeNIFTIChoice(Frame theParentFrame) {
-        super(theParentFrame, false);
+        super(theParentFrame, true);
         init();
 
         // skip the dialog if the user has requested to not be bothered
@@ -54,6 +54,7 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
             analyzeFile.setSelected(true);
             okayPressed = true;
             dispose();
+
             return;
         }
 
@@ -70,6 +71,7 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
     public void actionPerformed(ActionEvent event) {
 
         if (event.getSource() == OKButton) {
+
             if (alwaysSaveAnalyzeCheckBox.isSelected()) {
                 Preferences.setAlwaysSaveImgAsAnalyze(true);
             }
