@@ -3028,7 +3028,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         scrollButton.setSelectedIcon(MipavUtil.getIcon("link.gif"));
         scrollButton.addActionListener(this);
         scrollButton.setActionCommand("ScrollLink");
-        scrollButton.setToolTipText("Link images of like-dimensions for scrolling.");
+        scrollButton.setToolTipText("Link tri-images of like-dimensions for scrolling.");
         
         imageToolBar.add(scrollButton);
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
