@@ -125,6 +125,9 @@ public abstract class ViewJFrameBase extends JFrame
     /** DOCUMENT ME! */
     private String voiSavedFileName = null;
 
+    /** Variable indicating if images of like dimensions should be scrolled simult. */
+    protected boolean linkedScrolling = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**

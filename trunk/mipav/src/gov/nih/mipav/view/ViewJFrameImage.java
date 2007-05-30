@@ -344,8 +344,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             return;
         }
-
-        if (command.equals("QuantifyMasks")) {
+        if (command.equals("ScrollLink")) {
+           linkedScrolling = !linkedScrolling;        	
+        } else if (command.equals("QuantifyMasks")) {
             new JDialogQuantifyMask(this, this.getActiveImage());
         } else if (command.equals("PaintBrushEditor")) {
             new ViewJFrameCreatePaint();
@@ -2987,17 +2988,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setTitle();
 
             // need to get all other images in sync if there are other matching images and if shift was down
-            if (isShiftDown && (getRegisteredFramedImagesSize() > 0)) {
+            if ((isShiftDown || linkedScrolling) && (getRegisteredFramedImagesSize() > 0)) {
                 Vector registeredFramedImages = getRegisteredFramedImages();
 
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     ModelImage img = (ModelImage) registeredFramedImages.get(i);
                     ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-                    framedImg.setSlice(zSlice + 1);
-
-                    if (framedImg != null) {
-                        framedImg.decSlice();
-                    }
+                    framedImg.setSlice(zSlice, false);
                 }
 
                 registeredFramedImages = null;
@@ -3480,17 +3477,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setTitle();
 
             // need to get all other images in sync if there are other matching images and if shift was down
-            if (isShiftDown && (getRegisteredFramedImagesSize() > 0)) {
+            if ((isShiftDown || linkedScrolling) && (getRegisteredFramedImagesSize() > 0)) {
                 Vector registeredFramedImages = getRegisteredFramedImages();
 
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     ModelImage img = (ModelImage) registeredFramedImages.get(i);
                     ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-                    framedImg.setSlice(zSlice - 1);
-
-                    if (framedImg != null) {
-                        framedImg.incSlice();
-                    }
+                    framedImg.setSlice(zSlice, false);
+                    framedImg.updateImages();
                 }
 
                 registeredFramedImages = null;
@@ -3759,6 +3753,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         isShiftDown = false;
                         // registeredFramedImages = null;
                     }
+                    
+                   
 
                     incSlice();
                 } else if (buttonSource.getActionCommand().equals("PreviousImage")) {
@@ -4215,8 +4211,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param  slice  indicates image slice to be displayed
      */
     public void setSlice(int slice) {
+    	setSlice(slice, true);
+        
+    }
 
-        if (imageA.getNDims() <= 2) {
+    public void setSlice(int slice, boolean updateLinkedImages) {
+    	if (imageA.getNDims() <= 2) {
             return;
         }
 
@@ -4225,6 +4225,18 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             controls.setZSlider(zSlice);
             updateImages(true);
 
+            /** when we set the slice of the other images, make SURE they do not try to update linked images (infinite loop)*/
+            if (updateLinkedImages && linkedScrolling) {
+            	Vector registeredFramedImages = getRegisteredFramedImages();
+
+                for (int i = 0; i < registeredFramedImages.size(); i++) {
+                    ModelImage img = (ModelImage) registeredFramedImages.get(i);
+                    ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
+                    framedImg.setSlice(zSlice, false);
+                    framedImg.updateImages();
+                }
+            }
+            
             // livewire grad mag. should be recalculated for the new slice
             // componentImage.deactivateAllVOI();
             componentImage.getVOIHandler().resetLivewire();
@@ -4243,7 +4255,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         }
     }
-
+    
     /**
      * Sets the slice to be displayed and updates title frame.
      *
