@@ -1,15 +1,8 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.view.*;
-
-import com.sun.media.codec.video.vcm.*;
-
 import java.awt.*;
 import java.awt.event.*;
-
-import javax.media.*;
-import javax.media.format.*;
 
 import javax.swing.*;
 
@@ -50,7 +43,7 @@ public class JDialogNIFTIChoice extends JDialogBase {
      * @param  theParentFrame  Parent frame of dialog.
      */
     public JDialogNIFTIChoice(Frame theParentFrame) {
-        super(theParentFrame, false);
+        super(theParentFrame, true);
         init();
     }
 

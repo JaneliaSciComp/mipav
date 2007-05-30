@@ -15,6 +15,11 @@ import java.awt.event.*;
  */
 public class PlugInDialogBrainStatistics extends JDialogBase implements AlgorithmInterface {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -4310604464314852560L;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -32,7 +37,7 @@ public class PlugInDialogBrainStatistics extends JDialogBase implements Algorith
      * @param  img             Source image.
      */
     public PlugInDialogBrainStatistics(Frame theParentFrame, ModelImage img) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         if ((img.getType() == ModelImage.BOOLEAN) || img.isColorImage()) {
             MipavUtil.displayError("Source Image must NOT be Boolean or Color");

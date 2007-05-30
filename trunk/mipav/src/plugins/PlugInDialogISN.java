@@ -16,6 +16,11 @@ import java.awt.event.*;
  */
 public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 8992144247394255543L;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -39,7 +44,7 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
      * @param  imA             Source image
      */
     public PlugInDialogISN(Frame theParentFrame, ModelImage imA) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         imageA = imA;
         userInterface = ViewUserInterface.getReference();
         callAlgorithm();
@@ -117,7 +122,7 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
             isnAlgo.addListener(this);
 
             createProgressBar(imageA.getImageName(), " ...", isnAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
