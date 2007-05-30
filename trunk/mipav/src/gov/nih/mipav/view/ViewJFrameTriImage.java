@@ -459,7 +459,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         Preferences.debug(command, Preferences.DEBUG_MINOR);
 
-        if (command.equals("CloseFrame")) {
+        if (command.equals("ScrollLink")) {
+            linkedScrolling = !linkedScrolling;        	
+        } else if (command.equals("CloseFrame")) {
             windowClosing(null);
         } else if (command.equals("leastSquares")) {
             handleLeastSquares();
@@ -1889,6 +1891,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  k  model space coordinate
      */
     public void setCenter(int i, int j, int k) {
+    	setCenter(i,j,k, true);
+    }
+    
+    /**
+     * sets the crosshair positions and slices for each of the triImages. The inputs are in FileCoordinates, and are
+     * passed to the triImages in FileCoordinates. Each triImage converts from FileCoordinates to the local
+     * PatientCoordinate space, based on the triImage orientation (FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL).
+     *
+     * @param  i  model space coordinate
+     * @param  j  model space coordinate
+     * @param  k  model space coordinate
+     * @param checkLinkedScroll (boolean telling whether to look for linked images to sync scroll... necessary to avoid infinite loop)
+     */
+    public void setCenter(int i, int j, int k, boolean checkLinkedScroll) {
         i = (i < 0) ? 0 : ((i >= extents[0]) ? (extents[0] - 1) : i);
         j = (j < 0) ? 0 : ((j >= extents[1]) ? (extents[1] - 1) : j);
         k = (k < 0) ? 0 : ((k >= extents[2]) ? (extents[2] - 1) : k);
@@ -1902,6 +1919,38 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
 
+        if (checkLinkedScroll && linkedScrolling) {
+        	
+        	Enumeration names = userInterface.getRegisteredImageNames();
+
+            boolean sameDims = false;
+            while (names.hasMoreElements()) {
+                String name = (String) names.nextElement();
+                sameDims = true;
+
+                if (!imageA.getImageName().equals(name)) {
+                    ModelImage img = userInterface.getRegisteredImageByName(name);
+
+                    if (img.getTriImageFrame() != null) {
+
+                        if (imageA.getNDims() == img.getNDims()) {
+
+                            for (int z = 0; z < imageA.getNDims(); z++) {
+
+                                if (imageA.getExtents()[z] != img.getExtents()[z]) {
+                                    sameDims = false;
+                                }
+                            }
+
+                            if (sameDims == true) {
+                            	img.getTriImageFrame().setCenter(i, j, k, false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         // BEN
         if (scrollOriginalCrosshair) {
             parentFrame.setSlice(k);
@@ -2974,6 +3023,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
+        JCheckBox scrollButton = new JCheckBox(MipavUtil.getIcon("link_broken.gif"));
+        scrollButton.setPreferredSize(new Dimension(24,24));
+        scrollButton.setSelectedIcon(MipavUtil.getIcon("link.gif"));
+        scrollButton.addActionListener(this);
+        scrollButton.setActionCommand("ScrollLink");
+        scrollButton.setToolTipText("Link images of like-dimensions for scrolling.");
+        
+        imageToolBar.add(scrollButton);
+        imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         ButtonGroup intensityLineGroup = new ButtonGroup();
         imageToolBar.add(toolbarBuilder.buildToggleButton("Line", "Draw line VOI", "linear", VOIGroup));

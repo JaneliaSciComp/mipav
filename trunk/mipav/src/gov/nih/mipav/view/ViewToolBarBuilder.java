@@ -307,6 +307,17 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         tBar.add(rightArrowButton);
 
         tBar.add(makeSeparator());
+        
+        JCheckBox scrollButton = new JCheckBox(MipavUtil.getIcon("link_broken.gif"));
+        scrollButton.setPreferredSize(leftArrowButton.getSize());
+        scrollButton.setSelectedIcon(MipavUtil.getIcon("link.gif"));
+        scrollButton.addActionListener((ActionListener) UI);
+        scrollButton.setActionCommand("ScrollLink");
+        scrollButton.setToolTipText("Link images of like-dimensions for scrolling.");
+        
+        tBar.add(scrollButton);
+        
+        tBar.add(makeSeparator());
 
         tBar.add(buildToggleButton("MagImage",
                                    "<html>" + "Magnify image 2.0x" + "<br>" + "Hold SHIFT for multiple zooming" +
