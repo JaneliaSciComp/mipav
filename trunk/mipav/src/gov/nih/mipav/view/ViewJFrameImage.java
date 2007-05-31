@@ -626,6 +626,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 getLUTb().resetTransferLine(0, 255);
             }
 
+            imageB.getMatrixHolder().replaceMatrices(imageA.getMatrixHolder().getMatrices());
+            
             if (linkTriFrame != null) {
                 linkTriFrame.setImageSelectorPanelVisible(true); // set the selector panel to visible in the
                                                                  // ViewJFrameTriImage, if it exists
