@@ -876,6 +876,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Maximum intensity projection (MIP)",
                                                                   "maximumIntensityProjection", 0, null, false),
                                         menuBuilder.buildMenuItem("Noise", null, 0, null, false),
+                                        menuBuilder.buildMenuItem("Pad", null, 0, null, false),
                                         menuBuilder.makeMenu("Quantify", false,
                                                 new JMenuItem[] {
                                                     menuBuilder.buildMenuItem("Quantify using mask", "Quantify", 0, null, false),
