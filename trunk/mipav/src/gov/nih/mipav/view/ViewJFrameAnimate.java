@@ -395,10 +395,10 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
     public ViewJFrameAnimate(ModelImage _imageA, ModelLUT _LUTa, ModelImage _imageB, ModelLUT _LUTb, ModelRGB _RGBTA,
                              ModelRGB _RGBTB, ViewJFrameBase controlFrame, int nRow, int nColumn, int originalZDim,
                              boolean showFrameBorder, Color borderCol, boolean disposeImage) {
-
+    	
         super(_imageA, null);
         addNotify();
-
+ 
         try {
             setIconImage(MipavUtil.getIconImage("movie_16x16.gif"));
         } catch (FileNotFoundException error) {
@@ -961,6 +961,7 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
      * @param  event  event that triggered function
      */
     public synchronized void componentResized(ComponentEvent event) {
+
         int width, height;
 
         if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
@@ -969,21 +970,19 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
         removeComponentListener(this);
 
-        width = (int) Math.round(Math.max(getSize().width - (2 * getInsets().left) - 3, minimumToolBarWidth));
-        height = (int)
-                     Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom - 3,
-                                         minimumHeight));
+        width = (int) Math.round(Math.max(getSize().width, minimumToolBarWidth));
+        height = (int) Math.round(Math.max(getSize().height, minimumHeight));
 
-        scrollPane.setSize(width, height);
-        setSize(Math.max(scrollPane.getSize().width + getInsets().left + getInsets().right,
-                         minimumToolBarWidth + getInsets().left + getInsets().right),
-                Math.max(getInsets().top + componentY + scrollPane.getSize().height + getInsets().bottom,
-                         minimumHeight));
+        scrollPane.setSize(width, height - componentY);
+
+        setSize(Math.max(width, minimumToolBarWidth),Math.max(height,minimumHeight));
 
         validate();
         setTitle();
         addComponentListener(this);
         updateImages(true);
+  
+
     }
 
     /**

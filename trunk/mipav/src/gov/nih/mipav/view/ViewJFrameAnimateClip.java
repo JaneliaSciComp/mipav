@@ -714,16 +714,12 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
 
         removeComponentListener(this);
 
-        width = (int) Math.round(Math.max(getSize().width - (2 * getInsets().left) - 3, minimumToolBarWidth));
-        height = (int)
-                     Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom - 3,
-                                         minimumHeight));
+        width = (int) Math.round(Math.max(getSize().width, minimumToolBarWidth));
+        height = (int) Math.round(Math.max(getSize().height, minimumHeight));
 
-        scrollPane.setSize(width, height);
-        setSize(Math.max(scrollPane.getSize().width + getInsets().left + getInsets().right,
-                         minimumToolBarWidth + getInsets().left + getInsets().right),
-                Math.max(getInsets().top + componentY + scrollPane.getSize().height + getInsets().bottom,
-                         minimumHeight));
+        scrollPane.setSize(width, height - componentY);
+
+        setSize(Math.max(width, minimumToolBarWidth),Math.max(height,minimumHeight));
 
         validate();
         setTitle();
