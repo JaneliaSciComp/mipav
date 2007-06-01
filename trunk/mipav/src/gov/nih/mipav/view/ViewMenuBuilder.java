@@ -314,7 +314,16 @@ public class ViewMenuBuilder {
 
             try {
                 menu.setIcon(MipavUtil.getIcon("empty.gif"));
-                menu.setIconTextGap(50);
+                
+                try {
+                	float ver = Float.parseFloat(System.getProperty("java.version").substring(0, 3));
+                	
+                	if (ver < 1.6 && Preferences.getOS() != Preferences.OS_MAC) {
+                		menu.setIconTextGap(50);
+                	}
+                } catch (Exception e) {
+                }
+               
             } catch (Exception e) { }
         }
 
