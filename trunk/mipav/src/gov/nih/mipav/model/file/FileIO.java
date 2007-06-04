@@ -2223,6 +2223,9 @@ public class FileIO {
             case FileUtility.AVI:
                 success = writeAvi(image, options);
                 break;
+            case FileUtility.PARREC:
+                success = writePARREC(image, options);
+                break;
 
             default:
                 if (!quiet) {
@@ -8562,6 +8565,77 @@ public class FileIO {
         return true;
     }
 
+    /**
+     * Writes a PAR/REC file to store the image.
+     *
+     * @param   image    The image to write.
+     * @param   options  The options to use to write the image.
+     *
+     * @return  Flag indicating that this was a successful write.
+     */
+
+    private boolean writePARREC(ModelImage image, FileWriteOptions options) {
+        FileRaw rawFile;
+        FileInfoImageXML fileInfo;
+
+        try { // Construct new file info and file objects
+
+            FileInfoBase fileBase = image.getFileInfo()[0];
+            if(fileBase.getDataType()!=ModelStorageBase.FLOAT &&
+                    fileBase.getDataType()!=ModelStorageBase.USHORT &&
+                    fileBase.getDataType()!=ModelStorageBase.UBYTE ) {
+                throw new IOException("Format PAR/REC does not support this data type.");
+            }
+
+            if(FilePARREC.isImageFile(options.getFileName())) {
+                if(fileBase.getDataType()!=ModelStorageBase.FLOAT) {
+                    if(FileUtility.getExtension(options.getFileName()).compareTo(".rec")==0) {
+                        options.setFileName(options.getFileName().replaceAll(".rec",".frec"));
+                    }
+                    if(FileUtility.getExtension(options.getFileName()).compareTo(".REC")==0) {
+                        options.setFileName(options.getFileName().replaceAll(".REC",".fREC"));
+                    }
+                } else {
+                    if(FileUtility.getExtension(options.getFileName()).compareTo(".frec")==0) {
+                        options.setFileName(options.getFileName().replaceAll(".frec",".rec"));
+                    }
+                    if(FileUtility.getExtension(options.getFileName()).compareTo(".fREC")==0) {
+                        options.setFileName(options.getFileName().replaceAll(".fREC",".REC"));
+                    }
+                }
+            }
+
+            FilePARREC pr = new FilePARREC(options.getFileName(), options.getFileDirectory(), fileBase);
+
+            pr.writeHeader(options);
+
+            fileInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
+            fileInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
+            rawFile = new FileRaw(pr.getImageFiles()[0], "", fileInfo, FileBase.READ_WRITE);
+            createProgressBar(rawFile, options.getFileName(), FILE_WRITE);
+            rawFile.writeImage(image, options);
+
+
+        } catch (IOException error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
