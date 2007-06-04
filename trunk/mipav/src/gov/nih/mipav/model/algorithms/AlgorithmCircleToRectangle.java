@@ -2,6 +2,8 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.jama.*;
+import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
@@ -13,8 +15,10 @@ import java.io.*;
  * <p>References: 1.) Advanced Calculus For Applications Second Edition by F. B. Hildebrand, Section 10.4 Analytic
  * Functions of a Complex Variable pages 550-554 and Section 11.4 Conformal Mapping pages 628-632, Prentice-Hall, Inc.,
  * 1976. 2.) Applied and Computational Complex Analysis Volume I by Peter Henrici, Chapter on Schwarz-Christoffel
- * Mapping Function, pp. 411-412. 3.) 2D-Shape Analysis using COnformal Mapping by E. Sharon and D. Mumford
+ * Mapping Function, pp. 411-412. 3.) 2D-Shape Analysis using Conformal Mapping by E. Sharon and D. Mumford
  * 4.) http://mathworld.wolfram.com/LemniscateFunction.html
+ * 5.) Conformal Mapping from Zeev Nehari, Chapter VI, Mapping Properties of Special Functions, Section 3, 
+ * Elliptic Functions, pp. 280-299.
  */
 public class AlgorithmCircleToRectangle extends AlgorithmBase {
 
@@ -61,12 +65,13 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
     /**
      * Starts the program.
      */
-    public void runAlgorithmNext() {
+    public void runAlgorithm() {
         double x2, y2;
         
         double radius;
         double xc, yc;
         JacobianElliptic je;
+        EllipticIntegral ei;
         double xr[] = new double[1];
         double yr[] = new double[1];
 
@@ -85,6 +90,7 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         float[] srcBuffer;
         float[] destBuffer;
         double xp;
+        double yp;
         double ySrc;
         double xSrc;
         float imageMin;
@@ -94,21 +100,15 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         float delY;
         int sIndex;
         int cf;
-        double uk;
-        double klow;
-        double kmid;
-        double khigh;
-        double first[] = new double[1];
-        double second[] = new double[1];
-        EllipticIntegral eInt;
-        double knum;
-        double kdenom;
-        double ukmid;
-        double eps;
         double xoff;
+        double yoff;
         double xw[] = new double[1];
         double yw[] = new double[1];
-        double kSqrt;
+        double modulus;
+        double first[] = new double[1];
+        double second[] = new double[1];
+        double K;
+        double Kp;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -166,68 +166,54 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
             }
         } // if (!srcImage.isColorImage())
 
-        // 4 mappings
-        // Mapping 1 from destination rectangle to a rectangle centered around the y axis
-        // Mapping 1 from rectangle at (0,0), (xDimDest-1, 0), (xDimDest-1,yDimDest-1),
-        // (0, yDimDest-1) to rectangle at (-(xDimDest-1)/2,0), ((xDimDest-1)/2,0), ((xDimDest-1)/2, yDimDest-1),
-        // (-(xDimDest-1)/2, yDimDest-1).
+        // 3 mappings
+        // Mapping 1 from destination rectangle to a rectangle centered around the origin
+        // Rectangle at (0,0), (xDimDest-1, 0), (xDimDest-1,yDimDest-1), (0, yDimDest-1) 
+        // to rectangle at (-K,Kp), ((K,Kp), (K,-Kp), (-K, -Kp).
+        // where K is the complete elliptic integral of the first kind using the modulus
+        // and Kp is the complete elliptic integral of the first kind using the complementary
+        // modulus = square root(1 - modulus* modulus)
+        // modulus arbitrarily chosen as 0.5.
         
-        // Mapping 2 occurs from the y axis centered rectangle to the upper half plane
+        // Mapping 2 occurs from the origin centered rectangle to the unit circle
+        // w = square root((1 - cn(z,modulus))/(1 + cn(z,modulus))
         
-        // In mapping 3 go from the y centered rectangle to the unit circle
+        // In mapping 3 scale and translate the unit circle to arrive at the destination circle
         
-        // In mapping 4 scale and translate the unit circle to arrive at the destination circle
-        // (xDimDest-1)/2.0/(yDimDest-1) = 2.0 * K(k)/K(sqrt(1 - k*k)), where K is the complete
-        // elliptic integral of the first kind.
-        //      Now how to find k:
-        // u(k) = K(k)/K(sqrt(1 - k*k)) = 0.25*(xDimDest - 1.0)/(yDimDest = 1.0),
-        // where u(k) increases from 0 to infinity as k increases from 0 to 1
-        uk = 0.25 * (xDimDest - 1.0)/(yDimDest - 1.0);
-        klow = 0.001;
-        khigh = 0.999;
-        kmid = (klow + khigh)/2.0;
-        while (true) {
-            eInt = new EllipticIntegral(Math.sqrt(1.0 - kmid*kmid), first, second); 
-            eInt.run();
-            kdenom = first[0];
-            eInt = new EllipticIntegral(kmid, first, second);
-            eInt.run();
-            knum = first[0];
-            ukmid = knum/kdenom;
-            eps = Math.abs((ukmid - uk)/uk);
-            if (eps < 1.0E-8) {
-                break;
-            }
-            if (ukmid < uk) {
-                klow = kmid;
-            }
-            else {
-                khigh = kmid;
-            }
-            kmid = (klow + khigh)/2.0;
-        }
-        
-        
-        Preferences.debug("kmid = " + kmid + "\n");
-        kSqrt = Math.sqrt(kmid);
         xoff = (xDimDest - 1.0)/2.0;
+        yoff = (yDimDest - 1.0)/2.0;
+        modulus = 0.5;
+        ei = new EllipticIntegral(modulus, first, second);
+        ei.run();
+        K = first[0];
+        ei = new EllipticIntegral(Math.sqrt(1.0 - modulus*modulus), first, second);
+        ei.run();
+        Kp = first[0];
         for (j = 0; j < yDimDest; j++) {
             fireProgressStateChanged(100 * j / yDimDest);
             index1 = j * xDimDest;
-
+            // Center around y axis
+            yp = (j - yoff)*(Kp/yoff);
             for (i = 0; i < xDimDest; i++) {
-                // Translate to a rectangle centered around the y axis
-                xp = i - xoff;
-                // Conformal map from the y centered rectangle to the upper half plane
-                // w = sn(z, k)
-                // The sn function must be a (xDimDest - 1) periodic function and a
-                // 2*i*(yDimDest - 1) periodic function ???
-                je = new JacobianElliptic(xp,(double)j,kmid,JacobianElliptic.SN,xw,yw);
+                // Center around x axis
+                xp = (i - xoff)*(K/xoff);
+                // Conformal map from origin centered rectangle to unit circle
+                je = new JacobianElliptic(xp, yp, modulus, JacobianElliptic.CN, xw, yw);
                 je.run();
-                Preferences.debug("xw[0] = " + xw[0] + " yw[0] = " + yw[0] + "\n");
-                // Map from upper half plane to inside of unit circle
-                // xi = (i - sqrt(k)*w)/(1.0 + sqrt(k)*w)
-                zdiv(-kSqrt*xw[0], -kSqrt*yw[0] + 1.0, kSqrt*xw[0] + 1.0, kSqrt*yw[0], xr, yr);
+                zdiv(1.0 - xw[0], -yw[0], 1.0 + xw[0], yw[0], xr, yr);
+                sqrtc(xr[0], yr[0], xr, yr);
+                if (xp >=0.0) {
+                    xr[0] = Math.abs(xr[0]);
+                }
+                else {
+                    xr[0] = -Math.abs(xr[0]);
+                }
+                if (yp >= 0) {
+                    yr[0] = Math.abs(yr[0]);
+                }
+                else {
+                    yr[0] = -Math.abs(yr[0]);
+                }
                 // Scale and translate from unit circle to user selected circle
                 xSrc = radius*xr[0] + xc;
                 ySrc = radius*yr[0] + yc;
@@ -304,7 +290,7 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
     /**
      * Starts the program.
      */
-    public void runAlgorithm() {
+    public void runAlgorithmPrevious() {
         double x2, y2;
         
         double radius;
@@ -323,7 +309,6 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         double yr[] = new double[1];
         double xmul;
         double ymul;
-        double prod;
 
         int xDimSource;
 
@@ -847,6 +832,28 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
             return (v * Math.sqrt(1.0 + (q * q)));
         }
     }
+    
+    /**
+     * Performs square root of complex argument.
+     *
+     * @param  zinr  DOCUMENT ME!
+     * @param  zini  DOCUMENT ME!
+     * @param  zsqr  DOCUMENT ME!
+     * @param  zsqi  DOCUMENT ME!
+     */
+    private void sqrtc(double zinr, double zini, double[] zsqr, double[] zsqi) {
+        double a;
+        double th;
+
+        a = zabs(zinr, zini);
+        a = Math.sqrt(a);
+        th = Math.atan2(zini, zinr);
+        th *= 0.5;
+        zsqr[0] = a * Math.cos(th);
+        zsqi[0] = a * Math.sin(th);
+
+        return;
+    } // private void sqrtc
 
     /**
      * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
