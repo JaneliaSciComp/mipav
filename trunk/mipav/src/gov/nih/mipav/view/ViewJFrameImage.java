@@ -344,8 +344,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             return;
         }
+
         if (command.equals("ScrollLink")) {
-           linkedScrolling = !linkedScrolling;        	
+            linkedScrolling = !linkedScrolling;
         } else if (command.equals("QuantifyMasks")) {
             new JDialogQuantifyMask(this, this.getActiveImage());
         } else if (command.equals("PaintBrushEditor")) {
@@ -627,7 +628,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             imageB.getMatrixHolder().replaceMatrices(imageA.getMatrixHolder().getMatrices());
-            
+
             if (linkTriFrame != null) {
                 linkTriFrame.setImageSelectorPanelVisible(true); // set the selector panel to visible in the
                                                                  // ViewJFrameTriImage, if it exists
@@ -1333,30 +1334,33 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogPaintRGBComponents(this, getComponentImage().getRGBPaintComponents());
         } else if (command.equals("OpacityPaint")) {
             new JDialogOpacityControls(this, controls);
-        } else if (command.equals("CommitPaint") ||
-        		command.equals("CommitPaintExt")) {
-        	boolean outputNew = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
-        	boolean polarity = command.equals("CommitPaint");
-        	
-        	
-        	if (outputNew == true) {
-        		ModelImage cloneImage = (ModelImage)getActiveImage().clone();
-        		ViewJFrameImage newFrame = new ViewJFrameImage(cloneImage);
-        		if (getActiveImage() == imageA) {
-        			newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null);
-        		} else {
-        			newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null);
-        		}
-        		newFrame.getActiveImage().notifyImageDisplayListeners(null, true);
-        	} else {
-        		if (getActiveImage() == imageA) {
-        			componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null);
-        		} else {
-        			componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null);
-        		}
-        		getActiveImage().notifyImageDisplayListeners(null, true);
-        	}
-            
+        } else if (command.equals("CommitPaint") || command.equals("CommitPaintExt")) {
+            boolean outputNew = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
+            boolean polarity = command.equals("CommitPaint");
+
+
+            if (outputNew == true) {
+                ModelImage cloneImage = (ModelImage) getActiveImage().clone();
+                ViewJFrameImage newFrame = new ViewJFrameImage(cloneImage);
+
+                if (getActiveImage() == imageA) {
+                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null);
+                } else {
+                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null);
+                }
+
+                newFrame.getActiveImage().notifyImageDisplayListeners(null, true);
+            } else {
+
+                if (getActiveImage() == imageA) {
+                    componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null);
+                } else {
+                    componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null);
+                }
+
+                getActiveImage().notifyImageDisplayListeners(null, true);
+            }
+
         } else if (command.equals("UndoPaint")) {
             componentImage.undoLastPaint();
             getActiveImage().notifyImageDisplayListeners(null, true);
@@ -1662,8 +1666,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogConvert3Dto4D(this, getActiveImage());
         } else if (command.equals("Crop")) {
             new JDialogCrop(this, getActiveImage());
-        } else if (command.equals("Pad")) {
-        	new JDialogPad(this, getActiveImage());
+
+            // } else if (command.equals("Pad")) {
+            // new JDialogPad(this, getActiveImage());
         } else if (command.equals("CropParam")) {
             new JDialogCropParam(this, getActiveImage());
         } else if (command.equals("FFT")) {
@@ -1677,16 +1682,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Fill image")) {
             new JDialogMask(this, getActiveImage());
         } else if (command.equals("QuickMask")) {
-        	if (getActiveImage().getVOIs().size() < 1) {
-        		MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
-        		return;
-        	}
+
+            if (getActiveImage().getVOIs().size() < 1) {
+                MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
+
+                return;
+            }
+
             new JDialogMask(getActiveImage(), false, false);
         } else if (command.equals("QuickMaskReverse")) {
-        	if (getActiveImage().getVOIs().size() < 1) {
-        		MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
-        		return;
-        	}
+
+            if (getActiveImage().getVOIs().size() < 1) {
+                MipavUtil.displayWarning("Must have at least one VOI to perform quick mask");
+
+                return;
+            }
+
             new JDialogMask(getActiveImage(), false, true);
         } else if (command.equals("Mean")) {
             new JDialogMean(this, getActiveImage());
@@ -3720,6 +3731,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param  event  DOCUMENT ME!
      */
     public void mouseClicked(MouseEvent event) {
+
         if (event.getButton() == MouseEvent.BUTTON3) {
 
             if (event.getSource() instanceof JToggleButton) {
@@ -3730,13 +3742,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     handleZoomPopupMenu(btnSource, event);
                 }
             } else if (event.getSource() instanceof JButton) {
-            	if (((JButton)event.getSource()).getActionCommand().equals("QuickMask") ||
-            			((JButton)event.getSource()).getActionCommand().equals("QuickMaskReverse")) {
-            		handleMaskPopupMenu((Component)event.getSource(), event);
-            	} else if (((JButton)event.getSource()).getActionCommand().equals("CommitPaint") ||
-            			((JButton)event.getSource()).getActionCommand().equals("CommitPaintExt")) {
-            		handlePaintToMaskPopupMenu((Component)event.getSource(), event);
-            	}
+
+                if (((JButton) event.getSource()).getActionCommand().equals("QuickMask") ||
+                        ((JButton) event.getSource()).getActionCommand().equals("QuickMaskReverse")) {
+                    handleMaskPopupMenu((Component) event.getSource(), event);
+                } else if (((JButton) event.getSource()).getActionCommand().equals("CommitPaint") ||
+                               ((JButton) event.getSource()).getActionCommand().equals("CommitPaintExt")) {
+                    handlePaintToMaskPopupMenu((Component) event.getSource(), event);
+                }
             }
         }
 
@@ -3757,8 +3770,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         isShiftDown = false;
                         // registeredFramedImages = null;
                     }
-                    
-                   
 
                     incSlice();
                 } else if (buttonSource.getActionCommand().equals("PreviousImage")) {
@@ -4215,12 +4226,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param  slice  indicates image slice to be displayed
      */
     public void setSlice(int slice) {
-    	setSlice(slice, true);
-        
+        setSlice(slice, true);
+
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  slice               DOCUMENT ME!
+     * @param  updateLinkedImages  DOCUMENT ME!
+     */
     public void setSlice(int slice, boolean updateLinkedImages) {
-    	if (imageA.getNDims() <= 2) {
+
+        if (imageA.getNDims() <= 2) {
             return;
         }
 
@@ -4229,9 +4247,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             controls.setZSlider(zSlice);
             updateImages(true);
 
-            /** when we set the slice of the other images, make SURE they do not try to update linked images (infinite loop)*/
+            /** when we set the slice of the other images, make SURE they do not try to update linked images (infinite
+             * loop)*/
             if (updateLinkedImages && linkedScrolling) {
-            	Vector registeredFramedImages = getRegisteredFramedImages();
+                Vector registeredFramedImages = getRegisteredFramedImages();
 
                 for (int i = 0; i < registeredFramedImages.size(); i++) {
                     ModelImage img = (ModelImage) registeredFramedImages.get(i);
@@ -4240,7 +4259,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     framedImg.updateImages();
                 }
             }
-            
+
             // livewire grad mag. should be recalculated for the new slice
             // componentImage.deactivateAllVOI();
             componentImage.getVOIHandler().resetLivewire();
@@ -4259,7 +4278,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         }
     }
-    
+
     /**
      * Sets the slice to be displayed and updates title frame.
      *
@@ -4998,8 +5017,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         return componentImage.getSize(null).width + scrollPane.getInsets().left + scrollPane.getInsets().right;
     }
 
-    
-    
+
     /**
      * Creates and initializes the LUT for the first image (<code>imageA</code>) if it hasn't been already.
      *
