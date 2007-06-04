@@ -8,6 +8,10 @@ import gov.nih.mipav.view.*;
 
 /**
  * Port of MATLAB nlinfit Nonlinearleast-squares fitting by the Gauss-Newton method.
+ *  The original nlinfit was written by B.A. Jones 12-06-94.
+ *  nlinfit MATLAB code is Copyright 1993-2000 The MathWorks, Inc. 
+ *  Can be downloaded from http://www.math.montana.edu/~greenwood/nlinfit_mod1.m or from
+ *  http://www.ks.uiuc.edu/Training/Tutorials/namd/namd-tutorial-files/2-7-echoes/01_equil_NVE/nlinfit.m
  */
 
 public abstract class NLEngine3 {
