@@ -165,8 +165,8 @@ public class JDialogSaveSlices extends JDialogBase {
                               (options.getFileType() == FileUtility.FITS) ||
                               (options.getFileType() == FileUtility.ICS) ||
                               (options.getFileType() == FileUtility.INTERFILE) ||
-                              (options.getFileType() == FileUtility.AFNI) ||
-                              (options.getFileType() == FileUtility.XML));
+                              (options.getFileType() == FileUtility.AFNI) || (options.getFileType() == FileUtility.XML) ||
+                              (options.getFileType() == FileUtility.PARREC)); // Modified to support PAR/REC
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
         init();
