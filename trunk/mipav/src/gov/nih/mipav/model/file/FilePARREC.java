@@ -44,6 +44,8 @@ public class FilePARREC extends FileBase {
     /** Voxel offset tag used to read in the image. */
     private float vox_offset = 0.0f;
 
+    private FileInfoBase outInfo;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -65,11 +67,15 @@ public class FilePARREC extends FileBase {
         fileName = fName;
         fileDir = fDir;
 
-
         fileNames = getCompleteFileNameList(fileDir+fileName);
     }
 
-    FileInfoBase outInfo;
+   /**
+    * Constructor used by FileIO to write an image
+    * @param fileName
+    * @param fileDirectory
+    * @param fileInfo
+    */
     public FilePARREC(String fileName, String fileDirectory, FileInfoBase fileInfo) {
         outInfo = fileInfo;
         this.fileName = fileName;
@@ -89,7 +95,7 @@ public class FilePARREC extends FileBase {
      */
     public static String[] getCompleteFileNameList(String absolutePath) {
         String[] completeFileNameList = new String[2];
-
+System.err.println("absolute path: " + absolutePath);
         if (FilePARREC.isHeaderFile(absolutePath)) {
             completeFileNameList[0] = absolutePath;
 
@@ -366,10 +372,11 @@ public class FilePARREC extends FileBase {
      * @see        gov.nih.mipav.model.file.FileInfoAnalyze
      */
     public boolean readHeader(String imageFileName, String fileDir) throws IOException {
-
+System.err.println("imageFileName: " + imageFileName);
         //Setup Basic Variables//
         String fileHeaderName;
         fileHeaderName=getHeaderFile();
+        System.err.println("header file name: " + fileHeaderName);
         Preferences.debug(" fileHeaderName = " + fileHeaderName  + "\n");
         File fileHeader = new File(fileHeaderName);
         if (fileHeader.exists() == false) {
@@ -803,8 +810,14 @@ public class FilePARREC extends FileBase {
      * @see        gov.nih.mipav.model.file.FileRaw
      */
     public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
-        throw new IOException("FilePARRECWrite: " + "Not supported");
 
+    	writeHeader(options);
+    	
+    	FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
+    	tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
+        FileRaw rawFile = new FileRaw(fileNames[1], "", tempInfo, FileBase.READ_WRITE);
+        linkProgress(rawFile);
+        rawFile.writeImage(image, options);
     }
 
 
@@ -1070,6 +1083,11 @@ public class FilePARREC extends FileBase {
     };
 
 
+    /**
+     * Gets the header and image file names given a header or image file name
+     * @param absolutePath header or image filename
+     * @return array [0] headerfilename [1] imagefilename
+     */
     public String[] getCompleteFileNameListDefault(String absolutePath) {
         String[] completeFileNameList = new String[2];
 
@@ -1079,7 +1097,7 @@ public class FilePARREC extends FileBase {
             String ext = FileUtility.getExtension((absolutePath));
             int k,k0;
 
-            if(ext.compareTo(hdrEXTENSIONS[0])==0 || ext.compareTo(hdrEXTENSIONS[0])==2) { //lower case
+            if(ext.equals(hdrEXTENSIONS[0]) || ext.equals(hdrEXTENSIONS[2])) { //lower case
                 if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
                     // frec, lower case
                     k=2;
@@ -1115,7 +1133,7 @@ public class FilePARREC extends FileBase {
 
             String ext = FileUtility.getExtension((absolutePath));
             int k,k0;
-            if(ext.compareTo(imgEXTENSIONS[0])==0 || ext.compareTo(imgEXTENSIONS[0])==2) {
+            if(ext.equals(imgEXTENSIONS[0]) || ext.equals(imgEXTENSIONS[2])) {
                 if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
                     // frec, lower case
                     k=2;
@@ -1182,7 +1200,7 @@ public class FilePARREC extends FileBase {
         int []extents = outInfo.getExtents();
         //Set the number of slices
         extents[2] = options.getEndSlice()-options.getBeginSlice()+1;
-        PrintStream fp = new PrintStream(new File(getHeaderFile()));
+        PrintStream fp = new PrintStream(new File(fileNames[0]));
         fp.println("# === DATA DESCRIPTION FILE ======================================================");
         fp.println("#");
         fp.println("# CAUTION - Investigational device.");

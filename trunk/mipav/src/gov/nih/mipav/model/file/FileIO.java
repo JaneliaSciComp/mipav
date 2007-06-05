@@ -8575,8 +8575,6 @@ public class FileIO {
      */
 
     private boolean writePARREC(ModelImage image, FileWriteOptions options) {
-        FileRaw rawFile;
-        FileInfoImageXML fileInfo;
 
         try { // Construct new file info and file objects
 
@@ -8588,34 +8586,21 @@ public class FileIO {
             }
 
             if(FilePARREC.isImageFile(options.getFileName())) {
-                if(fileBase.getDataType()!=ModelStorageBase.FLOAT) {
-                    if(FileUtility.getExtension(options.getFileName()).compareTo(".rec")==0) {
-                        options.setFileName(options.getFileName().replaceAll(".rec",".frec"));
-                    }
-                    if(FileUtility.getExtension(options.getFileName()).compareTo(".REC")==0) {
-                        options.setFileName(options.getFileName().replaceAll(".REC",".fREC"));
-                    }
+                if(fileBase.getDataType()==ModelStorageBase.FLOAT) {
+                	if (FileUtility.getExtension(options.getFileName()).equalsIgnoreCase(".rec")) {
+                		options.setFileName(options.getFileName().substring(0, options.getFileName().length()-4) + ".frec");
+                	}
                 } else {
-                    if(FileUtility.getExtension(options.getFileName()).compareTo(".frec")==0) {
-                        options.setFileName(options.getFileName().replaceAll(".frec",".rec"));
-                    }
-                    if(FileUtility.getExtension(options.getFileName()).compareTo(".fREC")==0) {
-                        options.setFileName(options.getFileName().replaceAll(".fREC",".REC"));
-                    }
+                	if (FileUtility.getExtension(options.getFileName()).equalsIgnoreCase(".frec")) {
+                		options.setFileName(options.getFileName().substring(0, options.getFileName().length()-5) + ".rec");
+                	}
                 }
             }
 
             FilePARREC pr = new FilePARREC(options.getFileName(), options.getFileDirectory(), fileBase);
 
-            pr.writeHeader(options);
-
-            fileInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
-            fileInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
-            rawFile = new FileRaw(pr.getImageFiles()[0], "", fileInfo, FileBase.READ_WRITE);
-            createProgressBar(rawFile, options.getFileName(), FILE_WRITE);
-            rawFile.writeImage(image, options);
-
-
+            createProgressBar(pr, options.getFileName(), FileIO.FILE_WRITE);
+            pr.writeImage(image, options);
         } catch (IOException error) {
 
             if (!quiet) {
