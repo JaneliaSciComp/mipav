@@ -413,8 +413,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         // imageDestDirText -- when imageDestDirText is typed into.
         imageDestDirText.addKeyListener(new KeyAdapter() { // make the field
 
-                /*  when enter is typed, the next focusable component
-                 *  is found; the rest of the event is ignored. transmits the new text from the evt.component (the
+                /**
+                 * When enter is typed, the next focusable component
+                 * is found; the rest of the event is ignored. transmits the new text from the evt.component (the
                  * textbox) when [bs] or keys are typed.  Also handles removing selected text.  All handling is done
                  * through a StringBuffer.
                  */
@@ -465,9 +466,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                 }
 
                 /**
-                 * transmits the new text from the evt.component (the textbox) when [del] is pressed.
-                 *
-                 * @param  evt  DOCUMENT ME!
+                 * Transmits the new text from the evt.component (the textbox) when the delete key is pressed.
                  */
                 public void keyReleased(KeyEvent evt) { // not accept letters
 
@@ -1550,6 +1549,15 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             }
 
             try {
+                String suffix = FileUtility.getExtension(imageFile.getName());
+                if (!suffix.equalsIgnoreCase(".dcm") && !suffix.equalsIgnoreCase(".ima")) {
+                    if (FileUtility.isDicom(imageFile.getName(), imageFile.getParent() + File.separator, true) != FileUtility.DICOM) {
+                        writeToLog(imageFile.getAbsolutePath(), false);
+                        writeToLog(" -- Not a DICOM file.  File skipped.", true);
+                        return false;
+                    }
+                }
+                
                 io.setFileDir(imageFile.getParent() + File.separator);
                 mi = io.readDicom(imageFile.getName(), new String[] { imageFile.getName() }, false);
                 writeToLog(imageFile.getAbsolutePath(), false);
@@ -1589,6 +1597,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                     writeOpts.setFileDirectory(destinationDirectory.getPath() + File.separator);
                     writeOpts.setOptionsSet(true);
                     writeOpts.setRecalculateInstanceNumber(false);
+                    writeOpts.doPutInQuicklist(false);
                     writeOpts.setSaveInSubdirectory(false); // should be false by default.  we want to preserve current
                                                             // writeOpt structure
                     ((FileInfoDicom) mi.getFileInfo(0)).getTagTable().setValue("0010,0010", anonymousName);
@@ -1632,6 +1641,14 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                 writeToLog(imageFile.getAbsolutePath() + "  -- Not a DICOM file.  File not Touched.", true);
                 mi = null;
 
+                return false;
+            } catch (IOException ioe) {
+                writeToLog(imageFile.getAbsolutePath(), false);
+                writeToLog(" -- Problem encountered reading file.", true);
+                
+                ioe.printStackTrace();
+                mi = null;
+                
                 return false;
             }
         }
