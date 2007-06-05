@@ -471,6 +471,7 @@ public class ViewMenuBar {
 
         menuBuilder.makeMenu("Transformation tools", false,
                              new JMenuItem[] {
+                                 menuBuilder.buildMenuItem("Barrel distortion correction", "Barrel", 0, null, false),
                                  menuBuilder.buildMenuItem("Circle to rectangle", "CircleToRec", 0, null, false),
                                  menuBuilder.buildMenuItem("Circular sector to rectangle", "CirToRec", 0, null, false),
                                  menuBuilder.buildMenuItem("Ellipse to circle", "EllipseToCircle", 0, null, false),
@@ -1235,6 +1236,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
+            menuBuilder.setMenuItemEnabled("Menu distortion correction", false);
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
             menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
@@ -1253,6 +1255,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
+            menuBuilder.setMenuItemEnabled("Barrel distortion correction", false);
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
             menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
