@@ -93,32 +93,60 @@ public class FilePARREC extends FileBase {
         if (FilePARREC.isHeaderFile(absolutePath)) {
             completeFileNameList[0] = absolutePath;
 
-            //Try all extensions until one has a file that exists
+            // Try all extensions until one has a file that exists
             // completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[1];
-            for(int k=0;k<imgEXTENSIONS.length;k++) {
+            for (int k = 0; k < imgEXTENSIONS.length; k++) {
 
-                completeFileNameList[1] = absolutePath.replaceAll(FileUtility.getExtension((absolutePath)),FilePARREC.imgEXTENSIONS[k]);
+            	if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+            		completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
+            			FilePARREC.imgEXTENSIONS[k];
+            	} else {
+            		completeFileNameList[1] = absolutePath;
+            	}
+                
                 File fp = new File(completeFileNameList[1]);
-                if(fp.exists())
+
+                if (fp.exists()) {
                     break;
+                }
             }
         } else if (FilePARREC.isImageFile(absolutePath)) {
             completeFileNameList[1] = absolutePath;
 
-            //Try all extensions until one has a file that exists
+            // Try all extensions until one has a file that exists
             // completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[0];
             for(int k=0;k<hdrEXTENSIONS.length;k++) {
-                completeFileNameList[0] = absolutePath.replaceAll(FileUtility.getExtension((absolutePath)),FilePARREC.hdrEXTENSIONS[k]);
+            	
+            	if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+            		completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
+            			FilePARREC.hdrEXTENSIONS[k];
+            	} else {
+            		completeFileNameList[0] = absolutePath;
+            	}
+            }        
+            for (int k = 0; k < hdrEXTENSIONS.length; k++) {
+              
+                if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+            		completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) +
+            			FilePARREC.hdrEXTENSIONS[k];
+            	} else {
+            		completeFileNameList[1] = absolutePath;
+            	}
+                
                 File fp = new File(completeFileNameList[0]);
-                if(fp.exists())
+
+                if (fp.exists()) {
                     break;
+                }
             }
         } else {
             completeFileNameList = null;
         }
 
+        
         return completeFileNameList;
     }
+
 
     /**
      * ======= Returns the header file.
@@ -229,11 +257,8 @@ public class FilePARREC extends FileBase {
             throw (new IOException("PAR/REC header file error"));
         }
 
-        int[] extents = null;
-
         try {
-            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(),
-                    ViewUserInterface.getReference());
+            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
         } catch (OutOfMemoryError error) {
             throw (error);
         }
@@ -1076,9 +1101,12 @@ public class FilePARREC extends FileBase {
                     k0=3;
                 }
             }
-            completeFileNameList[1] = absolutePath.replaceAll(FileUtility.getExtension((absolutePath)),FilePARREC.imgEXTENSIONS[k]);
-            completeFileNameList[0] = absolutePath.replaceAll(FileUtility.getExtension((absolutePath)),FilePARREC.hdrEXTENSIONS[k0]);
-
+            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.imgEXTENSIONS[k];
+                completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + "." + FilePARREC.hdrEXTENSIONS[k0];
+            }
+            
+            
         } else if (FilePARREC.isImageFile(absolutePath)) {
             completeFileNameList[1] = absolutePath;
 
@@ -1109,14 +1137,18 @@ public class FilePARREC extends FileBase {
                     k0=1;
                 }
             }
-            completeFileNameList[0] = absolutePath.replaceAll(FileUtility.getExtension((absolutePath)),FilePARREC.hdrEXTENSIONS[k]);
-            completeFileNameList[1] = absolutePath.replaceAll(FileUtility.getExtension((absolutePath)),FilePARREC.imgEXTENSIONS[k0]);
+            if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
+            	completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.hdrEXTENSIONS[k];
+            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.imgEXTENSIONS[k0];
+            }
         } else {
             completeFileNameList = null;
         }
 
+        
         return completeFileNameList;
     }
+
 
     //todo: monitor options for cropped data
     public void writeHeader(FileWriteOptions options) throws IOException {
