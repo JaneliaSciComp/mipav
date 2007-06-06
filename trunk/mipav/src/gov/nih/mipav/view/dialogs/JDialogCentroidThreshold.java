@@ -67,7 +67,7 @@ public class JDialogCentroidThreshold extends JDialogBase {
      * @param  _max            image maximum
      */
     public JDialogCentroidThreshold(Frame theParentFrame, String _imageName, int _nClasses, float _min, float _max) {
-        super(theParentFrame, false);
+        super(theParentFrame, true);
 
         getContentPane().setLayout(new BorderLayout());
         setTitle("Threshold & Initial Centroids");
