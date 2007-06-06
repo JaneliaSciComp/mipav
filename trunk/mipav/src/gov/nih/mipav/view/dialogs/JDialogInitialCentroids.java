@@ -56,7 +56,7 @@ public class JDialogInitialCentroids extends JDialogBase {
      * @param  _max            image maximum
      */
     public JDialogInitialCentroids(Frame theParentFrame, int _nClasses, float _min, float _max) {
-        super(theParentFrame, false);
+        super(theParentFrame, true);
 
 
         getContentPane().setLayout(new BorderLayout());
