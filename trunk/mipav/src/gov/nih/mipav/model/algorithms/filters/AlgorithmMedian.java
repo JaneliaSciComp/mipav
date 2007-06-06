@@ -2618,6 +2618,10 @@ public class AlgorithmMedian extends AlgorithmBase {
         int srcBdrBufferIdx;
         int destRow, destCol, destBufferIdx = destBufferStartingPoint;
         float[] maskedList;
+        
+        float average; // arithmetic mean
+        float sigma; // standard deviation
+        int kCenter = maskCenter[0]; // to find the middle pixel of the kernel-mask
 
         for (destRow = 0; destRow < srcBufferHeight; destRow++) {
             srcBdrBufferIdx = (destRow * bdrBufferWidth) + srcBdrBufferOffset;
@@ -2655,8 +2659,24 @@ public class AlgorithmMedian extends AlgorithmBase {
                     } // if (adaptiveSize)
                     else { // not adaptiveSize
                         maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, true);
-                        shellSort(maskedList);
-                        destBuffer[destBufferIdx] = median(maskedList);
+                        
+                        //verify that this element is an outlier
+                        if (stdDevLimit == 0.0) { // anything is an outlier
+                            shellSort(maskedList);
+                            destBuffer[destBufferIdx] = median(maskedList);
+                        } else { // look for outlierness
+                            average = mean(maskedList);
+                            sigma = standardDeviation(maskedList, average);
+
+                            if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
+                                    (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+                                shellSort(maskedList);
+                                destBuffer[destBufferIdx] = median(maskedList);
+                            } else { // if element was not an outlier, pixel is fine.
+                                destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
+                            }
+                        }
+                        
                     } // else not adaptiveSize
                 } else {
                     destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
