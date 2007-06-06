@@ -433,7 +433,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     }
 
                     int ID = dco.getInt16(DICOM_RTC.DD_MoveOriginatorMessageID);
-                    process = dicomMessageDisplayer.getRowFromID(ID); // process = row in message table
+                    process = DICOMDisplayer.getRowFromID(ID); // process = row in message table
 
                     if (process == -1) {
                         process = 0;
@@ -477,7 +477,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     filePath = filePath.concat(patientName + File.separatorChar + "st_" + studyNo + File.separatorChar +
                                                "ser_" + seriesNo);
 
-                    dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.DESTINATION);
+                    DICOMDisplayer.setMessageType(process, DICOMDisplayer.DESTINATION);
                     showMessage(filePath);
 
                     if (modality.equals("PT")) { // If modality is PET
@@ -536,9 +536,9 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                         crNum++;
                     }
 
-                    dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.PROGRESS);
+                    DICOMDisplayer.setMessageType(process, DICOMDisplayer.PROGRESS);
                     showMessage(imageNo);
-                    dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.STATUS);
+                    DICOMDisplayer.setMessageType(process, DICOMDisplayer.STATUS);
                     showMessage("Saving images");
 
                     File DICOMFile = new File(filePath);
@@ -605,7 +605,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     }
 
                     if (cancelled) {
-                        dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.STATUS);
+                        DICOMDisplayer.setMessageType(process, DICOMDisplayer.STATUS);
                         showMessage("Cancelled");
                         cancelled = false;
 
@@ -614,7 +614,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                 }
             }
         } catch (DICOM_Exception e) {
-            dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.ERROR);
+            DICOMDisplayer.setMessageType(process, DICOMDisplayer.ERROR);
             showMessage("" + e);
         }
 
@@ -762,7 +762,6 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         implementationClassUID = getImplementationClassUID();
         transferSyntaxUID = getTransferSyntaxID();
 
-
         int classUIDLength = classUID.length();
 
         if ((classUID.length() % 2) == 1) {
@@ -787,67 +786,81 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
             transferSyntaxUIDLength++;
         }
 
+        // TODO: adjust length to include vr values of the preable
         // Length equals full length of preample.
-        int length = 132 + 12 + 10 + 8 + classUIDLength + 8 + instanceUIDLength + 8 + transferSyntaxUIDLength + 8 +
+        int length = 132 + 12 + 14 + 8 + classUIDLength + 8 + instanceUIDLength + 8 + transferSyntaxUIDLength + 8 +
                      implementationClassUIDLength;
 
         if ((preambleBuffer == null) || (preambleBuffer.length != length)) {
             preambleBuffer = new byte[length];
         }
 
+        int idx = 128;
+
         byte[] byteArray = null;
 
-        preambleBuffer[128] = 0x44; // D
-        preambleBuffer[129] = 0x49; // I
-        preambleBuffer[130] = 0x43; // C
-        preambleBuffer[131] = 0x4d; // M
+        preambleBuffer[idx++] = 0x44; // D
+        preambleBuffer[idx++] = 0x49; // I
+        preambleBuffer[idx++] = 0x43; // C
+        preambleBuffer[idx++] = 0x4d; // M
 
         // 0200 0000 0400 0000 xx00 0000   xx =
         // (0002, 0000)
-        preambleBuffer[132] = 0x02;
-        preambleBuffer[133] = 0x00;
-        preambleBuffer[134] = 0x00;
-        preambleBuffer[135] = 0x00;
+        preambleBuffer[idx++] = 0x02;
+        preambleBuffer[idx++] = 0x00;
+        preambleBuffer[idx++] = 0x00;
+        preambleBuffer[idx++] = 0x00;
+
+        // vr
+        preambleBuffer[idx++] = 0x55; // U
+        preambleBuffer[idx++] = 0x4c; // L
 
         // Length
-        preambleBuffer[136] = 4;
-        preambleBuffer[137] = 0x00;
-        preambleBuffer[138] = 0x00;
-        preambleBuffer[139] = 0x00;
+        preambleBuffer[idx++] = 4;
+        preambleBuffer[idx++] = 0x00;
 
-        DICOM_Comms.int32ToBuffer(preambleBuffer, 140, length - 144, DICOM_Comms.LITTLE_ENDIAN);
+        DICOM_Comms.int32ToBuffer(preambleBuffer, idx, length - (idx + 4), DICOM_Comms.LITTLE_ENDIAN);
+
+        idx += 4;
 
         // ***** (0002, 0001)
-        preambleBuffer[144] = 0x02;
-        preambleBuffer[145] = 0x00;
-        preambleBuffer[146] = 0x01;
-        preambleBuffer[147] = 0x00;
+        preambleBuffer[idx++] = 0x02;
+        preambleBuffer[idx++] = 0x00;
+        preambleBuffer[idx++] = 0x01;
+        preambleBuffer[idx++] = 0x00;
+
+        // vr
+        preambleBuffer[idx++] = 0x4f; // O
+        preambleBuffer[idx++] = 0x42; // B
+        preambleBuffer[idx++] = 0x00;
+        preambleBuffer[idx++] = 0x00;
 
         // Length
-        preambleBuffer[148] = 2;
-        preambleBuffer[149] = 0x00;
-        preambleBuffer[150] = 0x00;
-        preambleBuffer[151] = 0x00;
+        preambleBuffer[idx++] = 2;
+        preambleBuffer[idx++] = 0x00;
+        preambleBuffer[idx++] = 0x00;
+        preambleBuffer[idx++] = 0x00;
 
-        preambleBuffer[152] = 0x33;
-        preambleBuffer[153] = 0x37;
+        // TODO: what is this value?
+        preambleBuffer[idx++] = 0x33;
+        preambleBuffer[idx++] = 0x37;
 
         // *****  fileInfo.get("0008,0016");
-        preambleBuffer[154] = 0x02;
-        preambleBuffer[155] = 0x00;
-        preambleBuffer[156] = 0x02;
-        preambleBuffer[157] = 0x00;
+        preambleBuffer[idx++] = 0x02;
+        preambleBuffer[idx++] = 0x00;
+        preambleBuffer[idx++] = 0x02;
+        preambleBuffer[idx++] = 0x00;
+
+        // vr
+        preambleBuffer[idx++] = 0x55; // U
+        preambleBuffer[idx++] = 0x49; // I
 
         // Length
         byteArray = classUID.getBytes();
-        preambleBuffer[158] = (byte) classUIDLength;
-        preambleBuffer[159] = 0x00;
-        preambleBuffer[160] = 0x00;
-        preambleBuffer[161] = 0x00;
+        preambleBuffer[idx++] = (byte) classUIDLength;
+        preambleBuffer[idx++] = 0x00;
 
-        int idx = 162;
-
-        for (int i = 0, j = 162; i < classUID.length(); i++, j++) {
+        for (int i = 0, j = idx; i < classUID.length(); i++, j++) {
             preambleBuffer[j] = byteArray[i];
             idx++;
         }
@@ -862,11 +875,13 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         preambleBuffer[idx++] = 0x03;
         preambleBuffer[idx++] = 0x00;
 
+        // vr
+        preambleBuffer[idx++] = 0x55; // U
+        preambleBuffer[idx++] = 0x49; // I
+
         // Length
         byteArray = instanceUID.getBytes();
         preambleBuffer[idx++] = (byte) instanceUIDLength;
-        preambleBuffer[idx++] = 0x00;
-        preambleBuffer[idx++] = 0x00;
         preambleBuffer[idx++] = 0x00;
 
         for (int i = 0, j = idx; i < instanceUID.length(); i++, j++) {
@@ -884,10 +899,13 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         preambleBuffer[idx++] = 0x10;
         preambleBuffer[idx++] = 0x00;
 
+        // vr
+        preambleBuffer[idx++] = 0x55; // U
+        preambleBuffer[idx++] = 0x49; // I
+
+        // length
         byteArray = transferSyntaxUID.getBytes();
         preambleBuffer[idx++] = (byte) transferSyntaxUIDLength;
-        preambleBuffer[idx++] = 0x00;
-        preambleBuffer[idx++] = 0x00;
         preambleBuffer[idx++] = 0x00;
 
         for (int i = 0, j = idx; i < transferSyntaxUID.length(); i++, j++) {
@@ -905,10 +923,12 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         preambleBuffer[idx++] = 0x12;
         preambleBuffer[idx++] = 0x00;
 
+        // vr
+        preambleBuffer[idx++] = 0x55; // U
+        preambleBuffer[idx++] = 0x49; // I
+
         // Length
         preambleBuffer[idx++] = (byte) implementationClassUIDLength;
-        preambleBuffer[idx++] = 0x00;
-        preambleBuffer[idx++] = 0x00;
         preambleBuffer[idx++] = 0x00;
 
         // new String("1.2.840.34379.17");
