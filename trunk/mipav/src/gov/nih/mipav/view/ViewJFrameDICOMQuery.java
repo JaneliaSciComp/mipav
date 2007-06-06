@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.dicomcomm.*;
+import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.dialogs.*;
 
@@ -821,23 +822,48 @@ public class ViewJFrameDICOMQuery extends JFrame
             sendPanel.repaint();
         } else if (command.equals("SendImages")) {
 
-            int row = sendTable.getSelectedRow();
+            int[] rows = sendTable.getSelectedRows();
 
-            if (row == -1) { // no row selected
-                MipavUtil.displayError("Select directory or image.");
+            if (rows.length == 0) { // no row selected
+                MipavUtil.displayError("Select a directory or image.");
 
                 return;
             }
 
-            String str = (String) sendTable.getValueAt(row, 0);
-            DICOM_Store dcmStore = new DICOM_Store(sourceTextF.getText() + File.separatorChar + str,
-                                                   (String) sendDestCBox.getSelectedItem(), this);
+            for (int i = 0; i < rows.length; i++) {
+                String fileDir = sourceTextF.getText() + File.separatorChar;
+                String fileName = (String) sendTable.getValueAt(rows[i], 0);
 
-            Thread runner = new Thread(dcmStore);
-            runner.start();
+                String suffix = FileUtility.getExtension(fileName);
 
-            sendStatusTArea.append("Sending -- " + sourceTextF.getText() + File.separatorChar + str + " to " +
-                                   (String) sendDestCBox.getSelectedItem() + "\n");
+                if (!new File(fileDir + fileName).isDirectory() && !suffix.equalsIgnoreCase(".dcm") &&
+                        !suffix.equalsIgnoreCase(".ima")) {
+
+                    try {
+
+                        if (FileUtility.isDicom(fileName, fileDir, true) != FileUtility.DICOM) {
+                            sendStatusTArea.append("Skipping -- " + fileDir + fileName + " -- not a DICOM file.\n");
+
+                            continue;
+                        }
+                    } catch (IOException ioe) {
+                        sendStatusTArea.append("Skipping -- " + fileDir + fileName +
+                                               " -- I/O error encountered reading file.\n");
+                        ioe.printStackTrace();
+
+                        continue;
+                    }
+                }
+
+                DICOM_Store dcmStore = new DICOM_Store(fileDir + fileName, (String) sendDestCBox.getSelectedItem(),
+                                                       this);
+
+                Thread runner = new Thread(dcmStore);
+                runner.start();
+
+                sendStatusTArea.append("Sending -- " + fileDir + fileName + " to " +
+                                       (String) sendDestCBox.getSelectedItem() + "\n");
+            }
         } else if (command.equals("SendClear")) {
             sendStatusTArea.setText(" ");
         } else if (command.equals("TestConnection")) {

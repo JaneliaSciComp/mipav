@@ -632,6 +632,8 @@ public class FileDicom extends FileDicomBase {
                     Preferences.debug("Out of memory in FileDicom.readHeader\n", Preferences.DEBUG_FILEIO);
                 }
 
+                e.printStackTrace();
+
                 throw new IOException();
             }
 
@@ -832,6 +834,8 @@ public class FileDicom extends FileDicomBase {
                         Preferences.debug("Out of memory storing unknown tags in FileDicom.readHeader\n",
                                           Preferences.DEBUG_FILEIO);
                     }
+
+                    e.printStackTrace();
 
                     throw new IOException("Out of memory storing unknown tags in FileDicom.readHeader");
                 } catch (NullPointerException npe) {
@@ -2957,7 +2961,7 @@ public class FileDicom extends FileDicomBase {
             writeShort((short) gr, endianess); // write group
             writeShort((short) el, endianess); // write element
 
-            if ((fileInfo.vr_type == FileInfoDicom.EXPLICIT) && (vr != null)) {
+            if (((fileInfo.vr_type == FileInfoDicom.EXPLICIT) || (gr == 2)) && (vr != null)) {
                 outputFile.writeBytes(vr); // write explicit vr
 
                 if (vr.equals("SQ")) {
