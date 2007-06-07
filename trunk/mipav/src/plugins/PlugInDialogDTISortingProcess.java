@@ -259,7 +259,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 		mainPanelConstraints.gridy = 7;
 		mainPanelConstraints.gridwidth = 3;
 		mainPanelConstraints.insets = new Insets(15,5,15,5);
-		refLabel = new JLabel("developed in concert with Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS from the NIH/NICHD/LIMB/STBB group");
+		refLabel = new JLabel("Developed in concert with Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker MS from the NIH/NICHD/LIMB/STBB group");
 		mainPanel.add(refLabel, mainPanelConstraints);
 		
 		JPanel OKCancelPanel = new JPanel();
