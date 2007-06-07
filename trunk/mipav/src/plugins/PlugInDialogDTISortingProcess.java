@@ -35,6 +35,14 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
  * @author pandyan
  * 
  * This is the main dialog for the DTI Sorting Process Plug-In
+ * 
+ * References: This algorithm was developed in concert with Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS of
+ * the NIH/NICHD/LIMB/STBB group :
+ * 
+ * Section on Tissue Biophysics and Biomimetics (STBB)
+ * Laboratory of Integrative and Medical Biophysics (LIMB)
+ * National Institute of Child Health & Humann Development
+ * National Institutes of Health
  *
  */
 public class PlugInDialogDTISortingProcess extends JDialogScriptableBase implements
@@ -104,6 +112,9 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
     /** boolean if interleaved **/
     private boolean isInterleaved;
     
+    /** comment referencing the DTI group **/
+    JLabel refLabel;
+    
     
 
 	
@@ -129,7 +140,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("DTI Sorting Process " + " v2.1");
+        setTitle("DTI Sorting Process " + " v2.2");
         
         GridBagLayout mainPanelGridBagLayout = new GridBagLayout();
         GridBagConstraints mainPanelConstraints = new GridBagConstraints();
@@ -241,11 +252,15 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 		outputTextArea.setBackground(Color.lightGray);
 		outputTextArea.setBorder(new LineBorder(Color.black));
 		outputTextArea.setForeground(Color.black);
-		
 		scrollPane = new JScrollPane(outputTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		
 		mainPanel.add(scrollPane, mainPanelConstraints);
 		
+		mainPanelConstraints.gridx = 0;
+		mainPanelConstraints.gridy = 7;
+		mainPanelConstraints.gridwidth = 3;
+		mainPanelConstraints.insets = new Insets(15,5,15,5);
+		refLabel = new JLabel("developed in concert with Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS from the NIH/NICHD/LIMB/STBB group");
+		mainPanel.add(refLabel, mainPanelConstraints);
 		
 		JPanel OKCancelPanel = new JPanel();
         buildOKButton();
@@ -534,7 +549,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 	}
 
 	/**
-	 * Document me
+	 * method for scripting purposes
 	 *
 	 */
 	public void storeParamsFromGUI() throws ParserException{
@@ -546,7 +561,7 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 	
 	
 	/**
-	 * Document me
+	 * method for scripting purposes
 	 *
 	 */
 	public void setGUIFromParams() {

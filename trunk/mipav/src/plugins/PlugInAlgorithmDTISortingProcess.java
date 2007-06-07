@@ -29,7 +29,15 @@ import javax.swing.JTextArea;
 
 
 /**
- * DOCUMENT ME!
+ * This algorithm is responsible for the creation of a sorted path file, list file, and b-matrix file
+ * 
+ * References: This algorithm was developed in concert with Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS of
+ * the NIH/NICHD/LIMB/STBB group :
+ * 
+ * Section on Tissue Biophysics and Biomimetics (STBB)
+ * Laboratory of Integrative and Medical Biophysics (LIMB)
+ * National Institute of Child Health & Humann Development
+ * National Institutes of Health
  */
 public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
@@ -41,7 +49,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
     /** this is an array of b-values that for each volume.* */
     private ArrayList bValuesArrayList = new ArrayList();
 
-    /** Document ME.* */
+    /** Array that holds the dicom tag info* */
     private String[] dicomInfo;
 
     /** this is the gradient matrix that is populated when reading the gradient file.* */
@@ -109,11 +117,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
     /**
      * constructor.
      *
-     * @param  studyPath         DOCUMENT ME!
-     * @param  studyName         DOCUMENT ME!
-     * @param  gradientFilePath  DOCUMENT ME!
-     * @param  bmtxtFilePath     DOCUMENT ME!
-     * @param  outputTextArea    DOCUMENT ME!
+     * @param  studyPath         
+     * @param  studyName         
+     * @param  gradientFilePath  
+     * @param  bmtxtFilePath     
+     * @param  outputTextArea   
      */
     public PlugInAlgorithmDTISortingProcess(String studyPath, String studyName, String gradientFilePath,
                                             String bmtxtFilePath, JTextArea outputTextArea, boolean isInterleaved) {
@@ -127,12 +135,291 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+    
+    /**
+     * run algorithm.
+     */
+    public void runAlgorithm() {
+        long begTime = System.currentTimeMillis();
+
+
+        Preferences.debug("** Beginning Algorithm v2.2\n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("** Beginning Algorithm v2.2\n");
+        }
+
+        System.out.println("** Beginning Algorithm v2.2\n");
+
+        //remove last slash from study path if it has it
+        if(String.valueOf(studyPath.charAt(studyPath.length() - 1)).equals(File.separator)) {
+        	studyPath = studyPath.substring(0,studyPath.length() - 1);
+	    }
+        
+        Preferences.debug("* The study path is " + studyPath + " \n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("* The study path is " + studyPath + " \n");
+        }
+
+        System.out.println("* The study path is " + studyPath + " \n");
+        
+        
+        
+        if(isInterleaved) {
+        	Preferences.debug("* Interleaved dataset \n", Preferences.DEBUG_ALGORITHM);
+
+            if (outputTextArea != null) {
+                outputTextArea.append("* Interleaved dataset \n");
+            }
+
+            System.out.println("* Interleaved dataset \n");
+        }
+        
+        
+        if(isInterleaved && bmtxtFilePath.equals("")) {
+        	//this means that no b-matrix file was provided along with this  interleaved dataset
+            Preferences.debug("* For interleaved datasets, b-matrix file is required \n", Preferences.DEBUG_ALGORITHM);
+
+            if (outputTextArea != null) {
+                outputTextArea.append("* For interleaved datasets, b-matrix file is required \n");
+            }
+
+            System.out.println("* For interleaved datasets, b-matrix file is required \n");
+            
+            finalize();
+            setCompleted(true);
+            return;
+        }
+
+
+        // first create a File object based upon the study path
+        File studyPathRoot = new File(studyPath);
+
+
+        // parse the directory
+        Preferences.debug("* Parsing", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("* Parsing");
+        }
+
+        System.out.print("* Parsing");
+
+
+        try {
+            success = parse(studyPathRoot);
+        } catch (OutOfMemoryError e) {
+        	if (outputTextArea != null) {
+                outputTextArea.append("! ERROR: out of memory....exiting algorithm \n");
+            }
+            System.out.println("! ERROR: " + e.getCause().toString() + "\n");
+            System.out.println("! ERROR: out of memory....exiting algorithm \n");
+            finalize();
+            setCompleted(true);
+            return;
+        } catch (IOException e) {
+        	if (outputTextArea != null) {
+                outputTextArea.append("! ERROR: IOException....exiting algorithm \n");
+            }
+            System.out.println("! ERROR: " + e.toString() + "\n");
+            System.out.println("! ERROR: IOException....exiting algorithm \n");
+            finalize();
+            setCompleted(true);
+            return;
+        }
+
+        if (success == false) {
+            finalize();
+            setCompleted(true);
+            return;
+        }
+
+        System.gc();
+
+        Preferences.debug("\n* Number of image slices in study dir is " + totalImageSlices + " \n",
+                          Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("\n* Number of image slices in study dir is " + totalImageSlices + " \n");
+        }
+
+        System.out.println("\n\n* Number of image slices in study dir is " + totalImageSlices + " \n");
+
+
+        if (totalImageSlices == 0) {
+            finalize();
+            setCompleted(true);
+            return;
+        }
+
+
+        // set initial info
+        success = setInitialInfo();
+
+        if (success == false) {
+            finalize();
+            setCompleted(true);
+            return;
+        }
+
+
+        // create proc dir
+        Preferences.debug("* Creating proc dir \n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("* Creating proc dir \n");
+        }
+
+        System.out.println("* Creating proc dir \n");
+        success = createProcDir();
+
+        if (success == false) {
+            finalize();
+            setCompleted(true);
+            return;
+        }
+
+
+        // create path file
+        Preferences.debug("* Creating path file \n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("* Creating path file \n");
+        }
+
+        System.out.println("* Creating path file \n");
+        if(isInterleaved) {
+        	success = createPathFileForInterleaved();
+        }else {
+        	success = createPathFile();
+        }
+
+        if (success == false) {
+            finalize();
+            setCompleted(true);
+            return;
+        }
+
+
+        // create list file
+        Preferences.debug("* Creating list file \n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("* Creating list file \n");
+        }
+
+        System.out.println("* Creating list file \n");
+        success = createListFile();
+
+        if (success == false) {
+            finalize();
+            setCompleted(true);
+            return;
+        }
+ 
+
+        if (!gradientFilePath.equals("")) {
+            // this means user provided gradient file...so...
+
+            // read gradient file
+            Preferences.debug("* Reading gradient file \n", Preferences.DEBUG_ALGORITHM);
+
+            if (outputTextArea != null) {
+                outputTextArea.append("* Reading gradient file \n");
+            }
+
+            System.out.println("* Reading gradient file \n");
+            success = readGradientFile();
+
+            if (success == false) {
+                finalize();
+                setCompleted(true);
+                return;
+            }
+
+            // obtain b-values
+            Preferences.debug("* Obtaining b-values \n", Preferences.DEBUG_ALGORITHM);
+
+            if (outputTextArea != null) {
+                outputTextArea.append("* Obtaining b-values \n");
+            }
+
+            System.out.println("* Obtaining b-values \n");
+            success = obtainBValues();
+
+            if (success == false) {
+                finalize();
+                setCompleted(true);
+                return;
+            }
+
+            // create b matrix file
+            Preferences.debug("* Creating b-matrix file \n", Preferences.DEBUG_ALGORITHM);
+
+            if (outputTextArea != null) {
+                outputTextArea.append("* Creating b-matrix file \n");
+            }
+
+            System.out.println("\n* Creating b-matrix file \n");
+            success = createBMatrixFile();
+
+            if (success == false) {
+                finalize();
+                setCompleted(true);
+                return;
+            }
+        } else {
+            // this means that the bmtxt file was provided instead...so...
+
+            // copy and rename b-matrix file
+            Preferences.debug("* b-matrix file provided \n", Preferences.DEBUG_ALGORITHM);
+
+            if (outputTextArea != null) {
+                outputTextArea.append("* b-matrix file provided \n");
+            }
+
+            System.out.println("* b-matrix file provided \n");
+            success = copyBMatrixFile();
+
+            if (success == false) {
+                finalize();
+                setCompleted(true);
+                return;
+            }
+        }
+
+        Preferences.debug("** Ending Algorithm \n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("** Ending Algorithm \n");
+        }
+
+        System.out.println("** Ending Algorithm \n");
+
+        finalize();
+
+
+        long endTime = System.currentTimeMillis();
+        long diffTime = endTime - begTime;
+        float seconds = ((float) diffTime) / 1000;
+
+        Preferences.debug("** Algorithm took " + seconds + " seconds \n", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
+        }
+
+        System.out.println("** Algorithm took " + seconds + " seconds \n");
+
+        setCompleted(true);
+    }
 
     /**
      * This method copies the optional b matrix file that user provided, and copies it to proc dir and renames it to the
      * correct naming syntax.
      *
-     * @return  DOCUMENT ME!
+     * @return boolean
      */
     public boolean copyBMatrixFile() {
         File from = new File(bmtxtFilePath);
@@ -652,6 +939,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
     
     /**
 	 * This method creates the path file for interleaverd datasets
+	 * 
 	 * @return boolean success
 	 */
 	public boolean createPathFileForInterleaved() {
@@ -742,16 +1030,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		}
 	}
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+      
 
 
     /**
@@ -857,7 +1136,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
     /**
      * This method obtains the b-values for each volume from either the public tag or the private tag.
      *
-     * @return  DOCUMENT ME!
+     * @return  boolean success
      */
     public boolean obtainBValues() {
         // get b-values for each volume set
@@ -1100,12 +1379,12 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
      * on the filename, get vol number (for example mipav_dicom_dti_series11_volume10005.dcm), and sort within lists
      * using vol number and instance number that comes from dicom tag.
      *
-     * @param   file  DOCUMENT ME!
+     * @param   file 
      *
-     * @return  DOCUMENT ME!
+     * @return  boolean success
      *
-     * @throws  IOException       DOCUMENT ME!
-     * @throws  OutOfMemoryError  DOCUMENT ME!
+     * @throws  IOException     
+     * @throws  OutOfMemoryError 
      */
     public boolean parse(File file) throws IOException, OutOfMemoryError {
         imageFilter = new ViewImageFileFilter(new String[] { "dcm", "DCM", "ima", "IMA" });
@@ -1442,290 +1721,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
     }
 
 
-    /**
-     * run algorithm.
-     */
-    public void runAlgorithm() {
-        long begTime = System.currentTimeMillis();
-
-
-        Preferences.debug("** Beginning Algorithm v2.1...\n", Preferences.DEBUG_ALGORITHM);
-
-        if (outputTextArea != null) {
-            outputTextArea.append("** Beginning Algorithm v2.1...\n");
-        }
-
-        System.out.println("** Beginning Algorithm v2.1...\n");
-
-        //remove last slash from study path if it has it
-        if(String.valueOf(studyPath.charAt(studyPath.length() - 1)).equals(File.separator)) {
-        	studyPath = studyPath.substring(0,studyPath.length() - 1);
-	    }
-        
-        Preferences.debug("* The study path is " + studyPath + " \n", Preferences.DEBUG_ALGORITHM);
-
-        if (outputTextArea != null) {
-            outputTextArea.append("* The study path is " + studyPath + " \n");
-        }
-
-        System.out.println("* The study path is " + studyPath + " \n");
-        
-        
-        
-        if(isInterleaved) {
-        	Preferences.debug("* Interleaved dataset \n", Preferences.DEBUG_ALGORITHM);
-
-            if (outputTextArea != null) {
-                outputTextArea.append("* Interleaved dataset \n");
-            }
-
-            System.out.println("* Interleaved dataset \n");
-        }
-        
-        
-        if(isInterleaved && bmtxtFilePath.equals("")) {
-        	//this means that no b-matrix file was provided along with this  interleaved dataset
-            Preferences.debug("* For interleaved datasets, b-matrix file is required \n", Preferences.DEBUG_ALGORITHM);
-
-            if (outputTextArea != null) {
-                outputTextArea.append("* For interleaved datasets, b-matrix file is required \n");
-            }
-
-            System.out.println("* For interleaved datasets, b-matrix file is required \n");
-            
-            finalize();
-            setCompleted(true);
-            return;
-        }
-
-
-        // first create a File object based upon the study path
-        File studyPathRoot = new File(studyPath);
-
-
-        // parse the directory
-        Preferences.debug("* Parsing", Preferences.DEBUG_ALGORITHM);
-
-        if (outputTextArea != null) {
-            outputTextArea.append("* Parsing");
-        }
-
-        System.out.print("* Parsing");
-
-
-        try {
-            success = parse(studyPathRoot);
-        } catch (OutOfMemoryError e) {
-        	if (outputTextArea != null) {
-                outputTextArea.append("! ERROR: out of memory....exiting algorithm \n");
-            }
-            System.out.println("! ERROR: " + e.getCause().toString() + "\n");
-            System.out.println("! ERROR: out of memory....exiting algorithm \n");
-            finalize();
-            setCompleted(true);
-            return;
-        } catch (IOException e) {
-        	if (outputTextArea != null) {
-                outputTextArea.append("! ERROR: IOException....exiting algorithm \n");
-            }
-            System.out.println("! ERROR: " + e.toString() + "\n");
-            System.out.println("! ERROR: IOException....exiting algorithm \n");
-            finalize();
-            setCompleted(true);
-            return;
-        }
-
-        if (success == false) {
-            finalize();
-            setCompleted(true);
-            return;
-        }
-
-        System.gc();
-
-        Preferences.debug("\n* Number of image slices in study dir is " + totalImageSlices + " \n",
-                          Preferences.DEBUG_ALGORITHM);
-
-        if (outputTextArea != null) {
-            outputTextArea.append("\n* Number of image slices in study dir is " + totalImageSlices + " \n");
-        }
-
-        System.out.println("\n* Number of image slices in study dir is " + totalImageSlices + " \n");
-
-
-        if (totalImageSlices == 0) {
-            finalize();
-            setCompleted(true);
-            return;
-        }
-
-
-        // set initial info
-        success = setInitialInfo();
-
-        if (success == false) {
-            finalize();
-            setCompleted(true);
-            return;
-        }
-
-
-        // create proc dir
-        Preferences.debug("* Creating proc dir \n", Preferences.DEBUG_ALGORITHM);
-
-        if (outputTextArea != null) {
-            outputTextArea.append("* Creating proc dir \n");
-        }
-
-        System.out.println("* Creating proc dir \n");
-        success = createProcDir();
-
-        if (success == false) {
-            finalize();
-            setCompleted(true);
-            return;
-        }
-
-
-        // create path file
-        Preferences.debug("* Creating path file \n", Preferences.DEBUG_ALGORITHM);
-
-        if (outputTextArea != null) {
-            outputTextArea.append("* Creating path file \n");
-        }
-
-        System.out.println("* Creating path file \n");
-        if(isInterleaved) {
-        	success = createPathFileForInterleaved();
-        }else {
-        	success = createPathFile();
-        }
-
-        if (success == false) {
-            finalize();
-            setCompleted(true);
-            return;
-        }
-
-
-        // create list file
-        Preferences.debug("* Creating list file \n", Preferences.DEBUG_ALGORITHM);
-
-        if (outputTextArea != null) {
-            outputTextArea.append("* Creating list file \n");
-        }
-
-        System.out.println("* Creating list file \n");
-        success = createListFile();
-
-        if (success == false) {
-            finalize();
-            setCompleted(true);
-            return;
-        }
- 
-
-        if (!gradientFilePath.equals("")) {
-            // this means user provided gradient file...so...
-
-            // read gradient file
-            Preferences.debug("* Reading gradient file \n", Preferences.DEBUG_ALGORITHM);
-
-            if (outputTextArea != null) {
-                outputTextArea.append("* Reading gradient file \n");
-            }
-
-            System.out.println("* Reading gradient file \n");
-            success = readGradientFile();
-
-            if (success == false) {
-                finalize();
-                setCompleted(true);
-                return;
-            }
-
-            // obtain b-values
-            Preferences.debug("* Obtaining b-values \n", Preferences.DEBUG_ALGORITHM);
-
-            if (outputTextArea != null) {
-                outputTextArea.append("* Obtaining b-values \n");
-            }
-
-            System.out.println("* Obtaining b-values \n");
-            success = obtainBValues();
-
-            if (success == false) {
-                finalize();
-                setCompleted(true);
-                return;
-            }
-
-            // create b matrix file
-            Preferences.debug("* Creating b-matrix file \n", Preferences.DEBUG_ALGORITHM);
-
-            if (outputTextArea != null) {
-                outputTextArea.append("* Creating b-matrix file \n");
-            }
-
-            System.out.println("\n* Creating b-matrix file \n");
-            success = createBMatrixFile();
-
-            if (success == false) {
-                finalize();
-                setCompleted(true);
-                return;
-            }
-        } else {
-            // this means that the bmtxt file was provided instead...so...
-
-            // copy and rename b-matrix file
-            Preferences.debug("* b-matrix file provided \n", Preferences.DEBUG_ALGORITHM);
-
-            if (outputTextArea != null) {
-                outputTextArea.append("* b-matrix file provided \n");
-            }
-
-            System.out.println("* b-matrix file provided \n");
-            success = copyBMatrixFile();
-
-            if (success == false) {
-                finalize();
-                setCompleted(true);
-                return;
-            }
-        }
-
-        Preferences.debug("** Ending Algorithm \n", Preferences.DEBUG_ALGORITHM);
-
-        if (outputTextArea != null) {
-            outputTextArea.append("** Ending Algorithm \n");
-        }
-
-        System.out.println("** Ending Algorithm \n");
-
-        finalize();
-
-
-        long endTime = System.currentTimeMillis();
-        long diffTime = endTime - begTime;
-        float seconds = ((float) diffTime) / 1000;
-
-        Preferences.debug("** Algorithm took " + seconds + " seconds \n", Preferences.DEBUG_ALGORITHM);
-
-        if (outputTextArea != null) {
-            outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
-        }
-
-        System.out.println("** Algorithm took " + seconds + " seconds \n");
-
-        setCompleted(true);
-    }
-
 
     /**
      * this method sets initial info about the study.
      *
-     * @return  DOCUMENT ME!
+     * @return  boolean success
      */
     public boolean setInitialInfo() {
 
@@ -1812,16 +1812,39 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
                     System.out.println("* Software Version : " + geSoftwareVersion + " \n");
                 } catch (NumberFormatException e) {
-                    Preferences.debug("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n",
-                                      Preferences.DEBUG_ALGORITHM);
+                	//software version might be in a format like "12, blah, kdfhasdukfblah"....extract the first number (12)
+                	StringBuffer versionSB = new StringBuffer();
+            		for(int i=0;i<softwareVersion.length();i++) {
+            			char c = softwareVersion.charAt(i);
+            			if(Character.isDigit(c)) {
+            				versionSB.append(c);
+            			}
+            			else {
+            				break;
+            			}
+            		}
+            		if(versionSB.length() > 0) {
+            			geSoftwareVersion = new Integer(versionSB.toString().trim()).intValue();
+            			Preferences.debug("* Software Version : " + geSoftwareVersion + " \n", Preferences.DEBUG_ALGORITHM);
 
-                    if (outputTextArea != null) {
-                        outputTextArea.append("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
-                    }
+                        if (outputTextArea != null) {
+                            outputTextArea.append("* Software Version : " + geSoftwareVersion + " \n");
+                        }
 
-                    System.out.println("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
+                        System.out.println("* Software Version : " + geSoftwareVersion + " \n");
+            		}
+            		else {
+            			Preferences.debug("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n",
+                                Preferences.DEBUG_ALGORITHM);
 
-                    return false;
+            			if (outputTextArea != null) {
+            					outputTextArea.append("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
+            			}
+
+            			System.out.println("! ERROR: Unable to determine software version for GE dataset....exiting algorithm \n");
+
+            			return false;
+            		}
                 }
             }
         } else {
@@ -1855,12 +1878,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
     private class InstanceNumberVolComparator implements Comparator {
 
         /**
-         * DOCUMENT ME!
          *
-         * @param   oA  DOCUMENT ME!
-         * @param   oB  DOCUMENT ME!
+         * @param   oA  
+         * @param   oB  
          *
-         * @return  DOCUMENT ME!
+         * @return  int
          */
         public int compare(Object oA, Object oB) {
             String[] aA = (String[]) oA;
