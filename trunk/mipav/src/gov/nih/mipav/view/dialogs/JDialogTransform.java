@@ -729,7 +729,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         	
             matrixFName.setText(" ");
             storedMatrixBox.setEnabled(false);
-            tabbedPane.setEnabledAt(1, noTransform.isSelected());
+            //tabbedPane.setEnabledAt(1, noTransform.isSelected());
             if (noTransform.isSelected()) {
                 invertCheckbox.setSelected(false);
                 invertCheckbox.setEnabled(false);
@@ -3167,8 +3167,24 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         oXres = oYres = oZres = oXdim = oYdim = oZdim = 1; // initialize
 
+        //if a transform matrix is to be used (NOT resampling)
+        //  must adjust the result extents and resolutions
+        if (!noTransform.isSelected()) {
+        	
+        	oXres = image.getFileInfo()[0].getResolutions()[0];
+        	oYres = image.getFileInfo()[0].getResolutions()[1];
+        	
+        	oXdim = image.getExtents()[0];
+        	oYdim = image.getExtents()[1];
+        	
+        	if (image.getNDims() > 2) {
+        		oZres = image.getFileInfo()[0].getResolutions()[2];
+            	oZdim = image.getExtents()[2];
+        	} 
+        }
         
-        if (noTransform.isSelected()) {
+        
+   //     if (noTransform.isSelected()) {
         
         // RESAMPLE INFO
         if (resampletoImage.isSelected()) {
@@ -3213,7 +3229,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 oZdim = image.getExtents()[2];
             }
         } else if (resampletoUser.isSelected()) {
-
             // Read X, Y and Z resolutions
             tmpStr = textResX.getText();
 
@@ -3300,7 +3315,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 oZres = image.getFileInfo(0).getResolutions()[2];
             }
         }
-        } //end if (noTransform.isSelected())
+     //   } //end if (noTransform.isSelected())
       
         
         
@@ -3502,21 +3517,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             xfrm.identity();
         }
 
-        //if a transform matrix is to be used (NOT resampling)
-        //  must adjust the result extents and resolutions
-        if (!noTransform.isSelected()) {
-        	
-        	oXres = image.getFileInfo()[0].getResolutions()[0];
-        	oYres = image.getFileInfo()[0].getResolutions()[1];
-        	
-        	oXdim = image.getExtents()[0];
-        	oYdim = image.getExtents()[1];
-        	
-        	if (image.getNDims() > 2) {
-        		oZres = image.getFileInfo()[0].getResolutions()[2];
-            	oZdim = image.getExtents()[2];
-        	} 
-        }
+       
         
         // if ((no transformation) OR (user input transformation))
         // AND (total image size !=), then scale
