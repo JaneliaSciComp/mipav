@@ -218,18 +218,22 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 labelSTDDeviation.setEnabled(false);
                 textSTDDeviation.setEnabled(false);
                 textSTDDeviation.setText("0.0");
-                vectorMagnitudeButton.setEnabled(false);
-                vectorMagnitudeButton.setSelected(false);
-                vectorDirectionButton.setEnabled(false);
-                vectorDirectionButton.setSelected(false);
-                componentButton.setSelected(true);
+                if(image.isColorImage()) {
+	                vectorMagnitudeButton.setEnabled(false);
+	                vectorMagnitudeButton.setSelected(false);
+	                vectorDirectionButton.setEnabled(false);
+	                vectorDirectionButton.setSelected(false);
+	                componentButton.setSelected(true);
+                }
             } else {
                 labelMaximumSize.setEnabled(false);
                 comboBoxMaximumSize.setEnabled(false);
                 labelSTDDeviation.setEnabled(true);
                 textSTDDeviation.setEnabled(true);
-                vectorMagnitudeButton.setEnabled(true);
-                vectorDirectionButton.setEnabled(true);
+                if(image.isColorImage()) {
+                	vectorMagnitudeButton.setEnabled(true);
+                	vectorDirectionButton.setEnabled(true);
+                }
             }
         } else if (command.equals("Volume")) {
 
