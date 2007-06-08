@@ -1168,6 +1168,34 @@ public class JDialogSaveDicom extends JDialogBase {
             if (value.length() > 0) {
 
                 if (value.length() != 4) {
+
+                    // try to detect when leading zeros have been stripped from the value
+                    if ((value.length() < 4) &&
+                            ((value.charAt(value.length() - 1) == 'D') || (value.charAt(value.length() - 1) == 'W') ||
+                                 (value.charAt(value.length() - 1) == 'M') ||
+                                 (value.charAt(value.length() - 1) == 'Y'))) {
+
+                        for (int i = value.length() - 2; i >= 0; i--) {
+
+                            if (!Character.isDigit(value.charAt(i))) {
+                                MipavUtil.displayError("Dicom tag value: " + value + " does not start with a digit.\n" +
+                                                       "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
+                                                       "the number of days for D, the number of weeks for W, the number\n" +
+                                                       "of months for M, or the number of years for Y (4 characters).");
+                            }
+                        }
+
+                        String zeroPadding = new String();
+
+                        for (int i = 0; i < (4 - value.length()); i++) {
+                            zeroPadding += "0";
+                        }
+
+                        studyAge.setText(zeroPadding + value);
+
+                        return true;
+                    }
+
                     MipavUtil.displayError("Dicom tag value: " + value + " is not four characters long.\n" +
                                            "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
                                            "the number of days for D, the number of weeks for W, the number\n" +
