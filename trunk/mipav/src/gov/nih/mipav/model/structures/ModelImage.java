@@ -596,17 +596,12 @@ public class ModelImage extends ModelStorageBase {
             fileInfo[index].displayAboutInfo((JDialogFileInfoXML) dialog, getMatrix());
         } else {
 
-            try {
+            // System.out.println(" dialog = " + dialog);
+            // System.out.println(" +++++++++++++++++++++++++++++  z  = " + i);
+            // System.out.println(" fileInfo = " + fileInfo[i]);
+            dialog.setTitle(dialog.getTitle() + ": " + (index + 1));
 
-                // System.out.println(" dialog = " + dialog);
-                // System.out.println(" +++++++++++++++++++++++++++++  z  = " + i);
-                // System.out.println(" fileInfo = " + fileInfo[i]);
-                dialog.setTitle(dialog.getTitle() + ": " + (index + 1));
-                fileInfo[index].displayAboutInfo((JDialogFileInfo) dialog, getMatrix());
-            } catch (ClassCastException cce) {
-            	cce.printStackTrace();
-                fileInfo[index].displayAboutInfo((JDialogText) dialog, getMatrix());
-            }
+            fileInfo[index].displayAboutInfo(dialog, getMatrix());
         }
     }
 
@@ -793,6 +788,7 @@ public class ModelImage extends ModelStorageBase {
         int[] extents = getExtents();
 
         if (voiVector.size() != 0) {
+
             for (i = 0; i < voiVector.size(); i++) {
 
                 // System.out.println( "ModelImage: generateVOIMask(boolean XOR)  voi = " + i );
