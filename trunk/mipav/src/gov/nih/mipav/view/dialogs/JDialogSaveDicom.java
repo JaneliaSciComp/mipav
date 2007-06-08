@@ -1168,7 +1168,8 @@ public class JDialogSaveDicom extends JDialogBase {
             if (value.length() > 0) {
 
                 if (value.length() != 4) {
-                    MipavUtil.displayError("Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
+                    MipavUtil.displayError("Dicom tag value: " + value + " is not four characters long.\n" +
+                                           "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
                                            "the number of days for D, the number of weeks for W, the number\n" +
                                            "of months for M, or the number of years for Y (4 characters).");
 
@@ -1177,7 +1178,9 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 if ((value.charAt(3) != 'D') && (value.charAt(3) != 'W') && (value.charAt(3) != 'M') &&
                         (value.charAt(3) != 'Y')) {
-                    MipavUtil.displayError("Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
+                    MipavUtil.displayError("Dicom tag value: " + value +
+                                           " does not have a time indicator (D, W, M or Y).\n" +
+                                           "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
                                            "the number of days for D, the number of weeks for W, the number\n" +
                                            "of months for M, or the number of years for Y (4 characters).");
 
@@ -1186,7 +1189,8 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 if (!Character.isDigit(value.charAt(0)) || !Character.isDigit(value.charAt(1)) ||
                         !Character.isDigit(value.charAt(2))) {
-                    MipavUtil.displayError("Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
+                    MipavUtil.displayError("Dicom tag value: " + value + " does not start with a digit.\n" +
+                                           "Age must be of the form nnnD, nnnW, nnnM, or nnnY, where nnn contains\n" +
                                            "the number of days for D, the number of weeks for W, the number\n" +
                                            "of months for M, or the number of years for Y (4 characters).");
 
