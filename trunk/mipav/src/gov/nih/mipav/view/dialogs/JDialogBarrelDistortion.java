@@ -49,6 +49,10 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
     
     private JLabel mainLabel;
     
+    private JLabel mainLabel2;
+    
+    private JLabel mainLabel3;
+    
     private JLabel aLabel;
     
     private JLabel bLabel;
@@ -386,13 +390,31 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
         gbc.gridy = 0;
         paramsPanel.add(mainLabel, gbc);
         
-        aLabel = new JLabel("a ");
+        mainLabel2 = new JLabel("Use negative (a,b,c) up to -1.0 to shift distant points away from the center");
+        mainLabel2.setForeground(Color.black);
+        mainLabel2.setFont(serif12);
+        mainLabel2.setEnabled(true);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        paramsPanel.add(mainLabel2, gbc);
+        
+        mainLabel2 = new JLabel("Use positive (a,b,c) up to 1.0 to shift distant points towards the center");
+        mainLabel2.setForeground(Color.black);
+        mainLabel2.setFont(serif12);
+        mainLabel2.setEnabled(true);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        paramsPanel.add(mainLabel2, gbc);
+        
+        aLabel = new JLabel("a  (Affects only the outermost pixels of the image)");
         aLabel.setForeground(Color.black);
         aLabel.setFont(serif12);
         aLabel.setEnabled(true);
         
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         paramsPanel.add(aLabel, gbc);
         
         aText = new JTextField(10);
@@ -402,16 +424,16 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
         aText.setEnabled(true);
         
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         paramsPanel.add(aText, gbc);
         
-        bLabel = new JLabel("b ");
+        bLabel = new JLabel("b  (Most cases only require b optimization)");
         bLabel.setForeground(Color.black);
         bLabel.setFont(serif12);
         bLabel.setEnabled(true);
         
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 4;
         paramsPanel.add(bLabel, gbc);
         
         bText = new JTextField(10);
@@ -421,16 +443,16 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
         bText.setEnabled(true);
         
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 4;
         paramsPanel.add(bText, gbc);
         
-        cLabel = new JLabel("c ");
+        cLabel = new JLabel("c  (Most uniform correction)");
         cLabel.setForeground(Color.black);
         cLabel.setFont(serif12);
         cLabel.setEnabled(true);
         
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         paramsPanel.add(cLabel, gbc);
         
         cText = new JTextField(10);
@@ -440,16 +462,16 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
         cText.setEnabled(true);
         
         gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         paramsPanel.add(cText, gbc);
         
-        dLabel = new JLabel("d ");
+        dLabel = new JLabel("d  (Describes the linear scaling of the image)");
         dLabel.setForeground(Color.black);
         dLabel.setFont(serif12);
         dLabel.setEnabled(false);
         
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         paramsPanel.add(dLabel, gbc);
         
         dText = new JTextField(10);
@@ -459,7 +481,7 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
         dText.setEnabled(false);
         
         gbc.gridx = 1;
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         paramsPanel.add(dText, gbc);
         
         noScalingDCheckBox = new JCheckBox("Set d = 1-a-b-c for no image scaling");
@@ -470,7 +492,7 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
         noScalingDCheckBox.addActionListener(this);
         
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 7;
         paramsPanel.add(noScalingDCheckBox, gbc);
 
         getContentPane().add(paramsPanel, BorderLayout.CENTER);
