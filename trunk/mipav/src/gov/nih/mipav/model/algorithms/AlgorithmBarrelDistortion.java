@@ -13,7 +13,7 @@ import java.io.*;
  * rsrc = a * rdest**4 + b * rdest**3 + c * rdest**2 + d * rdest
  * rsrc and rdest are specified in units of the min((xDim-1)/2, (yDim-1)/2)
  * 
- * Reference: Correcting Barrel Distortion by Helmut Dersch at
+ * Reference 1.) Correcting Barrel Distortion by Helmut Dersch at
  * http://www.aa-in-one.ee/~dersch/barrel/barrel.html
  * Quoting from this reference:
  * How to determine suitable Parameters:
@@ -32,6 +32,13 @@ import java.io.*;
    In most cases, you will get quite satisfactory results by using just one parameter, like the 'b'-parameter in the above examples.
    These examples may also serve as a guide to how large these values should be, ie around 0.1 if the distortion is quite visible,
    or around 0.01 if it is very small. Simply optimize this starting value until you like your image. 
+   
+   Reference 2.) Lens correction model by From PanoTools.org Wiki at
+   http://wiki.panotools.org/Lens_correction_model
+   Quoting from this reference:
+   Usual values for a, b, and c are below 1.0, in most cases below 0.01.
+   The a and c parameters control more complex forms of distortion.  In most cases it will be enough to optimize for the b
+   parameter only, which is good at correcting normal barrel distortion and pincushion distortion.
  * 
  */
 public class AlgorithmBarrelDistortion extends AlgorithmBase {
