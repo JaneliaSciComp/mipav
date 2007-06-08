@@ -218,21 +218,23 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 labelSTDDeviation.setEnabled(false);
                 textSTDDeviation.setEnabled(false);
                 textSTDDeviation.setText("0.0");
-                if(image.isColorImage()) {
-	                vectorMagnitudeButton.setEnabled(false);
-	                vectorMagnitudeButton.setSelected(false);
-	                vectorDirectionButton.setEnabled(false);
-	                vectorDirectionButton.setSelected(false);
-	                componentButton.setSelected(true);
+
+                if (image.isColorImage()) {
+                    vectorMagnitudeButton.setEnabled(false);
+                    vectorMagnitudeButton.setSelected(false);
+                    vectorDirectionButton.setEnabled(false);
+                    vectorDirectionButton.setSelected(false);
+                    componentButton.setSelected(true);
                 }
             } else {
                 labelMaximumSize.setEnabled(false);
                 comboBoxMaximumSize.setEnabled(false);
                 labelSTDDeviation.setEnabled(true);
                 textSTDDeviation.setEnabled(true);
-                if(image.isColorImage()) {
-                	vectorMagnitudeButton.setEnabled(true);
-                	vectorDirectionButton.setEnabled(true);
+
+                if (image.isColorImage()) {
+                    vectorMagnitudeButton.setEnabled(true);
+                    vectorDirectionButton.setEnabled(true);
                 }
             }
         } else if (command.equals("Volume")) {
@@ -730,7 +732,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         scriptParameters.getParams().put(ParameterFactory.newParameter("std_dev", stdDev));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("adpative_size", adaptiveSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("adaptive_size", adaptiveSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_size", maximumSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_filter_type", filterType));
         scriptParameters.storeColorOptions(red, green, blue);
