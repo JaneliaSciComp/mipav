@@ -183,7 +183,8 @@ public class JacobianElliptic {
      *  Tables edited by Milton Abramowitz and Irene A. Stegun, Chapter 16 Jacobian 
      *  Elliptic Functions and Theta Functions, Section 16.21 Complex Arguments
      *  s = sn(realZ|hk), c = cn(realZ|hk), d = dn(realZ|hk)
-     *  s1 = sn(imagZ|(1-hk)), c1 = cn(imagZ|(1-hk)), d1 = dn(imagZ|(1-hk))
+     *  hkp = sqrt(1 - hk*hk)
+     *  s1 = sn(imagZ|hkp), c1 = cn(imagZ|hkp), d1 = dn(imagZ|hkp)
      *  sn(realZ + i*imagZ|hk) = (s*d1 + i*c*d*s1*c1)/(c1*c1 + m*s*s*s1*s1)
      *  cn(realZ + i*imagZ|hk) = (c*c1 - i*s*d*s1*d1)/(c1*c1 + m*s*s*s1*s1)
      *  dn(realZ + i*imagZ|hk) = (d*c1*d1 - i*m*s*c*s1)/(c1*c1 + m*s*s*s1*s1)
@@ -201,11 +202,13 @@ public class JacobianElliptic {
         double esdi[] = new double[1];
         double dphi[] = new double[1];
         double denom;
+        double hkp;
+        hkp = Math.sqrt(1.0 - hk*hk);
         je = new JacobianElliptic(realZ, hk, esnr, ecnr, ednr, esdr, dphr);
         je.run();
-        je = new JacobianElliptic(imagZ, (1.0-hk), esni, ecni, edni, esdi, dphi);
+        je = new JacobianElliptic(imagZ, hkp, esni, ecni, edni, esdi, dphi);
         je.run();
-        denom = ecni[0]*ecni[0] + hk*esnr[0]*esnr[0]*esni[0]*esni[0];
+        denom = ecni[0]*ecni[0] + hk*hk*esnr[0]*esnr[0]*esni[0]*esni[0];
         if (kind == SN) {
             realResult[0] = esnr[0]*edni[0]/denom;
             imagResult[0] = ecnr[0]*ednr[0]*esni[0]*ecni[0]/denom;
@@ -216,10 +219,10 @@ public class JacobianElliptic {
         } // else if (kind == CN)
         else if (kind == DN) {
             realResult[0] = ednr[0]*ecni[0]*edni[0]/denom;
-            imagResult[0] = -hk*esnr[0]*ecnr[0]*esni[0]/denom;
+            imagResult[0] = -hk*hk*esnr[0]*ecnr[0]*esni[0]/denom;
         } // else if kind == DN)
         else if (kind == SD) {
-            zdiv(esnr[0]*edni[0],ecnr[0]*ednr[0]*esni[0]*ecni[0],ednr[0]*ecni[0]*edni[0],-hk*esnr[0]*ecnr[0]*esni[0],
+            zdiv(esnr[0]*edni[0],ecnr[0]*ednr[0]*esni[0]*ecni[0],ednr[0]*ecni[0]*edni[0],-hk*hk*esnr[0]*ecnr[0]*esni[0],
                  realResult, imagResult);
         } // else if (kind == SD)
         return;
