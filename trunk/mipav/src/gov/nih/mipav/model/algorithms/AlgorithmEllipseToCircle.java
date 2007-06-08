@@ -112,7 +112,6 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         float majorAxis[] = new float[1];
         // Diameter of minor axis
         float minorAxis[] = new float[1];
-        BitSet mask;
         VOI selectedVOI = null;
         double radSq;
         double xrot, yrot;
@@ -233,8 +232,6 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         theta = (Math.PI/180.0)*pAxis[0];
         costh = Math.cos(theta);
         sinth = Math.sin(theta);
-        mask = new BitSet(sourceSlice);
-        selectedVOI.createActiveContourBinaryMask(mask, xDimSource, yDimSource);
         
         // Let 2*a = major axis, 2*b = minor axis
         // For an ellipse with its center at the origin and foci on the x axis:
