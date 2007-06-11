@@ -522,37 +522,57 @@ public class ModelImage extends ModelStorageBase {
      * @param  fromImage  image from which to copy file type info
      */
     public void copyFileTypeInfo(ModelImage fromImage) {
-        FileInfoBase fileInfo;
+        FileInfoBase[] fileInfo = new FileInfoDicom[getExtents()[2]];
 
-        for (int i = 0; i < fromImage.getFileInfo().length; i++) {
-            fileInfo = (FileInfoBase) (fromImage.getFileInfo(i).clone());
-            setFileInfo(fileInfo, i);
+        if (fromImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+            FileInfoDicom oldDicomInfo = (FileInfoDicom) fromImage.getFileInfo(0);
+            FileDicomTagTable[] childTagTables = new FileDicomTagTable[getExtents()[2] - 1];
+
+            // first create all of the new file infos (reference and children) and fill them with tags from the old
+            // file info.  some of these tag values will be overridden in the next loop
+            for (int i = 0; i < getExtents()[2]; i++) {
+
+                if (i == 0) {
+
+                    // create a new reference file info
+                    fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                    oldDicomInfo.getFileFormat());
+                } else {
+
+                    // all other slices are children of the first file info..
+                    fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                    oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
+
+                    childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
+                }
+
+                if (getExtents()[2] > i) {
+
+                    // more correct information for a Z-axis rotation, so copy the file info on a slice basis
+                    ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) fromImage.getFileInfo(i));
+                } else {
+
+                    // not possible for other rotations because the z-dimension is different
+                    ((FileInfoDicom) fileInfo[i]).getTagTable().importTags(oldDicomInfo);
+                }
+            }
+
+            ((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+        } else {
+
+            for (int i = 0; i < getExtents()[2]; i++) {
+
+                if (getExtents()[2] > i) {
+                    fileInfo[i] = (FileInfoBase) getFileInfo(i).clone();
+                } else {
+                    fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
+                }
+            }
         }
 
-        return;
-
-    }
-
-    /**
-     * Deep copies the file type info from the fromImage to the current image object. But does not copy over image
-     * buffer type.
-     *
-     * @param  fromImage  image from which to copy file type info
-     */
-    public void copyFileTypeInfoSansBufferType(ModelImage fromImage) {
-        FileInfoBase fileInfo;
-
-        // TODO: this appears to be a special-case method for mask calls from ViewJFrameImage.  remove it...
-
-        for (int i = 0; i < fromImage.getFileInfo().length; i++) {
-            fileInfo = (FileInfoBase) (fromImage.getFileInfo(i).clone());
-            fileInfo.setDataType(getType());
-            fileInfo.setFileName("Mask");
-            setFileInfo(fileInfo, i);
-        }
+        setFileInfo(fileInfo);
 
         return;
-
     }
 
     /**
