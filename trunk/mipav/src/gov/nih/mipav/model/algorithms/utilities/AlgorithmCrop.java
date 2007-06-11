@@ -9,7 +9,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
 import java.io.*;
-
+import java.util.*;
 
 /**
  * Crops 2D and 3D images using a supplied VOI. Crops 4D images.
@@ -616,7 +616,8 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         resols = fInfoBase[0].getResolutions();
         axisOrient = fInfoBase[0].getAxisOrientation();
-        mat = srcImage.getMatrix();
+        
+        Vector mats = srcImage.getMatrixHolder().getMatrices();
 
         for (i = 0; i < nDims; i++) {
 
@@ -714,7 +715,8 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         srcImage = new ModelImage(dataType, dimExtents, imageName);
         srcImage.setFileInfo(fInfoBase[0], 0);
-        srcImage.setMatrix(mat);
+        
+        srcImage.getMatrixHolder().replaceMatrices(mats);
 
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
             ((FileInfoDicom) (srcImage.getFileInfo(0))).setSecondaryCaptureTags();
@@ -869,7 +871,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         }
 
         axisOrient = fInfoBase[0].getAxisOrientation();
-        mat = srcImage.getMatrix();
+        Vector mats = srcImage.getMatrixHolder().getMatrices();
 
         for (i = 0; i < nDims; i++) {
 
@@ -969,7 +971,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             srcImage.setFileInfo(fInfoBase[n], n);
         }
 
-        srcImage.setMatrix(mat);
+        srcImage.getMatrixHolder().replaceMatrices(mats);
 
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
@@ -1184,7 +1186,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         } // for (t = 0; t < tDim; t++)
 
         axisOrient = fInfoBase[0].getAxisOrientation();
-        mat = srcImage.getMatrix();
+        Vector mats = srcImage.getMatrixHolder().getMatrices();
 
         for (i = 0; i < 3; i++) {
 
@@ -1284,7 +1286,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             srcImage.setFileInfo(fInfoBase[n], n);
         }
 
-        srcImage.setMatrix(mat);
+        srcImage.getMatrixHolder().replaceMatrices(mats);
 
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
