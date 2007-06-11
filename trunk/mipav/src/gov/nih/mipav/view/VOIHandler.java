@@ -452,6 +452,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         int i;
         int nVOI;
         int zDim = 1;
+        
+        if (compImage.getActiveImage().getNDims() > 2) {
+        	zDim = compImage.getActiveImage().getExtents()[2];
+        }
+        
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
 
         nVOI = VOIs.size();
@@ -470,10 +475,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         }
 
 
-        if (compImage.getActiveImage().getNDims() == 2) {
-
+        if (compImage.getActiveImage().getNDims() == 2 || !(Preferences.is(Preferences.PREF_VOI_LPS_SAVE))) {
             for (i = 0; i < nVOI; i++) {
-
                 if (VOIs.VOIAt(i).isActive() == true) {
                     voi = (VOI) ((VOI) VOIs.elementAt(i)).clone();
                     voi.setUID(voi.hashCode());
@@ -482,10 +485,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     curves = voi.getCurves();
 
                     int numCurves = 0;
-
                     for (int s = 0; s < zDim; s++) {
                         numCurves = curves[s].size();
-
+                        
                         for (int j = numCurves - 1; j >= 0; j--) {
 
                             if (!((VOIBase) (curves[s].elementAt(j))).isActive()) {
@@ -501,7 +503,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             }
         } else {
 
-            // image is 3+ dims... so copy the VOIs in scanner coordinate mode instead
+            // image is 3D AND the user wants to use LPS coordinates
             for (i = 0; i < nVOI; i++) {
 
                 if (VOIs.VOIAt(i).isActive() == true) {
@@ -510,8 +512,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     this.undoVOI = (VOI) (voi.clone());
 
                     curves = voi.getCurves();
-
-                    zDim = compImage.getActiveImage().getExtents()[2];
 
                     int numCurves = 0;
 
@@ -2656,7 +2656,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
                                 (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
 
-                            // System.err.println("IN HERE checkin for NEAR POINT with shift down");
                             for (j = 0; j < nCurves; j++) {
 
                                 if (VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), j, compImage.getZoomX(),
@@ -2843,7 +2842,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     }
                 }
             } else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-
                 if (VOIs.VOIAt(i).isVisible() &&
                         VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), compImage.getZoomX(),
                                                     compImage.getResolutionX(), compImage.getResolutionY())) {
@@ -3131,6 +3129,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             compImage.setPixelInformationAtLocation(xS, yS);
         }
 
+        
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
         if ((mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
@@ -3140,7 +3139,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 triFrame.setSlicesFromFrame(xS, yS, compImage.getSlice());
             }
         }
-
         if (mode == ViewJComponentEditImage.POINT_VOI) {
 
             if ((mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
@@ -3743,13 +3741,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         } else if (mode == ViewJComponentEditImage.MOVE) {
             Graphics g = compImage.getGraphics();
             nVOI = VOIs.size();
-
-            if (!mouseEvent.isControlDown()) {
-
-                for (i = 0; i < nVOI; i++) { // VOIs.VOIAt(i).setAllActive(false); // deactivate all other VOIs
-                }
-            }
-
+           
             for (i = 0; i < nVOI; i++) {
                 VOIBase selectedCurve = null;
 
@@ -3761,8 +3753,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     if (selectedCurve instanceof VOIPoint) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
-
-                            if (VOIs.VOIAt(i).nearLine(xS, yS, compImage.getSlice())) {
+                            if (VOIs.VOIAt(i).nearLine(xS, yS, compImage.getSlice()) ||
+                            		((VOIPoint) selectedCurve).nearPoint(xR, yR, compImage.getZoomX(),
+                                            compImage.getResolutionX(),
+                                            compImage.getResolutionY())) {
                                 VOIs.VOIAt(i).setActive(true);
                                 VOIs.VOIAt(i).setAllActive(true);
 
@@ -3775,7 +3769,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                 fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
 
                                 break;
-                            }
+                            } 
                         } else if (((VOIPoint) selectedCurve).nearPoint(xR, yR, compImage.getZoomX(),
                                                                         compImage.getResolutionX(),
                                                                         compImage.getResolutionY())) {
@@ -3993,28 +3987,27 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         float[] x, y, z;
         int imageXExt, imageYExt, zExt;
         VOI newVOI, outVOI;
-        int newSlice;
 
         boolean isFrom2D = ViewUserInterface.getReference().isClippedVOI2D();
+        if (Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
+        	
+     	   if (((compImage.getActiveImage().getNDims() > 2) && isFrom2D) ||
+     			   ((compImage.getActiveImage().getNDims() == 2) && !isFrom2D)) {
 
-        if (((compImage.getActiveImage().getNDims() > 2) && isFrom2D) ||
-                ((compImage.getActiveImage().getNDims() == 2) && !isFrom2D)) {
+     		   // display an error here
+     		   MipavUtil.displayInfo("Can not copy/paste LPS-based VOIs between 2D and 2.5D/3D images.");
 
-            // display an error here
-            MipavUtil.displayInfo("Can not copy/paste VOIs between 2D and 2.5D/3D images.");
-
-            return;
+     		   return;
+     	   }
         }
-
-        boolean isAnnotation = false;
-
+        
+        
         ViewVOIVector clippedVOIs = ViewUserInterface.getReference().getClippedVOIs();
-        Vector clippedSlices = ViewUserInterface.getReference().getClippedSlices();
         int numClipped = clippedVOIs.size();
 
         Vector scannerVectors = null;
 
-        if (!isFrom2D) {
+        if (!isFrom2D && Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
             scannerVectors = ViewUserInterface.getReference().getClippedScannerVectors();
         }
 
@@ -4028,8 +4021,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 imageYExt = compImage.getActiveImage().getExtents()[1];
                 newVOI = (VOI) clippedVOIs.VOIAt(k).clone();
 
-                // if the VOI was from a 3D image, process accordingly (using scanner conversion)
-                if (isFrom2D == false) {
+                // if the VOI is from 3D image and Preferences.PREF_VOI_LPS_SAVE is active (scanner)
+                if (isFrom2D == false && Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
                     Vector[] curves = newVOI.getCurves();
                     Vector[] newCurves = new Vector[compImage.getActiveImage().getExtents()[2]];
 
@@ -4090,8 +4083,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     newVOI.setCurves(newCurves);
                 }
 
-                outVOI = (VOI) newVOI.clone();
-                newSlice = ((Integer) clippedSlices.elementAt(k)).intValue();
+                
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in pasteVOI.");
 
@@ -4110,32 +4102,41 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             newVOI.getBounds(x, y, z);
 
             for (int i = 0; i < x.length; i++) {
-                // System.err.println("x-" + i + ": " + x[i]);
+            	System.err.println("x-" + i + ": " + x[i]);
             }
 
             for (int i = 0; i < y.length; i++) {
-                // System.err.println("y-" + i + ": " + y[i]);
+            	System.err.println("y-" + i + ": " + y[i]);
             }
 
             for (int i = 0; i < z.length; i++) {
-                // System.err.println("z-" + i + ": " + z[i]);
-            }
-
-
-            if (outVOI.getCurveType() == VOI.ANNOTATION) {
-                isAnnotation = true;
+                System.err.println("z-" + i + ": " + z[i]);
             }
 
             if ((imageXExt <= (x[1] - x[0])) || (imageYExt <= (y[1] - y[0])) || (imageXExt <= x[0]) ||
                     (imageXExt <= x[1]) || (imageYExt <= y[0]) || (imageYExt <= y[1])) { // checks to make sure if voi
                                                                                          // can fit
-                MipavUtil.displayError("Cannot paste VOI : VOI out of image bounds."); // in image in x and y dimension
+                MipavUtil.displayError("Cannot paste VOI : Out of image bounds."); // in image in x and y dimension
 
                 return;
             } else if ((newVOI.getCurveType() == VOI.POLYLINE_SLICE) && (compImage.getActiveImage().getNDims() < 3)) {
                 MipavUtil.displayError("Cannot paste VOI : Polyline-Slice VOIs are restricted to 3D+ images");
+                return;
             }
 
+            if (!Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
+            	int currentSlice = compImage.getSlice();
+            	int zDif = (int) (z[1] - z[0]) + 1;
+            	if (zDif > 1) {
+            		if (compImage.getActiveImage().getExtents().length < 3 ||
+            				compImage.getActiveImage().getExtents()[2] < (currentSlice + zDif)) {
+            			MipavUtil.displayError("Cannot paste VOI : Out of image bounds."); // in image z dim
+
+            			return;
+            		}
+            	}
+            }
+            
 
             int ID = 0; // finds an ID to assign the new VOI, which is not
             int test; // already in use by another VOI in the image
@@ -4151,86 +4152,72 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     }
                 }
             } while (test == 0);
-
-            outVOI.setID((short) ID);
-
-            float hue = (float) ((((ID) * 35) % 360) / 360.0);
-            outVOI.setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0));
-
-            // check to see if a VOI with this name exists, if not, keep same name
-            // otherwise append "_pasted_#" to the name
-            for (int i = 0; i < compImage.getActiveImage().getVOIs().size(); i++) {
-
-                if (outVOI.getName().equals(((VOI) compImage.getActiveImage().getVOIs().elementAt(i)).getName())) {
-                    outVOI.setName(outVOI.getName() + "_pasted_" + ID);
-                }
-            }
-
+            
             if (compImage.getActiveImage().getExtents().length > 2) {
                 zExt = compImage.getActiveImage().getExtents()[2]; // gets the Z dimensions of the active image
             } else {
                 zExt = 1;
             }
-
-            if ((newVOI.getCurveType() == VOI.POLYLINE_SLICE) || (newVOI.getCurveType() == VOI.POINT)) {
-
-                for (int i = 0; i < outVOI.getCurves().length; i++) {
-                    outVOI.removeCurves(i);
-                }
-
-                int oldIndex = 0;
-
-                for (oldIndex = 0; oldIndex < newVOI.getCurves().length; oldIndex++) {
-
-                    if (newVOI.getCurves()[oldIndex].size() > 0) {
-                        break;
-                    }
-                }
-
-                int numSlices = (int) (z[1] - z[0]) + 1;
-                int numElements = 0;
-                int sliceCounter = 0;
-
-                for (int start = compImage.getSlice(); sliceCounter < numSlices; start++, oldIndex++, sliceCounter++) {
-
-                    numElements = newVOI.getCurves()[oldIndex].size();
-
-                    for (int i = 0; i < numElements; i++) {
-                        outVOI.getCurves()[start].addElement(newVOI.getCurves()[oldIndex].elementAt(i));
-                    }
-                }
-
-                compImage.getActiveImage().getVOIs().addElement(outVOI);
-
+                        
+            float hue = (float) ((((ID) * 35) % 360) / 360.0);
+            
+            if (Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
+            	
+            	newVOI.setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0));
+            	newVOI.setID((short) ID);            	
+            	newVOI.setName(newVOI.getName()+ "_pasted_" + ID);
+            	
+            	compImage.getActiveImage().getVOIs().addElement(newVOI);
+            	
             } else {
+            	int currentSlice = compImage.getSlice();
+            	outVOI = new VOI((short) ID, newVOI.getName() + "_pasted_" + ID,zExt, newVOI.getCurveType(), hue);
+                
 
-                if (((z[1] - z[0]) != 0) || (outVOI.getCurveType() == VOI.POLYLINE_SLICE)) { // checks to see if it is
-                                                                                             // a 3D VOI
+                if ((newVOI.getCurveType() == VOI.POLYLINE_SLICE)) {
 
-                    if ((z[1] - z[0] + 1) == zExt) {
-                        compImage.getActiveImage().getVOIs().addElement(outVOI); // Add entire VOI
-                    } else if ((z[0] >= 0) && (z[1] <= (zExt - 1))) {
+                    int oldIndex = 0;
 
-                        // might wish to mod to copy only subset of input contours into VOI
-                        compImage.getActiveImage().getVOIs().addElement(outVOI);
-                    } else {
-                        outVOI.importNewVOI(compImage.getSlice(), newSlice, newVOI, zExt); // add only contour in
-                                                                                           // compImage.getSlice()
-                        compImage.getActiveImage().getVOIs().addElement(outVOI);
+                    for (oldIndex = 0; oldIndex < newVOI.getCurves().length; oldIndex++) {
+
+                        if (newVOI.getCurves()[oldIndex].size() > 0) {
+                            break;
+                        }
                     }
-                } else {
 
-                    if (isAnnotation) {
-                        compImage.getActiveImage().registerVOI(outVOI);
+                    int numSlices = (int) (z[1] - z[0]) + 1;
+                    int numElements = 0;
+                    int sliceCounter = 0;
 
-                        VOIVector vois = compImage.getActiveImage().getVOIs();
-                    } else {
-                        outVOI.importNewVOI(compImage.getSlice(), newSlice, newVOI, zExt);
-                        compImage.getActiveImage().getVOIs().addElement(outVOI);
+                    for (int start = compImage.getSlice(); sliceCounter < numSlices; start++, oldIndex++, sliceCounter++) {
+
+                        numElements = newVOI.getCurves()[oldIndex].size();
+
+                        for (int i = 0; i < numElements; i++) {
+                            outVOI.getCurves()[start].addElement(newVOI.getCurves()[oldIndex].elementAt(i));
+                        }
                     }
+
+                    compImage.getActiveImage().getVOIs().addElement(outVOI);
+
+                } else {                                                           
+                	
+                	//adjust VOI for current image slice(s)
+                	for (int cSlice = (int)z[0]; cSlice <= z[1]; cSlice++, currentSlice++) {
+                		//System.err.println("currentSlice: " + currentSlice + ", cSlice: " + cSlice + ", tCount: " + (currentSlice));
+                		outVOI.importNewVOI(currentSlice, cSlice, newVOI, zExt, false);
+                	}
+                    outVOI.setAllActive(false);	
+                    if (outVOI.isEmpty()) {
+                    //	System.err.println("OUT VOI IS EMPTY!");
+                    }
+                	compImage.getActiveImage().getVOIs().addElement(outVOI);
+                    
                 }
             }
         }
+            
+            
 
         compImage.getActiveImage().notifyImageDisplayListeners(null, true);
     }

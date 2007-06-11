@@ -93,9 +93,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** DOCUMENT ME! */
     private Vector clippedScannerVectors = new Vector();
 
-    /** Vector to hold the clipped slice numbers. */
-    private Vector clippedSlices = new Vector();
-
     /** Vector to hold clipped VOIs (multiple). */
     private ViewVOIVector clippedVOIs = new ViewVOIVector();
 
@@ -669,7 +666,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         this.clippedVOIs.add(voi);
-        this.clippedSlices.add(new Integer(slice));
     }
 
     /**
@@ -687,7 +683,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         this.clippedVOIs.add(voi);
-        this.clippedSlices.add(new Integer(slice));
         this.clippedScannerVectors.add(scannerPts);
     }
 
@@ -985,7 +980,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void clearClippedVOIs() {
         this.clippedVOIs.removeAllElements();
-        this.clippedSlices.removeAllElements();
         this.clippedScannerVectors.removeAllElements();
     }
 
@@ -1120,15 +1114,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public Vector getClippedScannerVectors() {
         return this.clippedScannerVectors;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  Vector
-     */
-    public Vector getClippedSlices() {
-        return this.clippedSlices;
     }
 
     /**

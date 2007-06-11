@@ -90,6 +90,7 @@ public class VOIPoint extends VOIBase {
         try {
             this.removeAllElements();
             this.addElement( new Point3Df( point.x, point.y, slice ) );
+            System.err.println("x: " + point.x + ", y: " + point.y + ", z: " + slice);
         } catch ( OutOfMemoryError error ) {
             System.gc();
             throw error;

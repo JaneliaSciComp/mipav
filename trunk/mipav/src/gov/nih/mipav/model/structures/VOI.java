@@ -2907,7 +2907,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  voi       added to VOI
      * @param  newZDim   indicates the new Z dimenions to be set
      */
-    public void importNewVOI(int slice, int voiSlice, VOI voi, int newZDim) {
+    public void importNewVOI(int slice, int voiSlice, VOI voi, int newZDim, boolean resize) {
         zDim = newZDim;
 
         float[] x, y, z;
@@ -2924,13 +2924,17 @@ public class VOI extends ModelSerialCloneable {
             x = new float[n];
             y = new float[n];
             z = new float[n];
-            curves = new Vector[zDim];
+            
+            if (resize) {
+            	curves = new Vector[zDim];
 
-            for (int i = 0; i < zDim; i++) {
-                curves[i] = new Vector();
+            	for (int i = 0; i < zDim; i++) {
+            		curves[i] = new Vector();
+            	}
+
             }
 
-            elementLabel = 1;
+        	elementLabel = 1;
         } catch (OutOfMemoryError e) {
             System.gc();
             throw e;
@@ -2943,7 +2947,13 @@ public class VOI extends ModelSerialCloneable {
                 importPolygon(gons[i], slice);
             }
         } else if (curveType == POINT) {
-            importPoints(voi.exportPoints(voiSlice), slice);
+        	
+        	Point3Df [] pts = voi.exportPoints(voiSlice);
+        	for (int i = 0; i < pts.length; i++) {
+        		System.err.println("i: " + i + ", pt: " + pts[i]);
+        	}
+        	
+            importPoints(pts, slice);
         } else if (curveType == ANNOTATION) {
             //
         } else if (curveType == LINE) {
@@ -2994,11 +3004,14 @@ public class VOI extends ModelSerialCloneable {
         } else {
             return;
         }
-
+System.err.println("VOI.importPoints() slice is: " + slice);
         for (i = 0; i < points.length; i++) {
             voiPts[i].importPoint(points[i], slice);
             curves[slice].addElement(voiPts[i]);
             ((VOIPoint) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++));
+        }
+        if (isEmpty()) {
+        	System.err.println("IS EMPTY AFTER IMPORTING");
         }
     }
 
@@ -3113,7 +3126,7 @@ public class VOI extends ModelSerialCloneable {
      */
     public boolean isEmpty() {
         int i;
-
+//System.err.println("zDim is: " + zDim);
         for (i = 0; i < zDim; i++) {
 
             if (!curves[i].isEmpty()) {
@@ -3619,6 +3632,7 @@ public class VOI extends ModelSerialCloneable {
     public boolean nearPoint(int x, int y, int slice, float zoom, float resolutionX, float resolutionY) {
 
         if (isEmpty()) {
+        	System.err.println("IS EMPTY... wtf?");
             return false;
         }
 
@@ -3668,7 +3682,6 @@ public class VOI extends ModelSerialCloneable {
                     return true;
                 }
             } else if ((curveType == VOI.POINT) || (curveType == VOI.POLYLINE_SLICE)) {
-
                 if (((VOIPoint) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
                     polygonIndex = i;
 

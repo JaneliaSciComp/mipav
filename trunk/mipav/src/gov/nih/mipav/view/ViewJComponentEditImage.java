@@ -4397,7 +4397,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void updatePaintBrushCursor() {
         int opacity = MipavMath.round(255 * .3);
         Color paintColor = Color.red;
-
         try {
             opacity = (int) (frame.getControls().getTools().getOpacity() * 255);
             paintColor = frame.getControls().getTools().getPaintColor();
