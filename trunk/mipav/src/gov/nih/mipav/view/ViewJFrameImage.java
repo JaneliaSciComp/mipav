@@ -615,12 +615,26 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             if (imageA.isColorImage()) {
                 imageB = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(), imageA.getImageName() + "_mask");
-                imageB.copyFileTypeInfoSansBufferType(imageA);
+
+                imageB.copyFileTypeInfo(imageA);
+
+                for (int i = 0; i < imageB.getFileInfo().length; i++) {
+                    imageB.getFileInfo(i).setDataType(imageB.getType());
+                    imageB.getFileInfo(i).setFileName("Mask");
+                }
+
                 imageB.calcMinMax();
                 setImageB(imageB);
             } else {
                 imageB = new ModelImage(ModelStorageBase.UBYTE, imageA.getExtents(), imageA.getImageName() + "_ubMask");
-                imageB.copyFileTypeInfoSansBufferType(imageA);
+
+                imageB.copyFileTypeInfo(imageA);
+
+                for (int i = 0; i < imageB.getFileInfo().length; i++) {
+                    imageB.getFileInfo(i).setDataType(imageB.getType());
+                    imageB.getFileInfo(i).setFileName("Mask");
+                }
+
                 imageB.calcMinMax();
                 setImageB(imageB);
                 getLUTb().makeStripedLUT(); // make striped look up table by default
