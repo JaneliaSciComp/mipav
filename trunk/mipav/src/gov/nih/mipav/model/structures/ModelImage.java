@@ -558,6 +558,8 @@ public class ModelImage extends ModelStorageBase {
             }
 
             ((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+
+            FileInfoBase.copyCoreInfo(fromImage.getFileInfo(), fileInfo);
         } else {
 
             for (int i = 0; i < getExtents()[2]; i++) {
