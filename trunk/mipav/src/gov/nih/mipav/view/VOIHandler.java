@@ -4048,21 +4048,24 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             tempBase = (VOIBase) curves[s].elementAt(j);
                             numPoints = tempBase.size();
 
-                            // System.err.println("number of points: " + numPoints);
+                          //  System.err.println("number of points: " + numPoints);
                             slice = -1;
 
                             for (int c = 0; c < numPoints; c++, scannerIndex++) {
                                 inPoint = (Point3Df) scannerVector.elementAt(scannerIndex);
 
-                                // System.err.println("In point (scanner): " + inPoint);
+                               // System.err.println("In point (scanner): " + inPoint);
 
                                 // convert from scanner
                                 MipavCoordinateSystems.scannerToFile(inPoint, outPoint, compImage.getActiveImage());
+                                outPoint.x = Math.abs(outPoint.x);
+                                outPoint.y = Math.abs(outPoint.y);
+                                outPoint.z = Math.abs(outPoint.z);
                                 ((Point3Df) tempBase.elementAt(c)).x = outPoint.x;
                                 ((Point3Df) tempBase.elementAt(c)).y = outPoint.y;
                                 ((Point3Df) tempBase.elementAt(c)).z = outPoint.z;
 
-                                // System.err.println("Out point is: " + outPoint);
+                            //   System.err.println("Out point is: " + outPoint);
 
                                 if ((slice != -1) && (slice != MipavMath.round(outPoint.z))) {
 
@@ -4094,6 +4097,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                 return;
             } catch (ArrayIndexOutOfBoundsException e) {
+            	e.printStackTrace();
                 MipavUtil.displayError("VOI bounds do not match those of current image: aborting.");
 
                 return;
@@ -4102,11 +4106,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             newVOI.getBounds(x, y, z);
 
             for (int i = 0; i < x.length; i++) {
-            	//System.err.println("x-" + i + ": " + x[i]);
+            //	System.err.println("x-" + i + ": " + x[i]);
             }
 
             for (int i = 0; i < y.length; i++) {
-            //	System.err.println("y-" + i + ": " + y[i]);
+          //  	System.err.println("y-" + i + ": " + y[i]);
             }
 
             for (int i = 0; i < z.length; i++) {
