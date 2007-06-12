@@ -5192,6 +5192,41 @@ System.err.println("curves size: " );
         return true;
     }
 
+    
+    /**
+     * Gets a sorted Vector of PolyPoints (for use in the VOI copy/pasting)
+     * @return Vector, sorted
+     */
+    public Vector getSortedPolyPoints() {
+    	Vector distanceVector = new Vector();
+        Point3Df firstPoint;
+        int i;
+        
+
+        int sliceCounter;
+        int pointNumber = 0;
+
+        for (sliceCounter = 0; sliceCounter < zDim; sliceCounter++) {
+
+            for (i = 0; i < curves[sliceCounter].size(); i++) {
+
+                try {
+                    pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
+                    firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).exportPoint();
+
+                    firstPoint.z = sliceCounter;
+
+                    distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        Collections.sort(distanceVector, new PointComparator());
+        return distanceVector;
+    }
+    
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
@@ -5219,7 +5254,7 @@ System.err.println("curves size: " );
     /**
      * DOCUMENT ME!
      */
-    private class PolyPointHolder {
+    public class PolyPointHolder {
 
         /** DOCUMENT ME! */
         private int number;
