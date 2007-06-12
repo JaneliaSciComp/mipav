@@ -4185,29 +4185,22 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         }
                     }
 
-                    int numSlices = (int) (z[1] - z[0]) + 1;
-                    int numElements = 0;
-                    int sliceCounter = 0;
-
-                    VOIPoint oldPoint;
                     Point3Df oldPt;
                     float[] xt = new float[1];
                     float[] yt = new float[1];
                     float[] zt = new float[1];
                     
-                    for (int start = compImage.getSlice(); sliceCounter < numSlices; start++, oldIndex++, sliceCounter++) {
-
-                        numElements = newVOI.getCurves()[oldIndex].size();
-
-                        for (int i = 0; i < numElements; i++) {
-                        	
-                        	oldPoint = (VOIPoint)newVOI.getCurves()[oldIndex].elementAt(i);
-                        	oldPt = (Point3Df)oldPoint.elementAt(0);
-                        	xt[0] = oldPt.x;
-                        	yt[0] = oldPt.y;
-                        	zt[0] = start;
-                            outVOI.importCurve(xt, yt, zt, start);
-                        }
+                    Vector polyVector = newVOI.getSortedPolyPoints();
+                    
+                    int adjZ = (int)((VOI.PolyPointHolder)polyVector.elementAt(0)).getPoint().z;
+                    int diff = currentSlice - adjZ;
+                    
+                    for (int i = 0; i < polyVector.size(); i++) {
+                    	oldPt = ((VOI.PolyPointHolder)polyVector.elementAt(i)).getPoint();
+                    	xt[0] = oldPt.x;
+                    	yt[0] = oldPt.y;
+                    	zt[0] = oldPt.z + diff;
+                        outVOI.importCurve(xt, yt, zt, (int)oldPt.z + diff);
                     }
 
                     compImage.getActiveImage().getVOIs().addElement(outVOI);

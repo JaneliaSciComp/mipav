@@ -404,17 +404,24 @@ public class VOIPoint extends VOIBase {
                 xPos = xS;
                 yPos = yS;
 
+                boolean displaySegmentDistance = true;
+                if (distanceString != null) {
+                	displaySegmentDistance = !(distanceString.startsWith("0.00"));
+                }
+                
                 if (firstSlicePoint && isActivePoint) {
                     if (xS < 20) {
                         g.drawString(label, xPos + 10, yPos - 5);
                         g.drawString("total: " + totalDistanceString, xPos + 10, yPos - 18);
-                        g.drawString("segment: " + distanceString, xPos + 10, yPos - 31);
+                        if (displaySegmentDistance)
+                        	g.drawString("segment: " + distanceString, xPos + 10, yPos - 31);
 
 
                     } else {
                         g.drawString(label, xPos - 15, yPos - 5);
                         g.drawString("total: " + totalDistanceString, xPos - 15, yPos - 18);
-                        g.drawString("segment: " + distanceString, xPos - 15, yPos - 31);
+                        if (displaySegmentDistance)
+                    	    g.drawString("segment: " + distanceString, xPos - 15, yPos - 31);
 
                     }
                 } else if (firstSlicePoint) {
@@ -428,11 +435,14 @@ public class VOIPoint extends VOIBase {
                 } else if (isActivePoint) {
                     if (xS < 20) {
                         g.drawString(label, xPos + 10, yPos - 5);
-                        g.drawString("segment: " + distanceString, xPos + 10, yPos - 18);
+                                                
+                        if (displaySegmentDistance)
+                        	g.drawString("segment: " + distanceString, xPos + 10, yPos - 18);
                     }
                     else {
                         g.drawString(label, xPos - 15, yPos - 5);
-                        g.drawString("segment: " + distanceString, xPos - 15, yPos - 18);
+                        if (displaySegmentDistance)
+                        	g.drawString("segment: " + distanceString, xPos - 15, yPos - 18);
                     }
                 } else {
                     if (xS < 20) {
