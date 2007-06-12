@@ -30,7 +30,7 @@ import javax.swing.event.*;
 import javax.swing.JPanel;
 
 import javax.vecmath.*;
-
+import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
 
 /**
  * Frame that holds the surface renderer. This frame is only possible to
@@ -1740,6 +1740,21 @@ public class SurfaceRender extends RenderViewBase {
         clipPanel.setRayBasedRender(_rayBasedRender);
         volOpacityPanel.setRayBasedRender(_rayBasedRender);
         surfacePanel.getLightDialog().setRayBasedRender(_rayBasedRender);
+        sculptorPanel.setVolumeSculptor(_rayBasedRender);
+    }
+
+    /**
+     * Set the reference to ray based renderer, raycast renderer or shear warp
+     * renderer. This method set the clipping dialog to control the both the
+     * 3D texture renderer and raycast based renderer.
+     *
+     * @param  _rayBasedRender  VolumeRenderer reference
+     */
+    public void setRayBasedRender(GPUVolumeRender _rayBasedRender) {
+        //rayBasedRender = _rayBasedRender;
+        clipPanel.setRayBasedRender(_rayBasedRender);
+        //volOpacityPanel.setRayBasedRender(_rayBasedRender);
+        //surfacePanel.getLightDialog().setRayBasedRender(_rayBasedRender);
         sculptorPanel.setVolumeSculptor(_rayBasedRender);
     }
 
