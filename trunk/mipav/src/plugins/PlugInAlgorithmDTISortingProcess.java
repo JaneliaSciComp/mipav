@@ -143,13 +143,13 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
         long begTime = System.currentTimeMillis();
 
 
-        Preferences.debug("** Beginning Algorithm v2.2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("** Beginning Algorithm v2.3\n", Preferences.DEBUG_ALGORITHM);
 
         if (outputTextArea != null) {
-            outputTextArea.append("** Beginning Algorithm v2.2\n");
+            outputTextArea.append("** Beginning Algorithm v2.3\n");
         }
 
-        System.out.println("** Beginning Algorithm v2.2\n");
+        System.out.println("** Beginning Algorithm v2.3\n");
 
         //remove last slash from study path if it has it
         if(String.valueOf(studyPath.charAt(studyPath.length() - 1)).equals(File.separator)) {
@@ -691,11 +691,12 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 
 
         String sliceThickness = ((String) (firstFileInfoDicom.getTagTable().getValue("0018,0050"))).trim();
-        float sliceTh = new Float(sliceThickness.trim()).intValue();
+        float sliceTh = new Float(sliceThickness.trim()).floatValue();
 
         String sliceGap = ((String) (firstFileInfoDicom.getTagTable().getValue("0018,0088"))).trim();
-        float sliceGp = new Float(sliceGap.trim()).intValue();
-        sliceGp = sliceGp - sliceTh;
+        float sliceGp = new Float(sliceGap.trim()).floatValue();
+        
+        sliceGp = sliceTh - sliceGp;
         sliceGap = String.valueOf(sliceGp);
 
         String fieldOfView = (String) (firstFileInfoDicom.getTagTable().getValue("0018,1100"));
