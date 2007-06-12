@@ -1271,7 +1271,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     outVOI = new VOI((short) resultImage.getVOIs().size(), resultImage.getImageName(), 1,
                                      voi.getCurveType(), -1.0f);
                     outVOI.setColor(voiColor);
-                    outVOI.importNewVOI(referenceSlice, referenceSlice, voi, sourceImage.getExtents()[2]);
+                    outVOI.importNewVOI(referenceSlice, referenceSlice, voi, sourceImage.getExtents()[2], true);
                     resultImage.getVOIs().addElement(outVOI);
                 }
             } // if (transformVOI)
@@ -1299,7 +1299,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                         outVOI = new VOI((short) targetImage.getVOIs().size(), targetImage.getImageName(), 1,
                                          voi.getCurveType(), -1.0f);
                         outVOI.setColor(voiColor);
-                        outVOI.importNewVOI(0, referenceSlice, voi, 1);
+                        outVOI.importNewVOI(0, referenceSlice, voi, 1, true);
                         targetImage.getVOIs().addElement(outVOI);
                     }
                 } // if (transformVOI)
@@ -1354,7 +1354,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                                 outVOI = new VOI((short) targetImage.getVOIs().size(), targetImage.getImageName(), 1,
                                                  voi.getCurveType(), -1.0f);
                                 outVOI.setColor(voiColor);
-                                outVOI.importNewVOI(0, referenceSlice, voi, 1);
+                                outVOI.importNewVOI(0, referenceSlice, voi, 1, true);
                                 targetImage.getVOIs().addElement(outVOI);
                             }
                         } // if (transformVOI)
@@ -1382,7 +1382,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                                 outVOI = new VOI((short) targetImage.getVOIs().size(), targetImage.getImageName(), 1,
                                                  voi.getCurveType(), -1.0f);
                                 outVOI.setColor(voiColor);
-                                outVOI.importNewVOI(0, tNumber, voi, 1);
+                                outVOI.importNewVOI(0, tNumber, voi, 1, true);
                                 targetImage.getVOIs().addElement(outVOI);
                             }
                         } // if (transformVOI)
@@ -1422,7 +1422,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                         outVOI = new VOI((short) sImage.getVOIs().size(), sImage.getImageName(), 1, voi.getCurveType(),
                                          -1.0f);
                         outVOI.setColor(voiColor);
-                        outVOI.importNewVOI(0, sNumber, voi, 1);
+                        outVOI.importNewVOI(0, sNumber, voi, 1, true);
                         sImage.getVOIs().addElement(outVOI);
                     }
                 } // if (transformVOI)
@@ -2426,7 +2426,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                         outVOI = new VOI((short) resultImage.getVOIs().size(), resultImage.getImageName(), 1,
                                          voi.getCurveType(), -1.0f);
                         outVOI.setColor(voiColor);
-                        outVOI.importNewVOI(sNumber, 0, voi, resultZDim);
+                        outVOI.importNewVOI(sNumber, 0, voi, resultZDim, true);
                         resultImage.getVOIs().addElement(outVOI);
                     }
                 } else {

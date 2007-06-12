@@ -95,7 +95,6 @@ public class FilePARREC extends FileBase {
      */
     public static String[] getCompleteFileNameList(String absolutePath) {
         String[] completeFileNameList = new String[2];
-System.err.println("absolute path: " + absolutePath);
         if (FilePARREC.isHeaderFile(absolutePath)) {
             completeFileNameList[0] = absolutePath;
 
@@ -372,11 +371,9 @@ System.err.println("absolute path: " + absolutePath);
      * @see        gov.nih.mipav.model.file.FileInfoAnalyze
      */
     public boolean readHeader(String imageFileName, String fileDir) throws IOException {
-System.err.println("imageFileName: " + imageFileName);
         //Setup Basic Variables//
         String fileHeaderName;
         fileHeaderName=getHeaderFile();
-        System.err.println("header file name: " + fileHeaderName);
         Preferences.debug(" fileHeaderName = " + fileHeaderName  + "\n");
         File fileHeader = new File(fileHeaderName);
         if (fileHeader.exists() == false) {
@@ -737,9 +734,7 @@ System.err.println("imageFileName: " + imageFileName);
     }
 
     /**
-     * Reads an analyze image file by reading the header then making a FileRaw to read the file. Image data is left in
-     * buffer. If the fileInfo cannot be found, the header will be located and read first. Image is not 'flipped', and
-     * neither units of measure nor orientation are set.
+     * Reads in a PAR/REC image (first the header file, then the raw file)
      *
      * @param      buffer  Image buffer to store image data into.
      *
@@ -800,7 +795,7 @@ System.err.println("imageFileName: " + imageFileName);
     }
 
     /**
-     * Writes an analyze format type image.
+     * Writes a PAR/REC format image and header.
      *
      * @param      image  Image model of data to write.
      *
