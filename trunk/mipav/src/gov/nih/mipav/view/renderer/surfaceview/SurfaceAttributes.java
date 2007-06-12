@@ -180,10 +180,12 @@ public class SurfaceAttributes {
         mMaterial = copyMaterial( material );
         if ( mMaterial != null )
         {
-            for ( int i = 0; i < mSurfaceShape.length; i++ )
-            {
-                mSurfaceShape[i].getAppearance().setMaterial( mMaterial );
-            }
+        	if ( mSurfaceShape != null ) {
+	            for ( int i = 0; i < mSurfaceShape.length; i++ )
+	            {
+	                mSurfaceShape[i].getAppearance().setMaterial( mMaterial );
+	            }
+        	}
             Color3f diffuse = new Color3f();
             mMaterial.getDiffuseColor( diffuse );
             mColor.x = diffuse.x;
@@ -250,11 +252,14 @@ public class SurfaceAttributes {
         mOpacity = opacity;
         mColor.w = 1 - opacity;
 
-        for (int i = 0; i < mSurfaceShape.length; i++ )
-        {
-            // 0 = Opaque
-            mSurfaceShape[i].getAppearance().getTransparencyAttributes().setTransparency(opacity);
+        if ( mSurfaceShape != null ) {
+	        for (int i = 0; i < mSurfaceShape.length; i++ )
+	        {
+	            // 0 = Opaque
+	            mSurfaceShape[i].getAppearance().getTransparencyAttributes().setTransparency(opacity);
+	        }
         }
+        
     }
 
     /**
