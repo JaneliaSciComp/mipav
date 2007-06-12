@@ -2742,6 +2742,20 @@ public class VOI extends ModelSerialCloneable {
     }
 
     public void importCurve(VOIText curve, int slice) {
+    	
+    	for (int i = 0; i < zDim; i++) {
+    		this.removeCurves(i);
+    	}
+    	
+    	Point3Df pt1 = (Point3Df)curve.elementAt(0);
+    	Point3Df pt2 = (Point3Df)curve.elementAt(1);
+
+    	pt1.z = slice;
+    	pt2.z = slice;
+    	curve.removeAllElements();
+    	curve.addElement(pt1);
+    	curve.addElement(pt2);
+    	
     	curves[slice].addElement(curve);
     }
     
@@ -2955,7 +2969,9 @@ public class VOI extends ModelSerialCloneable {
         	
             importPoints(pts, slice);
         } else if (curveType == ANNOTATION) {
-            //
+            if (isEmpty()) {
+            	curves[slice].addElement(voi.getCurves()[voiSlice].elementAt(0));
+            }
         } else if (curveType == LINE) {
             voi.exportArrays(x, y, z, voiSlice);
             importCurve(x, y, z, slice);
@@ -3050,8 +3066,9 @@ System.err.println("VOI.importPoints() slice is: " + slice);
         }
 
         if ((polygonIndex != -99) && (point != null)) {
-
+System.err.println("curves size: " );
             if (curves[slice].size() > polygonIndex) {
+            	System.err.println("yo2:");
                 VOIPoint vPt = new VOIPoint(name, true);
                 vPt.addElement(point);
 

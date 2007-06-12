@@ -4102,15 +4102,15 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             newVOI.getBounds(x, y, z);
 
             for (int i = 0; i < x.length; i++) {
-            	System.err.println("x-" + i + ": " + x[i]);
+            	//System.err.println("x-" + i + ": " + x[i]);
             }
 
             for (int i = 0; i < y.length; i++) {
-            	System.err.println("y-" + i + ": " + y[i]);
+            //	System.err.println("y-" + i + ": " + y[i]);
             }
 
             for (int i = 0; i < z.length; i++) {
-                System.err.println("z-" + i + ": " + z[i]);
+             //   System.err.println("z-" + i + ": " + z[i]);
             }
 
             if ((imageXExt <= (x[1] - x[0])) || (imageYExt <= (y[1] - y[0])) || (imageXExt <= x[0]) ||
@@ -4189,17 +4189,52 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     int numElements = 0;
                     int sliceCounter = 0;
 
+                    VOIPoint oldPoint;
+                    Point3Df oldPt;
+                    float[] xt = new float[1];
+                    float[] yt = new float[1];
+                    float[] zt = new float[1];
+                    
                     for (int start = compImage.getSlice(); sliceCounter < numSlices; start++, oldIndex++, sliceCounter++) {
 
                         numElements = newVOI.getCurves()[oldIndex].size();
 
                         for (int i = 0; i < numElements; i++) {
-                            outVOI.getCurves()[start].addElement(newVOI.getCurves()[oldIndex].elementAt(i));
+                        	
+                        	oldPoint = (VOIPoint)newVOI.getCurves()[oldIndex].elementAt(i);
+                        	oldPt = (Point3Df)oldPoint.elementAt(0);
+                        	xt[0] = oldPt.x;
+                        	yt[0] = oldPt.y;
+                        	zt[0] = start;
+                            outVOI.importCurve(xt, yt, zt, start);
                         }
                     }
 
                     compImage.getActiveImage().getVOIs().addElement(outVOI);
 
+                } else if (newVOI.getCurveType() == VOI.ANNOTATION) { 
+                	VOIText vText = (VOIText)newVOI.getCurves()[(int)z[0]].elementAt(0);
+                	VOIText newText = new VOIText();
+                	
+                	newText.setFontDescriptors(vText.getFontDescriptors());
+                	newText.setText(vText.getText());
+                	newText.setColor(newVOI.getColor());
+                	newText.setBackgroundColor(vText.getBackgroundColor());
+                	newText.setFontName(vText.getFontName());
+                	newText.setFontSize(vText.getFontSize());
+                	newText.setUseMarker(vText.useMarker());
+                	
+                	Point3Df oldPt1 = (Point3Df)vText.elementAt(0);
+                	Point3Df oldPt2 = (Point3Df)vText.elementAt(1);
+                	
+                	Point3Df pt1 = new Point3Df(oldPt1.x, oldPt1.y, currentSlice);
+                	Point3Df pt2 = new Point3Df(oldPt2.x, oldPt2.y, currentSlice);
+                	
+                	newText.addElement(pt1);
+                	newText.addElement(pt2);
+                	
+                	outVOI.importCurve(newText, currentSlice);
+                	compImage.getActiveImage().getVOIs().addElement(outVOI);
                 } else {                                                           
                 	
                 	//adjust VOI for current image slice(s)
@@ -4208,9 +4243,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 		outVOI.importNewVOI(currentSlice, cSlice, newVOI, zExt, false);
                 	}
                     outVOI.setAllActive(false);	
-                    if (outVOI.isEmpty()) {
-                    //	System.err.println("OUT VOI IS EMPTY!");
-                    }
                 	compImage.getActiveImage().getVOIs().addElement(outVOI);
                     
                 }
