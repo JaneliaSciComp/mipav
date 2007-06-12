@@ -28,8 +28,10 @@ import java.util.*;
  * unfiltered. This results in a border of unfiltered pixels in the image 1/2 of the kernel-size large.</p>
  * 
  * When adaptiveSize is true, the Adaptive median filter discussed in Digital Image Processing Second Edition
- * by Rafael C. Gonzalez and Richard E. Woods in Chapter 5.3 pages 241-243 is implemented.  Depending on 
- * certain conditions, the kernel size can incresase during the filtering operation.
+ * by Rafael C. Gonzalez and Richard E. Woods in Chapter 5.3 pages 241-243 is implemented.  It has 3 main purposes: 1. remove salt and pepper (impulse) noise 2. provide smoothening of other noise that may
+ * not be impulsive 3. reduce distortion such as excessive thinning or thickening of object bounderies. Depending on 
+ * certain conditions, the kernel size can incresase during the filtering operation. 
+ * 
  *
  * @version  1.0; 17 February 2000
  * @author   David Parsons (parsonsd)
