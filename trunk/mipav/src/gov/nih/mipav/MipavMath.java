@@ -22,7 +22,7 @@ public class MipavMath {
      *
      * @return  returns the distance
      */
-    public static final double distance(Point3Df pt1, Point3Df pt2) {
+    public static final double distance(final Point3Df pt1, final Point3Df pt2) {
         return Math.sqrt(((pt2.x - pt1.x) * (pt2.x - pt1.x)) + ((pt2.y - pt1.y) * (pt2.y - pt1.y)) +
                          ((pt2.z - pt1.z) * (pt2.z - pt1.z)));
     }
@@ -37,7 +37,7 @@ public class MipavMath {
      *
      * @return  returns the distance
      */
-    public static final double distance(int x1, int x2, int y1, int y2) {
+    public static final double distance(final int x1, final int x2, final int y1, final int y2) {
         return Math.sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)));
     }
 
@@ -51,12 +51,12 @@ public class MipavMath {
      *
      * @return  the distance as a double
      */
-    public static final double distance(float x1, float x2, float y1, float y2) {
+    public static final double distance(final float x1, final float x2, final float y1, final float y2) {
         return Math.sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)));
     }
 
     /**
-     * Finds the distance between two points.
+     * Finds the distance between two 2D points.
      *
      * @param   x1  x coordinate of the first point
      * @param   x2  x coordinate of the second point
@@ -65,24 +65,25 @@ public class MipavMath {
      *
      * @return  the distance as a double
      */
-    public static final double distance(double x1, double x2, double y1, double y2) {
+    public static final double distance(final double x1, final double x2, final double y1, final double y2) {
         return Math.sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)));
     }
 
     /**
-     * DOCUMENT ME!
+     * Calculates the actual distance between two 3D points using voxel resolutions.
      *
-     * @param   x0   DOCUMENT ME!
-     * @param   y0   DOCUMENT ME!
-     * @param   z0   DOCUMENT ME!
-     * @param   x1   DOCUMENT ME!
-     * @param   y1   DOCUMENT ME!
-     * @param   z1   DOCUMENT ME!
-     * @param   res  DOCUMENT ME!
+     * @param   x0   x coordinate of the first point
+     * @param   y0   y coordinate of the first point
+     * @param   z0   z coordinate of the first point
+     * @param   x1   x coordinate of the second point
+     * @param   y1   y coordinate of the second point
+     * @param   z1   z coordinate of the second point
+     * @param   res  Voxel resolutions.
      *
      * @return  DOCUMENT ME!
      */
-    public static final double distance(float x0, float y0, float z0, float x1, float y1, float z1, float[] res) {
+    public static final double distance(final float x0, final float y0, final float z0, final float x1, final float y1,
+                                        final float z1, final float[] res) {
 
         return Math.sqrt(((x1 - x0) * (x1 - x0) * (res[0] * res[0])) + ((y1 - y0) * (y1 - y0) * (res[1] * res[1])) +
                          ((z1 - z0) * (z1 - z0) * (res[2] * res[2])));
@@ -97,7 +98,7 @@ public class MipavMath {
      *
      * @return  returns the length
      */
-    public static final double length(float[] x, float[] y, float[] res) {
+    public static final double length(final float[] x, final float[] y, final float[] res) {
         double length;
 
         // length is (x1-x0) squared times the x resolution
@@ -117,7 +118,7 @@ public class MipavMath {
      *
      * @return  returns the length
      */
-    public static final double length(double[] x, double[] y, float[] res) {
+    public static final double length(final double[] x, final double[] y, final float[] res) {
         double length;
 
         // length is (x1-x0) squared times the x resolution
@@ -132,14 +133,15 @@ public class MipavMath {
      * Returns the real length (adjusted by the image resolution) of the line between (x0, y0) and (x1, y1).
      *
      * @param   x0   x coordinate of the first point
-     * @param   y0   x coordinate of the first point
-     * @param   x1   y coordinate of the second point
+     * @param   y0   y coordinate of the first point
+     * @param   x1   x coordinate of the second point
      * @param   y1   y coordinate of the second point
      * @param   res  resolutions in each dimension
      *
      * @return  returns the length
      */
-    public static final double length(float x0, float y0, float x1, float y1, float[] res) {
+    public static final double length(final float x0, final float y0, final float x1, final float y1,
+                                      final float[] res) {
         double length;
 
         // length is (x1-x0) squared times the x resolution
@@ -154,14 +156,15 @@ public class MipavMath {
      * Returns the real length (adjusted by the image resolution) of the line between (x0, y0) and (x1, y1).
      *
      * @param   x0   x coordinate of the first point
-     * @param   y0   x coordinate of the first point
-     * @param   x1   y coordinate of the second point
+     * @param   y0   y coordinate of the first point
+     * @param   x1   x coordinate of the second point
      * @param   y1   y coordinate of the second point
      * @param   res  resolutions in each dimension
      *
      * @return  returns the length
      */
-    public static final double length(double x0, double y0, double x1, double y1, float[] res) {
+    public static final double length(final double x0, final double y0, final double x1, final double y1,
+                                      final float[] res) {
         double length;
 
         // length is (x1-x0) squared times the x resolution
