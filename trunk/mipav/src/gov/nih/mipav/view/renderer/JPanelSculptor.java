@@ -12,7 +12,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
-import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
+
 
 /**
  * <p>Title: JPanelSculptor</p>
@@ -85,8 +85,6 @@ public class JPanelSculptor extends JPanelRendererBase {
 
     /** Toolbar builder reference. */
     private ViewToolBarBuilder toolbarBuilder;
-    
-    private GPUVolumeRender m_kVolumeRendererGPU = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -203,11 +201,6 @@ public class JPanelSculptor extends JPanelRendererBase {
         m_kInvertOutlineButton.setEnabled(false);
         m_kApplySculptButton.setEnabled(false);
 
-        if ( m_kVolumeRendererGPU != null )
-        {
-            m_kVolumeRendererGPU.clearSculpt();
-        }
-
         /* tell the m_kSculptor object to clear to draw outline */
         if (m_kVolumeSculptor != null) {
             m_kVolumeSculptor.clearSculpt();
@@ -242,11 +235,6 @@ public class JPanelSculptor extends JPanelRendererBase {
      * drawSculptRegion: called when the "Draw Sculpt Outline" Button is pressed.
      */
     public void drawSculptRegion() {
-
-        if ( m_kVolumeRendererGPU != null )
-        {
-            m_kVolumeRendererGPU.enableSculpt(!m_kVolumeRendererGPU.getSculptEnabled());
-        }
 
         /* tell the m_kSculptor object that drawing is enabled */
         if (m_kVolumeSculptor != null) {
@@ -406,11 +394,6 @@ public class JPanelSculptor extends JPanelRendererBase {
      */
     public void invertSculptRegion() {
 
-        if ( m_kVolumeRendererGPU != null )
-        {
-            m_kVolumeRendererGPU.invertSculpt();
-        }
-
         /* tell the m_kSculptor object to clear to draw outline */
         if (m_kVolumeSculptor != null) {
             m_kVolumeSculptor.invertSculpt();
@@ -475,15 +458,6 @@ public class JPanelSculptor extends JPanelRendererBase {
      */
     public void setVolumeSculptor(VolumeRenderer _rayBasedRender) {
         m_kVolumeSculptor = new VolumeSculptor(_rayBasedRender, m_iSculptWidth, m_iSculptHeight);
-    }
-
-    /**
-     * Initialize the raycast based volume render with the sculptor.
-     *
-     * @param  _rayBasedRender  VolumeRenderer
-     */
-    public void setVolumeSculptor(GPUVolumeRender _rayBasedRender) {
-        m_kVolumeRendererGPU = _rayBasedRender;
     }
 
     /**

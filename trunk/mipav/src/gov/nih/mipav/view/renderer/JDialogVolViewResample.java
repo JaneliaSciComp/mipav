@@ -117,15 +117,11 @@ public class JDialogVolViewResample extends JDialogBase {
      */
     private String startupCommand = null;
 
-
     /** Resampled dimension value in Power of 2. */
     private int[] volExtents = new int[3];
 
     /** Volume size X*Y*Z. */
     private int volSize = 1;
-
-    /** Type of ViewJFrameVolumeView object (using WildMagic or not) */
-    private String m_kVolViewType;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -135,11 +131,9 @@ public class JDialogVolViewResample extends JDialogBase {
      * @param  _imageA  Model image A.
      * @param  _imageB  Model image B.
      */
-    public JDialogVolViewResample(ModelImage _imageA, ModelImage _imageB, String kCommand ) {
+    public JDialogVolViewResample(ModelImage _imageA, ModelImage _imageB) {
 
         super(ViewUserInterface.getReference().getMainFrame(), false);
-
-        m_kVolViewType = kCommand;
         imageAOriginal = _imageA;
         imageA = (ModelImage) (_imageA.clone());
 
@@ -236,7 +230,6 @@ public class JDialogVolViewResample extends JDialogBase {
         if (forceResample && (volExtents[2] > extents[2])) {
             padButton.setEnabled(true);
         }
-
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -430,16 +423,8 @@ public class JDialogVolViewResample extends JDialogBase {
     public void exec() {
 
         try {
-            if ( m_kVolViewType.equals( "VolTriplanar" ) )
-            {
-                sr = new ViewJFrameVolumeView(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
-                                              rightPanelRenderMode, this);
-            }
-            else if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
-            {
-                sr = new ViewJFrameVolumeViewWM(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
-                                                rightPanelRenderMode, this);
-            }
+            sr = new ViewJFrameVolumeView(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB, leftPanelRenderMode,
+                                          rightPanelRenderMode, this);
             sr.setImageOriginal(imageAOriginal);
 
             if (forcePadding) {
@@ -735,32 +720,23 @@ public class JDialogVolViewResample extends JDialogBase {
         radioButtonPanelRight.setLayout(gbl);
 
         ButtonGroup group2 = new ButtonGroup();
-        
+
         radioSurfaceR = new JRadioButton("Surface & 3D Texture Volume Renderer", false);
         radioSurfaceR.setFont(serif12);
         radioSurfaceR.addItemListener(this);
         group2.add(radioSurfaceR);
 
-        if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
-        {
-            radioRaycastR = new JRadioButton("Shader-based Volume Renderer", false);
-            radioRaycastR.setFont(serif12);
-            radioRaycastR.addItemListener(this);
-            group2.add(radioRaycastR);
-        }
-        else
-        {
-            radioRaycastR = new JRadioButton("Raycast Volume Renderer", false);
-            radioRaycastR.setFont(serif12);
-            radioRaycastR.addItemListener(this);
-            group2.add(radioRaycastR);
-        }
+        radioRaycastR = new JRadioButton("Raycast Volume Renderer", false);
+        radioRaycastR.setFont(serif12);
+        radioRaycastR.addItemListener(this);
+        group2.add(radioRaycastR);
+
         radioShearwarpR = new JRadioButton("Shearwarp Volume Renderer", false);
         radioShearwarpR.setFont(serif12);
         group2.add(radioShearwarpR);
         radioShearwarpR.addItemListener(this);
         radioShearwarpR.setEnabled(false);
-        
+
         radioBrainSurfaceFlattenerR = new JRadioButton("Brain Surface Flattener Renderer", false);
         radioBrainSurfaceFlattenerR.setFont(serif12);
         group2.add(radioBrainSurfaceFlattenerR);
@@ -776,20 +752,12 @@ public class JDialogVolViewResample extends JDialogBase {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
-        if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
-        {
-            radioButtonPanelRight.add(radioRaycastR, gbc);
-            gbc.gridy++;
-       }
-        else
-        {
-            radioButtonPanelRight.add(radioSurfaceR, gbc);
-            gbc.gridy++;
-            radioButtonPanelRight.add(radioRaycastR, gbc);
-            gbc.gridy++;
-            radioButtonPanelRight.add(radioShearwarpR, gbc);
-            gbc.gridy++;
-        }
+        radioButtonPanelRight.add(radioSurfaceR, gbc);
+        gbc.gridy++;
+        radioButtonPanelRight.add(radioRaycastR, gbc);
+        gbc.gridy++;
+        radioButtonPanelRight.add(radioShearwarpR, gbc);
+        gbc.gridy++;
         radioButtonPanelRight.add(radioBrainSurfaceFlattenerR, gbc);
         gbc.gridy++;
         radioButtonPanelRight.add(radioNoneR, gbc);
