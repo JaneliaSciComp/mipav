@@ -478,7 +478,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         }
 
 
-        if (compImage.getActiveImage().getNDims() == 2 || !(Preferences.is(Preferences.PREF_VOI_LPS_SAVE))) {
+        if (!doLPS) {
             for (i = 0; i < nVOI; i++) {
                 if (VOIs.VOIAt(i).isActive() == true) {
                     voi = (VOI) ((VOI) VOIs.elementAt(i)).clone();
