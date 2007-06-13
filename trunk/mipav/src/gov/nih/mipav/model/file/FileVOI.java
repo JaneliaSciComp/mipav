@@ -2004,9 +2004,9 @@ public class FileVOI extends FileBase {
                     // System.err.println("\tScanner coord: " + ptIn);
                     MipavCoordinateSystems.scannerToFile(ptIn, ptOut, image);
 
-                    x[index] = MipavMath.round(ptOut.x);
-                    y[index] = MipavMath.round(ptOut.y);
-                    z[index] = MipavMath.round(ptOut.z);
+                    x[index] = MipavMath.round(Math.abs(ptOut.x));
+                    y[index] = MipavMath.round(Math.abs(ptOut.y));
+                    z[index] = MipavMath.round(Math.abs(ptOut.z));
 
                     // System.err.println("POINT OUT (scanner to file): " + x[index] + ", " + y[index] + ", " +
                     // z[index]);
@@ -2020,7 +2020,7 @@ public class FileVOI extends FileBase {
                     }
                 }
 
-                voi.importCurve(x, y, z, (int) ptOut.z);
+                voi.importCurve(x, y, z, (int)z[0]);
             }
 
         }
