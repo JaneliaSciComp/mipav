@@ -956,16 +956,26 @@ public class FileImageXML extends FileXML {
         boolean useTal = false;
         
         String currentKey = null;
-        while (iter.hasNext()) {
+        
+        boolean useMatrices = true;
+        while (useMatrices && iter.hasNext()) {
             currentKey = (String)iter.next();
             
             TransMatrix tMatrix =  (TransMatrix)matrixMap.get(currentKey);
             if (tMatrix != null && tMatrix.getNCols() >= img.getNDims()) {
             	openTag(bw, datasetAttributesStr[13], true);
+            	
+            	// if the dimensions arent correct for image/matrix, switch it to correct dim and identity
+            	if (tMatrix.getNCols() != (nDims + 1)) {
+                	tMatrix = new TransMatrix(nDims + 1, TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                	tMatrix.identity();
+                }
+            	
                 closedTag(bw, "Transform-ID", TransMatrix.getTransformIDStr(tMatrix.getTransformID()));
                 if (tMatrix.getTransformID() == TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX) {
                 	useTal = true;
                 } 
+                
                 
 //              check to see if it is sagittal or coronal with an identity transform matrix (convert)
                 if (tMatrix.isIdentity()) {
