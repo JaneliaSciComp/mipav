@@ -520,29 +520,37 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param  newInfo       destination file info.
      */
     public static void copyCoreInfo(FileInfoBase[] originalInfo, FileInfoBase[] newInfo) {
+        FileInfoBase curInfo;
 
-        for (int i = 0; i < originalInfo.length; i++) {
-            newInfo[i].setAxisOrientation(originalInfo[i].getAxisOrientation());
-            newInfo[i].setDataType(originalInfo[i].getDataType());
-            newInfo[i].setEndianess(originalInfo[i].getEndianess());
-            newInfo[i].setExtents(originalInfo[i].getExtents());
-            newInfo[i].setImageOrientation(originalInfo[i].getImageOrientation());
+        for (int i = 0; i < newInfo.length; i++) {
 
-            if (ModelImage.isColorImage(originalInfo[i].getDataType())) {
-                newInfo[i].setMinR(originalInfo[i].getMinR());
-                newInfo[i].setMaxR(originalInfo[i].getMaxR());
-                newInfo[i].setMinG(originalInfo[i].getMinG());
-                newInfo[i].setMaxG(originalInfo[i].getMaxG());
-                newInfo[i].setMinB(originalInfo[i].getMinB());
-                newInfo[i].setMaxB(originalInfo[i].getMaxB());
+            if (i < originalInfo.length) {
+                curInfo = originalInfo[i];
             } else {
-                newInfo[i].setMin(originalInfo[i].getMin());
-                newInfo[i].setMax(originalInfo[i].getMax());
+                curInfo = originalInfo[0];
             }
 
-            newInfo[i].setModality(originalInfo[i].getModality());
-            newInfo[i].setOrigin(originalInfo[i].getOrigin());
-            newInfo[i].setResolutions(originalInfo[i].getResolutions()); // Added 10/23/2002
+            newInfo[i].setAxisOrientation(curInfo.getAxisOrientation());
+            newInfo[i].setDataType(curInfo.getDataType());
+            newInfo[i].setEndianess(curInfo.getEndianess());
+            newInfo[i].setExtents(curInfo.getExtents());
+            newInfo[i].setImageOrientation(curInfo.getImageOrientation());
+
+            if (ModelImage.isColorImage(curInfo.getDataType())) {
+                newInfo[i].setMinR(curInfo.getMinR());
+                newInfo[i].setMaxR(curInfo.getMaxR());
+                newInfo[i].setMinG(curInfo.getMinG());
+                newInfo[i].setMaxG(curInfo.getMaxG());
+                newInfo[i].setMinB(curInfo.getMinB());
+                newInfo[i].setMaxB(curInfo.getMaxB());
+            } else {
+                newInfo[i].setMin(curInfo.getMin());
+                newInfo[i].setMax(curInfo.getMax());
+            }
+
+            newInfo[i].setModality(curInfo.getModality());
+            newInfo[i].setOrigin(curInfo.getOrigin());
+            newInfo[i].setResolutions(curInfo.getResolutions()); // Added 10/23/2002
         }
     }
 
@@ -555,31 +563,38 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param  listNoCopy    boolean[] boolean array of indices into the original fileinfos that should not be copied
      */
     public static void copyCoreInfo(FileInfoBase[] originalInfo, FileInfoBase[] newInfo, boolean[] listNoCopy) {
+        FileInfoBase curInfo;
 
         for (int i = 0, j = 0; i < originalInfo.length; i++) {
 
-            if (!listNoCopy[i % listNoCopy.length]) {
-                newInfo[j].setAxisOrientation(originalInfo[i].getAxisOrientation());
-                newInfo[j].setDataType(originalInfo[i].getDataType());
-                newInfo[j].setEndianess(originalInfo[i].getEndianess());
-                newInfo[j].setExtents(originalInfo[i].getExtents());
-                newInfo[j].setImageOrientation(originalInfo[i].getImageOrientation());
+            if (i < originalInfo.length) {
+                curInfo = originalInfo[i];
+            } else {
+                curInfo = originalInfo[0];
+            }
 
-                if (ModelImage.isColorImage(originalInfo[i].getDataType())) {
-                    newInfo[j].setMinR(originalInfo[i].getMinR());
-                    newInfo[j].setMaxR(originalInfo[i].getMaxR());
-                    newInfo[j].setMinG(originalInfo[i].getMinG());
-                    newInfo[j].setMaxG(originalInfo[i].getMaxG());
-                    newInfo[j].setMinB(originalInfo[i].getMinB());
-                    newInfo[j].setMaxB(originalInfo[i].getMaxB());
+            if (!listNoCopy[i % listNoCopy.length]) {
+                newInfo[j].setAxisOrientation(curInfo.getAxisOrientation());
+                newInfo[j].setDataType(curInfo.getDataType());
+                newInfo[j].setEndianess(curInfo.getEndianess());
+                newInfo[j].setExtents(curInfo.getExtents());
+                newInfo[j].setImageOrientation(curInfo.getImageOrientation());
+
+                if (ModelImage.isColorImage(curInfo.getDataType())) {
+                    newInfo[j].setMinR(curInfo.getMinR());
+                    newInfo[j].setMaxR(curInfo.getMaxR());
+                    newInfo[j].setMinG(curInfo.getMinG());
+                    newInfo[j].setMaxG(curInfo.getMaxG());
+                    newInfo[j].setMinB(curInfo.getMinB());
+                    newInfo[j].setMaxB(curInfo.getMaxB());
                 } else {
-                    newInfo[j].setMin(originalInfo[i].getMin());
-                    newInfo[j].setMax(originalInfo[i].getMax());
+                    newInfo[j].setMin(curInfo.getMin());
+                    newInfo[j].setMax(curInfo.getMax());
                 }
 
-                newInfo[j].setModality(originalInfo[i].getModality());
-                newInfo[j].setOrigin(originalInfo[i].getOrigin());
-                newInfo[j].setResolutions(originalInfo[i].getResolutions()); // Added 10/23/2002
+                newInfo[j].setModality(curInfo.getModality());
+                newInfo[j].setOrigin(curInfo.getOrigin());
+                newInfo[j].setResolutions(curInfo.getResolutions()); // Added 10/23/2002
                 j++; // increment the index into the newInfo
             }
         }

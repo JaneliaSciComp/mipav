@@ -522,15 +522,25 @@ public class ModelImage extends ModelStorageBase {
      * @param  fromImage  image from which to copy file type info
      */
     public void copyFileTypeInfo(ModelImage fromImage) {
-        FileInfoBase[] fileInfo = new FileInfoDicom[getExtents()[2]];
+        int numInfos;
+
+        if (getNDims() == 2) {
+            numInfos = 1;
+        } else if (getNDims() == 3) {
+            numInfos = getExtents()[2];
+        } else {
+            numInfos = getExtents()[2] * getExtents()[3];
+        }
+
+        FileInfoBase[] fileInfo = new FileInfoBase[numInfos];
 
         if (fromImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
             FileInfoDicom oldDicomInfo = (FileInfoDicom) fromImage.getFileInfo(0);
-            FileDicomTagTable[] childTagTables = new FileDicomTagTable[getExtents()[2] - 1];
+            FileDicomTagTable[] childTagTables = new FileDicomTagTable[numInfos - 1];
 
             // first create all of the new file infos (reference and children) and fill them with tags from the old
             // file info.  some of these tag values will be overridden in the next loop
-            for (int i = 0; i < getExtents()[2]; i++) {
+            for (int i = 0; i < numInfos; i++) {
 
                 if (i == 0) {
 
@@ -546,7 +556,7 @@ public class ModelImage extends ModelStorageBase {
                     childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
                 }
 
-                if (getExtents()[2] > i) {
+                if (numInfos > i) {
 
                     // more correct information for a Z-axis rotation, so copy the file info on a slice basis
                     ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) fromImage.getFileInfo(i));
@@ -558,11 +568,9 @@ public class ModelImage extends ModelStorageBase {
             }
 
             ((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
-
-            FileInfoBase.copyCoreInfo(fromImage.getFileInfo(), fileInfo);
         } else {
 
-            for (int i = 0; i < getExtents()[2]; i++) {
+            for (int i = 0; i < numInfos; i++) {
 
                 if (getExtents()[2] > i) {
                     fileInfo[i] = (FileInfoBase) getFileInfo(i).clone();
@@ -571,6 +579,8 @@ public class ModelImage extends ModelStorageBase {
                 }
             }
         }
+
+        FileInfoBase.copyCoreInfo(fromImage.getFileInfo(), fileInfo);
 
         setFileInfo(fileInfo);
 
