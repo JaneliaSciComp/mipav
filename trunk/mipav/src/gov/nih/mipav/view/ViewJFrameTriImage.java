@@ -564,7 +564,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             updateImages(true);
         } else if (command.equals("PaintBrush")) {
-
             if ((imageB != null) && (!radioImageBoth.isEnabled())) {
                 radioImageBoth.setEnabled(true);
             }
@@ -1491,10 +1490,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         if (source.equals(paintBox)) {
             int index = paintBox.getSelectedIndex();
-
-            triImage[0].loadPaintBrush(paintBrushNames[index], false);
-            triImage[1].loadPaintBrush(paintBrushNames[index], false);
-            triImage[2].loadPaintBrush(paintBrushNames[index], false);
+            
+            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            	if(triImage[i] != null) {
+            		triImage[i].loadPaintBrush(paintBrushNames[index], false);
+            	}
+            }
+            
             Preferences.setProperty(Preferences.PREF_LAST_PAINT_BRUSH, paintBrushNames[index]);
 
 
