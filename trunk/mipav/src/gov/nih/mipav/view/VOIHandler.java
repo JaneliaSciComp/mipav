@@ -457,6 +457,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         	zDim = compImage.getActiveImage().getExtents()[2];
         }
         
+        boolean isFrom2D = (compImage.getActiveImage().getNDims() == 2);
+        boolean doLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE) && !isFrom2D;
+        
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
 
         nVOI = VOIs.size();
@@ -3989,7 +3992,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         VOI newVOI, outVOI;
 
         boolean isFrom2D = ViewUserInterface.getReference().isClippedVOI2D();
-        if (Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
+        boolean doLPS = Preferences.is(Preferences.PREF_VOI_LPS_SAVE) && !isFrom2D;
+        
+        
+        
+        if (doLPS) {
         	
      	   if (((compImage.getActiveImage().getNDims() > 2) && isFrom2D) ||
      			   ((compImage.getActiveImage().getNDims() == 2) && !isFrom2D)) {
@@ -4007,8 +4014,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
         Vector scannerVectors = null;
 
-        if (!isFrom2D && Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
+        if (doLPS) {
             scannerVectors = ViewUserInterface.getReference().getClippedScannerVectors();
+            if (scannerVectors == null || scannerVectors.size() < 1) {
+            	return;
+            }
         }
 
         for (int k = 0; k < numClipped; k++) {
@@ -4022,7 +4032,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 newVOI = (VOI) clippedVOIs.VOIAt(k).clone();
 
                 // if the VOI is from 3D image and Preferences.PREF_VOI_LPS_SAVE is active (scanner)
-                if (isFrom2D == false && Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
+                if (isFrom2D == false && doLPS) {
                     Vector[] curves = newVOI.getCurves();
                     Vector[] newCurves = new Vector[compImage.getActiveImage().getExtents()[2]];
 
@@ -4128,7 +4138,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 return;
             }
 
-            if (!Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
+            if (!doLPS) {
             	int currentSlice = compImage.getSlice();
             	int zDif = (int) (z[1] - z[0]) + 1;
             	if (zDif > 1) {
@@ -4165,7 +4175,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         
             float hue = (float) ((((ID) * 35) % 360) / 360.0);
             
-            if (Preferences.is(Preferences.PREF_VOI_LPS_SAVE)) {
+            if (doLPS) {
             	
             	newVOI.setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0));
             	newVOI.setID((short) ID);            	
@@ -4178,6 +4188,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             	outVOI = new VOI((short) ID, newVOI.getName() + "_pasted_" + ID,zExt, newVOI.getCurveType(), hue);
                 
 
+            	/** special case for doing polyline_slice VOIs... ordering is specific, not slice-based */
                 if ((newVOI.getCurveType() == VOI.POLYLINE_SLICE)) {
 
                     int oldIndex = 0;
