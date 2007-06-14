@@ -1427,7 +1427,7 @@ public class FileAnalyze extends FileBase {
         if (!simple) { // Must be an Analyze file, can set all Analyze information based on fileInfo
             setBufferInt(bufferImageHeader, fileInfo.getSizeOfHeader(), 0, endianess);
             setBufferString(bufferImageHeader, fileInfo.getDataTypeName(), 4);
-            setBufferString(bufferImageHeader, fileName, 14);
+            setBufferString(bufferImageHeader, fileInfo.getDBname(), 14);
             setBufferInt(bufferImageHeader, fileInfo.getFileExtents(), 32, endianess);
             setBufferShort(bufferImageHeader, fileInfo.getSessionErr(), 36, endianess);
             bufferImageHeader[38] = (byte) 'r';
@@ -1534,7 +1534,7 @@ public class FileAnalyze extends FileBase {
 
             fileInfo.setDataType("          "); // 10 Spaces - not sure what really goes here.
             setBufferString(bufferImageHeader, fileInfo.getDataTypeName(), 4);
-            setBufferString(bufferImageHeader, fileName + "\n", 14);
+            setBufferString(bufferImageHeader, fileInfo.getDBname(), 14);
             setBufferInt(bufferImageHeader, fileInfo.getFileExtents(), 32, endianess);
             setBufferShort(bufferImageHeader, (short) 0, 36, endianess);
             bufferImageHeader[38] = (byte) 'r';
