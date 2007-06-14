@@ -2254,8 +2254,24 @@ public class FileIO {
 
                 fName = fName.substring(0, fName.indexOf(".")) + start +
                         fName.substring(fName.indexOf("."), fName.length());
-                Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
+                
+                //check to see if we are actually switching dims (split into multi-file)
+                if (options.getBeginSlice() == options.getEndSlice()) {
+                	if (image.getNDims() == 3) {
+                		Preferences.setLastImage(options.getFileDirectory() + fName, false, 2);
+                	} else {
+                		//image nDims is 4
+                		if (options.getBeginTime() == options.getEndTime()) {
+                			Preferences.setLastImage(options.getFileDirectory() + fName, false, 2);
+                		} else {
+                			Preferences.setLastImage(options.getFileDirectory() + fName, false, 3);
+                		}
+                	}
+                } else {
+                	Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
+                }
             } else {
+            	//single file format
                 Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
             }
 
