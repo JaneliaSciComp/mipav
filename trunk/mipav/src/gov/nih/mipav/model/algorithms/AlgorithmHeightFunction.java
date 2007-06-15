@@ -371,7 +371,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
                 surfaceFileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName;
             }
 
-            tMesh.save(surfaceFileName, true, direction, startLocation, box, null);
+            tMesh.save(surfaceFileName, true, direction, startLocation, box, null, srcImage);
         } catch (IOException e) {
             System.gc();
             displayError("AlgorithmHeightFunction: " + e);
