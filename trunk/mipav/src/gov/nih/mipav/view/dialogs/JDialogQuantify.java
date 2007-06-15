@@ -111,6 +111,8 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("U4043");
         }
     }
 
@@ -265,7 +267,8 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
-
+        buttonPanel.add(buildHelpButton());
+        
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(filePanel);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);

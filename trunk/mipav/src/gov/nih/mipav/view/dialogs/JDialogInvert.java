@@ -109,7 +109,7 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
             cancelFlag = true;
             dispose();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+        	MipavUtil.showHelp("U4035");
         }
 
     } // end actionPerformed()

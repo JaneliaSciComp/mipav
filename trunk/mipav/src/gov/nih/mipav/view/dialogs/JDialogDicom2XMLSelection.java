@@ -62,6 +62,9 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
         else if (ae.getActionCommand().equalsIgnoreCase("sortKeyRev")) { }
         else if (ae.getActionCommand().equalsIgnoreCase("sortName")) { }
         else if (ae.getActionCommand().equalsIgnoreCase("sortNameRev")) { }
+        else if (ae.getActionCommand().equalsIgnoreCase("help")) {
+        	MipavUtil.showHelp("U4018");
+        }
         else {
             super.actionPerformed(ae);
         }
@@ -113,7 +116,6 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(buildOKButton());
         buttonPanel.add(buildIgnoreButton());
-
         // buttonPanel.add(buildCancelButton());
         buttonPanel.add(buildHelpButton());
         OKButton.setToolTipText("Save list to file and convert tags in image");

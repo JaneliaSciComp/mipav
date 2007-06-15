@@ -106,7 +106,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10064");
+            MipavUtil.showHelp("U4037");
         }
     }
 

@@ -339,6 +339,8 @@ public class JDialogSaveSlices extends JDialogBase {
                     textLastSlice.setEnabled(true);
                 }
             }
+        } else if (command.equalsIgnoreCase("help")) {
+        	MipavUtil.showHelp("U4019");
         }
     }
 
@@ -561,7 +563,7 @@ public class JDialogSaveSlices extends JDialogBase {
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(buildOKButton());
         buttonPanel.add(buildCancelButton());
-
+        buttonPanel.add(buildHelpButton());
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 

@@ -179,7 +179,7 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
         } else if (source == cancelButton) {
             dispose();
         } else if (source == helpButton) {
-            MipavUtil.showHelp("10059");
+            MipavUtil.showHelp("U4021");
         }
     }
 

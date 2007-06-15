@@ -125,7 +125,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10077");
+            MipavUtil.showHelp("U4051");
         } else if (command.equals("Check")) {
 
             for (i = 0; i < nSlices; i++) {
