@@ -154,7 +154,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10066");
+            MipavUtil.showHelp("U4025");
         }
     }
 

@@ -199,10 +199,14 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 		OKCancelPanel = new JPanel();
         buildOKButton();
         OKButton.setActionCommand("ok");
-        OKCancelPanel.add(OKButton, BorderLayout.WEST);
+        OKCancelPanel.add(OKButton);
         buildCancelButton();
         cancelButton.setActionCommand("cancel");
-        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
+        OKCancelPanel.add(cancelButton);
+     
+        buildHelpButton();
+        OKCancelPanel.add(helpButton);
+        
 		getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
 		pack();
@@ -401,6 +405,9 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 		else if(command.equalsIgnoreCase("cancel")) {
 			finalize();
 			dispose();
+		}
+		else if (command.equalsIgnoreCase("help")) {
+			MipavUtil.showHelp("U4008");
 		}
 
 	}

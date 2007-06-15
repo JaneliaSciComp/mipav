@@ -129,6 +129,8 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
             }
         } else if (source == cancelButton) {
             dispose();
+        } else if (source == helpButton) {
+        	MipavUtil.showHelp("U4005");
         }
     }
 
@@ -451,6 +453,9 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
         buildCancelButton();
         buttonPanel.add(cancelButton);
 
+        buildHelpButton();
+        buttonPanel.add(helpButton);
+        
         mainDialogPanel.setLayout(new BorderLayout());
         mainDialogPanel.add(mainPanel); // put the main panel into the center of the dialog
         mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);

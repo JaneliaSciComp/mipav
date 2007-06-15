@@ -182,7 +182,7 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
                 callAlgorithm();
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10070");
+            MipavUtil.showHelp("U4017");
         } else if (command.equals("Cancel")) {
             dispose();
         }

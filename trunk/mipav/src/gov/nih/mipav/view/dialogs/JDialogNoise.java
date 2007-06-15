@@ -141,7 +141,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             cancelFlag = true;
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10065");
+            MipavUtil.showHelp("U4039");
         }
     }
 

@@ -131,6 +131,8 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("U4063");
         }
     }
 
@@ -515,6 +517,8 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
         buildCancelButton();
         buttonPanel.add(cancelButton);
 
+        buttonPanel.add(buildHelpButton());
+        
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();

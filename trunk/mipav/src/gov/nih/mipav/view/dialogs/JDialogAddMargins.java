@@ -178,7 +178,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10062");
+            MipavUtil.showHelp("U4009");
         }
     }
 

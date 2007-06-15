@@ -186,7 +186,7 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10079");
+            MipavUtil.showHelp("U4059");
         } else if (command.equals("Check")) {
 
             for (i = 0; i < nSlices; i++) {

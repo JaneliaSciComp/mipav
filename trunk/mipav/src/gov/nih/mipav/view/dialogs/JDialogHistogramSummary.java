@@ -122,7 +122,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+        	MipavUtil.showHelp("A3002");
         } else if ((source == redButton) || (source == greenButton) || (source == blueButton)) {
 
             switch (image.getType()) {

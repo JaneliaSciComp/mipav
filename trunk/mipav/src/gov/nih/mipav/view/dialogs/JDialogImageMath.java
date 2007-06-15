@@ -149,6 +149,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } if (command.equals("Help")) {
+            MipavUtil.showHelp("U4033");
         }
     }
 
@@ -781,6 +783,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         buildCancelButton();
         buttonPanel.add(cancelButton);
 
+        buttonPanel.add(buildHelpButton());
+        
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 

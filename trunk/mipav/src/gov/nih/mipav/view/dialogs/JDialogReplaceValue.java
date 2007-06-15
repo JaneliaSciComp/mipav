@@ -116,7 +116,7 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
         } else if (cmd.equals("Cancel")) {
             dispose();
         } else if (cmd.equals("Help")) {
-            MipavUtil.showHelp("10068");
+            MipavUtil.showHelp("U4045");
         }
     }
 

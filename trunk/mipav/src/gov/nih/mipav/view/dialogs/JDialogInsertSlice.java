@@ -134,7 +134,7 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10078");
+            MipavUtil.showHelp("U4055");
         } else if ((source == average) || (source == blank) || (source == original) || (source == adjacentUp) ||
                        (source == adjacentDown)) {
 

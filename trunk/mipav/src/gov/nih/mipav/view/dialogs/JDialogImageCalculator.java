@@ -134,7 +134,7 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                 callAlgorithm();
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("19070");
+            MipavUtil.showHelp("U4029");
         }
     }
 

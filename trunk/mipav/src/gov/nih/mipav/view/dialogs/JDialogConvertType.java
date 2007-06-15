@@ -206,7 +206,7 @@ public class JDialogConvertType extends JDialogScriptableBase
             cancelFlag = true;
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10069");
+            MipavUtil.showHelp("U4013");
         } else if (command.equals("FullRange")) {
 
             // if using full range, then reset the
@@ -1207,7 +1207,7 @@ public class JDialogConvertType extends JDialogScriptableBase
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Convert image type");
+        setTitle("Convert Image Type");
 
         GridBagLayout gblay = new GridBagLayout();
         JPanel panelImageType = new JPanel(new GridBagLayout());

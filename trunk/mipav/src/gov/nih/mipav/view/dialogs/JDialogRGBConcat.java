@@ -129,7 +129,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10070");
+            MipavUtil.showHelp("U4015");
         }
     }
 
