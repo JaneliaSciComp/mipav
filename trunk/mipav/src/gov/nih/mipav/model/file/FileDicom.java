@@ -2504,7 +2504,7 @@ public class FileDicom extends FileDicomBase {
 
                 // at this point transfer syntax not read; we know endianess
                 // is little endian but vr may be explicit
-                if (getFilePointer() <= metaGroupLength) {
+                if ((getFilePointer() <= metaGroupLength) || (groupWord == 2)) {
 
                     if (((b1 < 65) || (b1 > 90)) && ((b2 < 65) || (b2 > 90))) {
                         implicit = true;
