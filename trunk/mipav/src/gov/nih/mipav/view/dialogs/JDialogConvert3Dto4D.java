@@ -108,7 +108,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10073");
+            MipavUtil.showHelp("U4001");
         }
     }
 
