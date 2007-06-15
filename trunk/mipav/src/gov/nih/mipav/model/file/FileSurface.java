@@ -74,6 +74,7 @@ public class FileSurface {
                     kSurface[i].setOpacity(kFileInfo.getOpacity());
                     kSurface[i].setMaterial(kFileInfo.getMaterial());
                     kSurface[i].setLevelDetail(kFileInfo.getLevelDetail());
+                   
                 } catch (IOException e) {
                     kSurface[i] = null;
                 }
