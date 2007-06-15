@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
@@ -40,6 +41,10 @@ import javax.swing.SwingConstants;
 
 
 public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
+    
+    //~ Static fields --------------------------------------------------------------------------------------------------
+    
+    public static final Color[] colorPick = {Color.BLUE, Color.RED, Color.GREEN, Color.ORANGE, Color.CYAN, Color.PINK, Color.YELLOW, Color.MAGENTA, Color.WHITE};
     
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
@@ -313,6 +318,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             this.completed = completed;
         }
         
+        /**
+         * Initializes the dialog box.
+         *
+         */
+        
         private void init() {
             setForeground(Color.black);
             addNotify();
@@ -372,6 +382,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             setVisible(true);
         }
         
+        /**
+         * Initializes the image.
+         *
+         */
+        
         private void initImage() {
             srcImage = (ModelImage)((ViewJFrameImage)parentFrame).getImageA().clone();
             
@@ -384,6 +399,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     break;
                 }
             }
+            VOIVector tempVOI = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
             srcImage.getVOIs().removeAllElements();
             if(removedVoi != null) {
                 srcImage.registerVOI(removedVoi);
@@ -393,14 +409,23 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
                 srcImage.set(i, REMOVED_INTENSITY);
             }
+            
+            srcImage.setMask(fullMask);
+            
+            for(int i=0; i<tempVOI.size(); i++) {
+                VOI v = (VOI)tempVOI.get(i);
+                BitSet tempSet = new BitSet();
+                v.createBinaryMask(tempSet, xDim, yDim);
+               
+            }
+            
             ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).clearMask();
             ViewJFrameImage newFrame = new ViewJFrameImage(srcImage);
             newFrame.updateImages();
         }
         
         private boolean checkVoi() {
-            int j=0;
-            ModelImage voiImage = ((ViewJFrameImage)parentFrame).getImageA();
+            //ModelImage voiImage = ((ViewJFrameImage)parentFrame).getImageA();
             if(srcImage.getVOIs().size() != 1) {
                 String error = srcImage.getVOIs().size() > 1 ? "You have created too many VOIs." : 
                                                                 "You haven't created any VOIs.";
@@ -522,8 +547,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         //subDialog completed, not neccesarily successfully
         public void subDialogCompleted(VoiDialogPrompt dialog) {
             findButton(dialog, dialog.isCompleted());
+            initImage();
             srcImage.getParentFrame().setVisible(false);
-            ((ViewJFrameImage)parentFrame).getImageA().registerVOI(((VOI)srcImage.getVOIs().get(0)));
             ((ViewJFrameImage)parentFrame).setVisible(true);
             setVisible(true);
         }
@@ -552,9 +577,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             }
         }
         
+        /**
+         * Initializes the image.
+         *
+         */
+        
         private void initImage() {
             ((ViewJFrameImage)parentFrame).getImageA().unregisterAllVOIs();
-            
+            int colorChoice = 0;
             String fileDir = ((ViewJFrameImage)parentFrame).getImageA().getFileInfo(0).getFileDirectory()+"defaultVOIs_DICOM\\";
             File allVOIs = new File(fileDir);
             if(allVOIs.isDirectory()) {
@@ -573,6 +603,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                         if(voiVec.length > 1) {
                             MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
                         } else {
+                            Color c = hasColor(voiVec);
+                            if(c != null) {
+                                voiVec[0].setColor(c);
+                            } else {
+                                voiVec[0].setColor(colorPick[colorChoice % colorPick.length]);
+                                colorChoice++;
+                            }                      
                             ((ViewJFrameImage)parentFrame).getImageA().registerVOI(voiVec[0]);
                         }
                     }
@@ -581,6 +618,22 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             ((ViewJFrameImage)parentFrame).updateImages();
                 
             
+        }
+        
+        private Color hasColor(VOI[] voiVec) {
+            Color c = null;
+            int j = 2+ 2;
+            VOIVector tempVec = ((ViewJFrameImage)parentFrame).getImageA().getVOIs();
+            for(int i=0; i<tempVec.size(); i++) {
+                if(voiVec[0].getName().contains("Left") || voiVec[0].getName().contains("Right")) {
+                    if( !(((VOI)tempVec.get(i)).getName().contains("Left")  &&  voiVec[0].getName().contains("Left")) && 
+                            !(((VOI)tempVec.get(i)).getName().contains("Right")  &&  voiVec[0].getName().contains("Right")) && 
+                            ((VOI)tempVec.get(i)).getName().endsWith(voiVec[0].getName().substring(voiVec[0].getName().indexOf(" ")))) {
+                        c =  ((VOI)tempVec.get(i)).getColor();
+                    }
+                }
+            }
+            return c;
         }
         
         private void init(String[] mirrorArr, String[] noMirrorArr) {
@@ -608,7 +661,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             instructionLabel = new JLabel[4];
             instructionLabel[0] = new JLabel("1) Press an object button.\n\r");
             instructionLabel[1] = new JLabel("2) A dialog box will prompt you to draw VOI(s) around that object.");
-            instructionLabel[2] = new JLabel("3) Once drawn the button button will appear in green.");
+            instructionLabel[2] = new JLabel("3) Once drawn the check box next to the button will be checked.");
             instructionLabel[3] = new JLabel("4) Press that button again to review your VOI(s).");
             
             VOIVector existingVois = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
