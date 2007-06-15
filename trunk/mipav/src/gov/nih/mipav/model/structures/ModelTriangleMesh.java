@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
+import gov.nih.mipav.model.file.FileSurfaceXML;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -408,12 +409,13 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             } else {
                 flip = false;
             }
-
+            
             if ((actions == 2) || (actions == 3)) {
                 dicom = true;
             } else {
                 dicom = false;
             }
+            
 
             direction[0] = kIn.readInt();
             direction[1] = kIn.readInt();
@@ -679,12 +681,13 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             } else {
                 flip = false;
             }
-
+            System.err.println("flip = " + flip);
             if ((actions == 2) || (actions == 3)) {
                 dicom = true;
             } else {
                 dicom = false;
             }
+            System.err.println("dicom = " + dicom);
 
             direction[0] = kIn.readInt();
             direction[1] = kIn.readInt();
@@ -1931,7 +1934,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @exception  IOException  if the specified file could not be opened for writing
      */
     public void save(String kName, boolean flip, int[] direction, float[] startLocation, float[] box,
-                     double[][] inverseDicomArray) throws IOException {
+                     double[][] inverseDicomArray, ModelImage maskImage) throws IOException {
 
 
         int i = kName.lastIndexOf('.');
@@ -1953,6 +1956,16 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 kOut.writeInt(1); // one component
                 save(kOut, flip, direction, startLocation, box, inverseDicomArray);
                 kOut.close();
+            } else if ( extension.equals("xml") ) {
+            	saveAsXML( kName, flip, direction, startLocation, box, inverseDicomArray, maskImage);
+            	/*
+            	 FileSurfaceXML kSurfaceXML = new FileSurfaceXML(null, null);
+            	
+            	 Material matte = new Material();
+                 try {
+                     kSurfaceXML.writeXMLsurface(kName, this, matte, 0f, 100);
+                 } catch (IOException kError) { }
+                 */
             }
         }
         /*
@@ -2582,6 +2595,40 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         }
     }
 
+    
+    protected void saveAsXML( String fileName, boolean flip, int[] direction, float[] startLocation, float[] box, double[][] inverseDicomArray, ModelImage image) {
+    	 int[] extents = image.getExtents();
+         int xDim = extents[0];
+         int yDim = extents[1];
+         int zDim = extents[2];
+    	 float[] resols = image.getFileInfo()[0].getResolutions();
+         float xBox = (xDim - 1) * resols[0];
+         float yBox = (yDim - 1) * resols[1];
+         float zBox = (zDim - 1) * resols[2];
+         float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+         Point3f[]  akVertex = null;
+         akVertex = getVertexCopy();
+         
+         // getCoordinates(0, akVertex);
+         
+         for (int j = 0; j < akVertex.length; j++) {
+
+			    akVertex[j].x = ((2.0f * (akVertex[j].x - startLocation[0]) / direction[0]) -
+			                     ((xDim - 1) * resols[0])) / maxBox;
+			    akVertex[j].y = ((2.0f * (akVertex[j].y - startLocation[1]) / direction[1]) -
+			                     ((yDim - 1) * resols[1])) / maxBox;
+			    akVertex[j].z = ((2.0f * (akVertex[j].z - startLocation[2]) / direction[2]) -
+			                     ((zDim - 1) * resols[2])) / maxBox;
+         }
+         
+         setCoordinates(0, akVertex);
+    	try {
+        	FileSurfaceXML kSurfaceXML = new FileSurfaceXML(null, null);
+        	Material material = new Material();
+            kSurfaceXML.writeXMLsurface(fileName, this, material, 0f, 100);
+        } catch (IOException kError) { }
+    }
+    
     /**
      * Internal support for 'void save (String)' and 'void save (String, ModelTriangleMesh[])'. ModelTriangleMesh uses
      * this function to write vertices, normals, and connectivity indices to the file. ModelClodMesh overrides this to
