@@ -1934,7 +1934,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @exception  IOException  if the specified file could not be opened for writing
      */
     public void save(String kName, boolean flip, int[] direction, float[] startLocation, float[] box,
-                     double[][] inverseDicomArray, ModelImage maskImage) throws IOException {
+                     double[][] inverseDicomArray, ModelImage srcImage) throws IOException {
 
 
         int i = kName.lastIndexOf('.');
@@ -1957,15 +1957,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 save(kOut, flip, direction, startLocation, box, inverseDicomArray);
                 kOut.close();
             } else if ( extension.equals("xml") ) {
-            	saveAsXML( kName, flip, direction, startLocation, box, inverseDicomArray, maskImage);
-            	/*
-            	 FileSurfaceXML kSurfaceXML = new FileSurfaceXML(null, null);
-            	
-            	 Material matte = new Material();
-                 try {
-                     kSurfaceXML.writeXMLsurface(kName, this, matte, 0f, 100);
-                 } catch (IOException kError) { }
-                 */
+            	saveAsXML( kName, flip, direction, startLocation, box, inverseDicomArray, srcImage);
             }
         }
         /*
@@ -2595,7 +2587,22 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         }
     }
 
-    
+    /**
+     * Internal support for 'void save (String)' and 'void save (String, ModelTriangleMesh[])'. ModelTriangleMesh uses
+     * this function to write vertices, normals, and connectivity indices to the XML file. ModelClodMesh overrides this to
+     * additionally write collapse records to the file
+     *
+     * @param      fileName           the file to which the triangle mesh is saved
+     * @param      flip               if the y and z axes should be flipped - true in extraction algorithms and in
+     *                                JDialogSurface. To have proper orientations in surface file if flip is true flip y
+     *                                and z on reading.  Not used for now.
+     * @param      direction          either 1 or -1 for each axis
+     * @param      startLocation      image origin coordinate
+     * @param      box                (dim-1)*res
+     * @param      inverseDicomArray  used for the dicom image.  Not used for now. 
+     * @param	   image              Mask image
+     * @exception  IOException  if there is an error writing to the file
+     */ 
     protected void saveAsXML( String fileName, boolean flip, int[] direction, float[] startLocation, float[] box, double[][] inverseDicomArray, ModelImage image) {
     	 int[] extents = image.getExtents();
          int xDim = extents[0];
@@ -2609,22 +2616,31 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
          Point3f[]  akVertex = null;
          akVertex = getVertexCopy();
          
-         // getCoordinates(0, akVertex);
          
+         // Transfer the current vertex coordinate from the image coordinate to display coordinate. 
          for (int j = 0; j < akVertex.length; j++) {
-
+        	 //           flip y and z
+        	 if ( flip ) {
+                akVertex[j].y = (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[j].y;
+                akVertex[j].z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[j].z;
+        	 }
+        	 // The mesh files save the verticies as
+             // pt.x*resX*direction[0] + startLocation
+             // The loaded vertices go from -1 to 1
+             // The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
 			    akVertex[j].x = ((2.0f * (akVertex[j].x - startLocation[0]) / direction[0]) -
 			                     ((xDim - 1) * resols[0])) / maxBox;
 			    akVertex[j].y = ((2.0f * (akVertex[j].y - startLocation[1]) / direction[1]) -
 			                     ((yDim - 1) * resols[1])) / maxBox;
 			    akVertex[j].z = ((2.0f * (akVertex[j].z - startLocation[2]) / direction[2]) -
-			                     ((zDim - 1) * resols[2])) / maxBox;
+			                     ((zDim - 1) * resols[2])) / maxBox; 
          }
          
          setCoordinates(0, akVertex);
     	try {
         	FileSurfaceXML kSurfaceXML = new FileSurfaceXML(null, null);
         	Material material = new Material();
+        	// For the material, opacity, LOD, save as default values. 
             kSurfaceXML.writeXMLsurface(fileName, this, material, 0f, 100);
         } catch (IOException kError) { }
     }
