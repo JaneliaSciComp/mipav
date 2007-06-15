@@ -175,7 +175,9 @@ public class AlgorithmQuantify extends AlgorithmBase {
         }
 
         for (z = 0; (z < srcImage.getExtents()[2]) && !threadStopped; z++) {
-
+            for (i = 0; i < objs.length; i++) {
+                objs[i].sliceVoxels = 0;
+            }
             try {
                 srcImage.exportData(z * length, length, buffer); // locks and releases lock
             } catch (IOException error) {
@@ -192,9 +194,15 @@ public class AlgorithmQuantify extends AlgorithmBase {
                 objID = maskImage.getShort(offset + i);
 
                 if (objID != 0) {
+                    objs[objID].sliceVoxels++;
                     objs[objID].nVoxels++;
                     objs[objID].totalIntensity += buffer[i];
                 }
+            }
+            
+            for (i = 0; i < objs.length; i++) {
+                objs[i].volume += objs[i].sliceVoxels * srcImage.getFileInfo(z).getResolutions()[0] *
+                srcImage.getFileInfo(z).getResolutions()[1] * srcImage.getFileInfo(z).getResolutions()[2];
             }
         }
 
@@ -227,12 +235,15 @@ public class AlgorithmQuantify extends AlgorithmBase {
 
         /** DOCUMENT ME! */
         public int nVoxels = 0;
+        
+        public int sliceVoxels = 0;
 
         /** DOCUMENT ME! */
         public float totalIntensity = 0;
 
         /** DOCUMENT ME! */
         public float volume = 0;
+        
 
         /**
          * Outputs the area (2D) or volume (3D) the user interface for the specificed image and object.
@@ -241,16 +252,13 @@ public class AlgorithmQuantify extends AlgorithmBase {
          * @param  objNo  the object for which the information was calculated.
          */
         public void output(ModelImage image, int objNo) {
-            float area, volume;
+            float area;
 
             if (image.getNDims() == 2) {
                 area = (nVoxels * image.getFileInfo(0).getResolutions()[0] * image.getFileInfo(0).getResolutions()[1]);
                 ViewUserInterface.getReference().setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity +
                                                              "\t\t" + +area + "\n");
             } else {
-
-                volume = (nVoxels * image.getFileInfo(0).getResolutions()[0] *
-                              image.getFileInfo(0).getResolutions()[1] * image.getFileInfo(0).getResolutions()[2]);
                 ViewUserInterface.getReference().setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity +
                                                              "\t\t" + +volume + "\n");
             }
