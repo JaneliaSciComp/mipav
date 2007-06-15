@@ -275,6 +275,7 @@ public class ViewJComponentSurface extends ViewJComponentBase {
 
             for (Enumeration e = plottedRoot.getAllChildren(); e.hasMoreElements();) {
                 Shape3D shape = (Shape3D) e.nextElement();
+
                 shape.getAppearance().getPolygonAttributes().setPolygonMode(mode);
             }
 
@@ -452,12 +453,15 @@ public class ViewJComponentSurface extends ViewJComponentBase {
         kAppearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
         kAppearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
         kAppearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
+        
         kAppearance.setMaterial(kMaterial);
 
         // No back-face culling.  Supports double-sided meshes which can
         // regularly occur for level surfaces (open surfaces).
         PolygonAttributes kPAttr = new PolygonAttributes();
         kPAttr.setCullFace(PolygonAttributes.CULL_NONE);
+        kPAttr.setCapability(PolygonAttributes.ALLOW_MODE_READ);
+        kPAttr.setCapability(PolygonAttributes.ALLOW_MODE_WRITE);
         kAppearance.setPolygonAttributes(kPAttr);
 
         plottedRoot = new BranchGroup();
