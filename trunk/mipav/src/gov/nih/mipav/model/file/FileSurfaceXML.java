@@ -234,6 +234,149 @@ public class FileSurfaceXML extends FileXML {
 
         return true;
     }
+    
+    /**
+     * Writes the XML file information, including the ModelTriangleMesh surface out to the given filename and path:
+     *
+     * @param   fileName   file name to write to
+     * @param   kMesh        ModelTriangleMesh representing the surface
+     * @param   kMaterial    surface material
+     * @param   opacity      DOCUMENT ME!
+     * @param   levelDetail  DOCUMENT ME!
+     *
+     * @return  if header write was successful
+     *
+     * @throws  IOException  if a file I/O problem is encoutered while writing the header
+     */
+    public boolean writeXMLsurface(String fileName, ModelTriangleMesh kMesh, Material kMaterial,
+                               float opacity, int levelDetail) throws IOException {
+
+        /* Get the Material properties, colors to write to the file: */
+        Color3f kAmbient = new Color3f();
+        kMaterial.getAmbientColor(kAmbient);
+
+        Color3f kDiffuse = new Color3f();
+        kMaterial.getDiffuseColor(kDiffuse);
+
+        Color3f kEmissive = new Color3f();
+        kMaterial.getEmissiveColor(kEmissive);
+
+        Color3f kSpecular = new Color3f();
+        kMaterial.getSpecularColor(kSpecular);
+
+        float kShininess = kMaterial.getShininess();
+
+        /* Create the SurfaceXMLHandler which processes the vertex, normal,
+         * connectivity arrays and colors for writing in the xml format: */
+        SurfaceXMLHandler kSurfaceXMLHandler = new SurfaceXMLHandler((FileInfoSurfaceXML) fileInfo);
+
+        /* Output file: */
+        BufferedWriter bw;
+        FileWriter fw;
+        File headerFile;
+
+        headerFile = new File(fileName);
+        fw = new FileWriter(headerFile);
+        bw = new BufferedWriter(fw);
+
+        bw.write(XML_HEADER);
+        bw.newLine();
+        bw.write(MIPAV_HEADER);
+        bw.newLine();
+
+        /* Open the surface tag: */
+        openTag(bw, "Surface xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+
+        /***************************************************************************************/
+
+
+            /* Get the mesh information to write to the file: */
+            int iVertexCount = kMesh.getVertexCount();
+            Point3f[] akCoordinates = new Point3f[iVertexCount];
+            Vector3f[] akNormals = new Vector3f[iVertexCount];
+            Color4f[] akColors = new Color4f[iVertexCount];
+
+            for (int i = 0; i < iVertexCount; i++) {
+                akCoordinates[i] = new Point3f();
+                akNormals[i] = new Vector3f();
+                akColors[i] = new Color4f();
+            }
+
+            kMesh.getCoordinates(0, akCoordinates);
+            kMesh.getNormals(0, akNormals);
+            kMesh.getColors(0, akColors);
+
+            int iIndexCount = kMesh.getIndexCount();
+            int[] aiIndex = new int[iIndexCount];
+            kMesh.getCoordinateIndices(0, aiIndex);
+
+            /* Write the Unique-ID: */
+            closedTag(bw, m_kSurfaceStr[0], new String("22"));
+
+            /* Open the Material tag and write the material values (ambient,
+             * diffuse, emissive, specular, shininess: */
+            openTag(bw, m_kSurfaceStr[1], true);
+            closedTag(bw, m_kMaterialStr[0], kSurfaceXMLHandler.getColorString(kAmbient));
+            closedTag(bw, m_kMaterialStr[1], kSurfaceXMLHandler.getColorString(kDiffuse));
+            closedTag(bw, m_kMaterialStr[2], kSurfaceXMLHandler.getColorString(kEmissive));
+            closedTag(bw, m_kMaterialStr[3], kSurfaceXMLHandler.getColorString(kSpecular));
+            closedTag(bw, m_kMaterialStr[4], new String(" " + kShininess + " "));
+            openTag(bw, m_kSurfaceStr[1], false);
+
+            /* Write the type of Mesh (TMesh) */
+            closedTag(bw, m_kSurfaceStr[2], "TMesh");
+
+            /* Write the surface opacity */
+            closedTag(bw, m_kSurfaceStr[3], new String(" " + opacity + " "));
+
+            /* Write the surface level of detial */
+            closedTag(bw, m_kSurfaceStr[4], new String(" " + levelDetail + " "));
+
+
+            /* Write the TriangleMesh, Vertices, (Normals), Connectivity */
+            openTag(bw, m_kSurfaceStr[5], true);
+            closedTag(bw, m_kMeshStr[0], kSurfaceXMLHandler.getVertexString(akCoordinates));
+
+            if (akNormals != null) {
+                closedTag(bw, m_kMeshStr[1], kSurfaceXMLHandler.getNormalString(akNormals));
+            }
+
+            if (akColors != null) {
+                closedTag(bw, m_kMeshStr[2], kSurfaceXMLHandler.getColorString(akColors));
+            }
+
+            closedTag(bw, m_kMeshStr[3], kSurfaceXMLHandler.getIndexString(aiIndex));
+
+            openTag(bw, m_kSurfaceStr[5], false);
+
+            /* Delete local variables: */
+            for (int i = 0; i < iVertexCount; i++) {
+                akCoordinates[i] = null;
+                akNormals[i] = null;
+                akColors[i] = null;
+            }
+
+            akCoordinates = null;
+            akNormals = null;
+            akColors = null;
+            aiIndex = null;
+
+       
+
+        /********************************************************************************/
+        /* Close the surface tag: */
+        openTag(bw, "Surface", false);
+
+        bw.close();
+
+        kAmbient = null;
+        kDiffuse = null;
+        kEmissive = null;
+        kSpecular = null;
+        kSurfaceXMLHandler = null;
+
+        return true;
+    }    
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
