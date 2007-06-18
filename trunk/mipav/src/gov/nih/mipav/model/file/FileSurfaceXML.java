@@ -337,6 +337,7 @@ public class FileSurfaceXML extends FileXML {
             openTag(bw, m_kSurfaceStr[5], true);
             closedTag(bw, m_kMeshStr[0], kSurfaceXMLHandler.getVertexString(akCoordinates));
 
+            /*
             if (akNormals != null) {
                 closedTag(bw, m_kMeshStr[1], kSurfaceXMLHandler.getNormalString(akNormals));
             }
@@ -344,7 +345,7 @@ public class FileSurfaceXML extends FileXML {
             if (akColors != null) {
                 closedTag(bw, m_kMeshStr[2], kSurfaceXMLHandler.getColorString(akColors));
             }
-
+            */
             closedTag(bw, m_kMeshStr[3], kSurfaceXMLHandler.getIndexString(aiIndex));
 
             openTag(bw, m_kSurfaceStr[5], false);
