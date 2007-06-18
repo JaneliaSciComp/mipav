@@ -133,6 +133,23 @@ public class FileSurface {
             } catch (IOException e) {
                 return null;
             }
+        } else if ( file.getName().endsWith("xml") ) { 
+        	System.err.println("file.getName() = " + file.getName());
+        	System.err.println("file.getPath() = " + file.getPath());
+        	FileSurfaceXML kSurfaceXML = new FileSurfaceXML(file.getName(), file.getParent());
+        	SurfaceAttributes surface = null;
+            try {
+                FileInfoSurfaceXML kFileInfo = kSurfaceXML.readSurfaceXML(file.getName(), file.getParent());
+                surface = new SurfaceAttributes(kFileInfo.getMesh(), file.getPath(), file.getName());
+                surface.setOpacity(kFileInfo.getOpacity());
+                surface.setMaterial(kFileInfo.getMaterial());
+                surface.setLevelDetail(kFileInfo.getLevelDetail());
+               
+            } catch (IOException e) {
+            	surface = null;
+            }
+            return surface;
+            
         } else {
 
             try {
@@ -142,7 +159,7 @@ public class FileSurface {
                 in.seek(0);
                 isSur = false;
             } catch (NoSuchElementException e) {
-                MipavUtil.displayError("Only load VRML file specifically written by MIPAV!");
+                MipavUtil.displayError("Only load VRML file specifically written by MIPAV! ");
 
                 return null;
             } catch (IOException e) {
