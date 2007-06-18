@@ -1957,7 +1957,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 save(kOut, flip, direction, startLocation, box, inverseDicomArray);
                 kOut.close();
             } else if ( extension.equals("xml") ) {
-            	saveAsXML( kName, flip, direction, startLocation, box, inverseDicomArray, srcImage);
+            	saveAsXML( kName, direction, startLocation, box, srcImage);
             }
         }
         /*
@@ -2593,17 +2593,13 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * additionally write collapse records to the file
      *
      * @param      fileName           the file to which the triangle mesh is saved
-     * @param      flip               if the y and z axes should be flipped - true in extraction algorithms and in
-     *                                JDialogSurface. To have proper orientations in surface file if flip is true flip y
-     *                                and z on reading.  Not used for now.
      * @param      direction          either 1 or -1 for each axis
      * @param      startLocation      image origin coordinate
      * @param      box                (dim-1)*res
-     * @param      inverseDicomArray  used for the dicom image.  Not used for now. 
      * @param	   image              Mask image
      * @exception  IOException  if there is an error writing to the file
      */ 
-    protected void saveAsXML( String fileName, boolean flip, int[] direction, float[] startLocation, float[] box, double[][] inverseDicomArray, ModelImage image) {
+    protected void saveAsXML( String fileName, int[] direction, float[] startLocation, float[] box, ModelImage image) {
     	 int[] extents = image.getExtents();
          int xDim = extents[0];
          int yDim = extents[1];
@@ -2619,21 +2615,19 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
          
          // Transfer the current vertex coordinate from the image coordinate to display coordinate. 
          for (int j = 0; j < akVertex.length; j++) {
-        	 //           flip y and z
-        	 if ( flip ) {
-                akVertex[j].y = (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[j].y;
-                akVertex[j].z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[j].z;
-        	 }
+        	 // flip y, z
+             akVertex[j].y = (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[j].y;
+             akVertex[j].z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[j].z;
         	 // The mesh files save the verticies as
              // pt.x*resX*direction[0] + startLocation
              // The loaded vertices go from -1 to 1
              // The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
-			    akVertex[j].x = ((2.0f * (akVertex[j].x - startLocation[0]) / direction[0]) -
-			                     ((xDim - 1) * resols[0])) / maxBox;
+        	    akVertex[j].x = ((2.0f * (akVertex[j].x - startLocation[0]) / direction[0]) -
+			                     (box[0])) / maxBox;
 			    akVertex[j].y = ((2.0f * (akVertex[j].y - startLocation[1]) / direction[1]) -
-			                     ((yDim - 1) * resols[1])) / maxBox;
+			                     (box[1])) / maxBox;
 			    akVertex[j].z = ((2.0f * (akVertex[j].z - startLocation[2]) / direction[2]) -
-			                     ((zDim - 1) * resols[2])) / maxBox; 
+			                     (box[2])) / maxBox; 
          }
          
          setCoordinates(0, akVertex);
