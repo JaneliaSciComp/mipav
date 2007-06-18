@@ -569,15 +569,25 @@ public class ModelImage extends ModelStorageBase {
 
             ((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
         } else {
-
-            for (int i = 0; i < numInfos; i++) {
-
-                if (getExtents()[2] > i) {
-                    fileInfo[i] = (FileInfoBase) getFileInfo(i).clone();
-                } else {
-                    fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
-                }
+	
+        	  for (int i = 0; i < numInfos; i++) {
+            	if (getNDims() == 2) {
+            		fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
+            	}else if (getNDims() == 3) {
+	                if (getExtents()[2] > i) {
+	                    fileInfo[i] = (FileInfoBase) getFileInfo(i).clone();
+	                } else {
+	                    fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
+	                }
+            	}else {
+            		if (getExtents()[2]*getExtents()[3] > i) {
+	                    fileInfo[i] = (FileInfoBase) getFileInfo(i).clone();
+	                } else {
+	                    fileInfo[i] = (FileInfoBase) getFileInfo(0).clone();
+	                }
+            	}
             }
+        	 
         }
 
         FileInfoBase.copyCoreInfo(fromImage.getFileInfo(), fileInfo);
