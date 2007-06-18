@@ -134,8 +134,6 @@ public class FileSurface {
                 return null;
             }
         } else if ( file.getName().endsWith("xml") ) { 
-        	System.err.println("file.getName() = " + file.getName());
-        	System.err.println("file.getPath() = " + file.getPath());
         	FileSurfaceXML kSurfaceXML = new FileSurfaceXML(file.getName(), file.getParent());
         	SurfaceAttributes surface = null;
             try {
