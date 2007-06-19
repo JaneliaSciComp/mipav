@@ -514,7 +514,7 @@ public class AlgorithmPad extends AlgorithmBase {
 
             return;
         }
-
+        
         fInfoBase = new FileInfoBase[1];
         fInfoBase[0] = (FileInfoBase) (srcImage.getFileInfo(0).clone());
         fInfoBase[0].setExtents(dimExtents);
@@ -712,7 +712,7 @@ public class AlgorithmPad extends AlgorithmBase {
         int zDim = srcImage.getExtents()[2];
         int[] destExtents;
         int nDims;
-        FileInfoBase[] fInfoBase;
+        FileInfoBase[] fileInfo;
         int start = 0;
         int dataType = srcImage.getType();
         String imageName = srcImage.getImageName();
@@ -775,31 +775,65 @@ public class AlgorithmPad extends AlgorithmBase {
         	return;
         }
         
-
-        fInfoBase = new FileInfoBase[z[1]];
+        int numInfos = z[1];
         
-        if (z[0] != 0) {
+        fileInfo = new FileInfoBase[numInfos];
+        
+        if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+        	FileInfoDicom oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
+        	FileDicomTagTable[] childTagTables = new FileDicomTagTable[numInfos - 1];
+        
+        
+        	// Create all the new file infos (reference and children) and fill them with the tags from the old
+        	// file infos. 
+        	for(i = 0; i < numInfos; i++) {
         	
-        	for (n = 0; n < z[0]; n++) {
-        		fInfoBase[n] = (FileInfoBase) (srcImage.getFileInfo(0).clone());
-        		fInfoBase[n].setExtents(destExtents);
+        		if (i == 0) {
+        			// Create a reference file info
+        			fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                        							oldDicomInfo.getFileFormat());
+        		} else {
+        			fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+        										oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
+        			childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
+       			}
+        		
+        		if (numInfos > i) {
+        			
+        			if (i < z[0]) {
+        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(0));
+        			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
+        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(i-z[0]));
+        			} else {
+        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(srcImage.getExtents()[2] - 1));
+        			}
+        	   	}
+        	}
+        	
+        	((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+        	
+        } else {
+        	for (i = 0; i < numInfos; i++) {
+        		
+        		if (i == 0) {
+        			fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+        		}
+        		
+        		if (numInfos > i) {
+        			if (i < z[0]) {
+        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+        			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
+        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(i).clone();
+        			} else {
+        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(srcImage.getExtents()[2]-1).clone();
+        			}
+        		}
         	}
         }
         
-        for (n = z[0]; n < zDim; n++) {
-            fInfoBase[n] = (FileInfoBase) (srcImage.getFileInfo(n - z[0]).clone());
-            fInfoBase[n].setExtents(destExtents);
-        }
+        FileInfoBase.copyCoreInfo(srcImage.getFileInfo(), fileInfo);
         
-        if (z[1] != 0) {
-        	
-        	for (n = zDim; n < z[1]; n++) {
-        		fInfoBase[n] = (FileInfoBase) (srcImage.getFileInfo(zDim - 1).clone());
-        		fInfoBase[n].setExtents(destExtents);
-        	}
-        }
-        
-        axisOrient = fInfoBase[0].getAxisOrientation();
+        axisOrient = fileInfo[0].getAxisOrientation();
         
         Vector mats = srcImage.getMatrixHolder().getMatrices();
 
@@ -813,13 +847,13 @@ public class AlgorithmPad extends AlgorithmBase {
         }
 
         for (n = 0; n < z[1]; n++) {
-            imgOriginLPS = fInfoBase[n].getOrigin();
+            imgOriginLPS = fileInfo[n].getOrigin();
             originImgOrd = originLPS2Img(imgOriginLPS, srcImage);
             originImgOrd[0] = originImgOrd[0] + (direct[0] * x[0] * resols[0]);
             originImgOrd[1] = originImgOrd[1] + (direct[1] * y[0] * resols[1]);
             newImgOriginLPS = originImg2LPS(originImgOrd, srcImage);
-            fInfoBase[n].setOrigin(newImgOriginLPS);
-            fInfoBase[n].setResolutions(resols);
+            fileInfo[n].setOrigin(newImgOriginLPS);
+            fileInfo[n].setResolutions(resols);
         }
 
         if (srcImage.getParentFrame() != null) {
@@ -962,7 +996,7 @@ public class AlgorithmPad extends AlgorithmBase {
         srcImage = new ModelImage(dataType, destExtents, imageName);
 
         for (n = 0; n < z[1]; n++) {
-            srcImage.setFileInfo(fInfoBase[n], n);
+            srcImage.setFileInfo(fileInfo[n], n);
         }
 
         srcImage.getMatrixHolder().replaceMatrices(mats);
@@ -995,7 +1029,7 @@ public class AlgorithmPad extends AlgorithmBase {
             } // if (nDims = 2)
             else { // nDims == 3
 
-                for (n = 0, slc = 0; slc <= z[1]; n++, slc++) {
+                for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
                     ((FileInfoDicom) (srcImage.getFileInfo(n))).setSecondaryCaptureTags();
                     ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
@@ -1011,8 +1045,8 @@ public class AlgorithmPad extends AlgorithmBase {
 
                     // change the slice number ("0020,0013"):
                     // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-                    value = Integer.toString(slc - (int) z[0] + 1);
-                    dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
+                    //value = Integer.toString(slc - (int) z[0] + 1);
+                    //dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
 
                     // change the image start position ("0020, 0032")
                     startPos = originImgOrd[2];
@@ -1232,6 +1266,7 @@ public class AlgorithmPad extends AlgorithmBase {
      */
     private void updateFileInfoData() {
         int i;
+        int numInfos;
         float[] resols;
         float[] resolsTmp;
         float[] imgOriginLPS;
@@ -1239,32 +1274,82 @@ public class AlgorithmPad extends AlgorithmBase {
         float[] newImgOriginLPS = new float[3];
         int[] axisOrient;
         int[] extentsTmp;
+        FileInfoBase[] fileInfo;
         FileInfoBase fileInfoBuffer;
         int nDims = destImage.getNDims();
-
         int[] direct = new int[nDims];
-
-        if (nDims != srcImage.getNDims()) {
-
-            if (nDims == 2) {
-                destImage.setFileInfo(new FileInfoBase[1]);
-            } else if (nDims == 3) {
-                destImage.setFileInfo(new FileInfoBase[destImage.getExtents()[2]]);
-            } else if (nDims == 4) {
-                destImage.setFileInfo(new FileInfoBase[destImage.getExtents()[2] * destImage.getExtents()[3]]);
-            }
-        } else { // Ruida this was the problem.
-
-            // destImage.setFileInfo( (FileInfoBase [])(srcImage.getFileInfo().clone()) );
+        
+        if (nDims == 2) {
+        	numInfos = 1;
+        } else if(nDims == 3) {
+        	numInfos = destImage.getExtents()[2];
+        } else {
+        	numInfos = destImage.getExtents()[2] * destImage.getExtents()[3];
         }
-
-        int start = 0;
-
+        
+        fileInfo = new FileInfoBase[numInfos];
+        
+        if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+        	FileInfoDicom oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
+        	FileDicomTagTable[] childTagTables = new FileDicomTagTable[numInfos - 1];
+        
+        
+        	// Create all the new file infos (reference and children) and fill them with the tags from the old
+        	// file infos. 
+        	for(i = 0; i < numInfos; i++) {
+        	
+        		if (i == 0) {
+        			// Create a reference file info
+        			fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                        							oldDicomInfo.getFileFormat());
+        		} else {
+        			fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+        										oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
+        			childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
+       			}
+        		
+        		if (numInfos > i) {
+        			
+        			if (i < z[0]) {
+        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(0));
+        			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
+        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(i-z[0]));
+        			} else {
+        				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(srcImage.getExtents()[2] - 1));
+        			}
+        	   	}
+        	}
+        	
+        	((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+        	
+        } else {
+        	for (i = 0; i < numInfos; i++) {
+        		
+        		if (i == 0) {
+        			fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+        		}
+        		
+        		if (numInfos > i) {
+        			if (i < z[0]) {
+        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+        			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
+        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(i).clone();
+        			} else {
+        				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(srcImage.getExtents()[2]-1).clone();
+        			}
+        		}
+        	}
+        }
+        
+        FileInfoBase.copyCoreInfo(srcImage.getFileInfo(), fileInfo);
+        
+        destImage.setFileInfo(fileInfo);
+        
         if (nDims == 2) {
         	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
             // Copies the source's image file info.
-            destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[start].clone()), 0);
+            //destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[start].clone()), 0);
             fileInfoBuffer = (FileInfoBase) destImage.getFileInfo(0);
             resols = fileInfoBuffer.getResolutions();
             axisOrient = fileInfoBuffer.getAxisOrientation();
@@ -1303,17 +1388,7 @@ public class AlgorithmPad extends AlgorithmBase {
         } else if (nDims == 3) {
         	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices()); 
 
-        	for (int m = 0; m < z[0]; m++) {
-        		destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[0].clone()), m);
-        	}
-            for (int m = z[0]; m < srcImage.getExtents()[2]; m++) {
-                destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[m - z[0]].clone()), m);
-            }
-            for (int m = srcImage.getExtents()[2]; m < z[1]; m++) {
-        		destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[0].clone()), m);
-        	}
-
-            fileInfoBuffer = destImage.getFileInfo(0);
+        	fileInfoBuffer = destImage.getFileInfo(0);
             resols = fileInfoBuffer.getResolutions();
             axisOrient = fileInfoBuffer.getAxisOrientation();
 
@@ -1371,62 +1446,7 @@ public class AlgorithmPad extends AlgorithmBase {
                 destImage.getFileInfo(s).setExtents(extentsTmp);
                 fileInfoBuffer.setOrigin(originImgOrd);
             }
-        } else {
-            destImage.setMatrix(srcImage.getMatrix());
-
-            int slice = 0;
-
-            for (int t = 0; t < srcImage.getExtents()[3]; t++) {
-
-                for (int m = 0; m <= Math.abs(z[1] - z[0]); m++, slice++) {
-                    destImage.setFileInfo((FileInfoBase)
-                                          (srcImage.getFileInfo()[start + m + (t * srcImage.getExtents()[2])].clone()),
-                                          slice);
-                }
-            }
-
-            fileInfoBuffer = destImage.getFileInfo(0);
-            resols = fileInfoBuffer.getResolutions();
-            axisOrient = fileInfoBuffer.getAxisOrientation();
-
-            for (i = 0; i < 3; i++) {
-
-                if ((axisOrient[i] == 1) || (axisOrient[i] == 4) || (axisOrient[i] == 5)) {
-                    direct[i] = 1;
-                } else {
-                    direct[i] = -1;
-                }
-            }
-
-            Point3Df fileOriginVOI = new Point3Df(x[0], y[0], z[0]);
-            Point3Df lpsOriginVOI = new Point3Df();
-            MipavCoordinateSystems.fileToScanner(fileOriginVOI, lpsOriginVOI, destImage);
-
-            int orientation = destImage.getImageOrientation();
-
-            if ((orientation == FileInfoBase.AXIAL) || (orientation == FileInfoBase.UNKNOWN_ORIENT)) {
-                originImgOrd[0] = lpsOriginVOI.x;
-                originImgOrd[1] = lpsOriginVOI.y;
-                originImgOrd[2] = lpsOriginVOI.z;
-            } else if (orientation == FileInfoBase.SAGITTAL) {
-                originImgOrd[0] = lpsOriginVOI.x;
-                originImgOrd[1] = lpsOriginVOI.z;
-                originImgOrd[2] = lpsOriginVOI.y;
-            } else if (orientation == FileInfoBase.CORONAL) {
-
-                originImgOrd[0] = lpsOriginVOI.y;
-                originImgOrd[1] = lpsOriginVOI.z;
-                originImgOrd[2] = lpsOriginVOI.x;
-            }
-
-            for (int s = 0; s < (destImage.getExtents()[2] * destImage.getExtents()[3]); s++) {
-                fileInfoBuffer = destImage.getFileInfo(s);
-
-                destImage.getFileInfo(s).setExtents(destImage.getExtents());
-
-                fileInfoBuffer.setOrigin(originImgOrd);
-            }
-        }
+        } 
 
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
             updateDICOM();
