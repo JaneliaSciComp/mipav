@@ -384,7 +384,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
             } else {
                 fireProgressStateChanged(75);
                 fireProgressStateChanged("Saving surface");
-                kMesh.save(surfaceFileName, true, direction, startLocation, box, inverseDicomArray, srcImage);
+                kMesh.save(surfaceFileName, true, direction, startLocation, box, inverseDicomArray);
 
             }
         } catch (IOException error) {
