@@ -1934,7 +1934,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @exception  IOException  if the specified file could not be opened for writing
      */
     public void save(String kName, boolean flip, int[] direction, float[] startLocation, float[] box,
-                     double[][] inverseDicomArray, ModelImage srcImage) throws IOException {
+                     double[][] inverseDicomArray) throws IOException {
 
 
         int i = kName.lastIndexOf('.');
@@ -1957,7 +1957,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 save(kOut, flip, direction, startLocation, box, inverseDicomArray);
                 kOut.close();
             } else if ( extension.equals("xml") ) {
-            	saveAsXML( kName, direction, startLocation, box, srcImage);
+            	saveAsXML( kName, direction, startLocation, box);
             }
         }
         /*
@@ -2596,19 +2596,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @param      direction          either 1 or -1 for each axis
      * @param      startLocation      image origin coordinate
      * @param      box                (dim-1)*res
-     * @param	   image              Mask image
      * @exception  IOException  if there is an error writing to the file
      */ 
-    protected void saveAsXML( String fileName, int[] direction, float[] startLocation, float[] box, ModelImage image) {
-    	 int[] extents = image.getExtents();
-         int xDim = extents[0];
-         int yDim = extents[1];
-         int zDim = extents[2];
-    	 float[] resols = image.getFileInfo()[0].getResolutions();
-         float xBox = (xDim - 1) * resols[0];
-         float yBox = (yDim - 1) * resols[1];
-         float zBox = (zDim - 1) * resols[2];
-         float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+    protected void saveAsXML( String fileName, int[] direction, float[] startLocation, float[] box) {    	 
+         float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
          Point3f[]  akVertex = null;
          akVertex = getVertexCopy();
          
