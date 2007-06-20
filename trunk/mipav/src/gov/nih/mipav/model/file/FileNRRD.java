@@ -18,90 +18,150 @@ import java.util.zip.*;
  */
 
 public class FileNRRD extends FileBase {
+    
+    /**
+     * See http://teem.sourceforge.net/nrrd for information about the NRRD file format
+     * NRRD files can have the header and the data in the same file in which case the filename ends in .nrrd.
+     * NRRD files can have the header information and the data in separate files in which case the header name
+     * ends in .nhdr and the data name ends in .raw, .txt, .hex, .raw.gz, or .raw.bz2.
+     * 
+     * The general format of the header is:
+     * NRRD000X
+     * <field>: <desc>
+     * <field>: <desc>
+     * # <comment>
+     * ...
+     * <field>: <desc>
+     * <key>:=<value>
+     * <key>:=<value>
+     * <key>:=<value>
+     * # <comment>
+     *
+     * Each header line is terminated by either a pair of characters "\r\n" or by just a single character "\n".
+     * The first header line always starts with the four characters "NRRD" and the remaining characters give the 
+     * file format version information.  The X in the first line is a number such as 1, 2, 3, 4, or 5.
+     * All field specifications have a field identifier string "<field>", then a colon followed by a single space, and
+     * then the field descriptor information string "<desc>" describing the field.  Each of the "<key>:=<value>" lines
+     * describes a key/value pair in nrrd.  Comment lines start with a pound sign.  If the data is stored in the same
+     * file as the header, then a single blank line containing zero characters separates the header from the data.
+     * 
+     * If the header and data are stored in separate files then the data file specification can take 1 of 3 forms:
+     * 1.) data file: <filename>  There is a single detached data file, and its filename is "filename".
+     * 2.) data file: <format> <min> <max> <step> [<subdim>].  There are multiple detached data files, and their 
+     * filenames include integral values which must be generated using a format specification for an integer value,
+     * which ranges according to <min>, <max>, and <step>.
+     * 3.) data file: LIST [<subdim>]  There are multiple detached data files, and their filenames are given explicitly,
+     * in the NRRD header, one filename per line, in the line starting after the data file field specification, until
+     * the end of file.
+     */
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private static final int UNKNOWN = 0;
 
-    /** DOCUMENT ME! */
+    /** A patient-based right-handed coordinate frame, with ordered basis vectors pointing towards right, anterior, and
+     *  superior, respectivley.  Used in NIFTI. */
     private static final int RAS = 1;
 
-    /** DOCUMENT ME! */
+    /** A patient-based left-handed coordinate frame, with ordered basis vectors pointing towards left, anterior, and
+     *  superior, respectively.  Used in Analyze. */
     private static final int LAS = 2;
 
-    /** DOCUMENT ME! */
+    /** A patient-based right-handed coordinate frame, with ordered basis vectors pointing towards left, posterior, and
+     *  superior, respectively.  Used in DICOM. */
     private static final int LPS = 3;
 
-    /** DOCUMENT ME! */
+    /** Like RAS, but with time along the fourth axis. */
     private static final int RAST = 4;
 
-    /** DOCUMENT ME! */
+    /** Like LAS, but with time along the fourth axis. */
     private static final int LAST = 5;
 
-    /** DOCUMENT ME! */
+    /** Like LPS, but with time along the fourth axis. */
     private static final int LPST = 6;
 
-    /** DOCUMENT ME! */
+    /** A scanner-based right-handed coordinate frame, used in ACR/NEMA 2.0.
+     *  If a patient lies parallel to the ground, face-up on the table, with their feet-to-head direction same as the
+     *  front-to-back direction of the imaging equipment, the axes of this scanner-based coordinate frame and the 
+     *  (patient-based) left-posterior-superior frame coincide. */
     private static final int SCANNER_XYZ = 7;
 
-    /** DOCUMENT ME! */
+    /** Like SCANNER_XYZ, but with time along the fourth axis. */
     private static final int SCANNER_XYZ_TIME = 8;
 
-    /** DOCUMENT ME! */
+    /** Any right-handed three-dimensional space. */
     private static final int THREED_RIGHT_HANDED = 9;
 
-    /** DOCUMENT ME! */
+    /** Any left-handed three-dimensional space. */
     private static final int THREED_LEFT_HANDED = 10;
 
-    /** DOCUMENT ME! */
+    /** Like THREED_RIGHT_HANDED, but with time along the fourth axis. */
     private static final int THREED_RIGHT_HANDED_TIME = 11;
 
-    /** DOCUMENT ME! */
+    /** Like THREEE_LEFT_HANDED, but with time along the fourth axis. */
     private static final int THREED_LEFT_HANDED_TIME = 12;
 
-    /** DOCUMENT ME! */
+    /** Centering information for this axis is either meaningless or unknown.
+     *  This applies to any non-spatial axis. */
     private static final int NONE = 0;
 
-    /** DOCUMENT ME! */
+    /** The location of the sample is located in the interior of the grid element. */
     private static final int CELL = 1;
 
-    /** DOCUMENT ME! */
+    /** The location of the sample is at the boundary between grid elements. */
     private static final int NODE = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** True for RAS and LAS, false for LPS.  If true, change sign on origin[1] and row[1] of matrix. */
     private boolean apInvert = false;
 
-    /** DOCUMENT ME! */
+    /** True if data file: <format> <min> <max> <step> [<subdim>] encountered
+     *  If true, autosequence using integer format specification varied according to <min>, <max>, and <step>. */
     private boolean autoSequence = false;
 
-    /** DOCUMENT ME! */
+    /** Maximum axis value.  centers[i], axisMins[i], axisMaxs[i], and nrrdSizes[i] are used to calculate
+     *  resols[i] and origin[i] if spacings[i] not available. */
     private double[] axisMaxs = null;
 
-    /** DOCUMENT ME! */
+    /** Minimum axis value.  centers[i], axisMins[i], axisMaxs[i], and nrrdSizes[i] are used to calculate
+     *  resols[i] and origin[i] if spacings[i] not available. */
     private double[] axisMins = null;
 
-    /** DOCUMENT ME! */
+    /** For each axis R2L, L2R, A2P, P2A, I2S, or S2I */
     private int[] axisOrientation = null;
 
-    /** DOCUMENT ME! */
+    /** In autosequencing number between a capital D and the last period used in generating filenames.
+     *  The capital D must come after the percentage sign. */
     private String baseAfterNumber = null;
 
-    /** DOCUMENT ME! */
+    /** In autosequencing number before percentage sign and period used in generating start of
+     *  autosequenced filename. */
     private String baseBeforeNumber = null;
 
-    /** DOCUMENT ME! */
+    /** Used if autosequencing.  If true, increment file base.  If false, increment file extension.
+     *  True if period follows a capital D.  The capital D must follow a percentage sign.  */
     private boolean baseNumber = false;
 
-    /** DOCUMENT ME! */
+    /** May remain null or may be created as NONE, CELL, or NODE. */
     private int[] centers = null;
 
-    /** DOCUMENT ME! */
+    /** "modality:=DWMRI" : This key/value pair explicitly indicates that the image is a 
+     * diffusion-weighted MRI scan, and it implies that all of the following key/value pairs
+     * are also set in the header:
+     * "DWMRI_b-value:=b " : This key/value pair gives the (scalar) diffusion-weighting value,
+     *  in units of s/mm^2. Example: "DWMRI_b-value:=1000". As described below, the effective
+     *  magnitude of diffusion-weighting for each DWI is determined with some simple calculations based
+     *  on the individual per-DWI gradient directions or B-matrices.
+     *  For every index position NNNN along the DWI axis (whichever is the non-spatial axis identified
+     *  by the "list" or "vector" kind field), either "DWMRI_gradient_NNNN:=x y z " or 
+     *  "DWMRI_B-matrix_NNNN:=xx xy xz yy yz zz " must be given (except if "DWMRI_NEX_NNNN:= M " is used).  */
     private String[][] dwmriGradient = null;
 
-    /** DOCUMENT ME! */
+    /** "DWMRI_NEX_NNNN:=M " means that the information provided for image NNNN 
+     * (either gradient or B-matrix) is the same as for image NNNN+1, NNNN+2, up
+     *  to and including NNNN+M-1. */
     private String[][] dwmriNex = null;
 
     /** DOCUMENT ME! */
@@ -159,7 +219,7 @@ public class FileNRRD extends FileBase {
     /** DOCUMENT ME! */
     private int[] imgExtents;
 
-    /** DOCUMENT ME! */
+    /** Kind of information represented by the samples along each axis. */
     private String[] kindsString = null;
 
 
@@ -190,41 +250,44 @@ public class FileNRRD extends FileBase {
     /** DOCUMENT ME! */
     private String[] nrrdLabels = null;
 
-    /** DOCUMENT ME! */
+    /** The number of samples along each nrrd axis */
     private int[] nrrdSizes;
 
     /** DOCUMENT ME! */
     private String[] nrrdSpaceUnits = null;
 
-    /** DOCUMENT ME! */
+    /** Units of measurement of nrrd axis */
     private String[] nrrdUnits = null;
 
     /** DOCUMENT ME! */
     private int numColors = 3;
 
-    /** DOCUMENT ME! */
+    /** Number of nrrd dimensions for which the kinds string equals "SPACE". */
     private int numSpaceKinds = 0;
 
-    /** DOCUMENT ME! */
+    /** Number of axes for which thicknesses values found */
     private int numThicknesses = 0;
 
     /** DOCUMENT ME! */
     private long offset1;
 
 
-    /** DOCUMENT ME! */
+    /** True for .nrrd file with header and data in the same file.
+     *  False for .nhdr header files with the data in one or more other files. */
     private boolean oneFileStorage;
 
     /** DOCUMENT ME! */
     private float[] origin = null;
 
-    /** DOCUMENT ME! */
+    /** In autosequencing if the sequence number length is less than the padding number, zeroes are added
+     *  to the front of the sequence number until the sequence number length equals the padding number. */
     private int paddingNumber = 0;
 
     /** 0 indicates pixels are RGB, RGB chunky 1 indicates pixels are RRR, GGG, BBB planar. */
     private int planarConfig = 0;
 
-    /**
+     /**
+     * 
      * The orientation information in some NRRD files cannot be applied to MIPAV without dimension reordering. This
      * applies to 2 of my 15 example NRRD files. In Dwi-D.nhdr 4 dimensions are specified with the dimensions from 0 to
      * 3 having sizes of 13, 29, 30, and 31. Right-anterior-superior space is specified, but the first axis contains
@@ -240,10 +303,10 @@ public class FileNRRD extends FileBase {
     /** DOCUMENT ME! */
     private float[] resols = null;
 
-    /** DOCUMENT ME! */
+    /** If true, data is a specialized form of 4-color with red, green, blue, and alpha, in that order. */
     private boolean RGBAOrder = false;
 
-    /** DOCUMENT ME! */
+    /** True for RAS.  False for LAS and LPS.  If true, change sign on origin[0] and first row of matrix. */
     private boolean rlInvert = false;
 
     /** DOCUMENT ME! */
@@ -256,31 +319,29 @@ public class FileNRRD extends FileBase {
     private int sequenceStep;
 
 
-    /** DOCUMENT ME! */
-
-
-    /** DOCUMENT ME! */
+    /** Number of bytes to skip */
     private int skippedBytes = 0;
 
-    /** DOCUMENT ME! */
+    /** Number of lines to skip */
     private int skippedLines = 0;
 
     /** DOCUMENT ME! */
     private float sliceThickness;
 
-    /** DOCUMENT ME! */
+    /** RAS, LAS, LPS, RAST, LAST, LPST, SCANNER_XYZ, SCANNER_XYZ_TIME, THREED_RIGHT_HANDED, THREED_LEFT_HANDED,
+     *  THREED_RIGHT_HANDED_TIME, or THREED_LEFT_HANDED_TIME */
     private int space = UNKNOWN;
 
-    /** DOCUMENT ME! */
+    /** Second index of spaceDirections specifies row of matrix to set. */
     private double[][] spaceDirections = null;
 
-    /** DOCUMENT ME! */
+    /** Used to set origin values. */
     private double[] spaceOrigin = null;
 
     /** DOCUMENT ME! */
     private String spaceUnitsString = null;
 
-    /** DOCUMENT ME! */
+    /** Resolutions values for nrrd axes */
     private double[] spacings = null;
 
     /** DOCUMENT ME! */
@@ -292,10 +353,10 @@ public class FileNRRD extends FileBase {
     /** DOCUMENT ME! */
     private int subdim = 0;
 
-    /** DOCUMENT ME! */
+    /** Used to obtain MIPAV sliceThickness value */
     private double[] thicknesses = null;
 
-    /** DOCUMENT ME! */
+    /** Version of the NRRD file format being used. */
     private int versionNumber;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
