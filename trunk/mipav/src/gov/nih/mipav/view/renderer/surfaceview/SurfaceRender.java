@@ -30,7 +30,7 @@ import javax.swing.event.*;
 import javax.swing.JPanel;
 
 import javax.vecmath.*;
-
+import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
 
 /**
  * Frame that holds the surface renderer. This frame is only possible to
@@ -82,6 +82,8 @@ public class SurfaceRender extends RenderViewBase {
     /** Raycast based renderer reference, raycast renderer or shear warp renderer. */
     protected VolumeRenderer rayBasedRender;
 
+    private GPUVolumeRender rayBasedRenderWM = null;
+    
     /** Mode is tri-planar volume view or not. */
     boolean isTriPlanarVolView = false;
 
@@ -1744,6 +1746,21 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
+     * Set the reference to ray based renderer, raycast renderer or shear warp
+     * renderer. This method set the clipping dialog to control the both the
+     * 3D texture renderer and raycast based renderer.
+     *
+     * @param  _rayBasedRender  VolumeRenderer reference
+     */
+    public void setRayBasedRender(GPUVolumeRender _rayBasedRender) {
+        rayBasedRenderWM = _rayBasedRender;
+        clipPanel.setRayBasedRender(_rayBasedRender);
+        //volOpacityPanel.setRayBasedRender(_rayBasedRender);
+        //surfacePanel.getLightDialog().setRayBasedRender(_rayBasedRender);
+        sculptorPanel.setVolumeSculptor(_rayBasedRender);
+    }
+
+    /**
      * Enable perspective projection rendering; otherwise use orthographic projection.
      *
      * @param  bEnable  true to enable perspective projection
@@ -2631,6 +2648,14 @@ public class SurfaceRender extends RenderViewBase {
      * invokes this method call.
      */
     public void updateRaycastRender() {
+
+        if (rayBasedRenderWM != null) {
+            Transform3D kTransform = new Transform3D(currentTransform);
+            kTransform.setScale(new Vector3d(1,1,1));
+            float[] data = new float[16];
+            kTransform.get(data);
+            rayBasedRenderWM.transformUpdate(data);
+        }
 
         if (rayBasedRender != null) {
             rayBasedRender.transformUpdate(currentTransformType, currentTransform);

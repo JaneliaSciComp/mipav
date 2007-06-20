@@ -1,0 +1,216 @@
+int clip( float3 vec,
+          float clipX,
+          float clipXInv,
+          float clipY,
+          float clipYInv,
+          float clipZ,
+          float clipZInv )
+{
+    if ( vec.x > clipX )
+    {
+        return 1;
+    }
+    else if ( vec.x < clipXInv )
+    {
+        return 1;
+    }
+    else if ( vec.y > clipY )
+    {
+        return 1;
+    }
+    else if ( vec.y < clipYInv )
+    {
+        return 1;
+    }
+    else if ( vec.z > clipZ )
+    {
+        return 1;
+    }
+    else if ( vec.z < clipZInv )
+    {
+        return 1;
+    }
+    return 0;
+}
+
+void computeColor( float4 normalMax, float3 light,
+                   float3 CameraModelPosition, float3 inPos, float shininessParam,
+                   float ambientParam, float diffuseParam, float specularParam,
+                   inout float4 color_sample)
+{
+    float3 normal = normal.xyz = normalMax.xyz - (0.5, 0.5, 0.5);
+    normal = normalize( normal );
+
+    //float3 lightdir = normalize( light - inPos.xyz );
+    float3 lightdir = normalize( light );
+    float3 V = normalize( CameraModelPosition - inPos.xyz );
+    float3 halfway = normalize( lightdir + V );
+
+    // compute diffuse lighting component
+    float diffuse = max(dot(normal.xyz, lightdir), 0);
+    //fixed diffuse = abs(dot(lightdir.xyz, normal.xyz));
+    // compute specular lighting component
+    float specular = pow(max(dot(halfway.xyz, normal.xyz), 0),
+                         shininessParam);
+
+    color_sample.rgb =
+        ambientParam * color_sample.rgb
+        + diffuseParam * diffuse * color_sample.rgb
+        + specularParam * specular;
+
+    //color_sample.rgb = normal.xyz;
+}
+
+// Raycasting vertex program implementation
+void v_VolumeShader( in float4 inPosition     : POSITION,
+            in float3 inTexCoord1     : TEXCOORD0, 
+            out float4 outPosition    : POSITION, // For the rasterizer
+            out float3 outTexCoord1    : TEXCOORD0,
+            out float4 outPos         : TEXCOORD1,
+            uniform float4x4 WVPMatrix)
+{    
+    // Transform vertex
+    outPosition = mul( inPosition, WVPMatrix );
+    outPos = outPosition; 
+    outTexCoord1 = inTexCoord1;
+}
+
+// Raycasting fragment program implementation
+void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
+             in float4 inPos         : TEXCOORD1,
+             out float4 kColor	    : COLOR0,
+             uniform sampler3D volume_tex, 
+             uniform sampler2D tex, 
+             uniform sampler1D colormap, 
+             uniform sampler1D opacitymap, 
+             uniform sampler3D normalmap, 
+             uniform float MIP,
+             uniform float DDR,
+             uniform float Composite,
+             uniform float Surface,
+             uniform float stepsize,
+             uniform float clipX,
+             uniform float clipXInv,
+             uniform float clipY,
+             uniform float clipYInv,
+             uniform float clipZ,
+             uniform float clipZInv,
+             uniform float4 clipArb,
+             uniform float ambientParam,
+             uniform float diffuseParam,
+             uniform float shininessParam,
+             uniform float specularParam,
+             uniform float3 light,
+             uniform float3 CameraModelPosition,
+             uniform float4x4 WVPMatrix)
+{
+    float2 texc = ((inPos.xy / inPos.w) + 1) / 2; // find the right place to lookup in the backside buffer
+    float3 start = inTexCoord1; // the start position of the ray is stored in the texturecoordinate
+    float4 back_position  = tex2D(tex, texc);
+    float3 dir = float3(0,0,0);
+    dir.x = back_position.x - start.x;
+    dir.y = back_position.y - start.y;
+    dir.z = back_position.z - start.z;
+    float len = length(dir.xyz); // the length from front to back is calculated and used to terminate the ray
+    float3 norm_dir = normalize(dir);
+    float delta = stepsize;
+    float3 delta_dir = norm_dir * delta;
+    float delta_dir_len = length(delta_dir);
+    float3 vec = start.xyz;
+    float4 col_acc = float4(0,0,0,0);
+    float alpha_acc = 0;
+    float length_acc = 0;
+    float4 color_sample;
+    float alpha_sample;
+
+    float opacity = 0;
+    float4 normal = (0,0,0,0);
+    float4 normalMax = (0,0,0,0);
+    float fMax = 0;
+
+    for(int i = 0; i < 450; i++)
+    {
+        if ( clip( vec, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+        {
+            color_sample = (0,0,0,0);
+            opacity = 0;
+        }
+        else
+        {
+            float4 aVec = float4(0,0,0,0);
+            aVec.xyz = vec.xyz - (.5,.5,.5);
+            aVec = mul( aVec, WVPMatrix );
+            aVec.xyz = aVec.xyz + (.5,.5,.5);
+            float fDot = dot( aVec.xyz, clipArb.xyz );
+
+            if ( fDot < clipArb.w )
+            {
+                color_sample = (0,0,0,0);
+                opacity = 0;
+            }
+            else
+            {
+                color_sample = tex3D(volume_tex,vec);
+                opacity = tex1D(opacitymap,color_sample.r).r;
+                if ( DDR == 1 )
+                {
+                    color_sample = tex1D(colormap,color_sample.r);
+                }
+            }
+        }
+        
+        if ( opacity > 0 )
+        {
+            if ( Surface == 1 )
+            {
+                normal = tex3D(normalmap,vec);
+                normal.w = 0;
+
+                alpha_sample = stepsize;
+                normalMax = normal;
+
+                computeColor( normalMax, light, CameraModelPosition, inPos.xyz, shininessParam, ambientParam, diffuseParam, specularParam, color_sample );
+                if ( Composite == 1 )
+                {
+                    col_acc   = (1.0 - opacity) * col_acc + opacity * color_sample;
+                    alpha_acc += opacity;
+                }
+                else
+                {
+                    col_acc   = color_sample;
+                    break;
+                }
+            }
+            else
+            {
+                alpha_sample = stepsize;
+                if ( color_sample.r > fMax ) 
+                {
+                    fMax = color_sample.r;
+                }
+                
+                //alpha_sample = color_sample.a * stepsize;
+                if ( Composite == 1 )
+                {
+                    col_acc   = (1.0 - opacity) * col_acc + opacity * color_sample;
+                    alpha_acc += opacity;
+                }
+                else
+                {
+                    col_acc   += (1.0 - alpha_acc) * color_sample * alpha_sample * 3;
+                    alpha_acc += alpha_sample;
+                }
+            }
+        }
+        vec += delta_dir;
+        length_acc += delta_dir_len;
+        if(length_acc >= len || alpha_acc > 1.0) break; // terminate if opacity > 1 or the ray is outside the volume
+        if(fMax>=1)break;
+    } 
+
+    kColor = col_acc;
+    if ( MIP == 1 )
+    {
+        kColor = tex1D(colormap,fMax);
+    }
+}

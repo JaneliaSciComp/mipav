@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
@@ -25,6 +26,7 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
+import com.sun.opengl.util.Animator;
 
 
 /**
@@ -46,7 +48,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     /** Height of the display screen. */
     protected static final int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Object where DICOM image, ... is converted and displayed as a Java image */
@@ -2235,7 +2236,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } catch (OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: unable to open Tri-planar frame.");
             }
-        } else if (command.equals("VolTriplanar")) {
+        } else if (command.equals("VolTriplanar") || 
+                   command.equals("WMVolTriplanar") ) {
 
             // 3 space representation makes no sense on a 2d image!
             if (componentImage.getImageA().getNDims() == 2) {
@@ -2272,16 +2274,17 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                             imageInfoDialog.toFront();
                         }
                     } else {
-                        new JDialogVolViewResample(imageA, imageB);
+                        new JDialogVolViewResample(imageA, imageB, command);
                     }
                 } else {
-                    new JDialogVolViewResample(imageA, imageB);
+                    new JDialogVolViewResample(imageA, imageB, command);
                 }
             } catch (OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: unable to open Volume Triplanar frame.");
             }
 
-        } else if (command.equals("MagSettings")) {
+        } 
+        else if (command.equals("MagSettings")) {
             JDialogMagnificationControls magSettings = new JDialogMagnificationControls(this, componentImage,
                                                                                         componentImage.getZoomX(),
                                                                                         null);
