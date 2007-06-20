@@ -4655,15 +4655,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         int[] extentsSagittal = triImage[SAGITTAL_A].getExtents();
         int[] extentsCoronal = triImage[CORONAL_A].getExtents();
 
-        float zoomAxialWidth = desiredWidth / (extentsAxial[0] * triImage[AXIAL_A].getResolutionX());
-        float zoomSagittalWidth = desiredWidth / (extentsSagittal[0] * triImage[SAGITTAL_A].getResolutionX());
-        float zoomCoronalWidth = desiredWidth / (extentsCoronal[0] * triImage[CORONAL_A].getResolutionX());
+        float zoomAxialWidth = (desiredWidth * triImage[AXIAL_A].getResolutionX()) / (extentsAxial[0] * triImage[AXIAL_A].getResolutionX());
+        float zoomSagittalWidth = (desiredWidth * triImage[SAGITTAL_A].getResolutionX()) / (extentsSagittal[0] * triImage[SAGITTAL_A].getResolutionX());
+        float zoomCoronalWidth = (desiredWidth * triImage[CORONAL_A].getResolutionX()) / (extentsCoronal[0] * triImage[CORONAL_A].getResolutionX());
 
         float optimalZoomWidth = Math.min(zoomAxialWidth, Math.min(zoomSagittalWidth, zoomCoronalWidth));
 
-        float zoomAxialHeight = desiredHeight / (extentsAxial[1] * triImage[AXIAL_A].getResolutionY());
-        float zoomSagittalHeight = desiredHeight / (extentsSagittal[1] * triImage[SAGITTAL_A].getResolutionY());
-        float zoomCoronal = desiredHeight / (extentsCoronal[1] * triImage[CORONAL_A].getResolutionY());
+        float zoomAxialHeight = (desiredHeight * triImage[AXIAL_A].getResolutionY()) / (extentsAxial[1] * triImage[AXIAL_A].getResolutionY());
+        float zoomSagittalHeight = (desiredHeight * triImage[SAGITTAL_A].getResolutionY())/ (extentsSagittal[1] * triImage[SAGITTAL_A].getResolutionY());
+        float zoomCoronal = (desiredHeight * triImage[CORONAL_A].getResolutionY())/ (extentsCoronal[1] * triImage[CORONAL_A].getResolutionY());
 
         float optimalZoomHeight = Math.min(zoomAxialHeight, Math.min(zoomSagittalHeight, zoomCoronal));
 
