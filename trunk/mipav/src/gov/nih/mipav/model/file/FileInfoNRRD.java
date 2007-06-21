@@ -28,6 +28,7 @@ public class FileInfoNRRD extends FileInfoBase {
     /** Transformation matrix. */
     private TransMatrix matrix = new TransMatrix(4);
     
+    /** Version of the NRRD file format being used. */
     private int versionNumber = -1;
     
     /** Data compression - raw, gzip */
@@ -36,16 +37,30 @@ public class FileInfoNRRD extends FileInfoBase {
     /** Concise textual description of the information in the array */
     private String contentString = null;
     
+    /** Axis names such as X, Y, or Z */
     private String labelString[] = null;
     
     private float sliceThickness = -1.0f;
     
+    /** Diffusion weighted MRI is currently the only value that has been seen for modality 
+     *  in our samples. */
     private String modalityString = null;
     
+    /** "DWMRI_b-value:=b " : This key/value pair gives the (scalar) diffusion-weighting value,
+     *  in units of s/mm^2. Example: "DWMRI_b-value:=1000". The effective
+     *  magnitude of diffusion-weighting for each DWI is determined with some simple calculations based
+     *  on the individual per-DWI gradient directions or B-matrices. */
     private String DWMRI_B_VALUE = null;
     
+    /** For every index position NNNN along the DWI axis (whichever is the non-spatial axis identified
+     *  by the "list" or "vector" kind field), either "DWMRI_gradient_NNNN:=x y z " or 
+     *  "DWMRI_B-matrix_NNNN:=xx xy xz yy yz zz " must be given (except if "DWMRI_NEX_NNNN:= M " is used).  */
     private String dwmriGradient[][] = null;
     
+    /** Possible values are "right-anterior-superior", "left-anterior-superior", "left-posterior-superior",
+     *  "right-anterior-superior-time", "left-anterior-superior-time", "left-posterior-superior-time",
+     *  "scanner-xyz", "scanner-xyz-time", "3d-right-handed", "3d-left-handed", 
+     *  "3d-right-handed-time", "3d-left-handed-time" */
     private String spaceString = null;
 
     
@@ -277,7 +292,7 @@ public class FileInfoNRRD extends FileInfoBase {
     }
     
     /**
-     * 
+     * Accessor setting versionNumber, version of NRRD file format being used.
      * @param versionNumber
      */
     public void setVersionNumber(int versionNumber) {
@@ -285,7 +300,7 @@ public class FileInfoNRRD extends FileInfoBase {
     }
     
     /**
-     * 
+     * Accessor setting encoding string telling data compression method
      * @param encodingString
      */
     public void setEncoding(String encodingString) {
@@ -293,7 +308,7 @@ public class FileInfoNRRD extends FileInfoBase {
     }
     
     /**
-     * 
+     * Accessor setting contentString giving textual description of information in the array
      * @param contentString
      */
     public void setContent(String contentString) {
@@ -301,7 +316,7 @@ public class FileInfoNRRD extends FileInfoBase {
     }
     
     /**
-     * 
+     * Accessor setting labelString for axis names
      * @param labelString
      */
     public void setLabels(String labelString[]) {
@@ -309,7 +324,7 @@ public class FileInfoNRRD extends FileInfoBase {
     }
     
     /**
-     * 
+     * Accessor setting sliceThickness
      * @param sliceThickness
      */
     public void setSliceThickness(float sliceThickness) {
@@ -317,7 +332,7 @@ public class FileInfoNRRD extends FileInfoBase {
     }
     
     /**
-     * 
+     * Accessor setting modalityString
      * @param modalityString
      */
     public void setModality(String modalityString) {
@@ -325,7 +340,7 @@ public class FileInfoNRRD extends FileInfoBase {
     }
     
     /**
-     * 
+     * Accessor setting DWMRI_B_VALUE
      * @param DWMRI_B_VALUE
      */
     public void setDWMRI_B_VALUE(String DWMRI_B_VALUE) {
@@ -333,7 +348,7 @@ public class FileInfoNRRD extends FileInfoBase {
     }
     
     /**
-     * 
+     * Accessor setting dwmriGradient
      * @param dwmriGradient
      */
     public void setDwmriGradient(String dwmriGradient[][]) {
@@ -341,7 +356,7 @@ public class FileInfoNRRD extends FileInfoBase {
     }
     
     /**
-     * 
+     * Accessor setting spaceString
      * @param spaceString
      */
     public void setSpace(String spaceString) {
