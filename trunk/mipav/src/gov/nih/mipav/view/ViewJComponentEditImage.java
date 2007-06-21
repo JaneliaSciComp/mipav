@@ -4914,12 +4914,20 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     return zoom - 1.0f;
                 } else {
-                    return zoom + 1.0f;
+                	if (zoom <= 1.0f) {
+                		return zoom * 2.0f;
+                	} else {
+                		return zoom + 1.0f;
+                	}
                 }
             } else { // mode == ZOOMING_OUT
 
                 if (reverse) {
-                    return zoom + 1.0f;
+                	if (zoom <= 1.0f) {
+                		return zoom * 2.0f;
+                	} else {
+                		return zoom + 1.0f;
+                	}
                 } else {
 
                     if (zoom <= 1.0f) {

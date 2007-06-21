@@ -927,12 +927,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             float oldZoom = triImage[AXIAL_A].getZoomX();
 
             float newZoom = 1;
-
+            
             if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[AXIAL_A] != null)) {
-                newZoom = triImage[AXIAL_A].getZoomX() + 1.0f;
+            	if(triImage[AXIAL_A].getZoomX() < 1.0f) {
+            		newZoom = 2.0f * triImage[AXIAL_A].getZoomX();
+            	}else {
+            		newZoom = triImage[AXIAL_A].getZoomX() + 1.0f;
+            	}
             } else if (triImage[AXIAL_A] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
             {
-                newZoom = 2.0f * triImage[AXIAL_A].getZoomX();
+
+            	newZoom = 2.0f * triImage[AXIAL_A].getZoomX();
+
             }
 
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -4782,12 +4788,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         float newZoom = 1;
 
         if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (triImage[frame] != null)) {
-            newZoom = triImage[frame].getZoomX() + 1.0f;
+        	if(triImage[frame].getZoomX() < 1.0f) {
+        		newZoom = 2.0f * triImage[frame].getZoomX();
+        	} else {
+        		newZoom = triImage[frame].getZoomX() + 1.0f;
+        	}
         } else if (triImage[frame] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
         {
-            newZoom = 2.0f * triImage[frame].getZoomX();
-        }
+        	newZoom = 2.0f * triImage[frame].getZoomX();
 
+        }
 
         if (triImage[frame] != null) {
             triImage[frame].setZoom(newZoom, newZoom);
@@ -4827,7 +4837,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         } else {
             newZoom = 0.5f * triImage[frame].getZoomX();
         }
-
 
         if (triImage[frame] != null) {
             triImage[frame].setZoom(newZoom, newZoom);
