@@ -151,7 +151,7 @@ public class FileNRRD extends FileBase {
      * diffusion-weighted MRI scan, and it implies that all of the following key/value pairs
      * are also set in the header:
      * "DWMRI_b-value:=b " : This key/value pair gives the (scalar) diffusion-weighting value,
-     *  in units of s/mm^2. Example: "DWMRI_b-value:=1000". As described below, the effective
+     *  in units of s/mm^2. Example: "DWMRI_b-value:=1000". The effective
      *  magnitude of diffusion-weighting for each DWI is determined with some simple calculations based
      *  on the individual per-DWI gradient directions or B-matrices.
      *  For every index position NNNN along the DWI axis (whichever is the non-spatial axis identified
@@ -226,7 +226,13 @@ public class FileNRRD extends FileBase {
     /** DOCUMENT ME! */
     private TransMatrix matrix = new TransMatrix(4);
 
-    /** DOCUMENT ME! */
+    /** The measurement frame is a basic (per-array) field specification (not per-axis), which
+     *  identifies a spaceDim-by-spaceDim matrix, where spaceDim is the dimension of the word space
+     *  (implied by space or given by space dimension).  The matrix transforms (a column vector of)
+     *  coordinates in the measurement frame to corrdinates in world space.  vector[i] gives column i
+     *  of the measurement frame matrix.  Just as the space directions field gives, one column at
+     *  a time, the mapping from image space to world space coordinates, the measurement frame
+     *  gives the mapping measurement frame to world space coordinates, also one column at a time. */
     private double[][] measurementFrame = null;
 
     /** DOCUMENT ME! */
@@ -235,7 +241,7 @@ public class FileNRRD extends FileBase {
     /** DOCUMENT ME! */
     private int mipavDimensions;
 
-    /** DOCUMENT ME! */
+    /** MIPAV axis names such as X, Y, or Z */
     private String[] mipavLabels = null;
 
     /** DOCUMENT ME! */
@@ -247,7 +253,7 @@ public class FileNRRD extends FileBase {
     /** May not be the same as MIPAV dimensions because in nrrd color is a dimension. */
     private int nrrdDimensions;
 
-    /** DOCUMENT ME! */
+    /** nrrd axis names such as X, Y, or Z */
     private String[] nrrdLabels = null;
 
     /** The number of samples along each nrrd axis */
