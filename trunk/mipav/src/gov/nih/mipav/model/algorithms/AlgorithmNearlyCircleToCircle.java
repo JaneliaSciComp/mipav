@@ -41,6 +41,9 @@ import java.awt.*;
  * Integral from 0 to 2*PI of ((1 - x**2 - y**2)/denom)p(theta)d(theta)
  * The imaginary part of the integral equals:
  * Integral from 0 to 2*PI of ((-2xsin(theta) + 2ycos(theta))/denom)p(theta)d(theta)
+ * 0 to 2*PI direction would be counterclockwise.  Suppose curve is clockwise, then the theta increments are 
+ * negative.  So both a counterclockwise integral and the negative of the clockwise integral are
+ * realized by taking the absolute value of the theta angle increment.
  * 
  */
 public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
