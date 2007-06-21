@@ -3293,7 +3293,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         volToolBar.setBorderPainted(true);
         volToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         volToolBar.setFloatable(false);
-        volToolBar.add(toolbarBuilder.buildButton("Repaint", "Repaints images", "paintinside"));
+        volToolBar.add(toolbarBuilder.buildButton("Repaint", "Repaints images", "repaint"));
         volToolBar.add(ViewToolBarBuilder.makeSeparator());
         volToolBar.add(toolbarBuilder.buildButton("SurfaceDialog", "Add surface to viewer", "isosurface"));
         volToolBar.add(toolbarBuilder.buildButton("Geodesic", "Draw geodesic curves on the surface", "geodesic"));
