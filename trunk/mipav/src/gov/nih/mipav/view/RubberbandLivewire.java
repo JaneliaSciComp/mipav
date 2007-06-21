@@ -174,7 +174,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
         int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
         int yScreen = 100; // Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
+        //progressBar.setLocation(xScreen / 2, yScreen / 2);
 
         if (selection == GRADIENT_MAG) {
             progressBar.setVisible(true);
