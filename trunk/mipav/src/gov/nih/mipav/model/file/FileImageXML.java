@@ -3035,6 +3035,8 @@ public class FileImageXML extends FileXML {
                  } else {
                      matrix = new TransMatrix(4);
                  }
+            	 matrixCol = -1;
+            	 matrixRow = -1;
             } else if (currentKey.equals("Thumbnail")) {
             	thumbnailXDim = Integer.parseInt(atts.getValue("xDim"));
                 thumbnailYDim = Integer.parseInt(atts.getValue("yDim"));
