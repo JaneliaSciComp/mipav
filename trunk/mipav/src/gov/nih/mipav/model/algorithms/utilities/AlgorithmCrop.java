@@ -570,8 +570,6 @@ public class AlgorithmCrop extends AlgorithmBase {
         float[] imgOriginLPS;
         float[] originImgOrd = new float[3];
         float[] newImgOriginLPS = new float[3];
-        TransMatrix mat;
-        float startPos;
         String value;
 
 
@@ -729,8 +727,6 @@ public class AlgorithmCrop extends AlgorithmBase {
                                                                                Short.toString((short) (1)).length()); // instance number
 
 
-            startPos = originImgOrd[2];
-            originImgOrd[2] = startPos + (direct[2] * z[0] * resols[2]);
             newImgOriginLPS = originImg2LPS(originImgOrd, srcImage);
             value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
                     Float.toString(newImgOriginLPS[2]);
@@ -781,7 +777,6 @@ public class AlgorithmCrop extends AlgorithmBase {
         float[] resols;
         int[] axisOrient;
         int[] direct;
-        TransMatrix mat;
         float[] imgOriginLPS;
         float[] originImgOrd = new float[3];
         float[] newImgOriginLPS = new float[3];
@@ -1082,7 +1077,6 @@ public class AlgorithmCrop extends AlgorithmBase {
         float[] resols;
         int[] axisOrient;
         int[] direct;
-        TransMatrix mat;
         float[] imgOriginLPS;
         float[] originImgOrd = new float[3];
         float[] newImgOriginLPS = new float[3];
