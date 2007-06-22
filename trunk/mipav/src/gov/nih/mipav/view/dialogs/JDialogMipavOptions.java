@@ -248,7 +248,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeSplashOptions(gbc, gbl);
         makeAWTOptions(gbc, gbl);
         makePaintToolbarOptions(gbc, gbl);
-        makeQuickListOptions(gbc, gbl);
+        
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -278,6 +278,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         fileMiscPanel.setLayout(gbl);
         fileMiscPanel.setBorder(buildTitledBorder("Misc"));
+        makeQuickListOptions(gbc, gbl);
         makeFileFilterOptions(gbc, gbl);
 
         filePanel.setLayout(new BoxLayout(filePanel, BoxLayout.Y_AXIS));
@@ -1330,7 +1331,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(quickListLabel, gbc);
-        displayUserInterfacePanel.add(quickListLabel);
+        fileMiscPanel.add(quickListLabel);
 
         String[] quickListNumber = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
         quickListLevel = new JComboBox(quickListNumber);
@@ -1342,7 +1343,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(quickListLevel, gbc);
-        displayUserInterfacePanel.add(quickListLevel);
+        fileMiscPanel.add(quickListLevel);
 
         // preset the choices:
         int quickNum = 4;
