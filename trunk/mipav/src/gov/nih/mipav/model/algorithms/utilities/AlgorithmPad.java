@@ -150,7 +150,7 @@ public class AlgorithmPad extends AlgorithmBase {
 
         int i;
         int j = 0;
-        int index;
+        int index = 0;
         int length;
         float[] buffer;
         int xDim = srcImage.getExtents()[0];
@@ -199,7 +199,7 @@ public class AlgorithmPad extends AlgorithmBase {
             length = dimExtents[0] * dimExtents[1];
         }
 
-        int mod = length / 100; // mod is 1 percent of length
+        int mod = 	length / 100; // mod is 1 percent of length
 
         if (RGBImage) {
         	
@@ -221,7 +221,11 @@ public class AlgorithmPad extends AlgorithmBase {
         	for (i = 0; i < yDim; i++) {
         		
         		index = offset;
-        		offset = offset + (4 * x[1]);
+        		
+        		if (i != (yDim - 1)) {
+        			offset = offset + (4 * x[1]);
+        		}
+        		
         		        		        		        		
         		for (j = 0; j < (4 * xDim); j++) {
         			
@@ -233,7 +237,7 @@ public class AlgorithmPad extends AlgorithmBase {
         			index = index + 1;
         		}
         		
-        		for ( j = (index + 1); j < offset; j++) {
+        		for ( j = index; j < offset; j++) {
         			
         			if ((j % mod) == 0) {
         				fireProgressStateChanged(Math.round((float) j / (length - 1) * 100));
@@ -244,10 +248,11 @@ public class AlgorithmPad extends AlgorithmBase {
             		} else {
             			destImage.set(j, pad);
             		}
+        			index = j;
         		}
         	}
         	
-        	for (i = offset; i < length; i++) {
+        	for (i = (index + 1); i < length; i++) {
         		
         		if ((i % mod) == 0) {
     				fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
@@ -469,7 +474,8 @@ public class AlgorithmPad extends AlgorithmBase {
     private void calcStoreInPlace2D() {
 
         int i, j;
-        int length, index;
+        int length;
+        int index = 0;
         float[] buffer;
         float[] destBuffer;
         int xDim = srcImage.getExtents()[0];
@@ -485,7 +491,6 @@ public class AlgorithmPad extends AlgorithmBase {
         float[] imgOriginLPS;
         float[] originImgOrd = new float[3];
         float[] newImgOriginLPS = new float[3];
-        float startPos;
         String value;
 
 
@@ -589,7 +594,11 @@ public class AlgorithmPad extends AlgorithmBase {
         	for (i = 0; i < yDim; i++) {
         		
         		index = offset;
-        		offset = offset + (4 * x[1]);
+        		
+        		if (i != (yDim -1)) {
+        			offset = offset + (4 * x[1]);
+        		}
+        		
         		        		        		        		
         		for (j = 0; j < (4 * xDim); j++) {
         			
@@ -601,7 +610,7 @@ public class AlgorithmPad extends AlgorithmBase {
         			index = index + 1;
         		}
         		
-        		for ( j = (index + 1); j < offset; j++) {
+        		for ( j = index; j < offset; j++) {
         			
         			if ((j % mod) == 0) {
         				fireProgressStateChanged(Math.round((float) j / (length - 1) * 100));
@@ -612,10 +621,11 @@ public class AlgorithmPad extends AlgorithmBase {
             		} else {
             			destBuffer[j] = pad;
             		}
+        			index = j;
         		}
         	}
         	
-        	for (i = offset; i < length; i++) {
+        	for (i = (index + 1); i < length; i++) {
         		
         		if ((i % mod) == 0) {
     				fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
@@ -671,12 +681,10 @@ public class AlgorithmPad extends AlgorithmBase {
                                                                                Short.toString((short) (1)).length()); // instance number
 
 
-            startPos = originImgOrd[2];
-            originImgOrd[2] = startPos + (direct[2] * z[0] * resols[2]);
             newImgOriginLPS = originImg2LPS(originImgOrd, srcImage);
             value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
                     Float.toString(newImgOriginLPS[2]);
-
+            
             ((FileInfoDicom) (srcImage.getFileInfo(0))).getTagTable().setValue("0020,0032", value, value.length());
 
             value = String.valueOf(originImgOrd[2]);
@@ -900,7 +908,10 @@ public class AlgorithmPad extends AlgorithmBase {
             		
             		index = row_start;
             		
-            		row_start = row_start + (4 * x[1]);
+            		if (i != (yDim - 1)) {
+            			row_start = row_start + (4 * x[1]);
+            		}
+            		
             		
             		            		           		        		        		        		
             		for (j = 0; j < (4 * xDim); j++) {
@@ -912,7 +923,7 @@ public class AlgorithmPad extends AlgorithmBase {
             			destBuffer[index] = buffer[(4 * k * xDim * yDim) + (4 * i * xDim) + j];
             			index = index + 1;
             		}
-            		if (i == (yDim - 1)) {
+            		if (i == (yDim - 1) && k != (zDim -1)) {
             			
             			start = offset + (4 * (k + 1) * x[1] * y[1]);
             			
@@ -927,6 +938,7 @@ public class AlgorithmPad extends AlgorithmBase {
             				} else {
             					destBuffer[j] = pad;
             				}
+            				index = j;
             			}
             		} else {
             			
@@ -941,13 +953,14 @@ public class AlgorithmPad extends AlgorithmBase {
             				} else {
             					destBuffer[j] = pad;
             				}
+            				index = j;
             			}
             		}
             			
         		}
             }
         	
-        	for (i = start; i < paddedVolume; i++) {
+        	for (i = (index + 1); i < paddedVolume; i++) {
         		
         		if ((i % mod) == 0) {
     				fireProgressStateChanged(Math.round((float) i / (paddedVolume - 1) * 100));
@@ -1029,7 +1042,7 @@ public class AlgorithmPad extends AlgorithmBase {
             } // if (nDims = 2)
             else { // nDims == 3
 
-                for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
+                for (n = 0, slc = (n + z[0]); slc < z[1]; n++, slc++) {
 
                     ((FileInfoDicom) (srcImage.getFileInfo(n))).setSecondaryCaptureTags();
                     ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
@@ -1041,12 +1054,12 @@ public class AlgorithmPad extends AlgorithmBase {
                     ((FileInfoDicom) (srcImage.getFileInfo(n))).getTagTable().setValue("0020,0013",
                                                                                        Short.toString((short) (n + 1)),
                                                                                        Short.toString((short) (n + 1)).length()); // instance number
-                    dicomInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(slc - z[0]);
-
+                    //dicomInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(slc - z[0]);
+                    dicomInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(n);
                     // change the slice number ("0020,0013"):
                     // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-                    //value = Integer.toString(slc - (int) z[0] + 1);
-                    //dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
+                    value = Integer.toString(slc - (int) z[0] + 1);
+                    dicomInfoBuffer.getTagTable().setValue("0020,0013", value, value.length());
 
                     // change the image start position ("0020, 0032")
                     startPos = originImgOrd[2];
@@ -1162,7 +1175,7 @@ public class AlgorithmPad extends AlgorithmBase {
         FileInfoDicom dicomInfoBuffer;
 
         dicomInfoBuffer = (FileInfoDicom) destImage.getFileInfo(0);
-        destImage.setMatrix(srcImage.getMatrix());
+        destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
 
         float[] origins = new float[3];
@@ -1223,7 +1236,7 @@ public class AlgorithmPad extends AlgorithmBase {
                 startPos = origins[2];
 
                 // System.err.println("Original file origin: " + originVOI);
-                for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
+                for (n = 0, slc = (n + z[0]); slc < z[1]; n++, slc++) {
 
                     ((FileInfoDicom) (destImage.getFileInfo(n))).setSecondaryCaptureTags();
                     ((FileInfoDicom) (destImage.getFileInfo(n))).getTagTable().setValue("0028,0011",
@@ -1308,7 +1321,7 @@ public class AlgorithmPad extends AlgorithmBase {
         			childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
        			}
         		
-        		if (numInfos > i) {
+        		if ((numInfos > i) && (nDims > 2)) {
         			
         			if (i < z[0]) {
         				((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(0));
@@ -1329,7 +1342,7 @@ public class AlgorithmPad extends AlgorithmBase {
         			fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
         		}
         		
-        		if (numInfos > i) {
+        		if ((numInfos > i) && (nDims > 2)) {
         			if (i < z[0]) {
         				fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
         			} else if ((i < srcImage.getExtents()[2]) && (i >= z[0])) {
