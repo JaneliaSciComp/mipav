@@ -68,10 +68,10 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /** A list of the ChangeListeners which are interested in the ChangeEvent. */
     private EventListenerList listenerList = new EventListenerList();
 
-    /** DOCUMENT ME! */
+    /** Used to store the maximum value of the progress bar. */
     private int maxProgressValue = 100;
 
-    /** Used to store the minimum and maximum value of the progress bar. */
+    /** Used to store the minimum value of the progress bar. */
     private int minProgressValue = 0;
 
     /**
@@ -124,9 +124,9 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     public abstract void runAlgorithm();
 
     /**
-     * DOCUMENT ME!
+     * Routine to catch action events
      *
-     * @param  e  DOCUMENT ME!
+     * @param  e  ActionEvent
      */
     public void actionPerformed(ActionEvent e) {
 
@@ -253,9 +253,9 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
 
     /**
-     * DOCUMENT ME!
+     * Accessor to return the destination image
      *
-     * @return  DOCUMENT ME!
+     * @return  ModelImage destination image
      */
     public ModelImage getDestImage() {
         return destImage;
@@ -686,10 +686,10 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     /**
-     * Updates listeners of progress status.
+     * Updates listeners of progress status. Without actually changing the numerical value
      *
-     * @param  imageName  DOCUMENT ME!
-     * @param  message    DOCUMENT ME!
+     * @param  imageName  the name of the image
+     * @param  message    the new message to display
      */
     protected void fireProgressStateChanged(String imageName, String message) {
         fireProgressStateChanged(ViewJProgressBar.PROGRESS_VALUE_UNCHANGED, imageName, message);

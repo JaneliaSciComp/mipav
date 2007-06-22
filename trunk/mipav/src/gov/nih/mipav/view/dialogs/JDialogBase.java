@@ -204,7 +204,7 @@ public abstract class JDialogBase extends JDialog
      * Helper method for making the result image's name. Strips the current extension from the original name, adds the
      * given extension, and returns the new name.
      *
-     * @param   image_name  DOCUMENT ME!
+     * @param   image_name  the original image's name
      * @param   ext         Extension to add which gives information about what algorithm was performed on the image.
      *
      * @return  The new image name.
@@ -297,14 +297,14 @@ public abstract class JDialogBase extends JDialog
     /**
      * Unchanged.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event  FocusEvent
      */
     public void focusGained(FocusEvent event) { }
 
     /**
      * Unchanged.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event FocusEvent
      */
     public void focusLost(FocusEvent event) { }
 
@@ -329,7 +329,7 @@ public abstract class JDialogBase extends JDialog
     /**
      * Unchanged.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event  ItemEvent
      */
     public void itemStateChanged(ItemEvent event) { }
 
@@ -356,7 +356,7 @@ public abstract class JDialogBase extends JDialog
     /**
      * Sets the left-hand coordinate flag. If true, change matrix to the left-hand coordinate system.
      *
-     * @param  leftHandSys  DOCUMENT ME!
+     * @param  leftHandSys  flag for left hand coordinate system
      */
     public void setLeftHandSystem(boolean leftHandSys) { }
 
@@ -417,7 +417,7 @@ public abstract class JDialogBase extends JDialog
     /**
      * Sets the world coordinate flag. If true, change matrix to the world coordinate system.
      *
-     * @param  wcSys  DOCUMENT ME!
+     * @param  wcSys  flag for world coordinate
      */
     public void setWCSystem(boolean wcSys) { }
 
@@ -734,21 +734,21 @@ public abstract class JDialogBase extends JDialog
     /**
      * Unchanged.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event  WindowEvent
      */
     public void windowActivated(WindowEvent event) { }
 
     /**
      * Unchanged.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event  WindowEvent
      */
     public void windowClosed(WindowEvent event) { }
 
     /**
      * Disposes of error dialog, then frame. Sets cancelled to <code>true</code>.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event  WindowEvent
      */
     public void windowClosing(WindowEvent event) {
         cancelFlag = true;
@@ -758,35 +758,35 @@ public abstract class JDialogBase extends JDialog
     /**
      * Unchanged.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event  WindowEvent
      */
     public void windowDeactivated(WindowEvent event) { }
 
     /**
      * Unchanged.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event  WindowEvent
      */
     public void windowDeiconified(WindowEvent event) { }
 
     /**
      * Unchanged.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event WindowEvent
      */
     public void windowIconified(WindowEvent event) { }
 
     /**
      * Unchanged.
      *
-     * @param  event  DOCUMENT ME!
+     * @param  event  WindowEvent
      */
     public void windowOpened(WindowEvent event) { }
 
     /**
      * Builds the cancel button. Sets it internally as well return the just-built button.
      *
-     * @return  DOCUMENT ME!
+     * @return  JButton apply button
      */
     protected JButton buildApplyButton() {
         applyButton = new JButton("Apply");
@@ -802,7 +802,7 @@ public abstract class JDialogBase extends JDialog
     /**
      * Builds button panel consisting of OK, Cancel and Help buttons.
      *
-     * @return  DOCUMENT ME!
+     * @return  JPanel that has ok, cancel, and help buttons
      */
     protected JPanel buildButtons() {
         JPanel buttonPanel = new JPanel();
@@ -817,7 +817,7 @@ public abstract class JDialogBase extends JDialog
     /**
      * Builds the cancel button. Sets it internally as well return the just-built button.
      *
-     * @return  DOCUMENT ME!
+     * @return JButton cancel button
      */
     protected JButton buildCancelButton() {
         cancelButton = new JButton("Cancel");
@@ -834,7 +834,7 @@ public abstract class JDialogBase extends JDialog
     /**
      * Builds the close button. Sets it internally as well return the just-built button.
      *
-     * @return  DOCUMENT ME!
+     * @return JButton close button
      */
     protected JButton buildCloseButton() {
         closeButton = new JButton("Close");
@@ -850,7 +850,7 @@ public abstract class JDialogBase extends JDialog
     /**
      * Builds the help button. Sets it internally as well return the just-built button.
      *
-     * @return  DOCUMENT ME!
+     * @return  JButton help button
      */
     protected JButton buildHelpButton() {
         helpButton = new JButton("Help");
@@ -867,7 +867,7 @@ public abstract class JDialogBase extends JDialog
     /**
      * Builds a list of images. Returns combobox.
      *
-     * @param   image  DOCUMENT ME!
+     * @param   image ModelImage to exclude from the box
      *
      * @return  Newly created combo box.
      */
@@ -912,7 +912,7 @@ public abstract class JDialogBase extends JDialog
     /**
      * Builds the OK button. Sets it internally as well return the just-built button.
      *
-     * @return  DOCUMENT ME!
+     * @return  JButton ok button
      */
     protected JButton buildOKButton() {
         OKButton = new JButton("OK");
