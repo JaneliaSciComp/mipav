@@ -162,7 +162,7 @@ public class JDialogPad extends JDialogScriptableBase implements AlgorithmInterf
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+             MipavUtil.showHelp("U4041");
         }
     }
 
