@@ -220,6 +220,7 @@ public class AlgorithmRotate extends AlgorithmBase {
         float[] newResolutions;
         float[] newStartLocations;
         int[] newUnitsOfMeasure;
+        FileInfoBase[] newFileInfo;
 
         try {
             newDimExtents = new int[srcImage.getNDims()];
@@ -496,7 +497,12 @@ public class AlgorithmRotate extends AlgorithmBase {
         // and then adjusts the appropriate info.
         // For all image formats other than DICOM
         if (srcImage.getFileInfo(0).getFileFormat() != FileUtility.DICOM) {
-            FileInfoBase[] newFileInfo = new FileInfoBase[newDimExtents[2]];
+            if (srcImage.getNDims() >= 3) {
+                newFileInfo = new FileInfoBase[newDimExtents[2]];
+            }
+            else {
+                newFileInfo = new FileInfoBase[1];
+            }
 
             for (int i = 0; i < newFileInfo.length; i++) {
                 newFileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
