@@ -39,14 +39,22 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	/** Extents for Z Projection Image */
 	private int [] ZExtents;
 	
+	/** Minimum intensity value. */
+	private float min;
+	
+	/** Maximum intensity value. */
+	private float max;
+	
 //	~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Estimates the maximum intensity projection in each direction of a 3D Image
      * @param  srcImg    source image model
      */
-    public AlgorithmMaximumIntensityProjection(ModelImage srcImg) {
+    public AlgorithmMaximumIntensityProjection(ModelImage srcImg, float _min, float _max) {
         super(null, srcImg);
+        min = _min;
+        max = _max;
         imResolutions = srcImg.getResolutions(0);
 
     }
@@ -120,6 +128,10 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
         	// Compute the max intensity value along Z-axis
         	for (j = 0; j < dim[2]; j++) {
         		
+        		if ((buffer[i + (j * lengthZ)] < min) || (buffer[i + (j * lengthZ)] > max)) {
+        			buffer[i + (j * lengthZ)] = 0;
+        		}
+        		
         		if (buffer[i + (j * lengthZ)] > maxIntensityValue) {
         			maxIntensityValue = buffer[i + (j * lengthZ)];
         		}
@@ -171,6 +183,11 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
     		for (j = 0; j < dim[0]; j++) {
     			
     			for (k = 0; k < dim[1]; k++) {
+    				
+    				if ((buffer[(dim[0]*dim[1]*i) + j + (dim[0]*k)] < min) ||
+    						(buffer[(dim[0]*dim[1]*i) + j + (dim[0]*k)] > max)) {
+    					buffer[(dim[0]*dim[1]*i) + j + (dim[0]*k)] = 0;
+    				}
     				
     				if (buffer[(dim[0]*dim[1]*i) + j + (dim[0]*k)] > maxIntensityValue) {
             			maxIntensityValue = buffer[(dim[0]*dim[1]*i) + j + (dim[0]*k)];
@@ -224,6 +241,11 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
     		for (j = 0; j < dim[1]; j++) {
         		
         		for (k = 0; k < dim[0]; k++) {
+        			
+        			if ((buffer[(i*dim[1]*dim[0]) + (dim[0]*j) + k] < min) ||
+        					(buffer[(i*dim[1]*dim[0]) + (dim[0]*j) + k] > max)) {
+        				buffer[(i*dim[1]*dim[0]) + (dim[0]*j) + k] = 0;
+        			}
         			
         			if (buffer[(i*dim[1]*dim[0]) + (dim[0]*j) + k] > maxIntensityValue) {
             			maxIntensityValue = buffer[(i*dim[1]*dim[0]) + (dim[0]*j) + k];
