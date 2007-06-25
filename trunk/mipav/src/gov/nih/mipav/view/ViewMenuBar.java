@@ -242,6 +242,9 @@ public class ViewMenuBar {
                                                                                            "HistoSummary", 0, null,
                                                                                            false),
                                                              }),
+                                        menuBuilder.makeMenu("Hough transform", false,
+                                                             new JMenuItem[] {
+                                                                  menuBuilder.buildMenuItem("Line detection", "HoughLine", 0, null, false)}),
                                         menuBuilder.makeMenu("Insight toolkit (ITK)", false,
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Gaussian blur",
@@ -1242,6 +1245,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
+            menuBuilder.setMenuItemEnabled("Hough transform", false);
             if (ModelImage.isColorImage(type)) {
             	menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             }
@@ -1262,6 +1266,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
             menuBuilder.setMenuItemEnabled("Ellipse to circle", false);
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
+            menuBuilder.setMenuItemEnabled("Hough transform", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("3D rectangle", false);
             menuBuilder.setMenuItemEnabled("Animate", false);
@@ -1354,6 +1359,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
             menuBuilder.setMenuItemEnabled("Single MRI image", false);
             menuBuilder.setMenuItemEnabled("Two MRI images", false);
+            menuBuilder.setMenuItemEnabled("Hough transform", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
