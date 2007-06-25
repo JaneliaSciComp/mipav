@@ -427,9 +427,9 @@ public class FileInfoMinc extends FileInfoBase {
         String groupPrefix = "dicom_0x";
         String elemPrefix = "el_0x";
 
-        String group, elem, data;
+        String group, elem, data, vr;
         int index;
-
+        
         for (int varIndex = 0; varIndex < getVarArray().length; varIndex++) {
             index = getVarElem(varIndex).name.indexOf(groupPrefix);
 
@@ -441,7 +441,11 @@ public class FileInfoMinc extends FileInfoBase {
 
                     if (index != -1) {
                         elem = getVarElem(varIndex).getVattElem(attIndex).name.substring(elemPrefix.length());
-
+                        vr = DicomDictionary.getVR(new FileDicomKey(group + "," + elem));
+                        if (vr != null && vr.equals("SQ")) {
+                        	continue;
+                        }
+                        
                         data = new String("");
 
                         if (getVarElem(varIndex).getVattElem(attIndex).nc_type == FileInfoMinc.NC_CHAR) {
