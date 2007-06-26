@@ -310,7 +310,11 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
         this.topPad = topPad;
         setTitle(imageA.getImageName());
         this.RGBTA = _RGBTA;
-        this.mean = mean;
+        this.mean = new double[mean.length][2];
+        for (int i = 0; i < mean.length; i++) {
+           this.mean[i][0] = mean[i][0];
+           this.mean[i][1] = mean[i][1];
+        }
         this.halfMajor = halfMajor;
         this.halfMinor = halfMinor;
         this.theta = theta;
@@ -436,7 +440,6 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
 
                 histogramDialog.setColocalizationEMFrame(true);
                 histogramDialog.histogramLUT(true);
-
             }
         } else if (command.equals("Brightness")) {
 
@@ -537,6 +540,15 @@ public class ViewJFrameColocalizationEM extends ViewJFrameBase implements Change
         gbl = null;
         gbc = null;
         menuItemVector = null;
+        
+        if (mean != null) {
+
+            for (int i = 0; i < mean.length; i++) {
+                mean[i] = null;
+            }
+
+            mean = null;
+        }
 
     }
 
