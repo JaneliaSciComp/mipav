@@ -339,7 +339,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         segImage = null;
         srcImage = null;
         prob = null;
-
+        
         if (mean != null) {
 
             for (i = 0; i < mean.length; i++) {
@@ -944,6 +944,14 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                                          destImage, controlFrame, useRed, useGreen, useBlue, min1, max1,
                                                          min2, max2, scale1, scale2, leftPad, rightPad, bottomPad,
                                                          topPad, mean, halfMajor, halfMinor, theta);
+        if (mean != null) {
+
+            for (i = 0; i < mean.length; i++) {
+                mean[i] = null;
+            }
+
+            mean = null;
+        }
 
 
         setCompleted(true);
@@ -1455,6 +1463,14 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                                          destImage, controlFrame, useRed, useGreen, useBlue, min1, max1,
                                                          min2, max2, scale1, scale2, leftPad, rightPad, bottomPad,
                                                          topPad, mean, halfMajor, halfMinor, theta);
+        if (mean != null) {
+
+            for (i = 0; i < mean.length; i++) {
+                mean[i] = null;
+            }
+
+            mean = null;
+        }
 
         setCompleted(true);
     }
@@ -2014,7 +2030,14 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                                          controlFrame, useRed, useGreen, useBlue, min1, max1, min2,
                                                          max2, scale1, scale2, leftPad, rightPad, bottomPad, topPad,
                                                          mean, halfMajor, halfMinor, theta);
+        if (mean != null) {
 
+            for (i = 0; i < mean.length; i++) {
+                mean[i] = null;
+            }
+
+            mean = null;
+        }
 
         setCompleted(true);
     }
@@ -2619,6 +2642,14 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                                                          controlFrame, useRed, useGreen, useBlue, min1, max1, min2,
                                                          max2, scale1, scale2, leftPad, rightPad, bottomPad, topPad,
                                                          mean, halfMajor, halfMinor, theta);
+        if (mean != null) {
+
+            for (i = 0; i < mean.length; i++) {
+                mean[i] = null;
+            }
+
+            mean = null;
+        }
 
         setCompleted(true);
     }
