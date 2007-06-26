@@ -195,9 +195,6 @@ public class FileNIFTI extends FileBase {
     private short sform_code;
 
     /** DOCUMENT ME! */
-
-
-    /** DOCUMENT ME! */
     private int slice_dim = 0;
 
     /** DOCUMENT ME! */
@@ -549,6 +546,32 @@ public class FileNIFTI extends FileBase {
         }
 
         System.arraycopy(resultBuffer, 0, buffer, 0, buffer.length); // buffer = resultBuffer;
+    }
+    
+    /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+
+        axisOrientation = null;
+        axisOrientation2 = null;
+        bufferByte = null;
+        LPSOrigin = null;
+        LPSOrigin2 = null;
+        matrix = null;
+        matrixTwoDim = null;
+        matrix2 = null;
+        origin = null;
+        pixdim = null;
+        resolutions = null;
+        srow_x = null;
+        srow_y = null;
+        srow_z = null;
+
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
     }
 
     /**
