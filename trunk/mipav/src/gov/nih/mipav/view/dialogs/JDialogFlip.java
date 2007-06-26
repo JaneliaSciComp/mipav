@@ -314,17 +314,21 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             flipAxisYRadioButton.setSelected(true);
         }
         
-        flipAxisZRadioButton = new JRadioButton("Depth (Z axis)");
-        flipAxisZRadioButton.setFont(serif12);
-        
-        if(flipAxis == AlgorithmFlip.Z_AXIS) {
-            flipAxisZRadioButton.setSelected(true);
-        }
+        if (image.getNDims() >= 3) {
+            flipAxisZRadioButton = new JRadioButton("Depth (Z axis)");
+            flipAxisZRadioButton.setFont(serif12);
+            
+            if(flipAxis == AlgorithmFlip.Z_AXIS) {
+                flipAxisZRadioButton.setSelected(true);
+            }
+        } // if (image.getNDims() >= 3)
         
         ButtonGroup axisGroup = new ButtonGroup();
         axisGroup.add(flipAxisXRadioButton);
         axisGroup.add(flipAxisYRadioButton);
-        axisGroup.add(flipAxisZRadioButton);
+        if (image.getNDims() >= 3) {
+            axisGroup.add(flipAxisZRadioButton);
+        }
         
         JLabel orientIconLabel = new JLabel("Note: Image origin is in the upper left hand corner. Righthand coordinate system.",
                 MipavUtil.getIcon("orient.gif"), JLabel.LEFT);
@@ -344,8 +348,10 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         flipAxisPanel.add(flipAxisXRadioButton, gbc);
         gbc.gridx = 1;
         flipAxisPanel.add(flipAxisYRadioButton, gbc);
-        gbc.gridx = 2;
-        flipAxisPanel.add(flipAxisZRadioButton, gbc);
+        if (image.getNDims() >= 3) {
+            gbc.gridx = 2;
+            flipAxisPanel.add(flipAxisZRadioButton, gbc);
+        }
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
