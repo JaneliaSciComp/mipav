@@ -1040,7 +1040,7 @@ public class OpenGLRenderer extends Renderer
         // Get the texture image and its information.
         final GraphicsImage pkImage = pkTexture.GetImage();
         assert(pkImage != null);
-        ByteBuffer aucData = pkImage.GetDataBuffer();
+        Buffer aucData = pkImage.GetDataBuffer();
         int iComponent = ms_aeImageComponents[pkImage.GetFormat().Value()];
         int eFormat = ms_aeImageFormats[pkImage.GetFormat().Value()];
         int eIType = ms_aeImageTypes[pkImage.GetFormat().Value()];
@@ -1861,7 +1861,7 @@ public class OpenGLRenderer extends Renderer
             GL.GL_FLOAT,            // Image::IT_RGB32
             GL.GL_FLOAT,            // Image::IT_RGBA32
 
-            GL.GL_UNSIGNED_BYTE     // Image::IT_RGB888
+            GL.GL_FLOAT     // Image::IT_L8
         };
 
     /** Mappings from Wild Magic constants to OpenGL enumerations. */

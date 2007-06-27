@@ -2094,7 +2094,7 @@ public class SurfaceRender extends RenderViewBase {
             if (clipPanel != null) {
                 clipPanel.displaySClipPlanePts();
             }
-
+            updateRaycastRender();
             updateTextureVolumeRender();
 
             if ((clipPanel == null) || ((clipPanel != null) && !clipPanel.isClipArbiPicked())) {

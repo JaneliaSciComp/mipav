@@ -21,17 +21,12 @@ public class VertexProgram extends Program
     public static VertexProgram Load (String rkProgramName, String rkDirectory)
     {
         int iProfile = CgGL.cgGLGetLatestProfile(CgGL.CG_GL_VERTEX);
-        System.err.println( CgGL.cgGetProfileString(iProfile) );
-        //CgGL.cgGLSetOptimalOptions(iProfile);
-
         VertexProgram pkProgram = new VertexProgram();
         pkProgram.SetName(rkProgramName);
-        System.err.println( rkProgramName );
 
         boolean bLoaded = false;
 
         String kFilename = new String( rkDirectory + "\\Shaders\\Cg\\" + rkProgramName + ".cg" );
-        System.err.println( kFilename );
         String kProgramName = new String( "v_" + rkProgramName );
 
         CGprogram kCGProgram = CgGL.cgCreateProgramFromFile( pkProgram.m_kContext,
@@ -40,11 +35,9 @@ public class VertexProgram extends Program
                                                              iProfile,
                                                              kProgramName, null);
 
-        pkProgram.CheckCgError();
         pkProgram.m_kCGProgram = kCGProgram;
         if ( kCGProgram != null )
         {
-            System.err.println( CgGL.cgGetLastListing(pkProgram.m_kContext) );
             bLoaded = true;
             pkProgram.RecurseParamsInProgram();
             pkProgram.m_kProgramText = CgGL.cgGetProgramString(kCGProgram,CgGL.CG_COMPILED_PROGRAM);
@@ -52,6 +45,7 @@ public class VertexProgram extends Program
 
         if (!bLoaded)
         {
+            System.err.println( CgGL.cgGetLastListing(pkProgram.m_kContext) );
             pkProgram  = null;
             return null;
         }

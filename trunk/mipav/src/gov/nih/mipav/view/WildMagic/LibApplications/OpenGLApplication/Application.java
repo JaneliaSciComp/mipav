@@ -45,5 +45,5 @@ public abstract class Application
         new StringTreeGUI( pkRoot );
     }
     
-    public abstract void reloadShaders();
+    public void reloadShaders() {}
 }

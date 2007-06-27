@@ -12,7 +12,9 @@
 
 package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -103,7 +105,7 @@ public class GraphicsImage extends GraphicsObject
 
     // 1D image
     public GraphicsImage (FormatMode eFormat, int iBound0,
-                  byte[] aucData, String acImageName )
+                  float[] afData, String acImageName )
     {
         assert(BitHacks.IsPowerOfTwo(iBound0));
         assert(acImageName != null);
@@ -114,7 +116,7 @@ public class GraphicsImage extends GraphicsObject
         m_aiBound[1] = 1;
         m_aiBound[2] = 1;
         m_iQuantity = iBound0;
-        m_aucData = aucData;
+        m_afData = afData;
         SetName(acImageName);
 
         if( acImageName == ImageCatalog.ms_kDefaultString )
@@ -123,6 +125,28 @@ public class GraphicsImage extends GraphicsObject
         }
         ImageCatalog.GetActive().Insert(this);
     }
+
+    public GraphicsImage (FormatMode eFormat, int iBound0,
+            byte[] aucData, String acImageName )
+{
+  assert(BitHacks.IsPowerOfTwo(iBound0));
+  assert(acImageName != null);
+  
+  m_eFormat = eFormat;
+  m_iDimension = 1;
+  m_aiBound[0] = iBound0;
+  m_aiBound[1] = 1;
+  m_aiBound[2] = 1;
+  m_iQuantity = iBound0;
+  m_aucData = aucData;
+  SetName(acImageName);
+
+  if( acImageName == ImageCatalog.ms_kDefaultString )
+  {
+      return;
+  }
+  ImageCatalog.GetActive().Insert(this);
+}
 
     
     // 2D image
@@ -161,6 +185,26 @@ public class GraphicsImage extends GraphicsObject
         m_aiBound[2] = iBound2;
         m_iQuantity = iBound0*iBound1*iBound2;
         m_aucData = aucData;
+        SetName(acImageName);
+        ImageCatalog.GetActive().Insert(this);
+    }
+
+    // 3D image
+    public GraphicsImage (FormatMode eFormat, int iBound0, int iBound1, int iBound2,
+                  float[] afData, String acImageName)
+    {
+        assert(BitHacks.IsPowerOfTwo(iBound0)
+               && BitHacks.IsPowerOfTwo(iBound1)
+               && BitHacks.IsPowerOfTwo(iBound2));
+        assert(acImageName != null);
+
+        m_eFormat = eFormat;
+        m_iDimension = 3;
+        m_aiBound[0] = iBound0;
+        m_aiBound[1] = iBound1;
+        m_aiBound[2] = iBound2;
+        m_iQuantity = iBound0*iBound1*iBound2;
+        m_afData = afData;
         SetName(acImageName);
         ImageCatalog.GetActive().Insert(this);
     }
@@ -241,11 +285,24 @@ public class GraphicsImage extends GraphicsObject
         return m_aucData;
     }
 
-    public ByteBuffer GetDataBuffer ()
+    public float[] GetFloatData ()
     {
-        ByteBuffer imageBuf = ByteBuffer.wrap( m_aucData );
+        return m_afData;
+    }
+
+    public Buffer GetDataBuffer ()
+    {
+        Buffer imageBuf;
+        if ( m_afData == null )
+        {
+            imageBuf = ByteBuffer.wrap( m_aucData );
+        }
+        else
+        {
+            imageBuf = FloatBuffer.wrap( m_afData );            
+        }        
         imageBuf.rewind();
-        return imageBuf;
+        return imageBuf;                  
     }
 
     // Create an image of ColorRGBA values.  The function returns an image
@@ -437,7 +494,7 @@ public class GraphicsImage extends GraphicsObject
     protected int[] m_aiBound = new int[3];
     protected int m_iQuantity;
     protected byte[] m_aucData;
-
+    protected float[] m_afData = null;
 
     private static final float fInv255 = 1.0f/255.0f;
 

@@ -149,6 +149,7 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
 
     private Matrix4f m_kWVPMatrix = null;
     private byte[] m_aucTextureImageData = null;
+    private float[] m_aucTextureImageFloatData = null;
     
     public SculptorWm( GLCanvas kCanvas )
     {
@@ -190,6 +191,11 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
         m_aucTextureImageData = data;
     }
 
+    public void setTextureImageFloatData( float[] data )
+    {
+        m_aucTextureImageFloatData = data;
+    }
+
     
     /**
      * applySculpt: abstract function, implementation depends on whether the instance is VolumeTextureSculptor or
@@ -214,7 +220,7 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
             return false;
         }
 
-        if ( m_aucTextureImageData == null )
+        if ( (m_aucTextureImageData == null) && (m_aucTextureImageFloatData == null) )
         {
             return false;
         }
@@ -249,7 +255,14 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
                     {
                         m_kImage.set(iX, iY, iZ, (float)m_kImage.getMin());
                         bVolumeChanged = true;
-                        m_aucTextureImageData[i] = (byte)0;
+                        if ( m_aucTextureImageData != null )
+                        {
+                            m_aucTextureImageData[i] = (byte)0;
+                        }
+                        else
+                        {
+                            m_aucTextureImageFloatData[i] = 0f;
+                        }
                     }
                 }
             }
@@ -280,9 +293,14 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
                 {
                     if ( m_kImage.isColorImage() )
                     {
-                        m_aucTextureImageData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,0));
-                        m_aucTextureImageData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,1));
-                        m_aucTextureImageData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,2));
+                        if ( m_aucTextureImageData != null )
+                        {
+                            m_aucTextureImageData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,0));
+                            m_aucTextureImageData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,1));
+                            m_aucTextureImageData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,2));
+                        }
+                        else
+                        {}
                     }
                     else
                     {
@@ -291,7 +309,14 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
                         float fValue = m_kImage.getFloat(iX,iY,iZ);
                         fValue = (fValue - fImageMin)/(fImageMax - fImageMin);
                         byte bValue = (byte)(255.0f * fValue);
-                        m_aucTextureImageData[i++] = bValue;
+                        if ( m_aucTextureImageData != null )
+                        {
+                            m_aucTextureImageData[i++] = bValue;
+                        }
+                        else
+                        {
+                            m_aucTextureImageFloatData[i++] = fValue;
+                        }
                     }
                 }
             }

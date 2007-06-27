@@ -90,7 +90,7 @@ public class GPUVolumeRender extends JavaApplication3
             m_kCuller.ComputeVisibleSet(m_spkScene);
 
             m_pkPBuffer.Enable();
-            m_pkRenderer.SetBackgroundColor(ColorRGBA.WHITE);
+            m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
             m_pkRenderer.ClearBuffers();
             m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
@@ -107,6 +107,21 @@ public class GPUVolumeRender extends JavaApplication3
             m_pkRenderer.ClearBuffers();
 
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+
+            if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
+            {
+                m_spkEyeCamera.SetLocation(m_spkCamera.GetLocation());
+                m_pkRenderer.SetCamera(m_spkEyeCamera);
+                if ( m_bDisplayClipEye )
+                {
+                    m_pkRenderer.Draw(m_kClipEye);
+                }
+                if ( m_bDisplayClipEyeInv )
+                {
+                    m_pkRenderer.Draw(m_kClipEyeInv);
+                }
+                m_pkRenderer.SetCamera(m_spkCamera);
+            }
 
             /*
             m_pkRenderer.SetCamera(m_spkScreenCamera);
@@ -156,9 +171,9 @@ public class GPUVolumeRender extends JavaApplication3
         super.OnInitialize();
 
         // set up camera
-        m_spkCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,1000.0f);
+        m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,1.0f,1000.0f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCUp = new Vector3f(0.0f,-1.0f,0.0f);
+        Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
         Vector3f kCRight = kCDir.Cross(kCUp);
         Vector3f kCLoc = kCDir.scale(-4.0f);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
@@ -196,18 +211,20 @@ public class GPUVolumeRender extends JavaApplication3
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
-            if (m_pkRenderer != null)
-            {
-                m_pkRenderer.Resize(iWidth,iHeight);
-            }
-            
             m_iWidth = iWidth;
             m_iHeight = iHeight;
+            m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,1.0f,1000.0f);
+
+
+            if (m_pkRenderer != null)
+            {
+                ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+                m_pkRenderer.Resize(iWidth,iHeight);
+                ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+            }
         }
-        ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
     public GLCanvas GetCanvas()
@@ -273,6 +290,10 @@ public class GPUVolumeRender extends JavaApplication3
         // FrameBuffer::Create to succeed.
         TextureEffect pkEffect = new TextureEffect("SceneImage");
         m_pkSceneTarget = pkEffect.GetPTexture(0,0);
+        m_pkSceneTarget.SetFilterType(Texture.FilterType.NEAREST);
+        m_pkSceneTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_pkSceneTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+
         m_pkSceneTarget.SetOffscreenTexture(true);
         m_spkScenePolygon.AttachEffect(pkEffect);
         m_spkScenePolygon.UpdateGS();
@@ -312,59 +333,53 @@ public class GPUVolumeRender extends JavaApplication3
         m_fImageMax = (float)m_kImage.getMax();
         m_fImageMin = (float)m_kImage.getMin();
 
-        int iColorFactor = 1;
         if ( m_kImage.isColorImage() )
         {
-            iColorFactor = 3;
-        }
 
+            byte[] aucData = new byte[3*iXBound*iYBound*iZBound];
 
-        byte[] aucData = new byte[iColorFactor*iXBound*iYBound*iZBound];
-
-        int i = 0;
-        for (int iZ = 0; iZ < iZBound; iZ++)
-        {
-            for (int iY = 0; iY < iYBound; iY++)
+            int i = 0;
+            for (int iZ = 0; iZ < iZBound; iZ++)
             {
-                for (int iX = 0; iX < iXBound; iX++)
+                for (int iY = 0; iY < iYBound; iY++)
                 {
-                    if ( m_kImage.isColorImage() )
+                    for (int iX = 0; iX < iXBound; iX++)
                     {
                         aucData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,0));
                         aucData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,1));
                         aucData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,2));
                     }
-                    else
-                    {
-                        float fValue = m_kImage.getFloat(iX,iY,iZ);
-                        fValue = (fValue - m_fImageMin)/(m_fImageMax - m_fImageMin);
-                        byte bValue = (byte)(255.0f * fValue);
-                        aucData[i++] = bValue;
-                    }
                 }
             }
-        }
-
-        if ( m_kImage.isColorImage() )
-        {
             m_spkVolume = new GraphicsImage(
-                              GraphicsImage.FormatMode.IT_RGB888,iXBound,iYBound,iZBound,aucData,
-                                                                                       "VolumeImage");
+                                            GraphicsImage.FormatMode.IT_RGB888,iXBound,iYBound,iZBound,aucData,
+                                            "VolumeImage");
         }
         else
         {
+            float[] afData = new float[iXBound*iYBound*iZBound];
+
+            int i = 0;
+            for (int iZ = 0; iZ < iZBound; iZ++)
+            {
+                for (int iY = 0; iY < iYBound; iY++)
+                {
+                    for (int iX = 0; iX < iXBound; iX++)
+                    {
+                        float fValue = m_kImage.getFloat(iX,iY,iZ);
+                        afData[i++] = (fValue - m_fImageMin)/(m_fImageMax - m_fImageMin);
+                    }
+                }
+            }
             m_spkVolume = new GraphicsImage(
-                              GraphicsImage.FormatMode.IT_L8,iXBound,iYBound,iZBound,aucData,
-                                                                                       "VolumeImage");
+                                            GraphicsImage.FormatMode.IT_L8,iXBound,iYBound,iZBound,afData,
+                                            "VolumeImage");
         }
-
-        System.err.println( ViewUserInterface.getReference().getDefaultDirectory() );
-
-
+        
         VertexShader pkVShader = new VertexShader("VolumeShader");
         PixelShader pkPShader = new PixelShader("VolumeShader");
 
-        aucData = calcImageNormals();
+        byte[] aucData = calcImageNormals();
         m_spkVolume = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
                                         iXBound,iYBound,iZBound,aucData,
                                         "NormalMap");
@@ -388,6 +403,7 @@ public class GPUVolumeRender extends JavaApplication3
         pkPShader.GetTexture(4).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         pkPShader.GetTexture(4).SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         pkPShader.GetTexture(4).SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+        m_pkNormalMapTarget = pkPShader.GetTexture(4);
 
         m_kVolumeShaderEffect = new ShaderEffect(1);
         m_kVolumeShaderEffect.SetVShader(0,pkVShader);
@@ -395,7 +411,10 @@ public class GPUVolumeRender extends JavaApplication3
 
         m_pkRenderer.LoadResources(m_kVolumeShaderEffect);
         Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-        pkProgram.GetUC("stepsize").SetDataSource(m_afstepsize);
+        if ( pkProgram.GetUC("Iterations") != null)
+        {
+            pkProgram.GetUC("Iterations").SetDataSource(new float[]{500,0,0,0});
+        }
         float[] afMIP = new float[] {1,0,0,0};
         pkProgram.GetUC("MIP").SetDataSource(afMIP);
     }
@@ -403,78 +422,130 @@ public class GPUVolumeRender extends JavaApplication3
     public void MIPMode()
     {
         Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-        float[] afMIP = new float[] {1,0,0,0};
-        pkProgram.GetUC("MIP").SetDataSource(afMIP);
-        float[] afDDR = new float[] {0,0,0,0};
-        pkProgram.GetUC("DDR").SetDataSource(afDDR);
-        float[] afComposite = new float[] {0,0,0,0};
-        pkProgram.GetUC("Composite").SetDataSource(afComposite);
-        float[] afSurface = new float[] {0,0,0,0};
-        pkProgram.GetUC("Surface").SetDataSource(afSurface);
+        if ( pkProgram.GetUC("MIP") != null )
+        {
+        pkProgram.GetUC("MIP").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("DDR") != null )
+        {
+        pkProgram.GetUC("DDR").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("Composite") != null )
+        {
+            pkProgram.GetUC("Composite").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("Surface") != null )
+        {
+            pkProgram.GetUC("Surface").SetDataSource(new float[] {0,0,0,0});
+        }
     }
 
     public void DDRMode()
     {
         Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-        float[] afMIP = new float[] {0,0,0,0};
-        pkProgram.GetUC("MIP").SetDataSource(afMIP);
-        float[] afDDR = new float[] {1,0,0,0};
-        pkProgram.GetUC("DDR").SetDataSource(afDDR);
-        float[] afComposite = new float[] {0,0,0,0};
-        pkProgram.GetUC("Composite").SetDataSource(afComposite);
-        float[] afSurface = new float[] {0,0,0,0};
-        pkProgram.GetUC("Surface").SetDataSource(afSurface);
+        if ( pkProgram.GetUC("MIP") != null )
+        {
+        pkProgram.GetUC("MIP").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("DDR") != null )
+        {
+        pkProgram.GetUC("DDR").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("Composite") != null )
+        {
+            pkProgram.GetUC("Composite").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("Surface") != null )
+        {
+            pkProgram.GetUC("Surface").SetDataSource(new float[] {0,0,0,0});
+        }
     }
 
     public void CMPMode()
     {
         Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-        float[] afMIP = new float[] {0,0,0,0};
-        pkProgram.GetUC("MIP").SetDataSource(afMIP);
-        float[] afDDR = new float[]{1,0,0,0};
-        pkProgram.GetUC("DDR").SetDataSource(afDDR);
-        float[] afComposite = new float[]{1,0,0,0};
-        pkProgram.GetUC("Composite").SetDataSource(afComposite);
-        float[] afSurface = new float[] {0,0,0,0};
-        pkProgram.GetUC("Surface").SetDataSource(afSurface);
+        if ( pkProgram.GetUC("MIP") != null )
+        {
+        pkProgram.GetUC("MIP").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("DDR") != null )
+        {
+        pkProgram.GetUC("DDR").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("Composite") != null )
+        {
+            pkProgram.GetUC("Composite").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("Surface") != null )
+        {
+            pkProgram.GetUC("Surface").SetDataSource(new float[] {0,0,0,0});
+        }
     }
 
     public void SURMode()
     {
         Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-        float[] afMIP = new float[] {0,0,0,0};
-        pkProgram.GetUC("MIP").SetDataSource(afMIP);
-        float[] afDDR = new float[]{1,0,0,0};
-        pkProgram.GetUC("DDR").SetDataSource(afDDR);
-        float[] afComposite = new float[]{1,0,0,0};
-        pkProgram.GetUC("Composite").SetDataSource(afComposite);
-        float[] afSurface = new float[] {1,0,0,0};
-        pkProgram.GetUC("Surface").SetDataSource(afSurface);
-        float[] afSpecular = new float[] {1,0,0,0};
-        pkProgram.GetUC("specularParam").SetDataSource(afSpecular);
-        float[] afShininess = new float[] {1,0,0,0};
-        pkProgram.GetUC("shininessParam").SetDataSource(afShininess);
-        float[] afLight = new float[] {0,-5,-5,0};
-        pkProgram.GetUC("light").SetDataSource(afLight);
+        if ( pkProgram.GetUC("MIP") != null )
+        {
+        pkProgram.GetUC("MIP").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("DDR") != null )
+        {
+        pkProgram.GetUC("DDR").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("Composite") != null )
+        {
+            pkProgram.GetUC("Composite").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("Surface") != null )
+        {
+            pkProgram.GetUC("Surface").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("specularParam") != null )
+        {
+            pkProgram.GetUC("specularParam").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("shininessParam") != null )
+        {
+            pkProgram.GetUC("shininessParam").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("light") != null )
+        {
+            pkProgram.GetUC("light").SetDataSource(new float[] {0,-5,-5,0});
+        }
     }
 
     public void SURFASTMode()
     {
         Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-        float[] afMIP = new float[] {0,0,0,0};
-        pkProgram.GetUC("MIP").SetDataSource(afMIP);
-        float[] afDDR = new float[]{1,0,0,0};
-        pkProgram.GetUC("DDR").SetDataSource(afDDR);
-        float[] afComposite = new float[]{0,0,0,0};
-        pkProgram.GetUC("Composite").SetDataSource(afComposite);
-        float[] afSurface = new float[] {1,0,0,0};
-        pkProgram.GetUC("Surface").SetDataSource(afSurface);
-        float[] afSpecular = new float[] {1,0,0,0};
-        pkProgram.GetUC("specularParam").SetDataSource(afSpecular);
-        float[] afShininess = new float[] {1,0,0,0};
-        pkProgram.GetUC("shininessParam").SetDataSource(afShininess);
-        float[] afLight = new float[] {0,-5,-5,0};
-        pkProgram.GetUC("light").SetDataSource(afLight);
+        if ( pkProgram.GetUC("MIP") != null )
+        {
+        pkProgram.GetUC("MIP").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("DDR") != null )
+        {
+        pkProgram.GetUC("DDR").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("Composite") != null )
+        {
+            pkProgram.GetUC("Composite").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("Surface") != null )
+        {
+            pkProgram.GetUC("Surface").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("specularParam") != null )
+        {
+            pkProgram.GetUC("specularParam").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("shininessParam") != null )
+        {
+            pkProgram.GetUC("shininessParam").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("light") != null )
+        {
+            pkProgram.GetUC("light").SetDataSource(new float[] {0,-5,-5,0});
+        }
     }
 
     public boolean updateImages(boolean forceShow, TransferFunction kTransfer)
@@ -485,7 +556,7 @@ public class GPUVolumeRender extends JavaApplication3
             return false;
         }
         int iLutHeight = 256;
-        byte[] aucData = m_spkOpacityMap.GetData();
+        float[] afData = m_spkOpacityMap.GetFloatData();
 
         System.err.println( m_fImageMax + " " + m_fImageMin );
 
@@ -493,7 +564,8 @@ public class GPUVolumeRender extends JavaApplication3
         float fStep = fRange / (float)iLutHeight;
         float fDataValue = m_fImageMin;
         for (int i = 0; i < iLutHeight; i++) {
-            aucData[i] = (byte)(kTransfer.getRemappedValue( fDataValue, iLutHeight ));
+            afData[i] = (kTransfer.getRemappedValue( fDataValue, iLutHeight )/255.0f);
+            //System.err.println(afData[i]);
             fDataValue += fStep;
         }
         m_pkOpacityMapTarget.Release();
@@ -555,19 +627,18 @@ public class GPUVolumeRender extends JavaApplication3
 
 
 
-
         iLutHeight = 256;
-        aucData = new byte[iLutHeight];
+        float[] afData = new float[iLutHeight];
         float fRange = m_fImageMax - m_fImageMin;
         float fStep = fRange / (float)iLutHeight;
         float fDataValue = m_fImageMin;
         for (int i = 0; i < iLutHeight; i++) {
-            aucData[i] = (byte)( iLutHeight * (m_fImageMax - fDataValue) / fRange);
+            afData[i] = ( iLutHeight * (m_fImageMax - fDataValue) / fRange);
             fDataValue += fStep;
         }
 
         m_spkOpacityMap = new GraphicsImage(
-                              GraphicsImage.FormatMode.IT_L8,iLutHeight,aucData,
+                              GraphicsImage.FormatMode.IT_L8,iLutHeight,afData,
                                                                                            "OpacityMap");
     }
 
@@ -590,20 +661,9 @@ public class GPUVolumeRender extends JavaApplication3
     {
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
-        //kAttr.SetNChannels(3);
         kAttr.SetCChannels(0,3);
         kAttr.SetTChannels(0,3);
-        kAttr.SetTChannels(1,3);
-
-        int iMaxBound = iXBound;
-        if ( iYBound > iMaxBound )
-        {
-            iMaxBound = iYBound;
-        }
-        if ( iZBound > iMaxBound )
-        {
-            iMaxBound = iZBound;
-        }
+        //kAttr.SetTChannels(1,3);
 
         float fMaxX = (float) (iXBound - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
         float fMaxY = (float) (iYBound - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
@@ -616,6 +676,11 @@ public class GPUVolumeRender extends JavaApplication3
         if (fMaxZ > fMax) {
             fMax = fMaxZ;
         }
+        m_fX = fMaxX/fMax;
+        m_fY = fMaxY/fMax;
+        m_fZ = fMaxZ/fMax;
+
+
         int iVQuantity = 24;
         int iTQuantity = 12;
         VertexBuffer pkVB = new VertexBuffer(kAttr,iVQuantity);
@@ -625,79 +690,79 @@ public class GPUVolumeRender extends JavaApplication3
         int i = 0;
         int[] aiIndex = pkIB.GetData();
 
-        System.err.println( fMaxX/fMax + " " + fMaxY/fMax + " " + fMaxZ/fMax );
+        System.err.println( m_fX + " " + m_fY + " " + m_fZ );
 
 
         // generate geometry
         // front
         pkVB.Position3(0, new Vector3f(0,0,0));
-        pkVB.Position3(1, new Vector3f(fMaxX/fMax,0,0));
-        pkVB.Position3(2, new Vector3f(fMaxX/fMax,fMaxY/fMax,0));
-        pkVB.Position3(3, new Vector3f(0,fMaxY/fMax,0));
+        pkVB.Position3(1, new Vector3f(m_fX,0,0));
+        pkVB.Position3(2, new Vector3f(m_fX,m_fY,0));
+        pkVB.Position3(3, new Vector3f(0,m_fY,0));
         pkVB.Color3(0,0, new ColorRGB(0,0,0));
-        pkVB.Color3(0,1, new ColorRGB(fMaxX/fMax,0,0));
-        pkVB.Color3(0,2, new ColorRGB(fMaxX/fMax,fMaxY/fMax,0));
-        pkVB.Color3(0,3, new ColorRGB(0,fMaxY/fMax,0));
+        pkVB.Color3(0,1, new ColorRGB(1,0,0));
+        pkVB.Color3(0,2, new ColorRGB(1,1,0));
+        pkVB.Color3(0,3, new ColorRGB(0,1,0));
         aiIndex[i++] = 0;  aiIndex[i++] = 2;  aiIndex[i++] = 1;
         aiIndex[i++] = 0;  aiIndex[i++] = 3;  aiIndex[i++] = 2;
 
         // back
-        pkVB.Position3(4, new Vector3f(0,0,fMaxZ/fMax));
-        pkVB.Position3(5, new Vector3f(fMaxX/fMax,0,fMaxZ/fMax));
-        pkVB.Position3(6, new Vector3f(fMaxX/fMax,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Position3(7, new Vector3f(0,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Color3(0,4, new ColorRGB(0,0,fMaxZ/fMax));
-        pkVB.Color3(0,5, new ColorRGB(fMaxX/fMax,0,fMaxZ/fMax));
-        pkVB.Color3(0,6, new ColorRGB(fMaxX/fMax,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Color3(0,7, new ColorRGB(0,fMaxY/fMax,fMaxZ/fMax));
+        pkVB.Position3(4, new Vector3f(0,0,m_fZ));
+        pkVB.Position3(5, new Vector3f(m_fX,0,m_fZ));
+        pkVB.Position3(6, new Vector3f(m_fX,m_fY,m_fZ));
+        pkVB.Position3(7, new Vector3f(0,m_fY,m_fZ));
+        pkVB.Color3(0,4, new ColorRGB(0,0,1));
+        pkVB.Color3(0,5, new ColorRGB(1,0,1));
+        pkVB.Color3(0,6, new ColorRGB(1,1,1));
+        pkVB.Color3(0,7, new ColorRGB(0,1,1));
         aiIndex[i++] = 4;  aiIndex[i++] = 5;  aiIndex[i++] = 6;
         aiIndex[i++] = 4;  aiIndex[i++] = 6;  aiIndex[i++] = 7;
 
         // top
-        pkVB.Position3(8, new Vector3f(0,fMaxY/fMax,0));
-        pkVB.Position3(9, new Vector3f(fMaxX/fMax,fMaxY/fMax,0));
-        pkVB.Position3(10, new Vector3f(fMaxX/fMax,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Position3(11, new Vector3f(0,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Color3(0,8, new ColorRGB(0,fMaxY/fMax,0));
-        pkVB.Color3(0,9, new ColorRGB(fMaxX/fMax,fMaxY/fMax,0));
-        pkVB.Color3(0,10, new ColorRGB(fMaxX/fMax,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Color3(0,11, new ColorRGB(0,fMaxY/fMax,fMaxZ/fMax));
+        pkVB.Position3(8, new Vector3f(0,m_fY,0));
+        pkVB.Position3(9, new Vector3f(m_fX,m_fY,0));
+        pkVB.Position3(10, new Vector3f(m_fX,m_fY,m_fZ));
+        pkVB.Position3(11, new Vector3f(0,m_fY,m_fZ));
+        pkVB.Color3(0,8, new ColorRGB(0,1,0));
+        pkVB.Color3(0,9, new ColorRGB(1,1,0));
+        pkVB.Color3(0,10, new ColorRGB(1,1,1));
+        pkVB.Color3(0,11, new ColorRGB(0,1,1));
         aiIndex[i++] = 8;  aiIndex[i++] = 10;  aiIndex[i++] = 9;
         aiIndex[i++] = 8;  aiIndex[i++] = 11;  aiIndex[i++] = 10;
 
         // bottom
         pkVB.Position3(12, new Vector3f(0,0,0));
-        pkVB.Position3(13, new Vector3f(fMaxX/fMax,0,0));
-        pkVB.Position3(14, new Vector3f(fMaxX/fMax,0,fMaxZ/fMax));
-        pkVB.Position3(15, new Vector3f(0,0,fMaxZ/fMax));
+        pkVB.Position3(13, new Vector3f(m_fX,0,0));
+        pkVB.Position3(14, new Vector3f(m_fX,0,m_fZ));
+        pkVB.Position3(15, new Vector3f(0,0,m_fZ));
         pkVB.Color3(0,12, new ColorRGB(0,0,0));
-        pkVB.Color3(0,13, new ColorRGB(fMaxX/fMax,0,0));
-        pkVB.Color3(0,14, new ColorRGB(fMaxX/fMax,0,fMaxZ/fMax));
-        pkVB.Color3(0,15, new ColorRGB(0,0,fMaxZ/fMax));
+        pkVB.Color3(0,13, new ColorRGB(1,0,0));
+        pkVB.Color3(0,14, new ColorRGB(1,0,1));
+        pkVB.Color3(0,15, new ColorRGB(0,0,1));
         aiIndex[i++] = 12;  aiIndex[i++] = 13;  aiIndex[i++] = 14;
         aiIndex[i++] = 12;  aiIndex[i++] = 14;  aiIndex[i++] = 15;
 
         // right
-        pkVB.Position3(16, new Vector3f(fMaxX/fMax,0,0));
-        pkVB.Position3(17, new Vector3f(fMaxX/fMax,fMaxY/fMax,0));
-        pkVB.Position3(18, new Vector3f(fMaxX/fMax,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Position3(19, new Vector3f(fMaxX/fMax,0,fMaxZ/fMax));
-        pkVB.Color3(0,16, new ColorRGB(fMaxX/fMax,0,0));
-        pkVB.Color3(0,17, new ColorRGB(fMaxX/fMax,fMaxY/fMax,0));
-        pkVB.Color3(0,18, new ColorRGB(fMaxX/fMax,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Color3(0,19, new ColorRGB(fMaxX/fMax,0,fMaxZ/fMax));
+        pkVB.Position3(16, new Vector3f(m_fX,0,0));
+        pkVB.Position3(17, new Vector3f(m_fX,m_fY,0));
+        pkVB.Position3(18, new Vector3f(m_fX,m_fY,m_fZ));
+        pkVB.Position3(19, new Vector3f(m_fX,0,m_fZ));
+        pkVB.Color3(0,16, new ColorRGB(1,0,0));
+        pkVB.Color3(0,17, new ColorRGB(1,1,0));
+        pkVB.Color3(0,18, new ColorRGB(1,1,1));
+        pkVB.Color3(0,19, new ColorRGB(1,0,1));
         aiIndex[i++] = 16;  aiIndex[i++] = 17;  aiIndex[i++] = 18;
         aiIndex[i++] = 16;  aiIndex[i++] = 18;  aiIndex[i++] = 19;
 
         // left
         pkVB.Position3(20, new Vector3f(0,0,0));
-        pkVB.Position3(21, new Vector3f(0,fMaxY/fMax,0));
-        pkVB.Position3(22, new Vector3f(0,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Position3(23, new Vector3f(0,0,fMaxZ/fMax));
+        pkVB.Position3(21, new Vector3f(0,m_fY,0));
+        pkVB.Position3(22, new Vector3f(0,m_fY,m_fZ));
+        pkVB.Position3(23, new Vector3f(0,0,m_fZ));
         pkVB.Color3(0,20, new ColorRGB(0,0,0));
-        pkVB.Color3(0,21, new ColorRGB(0,fMaxY/fMax,0));
-        pkVB.Color3(0,22, new ColorRGB(0,fMaxY/fMax,fMaxZ/fMax));
-        pkVB.Color3(0,23, new ColorRGB(0,0,fMaxZ/fMax));
+        pkVB.Color3(0,21, new ColorRGB(0,1,0));
+        pkVB.Color3(0,22, new ColorRGB(0,1,1));
+        pkVB.Color3(0,23, new ColorRGB(0,0,1));
         aiIndex[i++] = 20;  aiIndex[i++] = 22;  aiIndex[i++] = 21;
         aiIndex[i++] = 20;  aiIndex[i++] = 23;  aiIndex[i++] = 22;
 
@@ -759,16 +824,10 @@ public class GPUVolumeRender extends JavaApplication3
         float fMax = kSimpleImageA.max;
         float fMin = kSimpleImageA.min;
 
+        kSimpleImageA = null;
+        System.gc();
+
         // Access intensity values as a linear array.
-        // Initially allocate all normal vectors as the zero vector.
-        Vector3f[] akNormal = new Vector3f[afData.length];
-
-        Vector3f[] akNormalTmp = new Vector3f[afData.length];
-
-        for (int i = 0; i < akNormalTmp.length; i++) {
-            akNormal[i] = new Vector3f(0, 0, 0);
-            akNormalTmp[i] = new Vector3f(0, 0, 0);
-        }
 
         int iXBound = m_kImage.getExtents()[0];;
         int iYBound = m_kImage.getExtents()[1];;
@@ -788,6 +847,9 @@ public class GPUVolumeRender extends JavaApplication3
         int iOffZ = iXBound * iYBound;
         int iX, iY, iZ;
 
+        //byte[] acData = new byte[afData.length*3];
+        float[] afDataN = new float[afData.length*3];
+
         for (iZ = 1; iZ < (iZBound - 1); iZ++) {
             boolean bMinZ = 0 == iZ;
             boolean bMaxZ = (iZBound - 1) == iZ;
@@ -805,37 +867,47 @@ public class GPUVolumeRender extends JavaApplication3
 
                     fDX = (((bMinX ? afData[i] : afData[i - iOffX - iXBound]) -
                             (bMaxX ? afData[i] : afData[i + iOffX - iXBound])) * 0.71f) +
-
-                    (bMinX ? afData[i] : afData[i - iOffX]) - (bMaxX ? afData[i] : afData[i + iOffX]) +
-                          (
-
-                    ((bMinX ? afData[i] : afData[i - iOffX + iXBound]) -
-                     (bMaxX ? afData[i] : afData[i + iOffX + iXBound])) * 0.71f);
-
+                            
+                        (bMinX ? afData[i] : afData[i - iOffX]) - (bMaxX ? afData[i] : afData[i + iOffX]) +
+                        (
+                             
+                         ((bMinX ? afData[i] : afData[i - iOffX + iXBound]) -
+                          (bMaxX ? afData[i] : afData[i + iOffX + iXBound])) * 0.71f);
+                        
                     fDY = (((bMinY ? afData[i] : afData[i - iOffY - 1]) - (bMaxY ? afData[i] : afData[i + iOffY - 1])) *
-                               0.71f) +
-
-                    (bMinY ? afData[i] : afData[i - iOffY]) - (bMaxY ? afData[i] : afData[i + iOffY]) +
-                          (
-
-                    ((bMinY ? afData[i] : afData[i - iOffY + 1]) - (bMaxY ? afData[i] : afData[i + iOffY + 1])) * 0.71f);
-
+                           0.71f) +
+                            
+                        (bMinY ? afData[i] : afData[i - iOffY]) - (bMaxY ? afData[i] : afData[i + iOffY]) +
+                        (
+                             
+                         ((bMinY ? afData[i] : afData[i - iOffY + 1]) - (bMaxY ? afData[i] : afData[i + iOffY + 1])) * 0.71f);
+                        
                     fDZ = (((bMinZ ? afData[i] : afData[i - iOffZ - 1]) - (bMaxZ ? afData[i] : afData[i + iOffZ - 1])) *
-                               0.71f) +
-
-                    (bMinZ ? afData[i] : afData[i - iOffZ]) - (bMaxZ ? afData[i] : afData[i + iOffZ]) +
-                          (
-
-                    ((bMinZ ? afData[i] : afData[i - iOffZ + 1]) - (bMaxZ ? afData[i] : afData[i + iOffZ + 1])) * 0.71f);
-
-
+                           0.71f) +
+                            
+                        (bMinZ ? afData[i] : afData[i - iOffZ]) - (bMaxZ ? afData[i] : afData[i + iOffZ]) +
+                        (
+                             
+                         ((bMinZ ? afData[i] : afData[i - iOffZ + 1]) - (bMaxZ ? afData[i] : afData[i + iOffZ + 1])) * 0.71f);
+                        
+                        
                     if ((fDX != 0.0f) || (fDY != 0.0f) || (fDZ != 0.0f)) {
-                        akNormalTmp[i] = new Vector3f(fDX, fDY, fDZ);
+                        afDataN[i*3+0] = fDX;
+                        afDataN[i*3+1] = fDY;
+                        afDataN[i*3+2] = fDZ;
+//                         acData[i*3+0] = (byte)(fDX*127 + 127);
+//                         acData[i*3+1] = (byte)(fDY*127 + 127);
+//                         acData[i*3+2] = (byte)(fDZ*127 + 127);
                     }
                 }
             }
         }
 
+        int[] aiNormalAverageIndex = new int[]{ 0, -1, +1, -iXBound, +iXBound, -iXYBound, +iXYBound };
+        Vector3f kNormal = new Vector3f();
+        Vector3f kNormalTmp = new Vector3f();
+        byte[] acData = new byte[afData.length*3];
+                    
         // Catch any zero-vector normals and replace them by an average of
         // neighboring normals.
         for (iZ = 1; iZ < (iZBound - 1); iZ++) {
@@ -845,32 +917,26 @@ public class GPUVolumeRender extends JavaApplication3
 
                 for (iX = 1; iX < (iXBound - 1); iX++) {
                     int i = iX + offset;
-                    akNormal[i].addEquals(akNormalTmp[i]);
-                    akNormal[i].addEquals(akNormalTmp[i - 1]);
-                    akNormal[i].addEquals(akNormalTmp[i + 1]);
-                    akNormal[i].addEquals(akNormalTmp[i - iXBound]);
-                    akNormal[i].addEquals(akNormalTmp[i + iXBound]);
-                    akNormal[i].addEquals(akNormalTmp[i - iXYBound]);
-                    akNormal[i].addEquals(akNormalTmp[i + iXYBound]);
-                    akNormal[i].Normalize();
+
+                    kNormal.copy(Vector3f.ZERO);
+                    for ( int iN = 0; iN < aiNormalAverageIndex.length; iN++ )
+                    {
+                        int index = i + aiNormalAverageIndex[iN];
+                        index *= 3;
+                        kNormalTmp.X(afDataN[index + 0]);
+                        kNormalTmp.Y(afDataN[index + 1]);
+                        kNormalTmp.Z(afDataN[index + 2]);
+
+                        kNormal.addEquals( kNormalTmp );
+                    }
+                    kNormal.Normalize();
+                    acData[i*3+0] = (byte)(kNormal.X()*127 + 127);
+                    acData[i*3+1] = (byte)(kNormal.Y()*127 + 127);
+                    acData[i*3+2] = (byte)(kNormal.Z()*127 + 127);
                 }
             }
         }
 
-        byte[] acData = new byte[akNormalTmp.length*3];
-        for (int i = 0; i < akNormalTmp.length; i++) {
-            acData[i*3+0] = (byte)(akNormal[i].X()*127 + 127);
-            acData[i*3+1] = (byte)(akNormal[i].Y()*127 + 127);
-            acData[i*3+2] = (byte)(akNormal[i].Z()*127 + 127);
-
-            akNormalTmp[i] = null;
-            akNormal[i] = null;
-        }
-
-        akNormalTmp = null;
-        akNormal = null;
-        kSimpleImageA = null;
-        System.gc();
 
         return acData;
     }
@@ -918,7 +984,14 @@ public class GPUVolumeRender extends JavaApplication3
     
     public void undoSculpt()
     {
-        m_kSculptor.setTextureImageData( m_pkVolumeTarget.GetImage().GetData() );
+        if ( m_pkVolumeTarget.GetImage().GetData() != null )
+        {
+            m_kSculptor.setTextureImageData( m_pkVolumeTarget.GetImage().GetData() );
+        }
+        else
+        {
+            m_kSculptor.setTextureImageFloatData( m_pkVolumeTarget.GetImage().GetFloatData() );
+        }
         m_kSculptor.undoSculpt();
         m_pkVolumeTarget.Release();
     }
@@ -928,7 +1001,14 @@ public class GPUVolumeRender extends JavaApplication3
         float[] afData = new float[16];
         m_pkRenderer.SetConstantWVPMatrix (0, afData);
         m_kSculptor.setWVPMatrix(new Matrix4f(afData, true));
-        m_kSculptor.setTextureImageData( m_pkVolumeTarget.GetImage().GetData() );
+        if ( m_pkVolumeTarget.GetImage().GetData() != null )
+        {
+            m_kSculptor.setTextureImageData( m_pkVolumeTarget.GetImage().GetData() );
+        }
+        else
+        {
+            m_kSculptor.setTextureImageFloatData( m_pkVolumeTarget.GetImage().GetFloatData() );
+        }
         if ( m_kSculptor.applySculpt() )
         {
             m_pkVolumeTarget.Release();
@@ -1055,23 +1135,6 @@ public class GPUVolumeRender extends JavaApplication3
         m_akPolyline[5].AttachEffect( m_spkVertexColor3Shader );
         m_akPolyline[5].Local.SetTranslate(m_kTranslate);
 
-        String[] akCmd = new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
-        Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-        for ( int i = 0; i < 6; i++ )
-        {
-            if ( pkProgram.GetUC(akCmd[i]) != null ) 
-            {
-                float[] data = new float[4];
-                if ( i%2 == 0 )
-                    data[0] = 0;
-                else
-                    data[0] = 1;
-                pkProgram.GetUC(akCmd[i]).SetDataSource(data);
-                System.err.println( akCmd[i] + " " + data[0] );
-            }       
-        }
-
-
         // arbitrary clipping:
         kClipView = new VertexBuffer(kAttributes, 4 );
         for ( int i = 0; i < 4; i++ )
@@ -1087,19 +1150,70 @@ public class GPUVolumeRender extends JavaApplication3
         m_kClipArb.Local.SetTranslate(m_kTranslate);
 
         // eye clipping:
+        // set up camera
+        m_spkEyeCamera = new Camera();
+        m_spkEyeCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,1000.0f);
+        Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
+        Vector3f kCUp = new Vector3f(0.0f,-1.0f,0.0f);
+        Vector3f kCRight = kCDir.Cross(kCUp);
+        Vector3f kCLoc = kCDir.scale(-4.0f);
+        m_spkEyeCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
+
         kClipView = new VertexBuffer(kAttributes, 4 );
         for ( int i = 0; i < 4; i++ )
         {
             kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
         }
-        kClipView.Position3( 0, new Vector3f( 0, 0, m_fZ ) );
-        kClipView.Position3( 1, new Vector3f( m_fX, 0, m_fZ ) );
-        kClipView.Position3( 2, new Vector3f( m_fX, m_fY, m_fZ ) );
-        kClipView.Position3( 3, new Vector3f( 0, m_fY, m_fZ ) );
+        kClipView.Position3( 0, new Vector3f( -.2f, -.2f, m_fZ ) );
+        kClipView.Position3( 1, new Vector3f( m_fX +.2f, -.2f, m_fZ ) );
+        kClipView.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, m_fZ ) );
+        kClipView.Position3( 3, new Vector3f( -.2f, m_fY +.2f, m_fZ ) );
         m_kClipEye = new Polyline( kClipView, true, true );
-        m_kClipEye.AttachEffect( m_spkVertexColor3Shader );
         m_kClipEye.Local.SetTranslate(m_kTranslate);
+        m_kClipEye.AttachEffect( m_spkVertexColor3Shader );
+        m_kClipEye.UpdateGS();
+        m_kClipEye.UpdateRS();
+        m_pkRenderer.LoadResources(m_kClipEye);
+
+        kClipView = new VertexBuffer(kAttributes, 4 );
+        for ( int i = 0; i < 4; i++ )
+        {
+            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+        }
+        kClipView.Position3( 0, new Vector3f( -.2f, -.2f, 1.0f ) );
+        kClipView.Position3( 1, new Vector3f( m_fX +.2f, -.2f, 1.0f ) );
+        kClipView.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, 1.0f ) );
+        kClipView.Position3( 3, new Vector3f( -.2f, m_fY +.2f, 1.0f ) );
+        m_kClipEyeInv = new Polyline( kClipView, true, true );
+        m_kClipEyeInv.Local.SetTranslate(m_kTranslate);
+        m_kClipEyeInv.AttachEffect( m_spkVertexColor3Shader );
+        m_kClipEyeInv.UpdateGS();
+        m_kClipEyeInv.UpdateRS();
+        m_pkRenderer.LoadResources(m_kClipEyeInv);
+
+
+        resetClip();
     }
+
+    private void resetClip()
+    {
+        String[] akCmd = new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
+        Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
+        for ( int i = 0; i < 6; i++ )
+        {
+            if ( pkProgram.GetUC(akCmd[i]) != null ) 
+            {
+                float[] data = new float[4];
+                if ( i%2 == 0 )
+                    data[0] = 0;
+                else
+                    data[0] = 1;
+                pkProgram.GetUC(akCmd[i]).SetDataSource(data);
+                System.err.println( akCmd[i] + " " + data[0] );
+            }       
+        }
+    }
+
 
     public void setClipPlane( int iWhich, float fValue, String cmd )
     {
@@ -1208,44 +1322,103 @@ public class GPUVolumeRender extends JavaApplication3
         }
     }
 
-    public void setEyeClipPlane( float f4 )
+    public void enableEyeClipPlane( boolean bDisplay, ColorRGB kColor )
     {
-        m_kArbitraryClip = new Vector4f(0,0,1,(f4 + 1)/2.0f);
+        m_bDisplayClipEye = bDisplay;
+        if ( m_bDisplayClipEye )
+        {
+            setEyeColor(kColor);
+        }
+        else
+        {
+            setEyeClipPlane(0,m_bDisplayClipEye);
+        }
+    }
+        
+    public void enableEyeInvClipPlane( boolean bDisplay, ColorRGB kColor )
+    {
+        m_bDisplayClipEyeInv = bDisplay;
+        if ( m_bDisplayClipEyeInv )
+        {
+            setEyeInvColor(kColor);
+        }
+        else
+        {
+            setEyeInvClipPlane(m_kImage.getExtents()[2] - 1,m_bDisplayClipEyeInv);
+        }
+    }
+
+    public void setEyeClipPlane( float f4, boolean bDisplay )
+    {
+        //Vector4f kEyeClipV = new Vector4f(0,0,1,(f4 + 1)/2.0f);
+        Vector4f kEyeClipV = new Vector4f(0,0,1,(f4/(float)(m_kImage.getExtents()[2]-1)));
         
         float[] afEquation = new float[4];
-        afEquation[0] = m_kArbitraryClip.X();
-        afEquation[1] = m_kArbitraryClip.Y();
-        afEquation[2] = m_kArbitraryClip.Z();;
-        afEquation[3] = m_kArbitraryClip.W();
+        afEquation[0] = kEyeClipV.X();
+        afEquation[1] = kEyeClipV.Y();
+        afEquation[2] = kEyeClipV.Z();;
+        afEquation[3] = kEyeClipV.W();
 
 
-        float fZ = m_kArbitraryClip.W();//(m_kArbitraryClip.W() + 1)/2.0f;
+        float fZ = kEyeClipV.W();//(kEyeClipV.W() + 1)/2.0f;
         
-        m_kClipEye.VBuffer.Position3( 0, new Vector3f( 0, 0, fZ ) );
-        m_kClipEye.VBuffer.Position3( 1, new Vector3f( m_fX, 0, fZ ) );
-        m_kClipEye.VBuffer.Position3( 2, new Vector3f( m_fX, m_fY, fZ ) );
-        m_kClipEye.VBuffer.Position3( 3, new Vector3f( 0, m_fY, fZ ) );
+        m_kClipEye.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
+        m_kClipEye.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
+        m_kClipEye.VBuffer.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, fZ ) );
+        m_kClipEye.VBuffer.Position3( 3, new Vector3f( -.2f, m_fY +.2f, fZ ) );
         m_kClipEye.VBuffer.Release();
 
+        m_kClipEye.UpdateGS();
+        m_kClipEye.UpdateRS();
+
         Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-        if ( pkProgram.GetUC("clipArb") != null ) 
+        if ( pkProgram.GetUC("clipEye") != null ) 
         {
-            pkProgram.GetUC("clipArb").SetDataSource(afEquation);
-            System.err.println( "ClipArb " + afEquation[0] + " " +
-                                afEquation[1] + " " +
-                                afEquation[2] + " " +
-                                afEquation[3] );
+            pkProgram.GetUC("clipEye").SetDataSource(afEquation);
         }
 
         if ( !m_bDisplayClipEye )
         {
-            m_bDisplayClipEye = true;
-            m_spkScene.AttachChild(m_kClipEye);
+            m_bDisplayClipEye = bDisplay;
+        }
+    }
+
+    public void setEyeInvClipPlane( float f4, boolean bDisplay )
+    {
+        //Vector4f kEyeClipV = new Vector4f(0,0,1,(f4 + 1)/2.0f);
+        Vector4f kEyeClipV = new Vector4f(0,0,1,(f4/(float)(m_kImage.getExtents()[2]-1)));
+
+        float[] afEquation = new float[4];
+        afEquation[0] = kEyeClipV.X();
+        afEquation[1] = kEyeClipV.Y();
+        afEquation[2] = kEyeClipV.Z();;
+        afEquation[3] = kEyeClipV.W();
+
+
+        float fZ = kEyeClipV.W();//(kEyeClipV.W() + 1)/2.0f;
+
+        System.err.println( fZ );
+
+        
+        m_kClipEyeInv.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
+        m_kClipEyeInv.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
+        m_kClipEyeInv.VBuffer.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, fZ ) );
+        m_kClipEyeInv.VBuffer.Position3( 3, new Vector3f( -.2f, m_fY +.2f, fZ ) );
+        m_kClipEyeInv.VBuffer.Release();
+
+        m_kClipEyeInv.UpdateGS();
+        m_kClipEyeInv.UpdateRS();
+
+        Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
+        if ( pkProgram.GetUC("clipEyeInv") != null ) 
+        {
+            pkProgram.GetUC("clipEyeInv").SetDataSource(afEquation);
         }
 
-        m_spkScene.UpdateGS();
-        m_spkScene.UpdateRS();
-
+        if ( !m_bDisplayClipEyeInv )
+        {
+            m_bDisplayClipEyeInv = bDisplay;
+        }
     }
 
     
@@ -1266,7 +1439,7 @@ public class GPUVolumeRender extends JavaApplication3
     private void doClip() 
     {
         Vector3f kClip = new Vector3f( m_kArbitraryClip.X(), m_kArbitraryClip.Y(), m_kArbitraryClip.Z() );
-        kClip = m_kClipRotate.mult(kClip);
+        //kClip = m_kClipRotate.mult(kClip);
 
         float[] afEquation = new float[4];
         afEquation[0] = kClip.X();
@@ -1285,7 +1458,7 @@ public class GPUVolumeRender extends JavaApplication3
         for ( int i = 0; i < 4; i++ )
         {
             Vector3f kPos = m_kClipArb.VBuffer.Position3( i );
-            kPos = m_kClipRotate.mult( kPos );
+            kPos = Matrix3f.mult( kPos, m_kClipRotate );
             m_kClipArb.VBuffer.Position3( i, kPos );
         }
         m_kClipArb.VBuffer.Release();
@@ -1294,10 +1467,6 @@ public class GPUVolumeRender extends JavaApplication3
         if ( pkProgram.GetUC("clipArb") != null ) 
         {
             pkProgram.GetUC("clipArb").SetDataSource(afEquation);
-            System.err.println( "ClipArb " + afEquation[0] + " " +
-                                afEquation[1] + " " +
-                                afEquation[2] + " " +
-                                afEquation[3] );
         }
 
         m_spkScene.UpdateGS();
@@ -1313,6 +1482,23 @@ public class GPUVolumeRender extends JavaApplication3
         m_akPolyline[iWhich].VBuffer.Release();
     }
 
+    public void setEyeColor( ColorRGB kColor )
+    {
+        for ( int i = 0; i < 4; i++ )
+        {
+            m_kClipEye.VBuffer.Color3( 0, i, kColor );
+        }
+        m_kClipEye.VBuffer.Release();
+    }
+    
+    public void setEyeInvColor( ColorRGB kColor )
+    {
+        for ( int i = 0; i < 4; i++ )
+        {
+            m_kClipEyeInv.VBuffer.Color3( 0, i, kColor );
+        }
+        m_kClipEyeInv.VBuffer.Release();
+    }
 
     /** Rotates the object with a virtual trackball:
      * @param e, the MouseEvent
@@ -1335,12 +1521,17 @@ public class GPUVolumeRender extends JavaApplication3
 
     public void transformUpdate( float[] data )
     {
-        m_spkMotionObject.Local.
-            SetMatrix(new Matrix3f(data[0], data[1], data[2],
-                                   data[4], data[5], data[6],
-                                   data[8], data[9], data[10]));
+        Matrix3f kRotate = new Matrix3f( -1, 0, 0,
+                                         0,  1, 0,
+                                         0,  0, 1 );
+        Matrix3f kIn = new Matrix3f(data[0], data[1], data[2],
+                                    data[4], data[5], data[6],
+                                    data[8], data[9], data[10]);
+
+        Matrix3f kLocal = kRotate.mult(kIn.mult(kRotate));
+
+        m_spkMotionObject.Local.SetMatrix(kLocal);
         m_spkScene.UpdateGS();
-        m_kCuller.ComputeVisibleSet(m_spkScene);
     }
 
     public void reloadShaders()
@@ -1363,10 +1554,12 @@ public class GPUVolumeRender extends JavaApplication3
                               m_pkRenderer.GetMaxPShaderImages());
 
         Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-        pkProgram.GetUC("stepsize").SetDataSource(m_afstepsize);
-        float[] afMIP = new float[] {1,0,0,0};
-        pkProgram.GetUC("MIP").SetDataSource(afMIP);
-
+        if ( pkProgram.GetUC("Iterations") != null)
+        {
+            pkProgram.GetUC("Iterations").SetDataSource(new float[]{500,0,0,0});
+        }
+        resetClip();
+        MIPMode();
     }
 
 
@@ -1379,6 +1572,7 @@ public class GPUVolumeRender extends JavaApplication3
     private Polyline[] m_akPolyline;
     private Polyline m_kClipArb;
     private Polyline m_kClipEye;
+    private Polyline m_kClipEyeInv;
     private boolean[] m_abDisplayPolyline = new boolean[]{false,false,false,false,false,false};
 
     private TriMesh m_spkMesh;
@@ -1388,6 +1582,7 @@ public class GPUVolumeRender extends JavaApplication3
     private ModelImage m_kImage;
 
     private Camera m_spkScreenCamera;
+    private Camera m_spkEyeCamera;
     private TriMesh m_spkScenePolygon;
     private GraphicsImage m_spkSceneImage;
     private Texture m_pkSceneTarget;
@@ -1395,9 +1590,6 @@ public class GPUVolumeRender extends JavaApplication3
 
     private Node m_spkVolumeNode;
     private ShaderEffect m_spkVertexColor3Shader;
-    private float[] m_afstepsize = new float[]{0.005f,0,0,0};
-    private float[] m_afCommonAlpha = new float[]{5.0f,0,0,0};
-    private float[] m_afThreshold = new float[]{1,0,0,0};
 
     private Animator m_kAnimator;
 
@@ -1409,6 +1601,7 @@ public class GPUVolumeRender extends JavaApplication3
     private Texture m_pkVolumeTarget;
     private Texture m_pkColorMapTarget;
     private Texture m_pkOpacityMapTarget;
+    private Texture m_pkNormalMapTarget;
 
     private float m_fImageMax;
     private float m_fImageMin;
@@ -1422,5 +1615,6 @@ public class GPUVolumeRender extends JavaApplication3
     private Matrix3f m_kClipRotate = new Matrix3f(false);
     private boolean m_bDisplayClipArb = false;
     private boolean m_bDisplayClipEye = false;
+    private boolean m_bDisplayClipEyeInv = false;
     private float m_fX, m_fY, m_fZ;
 }

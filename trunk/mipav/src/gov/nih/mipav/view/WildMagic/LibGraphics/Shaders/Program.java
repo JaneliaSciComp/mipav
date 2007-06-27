@@ -35,10 +35,10 @@ public abstract class Program extends Bindable
 
     public void finalize ()
     {
-        CgGL.cgDestroyProgram( m_kCGProgram);
-        CheckCgError();
+        //CgGL.cgDestroyProgram( m_kCGProgram);
+        //CheckCgError();
         CgGL.cgDestroyContext( m_kContext );
-        CheckCgError();
+        //CheckCgError();
         super.finalize();
     }
     
