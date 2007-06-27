@@ -1,10 +1,13 @@
-void computeColor( float4 normalMax, float3 light,
+/**
+ * Compute the surface color based on lighting.
+ */
+void computeColor( float4 normal, float3 light,
                    float3 CameraModelPosition, float3 inPos, float shininessParam,
-                   float ambientParam, float diffuseParam, float specularParam,
+                   float ambientParam, float diffuseParam, float specularParam, float Composite,
                    inout float4 color_sample)
 {
-    float3 normal = normalMax.xyz - (0.5, 0.5, 0.5);
-    normal = normalize( normal );
+    float3 local_normal = normal.xyz - (0.5, 0.5, 0.5);
+    local_normal = normalize( local_normal );
 
     //float3 lightdir = normalize( light - inPos.xyz );
     float3 lightdir = normalize( light );
@@ -12,19 +15,32 @@ void computeColor( float4 normalMax, float3 light,
     float3 halfway = normalize( lightdir + V );
 
     // compute diffuse lighting component
-    float diffuse = max(dot(normal.xyz, lightdir), 0);
+    float diffuse = max(dot(local_normal.xyz, lightdir), 0);
     // compute specular lighting component
-    float specular = pow(max(dot(halfway.xyz, normal.xyz), 0),
+    float specular = pow(max(dot(halfway.xyz, local_normal.xyz), 0),
                          shininessParam);
-
-    float3 color = 
-        ambientParam * color_sample.rgb
-        + diffuseParam * diffuse * color_sample.rgb
-        + specularParam * specular;
-
+    float3 color;
+    if ( Composite != 0 )
+    {
+        color = 
+            ambientParam * color_sample.rgb
+            + diffuseParam * diffuse * color_sample.rgb
+            + specularParam * specular * color_sample.rgb;
+    }
+    else
+    {
+        color = 
+            ambientParam * color_sample.rgb
+            + diffuseParam * diffuse * color_sample.rgb
+            + specularParam * specular;
+    }
     color_sample.rgb = color.rgb;
 }
 
+/**
+ * Clip the volume based on the x,y,z axes.
+ * returns 1 when the volume is clipped, 0 when not clipped.
+ */
 bool myClip(float3 vec,
             float clipX,
             float clipXInv,
@@ -61,12 +77,12 @@ bool myClip(float3 vec,
 }
 
 
-// Raycasting vertex program implementation
+/** Raycasting vertex program implementation */
 void v_VolumeShader( in float4 inPosition     : POSITION,
                      in float3 inTexCoord1     : TEXCOORD0, 
                      out float4 outPosition    : POSITION, // For the rasterizer
                      out float3 outTexCoord1    : TEXCOORD0,
-                     out float4 outPos,//         : TEXCOORD1,
+                     out float4 outPos,
                      uniform float4x4 WVPMatrix)
 {    
     // Transform vertex
@@ -75,15 +91,16 @@ void v_VolumeShader( in float4 inPosition     : POSITION,
     outTexCoord1 = inTexCoord1;
 }
 
-// Raycasting fragment program implementation
+/** Raycasting fragment program implementation */
 void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
-                      in float4 inPos,//         : TEXCOORD1,
+                      in float4 inPos,
                       out float4 kColor	    : COLOR0,
                       uniform sampler3D volume_tex, 
                       uniform sampler2D tex, 
                       uniform sampler1D colormap, 
                       uniform sampler1D opacitymap, 
                       uniform sampler3D normalmap, 
+                      uniform float stepsize,
                       uniform float MIP,
                       uniform float DDR,
                       uniform float Composite,
@@ -105,133 +122,179 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
                       uniform float3 CameraModelPosition,
                       uniform float4x4 WVPMatrix)
 {
-    float2 texc = ((inPos.xy / inPos.w) + 1) / 2.0; // find the right place to lookup in the backside buffer
-    float3 start = inTexCoord1; // the start position of the ray is stored in the texturecoordinate
+    // find the right place to lookup in the backside buffer
+    float2 texc = ((inPos.xy / inPos.w) + 1) / 2.0;
     float4 back_position  = tex2D(tex, texc);
-    float3 dir = float3(0,0,0);
-    dir.x = back_position.x - start.x;
-    dir.y = back_position.y - start.y;
-    dir.z = back_position.z - start.z;
-    float len = length(dir.xyz); // the length from front to back is calculated and used to terminate the ray
+
+    // the start position of the ray is stored in the texturecoordinate
+    float3 start = inTexCoord1; 
+
+    // the ray direction
+    float3 dir = back_position.xyz - start;
+
+    // the length from front to back is calculated and used to terminate the ray
+    float len = length(dir.xyz); 
+
+    // normalized direction vector:
     float3 norm_dir = normalize(dir);
-    float3 vec = start.xyz;
-    float4 col_acc = float4(0,0,0,0);
+
+    // current position along the ray: 
+    float3 position = start.xyz;
+
+    // The accumulated color and alpha values:
+    float4 color_acc = float4(0,0,0,0);
     float alpha_acc = 0;
-    float4 color_sample = (0,0,0,0);
 
-    float opacity = 0;
-    float4 normal = (0,0,0,0);
-    float4 normalMax = (0,0,0,0);
-    float fMax = 0;
-
-    float count = 0;
-
-    kColor.rgb = back_position.xyz;
-    kColor.a = 0;
+    // output color:
+    kColor = (0,0,0,0);
     if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
     {
         return;
     }
 
-    float Iterations = 450;
-    float stepsize = len / Iterations;
-    float alpha_sample = stepsize;
-
-    for ( int i = 0; i < Iterations; i++ )
+    // limit the number of iterations to 450, make sure that the stepsize will
+    // cover the entire ray:
+    if ( (len/stepsize) > 450 )
     {
-        if ( myClip( vec, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+        stepsize = len/450.0;
+    }
+
+    // The color at the current position along the ray:
+    float4 color = (0,0,0,0);
+    // The opacity at the current position along the ray:
+    float opacity = 0;
+
+    // The normal at the current position along the ray:
+    float4 normal = (0,0,0,0);
+
+    // Maximum value along the ray for MIP
+    float fMax = 0;
+    // Intensity value of color:
+    float intensity_color = 0;
+    // maximum color value along the ray
+    float3 color_max = (0,0,0);
+
+    float alpha_sample = stepsize;
+    float delta = stepsize;
+    float3 delta_dir = norm_dir * delta;
+    float delta_dir_len = length(delta_dir);
+    float length_acc = 0;
+
+
+    // For some profiles the number of loop iterations must be determined at
+    // compile time:
+    for( int i = 0; i < 450; i++ )
+    {
+        // axis-aligned clipping:
+        if ( myClip( position, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
         {
-            color_sample = (0,0,0,0);
+            color = (0,0,0,0);
             opacity = 0;
         }
         else
         {
-            float4 aVec = float4(0,0,0,0);
-            aVec.xyz = vec.xyz - (.5,.5,.5);
-            aVec = mul( aVec, WVPMatrix );
-            aVec.xyz = aVec.xyz + (.5,.5,.5);
-            float fDot = dot( aVec.xyz, clipEye.xyz );
-            float fDotInv = dot( aVec.xyz, clipEyeInv.xyz );
-            float fDotArb = dot( aVec.xyz, clipArb.xyz );
+            // eye clipping and arbitrary clipping:
+            float4 aPosition = float4(0,0,0,0);
+            aPosition.xyz = position.xyz - (.5,.5,.5);
+            aPosition = mul( aPosition, WVPMatrix );
+            aPosition.xyz = aPosition.xyz + (.5,.5,.5);
+            float fDot = dot( aPosition.xyz, clipEye.xyz );
+            float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
+            float fDotArb = dot( aPosition.xyz, clipArb.xyz );
             if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
             {
-                color_sample = (0,0,0,0);
+                color = (0,0,0,0);
                 opacity = 0;
             }
+            // The value is not clipped, compute the color:
             else
             {
-                color_sample = tex3D(volume_tex,vec);
-                opacity = tex1D(opacitymap,color_sample.r).r;
+                color = tex3D(volume_tex,position);
+                opacity = tex1D(opacitymap,color.r).r;
                 if ( DDR != 0 )
                 {
-                    color_sample = tex1D(colormap,color_sample.r);
+                    color = tex1D(colormap,color.r);
                 }
             }
         }
-        
+        // If the opacity is not zero:
         if ( opacity > 0 )
         {
-            if ( color_sample.r > fMax ) 
+            // MIP: Store the maximum value:
+            intensity_color = dot(color.rgb, (.3,.3,.3));
+            if ( intensity_color > fMax ) 
             {
-                fMax = color_sample.r;
+                fMax = intensity_color;
+                color_max = color.rgb;
             }
+            // Surface and Composite surface display:
             if ( Surface != 0 )
             {
-                normal = tex3D(normalmap,vec);
+                normal = tex3D(normalmap,position);
                 normal.w = 0;
 
-                normalMax = normal;
-
-                computeColor( normalMax, light, CameraModelPosition, inPos.xyz, shininessParam, ambientParam, diffuseParam, specularParam, color_sample );
+                // Get the color based on lighting:
+                computeColor( normal, light, CameraModelPosition, inPos.xyz,
+                              shininessParam, ambientParam, diffuseParam, specularParam, Composite, color );
+                // Composite surface:
                 if ( Composite != 0 )
                 {
-                    col_acc   = (1.0 - opacity) * col_acc + opacity * color_sample;
-                    alpha_acc += opacity;
+                    color_acc   = (1.0 - alpha_acc) * color * opacity + color_acc;
+                    alpha_acc += (1 - alpha_acc) * opacity;
                 }
-                else if ( (color_sample.x != 0) || (color_sample.y != 0) || (color_sample.z != 0) )
+                // Surface:
+                else if ( (color.x != 0) || (color.y != 0) || (color.z != 0) )
                 {
-                    col_acc   = color_sample;
+                    color_acc   = color;
                     break;
                 }
             }
+            // DDR, and Composite display:
             else
             {
+                // Composite:
                 if ( Composite != 0 )
                 {
-                    col_acc   = (1.0 - opacity) * col_acc + opacity * color_sample;
-                    alpha_acc += opacity;
+                    color_acc   = (1.0 - alpha_acc) * color * opacity + color_acc;
+                    alpha_acc += (1 - alpha_acc) * opacity;
                 }
+                // DDR:
                 else
                 {
-                    col_acc   += (1.0 - alpha_acc) * color_sample * alpha_sample * 3;
+                    color_acc   += (1.0 - alpha_acc) * color * alpha_sample * 3;
                     alpha_acc += (1 - alpha_acc) * alpha_sample;
                 }
             }
         }
-
-
-        vec.x = norm_dir.x * i * stepsize + start.x;
-        vec.y = norm_dir.y * i * stepsize + start.y;
-        vec.z = norm_dir.z * i * stepsize + start.z;
+        // Break early if the accumulate alpha value for composite or composite surface is >= 1
         if ( (Composite != 0) && (alpha_acc >= 1.0) )
         {
             break;
         }
-
+        // Break early if the max is >= 1
         if ( (MIP==1) && (fMax>=1))
+        {
+            break;
+        }
+        // Increment position along the ray:
+        position += delta_dir;
+        length_acc += delta_dir_len;
+        // Break when the end of the ray is reached, or if alpha >= 1;
+        if ( (length_acc >= len) || (alpha_acc >= 1.0) )
         {
             break;
         }
     } 
 
-    if ( (Surface == 0) && (alpha_acc > 1) )
+    //if ( (Surface == 0) && (alpha_acc > 1) )
+    if ( alpha_acc > 1 )
     {
-        col_acc.r /= alpha_acc;
-        col_acc.g /= alpha_acc;
-        col_acc.b /= alpha_acc;
+        color_acc.r /= alpha_acc;
+        color_acc.g /= alpha_acc;
+        color_acc.b /= alpha_acc;
     }
 
-    kColor = col_acc;
+    kColor = color_acc;
     kColor.a = alpha_acc;
     if ( MIP != 0 )
     {

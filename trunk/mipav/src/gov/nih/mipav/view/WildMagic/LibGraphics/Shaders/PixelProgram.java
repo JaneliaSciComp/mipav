@@ -44,6 +44,7 @@ public class PixelProgram extends Program
         if (!bLoaded)
         {
             System.err.println( CgGL.cgGetLastListing(pkProgram.m_kContext) );
+            pkProgram.finalize();
             pkProgram = null;
             return null;
         }      
