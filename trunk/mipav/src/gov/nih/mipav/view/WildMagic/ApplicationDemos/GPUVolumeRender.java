@@ -5,31 +5,22 @@
 package gov.nih.mipav.view.WildMagic.ApplicationDemos;
 
 import javax.media.opengl.*;
-import com.sun.opengl.cg.CgGL;
 import com.sun.opengl.util.*;
 
-import java.awt.*;
 import java.awt.event.*;
-import java.util.Calendar;
-import java.nio.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Detail.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Sorting.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
 import gov.nih.mipav.view.renderer.volumeview.*;
 
 /**
- * @author Alexandra
- *
  */
 public class GPUVolumeRender extends JavaApplication3
     implements GLEventListener, KeyListener, MouseMotionListener
@@ -647,8 +638,6 @@ public class GPUVolumeRender extends JavaApplication3
     private void CreateBox ()
     {
         m_spkVolumeNode = new Node();
-        int iSlices = 64;
-        final int iDelta = 32;
         int iXBound = m_kImage.getExtents()[0];
         int iYBound = m_kImage.getExtents()[1];
         int iZBound = m_kImage.getExtents()[2];
@@ -1439,7 +1428,7 @@ public class GPUVolumeRender extends JavaApplication3
     private void doClip() 
     {
         Vector3f kClip = new Vector3f( m_kArbitraryClip.X(), m_kArbitraryClip.Y(), m_kArbitraryClip.Z() );
-        //kClip = m_kClipRotate.mult(kClip);
+        kClip = m_kClipRotate.mult(kClip);
 
         float[] afEquation = new float[4];
         afEquation[0] = kClip.X();
@@ -1458,7 +1447,7 @@ public class GPUVolumeRender extends JavaApplication3
         for ( int i = 0; i < 4; i++ )
         {
             Vector3f kPos = m_kClipArb.VBuffer.Position3( i );
-            kPos = Matrix3f.mult( kPos, m_kClipRotate );
+            kPos = m_kClipRotate.mult(kPos);
             m_kClipArb.VBuffer.Position3( i, kPos );
         }
         m_kClipArb.VBuffer.Release();
@@ -1513,9 +1502,14 @@ public class GPUVolumeRender extends JavaApplication3
 
     public void setArbitraryClipPlaneTransform( float[] data )
     {
-        m_kClipRotate = new Matrix3f(data[0], data[1], data[2],
-                                     data[4], data[5], data[6],
-                                     data[8], data[9], data[10]);
+        Matrix3f kRotate = new Matrix3f( -1, 0, 0,
+                                         0,  1, 0,
+                                         0,  0, 1 );
+        Matrix3f kIn = new Matrix3f(data[0], data[1], data[2],
+                                    data[4], data[5], data[6],
+                                    data[8], data[9], data[10]);
+
+        m_kClipRotate = kRotate.mult(kIn.mult(kRotate));
         doClip();
     }
 

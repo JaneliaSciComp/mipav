@@ -4813,7 +4813,7 @@ public class JPanelClip extends JPanelRendererBase
         displayAClipPlanePts();
     
         if (rayBasedRenderWM != null) {
-            Transform3D kTransform = new Transform3D(arbiTrans3d);
+            Transform3D kTransform = new Transform3D(mcArbiTrans3D);
             kTransform.setScale(new Vector3d(1,1,1));
             float[] data = new float[16];
             kTransform.get(data);

@@ -45,5 +45,6 @@ public abstract class Application
         new StringTreeGUI( pkRoot );
     }
     
+    /** Stub for derived classes: */
     public void reloadShaders() {}
 }

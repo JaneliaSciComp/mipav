@@ -19,6 +19,14 @@ import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 
 public abstract class JavaApplication2 extends JavaApplication
 {
+    /** Constructs a 2D application.
+     * @param acWindowTitle, the window title
+     * @param iXPosition, window screen x-position
+     * @param iYPosition, window screen y-position
+     * @param iWidth, window width
+     * @param iHeight, window height
+     * @param rkBackgroundColor, background color
+     */
     public JavaApplication2 (final String acWindowTitle, int iXPosition,
                              int iYPosition, int iWidth, int iHeight,
                              final ColorRGBA rkBackgroundColor)
@@ -32,7 +40,9 @@ public abstract class JavaApplication2 extends JavaApplication
         m_akFlipScreen = null;
     }
 
-    // event callbacks
+    /** Initialize event callback.
+     * @return true if sucessful initialization, false otherwise.
+     */
     public boolean OnInitialize ()
     {
         if (!super.OnInitialize())
@@ -43,11 +53,14 @@ public abstract class JavaApplication2 extends JavaApplication
         // the RGB screen pixels
         m_iScrWidth = GetWidth();
         m_iScrHeight = GetHeight();
-        m_akScreen = new Color[m_iScrWidth*m_iScrHeight];
+        m_akScreen = new byte[m_iScrWidth*m_iScrHeight*3];
+        m_akFlipScreen = new byte[m_iScrWidth*m_iScrHeight*3];
         ClearScreen();
         return true;
     }
 
+    /** Terminate event callback.
+     */
     public void OnTerminate ()
     {
         m_akScreen = null;
@@ -55,6 +68,10 @@ public abstract class JavaApplication2 extends JavaApplication
         super.OnTerminate();
     }
 
+    /** Resize event callback.
+     * @param iWidth, new window width
+     * @param iHeight, new window height
+     */
     public void OnResize (int iWidth, int iHeight)
     {
         iWidth = iWidth - (iWidth % 4);
@@ -69,17 +86,14 @@ public abstract class JavaApplication2 extends JavaApplication
             m_akScreen = null;
             m_iScrWidth = iWidth;
             m_iScrHeight = iHeight;
-            m_akScreen = new Color[m_iScrWidth*m_iScrHeight];
+            m_akScreen = new byte[m_iScrWidth*m_iScrHeight*3];
+            m_akFlipScreen = null;
+            m_akFlipScreen = new byte[m_iScrWidth*m_iScrHeight*3];
             ClearScreen();
-
-            if (m_akFlipScreen != null)
-            {
-                m_akFlipScreen = null;
-                m_akFlipScreen = new Color[m_iScrWidth*m_iScrHeight];
-            }
         }
     }
 
+    /** Display event callabck. */
     public void OnDisplay ()
     {
         m_pkRenderer.ClearBuffers();
@@ -87,22 +101,12 @@ public abstract class JavaApplication2 extends JavaApplication
         {
             if (m_akFlipScreen == null)
             {
-                //m_pkRenderer.Draw((final byte[])m_akScreen);
+                m_pkRenderer.Draw(m_akScreen);
             }
             else
             {
-//                 // flip the screen
-//                 Color[] akSPtr = m_akScreen;
-//                 Color[] akFPtr = m_akFlipScreen + m_iScrWidth*(m_iScrHeight-1);
-//                 size_t uiQuantity = m_iScrWidth*sizeof(Color);
-//                 for (int i = 0; i < m_iScrHeight; i++)
-//                 {
-//                     System::Memcpy(akFPtr,uiQuantity,akSPtr,uiQuantity);
-//                     akSPtr += m_iScrWidth;
-//                     akFPtr -= m_iScrWidth;
-//                 }
-
-//                 m_pkRenderer.Draw((const unsigned char*)m_akFlipScreen);
+                // flip the screen
+                m_pkRenderer.Draw(m_akFlipScreen);
             }
 
             // Screen overlays should use m_pkRenderer and not access the
@@ -115,73 +119,70 @@ public abstract class JavaApplication2 extends JavaApplication
     }
 
 
-    // Allows you to do additional drawing after the screen polygon is drawn.
+    /** Allows you to do additional drawing after the screen polygon is drawn. */
     public void ScreenOverlay ()
     {
         // stub for derived classes
     }
 
-    void ClearScreen ()
+    /** Clears the screen polygon. */
+    public void ClearScreen ()
     {
         for (int i = 0; i < m_iWidth*m_iHeight; i++)
         {
-            // This can lead to slow float-to-int conversions.
-            m_akScreen[i].r = (byte)(255.0f*m_kBackgroundColor.R());
-            m_akScreen[i].b = (byte)(255.0f*m_kBackgroundColor.G());
-            m_akScreen[i].b = (byte)(255.0f*m_kBackgroundColor.B());
-
-            // fast float-to-int conversions
-//             int iValue;
-//             WM4_SCALED_FLOAT_TO_INT(m_kBackgroundColor.R(),8,iValue);
-//             m_akScreen[i].r = (unsigned char)iValue;
-//             WM4_SCALED_FLOAT_TO_INT(m_kBackgroundColor.G(),8,iValue);
-//             m_akScreen[i].g = (unsigned char)iValue;
-//             WM4_SCALED_FLOAT_TO_INT(m_kBackgroundColor.B(),8,iValue);
-//             m_akScreen[i].b = (unsigned char)iValue;
+            m_akScreen[i*3 + 0] = (byte)(255.0f*m_kBackgroundColor.R());
+            m_akScreen[i*3 + 1] = (byte)(255.0f*m_kBackgroundColor.G());
+            m_akScreen[i*3 + 2] = (byte)(255.0f*m_kBackgroundColor.B());
+            m_akFlipScreen[i*3 + 0] = (byte)(255.0f*m_kBackgroundColor.R());
+            m_akFlipScreen[i*3 + 1] = (byte)(255.0f*m_kBackgroundColor.G());
+            m_akFlipScreen[i*3 + 2] = (byte)(255.0f*m_kBackgroundColor.B());
         }
     }
 
 
-    class Color
-    {
-        public Color () {}
-
-        public Color (byte ucR, byte ucG, byte ucB)
-        {
-            r = ucR;
-            g = ucG;
-            b = ucB;
-        }
-
-//         boolean operator== (Color kColor) const
-//         {
-//             return b == kColor.b && g == kColor.g && r == kColor.r;
-//         }
-
-//         boolean operator!= (Color kColor) const
-//         {
-//             return b != kColor.b || g != kColor.g || r != kColor.r;
-//         }
-
-        byte b = 0, g = 0, r = 0;
-    };
-
-    public void SetPixel (int iX, int iY, Color kColor)
+    /** Sets the pixel color. 
+     * @param iX, pixel x-location.
+     * @param iY, pixel y-location.
+     * @param kColor, new pixel color.
+     */
+    public void SetPixel (int iX, int iY, ColorRGB kColor)
     {
         if (m_bClampToWindow)
         {
             if (0 <= iX && iX < m_iWidth && 0 <= iY && iY < m_iHeight)
             {
-                m_akScreen[Index(iX,iY)] = kColor;
+                int iIndex = Index(iX,iY);
+                m_akScreen[iIndex*3 + 0] = (byte)(255.0f*kColor.R());
+                m_akScreen[iIndex*3 + 1] = (byte)(255.0f*kColor.G());
+                m_akScreen[iIndex*3 + 2] = (byte)(255.0f*kColor.B());
+
+                int iIndexFlip = IndexFlip(iX,iY);
+                m_akFlipScreen[iIndexFlip*3 + 0] = (byte)(255.0f*kColor.R());
+                m_akFlipScreen[iIndexFlip*3 + 1] = (byte)(255.0f*kColor.G());
+                m_akFlipScreen[iIndexFlip*3 + 2] = (byte)(255.0f*kColor.B());
             }
         }
         else
         {
-            m_akScreen[Index(iX,iY)] = kColor;
+            int iIndex = Index(iX,iY);
+            m_akScreen[iIndex*3 + 0] = (byte)(255.0f*kColor.R());
+            m_akScreen[iIndex*3 + 1] = (byte)(255.0f*kColor.G());
+            m_akScreen[iIndex*3 + 2] = (byte)(255.0f*kColor.B());
+
+            int iIndexFlip = IndexFlip(iX,iY);
+            m_akFlipScreen[iIndexFlip*3 + 0] = (byte)(255.0f*kColor.R());
+            m_akFlipScreen[iIndexFlip*3 + 1] = (byte)(255.0f*kColor.G());
+            m_akFlipScreen[iIndexFlip*3 + 2] = (byte)(255.0f*kColor.B());
         }
     }
 
-    public void SetThickPixel (int iX, int iY, int iThick, Color kColor)
+    /** Sets a thick pixel color. 
+     * @param iX, pixel x-location.
+     * @param iY, pixel y-location.
+     * @param iThink, pixel thickness.
+     * @param kColor, new pixel color.
+     */
+    public void SetThickPixel (int iX, int iY, int iThick, ColorRGB kColor)
     {
         for (int iDY = -iThick; iDY <= iThick; iDY++)
         {
@@ -192,26 +193,46 @@ public abstract class JavaApplication2 extends JavaApplication
         }
     }
 
-    public Color GetPixel (int iX, int iY)
+    /** Returns the pixel color at the specified location.
+     * @param iX, pixel x-location.
+     * @param iY, pixel y-location.
+     * @return the new pixel color.
+     */
+    public ColorRGB GetPixel (int iX, int iY)
     {
         if (m_bClampToWindow)
         {
             if (0 <= iX && iX < m_iWidth && 0 <= iY && iY < m_iHeight)
             {
-                return m_akScreen[Index(iX,iY)];
+                int iIndex = Index(iX,iY);
+                return new ColorRGB( m_akScreen[iIndex*3 + 0] / 255.0f,
+                                     m_akScreen[iIndex*3 + 1] / 255.0f,
+                                     m_akScreen[iIndex*3 + 2] / 255.0f );
+
             }
             else
             {
-                return new Color();
+                return new ColorRGB();
             }
         }
         else
         {
-            return m_akScreen[Index(iX,iY)];
+            int iIndex = Index(iX,iY);
+            return new ColorRGB( m_akScreen[iIndex*3 + 0] / 255.0f,
+                                 m_akScreen[iIndex*3 + 1] / 255.0f,
+                                 m_akScreen[iIndex*3 + 2] / 255.0f );
         }
     }
 
-    public void DrawLine (int iX0, int iY0, int iX1, int iY1, Color kColor)
+    /**
+     * Draw a line from (iX0,iY0) to (iX1,iY1).
+     * @param iX0 start x-location.
+     * @param iY0 start y-location.
+     * @param iX1 end x-location.
+     * @param iY1 end y-location.
+     * @param kColor, line color.
+     */
+    public void DrawLine (int iX0, int iY0, int iX1, int iY1, ColorRGB kColor)
     {
         int iX = iX0, iY = iY0;
 
@@ -285,8 +306,19 @@ public abstract class JavaApplication2 extends JavaApplication
         }
     }
 
+    /**
+     * Draw a rectangle with lower-left corner (iXMin,iYMin) and upper-right
+     * corner (iXMax,iYMax).
+     * @param iXMin lower-left corner x-position
+     * @param iYMin lower-left corner y-position
+     * @param iXMax upper-right corner x-position
+     * @param iYMax upper-right corner y-position
+     * @param kColor  color.
+     * @param bSolid, when true the rectangle is solid, when false it is an
+     * outline.
+     */
     public void DrawRectangle (int iXMin, int iYMin, int iXMax, int iYMax,
-                        Color kColor, boolean bSolid)
+                               ColorRGB kColor, boolean bSolid)
     {
         if (iXMin >= m_iWidth || iXMax < 0 || iYMin >= m_iHeight || iYMax < 0)
         {
@@ -321,8 +353,17 @@ public abstract class JavaApplication2 extends JavaApplication
         }
     }
 
-    public void DrawCircle (int iXCenter, int iYCenter, int iRadius, Color kColor,
-                     boolean bSolid)
+    /**
+     * Draw a circle centered at iXCenter, iYCenter
+     * @param iXCenter center x-position
+     * @param iYCenter center y-position
+     * @param iRadius circle radius
+     * @param kColor  color.
+     * @param bSolid, when true the circle is solid, when false it is an
+     * outline.
+     */
+    public void DrawCircle (int iXCenter, int iYCenter, int iRadius,
+                            ColorRGB kColor, boolean bSolid)
     {
         int iX, iY, iDec;
 
@@ -388,7 +429,7 @@ public abstract class JavaApplication2 extends JavaApplication
         }
     }
 
-    public void Fill (int iX, int iY, Color kFColor, Color kBColor)
+    public void Fill (int iX, int iY, ColorRGB kFColor, ColorRGB kBColor)
     {
         // Allocate the maximum amount of space needed.  If you prefer less, you
         // need to modify this data structure to allow for dynamic reallocation
@@ -463,47 +504,54 @@ public abstract class JavaApplication2 extends JavaApplication
     }
 
 
+    /** Returns if the Screen wraps or is clamped
+     * @return true if the Screen is clamped, false if it wraps. */
     public boolean ClampToWindow ()
     {
         return m_bClampToWindow;
     }
 
 
-    // For right-handed drawing.  You still draw to the left-handed screen,
-    // but immediately before drawing the screen is copied into another buffer
-    // with the rows reversed.  You need only call DoFlip(true) once for an
-    // application.  The default is 'false'.
+    /** For right-handed drawing.  You need only call DoFlip(true) once for an
+     * application.  The default is 'false'.
+     * @param bDoFlip, sets the flip screen contant.
+     */
     public void DoFlip (boolean bDoFlip)
     {
-        if (m_akFlipScreen != null)
-        {
-            if (!bDoFlip)
-            {
-                m_akFlipScreen = null;
-            }
-        }
-        else
-        {
-            if (bDoFlip)
-            {
-                m_akFlipScreen = new Color[m_iScrWidth*m_iScrHeight];
-            }
-        }
+        m_bFlipScreen = bDoFlip;
     }
 
-
-
+    /** left-handed screen coordinates
+     * @param iX, screen coordinate
+     * @param iY, screen coordinate
+     * @return left-handed screen coordinates.
+     */
     protected int Index (int iX, int iY)
     {
-        // left-handed screen coordinates
         return iX + m_iWidth*iY;
     }
+    
+    /** right-handed screen coordinates
+     * @param iX, screen coordinate
+     * @param iY, screen coordinate
+     * @return right-handed screen coordinates.
+     */
+    protected int IndexFlip (int iX, int iY)
+    {
+        return iY + m_iHeight*iX;
+    }
 
+    /** Screen width, height */
     protected int m_iScrWidth, m_iScrHeight;
-    protected Color[] m_akScreen;
+    /** Screen polygon */
+    protected byte[] m_akScreen;
+    /** Screen wraps or is clamped */
     protected boolean m_bClampToWindow;
 
-    // For right-handed drawing.  The array m_akScreen is copied to
-    // m_akFlipScreen so that the rows are reversed.
-    protected Color[] m_akFlipScreen;
+    /** Set to true to flip the screen: */
+    protected boolean m_bFlipScreen = false;
+
+    /** For right-handed drawing.  The array m_akScreen is copied to
+     * m_akFlipScreen so that the rows are reversed. */
+    protected byte[] m_akFlipScreen;
 };

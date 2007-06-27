@@ -172,6 +172,9 @@ public class ApplicationGUI
         }
     }
 
+    /** Sets the parent Application
+     * @param kParent, the parent Application.
+     */
     public void setParent( Application kParent )
     {
         m_kParent = kParent;
@@ -182,6 +185,8 @@ public class ApplicationGUI
     /** Initialize the interface once. */
     private static boolean ms_bInit = false;
 
+    /** Parent Application */
     private Application m_kParent = null;
+    /** Local JFrame */
     private JFrame m_kFrame = null;
 }
