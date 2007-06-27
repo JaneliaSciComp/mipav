@@ -69,16 +69,20 @@ public class FileNIFTI extends FileBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** R2L, L2R, A2P, P2A, I2S, and S2I orientations of x, y, and z axes. */
     private int[] axisOrientation;
 
-    /** DOCUMENT ME! */
+    /** When both qform_code > 0 and sform_code > 0, the axis orientation information corresponding to sform_code > 0
+     *  is placed in axisOrientation2 */
     private int[] axisOrientation2;
 
-    /** DOCUMENT ME! */
+    /** A byte array of the size of the NIFTI header. */
     private byte[] bufferByte = null;
 
-    /** DOCUMENT ME! */
+    /** If qform_code > 0, coord_code = qform_code.  If qform_code <= 0 and sform_code > 0, coord_code = sform_code.
+     *  coord_code has values for "Arbitrary X,Y,Z coordinate system", "Scanner based anatomical coordinates",
+     *  "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
+     *  "MNI 152 normalized X,Y,Z coordinates".   */
     private short coord_code;
 
     /** DOCUMENT ME! */
@@ -93,10 +97,12 @@ public class FileNIFTI extends FileBase {
     /** DOCUMENT ME! */
     private String fileName;
 
-    /** DOCUMENT ME! */
+    /** Bits 0 and 1 of the dim_info character contain the freq_dim information.
+     *  0 for "No frequency encoding direction is present", 1 for "Frequency encoding in the x direction",
+     *  2 for "Frequency encoding in the y direction", and 3 for "Frequency encoding in the z direction". */
     private int freq_dim = 0;
 
-    /** DOCUMENT ME! */
+    /** The size of the NIFTI header must be set to 348 bytes. */
     private int headerSize = 348;
 
     /** DOCUMENT ME! */
@@ -108,132 +114,264 @@ public class FileNIFTI extends FileBase {
     /** DOCUMENT ME! */
     private double imageMin;
 
-    /** DOCUMENT ME! */
+    /** The intent_name field provides space for a 15 character (plus 0 byte)
+        name string for the type of data stored. Examples:
+        - intent_code = NIFTI_INTENT_ESTIMATE; intent_name = "T1";
+        could be used to signify that the voxel values are estimates of the
+        NMR parameter T1.
+        - intent_code = NIFTI_INTENT_TTEST; intent_name = "House";
+        could be used to signify that the voxel values are t-statistics
+        for the significance of activation response to a House stimulus.
+        - intent_code = NIFTI_INTENT_DISPVECT; intent_name = "ToMNI152";
+        could be used to signify that the voxel values are a displacement
+        vector that transforms each voxel (x,y,z) location to the
+        corresponding location in the MNI152 standard brain.
+        - intent_code = NIFTI_INTENT_SYMMATRIX; intent_name = "DTI";
+        could be used to signify that the voxel values comprise a diffusion
+        tensor image. */
     private String intentName;
 
-    /** DOCUMENT ME! */
+    /** The MIPAV origin value which is obtained from qoffset_x, qoffset_y, and qoffset_z
+     *  when qform_code > 0 or from srow_x[3], srow_y[3], and srow_z[3] when sform_code > 0.
+     *  The MIPAV value will equal the NIFTI value or the negative of the NIFTI value.
+     *  The MIPAV value is stored using fileInfo.setOrigin(LPSOrigin) and  
+     *  matrix.setMatrix((double) LPSOrigin[0], 0, 3);
+        matrix.setMatrix((double) LPSOrigin[1], 1, 3);
+        matrix.setMatrix((double) LPSOrigin[2], 2, 3);*/
     private float[] LPSOrigin;
 
-    /** DOCUMENT ME! */
+    /** When qform_code > 0 and sform_code > 0, LPSOrigin derives the MIPAV origin from 
+     *  the qform information and LPSOrigin2 derives MIPAV origin from the sform 
+     *  information.  LPSOrigin2 is derived from srow_x[3], srow_y[3], and srow_z[3].
+     *  The MIPAV value will equal the NIFTI value or the negative of the NIFTI value.
+     *  MIPAV information is stored using
+     *  matrix2.setMatrix((double) LPSOrigin2[0], 0, 3);
+        matrix2.setMatrix((double) LPSOrigin2[1], 1, 3);
+        matrix2.setMatrix((double) LPSOrigin2[2], 2, 3); */
     private float[] LPSOrigin2;
 
-    /** DOCUMENT ME! */
+    /** MIPAV matrix used for storing qform or sform transformation information. */
     private TransMatrix matrix = new TransMatrix(4);
     
+    /** MIPAV matrix used for storing qform or sform transformation information
+     * for 2D images.
+     */
     private TransMatrix matrixTwoDim = new TransMatrix(3);
 
-    /** DOCUMENT ME! */
+    /** When qform_code > 0 and sform_code > 0, the qform transformation information
+     *  is stored in matrix and the sform transformation information is stored in
+     *  matrix2. */
     private TransMatrix matrix2 = null;
 
-    /** DOCUMENT ME! */
+    /** When the image data is rescaled by
+     *  y = scl_slope * x + scl_inter,
+     *  the image minimum or image maximum is rescaled to newMax. */
     private double newMax;
 
-    /** DOCUMENT ME! */
+    /** When the image data is rescaled by
+     *  y = scl_slope * x + scl_inter,
+     *  the image minimum or image maximum is rescaled to newMin. */
     private double newMin;
 
-    /** DOCUMENT ME! */
+    /** If true, header and data both stored in .nii file.
+     *  If false, header stored in filename.hdr and data
+     *  stored in filename.img. */
     private boolean oneFile;
-
-    /** DOCUMENT ME! */
-    private boolean oneFileStorage;
 
     /** DOCUMENT ME! */
     private float[] origin;
 
-    /** DOCUMENT ME! */
+    /** Bits 2 and 3 of the dim_info character contain the phase_dim information.
+     *  0 for "No phase encoding direction is present", 1 for "Phase encoding in the x direction",
+     *  2 for "Phase encoding in the y direction", and 3 for "Phase encoding in the z direction". */
     private int phase_dim = 0;
 
-    /** DOCUMENT ME! */
+    /** qfac is stored in the otherwise unused pixdim[0].
+     *  pixdim[i] = voxel width along dimension #i, i=1..dim[0] (positive)
+     *  the units of pixdim can be specified with the xyzt_units field */
     private float[] pixdim;
 
-    /** DOCUMENT ME! */
+    /**  The scaling factor qfac is either 1 or -1. The rotation matrix R
+         defined by the quaternion parameters is "proper" (has determinant 1).
+         This may not fit the needs of the data; for example, if the image
+         grid is
+         i increases from Left-to-Right
+         j increases from Anterior-to-Posterior
+         k increases from Inferior-to-Superior
+         Then (i,j,k) is a left-handed triple. In this example, if qfac=1,
+         the R matrix would have to be
+        
+         [ 1 0 0 ]
+         [ 0 -1 0 ] which is "improper" (determinant = -1).
+         [ 0 0 1 ]
+        
+         If we set qfac=-1, then the R matrix would be
+        
+         [ 1 0 0 ]
+         [ 0 -1 0 ] which is proper.
+         [ 0 0 -1 ]
+         qfac is stored in the otherwise unused pixdim[0]. */
     private float qfac;
 
-    /** DOCUMENT ME! */
+    /** When qform_code > 0 the (x,y,z) coordinates are given by:
+     *  [ x ]   [ R11 R12 R13 ] [        pixdim[1] * i ]   [ qoffset_x ]
+        [ y ] = [ R21 R22 R23 ] [        pixdim[2] * j ] + [ qoffset_y ]
+        [ z ]   [ R31 R32 R33 ] [ qfac * pixdim[3] * k ]   [ qoffset_z ] 
+        where the R rotation parameters are calculated from the 
+        quaternion parameters.
+        qform_code has values for "Arbitrary X,Y,Z coordinate system", "Scanner based anatomical coordinates",
+     *  "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
+     *  "MNI 152 normalized X,Y,Z coordinates".   */
     private short qform_code;
 
-    /** DOCUMENT ME! */
+    /** Quaternion x shift */
     private float qoffset_x;
 
-    /** DOCUMENT ME! */
+    /** Quaternion y shift */
     private float qoffset_y;
 
-    /** DOCUMENT ME! */
+    /** Quaternion z shift */
     private float qoffset_z;
 
-    /** DOCUMENT ME! */
+    /** The orientation of the (x,y,z) axes relative to the (i,j,k) axes
+   in 3D space is specified using a unit quaternion [a,b,c,d], where
+   a*a+b*b+c*c+d*d=1.  The (b,c,d) values are all that is needed, since
+   we require that a = sqrt(1.0-(b*b+c*c+d*d)) be nonnegative. */
     private float quatern_a;
 
-    /** DOCUMENT ME! */
+    /** Quaternion b parameter */
     private float quatern_b;
 
-    /** DOCUMENT ME! */
+    /** Quaternion c parameter */
     private float quatern_c;
 
-    /** DOCUMENT ME! */
+    /** Quaternion d parameter */
     private float quatern_d;
 
-    /** DOCUMENT ME! */
+    /** The (proper) 3x3 rotation matrix that
+        corresponds to quaternion [a,b,c,d] is
+
+         [ a*a+b*b-c*c-d*d   2*b*c-2*a*d       2*b*d+2*a*c     ]
+     R = [ 2*b*c+2*a*d       a*a+c*c-b*b-d*d   2*c*d-2*a*b     ]
+         [ 2*b*d-2*a*c       2*c*d+2*a*b       a*a+d*d-c*c-b*b ] */
     private double r00, r01, r02;
-
-    /** DOCUMENT ME! */
     private double r10, r11, r12;
-
-    /** DOCUMENT ME! */
     private double r20, r21, r22;
 
-    /** DOCUMENT ME! */
+    /** NIFTI pixdim information is converted into MIPAV resolutions information
+     *  Only those pixdim[i] for which the niftiExtents[i] > 1 are passed into
+     *  a resolutions[j] value. */
     private float[] resolutions;
 
-    /** DOCUMENT ME! */
-    private float scl_inter;
-
-    /** DOCUMENT ME! */
+    /** If the scl_slope field is nonzero, then each voxel value in the dataset
+        should be scaled as
+        y = scl_slope * x + scl_inter
+        where x = voxel value stored
+        y = "true" voxel value
+        Normally, we would expect this scaling to be used to store "true" floating
+        values in a smaller integer datatype, but that is not required.  That is,
+        it is legal to use scaling even if the datatype is a float type (crazy,
+        perhaps, but legal).
+        - However, the scaling is to be ignored if datatype is DT_RGB24.
+        - If datatype is a complex type, then the scaling is to be
+        applied to both the real and imaginary parts. */
     private float scl_slope;
+    private float scl_inter;   
 
-    /** DOCUMENT ME! */
+    /** When sform_code > 0,
+     *  The (x,y,z) coordinates are given by a general affine transformation
+        of the (i,j,k) indexes:
+
+        x = srow_x[0] * i + srow_x[1] * j + srow_x[2] * k + srow_x[3]
+        y = srow_y[0] * i + srow_y[1] * j + srow_y[2] * k + srow_y[3]
+        z = srow_z[0] * i + srow_z[1] * j + srow_z[2] * k + srow_z[3]
+        sform_code has values for "Arbitrary X,Y,Z coordinate system", "Scanner based anatomical coordinates",
+     *  "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
+     *  "MNI 152 normalized X,Y,Z coordinates".   */
     private short sform_code;
 
-    /** DOCUMENT ME! */
+    /** Bits 4 and 5 of the dim_info character contain the slice_dim information.
+     *  0 for "No slice acquisition direction is present", 1 for "Slice acquisition in the x direction",
+     *  2 for "Slice acquisition in the y direction", and 3 for "Slice acquisition in the z direction". */
     private int slice_dim = 0;
 
-    /** DOCUMENT ME! */
+    /** If this is nonzero, AND if slice_dim is nonzero, AND
+        if slice_duration is positive, indicates the timing
+        pattern of the slice acquisition.  The following codes
+        are defined:
+        "Slice timing order is sequentially increasing",
+        "Slice timing order is sequentially decreasing",
+        "Slice timing order is alternately increasing",
+        "Slice timing order is alternately decreasing",
+        "Slice timing order is alternately increasing #2",
+        "Slice timing order is alternately decreasing #2". */
     private byte sliceCode;
 
-    /** DOCUMENT ME! */
+    /** Time used to acquire 1 slice. */
     private float sliceDuration;
 
-    /** DOCUMENT ME! */
+    /** Slice timing pattern ends with slice = (sliceEnd + 1) */
     private short sliceEnd;
 
-    /** DOCUMENT ME! */
+    /** Slice timing pattern starts with slice = (sliceStart + 1) */
     private short sliceStart;
 
-    /** DOCUMENT ME! */
+    /** Source bits per pixel = sourceBitPix */
     private short sourceBitPix;
 
-    /** DOCUMENT ME! */
+    /** Original unscaled source data type */
     private short sourceType;
 
-    /** DOCUMENT ME! */
+    /** Bits 0, 1, and 2 of xyzt_units specify the units of pixdim[1..3],
+     *  that is the spatial units of the nifti x, y, and z axes.
+     *  0 means "Spatial units are unknown",
+     *  1 means "Spatial units are meters",
+     *  2 means "Spatial units are millimeters",
+     *  3 means "Spatial units are micrometers". */
     private int spaceUnits = FileInfoNIFTI.NIFTI_UNITS_UNKNOWN;
 
-    /** DOCUMENT ME! */
+    /** 1st row affine transform */
     private float[] srow_x;
 
-    /** DOCUMENT ME! */
+    /** 2nd row affine transform */
     private float[] srow_y;
 
-    /** DOCUMENT ME! */
+    /** 3rd row affine transform */
     private float[] srow_z;
 
-    /** DOCUMENT ME! */
+    /** Bits 3, 4, and 5 of xyzt_units specify the units of pixdim[4],
+     *  that is the temporal units of the nifti time axis.
+        Temporal units are multiples of 8.
+        0 means "Temporal units are unknown",
+        8 means "Temporal units are seconds",
+        16 means "Temporal units are milliseconds",
+        24 means "Temporal units are microseconds",
+        32 means "Temporal units are Hertz",
+        40 means "Temporal units are parts per million",
+        48 means "Temporal units are Radians per second." */
     private int timeUnits = FileInfoNIFTI.NIFTI_UNITS_UNKNOWN;
 
-    /** DOCUMENT ME! */
+    /** The toffset field can be used to indicate a nonzero start point for
+        the time axis.  That is, time point #m is at t=toffset+m*pixdim[4]
+        for m=0..dim[4]-1. */
     private float tOffset;
 
-    /** DOCUMENT ME! */
+    /** If the magic field is "n+1", then the voxel data is stored in the same file as the header.
+     *  In this case, the voxel data starts at offset (int)vox_offset into the header file. Thus,
+     *  vox_offset=352.0 means that the data starts immediately after the NIFTI-1 header. If vox_offset
+     *  is greater than 352, the NIFTI-1 format does not say much about the contents of the dataset
+     *  file between the end of the header and the start of the data.
+
+        If the magic field is "ni1", then the voxel data is stored in the associated ".img" file,
+        starting at offset 0 (i.e., vox_offset is not used in this case, and should be set to 0.0).
+
+        In a .nii file, the vox_offset field value is interpreted as the start location of the image
+        data bytes in that file. In a .hdr/.img file pair, the vox_offset field value is the start
+        location of the image data bytes in the .img file. If vox_offset is less than 352 in a .nii
+        file, it is equivalent to 352 (i.e., image data never starts before byte #352 in a .nii file).
+        The default value for vox_offset in a .nii file is 352. In a .hdr file, the default value for
+        vox_offset is 0. * vox_offset should be an integer multiple of 16; otherwise, some programs
+        may not work properly (e.g., SPM). This is to allow memory-mapped input to be properly byte-aligned. */
     private float vox_offset = 0.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -617,7 +755,7 @@ public class FileNIFTI extends FileBase {
         index = fileName.lastIndexOf(".");
 
         if (index == -1) {
-            oneFileStorage = false;
+            oneFile = false;
             fileHeaderName = fileName + ".hdr";
             fileHeader = new File(fileDir + fileHeaderName);
 
@@ -633,10 +771,10 @@ public class FileNIFTI extends FileBase {
         } else {
 
             if (fileName.substring(index + 1).equalsIgnoreCase("nii")) {
-                oneFileStorage = true;
+                oneFile = true;
                 fileHeaderName = fileName;
             } else {
-                oneFileStorage = false;
+                oneFile = false;
                 fileHeaderName = fileName.substring(0, index) + ".hdr";
             }
 
@@ -1328,7 +1466,7 @@ public class FileNIFTI extends FileBase {
                     break;
 
                 case FileInfoNIFTI.NIFTI_UNITS_PPM:
-                    Preferences.debug("Time units are part per million\n");
+                    Preferences.debug("Time units are parts per million\n");
                     unitMeasure = FileInfoBase.PPM;
                     break;
 
@@ -1505,6 +1643,10 @@ public class FileNIFTI extends FileBase {
         }
 
         fileInfo.setCoordCode(coord_code);
+        
+        if ((qform_code > 0) && (sform_code > 0)) {
+            fileInfo.setCoordCode2(sform_code);
+        }
 
         if (coord_code > 0) {
 
@@ -1914,7 +2056,7 @@ public class FileNIFTI extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            if (oneFileStorage) {
+            if (oneFile) {
                 offset = (int) Math.abs(vox_offset);
 
                 if (offset < headerSize) { // header length
@@ -2057,7 +2199,7 @@ public class FileNIFTI extends FileBase {
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
             linkProgress(rawFile);
 
-            if (oneFileStorage) {
+            if (oneFile) {
                 offset = (int) Math.abs(vox_offset);
 
                 if (offset < headerSize) { // header length
@@ -2967,7 +3109,6 @@ public class FileNIFTI extends FileBase {
 
         // Set certain neccessary information
         fileInfo.setSizeOfHeader(headerSize);
-        fileInfo.setFileExtents(0);
 
         extents = myFileInfo.getExtents();
         unitsOfMeasure = myFileInfo.getUnitsOfMeasure();
@@ -3727,7 +3868,7 @@ public class FileNIFTI extends FileBase {
             setBufferString(bufferByte, fileName, 14);
 
             // extents not needed by NIFTI
-            setBufferInt(bufferByte, fileInfo.getFileExtents(), 32, endianess);
+            setBufferInt(bufferByte, 0, 32, endianess);
 
             // regular - not needed by NIFTI
             bufferByte[38] = (byte) 'r';
@@ -3900,7 +4041,7 @@ public class FileNIFTI extends FileBase {
             setBufferString(bufferByte, fileName + "\n", 14);
 
             // unused in NIFTI
-            setBufferInt(bufferByte, fileInfo.getFileExtents(), 32, endianess);
+            setBufferInt(bufferByte, 0, 32, endianess);
 
             // unused in NIFTI
             setBufferShort(bufferByte, (short) 0, 36, endianess);
