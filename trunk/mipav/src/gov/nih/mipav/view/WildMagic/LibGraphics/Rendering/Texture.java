@@ -30,6 +30,7 @@ public class Texture extends Bindable
     {
         NEAREST ("NEAREST"),          // nearest neighbor
         LINEAR ("LINEAR"),           // linear filtering
+        //mipmap filtering:
         NEAREST_NEAREST ("NEAREST_NEAREST"),  // nearest within image, nearest across images
         NEAREST_LINEAR ("NEAREST_LINEAR"),   // nearest within image, linear across images
         LINEAR_NEAREST ("LINEAR_NEAREST"),   // linear within image, nearest across images

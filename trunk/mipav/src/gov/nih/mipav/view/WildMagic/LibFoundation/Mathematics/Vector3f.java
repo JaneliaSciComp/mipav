@@ -123,6 +123,13 @@ public class Vector3f
                             -m_afTuple[2]);
     }
 
+    public void copy (Vector3f rkV)
+    {
+        m_afTuple[0] = rkV.m_afTuple[0];
+        m_afTuple[1] = rkV.m_afTuple[1];
+        m_afTuple[2] = rkV.m_afTuple[2];
+    }
+
     // arithmetic updates
     public void addEquals (Vector3f rkV)
     {
@@ -306,5 +313,5 @@ public class Vector3f
         }
     }
 
-    private float[] m_afTuple = new float[3];
+    private float[] m_afTuple = new float[]{0,0,0};
 }

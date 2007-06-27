@@ -541,7 +541,15 @@ public class JPanelClip extends JPanelRendererBase
                 hideClipSliceStatic();
                 colorButtonStatic.setEnabled(false);
             }
-        } else if (source == boundingCheckStaticInv) {
+            if ( rayBasedRenderWM != null )
+            {
+                rayBasedRenderWM.enableEyeClipPlane( boundingCheckStatic.isSelected(),
+                                                     new ColorRGB( clipSliceStatic.getColor().x,
+                                                                   clipSliceStatic.getColor().y,
+                                                                   clipSliceStatic.getColor().z)
+                                                     );
+            }
+       } else if (source == boundingCheckStaticInv) {
 
             if (boundingCheckStaticInv.isSelected()) {
                 addClipSliceStaticInv();
@@ -549,6 +557,14 @@ public class JPanelClip extends JPanelRendererBase
             } else {
                 hideClipSliceStaticInv();
                 colorButtonStaticInv.setEnabled(false);
+            }
+            if ( rayBasedRenderWM != null )
+            {
+                rayBasedRenderWM.enableEyeInvClipPlane( boundingCheckStaticInv.isSelected(),
+                                                        new ColorRGB( clipSliceStaticInv.getColor().x,
+                                                                   clipSliceStaticInv.getColor().y,
+                                                                   clipSliceStaticInv.getColor().z)
+                                                        );
             }
         } else if (command.equals("+X")) {
 
@@ -716,6 +732,10 @@ public class JPanelClip extends JPanelRendererBase
                 disableStaticClipping();
                 disableStaticInvClipping();
                 hideClipSliceStaticInv();
+                if ( rayBasedRenderWM != null )
+                {
+                    rayBasedRenderWM.enableEyeClipPlane( false, null );
+                }
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
@@ -736,6 +756,11 @@ public class JPanelClip extends JPanelRendererBase
                 initClipSliceStaticInv();
                 disableStaticInvClipping();
                 disableStaticClipping();
+
+                if ( rayBasedRenderWM != null )
+                {
+                    rayBasedRenderWM.enableEyeInvClipPlane( false, null );
+                }
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
@@ -4109,7 +4134,13 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void setClipSliceSColor(Color color) {
         clipSliceStatic.setColor(color);
-    }
+        if ( rayBasedRenderWM != null )
+        {
+            rayBasedRenderWM.setEyeColor( new ColorRGB( clipSliceStatic.getColor().x,
+                    clipSliceStatic.getColor().y,
+                    clipSliceStatic.getColor().z) );
+        }
+   }
 
     /**
      * Sets the color of the static inverse clipping plane slice frame.
@@ -4118,6 +4149,12 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void setClipSliceSInvColor(Color color) {
         clipSliceStaticInv.setColor(color);
+        if ( rayBasedRenderWM != null )
+        {
+            rayBasedRenderWM.setEyeInvColor( new ColorRGB( clipSliceStaticInv.getColor().x,
+                    clipSliceStaticInv.getColor().y,
+                    clipSliceStaticInv.getColor().z) );
+        }
     }
 
     /**
@@ -4776,7 +4813,7 @@ public class JPanelClip extends JPanelRendererBase
         displayAClipPlanePts();
     
         if (rayBasedRenderWM != null) {
-            Transform3D kTransform = new Transform3D(mcArbiTrans3D);
+            Transform3D kTransform = new Transform3D(arbiTrans3d);
             kTransform.setScale(new Vector3d(1,1,1));
             float[] data = new float[16];
             kTransform.get(data);
@@ -4805,7 +4842,9 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setEyeClipPlane((float)((2 * ((float) sSlice / (zDim - 1)) * zBox) - zBox - 0.001));
+                System.err.println( sSlice );
+                //rayBasedRenderWM.setEyeClipPlane((float)((2 * ((float) sSlice / (zDim - 1)) * zBox) - zBox - 0.001));
+                rayBasedRenderWM.setEyeClipPlane(sSlice, boundingCheckStatic.isSelected());
 
             }
 
@@ -4839,8 +4878,11 @@ public class JPanelClip extends JPanelRendererBase
                                          zBox - (2 * ((float) sSliceInv / (zDim - 1)) * zBox) + 0.001f,
                                          ViewJComponentBoxSlice.S_CLIPSLICE_NEG);
 
-            System.err.println( (xBox * 0.5f) + " " +  (yBox * 0.5f) + " " +
-                                (zBox - (2 * ((float) sSliceInv / (zDim - 1)) * zBox) + 0.001f));
+            if ( rayBasedRenderWM != null )
+            {
+                //rayBasedRenderWM.setEyeInvClipPlane((float)((2 * ((float) sSliceInv / (zDim - 1)) * zBox) - zBox - 0.001));
+                rayBasedRenderWM.setEyeInvClipPlane(sSliceInv, boundingCheckStatic.isSelected());
+            }
 
             Shape3D shape = new Shape3D(clipSliceStaticInv, null);
 

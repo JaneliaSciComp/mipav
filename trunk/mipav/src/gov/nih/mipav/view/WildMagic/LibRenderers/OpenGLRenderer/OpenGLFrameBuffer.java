@@ -12,7 +12,7 @@
 
 package gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer;
 
-import java.nio.ByteBuffer;
+import java.nio.Buffer;
 import javax.media.opengl.*;
 
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
@@ -206,7 +206,7 @@ public class OpenGLFrameBuffer extends FrameBuffer
         if (bFillImage)
         {
             GraphicsImage pkImage = m_pkTarget.GetImage();
-            ByteBuffer aucData = pkImage.GetDataBuffer();
+            Buffer aucData = pkImage.GetDataBuffer();
             int iBound0 = pkImage.GetBound(0);
             int iBound1 = pkImage.GetBound(1);
 

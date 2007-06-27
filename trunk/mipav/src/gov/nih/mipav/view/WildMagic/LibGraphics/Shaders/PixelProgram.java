@@ -21,16 +21,11 @@ public class PixelProgram extends Program
     public static PixelProgram Load (String rkProgramName, String rkDirectory)
     {
         int iProfile = CgGL.cgGLGetLatestProfile(CgGL.CG_GL_FRAGMENT);
-        System.err.println( CgGL.cgGetProfileString(iProfile) );
-        //CgGL.cgGLSetOptimalOptions(iProfile);
-        
         PixelProgram pkProgram = new PixelProgram();
         pkProgram.SetName(rkProgramName);
-        System.err.println( rkProgramName );
 
         boolean bLoaded = false;
         String kFilename = new String( rkDirectory + "\\Shaders\\Cg\\" + rkProgramName + ".cg" );
-        System.err.println( kFilename );
         String kProgramName = new String( "p_" + rkProgramName );
         
         CGprogram kCGProgram = CgGL.cgCreateProgramFromFile( pkProgram.m_kContext,
@@ -38,11 +33,9 @@ public class PixelProgram extends Program
                                                              kFilename,
                                                              iProfile,
                                                              kProgramName, null);
-        pkProgram.CheckCgError();
         pkProgram.m_kCGProgram = kCGProgram;
         if ( kCGProgram != null )
         {
-            System.err.println( CgGL.cgGetLastListing(pkProgram.m_kContext) );
             bLoaded = true;
             pkProgram.RecurseParamsInProgram();
             pkProgram.m_kProgramText = CgGL.cgGetProgramString(kCGProgram,CgGL.CG_COMPILED_PROGRAM);
@@ -50,6 +43,7 @@ public class PixelProgram extends Program
 
         if (!bLoaded)
         {
+            System.err.println( CgGL.cgGetLastListing(pkProgram.m_kContext) );
             pkProgram = null;
             return null;
         }      
