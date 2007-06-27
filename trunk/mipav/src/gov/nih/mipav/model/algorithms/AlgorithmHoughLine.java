@@ -76,6 +76,17 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         double costh[];
         double sinth[];
         boolean test = false;
+        boolean foundIndex[];
+        int largestValue;
+        int largestIndex;
+        int numLinesFound;
+        int indexArray[];
+        int rhoArray[];
+        int thetaArray[];
+        int countArray[];
+        int xArray[][];
+        int yArray[][];
+        int pointIndex;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -160,6 +171,66 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             return;
         }
        
+        // Find the 10 cells with the highest counts
+        foundIndex = new boolean[destSlice];
+        numLinesFound = 0;
+        indexArray = new int[10];
+        rhoArray = new int[10];
+        thetaArray = new int[10];
+        countArray = new int[10];
+        for (i = 0; i < 10; i++) {
+            largestValue = 0;
+            largestIndex = -1;
+            for (j = 0; j < destSlice; j++) {
+                if (!foundIndex[j]) {
+                    if (destBuffer[j] > largestValue) {
+                        largestValue = destBuffer[j];
+                        largestIndex = j;
+                    }
+                }
+            } // for (j = 0; j < destSlice; j++)
+            if (largestIndex == -1) {
+                break;
+            }
+            foundIndex[largestIndex] = true;
+            numLinesFound++;
+            indexArray[i] = largestIndex;
+            rhoArray[i] = largestIndex % n1;
+            thetaArray[i] = largestIndex/n1;
+            countArray[i] = largestValue;
+        } // for (i = 0; i < 10; i++)
+        
+        xArray = new int[numLinesFound][];
+        yArray = new int[numLinesFound][];
+        for (i = 0; i < numLinesFound; i++) {
+            xArray[i] = new int[countArray[i]];
+            yArray[i] = new int[countArray[i]];
+            pointIndex = 0;
+            for (y = 0; y < yDimSource; y++) {
+                offset = y * xDimSource;
+                for (x = 0; x < xDimSource; x++) {
+                    index = offset + x;
+                    if (srcBuffer[index] != 0) {
+                        for (k = 0; k < n2; k++) {
+                            rho = x*costh[k] + y*sinth[k];
+                            j = (int)((rho + d)*n1/(2.0*d));
+                            if (j >= n1) {
+                                j = n1 - 1;
+                            }
+                            indexDest = j + k*n1;
+                            if (indexDest == indexArray[i]) {
+                                xArray[i][pointIndex] = x;
+                                yArray[i][pointIndex++] = y;
+                            }
+                        } // for (k = 0; k < n2; k++)
+                    } // if (srcBuffer[index] != 0)
+                } // for (x = 0; x < xDimSource; x++)
+            } // for (y = 0; y < yDimSource; y++)
+        } // for (i = 0; i < numLinesFound; i++)
+        
+        // Create a dialog with numLinesFound(up to 10 maximum) rhoArray[i], thetaArray[i], and
+        // countArray[i], where the user will select a check box to have that line selected and
+        // fill in a text field with the maximum gap length to be filled on that line.
         setCompleted(true);
         return;
     }
