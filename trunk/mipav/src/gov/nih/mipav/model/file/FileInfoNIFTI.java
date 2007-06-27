@@ -201,106 +201,110 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public static final short NIFTI_INTENT_DIMLESS = 1011;
 
-    /** DOCUMENT ME! */
+    /** Unspecified original unscaled source data type */
     public static final short DT_NONE = 0;
 
-    /** DOCUMENT ME! */
+    /** Unknown original unscaled source data type */
     public static final short DT_UNKNOWN = 0;
 
-    /** DOCUMENT ME! */
+    /** Binary (1 bit/voxel) */
     public static final short DT_BINARY = 1;
 
-    /** DOCUMENT ME! */
+    /** Unsigned character (8 bits/voxel) */
     public static final short NIFTI_TYPE_UINT8 = 2;
 
-    /** DOCUMENT ME! */
+    /** Signed short (16 bits/voxel) */
     public static final short NIFTI_TYPE_INT16 = 4;
 
-    /** DOCUMENT ME! */
+    /** Signed int (32 bits/voxel) */
     public static final short NIFTI_TYPE_INT32 = 8;
 
-    /** DOCUMENT ME! */
+    /** Float (32 bits/voxel) */
     public static final short NIFTI_TYPE_FLOAT32 = 16;
 
     /** 64 bit COMPLEX = 2 32 bit floats. */
     public static final short NIFTI_TYPE_COMPLEX64 = 32;
 
-    /** DOCUMENT ME! */
+    /** Double (64 bits/voxel) */
     public static final short NIFTI_TYPE_FLOAT64 = 64;
 
-    /** DOCUMENT ME! */
+    /** RGB triple (24 bits/voxel) */
     public static final short NIFTI_TYPE_RGB24 = 128;
 
-    /** DOCUMENT ME! */
+    /** Signed char (8 bits/voxel) */
     public static final short NIFTI_TYPE_INT8 = 256;
 
-    /** DOCUMENT ME! */
+    /** Unsigned short (16 bits/voxel) */
     public static final short NIFTI_TYPE_UINT16 = 512;
 
-    /** DOCUMENT ME! */
+    /** Unsigned integer (32 bits/voxel) */
     public static final short NIFTI_TYPE_UINT32 = 768;
 
-    /** DOCUMENT ME! */
+    /** Signed long (64 bits/voxel) */
     public static final short NIFTI_TYPE_INT64 = 1024;
 
-    /** DOCUMENT ME! */
+    /** Unsigned long (64 bits/voxel) */
     public static final short NIFTI_TYPE_UINT64 = 1280;
 
-    /** DOCUMENT ME! */
+    /** 128 bit floating point number - MIPAV cannot handle */
     public static final short NIFTI_TYPE_FLOAT128 = 1536;
 
     /** 128 bit COMPLEX = 2 64 bit floats. */
     public static final short NIFTI_TYPE_COMPLEX128 = 1792;
 
-    /** 256 bit COMPLEX = 2 128 bit floats. */
+    /** 256 bit COMPLEX = 2 128 bit floats. MIPAV cannot handle. */
     public static final short NIFTI_TYPE_COMPLEX256 = 2048;
 
-    /** DOCUMENT ME! */
+    /** Unknown spatial or temporal units */
     public static final int NIFTI_UNITS_UNKNOWN = 0;
 
-    /** DOCUMENT ME! */
+    /** Spatial units are in meters */
     public static final int NIFTI_UNITS_METER = 1;
 
-    /** DOCUMENT ME! */
+    /** Spatial units are in millimeters */
     public static final int NIFTI_UNITS_MM = 2;
 
-    /** DOCUMENT ME! */
+    /** Spatial units are in micrometers */
     public static final int NIFTI_UNITS_MICRON = 3;
 
-    /** DOCUMENT ME! */
+    /** Temporal units are in seconds */
     public static final int NIFTI_UNITS_SEC = 8;
 
-    /** DOCUMENT ME! */
+    /** Temporal units are in milliseconds */
     public static final int NIFTI_UNITS_MSEC = 16;
 
-    /** DOCUMENT ME! */
+    /** Temporal units are in microseconds */
     public static final int NIFTI_UNITS_USEC = 24;
 
-    /** DOCUMENT ME! */
+    /** Temporal units are in Hertz */
     public static final int NIFTI_UNITS_HZ = 32;
 
-    /** DOCUMENT ME! */
+    /** Temporal units are in parts per million */
     public static final int NIFTI_UNITS_PPM = 40;
 
-    /** DOCUMENT ME! */
+    /** Temporal units are in radians per second */
     public static final int NIFTI_UNITS_RADS = 48;
 
-    /** DOCUMENT ME! */
+    /** Sequential increasing pattern of slice acquisition */
     public static final byte NIFTI_SLICE_SEQ_INC = 1;
 
-    /** DOCUMENT ME! */
+    /** Sequential decreasing pattern of slice acquisition */
     public static final byte NIFTI_SLICE_SEQ_DEC = 2;
 
-    /** DOCUMENT ME! */
+    /** Alternating increasing pattern of slice acquisition
+     *  Slice timing starts at slice_start */
     public static final byte NIFTI_SLICE_ALT_INC = 3;
 
-    /** DOCUMENT ME! */
+    /** Alternating decreasing pattern of slice acquisition
+     *  slice timing starts at slice_end */
     public static final byte NIFTI_SLICE_ALT_DEC = 4;
 
-    /** DOCUMENT ME! */
+    /** Alternating increasing pattern of slice acquisition # 2
+     * Slice timing starts at slice_start + 1 */
     public static final byte NIFTI_SLICE_ALT_INC2 = 5;
 
-    /** DOCUMENT ME! */
+    /** Alternating decreasing pattern of slice acquisition # 2
+     * Slice timing starts at slice_end - 1 */
     public static final byte NIFTI_SLICE_ALT_DEC2 = 6;
 
     // Codes for type of X, Y, Z coordinate system.
@@ -321,102 +325,154 @@ public class FileInfoNIFTI extends FileInfoBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** auxiliary file */
     private String aux_file = null;
 
-    /** DOCUMENT ME! */
+    /** Bits per pixel */
     private short bitpix = -1;
 
-    /** range of calibration values. */
+    /** The cal_min and cal_max fields (if nonzero) are used for mapping (possibly
+        scaled) dataset values to display colors:
+        - Minimum display intensity (black) corresponds to dataset value cal_min.
+        - Maximum display intensity (white) corresponds to dataset value cal_max.
+        - Dataset values below cal_min should display as black also, and values
+        above cal_max as white.
+        - Colors "black" and "white", of course, may refer to any scalar display
+        scheme (e.g., a color lookup table specified via aux_file).
+        - cal_min and cal_max only make sense when applied to scalar-valued
+        datasets (i.e., dim[0] < 5 or dim[5] = 1). */
     private float cal_max = 0;
 
     /** values of 0.0 for both fields imply that no calibration min and max values are used ! */
     private float cal_min = 0;
 
-    /** DOCUMENT ME! */
+    /** If qform_code > 0, coord_code = qform_code.  If qform_code <= 0 and sform_code > 0, coord_code = sform_code.
+     *  coord_code has values for "Arbitrary X,Y,Z coordinate system", "Scanner based anatomical coordinates",
+     *  "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
+     *  "MNI 152 normalized X,Y,Z coordinates".   */
     private short coord_code = 0;
+    
+    /** If qform_code > 0 and sform_code > 0, coord_code = qform_code and coord_code2 = sform_code.
+     *  coord_code has values for "Arbitrary X,Y,Z coordinate system", "Scanner based anatomical coordinates",
+     *  "Coordinates aligned to another file's or to anatomical truth", "Talairach X,Y,Z coordinate system", and
+     *  "MNI 152 normalized X,Y,Z coordinates".   */
+    private short coord_code2 = 0;
 
-    /** DOCUMENT ME! */
+    /** Any text you like */
     private String descrip = null;
 
-    /** Is always 16384. */
-    private int extents = 0;
-
-    /** DOCUMENT ME! */
+    /** Bits 0 and 1 of the dim_info character contain the freq_dim information.
+     *  0 for "No frequency encoding direction is present", 1 for "Frequency encoding in the x direction",
+     *  2 for "Frequency encoding in the y direction", and 3 for "Frequency encoding in the z direction". */
     private int freq_dim = 0;
 
-    /** DOCUMENT ME! */
-    private float funused3 = -1;
-
-    /** DOCUMENT ME! */
+    /** The intent_code field can be used to indicate that the voxel data has
+        some particular meaning.  In particular, a large number of codes is
+        given to indicate that the the voxel data should be interpreted as
+        being drawn from a given probability distribution. */
     private short intentCode = 0;
 
-    /** DOCUMENT ME! */
+    /** The intent_name field provides space for a 15 character (plus 0 byte)
+    name string for the type of data stored. Examples:
+    - intent_code = NIFTI_INTENT_ESTIMATE; intent_name = "T1";
+    could be used to signify that the voxel values are estimates of the
+    NMR parameter T1.
+    - intent_code = NIFTI_INTENT_TTEST; intent_name = "House";
+    could be used to signify that the voxel values are t-statistics
+    for the significance of activation response to a House stimulus.
+    - intent_code = NIFTI_INTENT_DISPVECT; intent_name = "ToMNI152";
+    could be used to signify that the voxel values are a displacement
+    vector that transforms each voxel (x,y,z) location to the
+    corresponding location in the MNI152 standard brain.
+    - intent_code = NIFTI_INTENT_SYMMATRIX; intent_name = "DTI";
+    could be used to signify that the voxel values comprise a diffusion
+    tensor image. */
     private String intentName = null;
 
     /**
-     * public short dim[] = new short[8]; // image dimension data stored in FileInfoBase dim[0] = number of dimensions;
-     * usually 4 dim[1] = image width dim[2] = image height dim[3] = image depth (# of slices) dim[4] = volumes in image
-     * --- must be one for 3D image.
+     * If present, first auxiliary parameter used with intentCode
      */
     private float intentP1;
 
-    /** DOCUMENT ME! */
+    /** If present, second auxiliary parameter used with intentCode */
     private float intentP2;
 
-    /** DOCUMENT ME! */
+    /** If present, third auxiliary parameter used with intentCode */
     private float intentP3;
 
-    /** DOCUMENT ME! */
-    private byte orient = -1;
-
-    /** DOCUMENT ME! */
+    /** Bits 2 and 3 of the dim_info character contain the phase_dim information.
+     *  0 for "No phase encoding direction is present", 1 for "Phase encoding in the x direction",
+     *  2 for "Phase encoding in the y direction", and 3 for "Phase encoding in the z direction". */
     private int phase_dim = 0;
 
-    /** DOCUMENT ME! */
-    private float scl_inter = 0.0f;
-
-    /** Data is scaled according to:scaled_data[i] = unscaled_data[i]*scl_slope + scl_inter. */
+    /** If the scl_slope field is nonzero, then each voxel value in the dataset
+    should be scaled as
+    y = scl_slope * x + scl_inter
+    where x = voxel value stored
+    y = "true" voxel value
+    Normally, we would expect this scaling to be used to store "true" floating
+    values in a smaller integer datatype, but that is not required.  That is,
+    it is legal to use scaling even if the datatype is a float type (crazy,
+    perhaps, but legal).
+    - However, the scaling is to be ignored if datatype is DT_RGB24.
+    - If datatype is a complex type, then the scaling is to be
+    applied to both the real and imaginary parts. */
     private float scl_slope = 1.0f;
+    private float scl_inter = 0.0f;
 
     /** Should always be a length of 348. */
     private int sizeof_hdr = -1;
 
-    /** DOCUMENT ME! */
+    /** Bits 4 and 5 of the dim_info character contain the slice_dim information.
+     *  0 for "No slice acquisition direction is present", 1 for "Slice acquisition in the x direction",
+     *  2 for "Slice acquisition in the y direction", and 3 for "Slice acquisition in the z direction". */
     private int slice_dim = 0;
 
-    /** DOCUMENT ME! */
+    /** If this is nonzero, AND if slice_dim is nonzero, AND
+    if slice_duration is positive, indicates the timing
+    pattern of the slice acquisition.  The following codes
+    are defined:
+    "Slice timing order is sequentially increasing",
+    "Slice timing order is sequentially decreasing",
+    "Slice timing order is alternately increasing",
+    "Slice timing order is alternately decreasing",
+    "Slice timing order is alternately increasing #2",
+    "Slice timing order is alternately decreasing #2". */
     private byte sliceCode = 0;
 
-    /** DOCUMENT ME! */
+    /** Time used to acquire 1 slice. */
     private float sliceDuration = -1.0f;
 
-    /** DOCUMENT ME! */
+    /** Slice timing pattern ends with slice = (sliceEnd + 1) */
     private short sliceEnd = -1;
 
-    /** DOCUMENT ME! */
+    /** Slice timing pattern starts with slice = (sliceStart + 1) */
     private short sliceStart = -1;
 
 
-    /** Bits per pixel : 1,8,16,32,64,128 24(rgb). */
+    /** Source bits per pixel : 1,8,16,32,64,128 24(rgb). */
     private short sourceBitPix = -1;
 
 
-    /** DOCUMENT ME! */
+    /** Original unscaled source data type */
     private short sourceType = -1;
 
-    // public     float   pixdim               = new float[8]; // image resolutions info mm or ms
-    // stored in FileInfoBase
-    // pixdim[0] = number of dimensions
-    // pixdim[1] = voxel width
-    // pixdim[2] = voxel height
-    // pixdim[3] = voxel thickness
-    // pixdim[4] = time
+    /** If the magic field is "n+1", then the voxel data is stored in the same file as the header.
+     *  In this case, the voxel data starts at offset (int)vox_offset into the header file. Thus,
+     *  vox_offset=352.0 means that the data starts immediately after the NIFTI-1 header. If vox_offset
+     *  is greater than 352, the NIFTI-1 format does not say much about the contents of the dataset
+     *  file between the end of the header and the start of the data.
 
-    /**
-     * Byte offset in the ".img" file at which voxels start. This value can be negative to specify that the absolute
-     * value is applied for every image in the file
-     */
+        If the magic field is "ni1", then the voxel data is stored in the associated ".img" file,
+        starting at offset 0 (i.e., vox_offset is not used in this case, and should be set to 0.0).
+
+        In a .nii file, the vox_offset field value is interpreted as the start location of the image
+        data bytes in that file. In a .hdr/.img file pair, the vox_offset field value is the start
+        location of the image data bytes in the .img file. If vox_offset is less than 352 in a .nii
+        file, it is equivalent to 352 (i.e., image data never starts before byte #352 in a .nii file).
+        The default value for vox_offset in a .nii file is 352. In a .hdr file, the default value for
+        vox_offset is 0. * vox_offset should be an integer multiple of 16; otherwise, some programs
+        may not work properly (e.g., SPM). This is to allow memory-mapped input to be properly byte-aligned. */
     private float vox_offset = -1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -735,6 +791,35 @@ public class FileInfoNIFTI extends FileInfoBase {
         }
 
         dialog.appendSecondaryData("X,Y,Z Coordinate system", coordString);
+        
+        if (coord_code2 > 0) {
+            String coordString2 = null;
+    
+            switch (coord_code2) {
+    
+                case NIFTI_XFORM_UNKNOWN:
+                    coordString2 = "Arbitrary";
+                    break;
+    
+                case NIFTI_XFORM_SCANNER_ANAT:
+                    coordString2 = "Scanner-based anatomical";
+                    break;
+    
+                case NIFTI_XFORM_ALIGNED_ANAT:
+                    coordString2 = "Aligned to another anatomy";
+    
+                case NIFTI_XFORM_TALAIRACH:
+                    coordString2 = "Talairach-Tournoux Atlas";
+                    break;
+    
+                case NIFTI_XFORM_MNI_152:
+                    coordString2 = "MNI 152 normalized coordinates";
+                    break;
+            }
+    
+            dialog.appendSecondaryData("X,Y,Z Coordinate system 2", coordString2);
+        } // if (coord_code2 > 0)
+
 
         String sourceTypeString = null;
 
@@ -979,6 +1064,15 @@ public class FileInfoNIFTI extends FileInfoBase {
     public short getCoordCode() {
         return coord_code;
     }
+    
+    /**
+     * Returns type of x, y, z coordinates 2.
+     *
+     * @return  coord_code2
+     */
+    public short getCoordCode2() {
+        return coord_code2;
+    }
 
     /**
      * accessor to the current analyze-image description.
@@ -987,15 +1081,6 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public String getDescription() {
         return descrip;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public int getFileExtents() {
-        return extents;
     }
 
     /**
@@ -1220,6 +1305,15 @@ public class FileInfoNIFTI extends FileInfoBase {
     public void setCoordCode(short coord_code) {
         this.coord_code = coord_code;
     }
+    
+    /**
+     * Sets type of xyz coordinates 2.
+     *
+     * @param  coord_code2  DOCUMENT ME!
+     */
+    public void setCoordCode2(short coord_code2) {
+        this.coord_code2 = coord_code2;
+    }
 
 
     /**
@@ -1229,15 +1323,6 @@ public class FileInfoNIFTI extends FileInfoBase {
      */
     public void setDescription(String description) {
         descrip = setString(description, 80);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  ext  DOCUMENT ME!
-     */
-    public void setFileExtents(int ext) {
-        extents = ext;
     }
 
     /**
@@ -1499,6 +1584,7 @@ public class FileInfoNIFTI extends FileInfoBase {
         fInfo.setIntentP2(this.getIntentP2());
         fInfo.setIntentP3(this.getIntentP3());
         fInfo.setCoordCode(this.getCoordCode());
+        fInfo.setCoordCode2(this.getCoordCode2());
         fInfo.setCalMin(this.getCalMin());
         fInfo.setCalMax(this.getCalMax());
         fInfo.setSliceDuration(this.getSliceDuration());
