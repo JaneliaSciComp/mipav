@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
 import java.util.*;
@@ -22,6 +23,14 @@ import java.awt.*;
 public class AlgorithmHoughLine extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    // Number of rho bins
+    private int n1;
+    
+    // Number of theta bins
+    private int n2;
+    
+    // Hough transform of image with rho on x axis and theta on y axis
+    private ModelImage houghImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -35,9 +44,13 @@ public class AlgorithmHoughLine extends AlgorithmBase {
      *
      * @param  destImg  DOCUMENT ME!
      * @param  srcImg   DOCUMENT ME!
+     * @param  n1       number of rho bins
+     * @param  n2       number of theta bins
      */
-    public AlgorithmHoughLine(ModelImage destImg, ModelImage srcImg) {
+    public AlgorithmHoughLine(ModelImage destImg, ModelImage srcImg, int n1, int n2) {
         super(destImg, srcImg);
+        this.n1 = n1;
+        this.n2 = n2;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -53,7 +66,6 @@ public class AlgorithmHoughLine extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        int n1, n2;
         int x, y;
         int offset;
         double rho;
@@ -69,13 +81,13 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         int index, indexDest;
 
         
-        int destSlice;
+        int houghSlice;
         byte[] srcBuffer;
-        int[] destBuffer;
+        int[] houghBuffer;
         double theta;
         double costh[];
         double sinth[];
-        boolean test = false;
+        boolean test = true;
         boolean foundIndex[];
         int largestValue;
         int largestIndex;
@@ -87,6 +99,20 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         int xArray[][];
         int yArray[][];
         int pointIndex;
+        int maxLineNumber = 10;
+        boolean selectedLine[];
+        float maxDistance[];
+        JDialogHoughLineChoice choice;
+        int extents[];
+        String name;
+        double xDist;
+        double yDist;
+        double xAbs;
+        double yAbs;
+        double distance;
+        double yPerX;
+        double xPerY;
+        byte value = 0;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -103,9 +129,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         yDimSource = srcImage.getExtents()[1];
         sourceSlice = xDimSource * yDimSource; 
 
-        n1 = destImage.getExtents()[0];
-        n2 = destImage.getExtents()[1];
-        destSlice = n1 * n2;
+        houghSlice = n1 * n2;
         srcBuffer = new byte[sourceSlice];
 
         try {
@@ -116,6 +140,13 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        }
+        
+        for (i = 0; i < sourceSlice; i++) {
+            if (srcBuffer[i] != 0) {
+                value = srcBuffer[i];
+                break;
+            }
         }
         
         if (test) {
@@ -134,7 +165,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             srcBuffer[sourceSlice - 1] = 1;
         }
 
-        destBuffer = new int[destSlice];
+        houghBuffer = new int[houghSlice];
         
         costh = new double[n2];
         sinth = new double[n2];
@@ -156,35 +187,41 @@ public class AlgorithmHoughLine extends AlgorithmBase {
                             j = n1 - 1;
                         }
                         indexDest = j + k*n1;
-                        destBuffer[indexDest]++;
+                        houghBuffer[indexDest]++;
                     } // for (k = 0; k < n2; k++)
                 } // if (srcBuffer[index] != 0)
             } // for (x = 0; x < xDimSource; x++)
         } // for (y = 0; y < yDimSource; y++)
+        extents = new int[2];
+        extents[0] = n1;
+        extents[1] = n2;
+        name = srcImage.getImageName() +  "_hough_line";
+        houghImage = new ModelImage(ModelStorageBase.INTEGER, extents, name);
         try {
-            destImage.importData(0, destBuffer, true);
+            houghImage.importData(0, houghBuffer, true);
         } catch (IOException e) {
-            MipavUtil.displayError("IOException " + e + " on destImage.importData");
+            MipavUtil.displayError("IOException " + e + " on houghImage.importData");
 
             setCompleted(false);
 
             return;
         }
+        new ViewJFrameImage(houghImage);
        
-        // Find the 10 cells with the highest counts
-        foundIndex = new boolean[destSlice];
+        // Find the maxLineNumber cells with the highest counts
+        foundIndex = new boolean[houghSlice];
         numLinesFound = 0;
-        indexArray = new int[10];
-        rhoArray = new int[10];
-        thetaArray = new int[10];
-        countArray = new int[10];
-        for (i = 0; i < 10; i++) {
+        indexArray = new int[maxLineNumber];
+        rhoArray = new int[maxLineNumber];
+        thetaArray = new int[maxLineNumber];
+        countArray = new int[maxLineNumber];
+        for (i = 0; i < maxLineNumber; i++) {
             largestValue = 0;
             largestIndex = -1;
-            for (j = 0; j < destSlice; j++) {
+            for (j = 0; j < houghSlice; j++) {
                 if (!foundIndex[j]) {
-                    if (destBuffer[j] > largestValue) {
-                        largestValue = destBuffer[j];
+                    if (houghBuffer[j] > largestValue) {
+                        largestValue = houghBuffer[j];
                         largestIndex = j;
                     }
                 }
@@ -198,7 +235,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             rhoArray[i] = largestIndex % n1;
             thetaArray[i] = largestIndex/n1;
             countArray[i] = largestValue;
-        } // for (i = 0; i < 10; i++)
+        } // for (i = 0; i < maxLineNumber; i++)
         
         xArray = new int[numLinesFound][];
         yArray = new int[numLinesFound][];
@@ -228,9 +265,80 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             } // for (y = 0; y < yDimSource; y++)
         } // for (i = 0; i < numLinesFound; i++)
         
-        // Create a dialog with numLinesFound(up to 10 maximum) rhoArray[i], thetaArray[i], and
+        // Create a dialog with numLinesFound(up to maxLineNumber) rhoArray[i], thetaArray[i], and
         // countArray[i], where the user will select a check box to have that line selected and
         // fill in a text field with the maximum gap length to be filled on that line.
+        selectedLine = new boolean[numLinesFound];
+        maxDistance = new float[numLinesFound];
+        
+        choice = new JDialogHoughLineChoice(ViewUserInterface.getReference().getMainFrame(), rhoArray,
+                 n1, thetaArray, n2, countArray, selectedLine, maxDistance);
+        
+        if (!choice.okayPressed() ) {
+            setCompleted(false);
+            return;
+        }
+        
+        for (i = 0; i < numLinesFound; i++) {
+            if (selectedLine[i]) {
+                for (j = 1; j < countArray[i]; j++) {
+                    xDist = (double)(xArray[i][j] - xArray[i][j-1]);
+                    xAbs = Math.abs(xDist);
+                    yDist = (double)(yArray[i][j] - yArray[i][j-1]);
+                    yAbs = Math.abs(yDist);
+                    if ((xAbs > 1.0) || (yAbs > 1.0)) {
+                        distance = Math.sqrt(xDist*xDist + yDist*yDist);
+                        if (distance <= maxDistance[i]) {
+                            if (xAbs >= yAbs) {
+                                yPerX = yDist/xDist;
+                                if (xDist > 0) {
+                                    for (x = xArray[i][j-1] + 1; x < xArray[i][j]; x++) {
+                                        y = (int)Math.round(yArray[i][j-1] + yPerX*(x - xArray[i][j-1]));
+                                        offset = y * xDimSource + x;
+                                        srcBuffer[offset] = value;
+                                    }
+                                }
+                                else {
+                                    for (x = xArray[i][j] + 1; x < xArray[i][j-1]; x++) {
+                                        y = (int)Math.round(yArray[i][j] + yPerX*(x - xArray[i][j]));
+                                        offset = y * xDimSource + x;
+                                        srcBuffer[offset] = value;
+                                    }
+                                }
+                            } // if (xAbs >= yAbs)
+                            else { // xAbs < yAbs
+                                xPerY = xDist/yDist;
+                                if (yDist > 0) {
+                                    for (y = yArray[i][j-1] + 1; y < yArray[i][j]; y++) {
+                                        x = (int)Math.round(xArray[i][j-1] + xPerY*(y - yArray[i][j-1]));
+                                        offset = y * xDimSource + x;
+                                        srcBuffer[offset] = value;
+                                    }
+                                }
+                                else {
+                                    for (y = yArray[i][j] + 1; y < yArray[i][j-1]; y++) {
+                                        x = (int)Math.round(xArray[i][j] + xPerY*(y - yArray[i][j]));
+                                        offset = y * xDimSource + x;
+                                        srcBuffer[offset] = value;
+                                    }
+                                }
+                            } // else xAbs < yAbs
+                        } // if (distance <= maxDistance[i])
+                    } // if ((xAbs > 1.0) || (yAbs > 1.0))
+                } // for (j = 1; j < countArray[i]; j++)
+            } // if (selectedLine[i])
+        } // for (i = 0; i < numLinesFound; i++)
+        
+        try {
+            destImage.importData(0, srcBuffer, true);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+            setCompleted(false);
+
+            return;
+        }
+        
         setCompleted(true);
         return;
     }
