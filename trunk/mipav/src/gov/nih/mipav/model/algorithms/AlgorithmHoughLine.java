@@ -7,17 +7,44 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
-import java.util.*;
-import java.awt.*;
 
 /**
  *  This Hough transform uses (xi, yi) points in the original image space to generate rho, theta points in the Hough
- *  transform.  The Hough transform only works with binary images.  Compute the gradient of an image and threshold
- *  it to obtain a binary image.  Noise removal and thinning can then be used.  rho goes from
- *  -sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)) to +sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)).  theta goes from
- *  -PI/2 to +PI/2.  Let rho have n1 cells and let theta have n2 cells.  theta(k) = -PI/2 + k*PI/n2, where k goes from
- *  0 to (n2 - 1).  Let d = sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)). rho = x*cos(theta) + y*sin(theta)
+ *  transform.  This Hough transform module only works with binary images.    Before it is used the user must 
+ *  compute the gradient of an image and threshold it to obtain a binary image.  Noise removal and thinning should also
+ *  be performed, if necessary, before this program is run. 
+ *  
+ *  The user is asked for the number of rho and theta bins.  The program generates a Hough transform of the source image
+ *  using the basic equation rho = x*cos(theta) + y*sin(theta).  The program selects the lines containing the largest
+ *  number of points.  The program can select up to maxLineNumber, which currently has a value of 10, lines. The program
+ *  produces a dialog which allows the user to select which lines should be filled in and for selected lines the maximum
+ *  length of the gaps to be filled.
+ *  
+ *  rho goes from -sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)) to +sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)).
+ *  theta goes from -PI/2 to +PI/2.  rho has n1 cells and theta has n2 cells.  d = sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)).
+ *  For each (xi, yi) point in the original image not having a value of zero, calculate n2 values of (rho, theta).
+ *  Take k from 0 to (n2 - 1) to generate theta(k) = -PI/2 + k*PI/n2.
+ *  rho = x*cos(theta) + y*sin(theta).  Then find which of n1 bins rho belongs to by calculating
  *  j = (rho + d)*n1/(2*d), with j going from 0 to n1-1.  If j = n1, set j equal to n1 - 1.
+ *  Generate the Hough transform image.
+ *  
+ *  Find up to maxLineNumber lines with the highest number of points by finding the points in the
+ *  Hough transform with the highest number of counts.  Form rho, theta, and count arrays for these
+ *  lines.
+ *  
+ *  Run through the Hough transform process 1 time for each of the numLinesFound lines 
+ *  Find the xi, yi nonzero points present on each of the numLinesFound lines
+ *  
+ *  Create a dialog with numLinesFound rhoArray[i], thetaArray[i], and
+ *  countArray[i] values, where the user will select a check box to have that line selected for 
+ *  gap filling and fill in a text field with the maximum gap length to be filled on that line.
+ *  
+ *  Fill in the gaps on the selected lines by examining distances between adjacent points.
+ *  
+ *  References: 1.) Digital Image Processing, Second Edition by Richard C. Gonzalez and Richard E. Woods, Section 10.2.2
+ *  Global Processing via the Hough Transform, Prentice-Hall, Inc., 2002, pp. 587-591.
+ *  
+ *  2.) Shape Detection in Computer Vision Using the Hough Transform by V. F. Leavers, Springer-Verlag, 1992.
  * 
  */
 public class AlgorithmHoughLine extends AlgorithmBase {
@@ -42,8 +69,8 @@ public class AlgorithmHoughLine extends AlgorithmBase {
     /**
      * AlgorithmHoughLine.
      *
-     * @param  destImg  DOCUMENT ME!
-     * @param  srcImg   DOCUMENT ME!
+     * @param  destImg  Image with lines filled in
+     * @param  srcImg   Binary source image that has lines with gaps
      * @param  n1       number of rho bins
      * @param  n2       number of theta bins
      */
@@ -87,7 +114,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         double theta;
         double costh[];
         double sinth[];
-        boolean test = true;
+        boolean test = false;
         boolean foundIndex[];
         int largestValue;
         int largestIndex;
@@ -167,6 +194,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
 
         houghBuffer = new int[houghSlice];
         
+        // Calculate values of cosine and sine arrays
         costh = new double[n2];
         sinth = new double[n2];
         for (i = 0; i < n2; i++) {
@@ -175,6 +203,8 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             sinth[i] = Math.sin(theta);
         }
         d = Math.sqrt((xDimSource - 1.0)*(xDimSource - 1.0) + (yDimSource - 1.0)*(yDimSource - 1.0));
+        
+        // Calculate the Hough transform
         for (y = 0; y < yDimSource; y++) {
             offset = y * xDimSource;
             for (x = 0; x < xDimSource; x++) {
@@ -192,6 +222,8 @@ public class AlgorithmHoughLine extends AlgorithmBase {
                 } // if (srcBuffer[index] != 0)
             } // for (x = 0; x < xDimSource; x++)
         } // for (y = 0; y < yDimSource; y++)
+        
+        // Generate the hough transform image
         extents = new int[2];
         extents[0] = n1;
         extents[1] = n2;
@@ -208,7 +240,8 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         }
         new ViewJFrameImage(houghImage);
        
-        // Find the maxLineNumber cells with the highest counts
+        // Find up to maxLineNumber cells with the highest counts
+        // Obtain the rho, theta, and count values of these lines
         foundIndex = new boolean[houghSlice];
         numLinesFound = 0;
         indexArray = new int[maxLineNumber];
@@ -237,6 +270,8 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             countArray[i] = largestValue;
         } // for (i = 0; i < maxLineNumber; i++)
         
+        // Run through the Hough transform process 1 time for each of the numLinesFound lines 
+        // Find the xi, yi nonzero points present on each of the numLinesFound lines
         xArray = new int[numLinesFound][];
         yArray = new int[numLinesFound][];
         for (i = 0; i < numLinesFound; i++) {
@@ -265,9 +300,9 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             } // for (y = 0; y < yDimSource; y++)
         } // for (i = 0; i < numLinesFound; i++)
         
-        // Create a dialog with numLinesFound(up to maxLineNumber) rhoArray[i], thetaArray[i], and
-        // countArray[i], where the user will select a check box to have that line selected and
-        // fill in a text field with the maximum gap length to be filled on that line.
+        // Create a dialog with numLinesFound rhoArray[i], thetaArray[i], and
+        // countArray[i] values, where the user will select a check box to have that line selected for 
+        // gap filling and fill in a text field with the maximum gap length to be filled on that line.
         selectedLine = new boolean[numLinesFound];
         maxDistance = new float[numLinesFound];
         
@@ -279,6 +314,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             return;
         }
         
+        // Fill in the gaps on the selected lines by examining distances between adjacent points.
         for (i = 0; i < numLinesFound; i++) {
             if (selectedLine[i]) {
                 for (j = 1; j < countArray[i]; j++) {
