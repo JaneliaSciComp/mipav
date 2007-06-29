@@ -26,14 +26,13 @@ import java.io.*;
  *  Take k from 0 to (n2 - 1) to generate theta(k) = -PI/2 + k*PI/n2.
  *  rho = x*cos(theta) + y*sin(theta).  Then find which of n1 bins rho belongs to by calculating
  *  j = (rho + d)*n1/(2*d), with j going from 0 to n1-1.  If j = n1, set j equal to n1 - 1.
+ *  For each of the points in the Hough transform make a list of the x values and y values
+ *  that went to generate it.
  *  Generate the Hough transform image.
  *  
  *  Find up to maxLineNumber lines with the highest number of points by finding the points in the
  *  Hough transform with the highest number of counts.  Form rho, theta, and count arrays for these
  *  lines.
- *  
- *  Run through the Hough transform process 1 time for each of the numLinesFound lines 
- *  Find the xi, yi nonzero points present on each of the numLinesFound lines
  *  
  *  Create a dialog with numLinesFound rhoArray[i], thetaArray[i], and
  *  countArray[i] values, where the user will select a check box to have that line selected for 
@@ -125,7 +124,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         int countArray[];
         int xArray[][];
         int yArray[][];
-        int pointIndex;
+        int pointIndex[];
         int maxLineNumber = 10;
         boolean selectedLine[];
         float maxDistance[];
@@ -140,6 +139,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         double yPerX;
         double xPerY;
         byte value = 0;
+        int maxLinePoints;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -203,6 +203,10 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             sinth[i] = Math.sin(theta);
         }
         d = Math.sqrt((xDimSource - 1.0)*(xDimSource - 1.0) + (yDimSource - 1.0)*(yDimSource - 1.0));
+        maxLinePoints = (int)Math.ceil(Math.sqrt(xDimSource*xDimSource + yDimSource*yDimSource));
+        xArray = new int[houghSlice][maxLinePoints];
+        yArray = new int[houghSlice][maxLinePoints];
+        pointIndex = new int[houghSlice];
         
         // Calculate the Hough transform
         for (y = 0; y < yDimSource; y++) {
@@ -218,6 +222,9 @@ public class AlgorithmHoughLine extends AlgorithmBase {
                         }
                         indexDest = j + k*n1;
                         houghBuffer[indexDest]++;
+                        xArray[indexDest][pointIndex[indexDest]] = x;
+                        yArray[indexDest][pointIndex[indexDest]] = y;
+                        pointIndex[indexDest]++;
                     } // for (k = 0; k < n2; k++)
                 } // if (srcBuffer[index] != 0)
             } // for (x = 0; x < xDimSource; x++)
@@ -270,36 +277,6 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             countArray[i] = largestValue;
         } // for (i = 0; i < maxLineNumber; i++)
         
-        // Run through the Hough transform process 1 time for each of the numLinesFound lines 
-        // Find the xi, yi nonzero points present on each of the numLinesFound lines
-        xArray = new int[numLinesFound][];
-        yArray = new int[numLinesFound][];
-        for (i = 0; i < numLinesFound; i++) {
-            xArray[i] = new int[countArray[i]];
-            yArray[i] = new int[countArray[i]];
-            pointIndex = 0;
-            for (y = 0; y < yDimSource; y++) {
-                offset = y * xDimSource;
-                for (x = 0; x < xDimSource; x++) {
-                    index = offset + x;
-                    if (srcBuffer[index] != 0) {
-                        for (k = 0; k < n2; k++) {
-                            rho = x*costh[k] + y*sinth[k];
-                            j = (int)((rho + d)*n1/(2.0*d));
-                            if (j >= n1) {
-                                j = n1 - 1;
-                            }
-                            indexDest = j + k*n1;
-                            if (indexDest == indexArray[i]) {
-                                xArray[i][pointIndex] = x;
-                                yArray[i][pointIndex++] = y;
-                            }
-                        } // for (k = 0; k < n2; k++)
-                    } // if (srcBuffer[index] != 0)
-                } // for (x = 0; x < xDimSource; x++)
-            } // for (y = 0; y < yDimSource; y++)
-        } // for (i = 0; i < numLinesFound; i++)
-        
         // Create a dialog with numLinesFound rhoArray[i], thetaArray[i], and
         // countArray[i] values, where the user will select a check box to have that line selected for 
         // gap filling and fill in a text field with the maximum gap length to be filled on that line.
@@ -318,9 +295,9 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         for (i = 0; i < numLinesFound; i++) {
             if (selectedLine[i]) {
                 for (j = 1; j < countArray[i]; j++) {
-                    xDist = (double)(xArray[i][j] - xArray[i][j-1]);
+                    xDist = (double)(xArray[indexArray[i]][j] - xArray[indexArray[i]][j-1]);
                     xAbs = Math.abs(xDist);
-                    yDist = (double)(yArray[i][j] - yArray[i][j-1]);
+                    yDist = (double)(yArray[indexArray[i]][j] - yArray[indexArray[i]][j-1]);
                     yAbs = Math.abs(yDist);
                     if ((xAbs > 1.0) || (yAbs > 1.0)) {
                         distance = Math.sqrt(xDist*xDist + yDist*yDist);
@@ -328,15 +305,15 @@ public class AlgorithmHoughLine extends AlgorithmBase {
                             if (xAbs >= yAbs) {
                                 yPerX = yDist/xDist;
                                 if (xDist > 0) {
-                                    for (x = xArray[i][j-1] + 1; x < xArray[i][j]; x++) {
-                                        y = (int)Math.round(yArray[i][j-1] + yPerX*(x - xArray[i][j-1]));
+                                    for (x = xArray[indexArray[i]][j-1] + 1; x < xArray[indexArray[i]][j]; x++) {
+                                        y = (int)Math.round(yArray[indexArray[i]][j-1] + yPerX*(x - xArray[indexArray[i]][j-1]));
                                         offset = y * xDimSource + x;
                                         srcBuffer[offset] = value;
                                     }
                                 }
                                 else {
-                                    for (x = xArray[i][j] + 1; x < xArray[i][j-1]; x++) {
-                                        y = (int)Math.round(yArray[i][j] + yPerX*(x - xArray[i][j]));
+                                    for (x = xArray[indexArray[i]][j] + 1; x < xArray[indexArray[i]][j-1]; x++) {
+                                        y = (int)Math.round(yArray[indexArray[i]][j] + yPerX*(x - xArray[indexArray[i]][j]));
                                         offset = y * xDimSource + x;
                                         srcBuffer[offset] = value;
                                     }
@@ -345,15 +322,15 @@ public class AlgorithmHoughLine extends AlgorithmBase {
                             else { // xAbs < yAbs
                                 xPerY = xDist/yDist;
                                 if (yDist > 0) {
-                                    for (y = yArray[i][j-1] + 1; y < yArray[i][j]; y++) {
-                                        x = (int)Math.round(xArray[i][j-1] + xPerY*(y - yArray[i][j-1]));
+                                    for (y = yArray[indexArray[i]][j-1] + 1; y < yArray[indexArray[i]][j]; y++) {
+                                        x = (int)Math.round(xArray[indexArray[i]][j-1] + xPerY*(y - yArray[indexArray[i]][j-1]));
                                         offset = y * xDimSource + x;
                                         srcBuffer[offset] = value;
                                     }
                                 }
                                 else {
-                                    for (y = yArray[i][j] + 1; y < yArray[i][j-1]; y++) {
-                                        x = (int)Math.round(xArray[i][j] + xPerY*(y - yArray[i][j]));
+                                    for (y = yArray[indexArray[i]][j] + 1; y < yArray[indexArray[i]][j-1]; y++) {
+                                        x = (int)Math.round(xArray[indexArray[i]][j] + xPerY*(y - yArray[indexArray[i]][j]));
                                         offset = y * xDimSource + x;
                                         srcBuffer[offset] = value;
                                     }
