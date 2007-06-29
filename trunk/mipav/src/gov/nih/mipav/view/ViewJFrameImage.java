@@ -2907,6 +2907,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
     }
 
+    
     /**
      * Resizes frame and all components.
      *
@@ -2915,26 +2916,72 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public synchronized void componentResized(ComponentEvent event) {
         int width, height;
         float bigger;
+        int minFrameWidth = 123;  ///minimum frame width... function of java or windows?  need to check w\ linux build
+        
+        boolean imageSizeSmall = false;
+        //check to see if the image width is SMALLER than the minimum frame width
+        if (componentImage.getActiveImage().getExtents()[0] <= minFrameWidth) {
+        	imageSizeSmall = true;
+        //	System.err.println("Image size small");
+        }
+    
+       // System.err.println("Current zoom: " + componentImage.getZoomX());
 
-
+        
+        
+        // if the window size is greater than the display window size - 20 (in either direction)
+        //  do nothing
         if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
             return;
         }
 
-        removeComponentListener(this);
+       
 
-        width = getSize().width - (2 * getInsets().left);
-        height = getSize().height - getInsets().top - getInsets().bottom;
+        //width and height calculated by size minus both insets
+        width = getSize().width - (getInsets().left + getInsets().right);
+        height = getSize().height - (getInsets().top + getInsets().bottom);
+        
+        width -= (scrollPane.getInsets().left + scrollPane.getInsets().right);
+        height -= (scrollPane.getInsets().top + scrollPane.getInsets().bottom);
+        
+       // System.err.println("current size: " + getSize());
+       // System.err.println("current insets: " + getInsets());
+       // System.err.println("current scrollinsets: " + scrollPane.getInsets());
+      //  System.err.println("Current comp size: " + componentImage.getSize(null));
+      //  System.err.println("Current scrollPane size: " + scrollPane.getSize() + "\n");
+        
+       // System.err.println("calculated width, height: " + width + " , " + height);
+        
+        
+        //determine the larger of width/height
+        // in order to find the zoom based the current window size (not necessarily the current zoom)
         bigger = Math.max(width, height);
-        zoom = (int) Math.min((bigger - 1) / ((imageA.getExtents()[0] * widthResFactor) - 1),
-                              (bigger - 1) / ((imageA.getExtents()[1] * heightResFactor) - 1));
+        zoom = (int) Math.min((bigger ) / ((imageA.getExtents()[0] * widthResFactor) ),
+                              (bigger ) / ((imageA.getExtents()[1] * heightResFactor) ));
 
-
+        
+        //check to see if we are dealing with a small sized image at the minimum frame width
+        if (imageSizeSmall && (zoom > componentImage.getZoomX()) && (getSize().width <= minFrameWidth)) {
+        	
+        		//System.err.println("Doing nothing, returning\n\n\n");
+        	return;
+        }
+        
+        // remove the componentListener so this function will not be called twice
+        removeComponentListener(this);
+        
+       // System.err.println("Calculated zoom: " + zoom);
+        //System.err.println("ComponentImage size (pre-adjustment): " + componentImage.getSize(null));
+        
+        //if the zoom is larger than the current zoom, set the current zoom to the calculated zoom
         if (zoom > componentImage.getZoomX()) {
+        	//System.err.println("Setting componentImage to calculated zoom");
             componentImage.setZoom((int) zoom, (int) zoom); // ***************************
-
+           
             updateImages(true);
 
+            //checking componentImage size after updateImages (with new zoom)
+            
             if ((componentImage.getSize(null).width + 200) > xScreen) {
                 width = xScreen - 200;
             } else {
@@ -2946,32 +2993,27 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
                 height = componentImage.getSize(null).height;
             }
+           // System.err.println("componentImage size now: " + componentImage.getSize(null));
+            
         } else if ((width < componentImage.getSize(null).width) && (height >= componentImage.getSize(null).height)) {
-
+        	//System.err.println("Width is less than compImage.width, height is greater than compImage.height");
 
             height = componentImage.getSize(null).height + scrollPane.getHorizontalScrollBar().getHeight();
         } else if ((width >= componentImage.getSize(null).width) && (height < componentImage.getSize(null).height)) {
             width = componentImage.getSize(null).width + scrollPane.getVerticalScrollBar().getWidth();
 
-            /*
-             * The below else if block was modified to handle a bug found on Linux.  When a window was made smaller on
-             * windows on action event triggered the calling of this method, however on Linux several hundred events
-             * would be triggered by the same action.  The code would enter the below block, which did nothing. Then
-             * later in this method a small amount would be added to the width and height each time.  Until eventually
-             * the image would reach the original size before the user made it smaller.
-             *
-             * This code now re-adds the component listener and then just returns without allowing the code to reach the
-             * point where it adds to the size.  This has been tested on Windows and Linux and appears to produce the
-             * desired behavior on both.
-             *
-             * Nathan Pollack (Contractor-SSAI)  June 19, 2006
-             */
+            //System.err.println("Height is less than compImage.height, width is greater than compImage.width");
+                        
         } else if ((width < componentImage.getSize(null).width) || (height < componentImage.getSize(null).height)) { // width += fudgeFactor;
-            addComponentListener(this);
+           
+        	//System.err.println("either width is less than component width or height is less than component height... returning\n\n");
+        	addComponentListener(this);
 
             return;
         } else if ((width > componentImage.getSize(null).width) || (height > componentImage.getSize(null).height)) {
 
+        	//System.err.println("Width or height is greater than compImage width/height, setting to compImage width and height");
+        	
             if (width > componentImage.getSize(null).width) {
                 width = componentImage.getSize(null).width;
             }
@@ -2980,25 +3022,45 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 height = componentImage.getSize(null).height;
             }
         } else {
+        	//System.err.println("apparently width and height are set okay (comparing to compeditimage)...returning\n\n");
+        	
             addComponentListener(this);
 
             return;
         }
 
+       // System.err.println("Adjusting scrollpane width, height with scrollpane insets: " + scrollPane.getInsets());
+        
         width += scrollPane.getInsets().left + scrollPane.getInsets().right;
         height += scrollPane.getInsets().top + scrollPane.getInsets().bottom;
-
-        scrollPane.setSize(width, height);
-        setSize(scrollPane.getSize().width + getInsets().left + getInsets().right,
-                scrollPane.getSize().height + getInsets().top + getInsets().bottom);
-
-        validate();
-        setTitle();
-        updateImages(true);
+        
+     //   System.err.println("Old scrollpane width, height: " + scrollPane.getSize());
+        
+        
+        
+        if (scrollPane.getSize().width != width ||
+        		scrollPane.getSize().height != height) {
+        	//System.err.println("New scrollpane width, height: " + width + " , " + height);
+        	scrollPane.setSize(width, height);
+        	//System.err.println("Scrollpane after setting width, height: " + scrollPane.getSize());
+        	
+        	//System.err.println("Frame insets are currently: " + getInsets());
+        	
+        	//System.err.println("setting frame size to: " + (scrollPane.getSize().width + getInsets().left + getInsets().right) + " , " +
+            //		(scrollPane.getSize().height + getInsets().top + getInsets().bottom));
+            setSize(scrollPane.getSize().width + getInsets().left + getInsets().right,
+                    scrollPane.getSize().height + getInsets().top + getInsets().bottom);
+           
+            validate();
+            setTitle();
+           // System.err.println("New frame size: " + getSize());
+            updateImages(true);
+        }
+        
+       // System.err.println("Adding complistener back...done\n\n");
         addComponentListener(this);
-
     }
-
+    
     /**
      * Decreases the slice to be displayed by one and updates title frame.
      */
@@ -5404,8 +5466,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         getContentPane().add(scrollPane);
         scrollPane.setBackground(Color.black);
 
-        setSize(scrollPane.getSize().width + getInsets().left + getInsets().right,
-                scrollPane.getSize().height + getInsets().top + getInsets().bottom);
+     //   setSize(scrollPane.getSize().width + getInsets().left + getInsets().right,
+     //           scrollPane.getSize().height + getInsets().top + getInsets().bottom);
 
         setBackground(Color.black);
 
@@ -5432,27 +5494,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         pack();
-
+        
         // User interface will have list of frames
         userInterface.registerFrame(this);
 
+        
+
+    
+        
+       
+        this.updateImages();
+        addComponentListener(this);
+        
         if (userInterface.isAppFrameVisible()) {
             setVisible(true);
         } else {
             setVisible(false);
         }
-
-        /*
-         * The addComponentListener statement was moved from earlier in the code to the end because of a bug found on
-         * Linux.  It appeared that adding the component listener earlier caused events to be sent which led to a
-         * deadlocked situation.  So on the opening of a new window in Linux MIPAV would sometimes freeze up.  The
-         * moving of this statement to this line appeared to resolve that, and so this statement should remain here.
-         *
-         * Nathan Pollack (Contractor - SSAI)  June 19, 2006
-         */
-        addComponentListener(this);
-
-
     } // end init()
 
     /**
