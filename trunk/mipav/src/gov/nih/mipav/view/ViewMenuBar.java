@@ -244,7 +244,7 @@ public class ViewMenuBar {
                                                              }),
                                         menuBuilder.makeMenu("Hough transform", false,
                                                              new JMenuItem[] {
-                                                                  menuBuilder.buildMenuItem("Line detection", "HoughLine", 0, null, false)}),
+                                                                  menuBuilder.buildMenuItem("Line filling", "HoughLine", 0, null, false)}),
                                         menuBuilder.makeMenu("Insight toolkit (ITK)", false,
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Gaussian blur",
