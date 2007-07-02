@@ -244,9 +244,10 @@ public class FileIO {
      *
      * @return  ModelImage - the subsampled image
      */
-    public static final ModelImage subsample(ModelImage modelImage, Dimension subsampleDimension) {
+    private static final ModelImage subsample(ModelImage modelImage, Dimension subsampleDimension) {
         int[] subsampledExtents = new int[] { subsampleDimension.getSize().width, subsampleDimension.getSize().height };
-
+        // SubSample dialog now allows users to pad image so that extents are divisible by the subsampling scalar. 
+        int[] padExtents = modelImage.getExtents();
         ModelImage modelImageResult = new ModelImage(modelImage.getType(),
                                                      new int[] {
                                                          subsampleDimension.getSize().width,
@@ -254,8 +255,8 @@ public class FileIO {
                                                      }, modelImage.getImageName() + "_subsampled");
 
         AlgorithmSubsample algorithmSubsample = new AlgorithmSubsample(modelImage, modelImageResult, subsampledExtents,
-                                                                       new float[] { 1.0f, 1.0f, 1.0f }, false, false,
-                                                                       null);
+                                                                       padExtents, new float[] { 1.0f, 1.0f, 1.0f }, false, false,
+                                                                       null, false);
         algorithmSubsample.run();
 
         modelImage.disposeLocal(false);
