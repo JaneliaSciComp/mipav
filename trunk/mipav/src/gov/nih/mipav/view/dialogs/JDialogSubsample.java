@@ -576,7 +576,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 		JPanel expectedExtentsPanel = new JPanel(new GridBagLayout());
 
 		expectedExtentsPanel.setForeground(Color.black);
-		expectedExtentsPanel.setBorder(buildTitledBorder("Expected Extents"));
+		expectedExtentsPanel.setBorder(buildTitledBorder("Pad Extents"));
 
 		// Expected Extent X
 		JLabel labelExpectedExtentX = new JLabel("extent X: ");
