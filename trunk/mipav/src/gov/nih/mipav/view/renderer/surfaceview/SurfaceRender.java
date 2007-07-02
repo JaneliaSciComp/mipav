@@ -2486,8 +2486,11 @@ public class SurfaceRender extends RenderViewBase {
             return false;
         }
 
-        if (updateVolume(null, null, flag) == false) {
-            return false;
+        if ( !(getParentFrame() instanceof ViewJFrameVolumeViewWM) )
+        {
+            if (updateVolume(null, null, flag) == false) {
+                return false;
+            }
         }
 
         return true;
@@ -3563,5 +3566,10 @@ public class SurfaceRender extends RenderViewBase {
         /* Calculate and store the original screenscale: */
         dViewWidth = 15.0f * Math.tan(dFieldOfView / 15.0f);
         m_dOriginalScreenScale = kScreen.getPhysicalScreenWidth() / dViewWidth;
+    }
+    
+    public void updateParent()
+    {
+        getParentFrame().updateImages(true);
     }
 }

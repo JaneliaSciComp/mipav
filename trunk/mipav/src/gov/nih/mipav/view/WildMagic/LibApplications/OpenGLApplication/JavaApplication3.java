@@ -394,6 +394,7 @@ public abstract class JavaApplication3 extends JavaApplication
         Vector3f kLoc = m_spkCamera.GetLocation();
         kLoc.addEquals( m_akWorldAxis[0].scale(m_fTrnSpeed) );
         m_spkCamera.SetLocation(kLoc);
+        System.err.println( kLoc.X() + " " + kLoc.Y() + " " + kLoc.Z() );
     }
 
     /** 

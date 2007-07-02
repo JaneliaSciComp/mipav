@@ -17,8 +17,6 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 
 public abstract class Application
 {
-    /** The unique application object */
-    public static Application TheApplication;
 
     /** TestStreaming. For testing the disk-streaming and string-tree systems.  The input
      * object is streamed to disk and then loaded.  In a debug build, this

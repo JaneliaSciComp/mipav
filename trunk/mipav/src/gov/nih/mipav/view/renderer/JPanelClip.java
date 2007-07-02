@@ -4781,8 +4781,8 @@ public class JPanelClip extends JPanelRendererBase
             
             if ( rayBasedRenderWM != null )
             {
-                //rayBasedRenderWM.setArbitraryClipPlane(1.0f, 0.0f, 0.0f, (float)((xBox - (2 * ((float) aSlice / (xDim - 1)) * xBox) - 0.001)) );
-                rayBasedRenderWM.setArbitraryClipPlane(1.0f, 0.0f, 0.0f, clipSliceA.getVertices()[0].x);
+                //rayBasedRenderWM.setArbitraryClipPlane((float)-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox));
+                rayBasedRenderWM.setArbitraryClipPlane(aSlice);
             }
 
         }
@@ -4842,8 +4842,6 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                System.err.println( sSlice );
-                //rayBasedRenderWM.setEyeClipPlane((float)((2 * ((float) sSlice / (zDim - 1)) * zBox) - zBox - 0.001));
                 rayBasedRenderWM.setEyeClipPlane(sSlice, boundingCheckStatic.isSelected());
 
             }
@@ -4880,7 +4878,6 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                //rayBasedRenderWM.setEyeInvClipPlane((float)((2 * ((float) sSliceInv / (zDim - 1)) * zBox) - zBox - 0.001));
                 rayBasedRenderWM.setEyeInvClipPlane(sSliceInv, boundingCheckStatic.isSelected());
             }
 

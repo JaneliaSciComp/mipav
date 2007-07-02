@@ -246,8 +246,7 @@ public class Texture extends Bindable
     {
         m_bOffscreenTexture = bOffscreenTexture;
     }
-
-
+        
     protected GraphicsImage m_spkImage;
     protected SamplerInformation m_pkSamplerInformation;
     protected FilterType m_eFType = FilterType.LINEAR;
@@ -265,6 +264,17 @@ public class Texture extends Bindable
     // dynamically allocated and must be deallocated during destruction.
     protected boolean m_bSIOwner;
 
+    protected boolean m_bReload = false;
+    public void Reload( boolean bReload )
+    {
+        m_bReload = bReload;
+    }
+    
+    public boolean Reload()
+    {
+        return m_bReload;
+    }
+    
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);

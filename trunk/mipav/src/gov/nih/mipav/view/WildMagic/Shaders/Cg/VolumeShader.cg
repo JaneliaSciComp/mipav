@@ -200,7 +200,7 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
             aPosition.xyz = aPosition.xyz + (.5,.5,.5);
             float fDot = dot( aPosition.xyz, clipEye.xyz );
             float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
-            float fDotArb = dot( aPosition.xyz, clipArb.xyz );
+            float fDotArb = dot( position.xyz, clipArb.xyz );
             if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
             {
                 color = (0,0,0,0);
@@ -287,18 +287,18 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
     } 
 
     //if ( (Surface == 0) && (alpha_acc > 1) )
-    if ( alpha_acc > 1 )
-    {
-        color_acc.r /= alpha_acc;
-        color_acc.g /= alpha_acc;
-        color_acc.b /= alpha_acc;
-    }
+//     if ( alpha_acc > 1 )
+//     {
+//         color_acc.r /= alpha_acc;
+//         color_acc.g /= alpha_acc;
+//         color_acc.b /= alpha_acc;
+//     }
 
-    kColor = color_acc;
-    kColor.a = alpha_acc;
+    kColor.rgb = color_acc.rgb;
+    kColor.a = 1;
     if ( MIP != 0 )
     {
-        kColor = tex1D(colormap,fMax);
+        kColor.rgb = tex1D(colormap,fMax).rgb;
         kColor.a = fMax;
     }
 }

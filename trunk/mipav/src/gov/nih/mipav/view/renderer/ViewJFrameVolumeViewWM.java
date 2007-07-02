@@ -195,6 +195,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
     /** The image panel to hold one Canvas3D. */
     private JPanel imagePanel;
+    private JPanel surfaceRenderPanel;
+    private JPanel gpuPanel;
 
     /** DOCUMENT ME! */
     private JDialogIntensityPaint intensityDialog;
@@ -361,6 +363,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     /** Surface Render toolbar. */
     private JToolBar volToolBar;
 
+    private boolean m_bSurfaceVisible = true;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -446,8 +450,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             insertTab("LUT", histoLUTPanel);
             insertSurfaceTab("LUT", histoLUTPanel);
             insertRaycastTab("LUT", histoLUTPanel);
-        } else if (command.equals("Flythru")) {
-            enableFlyThruRender();
         } else if (command.equals("FlythruControl")) {
             insertTab("FlythruControl", flythruMovePanel);
             insertFlythruTab("FlythruControl", flythruMovePanel);
@@ -456,8 +458,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             enableSurfaceRender();
         } else if (command.equals("VolRender")) {
             enableVolumeRender();
-        } else if (command.equals("DualPanelRender")) {
-            enableDualPanelRender();
         } else if (command.equals("RayCastOptions")) {
             insertTab("View", raycastOptionsPanel);
             insertRaycastTab("View", raycastOptionsPanel);
@@ -500,6 +500,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             insertTab("Opacity", opacityPanel);
             insertSurfaceTab("Opacity", opacityPanel);
             insertRaycastTab("Opacity", opacityPanel);
+            enableVolumeRender();
         } else if (command.equals("Stereo")) {
 
             /* Launch the stereo viewer for the volumeTexture. Using the
@@ -558,6 +559,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             clipSaveButton.setEnabled(false);
             insertTab("Slices", slicePanel);
             insertSurfaceTab("Slices", slicePanel);
+            enableSurfaceRender();
         } else if (command.equals("SurfaceDialog")) {
             insertTab("Surface", surfacePanel);
             insertSurfaceTab("Surface", surfacePanel);
@@ -1044,17 +1046,14 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                                                      false);
                 m_akPlaneRender[2] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.CORONAL,
                                                      false);
-            }
 
-            if (isRayCastEnable) {
-                progressBar.setMessage("Constructing raycast renderer...");
-//                 raycastRenderWM = new GPUVolumeRender(imageA, LUTa);  
-//                 TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
-//                 raycastRenderWM.updateImages(true, kTransfer);
-
-//                 if (surRender != null) {
-//                     surRender.setRayBasedRender(raycastRenderWM);
-//                 }
+                progressBar.setMessage("Constructing gpu renderer...");
+                raycastRenderWM = new GPUVolumeRender(imageA, LUTa);  
+                TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
+                raycastRenderWM.updateImages(true, kTransfer);
+                if (surRender != null) {
+                    surRender.setRayBasedRender(raycastRenderWM);
+                }
             }
 
             if (isEndoscopyEnable) {
@@ -1083,14 +1082,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             this.configureFrame();
         } finally {
             progressBar.dispose();
-        }
-
-        if (isEndoscopyEnable) {
-            enableFlyThruRender();
-        }
-
-        if (isRayCastEnable || isBrainsurfaceFlattenerEnable) {
-            enableDualPanelRender();
         }
 
         if (imageA.isColorImage()) {
@@ -1170,6 +1161,11 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         if (surRender != null) {
             surRender.close();
             surRender = null;
+        }
+
+        if (raycastRenderWM != null) {
+            raycastRenderWM.finalize();
+            raycastRenderWM = null;
         }
 
         if (flythruRender != null) {
@@ -2255,8 +2251,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                 surRender.switchToSliceView(false);
             } else if (tabbedPane.getSelectedComponent() == opacityPanel) {
                 clipBox.setVisible(true);
-                surRender.switchToVolView(firstTimeVolView);
-                firstTimeVolView = false;
+                //surRender.switchToVolView(firstTimeVolView);
+                //firstTimeVolView = false;
             }
         }
     }
@@ -2673,13 +2669,19 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         gbc2.insets = new Insets(0, 5, 0, 5);
 
         imagePanel = new JPanel(new BorderLayout());
+        surfaceRenderPanel = new JPanel(new BorderLayout());
+        gpuPanel = new JPanel(new BorderLayout());
 
         setLocation(100, 100);
 
         if (leftPanelRenderMode == SURFACE) {
-            imagePanel.add(surRender.getCanvas(), BorderLayout.CENTER);
-//         } else if (leftPanelRenderMode == RAYCAST) {          
-//             imagePanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
+            surfaceRenderPanel.add(surRender.getCanvas(), BorderLayout.CENTER);
+            gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
+            imagePanel.add(surfaceRenderPanel, BorderLayout.WEST);
+            surfaceRenderPanel.setVisible(true);
+            imagePanel.add(gpuPanel, BorderLayout.EAST);
+            gpuPanel.setVisible(true);
+            raycastRenderWM.setVisible(true);
         }
 
         int imagePanelWidth = (int) (screenWidth * 0.51f);
@@ -2688,6 +2690,15 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         imagePanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
         imagePanel.setMinimumSize(new Dimension(500, 500));
         imagePanel.setBorder(compound);
+
+        surfaceRenderPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
+        surfaceRenderPanel.setMinimumSize(new Dimension(500, 500));
+        surfaceRenderPanel.setBorder(compound);
+
+        gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
+        gpuPanel.setMinimumSize(new Dimension(500, 500));
+        gpuPanel.setBorder(compound);
+
 
         rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, imagePanel, triImagePanel);
 
@@ -2798,9 +2809,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             buildSurRenderToolbar();
         }
 
-        if (isRayCastEnable) {
-            buildRayCastToolbar();
-        }
+        //if (isRayCastEnable) {
+         //   buildRayCastToolbar();
+        //}
 
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -2814,8 +2825,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         gbc.weighty = 1;
 
         if (leftPanelRenderMode == SURFACE) {
-            panelToolbar.add(volToolBar, gbc);
-        } else if (leftPanelRenderMode == RAYCAST) {
+//             panelToolbar.add(volToolBar, gbc);
+//         } else if (leftPanelRenderMode == RAYCAST) {
+            buildRayCastToolbar();
             panelToolbar.add(rayCastToolBar, gbc);
         }
     }
@@ -3042,271 +3054,32 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     }
 
     /**
-     * Enable dual panel renders.
-     */
-    private void enableDualPanelRender() {
-        switchTabList("DualPanelRender");
-
-        if (isRayCastEnable) {
-            panelToolbar.remove(rayCastToolBar);
-        }
-
-        if (isSurfaceRenderEnable) {
-            panelToolbar.remove(volToolBar);
-        }
-
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-
-//         if (leftPanelRenderMode == SURFACE) {
-//             panelToolbar.add(volToolBar, gbc);
-//         } else if (leftPanelRenderMode == RAYCAST) {
-            panelToolbar.add(rayCastToolBar, gbc);
-//         }
-
-        imagePanel.removeAll();
-
-        int imagePanelWidth = (int) (screenWidth * 0.510f);
-        int imagePanelHeight = (int) (screenHeight * 0.43f);
-
-        dualImagePanel = null;
-        dualLeftPanel = null;
-        dualRightPanel = null;
-        dualImagePanel = new JPanel(new BorderLayout());
-        dualLeftPanel = new JPanel(new BorderLayout());
-        dualLeftPanel.setMinimumSize(new Dimension(imagePanelWidth / 2, 1));
-        dualLeftPanel.setPreferredSize(new Dimension(imagePanelWidth / 2, imagePanelHeight));
-
-        if (leftPanelRenderMode == SURFACE) {
-            dualLeftPanel.add(surRender.getCanvas(), BorderLayout.CENTER);
-            surRender.getCanvas().addMouseListener(this);
-        }
-
-        dualLeftPanel.setBorder(redBorder);
-        dualRightPanel = new JPanel(new BorderLayout());
-        dualRightPanel.setPreferredSize(new Dimension(imagePanelWidth / 2, imagePanelHeight));
-        dualRightPanel.setMinimumSize(new Dimension(imagePanelWidth / 2, 1));
-        dualRightPanel.setBorder(loweredbevel);
-
-        if (rightPanelRenderMode == RAYCAST) {
-
-            if ( raycastRenderWM != null )
-            {
-                raycastRenderWM.stopAnimator();
-                raycastRenderWM = null;
-            }
-            raycastRenderWM = new GPUVolumeRender(imageA, LUTa);  
-            TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
-            raycastRenderWM.updateImages(true, kTransfer);
-            
-            if (surRender != null) {
-                surRender.setRayBasedRender(raycastRenderWM);
-            }
-
-            dualRightPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
-            raycastRenderWM.GetCanvas().addMouseListener(this);
-        } else if (rightPanelRenderMode == SURFACE) {
-            dualRightPanel.add(surRender.getCanvas(), BorderLayout.CENTER);
-            surRender.getCanvas().addMouseListener(this);
-        } else if ((rightPanelRenderMode == ENDOSCOPY) && isEndoscopyEnable) {
-            dualRightPanel.add(flythruRender.getCanvas(), BorderLayout.CENTER);
-            flythruRender.getCanvas().addMouseListener(this);
-            dualRightPanel.setBorder(redBorder);
-            dualLeftPanel.setBorder(loweredbevel);
-            dualRightPanel.validate();
-            dualRightPanel.repaint();
-        } else if (rightPanelRenderMode == BRAINSURFACE_FLATTENER) {
-            dualRightPanel.add(brainsurfaceFlattenerRender.getCanvas(), BorderLayout.CENTER);
-            brainsurfaceFlattenerRender.getCanvas().addMouseListener(this);
-            insertSurfaceTab("Brain Surface Flattener", m_kBrainsurfaceFlattenerPanel);
-            insertTab("Brain Surface Flattener", m_kBrainsurfaceFlattenerPanel);
-        }
-
-        dualImagePane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, dualLeftPanel, dualRightPanel);
-        dualImagePane.setOneTouchExpandable(false);
-        dualImagePane.setDividerSize(6);
-        dualImagePane.setContinuousLayout(true);
-        dualImagePanel.add(dualImagePane, BorderLayout.CENTER);
-        imagePanel.add(dualImagePanel, BorderLayout.CENTER);
-
-        getContentPane().validate();
-        dualLeftPanel.setMinimumSize(new Dimension(12, 12));
-        dualRightPanel.setMinimumSize(new Dimension(12, 12));
-
-    }
-
-    /**
-     * Enable the fly through frame layout.
-     */
-    private void enableFlyThruRender() {
-        switchTabList("FlythruRender");
-        insertTab("Flythru", flythruPanel);
-        insertFlythruTab("Flythru", flythruPanel);
-
-        if (isSurfaceRenderEnable) {
-            panelToolbar.remove(volToolBar);
-        }
-
-        if (isEndoscopyEnable) {
-            panelToolbar.remove(flyThruToolbar);
-        }
-
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        panelToolbar.add(flyThruToolbar, gbc);
-        panelToolbar.validate();
-        panelToolbar.repaint();
-
-        if (flythruRender.getCanvas() != null) {
-            imagePanel.removeAll();
-            imagePanel.add(flythruRender.getCanvas(), BorderLayout.CENTER);
-            getContentPane().validate();
-        } else { // first time calling flythru render
-            imagePanel.removeAll();
-
-            int imagePanelWidth = (int) (screenWidth * 0.510f);
-            int imagePanelHeight = (int) (screenHeight * 0.43f);
-
-            dualImagePanel = null;
-            dualLeftPanel = null;
-            dualRightPanel = null;
-            dualImagePanel = new JPanel(new BorderLayout());
-            dualLeftPanel = new JPanel(new BorderLayout());
-            dualLeftPanel.setMinimumSize(new Dimension(imagePanelWidth / 2, 1));
-            dualLeftPanel.setPreferredSize(new Dimension(imagePanelWidth / 2, imagePanelHeight));
-
-            if (leftPanelRenderMode == SURFACE) {
-                dualLeftPanel.add(surRender.getCanvas(), BorderLayout.CENTER);
-                surRender.getCanvas().addMouseListener(this);
-            }
-
-            dualRightPanel = new JPanel(new BorderLayout());
-            dualRightPanel.setPreferredSize(new Dimension(imagePanelWidth / 2, imagePanelHeight));
-            dualRightPanel.setMinimumSize(new Dimension(imagePanelWidth / 2, 1));
-            dualRightPanel.setBorder(loweredbevel);
-
-            if ((rightPanelRenderMode == ENDOSCOPY) && isEndoscopyEnable) {
-                dualRightPanel.setBorder(redBorder);
-                dualLeftPanel.setBorder(loweredbevel);
-                dualRightPanel.validate();
-                dualRightPanel.repaint();
-            }
-
-            dualImagePane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, dualLeftPanel, dualRightPanel);
-            dualImagePane.setOneTouchExpandable(false);
-            dualImagePane.setDividerSize(6);
-            dualImagePane.setContinuousLayout(true);
-            dualImagePanel.add(dualImagePane, BorderLayout.CENTER);
-            imagePanel.add(dualImagePanel, BorderLayout.CENTER);
-
-            getContentPane().validate();
-            dualLeftPanel.setMinimumSize(new Dimension(12, 12));
-            dualRightPanel.setMinimumSize(new Dimension(12, 12));
-
-        }
-
-    }
-
-    /**
      * Enable surface render.
      */
-    private void enableSurfaceRender() {
-
-        if (isEndoscopyEnable) {
-            panelToolbar.remove(flyThruToolbar);
+    private void enableSurfaceRender()
+    {
+        if ( !m_bSurfaceVisible )
+        {
+            switchTabList("SurRender");
+            gpuPanel.setVisible(false);
+            raycastRenderWM.setVisible(false);
+            surfaceRenderPanel.setVisible(true);
+            m_bSurfaceVisible = true;
         }
-
-        switchTabList("SurRender");
-
-        if (isRayCastEnable) {
-            panelToolbar.remove(rayCastToolBar);
-        }
-
-        if (isSurfaceRenderEnable) {
-            panelToolbar.remove(volToolBar);
-        }
-
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        panelToolbar.add(volToolBar, gbc);
-        imagePanel.removeAll();
-
-        raycastRenderWM.stopAnimator();
-        raycastRenderWM = null;
-
-        imagePanel.add(surRender.getCanvas(), BorderLayout.CENTER);
-        getContentPane().validate();
-
     }
 
     /**
      * Enable volume render.
      */
     private void enableVolumeRender() {
-        switchTabList("VolRender");
-
-        if (isRayCastEnable) {
-            panelToolbar.remove(rayCastToolBar);
-        }
-
-        if (isSurfaceRenderEnable) {
-            panelToolbar.remove(volToolBar);
-        }
-
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        panelToolbar.add(rayCastToolBar, gbc);
-
-        imagePanel.removeAll();
-
-        if ( raycastRenderWM != null )
+        if ( m_bSurfaceVisible )
         {
-            raycastRenderWM.stopAnimator();
-            raycastRenderWM = null;
+            switchTabList("VolRender");
+            surfaceRenderPanel.setVisible(false);
+            gpuPanel.setVisible(true);
+            raycastRenderWM.setVisible(true);
+            m_bSurfaceVisible = false;
         }
-        raycastRenderWM = new GPUVolumeRender(imageA, LUTa);  
-        TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
-        raycastRenderWM.updateImages(true, kTransfer);
-        
-        if (surRender != null) {
-            surRender.setRayBasedRender(raycastRenderWM);
-        }
-
-        imagePanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
-
-        getContentPane().validate();
     }
 
     /**

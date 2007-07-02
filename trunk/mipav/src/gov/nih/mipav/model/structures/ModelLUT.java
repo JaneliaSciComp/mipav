@@ -217,6 +217,39 @@ public class ModelLUT extends ModelStorageBase {
         return (remappedLUT);
     }
 
+    /**
+     */
+    public final byte[] exportIndexedLUTMin() {
+
+//         if (type == STRIPED) {
+//             lutHeight = getExtents()[1];
+
+//             for (i = 0; i < lutHeight; i++) {
+//                 remappedLUT[i] = indexedLUT[255 - i];
+//             }
+//         } else {
+
+
+        int nPts = transferLine.size();
+        int lutHeight = getExtents()[1];
+
+        byte[] remappedLUTMin = new byte[nPts * 4];
+        float xMax = ((Point2Df) (transferLine.getPoint(nPts-1))).x;
+        float xMin = ((Point2Df) (transferLine.getPoint(0))).x;
+        int remappedValue;
+        int count = 0;
+        float fNew;
+        for (int i = 0; i < nPts; i++) {
+            fNew = (float) (xMin + (((float) i / (nPts - 1)) * (xMax - xMin)));
+            remappedValue = indexedLUT[(int) (transferLine.getRemappedValue(fNew, lutHeight) + 0.5f)];
+            remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
+            remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
+            remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
+            remappedLUTMin[count++] = (byte)( (remappedValue & 0xff000000) >> 24);
+        }
+        return remappedLUTMin;
+    }
+
 
     /**
      * This is a method to export a special int array where the alpha is stored in the most significant byte, then red,

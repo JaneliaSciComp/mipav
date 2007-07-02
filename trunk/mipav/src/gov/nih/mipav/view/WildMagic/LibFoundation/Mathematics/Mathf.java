@@ -43,4 +43,5 @@ public final class Mathf
     public static final float HALF_PI = (float)(0.5f*Math.PI);
     public static final float INV_PI = (float)(1.0f/Math.PI);
     public static final float DEG_TO_RAD = (float)Math.PI/180.0f;
+    public static final float SQRT2 = (float)Math.sqrt(2);
 }
