@@ -2677,11 +2677,11 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         if (leftPanelRenderMode == SURFACE) {
             surfaceRenderPanel.add(surRender.getCanvas(), BorderLayout.CENTER);
             gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
-            imagePanel.add(surfaceRenderPanel, BorderLayout.WEST);
+            imagePanel.add(surfaceRenderPanel, BorderLayout.EAST);
             surfaceRenderPanel.setVisible(true);
-            imagePanel.add(gpuPanel, BorderLayout.EAST);
+            imagePanel.add(gpuPanel, BorderLayout.WEST);
             gpuPanel.setVisible(true);
-            raycastRenderWM.setVisible(true);
+            raycastRenderWM.setVisible(false);
         }
 
         int imagePanelWidth = (int) (screenWidth * 0.51f);
@@ -2693,11 +2693,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
         surfaceRenderPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
         surfaceRenderPanel.setMinimumSize(new Dimension(500, 500));
-        surfaceRenderPanel.setBorder(compound);
 
         gpuPanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
         gpuPanel.setMinimumSize(new Dimension(500, 500));
-        gpuPanel.setBorder(compound);
 
 
         rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, imagePanel, triImagePanel);
@@ -2738,6 +2736,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         sculptHeight = imagePanelHeight - getInsets().top - getInsets().bottom;
 
         surRender.getSculptorPanel().setFrameSize(sculptWidth, sculptHeight);
+
+        enableSurfaceRender();
     }
 
     /**
