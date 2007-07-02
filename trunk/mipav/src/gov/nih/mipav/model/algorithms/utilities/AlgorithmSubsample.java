@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Dimension;
 import java.io.*;
 
 
@@ -59,8 +60,8 @@ public class AlgorithmSubsample extends AlgorithmBase {
      * @param  transformVOI  if true transform the VOIs
      * @param  transMatrix   transformation matrix
      */
-    public AlgorithmSubsample(ModelImage src, ModelImage result, int[] newExtents, float[] _sigmas, boolean indep,
-                              boolean transformVOI, TransMatrix transMatrix) {
+    public AlgorithmSubsample(ModelImage src, ModelImage result, int[] newExtents, int[] padExtents, float[] _sigmas, boolean indep,
+                              boolean transformVOI, TransMatrix transMatrix, boolean doPad) {
         super(result, src);
 
         if (src == null) {
@@ -68,15 +69,21 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
             return;
         }
-
-        srcImage = src;
+        
+        if (doPad) {
+        	srcImage = padImage(src, padExtents);
+        	new ViewJFrameImage((ModelImage)(srcImage.clone()), null, new Dimension(610, 200));
+        } else {
+        	srcImage = src;
+        }
+        
         resultImage = result;
         resultExtents = newExtents;
         sigmas = _sigmas;
         processIndep = indep;
         this.transformVOI = transformVOI;
         this.transMatrix = transMatrix;
-
+        
         if (processIndep && ((srcImage.getExtents().length > 2) && (srcImage.getExtents()[2] != resultExtents[2]))) {
             MipavUtil.displayError("Cannot perform 2.5D subsampling and change the number of slices");
             threadStopped = true;
@@ -1810,6 +1817,80 @@ public class AlgorithmSubsample extends AlgorithmBase {
         resultImage.setVOIs(tmpMask.getVOIs());
         tmpMask.disposeLocal();
         maskImage.disposeLocal();
+    }
+    
+    private ModelImage padImage(ModelImage kImage, int[] padExtents) {
+    	
+    	ModelImage resultImage = new ModelImage(kImage.getType(), padExtents,
+                makeImageName(kImage.getImageName(), "_pad"));
+    	resultImage.setAll(0);
+    	int[] extents = kImage.getExtents();
+    	AlgorithmPad algoPad = null;
+    	int[] x = new int[2];
+    	int[] y = new int[2];
+    	int[] z = new int[2];
+    	    	
+    	// Generate bounds for pad algorithm
+    	
+    	// X bounds
+    	if (extents[0] == padExtents[0]) {
+    		x[0] = 0;
+    		x[1] = extents[0];
+    	} else {
+    		x[0] = 0;
+    		x[1] = padExtents[0];
+    	}
+    	
+    	// Y bounds
+    	if (extents[1] == padExtents[1]) {
+    		y[0] = 0;
+    		y[1] = extents[1];
+    	} else {
+    		y[0] = 0;
+    		y[1] = padExtents[1];
+    	}
+    	
+    	if (extents.length == 3) {
+    		if (extents[2] == padExtents[2]) {
+        		z[0] = 0;
+        		z[1] = extents[2];
+        	} else {
+        		z[0] = 0;
+        		z[1] = padExtents[2];
+        	}
+    	}
+    	
+    	algoPad = new AlgorithmPad(resultImage, kImage, 0, x, y, z);
+    	
+    	algoPad.run();
+    	algoPad.finalize();
+        
+        return resultImage;
+        	
+    }
+    
+    /**
+     * Helper method for making the result image's name. Strips the current extension from the original name, adds the
+     * given extension, and returns the new name.
+     *
+     * @param   image_name  the original image's name
+     * @param   ext         Extension to add which gives information about what algorithm was performed on the image.
+     *
+     * @return  The new image name.
+     */
+    private static String makeImageName(String image_name, String ext) {
+        String name;
+        int index = image_name.indexOf(".");
+
+        if (index == -1) {
+            name = image_name;
+        } else {
+            name = image_name.substring(0, index);
+        } // Used for setting image name
+
+        name += ext;
+
+        return name;
     }
 
 }
