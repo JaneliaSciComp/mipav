@@ -252,6 +252,22 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
         int iYBound = m_kImage.getExtents()[1];
         int iZBound = m_kImage.getExtents()[2];
 
+        float fMaxX = (float) (iXBound - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (float) (iYBound - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (float) (iZBound - 1) * m_kImage.getFileInfo(0).getResolutions()[2];
+
+        float fMax = fMaxX;
+        if (fMaxY > fMax) {
+            fMax = fMaxY;
+        }
+        if (fMaxZ > fMax) {
+            fMax = fMaxZ;
+        }
+        float fX = fMaxX/fMax;
+        float fY = fMaxY/fMax;
+        float fZ = fMaxZ/fMax;
+
+
         Vector4f kIn = new Vector4f(0,0,0,1);
         Vector4f kOut;
         for (int iZ = 0, i = 0; iZ < iZBound; iZ++)
@@ -260,9 +276,10 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
             {
                 for (int iX = 0; iX < iXBound; iX++, i++)
                 {
-                    kIn.X((float)iX/(float)iXBound);
-                    kIn.Y((float)iY/(float)iYBound);
-                    kIn.Z((float)iZ/(float)iZBound);
+                    kIn.X(((float)iX/(float)iXBound)*fX);
+                    kIn.Y(((float)iY/(float)iYBound)*fY);
+                    kIn.Z(((float)iZ/(float)iZBound)*fZ);
+
                     kOut = Matrix4f.mult( kIn, m_kWVPMatrix);
                     kOut.X( kOut.X()/kOut.W() );
                     kOut.Y( kOut.Y()/kOut.W() );
