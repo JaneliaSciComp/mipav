@@ -11,6 +11,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 
 import javax.swing.*;
 
@@ -42,6 +43,24 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private JRadioButton by8Button = null; // subsample by 8
+    
+    /** User-Interface for displaying the original extent X */
+	private JTextField textOriginalExtentX;
+
+	/** User-Interface for displaying the original extent Y */
+	private JTextField textOriginalExtentY;
+
+	/** User-Interface for displaying the original extent Z */
+	private JTextField textOriginalExtentZ;
+
+	/** User-Interface for entering the expected extent X */
+	private JTextField textExpectedExtentX;
+
+	/** User-Interface for entering the expected extent Y */
+	private JTextField textExpectedExtentY;
+
+	/** User-Interface for entering the expected extent Z */
+	private JTextField textExpectedExtentZ;
 
     /** DOCUMENT ME! */
     private int denom = 2; // denominator for subsampling
@@ -57,7 +76,19 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private JCheckBox lockZBox = null;
-
+    
+    /** Number of dimensions in an image e.g 2D, 3D */
+	private int dim;
+	
+	/** The boolean value to determine whether to pad the original image or not. */
+	private boolean doPad;
+    
+    /** The extents of original image */
+	private int[] extents = null;
+	
+	/** The extents of padded image */
+	private int[] padExtents = null;
+	
     /** DOCUMENT ME! */
     private int[] newExtents = null;
 
@@ -105,6 +136,24 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         super(theParentFrame, false);
         this.image = sourceImage;
         this.userInterface = ViewUserInterface.getReference();
+        extents = sourceImage.getExtents();
+        dim = extents.length;
+        padExtents = new int[dim];
+        
+        for (int i = 0; i < dim; i++) {
+        	if (isDivisible(extents[i], denom)) {
+        		padExtents[i] = extents[i];
+        	} else {
+        		padExtents[i] = extents[i] + 1;
+        	}
+        }
+        
+        if (Arrays.equals(padExtents, extents)) {
+			doPad = false;
+		} else {
+			doPad = true;
+		}
+        
         init();
     }
 
@@ -127,6 +176,97 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             dispose();
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("10067");
+        } else if (command.equals("Subsample by 2")) {
+        	denom = 2;
+        	for(int i = 0; i < dim; i++) {
+        		if(isDivisible(extents[i], denom)) {
+        			padExtents[i] = extents[i];
+        		} else {
+        			padExtents[i] = makeExtentDivisibleByDenom(extents[i], denom);
+        		}
+        	}
+        	
+        	textExpectedExtentX.setText(Integer.toString(padExtents[0]));
+        	textExpectedExtentY.setText(Integer.toString(padExtents[1]));
+        	textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+        	
+        	if (Arrays.equals(padExtents, extents)) {
+    			doPad = false;
+    		} else {
+    			doPad = true;
+    		}
+        	
+        	if (doPad) {
+        		textExpectedExtentX.setEnabled(true);
+            	textExpectedExtentY.setEnabled(true);
+            	textExpectedExtentZ.setEnabled(true);
+        	} else {
+        		textExpectedExtentX.setEnabled(false);
+            	textExpectedExtentY.setEnabled(false);
+            	textExpectedExtentZ.setEnabled(false);
+        	}
+        	
+        	
+        } else if (command.equals("Subsample by 4")) {
+        	denom = 4;
+        	for(int i = 0; i < dim; i++) {
+        		if(isDivisible(extents[i], denom)) {
+        			padExtents[i] = extents[i];
+        		} else {
+        			padExtents[i] = makeExtentDivisibleByDenom(extents[i], denom);
+        		}
+        	}
+        	
+        	textExpectedExtentX.setText(Integer.toString(padExtents[0]));
+        	textExpectedExtentY.setText(Integer.toString(padExtents[1]));
+        	textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+        	
+        	if (Arrays.equals(padExtents, extents)) {
+    			doPad = false;
+    		} else {
+    			doPad = true;
+    		}
+        	
+        	if (doPad) {
+        		textExpectedExtentX.setEnabled(true);
+            	textExpectedExtentY.setEnabled(true);
+            	textExpectedExtentZ.setEnabled(true);
+        	} else {
+        		textExpectedExtentX.setEnabled(false);
+            	textExpectedExtentY.setEnabled(false);
+            	textExpectedExtentZ.setEnabled(false);
+        	}
+        	        	
+        } else if (command.equals("Subsample by 8")) {
+        	denom = 8;
+        	for(int i = 0; i < dim; i++) {
+        		if(isDivisible(extents[i], denom)) {
+        			padExtents[i] = extents[i];
+        		} else {
+        			padExtents[i] = makeExtentDivisibleByDenom(extents[i], denom);
+        		}
+        	}
+        	
+        	textExpectedExtentX.setText(Integer.toString(padExtents[0]));
+        	textExpectedExtentY.setText(Integer.toString(padExtents[1]));
+        	textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+        	
+        	if (Arrays.equals(padExtents, extents)) {
+    			doPad = false;
+    		} else {
+    			doPad = true;
+    		}
+        	
+        	if (doPad) {
+        		textExpectedExtentX.setEnabled(true);
+            	textExpectedExtentY.setEnabled(true);
+            	textExpectedExtentZ.setEnabled(true);
+        	} else {
+        		textExpectedExtentX.setEnabled(false);
+            	textExpectedExtentY.setEnabled(false);
+            	textExpectedExtentZ.setEnabled(false);
+        	}
+        	        	
         }
     }
 
@@ -188,6 +328,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 }
             }
         }
+        
     }
 
     /**
@@ -217,7 +358,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
         resultImage = new ModelImage(image.getType(), newExtents, image.getImageName() + "_subsample_" + denom);
 
-        algoSub = new AlgorithmSubsample(image, resultImage, newExtents, sigmas, processIndep, doVOI, xfrm);
+        algoSub = new AlgorithmSubsample(image, resultImage, newExtents, padExtents, sigmas, processIndep, doVOI, xfrm, doPad);
 
         algoSub.addListener(this);
 
@@ -351,16 +492,19 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         sampleSizeGroup = new ButtonGroup();
 
         by2Button = new JRadioButton("Subsample by 2", true);
+        by2Button.addActionListener(this);
         by2Button.setFont(serif12);
         sampleSizeGroup.add(by2Button);
         sampleSizePanel.add(by2Button);
 
         by4Button = new JRadioButton("Subsample by 4", false);
+        by4Button.addActionListener(this);
         by4Button.setFont(serif12);
         sampleSizeGroup.add(by4Button);
         sampleSizePanel.add(by4Button);
 
         by8Button = new JRadioButton("Subsample by 8", false);
+        by8Button.addActionListener(this);
         by8Button.setFont(serif12);
         sampleSizeGroup.add(by8Button);
         sampleSizePanel.add(by8Button);
@@ -383,8 +527,188 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             lockZBox.addItemListener(this);
             sampleSizePanel.add(lockZBox);
         }
+        
+        //Panel for Orginal Extents
+		JPanel originalExtentsPanel = new JPanel(new GridBagLayout());
 
-        JPanel buttonPanel = new JPanel(new FlowLayout());
+		originalExtentsPanel.setForeground(Color.black);
+		originalExtentsPanel.setBorder(buildTitledBorder("Original Extents"));
+        
+        //Orginal Extent X
+		JLabel labelOriginalExtentX = new JLabel("extent X: ");
+		labelOriginalExtentX.setFont(serif12);
+
+		textOriginalExtentX = new JTextField();
+		textOriginalExtentX.setColumns(5);
+		textOriginalExtentX.setMaximumSize(labelOriginalExtentX.getPreferredSize());
+		textOriginalExtentX.setHorizontalAlignment(JTextField.RIGHT);
+		textOriginalExtentX.setText(Integer.toString(extents[0]));
+		textOriginalExtentX.setFont(serif12);
+		textOriginalExtentX.setEnabled(false);
+
+		// Orginal Extent Y
+		JLabel labelOriginalExtentY = new JLabel("extent Y: ");
+		labelOriginalExtentY.setFont(serif12);
+
+		textOriginalExtentY = new JTextField();
+		textOriginalExtentY.setColumns(5);
+		textOriginalExtentY.setMaximumSize(labelOriginalExtentY.getPreferredSize());
+		textOriginalExtentY.setHorizontalAlignment(JTextField.RIGHT);
+		textOriginalExtentY.setText(Integer.toString(extents[1]));
+		textOriginalExtentY.setFont(serif12);
+		textOriginalExtentY.setEnabled(false);
+
+		// Orginal Extent Z
+		JLabel labelOriginalExtentZ = new JLabel("extent Z: ");
+		labelOriginalExtentZ.setFont(serif12);
+
+		textOriginalExtentZ = new JTextField();
+		textOriginalExtentZ.setColumns(5);
+		textOriginalExtentZ.setMaximumSize(labelOriginalExtentZ.getPreferredSize());
+		textOriginalExtentZ.setHorizontalAlignment(JTextField.RIGHT);
+		if (dim >= 3) {
+			textOriginalExtentZ.setText(Integer.toString(extents[2]));
+			textOriginalExtentZ.setFont(serif12);
+		}
+		textOriginalExtentZ.setEnabled(false);
+
+		// Panel for Expected Extents
+		JPanel expectedExtentsPanel = new JPanel(new GridBagLayout());
+
+		expectedExtentsPanel.setForeground(Color.black);
+		expectedExtentsPanel.setBorder(buildTitledBorder("Expected Extents"));
+
+		// Expected Extent X
+		JLabel labelExpectedExtentX = new JLabel("extent X: ");
+		labelExpectedExtentX.setFont(serif12);
+
+		textExpectedExtentX = new JTextField();
+		textExpectedExtentX.setColumns(5);
+		textExpectedExtentX.setMaximumSize(labelExpectedExtentX.getPreferredSize());
+		textExpectedExtentX.setHorizontalAlignment(JTextField.RIGHT);
+		textExpectedExtentX.setText(Integer.toString(padExtents[0]));
+		textExpectedExtentX.setFont(serif12);
+		if (!doPad) {
+			textExpectedExtentX.setEnabled(false);
+		}
+
+		// Expected Extent Y
+		JLabel labelExpectedExtentY = new JLabel("extent Y: ");
+		labelExpectedExtentY.setFont(serif12);
+
+		textExpectedExtentY = new JTextField();
+		textExpectedExtentY.setColumns(5);
+		textExpectedExtentY.setMaximumSize(labelExpectedExtentY.getPreferredSize());
+		textExpectedExtentY.setHorizontalAlignment(JTextField.RIGHT);
+		textExpectedExtentY.setText(Integer.toString(padExtents[1]));
+		textExpectedExtentY.setFont(serif12);
+		if (!doPad) {
+			textExpectedExtentY.setEnabled(false);
+		}
+
+		// Expected Extent Z
+		JLabel labelExpectedExtentZ = new JLabel("extent Z: ");
+		labelExpectedExtentZ.setFont(serif12);
+
+		textExpectedExtentZ = new JTextField();
+		textExpectedExtentZ.setColumns(5);
+		textExpectedExtentZ.setMaximumSize(labelExpectedExtentZ.getPreferredSize());
+		textExpectedExtentZ.setHorizontalAlignment(JTextField.RIGHT);
+		textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+		textExpectedExtentZ.setFont(serif12);
+		if (!doPad || dim < 3)  {
+			textExpectedExtentZ.setEnabled(false);
+		}
+		
+		GridBagConstraints gbc1 = new GridBagConstraints();
+		
+		gbc1.anchor = GridBagConstraints.WEST;
+		gbc1.gridheight = 1;
+		gbc1.gridwidth = 1;
+		gbc1.insets = new Insets(3, 3, 3, 3);
+
+		gbc1.gridy++;
+		gbc1.gridx = 0;
+		originalExtentsPanel.add(labelOriginalExtentX, gbc1);
+		gbc1.gridx = 1;
+		originalExtentsPanel.add(textOriginalExtentX, gbc1);
+
+		gbc1.gridy++;
+		gbc1.gridx = 0;
+		originalExtentsPanel.add(labelOriginalExtentY, gbc1);
+		gbc1.gridx = 1;
+		originalExtentsPanel.add(textOriginalExtentY, gbc1);
+
+		gbc1.gridy++;
+		gbc1.gridx = 0;
+		originalExtentsPanel.add(labelOriginalExtentZ, gbc1);
+		gbc1.gridx = 1;
+		originalExtentsPanel.add(textOriginalExtentZ, gbc1);
+
+		gbc1.gridx = 0;
+		gbc1.weightx = 1.0;
+		gbc1.weighty = 1.0;
+		gbc1.fill = GridBagConstraints.VERTICAL;
+
+		GridBagConstraints gbc2 = new GridBagConstraints();
+		gbc2.anchor = GridBagConstraints.WEST;
+		gbc2.gridheight = 1;
+		gbc2.gridwidth = 1;
+		gbc2.insets = new Insets(3, 3, 3, 3);
+
+		gbc2.gridy++;
+		gbc2.gridx = 2;
+		expectedExtentsPanel.add(labelExpectedExtentX, gbc2);
+		gbc2.gridx = 3;
+		expectedExtentsPanel.add(textExpectedExtentX, gbc2);
+
+		gbc2.gridy++;
+		gbc2.gridx = 2;
+		expectedExtentsPanel.add(labelExpectedExtentY, gbc2);
+		gbc2.gridx = 3;
+		expectedExtentsPanel.add(textExpectedExtentY, gbc2);
+
+		gbc2.gridy++;
+		gbc2.gridx = 2;
+		expectedExtentsPanel.add(labelExpectedExtentZ, gbc2);
+		gbc2.gridx = 3;
+		expectedExtentsPanel.add(textExpectedExtentZ, gbc2);
+
+		gbc2.gridx = 1;
+		gbc2.weightx = 1.0;
+		gbc2.weighty = 1.0;
+		gbc2.fill = GridBagConstraints.VERTICAL;
+        
+		JPanel mainPanel = new JPanel(new GridBagLayout());
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridy = 0;
+		
+		mainPanel.add(sampleSizePanel, gbc);
+
+		JPanel padPanel = new JPanel(new GridBagLayout());
+
+		padPanel.setForeground(Color.black);
+		padPanel.setBorder(buildTitledBorder("Pad Image"));
+
+		gbc.gridy = 1;
+		mainPanel.add(padPanel, gbc);
+
+		padPanel.add(originalExtentsPanel, gbc1);
+		padPanel.add(expectedExtentsPanel, gbc2);
+
+		getContentPane().add(mainPanel);
+		getContentPane().add(buildButtons(), BorderLayout.SOUTH);
+
+		pack();
+		setVisible(true);
+		setResizable(false);
+        
+        
+        
+
+        //JPanel buttonPanel = new JPanel(new FlowLayout());
 
         // Make & set the OK (remove) and Cancel buttons--place outside the border
         /*
@@ -393,17 +717,17 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
          *
          * buildCancelButton(); cancelButton.setPreferredSize(MipavUtil.defaultButtonSize); buttonPanel.add(cancelButton);
          */
-        buttonPanel.add(buildButtons());
+        //buttonPanel.add(buildButtons());
 
-        JPanel panel = new JPanel(new BorderLayout());
+        //JPanel panel = new JPanel(new BorderLayout());
 
-        panel.add(sampleSizePanel); // put the main panel into the center of the dialog
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        getContentPane().add(panel);
-        pack();
-        setResizable(false);
-        setVisible(true);
+        //panel.add(sampleSizePanel); // put the main panel into the center of the dialog
+        //panel.add(buttonPanel, BorderLayout.SOUTH);
+        //panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        //getContentPane().add(panel);
+        //pack();
+        //setResizable(false);
+        //setVisible(true);
     }
 
     /**
@@ -415,8 +739,18 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 
         if (by4Button.isSelected()) {
             denom = 4;
+            for(int i = 0; i < dim; i++) {
+            	if(!isDivisible(padExtents[i], denom)) {
+            		padExtents[i] = makeExtentDivisibleByDenom(padExtents[i], denom);
+            	}
+            }
         } else if (by8Button.isSelected()) {
             denom = 8;
+            for(int i = 0; i < dim; i++) {
+            	if(!isDivisible(padExtents[i], denom)) {
+            		padExtents[i] = makeExtentDivisibleByDenom(padExtents[i], denom);
+            	}
+            }
         }
 
         if (processIndepBox != null) {
@@ -429,21 +763,30 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 
         if (image.getNDims() == 2) {
             newExtents = new int[2];
-            newExtents[0] = image.getExtents()[0] / denom;
-            newExtents[1] = image.getExtents()[1] / denom;
+            //newExtents[0] = image.getExtents()[0] / denom;
+            //newExtents[1] = image.getExtents()[1] / denom;
+            
+            newExtents[0] = padExtents[0] / denom;
+            newExtents[1] = padExtents[1] / denom;
 
             sigmas = new float[2];
             sigmas[0] = 1.0f;
             sigmas[1] = 1.0f;
         } else if (image.getNDims() == 3) {
             newExtents = new int[3];
-            newExtents[0] = image.getExtents()[0] / denom;
-            newExtents[1] = image.getExtents()[1] / denom;
+            //newExtents[0] = image.getExtents()[0] / denom;
+            //newExtents[1] = image.getExtents()[1] / denom;
+            
+            newExtents[0] = padExtents[0] / denom;
+            newExtents[1] = padExtents[1] / denom;
+            newExtents[2] = padExtents[2] / denom;
 
             if (lockZ) {
-                newExtents[2] = image.getExtents()[2];
+                //newExtents[2] = image.getExtents()[2];
+                newExtents[2] = padExtents[2];
             } else {
-                newExtents[2] = image.getExtents()[2] / denom;
+                //newExtents[2] = image.getExtents()[2] / denom;
+                newExtents[2] = padExtents[2] / denom;
             }
 
             sigmas = new float[3];
@@ -452,10 +795,15 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             sigmas[2] = 1.0f * (image.getFileInfo(0).getResolutions()[0] / image.getFileInfo(0).getResolutions()[2]);
         } else if (image.getNDims() == 4) {
             newExtents = new int[4];
-            newExtents[0] = image.getExtents()[0] / denom;
-            newExtents[1] = image.getExtents()[1] / denom;
-            newExtents[2] = image.getExtents()[2] / denom;
+            //newExtents[0] = image.getExtents()[0] / denom;
+            //newExtents[1] = image.getExtents()[1] / denom;
+            //newExtents[2] = image.getExtents()[2] / denom;
+            
+            newExtents[0] = padExtents[0] / denom;
+            newExtents[1] = padExtents[1] / denom;
+            newExtents[2] = padExtents[2] / denom;
             newExtents[3] = image.getExtents()[3];
+            
             sigmas = new float[3];
             sigmas[0] = 1.0f;
             sigmas[1] = 1.0f;
@@ -506,4 +854,47 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 
         return true;
     }
+    
+    /**
+	 * Check if the extent value is divisible by 2, 4 or 8.
+	 * 
+	 * @param dimValue	dimension value
+	 * 
+	 * @return isPower2 true if dimValue is divisible 2, 4 or 8 false otherwise.
+	 */
+
+	private boolean isDivisible(int dimValue, int scale) {
+		
+		boolean flag = false;
+		
+		if ((dimValue % scale) == 0) {
+			flag = true;
+		}
+		
+		return flag;
+	}
+	
+	/**
+	 * Calculate the nearest extent value divisible by 2, 4 or 8
+	 * 
+	 * @param dimValue     extent value
+	 * 
+	 * @return newDimValue extent value divisible by 2, 4 or 8.
+	 */
+	
+	private int makeExtentDivisibleByDenom (int dimValue, int scale) {
+		
+		int newDimValue = dimValue;
+		int rem = 0;
+		if (scale == 2) {
+			newDimValue = dimValue + 1;
+		} else {
+			rem = dimValue % scale;
+			newDimValue = dimValue + (scale - rem);
+		}
+		
+		return newDimValue;
+	}
+	
+    
 }
