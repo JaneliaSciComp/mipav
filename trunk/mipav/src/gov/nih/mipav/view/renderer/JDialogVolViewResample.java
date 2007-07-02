@@ -505,6 +505,12 @@ public class JDialogVolViewResample extends JDialogBase {
      * Build the resample dialog.
      */
     public void init() {
+        if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
+        {
+            initWM();
+            return;
+        }
+
         setTitle("Resample Dialog");
 
         Box mainBox = new Box(BoxLayout.Y_AXIS);
@@ -741,20 +747,11 @@ public class JDialogVolViewResample extends JDialogBase {
         radioSurfaceR.addItemListener(this);
         group2.add(radioSurfaceR);
 
-        if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
-        {
-            radioRaycastR = new JRadioButton("Shader-based Volume Renderer", false);
-            radioRaycastR.setFont(serif12);
-            radioRaycastR.addItemListener(this);
-            group2.add(radioRaycastR);
-        }
-        else
-        {
-            radioRaycastR = new JRadioButton("Raycast Volume Renderer", false);
-            radioRaycastR.setFont(serif12);
-            radioRaycastR.addItemListener(this);
-            group2.add(radioRaycastR);
-        }
+        radioRaycastR = new JRadioButton("Raycast Volume Renderer", false);
+        radioRaycastR.setFont(serif12);
+        radioRaycastR.addItemListener(this);
+        group2.add(radioRaycastR);
+
         radioShearwarpR = new JRadioButton("Shearwarp Volume Renderer", false);
         radioShearwarpR.setFont(serif12);
         group2.add(radioShearwarpR);
@@ -776,20 +773,12 @@ public class JDialogVolViewResample extends JDialogBase {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
-        if ( m_kVolViewType.equals( "WMVolTriplanar" ) )
-        {
-            radioButtonPanelRight.add(radioRaycastR, gbc);
-            gbc.gridy++;
-       }
-        else
-        {
-            radioButtonPanelRight.add(radioSurfaceR, gbc);
-            gbc.gridy++;
-            radioButtonPanelRight.add(radioRaycastR, gbc);
-            gbc.gridy++;
-            radioButtonPanelRight.add(radioShearwarpR, gbc);
-            gbc.gridy++;
-        }
+        radioButtonPanelRight.add(radioSurfaceR, gbc);
+        gbc.gridy++;
+        radioButtonPanelRight.add(radioRaycastR, gbc);
+        gbc.gridy++;
+        radioButtonPanelRight.add(radioShearwarpR, gbc);
+        gbc.gridy++;
         radioButtonPanelRight.add(radioBrainSurfaceFlattenerR, gbc);
         gbc.gridy++;
         radioButtonPanelRight.add(radioNoneR, gbc);
@@ -826,6 +815,262 @@ public class JDialogVolViewResample extends JDialogBase {
         OKButton.requestFocus();
     }
 
+    public void initWM() {
+        setTitle("Resample Dialog");
+
+        Box mainBox = new Box(BoxLayout.Y_AXIS);
+
+        JPanel endPanel = new JPanel();
+
+        endPanel.setLayout(new BorderLayout());
+        endPanel.add(new JLabel(" Selecting _Resample_ will resample the image's extents to a Power of 2."),
+                     BorderLayout.NORTH);
+        endPanel.add(new JLabel(" Selecting _Do not resample_ will disable the volume render button of "),
+                     BorderLayout.CENTER);
+        endPanel.add(new JLabel(" Surface Renderer since the image's extents are not a Power of 2."),
+                     BorderLayout.SOUTH);
+        mainBox.add(endPanel);
+
+        Box contentBox = new Box(BoxLayout.X_AXIS);
+        JPanel leftPanel = new JPanel();
+        JPanel rightPanel = new JPanel();
+
+        // make border
+        leftPanel.setBorder(buildTitledBorder("Original Extents"));
+        contentBox.add(leftPanel);
+
+        // set layout
+        GridBagLayout gbl = new GridBagLayout();
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        leftPanel.setLayout(gbl);
+
+        // extent X
+        leftPanel.add(Box.createHorizontalStrut(10));
+
+        JLabel extXLabel = new JLabel("extent X:");
+
+        extXLabel.setFont(serif12);
+        extXLabel.setForeground(Color.black);
+        extXLabel.setRequestFocusEnabled(false);
+        gbc.gridwidth = 2;
+        gbl.setConstraints(extXLabel, gbc);
+        leftPanel.add(extXLabel);
+        leftPanel.add(Box.createHorizontalStrut(10));
+
+        extXInput = new JTextField(Integer.toString(extents[0]), 3);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(extXInput, gbc);
+        extXInput.setEnabled(false);
+        leftPanel.add(extXInput);
+
+        // extent Y
+        leftPanel.add(Box.createHorizontalStrut(10));
+
+        JLabel extYLabel = new JLabel("extent Y:");
+
+        extYLabel.setFont(serif12);
+        extYLabel.setForeground(Color.black);
+        extYLabel.setRequestFocusEnabled(false);
+        gbc.gridwidth = 2;
+        gbl.setConstraints(extYLabel, gbc);
+        leftPanel.add(extYLabel);
+        leftPanel.add(Box.createHorizontalStrut(10));
+
+        extYInput = new JTextField(Integer.toString(extents[1]), 3);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(extYInput, gbc);
+        extYInput.setEnabled(false);
+        leftPanel.add(extYInput);
+
+        if (nDim >= 3) {
+
+            // extent Z
+            leftPanel.add(Box.createHorizontalStrut(10));
+
+            JLabel extZLabel = new JLabel("extent Z:");
+
+            extZLabel.setFont(serif12);
+            extZLabel.setForeground(Color.black);
+            extZLabel.setRequestFocusEnabled(false);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(extZLabel, gbc);
+            leftPanel.add(extZLabel);
+            leftPanel.add(Box.createHorizontalStrut(10));
+
+            extZInput = new JTextField(Integer.toString(extents[2]), 3);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(extZInput, gbc);
+            extZInput.setEnabled(false);
+            leftPanel.add(extZInput);
+        }
+
+        // make border
+        rightPanel.setBorder(buildTitledBorder("Expected Extents"));
+        contentBox.add(rightPanel);
+
+        // set layout
+        gbl = new GridBagLayout();
+        gbc = new GridBagConstraints();
+        rightPanel.setLayout(gbl);
+
+        // extent X expected
+        rightPanel.add(Box.createHorizontalStrut(10));
+
+        JLabel extXNewLabel = new JLabel("extent X:");
+
+        extXNewLabel.setFont(serif12);
+        extXNewLabel.setForeground(Color.black);
+        extXNewLabel.setRequestFocusEnabled(false);
+        gbc.gridwidth = 2;
+        gbl.setConstraints(extXNewLabel, gbc);
+        rightPanel.add(extXNewLabel);
+        rightPanel.add(Box.createHorizontalStrut(10));
+
+        extXOutput = new JTextField(Integer.toString(volExtents[0]), 3);
+        extXOutput.addActionListener(this);
+        extXOutput.setActionCommand("xChanged");
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(extXOutput, gbc);
+        MipavUtil.makeNumericsOnly(extXOutput, false);
+        rightPanel.add(extXOutput);
+
+        // extent Y expected
+        rightPanel.add(Box.createHorizontalStrut(10));
+
+        JLabel extYNewLabel = new JLabel("extent Y:");
+
+        extYNewLabel.setFont(serif12);
+        extYNewLabel.setForeground(Color.black);
+        extYNewLabel.setRequestFocusEnabled(false);
+        gbc.gridwidth = 2;
+        gbl.setConstraints(extYNewLabel, gbc);
+        rightPanel.add(extYNewLabel);
+        rightPanel.add(Box.createHorizontalStrut(10));
+
+        extYOutput = new JTextField(Integer.toString(volExtents[1]), 3);
+        extYOutput.addActionListener(this);
+        extYOutput.setActionCommand("yChanged");
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(extYOutput, gbc);
+        MipavUtil.makeNumericsOnly(extYOutput, false);
+        rightPanel.add(extYOutput);
+
+        if (nDim >= 3) {
+
+            // extent Z expected
+            rightPanel.add(Box.createHorizontalStrut(10));
+
+            JLabel extZNewLabel = new JLabel("extent Z:");
+
+            extZNewLabel.setFont(serif12);
+            extZNewLabel.setForeground(Color.black);
+            extZNewLabel.setRequestFocusEnabled(false);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(extZNewLabel, gbc);
+            rightPanel.add(extZNewLabel);
+            rightPanel.add(Box.createHorizontalStrut(10));
+
+            extZOutput = new JTextField(Integer.toString(volExtents[2]), 3);
+            extZOutput.addActionListener(this);
+            extZOutput.setActionCommand("zChanged");
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(extZOutput, gbc);
+            MipavUtil.makeNumericsOnly(extZOutput, false);
+            rightPanel.add(extZOutput);
+        }
+
+        mainBox.add(contentBox);
+
+        /* Filter selection: */
+        JPanel filterPanel = new JPanel();
+        filterPanel.setBorder(buildTitledBorder("Select Resampling Filter"));
+        m_kFilterType = new JComboBox();
+        m_kFilterType.addItem(new String("Trilinear Interpolation"));
+        m_kFilterType.addItem(new String("Nearest Neighbor"));
+        m_kFilterType.addItem(new String("Cubic BSpline"));
+        m_kFilterType.addItem(new String("Quadratic BSpline"));
+        m_kFilterType.addItem(new String("Cubic lagrangian"));
+        m_kFilterType.addItem(new String("Quintic lagrangian"));
+        m_kFilterType.addItem(new String("Heptic lagrangian"));
+        m_kFilterType.addItem(new String("Windowed sinc"));
+        m_kFilterType.setSelectedIndex(0);
+        m_kFilterType.addActionListener(this);
+        m_kFilterType.setActionCommand("FilterChanged");
+        filterPanel.add(m_kFilterType);
+        mainBox.add(filterPanel);
+
+        JPanel radioBox = new JPanel();
+
+        gbl = new GridBagLayout();
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = 2;
+
+        radioBox.setBorder(MipavUtil.buildTitledBorder("Select Renderer"));
+        radioBox.setLayout(gbl);
+
+        ButtonGroup group1 = new ButtonGroup();
+
+        radioSurfaceL = new JRadioButton("Surface & 3D GPU Volume Renderer", false);
+        radioSurfaceL.setFont(serif12);
+        radioSurfaceL.addItemListener(this);
+        group1.add(radioSurfaceL);
+
+        JLabel emptyLabelUp = new JLabel(" ");
+        JLabel emptyLabelDown = new JLabel(" ");
+
+        radioFlythruL = new JRadioButton("Flythru Renderer", false);
+        radioFlythruL.setFont(serif12);
+        radioFlythruL.setEnabled(false);
+        radioFlythruL.addItemListener(this);
+        group1.add(radioFlythruL);
+
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        radioBox.add(radioSurfaceL, gbc);
+        gbc.gridy++;
+        radioBox.add(emptyLabelUp, gbc);
+        gbc.gridy++;
+        radioBox.add(emptyLabelDown, gbc);
+        gbc.gridy++;
+        radioBox.add(radioFlythruL, gbc);
+        gbc.gridy++;
+
+        gbl = new GridBagLayout();
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = 2;
+
+        mainBox.add(radioBox);
+
+        JPanel OKCancelPanel = new JPanel(new FlowLayout());
+
+        OKButton = buildResampleButton();
+        OKCancelPanel.add(OKButton);
+
+        buildPadButton();
+        OKCancelPanel.add(padButton);
+
+        cancelButton = buildNotResampleButton();
+        OKCancelPanel.add(cancelButton);
+
+        mainBox.add(OKCancelPanel);
+        radioSurfaceL.setSelected(true);
+
+        mainDialogPanel.add(mainBox);
+        getContentPane().add(mainDialogPanel);
+
+        pack();
+        setVisible(true);
+
+        // so that hitting space or enter makes the dialog go
+        // (focus used to go to the first text field, which the user doesn't change much)
+        OKButton.requestFocus();
+    }
+
+
     /**
      * Sets the flags for the checkboxes.
      *
@@ -845,30 +1090,35 @@ public class JDialogVolViewResample extends JDialogBase {
             }
         } else if (radioFlythruL.isSelected()) {
             leftPanelRenderMode = ViewJFrameVolumeView.ENDOSCOPY;
-            radioShearwarpR.setSelected(false);
-            radioShearwarpR.setEnabled(false);
-            radioBrainSurfaceFlattenerR.setSelected(false);
-            radioBrainSurfaceFlattenerR.setEnabled(false);
-            radioSurfaceR.setSelected(false);
-            radioSurfaceR.setEnabled(false);
-            radioRaycastR.setSelected(false);
-            radioRaycastR.setEnabled(false);
-            radioNoneR.setSelected(true);
-            radioNoneR.setEnabled(false);
+            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
+            {
+                radioShearwarpR.setSelected(false);
+                radioShearwarpR.setEnabled(false);
+                radioBrainSurfaceFlattenerR.setSelected(false);
+                radioBrainSurfaceFlattenerR.setEnabled(false);
+                radioSurfaceR.setSelected(false);
+                radioSurfaceR.setEnabled(false);
+                radioRaycastR.setSelected(false);
+                radioRaycastR.setEnabled(false);
+                radioNoneR.setSelected(true);
+                radioNoneR.setEnabled(false);
+            }
         }
 
-        if (radioSurfaceR.isSelected()) {
-            rightPanelRenderMode = ViewJFrameVolumeView.SURFACE;
-        } else if (radioRaycastR.isSelected()) {
-            rightPanelRenderMode = ViewJFrameVolumeView.RAYCAST;
-        } else if (radioShearwarpR.isSelected()) {
-            rightPanelRenderMode = ViewJFrameVolumeView.SHEARWARP;
-        } else if (radioBrainSurfaceFlattenerR.isSelected()) {
-            rightPanelRenderMode = ViewJFrameVolumeView.BRAINSURFACE_FLATTENER;
-        } else if (radioNoneR.isSelected()) {
-            rightPanelRenderMode = ViewJFrameVolumeView.NONE;
+        if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
+        {
+            if (radioSurfaceR.isSelected()) {
+                rightPanelRenderMode = ViewJFrameVolumeView.SURFACE;
+            } else if (radioRaycastR.isSelected()) {
+                rightPanelRenderMode = ViewJFrameVolumeView.RAYCAST;
+            } else if (radioShearwarpR.isSelected()) {
+                rightPanelRenderMode = ViewJFrameVolumeView.SHEARWARP;
+            } else if (radioBrainSurfaceFlattenerR.isSelected()) {
+                rightPanelRenderMode = ViewJFrameVolumeView.BRAINSURFACE_FLATTENER;
+            } else if (radioNoneR.isSelected()) {
+                rightPanelRenderMode = ViewJFrameVolumeView.NONE;
+            }
         }
-
     }
 
     /**

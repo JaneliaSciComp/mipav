@@ -1040,6 +1040,7 @@ public class OpenGLRenderer extends Renderer
         // Get the texture image and its information.
         final GraphicsImage pkImage = pkTexture.GetImage();
         assert(pkImage != null);
+
         Buffer aucData = pkImage.GetDataBuffer();
         int iComponent = ms_aeImageComponents[pkImage.GetFormat().Value()];
         int eFormat = ms_aeImageFormats[pkImage.GetFormat().Value()];
@@ -1194,6 +1195,129 @@ public class OpenGLRenderer extends Renderer
         return rpkID;
     }
 
+    /** Resource loading and releasing (to/from video memory).
+     * @param pkTexture the Texture to generate/bind
+     * @return the new ResourceIdentifier for the Texture
+     */
+    public void OnReloadTexture (ResourceIdentifier pkID)
+    {
+        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        GL gl = m_kDrawable.getGL();
+
+
+        OnEnableTexture(pkID);
+        
+        TextureID pkResource = (TextureID)pkID;
+        Texture pkTexture = pkResource.TextureObject;
+        SamplerInformation pkSI = pkTexture.GetSamplerInformation();
+        SamplerInformation.Type eSType = pkSI.GetType();
+        int eTarget = ms_aeSamplerTypes[eSType.Value()];
+
+        // Get the texture image and its information.
+        final GraphicsImage pkImage = pkTexture.GetImage();
+        assert(pkImage != null);
+
+        Buffer aucData = pkImage.GetDataBuffer();
+        int iComponent = ms_aeImageComponents[pkImage.GetFormat().Value()];
+        int eFormat = ms_aeImageFormats[pkImage.GetFormat().Value()];
+        int eIType = ms_aeImageTypes[pkImage.GetFormat().Value()];
+
+        // Set the filter mode.
+        Texture.FilterType eFType = pkTexture.GetFilterType();
+
+        // Copy the image data from system memory to video memory.
+        boolean bNoMip =
+            (eFType == Texture.FilterType.NEAREST ||
+             eFType == Texture.FilterType.LINEAR);
+
+        boolean bDepth = pkTexture.IsDepthTexture();
+
+        if ( eSType == SamplerInformation.Type.SAMPLER_1D )
+        {
+            if (bNoMip)
+            {
+                gl.glTexSubImage1D(eTarget,0,0,pkImage.GetBound(0),
+                                   eFormat,eIType,aucData);
+            }
+//             else
+//             {
+//                 GLU kGLU = new GLU();
+//                 kGLU.gluBuild1DMipmaps(eTarget,iComponent,pkImage.GetBound(0),
+//                                        eFormat,eIType,aucData);
+//             }
+        }
+        else if ( eSType == SamplerInformation.Type.SAMPLER_2D ||
+                  eSType == SamplerInformation.Type.SAMPLER_PROJ  )
+        {
+            if (!bDepth)
+            {
+                if (bNoMip)
+                {
+                    gl.glTexSubImage2D(eTarget,0,0,0,pkImage.GetBound(0),
+                                       pkImage.GetBound(1),eFormat,eIType,aucData);
+                }
+//                 else
+//                 {
+//                     GLU kGLU = new GLU();
+//                     kGLU.gluBuild2DMipmaps(eTarget,iComponent,pkImage.GetBound(0),
+//                                       pkImage.GetBound(1),eFormat,eIType,aucData);
+//                 }
+            }
+            else
+            {
+                gl.glTexSubImage2D(eTarget,0,0,0,pkImage.GetBound(0),
+                                   pkImage.GetBound(1),eFormat,eIType,0);
+            }
+        }
+        else if ( eSType ==  SamplerInformation.Type.SAMPLER_3D )
+        {
+            // TO DO.  Microsoft's GLU library does not implement the function
+            // gluBuild3DMipmaps.  DirectX9 SDK does not support automatic
+            // generation of mipmaps for volume textures.  For now, do not
+            // support mipmaps of 3D textures.  However, manually generated
+            // mipmaps can be added later.  The LibGraphics Sampler classes
+            // already implement this for software rendering.
+            gl.glTexSubImage3D(eTarget,0,0,0,0,pkImage.GetBound(0),
+                               pkImage.GetBound(1),pkImage.GetBound(2),eFormat,eIType,
+                               aucData);
+        }
+//         case SamplerInformation.Type.SAMPLER_CUBE.Value():
+//             {
+//                 // A cube map image has 6 subimages (+x,-x,+y,-y,+z,-z).
+//                 assert(pkImage.IsCubeImage());
+//                 int i, iIncrement = pkImage.GetBytesPerPixel() *
+//                     pkImage.GetQuantity();
+
+//                 if (bNoMip)
+//                 {
+//                     for (i = 0; i < 6; i++, aucData += iIncrement)
+//                     {
+//                         gl.glTexImage2D(GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X+i,0,
+//                                         iComponent,pkImage.GetBound(0),
+//                                         pkImage.GetBound(1),
+//                                         0,eFormat,eIType,aucData);
+//                     }
+//                 }
+//                 else
+//                 {
+// //                     for (i = 0; i < 6; i++, aucData += iIncrement)
+// //                     {
+// //                         gluBuild2DMipmaps(GL.GL_TEXTURE_CUBE_MAP_POSITIVE_X+i,
+// //                                           iComponent,pkImage.GetBound(0),
+// //                                           pkImage.GetBound(1),
+// //                                           eFormat,eIType,aucData);
+// //                     }
+//                 }
+//                 break;
+//             }
+        else
+        {
+            assert(false);
+        }
+        aucData.clear();
+        aucData = null;
+    }
+
     /**
      * Release the Texture described in the ResourceIdentifier parameter.
      * @param pkID, the ResourceIdentifier with the Texture to release.
@@ -1208,13 +1332,10 @@ public class OpenGLRenderer extends Renderer
         {
             Activate();
         }
-
-        TextureID pkResource = (TextureID)pkID;
+        TextureID pkResource = (TextureID)pkID;     
         int[] aiParams = new int[1];
         aiParams[0] = pkResource.ID;
         gl.glDeleteTextures((int)1,aiParams,0);
-        pkResource.ID = aiParams[0];
-        pkResource = null;
     }
 
     /** Resource loading and releasing (to/from video memory).

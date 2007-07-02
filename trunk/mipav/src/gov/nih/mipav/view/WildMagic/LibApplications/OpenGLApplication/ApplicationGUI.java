@@ -127,6 +127,19 @@ public class ApplicationGUI
         m_kShaderMap = new Hashtable<String,Vector<UserConstant>>();
     }
 
+    public void close()
+    {
+        m_kFrame.setVisible(false);
+        if ( m_kShaderMap != null )
+        {
+            m_kShaderMap.clear();
+        }
+
+        m_kParent = null;
+        m_kFrame = null;
+        ms_bInit = false;
+    }
+    
     /** 
      * Called when the user changes one of the Shader parameters. The
      * corresponding UserConstant variable is found and the updated value is

@@ -880,4 +880,12 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         options.setEndSlice(gmImage.getExtents()[2] - 1);
         fileIO.writeImage(gmImage, options);
     }
+    
+    public void update()
+    {
+        if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+        {
+            ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).updateParent();
+        }
+    }
 }

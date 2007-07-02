@@ -285,9 +285,29 @@ public class GraphicsImage extends GraphicsObject
         return m_aucData;
     }
 
+    public void SetData ( byte[] aucData, int iSize )
+    {
+        if ( m_aucData != null )
+        {
+            m_aucData = null;
+        }
+        m_aucData = aucData;
+        m_aiBound[0] = iSize;
+    }
+
     public float[] GetFloatData ()
     {
         return m_afData;
+    }
+
+    public void SetFloatData ( float[] afData, int iSize )
+    {
+        if ( m_afData != null )
+        {
+            m_afData = null;
+        }
+        m_afData = afData;
+        m_aiBound[0] = iSize;
     }
 
     public Buffer GetDataBuffer ()

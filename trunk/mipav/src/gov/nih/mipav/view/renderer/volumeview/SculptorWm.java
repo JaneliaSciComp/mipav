@@ -157,6 +157,29 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
         initVolumeSculptor();
     }
 
+    public void disposeLocal(boolean flag)
+    {
+        m_kCanvas.removeMouseMotionListener(this);
+        m_kCanvas.removeMouseListener(this);
+
+        if (m_aucSculptImage != null) {
+            m_aucSculptImage = null;
+        }
+
+        if (m_aucSavedImage != null) {
+            m_aucSavedImage = null;
+        }
+
+        m_aiColorSculpt = null;
+        m_aiXPoints = null;
+        m_aiYPoints = null;
+
+        if ( m_kImageBackup != null )
+        {
+            m_kImageBackup.disposeLocal(true);
+            m_kImageBackup = null;
+        }
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -268,8 +291,8 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
             }
         }
         
+        kIn = null;
         return bVolumeChanged;
-        
     }
 
     /**
@@ -341,25 +364,6 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
     }
 
     /**
-     * Sets all variables to null, disposes, and garbage collects.
-     *
-     * @param  flag  DOCUMENT ME!
-     */
-    public void disposeLocal(boolean flag) {
-
-        if (m_aucSculptImage != null) {
-            m_aucSculptImage = null;
-        }
-
-        if (m_aucSavedImage != null) {
-            m_aucSavedImage = null;
-        }
-
-        m_aiXPoints = null;
-        m_aiYPoints = null;
-    }
-
-    /**
      * enableSculpt: called by the ViewJFrameVolumeView object when the Draw Sculpt button is pressed. This function
      * deactivates the m_kVolumeRenderer's mouse response, so the mouse can be used to draw the sculpt outline. It also
      * allocates and initializes the m_iSculptImage buffer for drawing.
@@ -370,6 +374,8 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
         m_bSculptEnabled = bEnabled;
 
         if (m_bSculptEnabled == false) {
+            m_aucSculptImage = null;
+            m_aucSavedImage = null;
             return;
         }
 
@@ -875,7 +881,7 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
      *
      * @throws  Throwable  DOCUMENT ME!
      */
-    protected void finalize() throws Throwable {
+    public void finalize() throws Throwable {
         this.disposeLocal(false);
         super.finalize();
     }

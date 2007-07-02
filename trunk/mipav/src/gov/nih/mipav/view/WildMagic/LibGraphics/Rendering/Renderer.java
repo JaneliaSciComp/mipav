@@ -803,6 +803,11 @@ public abstract class Renderer
             pkID = OnLoadTexture(pkTexture);
             pkTexture.OnLoad(this,new ReleaseFunctionTexture(this),pkID);
         }
+        else if ( pkTexture.Reload() )
+        {
+            OnReloadTexture(pkID);
+            pkTexture.Reload(false);
+        }
     }
 
     public void ReleaseTexture (Bindable pkTexture)
@@ -817,6 +822,20 @@ public abstract class Renderer
         {
             OnReleaseTexture(pkID);
             pkTexture.OnRelease(this,pkID);
+        }
+    }
+
+    public void ReloadTexture (Bindable pkTexture)
+    {
+        if (pkTexture == null)
+        {
+            return;
+        }
+
+        ResourceIdentifier pkID = pkTexture.GetIdentifier(this);
+        if (pkID != null)
+        {
+            OnReloadTexture(pkID);
         }
     }
 
@@ -1280,6 +1299,7 @@ public abstract class Renderer
     public abstract ResourceIdentifier OnLoadPProgram (PixelProgram pkPProgram);
     public abstract void OnReleasePProgram (ResourceIdentifier pkID);
     public abstract ResourceIdentifier OnLoadTexture (Texture pkTexture);
+    public abstract void OnReloadTexture (ResourceIdentifier pkID);
     public abstract void OnReleaseTexture (ResourceIdentifier pkID);
     public abstract ResourceIdentifier OnLoadVBuffer (final Attributes rkIAttr,
                                                       final Attributes rkOAttr,
