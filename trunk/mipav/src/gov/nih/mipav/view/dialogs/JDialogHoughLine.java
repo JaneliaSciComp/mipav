@@ -9,8 +9,6 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.util.*;
-
 import javax.swing.*;
 
 
@@ -27,9 +25,6 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    int[] extents = new int[2];
-
-    /** DOCUMENT ME! */
     private AlgorithmHoughLine hAlgo = null;
 
     /** DOCUMENT ME! */
@@ -38,13 +33,13 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
     /** DOCUMENT ME! */
     private ModelImage resultImage = null;
 
-    /** DOCUMENT ME! */
+    /** Number of rho cells */
     private int n1;
 
     /** DOCUMENT ME! */
     private JTextField xText;
 
-    /** DOCUMENT ME! */
+    /** Number of theta cells */
     private int n2;
 
     /** DOCUMENT ME! */
@@ -219,7 +214,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
         JLabel xLabel;
         JLabel yLabel;
         setForeground(Color.black);
-        setTitle("Hough transform for line detection");
+        setTitle("Hough transform for line filling");
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
