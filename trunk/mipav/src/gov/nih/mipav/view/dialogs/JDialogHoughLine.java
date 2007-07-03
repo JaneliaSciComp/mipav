@@ -213,6 +213,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
     private void init() {
         JLabel xLabel;
         JLabel yLabel;
+        int maxDim = Math.max(image.getExtents()[0], image.getExtents()[1]);
         setForeground(Color.black);
         setTitle("Hough transform for line filling");
 
@@ -238,7 +239,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
         paramPanel.add(xLabel, gbc6);
 
         xText = new JTextField(10);
-        xText.setText(String.valueOf(image.getExtents()[0]));
+        xText.setText(String.valueOf(maxDim));
         xText.setFont(serif12);
         xText.setEnabled(true);
         gbc6.gridx = 1;
@@ -253,7 +254,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
         paramPanel.add(yLabel, gbc6);
 
         yText = new JTextField(10);
-        yText.setText(String.valueOf(image.getExtents()[1]));
+        yText.setText(String.valueOf(maxDim));
         yText.setFont(serif12);
         yText.setEnabled(true);
         gbc6.gridx = 1;
