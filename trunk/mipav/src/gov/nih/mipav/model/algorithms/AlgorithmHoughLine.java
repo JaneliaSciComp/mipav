@@ -362,7 +362,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
     private void constructLog() {
 
 
-        historyString = new String("HoughLine(" + String.valueOf(destImage.getExtents()[0]) + ", " +
-                                   String.valueOf(destImage.getExtents()[1]) + ")\n");
+        historyString = new String("HoughLine(" + String.valueOf(n1) + ", " +
+                                   String.valueOf(n2) + ")\n");
     }
 }
