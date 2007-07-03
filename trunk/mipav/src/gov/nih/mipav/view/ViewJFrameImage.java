@@ -1688,6 +1688,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogFFT(this, getActiveImage());
         } else if (command.equals("Filters (frequency)")) {
             new JDialogFrequencyFilter(this, getActiveImage());
+        } else if (command.equals("HoughCircle")) {
+            new JDialogHoughCircle(this, getActiveImage());
         } else if (command.equals("HoughLine")) {
             new JDialogHoughLine(this, getActiveImage());
         } else if (command.equals("gFilter")) {
