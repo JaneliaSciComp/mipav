@@ -218,7 +218,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
-        paramPanel.setBorder(buildTitledBorder("Output dimensions"));
+        paramPanel.setBorder(buildTitledBorder("Hough transform dimensions"));
 
         GridBagConstraints gbc6 = new GridBagConstraints();
 
