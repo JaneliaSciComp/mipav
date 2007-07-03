@@ -163,7 +163,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 	/** populates the menu item showing available brushes to edit*/
 	private void populateBrushList() {
 		openItem.removeAll();
-		
+		boolean hasBrush = false;
 		JMenuItem brushItem = null;
 		
 		String userBrushes = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "brushes" + File.separator;
@@ -175,6 +175,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 			for (int i = 0; i < brushes.length; i++) {
 				
 				if (brushes[i].getName().endsWith(".png")) {
+					hasBrush = true;
 					brushItem = new JMenuItem(brushes[i].getName());
 					brushItem.addActionListener(this);
 					brushItem.setActionCommand(brushes[i].getPath());
@@ -187,6 +188,8 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 			}
 			
 		}
+		
+		openItem.setEnabled(hasBrush);
 	}
 	
 	/** saves the drawn paintbrush to a .png */
@@ -343,6 +346,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 		
 		openItem = new JMenu("Load paint brush");
 		populateBrushList();
+		
 		
 		gridMenu.add(fillAllItem);
 		gridMenu.add(clearAllItem);
