@@ -22,7 +22,7 @@ import java.io.*;
  *  
  *  rho goes from -sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)) to +sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)).
  *  theta goes from -PI/2 to +PI/2.  rho has n1 cells and theta has n2 cells.  d = sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)).
- *  For each (xi, yi) point in the original image not having a value of zero, calculate n2 values of (rho, theta).
+ *  For each (xi, yi) point in the original image not having a value of zero, calculate n2 values of theta.
  *  Take k from 0 to (n2 - 1) to generate theta(k) = -PI/2 + k*PI/n2.
  *  rho = x*cos(theta) + y*sin(theta).  Then find which of n1 bins rho belongs to by calculating
  *  j = (rho + d)*n1/(2*d), with j going from 0 to n1-1.  If j = n1, set j equal to n1 - 1.
