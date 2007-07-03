@@ -124,7 +124,6 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         int countArray[];
         int xArray[][];
         int yArray[][];
-        int pointIndex[];
         int maxLineNumber = 10;
         boolean selectedLine[];
         float maxDistance[];
@@ -206,7 +205,6 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         maxLinePoints = (int)Math.ceil(Math.sqrt(xDimSource*xDimSource + yDimSource*yDimSource));
         xArray = new int[houghSlice][maxLinePoints];
         yArray = new int[houghSlice][maxLinePoints];
-        pointIndex = new int[houghSlice];
         
         // Calculate the Hough transform
         for (y = 0; y < yDimSource; y++) {
@@ -221,10 +219,9 @@ public class AlgorithmHoughLine extends AlgorithmBase {
                             j = n1 - 1;
                         }
                         indexDest = j + k*n1;
+                        xArray[indexDest][houghBuffer[indexDest]] = x;
+                        yArray[indexDest][houghBuffer[indexDest]] = y;
                         houghBuffer[indexDest]++;
-                        xArray[indexDest][pointIndex[indexDest]] = x;
-                        yArray[indexDest][pointIndex[indexDest]] = y;
-                        pointIndex[indexDest]++;
                     } // for (k = 0; k < n2; k++)
                 } // if (srcBuffer[index] != 0)
             } // for (x = 0; x < xDimSource; x++)
