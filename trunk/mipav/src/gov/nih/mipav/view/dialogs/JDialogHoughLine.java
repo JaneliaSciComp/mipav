@@ -232,7 +232,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
         gbc6.gridx = 0;
         gbc6.gridy = 0;
 
-        xLabel = new JLabel("X (rho) dimension of hough transform image ");
+        xLabel = new JLabel("X (rho) dimension of Hough transform image ");
         xLabel.setForeground(Color.black);
         xLabel.setFont(serif12);
         xLabel.setEnabled(true);
@@ -245,7 +245,7 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
         gbc6.gridx = 1;
         paramPanel.add(xText, gbc6);
 
-        yLabel = new JLabel("Y (theta) dimension of hough transform image ");
+        yLabel = new JLabel("Y (theta) dimension of Hough transform image ");
         yLabel.setForeground(Color.black);
         yLabel.setFont(serif12);
         yLabel.setEnabled(true);
