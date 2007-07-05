@@ -18,7 +18,8 @@ import java.io.*;
  *  using the basic equation rho = x*cos(theta) + y*sin(theta).  The program selects the lines containing the largest
  *  number of points.  The program can select up to maxLineNumber, which currently has a value of 10, lines. The program
  *  produces a dialog which allows the user to select which lines should be filled in and for selected lines the maximum
- *  length of the gaps to be filled.
+ *  length of the gaps to be filled.  By setting the maximum distance equal to 0.0, the user can have this module function
+ *  solely for line detection and not perform any line filling.
  *  
  *  rho goes from -sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)) to +sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)).
  *  theta goes from -PI/2 to +PI/2.  rho has n1 cells and theta has n2 cells.  d = sqrt((xDim-1)*(xDim-1) + (yDim-1)*(yDim-1)).
@@ -30,8 +31,10 @@ import java.io.*;
  *  that went to generate it.
  *  Generate the Hough transform image.
  *  
- *  Find up to maxLineNumber lines with the highest number of points by finding the points in the
- *  Hough transform with the highest number of counts.  Form rho, theta, and count arrays for these
+ *  Find which rho, theta points are peak points in the rho, theta plane.
+ *  Find up to maxLineNumber lines with the highest number of points by finding the peaks in the
+ *  Hough transform with the highest number of counts.  Note that only peaks in the rho, theta plane are
+ *  considered so that we do not make selections from the spread around the peak.  Form rho, theta, and count arrays for these
  *  lines.
  *  
  *  Create a dialog with numLinesFound rhoArray[i], thetaArray[i], and
@@ -139,6 +142,12 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         double xPerY;
         byte value = 0;
         int maxLinePoints;
+        boolean peak[];
+        int offset2;
+        int index2;
+        boolean found;
+        boolean flat;
+        boolean neighborNotPeak;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -243,8 +252,62 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             return;
         }
         new ViewJFrameImage(houghImage);
+        
+        // Find which rho, theta points are peak points
+        peak = new boolean[houghSlice];
+        for (i = 0; i < houghSlice; i++) {
+            peak[i] = true;
+        }
+        for (y = 0; y < n2; y++) {
+            offset = y * n1;
+            for (x = 0; x < n1; x++) {
+                index = offset + x;
+                for (k = Math.max(0, y-1); k <= Math.min(n2-1, y+1); k++) {
+                    offset2 = k * n1;
+                    for (j = Math.max(0, x-1); j <= Math.min(n1-1, x+1); j++) {
+                        index2 = offset2 + j;
+                        if (houghBuffer[index] < houghBuffer[index2]) {
+                            peak[index] = false;
+                        }
+                    }
+                }
+            } // for (x = 0; x < n1; x++)
+        } // for (y = 0; y < n2; y++)
+        
+        found = true;
+        while(found) {
+            found = false;
+            for (y = 0; y < n2; y++) {
+                offset = y * n1;
+                for (x = 0; x < n1; x++) {
+                    index = offset + x;
+                    if (peak[index]) {
+                        flat = true;
+                        neighborNotPeak = false;
+                        kloop:
+                        for (k = Math.max(0, y-1); k <= Math.min(n2-1, y+1); k++) {
+                            offset2 = k * n1;
+                            for (j = Math.max(0, x-1); j <= Math.min(n1-1, x+1); j++) {
+                                index2 = offset2 + j;
+                                if (houghBuffer[index] != houghBuffer[index2]) {
+                                    flat = false;
+                                    break kloop;
+                                }
+                                if (!peak[index2]) {
+                                    neighborNotPeak = true;
+                                }
+                            }
+                        } // for (k = Math.max(0, y-1); k <= Math.min(n2-1, y+1); k++)
+                        if (flat && neighborNotPeak) {
+                            peak[index] = false;
+                            found = true;
+                        }
+                    } // if (peak[index])
+                } // for (x = 0; x < n1; x++)
+            } // for (y = 0; y < n2; y++)   
+        } // while(found)
        
-        // Find up to maxLineNumber cells with the highest counts
+        // Find up to maxLineNumber cells with the highest peak counts
         // Obtain the rho, theta, and count values of these lines
         foundIndex = new boolean[houghSlice];
         numLinesFound = 0;
@@ -256,7 +319,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             largestValue = 0;
             largestIndex = -1;
             for (j = 0; j < houghSlice; j++) {
-                if (!foundIndex[j]) {
+                if (peak[j] && (!foundIndex[j])) {
                     if (houghBuffer[j] > largestValue) {
                         largestValue = houghBuffer[j];
                         largestIndex = j;
