@@ -10,33 +10,38 @@ import java.io.*;
 
 /**
  *  This Hough transform uses (xi, yi) points in the original image space to generate x0, y0, rad points in the Hough
- *  transform.  This Hough transform module only works with binary images.    Before it is used the user must 
+ *  transform.  This Hough transform module only works with binary images.   Before it is used the user must 
  *  compute the gradient of an image and threshold it to obtain a binary image.  Noise removal and thinning should also
  *  be performed, if necessary, before this program is run. 
  *  
- *  The user is asked for the number of x0, y0, and rad bins.  The default size for x0 is 
+ *  The user is asked for the number of x0 bins, y0 bins, rad bins, and number of circles.  The default size for x0 is 
  *  min(512, image.getExtents()[0]).  The default size for y0 is min(512, image.getExtents()[1]).
  *  The default size for rad is min(512, max(image.getExtents()[0], image.getExtents()[1]).
- *  The program generates a Hough transform of the source image using the basic equation (x - x0)**2 + (y - y0)**2 = rad**2.  
- *  The program selects the circles containing the largest number of points.  The program can select up to maxCircleNumber,
- *  which currently has a value of 10, circles. The program produces a dialog which allows the user to select which
- *  circles should be drawn.
+ *  The default number of circles is 1. The program generates a Hough transform of the source image using the basic
+ *  equation (x - x0)**2 + (y - y0)**2 = rad**2.  The program finds the circles containing the largest number of points.
+ *  The program produces a dialog which allows the user to select which circles should be drawn.
  *  
+ *  The Hough transform for the entire image is generated a separate time to find each circle.
  *  For each (xi, yi) point in the original image not having a value of zero, calculate the first dimension value d1 = 
  *  j * (xDim - 1)/(x0 - 1), with j = 0 to x0 - 1.  Calculate the second dimension value d2 = k * (yDim - 1)/(y0 - 1),
  *  with k = 0 to y0 - 1.  Calculate d3 = sqrt((x - d1)**2 + (y - d2)**2).
- *  d3 goes from 0 to max(xDim-1, yDim-1)/2.  s3 is the dimension 3 scaling factor.
- *  s3 * (rad - 1) = max(xDim-1, yDim-1)/2.
- *  s3 = max(xDim-1, yDim-1)/(2*(rad - 1))
- *  m = d3*2*(rad - 1)/max(xDim-1, yDim-1).  If m > rad -1, set m equal to rad - 1.
- *  For each of the points in the Hough transform make a list of the x values and y values
- *  that went to generate it.
+ *  d3 goes from 0 to maxRad = max(xDim-1, yDim-1)/2.0.  s3 is the dimension 3 scaling factor.
+ *  s3 * (rad - 1) = maxRad.
+ *  s3 = maxRad/(rad - 1)
+ *  m = d3*(rad - 1)/maxRad.
+ *  Only calculate the Hough transform for d3 <= maxRad.
  *  
- *  Find up to maxCircleNumber circles with the highest number of points by finding the points in the
- *  Hough transform with the highest number of counts.  Form x0, y0, rad and count arrays for these
- *  lines.
+ *  Find the peak point in the x0, y0, rad Hough transform space.
+ *  Put the values for this peak point in x0Array[c], y0Array[c], radArray[c], and
+ *  countArray[c].
  *  
- *  Create a dialog with numCriclesFound x0Array[i], y0Array[i], radArray[i], and
+ *  If more circles are to be found, then zero the houghBuffer and run through the
+ *  same Hough transform a second time, but on this second run instead of incrementing
+ *  the Hough buffer, zero the values in the source buffer that contributed to the peak
+ *  point in the Hough buffer. So on the next run of the Hough transform the source points that
+ *  contributed to the Hough peak value just detected will not be present.
+ *  
+ *  Create a dialog with numCirclesFound x0Array[i], y0Array[i], radArray[i], and
  *  countArray[i] values, where the user will select a check box to have that circle drawn.
  *  
  *  References: 1.) Digital Image Processing, Second Edition by Richard C. Gonzalez and Richard E. Woods, Section 10.2.2
@@ -56,6 +61,9 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
     
     // number of dimension 3 bins in Hough transform space
     private int rad;
+    
+    // number of circles to be found
+    private int numCircles;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -72,12 +80,14 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
      * @param  x0       number of dimension 1 bins in Hough transform space
      * @param  y0       number of dimension 2 bins in Hough transform space
      * @param  rad      number of dimension 3 bins in Hough transform space
+     * @param  numCircles number of circles to be found
      */
-    public AlgorithmHoughCircle(ModelImage destImg, ModelImage srcImg, int x0, int y0, int rad) {
+    public AlgorithmHoughCircle(ModelImage destImg, ModelImage srcImg, int x0, int y0, int rad, int numCircles) {
         super(destImg, srcImg);
         this.x0 = x0;
         this.y0 = y0;
         this.rad = rad;
+        this.numCircles = numCircles;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -93,7 +103,7 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        int x, y, r;
+        int x, y;
         int offset;
 
         int xDimSource;
@@ -102,7 +112,7 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
 
         int sourceSlice;
 
-        int i, j, k, m;
+        int i, j, k, m, c;
         int index, indexDest;
         
         int houghSlice;
@@ -113,20 +123,19 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
         double d2Array[];
         double d3;
         double d3Scale;
-        boolean test = true;
+        boolean test = false;
         double xCenter;
         double yCenter;
         double radius;
-        boolean foundIndex[];
+        double radius2;
+        double radius3;
         int largestValue;
         int largestIndex;
         int numCirclesFound;
-        int indexArray[];
         double x0Array[];
         double y0Array[];
         double radArray[];
         int countArray[];
-        int maxCircleNumber = 10;
         boolean selectedCircle[];
         JDialogHoughCircleChoice choice;
         byte value = 0;
@@ -134,17 +143,12 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
         double maxRad;
         int x0y0;
         double xSum;
+        double xSum2;
+        double xSum3;
         double ySum;
+        double ySum2;
+        double ySum3;
         double radSum;
-        int xa;
-        int ya;
-        int ra;
-        int rStart;
-        int rFinish;
-        int yStart;
-        int yFinish;
-        int xStart;
-        int xFinish;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -195,8 +199,14 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
             xCenter = (xDimSource-1)/2.0;
             yCenter = (yDimSource-1)/2.0;
             radius = 50.0;
+            radius2 = 70.0;
+            radius3 = 90.0;
             xSum = 0.0;
             ySum = 0.0;
+            xSum2 = 0.0;
+            ySum2 = 0.0;
+            xSum3 = 0.0;
+            ySum3 = 0.0;
             for (i = 0; i < 20; i++) {
                 theta = i * Math.PI/10.0;
                 x = (int)Math.round(xCenter + radius *Math.cos(theta));
@@ -205,6 +215,18 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
                 srcBuffer[index] = 1;
                 xSum = xSum + x;
                 ySum = ySum + y;
+                x = (int)Math.round(xCenter + radius2 *Math.cos(theta));
+                y = (int)Math.round(yCenter + radius2 * Math.sin(theta));
+                index = x + y * xDimSource;
+                srcBuffer[index] = 1;
+                xSum2 = xSum2 + x;
+                ySum2 = ySum2 + y;
+                x = (int)Math.round(xCenter + radius3 *Math.cos(theta));
+                y = (int)Math.round(yCenter + radius3 * Math.sin(theta));
+                index = x + y * xDimSource;
+                srcBuffer[index] = 1;
+                xSum3 = xSum3 + x;
+                ySum3 = ySum3 + y;
             }
             xSum = xSum/20.0;
             ySum = ySum/20.0;
@@ -217,6 +239,30 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
             }
             radSum = radSum/20.0;
             System.out.println(" x = " + xSum + " y = " + ySum + " radius = " + radSum);
+            
+            xSum2 = xSum2/20.0;
+            ySum2 = ySum2/20.0;
+            radSum = 0.0;
+            for (i = 0; i < 20; i++) {
+                theta = i * Math.PI/10.0;
+                x = (int)Math.round(xCenter + radius2 *Math.cos(theta));
+                y = (int)Math.round(yCenter + radius2 * Math.sin(theta));
+                radSum = radSum + Math.sqrt((x - xSum2)*(x - xSum2) + (y - ySum2)*(y - ySum2));
+            }
+            radSum = radSum/20.0;
+            System.out.println(" x2 = " + xSum2 + " y2 = " + ySum2 + " radius2 = " + radSum);
+            
+            xSum3 = xSum3/20.0;
+            ySum3 = ySum3/20.0;
+            radSum = 0.0;
+            for (i = 0; i < 20; i++) {
+                theta = i * Math.PI/10.0;
+                x = (int)Math.round(xCenter + radius3 *Math.cos(theta));
+                y = (int)Math.round(yCenter + radius3 * Math.sin(theta));
+                radSum = radSum + Math.sqrt((x - xSum3)*(x - xSum3) + (y - ySum3)*(y - ySum3));
+            }
+            radSum = radSum/20.0;
+            System.out.println(" x3 = " + xSum3 + " y3 = " + ySum3 + " radius3 = " + radSum);
         }
 
         houghBuffer = new int[houghSlice];
@@ -233,72 +279,103 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
         d3Scale = ((double)(rad - 1))/maxRad;
         maxCirclePoints = (int)Math.ceil(2.0 * Math.PI * maxRad);
         
-        // Calculate the Hough transform
-        for (y = 0; y < yDimSource; y++) {
-            offset = y * xDimSource;
-            for (x = 0; x < xDimSource; x++) {
-                index = offset + x;
-                if (srcBuffer[index] != 0) {
-                    for (j = 0; j < x0; j++) {
-                        for (k = 0; k < y0; k++) {
-                            d3 = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
-                            if (d3 <= maxRad) {
-                                m = (int)Math.round(d3*d3Scale);
-                                indexDest = j + k * x0 + m * x0y0;
-                                houghBuffer[indexDest]++;
-                            }
-                        } // for (k = 0; k < y0; k++)
-                    } // for (j = 0; j < x0; j++)
-                } // if (srcBuffer[index] != 0)
-            } // for (x = 0; x < xDimSource; x++)
-        } // for (y = 0; y < yDimSource; y++)
-       
-        // Find up to maxCircleNumber cells with the highest counts
-        // Obtain the x0, y0, rad,  and count values of these circles
-        foundIndex = new boolean[houghSlice];
+        x0Array = new double[numCircles];
+        y0Array = new double[numCircles];
+        radArray = new double[numCircles];
+        countArray = new int[numCircles];
         numCirclesFound = 0;
-        indexArray = new int[maxCircleNumber];
-        x0Array = new double[maxCircleNumber];
-        y0Array = new double[maxCircleNumber];
-        radArray = new double[maxCircleNumber];
-        countArray = new int[maxCircleNumber];
-        for (i = 0; i < maxCircleNumber; i++) {
+        
+        for (c = 0; c < numCircles; c++) {
+            // Calculate the Hough transform
+            fireProgressStateChanged("Calculating Hough circle " + String.valueOf(c+1));
+            for (y = 0; y < yDimSource; y++) {
+                offset = y * xDimSource;
+                for (x = 0; x < xDimSource; x++) {
+                    index = offset + x;
+                    if (srcBuffer[index] != 0) {
+                        for (j = 0; j < x0; j++) {
+                            for (k = 0; k < y0; k++) {
+                                d3 = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
+                                if (d3 <= maxRad) {
+                                    m = (int)Math.round(d3*d3Scale);
+                                    indexDest = j + k * x0 + m * x0y0;
+                                    houghBuffer[indexDest]++;
+                                }
+                            } // for (k = 0; k < y0; k++)
+                        } // for (j = 0; j < x0; j++)
+                    } // if (srcBuffer[index] != 0)
+                } // for (x = 0; x < xDimSource; x++)
+            } // for (y = 0; y < yDimSource; y++)
+            
+            
+           
+            // Find up to cell with the highest counts
+            // Obtain the x0, y0, rad, and count values of this circle
+            fireProgressStateChanged("Finding Hough peak circle " + String.valueOf(c+1));
+            
             largestValue = 0;
             largestIndex = -1;
             for (j = 0; j < houghSlice; j++) {
-                if (!foundIndex[j]) {
-                    if (houghBuffer[j] > largestValue) {
-                        largestValue = houghBuffer[j];
-                        largestIndex = j;
-                    }
+                if (houghBuffer[j] > largestValue) {
+                    largestValue = houghBuffer[j];
+                    largestIndex = j;
                 }
             } // for (j = 0; j < houghSlice; j++)
             if (largestIndex == -1) {
                 break;
             }
             
-            foundIndex[largestIndex] = true;
             numCirclesFound++;
-            indexArray[i] = largestIndex;
-            xa = largestIndex % x0;
-            x0Array[i] = xa * ((double)(xDimSource - 1))/((double)(x0 - 1));
-            ya = (largestIndex % x0y0)/x0;
-            y0Array[i] = ya * ((double)(yDimSource - 1))/((double)(y0 - 1));
-            ra = largestIndex/ x0y0;
-            radArray[i] = ra/d3Scale;
-            countArray[i] = largestValue;
-            //  Remove points immediately surrounding maximum
-            for (r = Math.max(0, ra - 4); r <= Math.min(rad - 1, ra + 4); r++) {
-                for (y = Math.max(0, ya - 2); y <= Math.min(y0 - 1, ya + 2); y++) {
-                    for (x = Math.max(0, xa - 2); x <= Math.min(x0 - 1, xa + 2); x++) {
-                        indexDest = x + y * x0 + r * x0y0;
-                        if (indexDest != largestIndex) {
-                            houghBuffer[indexDest] = 0;
-                        }
-                    }
+            x0Array[c] = largestIndex % x0;
+            x0Array[c] = x0Array[c] * ((double)(xDimSource - 1))/((double)(x0 - 1));
+            y0Array[c] = (largestIndex % x0y0)/x0;
+            y0Array[c] = y0Array[c] * ((double)(yDimSource - 1))/((double)(y0 - 1));
+            radArray[c] = largestIndex/ x0y0;
+            radArray[c] = radArray[c]/d3Scale;
+            countArray[c] = largestValue;
+            
+            if (c < numCircles - 1) {
+                // Zero hough buffer for next run
+                for (i = 0; i < houghSlice; i++) {
+                    houghBuffer[i] = 0;
                 }
+                // zero all points in the source slice that contributed to this circle
+                fireProgressStateChanged("Zeroing source circle " + String.valueOf(c+1));
+                for (y = 0; y < yDimSource; y++) {
+                    offset = y * xDimSource;
+                    for (x = 0; x < xDimSource; x++) {
+                        index = offset + x;
+                        if (srcBuffer[index] != 0) {
+                            for (j = 0; j < x0; j++) {
+                                for (k = 0; k < y0; k++) {
+                                    d3 = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
+                                    if (d3 <= maxRad) {
+                                        m = (int)Math.round(d3*d3Scale);
+                                        indexDest = j + k * x0 + m * x0y0;
+                                        if (indexDest == largestIndex) {
+                                            srcBuffer[index] = 0;
+                                        }
+                                    }
+                                } // for (k = 0; k < y0; k++)
+                            } // for (j = 0; j < x0; j++)
+                        } // if (srcBuffer[index] != 0)
+                    } // for (x = 0; x < xDimSource; x++)
+                } // for (y = 0; y < yDimSource; y++)
+            } // if (c < numCircles - 1)
+        } // for (c = 0; c < numCircles; c++)
+        
+        // Restore original source values
+        if (!test) {
+            try {
+                srcImage.exportData(0, sourceSlice, srcBuffer);
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+    
+                setCompleted(false);
+    
+                return;
             }
-        } // for (i = 0; i < maxCircleNumber; i++)
+        } // if (!test)
         
         // Create a dialog with numLinesFound x0Array[i], y0Array[i], radArray[i] and
         // countArray[i] values, where the user will select a check box to have the selected circle drawn.
