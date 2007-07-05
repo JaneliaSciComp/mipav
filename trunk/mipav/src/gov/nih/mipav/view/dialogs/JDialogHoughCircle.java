@@ -51,6 +51,10 @@ public class JDialogHoughCircle extends JDialogBase implements AlgorithmInterfac
 
     /** DOCUMENT ME! */
     private JTextField radText;
+    
+    private int numCircles;
+    
+    private JTextField numCirclesText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -184,12 +188,14 @@ public class JDialogHoughCircle extends JDialogBase implements AlgorithmInterfac
             resultImage.setImageName(name);
 
             // Make algorithm
-            hAlgo = new AlgorithmHoughCircle(resultImage, image, x0, y0, rad);
+            hAlgo = new AlgorithmHoughCircle(resultImage, image, x0, y0, rad, numCircles);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             hAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), hAlgo);
 
             // Hide dialog
             setVisible(false);
@@ -222,6 +228,7 @@ public class JDialogHoughCircle extends JDialogBase implements AlgorithmInterfac
         JLabel x0Label;
         JLabel y0Label;
         JLabel radLabel;
+        JLabel numCirclesLabel;
         int xDim = Math.min(512, image.getExtents()[0]);
         int yDim = Math.min(512, image.getExtents()[1]);
         int rDim = Math.min(512, Math.max(image.getExtents()[0], image.getExtents()[1]));
@@ -230,7 +237,7 @@ public class JDialogHoughCircle extends JDialogBase implements AlgorithmInterfac
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
-        paramPanel.setBorder(buildTitledBorder("Hough transform dimensions"));
+        paramPanel.setBorder(buildTitledBorder("Hough transform parameters"));
 
         GridBagConstraints gbc6 = new GridBagConstraints();
 
@@ -292,6 +299,21 @@ public class JDialogHoughCircle extends JDialogBase implements AlgorithmInterfac
         radText.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(radText, gbc6);
+        
+        numCirclesLabel = new JLabel("Number of circles ");
+        numCirclesLabel.setForeground(Color.black);
+        numCirclesLabel.setFont(serif12);
+        numCirclesLabel.setEnabled(true);
+        gbc6.gridx = 0;
+        gbc6.gridy = 4;
+        paramPanel.add(numCirclesLabel, gbc6);
+        
+        numCirclesText = new JTextField(3);
+        numCirclesText.setText("1");
+        numCirclesText.setFont(serif12);
+        numCirclesText.setEnabled(true);
+        gbc6.gridx = 1;
+        paramPanel.add(numCirclesText, gbc6);
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -332,6 +354,15 @@ public class JDialogHoughCircle extends JDialogBase implements AlgorithmInterfac
             return false;
         } else {
             rad = Integer.valueOf(radText.getText()).intValue();
+        }
+        
+        if (!testParameter(numCirclesText.getText(), 1, 100)) {
+            numCirclesText.requestFocus();
+            numCirclesText.selectAll();
+
+            return false;
+        } else {
+            numCircles = Integer.valueOf(numCirclesText.getText()).intValue();
         }
 
         return true;
