@@ -137,7 +137,10 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
     			callAlgorithm();
     		}
     	} else {
-    		init();
+    		if (calcLowerResol()) {
+    			init();
+    		}
+    		
     	}
     	
     	
@@ -407,12 +410,11 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
     /**
      * This method calculates the lower X, lower Y, and lower Z coordinates(millimeters) for the CROP VOI region.
      */
-    private void calcLowerResol() {
+    private boolean calcLowerResol() {
 
         if (!findBounds()) {
             dispose();
-
-            return;
+            return false;
         }
 
         nDims = image.getNDims();
@@ -426,6 +428,8 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
         } else if (nDims >= 3) {
             lowZmm = startPos[2] + (imgRes[2] * zBounds[0]);
         }
+        
+        return true;
 
     }
 
