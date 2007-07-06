@@ -859,11 +859,61 @@ public class AlgorithmCrop extends AlgorithmBase {
         } // for (slice = z[0]; slice <= z[1]; slice++)
 
         fInfoBase = new FileInfoBase[nImages];
-
-        for (n = 0; n < nImages; n++) {
-            fInfoBase[n] = (FileInfoBase) (srcImage.getFileInfo(n + start).clone());
-            fInfoBase[n].setExtents(destExtents);
+        
+        if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+        	FileInfoDicom oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
+        	FileDicomTagTable[] childTagTables = new FileDicomTagTable[nImages - 1];
+        
+        
+        	// Create all the new file infos (reference and children) and fill them with the tags from the old
+        	// file infos. 
+        	for(i = 0; i < nImages; i++) {
+        	
+        		if (i == 0) {
+        			// Create a reference file info
+        			fInfoBase[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                        							oldDicomInfo.getFileFormat());
+        			fInfoBase[i].setExtents(destExtents);
+        		} else {
+        			fInfoBase[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+        										oldDicomInfo.getFileFormat(), (FileInfoDicom) fInfoBase[0]);
+        			fInfoBase[i].setExtents(destExtents);
+        			childTagTables[i - 1] = ((FileInfoDicom) fInfoBase[i]).getTagTable();
+       			}
+        		
+        		if (nImages > i) {
+        			
+        			
+        			((FileInfoDicom) fInfoBase[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(start + i));
+        			fInfoBase[i].setExtents(destExtents);
+        	   	}
+        	}
+        	
+        	((FileInfoDicom) fInfoBase[0]).getTagTable().attachChildTagTables(childTagTables);
+        	
+        } else {
+        	for (i = 0; i < nImages; i++) {
+        		
+        		if (i == 0) {
+        			fInfoBase[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+        			fInfoBase[i].setExtents(destExtents);
+        		}
+        		
+        		if (nImages > i) {
+        			fInfoBase[i] = (FileInfoBase) srcImage.getFileInfo(start + i).clone();
+        			fInfoBase[i].setExtents(destExtents);
+        		}
+        		
+        	}
         }
+        
+        //FileInfoBase.copyCoreInfo(srcImage.getFileInfo(), fInfoBase);
+        //srcImage.setFileInfo(fInfoBase);
+        
+        //for (n = 0; n < nImages; n++) {
+        //    fInfoBase[n] = (FileInfoBase) (srcImage.getFileInfo(n + start).clone());
+        //    fInfoBase[n].setExtents(destExtents);
+        //}
 
         axisOrient = fInfoBase[0].getAxisOrientation();
         Vector mats = srcImage.getMatrixHolder().getMatrices();
@@ -1170,14 +1220,67 @@ public class AlgorithmCrop extends AlgorithmBase {
         } // for (t = 0; t < tDim; t++)
 
         fInfoBase = new FileInfoBase[tDim * nImages];
+        
+        if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+        	FileInfoDicom oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
+        	FileDicomTagTable[] childTagTables = new FileDicomTagTable[nImages - 1];
+        
+        
+        	// Create all the new file infos (reference and children) and fill them with the tags from the old
+        	// file infos. 
+        	for (t = 0; t < tDim; t++) {
+        		for(i = 0; i < nImages; i++) {
+        	
+        			if (i == 0) {
+        				// Create a reference file info
+        				fInfoBase[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+        													oldDicomInfo.getFileFormat());
+        				fInfoBase[i].setExtents(destExtents);
+        			} else {
+        				fInfoBase[(t * nImages) + i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+        											oldDicomInfo.getFileFormat(), (FileInfoDicom) fInfoBase[0]);
+        				fInfoBase[(t * nImages) + i].setExtents(destExtents);
+        				childTagTables[(t * nImages) + i - 1] = ((FileInfoDicom) fInfoBase[i]).getTagTable();
+        			}
+        		
+        			if (nImages > i) {
+        			
+        			
+        				((FileInfoDicom) fInfoBase[(t * nImages) + i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(start + i));
+        				fInfoBase[(t * nImages) + i].setExtents(destExtents);
+        			}
+        		}
+        	}
+        			
+        		        	
+        	((FileInfoDicom) fInfoBase[0]).getTagTable().attachChildTagTables(childTagTables);
+        	
+        	} else {
+        		for (t = 0; t < tDim; t++) {
+        			for (i = 0; i < nImages; i++) {
+        		
+        				if (i == 0) {
+        					fInfoBase[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+        					fInfoBase[i].setExtents(destExtents);
+        				}
+        		
+        				if (nImages > i) {
+        					fInfoBase[(t * nImages) + i] = (FileInfoBase) srcImage.getFileInfo(start + i).clone();
+        					fInfoBase[(t * nImages) + i].setExtents(destExtents);
+        				}
+        			}
+        		}
+        	}
+        	
+        
+        
+        //for (t = 0; t < tDim; t++) {
 
-        for (t = 0; t < tDim; t++) {
-
-            for (n = 0; n < nImages; n++) {
-                fInfoBase[(t * nImages) + n] = (FileInfoBase) (srcImage.getFileInfo((t * zDim) + n + start).clone());
-                fInfoBase[(t * nImages) + n].setExtents(destExtents);
-            }
-        } // for (t = 0; t < tDim; t++)
+        //    for (n = 0; n < nImages; n++) {
+        //        fInfoBase[(t * nImages) + n] = (FileInfoBase) (srcImage.getFileInfo((t * zDim) + n + start).clone());
+        //        fInfoBase[(t * nImages) + n].setExtents(destExtents);
+        //    }
+        //} // for (t = 0; t < tDim; t++)
 
         axisOrient = fInfoBase[0].getAxisOrientation();
         Vector mats = srcImage.getMatrixHolder().getMatrices();
@@ -1521,7 +1624,7 @@ public class AlgorithmCrop extends AlgorithmBase {
      * fileinfo fo the new ( destination ) image.
      */
     private void updateFileInfoData() {
-        int i;
+        int i, numInfos;
         float[] resols;
         float[] resolsTmp;
         float[] imgOriginLPS;
@@ -1529,11 +1632,22 @@ public class AlgorithmCrop extends AlgorithmBase {
         float[] newImgOriginLPS = new float[3];
         int[] axisOrient;
         int[] extentsTmp;
+        FileInfoBase[] fileInfo;
         FileInfoBase fileInfoBuffer;
         int nDims = destImage.getNDims();
-
         int[] direct = new int[nDims];
-
+        
+        if (nDims == 2) {
+        	numInfos = 1;
+        } else if(nDims == 3) {
+        	numInfos = destImage.getExtents()[2];
+        } else {
+        	numInfos = destImage.getExtents()[2] * destImage.getExtents()[3];
+        }
+        
+        fileInfo = new FileInfoBase[numInfos];
+        
+        
         if (nDims != srcImage.getNDims()) {
 
             if (nDims == 2) {
@@ -1547,18 +1661,62 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             // destImage.setFileInfo( (FileInfoBase [])(srcImage.getFileInfo().clone()) );
         }
-
+        
         int start = z[0];
 
         if (z[1] < z[0]) {
             start = z[1];
         }
+        
+        if(srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+        	FileInfoDicom oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
+        	FileDicomTagTable[] childTagTables = new FileDicomTagTable[numInfos - 1];
+        
+        
+        	// Create all the new file infos (reference and children) and fill them with the tags from the old
+        	// file infos. 
+        	for(i = 0; i < numInfos; i++) {
+        	
+        		if (i == 0) {
+        			// Create a reference file info
+        			fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                        							oldDicomInfo.getFileFormat());
+        		} else {
+        			fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+        										oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
+        			childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
+       			}
+        		
+        		if (numInfos > i) {
+        			((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(start + i));
+        		}
+        	}
+        	
+        	((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+        	
+        } else {
+        	
+        	for (i = 0; i < numInfos; i++) {
+        		
+        		if (i == 0) {
+        			fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+        		}
+        		
+        		if (numInfos > i) {
+        			fileInfo[i] = (FileInfoBase) srcImage.getFileInfo(start + i).clone();
+        		}
+        	}
+                	
+        }
+        
+        FileInfoBase.copyCoreInfo(srcImage.getFileInfo(), fileInfo);
+        destImage.setFileInfo(fileInfo);
 
         if (nDims == 2) {
         	destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
             // Copies the source's image file info.
-            destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[start].clone()), 0);
+            //destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[start].clone()), 0);
             fileInfoBuffer = (FileInfoBase) destImage.getFileInfo(0);
             resols = fileInfoBuffer.getResolutions();
             axisOrient = fileInfoBuffer.getAxisOrientation();
@@ -1599,9 +1757,9 @@ public class AlgorithmCrop extends AlgorithmBase {
            // destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
 
-            for (int m = 0; m <= Math.abs(z[1] - z[0]); m++) {
-                destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[start + m].clone()), m);
-            }
+            //for (int m = 0; m <= Math.abs(z[1] - z[0]); m++) {
+            //    destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[start + m].clone()), m);
+            //}
 
             fileInfoBuffer = destImage.getFileInfo(0);
             resols = fileInfoBuffer.getResolutions();
@@ -1666,16 +1824,16 @@ public class AlgorithmCrop extends AlgorithmBase {
         } else {
             destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
-            int slice = 0;
+            //int slice = 0;
 
-            for (int t = 0; t < srcImage.getExtents()[3]; t++) {
+            //for (int t = 0; t < srcImage.getExtents()[3]; t++) {
 
-                for (int m = 0; m <= Math.abs(z[1] - z[0]); m++, slice++) {
-                    destImage.setFileInfo((FileInfoBase)
-                                          (srcImage.getFileInfo()[start + m + (t * srcImage.getExtents()[2])].clone()),
-                                          slice);
-                }
-            }
+                //for (int m = 0; m <= Math.abs(z[1] - z[0]); m++, slice++) {
+                    //destImage.setFileInfo((FileInfoBase)
+                    //                      (srcImage.getFileInfo()[start + m + (t * srcImage.getExtents()[2])].clone()),
+                    //                      slice);
+                //}
+            //}
 
             fileInfoBuffer = destImage.getFileInfo(0);
             resols = fileInfoBuffer.getResolutions();
