@@ -1,4 +1,5 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.MipavUtil;
@@ -10,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
+import java.util.TreeMap;
 import java.util.Vector;
 import javax.swing.*;
 
@@ -125,17 +127,23 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         yDim = srcImage.getExtents()[1];
         sliceSize = xDim * yDim;
         
-        String[] mirrorArr = new String[4];
+        String[] mirrorArr = new String[6];
         mirrorArr[0] = "Quads";
         mirrorArr[1] = "Hamstrings";
         mirrorArr[2] = "Sartorius";
-        mirrorArr[3] = "Everything else";
+        mirrorArr[3] = "Fascia";
+        mirrorArr[4] = "Everything else";
+        mirrorArr[5] = "Whole Thigh";   //not to be zeroed out
+        
+        boolean[] mirrorZ = {true, true, true, true, true, false};
         
         String[] noMirrorArr = new String[2];
         noMirrorArr[0] = "Phantom";
         noMirrorArr[1] = "Block thing";
         
-        MuscleDialogPrompt prompt = new MuscleDialogPrompt(parentFrame, mirrorArr, noMirrorArr, ImageType.TWO_THIGHS, Symmetry.LEFT_RIGHT);
+        boolean[] noMirrorZ = {true, true};
+        
+        MuscleDialogPrompt prompt = new MuscleDialogPrompt(parentFrame, mirrorArr, mirrorZ, noMirrorArr, noMirrorZ, ImageType.TWO_THIGHS, Symmetry.LEFT_RIGHT);
         
         
     }
@@ -198,10 +206,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
          */
         private Vector objectList = new Vector();
         
+        private TreeMap zeroStatus;
+        
         private MuscleDialogPrompt muscle;
         
         
-        public VoiDialogPrompt(MuscleDialogPrompt muscle, Frame theParentFrame, String objectName, boolean closedVoi, int numVoi, Symmetry symmetry) {
+        public VoiDialogPrompt(MuscleDialogPrompt muscle, Frame theParentFrame, String objectName, boolean closedVoi, int numVoi, Symmetry symmetry, TreeMap zeroStatus) {
             super(theParentFrame, false);
             
             
@@ -211,6 +221,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             this.numVoi = numVoi;
             this.symmetry = symmetry;
             this.muscle = muscle;
+            
+            this.zeroStatus = zeroStatus;
             
             novelVoiProduced = false;
             completed = false;
@@ -387,7 +399,18 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     break;
                 }
             }
-            VOIVector tempVOI = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();
+            VOIVector tempVOI = (VOIVector)((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs().clone();
+            VOIVector zeroVOI = ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs();  //not cloned to maintain consistency of for loop
+            
+            System.out.println("Size: "+((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs().size());
+            
+            for(int i=0; i<zeroVOI.size(); i++) {
+                if(!(Boolean)zeroStatus.get(((VOI)zeroVOI.get(i)).getName())) {
+                    ((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs().remove(i);
+                }
+                System.out.println("Size: "+((ModelImage)((ViewJFrameImage)parentFrame).getImageA()).getVOIs().size());
+            }
+            
             srcImage.getVOIs().removeAllElements();
             if(removedVoi != null) {
                 srcImage.registerVOI(removedVoi);
@@ -407,7 +430,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             for(int i=0; i<tempVOI.size(); i++) {
                 VOI v = (VOI)tempVOI.get(i);
-                v.setDisplayMode(VOI.SOLID);
+                if((Boolean)zeroStatus.get(v.getName())) {
+                    v.setDisplayMode(VOI.SOLID);
+                } else {
+                    v.setDisplayMode(VOI.CONTOUR);
+                }
                 srcImage.registerVOI(v);
                
             }
@@ -422,7 +449,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             int qualifiedVoi = 0;
             VOIVector srcVOI = srcImage.getVOIs();
             int countQualifiedVOIs = 0; //equal to 1 when the right  amount of VOIs have been created
-            VOI goodVOI = (VOI)srcVOI.get(0);
+            VOI goodVOI = null;
+            //VOI goodVOI = (VOI)srcVOI.get(0);
             for(int i=0; i<srcVOI.size(); i++) {
                 System.out.println(((VOI)srcVOI.get(i)).getName());
                 if(((VOI)srcVOI.get(i)).getName().equals(objectName)) {
@@ -493,6 +521,70 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
     }
     
+    private class MuscleImageDisplay extends ViewJFrameImage {
+        
+        private JDialogBase dialogBase;
+        
+        //~ Constructors ---------------------------------------------------------------------------------------------------
+
+        /**
+         * Makes a frame and puts an image into it. Image will be centered on screen.
+         *
+         * @param  _imageA  ModelImage - first image to display
+         * @param  dialogBase dialog to display alongside image
+         */
+        public MuscleImageDisplay(ModelImage _imageA, JDialogBase dialogBase) {
+            this(_imageA, null, dialogBase);
+        }
+
+        /**
+         * Makes a frame and puts an image into it. Image will be centered on screen.
+         *
+         * @param  _imageA  ModelImage - first image to display
+         * @param  LUTa     LUT of the imageA (if null grayscale LUT is constructed)
+         * @param  dialogBase dialog to display alongside image
+         */
+        public MuscleImageDisplay(ModelImage _imageA, ModelLUT LUTa, JDialogBase dialogBase) {
+            this(_imageA, LUTa, null, dialogBase);
+        }
+
+        /**
+         * Makes a frame and puts an image component into it.
+         *
+         * @param  _imageA  First image to display
+         * @param  LUTa     LUT of the imageA (if null grayscale LUT is constructed)
+         * @param  loc      location where image should be initially placed
+         * @param  dialogBase dialog to display alongside image
+         */
+        public MuscleImageDisplay(ModelImage _imageA, ModelLUT LUTa, Dimension loc, JDialogBase dialogBase) {
+
+            this(_imageA, LUTa, loc, _imageA.getLogMagDisplay(), dialogBase);
+        }
+
+
+        /**
+         * Makes a frame and puts an image component into it.
+         *
+         * @param  _imageA        First image to display
+         * @param  LUTa           LUT of the imageA (if null grayscale LUT is constructed)
+         * @param  loc            location where image should be initially placed
+         * @param  logMagDisplay  Display log magnitude of image
+         * @param  dialogBase dialog to display alongside image
+         */
+        public MuscleImageDisplay(ModelImage _imageA, ModelLUT LUTa, Dimension loc, boolean logMagDisplay, JDialogBase dialogBase) {
+            super(_imageA, LUTa, loc, logMagDisplay);
+            
+            this.dialogBase = dialogBase;
+            
+            init();
+
+        }
+        
+        private void init() {
+            
+        }
+    }
+    
     private class MuscleDialogPrompt extends JDialogBase {
         
         //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -532,8 +624,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         /** Text for muscles where a mirror muscle may exist. */
         private String[] mirrorArr;
         
+        private boolean[] mirrorZ;
+        
         /** Text for muscles where mirror muscles are not considered. */
         private String[] noMirrorArr;
+        
+        private boolean[] noMirrorZ;
+        
+        private TreeMap zeroStatus;
         
         //private ModelImage srcImg;
         
@@ -542,11 +640,15 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
          *
          * @param  theParentFrame  Parent frame.
          */
-        public MuscleDialogPrompt(Frame theParentFrame, String[] mirrorArr, String[] noMirrorArr, 
+        public MuscleDialogPrompt(Frame theParentFrame, String[] mirrorArr, boolean[] mirrorZ, 
+                String[] noMirrorArr, boolean[] noMirrorZ,  
                 ImageType imageType, Symmetry symmetry) {
             super(theParentFrame, false);
             this.mirrorArr = mirrorArr;
             this.noMirrorArr = noMirrorArr;
+            
+            this.mirrorZ = mirrorZ;
+            this.noMirrorZ = noMirrorZ;
             
             this.imageType = imageType;
             this.symmetry = symmetry;
@@ -566,7 +668,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 initImage();
                 ((ViewJFrameImage)parentFrame).setVisible(false);
                 
-                VoiDialogPrompt voiPrompt = new VoiDialogPrompt(this, parentFrame, ((JButton)(e.getSource())).getText(), true, 1, symmetry);
+                VoiDialogPrompt voiPrompt = new VoiDialogPrompt(this, parentFrame, ((JButton)(e.getSource())).getText(), true, 1, symmetry, zeroStatus);
                 // This is very important. Adding this object as a listener allows the subdialog to
                 // notify this object when it has completed or failed. 
                 // This is could be generalized by making a subDialog interface.
@@ -745,6 +847,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             mainPanel.add(instructionPanel, BorderLayout.NORTH);
             
+            zeroStatus = new TreeMap();
+            
             if(!symmetry.equals(Symmetry.NO_SYMMETRY)) {
                 
                 mirrorCheckArr = new JCheckBox[mirrorArr.length * 2];
@@ -801,6 +905,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     mirrorPanel.add(mirrorButtonArr[i]);
                     gbc.gridx++;
                     
+                    System.out.println(mirrorButtonArr[i].getText()+" is "+mirrorZ[i/2]);
+                    zeroStatus.put(mirrorButtonArr[i].getText(), mirrorZ[i/2]);
+                    
                 }
                 
                 mainPanel.add(mirrorPanel, BorderLayout.CENTER);
@@ -835,6 +942,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                         noMirrorCheckArr[i].setSelected(true);
                     }
                 }
+                
+                System.out.println(noMirrorButtonArr[i].getText()+" is "+noMirrorZ[i]);
+                zeroStatus.put(noMirrorButtonArr[i].getText(), noMirrorZ[i]);
             }
             
             mainPanel.add(noMirrorPanel, BorderLayout.SOUTH);
@@ -845,6 +955,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             pack();
             setResizable(false);
             setVisible(true);
+            
+            
         }
         
         private boolean checkVariables() {
