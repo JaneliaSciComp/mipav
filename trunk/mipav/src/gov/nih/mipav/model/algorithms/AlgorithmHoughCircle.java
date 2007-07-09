@@ -377,7 +377,7 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
             }
         } // if (!test)
         
-        // Create a dialog with numLinesFound x0Array[i], y0Array[i], radArray[i] and
+        // Create a dialog with numCirclesFound x0Array[i], y0Array[i], radArray[i] and
         // countArray[i] values, where the user will select a check box to have the selected circle drawn.
         selectedCircle = new boolean[numCirclesFound];
         
