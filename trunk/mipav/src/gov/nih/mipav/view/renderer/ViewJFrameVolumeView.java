@@ -69,7 +69,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     public static final int BRAINSURFACE_FLATTENER = 6;
 
     /** The small bar on the top right corner the volume view frame. */
-    private static JProgressBar rendererProgressBar;
+    protected static JProgressBar rendererProgressBar;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -607,7 +607,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
             if (surRender.getDisplayMode3D()) {
                 clipBox.setVisible(true);
-                surRender.diableClipping();
+                surRender.disableClipping();
             } else {
                 clipBox.setVisible(false);
             }

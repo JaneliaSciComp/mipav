@@ -27,7 +27,7 @@ public class PixelProgram extends Program
         boolean bLoaded = false;
         String kFilename = new String( rkDirectory + "\\Shaders\\Cg\\" + rkProgramName + ".cg" );
         String kProgramName = new String( "p_" + rkProgramName );
-        
+        System.err.println(kProgramName);
         CGprogram kCGProgram = CgGL.cgCreateProgramFromFile( pkProgram.m_kContext,
                                                              CgGL.CG_SOURCE,
                                                              kFilename,

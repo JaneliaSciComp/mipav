@@ -7,6 +7,7 @@ import gov.nih.mipav.view.renderer.volumeview.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import javax.media.j3d.Material;
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -100,6 +101,19 @@ public abstract class JPanelRendererBase extends JPanel
         addKeyListener(this);
     }
 
+    /**
+     * Constructor that sets the parent frame of the dialog and whether or not the dialog is modal. Also adds this as a
+     * window listener and key listener to all dialogs.
+     *
+     * @param  parent  Parent frame.
+     */
+    public JPanelRendererBase() {
+        renderBase = null;
+        serif12 = MipavUtil.font12;
+        serif12B = MipavUtil.font12B;
+        addKeyListener(this);
+    }
+
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -156,6 +170,8 @@ public abstract class JPanelRendererBase extends JPanel
         return cancelFlag;
     }
 
+    public void setMaterial(Material kMaterial, int iIndex) {}
+    public void restorePerVertexColor(Material kMaterial, int index) {}
     /**
      * Unchanged.
      *

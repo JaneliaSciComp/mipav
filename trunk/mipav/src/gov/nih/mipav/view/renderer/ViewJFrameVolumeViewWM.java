@@ -69,7 +69,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     public static final int BRAINSURFACE_FLATTENER = 6;
 
     /** The small bar on the top right corner the volume view frame. */
-    private static JProgressBar rendererProgressBar;
+    //private static JProgressBar rendererProgressBar;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -80,10 +80,10 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     protected ViewMenuBuilder menuObj;
 
     /** Labels for the current position in 3D ModelView coordinates:. */
-    protected JLabel modelViewLabel = null;
+    //protected JLabel modelViewLabel = null;
 
     /** DOCUMENT ME! */
-    protected JLabel[] modelViewLabelVals = new JLabel[3];
+    //protected JLabel[] modelViewLabelVals = new JLabel[3];
 
     /** Orientations of the three axes. */
     protected int[] orient = new int[3];
@@ -92,10 +92,10 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     protected JPanel panelToolbar = new JPanel();
 
     /** Labels for the current position in PatientSlice coordinates:. */
-    protected JLabel patientSliceLabel = null;
+    //protected JLabel patientSliceLabel = null;
 
     /** DOCUMENT ME! */
-    protected JLabel[] patientSliceLabelVals = new JLabel[3];
+    //protected JLabel[] patientSliceLabelVals = new JLabel[3];
 
     /** Lookup table of the color imageA, B. */
     protected ModelRGB RGBTA = null, RGBTB = null;
@@ -303,9 +303,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     /** DOCUMENT ME! */
     private Vector raycastTabVector = new Vector();
 
-    /** Raycast toolbar. */
-    private JToolBar rayCastToolBar;
-
     /** Reference to resample dialog, use to null out the resample dialog in this frame. */
     private JDialogVolViewResample resampleDialog;
 
@@ -361,7 +358,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     private JToolBar viewToolBar;
 
     /** Surface Render toolbar. */
-    private JToolBar volToolBar;
+    private JToolBar surfaceToolBar;
 
     private boolean m_bSurfaceVisible = true;
 
@@ -475,13 +472,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         } else if (command.equals("Repaint")) {
             volumeRepaint();
         } else if (command.equals("Clipping")) {
-
-            if (surRender.getDisplayMode3D()) {
-                clipBox.setVisible(true);
-            } else {
-                clipBox.setVisible(false);
-            }
-
+            clipBox.setVisible(true);
             insertTab("Clip", clipPanel);
             insertSurfaceTab("Clip", clipPanel);
             insertRaycastTab("Clip", clipPanel);
@@ -520,26 +511,14 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             insertTab("View", viewPanel);
             insertSurfaceTab("View", viewPanel);
         } else if (command.equals("InvokeClipping")) {
-
-            if (surRender.getDisplayMode3D()) {
-                clipBox.setVisible(true);
-                surRender.invokeClipping();
-            } else {
-                clipBox.setVisible(false);
-            }
-
+            clipBox.setVisible(true);
+            surRender.invokeClipping();
             insertTab("Clip", clipPanel);
             insertSurfaceTab("Clip", clipPanel);
             insertRaycastTab("Clip", clipPanel);
         } else if (command.equals("DisableClipping")) {
-
-            if (surRender.getDisplayMode3D()) {
-                clipBox.setVisible(true);
-                surRender.diableClipping();
-            } else {
-                clipBox.setVisible(false);
-            }
-
+            clipBox.setVisible(true);
+            surRender.disableClipping();
             insertTab("Clip", clipPanel);
             insertSurfaceTab("Clip", clipPanel);
             insertRaycastTab("Clip", clipPanel);
@@ -784,6 +763,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      */
     public void buildLabelPanel() {
         super.buildLabelPanel();
+        /*
         patientSliceLabel = new JLabel("Patient Slice Position");
         patientSliceLabel.setForeground(Color.black);
         patientSliceLabel.setFont(MipavUtil.font14B);
@@ -875,6 +855,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         panelLabels.add(panelLabelsModel);
 
         tabbedPane.addTab("Positions", null, panelLabels);
+        */
     }
 
     /**
@@ -936,9 +917,11 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      * Build the view control panel for the raycast render.
      */
     public void buildRayCastOptions() {
-//         raycastOptionsPanel = new JPanel();
-//         raycastOptionsPanel.add(raycastRender.getOptions());
-//         maxPanelWidth = Math.max(raycastOptionsPanel.getPreferredSize().width, maxPanelWidth);
+         raycastOptionsPanel = new JPanel();
+         raycastOptionsPanel.add(raycastRenderWM.getOptions());
+         //update lighting...
+         surRender.getSurfaceDialog().getLightDialog().refreshLighting();
+         maxPanelWidth = Math.max(raycastOptionsPanel.getPreferredSize().width, maxPanelWidth);
     }
 
     /**
@@ -1141,7 +1124,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         mousePanel = null;
 
         clipBox = null;
-        volToolBar = null;
 
         if (paintGrowDialog != null) {
             paintGrowDialog.dispose();
@@ -1700,14 +1682,14 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
              }
 
         }
-        if (surRender != null) {
+//         if (surRender != null) {
 
-            if (radioSurrenderCOMPOSITE.isSelected() && (source == radioSurrenderCOMPOSITE)) {
-                surRender.setCompositeMode();
-            } else if (radioSurrenderLIGHT.isSelected() && (source == radioSurrenderLIGHT)) {
-                surRender.setLightingMode();
-            }
-        }
+//             if (radioSurrenderCOMPOSITE.isSelected() && (source == radioSurrenderCOMPOSITE)) {
+//                 surRender.setCompositeMode();
+//             } else if (radioSurrenderLIGHT.isSelected() && (source == radioSurrenderLIGHT)) {
+//                 surRender.setLightingMode();
+//             }
+//         }
 
     }
 
@@ -1736,13 +1718,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                     dualRightPanel.repaint();
                 }
 
-                if (isRayCastEnable) {
-                    panelToolbar.remove(rayCastToolBar);
-                }
+//                 if (isRayCastEnable) {
+//                     panelToolbar.remove(rayCastToolBar);
+//                 }
 
-                if (isSurfaceRenderEnable) {
-                    panelToolbar.remove(volToolBar);
-                }
+//                 if (isSurfaceRenderEnable) {
+//                     panelToolbar.remove(volToolBar);
+//                }
 
                 if (isEndoscopyEnable) {
                     panelToolbar.remove(flyThruToolbar);
@@ -1758,7 +1740,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                 gbc.anchor = GridBagConstraints.WEST;
                 gbc.weightx = 1;
                 gbc.weighty = 1;
-                panelToolbar.add(volToolBar, gbc);
+//                 panelToolbar.add(volToolBar, gbc);
                 panelToolbar.validate();
                 panelToolbar.repaint();
             } else if ((flythruRender != null) && (source == flythruRender.getCanvas())) {
@@ -1768,9 +1750,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                 dualLeftPanel.repaint();
                 dualRightPanel.repaint();
 
-                if (isSurfaceRenderEnable) {
-                    panelToolbar.remove(volToolBar);
-                }
+//                 if (isSurfaceRenderEnable) {
+//                     panelToolbar.remove(volToolBar);
+//                 }
 
                 if (isEndoscopyEnable) {
                     panelToolbar.remove(flyThruToolbar);
@@ -1804,13 +1786,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                     dualRightPanel.repaint();
                 }
 
-                if (isRayCastEnable) {
-                    panelToolbar.remove(rayCastToolBar);
-                }
+//                 if (isRayCastEnable) {
+//                     panelToolbar.remove(rayCastToolBar);
+//                 }
 
-                if (isSurfaceRenderEnable) {
-                    panelToolbar.remove(volToolBar);
-                }
+//                 if (isSurfaceRenderEnable) {
+//                     panelToolbar.remove(volToolBar);
+//                 }
 
                 GridBagConstraints gbc = new GridBagConstraints();
 
@@ -1822,7 +1804,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                 gbc.anchor = GridBagConstraints.WEST;
                 gbc.weightx = 1;
                 gbc.weighty = 1;
-                panelToolbar.add(rayCastToolBar, gbc);
+//                 panelToolbar.add(rayCastToolBar, gbc);
                 panelToolbar.validate();
                 panelToolbar.repaint();
             } else if ((brainsurfaceFlattenerRender != null) && (source == brainsurfaceFlattenerRender.getCanvas())) {
@@ -1834,9 +1816,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                     dualRightPanel.repaint();
                 }
 
-                if (isSurfaceRenderEnable) {
-                    panelToolbar.remove(volToolBar);
-                }
+//                 if (isSurfaceRenderEnable) {
+//                     panelToolbar.remove(volToolBar);
+//                 }
             }
         }
 
@@ -2276,7 +2258,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         }
 
         tabbedPane.removeAll();
-        tabbedPane.addTab("Positions", null, panelLabels);
+        //tabbedPane.addTab("Positions", null, panelLabels);
 
         if (command.equals("VolRender")) {
 
@@ -2436,6 +2418,10 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         for (int iPlane = 0; iPlane < 3; iPlane++) {
             m_akPlaneRender[iPlane].updateData();
         }
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.updateData(imageA);
+        }
     }
 
     /**
@@ -2581,11 +2567,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             buildMousePanel();
             buildGeodesic();
             buildSculpt();
-        }
-
-        if (isRayCastEnable) {
-            //buildRayCastOptions();
-            //buildRayCastCameraPanel();
+            buildRayCastOptions();
         }
 
         if (isBrainsurfaceFlattenerEnable) {
@@ -2809,26 +2791,19 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             buildSurRenderToolbar();
         }
 
-        //if (isRayCastEnable) {
-         //   buildRayCastToolbar();
-        //}
-
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.BOTH;
+//         gbc.gridwidth = 1;
+//         gbc.gridheight = 1;
+//         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
+//         gbc.weightx = 1;
+//         gbc.weighty = 1;
 
         if (leftPanelRenderMode == SURFACE) {
-//             panelToolbar.add(volToolBar, gbc);
-//         } else if (leftPanelRenderMode == RAYCAST) {
-            buildRayCastToolbar();
-            panelToolbar.add(rayCastToolBar, gbc);
+            panelToolbar.add(surfaceToolBar, gbc);
         }
     }
 
@@ -2847,18 +2822,30 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         flyThruToolbar.add(ViewToolBarBuilder.makeSeparator());
     }
 
+
     /**
-     * Build the raycast toolbar.
+     * Build the surface render toolbar.
      */
-    private void buildRayCastToolbar() {
-        rayCastToolBar = new JToolBar();
-        rayCastToolBar.setBorder(etchedBorder);
-        rayCastToolBar.setBorderPainted(true);
-        rayCastToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        rayCastToolBar.add(toolbarBuilder.buildButton("Repaint", "Repaints images", "paintinside"));
-        rayCastToolBar.add(ViewToolBarBuilder.makeSeparator());
-        rayCastToolBar.add(toolbarBuilder.buildButton("RayCastOptions", "Option Dialog.", "options"));
-        rayCastToolBar.add(ViewToolBarBuilder.makeSeparator());
+    private void buildSurRenderToolbar() {
+        surfaceToolBar = new JToolBar();
+        surfaceToolBar.setBorder(etchedBorder);
+        surfaceToolBar.setBorderPainted(true);
+        surfaceToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
+        surfaceToolBar.setFloatable(false);
+        surfaceToolBar.add(toolbarBuilder.buildButton("Repaint", "Repaints images", "paintinside"));
+        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
+        surfaceToolBar.add(toolbarBuilder.buildButton("SurfaceDialog", "Add surface to viewer", "isosurface"));
+        surfaceToolBar.add(toolbarBuilder.buildButton("Geodesic", "Draw geodesic curves on the surface", "geodesic"));
+        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
+        surfaceToolBar.add(toolbarBuilder.buildButton("Mouse", "Record mouse changes", "camcorder"));
+        surfaceToolBar.add(toolbarBuilder.buildButton("Capture", "Capture screen shot", "camera"));
+        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
+        surfaceToolBar.add(toolbarBuilder.buildButton("Box", "Display options", "perspective"));
+        surfaceToolBar.add(toolbarBuilder.buildButton("ViewControls", "View mode", "mousecontrol"));
+        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
+
+        surfaceToolBar.add(toolbarBuilder.buildButton("RayCastOptions", "Option Dialog.", "options"));
+        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         ButtonGroup group1 = new ButtonGroup();
 
@@ -2897,58 +2884,13 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         radioCOMPOSITE.addItemListener(this);
         radioSURFACE.addItemListener(this);
         radioSURFACEFAST.addItemListener(this);
-        rayCastToolBar.add(radioMIP);
-        rayCastToolBar.add(radioXRAY);
-        rayCastToolBar.add(radioCOMPOSITE);
-        rayCastToolBar.add(radioSURFACEFAST);
-        rayCastToolBar.add(radioSURFACE);
-        rayCastToolBar.add(ViewToolBarBuilder.makeSeparator());
-        rayCastToolBar.add(toolbarBuilder.buildButton("AutoCapture", "Auto snapshot screen", "camera"));
-
+        surfaceToolBar.add(radioMIP);
+        surfaceToolBar.add(radioXRAY);
+        surfaceToolBar.add(radioCOMPOSITE);
+        surfaceToolBar.add(radioSURFACEFAST);
+        surfaceToolBar.add(radioSURFACE);
     }
 
-    /**
-     * Build the surface render toolbar.
-     */
-    private void buildSurRenderToolbar() {
-        volToolBar = new JToolBar();
-        volToolBar.setBorder(etchedBorder);
-        volToolBar.setBorderPainted(true);
-        volToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        volToolBar.setFloatable(false);
-        volToolBar.add(toolbarBuilder.buildButton("Repaint", "Repaints images", "paintinside"));
-        volToolBar.add(ViewToolBarBuilder.makeSeparator());
-        volToolBar.add(toolbarBuilder.buildButton("SurfaceDialog", "Add surface to viewer", "isosurface"));
-        volToolBar.add(toolbarBuilder.buildButton("Geodesic", "Draw geodesic curves on the surface", "geodesic"));
-        volToolBar.add(ViewToolBarBuilder.makeSeparator());
-        volToolBar.add(toolbarBuilder.buildButton("Mouse", "Record mouse changes", "camcorder"));
-        volToolBar.add(toolbarBuilder.buildButton("Capture", "Capture screen shot", "camera"));
-        volToolBar.add(ViewToolBarBuilder.makeSeparator());
-        volToolBar.add(toolbarBuilder.buildButton("Box", "Display options", "perspective"));
-        volToolBar.add(toolbarBuilder.buildButton("ViewControls", "View mode", "mousecontrol"));
-        volToolBar.add(ViewToolBarBuilder.makeSeparator());
-
-        ButtonGroup group1 = new ButtonGroup();
-
-        radioSurrenderCOMPOSITE = new JRadioButton("Composite", false);
-        radioSurrenderCOMPOSITE.setFont(serif12);
-        group1.add(radioSurrenderCOMPOSITE);
-
-        radioSurrenderLIGHT = new JRadioButton("Composite Surface", false);
-        radioSurrenderLIGHT.setFont(serif12);
-        group1.add(radioSurrenderLIGHT);
-
-        radioSurrenderCOMPOSITE.setSelected(true);
-        radioSurrenderLIGHT.setSelected(false);
-
-        radioSurrenderCOMPOSITE.addItemListener(this);
-        radioSurrenderLIGHT.addItemListener(this);
-
-        volToolBar.add(radioSurrenderCOMPOSITE);
-        volToolBar.add(radioSurrenderLIGHT);
-
-        volToolBar.add(ViewToolBarBuilder.makeSeparator());
-    }
 
     /**
      * The the top one volume view toolbar.
@@ -3060,7 +3002,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     {
         if ( !m_bSurfaceVisible )
         {
-            switchTabList("SurRender");
+            //switchTabList("SurRender");
             gpuPanel.setVisible(false);
             raycastRenderWM.setVisible(false);
             surfaceRenderPanel.setVisible(true);
@@ -3074,7 +3016,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     private void enableVolumeRender() {
         if ( m_bSurfaceVisible )
         {
-            switchTabList("VolRender");
+            //switchTabList("VolRender");
             surfaceRenderPanel.setVisible(false);
             gpuPanel.setVisible(true);
             raycastRenderWM.setVisible(true);

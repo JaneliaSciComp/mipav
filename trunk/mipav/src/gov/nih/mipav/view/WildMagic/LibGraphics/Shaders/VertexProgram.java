@@ -28,6 +28,7 @@ public class VertexProgram extends Program
 
         String kFilename = new String( rkDirectory + "\\Shaders\\Cg\\" + rkProgramName + ".cg" );
         String kProgramName = new String( "v_" + rkProgramName );
+        System.err.println(kProgramName);
 
         CGprogram kCGProgram = CgGL.cgCreateProgramFromFile( pkProgram.m_kContext,
                                                              CgGL.CG_SOURCE,

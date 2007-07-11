@@ -631,6 +631,9 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         if (rayBasedRender != null) {
             rayBasedRender.updateLighting();
         }
+        if (rayBasedRenderWM != null) {
+            rayBasedRenderWM.updateLighting(m_akLights);
+        }
     }
 
     /**
@@ -1083,6 +1086,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         shininessSlider.setMinorTickSpacing(100 / 10);
         shininessSlider.setPaintTicks(true);
         shininessSlider.addChangeListener(this);
+        shininessSlider.addMouseListener(this);
         shininessSlider.setVisible(true);
 
         labelShininessBegin = new JLabel("0.0");

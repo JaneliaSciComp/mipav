@@ -129,7 +129,10 @@ public class ApplicationGUI
 
     public void close()
     {
-        m_kFrame.setVisible(false);
+        if ( m_kFrame != null )
+        {
+            m_kFrame.setVisible(false);
+        }
         if ( m_kShaderMap != null )
         {
             m_kShaderMap.clear();
