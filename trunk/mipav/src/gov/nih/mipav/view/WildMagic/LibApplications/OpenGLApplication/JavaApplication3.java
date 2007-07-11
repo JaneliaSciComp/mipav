@@ -394,7 +394,6 @@ public abstract class JavaApplication3 extends JavaApplication
         Vector3f kLoc = m_spkCamera.GetLocation();
         kLoc.addEquals( m_akWorldAxis[0].scale(m_fTrnSpeed) );
         m_spkCamera.SetLocation(kLoc);
-        System.err.println( kLoc.X() + " " + kLoc.Y() + " " + kLoc.Z() );
     }
 
     /** 
@@ -883,7 +882,6 @@ public abstract class JavaApplication3 extends JavaApplication
     {
         if (m_iMouseButton == MouseEvent.BUTTON2)
         {
-            int iX = e.getX();
             int iY = e.getY();
             // get the ending point
             float fMult = 1.0f/(m_iWidth >= m_iHeight ? m_iHeight : m_iWidth);
@@ -902,42 +900,6 @@ public abstract class JavaApplication3 extends JavaApplication
             m_fTrnSpeed = fTrnSpeedTmp;
             m_fYDrag0 = fYDrag1;
         }
-        if (m_iMouseButton == MouseEvent.BUTTON3)
-        {
-            int iX = e.getX();
-            int iY = e.getY();
-            // get the ending point
-            float fMult = 1.0f/(m_iWidth >= m_iHeight ? m_iHeight : m_iWidth);
-            float fXDrag1 = (2*iX-m_iWidth)*fMult;
-            float fYDrag1 = (2*(m_iHeight-1-iY)-m_iHeight)*fMult;
-          
-            float fTrnSpeedTmp = m_fTrnSpeed;
-            if ( fXDrag1 > m_fXDrag0 )
-            {
-                m_fTrnSpeed = .01f;// + Math.abs( fXDrag1 )/50f;
-                MoveLeft();
-            }
-            else if ( fXDrag1 < m_fXDrag0 )
-            {
-                m_fTrnSpeed = .01f;//  + Math.abs( fXDrag1 )/50f;
-                MoveRight();
-            }
-            if ( fYDrag1 > m_fYDrag0 )
-            {
-                m_fTrnSpeed = .01f;//  + Math.abs( fYDrag1 )/50f;
-                MoveDown();
-            }
-            else if ( fYDrag1 < m_fYDrag0 )
-            {
-                m_fTrnSpeed = .01f;//  + Math.abs( fYDrag1 )/50f;
-                MoveUp();
-            }
-            System.err.println(m_fTrnSpeed);
-            m_fTrnSpeed = fTrnSpeedTmp;
-            m_fXDrag0 = fXDrag1;
-            m_fYDrag0 = fYDrag1;
-        }
-
         if (!m_bUseTrackBall
             ||  m_iMouseButton != MouseEvent.BUTTON1
             ||  !m_bTrackBallDown
