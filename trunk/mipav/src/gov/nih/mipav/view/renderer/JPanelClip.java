@@ -421,7 +421,9 @@ public class JPanelClip extends JPanelRendererBase
                 if ( rayBasedRenderWM != null )
                 {
                     rayBasedRenderWM.displayClipPlane( 1, true, 
-                            new ColorRGB( clipSliceX.getColor().x, clipSliceX.getColor().y, clipSliceX.getColor().z) );
+                            new ColorRGB( colorButtonX.getBackground().getRed(),
+                                          colorButtonX.getBackground().getGreen(),
+                                          colorButtonX.getBackground().getBlue() ) );
                 }
             } else {
                 hideClipSliceX();
@@ -439,7 +441,9 @@ public class JPanelClip extends JPanelRendererBase
                 if ( rayBasedRenderWM != null )
                 {
                     rayBasedRenderWM.displayClipPlane( 0, true, 
-                            new ColorRGB( clipSliceXInv.getColor().x, clipSliceXInv.getColor().y, clipSliceXInv.getColor().z) );
+                            new ColorRGB( colorButtonXInv.getBackground().getRed(),
+                                          colorButtonXInv.getBackground().getGreen(),
+                                          colorButtonXInv.getBackground().getBlue() ) );
                 }
 
             } else {
@@ -458,7 +462,9 @@ public class JPanelClip extends JPanelRendererBase
                 if ( rayBasedRenderWM != null )
                 {
                     rayBasedRenderWM.displayClipPlane( 3, true, 
-                            new ColorRGB( clipSliceY.getColor().x, clipSliceY.getColor().y, clipSliceY.getColor().z) );
+                            new ColorRGB( colorButtonY.getBackground().getRed(),
+                                          colorButtonY.getBackground().getGreen(),
+                                          colorButtonY.getBackground().getBlue() ) );
                 }
             } else {
                 hideClipSliceY();
@@ -476,7 +482,9 @@ public class JPanelClip extends JPanelRendererBase
                 if ( rayBasedRenderWM != null )
                 {
                     rayBasedRenderWM.displayClipPlane( 2, true, 
-                            new ColorRGB( clipSliceYInv.getColor().x, clipSliceYInv.getColor().y, clipSliceYInv.getColor().z) );
+                            new ColorRGB( colorButtonYInv.getBackground().getRed(),
+                                          colorButtonYInv.getBackground().getGreen(),
+                                          colorButtonYInv.getBackground().getBlue() ) );
                 }
             } else {
                 hideClipSliceYInv();
@@ -494,7 +502,9 @@ public class JPanelClip extends JPanelRendererBase
                 if ( rayBasedRenderWM != null )
                 {
                     rayBasedRenderWM.displayClipPlane( 5, true, 
-                            new ColorRGB( clipSliceZ.getColor().x, clipSliceZ.getColor().y, clipSliceZ.getColor().z) );
+                            new ColorRGB( colorButtonZ.getBackground().getRed(),
+                                          colorButtonZ.getBackground().getGreen(),
+                                          colorButtonZ.getBackground().getBlue() ) );
                 }
             } else {
                 hideClipSliceZ();
@@ -512,7 +522,9 @@ public class JPanelClip extends JPanelRendererBase
                 if ( rayBasedRenderWM != null )
                 {
                     rayBasedRenderWM.displayClipPlane( 4, true, 
-                            new ColorRGB( clipSliceZInv.getColor().x, clipSliceZInv.getColor().y, clipSliceZInv.getColor().z) );
+                            new ColorRGB( colorButtonZInv.getBackground().getRed(),
+                                          colorButtonZInv.getBackground().getGreen(),
+                                          colorButtonZInv.getBackground().getBlue() ) );
                 }
             } else {
                 hideClipSliceZInv();
@@ -532,7 +544,14 @@ public class JPanelClip extends JPanelRendererBase
                 hideClipSliceA();
                 colorButtonA.setEnabled(false);
             }
-        } else if (source == boundingCheckStatic) {
+            if ( rayBasedRenderWM != null )
+            {
+                rayBasedRenderWM.enableArbitraryClipPlane( boxA.isSelected(), boundingCheckA.isSelected(),
+                                                           new ColorRGB( colorButtonA.getBackground().getRed(),
+                                                                         colorButtonA.getBackground().getGreen(),
+                                                                         colorButtonA.getBackground().getBlue() ) );
+            }
+       } else if (source == boundingCheckStatic) {
 
             if (boundingCheckStatic.isSelected()) {
                 addClipSliceStatic();
@@ -543,11 +562,10 @@ public class JPanelClip extends JPanelRendererBase
             }
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.enableEyeClipPlane( boundingCheckStatic.isSelected(),
-                                                     new ColorRGB( clipSliceStatic.getColor().x,
-                                                                   clipSliceStatic.getColor().y,
-                                                                   clipSliceStatic.getColor().z)
-                                                     );
+                rayBasedRenderWM.enableEyeClipPlane( boxStatic.isSelected(), boundingCheckStatic.isSelected(),
+                            new ColorRGB( colorButtonStatic.getBackground().getRed(),
+                                          colorButtonStatic.getBackground().getGreen(),
+                                          colorButtonStatic.getBackground().getBlue() ) );
             }
        } else if (source == boundingCheckStaticInv) {
 
@@ -560,11 +578,10 @@ public class JPanelClip extends JPanelRendererBase
             }
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.enableEyeInvClipPlane( boundingCheckStaticInv.isSelected(),
-                                                        new ColorRGB( clipSliceStaticInv.getColor().x,
-                                                                   clipSliceStaticInv.getColor().y,
-                                                                   clipSliceStaticInv.getColor().z)
-                                                        );
+                rayBasedRenderWM.enableEyeInvClipPlane( boxStaticInv.isSelected(), boundingCheckStaticInv.isSelected(),
+                            new ColorRGB( colorButtonStaticInv.getBackground().getRed(),
+                                          colorButtonStaticInv.getBackground().getGreen(),
+                                          colorButtonStaticInv.getBackground().getBlue() ) );
             }
         } else if (command.equals("+X")) {
 
@@ -719,7 +736,14 @@ public class JPanelClip extends JPanelRendererBase
                 colorButtonA.setEnabled(true);
                 enableClipArbiBehavior(false);
             }
-        } else if (command.equals("EYE")) {
+            if ( rayBasedRenderWM != null )
+            {
+                rayBasedRenderWM.enableArbitraryClipPlane( boxA.isSelected(), boundingCheckA.isSelected(),
+                        new ColorRGB( colorButtonA.getBackground().getRed(),
+                                colorButtonA.getBackground().getGreen(),
+                                colorButtonA.getBackground().getBlue() ) );
+            }
+       } else if (command.equals("EYE")) {
 
             if (!boxStatic.isSelected()) {
                 setStaticSliderEnabled(false);
@@ -732,10 +756,6 @@ public class JPanelClip extends JPanelRendererBase
                 disableStaticClipping();
                 disableStaticInvClipping();
                 hideClipSliceStaticInv();
-                if ( rayBasedRenderWM != null )
-                {
-                    rayBasedRenderWM.enableEyeClipPlane( false, null );
-                }
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
@@ -743,7 +763,14 @@ public class JPanelClip extends JPanelRendererBase
                 setStaticSliderEnabled(true);
                 updateClipSliceStatic();
             }
-        } else if (command.equals("-EYE")) {
+            if ( rayBasedRenderWM != null )
+            {
+                rayBasedRenderWM.enableEyeClipPlane( boxStatic.isSelected(), boundingCheckStatic.isSelected(),
+                            new ColorRGB( colorButtonStatic.getBackground().getRed(),
+                                          colorButtonStatic.getBackground().getGreen(),
+                                          colorButtonStatic.getBackground().getBlue() ) );
+            }
+       } else if (command.equals("-EYE")) {
 
             if (!boxStaticInv.isSelected()) {
                 setStaticInvSliderEnabled(false);
@@ -756,17 +783,19 @@ public class JPanelClip extends JPanelRendererBase
                 initClipSliceStaticInv();
                 disableStaticInvClipping();
                 disableStaticClipping();
-
-                if ( rayBasedRenderWM != null )
-                {
-                    rayBasedRenderWM.enableEyeInvClipPlane( false, null );
-                }
             } else {
                 disableClipPlanes();
                 disableClipPlanesArbi();
                 enableStaticInvClipping();
                 setStaticInvSliderEnabled(true);
                 updateClipSliceStaticInv();
+            }
+            if ( rayBasedRenderWM != null )
+            {
+                rayBasedRenderWM.enableEyeInvClipPlane( boxStaticInv.isSelected(), boundingCheckStaticInv.isSelected(),
+                            new ColorRGB( colorButtonStaticInv.getBackground().getRed(),
+                                          colorButtonStaticInv.getBackground().getGreen(),
+                                          colorButtonStaticInv.getBackground().getBlue() ) );
             }
         }
 
@@ -789,7 +818,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void addClipSliceA() {
 
-        if (!objClipSliceA_BG.isLive()) {
+        if ((objClipSliceA_BG != null) && !objClipSliceA_BG.isLive()) {
             objClipSlices_BG.addChild(objClipSliceA_BG);
         }
 
@@ -803,7 +832,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void addClipSliceStatic() {
 
-        if (!objClipSliceStatic_BG.isLive()) {
+        if ((objClipSliceStatic_BG != null) && !objClipSliceStatic_BG.isLive()) {
 
             // objClipSlices_BG.addChild(objClipSliceStatic_BG);
             renderBase.getBranchGroup().addChild(objClipSliceStatic_BG);
@@ -820,7 +849,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void addClipSliceStaticInv() {
 
-        if (!objClipSliceStaticInv_BG.isLive()) {
+        if ((objClipSliceStaticInv_BG != null) && !objClipSliceStaticInv_BG.isLive()) {
             renderBase.getBranchGroup().addChild(objClipSliceStaticInv_BG);
         }
 
@@ -834,7 +863,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void addClipSliceX() {
 
-        if (!objClipSliceX_BG.isLive()) {
+        if ((objClipSliceX_BG != null) && !objClipSliceX_BG.isLive()) {
             objClipSlices_BG.addChild(objClipSliceX_BG);
         }
     }
@@ -844,7 +873,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void addClipSliceXInv() {
 
-        if (!objClipSliceXInv_BG.isLive()) {
+        if ((objClipSliceXInv_BG != null) && !objClipSliceXInv_BG.isLive()) {
             objClipSlices_BG.addChild(objClipSliceXInv_BG);
         }
     }
@@ -854,7 +883,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void addClipSliceY() {
 
-        if (!objClipSliceY_BG.isLive()) {
+        if ((objClipSliceY_BG != null) && !objClipSliceY_BG.isLive()) {
             objClipSlices_BG.addChild(objClipSliceY_BG);
         }
     }
@@ -864,7 +893,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void addClipSliceYInv() {
 
-        if (!objClipSliceYInv_BG.isLive()) {
+        if ((objClipSliceYInv_BG != null) && !objClipSliceYInv_BG.isLive()) {
             objClipSlices_BG.addChild(objClipSliceYInv_BG);
         }
     }
@@ -874,7 +903,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void addClipSliceZ() {
 
-        if (!objClipSliceZ_BG.isLive()) {
+        if ((objClipSliceZ_BG != null) && !objClipSliceZ_BG.isLive()) {
             objClipSlices_BG.addChild(objClipSliceZ_BG);
         }
     }
@@ -884,7 +913,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void addClipSliceZInv() {
 
-        if (!objClipSliceZInv_BG.isLive()) {
+        if ((objClipSliceZInv_BG != null) && !objClipSliceZInv_BG.isLive()) {
             objClipSlices_BG.addChild(objClipSliceZInv_BG);
         }
     }
@@ -2072,6 +2101,14 @@ public class JPanelClip extends JPanelRendererBase
             m_fZ1 = 1f;
         }
 
+        eqnX = new Vector4d(1.0, 0.0, 0.0, xBox - (2 * ((float) xSlice / (xDim - 1)) * xBox) - 0.001);
+        eqnXInv = new Vector4d(-1.0, 0.0, 0.0, -xBox + (2 * ((float) xSliceInv / (xDim - 1)) * xBox) - 0.001);
+        eqnY = new Vector4d(0.0, -1.0, 0.0, yBox - (2 * ((float) ySlice / (yDim - 1)) * yBox) - 0.001);
+        eqnYInv = new Vector4d(0.0, 1.0, 0.0, -yBox + (2 * ((float) ySliceInv / (yDim - 1)) * yBox) - 0.001);
+        eqnZ = new Vector4d(0.0, 0.0, -1.0, zBox - (2 * ((float) sSliceInv / (zDim - 1)) * zBox) - 0.001);
+        eqnZInv = new Vector4d(0.0, 0.0, 1.0, (2 * ((float) sSlice / (zDim - 1)) * zBox) - zBox - 0.001);
+        updateClipPlanesEqn();
+
         x = eqnX.w;
         xInv = eqnXInv.w;
         y = eqnY.w;
@@ -2169,6 +2206,16 @@ public class JPanelClip extends JPanelRendererBase
         colorButtonZInv.setEnabled(false);
         removeClipSliceZInv();
         boundingCheckZInv.setSelected(false);
+
+        if ( rayBasedRenderWM != null )
+        {
+            rayBasedRenderWM.enableClipPlane( 0, boxXInv.isSelected(), boundingCheckXInv.isSelected() );
+            rayBasedRenderWM.enableClipPlane( 1, boxX.isSelected(), boundingCheckX.isSelected() );
+            rayBasedRenderWM.enableClipPlane( 2, boxYInv.isSelected(), boundingCheckYInv.isSelected() );
+            rayBasedRenderWM.enableClipPlane( 3, boxY.isSelected(), boundingCheckY.isSelected() );
+            rayBasedRenderWM.enableClipPlane( 4, boxZInv.isSelected(), boundingCheckZInv.isSelected() );
+            rayBasedRenderWM.enableClipPlane( 5, boxZ.isSelected(), boundingCheckZ.isSelected() );
+        }
     }
 
     /**
@@ -2262,7 +2309,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void disableStaticClipping() {
 
-        if (mcStaticBG.isLive()) {
+        if ((mcStatic != null) && mcStaticBG.isLive()) {
             mcStaticBG.detach();
             mcStatic.removeScope(((SurfaceRender) renderBase).getVolRenderBG());
         }
@@ -2280,7 +2327,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void disableStaticInvClipping() {
 
-        if (mcStaticBG.isLive()) {
+        if ((mcStatic != null) && mcStaticBG.isLive()) {
             mcStaticBG.detach();
             mcStatic.removeScope(((SurfaceRender) renderBase).getVolRenderBG());
         }
@@ -2510,6 +2557,10 @@ public class JPanelClip extends JPanelRendererBase
      *               behavior.
      */
     public void enableClipArbiBehavior(boolean flag) {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
 
         // arbiMouseRotateBehavior.setEnable( flag );
         if (flag) {
@@ -2534,6 +2585,10 @@ public class JPanelClip extends JPanelRendererBase
      * Enable the eye clipping plane.
      */
     public void enableStaticClipping() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
 
         if (!mcStaticBG.isLive()) {
             renderBase.getBranchGroup().addChild(mcStaticBG);
@@ -2550,6 +2605,10 @@ public class JPanelClip extends JPanelRendererBase
      * Enable the eye inverse clipping plane.
      */
     public void enableStaticInvClipping() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
 
         if (!mcStaticBG.isLive()) {
             renderBase.getBranchGroup().addChild(mcStaticBG);
@@ -2988,7 +3047,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void hideClipSliceA() {
 
-        if (objClipSliceA_BG.isLive()) {
+        if ((objClipSliceA_BG != null) && objClipSliceA_BG.isLive()) {
             objClipSliceA_BG.detach();
         }
 
@@ -3002,7 +3061,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void hideClipSliceStatic() {
 
-        if (objClipSliceStatic_BG.isLive()) {
+        if ((objClipSliceStatic_BG != null) && objClipSliceStatic_BG.isLive()) {
             objClipSliceStatic_BG.detach();
         }
 
@@ -3017,7 +3076,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void hideClipSliceStaticInv() {
 
-        if (objClipSliceStaticInv_BG.isLive()) {
+        if ((objClipSliceStaticInv_BG != null) && objClipSliceStaticInv_BG.isLive()) {
             objClipSliceStaticInv_BG.detach();
         }
     }
@@ -3027,7 +3086,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void hideClipSliceX() {
 
-        if (objClipSliceX_BG.isLive()) {
+        if ((objClipSliceX_BG != null) && objClipSliceX_BG.isLive()) {
             objClipSliceX_BG.detach();
         }
     }
@@ -3037,7 +3096,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void hideClipSliceXInv() {
 
-        if (objClipSliceXInv_BG.isLive()) {
+        if ((objClipSliceXInv_BG != null) && objClipSliceXInv_BG.isLive()) {
             objClipSliceXInv_BG.detach();
         }
     }
@@ -3047,7 +3106,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void hideClipSliceY() {
 
-        if (objClipSliceY_BG.isLive()) {
+        if ((objClipSliceY_BG != null) && objClipSliceY_BG.isLive()) {
             objClipSliceY_BG.detach();
         }
     }
@@ -3057,7 +3116,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void hideClipSliceYInv() {
 
-        if (objClipSliceYInv_BG.isLive()) {
+        if ((objClipSliceYInv_BG != null) && objClipSliceYInv_BG.isLive()) {
             objClipSliceYInv_BG.detach();
         }
     }
@@ -3067,7 +3126,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void hideClipSliceZ() {
 
-        if (objClipSliceZ_BG.isLive()) {
+        if ((objClipSliceZ_BG != null) && objClipSliceZ_BG.isLive()) {
             objClipSliceZ_BG.detach();
         }
     }
@@ -3077,7 +3136,7 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void hideClipSliceZInv() {
 
-        if (objClipSliceZInv_BG.isLive()) {
+        if ((objClipSliceZInv_BG != null) && objClipSliceZInv_BG.isLive()) {
             objClipSliceZInv_BG.detach();
         }
     }
@@ -3123,6 +3182,10 @@ public class JPanelClip extends JPanelRendererBase
      * Move the arbitrary clipping bounding frame to initial position.
      */
     public void initClipSliceA() {
+        if ( mcArbi == null )
+        {
+            return;
+        }
 
         if (rotationAxis != null) {
             mcArbiTrans3D.set(rotationAxis);
@@ -3153,6 +3216,11 @@ public class JPanelClip extends JPanelRendererBase
      * Move the static clipping bounding frame to initial position.
      */
     public void initClipSliceStatic() {
+        if (mcStatic == null)
+        {
+            return;
+        }
+
         clipSliceStatic.setSlices(xBox * 0.5f, yBox * 0.5f, zBox, ViewJComponentBoxSlice.S_CLIPSLICE);
         mcStatic.setEnable(5, false);
 
@@ -3171,6 +3239,11 @@ public class JPanelClip extends JPanelRendererBase
      * Move the static inverse clipping bounding frame to initial position.
      */
     public void initClipSliceStaticInv() {
+        if (mcStatic == null)
+        {
+            return;
+        }
+
         clipSliceStaticInv.setSlices(xBox * 0.5f, yBox * 0.5f, -zBox, ViewJComponentBoxSlice.S_CLIPSLICE_NEG);
         mcStatic.setEnable(4, false);
 
@@ -3189,6 +3262,11 @@ public class JPanelClip extends JPanelRendererBase
      * Move the X clipping bounding frame to initial position.
      */
     public void initClipSliceX() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
+
         clipSliceX.setSlices(1, yBox, zBox, ViewJComponentBoxSlice.X_CLIPSLICE);
         mc.setEnable(0, false);
 
@@ -3207,6 +3285,11 @@ public class JPanelClip extends JPanelRendererBase
      * Move the X Invative clipping bounding frame to initial position.
      */
     public void initClipSliceXInv() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
+
         clipSliceXInv.setSlices(-1, yBox, zBox, ViewJComponentBoxSlice.X_CLIPSLICE_NEG);
         mc.setEnable(1, false);
 
@@ -3225,6 +3308,10 @@ public class JPanelClip extends JPanelRendererBase
      * Move the Y clipping bounding frame to initial position.
      */
     public void initClipSliceY() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
         clipSliceY.setSlices(xBox, -1, zBox, ViewJComponentBoxSlice.Y_CLIPSLICE);
         mc.setEnable(2, false);
 
@@ -3243,6 +3330,11 @@ public class JPanelClip extends JPanelRendererBase
      * Move the Y Nagative clipping bounding frame to initial position.
      */
     public void initClipSliceYInv() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
+
         clipSliceYInv.setSlices(xBox, 1, zBox, ViewJComponentBoxSlice.Y_CLIPSLICE_NEG);
         mc.setEnable(3, false);
 
@@ -3261,6 +3353,11 @@ public class JPanelClip extends JPanelRendererBase
      * Move the Z clipping bounding frame to initial position.
      */
     public void initClipSliceZ() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
+
         clipSliceZ.setSlices(xBox, yBox, -zBox, ViewJComponentBoxSlice.Z_CLIPSLICE);
         mc.setEnable(4, false);
 
@@ -3279,6 +3376,11 @@ public class JPanelClip extends JPanelRendererBase
      * Move the Z Invative clipping bounding frame to initial position.
      */
     public void initClipSliceZInv() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
+
         clipSliceZInv.setSlices(xBox, yBox, zBox, ViewJComponentBoxSlice.Z_CLIPSLICE_NEG);
         mc.setEnable(5, false);
 
@@ -3342,6 +3444,55 @@ public class JPanelClip extends JPanelRendererBase
 
         updateVolumeRenderClipPlane();
         disableClipPlanesArbi();
+
+
+        if ( rayBasedRenderWM != null )
+        {
+            rayBasedRenderWM.displayClipPlane( 0, true, 
+                                               new ColorRGB( colorButtonXInv.getBackground().getRed(),
+                                                             colorButtonXInv.getBackground().getGreen(),
+                                                             colorButtonXInv.getBackground().getBlue() ) );
+            rayBasedRenderWM.setClipPlane( 0, xSliceInv, "clipXInv" );
+
+            rayBasedRenderWM.displayClipPlane( 1, true, 
+                                               new ColorRGB( colorButtonX.getBackground().getRed(),
+                                                             colorButtonX.getBackground().getGreen(),
+                                                             colorButtonX.getBackground().getBlue() ) );
+            rayBasedRenderWM.setClipPlane( 1, xSlice, "clipX" );
+            rayBasedRenderWM.displayClipPlane( 2, true, 
+                                               new ColorRGB( colorButtonYInv.getBackground().getRed(),
+                                                             colorButtonYInv.getBackground().getGreen(),
+                                                             colorButtonYInv.getBackground().getBlue() ) );
+            rayBasedRenderWM.setClipPlane( 2, ySliceInv, "clipYInv" );
+
+            rayBasedRenderWM.displayClipPlane( 3, true, 
+                                               new ColorRGB( colorButtonY.getBackground().getRed(),
+                                                             colorButtonY.getBackground().getGreen(),
+                                                             colorButtonY.getBackground().getBlue() ) );
+            rayBasedRenderWM.setClipPlane( 3, ySlice, "clipY" );
+
+            rayBasedRenderWM.displayClipPlane( 4, true, 
+                                               new ColorRGB( colorButtonZInv.getBackground().getRed(),
+                                                             colorButtonZInv.getBackground().getGreen(),
+                                                             colorButtonZInv.getBackground().getBlue() ) );
+            rayBasedRenderWM.setClipPlane( 4, zSliceInv, "clipZInv" );
+
+            rayBasedRenderWM.displayClipPlane( 5, true, 
+                                               new ColorRGB( colorButtonZ.getBackground().getRed(),
+                                                             colorButtonZ.getBackground().getGreen(),
+                                                             colorButtonZ.getBackground().getBlue() ) );
+            rayBasedRenderWM.setClipPlane( 5, zSlice, "clipZ" );
+
+
+            rayBasedRenderWM.enableArbitraryClipPlane( boxA.isSelected(), boundingCheckA.isSelected(),
+                                                       new ColorRGB( colorButtonA.getBackground().getRed(),
+                                                                     colorButtonA.getBackground().getGreen(),
+                                                                     colorButtonA.getBackground().getBlue() ) );
+            rayBasedRenderWM.enableEyeClipPlane( boxStatic.isSelected(), boundingCheckStatic.isSelected(),
+                                                 new ColorRGB( colorButtonStatic.getBackground().getRed(),
+                                                               colorButtonStatic.getBackground().getGreen(),
+                                                               colorButtonStatic.getBackground().getBlue() ) );
+        }
     }
 
     /**
@@ -3579,6 +3730,10 @@ public class JPanelClip extends JPanelRendererBase
      * Detaches the slice frame on arbitrary clipping plane slice.
      */
     public void removeClipSliceA() {
+        if ( mcArbi == null )
+        {
+            return;
+        }
 
         if (objClipSliceA_BG.isLive()) {
             objClipSliceA_BG.detach();
@@ -3590,6 +3745,10 @@ public class JPanelClip extends JPanelRendererBase
      * remove the static clipping plane box frame.
      */
     public void removeClipSliceStatic() {
+        if (mcStatic == null)
+        {
+            return;
+        }
 
         if (objClipSliceStatic_BG.isLive()) {
             objClipSliceStatic_BG.detach();
@@ -3602,6 +3761,10 @@ public class JPanelClip extends JPanelRendererBase
      * remove the static inverse clipping plane box frame.
      */
     public void removeClipSliceStaticInv() {
+        if (mcStatic == null)
+        {
+            return;
+        }
 
         if (objClipSliceStaticInv_BG.isLive()) {
             objClipSliceStaticInv_BG.detach();
@@ -3614,6 +3777,10 @@ public class JPanelClip extends JPanelRendererBase
      * Detaches the slice frame on clipping plane slice x.
      */
     public void removeClipSliceX() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
 
         if (objClipSliceX_BG.isLive()) {
             objClipSliceX_BG.detach();
@@ -3626,6 +3793,10 @@ public class JPanelClip extends JPanelRendererBase
      * Detaches the slice frame on clipping plane slice -x.
      */
     public void removeClipSliceXInv() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
 
         if (objClipSliceXInv_BG.isLive()) {
             objClipSliceXInv_BG.detach();
@@ -3638,6 +3809,10 @@ public class JPanelClip extends JPanelRendererBase
      * Detaches the slice frame on clipping plane slice y.
      */
     public void removeClipSliceY() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
 
         if (objClipSliceY_BG.isLive()) {
             objClipSliceY_BG.detach();
@@ -3650,6 +3825,10 @@ public class JPanelClip extends JPanelRendererBase
      * Detaches the slice frame on clipping plane slice -y.
      */
     public void removeClipSliceYInv() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
 
         if (objClipSliceYInv_BG.isLive()) {
             objClipSliceYInv_BG.detach();
@@ -3662,6 +3841,10 @@ public class JPanelClip extends JPanelRendererBase
      * Detaches the slice frame on clipping plane slice z.
      */
     public void removeClipSliceZ() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
 
         if (objClipSliceZ_BG.isLive()) {
             objClipSliceZ_BG.detach();
@@ -3674,6 +3857,10 @@ public class JPanelClip extends JPanelRendererBase
      * Detaches the slice frame on clipping plane slice -z.
      */
     public void removeClipSliceZInv() {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
 
         if (objClipSliceZInv_BG.isLive()) {
             objClipSliceZInv_BG.detach();
@@ -3688,6 +3875,11 @@ public class JPanelClip extends JPanelRendererBase
      * @param  root  BranchGroup node to be removed.
      */
     public void removeFromModelClip(BranchGroup root) {
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
+
         int index = -1;
 
         index = mc.indexOfScope(root);
@@ -4013,7 +4205,10 @@ public class JPanelClip extends JPanelRendererBase
         labelAStart.setEnabled(flag);
         labelAMid.setEnabled(flag);
         labelAEnd.setEnabled(flag);
-        mcArbi.setEnable(0, flag);
+        if ( mcArbi != null )
+        {
+            mcArbi.setEnable(0, flag);
+        }
     }
 
     /**
@@ -4133,12 +4328,15 @@ public class JPanelClip extends JPanelRendererBase
      * @param  color  Color to set to.
      */
     public void setClipSliceSColor(Color color) {
-        clipSliceStatic.setColor(color);
+        if ( clipSliceStatic != null )
+        {
+            clipSliceStatic.setColor(color);
+        }
         if ( rayBasedRenderWM != null )
         {
-            rayBasedRenderWM.setEyeColor( new ColorRGB( clipSliceStatic.getColor().x,
-                    clipSliceStatic.getColor().y,
-                    clipSliceStatic.getColor().z) );
+            rayBasedRenderWM.setEyeColor( new ColorRGB( colorButtonStatic.getBackground().getRed(),
+                                                        colorButtonStatic.getBackground().getGreen(),
+                                                        colorButtonStatic.getBackground().getBlue() ) );
         }
    }
 
@@ -4148,12 +4346,15 @@ public class JPanelClip extends JPanelRendererBase
      * @param  color  Color to set to.
      */
     public void setClipSliceSInvColor(Color color) {
-        clipSliceStaticInv.setColor(color);
+        if ( clipSliceStaticInv != null )
+        {
+            clipSliceStaticInv.setColor(color);
+        }
         if ( rayBasedRenderWM != null )
         {
-            rayBasedRenderWM.setEyeInvColor( new ColorRGB( clipSliceStaticInv.getColor().x,
-                    clipSliceStaticInv.getColor().y,
-                    clipSliceStaticInv.getColor().z) );
+            rayBasedRenderWM.setEyeInvColor(  new ColorRGB( colorButtonStaticInv.getBackground().getRed(),
+                                                            colorButtonStaticInv.getBackground().getGreen(),
+                                                            colorButtonStaticInv.getBackground().getBlue() ) );
         }
     }
 
@@ -4163,13 +4364,16 @@ public class JPanelClip extends JPanelRendererBase
      * @param  color  Color to set to.
      */
     public void setClipSliceXColor(Color color) {
-        clipSliceX.setColor(color);
+        if ( clipSliceX != null )
+        {
+            clipSliceX.setColor(color);
+        }
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 1,
-                                                new ColorRGB( clipSliceX.getColor().x,
-                                                              clipSliceX.getColor().y,
-                                                              clipSliceX.getColor().z) );
+                                                new ColorRGB( colorButtonX.getBackground().getRed(),
+                                                              colorButtonX.getBackground().getGreen(),
+                                                              colorButtonX.getBackground().getBlue() ) );
         }
     }
 
@@ -4179,13 +4383,16 @@ public class JPanelClip extends JPanelRendererBase
      * @param  color  Color to set to.
      */
     public void setClipSliceXInvColor(Color color) {
-        clipSliceXInv.setColor(color);
+        if ( clipSliceXInv != null )
+        {
+            clipSliceXInv.setColor(color);
+        }
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 0,
-                                                new ColorRGB( clipSliceXInv.getColor().x,
-                                                              clipSliceXInv.getColor().y,
-                                                              clipSliceXInv.getColor().z) );
+                                                new ColorRGB( colorButtonXInv.getBackground().getRed(),
+                                                              colorButtonXInv.getBackground().getGreen(),
+                                                              colorButtonXInv.getBackground().getBlue() ) );
         }
     }
 
@@ -4195,13 +4402,16 @@ public class JPanelClip extends JPanelRendererBase
      * @param  color  Color to set to.
      */
     public void setClipSliceYColor(Color color) {
-        clipSliceY.setColor(color);
+        if ( clipSliceY != null )
+        {
+            clipSliceY.setColor(color);
+        }
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 3,
-                                                new ColorRGB( clipSliceY.getColor().x,
-                                                              clipSliceY.getColor().y,
-                                                              clipSliceY.getColor().z) );
+                                                new ColorRGB( colorButtonY.getBackground().getRed(),
+                                                              colorButtonY.getBackground().getGreen(),
+                                                              colorButtonY.getBackground().getBlue() ) );
         }
     }
 
@@ -4211,13 +4421,16 @@ public class JPanelClip extends JPanelRendererBase
      * @param  color  Color to set to.
      */
     public void setClipSliceYInvColor(Color color) {
-        clipSliceYInv.setColor(color);
+        if ( clipSliceYInv != null )
+        {
+            clipSliceYInv.setColor(color);
+        }
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 2,
-                                                new ColorRGB( clipSliceYInv.getColor().x,
-                                                              clipSliceYInv.getColor().y,
-                                                              clipSliceYInv.getColor().z) );
+                                                new ColorRGB( colorButtonYInv.getBackground().getRed(),
+                                                              colorButtonYInv.getBackground().getGreen(),
+                                                              colorButtonYInv.getBackground().getBlue() ) );
         }
     }
 
@@ -4227,13 +4440,16 @@ public class JPanelClip extends JPanelRendererBase
      * @param  color  Color to set to.
      */
     public void setClipSliceZColor(Color color) {
-        clipSliceZ.setColor(color);
+        if ( clipSliceZ != null )
+        {
+            clipSliceZ.setColor(color);
+        }
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 5,
-                                                new ColorRGB( clipSliceZ.getColor().x,
-                                                              clipSliceZ.getColor().y,
-                                                              clipSliceZ.getColor().z) );
+                                                new ColorRGB( colorButtonZ.getBackground().getRed(),
+                                                              colorButtonZ.getBackground().getGreen(),
+                                                              colorButtonZ.getBackground().getBlue() ) );
         }
     }
 
@@ -4243,13 +4459,16 @@ public class JPanelClip extends JPanelRendererBase
      * @param  color  Color to set to.
      */
     public void setClipSliceZInvColor(Color color) {
-        clipSliceZInv.setColor(color);
+        if ( clipSliceZInv != null )
+        {
+            clipSliceZInv.setColor(color);
+        }
         if ( rayBasedRenderWM != null )
         {
             rayBasedRenderWM.setClipPlaneColor( 4,
-                                                new ColorRGB( clipSliceZInv.getColor().x,
-                                                              clipSliceZInv.getColor().y,
-                                                              clipSliceZInv.getColor().z) );
+                                                new ColorRGB( colorButtonZInv.getBackground().getRed(),
+                                                              colorButtonZInv.getBackground().getGreen(),
+                                                              colorButtonZInv.getBackground().getBlue() ) );
         }
     }
 
@@ -4264,7 +4483,10 @@ public class JPanelClip extends JPanelRendererBase
         labelStaticInvStart.setEnabled(flag);
         labelStaticInvMid.setEnabled(flag);
         labelStaticInvEnd.setEnabled(flag);
-        mcStatic.setEnable(4, flag);
+        if ( mcStatic != null )
+        {
+            mcStatic.setEnable(4, flag);
+        }
     }
 
     /**
@@ -4278,7 +4500,10 @@ public class JPanelClip extends JPanelRendererBase
         labelStaticStart.setEnabled(flag);
         labelStaticMid.setEnabled(flag);
         labelStaticEnd.setEnabled(flag);
-        mcStatic.setEnable(5, flag);
+        if ( mcStatic != null )
+        {
+            mcStatic.setEnable(5, flag);
+        }
     }
 
     /**
@@ -4292,7 +4517,10 @@ public class JPanelClip extends JPanelRendererBase
         labelXStart.setEnabled(flag);
         labelXMid.setEnabled(flag);
         labelXEnd.setEnabled(flag);
-        mc.setEnable(0, flag);
+        if ( mc != null )
+        {
+            mc.setEnable(0, flag);
+        }
     }
 
     /**
@@ -4306,7 +4534,10 @@ public class JPanelClip extends JPanelRendererBase
         labelXStartInv.setEnabled(flag);
         labelXMidInv.setEnabled(flag);
         labelXEndInv.setEnabled(flag);
-        mc.setEnable(1, flag);
+        if ( mc != null )
+        {
+            mc.setEnable(1, flag);
+        }
     }
 
     /**
@@ -4320,7 +4551,10 @@ public class JPanelClip extends JPanelRendererBase
         labelYStart.setEnabled(flag);
         labelYMid.setEnabled(flag);
         labelYEnd.setEnabled(flag);
-        mc.setEnable(2, flag);
+        if ( mc != null )
+        {
+            mc.setEnable(2, flag);
+        }
     }
 
     /**
@@ -4334,7 +4568,10 @@ public class JPanelClip extends JPanelRendererBase
         labelYStartInv.setEnabled(flag);
         labelYMidInv.setEnabled(flag);
         labelYEndInv.setEnabled(flag);
-        mc.setEnable(3, flag);
+        if ( mc != null )
+        {
+            mc.setEnable(3, flag);
+        }
     }
 
     /**
@@ -4348,7 +4585,10 @@ public class JPanelClip extends JPanelRendererBase
         labelZStart.setEnabled(flag);
         labelZMid.setEnabled(flag);
         labelZEnd.setEnabled(flag);
-        mc.setEnable(4, flag);
+        if ( mc != null )
+        {
+            mc.setEnable(4, flag);
+        }
     }
 
     /**
@@ -4362,7 +4602,10 @@ public class JPanelClip extends JPanelRendererBase
         labelZStartInv.setEnabled(flag);
         labelZMidInv.setEnabled(flag);
         labelZEndInv.setEnabled(flag);
-        mc.setEnable(5, flag);
+        if ( mc != null )
+        {
+            mc.setEnable(5, flag);
+        }
     }
 
     /**
@@ -4395,7 +4638,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 1, clipSliceX.getVertices()[0].x, "clipX" );
+                rayBasedRenderWM.setClipPlane( 1, xSlice, "clipX" );
             }
             
             if (!clipSliderX.getValueIsAdjusting()) {
@@ -4420,7 +4663,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 3, clipSliceY.getVertices()[0].y, "clipY" );
+                rayBasedRenderWM.setClipPlane( 3, ySlice, "clipY" );
             }
 
             if (!clipSliderY.getValueIsAdjusting()) {
@@ -4445,7 +4688,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 5, clipSliceZ.getVertices()[0].z, "clipZ" );
+                rayBasedRenderWM.setClipPlane( 5, zSlice, "clipZ" );
             }
 
             if (!clipSliderZ.getValueIsAdjusting()) {
@@ -4470,7 +4713,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 0, clipSliceXInv.getVertices()[0].x, "clipXInv" );
+                rayBasedRenderWM.setClipPlane( 0, xSliceInv, "clipXInv" );
             }
 
             if (!sliderXInv.getValueIsAdjusting()) {
@@ -4495,7 +4738,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 2, clipSliceYInv.getVertices()[0].y, "clipYInv" );
+                rayBasedRenderWM.setClipPlane( 2, ySliceInv, "clipYInv" );
             }
 
             if (!sliderYInv.getValueIsAdjusting()) {
@@ -4520,7 +4763,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 4, clipSliceZInv.getVertices()[0].z, "clipZInv" );
+                rayBasedRenderWM.setClipPlane( 4, zSliceInv, "clipZInv" );
             }
 
             if (!sliderZInv.getValueIsAdjusting()) {
@@ -4597,6 +4840,11 @@ public class JPanelClip extends JPanelRendererBase
      */
     public void swapModelClipBG(boolean flag) {
 
+        if ( (mcArbi == null) || (mc == null) || (mcStatic == null) )
+        {
+            return;
+        }
+
         if (flag) { // true,  enable 6 clipping plane.
             is6PlaneClipping = true;
             mcArbi.removeScope(((SurfaceRender) renderBase).getVolRenderBG());
@@ -4606,7 +4854,6 @@ public class JPanelClip extends JPanelRendererBase
             if (!mcExtendBG.isLive()) {
                 mcBG.addChild(mcExtendBG);
             }
-
             mc.addScope(((SurfaceRender) renderBase).getVolRenderBG());
             disableStaticClipping();
         } else { // false. enable arbitrary clipping plane.
@@ -4755,33 +5002,35 @@ public class JPanelClip extends JPanelRendererBase
 
         if (getAVisible()) {
 
-            if (rotationAxis != null) {
-                mcArbiTrans3D.set(rotationAxis);
-                arbiTrans3d.set(rotationAxis);
+            if ( (mcArbi != null) && (mc != null) && (mcStatic != null) )
+            {
+                
+                if (rotationAxis != null) {
+                    mcArbiTrans3D.set(rotationAxis);
+                    arbiTrans3d.set(rotationAxis);
+                }
+                
+                mcArbiTG.setTransform(mcArbiTrans3D);
+                arbiTG.setTransform(arbiTrans3d);
+                
+                
+                eqnA = new Vector4d(1.0, 0.0, 0.0, (xBox - (2 * ((float) aSlice / (xDim - 1)) * xBox) - 0.001));
+                updateClipPlanesEqn();
+                mcArbi.setPlanes(eqnPlanesArbi);
+                mcArbi.setEnable(0, true);
+                mcArbi.setInfluencingBounds(renderBase.getBound());
+                
+                clipSliceA.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox), maxBox, maxBox,
+                                     ViewJComponentBoxSlice.A_CLIPSLICE);
+                
+                clipSliceAIndicator.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox), maxBox, maxBox,
+                                              ViewJComponentBoxSlice.A_CLIPSLICE);
+                
+                
+                displayAClipPlanePts();
             }
-
-            mcArbiTG.setTransform(mcArbiTrans3D);
-            arbiTG.setTransform(arbiTrans3d);
-
-
-            eqnA = new Vector4d(1.0, 0.0, 0.0, (xBox - (2 * ((float) aSlice / (xDim - 1)) * xBox) - 0.001));
-            updateClipPlanesEqn();
-            mcArbi.setPlanes(eqnPlanesArbi);
-            mcArbi.setEnable(0, true);
-            mcArbi.setInfluencingBounds(renderBase.getBound());
-
-            clipSliceA.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox), maxBox, maxBox,
-                                 ViewJComponentBoxSlice.A_CLIPSLICE);
-
-            clipSliceAIndicator.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox), maxBox, maxBox,
-                                          ViewJComponentBoxSlice.A_CLIPSLICE);
-
-
-            displayAClipPlanePts();
-            
             if ( rayBasedRenderWM != null )
             {
-                //rayBasedRenderWM.setArbitraryClipPlane((float)-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox));
                 rayBasedRenderWM.setArbitraryClipPlane(aSlice);
             }
 
@@ -4811,16 +5060,6 @@ public class JPanelClip extends JPanelRendererBase
 
         // displayIntersection();
         displayAClipPlanePts();
-    
-        if (rayBasedRenderWM != null) {
-            Transform3D kTransform = new Transform3D(mcArbiTrans3D);
-            kTransform.setScale(new Vector3d(1,1,1));
-            float[] data = new float[16];
-            kTransform.get(data);
-            rayBasedRenderWM.setArbitraryClipPlaneTransform(data);
-        }
-
-    
     }
 
     /**
@@ -4829,34 +5068,36 @@ public class JPanelClip extends JPanelRendererBase
     public void updateClipSliceStatic() {
 
         if (getStaticVisible()) {
-            eqnZInv = new Vector4d(0.0, 0.0, 1.0, (2 * ((float) sSlice / (zDim - 1)) * zBox) - zBox - 0.001);
-            updateClipPlanesEqn();
-            mcStatic.setPlanes(eqnPlanesStatic);
-            mcStatic.setEnable(5, true);
-            mcStatic.setInfluencingBounds(renderBase.getBound());
+            if ( mcStatic != null )
+            {
+                eqnZInv = new Vector4d(0.0, 0.0, 1.0, (2 * ((float) sSlice / (zDim - 1)) * zBox) - zBox - 0.001);
+                updateClipPlanesEqn();
+                mcStatic.setPlanes(eqnPlanesStatic);
+                mcStatic.setEnable(5, true);
+                mcStatic.setInfluencingBounds(renderBase.getBound());
+                
+                clipSliceStatic.setSlices(xBox * 0.5f, yBox * 0.5f,
+                                          zBox - (2 * ((float) sSlice / (zDim - 1)) * zBox) + 0.001f,
+                                          ViewJComponentBoxSlice.S_CLIPSLICE);
 
-            clipSliceStatic.setSlices(xBox * 0.5f, yBox * 0.5f,
-                                      zBox - (2 * ((float) sSlice / (zDim - 1)) * zBox) + 0.001f,
-                                      ViewJComponentBoxSlice.S_CLIPSLICE);
 
+                Shape3D shape = new Shape3D(clipSliceStatic, null);
 
+                shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+                shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+                shape.setCapability(Shape3D.ENABLE_PICK_REPORTING);
+
+                try {
+                    objClipSliceStatic_BG.addChild(shape);
+                } catch (RestrictedAccessException error) { }
+
+                displaySClipPlanePts();
+            }
             if ( rayBasedRenderWM != null )
             {
                 rayBasedRenderWM.setEyeClipPlane(sSlice, boundingCheckStatic.isSelected());
 
             }
-
-            Shape3D shape = new Shape3D(clipSliceStatic, null);
-
-            shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-            shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-            shape.setCapability(Shape3D.ENABLE_PICK_REPORTING);
-
-            try {
-                objClipSliceStatic_BG.addChild(shape);
-            } catch (RestrictedAccessException error) { }
-
-            displaySClipPlanePts();
         }
     }
 
@@ -4866,31 +5107,33 @@ public class JPanelClip extends JPanelRendererBase
     public void updateClipSliceStaticInv() {
 
         if (getStaticInvVisible()) {
-            eqnZ = new Vector4d(0.0, 0.0, -1.0, zBox - (2 * ((float) sSliceInv / (zDim - 1)) * zBox) - 0.001);
-            updateClipPlanesEqn();
-            mcStatic.setPlanes(eqnPlanesStatic);
-            mcStatic.setEnable(4, true);
-            mcStatic.setInfluencingBounds(renderBase.getBound());
+            if ( mcStatic != null )
+            {
+                eqnZ = new Vector4d(0.0, 0.0, -1.0, zBox - (2 * ((float) sSliceInv / (zDim - 1)) * zBox) - 0.001);
+                updateClipPlanesEqn();
+                mcStatic.setPlanes(eqnPlanesStatic);
+                mcStatic.setEnable(4, true);
+                mcStatic.setInfluencingBounds(renderBase.getBound());
 
-            clipSliceStaticInv.setSlices(xBox * 0.5f, yBox * 0.5f,
-                                         zBox - (2 * ((float) sSliceInv / (zDim - 1)) * zBox) + 0.001f,
-                                         ViewJComponentBoxSlice.S_CLIPSLICE_NEG);
+                clipSliceStaticInv.setSlices(xBox * 0.5f, yBox * 0.5f,
+                                             zBox - (2 * ((float) sSliceInv / (zDim - 1)) * zBox) + 0.001f,
+                                             ViewJComponentBoxSlice.S_CLIPSLICE_NEG);
 
+                Shape3D shape = new Shape3D(clipSliceStaticInv, null);
+
+                shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+                shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+                shape.setCapability(Shape3D.ENABLE_PICK_REPORTING);
+
+                try {
+                    objClipSliceStaticInv_BG.addChild(shape);
+                } catch (RestrictedAccessException error) { }
+                // displaySClipPlanePts();
+            }
             if ( rayBasedRenderWM != null )
             {
                 rayBasedRenderWM.setEyeInvClipPlane(sSliceInv, boundingCheckStatic.isSelected());
             }
-
-            Shape3D shape = new Shape3D(clipSliceStaticInv, null);
-
-            shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-            shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-            shape.setCapability(Shape3D.ENABLE_PICK_REPORTING);
-
-            try {
-                objClipSliceStaticInv_BG.addChild(shape);
-            } catch (RestrictedAccessException error) { }
-            // displaySClipPlanePts();
         }
     }
 
@@ -4898,6 +5141,10 @@ public class JPanelClip extends JPanelRendererBase
      * Sets new frame around clip plane slice x based on the new position.
      */
     public void updateClipSliceX() {
+        if ( mc == null )
+        {
+            return;
+        }
 
         if (getXVisible()) {
             eqnX = new Vector4d(1.0, 0.0, 0.0, xBox - (2 * ((float) xSlice / (xDim - 1)) * xBox) - 0.001);
@@ -4926,6 +5173,10 @@ public class JPanelClip extends JPanelRendererBase
      * Sets new frame around clip plane slice -x based on the new position.
      */
     public void updateClipSliceXInv() {
+        if ( mc == null )
+        {
+            return;
+        }
 
         if (getXVisibleInv()) {
             eqnXInv = new Vector4d(-1.0, 0.0, 0.0, -xBox + (2 * ((float) xSliceInv / (xDim - 1)) * xBox) - 0.001);
@@ -4953,6 +5204,10 @@ public class JPanelClip extends JPanelRendererBase
      * Sets new frame around clip plane slice y based on the new position.
      */
     public void updateClipSliceY() {
+        if ( mc == null )
+        {
+            return;
+        }
 
         if (getYVisible()) {
             eqnY = new Vector4d(0.0, -1.0, 0.0, yBox - (2 * ((float) ySlice / (yDim - 1)) * yBox) - 0.001);
@@ -4980,6 +5235,10 @@ public class JPanelClip extends JPanelRendererBase
      * Sets new frame around clip plane slice -y based on the new position.
      */
     public void updateClipSliceYInv() {
+        if ( mc == null )
+        {
+            return;
+        }
 
         if (getYVisibleInv()) {
             eqnYInv = new Vector4d(0.0, 1.0, 0.0, -yBox + (2 * ((float) ySliceInv / (yDim - 1)) * yBox) - 0.001);
@@ -5007,6 +5266,10 @@ public class JPanelClip extends JPanelRendererBase
      * Sets new frame around clip plane slice z based on the new position.
      */
     public void updateClipSliceZ() {
+        if ( mc == null )
+        {
+            return;
+        }
 
         if (getZVisible()) {
             eqnZ = new Vector4d(0.0, 0.0, -1.0, zBox - (2 * ((float) zSlice / (zDim - 1)) * zBox) - 0.001);
@@ -5034,6 +5297,10 @@ public class JPanelClip extends JPanelRendererBase
      * Sets new frame around clip plane slice -z based on the new position.
      */
     public void updateClipSliceZInv() {
+        if ( mc == null )
+        {
+            return;
+        }
 
         if (getZVisibleInv()) {
             eqnZInv = new Vector4d(0.0, 0.0, 1.0, (2 * ((float) zSliceInv / (zDim - 1)) * zBox) - zBox - 0.05);

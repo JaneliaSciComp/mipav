@@ -295,6 +295,29 @@ public class GraphicsImage extends GraphicsObject
         m_aiBound[0] = iSize;
     }
 
+    public void SetData ( byte[] aucData, int iXSize, int iYSize )
+    {
+        if ( m_aucData != null )
+        {
+            m_aucData = null;
+        }
+        m_aucData = aucData;
+        m_aiBound[0] = iXSize;
+        m_aiBound[1] = iYSize;
+    }
+
+    public void SetData ( byte[] aucData, int iXSize, int iYSize, int iZSize )
+    {
+        if ( m_aucData != null )
+        {
+            m_aucData = null;
+        }
+        m_aucData = aucData;
+        m_aiBound[0] = iXSize;
+        m_aiBound[1] = iYSize;
+        m_aiBound[2] = iZSize;
+    }
+
     public float[] GetFloatData ()
     {
         return m_afData;
@@ -308,6 +331,29 @@ public class GraphicsImage extends GraphicsObject
         }
         m_afData = afData;
         m_aiBound[0] = iSize;
+    }
+
+    public void SetFloatData ( float[] afData, int iXSize, int iYSize )
+    {
+        if ( m_afData != null )
+        {
+            m_afData = null;
+        }
+        m_afData = afData;
+        m_aiBound[0] = iXSize;
+        m_aiBound[1] = iYSize;
+    }
+
+    public void SetFloatData ( float[] afData, int iXSize, int iYSize, int iZSize )
+    {
+        if ( m_afData != null )
+        {
+            m_afData = null;
+        }
+        m_afData = afData;
+        m_aiBound[0] = iXSize;
+        m_aiBound[1] = iYSize;
+        m_aiBound[2] = iZSize;
     }
 
     public Buffer GetDataBuffer ()

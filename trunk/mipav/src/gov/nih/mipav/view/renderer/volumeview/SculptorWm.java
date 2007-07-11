@@ -465,6 +465,27 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
         m_bSculptDrawn = true;
     }
 
+    private void invertSculpt( int iX, int iY, int[] aiColors )
+    {
+        int index = (iY * m_iSculptImageWidth + iX)*4;
+        if ( aiColors != null )
+        {
+            m_aucSculptImage[index + 0] = (byte)aiColors[0];
+            m_aucSculptImage[index + 1] = (byte)aiColors[1];
+            m_aucSculptImage[index + 2] = (byte)aiColors[2];
+            m_aucSculptImage[index + 3] = (byte)200;
+        }
+        else
+        {
+            m_aucSculptImage[index + 0] = (byte)0;
+            m_aucSculptImage[index + 1] = (byte)0;
+            m_aucSculptImage[index + 2] = (byte)0;
+            m_aucSculptImage[index + 3] = (byte)0;
+        }
+        m_bSculptDrawn = true;
+    }
+
+
     private boolean getSculpt( int iX, int iY )
     {
         int index = (iY * m_iSculptImageWidth + iX)*4;
@@ -489,22 +510,24 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
             return;
         }
 
+
         /* Loop over the pixels in the sculpt buffer: */
         for (int iY = 0; iY < m_iSculptImageHeight; iY++)
         {
             for (int iX = 0; iX < m_iSculptImageWidth; iX++)
             {
                 int index = (iY * m_iSculptImageWidth + iX)*4;
+
                 /* If the pixel is inside the sculpt region, then change it to
                  * the saved image color: */
                 if ( (m_aucSculptImage[index + 0] == (byte)0) &&
                      (m_aucSculptImage[index + 1] == (byte)0) &&
                      (m_aucSculptImage[index + 2] == (byte)0)    )
                 {
-                    setSculpt( iX, iY, m_aiColorSculpt );
+                    invertSculpt( iX, iY, m_aiColorSculpt );
                 }
                 else {
-                    setSculpt( iX, iY, null );
+                    invertSculpt( iX, iY, null );
                 }
             }
         }

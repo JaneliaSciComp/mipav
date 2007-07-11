@@ -727,7 +727,7 @@ public class SurfaceRender extends RenderViewBase {
     /**
      * Diable all the six clipping planes at a time.
      */
-    public void diableClipping() {
+    public void disableClipping() {
         clipPanel.disable6Planes();
     }
 
@@ -1756,7 +1756,7 @@ public class SurfaceRender extends RenderViewBase {
         rayBasedRenderWM = _rayBasedRender;
         clipPanel.setRayBasedRender(_rayBasedRender);
         //volOpacityPanel.setRayBasedRender(_rayBasedRender);
-        //surfacePanel.getLightDialog().setRayBasedRender(_rayBasedRender);
+        surfacePanel.getLightDialog().setRayBasedRender(_rayBasedRender);
         sculptorPanel.setVolumeSculptor(_rayBasedRender);
     }
 

@@ -27,8 +27,11 @@ public class Node extends Spatial
         for (int i = 0; i < (int)m_kChild.size(); i++)
         {
             Spatial spkChild = DetachChildAt(i);
-            spkChild.finalize();
-            spkChild = null;
+            if ( spkChild != null )
+            {
+                spkChild.finalize();
+                spkChild = null;
+            }
         }
         super.finalize();
     }

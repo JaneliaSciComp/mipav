@@ -99,7 +99,7 @@ public class JFrameSurfaceMaterialProperties extends JFrame
     private Material m_kMaterialSave;
 
     /** Parent class:. */
-    private JPanelSurface m_kParent = null;
+    private JPanelRendererBase m_kParent = null;
 
     /** Shininess slider. */
     private JSlider m_kShininessSlider;
@@ -126,7 +126,7 @@ public class JFrameSurfaceMaterialProperties extends JFrame
      * @param  fOpacity         DOCUMENT ME!
      * @param  kMaterial        the original material properties.
      */
-    public JFrameSurfaceMaterialProperties(JPanelSurface kParent, int iSurface, GeneralLight[] akGeneralLights,
+    public JFrameSurfaceMaterialProperties(JPanelRendererBase kParent, int iSurface, GeneralLight[] akGeneralLights,
                                            float fOpacity, Material kMaterial) {
 
         /* Create the window: */
