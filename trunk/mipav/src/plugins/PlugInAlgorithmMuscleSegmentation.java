@@ -155,7 +155,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         boolean[] noMirrorZ = {true, true};
         //((ViewJFrameImage)parentFrame).getImageA().setImageName("TEMP FIX FOR MUSCLE");
         //((ViewJFrameImage)parentFrame).getImageA().
-        MuscleImageDisplayTest display = new MuscleImageDisplayTest(((ViewJFrameImage)parentFrame).getImageA(), mirrorArr, mirrorZ, 
+        MuscleImageDisplay display = new MuscleImageDisplay(((ViewJFrameImage)parentFrame).getImageA(), mirrorArr, mirrorZ, 
                                                             noMirrorArr, noMirrorZ, ImageType.TWO_THIGHS, Symmetry.LEFT_RIGHT);
         
         
