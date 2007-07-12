@@ -9,97 +9,90 @@ import gov.nih.mipav.view.dialogs.*;
 import java.io.*;
 
 /**
- *  This Hough transform uses (xi, yi) points in the original image space to generate x0, y0, 2*a, x1, y1 points in the Hough
+ *  This Hough transform uses (xi, yi) points in the original image space to generate p, q, r1, r2, and theta points in the Hough
  *  transform.  This Hough transform module only works with binary images.   Before it is used the user must 
  *  compute the gradient of an image and threshold it to obtain a binary image.  Noise removal and thinning should also
  *  be performed, if necessary, before this program is run. 
  *  
- *  The user is asked for the number of x0 bins, y0 bins, 2a bins, minimum major axis length, maximum major axis length,
- *  maximum ratio of major axis to minor axis, and number of ellipses.  The default size for x0 is 
- *  min(512, image.getExtents()[0]).  The default size for y0 is min(512, image.getExtents()[1]).
- *  The default size for twoa is (int)Math.round(2.0*(maxMajorAxisLength - minMajorAxisLength) + 1.0).
- *  The default number of ellipses is 1. The program generates a Hough transform of the source image using the basic
- *  equation sqrt((x - x0)**2 + (y - y0)**2) + sqrt((x - x1)**2 + (y - y1)**2) = 2.0*a, where (x0, y0) and (x1, y1) are
- *  the two foci of the ellipse and 2*a is the length of the major axis.  The program finds the ellipses containing
- *  the largest number of points.  The program produces a dialog which allows the user to select which ellipses should be drawn.
+ *  Pixel neighbors:
+ *  0 1 2
+ *  3   4
+ *  5 6 7
  *  
- *  Let 2a be the distance of the major axis and 2b be the distance of the minor axis.  The distance from the center to
- *  either focus is sqrt(a**2 - b**2), so the distance between the 2 foci is 2*sqrt(a**2 - b**2) = 
- *  2*a*sqrt(1.0 - 1.0/((a/b)**2)).  The distance between the foci can vary from zero in the case of a circle where
- *  a = b to 2.0*a*sqrt(1 - (1/maxAxesRatio)**2) when (a/b) is the maximum value allowed.  The second focus x1, y1
- *  must be within a circle of radius 2.0*a*sqrt(1 - (1/maxAxesRatio)**2) of (x0, y0).  Also x1 must be between 0 and
- *  xDim - 1 and y1 must be between 0 and yDim - 1.  So for houghBuffer use a five level multidimensional array with
- *  x0, y0, twoa, x1, and y1, where the size of x0, y0, and twoa are fixed, but the size of x1 and y1 vary with 
- *  x0, y0, and twoa.
- *  
- *  When the two foci are found, the center is simply the arithmetic average of the two foci.
- *  xcenter = (x0 + x1)/2.0, ycenter = (y0 + y1)/2.0
- *  2.0*sqrt(a**2 - b**2) = distance between the two foci = sqrt((x1 - x0)**2 + (y1 - y0)**2), 
- *  so b can be found.
- *  The angle of rotation phi is arctan((y1 - y0)/(x1 - x0)).
- *  To draw the ellipse:
- *  beta = -phi
- *  maxEllipsePoints = (int)Math.ceil(2.0 * Math.PI * a);
- *  for (i = 0; i < maxEllipsePoints; i++) {
- *      alpha = 2.0 * PI/maxEllipsePoints;
- *      x = xcenter + (a * cos(alpha) * cos(beta) - b * sin(alpha) * sin(beta));
- *      y = ycenter + (a * cos(alpha) * sin(beta) + b * sin(alpha) * cos(beta));
- *  
- *  The Hough transform for the entire image is generated a separate time to find each circle.
- *  For each (xi, yi) point in the original image not having a value of zero, calculate the first dimension value d1 = 
- *  j * (xDim - 1)/(x0 - 1), with j = 0 to x0 - 1.  Calculate the second dimension value d2 = k * (yDim - 1)/(y0 - 1),
- *  with k = 0 to y0 - 1.  Calculate d3 = sqrt((x - d1)**2 + (y - d2)**2).
- *  d3 goes from 0 to maxRad = max(xDim-1, yDim-1)/2.0.  s3 is the dimension 3 scaling factor.
- *  s3 * (rad - 1) = maxRad.
- *  s3 = maxRad/(rad - 1)
- *  m = d3*(rad - 1)/maxRad.
- *  Only calculate the Hough transform for d3 <= maxRad.
- *  
- *  Find the peak point in the x0, y0, rad Hough transform space.
- *  Put the values for this peak point in x0Array[c], y0Array[c], radArray[c], and
- *  countArray[c].
- *  
- *  If more circles are to be found, then zero the houghBuffer and run through the
+ *  If more ellipses are to be found, then zero the houghBuffer and run through the
  *  same Hough transform a second time, but on this second run instead of incrementing
  *  the Hough buffer, zero the values in the source buffer that contributed to the peak
  *  point in the Hough buffer. So on the next run of the Hough transform the source points that
  *  contributed to the Hough peak value just detected will not be present.
  *  
- *  Create a dialog with numEllipsesFound x0Array[i], y0Array[i], radArray[i], and
- *  countArray[i] values, where the user will select a check box to have that circle drawn.
+ *  Create a dialog with numEllipsesFound pArray[i], qArray[i], r1Array[i], r2Array[i], thetaArray[i], and
+ *  countArray[i] values, where the user will select a check box to have that ellipse drawn.
  *  
- *  References: 1.) Digital Image Processing, Second Edition by Richard C. Gonzalez and Richard E. Woods, Section 10.2.2
+ *  References: 1.) The Randomized Hough Transform used for ellipse detection by Andrew Schuler
+ *  
+ *  2.) Technical Report - Randomized Hough Transform: Improved Ellipse Detection with Comparison by
+ *  Robert A. Mclaughlin
+ *  
+ *  3.) Digital Image Processing, Second Edition by Richard C. Gonzalez and Richard E. Woods, Section 10.2.2
  *  Global Processing via the Hough Transform, Prentice-Hall, Inc., 2002, pp. 587-591.
  *  
- *  2.) Shape Detection in Computer Vision Using the Hough Transform by V. F. Leavers, Springer-Verlag, 1992.
+ *  4.) Shape Detection in Computer Vision Using the Hough Transform by V. F. Leavers, Springer-Verlag, 1992.
  * 
  */
 public class AlgorithmHoughEllipse extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    // Number of dimension 1 bins in Hough transform space
-    // For x location of first focus
-    private int x0;
+    // Minimum percentage of the perimiter of a found ellipse that must be covered by points for it to be
+    // valid.  The perimiter of an ellipse = 4 * a * E(e), where E is the complete elliptic integral of
+    // the second kind and e = the eccentricity = sqrt(r1**2 - r2**2)/r1
+    // An approximation is perimiter equals approximately PI * sqrt(2*(r1**2 + r2**2))
+    // A more exact approximation is perimiter equals approximately
+    // PI * [3*(r1 + r2) - sqrt((r1 + 3*r2)*(3*r1 + r2))]
+    // More exact still is perimiter equals approximately 
+    // PI * (r1 + r2) * [1 + (3*h)/(10 + sqrt(4 - 3*h))], where h = ((r1 - r2)/(r1 + r2))**2,
+    // where the last approximation has an  error of about 3 * 2**-17 * h**5 for small values of h.
+    // Default value is 30.0.
+    private double minCoverage;
     
-    // Number of dimension 2 bins in Hough transform space
-    // For y location of second focus;
-    private int y0;
+    // Maximum number of points to take from each side of a point on a curve in determining a tangent
+    // If only 1 point is available on each side, simply use avarage of slopes to each of the
+    // neigboring points.  If at least 2 or more points are available on each side, use 
+    // bspline.bSplineJetXY.
+    private int sidePointsForTangent;
     
-    // Smallest allowable length of an ellipse major axis
-    private double minMajorAxisLength;
+    // For p, q, r1, and r2 must have the abs(var(i) - var) <= maxPixelDiff if the set of 5 values is to
+    // be placed into an existing bin.  If any of the 4 variables exceeds this difference, then a
+    // new bin must be created.
+    private double maxPixelDiff;
     
-    // Largest allowable length of an ellipse major axis
-    private double maxMajorAxisLength;
+    // For theta must have abs(theta(i) - theta) <= maxDegreesDiff if the set of 5 values is to be
+    // placed into an existing bin.  If the difference exceeds maxDegreesDiff, then a new bin
+    // must be created.
+    private double maxDegreesDiff;
     
-    // Number of dimension 3 bins in Hough transform space
-    // For length of major axis
-    private int twoa;
+    // Smallest allowable distance between 2 of 3 picked points
+    private double minPointDistance;
+    
+    // Largest allowable distance between 2 of 3 picked points
+    private double maxPointDistance;
+    
+    // Number of point triplets acquired before each ellipse find is performed
+    private int pointSetsAcquired;
     
     // Maximum ratio of major axis to minor axis - default is 2.0;
     private double maxAxesRatio;
     
     // number of ellipses to be found
     private int numEllipses;
+    
+    // The maximum Hough transform size in megabytes - default is currently 256
+    private int maxBufferSize;
+    
+    // Number of counts required to find an ellipse
+    private int countThreshold;
+    
+    // Maximum pixel distance by which ellipse perimiter pixels can deviate from the calculated curve
+    private double ellipseRangeTolerance;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -113,27 +106,42 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
      *
      * @param  destImg  Image with lines filled in
      * @param  srcImg   Binary source image that has lines with gaps
-     * @param  x0       number of dimension 1 bins in Hough transform space
-     *                  for x location of first focus
-     * @param  y0       number of dimension 2 bins in Hough transform space
-     *                  for y location of first focus
-     * @param  minMajorAxisLength Smallest allowable length of an ellipse major axis
-     * @param  maxMajorAxisLength Largest allowable length of an ellipse major axis
-     * @param  twoa     number of dimension 3 bins in Hough transform space
-     *                  for length of major axis
+     * @param  minCoverage Minimum percentage of the perimiter of a found ellipse that must be covered by points
+     *                     for it to be valid.
+     * @param  sidePointsForTangent  Maximum number of points to take from each side of a point on a curve
+     *                               in determining the tangent
+     * @param  maxPixelDiff  Maximum pixel difference allowed for p, q, r1, and r2 for 5 values to be placed
+     *                       into an existing bin
+     * @param  maxDegreesDiff Maximum degrees difference allowed for theth for 5 values to be placed into
+     *                        an existing bin
+     * @param  minPointDistance Smallest allowable distance between 2 of 3 picked points
+     * @param  maxPointDistance Largest allowable distance between 2 of 3 picked points
+     * @param  pointSetsAcquired Number of point triplets acquired before each ellipse find is performed
+     * @param  countThreshold Number of counts required to find an ellipse
+     * @param  ellipseRangeTolerance Maximum pixel distance by which ellipse perimiter pixels can deviate from
+     *                               the calculated space
      * @param  maxAxesRatio  Maximum ratio of major axis to minor axis
      * @param  numEllipses number of ellipses to be found
+     * @param  maxBufferSize maximum Hough transform size in megabytes
      */
-    public AlgorithmHoughEllipse(ModelImage destImg, ModelImage srcImg, int x0, int y0, double minMajorAxisLength,
-                                 double maxMajorAxisLength, int twoa, double maxAxesRatio, int numEllipses) {
+    public AlgorithmHoughEllipse(ModelImage destImg, ModelImage srcImg, double minCoverage, int sidePointsForTangent,
+                                 double maxPixelDiff, double maxDegreesDiff, double minPointDistance,
+                                 double maxPointDistance, int pointSetsAcquired, int countThreshold, 
+                                 double ellipseRangeTolerance, double maxAxesRatio, int numEllipses,
+                                 int maxBufferSize) {
         super(destImg, srcImg);
-        this.x0 = x0;
-        this.y0 = y0;
-        this.minMajorAxisLength = minMajorAxisLength;
-        this.maxMajorAxisLength = maxMajorAxisLength;
-        this.twoa = twoa;
+        this.minCoverage = minCoverage;
+        this.sidePointsForTangent = sidePointsForTangent;
+        this.maxPixelDiff = maxPixelDiff;
+        this.maxDegreesDiff = maxDegreesDiff;
+        this.minPointDistance = minPointDistance;
+        this.maxPointDistance = maxPointDistance;
+        this.pointSetsAcquired = pointSetsAcquired;
+        this.countThreshold = countThreshold;
+        this.ellipseRangeTolerance = ellipseRangeTolerance;
         this.maxAxesRatio = maxAxesRatio;
         this.numEllipses = numEllipses;
+        this.maxBufferSize = maxBufferSize;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -152,21 +160,24 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int x, y;
         int offset;
 
-        int xDimSource;
+        int xDim;
 
-        int yDimSource;
+        int yDim;
 
         int sourceSlice;
+        
+        int numPoints;
 
         int i, j, k, m, c;
         int index, indexDest;
         
         int houghSlice;
         byte[] srcBuffer;
-        int[] houghBuffer;
+        short[][][][][] houghBuffer;
         double theta;
         double d1Array[];
         double d2Array[];
+        double d3Array[];
         double d3;
         double d3Scale;
         boolean test = false;
@@ -177,15 +188,15 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         double radius3;
         int largestValue;
         int largestIndex;
-        int numEllipsesFound;
+        int numEllipsesFound = 0;
         double x0Array[];
         double y0Array[];
         double radArray[];
         int countArray[];
-        boolean selectedCircle[];
-        JDialogHoughCircleChoice choice;
+        boolean selectedEllipse[];
+        //JDialogHoughEllipseChoice choice;
         byte value = 0;
-        int maxCirclePoints;
+        int maxEllipsePoints;
         double maxRad;
         int x0y0;
         double xSum;
@@ -195,6 +206,44 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         double ySum2;
         double ySum3;
         double radSum;
+        double maxDist[];
+        double xpos[];
+        double ypos[];
+        double majorAxis[];
+        double maxRoot;
+        double x1min;
+        double x1max;
+        int x1num;
+        double perx;
+        int x1;
+        double xpos1;
+        double xdist;
+        double maxyDist;
+        double maxDistSq[];
+        double y1min;
+        double y1max;
+        int y1num;
+        double pery;
+        int bufferBytes;
+        float bufferMbytes;
+        double invx;
+        double invy;
+        double invm;
+        double invx1;
+        int indexArray[];
+        int curve1[];
+        int curve2[];
+        int numCurves;
+        int curvesAtPoint;
+        int neighbor0[];
+        int neighbor1[];
+        int neighbor2[];
+        int neighbor3[];
+        int neighbor4[];
+        int neighbor5[];
+        int neighbor6[];
+        int neighbor7[];
+        int slope[];
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -205,15 +254,12 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
 
         constructLog();
 
-        fireProgressStateChanged(srcImage.getImageName(), "Hough circle ...");
+        fireProgressStateChanged(srcImage.getImageName(), "Hough ellipse ...");
 
-        xDimSource = srcImage.getExtents()[0];
-        yDimSource = srcImage.getExtents()[1];
-        sourceSlice = xDimSource * yDimSource; 
-        maxRad = Math.max(xDimSource - 1, yDimSource - 1)/2.0;
-
-        x0y0 = x0 * y0;
-        houghSlice = x0y0;
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sourceSlice = xDim * yDim; 
+        
         srcBuffer = new byte[sourceSlice];
 
         try {
@@ -226,24 +272,17 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             return;
         }
         
-        for (i = 0; i < sourceSlice; i++) {
-            if (srcBuffer[i] != 0) {
-                value = srcBuffer[i];
-                break;
-            }
-        }
-        
         if (test) {
-            for (y = 0; y < yDimSource; y++) {
-                offset = y * xDimSource;
-                for (x = 0; x < xDimSource; x++) {
+            for (y = 0; y < yDim; y++) {
+                offset = y * xDim;
+                for (x = 0; x < xDim; x++) {
                     index = offset + x; 
                     srcBuffer[index] = 0;
-                } // for (x = 0; x < xDimSource; x++)
-            } // for (y = 0; y < yDimSource; y++)
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; y < yDim; y++)
             
-            xCenter = (xDimSource-1)/2.0;
-            yCenter = (yDimSource-1)/2.0;
+            xCenter = (xDim-1)/2.0;
+            yCenter = (yDim-1)/2.0;
             radius = 50.0;
             radius2 = 70.0;
             radius3 = 90.0;
@@ -257,19 +296,19 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 theta = i * Math.PI/10.0;
                 x = (int)Math.round(xCenter + radius *Math.cos(theta));
                 y = (int)Math.round(yCenter + radius * Math.sin(theta));
-                index = x + y * xDimSource;
+                index = x + y * xDim;
                 srcBuffer[index] = 1;
                 xSum = xSum + x;
                 ySum = ySum + y;
                 x = (int)Math.round(xCenter + radius2 *Math.cos(theta));
                 y = (int)Math.round(yCenter + radius2 * Math.sin(theta));
-                index = x + y * xDimSource;
+                index = x + y * xDim;
                 srcBuffer[index] = 1;
                 xSum2 = xSum2 + x;
                 ySum2 = ySum2 + y;
                 x = (int)Math.round(xCenter + radius3 *Math.cos(theta));
                 y = (int)Math.round(yCenter + radius3 * Math.sin(theta));
-                index = x + y * xDimSource;
+                index = x + y * xDim;
                 srcBuffer[index] = 1;
                 xSum3 = xSum3 + x;
                 ySum3 = ySum3 + y;
@@ -309,106 +348,98 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             }
             radSum = radSum/20.0;
             System.out.println(" x3 = " + xSum3 + " y3 = " + ySum3 + " radius3 = " + radSum);
-        }
-
-        houghBuffer = new int[houghSlice];
+        } // if (test)
         
-        // Calculate d1Array and d2Array values
-        d1Array = new double[x0];
-        d2Array = new double[y0];
-        for (i = 0; i < x0; i++) {
-            d1Array[i] = ((double)(i * (xDimSource - 1)))/((double)(x0 - 1));
-        }
-        for (i = 0; i < y0; i++) {
-            d2Array[i] = ((double)(i * (yDimSource - 1)))/((double)(y0 - 1));
-        }
-        d3Scale = 1.0;
-        maxCirclePoints = (int)Math.ceil(2.0 * Math.PI * maxRad);
-        
-        x0Array = new double[numEllipses];
-        y0Array = new double[numEllipses];
-        radArray = new double[numEllipses];
-        countArray = new int[numEllipses];
-        numEllipsesFound = 0;
-        
-        for (c = 0; c < numEllipses; c++) {
-            // Calculate the Hough transform
-            fireProgressStateChanged("Calculating Hough circle " + String.valueOf(c+1));
-            for (y = 0; y < yDimSource; y++) {
-                offset = y * xDimSource;
-                for (x = 0; x < xDimSource; x++) {
-                    index = offset + x;
-                    if (srcBuffer[index] != 0) {
-                        for (j = 0; j < x0; j++) {
-                            for (k = 0; k < y0; k++) {
-                                d3 = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
-                                if (d3 <= maxRad) {
-                                    m = (int)Math.round(d3*d3Scale);
-                                    indexDest = j + k * x0 + m * x0y0;
-                                    houghBuffer[indexDest]++;
-                                }
-                            } // for (k = 0; k < y0; k++)
-                        } // for (j = 0; j < x0; j++)
-                    } // if (srcBuffer[index] != 0)
-                } // for (x = 0; x < xDimSource; x++)
-            } // for (y = 0; y < yDimSource; y++)
-            
-            
-           
-            // Find up to cell with the highest counts
-            // Obtain the x0, y0, rad, and count values of this circle
-            fireProgressStateChanged("Finding Hough peak circle " + String.valueOf(c+1));
-            
-            largestValue = 0;
-            largestIndex = -1;
-            for (j = 0; j < houghSlice; j++) {
-                if (houghBuffer[j] > largestValue) {
-                    largestValue = houghBuffer[j];
-                    largestIndex = j;
-                }
-            } // for (j = 0; j < houghSlice; j++)
-            if (largestIndex == -1) {
+        for (i = 0; i < sourceSlice; i++) {
+            if (srcBuffer[i] != 0) {
+                value = srcBuffer[i];
                 break;
             }
-            
-            numEllipsesFound++;
-            x0Array[c] = largestIndex % x0;
-            x0Array[c] = x0Array[c] * ((double)(xDimSource - 1))/((double)(x0 - 1));
-            y0Array[c] = (largestIndex % x0y0)/x0;
-            y0Array[c] = y0Array[c] * ((double)(yDimSource - 1))/((double)(y0 - 1));
-            radArray[c] = largestIndex/ x0y0;
-            radArray[c] = radArray[c]/d3Scale;
-            countArray[c] = largestValue;
-            
-            if (c < numEllipses - 1) {
-                // Zero hough buffer for next run
-                for (i = 0; i < houghSlice; i++) {
-                    houghBuffer[i] = 0;
-                }
-                // zero all points in the source slice that contributed to this circle
-                fireProgressStateChanged("Zeroing source circle " + String.valueOf(c+1));
-                for (y = 0; y < yDimSource; y++) {
-                    offset = y * xDimSource;
-                    for (x = 0; x < xDimSource; x++) {
-                        index = offset + x;
-                        if (srcBuffer[index] != 0) {
-                            for (j = 0; j < x0; j++) {
-                                for (k = 0; k < y0; k++) {
-                                    d3 = Math.sqrt((x - d1Array[j])*(x - d1Array[j]) + (y - d2Array[k])*(y - d2Array[k]));
-                                    if (d3 <= maxRad) {
-                                        m = (int)Math.round(d3*d3Scale);
-                                        indexDest = j + k * x0 + m * x0y0;
-                                        if (indexDest == largestIndex) {
-                                            srcBuffer[index] = 0;
-                                        }
-                                    }
-                                } // for (k = 0; k < y0; k++)
-                            } // for (j = 0; j < x0; j++)
-                        } // if (srcBuffer[index] != 0)
-                    } // for (x = 0; x < xDimSource; x++)
-                } // for (y = 0; y < yDimSource; y++)
-            } // if (c < numEllipses - 1)
-        } // for (c = 0; c < numEllipses; c++)
+        }
+        
+        numPoints = 0;
+        for (i = 0; i < sourceSlice; i++) {
+            if (srcBuffer[i] != 0) {
+                numPoints++;
+            }
+        }
+        
+        indexArray = new int[numPoints];
+        curve1 = new int[numPoints];
+        curve2 = new int[numPoints];
+        neighbor0 = new int[numPoints];
+        neighbor1 = new int[numPoints];
+        neighbor2 = new int[numPoints];
+        neighbor3 = new int[numPoints];
+        neighbor4 = new int[numPoints];
+        neighbor5 = new int[numPoints];
+        neighbor6 = new int[numPoints];
+        neighbor7 = new int[numPoints];
+        for (i = 0; i < numPoints; i++) {
+            indexArray[i] = -1;
+            curve1[i] = -1;
+            curve2[i] = -1;
+            neighbor0[i] = -1;
+            neighbor1[i] = -1;
+            neighbor2[i] = -1;
+            neighbor3[i] = -1;
+            neighbor4[i] = -1;
+            neighbor5[i] = -1;
+            neighbor6[i] = -1;
+            neighbor7[i] = -1;
+        }
+        // Assign every nonzero point to a curve and find its tangent
+        for (y = 0 ; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if (srcBuffer[index] != 0) {
+                  indexArray[numPoints++] = index;
+                  if (x > 0) {
+                      if (srcBuffer[index-1] != 0) {
+                          curve1[index] = curve1[index-1];
+                          neighbor3[index] = index - 1;
+                          neighbor4[index-1] = index;
+                      }
+                      else if (y > 0) {
+                          if (srcBuffer[index - xDim - 1] != 0) {
+                              curve1[index] = curve1[index - xDim - 1];
+                              neighbor0[index] = index - xDim - 1;
+                              neighbor7[index - xDim - 1] = index;
+                          }
+                      }
+                  } // if (x > 0)
+                  if (y > 0) {
+                      if (srcBuffer[index - xDim] != 0) {
+                          curve1[index] = curve1[index - xDim];
+                          neighbor1[index] = index - xDim;
+                          neighbor6[index - xDim] = index;
+                      }
+                      if (x < xDim - 1) {
+                          if (srcBuffer[index - xDim + 1] != 0) {
+                              if (curve1[index] == -1) {
+                                  if (curve2[index - xDim + 1] != -1) {
+                                      curve1[index] = curve2[index - xDim + 1];
+                                  }
+                                  else {
+                                      curve1[index] = curve1[index - xDim + 1];
+                                  }
+                                  neighbor2[index] = index - xDim + 1;
+                                  neighbor5[index - xDim + 1] = index;
+                              }
+                              else {
+                                  // Two different curves intersect at this point
+                                  curve2[index] = curve1[index - xDim +1];
+                                  neighbor2[index] = index - xDim + 1;
+                                  neighbor5[index - xDim + 1] = index;
+                              }
+                          }
+                      }
+                  } // if (y > 0)
+               } // if (srcBuffer[index] != 0)
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
+        
         
         // Restore original source values
         if (!test) {
@@ -423,29 +454,23 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             }
         } // if (!test)
         
-        // Create a dialog with numLinesFound x0Array[i], y0Array[i], radArray[i] and
+        // Create a dialog with numEllipsesFound x0Array[i], y0Array[i], radArray[i] and
         // countArray[i] values, where the user will select a check box to have the selected circle drawn.
-        selectedCircle = new boolean[numEllipsesFound];
+        selectedEllipse = new boolean[numEllipsesFound];
         
-        choice = new JDialogHoughCircleChoice(ViewUserInterface.getReference().getMainFrame(), x0Array,
-                 xDimSource, y0Array, yDimSource, radArray, maxRad, countArray, selectedCircle);
+        //choice = new JDialogHoughCircleChoice(ViewUserInterface.getReference().getMainFrame(), x0Array,
+                 //xDimSource, y0Array, yDimSource, radArray, maxRad, countArray, selectedCircle);
         
-        if (!choice.okayPressed() ) {
-            setCompleted(false);
-            return;
-        }
+        //if (!choice.okayPressed() ) {
+            //setCompleted(false);
+            //return;
+        //}
         
-        // Draw selected circles
+        // Draw selected elipses
         for (i = 0; i < numEllipsesFound; i++) {
-            if (selectedCircle[i]) {
-                for (j = 0; j < maxCirclePoints; j++) {
-                    theta = j * 2.0 * Math.PI/maxCirclePoints;
-                    x = (int)Math.round(x0Array[i] + radArray[i]*Math.cos(theta));
-                    y = (int)Math.round(y0Array[i] + radArray[i]*Math.sin(theta));
-                    indexDest = x + y * xDimSource;
-                    srcBuffer[indexDest] = value;
-                }
-            } // if (selectedCircle[i])
+            //if (selectedEllipse[i]) {
+                
+           // } // if (selectedEllipse[i])
         } // for (i = 0; i < numEllipsesFound; i++)
         
         try {
@@ -471,11 +496,16 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
     private void constructLog() {
 
 
-        historyString = new String("HoughEllipses(" + String.valueOf(x0) + ", " +
-                                   String.valueOf(y0) + ", " +
-                                   String.valueOf(minMajorAxisLength) + ", " +
-                                   String.valueOf(maxMajorAxisLength) + ", " +
-                                   String.valueOf(twoa) + ", " +
-                                   String.valueOf(maxAxesRatio) + ")\n");
+        historyString = new String("HoughEllipse(" + String.valueOf(minCoverage) + ", " +
+                                   String.valueOf(sidePointsForTangent) + ", " +
+                                   String.valueOf(maxPixelDiff) + ", " +
+                                   String.valueOf(maxDegreesDiff) + ", " + 
+                                   String.valueOf(minPointDistance) + ", " +
+                                   String.valueOf(maxPointDistance) + ", " +
+                                   String.valueOf(pointSetsAcquired) + ", " +
+                                   String.valueOf(countThreshold) + ", " +
+                                   String.valueOf(ellipseRangeTolerance) + ", " +
+                                   String.valueOf(maxAxesRatio) + ", " + 
+                                   String.valueOf(maxBufferSize) + ")\n");
     }
 }
