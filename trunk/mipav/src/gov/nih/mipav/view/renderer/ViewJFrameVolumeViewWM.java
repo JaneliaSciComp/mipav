@@ -1677,20 +1677,14 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                 raycastRenderWM.CMPMode();
             } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
                 raycastRenderWM.SURMode();
+                surRender.getSurfaceDialog().getLightDialog().getGeneralLight(2).enable(true);
+                surRender.getSurfaceDialog().getLightDialog().refreshLighting();
             } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
                 raycastRenderWM.SURFASTMode();
-             }
-
+                surRender.getSurfaceDialog().getLightDialog().getGeneralLight(2).enable(true);
+                surRender.getSurfaceDialog().getLightDialog().refreshLighting();
+           }
         }
-//         if (surRender != null) {
-
-//             if (radioSurrenderCOMPOSITE.isSelected() && (source == radioSurrenderCOMPOSITE)) {
-//                 surRender.setCompositeMode();
-//             } else if (radioSurrenderLIGHT.isSelected() && (source == radioSurrenderLIGHT)) {
-//                 surRender.setLightingMode();
-//             }
-//         }
-
     }
 
     /**
