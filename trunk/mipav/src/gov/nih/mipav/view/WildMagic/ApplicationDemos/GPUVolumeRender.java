@@ -6,8 +6,6 @@ package gov.nih.mipav.view.WildMagic.ApplicationDemos;
 
 import javax.media.opengl.*;
 import com.sun.opengl.util.*;
-import java.util.*;
-import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
@@ -21,7 +19,6 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
-import gov.nih.mipav.view.renderer.SoftwareLight;
 import gov.nih.mipav.view.renderer.GeneralLight;
 import gov.nih.mipav.view.renderer.volumeview.*;
 
@@ -215,7 +212,7 @@ public class GPUVolumeRender extends JavaApplication3
         ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         m_kAnimator = new Animator( GetCanvas() );
-        m_kAnimator.setRunAsFastAsPossible(true); 
+        //m_kAnimator.setRunAsFastAsPossible(true); 
         m_kAnimator.start();
     }
     
@@ -777,10 +774,6 @@ public class GPUVolumeRender extends JavaApplication3
         } else {
             afData = kSimpleImageA.data;
         }
-        kSimpleImageA.calcMinMax();
-        float fMax = kSimpleImageA.max;
-        float fMin = kSimpleImageA.min;
-
         kSimpleImageA = null;
         System.gc();
 
@@ -906,73 +899,12 @@ public class GPUVolumeRender extends JavaApplication3
         char ucKey = e.getKeyChar();
         
         super.keyPressed(e);
-        float[] afEquation;
-        Program pkProgram;
         switch (ucKey)
         {
-        case 'w':
-        case 'W':
-            m_spkWireframe.Enabled = !m_spkWireframe.Enabled;
-            return;
         case 's':
         case 'S':
              TestStreaming(m_spkScene,"VolumeTextures.wmof");
              return;
-
-        case 'v':
-            m_kNormal.W( (float)(m_kNormal.W() + 0.1) );
-            afEquation = new float[4];
-            afEquation[0] = m_kNormal.X();
-            afEquation[1] = m_kNormal.Y();
-            afEquation[2] = m_kNormal.Z();
-            afEquation[3] = m_kNormal.W();
-
-            System.err.println( "Normal: " + 
-                                m_kNormal.X() + " " +
-                                m_kNormal.Y() + " " +
-                                m_kNormal.Z() + " " +
-                                m_kNormal.W() + " " +
-                                m_kArbitraryClip.W()
-                                );
-            // Update shader with rotated normal and distance:
-            pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-            if ( pkProgram.GetUC("clipArb") != null ) 
-            {
-                pkProgram.GetUC("clipArb").SetDataSource(afEquation);
-            }
-            m_spkScene.UpdateGS();
-            m_spkScene.UpdateRS();
-            return;
-        case 'V':
-            m_kNormal.W( (float)(m_kNormal.W() - 0.1) );
-            afEquation = new float[4];
-            afEquation[0] = m_kNormal.X();
-            afEquation[1] = m_kNormal.Y();
-            afEquation[2] = m_kNormal.Z();
-            afEquation[3] = m_kNormal.W();
-
-            System.err.println( "Normal: " + 
-                                m_kNormal.X() + " " +
-                                m_kNormal.Y() + " " +
-                                m_kNormal.Z() + " " +
-                                m_kNormal.W() + " " +
-                                m_kArbitraryClip.W() );
-            // Update shader with rotated normal and distance:
-            pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
-            if ( pkProgram.GetUC("clipArb") != null ) 
-            {
-                pkProgram.GetUC("clipArb").SetDataSource(afEquation);
-            }
-            m_spkScene.UpdateGS();
-            m_spkScene.UpdateRS();
-            return;
-
-        case 'o':
-            setOrthographicProjection();
-            return;
-        case 'p':
-            setPerspectiveProjection();
-            return;
         }
 
         return;
@@ -1553,12 +1485,8 @@ public class GPUVolumeRender extends JavaApplication3
     
     private void doClip() 
     {
-
         // update position of the bounding box:
         m_kClipArb.Local.SetTranslate( m_kTranslate.add( new Vector3f( m_kArbitraryClip.W(), 0, 0 ) ) );
-
-        Vector3f kPrePos = m_kClipArb.Local.GetTranslate();
-        System.err.println( kPrePos.X() + " " +  kPrePos.Y() + " " +  kPrePos.Z() );
 
         // Rotate normal vector:
         Matrix3f kClipRotate = m_kArbRotate.Local.GetRotate();
@@ -1572,16 +1500,11 @@ public class GPUVolumeRender extends JavaApplication3
         afEquation[2] = kNormal.Z();
         afEquation[3] = m_kArbitraryClip.W();
 
-        m_kNormal = new Vector4f( kNormal.X(), kNormal.Y(), kNormal.Z(), m_kArbitraryClip.W() );
-        
-        
-        System.err.println( "Normal: " + 
-                            kNormal.X() + " " +
-                            kNormal.Y() + " " +
-                            kNormal.Z() + " " +
-                            m_kArbitraryClip.W() );
-
-
+        Vector3f kPos = new Vector3f( m_kArbitraryClip.W(), 0, 0 );
+        kPos.addEquals(m_kTranslate);
+        kPos = kClipRotate.mult(kPos);
+        kPos.subEquals( m_kTranslate );
+        afEquation[3] = kNormal.Dot(kPos);
 
         // Update shader with rotated normal and distance:
         Program pkProgram = m_kVolumeShaderEffect.GetPProgram(0);
@@ -1859,7 +1782,6 @@ public class GPUVolumeRender extends JavaApplication3
 
     private boolean m_bVisible = true;
     private Node m_kArbRotate = new Node();
-    private Vector4f m_kNormal;
 
     private JPanelRenderOptionsGPU m_kOptionsPanel = null;
     private MaterialState m_kMaterial;
