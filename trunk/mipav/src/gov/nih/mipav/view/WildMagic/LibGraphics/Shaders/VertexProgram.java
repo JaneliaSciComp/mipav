@@ -28,7 +28,7 @@ public class VertexProgram extends Program
 
         String kFilename = new String( rkDirectory + "\\Shaders\\Cg\\" + rkProgramName + ".cg" );
         String kProgramName = new String( "v_" + rkProgramName );
-        System.err.println(kProgramName);
+        //System.err.println(kProgramName);
 
         CGprogram kCGProgram = CgGL.cgCreateProgramFromFile( pkProgram.m_kContext,
                                                              CgGL.CG_SOURCE,
@@ -69,7 +69,7 @@ public class VertexProgram extends Program
         if ( ms_Options == 0 )
         {
             int iProfile = CgGL.cgGLGetLatestProfile(CgGL.CG_GL_VERTEX);
-            System.err.println( CgGL.cgGetProfileString(iProfile) );
+            //System.err.println( CgGL.cgGetProfileString(iProfile) );
             CgGL.cgGLSetOptimalOptions(iProfile);
         }
         ms_Options++;

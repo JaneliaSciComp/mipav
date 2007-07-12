@@ -27,7 +27,7 @@ public class PixelProgram extends Program
         boolean bLoaded = false;
         String kFilename = new String( rkDirectory + "\\Shaders\\Cg\\" + rkProgramName + ".cg" );
         String kProgramName = new String( "p_" + rkProgramName );
-        System.err.println(kProgramName);
+        //System.err.println(kProgramName);
         CGprogram kCGProgram = CgGL.cgCreateProgramFromFile( pkProgram.m_kContext,
                                                              CgGL.CG_SOURCE,
                                                              kFilename,
@@ -66,7 +66,7 @@ public class PixelProgram extends Program
         if ( ms_Options == 0 )
         {
             int iProfile = CgGL.cgGLGetLatestProfile(CgGL.CG_GL_FRAGMENT);
-            System.err.println( CgGL.cgGetProfileString(iProfile) );
+            //System.err.println( CgGL.cgGetProfileString(iProfile) );
             CgGL.cgGLSetOptimalOptions(iProfile);
         }
         ms_Options++;
