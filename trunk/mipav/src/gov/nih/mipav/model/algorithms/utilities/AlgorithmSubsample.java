@@ -66,13 +66,13 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
         if (src == null) {
             MipavUtil.displayError("No source image provided to be subsampled.");
-
+            
             return;
         }
         
         if (doPad) {
         	srcImage = padImage(src, padExtents);
-        	new ViewJFrameImage((ModelImage)(srcImage.clone()), null, new Dimension(610, 200));
+        	//new ViewJFrameImage((ModelImage)(srcImage.clone()), null, new Dimension(610, 200));
         } else {
         	srcImage = src;
         }
