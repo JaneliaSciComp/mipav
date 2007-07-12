@@ -310,10 +310,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         
         JCheckBox scrollButton = new JCheckBox(MipavUtil.getIcon("link_broken.gif"));
         scrollButton.setPreferredSize(leftArrowButton.getSize());
+        scrollButton.setMinimumSize(new Dimension(24,24));
         scrollButton.setSelectedIcon(MipavUtil.getIcon("link.gif"));
         scrollButton.addActionListener((ActionListener) UI);
         scrollButton.setActionCommand("ScrollLink");
         scrollButton.setToolTipText("Link images of like-dimensions for scrolling.");
+        //scrollButton.se
         
         tBar.add(scrollButton);
         
@@ -613,7 +615,9 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         paintToolBar.add(makeSeparator());
 
-        paintToolBar.add(buildButton("PowerPaint", "Load power paint tools", "powerpaint"));
+        JButton ppButton = buildButton("PowerPaint", "Load power paint tools", "powerpaint");
+        ppButton.setEnabled(nDim > 2);
+        paintToolBar.add(ppButton);
 
         return paintToolBar;
     }
