@@ -330,69 +330,91 @@ void computeColor( float4 kModelPosition, float3 kModelNormal, float3 CameraWorl
                    float4 LightSpotCutoff, float4 LightAttenuation,
                    float LightType,
                    float Composite,
-                   out float4 color_sample)
+                   inout float4 color_sample)
 {
-    float3 local_normal = kModelNormal.xyz - (0.5, 0.5, 0.5);
-    local_normal = normalize( local_normal );
-
-    if ( LightType == 0 )
+    if ( LightType == -1 )
     {
-        AmbientLight( MaterialEmissive,
-                      MaterialAmbient,
-                      LightAmbient,
-                      LightAttenuation,
-                      color_sample );
-    }
-    else if ( LightType == 1 )
-    {
-        DirectionalLight(  kModelPosition,
-                           local_normal,
-                           CameraWorldPosition,
-                           MaterialEmissive,
-                           MaterialAmbient,
-                           MaterialDiffuse,
-                           MaterialSpecular,
-                           LightWorldDirection,
-                           LightAmbient,
-                           LightDiffuse,
-                           LightSpecular,
-                           LightAttenuation,
-                           color_sample);
-
-    }
-    else if ( LightType == 2 )
-    {
-        PointLight( kModelPosition,
-                    local_normal,
-                    CameraWorldPosition,
-                    MaterialEmissive,
-                    MaterialAmbient,
-                    MaterialDiffuse,
-                    MaterialSpecular,
-                    LightWorldPosition,
-                    LightAmbient,
-                    LightDiffuse,
-                    LightSpecular,
-                    LightAttenuation,
-                    color_sample);
+        color_sample.r = 0;
+        color_sample.g = 0;
+        color_sample.b = 0;
     }
     else
     {
-        SpotLight( kModelPosition,
-                   local_normal,
-                   CameraWorldPosition,
-                   MaterialEmissive,
-                   MaterialAmbient,
-                   MaterialDiffuse,
-                   MaterialSpecular,
-                   LightWorldPosition,
-                   LightWorldDirection,
-                   LightAmbient,
-                   LightDiffuse,
-                   LightSpecular,
-                   LightSpotCutoff,
-                   LightAttenuation,
-                   color_sample);
+        float3 local_normal = kModelNormal.xyz - (0.5, 0.5, 0.5);
+        local_normal = normalize( local_normal );
+
+        float3 LocalMaterialAmbient = MaterialAmbient;
+        float4 LocalMaterialDiffuse = MaterialDiffuse;
+        float3 LocalMaterialEmissive = MaterialEmissive;
+        float4 LocalMaterialSpecular = MaterialSpecular;
+
+        if ( Composite != 0 )
+        {
+            LocalMaterialAmbient = color_sample;
+            LocalMaterialDiffuse = color_sample;
+            LocalMaterialEmissive = color_sample;
+            LocalMaterialSpecular = color_sample;
+        }
+
+        if ( LightType == 0 )
+        {
+            AmbientLight( LocalMaterialEmissive,
+                          LocalMaterialAmbient,
+                          LightAmbient,
+                          LightAttenuation,
+                          color_sample );
+        }
+        else if ( LightType == 1 )
+        {
+            DirectionalLight(  kModelPosition,
+                               local_normal,
+                               CameraWorldPosition,
+                               LocalMaterialEmissive,
+                               LocalMaterialAmbient,
+                               LocalMaterialDiffuse,
+                               LocalMaterialSpecular,
+                               LightWorldDirection,
+                               LightAmbient,
+                               LightDiffuse,
+                               LightSpecular,
+                               LightAttenuation,
+                               color_sample);
+
+        }
+        else if ( LightType == 2 )
+        {
+            PointLight( kModelPosition,
+                        local_normal,
+                        CameraWorldPosition,
+                        LocalMaterialEmissive,
+                        LocalMaterialAmbient,
+                        LocalMaterialDiffuse,
+                        LocalMaterialSpecular,
+                        LightWorldPosition,
+                        LightAmbient,
+                        LightDiffuse,
+                        LightSpecular,
+                        LightAttenuation,
+                        color_sample);
+        }
+        else
+        {
+            SpotLight( kModelPosition,
+                       local_normal,
+                       CameraWorldPosition,
+                       LocalMaterialEmissive,
+                       LocalMaterialAmbient,
+                       LocalMaterialDiffuse,
+                       LocalMaterialSpecular,
+                       LightWorldPosition,
+                       LightWorldDirection,
+                       LightAmbient,
+                       LightDiffuse,
+                       LightSpecular,
+                       LightSpotCutoff,
+                       LightAttenuation,
+                       color_sample);
+        }
     }
 }
 
@@ -692,7 +714,7 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
                 // Get the color based on lighting:
 //                 computeColor( normal, light, CameraModelPosition, inPos.xyz,
 //                               shininessParam, ambientParam, diffuseParam, specularParam, Composite, color );
-
+                color0 = color;
                 computeColor( inPos, normal, CameraWorldPosition,
                               MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                               Light0Ambient, Light0Diffuse, Light0Specular,
@@ -701,6 +723,8 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
                               Light0Type,
                               Composite, color0 );
                 
+
+                color1 = color;
                 computeColor( inPos, normal, CameraWorldPosition,
                               MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                               Light1Ambient, Light1Diffuse, Light1Specular,
@@ -709,6 +733,7 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
                               Light1Type,
                               Composite, color1 );
 
+                color2 = color;
                 computeColor( inPos, normal, CameraWorldPosition,
                               MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                               Light2Ambient, Light2Diffuse, Light2Specular,
@@ -717,6 +742,7 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
                               Light2Type,
                               Composite, color2 );
 
+                color3 = color;
                 computeColor( inPos, normal, CameraWorldPosition,
                               MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                               Light3Ambient, Light3Diffuse, Light3Specular,
@@ -725,6 +751,7 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
                               Light3Type,
                               Composite, color3 );
 
+                color4 = color;
                 computeColor( inPos, normal, CameraWorldPosition,
                               MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                               Light4Ambient, Light4Diffuse, Light4Specular,
@@ -733,6 +760,7 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
                               Light4Type,
                               Composite, color4 );
 
+                color5 = color;
                 computeColor( inPos, normal, CameraWorldPosition,
                               MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                               Light5Ambient, Light5Diffuse, Light5Specular,
@@ -741,6 +769,7 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
                               Light5Type,
                               Composite, color5 );
 
+                color6 = color;
                 computeColor( inPos, normal, CameraWorldPosition,
                               MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                               Light6Ambient, Light6Diffuse, Light6Specular,
@@ -749,6 +778,7 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
                               Light6Type,
                               Composite, color6 );
 
+                color7 = color;
                 computeColor( inPos, normal, CameraWorldPosition,
                               MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                               Light7Ambient, Light7Diffuse, Light7Specular,

@@ -59,7 +59,7 @@ public class GPUVolumeRender extends JavaApplication3
         m_kAnimator.stop();
         m_kAnimator = null;
 
-        System.err.println("GPUVolumeRender: finalize()");
+        //System.err.println("GPUVolumeRender: finalize()");
         m_spkScene.finalize();
         m_spkScene = null;
 
@@ -152,8 +152,8 @@ public class GPUVolumeRender extends JavaApplication3
             m_pkRenderer.Draw(m_spkScenePolygon);
 
             m_pkRenderer.SetCamera(m_spkCamera);
-            */
             DrawFrameRate(8,16,ColorRGBA.WHITE);
+            */
 
             if ( m_kSculptor.IsSculptDrawn() )
             {
@@ -170,10 +170,7 @@ public class GPUVolumeRender extends JavaApplication3
         ApplicationGUI.TheApplicationGUI.Display();
     }
 
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
-        // TODO Auto-generated method stub
-        System.err.println("displayChanged");
-    }
+    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
 
     public void init(GLAutoDrawable arg0) {
         if ( m_bInit )
@@ -218,6 +215,7 @@ public class GPUVolumeRender extends JavaApplication3
         ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         m_kAnimator = new Animator( GetCanvas() );
+        m_kAnimator.setRunAsFastAsPossible(true); 
         m_kAnimator.start();
     }
     
@@ -541,29 +539,6 @@ public class GPUVolumeRender extends JavaApplication3
             return false;
         }
 
-//         int nPts = kTransfer.size();
-//         int lutHeight = 256;
-
-//         float[] afData = new float[nPts];
-//         float xMax = ((Point2Df) (kTransfer.getPoint(nPts-1))).x;
-//         float xMin = ((Point2Df) (kTransfer.getPoint(0))).x;
-//         float fNew;
-//         for (int i = 0; i < nPts; i++) {
-//             fNew = (float) (xMin + (((float) i / (nPts - 1)) * (xMax - xMin)));
-//             afData[i] = kTransfer.getRemappedValue(fNew, lutHeight) + 0.5f;
-//             System.err.println( afData[i] );
-//         }
-//         m_spkOpacityMap.SetFloatData(afData, nPts);
-
-
-
-//         int nPts = kTransfer.size();
-//         System.err.print("Opacity Transfer = ");
-//         //for (int i = 0; i < nPts; i++) {
-//             System.err.println(((Point2Df)(kTransfer.getPoint(1))).x + " " +
-//                                ((Point2Df)(kTransfer.getPoint(1))).y );
-//             //}
-
          int iLutHeight = 256;
          float[] afData = m_spkOpacityMap.GetFloatData();
 
@@ -572,7 +547,6 @@ public class GPUVolumeRender extends JavaApplication3
          float fDataValue = m_fImageMin;
          for (int i = 0; i < iLutHeight; i++) {
              afData[i] = (kTransfer.getRemappedValue( fDataValue, iLutHeight )/255.0f);
-//             //System.err.println(afData[i]);
              fDataValue += fStep;
          }
          m_pkOpacityMapTarget.Reload(true);
@@ -666,9 +640,6 @@ public class GPUVolumeRender extends JavaApplication3
         // generate connectivity (outside view)
         int i = 0;
         int[] aiIndex = pkIB.GetData();
-
-        System.err.println( m_fX + " " + m_fY + " " + m_fZ );
-
 
         // generate geometry
         // front
@@ -1771,14 +1742,13 @@ public class GPUVolumeRender extends JavaApplication3
 
             for ( int i = 2; i < akGLights.length; i++ )
             {
-                if ( i < m_pkRenderer.GetMaxLights() )
+                String kLightType = new String("Light"+(i-2)+"Type");
+                float[] afType = new float[]{0,0,0,0};
+                if ( (i-2) < m_pkRenderer.GetMaxLights() )
                 {
                     if ( akGLights[i].isEnabled() )
                     {
                         m_pkRenderer.SetLight( i-2, akGLights[i].createWMLight() );
-                        System.err.println( "GPU updatelights " + (i-2));
-                        String kLightType = new String("Light"+(i-2)+"Type");
-                        float[] afType = new float[]{0,0,0,0};
                         if ( pkProgram.GetUC(kLightType) != null)
                         {
                             if ( akGLights[i].isTypeAmbient() )
@@ -1803,6 +1773,11 @@ public class GPUVolumeRender extends JavaApplication3
                     else
                     {
                         m_pkRenderer.SetLight( i-2, new Light() );
+                        if ( pkProgram.GetUC(kLightType) != null)
+                        {
+                            afType[0] = -1;
+                            pkProgram.GetUC(kLightType).SetDataSource(afType);
+                        }
                     }
                 }
             }
