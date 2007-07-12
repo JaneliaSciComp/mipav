@@ -1357,13 +1357,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (outputNew == true) {
                 ModelImage cloneImage = (ModelImage) getActiveImage().clone();
                 ViewJFrameImage newFrame = new ViewJFrameImage(cloneImage);
-
+                newFrame.getComponentImage().intensityDropper = getComponentImage().intensityDropper;
+                
                 if (getActiveImage() == imageA) {
                     newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null);
                 } else {
                     newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null);
                 }
-
+                //reset to default
+                newFrame.getComponentImage().intensityDropper = 1f;
+                
                 newFrame.getActiveImage().notifyImageDisplayListeners(null, true);
             } else {
 
