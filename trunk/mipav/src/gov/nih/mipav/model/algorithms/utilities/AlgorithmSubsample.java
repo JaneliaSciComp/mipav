@@ -31,6 +31,9 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
     /** Result image. */
     private ModelImage resultImage;
+    
+    /** Padded image. */
+    private ModelImage paddedImage;
 
     /** Std deviation of the Gaussian function. */
     private float[] sigmas;
@@ -102,6 +105,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
      */
     public void finalize() {
         super.finalize();
+        paddedImage.disposeLocal();
     }
 
     /**
@@ -1821,9 +1825,9 @@ public class AlgorithmSubsample extends AlgorithmBase {
     
     private ModelImage padImage(ModelImage kImage, int[] padExtents) {
     	
-    	ModelImage resultImage = new ModelImage(kImage.getType(), padExtents,
+    	paddedImage = new ModelImage(kImage.getType(), padExtents,
                 makeImageName(kImage.getImageName(), "_pad"));
-    	resultImage.setAll(0);
+    	paddedImage.setAll(0);
     	int[] extents = kImage.getExtents();
     	AlgorithmPad algoPad = null;
     	int[] x = new int[2];
@@ -1860,13 +1864,13 @@ public class AlgorithmSubsample extends AlgorithmBase {
         	}
     	}
     	
-    	algoPad = new AlgorithmPad(resultImage, kImage, 0, x, y, z);
+    	algoPad = new AlgorithmPad(paddedImage, kImage, 0, x, y, z);
     	
     	algoPad.run();
     	algoPad.finalize();
-        
-        return resultImage;
-        	
+    	
+    	return paddedImage;
+                        	
     }
     
     /**
