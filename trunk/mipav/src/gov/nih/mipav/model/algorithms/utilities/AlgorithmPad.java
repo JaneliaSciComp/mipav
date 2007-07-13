@@ -95,6 +95,15 @@ public class AlgorithmPad extends AlgorithmBase {
     public ModelImage getSrcImage() {
         return srcImage;
     }
+    
+    /**
+     * Return the result image (or null if not created yet).
+     *
+     * @return  the padded image
+     */
+    public ModelImage getResultImage() {
+        return destImage;
+    }
 
     /**
      * Starts the program.
