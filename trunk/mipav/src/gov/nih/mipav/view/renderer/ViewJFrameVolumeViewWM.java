@@ -2826,7 +2826,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         surfaceToolBar.setBorderPainted(true);
         surfaceToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         surfaceToolBar.setFloatable(false);
-        surfaceToolBar.add(toolbarBuilder.buildButton("Repaint", "Repaints images", "paintinside"));
+        surfaceToolBar.add(toolbarBuilder.buildButton("Repaint", "Repaints images", "paint"));
         surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
         surfaceToolBar.add(toolbarBuilder.buildButton("SurfaceDialog", "Add surface to viewer", "isosurface"));
         surfaceToolBar.add(toolbarBuilder.buildButton("Geodesic", "Draw geodesic curves on the surface", "geodesic"));

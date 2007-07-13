@@ -3179,7 +3179,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         rayCastToolBar.setBorder(etchedBorder);
         rayCastToolBar.setBorderPainted(true);
         rayCastToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        rayCastToolBar.add(toolbarBuilder.buildButton("raycastRepaint", "Repaint image", "paintinside"));
+        rayCastToolBar.add(toolbarBuilder.buildButton("raycastRepaint", "Repaint image", "paint"));
         rayCastToolBar.add(ViewToolBarBuilder.makeSeparator());
         rayCastToolBar.add(toolbarBuilder.buildButton("RayCastOptions", "Option Dialog.", "options"));
         rayCastToolBar.add(ViewToolBarBuilder.makeSeparator());
