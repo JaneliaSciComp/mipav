@@ -168,7 +168,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         
         int numPoints;
 
-        int i, j, k, m, c;
+        int i, j, k, m, n, c;
         int index, indexDest;
         
         int houghSlice;
@@ -243,7 +243,37 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int neighbor5[];
         int neighbor6[];
         int neighbor7[];
-        int slope[];
+        int neighbors;
+        int endPoints;
+        int numOpenCurves;
+        int numClosedCurves;
+        boolean foundArray[];
+        boolean found;
+        int curvePos;
+        int openStart[];
+        int openLength[];
+        int nextPos;
+        int closedStart;
+        int closedLength;
+        int indexPtr = 0;
+        int firstPoint;
+        int nextPoint;
+        int lastPoint;
+        float xArray[];
+        float yArray[];
+        float tangentX;
+        float tangentY;
+        float slopeArray[];
+        float interceptArray[];;
+        int startPtr;
+        int presentSidePoints;
+        float xPoints[];
+        float yPoints[];
+        AlgorithmBSpline bSpline = null;
+        Point2Df tangentDir = null;
+        int endPtr;
+        int startWrapPoints;
+        int endWrapPoints;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -357,89 +387,315 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             }
         }
         
+        // Delete all points with 0 neighbors or more than 2 neighbors
         numPoints = 0;
+        endPoints = 0;
+        neighbor1 = new int[sourceSlice];
+        neighbor2 = new int[sourceSlice];
         for (i = 0; i < sourceSlice; i++) {
-            if (srcBuffer[i] != 0) {
-                numPoints++;
-            }
-        }
-        
-        indexArray = new int[numPoints];
-        curve1 = new int[numPoints];
-        curve2 = new int[numPoints];
-        neighbor0 = new int[numPoints];
-        neighbor1 = new int[numPoints];
-        neighbor2 = new int[numPoints];
-        neighbor3 = new int[numPoints];
-        neighbor4 = new int[numPoints];
-        neighbor5 = new int[numPoints];
-        neighbor6 = new int[numPoints];
-        neighbor7 = new int[numPoints];
-        for (i = 0; i < numPoints; i++) {
-            indexArray[i] = -1;
-            curve1[i] = -1;
-            curve2[i] = -1;
-            neighbor0[i] = -1;
             neighbor1[i] = -1;
             neighbor2[i] = -1;
-            neighbor3[i] = -1;
-            neighbor4[i] = -1;
-            neighbor5[i] = -1;
-            neighbor6[i] = -1;
-            neighbor7[i] = -1;
         }
-        // Assign every nonzero point to a curve and find its tangent
-        for (y = 0 ; y < yDim; y++) {
+        for (y = 0; y < yDim; y++) {
             offset = y * xDim;
             for (x = 0; x < xDim; x++) {
                 index = offset + x;
                 if (srcBuffer[index] != 0) {
-                  indexArray[numPoints++] = index;
-                  if (x > 0) {
-                      if (srcBuffer[index-1] != 0) {
-                          curve1[index] = curve1[index-1];
-                          neighbor3[index] = index - 1;
-                          neighbor4[index-1] = index;
-                      }
-                      else if (y > 0) {
-                          if (srcBuffer[index - xDim - 1] != 0) {
-                              curve1[index] = curve1[index - xDim - 1];
-                              neighbor0[index] = index - xDim - 1;
-                              neighbor7[index - xDim - 1] = index;
-                          }
-                      }
-                  } // if (x > 0)
-                  if (y > 0) {
-                      if (srcBuffer[index - xDim] != 0) {
-                          curve1[index] = curve1[index - xDim];
-                          neighbor1[index] = index - xDim;
-                          neighbor6[index - xDim] = index;
-                      }
-                      if (x < xDim - 1) {
-                          if (srcBuffer[index - xDim + 1] != 0) {
-                              if (curve1[index] == -1) {
-                                  if (curve2[index - xDim + 1] != -1) {
-                                      curve1[index] = curve2[index - xDim + 1];
-                                  }
-                                  else {
-                                      curve1[index] = curve1[index - xDim + 1];
-                                  }
-                                  neighbor2[index] = index - xDim + 1;
-                                  neighbor5[index - xDim + 1] = index;
-                              }
-                              else {
-                                  // Two different curves intersect at this point
-                                  curve2[index] = curve1[index - xDim +1];
-                                  neighbor2[index] = index - xDim + 1;
-                                  neighbor5[index - xDim + 1] = index;
-                              }
-                          }
-                      }
-                  } // if (y > 0)
-               } // if (srcBuffer[index] != 0)
+                    neighbors = 0;
+                    if (y > 0) {
+                        if (x > 0) {
+                            if (srcBuffer[index - xDim - 1] != 0) {
+                                neighbors++;
+                                neighbor1[index] = index - xDim - 1;
+                            }
+                        }
+                        if (srcBuffer[index - xDim] != 0) {
+                            neighbors++;
+                            if (neighbor1[index] == -1) {
+                                neighbor1[index] = index - xDim;
+                            }
+                            else {
+                                neighbor2[index] = index - xDim;
+                            }
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index - xDim + 1] != 0) {
+                                neighbors++;
+                                if (neighbor1[index] == -1) {
+                                    neighbor1[index] = index - xDim + 1;
+                                }
+                                else {
+                                    neighbor2[index] = index - xDim + 1;
+                                }
+                            }
+                        }
+                    } // if (y > 0)
+                    if (x > 0) {
+                        if (srcBuffer[index - 1] != 0) {
+                            neighbors++;
+                            if (neighbor1[index] == -1) {
+                                neighbor1[index] = index - 1;
+                            }
+                            else {
+                                neighbor2[index] = index - 1;
+                            }
+                        }
+                    } // if (x > 0)
+                    if (x < xDim - 1) {
+                        if (srcBuffer[index + 1] != 0) {
+                            neighbors++;
+                            if (neighbor1[index] == -1) {
+                                neighbor1[index] = index + 1;
+                            }
+                            else {
+                                neighbor2[index] = index + 1;
+                            }
+                        }
+                    } // if (x < xDim - 1)
+                    if (y < yDim - 1) {
+                        if (x > 0) {
+                            if (srcBuffer[index + xDim - 1] != 0) {
+                                neighbors++;
+                                if (neighbor1[index] == -1) {
+                                    neighbor1[index] = index + xDim - 1;
+                                }
+                                else {
+                                    neighbor2[index] = index + xDim - 1;
+                                }
+                            }
+                        }
+                        if (srcBuffer[index + xDim] != 0) {
+                            neighbors++;
+                            if (neighbor1[index] == -1) {
+                                neighbor1[index] = index + xDim;
+                            }
+                            else {
+                                neighbor2[index] = index + xDim;
+                            }
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index + xDim + 1] != 0) {
+                                neighbors++;
+                                if (neighbor1[index] == -1) {
+                                    neighbor1[index] = index + xDim + 1;
+                                }
+                                else {
+                                    neighbor2[index] = index + xDim + 1;
+                                }
+                            }
+                        }    
+                    } // if (y < yDim - 1)
+                    if ((neighbors == 0) || (neighbors > 2)) {
+                        srcBuffer[index] = 0;
+                        neighbor1[index] = -1;
+                        neighbor2[index] = -1;
+                    }
+                    else {
+                        numPoints++;
+                        if (neighbors == 1) {
+                            endPoints++;
+                        }
+                    }
+                } // if (srcBuffer[index] != 0)
             } // for (x = 0; x < xDim; x++)
         } // for (y = 0; y < yDim; y++)
         
+        numOpenCurves = endPoints/2;
+        openStart = new int[numOpenCurves];
+        openLength = new int[numOpenCurves];
+        foundArray = new boolean[sourceSlice];
+        i = 0;
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if (srcBuffer[index] == 0) {
+                    foundArray[index] = true;
+                }
+            }
+        }
+        
+        // Find the starting positions and lengths of the open curves
+        i = 0;
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if ((neighbor2[index] == -1) && (!foundArray[index])) {
+                    foundArray[index] = true;
+                    openStart[i] = index;
+                    openLength[i]++;
+                    index = neighbor1[index];
+                    foundArray[index] = true;
+                    openLength[i]++;
+                    while(neighbor2[index] != -1) {
+                        if (!foundArray[neighbor1[index]]) {
+                            index = neighbor1[index];
+                        }
+                        else {
+                            index = neighbor2[index];
+                        }
+                        foundArray[index] = true;
+                        openLength[i]++;
+                    } // while(neighbor2[index] != -1;
+                    // Delete all open curves with only 2 points
+                    // Also delete 2 end points on longer open curves since tangents are too unclear
+                    numPoints = numPoints - 2;
+                    if (openLength[i] == 2) {
+                        srcBuffer[openStart[i]] = 0;
+                        srcBuffer[neighbor1[openStart[i]]] = 0;
+                        numOpenCurves--;
+                        openLength[i] = 0;
+                    }
+                    else {
+                        i++;
+                    }
+                }
+            }
+        }
+        
+        indexArray = new int[numPoints];
+        slopeArray = new float[numPoints];
+        interceptArray = new float[numPoints];
+        for (i = 0; i < sourceSlice; i++) {
+            if (srcBuffer[i] != 0) {
+                foundArray[i] = false;
+            }
+        }
+        indexPtr = 0;
+        if (sidePointsForTangent > 1) {
+            bSpline = new AlgorithmBSpline();
+            tangentDir = new Point2Df();
+        }
+        for (i = 0; i < numOpenCurves; i++) {
+            startPtr = indexPtr;
+            xArray = new float[openLength[i]];
+            yArray = new float[openLength[i]];
+            nextPoint = openStart[i];
+            xArray[0] = nextPoint % xDim;
+            yArray[0] = nextPoint / xDim;
+            foundArray[nextPoint] = true;
+            for (n = 1; n <= openLength[i] - 1; n++) {
+              if (!foundArray[neighbor1[nextPoint]]) {
+                  nextPoint = neighbor1[nextPoint];
+              }
+              else {
+                  nextPoint = neighbor2[nextPoint];
+              }
+              if (n <= openLength[i] - 2) {
+                  indexArray[indexPtr++] = nextPoint;
+              }
+              xArray[n] = nextPoint % xDim;
+              yArray[n] = nextPoint / xDim;
+              foundArray[nextPoint] = true;
+            } // for (n = 0; n <= openLength[i] - 1; n++)
+            indexPtr = startPtr;
+            for (n = 1; n <= openLength[i] - 2; n++) {
+                presentSidePoints = Math.min(sidePointsForTangent, n);
+                presentSidePoints = Math.min(presentSidePoints, openLength[i] - 1 - n);
+                if (presentSidePoints == 1) {
+                    tangentX = (xArray[n+1] - xArray[n-1])/2.0f;
+                    tangentY = (yArray[n+1] - yArray[n-1])/2.0f;
+                    if (tangentX == 0.0f) {
+                        slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+                    }
+                    else {
+                        slopeArray[indexPtr] = tangentY/tangentX;
+                        interceptArray[indexPtr] = yArray[n] - slopeArray[indexPtr] * xArray[n];
+                        indexPtr++;
+                    }
+                } // if (presentSidePoints == 1)
+                else {
+                    xPoints = new float[2*presentSidePoints+1];
+                    yPoints = new float[2*presentSidePoints+1];
+                    for (k = 0, j = n - presentSidePoints; j <= n + presentSidePoints; j++, k++) {
+                        xPoints[k] = xArray[j];
+                        yPoints[k] = yArray[j];
+                    }
+                    tangentDir = bSpline.bSplineJetXY(1, presentSidePoints, xPoints, yPoints);
+                    if (tangentDir.x == 0.0f) {
+                        slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+                    }
+                    else {
+                        slopeArray[indexPtr] = tangentDir.y/tangentDir.x;
+                        interceptArray[indexPtr] = yArray[n] - slopeArray[indexPtr] * xArray[n];
+                        indexPtr++;
+                    }
+                }
+            } // for (n = 2; n <= openLength[i] - 2; n++)
+        } // for (i = 0; i < numOpenCurves; i++)      
+        
+        // Find a position and length of closed curve
+        numClosedCurves = 0;
+        startPtr = indexPtr;
+        xPoints = new float[2*sidePointsForTangent + 1];
+        yPoints = new float[2*sidePointsForTangent + 1];
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if (!foundArray[index]) {
+                    foundArray[index] = true;
+                    numClosedCurves++;
+                    closedStart = index;
+                    closedLength = 1;
+                    indexArray[indexPtr++] = index;
+                    while ((!foundArray[neighbor1[index]]) || (!foundArray[neighbor2[index]])) {
+                        if (!foundArray[neighbor1[index]]) {
+                            index = neighbor1[index];
+                        }
+                        else {
+                            index = neighbor2[index];
+                        }
+                        foundArray[index] = true;
+                        closedLength++;
+                        indexArray[indexPtr++] = index;
+                    } // while ((!foundArray[neighbor1[index]]) || (!foundArray[neighbor2[index]]))
+                    endPtr = indexPtr - 1;
+                    indexPtr = startPtr;
+                    for (n = 0; n <= closedLength - 1; n++) {
+                        startWrapPoints = Math.max(0, sidePointsForTangent - n);
+                        endWrapPoints =  Math.max(0, sidePointsForTangent - (closedLength - 1 - n));
+                        for (k = 0; k < startWrapPoints; k++) {
+                            xPoints[k] = indexArray[endPtr - k] % xDim;
+                            yPoints[k] = indexArray[endPtr - k] / xDim;
+                        }
+                        for (k = startWrapPoints, j = indexPtr - sidePointsForTangent + startWrapPoints;
+                             k < 2*sidePointsForTangent + 1 - endWrapPoints; j++, k++) {
+                            xPoints[k] = indexArray[j] % xDim;
+                            yPoints[k] = indexArray[j] / xDim;
+                        }
+                        for (k = 2*sidePointsForTangent + 1 - endWrapPoints; k < 2*sidePointsForTangent + 1; k++) {
+                            xPoints[k] = indexArray[startPtr + k] % xDim;
+                            yPoints[k] = indexArray[startPtr + k] / xDim;
+                        }
+                        if (sidePointsForTangent == 1) {
+                            tangentX = (xPoints[2] - xPoints[0])/2.0f;
+                            tangentY = (yPoints[2] - yPoints[0])/2.0f;
+                            if (tangentX == 0.0f) {
+                                slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+                            }
+                            else {
+                                slopeArray[indexPtr] = tangentY/tangentX;
+                                interceptArray[indexPtr] = yPoints[1] - slopeArray[indexPtr] * xPoints[1];
+                                indexPtr++;
+                            }    
+                        } // if (sidePointsForTangent == 1)
+                        else {
+                            tangentDir = bSpline.bSplineJetXY(1, sidePointsForTangent, xPoints, yPoints);
+                            if (tangentDir.x == 0.0f) {
+                                slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+                            }
+                            else {
+                                slopeArray[indexPtr] = tangentDir.y/tangentDir.x;
+                                interceptArray[indexPtr] = yPoints[sidePointsForTangent] - slopeArray[indexPtr] * xPoints[sidePointsForTangent];
+                                indexPtr++;
+                            }    
+                        }
+                    } // for (n = 0; n <= closedLength[i] - 1; n++)
+                }
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
         
         // Restore original source values
         if (!test) {
