@@ -523,9 +523,12 @@ public class JDialogRunScriptController implements ActionListener {
                     Preferences.debug("run dialog:\tError during script execution #" + i + "\n",
                                       Preferences.DEBUG_SCRIPTING);
                 }
-
+                
                 for (int j = 0; j < imagesOpenedByDialog.size(); j++) {
-                    ((ModelImage) imagesOpenedByDialog.elementAt(j)).getParentFrame().close();
+                	if (((ModelImage) imagesOpenedByDialog.elementAt(j)).getParentFrame() != null) {
+                		((ModelImage) imagesOpenedByDialog.elementAt(j)).getParentFrame().close();
+                	}
+                    
                 }
 
                 System.gc();
