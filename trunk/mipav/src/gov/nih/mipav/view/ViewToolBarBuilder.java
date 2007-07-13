@@ -339,20 +339,20 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         JButton triPlanarButton = buildButton("Tri-planar", "Tri-Planar View", "3plane");
         JButton quadPlanarButton = buildButton("VolTriplanar", "Volume Tri-Planar View", "4plane");
-        JButton wmPlanarButton = buildButton("WMVolTriplanar", "Volume Tri-Planar View", "4plane");
+        JButton wmPlanarButton = buildButton("WMVolTriplanar", "Volume Tri-Planar View", "gpu");
         JButton lightBoxButton = buildButton("Light box", "View Light Box", "lightbox");
-        JButton gpuButton = buildButton("GPU", "GPU rendering", "gpu");
-        JButton multiButton = buildButton("MultiHisto", "Multi-histo rendering", "multihisto");
-        JButton vtkButton = buildButton("VTK", "VTK rendering", "vtk");
+        // JButton gpuButton = buildButton("GPU", "GPU rendering", "gpu");
+        // JButton multiButton = buildButton("MultiHisto", "Multi-histo rendering", "multihisto");
+        // JButton vtkButton = buildButton("VTK", "VTK rendering", "vtk");
 
         if (numberOfDimensions == 2) {
             triPlanarButton.setEnabled(false);
             quadPlanarButton.setEnabled(false);
             wmPlanarButton.setEnabled(false);
             lightBoxButton.setEnabled(false);
-            gpuButton.setEnabled(false);
-            multiButton.setEnabled(false);
-            vtkButton.setEnabled(false);
+            // gpuButton.setEnabled(false);
+            // multiButton.setEnabled(false);
+            // vtkButton.setEnabled(false);
         }
 
         tBar.add(triPlanarButton);
