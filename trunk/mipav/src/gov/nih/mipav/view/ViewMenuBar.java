@@ -1214,6 +1214,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Quantify using mask", false);
             menuBuilder.setMenuItemEnabled("Shading correction", false);
             menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
+            menuBuilder.setMenuItemEnabled("Skeletonize", false);
 
             // menuBuilder.setMenuItemEnabled("AFNI - Shear", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration", false);
@@ -1361,6 +1362,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
+            menuBuilder.setMenuItemEnabled("Skeletonize", false);
             menuBuilder.setMenuItemEnabled("Single MRI image", false);
             menuBuilder.setMenuItemEnabled("Two MRI images", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
