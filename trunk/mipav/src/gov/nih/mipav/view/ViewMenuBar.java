@@ -334,6 +334,7 @@ public class ViewMenuBar {
                                                                                            false),
                                                                  menuBuilder.buildMenuItem("Particle analysis", null, 0,
                                                                                            null, false),
+                                                                 menuBuilder.buildMenuItem("Skeletonize", null, 0, null, false),
                                                                  menuBuilder.buildMenuItem("Skeletonize3D pot field",
                                                                                            "Skeletonize3D", 0, null,
                                                                                            false),
@@ -1212,7 +1213,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Principal component", false);
             menuBuilder.setMenuItemEnabled("Quantify using mask", false);
             menuBuilder.setMenuItemEnabled("Shading correction", false);
-            menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
+            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
 
             // menuBuilder.setMenuItemEnabled("AFNI - Shear", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration", false);
@@ -1317,7 +1318,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Capture images to new frame", false);
             menuBuilder.setMenuItemSelected("ShowSliceNum", false);
             menuBuilder.setMenuItemEnabled("Show slice number overlay", false);
-            menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
+            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
             menuBuilder.setMenuItemEnabled("4D tools", false);
@@ -1359,7 +1360,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
-            menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
+            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Single MRI image", false);
             menuBuilder.setMenuItemEnabled("Two MRI images", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
