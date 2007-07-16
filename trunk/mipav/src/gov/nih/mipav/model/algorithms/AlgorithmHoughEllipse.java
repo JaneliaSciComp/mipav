@@ -76,14 +76,16 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
     // Largest allowable distance between 2 of 3 picked points
     private double maxPointDistance;
     
-    // Number of point triplets acquired before each ellipse find is performed
-    private int pointSetsAcquired;
+    // Number of point triplets required before each ellipse find is performed
+    private int pointSetsRequired;
     
     // Maximum ratio of major axis to minor axis - default is 2.0;
     private double maxAxesRatio;
     
     // number of ellipses to be found
     private int numEllipses;
+    
+    private int maxEllipseFindCycles = 80;
     
     // The maximum Hough transform size in megabytes - default is currently 256
     private int maxBufferSize;
@@ -116,7 +118,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
      *                        an existing bin
      * @param  minPointDistance Smallest allowable distance between 2 of 3 picked points
      * @param  maxPointDistance Largest allowable distance between 2 of 3 picked points
-     * @param  pointSetsAcquired Number of point triplets acquired before each ellipse find is performed
+     * @param  pointSetsRequired Number of point triplets acquired before each ellipse find is performed
      * @param  countThreshold Number of counts required to find an ellipse
      * @param  ellipseRangeTolerance Maximum pixel distance by which ellipse perimiter pixels can deviate from
      *                               the calculated space
@@ -126,7 +128,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
      */
     public AlgorithmHoughEllipse(ModelImage destImg, ModelImage srcImg, double minCoverage, int sidePointsForTangent,
                                  double maxPixelDiff, double maxDegreesDiff, double minPointDistance,
-                                 double maxPointDistance, int pointSetsAcquired, int countThreshold, 
+                                 double maxPointDistance, int pointSetsRequired, int countThreshold, 
                                  double ellipseRangeTolerance, double maxAxesRatio, int numEllipses,
                                  int maxBufferSize) {
         super(destImg, srcImg);
@@ -136,7 +138,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         this.maxDegreesDiff = maxDegreesDiff;
         this.minPointDistance = minPointDistance;
         this.maxPointDistance = maxPointDistance;
-        this.pointSetsAcquired = pointSetsAcquired;
+        this.pointSetsRequired = pointSetsRequired;
         this.countThreshold = countThreshold;
         this.ellipseRangeTolerance = ellipseRangeTolerance;
         this.maxAxesRatio = maxAxesRatio;
@@ -180,7 +182,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         double d3Array[];
         double d3;
         double d3Scale;
-        boolean test = false;
+        boolean test = true;
         double xCenter;
         double yCenter;
         double radius;
@@ -235,14 +237,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int curve2[];
         int numCurves;
         int curvesAtPoint;
-        int neighbor0[];
-        int neighbor1[];
-        int neighbor2[];
-        int neighbor3[];
-        int neighbor4[];
-        int neighbor5[];
-        int neighbor6[];
-        int neighbor7[];
         int neighbors;
         int endPoints;
         int numOpenCurves;
@@ -274,6 +268,31 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int endPtr;
         int startWrapPoints;
         int endWrapPoints;
+        double a1;
+        double b1;
+        double alpha;
+        double cosalpha;
+        double sinalpha;
+        double angle;
+        double beta;
+        double cosbeta;
+        double sinbeta;
+        int neighbor1[];
+        int neighbor2[];
+        AlgorithmMorphology2D algoMorph2D;
+        int neigh0;
+        int neigh1;
+        int neigh2;
+        int neigh3;
+        int neigh4;
+        int neigh5;
+        int neigh6;
+        int neigh7;
+        int pruningPix;
+        boolean entireImage;
+        int ellipsesFound = 0;
+        int ellipseFindCycles = 0;
+        int pointSetsAcquired = 0;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -313,72 +332,138 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             
             xCenter = (xDim-1)/2.0;
             yCenter = (yDim-1)/2.0;
-            radius = 50.0;
-            radius2 = 70.0;
-            radius3 = 90.0;
-            xSum = 0.0;
-            ySum = 0.0;
-            xSum2 = 0.0;
-            ySum2 = 0.0;
-            xSum3 = 0.0;
-            ySum3 = 0.0;
-            for (i = 0; i < 20; i++) {
-                theta = i * Math.PI/10.0;
-                x = (int)Math.round(xCenter + radius *Math.cos(theta));
-                y = (int)Math.round(yCenter + radius * Math.sin(theta));
-                index = x + y * xDim;
-                srcBuffer[index] = 1;
-                xSum = xSum + x;
-                ySum = ySum + y;
-                x = (int)Math.round(xCenter + radius2 *Math.cos(theta));
-                y = (int)Math.round(yCenter + radius2 * Math.sin(theta));
-                index = x + y * xDim;
-                srcBuffer[index] = 1;
-                xSum2 = xSum2 + x;
-                ySum2 = ySum2 + y;
-                x = (int)Math.round(xCenter + radius3 *Math.cos(theta));
-                y = (int)Math.round(yCenter + radius3 * Math.sin(theta));
-                index = x + y * xDim;
-                srcBuffer[index] = 1;
-                xSum3 = xSum3 + x;
-                ySum3 = ySum3 + y;
+            a1 = 50.0;
+            b1 = 25.0;
+            for (i = 0; i < 360; i++) {
+                alpha = i * Math.PI/180.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + a1 * cosalpha);
+                y = (int)(yCenter + b1 * sinalpha);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
             }
-            xSum = xSum/20.0;
-            ySum = ySum/20.0;
-            radSum = 0.0;
-            for (i = 0; i < 20; i++) {
-                theta = i * Math.PI/10.0;
-                x = (int)Math.round(xCenter + radius *Math.cos(theta));
-                y = (int)Math.round(yCenter + radius * Math.sin(theta));
-                radSum = radSum + Math.sqrt((x - xSum)*(x - xSum) + (y - ySum)*(y - ySum));
-            }
-            radSum = radSum/20.0;
-            System.out.println(" x = " + xSum + " y = " + ySum + " radius = " + radSum);
             
-            xSum2 = xSum2/20.0;
-            ySum2 = ySum2/20.0;
-            radSum = 0.0;
-            for (i = 0; i < 20; i++) {
-                theta = i * Math.PI/10.0;
-                x = (int)Math.round(xCenter + radius2 *Math.cos(theta));
-                y = (int)Math.round(yCenter + radius2 * Math.sin(theta));
-                radSum = radSum + Math.sqrt((x - xSum2)*(x - xSum2) + (y - ySum2)*(y - ySum2));
+            a1 = 75.0;
+            b1 = 37.5;
+            angle = Math.PI/4.0;
+            beta = -angle;
+            cosbeta = Math.cos(beta);
+            sinbeta = Math.sin(beta);
+            for (i = 0; i < 90; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
             }
-            radSum = radSum/20.0;
-            System.out.println(" x2 = " + xSum2 + " y2 = " + ySum2 + " radius2 = " + radSum);
             
-            xSum3 = xSum3/20.0;
-            ySum3 = ySum3/20.0;
-            radSum = 0.0;
-            for (i = 0; i < 20; i++) {
-                theta = i * Math.PI/10.0;
-                x = (int)Math.round(xCenter + radius3 *Math.cos(theta));
-                y = (int)Math.round(yCenter + radius3 * Math.sin(theta));
-                radSum = radSum + Math.sqrt((x - xSum3)*(x - xSum3) + (y - ySum3)*(y - ySum3));
+            for (i = 180; i < 270; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
             }
-            radSum = radSum/20.0;
-            System.out.println(" x3 = " + xSum3 + " y3 = " + ySum3 + " radius3 = " + radSum);
+            
+            for (i = 360; i < 450; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
+            }
+            
+            for (i = 540; i < 630; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
+            }
+            
+            a1 = 100.0;
+            b1 = 50.0;
+            angle = -Math.PI/4.0;
+            beta = -angle;
+            cosbeta = Math.cos(beta);
+            sinbeta = Math.sin(beta);
+            for (i = 0; i < 90; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
+            }
+            
+            for (i = 180; i < 270; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
+            }
+            
+            for (i = 360; i < 450; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
+            }
+            
+            for (i = 540; i < 630; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
+            }
+            //setCompleted(true);
+            //return;
         } // if (test)
+        
+        try {
+            destImage.importData(0, srcBuffer, true);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+            setCompleted(true);
+
+            return;
+        }
+        
+        pruningPix = 2;
+        entireImage = true;
+        algoMorph2D = new AlgorithmMorphology2D(destImage, 0, 0.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, pruningPix, 0, entireImage);
+        algoMorph2D.run();
+        algoMorph2D.finalize();
+        
+        try {
+            destImage.exportData(0, sourceSlice, srcBuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on destImage.exportData");
+
+            setCompleted(false);
+
+            return;
+        }
         
         for (i = 0; i < sourceSlice; i++) {
             if (srcBuffer[i] != 0) {
@@ -387,7 +472,109 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             }
         }
         
-        // Delete all points with 0 neighbors or more than 2 neighbors
+        // Reduce the number of 8-connected neighbors to 2
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if (srcBuffer[index] != 0) {
+                    neighbors = 0;
+                    neigh0 = -1;
+                    neigh1 = -1;
+                    neigh2 = -1;
+                    neigh3 = -1;
+                    neigh4 = -1;
+                    neigh5 = -1;
+                    neigh6 = -1;
+                    neigh7 = -1;
+                    if (y > 0) {
+                        if (x > 0) {
+                            if (srcBuffer[index - xDim - 1] != 0) {
+                                neighbors++;
+                                neigh0 = index - xDim - 1;
+                            }
+                        }
+                        if (srcBuffer[index - xDim] != 0) {
+                            neighbors++;
+                            neigh1 = index - xDim;
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index - xDim + 1] != 0) {
+                                neighbors++;
+                                neigh2 = index - xDim + 1;
+                            }
+                        }
+                    } // if (y > 0)
+                    if (x > 0) {
+                        if (srcBuffer[index - 1] != 0) {
+                            neighbors++;
+                            neigh3 = index - 1;
+                        }
+                    } // if (x > 0)
+                    if (x < xDim - 1) {
+                        if (srcBuffer[index + 1] != 0) {
+                            neighbors++;
+                            neigh4 = index + 1;
+                        }
+                    } // if (x < xDim - 1)
+                    if (y < yDim - 1) {
+                        if (x > 0) {
+                            if (srcBuffer[index + xDim - 1] != 0) {
+                                neighbors++;
+                                neigh5 = index + xDim - 1;
+                            }
+                        }
+                        if (srcBuffer[index + xDim] != 0) {
+                            neighbors++;
+                            neigh6 = index + xDim;
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index + xDim + 1] != 0) {
+                                neighbors++;
+                                neigh7 = index + xDim + 1;
+                            }
+                        }    
+                    } // if (y < yDim - 1)
+                    if (neighbors > 2) {
+                        // Could be 3 or 4
+                        if ((neigh0 >= 0) && (neigh1 >= 0)) {
+                            srcBuffer[neigh1] = 0;
+                            neigh1 = -1;
+                        }
+                        if ((neigh1 >= 0) && (neigh2 >= 0)) {
+                            srcBuffer[neigh1] = 0;
+                            neigh1 = -1;
+                        }
+                        if ((neigh0 >= 0) && (neigh3 >= 0)) {
+                            srcBuffer[neigh3] = 0;
+                            neigh3 = -1;
+                        }
+                        if ((neigh3 >= 0) && (neigh5 >= 0)) {
+                            srcBuffer[neigh3] = 0;
+                            neigh3 = -1;
+                        }
+                        if ((neigh2 >= 0) && (neigh4 >= 0)) {
+                            srcBuffer[neigh4] = 0;
+                            neigh4 = -1;
+                        }
+                        if ((neigh4 >= 0) && (neigh7 >= 0)) {
+                            srcBuffer[neigh4] = 0;
+                            neigh4 = -1;
+                        }
+                        if ((neigh5 >= 0) && (neigh6 >= 0)) {
+                            srcBuffer[neigh6] = 0;
+                            neigh6 = -1;
+                        }
+                        if ((neigh6 >= 0) && (neigh7 >= 0)) {
+                            srcBuffer[neigh6] = 0;
+                            neigh6 = -1;
+                        }
+                    }
+                } // if (srcBuffer[index] != 0)
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
+        
+        
         numPoints = 0;
         endPoints = 0;
         neighbor1 = new int[sourceSlice];
@@ -485,7 +672,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                             }
                         }    
                     } // if (y < yDim - 1)
-                    if ((neighbors == 0) || (neighbors > 2)) {
+                    if (neighbors == 0) {
                         srcBuffer[index] = 0;
                         neighbor1[index] = -1;
                         neighbor2[index] = -1;
@@ -539,7 +726,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                         openLength[i]++;
                     } // while(neighbor2[index] != -1;
                     // Delete all open curves with only 2 points
-                    // Also delete 2 end points on longer open curves since tangents are too unclear
+                    // Also don't determine tangents of end points on longer curves,
+                    // but use these 2 end points in determining tangents of more inner points
+                    // These 2 end points will not be used in generating random 3 point sets.
                     numPoints = numPoints - 2;
                     if (openLength[i] == 2) {
                         srcBuffer[openStart[i]] = 0;
@@ -553,6 +742,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 }
             }
         }
+        
+        ViewUserInterface.getReference().setDataText("Number of open curves = " + numOpenCurves + "\n");
         
         indexArray = new int[numPoints];
         slopeArray = new float[numPoints];
@@ -627,7 +818,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         
         // Find a position and length of closed curve
         numClosedCurves = 0;
-        startPtr = indexPtr;
         xPoints = new float[2*sidePointsForTangent + 1];
         yPoints = new float[2*sidePointsForTangent + 1];
         for (y = 0; y < yDim; y++) {
@@ -635,6 +825,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             for (x = 0; x < xDim; x++) {
                 index = offset + x;
                 if (!foundArray[index]) {
+                    startPtr = indexPtr;
                     foundArray[index] = true;
                     numClosedCurves++;
                     closedStart = index;
@@ -697,6 +888,15 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             } // for (x = 0; x < xDim; x++)
         } // for (y = 0; y < yDim; y++)
         
+        ViewUserInterface.getReference().setDataText("Number of closed curves = " + numClosedCurves + "\n");
+        
+        while ((ellipsesFound < numEllipses) && (ellipseFindCycles < maxEllipseFindCycles)) {
+            pointSetsAcquired = 0;
+            while (pointSetsAcquired < pointSetsRequired) {
+                // Generate 3 random numbers from 0 to numPoints - 1    
+            } // while (pointSetsAcquired < pointSetsRequired)
+        } // while ((ellipsesFound < numEllipses) && (ellipseFindCycles < maxEllipseFindCycles))
+        
         // Restore original source values
         if (!test) {
             try {
@@ -758,7 +958,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                                    String.valueOf(maxDegreesDiff) + ", " + 
                                    String.valueOf(minPointDistance) + ", " +
                                    String.valueOf(maxPointDistance) + ", " +
-                                   String.valueOf(pointSetsAcquired) + ", " +
+                                   String.valueOf(pointSetsRequired) + ", " +
                                    String.valueOf(countThreshold) + ", " +
                                    String.valueOf(ellipseRangeTolerance) + ", " +
                                    String.valueOf(maxAxesRatio) + ", " + 
