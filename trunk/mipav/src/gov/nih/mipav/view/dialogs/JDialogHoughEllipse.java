@@ -69,7 +69,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
     
     private JTextField maxPointText;
     
-    private int pointSetsAcquired;
+    private int pointSetsRequired;
     
     private JTextField pointSetsText;
     
@@ -223,7 +223,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
             // Make algorithm
             hAlgo = new AlgorithmHoughEllipse(resultImage, image, minCoverage, sidePointsForTangent, maxPixelDiff,
                                               maxDegreesDiff, minPointDistance,
-                                              maxPointDistance, pointSetsAcquired, countThreshold,
+                                              maxPointDistance, pointSetsRequired, countThreshold,
                                               ellipseRangeTolerance, maxAxesRatio, numEllipses,
                                               maxBufferSize);
 
@@ -398,7 +398,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         gbc.gridx = 1;
         paramPanel.add(maxPointText, gbc);
         
-        pointSetsLabel = new JLabel("Point triplets acquired per ellipse find ");
+        pointSetsLabel = new JLabel("Point triplets required per ellipse find ");
         pointSetsLabel.setForeground(Color.black);
         pointSetsLabel.setFont(serif12);
         pointSetsLabel.setEnabled(true);
@@ -562,7 +562,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
 
             return false;
         } else {
-            pointSetsAcquired = Integer.valueOf(pointSetsText.getText()).intValue();
+            pointSetsRequired = Integer.valueOf(pointSetsText.getText()).intValue();
         }
         
         if (!testParameter(countText.getText(), 1, 1000)) {
