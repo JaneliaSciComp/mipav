@@ -418,35 +418,19 @@ bool myClip(float3 vec,
 }
 
 
-/** Raycasting vertex program implementation */
-void v_VolumeShader( in float4 inPosition     : POSITION,
-                     in float3 inTexCoord1     : TEXCOORD0, 
-                     out float4 outPosition    : POSITION, // For the rasterizer
-                     out float3 outTexCoord1    : TEXCOORD0,
-                     out float4 outPos,
-                     uniform float4x4 WVPMatrix)
-{    
-    // Transform vertex
-    outPosition = mul( inPosition, WVPMatrix );
-    outPos = outPosition; 
-    outTexCoord1 = inTexCoord1;
-}
-
 /** Raycasting fragment program implementation */
-void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
+void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                       in float4 inPos,
                       out float4 kColor	    : COLOR0,
-                      uniform sampler3D volume_tex, 
                       uniform sampler2D tex, 
+                      uniform sampler3D volume_tex, 
                       uniform sampler1D colormap, 
                       uniform sampler1D opacitymap, 
                       uniform sampler3D normalmap, 
                       uniform float stepsize,
                       uniform float IsColor,
-                      uniform float MIP,
-                      uniform float DDR,
+                      uniform float DoClip,
                       uniform float Composite,
-                      uniform float Surface,
                       uniform float clipX,
                       uniform float clipXInv,
                       uniform float clipY,
@@ -542,18 +526,12 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
     // The normal at the current position along the ray:
     float4 normal = (0,0,0,0);
 
-    // Maximum value along the ray for MIP
-    float fMax = 0;
-    // Intensity value of color:
-    float intensity_color = 0;
-    // maximum color value along the ray
-    float3 color_max = (0,0,0);
-
     float alpha_sample = stepsize;
     float delta = stepsize;
     float3 delta_dir = norm_dir * delta;
     float delta_dir_len = length(delta_dir);
     float length_acc = 0;
+    bool bClipped = false;
 
     float4 worldNormal;
     float4 color0;
@@ -566,140 +544,111 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
     for( int i = 0; i < 450; i++ )
     {
         // axis-aligned clipping:
-        if ( myClip( position, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+        if ( (DoClip != 0) && myClip( position, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
         {
             color = (0,0,0,0);
             opacity = 0;
         }
         else
         {
-            // eye clipping and arbitrary clipping:
-            float4 aPosition = float4(0,0,0,0);
-            aPosition.xyz = position.xyz - (.5,.5,.5);
-            aPosition = mul( aPosition, WVPMatrix );
-            aPosition.xyz = aPosition.xyz + (.5,.5,.5);
-            float fDot = dot( aPosition.xyz, clipEye.xyz );
-            float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
-            float fDotArb = dot( position.xyz, clipArb.xyz );
-            if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
+            bClipped = false;
+            if ( DoClip != 0 )
             {
-                color = (0,0,0,0);
-                opacity = 0;
+                // eye clipping and arbitrary clipping:
+                float4 aPosition = float4(0,0,0,0);
+                aPosition.xyz = position.xyz - (.5,.5,.5);
+                aPosition = mul( aPosition, WVPMatrix );
+                aPosition.xyz = aPosition.xyz + (.5,.5,.5);
+                float fDot = dot( aPosition.xyz, clipEye.xyz );
+                float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
+                float fDotArb = dot( position.xyz, clipArb.xyz );
+                if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
+                {
+                    color = (0,0,0,0);
+                    opacity = 0;
+                    bClipped = true;
+                }
             }
             // The value is not clipped, compute the color:
-            else
+            if ( !bClipped )
             {
                 color = tex3D(volume_tex,position);
                 opacity = tex1D(opacitymap,color.r).r;
-                if ( MIP == 0 )
+                if ( IsColor != 0 )
                 {
-                    if ( IsColor != 0 )
-                    {
-                        color.r = tex1D(colormap,color.r).r;
-                        color.g = tex1D(colormap,color.g).g;
-                        color.b = tex1D(colormap,color.b).b;
-                    }
-                    else
-                    {
-                        color = tex1D(colormap,color.r);
-                    }
+                    color.r = tex1D(colormap,color.r).r;
+                    color.g = tex1D(colormap,color.g).g;
+                    color.b = tex1D(colormap,color.b).b;
+                }
+                else
+                {
+                    color = tex1D(colormap,color.r);
                 }
             }
         }
         // If the opacity is not zero:
         if ( opacity > 0 )
         {
-            // MIP: Store the maximum value:
-            intensity_color = dot(color.rgb, (.3,.3,.3));
-            if ( intensity_color > fMax ) 
-            {
-                fMax = intensity_color;
-                color_max.rgb = color.rgb;
-            }
             // Surface and Composite surface display:
-            if ( Surface != 0 )
-            {
-                normal = tex3D(normalmap,position);
+            normal = tex3D(normalmap,position);
 
-                // Get the color based on lighting:
-                normal.w = 1;
-                worldNormal = mul( normal, WVMatrix );
-                color0 = color;
-                computeColor( inPos, worldNormal, CameraWorldPosition,
-                              MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                              Light0Ambient, Light0Diffuse, Light0Specular,
-                              Light0WorldPosition, Light0WorldDirection,
-                              Light0SpotCutoff, Light0Attenuation,
-                              Light0Type,
-                              Composite, color0 );
+            // Get the color based on lighting:
+            normal.w = 1;
+            worldNormal = mul( normal, WVMatrix );
+            color0 = color;
+            computeColor( inPos, worldNormal, CameraWorldPosition,
+                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
+                          Light0Ambient, Light0Diffuse, Light0Specular,
+                          Light0WorldPosition, Light0WorldDirection,
+                          Light0SpotCutoff, Light0Attenuation,
+                          Light0Type,
+                          Composite, color0 );
                 
 
-                normal.w = 0;
-                color1 = color;
-                computeColor( inPos, normal, CameraWorldPosition,
-                              MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                              Light1Ambient, Light0Diffuse, Light0Specular,
-                              Light0WorldPosition, Light0WorldDirection,
-                              Light0SpotCutoff, Light1Attenuation,
-                              0, Composite, color1 );
+            normal.w = 0;
+            color1 = color;
+            computeColor( inPos, normal, CameraWorldPosition,
+                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
+                          Light1Ambient, Light0Diffuse, Light0Specular,
+                          Light0WorldPosition, Light0WorldDirection,
+                          Light0SpotCutoff, Light1Attenuation,
+                          0, Composite, color1 );
 
-                color2 = color;
-                computeColor( inPos, normal, CameraWorldPosition,
-                              MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                              Light2Ambient, Light2Diffuse, Light2Specular,
-                              Light2WorldPosition, Light2WorldDirection,
-                              Light2SpotCutoff, Light2Attenuation,
-                              Light2Type,
-                              Composite, color2 );
+            color2 = color;
+            computeColor( inPos, normal, CameraWorldPosition,
+                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
+                          Light2Ambient, Light2Diffuse, Light2Specular,
+                          Light2WorldPosition, Light2WorldDirection,
+                          Light2SpotCutoff, Light2Attenuation,
+                          Light2Type,
+                          Composite, color2 );
 
-                color3 = color;
-                computeColor( inPos, normal, CameraWorldPosition,
-                              MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                              Light3Ambient, Light3Diffuse, Light3Specular,
-                              Light3WorldPosition, Light3WorldDirection,
-                              Light3SpotCutoff, Light3Attenuation,
-                              Light3Type,
-                              Composite, color3 );
+            color3 = color;
+            computeColor( inPos, normal, CameraWorldPosition,
+                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
+                          Light3Ambient, Light3Diffuse, Light3Specular,
+                          Light3WorldPosition, Light3WorldDirection,
+                          Light3SpotCutoff, Light3Attenuation,
+                          Light3Type,
+                          Composite, color3 );
 
-                color = color0 + color1 + color2 + color3;
+            color = color0 + color1 + color2 + color3;
 
-                // Composite surface:
-                if ( Composite != 0 )
-                {
-                    color_acc   = (1.0 - alpha_acc) * color * opacity + color_acc;
-                    alpha_acc += (1 - alpha_acc) * opacity;
-                }
-                // Surface:
-                else if ( (color.x != 0) || (color.y != 0) || (color.z != 0) )
-                {
-                    color_acc   = color;
-                    break;
-                }
-            }
-            // DDR, and Composite display:
-            else
+            // Composite surface:
+            if ( Composite != 0 )
             {
-                // Composite:
-                if ( Composite != 0 )
-                {
-                    color_acc   = (1.0 - alpha_acc) * color * opacity + color_acc;
-                    alpha_acc += (1 - alpha_acc) * opacity;
-                }
-                // DDR:
-                else
-                {
-                    color_acc   += (1.0 - alpha_acc) * color * alpha_sample * 3;
-                    alpha_acc += (1 - alpha_acc) * alpha_sample;
-                }
+                color_acc   = (1.0 - alpha_acc) * color * opacity + color_acc;
+                alpha_acc += (1 - alpha_acc) * opacity;
+            }
+            // Surface:
+            else if ( (color.x != 0) || (color.y != 0) || (color.z != 0) )
+            {
+                color_acc   = color;
+                break;
             }
         }
         // Break early if the accumulate alpha value for composite or composite surface is >= 1
         if ( (Composite != 0) && (alpha_acc >= 1.0) )
-        {
-            break;
-        }
-        // Break early if the max is >= 1
-        if ( (MIP==1) && (fMax>=1))
         {
             break;
         }
@@ -715,18 +664,4 @@ void p_VolumeShader(  in float3 inTexCoord1    : TEXCOORD0,
 
     kColor.rgb = color_acc.rgb;
     kColor.a = 1;
-    if ( MIP != 0 )
-    {
-        if ( IsColor != 0 )
-        {
-            kColor.r = tex1D(colormap,color_max.r).r;
-            kColor.g = tex1D(colormap,color_max.g).g;
-            kColor.b = tex1D(colormap,color_max.b).b;
-        }
-        else
-        {
-            kColor.rgb = tex1D(colormap,fMax).rgb;
-        }
-        kColor.a = fMax;
-    }
 }

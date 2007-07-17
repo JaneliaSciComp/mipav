@@ -47,18 +47,7 @@ import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
  * volume voxels onto the canvas image. Voxels that project onto blue pixels in the canvas image are removed, and voxels
  * that project to non-masked pixels are unaltered.</p>
  *
- * <p>Removing Sculpted Voxels</p>
- *
- * <p>The process of applying the sculpt region to the volume data and removing the voxels that fall inside the sculpt
- * region is broken down into three steps. First, the ModelImage data is retrieved and the center and spacing of the
- * data is determined. Second, the viewing transformations are calculated. Third, the voxels are mapped into screen
- * space and the location of the voxel is compared to the corresponding pixel. If the voxel maps to a pixel inside the
- * sculpt region its value is set to the minimum voxel value.</p>
- *
- * @author  Alexandra Bokinsky, Ph.D. Under contract from Magic Software.
- * @see     ViewJFrameVolumeView
- * @see     RayCastVolumeRenderer
- * @see     ShearWarpVolumeRenderer
+ * @author  Alexandra Bokinsky, Ph.D. Under contract from GeometricTools, Inc.
  */
 public class SculptorWm implements MouseMotionListener, MouseListener {
 
@@ -144,12 +133,18 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
     /** Shape of the drawing rectangle. */
     private int drawShape = LINES;
 
-    private ModelImage m_kImage = null;
-    private ModelImage m_kImageBackup = null;
+    private ModelImage m_kImageA = null;
+    private ModelImage m_kImageBackupA = null;
+
+    private ModelImage m_kImageB = null;
+    private ModelImage m_kImageBackupB = null;
 
     private Matrix4f m_kWVPMatrix = null;
-    private byte[] m_aucTextureImageData = null;
-    private float[] m_aucTextureImageFloatData = null;
+    private byte[] m_aucTextureImageDataA = null;
+    private float[] m_afTextureImageDataA = null;
+
+    private byte[] m_aucTextureImageDataB = null;
+    private float[] m_afTextureImageDataB = null;
     
     public SculptorWm( GLCanvas kCanvas )
     {
@@ -174,12 +169,19 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
         m_aiXPoints = null;
         m_aiYPoints = null;
 
-        if ( m_kImageBackup != null )
+        m_kImageA = null;
+        if ( m_kImageBackupA != null )
         {
-            m_kImageBackup.disposeLocal(true);
-            m_kImageBackup = null;
+            m_kImageBackupA.disposeLocal(true);
+            m_kImageBackupA = null;
         }
-    }
+        m_kImageB = null;
+        if ( m_kImageBackupB != null )
+        {
+            m_kImageBackupB.disposeLocal(true);
+            m_kImageBackupB = null;
+        }
+   }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -193,15 +195,25 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
         return m_bSculptDrawn;
     }
 
-    public void setImage( ModelImage kImage )
+    public void setImage( ModelImage kImageA, ModelImage kImageB )
     {
-        m_kImage = kImage;
-        if ( m_kImageBackup != null )
+        m_kImageA = kImageA;
+        if ( m_kImageBackupA != null )
         {
-            m_kImageBackup.disposeLocal(true);
-            m_kImageBackup = null;
+            m_kImageBackupA.disposeLocal(true);
+            m_kImageBackupA = null;
         }
-        m_kImageBackup = (ModelImage)m_kImage.clone("sculpt_backup");
+        m_kImageBackupA = (ModelImage)m_kImageA.clone("sculpt_backupA");
+        if ( kImageB != null )
+        {
+            m_kImageB = kImageB;
+            if ( m_kImageBackupB != null )
+            {
+                m_kImageBackupB.disposeLocal(true);
+                m_kImageBackupB = null;
+            }
+            m_kImageBackupB = (ModelImage)m_kImageB.clone("sculpt_backupB");
+        }
     }
     
     public void setWVPMatrix( Matrix4f kMatrix )
@@ -209,14 +221,24 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
         m_kWVPMatrix = kMatrix;
     }
 
-    public void setTextureImageData( byte[] data )
+    public void setTextureImageDataA( byte[] data )
     {
-        m_aucTextureImageData = data;
+        m_aucTextureImageDataA = data;
     }
 
-    public void setTextureImageFloatData( float[] data )
+    public void setTextureImageFloatDataA( float[] data )
     {
-        m_aucTextureImageFloatData = data;
+        m_afTextureImageDataA = data;
+    }
+
+    public void setTextureImageDataB( byte[] data )
+    {
+        m_aucTextureImageDataB = data;
+    }
+
+    public void setTextureImageFloatDataB( float[] data )
+    {
+        m_afTextureImageDataB = data;
     }
 
     
@@ -236,25 +258,25 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
             return false;
         }
         
-        if ( m_kImage == null ) {
+        if ( m_kImageA == null ) {
             return false;
         }
         if ( m_kWVPMatrix == null ) {
             return false;
         }
 
-        if ( (m_aucTextureImageData == null) && (m_aucTextureImageFloatData == null) )
+        if ( (m_aucTextureImageDataA == null) && (m_afTextureImageDataA == null) )
         {
             return false;
         }
 
-        int iXBound = m_kImage.getExtents()[0];
-        int iYBound = m_kImage.getExtents()[1];
-        int iZBound = m_kImage.getExtents()[2];
+        int iXBound = m_kImageA.getExtents()[0];
+        int iYBound = m_kImageA.getExtents()[1];
+        int iZBound = m_kImageA.getExtents()[2];
 
-        float fMaxX = (float) (iXBound - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (float) (iYBound - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (float) (iZBound - 1) * m_kImage.getFileInfo(0).getResolutions()[2];
+        float fMaxX = (float) (iXBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (float) (iYBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (float) (iZBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[2];
 
         float fMax = fMaxX;
         if (fMaxY > fMax) {
@@ -270,11 +292,13 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
 
         Vector4f kIn = new Vector4f(0,0,0,1);
         Vector4f kOut;
-        for (int iZ = 0, i = 0; iZ < iZBound; iZ++)
+        int iA = 0;
+        int iB = 0;
+        for (int iZ = 0; iZ < iZBound; iZ++)
         {
             for (int iY = 0; iY < iYBound; iY++)
             {
-                for (int iX = 0; iX < iXBound; iX++, i++)
+                for (int iX = 0; iX < iXBound; iX++)
                 {
                     kIn.X(((float)iX/(float)iXBound)*fX);
                     kIn.Y(((float)iY/(float)iYBound)*fY);
@@ -288,20 +312,24 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
                     int iXIndex = (int)((m_iSculptImageWidth-1) * (1 + kOut.X())/2.0f);
                     int iYIndex = (int)((m_iSculptImageHeight-1) * (1 - kOut.Y())/2.0f);
 
-                    m_kImageBackup.set(iX, iY, iZ, m_kImage.getFloat(iX,iY,iZ));
+                    int iDataIndex = iZ * (iXBound * iYBound) + (iY * iXBound) + iX;
+
+                    backupData( m_kImageA, m_kImageBackupA, iDataIndex );
+                    if ( m_kImageB != null )
+                    {
+                        backupData( m_kImageB, m_kImageBackupB, iDataIndex );
+                    }
                     if ( (iXIndex >= 0) && (iXIndex < m_iSculptImageWidth) &&
                          (iYIndex >= 0) && (iYIndex < m_iSculptImageHeight) &&
                          getSculpt( iXIndex, iYIndex ) )
                     {
-                        m_kImage.set(iX, iY, iZ, (float)m_kImage.getMin());
                         bVolumeChanged = true;
-                        if ( m_aucTextureImageData != null )
+                        
+                        sculptData( m_kImageA, iDataIndex, m_aucTextureImageDataA, m_afTextureImageDataA );
+
+                        if ( m_kImageB != null )
                         {
-                            m_aucTextureImageData[i] = (byte)0;
-                        }
-                        else
-                        {
-                            m_aucTextureImageFloatData[i] = 0f;
+                            sculptData( m_kImageB, iDataIndex, m_aucTextureImageDataB, m_afTextureImageDataB );
                         }
                     }
                 }
@@ -313,54 +341,141 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
     }
 
     /**
-     * undoSculpt: abstract function, implementation depends on whether the instance is VolumeTextureSculptor or
-     * VolumeSculptor.
      */
     public void undoSculpt()
     {
-        float fImageMax = (float)m_kImage.getMax();
-        float fImageMin = (float)m_kImage.getMin();
-        int iXBound = m_kImage.getExtents()[0];
-        int iYBound = m_kImage.getExtents()[1];
-        int iZBound = m_kImage.getExtents()[2];
+        float fImageMaxA = (float)m_kImageA.getMax();
+        float fImageMinA = (float)m_kImageA.getMin();
+        int iXBound = m_kImageA.getExtents()[0];
+        int iYBound = m_kImageA.getExtents()[1];
+        int iZBound = m_kImageA.getExtents()[2];
 
-        int i = 0;
+        float fImageMaxB = 0, fImageMinB = 0;
+        if ( m_kImageB != null )
+        {
+            fImageMaxB = (float)m_kImageB.getMax();
+            fImageMinB = (float)m_kImageB.getMin();
+        }
+
+        int iA = 0;
+        int iB = 0;
         for (int iZ = 0; iZ < iZBound; iZ++)
         {
             for (int iY = 0; iY < iYBound; iY++)
             {
                 for (int iX = 0; iX < iXBound; iX++)
                 {
-                    if ( m_kImage.isColorImage() )
+                    int iDataIndex = iZ * (iXBound * iYBound) + (iY * iXBound) + iX;
+                    backupData( m_kImageBackupA, m_kImageA, iDataIndex );
+                    if ( m_kImageA.isColorImage() )
                     {
-                        if ( m_aucTextureImageData != null )
+                        if ( m_aucTextureImageDataA != null )
                         {
-                            m_aucTextureImageData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,0));
-                            m_aucTextureImageData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,1));
-                            m_aucTextureImageData[i++] = (byte)(255.0f*m_kImage.getFloatC(iX,iY,iZ,2));
+                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +1).byteValue();
+                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +2).byteValue();
+                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +3).byteValue();
+                            m_aucTextureImageDataA[iA++] = (byte)255;
                         }
                         else
                         {}
                     }
                     else
                     {
-                        m_kImage.set(iX, iY, iZ, m_kImageBackup.getFloat(iX,iY,iZ));
-
-                        float fValue = m_kImage.getFloat(iX,iY,iZ);
-                        fValue = (fValue - fImageMin)/(fImageMax - fImageMin);
+                        float fValue = m_kImageA.get(iDataIndex).floatValue();
+                        fValue = (fValue - fImageMinA)/(fImageMaxA - fImageMinA);
                         byte bValue = (byte)(255.0f * fValue);
-                        if ( m_aucTextureImageData != null )
+                        if ( m_aucTextureImageDataA != null )
                         {
-                            m_aucTextureImageData[i++] = bValue;
+                            m_aucTextureImageDataA[iA++] = bValue;
                         }
                         else
                         {
-                            m_aucTextureImageFloatData[i++] = fValue;
+                            m_afTextureImageDataA[iA++] = fValue;
+                        }
+                    }
+
+                    if ( m_kImageB != null )
+                    {
+                        backupData( m_kImageBackupB, m_kImageB, iDataIndex );
+                        if ( m_kImageB.isColorImage() )
+                        {
+                            if ( m_aucTextureImageDataB != null )
+                            {
+                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +1).byteValue();
+                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +2).byteValue();
+                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +3).byteValue();
+                                m_aucTextureImageDataB[iB++] = (byte)255;
+                            }
+                        }
+                        else
+                        {
+                            float fValue = m_kImageB.get(iDataIndex).floatValue();
+                            fValue = (fValue - fImageMinB)/(fImageMaxB - fImageMinB);
+                            byte bValue = (byte)(255.0f * fValue);
+                            if ( m_aucTextureImageDataB != null )
+                            {
+                                m_aucTextureImageDataB[iB++] = bValue;
+                            }
+                            else
+                            {
+                                m_afTextureImageDataB[iB++] = fValue;
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+
+    private void backupData( ModelImage kImage, ModelImage kImageBackup, int iDataIndex )
+    {
+        if ( !kImage.isColorImage() )
+        {
+            kImageBackup.set(iDataIndex, kImage.get(iDataIndex));
+        }
+        else
+        {
+            for ( int c = 0; c < 4; c++ )
+            {
+                kImageBackup.set(iDataIndex * 4 + c, kImage.get(iDataIndex * 4 + c));
+            }
+        }
+    }
+
+    private void sculptData( ModelImage kImage, int iDataIndex,
+                             byte[] aucTextureImageData, float[] afTextureImageData )
+    {
+        if ( !kImage.isColorImage() )
+        {
+            kImage.set(iDataIndex, (float)kImage.getMin());
+        }
+        else
+        {
+            kImage.set(iDataIndex*4 + 1, (float)kImage.getMinR());
+            kImage.set(iDataIndex*4 + 2, (float)kImage.getMinG());
+            kImage.set(iDataIndex*4 + 3, (float)kImage.getMinB());
+        }
+        
+        if ( aucTextureImageData != null )
+        {
+            if ( kImage.isColorImage() )
+            {
+                aucTextureImageData[iDataIndex * 4 + 0] = (byte)0;
+                aucTextureImageData[iDataIndex * 4 + 1] = (byte)0;
+                aucTextureImageData[iDataIndex * 4 + 2] = (byte)0;
+                aucTextureImageData[iDataIndex * 4 + 3] = (byte)0;
+            }
+            else
+            {
+                aucTextureImageData[iDataIndex] = (byte)0;
+            }
+        }
+        else
+        {
+            afTextureImageData[iDataIndex] = 0f;
+        }
+
     }
 
     /**
@@ -1225,8 +1340,8 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
 
         int i;
 
-        if (m_kImage != null) {
-            img = m_kImage;
+        if (m_kImageA != null) {
+            img = m_kImageA;
         } else {
             return false;
         }
@@ -1349,13 +1464,6 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
             fileName = img.getFileInfo(0).getFileName();
             directory = img.getFileInfo(0).getFileDirectory();
         }
-
-        /*
-         * I'm not sure why this wasn't done before.... if we do a save-as we should also update the name of the file
-         */
-        // if (options.isSaveAs()) {
-        // img.setImageName(fileName.substring(0, fileName.length()-4));
-        // }
 
         options.setFileName(fileName);
         options.setFileDirectory(directory);

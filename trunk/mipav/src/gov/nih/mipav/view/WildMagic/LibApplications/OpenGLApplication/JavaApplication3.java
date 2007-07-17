@@ -886,9 +886,9 @@ public abstract class JavaApplication3 extends JavaApplication
             // get the ending point
             float fMult = 1.0f/(m_iWidth >= m_iHeight ? m_iHeight : m_iWidth);
             float fYDrag1 = (2*(m_iHeight-1-iY)-m_iHeight)*fMult;
-            float fSpeed = Math.abs( fYDrag1 ); 
-            float fTrnSpeedTmp = m_fTrnSpeed;
-            m_fTrnSpeed = .01f + fSpeed;
+            //float fSpeed = Math.abs( fYDrag1 ); 
+            //float fTrnSpeedTmp = m_fTrnSpeed;
+            //m_fTrnSpeed = .01f + fSpeed;
             if ( fYDrag1 > m_fYDrag0 )
             {
                 MoveBackward();
@@ -897,7 +897,7 @@ public abstract class JavaApplication3 extends JavaApplication
             {
                 MoveForward();
             }
-            m_fTrnSpeed = fTrnSpeedTmp;
+            //m_fTrnSpeed = fTrnSpeedTmp;
             m_fYDrag0 = fYDrag1;
         }
         if (!m_bUseTrackBall

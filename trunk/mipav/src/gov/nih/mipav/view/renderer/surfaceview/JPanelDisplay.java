@@ -3,11 +3,15 @@ package gov.nih.mipav.view.renderer.surfaceview;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
+import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 
 import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.media.j3d.Material;
 
 
 /**
@@ -99,8 +103,17 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
+        String command = event.getActionCommand();
 
-        if (source instanceof JButton) {
+        if ( command.equals( "AdvancedMaterialOptions" ) ) {
+            if ( renderBase instanceof SurfaceRender )
+            {
+                new JFrameSurfaceMaterialProperties(this, 0,
+                                                    ((SurfaceRender)renderBase).getSurfaceDialog().getLightDialog().getGeneralLights(),
+                                                    0, new Material() );
+            }
+        }
+        else if (source instanceof JButton) {
             colorChooser = new ViewJColorChooser(new Frame(), "Pick color", new OkColorListener((JButton) source),
                                                  new CancelListener());
         } else if (source == boundingCheck) {
@@ -367,11 +380,9 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         cubePanel.setBorder(buildTitledBorder("Orientation"));
 
         JPanel viewTexturePanel = new JPanel();
-
         viewTexturePanel.setBorder(buildTitledBorder("Texture Type"));
 
         Box viewTextureBox = new Box(BoxLayout.Y_AXIS);
-
         viewButton = new JRadioButton();
         viewButton.addActionListener(this);
         viewAlignedButton = new JRadioButton();
@@ -441,7 +452,24 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         contentBox.add(panel2);
         contentBox.add(cubePanel);
         contentBox.add(projectionTypePanel);
-        contentBox.add(viewTexturePanel);
+        if ( (renderBase instanceof SurfaceRender) &&
+             !( ((SurfaceRender)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWM ))
+        {
+            contentBox.add(viewTexturePanel);
+        }
+        else
+        {
+            JPanel buttonPanel = new JPanel();
+            /* Creates the advanced material options button, which launches the
+             * material editor dialog: */
+            JButton kAdvancedMaterialOptionsButton = new JButton("Material");
+            kAdvancedMaterialOptionsButton.setToolTipText("Change material properties");
+            kAdvancedMaterialOptionsButton.addActionListener(this);
+            kAdvancedMaterialOptionsButton.setActionCommand("AdvancedMaterialOptions");
+            kAdvancedMaterialOptionsButton.setEnabled(true);
+            buttonPanel.add(kAdvancedMaterialOptionsButton);
+            contentBox.add(buttonPanel);
+        }
 
         // Scroll panel that hold the control panel layout in order to use JScrollPane
         scrollPanel = new DrawingPanel();
@@ -521,4 +549,37 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
             setBoxColor(button, color);
         }
     }
+
+    public void setMaterial(Material kMaterial, int iIndex)
+    {
+        MaterialState kMaterialState = new MaterialState();
+
+        javax.vecmath.Color3f kColor = new javax.vecmath.Color3f();
+        kMaterial.getAmbientColor(kColor);
+        kMaterialState.Ambient = new ColorRGB(kColor.x, kColor.y, kColor.z);
+
+        kMaterial.getEmissiveColor(kColor);
+        kMaterialState.Emissive = new ColorRGB(kColor.x, kColor.y, kColor.z);
+
+        kMaterial.getDiffuseColor(kColor);
+        kMaterialState.Diffuse = new ColorRGB(kColor.x, kColor.y, kColor.z);
+
+        kMaterial.getSpecularColor(kColor);
+        kMaterialState.Specular = new ColorRGB(kColor.x, kColor.y, kColor.z);
+
+        kMaterialState.Shininess = kMaterial.getShininess();
+
+        if ( (renderBase instanceof SurfaceRender) &&
+             ( ((SurfaceRender)renderBase).getParentFrame() instanceof ViewJFrameVolumeViewWM ))
+        {
+            ((ViewJFrameVolumeViewWM)((SurfaceRender)renderBase).getParentFrame()).getRaycastRenderWM().SetMaterialState( kMaterialState );
+        }
+    }
+
+
+    public void restorePerVertexColor(Material kMaterial, int index)
+    {
+        setMaterial( kMaterial, index );
+    }
+
 }

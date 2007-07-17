@@ -241,7 +241,7 @@ public abstract class JavaApplication extends Application
     protected FrameBuffer.MultisamplingType m_eMultisampling = FrameBuffer.MultisamplingType.MT_SAMPLING_NONE;
 
     /** The renderer (used for 2D and 3D applications). */
-    protected Renderer m_pkRenderer = null;
+    protected gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer m_pkRenderer = null;
 
     /** KeyEvents: */
     public void keyPressed(KeyEvent e) {}

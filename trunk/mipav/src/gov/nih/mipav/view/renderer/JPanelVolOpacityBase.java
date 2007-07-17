@@ -543,6 +543,18 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
 
             componentOpacityGM_B.updateCursorXPos(middleLabelValueGM_B + deltaValue);
         }
+        else if ( event.getSource() == blendSlider )
+        {
+            if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+            {
+                if ( ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
+                     instanceof ViewJFrameVolumeViewWM )
+                {
+                    ((ViewJFrameVolumeViewWM)((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()).
+                        updateBlend();
+                }
+            }
+        }
     }
 
     /**
@@ -610,6 +622,7 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         blendSlider.setLabelTable(labels);
         blendSlider.setPaintLabels(true);
         blendSlider.addMouseListener(this);
+        blendSlider.addChangeListener(this);
         blendSlider.setEnabled(imageB != null);
 
         JPanel blendPanel = new JPanel(new GridLayout(1, 1));

@@ -435,7 +435,7 @@ public class ShaderEffect extends Effect
 
     /** The functions are called by Renderer::LoadResources and
      * Renderer::ReleaseResources for Geometry and Effect objects.
-     * Releases the programs froma the shader objects and video memory
+     * Releases the programs from the shader objects and video memory
      * @param pkRenderer the Rederer object
      * @param pkGeometry the Geometry the ShaderEffect is applied to
      */
@@ -515,88 +515,102 @@ public class ShaderEffect extends Effect
         assert((m_kVShader.get(iPass) != null) &&
                (m_kPShader.get(iPass) != null));
 
-        Program pkVProgram = m_kVShader.get(iPass).GetProgram();
-        Program pkPProgram = m_kPShader.get(iPass).GetProgram();
-        assert((pkVProgram != null) == (pkPProgram != null));
-        if (pkVProgram != null)
+        VertexProgram pkVProgram = m_kVShader.get(iPass).GetProgram();
+        PixelProgram pkPProgram = m_kPShader.get(iPass).GetProgram();
+
+        if ((pkVProgram != null) && (pkPProgram != null))
         {
             // The programs have already been loaded.
             return;
         }
 
-        PixelProgram spkPProgram =
-            PixelProgramCatalog.GetActive().
-            Find( m_kPShader.get(iPass).GetShaderName(),
-                  PixelProgramCatalog.GetActive().GetDefaultDir());
-        assert(spkPProgram != null);
+        boolean bLoadedVProgram = false;
+        boolean bLoadedPProgram = false;
+        if ( pkPProgram == null )
+        {
+            pkPProgram =
+                PixelProgramCatalog.GetActive().
+                Find( m_kPShader.get(iPass).GetShaderName(),
+                      PixelProgramCatalog.GetActive().GetDefaultDir());
+            bLoadedPProgram = true;
+        }
 
-        VertexProgram spkVProgram =
-            VertexProgramCatalog.GetActive().
-            Find( m_kVShader.get(iPass).GetShaderName(),
-                  VertexProgramCatalog.GetActive().GetDefaultDir());
-        assert(spkVProgram != null);
+        if ( pkVProgram == null )
+        {
+            pkVProgram =
+                VertexProgramCatalog.GetActive().
+                Find( m_kVShader.get(iPass).GetShaderName(),
+                      VertexProgramCatalog.GetActive().GetDefaultDir());
+            bLoadedVProgram = true;
+        }
 
         // Ensure that the output of the vertex program and the input of the
         // pixel program are compatible.  Each vertex program always has a clip
         // position output.  This is not relevant to the compatibility check.
         String kDefault = new String("Default");
-        Attributes rkVOAttr = spkVProgram.GetOutputAttributes();
-        Attributes rkPIAttr = spkPProgram.GetInputAttributes();
+        Attributes rkVOAttr = pkVProgram.GetOutputAttributes();
+        Attributes rkPIAttr = pkPProgram.GetInputAttributes();
         if (!rkVOAttr.Matches(rkPIAttr,false,true,true,true))
         {
             // The output attributes of the vertex program and the input
             // attributes of the pixel program are incompatible.  Use the default
             // shader objects.
-            if (!spkVProgram.GetName().equals(kDefault))
+            if (!pkVProgram.GetName().equals(kDefault))
             {
                 m_kVShader.set(iPass, new VertexShader(kDefault));
-                spkVProgram = VertexProgramCatalog.GetActive().Find(kDefault,
+                pkVProgram = VertexProgramCatalog.GetActive().Find(kDefault,
                         VertexProgramCatalog.GetActive().GetDefaultDir());
-                assert(spkVProgram != null);
+                assert(pkVProgram != null);
             }
 
-            if (!spkPProgram.GetName().equals(kDefault))
+            if (!pkPProgram.GetName().equals(kDefault))
             {
                 m_kPShader.set(iPass, new PixelShader(kDefault));
-                spkPProgram = PixelProgramCatalog.GetActive().Find(kDefault,
+                pkPProgram = PixelProgramCatalog.GetActive().Find(kDefault,
                         PixelProgramCatalog.GetActive().GetDefaultDir());
-                assert(spkPProgram != null);
+                assert(pkPProgram != null);
             }
         }
 
         // Verify the shader program does not require more resources than the
         // renderer can support.
-        Attributes rkVIAttr = spkVProgram.GetInputAttributes();
+        Attributes rkVIAttr = pkVProgram.GetInputAttributes();
         if (rkVIAttr.GetMaxColors()  > iMaxColors
             ||  rkVIAttr.GetMaxTCoords() > iMaxTCoords
             ||  rkVOAttr.GetMaxColors()  > iMaxColors
             ||  rkVOAttr.GetMaxTCoords() > iMaxTCoords
             ||  rkPIAttr.GetMaxColors()  > iMaxColors
             ||  rkPIAttr.GetMaxTCoords() > iMaxTCoords
-            ||  spkVProgram.GetSIQuantity() > iMaxVShaderImages
-            ||  spkPProgram.GetSIQuantity() > iMaxPShaderImages)
+            ||  pkVProgram.GetSIQuantity() > iMaxVShaderImages
+            ||  pkPProgram.GetSIQuantity() > iMaxPShaderImages)
         {
             // The renderer cannot support the requested resources.
-            if (!spkVProgram.GetName().equals(kDefault))
+            if (pkVProgram.GetName().equals(kDefault))
             {
                 m_kVShader.set(iPass, new VertexShader(kDefault));
-                spkVProgram = VertexProgramCatalog.GetActive().Find(kDefault,
+                pkVProgram = VertexProgramCatalog.GetActive().Find(kDefault,
                         VertexProgramCatalog.GetActive().GetDefaultDir());
-                assert(spkVProgram != null);
+                assert(pkVProgram != null);
             }
 
-            if (!spkPProgram.GetName().equals(kDefault))
+            if (!pkPProgram.GetName().equals(kDefault))
             {
                 m_kPShader.set(iPass, new PixelShader(kDefault));
-                spkPProgram = PixelProgramCatalog.GetActive().Find(kDefault,
+                pkPProgram = PixelProgramCatalog.GetActive().Find(kDefault,
                         PixelProgramCatalog.GetActive().GetDefaultDir());
-                assert(spkPProgram != null);
+                assert(pkPProgram != null);
             }
         }
 
-        m_kVShader.get(iPass).OnLoadProgram(spkVProgram);
-        m_kPShader.get(iPass).OnLoadProgram(spkPProgram);
-        OnLoadPrograms(iPass,spkVProgram,spkPProgram);
+        if ( bLoadedVProgram )
+        {
+            m_kVShader.get(iPass).OnLoadProgram(pkVProgram);
+        }
+        if ( bLoadedPProgram )
+        {
+            m_kPShader.get(iPass).OnLoadProgram(pkPProgram);
+        }
+        OnLoadPrograms(iPass,pkVProgram,pkPProgram);
     }
 
     /**

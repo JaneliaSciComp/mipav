@@ -455,9 +455,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             enableSurfaceRender();
         } else if (command.equals("VolRender")) {
             enableVolumeRender();
-        } else if (command.equals("RayCastOptions")) {
-            insertTab("View", raycastOptionsPanel);
-            insertRaycastTab("View", raycastOptionsPanel);
         } else if (command.equals("Geodesic")) {
             insertTab("Geodesic", m_kGeodesicPanel);
             insertSurfaceTab("Geodesic", m_kGeodesicPanel);
@@ -626,6 +623,11 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             surRender.setCenter(m_akPlaneRender[0].getCenter());
             setPositionLabels(surRender.getSlicePanel().getCenter());
             updateImages(true);
+        } else if (command.equals("ShaderParameters") ) {
+            if ( raycastRenderWM != null )
+            {
+                raycastRenderWM.displayShaderParameters();
+            }
         }
 
     }
@@ -914,17 +916,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     }
 
     /**
-     * Build the view control panel for the raycast render.
-     */
-    public void buildRayCastOptions() {
-         raycastOptionsPanel = new JPanel();
-         raycastOptionsPanel.add(raycastRenderWM.getOptions());
-         //update lighting...
-         surRender.getSurfaceDialog().getLightDialog().refreshLighting();
-         maxPanelWidth = Math.max(raycastOptionsPanel.getPreferredSize().width, maxPanelWidth);
-    }
-
-    /**
      * Build the Sculpturing control panel.
      */
     public void buildSculpt() {
@@ -1031,9 +1022,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                                                      false);
 
                 progressBar.setMessage("Constructing gpu renderer...");
-                raycastRenderWM = new GPUVolumeRender(imageA, LUTa);  
+                raycastRenderWM = new GPUVolumeRender(imageA, LUTa, RGBTA, imageB, LUTb, RGBTB);
                 TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
-                raycastRenderWM.updateImages(true, kTransfer);
+                raycastRenderWM.updateImages(0, kTransfer);
                 if (surRender != null) {
                     surRender.setRayBasedRender(raycastRenderWM);
                 }
@@ -1668,20 +1659,24 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         Object source = event.getSource();
 
         if (raycastRenderWM != null) {
+            int iImage = 0;
+            ViewJComponentVolOpacityBase kSelectedComp = surRender.getVolOpacityPanel().getSelectedComponent();
+            if ( kSelectedComp == surRender.getVolOpacityPanel().getCompB() )
+            {
+                iImage = 1;
+            }
 
             if (radioMIP.isSelected() && (source == radioMIP)) {
-                raycastRenderWM.MIPMode();
+                raycastRenderWM.MIPMode( iImage );
             } else if (radioXRAY.isSelected() && (source == radioXRAY)) {
-                raycastRenderWM.DDRMode();
+                raycastRenderWM.DDRMode( iImage );
             } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
-                raycastRenderWM.CMPMode();
+                raycastRenderWM.CMPMode( iImage );
             } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
-                raycastRenderWM.SURMode();
-                surRender.getSurfaceDialog().getLightDialog().getGeneralLight(2).enable(true);
+                raycastRenderWM.SURMode( iImage );
                 surRender.getSurfaceDialog().getLightDialog().refreshLighting();
             } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
-                raycastRenderWM.SURFASTMode();
-                surRender.getSurfaceDialog().getLightDialog().getGeneralLight(2).enable(true);
+                raycastRenderWM.SURFASTMode( iImage );
                 surRender.getSurfaceDialog().getLightDialog().refreshLighting();
            }
         }
@@ -2081,9 +2076,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             surRender.setRGBTA(RGBT);
         }
 
-//         if (raycastRenderWM != null) {
-//             raycastRenderWM.setRGBTA(RGBT);
-//         }
+        if (raycastRenderWM != null) {
+            raycastRenderWM.setRGBT(RGBT, 0);
+        }
     }
 
     /**
@@ -2101,9 +2096,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             surRender.setRGBTB(RGBT);
         }
 
-//         if (raycastRenderWM != null) {
-//             raycastRendeWMr.setRGBTB(RGBT);
-//         }
+        if (raycastRenderWM != null) {
+            raycastRenderWM.setRGBT(RGBT, 1);
+        }
     }
 
     /**
@@ -2333,10 +2328,14 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             surRender.updateImages();
         }
 
-//         if (raycastRenderWM != null) {
-//             raycastRenderWM.updateImages(true);
-//         }
         return true;
+    }
+
+    public void updateBlend()
+    {
+        if (raycastRenderWM != null) {
+            raycastRenderWM.Blend(1 - getBlendValue()/100.0f);
+        }
     }
 
     /**
@@ -2360,8 +2359,25 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         }
 
         if (raycastRenderWM != null) {
-            TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
-            raycastRenderWM.updateImages(forceShow, kTransfer);
+            if ( imageB != null )
+            {
+                ViewJComponentVolOpacityBase kSelectedComp = surRender.getVolOpacityPanel().getSelectedComponent();
+                if ( kSelectedComp == surRender.getVolOpacityPanel().getCompA() )
+                {
+                    TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
+                    raycastRenderWM.updateImages(0, kTransfer);
+                }
+                else
+                {
+                    TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompB().getOpacityTransferFunction();
+                    raycastRenderWM.updateImages(1, kTransfer);
+                }
+            }
+            else
+            {
+                TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
+                raycastRenderWM.updateImages(0, kTransfer);
+            }
         }
 
         return true;
@@ -2389,7 +2405,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         }
 
         if (raycastRenderWM != null) {
-            raycastRenderWM.updateImages(LUTa, LUTb, forceShow, interpMode);
+            raycastRenderWM.updateImages(LUTa, LUTb);
         }
         return true;
     }
@@ -2561,7 +2577,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             buildMousePanel();
             buildGeodesic();
             buildSculpt();
-            buildRayCastOptions();
         }
 
         if (isBrainsurfaceFlattenerEnable) {
@@ -2838,9 +2853,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         surfaceToolBar.add(toolbarBuilder.buildButton("ViewControls", "View mode", "mousecontrol"));
         surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        surfaceToolBar.add(toolbarBuilder.buildButton("RayCastOptions", "Option Dialog.", "options"));
-        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
-
         ButtonGroup group1 = new ButtonGroup();
 
         radioMIP = new JRadioButton("MIP", false);
@@ -2859,19 +2871,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         radioSURFACE.setFont(serif12);
         group1.add(radioSURFACE);
 
-        int rayCastMode = ViewJComponentRenderImage.ModeMIP; //raycastRender.getRenderMode();
-
-        if (rayCastMode == ViewJComponentRenderImage.ModeMIP) {
-            radioMIP.setSelected(true);
-        } else if (rayCastMode == ViewJComponentRenderImage.ModeXRAY) {
-            radioXRAY.setSelected(true);
-        } else if (rayCastMode == ViewJComponentRenderImage.ModeCOMPOSITE) {
-            radioCOMPOSITE.setSelected(true);
-        } else if (rayCastMode == ViewJComponentRenderImage.ModeSURFACE) {
-            radioSURFACE.setSelected(true);
-        } else if (rayCastMode == ViewJComponentRenderImage.ModeSURFACEFAST) {
-            radioSURFACEFAST.setSelected(true);
-        }
+        int rayCastMode = ViewJComponentRenderImage.ModeMIP; 
+        radioMIP.setSelected(true);
 
         radioMIP.addItemListener(this);
         radioXRAY.addItemListener(this);
@@ -2883,6 +2884,16 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         surfaceToolBar.add(radioCOMPOSITE);
         surfaceToolBar.add(radioSURFACEFAST);
         surfaceToolBar.add(radioSURFACE);
+
+        surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
+        JButton kShaderButton = new JButton( "Shader Parameters" );
+        kShaderButton.addActionListener(this);
+        kShaderButton.setActionCommand("ShaderParameters");
+        kShaderButton.setToolTipText("Open Shader Dialig");
+        kShaderButton.setBorderPainted(false);
+        kShaderButton.setFocusPainted(true);
+        kShaderButton.setMargin(new Insets(0, 0, 0, 0));
+        surfaceToolBar.add(kShaderButton);
     }
 
 
@@ -3200,6 +3211,23 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             name = _name;
             panel = _panel;
         }
+    }
+
+    public void setRenderPerspective(boolean bEnable)
+    {
+        if ( bEnable )
+        {
+            raycastRenderWM.setPerspectiveProjection();
+        }
+        else
+        {
+            raycastRenderWM.setOrthographicProjection();
+        }
+    }
+
+    public GPUVolumeRender getRaycastRenderWM()
+    {
+        return raycastRenderWM;
     }
 
 }

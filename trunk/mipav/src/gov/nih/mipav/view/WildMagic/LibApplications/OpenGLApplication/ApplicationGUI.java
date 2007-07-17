@@ -26,8 +26,14 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 public class ApplicationGUI
     implements ActionListener
 {
-    /** The unique application object */
-    public static ApplicationGUI TheApplicationGUI = new ApplicationGUI();
+
+    /**
+     * Constructs the singleton ApplicationGUI
+     */
+    public ApplicationGUI ()
+    {
+        m_kShaderMap = new Hashtable<String,Vector<UserConstant>>();
+    }
 
     /** Adds a user-parameter to the shader with the specified shader name. A
      * label and text field user-interface components are created for the
@@ -35,7 +41,7 @@ public class ApplicationGUI
      * @param kShaderName, the name of the Shader to which the parameter belongs.
      * @param kVar, the UserConstant shader parameter
      */
-    public void AddUserVariable ( String kShaderName, UserConstant kVar )
+    private void AddUserVariable ( String kShaderName, UserConstant kVar )
     {
         Vector<UserConstant> kUserVariables = m_kShaderMap.get(kShaderName);
         if ( kUserVariables == null )
@@ -57,6 +63,10 @@ public class ApplicationGUI
     {
         if ( ms_bInit == true )
         {
+            if ( m_kFrame != null )
+            {
+                m_kFrame.setVisible(true);
+            }            
             return;
         }
 
@@ -117,14 +127,6 @@ public class ApplicationGUI
         m_kFrame.setVisible(true);
 
         ms_bInit = true;
-    }
-
-    /**
-     * Constructs the singleton ApplicationGUI
-     */
-    protected ApplicationGUI ()
-    {
-        m_kShaderMap = new Hashtable<String,Vector<UserConstant>>();
     }
 
     public void close()
@@ -196,10 +198,19 @@ public class ApplicationGUI
         m_kParent = kParent;
     }
 
+    public void AddUserVariables( Program kProgram )
+    {
+        for ( int i = 0; i < kProgram.GetUCQuantity(); i++ )
+        {
+            AddUserVariable(kProgram.GetName(), kProgram.GetUC(i) );
+        }
+    }
+
     /** HashTable maps Shader parameters to the Shader name: */
     private Hashtable<String,Vector<UserConstant>> m_kShaderMap = null;
+
     /** Initialize the interface once. */
-    private static boolean ms_bInit = false;
+    private boolean ms_bInit = false;
 
     /** Parent Application */
     private Application m_kParent = null;

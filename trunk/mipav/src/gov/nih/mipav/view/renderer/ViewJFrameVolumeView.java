@@ -3928,4 +3928,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         }
     }
 
+    public void setRenderPerspective(boolean bEnable) {}
+
 }

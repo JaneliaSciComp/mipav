@@ -1,0 +1,211 @@
+/**
+ * Clip the volume based on the x,y,z axes.
+ * returns 1 when the volume is clipped, 0 when not clipped.
+ */
+bool myClip(float3 vec,
+            float clipX,
+            float clipXInv,
+            float clipY,
+            float clipYInv,
+            float clipZ,
+            float clipZInv )
+{
+    if ( vec.x > clipX )
+    {
+        return 1;
+    }
+    if ( vec.x < clipXInv )
+    {
+        return 1;
+    }
+    if ( vec.y > clipY )
+    {
+        return 1;
+    }
+    if ( vec.y < clipYInv )
+    {
+        return 1;
+    }
+    if ( vec.z > clipZ )
+    {
+        return 1;
+    }
+    if ( vec.z < clipZInv )
+    {
+        return 1;
+    }
+    return 0;
+}
+
+/** Raycasting fragment program implementation */
+void p_VolumeShaderDDR_DDR(  in float3 inTexCoord1    : TEXCOORD0,
+                      in float4 inPos,
+                      out float4 kColor	    : COLOR0,
+                         uniform sampler2D tex, 
+                         uniform sampler3D volume_texA, 
+                         uniform sampler1D colormapA, 
+                         uniform sampler1D opacitymapA, 
+                         uniform sampler3D volume_texB, 
+                         uniform sampler1D colormapB, 
+                         uniform sampler1D opacitymapB, 
+                         uniform float stepsize,
+                         uniform float blend,
+                         uniform float IsColorA,
+                         uniform float IsColorB,
+                      uniform float DoClip,
+                      uniform float clipX,
+                      uniform float clipXInv,
+                      uniform float clipY,
+                      uniform float clipYInv,
+                      uniform float clipZ,
+                      uniform float clipZInv,
+                      uniform float4 clipArb,
+                      uniform float4 clipEye,
+                      uniform float4 clipEyeInv,
+                      uniform float4x4 WVPMatrix)
+{
+    // find the right place to lookup in the backside buffer
+    float2 texc = ((inPos.xy / inPos.w) + 1) / 2.0;
+    float4 back_position  = tex2D(tex, texc);
+
+    // the start position of the ray is stored in the texturecoordinate
+    float3 start = inTexCoord1; 
+
+    // the ray direction
+    float3 dir = back_position.xyz - start;
+
+    // the length from front to back is calculated and used to terminate the ray
+    float len = length(dir.xyz); 
+
+    // normalized direction vector:
+    float3 norm_dir = normalize(dir);
+
+    // current position along the ray: 
+    float3 position = start.xyz;
+
+    // The accumulated color and alpha values:
+    float4 color_accA = float4(0,0,0,0);
+    float alpha_accA = 0;
+
+    // The accumulated color and alpha values:
+    float4 color_accB = float4(0,0,0,0);
+    float alpha_accB = 0;
+
+    // output color:
+    kColor = (0,0,0,0);
+    if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
+    {
+        return;
+    }
+
+    // limit the number of iterations to 450, make sure that the stepsize will
+    // cover the entire ray:
+    if ( (len/stepsize) > 450 )
+    {
+        stepsize = len/450.0;
+    }
+
+    // The color at the current position along the ray:
+    float4 colorA = (0,0,0,0);
+    float4 colorB = (0,0,0,0);
+
+    // The opacity at the current position along the ray:
+    float opacityA = 0;
+    float opacityB = 0;
+
+    float alpha_sample = stepsize;
+    float delta = stepsize;
+    float3 delta_dir = norm_dir * delta;
+    float delta_dir_len = length(delta_dir);
+    float length_acc = 0;
+    bool bClipped = false;
+
+    // For some profiles the number of loop iterations must be determined at
+    // compile time:
+    for( int i = 0; i < 450; i++ )
+    {
+        // axis-aligned clipping:
+        if ( (DoClip != 0) && myClip( position, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+        {
+            colorA = (0,0,0,0);
+            opacityA = 0;
+            colorB = (0,0,0,0);
+            opacityB = 0;
+        }
+        else
+        {
+            bClipped = false;
+            if ( DoClip != 0 )
+            {
+                // eye clipping and arbitrary clipping:
+                float4 aPosition = float4(0,0,0,0);
+                aPosition.xyz = position.xyz - (.5,.5,.5);
+                aPosition = mul( aPosition, WVPMatrix );
+                aPosition.xyz = aPosition.xyz + (.5,.5,.5);
+                float fDot = dot( aPosition.xyz, clipEye.xyz );
+                float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
+                float fDotArb = dot( position.xyz, clipArb.xyz );
+                if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
+                {
+                    colorA = (0,0,0,0);
+                    opacityA = 0;
+                    colorB = (0,0,0,0);
+                    opacityB = 0;
+                    bClipped = true;
+                }
+            }
+            // The value is not clipped, compute the color:
+            if ( !bClipped )
+            {
+                colorA = tex3D(volume_texA,position);
+                opacityA = tex1D(opacitymapA,colorA.r).r;
+                if ( IsColorA != 0 )
+                {
+                    colorA.r = tex1D(colormapA,colorA.r).r;
+                    colorA.g = tex1D(colormapA,colorA.g).g;
+                    colorA.b = tex1D(colormapA,colorA.b).b;
+                }
+                else
+                {
+                    colorA = tex1D(colormapA,colorA.r);
+                }
+
+                colorB = tex3D(volume_texB,position);
+                opacityB = tex1D(opacitymapB,colorB.r).r;
+                if ( IsColorB != 0 )
+                {
+                    colorB.r = tex1D(colormapB,colorB.r).r;
+                    colorB.g = tex1D(colormapB,colorB.g).g;
+                    colorB.b = tex1D(colormapB,colorB.b).b;
+                }
+                else
+                {
+                    colorB = tex1D(colormapB,colorB.r);
+                }
+            }
+        }
+        // If the opacity is not zero:
+        if ( opacityA > 0 )
+        {
+            color_accA   += (1.0 - alpha_accA) * colorA * alpha_sample * 3;
+            alpha_accA += (1 - alpha_accA) * alpha_sample;
+        }
+        if ( opacityB > 0 )
+        {
+            color_accB   += (1.0 - alpha_accB) * colorB * alpha_sample * 3;
+            alpha_accB += (1 - alpha_accB) * alpha_sample;
+        }
+
+        // Increment position along the ray:
+        position += delta_dir;
+        length_acc += delta_dir_len;
+        // Break when the end of the ray is reached, or if alpha >= 1;
+        if ( (length_acc >= len) || ((alpha_accA >= 1.0) && (alpha_accB >= 1.0)) )
+        {
+            break;
+        }
+    } 
+
+    kColor.rgb = blend * color_accA.rgb + (1 - blend) * color_accB.rgb;
+    kColor.a = 1;
+}

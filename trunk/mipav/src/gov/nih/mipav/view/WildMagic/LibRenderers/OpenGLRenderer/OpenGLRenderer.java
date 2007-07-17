@@ -992,7 +992,6 @@ public class OpenGLRenderer extends Renderer
         gl.glProgramStringARB(GL.GL_FRAGMENT_PROGRAM_ARB,GL.GL_PROGRAM_FORMAT_ASCII_ARB,
                            iProgramLength,acProgramText);
         gl.glDisable(GL.GL_FRAGMENT_PROGRAM_ARB);
-
         return rpkID;
     }
 
