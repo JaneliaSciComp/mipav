@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -170,7 +171,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         
         int numPoints;
 
-        int i, j, k, m, n, c;
+        int i, j, k, m, n;
         int index, indexDest;
         
         int houghSlice;
@@ -218,6 +219,17 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int x1num;
         double perx;
         int x1;
+        int y1;
+        int x2;
+        int y2;
+        int x3;
+        int y3;
+        double x1c;
+        double y1c;
+        double x2c;
+        double y2c;
+        double x3c;
+        double y3c;
         double xpos1;
         double xdist;
         double maxyDist;
@@ -293,6 +305,50 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int ellipsesFound = 0;
         int ellipseFindCycles = 0;
         int pointSetsAcquired = 0;
+        RandomNumberGen randomGen;
+        int number1;
+        int number2;
+        int number3;
+        double minDistanceSquared;
+        double maxDistanceSquared;
+        int distanceSquared;
+        int xDiff;
+        int yDiff;
+        float slope1;
+        float slope2;
+        float slope3;
+        float intercept1;
+        float intercept2;
+        float intercept3;
+        float tx12;
+        float ty12;
+        float midx12;
+        float midy12;
+        float tangentx12;
+        float tangenty12;
+        float slope12;
+        float intercept12 = 0.0f;
+        float tx23;
+        float ty23;
+        float midx23;
+        float midy23;
+        float tangentx23;
+        float tangenty23;
+        float slope23;
+        float intercept23 = 0.0f;
+        Matrix A;
+        Matrix B;
+        Matrix X;
+        double a;
+        double b;
+        double c;
+        double r1;
+        double r2;
+        double aminusc;
+        double sqr2 = Math.sqrt(2.0);
+        double twob;
+        double var;
+        double aplusc;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -890,10 +946,235 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         
         ViewUserInterface.getReference().setDataText("Number of closed curves = " + numClosedCurves + "\n");
         
+        randomGen = new RandomNumberGen();
+        minDistanceSquared = minPointDistance * minPointDistance;
+        maxDistanceSquared = maxPointDistance * maxPointDistance;
         while ((ellipsesFound < numEllipses) && (ellipseFindCycles < maxEllipseFindCycles)) {
             pointSetsAcquired = 0;
             while (pointSetsAcquired < pointSetsRequired) {
-                // Generate 3 random numbers from 0 to numPoints - 1    
+                // Generate 3 random numbers from 0 to numPoints - 1  
+                number1 = randomGen.genUniformRandomNum(0, numPoints - 1);
+                x1 = indexArray[number1] % xDim;
+                y1 = indexArray[number1] / xDim;
+                slope1 = slopeArray[number1];
+                while (true) {
+                    number2 = randomGen.genUniformRandomNum(0, numPoints - 1);
+                    if (number1 == number2) {
+                        continue;
+                    }
+                    x2 = indexArray[number2] % xDim;
+                    y2 = indexArray[number2] / xDim;
+                    xDiff = x1 - x2;
+                    yDiff = y1 - y2;
+                    distanceSquared = xDiff * xDiff + yDiff * yDiff;
+                    if ((distanceSquared < minDistanceSquared) || (distanceSquared > maxDistanceSquared)) {
+                        continue;
+                    }
+                    // Don't use if lines are parallel
+                    slope2 = slopeArray[number2];
+                    if (Float.isInfinite(slope1) && Float.isInfinite(slope2)) {
+                        continue;
+                    }
+                    if (slope1 == slope2) {
+                        continue;
+                    }
+                    break;
+                }
+                // Find intersection of tangent 1 and tangent2.
+                intercept1 = interceptArray[number1];
+                intercept2 = interceptArray[number2];
+                if (Float.isInfinite(slope1)) {
+                    tx12 = x1;
+                    ty12 = slope2 * tx12 + intercept2;
+                }
+                else if (Float.isInfinite(slope2)) {
+                    tx12 = x2;
+                    ty12 = slope1 * tx12 + intercept1;
+                }
+                else {
+                    tx12 = (intercept2 - intercept1)/(slope1 - slope2);
+                    ty12 = slope1 * tx12 + intercept1;
+                }
+                // Find point midway between point 1 and point 2
+                midx12 = (x1 + x2)/2.0f;
+                midy12 = (y1 + y2)/2.0f;
+                // Find slope and intercept of line connecting intsection point of tangent1 and tangent2 and midpoint of 1 and 2
+                tangentx12 = tx12 - midx12;
+                tangenty12 = ty12 - midy12;
+                if (tangentx12 == 0.0f) {
+                    slope12 = Float.POSITIVE_INFINITY;
+                }
+                else {
+                    slope12 = tangenty12/tangentx12;
+                    intercept12 = midy12 - slope12 * midx12;
+                }
+                while (true) {
+                    number3 = randomGen.genUniformRandomNum(0, numPoints - 1);
+                    if ((number1 == number3) || (number2 == number3)) {
+                        continue;
+                    }
+                    x3 = indexArray[number3] % xDim;
+                    y3 = indexArray[number3] / xDim;
+                    xDiff = x1 - x3;
+                    yDiff = y1 - y3;
+                    distanceSquared = xDiff * xDiff + yDiff * yDiff;
+                    if ((distanceSquared < minDistanceSquared) || (distanceSquared > maxDistanceSquared)) {
+                        continue;
+                    }
+                    xDiff = x2 - x3;
+                    yDiff = y2 - y3;
+                    distanceSquared = xDiff * xDiff + yDiff * yDiff;
+                    if ((distanceSquared < minDistanceSquared) || (distanceSquared > maxDistanceSquared)) {
+                        continue;
+                    }
+                    // Don't use if lines are parallel
+                    slope3 = slopeArray[number3];
+                    if (Float.isInfinite(slope2) && Float.isInfinite(slope3)) {
+                        continue;
+                    }
+                    if (slope2 == slope3) {
+                        continue;
+                    }
+                    break;
+                }
+                // Find intersection of tangent 2 and tangent3.
+                intercept3 = interceptArray[number3];
+                if (Float.isInfinite(slope2)) {
+                    tx23 = x2;
+                    ty23 = slope3 * tx23 + intercept3;
+                }
+                else if (Float.isInfinite(slope3)) {
+                    tx23 = x3;
+                    ty23 = slope2 * tx23 + intercept2;
+                }
+                else {
+                    tx23 = (intercept3 - intercept2)/(slope2 - slope3);
+                    ty23 = slope2 * tx23 + intercept2;
+                }
+                // Find point midway between point 2 and point 3
+                midx23 = (x2 + x3)/2.0f;
+                midy23 = (y2 + y3)/2.0f;
+                // Find slope and intercept of line connecting intsection point of tangent2 and tangent3 and midpoint of 2 and 3
+                tangentx23 = tx23 - midx23;
+                tangenty23 = ty23 - midy23;
+                if (tangentx23 == 0.0f) {
+                    slope23 = Float.POSITIVE_INFINITY;
+                }
+                else {
+                    slope23 = tangenty23/tangentx23;
+                    intercept23 = midy23 - slope23 * midx23;
+                }
+                // Don't use if lines are parallel
+                if (Float.isInfinite(slope12) && Float.isInfinite(slope23)) {
+                    continue;
+                }
+                if (slope12 == slope23) {
+                    continue;
+                }
+                // The estimated center of the ellipse is at the intersection of these 2 lines
+                if (Float.isInfinite(slope12)) {
+                    xCenter = midx12;
+                    yCenter = slope23 * xCenter + intercept23;
+                }
+                else if (Float.isInfinite(slope23)) {
+                    xCenter = midx23;
+                    yCenter = slope12 * xCenter + intercept12;
+                }
+                else {
+                    xCenter = (intercept23 - intercept12)/(slope12 - slope23);
+                    yCenter = slope12 * xCenter + intercept12;
+                }
+                // Translate the ellipse to be centered at the origin
+                x1c = x1 - xCenter;
+                x2c = x2 - xCenter;
+                x3c = x3 - xCenter;
+                y1c = y1 - yCenter;
+                y2c = y2 - yCenter;
+                y3c = y3 - yCenter;
+                // Solve:
+                // [x1c**2  2*x1c*y1c  y1c**2] [a]   [1]
+                // [x2c**2  2*x2c*y2c  y2c**2] [b] = [1]
+                // [x3c**2  2*x3c*y3c  y3c**2] [c]   [1]
+                A = new Matrix(3,3);
+                A.set(0, 0, x1c*x1c);
+                A.set(0, 1, 2.0*x1c*y1c);
+                A.set(0, 2, y1c*y1c);
+                A.set(1, 0, x2c*x2c);
+                A.set(1, 1, 2.0*x2c*y2c);
+                A.set(1, 2, y2c*y2c);
+                A.set(2, 0, x3c*x3c);
+                A.set(2, 1, 2.0*x3c*y3c);
+                A.set(2, 2, y3c*y3c);
+                B = new Matrix(3,1);
+                B.set(0, 0, 1.0);
+                B.set(1, 0, 1.0);
+                B.set(2, 0, 1.0);
+                try {
+                    X = A.solve(B);
+                }
+                catch (RuntimeException e) {
+                    // Matrix is singular
+                    continue;
+                }
+                // Obtain the remaining 3 ellipse parameters, a, b, and c
+                // where a*x**2 + 2*b*x*y + c*y**2 = 1
+                // in the now zero centered ellipse
+                a = X.get(0, 0);
+                b = X.get(1, 0);
+                c = X.get(2, 0);
+                // The inequality a*c - b**2 > 0 is true if the parameters represent a valid ellipse.
+                // If this inequality is false, it implies that either the 3 pixels do not lie on the same ellipse,
+                // or that the estimates of the tangents were inaccurate.  In either case, we discard the 
+                // parameters and choose a new pixel triplet.
+                if ((a*c - b*b) <= 0.0) {
+                    continue;
+                }
+                // Convert a, b, and c to semi major axis r1, semi minor axis r2, and orientation angle theta
+                // Convert a*x**2 + 2*b*x*y + c*y**2 = 1 to
+                // (y*sin(theta) + x*cos(theta))**2/r1**2 + (y*cos(theta) - x*sin(theta))**2/r2**2 = 1
+                // If a = c, this is a circle with r1 = a, r2 = a, and theta = 0.
+                // y**2*(sin(theta))**2/r1**2 + 2*x*y*cos(theta)*sin(theta)/r1**2 + x**2*(cos(theta))**2/r1**2
+                // + y**2*(cos(theta))**2/r2**2 - 2*x*y*cos(theta)*sin(theta)/r2**2 + x**2*(sin(theta))**2/r2**2 = 1
+                // a = (cos(theta))**2/r1**2 + (sin(theta))**2/r2**2
+                // c = (sin(theta))**2/r1**2 + (cos(theta))**2/r2**2
+                // b = cos(theta)*sin(theta)*(1/r1**2 - 1/r2**2) = (1/2)*sin(2*theta)*(1/r1*2 - 1/r2**2)
+                // a + c = 1/r1**2 + 1/r2**2
+                // a - c = ((cos(theta))**2 - (sin(theta))**2)*(1/r1**2 - 1/r2**2)
+                // a - c = (cos(2*theta)) * (1/r1*2 - 1/r2**2)
+                // b/(a - c)= tan(2*theta)/2
+                // tan(2*theta) = (2*b)/(a - c)
+                // 2*theta = arctan((2*b)/(a - c))
+                // theta = 0.5 * arctan((2*b)/(a - c))
+                // sin(2*theta) = (2*b)/(1/r1**2 - 1/r2**2)
+                // cos(2*theta) = (a - c)/(1/r1**2 - 1/r2**2)
+                // 1 = (4*b**2 + (a - c)**2)/((1/r1**2 - 1/r2**2)**2)
+                // If r1 > r2, then (1/r1**2 - 1/r2**2) < 0 so
+                // 1/r1**2 - 1/r2**2 = -sqrt(4*b**2 + (a - c)**2)
+                // 1/r2**2 = a + c - 1/r1**2
+                // 2/r1**2 - a - c = -sqrt(4*b**2 + (a - c)**2)
+                // 2/r1**2 = a + c - sqrt(4*b**2 + (a - c)**2)
+                // r1**2/2 = 1/(a + c - sqrt(4*b**2 + (a - c)**2))
+                // r1 = sqrt(2)/sqrt(a + c - sqrt(4*b**2 + (a - c)**2))
+                // 1/r2**2 = a + c - 1/r1**2
+                // 1/r2**2 = (2*a + 2*c - (a + c - sqrt(4*b**2 + (a - c)**2)))/2
+                // 1/r2**2 = (a + c + sqrt(4*b**2 + (a - c)**2))/2
+                // r2 = sqrt(2)/sqrt(a + c + sqrt(4*b**2 + (a - c)**2))
+                if (a == c) {
+                    // Circle
+                    r1 = a;
+                    r2 = a;
+                    theta = 0.0;
+                }
+                else {
+                    aminusc = a - c;
+                    twob = 2.0*b;
+                    var = Math.sqrt(twob*twob + aminusc*aminusc);
+                    aplusc = a + c;
+                    r1 = sqr2/Math.sqrt(aplusc - var);
+                    r2 = sqr2/Math.sqrt(aplusc + var);
+                    theta = 0.5 * Math.atan2(twob, aminusc);
+                }
+                pointSetsAcquired++;
             } // while (pointSetsAcquired < pointSetsRequired)
         } // while ((ellipsesFound < numEllipses) && (ellipseFindCycles < maxEllipseFindCycles))
         
