@@ -537,6 +537,15 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
+     * Returns all general lights.
+     *
+     * @return  GeneralLight[] general light model.
+     */
+    public GeneralLight[] getGeneralLights() {
+        return m_akLights;
+    }
+
+    /**
      * Get the main control Panel.
      *
      * @return  mainPanel main control panel

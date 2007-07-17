@@ -80,7 +80,7 @@ public class SurfaceRender extends RenderViewBase {
     protected boolean isViewTextureAligned;
 
     /** Raycast based renderer reference, raycast renderer or shear warp renderer. */
-    protected VolumeRenderer rayBasedRender;
+    protected VolumeRenderer rayBasedRender = null;
 
     private GPUVolumeRender rayBasedRenderWM = null;
     
@@ -1788,6 +1788,7 @@ public class SurfaceRender extends RenderViewBase {
         if ((clipPanel == null) || ((clipPanel != null) && !clipPanel.isClipArbiPicked())) {
             updateCubicTransform(transformNode3d);
         }
+        getParentFrame().setRenderPerspective(bEnable);
     }
 
     /**
@@ -3572,4 +3573,10 @@ public class SurfaceRender extends RenderViewBase {
     {
         getParentFrame().updateImages(true);
     }
+
+    public GPUVolumeRender getGPURenderer()
+    {
+        return rayBasedRenderWM;
+    }
+
 }

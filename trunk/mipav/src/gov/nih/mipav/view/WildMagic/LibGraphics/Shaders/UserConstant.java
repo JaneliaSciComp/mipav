@@ -32,8 +32,6 @@ public class UserConstant
         // To be set later in the effect creation.
         m_afData = null;
         m_iNumFloats = iNumFloats;
-
-        ApplicationGUI.TheApplicationGUI.AddUserVariable(kProgramName, this);
     }
 
     // Member access.  The renderer will use these to pass the information to
