@@ -258,7 +258,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                                              makeImageName(imageR.getImageName(), "_rgb"));
 
                 // Make algorithm
-                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode);
+                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -301,7 +301,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 // Make algorithm
-                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, remapMode);
+                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, remapMode, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.

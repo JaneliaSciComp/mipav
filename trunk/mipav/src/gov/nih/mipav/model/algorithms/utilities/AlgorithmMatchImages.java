@@ -1863,7 +1863,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
             resultImgB.setImageName("imageB_rgb");
 
-            AlgorithmRGBConcat rgbAlgo = new AlgorithmRGBConcat(resultImgB, resultImgB, resultImgB, true);
+            AlgorithmRGBConcat rgbAlgo = new AlgorithmRGBConcat(resultImgB, resultImgB, resultImgB, true, true);
             rgbAlgo.setRunningInSeparateThread(runningInSeparateThread);
             rgbAlgo.run();
             resultImgB = rgbAlgo.getImageR();

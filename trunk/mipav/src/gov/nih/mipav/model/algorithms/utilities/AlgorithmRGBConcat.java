@@ -37,6 +37,9 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
     /** Source gray scale image to be stored in the RED channel. */
     private ModelImage srcImageR;
+    
+    /** flag for performing bounds checking...normally should be set to true unless negative numbers are desired**/
+    private boolean performBoundsChecking;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -49,13 +52,14 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
      * @param  remap    if true and srcImage data max is < 255 data will be remapped [0-255] else if image max > 255
      *                  data will automatically be remapped [0-255].
      */
-    public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, boolean remap) {
+    public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, boolean remap, boolean performBoundsChecking) {
 
         srcImageR = srcImgR; // Put results in red   destination image.
         srcImageG = srcImgG; // Put results in green destination image.
         srcImageB = srcImgB; // Put results in blue  destination image.
         destImage = null;
         reMap = remap;
+        this.performBoundsChecking = performBoundsChecking;
     }
 
     /**
@@ -69,13 +73,14 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
      *                  data will automatically be remapped [0-255].
      */
     public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, ModelImage destImg,
-                              boolean remap) {
+                              boolean remap, boolean performBoundsChecking) {
 
         srcImageR = srcImgR; // Put results in red   destination image.
         srcImageG = srcImgG; // Put results in green destination image.
         srcImageB = srcImgB; // Put results in blue  destination image.
         destImage = destImg;
         reMap = remap;
+        this.performBoundsChecking = performBoundsChecking;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -262,29 +267,35 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
                     }
 
                     buffer[i] = 255;
-
-                    if (bufferR[id] < 0) {
-                        buffer[i + 1] = 0;
-                    } else if (bufferR[id] > 255) {
-                        buffer[i + 1] = 255;
-                    } else {
-                        buffer[i + 1] = bufferR[id];
+                    if(performBoundsChecking) {
+	                    if (bufferR[id] < 0) {
+	                        buffer[i + 1] = 0;
+	                    } else if (bufferR[id] > 255) {
+	                        buffer[i + 1] = 255;
+	                    } else {
+	                        buffer[i + 1] = bufferR[id];
+	                    }
+	
+	                    if (bufferG[id] < 0) {
+	                        buffer[i + 2] = 0;
+	                    } else if (bufferG[id] > 255) {
+	                        buffer[i + 2] = 255;
+	                    } else {
+	                        buffer[i + 2] = bufferG[id];
+	                    }
+	
+	                    if (bufferB[id] < 0) {
+	                        buffer[i + 3] = 0;
+	                    } else if (bufferB[id] > 255) {
+	                        buffer[i + 3] = 255;
+	                    } else {
+	                        buffer[i + 3] = bufferB[id];
+	                    }
                     }
-
-                    if (bufferG[id] < 0) {
-                        buffer[i + 2] = 0;
-                    } else if (bufferG[id] > 255) {
-                        buffer[i + 2] = 255;
-                    } else {
-                        buffer[i + 2] = bufferG[id];
-                    }
-
-                    if (bufferB[id] < 0) {
-                        buffer[i + 3] = 0;
-                    } else if (bufferB[id] > 255) {
-                        buffer[i + 3] = 255;
-                    } else {
-                        buffer[i + 3] = bufferB[id];
+                    else {
+                    	buffer[i + 1] = bufferR[id];
+                    	buffer[i + 2] = bufferG[id];
+                    	buffer[i + 3] = bufferB[id];
                     }
                 }
 
@@ -525,29 +536,35 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
                 }
 
                 buffer[i] = 255;
-
-                if (bufferR[id] < 0) {
-                    buffer[i + 1] = 0;
-                } else if (bufferR[id] > 255) {
-                    buffer[i + 1] = 255;
-                } else {
-                    buffer[i + 1] = bufferR[id];
+                if(performBoundsChecking) {
+	                if (bufferR[id] < 0) {
+	                    buffer[i + 1] = 0;
+	                } else if (bufferR[id] > 255) {
+	                    buffer[i + 1] = 255;
+	                } else {
+	                    buffer[i + 1] = bufferR[id];
+	                }
+	
+	                if (bufferG[id] < 0) {
+	                    buffer[i + 2] = 0;
+	                } else if (bufferG[id] > 255) {
+	                    buffer[i + 2] = 255;
+	                } else {
+	                    buffer[i + 2] = bufferG[id];
+	                }
+	
+	                if (bufferB[id] < 0) {
+	                    buffer[i + 3] = 0;
+	                } else if (bufferB[id] > 255) {
+	                    buffer[i + 3] = 255;
+	                } else {
+	                    buffer[i + 3] = bufferB[id];
+	                }
                 }
-
-                if (bufferG[id] < 0) {
-                    buffer[i + 2] = 0;
-                } else if (bufferG[id] > 255) {
-                    buffer[i + 2] = 255;
-                } else {
-                    buffer[i + 2] = bufferG[id];
-                }
-
-                if (bufferB[id] < 0) {
-                    buffer[i + 3] = 0;
-                } else if (bufferB[id] > 255) {
-                    buffer[i + 3] = 255;
-                } else {
-                    buffer[i + 3] = bufferB[id];
+                else {
+                	buffer[i + 1] = bufferR[id];
+                	buffer[i + 2] = bufferG[id];
+                	buffer[i + 3] = bufferB[id];
                 }
             }
 

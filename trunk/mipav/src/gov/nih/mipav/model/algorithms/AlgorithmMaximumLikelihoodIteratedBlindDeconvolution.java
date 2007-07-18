@@ -536,7 +536,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         ModelImage kResult = (ModelImage) m_kOriginalSourceImage.clone();
         
         // Make algorithm
-        AlgorithmRGBConcat kMathAlgo = new AlgorithmRGBConcat(kRed, kGreen, kBlue, kResult, true);
+        AlgorithmRGBConcat kMathAlgo = new AlgorithmRGBConcat(kRed, kGreen, kBlue, kResult, true, true);
     	
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
