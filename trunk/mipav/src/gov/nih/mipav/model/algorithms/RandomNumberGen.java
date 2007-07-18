@@ -27,7 +27,7 @@ public class RandomNumberGen extends Random {
     // Float.MIN_VALUE equals 2**(-149) equals approximately 1.4E-45
     // so the additon of -0.5f + (float)(3.0 * Float.MIN_VALUE) gives
     // -0.5f.  In fact, the addition of -0.5 + (float)(1.0E37 * Float.MIN_VALUE)
-    // still gives - 0.5f.  If you use -0.5f + (float)(1.1E37 * FLOAT_MIN_VALUE),
+    // still gives - 0.5f.  If you use -0.5f + (float)(1.1E37 * Float_MIN_VALUE),
     // a result of -0.49999997 is achieved.
     // So just use -0.49999997f the closest floating point number to -0.5f
     //float endTol = +0.5f - (float) (3.0 * Float.MIN_VALUE);
@@ -88,7 +88,7 @@ public class RandomNumberGen extends Random {
         // Float.MIN_VALUE equals 2**(-149) equals approximately 1.4E-45
         // so the additon of -0.5f + (float)(3.0 * Float.MIN_VALUE) gives
         // -0.5f.  In fact, the addition of -0.5 + (float)(1.0E37 * Float.MIN_VALUE)
-        // still gives - 0.5f.  If you use -0.5f + (float)(1.1E37 * FLOAT_MIN_VALUE),
+        // still gives - 0.5f.  If you use -0.5f + (float)(1.1E37 * Float_MIN_VALUE),
         // a result of -0.49999997 is achieved.
         // So just use -0.49999997f the closest floating point number to -0.5f
         //float newSt = (float) stRange - 0.5f + (float) (3.0 * Float.MIN_VALUE);
