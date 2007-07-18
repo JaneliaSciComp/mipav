@@ -2046,7 +2046,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             }
 
             // Make algorithm
-            mathAlgo = new AlgorithmRGBConcat(image2load, image2load, image2load, tempImage, true);
+            mathAlgo = new AlgorithmRGBConcat(image2load, image2load, image2load, tempImage, true,true);
             mathAlgo.setRunningInSeparateThread(false);
             mathAlgo.run();
 
