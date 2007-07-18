@@ -24,11 +24,16 @@ public class RandomNumberGen extends Random {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    float endTol = +0.5f - (float) (3.0 * Float.MIN_VALUE);
-
-    /** DOCUMENT ME! */
-    float stTol = -0.5f + (float) (3.0 * Float.MIN_VALUE);
+    // Float.MIN_VALUE equals 2**(-149) equals approximately 1.4E-45
+    // so the additon of -0.5f + (float)(3.0 * Float.MIN_VALUE) gives
+    // -0.5f.  In fact, the addition of -0.5 + (float)(1.0E37 * Float.MIN_VALUE)
+    // still gives - 0.5f.  If you use -0.5f + (float)(1.1E37 * FLOAT_MIN_VALUE),
+    // a result of -0.49999997 is achieved.
+    // So just use -0.49999997f the closest floating point number to -0.5f
+    //float endTol = +0.5f - (float) (3.0 * Float.MIN_VALUE);
+    //float stTol = -0.5f + (float) (3.0 * Float.MIN_VALUE);
+    float endTol = +0.49999997f;;
+    float stTol = -0.49999997f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -80,8 +85,16 @@ public class RandomNumberGen extends Random {
      */
     public final int genGaussianRandomNum(int stRange, int endRange) {
         float rNum;
-        float newSt = (float) stRange - 0.5f + (float) (3.0 * Float.MIN_VALUE);
-        float newEnd = (float) endRange + 0.5f - (float) (3.0 * Float.MIN_VALUE);
+        // Float.MIN_VALUE equals 2**(-149) equals approximately 1.4E-45
+        // so the additon of -0.5f + (float)(3.0 * Float.MIN_VALUE) gives
+        // -0.5f.  In fact, the addition of -0.5 + (float)(1.0E37 * Float.MIN_VALUE)
+        // still gives - 0.5f.  If you use -0.5f + (float)(1.1E37 * FLOAT_MIN_VALUE),
+        // a result of -0.49999997 is achieved.
+        // So just use -0.49999997f the closest floating point number to -0.5f
+        //float newSt = (float) stRange - 0.5f + (float) (3.0 * Float.MIN_VALUE);
+        //float newEnd = (float) endRange + 0.5f - (float) (3.0 * Float.MIN_VALUE);
+        float newSt = (float) stRange - 0.49999997f;
+        float newEnd = (float) endRange + 49999997f;
 
         // This modification ensures that the Gaussian encompasses
         // bins on both sides of the end numbers the same way that
