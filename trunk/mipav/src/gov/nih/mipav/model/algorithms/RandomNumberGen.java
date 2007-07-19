@@ -113,7 +113,7 @@ public class RandomNumberGen extends Random {
 
         rNum = (rNum / 8) + 0.5f; // range  0 to 1
 
-        return (int) (MipavMath.round((rNum * (newEnd - newSt)) + newSt));
+        return (int) (Math.round((rNum * (newEnd - newSt)) + newSt));
 
     }
 
@@ -218,7 +218,7 @@ public class RandomNumberGen extends Random {
         // 3.0*Float_MIN_VALUE is used to compensate for possibility of
         // the float of the integer and 0.5f each being off by
         // Float.MIN_VALUE in the opposite direction.
-        return (MipavMath.round((nextFloat() * (newEnd - newSt)) + newSt));
+        return (Math.round((nextFloat() * (newEnd - newSt)) + newSt));
     }
 
     /**
