@@ -24,17 +24,6 @@ public class RandomNumberGen extends Random {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    // Float.MIN_VALUE equals 2**(-149) equals approximately 1.4E-45
-    // so the additon of -0.5f + (float)(3.0 * Float.MIN_VALUE) gives
-    // -0.5f.  In fact, the addition of -0.5 + (float)(1.0E37 * Float.MIN_VALUE)
-    // still gives - 0.5f.  If you use -0.5f + (float)(1.1E37 * Float_MIN_VALUE),
-    // a result of -0.49999997 is achieved.
-    // So just use -0.49999997f the closest floating point number to -0.5f
-    //float endTol = +0.5f - (float) (3.0 * Float.MIN_VALUE);
-    //float stTol = -0.5f + (float) (3.0 * Float.MIN_VALUE);
-    float endTol = +0.49999997f;;
-    float stTol = -0.49999997f;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -86,16 +75,30 @@ public class RandomNumberGen extends Random {
     public final int genGaussianRandomNum(int stRange, int endRange) {
         float rNum;
         // Float.MIN_VALUE equals 2**(-149) equals approximately 1.4E-45
-        // so the additon of -0.5f + (float)(3.0 * Float.MIN_VALUE) gives
+        // Consider the case of stRange equals 0
+        // The additon of -0.5f + (float)(3.0 * Float.MIN_VALUE) gives
         // -0.5f.  In fact, the addition of -0.5 + (float)(1.0E37 * Float.MIN_VALUE)
         // still gives - 0.5f.  If you use -0.5f + (float)(1.1E37 * Float_MIN_VALUE),
-        // a result of -0.49999997 is achieved.
-        // So just use -0.49999997f the closest floating point number to -0.5f
-        //float newSt = (float) stRange - 0.5f + (float) (3.0 * Float.MIN_VALUE);
-        //float newEnd = (float) endRange + 0.5f - (float) (3.0 * Float.MIN_VALUE);
-        float newSt = (float) stRange - 0.49999997f;
-        float newEnd = (float) endRange + 49999997f;
-
+        // a result of -0.49999997f is achieved.
+        // If stRange or endRange are different than zero, then you must add
+        // in an even larger multiple of Float.MIN_VALUE
+        float newSt;
+        float newEnd;
+        float newSta;
+        float newEnda;
+        float eps = (float)(1.1E37 * Float.MIN_VALUE);
+        newSta = (float)stRange - 0.5f;
+        newSt = newSta + eps;
+        while (newSt == newSta) {
+            eps = 2.0f * eps;
+            newSt = newSta + eps;
+        }
+        newEnda = (float)endRange + 0.5f;
+        newEnd = newEnda - eps;
+        while (newEnd == newEnda) {
+            eps = 2.0f * eps;
+            newEnd = newEnda - eps;
+        }
         // This modification ensures that the Gaussian encompasses
         // bins on both sides of the end numbers the same way that
         // it does to the intermediate numbers.
@@ -178,8 +181,31 @@ public class RandomNumberGen extends Random {
      * @return  integer number in the range
      */
     public final int genUniformRandomNum(int stRange, int endRange) {
-        float newSt = (float) stRange + stTol;
-        float newEnd = (float) endRange + endTol;
+        // Float.MIN_VALUE equals 2**(-149) equals approximately 1.4E-45
+        // Consider the case of stRange equals 0
+        // The additon of -0.5f + (float)(3.0 * Float.MIN_VALUE) gives
+        // -0.5f.  In fact, the addition of -0.5 + (float)(1.0E37 * Float.MIN_VALUE)
+        // still gives - 0.5f.  If you use -0.5f + (float)(1.1E37 * Float_MIN_VALUE),
+        // a result of -0.49999997f is achieved.
+        // If stRange or endRange are different than zero, then you must add
+        // in an even larger multiple of Float.MIN_VALUE
+        float newSt;
+        float newEnd;
+        float newSta;
+        float newEnda;
+        float eps = (float)(1.1E37 * Float.MIN_VALUE);
+        newSta = (float)stRange - 0.5f;
+        newSt = newSta + eps;
+        while (newSt == newSta) {
+            eps = 2.0f * eps;
+            newSt = newSta + eps;
+        }
+        newEnda = (float)endRange + 0.5f;
+        newEnd = newEnda - eps;
+        while (newEnd == newEnda) {
+            eps = 2.0f * eps;
+            newEnd = newEnda - eps;
+        }
 
         // If the newSt and newEnd modifications are not used, the stRange
         // and endRange numbers will only occur with half the frequency of
