@@ -179,7 +179,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         boolean test = true;
         double xCenter;
         double yCenter;
-        int numEllipsesFound = 0;
         float xCenterArray[];
         float yCenterArray[];
         float r1Array[];
@@ -360,6 +359,24 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int pointsDeleted;
         int newNumPoints;
         boolean testedArray[];
+        AlgorithmArcLength arcLength;
+        float pct;
+        float pos;
+        int nPts;
+        float xpc;
+        float ypc;
+        double xSqSum;
+        double ySqSum;
+        double xySum;
+        double x1t;
+        double x2t;
+        double y1t;
+        double y2t;
+        double xdist;
+        double ydist;
+        double d1;
+        double d2;
+        double slope;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -411,18 +428,27 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 srcBuffer[index] = 1; 
             }
             
-            a1 = 75.0;
+            /*a1 = 75.0;
             b1 = 37.5;
             angle = Math.PI/4.0;
             beta = -angle;
             cosbeta = Math.cos(beta);
             sinbeta = Math.sin(beta);
-            for (i = 0; i < 90; i++) {
+            for (i = 0; i < 720; i++) {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
                 sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
+            }*/
+            /*for (i = 0; i < 90; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
             }
@@ -431,8 +457,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
                 sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
             }
@@ -441,8 +467,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
                 sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
             }
@@ -451,24 +477,33 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
                 sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
-            }
+            }*/
             
-            a1 = 100.0;
-            b1 = 50.0;
+            /*a1 = 50.0;
+            b1 = 25.0;
             angle = -Math.PI/4.0;
             beta = -angle;
             cosbeta = Math.cos(beta);
             sinbeta = Math.sin(beta);
-            for (i = 0; i < 90; i++) {
+            for (i = 0; i < 720; i++) {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
                 sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                index = x + (xDim*y);
+                srcBuffer[index] = 1; 
+            }*/
+            /*for (i = 0; i < 90; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
             }
@@ -477,8 +512,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
                 sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
             }
@@ -487,8 +522,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
                 sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
             }
@@ -497,11 +532,12 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
                 sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
+                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
+                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
-            }
+            }*/
+   
             //setCompleted(true);
             //return;
         } // if (test)
@@ -637,6 +673,60 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                             srcBuffer[neigh6] = 0;
                             neigh6 = -1;
                         }
+                    }
+                } // if (srcBuffer[index] != 0)
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
+        
+        // Remove points with more than 2 neighbors
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if (srcBuffer[index] != 0) {
+                    neighbors = 0;
+                    if (y > 0) {
+                        if (x > 0) {
+                            if (srcBuffer[index - xDim - 1] != 0) {
+                                neighbors++;
+                            }
+                        }
+                        if (srcBuffer[index - xDim] != 0) {
+                            neighbors++;
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index - xDim + 1] != 0) {
+                                neighbors++;
+                            }
+                        }
+                    } // if (y > 0)
+                    if (x > 0) {
+                        if (srcBuffer[index - 1] != 0) {
+                            neighbors++;
+                        }
+                    } // if (x > 0)
+                    if (x < xDim - 1) {
+                        if (srcBuffer[index + 1] != 0) {
+                            neighbors++;
+                        }
+                    } // if (x < xDim - 1)
+                    if (y < yDim - 1) {
+                        if (x > 0) {
+                            if (srcBuffer[index + xDim - 1] != 0) {
+                                neighbors++;
+                            }
+                        }
+                        if (srcBuffer[index + xDim] != 0) {
+                            neighbors++;
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index + xDim + 1] != 0) {
+                                neighbors++;
+                            }
+                        }    
+                    } // if (y < yDim - 1)
+                    if (neighbors > 2) {
+                        srcBuffer[index] = 0;
                     }
                 } // if (srcBuffer[index] != 0)
             } // for (x = 0; x < xDim; x++)
@@ -792,7 +882,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                         }
                         foundArray[index] = true;
                         openLength[i]++;
-                    } // while(neighbor2[index] != -1;
+                    } // (while(neighbor2[index] != -1)
                     // Delete all open curves with only 2 points
                     // Also don't determine tangents of end points on longer curves,
                     // but use these 2 end points in determining tangents of more inner points
@@ -871,15 +961,82 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                         xPoints[k] = xArray[j];
                         yPoints[k] = yArray[j];
                     }
-                    tangentDir = bSpline.bSplineJetXY(1, presentSidePoints, xPoints, yPoints);
-                    if (tangentDir.x == 0.0f) {
-                        slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+//                  Center all points for at (0, 0)
+                    xpc = xPoints[sidePointsForTangent];
+                    ypc = yPoints[sidePointsForTangent];
+                    for (k = 0; k < xPoints.length; k++) {
+                        xPoints[k] = xPoints[k] - xpc;
+                        yPoints[k] = yPoints[k] - ypc;
+                    }
+                    xSqSum = 0.0;
+                    ySqSum = 0.0;
+                    xySum = 0.0;
+                    for (k = 0; k < xPoints.length; k++) {
+                        xSqSum += xPoints[k]*xPoints[k];
+                        ySqSum += yPoints[k]*yPoints[k];
+                        xySum += xPoints[k]*yPoints[k];
+                    }
+                    if (xySum != 0.0) {
+                        var = Math.sqrt(ySqSum*ySqSum - 2.0 * xSqSum * ySqSum + xSqSum * xSqSum + 4.0 * xySum * xySum);
+                        x1t = 0.5 * ((-ySqSum + xSqSum + var)/xySum);
+                        x2t = 0.5 * ((-ySqSum + xSqSum - var)/xySum);
+                        y1t = 1.0;
+                        y2t = 1.0;
                     }
                     else {
-                        slopeArray[indexPtr] = tangentDir.y/tangentDir.x;
+                        x1t = 1.0;
+                        x2t = 0.0;
+                        y1t = 0.0;
+                        y2t = 1.0;
+                    }
+                    d1 = 0.0;
+                    for (k = 0; k < xPoints.length; k++) {
+                        if (x1t == 0.0) {
+                            // Infinite slope thru (0,0)
+                            d1 += Math.abs(xPoints[k]);
+                        }
+                        else if (y1t == 0.0) {
+                            // Zero slope thru (0, 0)
+                            d1 += Math.abs(yPoints[k]);
+                        }
+                        else {
+                            slope = y1t/x1t;
+                            d1 += Math.abs((slope * xPoints[k] - yPoints[k])/Math.sqrt(slope*slope + 1));
+                        }
+                    }
+                    d2 = 0.0;
+                    for (k = 0; k < xPoints.length; k++) {
+                        if (x2t == 0.0) {
+                            // Infinite slope thru (0,0)
+                            d2 += Math.abs(xPoints[k]);
+                        }
+                        else if (y2t == 0.0) {
+                            // Zero slope thru (0, 0)
+                            d2 += Math.abs(yPoints[k]);
+                        }
+                        else {
+                            slope = y2t/x2t;
+                            d2 += Math.abs((slope * xPoints[k] - yPoints[k])/Math.sqrt(slope*slope + 1));
+                        }
+                    }
+                    if (d1 < d2) {
+                        tangentX = (float)x1t;
+                        tangentY = (float)y1t;
+                    }
+                    else {
+                        tangentX = (float)x2t;
+                        tangentY = (float)y2t;
+                    }
+                    if (tangentX == 0.0f) {
+                        slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+                        
+                    }
+                    else {
+                        slopeArray[indexPtr] = tangentY/tangentX;
+                        System.out.println("slopeArray[indexPtr] = " + slopeArray[indexPtr]);
                         interceptArray[indexPtr] = yArray[n] - slopeArray[indexPtr] * xArray[n];
                         indexPtr++;
-                    }
+                    }    
                 }
             } // for (n = 2; n <= openLength[i] - 2; n++)
         } // for (i = 0; i < numOpenCurves; i++)
@@ -920,17 +1077,17 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                         startWrapPoints = Math.max(0, sidePointsForTangent - n);
                         endWrapPoints =  Math.max(0, sidePointsForTangent - (closedLength - 1 - n));
                         for (k = 0; k < startWrapPoints; k++) {
-                            xPoints[k] = indexArray[endPtr - k] % xDim;
-                            yPoints[k] = indexArray[endPtr - k] / xDim;
+                            xPoints[k] = indexArray[endPtr - (startWrapPoints - k)] % xDim;
+                            yPoints[k] = indexArray[endPtr - (startWrapPoints - k)] / xDim;
                         }
                         for (k = startWrapPoints, j = indexPtr - sidePointsForTangent + startWrapPoints;
                              k < 2*sidePointsForTangent + 1 - endWrapPoints; j++, k++) {
                             xPoints[k] = indexArray[j] % xDim;
                             yPoints[k] = indexArray[j] / xDim;
                         }
-                        for (k = 2*sidePointsForTangent + 1 - endWrapPoints; k < 2*sidePointsForTangent + 1; k++) {
-                            xPoints[k] = indexArray[startPtr + k] % xDim;
-                            yPoints[k] = indexArray[startPtr + k] / xDim;
+                        for (j = 0, k = 2*sidePointsForTangent + 1 - endWrapPoints; k < 2*sidePointsForTangent + 1; j++, k++) {
+                            xPoints[k] = indexArray[startPtr + j] % xDim;
+                            yPoints[k] = indexArray[startPtr + j] / xDim;
                         }
                         if (sidePointsForTangent == 1) {
                             tangentX = (xPoints[2] - xPoints[0])/2.0f;
@@ -945,12 +1102,79 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                             }    
                         } // if (sidePointsForTangent == 1)
                         else {
-                            tangentDir = bSpline.bSplineJetXY(1, sidePointsForTangent, xPoints, yPoints);
-                            if (tangentDir.x == 0.0f) {
-                                slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+                            // Center all points for at (0, 0)
+                            xpc = xPoints[sidePointsForTangent];
+                            ypc = yPoints[sidePointsForTangent];
+                            for (k = 0; k < xPoints.length; k++) {
+                                xPoints[k] = xPoints[k] - xpc;
+                                yPoints[k] = yPoints[k] - ypc;
+                            }
+                            xSqSum = 0.0;
+                            ySqSum = 0.0;
+                            xySum = 0.0;
+                            for (k = 0; k < xPoints.length; k++) {
+                                xSqSum += xPoints[k]*xPoints[k];
+                                ySqSum += yPoints[k]*yPoints[k];
+                                xySum += xPoints[k]*yPoints[k];
+                            }
+                            if (xySum != 0.0) {
+                                var = Math.sqrt(ySqSum*ySqSum - 2.0 * xSqSum * ySqSum + xSqSum * xSqSum + 4.0 * xySum * xySum);
+                                x1t = 0.5 * ((-ySqSum + xSqSum + var)/xySum);
+                                x2t = 0.5 * ((-ySqSum + xSqSum - var)/xySum);
+                                y1t = 1.0;
+                                y2t = 1.0;
                             }
                             else {
-                                slopeArray[indexPtr] = tangentDir.y/tangentDir.x;
+                                x1t = 1.0;
+                                x2t = 0.0;
+                                y1t = 0.0;
+                                y2t = 1.0;
+                            }
+                            d1 = 0.0;
+                            for (k = 0; k < xPoints.length; k++) {
+                                if (x1t == 0.0) {
+                                    // Infinite slope thru (0,0)
+                                    d1 += Math.abs(xPoints[k]);
+                                }
+                                else if (y1t == 0.0) {
+                                    // Zero slope thru (0, 0)
+                                    d1 += Math.abs(yPoints[k]);
+                                }
+                                else {
+                                    slope = y1t/x1t;
+                                    d1 += Math.abs((slope * xPoints[k] - yPoints[k])/Math.sqrt(slope*slope + 1));
+                                }
+                            }
+                            d2 = 0.0;
+                            for (k = 0; k < xPoints.length; k++) {
+                                if (x2t == 0.0) {
+                                    // Infinite slope thru (0,0)
+                                    d2 += Math.abs(xPoints[k]);
+                                }
+                                else if (y2t == 0.0) {
+                                    // Zero slope thru (0, 0)
+                                    d2 += Math.abs(yPoints[k]);
+                                }
+                                else {
+                                    slope = y2t/x2t;
+                                    d2 += Math.abs((slope * xPoints[k] - yPoints[k])/Math.sqrt(slope*slope + 1));
+                                }
+                            }
+                            if (d1 < d2) {
+                                tangentX = (float)x1t;
+                                tangentY = (float)y1t;
+                            }
+                            else {
+                                tangentX = (float)x2t;
+                                tangentY = (float)y2t;
+                            }
+                            if (tangentX == 0.0f) {
+                                slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+                                
+                            }
+                            else {
+                                slopeArray[indexPtr] = tangentY/tangentX;
+                                System.out.println("slopeArray[indexPtr] = " + slopeArray[indexPtr]);
                                 interceptArray[indexPtr] = yPoints[sidePointsForTangent] - slopeArray[indexPtr] * xPoints[sidePointsForTangent];
                                 indexPtr++;
                             }    
@@ -959,6 +1183,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 }
             } // for (x = 0; x < xDim; x++)
         } // for (y = 0; y < yDim; y++)
+        
         neighbor1 = null;
         neighbor2 = null;
         foundArray = null;
@@ -1029,24 +1254,17 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         A = new Matrix(3,3);
         B = new Matrix(3,1);
         foundPoint = new byte[numPoints];
-        testedArray = new boolean[numPoints];
+        testedArray = new boolean[numBins];
         while (ellipseFindCycles < maxEllipseFindCycles) {
             pointSetsAcquired = 0;
             while (pointSetsAcquired < pointSetsRequired) {
-                System.out.println("pointSetsAcquired = " + pointSetsAcquired);
                 // Generate 3 random numbers from 0 to numPoints - 1  
                 number1 = randomGen.genUniformRandomNum(0, numPoints - 1);
-                if (number1 < 0) {
-                    System.out.println("number1 = " + number1);
-                }
                 x1 = indexArray[number1] % xDim;
                 y1 = indexArray[number1] / xDim;
                 slope1 = slopeArray[number1];
                 while (true) {
                     number2 = randomGen.genUniformRandomNum(0, numPoints - 1);
-                    if (number2 < 0) {
-                        System.out.println("number2 = " + number2);
-                    }
                     if (number1 == number2) {
                         continue;
                     }
@@ -1098,10 +1316,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 }
                 while (true) {
                     number3 = randomGen.genUniformRandomNum(0, numPoints - 1);
-                    if (number3 < 0) {
-                        System.out.println("number3 = " + number3);
-                        System.out.println("numPoints = " + numPoints);
-                    }
                     if ((number1 == number3) || (number2 == number3)) {
                         continue;
                     }
@@ -1277,6 +1491,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     continue;
                 }
                 pointSetsAcquired++;
+                //System.out.println("pointsSetsAcquired = " + pointSetsAcquired);
                 xCenterIndex = (int)((xCenter - minXCenter)/maxPixelDiff);
                 yCenterIndex = (int)((yCenter - minYCenter)/maxPixelDiff);
                 r1Index = (int)((r1 - minR1)/maxPixelDiff);
@@ -1291,76 +1506,88 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 countArray[index]++;
             } // while (pointSetsAcquired < pointSetsRequired)
             countThresholdFound = true;
-            while ((ellipsesFound < numEllipses) && (countThresholdFound)) {
-                countThresholdFound = false;
-                maxIndex = -1;
-                maxCount = 0;
-                for (i = 0; i < numBins; i++) {
-                    testedArray[i] = false;
+            for (i = 0; i < numBins; i++) {
+                testedArray[i] = false;
+            }
+            countThresholdFound = false;
+            maxIndex = -1;
+            maxCount = 0;
+            for (i = 0; i < numBins; i++) {
+                if ((!testedArray[i]) && (countArray[i] > maxCount)) {
+                    maxIndex = i;
+                    maxCount = countArray[i];
+                    testedArray[i] = true;
                 }
-                for (i = 0; i < numBins; i++) {
-                    if ((!testedArray[i]) && (countArray[i] > maxCount)) {
-                        maxIndex = i;
-                        maxCount = countArray[i];
-                        testedArray[i] = true;
+            } // for (i = 0; i < numBins; i++)
+            if (maxCount >= countThreshold) {
+                countThresholdFound = true;
+                // Check to see if ellipse perimiter has at least minCoverage percent pixels set
+                xCenter = xCenterArray[maxIndex]/maxCount;
+                yCenter = yCenterArray[maxIndex]/maxCount;
+                r1 = r1Array[maxIndex]/maxCount;
+                r2 = r2Array[maxIndex]/maxCount;
+                theta = thetaArray[maxIndex]/maxCount;
+                h = ((r1 - r2)/(r1 + r2));
+                h = h * h;
+                perimiter = Math.PI * (r1 + r2) * (1 + (3*h)/(10 + Math.sqrt(4 - 3*h)));
+                minPixels = (int)(minCoverage * 0.01 * perimiter);
+                costheta = Math.cos(theta);
+                sintheta = Math.sin(theta);
+                r1Sq = r1 * r1;
+                r2Sq = r2 * r2;
+                pointsOnEllipse = 0;
+                for (i = 0; i < numPoints; i++) {
+                    x = indexArray[i] % xDim;
+                    y = indexArray[i] / xDim;
+                    // Check on a zero centered ellipse
+                    xc = x - xCenter;
+                    yc = y - yCenter;
+                    var1 = yc * sintheta + xc*costheta;
+                    var2 = yc * costheta - xc*sintheta;
+                    checkVal = var1*var1/r1Sq + var2*var2/r2Sq;
+                    if ((checkVal >= lowerLimit) && (checkVal <= upperLimit)) {
+                        pointsOnEllipse++;
+                        if (foundPoint[i] == 0) {
+                            foundPoint[i] = 1;
+                        }
                     }
-                } // for (i = 0; i < numBins; i++)
-                if (maxCount >= countThreshold) {
-                    countThresholdFound = true;
-                    // Check to see if ellipse perimiter has at least minCoverage percent pixels set
-                    xCenter = xCenterArray[maxIndex]/maxCount;
-                    yCenter = yCenterArray[maxIndex]/maxCount;
-                    r1 = r1Array[maxIndex]/maxCount;
-                    r2 = r2Array[maxIndex]/maxCount;
-                    theta = thetaArray[maxIndex]/maxCount;
-                    h = ((r1 - r2)/(r1 + r2));
-                    h = h * h;
-                    perimiter = Math.PI * (r1 + r2) * (1 + (3*h)/(10 + Math.sqrt(4 - 3*h)));
-                    minPixels = (int)(minCoverage * 0.01 * perimiter);
-                    costheta = Math.cos(theta);
-                    sintheta = Math.sin(theta);
-                    r1Sq = r1 * r1;
-                    r2Sq = r2 * r2;
-                    pointsOnEllipse = 0;
+                } // for (i = 0; i < numPoints; i++)
+                System.out.println("pointsOnEllipse = " + pointsOnEllipse);
+                System.out.println("minPixels = " + minPixels);
+                System.out.println("xCenter = " + xCenter);
+                System.out.println("yCenter = " + yCenter);
+                System.out.println("r1 = " + r1);
+                System.out.println("r2 = " + r2);
+                System.out.println("theta = " + (theta * 180.0/Math.PI));
+                if (pointsOnEllipse >= minPixels) {
+                    xCenterTable[ellipsesFound] = (float)xCenter;
+                    yCenterTable[ellipsesFound] = (float)yCenter;
+                    r1Table[ellipsesFound] = (float)r1;
+                    r2Table[ellipsesFound] = (float)r2;
+                    thetaTable[ellipsesFound] = (float)(theta);
+                    countTable[ellipsesFound] = pointsOnEllipse;
+                    ellipsesFound++;
+                    System.out.println("ellipses found = " + ellipsesFound);
+                    ViewUserInterface.getReference().setDataText("Ellipse # " + ellipsesFound + " found\n");
+                    ViewUserInterface.getReference().setDataText(" x center = " + xCenter + "\n");
+                    ViewUserInterface.getReference().setDataText(" y center = " + yCenter + "\n");
+                    ViewUserInterface.getReference().setDataText(" r1 = " + r1 + "\n");
+                    ViewUserInterface.getReference().setDataText(" r2 = " + r2 + "\n");
+                    ViewUserInterface.getReference().setDataText(" theta = " + (theta * 180/Math.PI) + "\n");
                     for (i = 0; i < numPoints; i++) {
-                        x = indexArray[i] % xDim;
-                        y = indexArray[i] / xDim;
-                        // Check on a zero centered ellipse
-                        xc = x - xCenter;
-                        yc = y - yCenter;
-                        var1 = yc * sintheta + xc*costheta;
-                        var2 = yc * costheta - xc*sintheta;
-                        checkVal = var1*var1/r1Sq + var2*var2/r2Sq;
-                        if ((checkVal >= lowerLimit) && (checkVal <= upperLimit)) {
-                            pointsOnEllipse++;
-                            if (foundPoint[i] == 0) {
-                                foundPoint[i] = 1;
-                            }
-                        }
-                    } // for (i = 0; i < numPoints; i++)
-                    if (pointsOnEllipse >= minPixels) {
-                        xCenterTable[ellipsesFound] = (float)xCenter;
-                        yCenterTable[ellipsesFound] = (float)yCenter;
-                        r1Table[ellipsesFound] = (float)r1;
-                        r2Table[ellipsesFound] = (float)r2;
-                        thetaTable[ellipsesFound] = (float)(theta);
-                        countTable[ellipsesFound] = pointsOnEllipse;
-                        ellipsesFound++;
-                        for (i = 0; i < numPoints; i++) {
-                            if (foundPoint[i] == 1) {
-                                foundPoint[i] = 2;
-                            }
+                        if (foundPoint[i] == 1) {
+                            foundPoint[i] = 2;
                         }
                     }
-                    else { // pointsOnEllipse < minPixels
-                        for (i = 0; i < numPoints; i++) {
-                            if (foundPoint[i] == 1) {
-                                foundPoint[i] = 0;
-                            }
+                }
+                else { // pointsOnEllipse < minPixels
+                    for (i = 0; i < numPoints; i++) {
+                        if (foundPoint[i] == 1) {
+                            foundPoint[i] = 0;
                         }
                     }
-                } // if (maxCount >= countThreshold)
-            } // while ((ellipsesFound < numEllipses) && (countThresholdFound))
+                }
+            } // if (maxCount >= countThreshold)
             if (ellipsesFound == numEllipses) {
                 break;
             }
@@ -1452,7 +1679,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         // Create a dialog with numEllipsesFound xCenterTable[i], yCenterTable[i], r1Table[i],
         // r2Table[i], thetaTable[i], and countTable[i] values, where the user will select a check box
         // to have the selected ellipse drawn.
-        selectedEllipse = new boolean[numEllipsesFound];
+        selectedEllipse = new boolean[ellipsesFound];
         
         choice = new JDialogHoughEllipseChoice(ViewUserInterface.getReference().getMainFrame(), xCenterTable,
                  xDim, yCenterTable, yDim, r1Table, minR1, maxR1, r2Table, minR2, maxR2, thetaTable,
@@ -1464,7 +1691,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         }
         
         // Draw selected elipses
-        for (i = 0; i < numEllipsesFound; i++) {
+        for (i = 0; i < ellipsesFound; i++) {
             if (selectedEllipse[i]) {
                 beta = -thetaTable[i];
                 cosbeta = Math.cos(beta);
@@ -1474,12 +1701,16 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     cosalpha = Math.cos(alpha);
                     sinalpha = Math.sin(alpha);
                     x = (int)(xCenterTable[i] + r1Table[i] * cosalpha * cosbeta - r2Table[i] * sinalpha * sinbeta);
-                    y = (int)(yCenterTable[i] + r1Table[i] * cosalpha * sinbeta + r2Table[i] * sinalpha * cosbeta);
-                    index = x + (xDim*y);
-                    srcBuffer[index] = value; 
+                    if ((x >= 0) && (x < xDim)) {
+                        y = (int)(yCenterTable[i] + r1Table[i] * cosalpha * sinbeta + r2Table[i] * sinalpha * cosbeta);
+                        if ((y >= 0) && (y < yDim)) {
+                            index = x + (xDim*y);
+                            srcBuffer[index] = value;
+                        }
+                    }
                 }
             } // if (selectedEllipse[i])
-        } // for (i = 0; i < numEllipsesFound; i++)
+        } // for (i = 0; i < ellipsesFound; i++)
         
         try {
             destImage.importData(0, srcBuffer, true);
