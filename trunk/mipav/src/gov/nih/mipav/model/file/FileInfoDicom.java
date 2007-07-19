@@ -148,7 +148,10 @@ public class FileInfoDicom extends FileInfoBase {
      */
     public Short pixelPaddingValue = null;
 
-    /** Data type. */
+    /** DICOM tag (0028,103) 
+     * 	-1 = undefined
+     * 	 0 = unsigned 
+     *   1 = signed */
     public short pixelRepresentation = -1;
 
     /** 0 = RGB, RGB, 1 = R R R, G G G, B B B. */
