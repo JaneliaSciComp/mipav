@@ -317,7 +317,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         paramPanel.add(minCoverageLabel, gbc);
 
         minCoverageText = new JTextField(10);
-        minCoverageText.setText("30.0");
+        minCoverageText.setText("10.0");
         minCoverageText.setFont(serif12);
         minCoverageText.setEnabled(true);
         gbc.gridx = 1;
@@ -392,7 +392,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         paramPanel.add(maxPointLabel, gbc);
         
         maxPointText = new JTextField(10);
-        maxPointText.setText("50.0");
+        maxPointText.setText("100.0");
         maxPointText.setFont(serif12);
         maxPointText.setEnabled(true);
         gbc.gridx = 1;
@@ -407,7 +407,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         paramPanel.add(pointSetsLabel, gbc);
         
         pointSetsText = new JTextField(10);
-        pointSetsText.setText("80");
+        pointSetsText.setText("1000");
         pointSetsText.setFont(serif12);
         pointSetsText.setEnabled(true);
         gbc.gridx = 1;
