@@ -463,7 +463,7 @@ public class FileDicom extends FileDicomBase {
                 // syntax group has been read in
                 if (getFilePointer() >= (ID_OFFSET + 4 + metaGroupLength)) {
                     endianess = fileInfo.getEndianess();
-                    Preferences.debug("endianess = " + endianess + "\n", Preferences.DEBUG_FILEIO);
+                    //Preferences.debug("endianess = " + endianess + "\n", Preferences.DEBUG_FILEIO);
                 }
             } else {
 
@@ -876,9 +876,10 @@ public class FileDicom extends FileDicomBase {
 
                 // Found an CT that was incorrectly label pixelRepresentation = 0 (unsigned when
                 // in fact all CT images are signed!
-                fileInfo.setDataType(ModelStorageBase.SHORT);
-                fileInfo.displayType = ModelStorageBase.SHORT;
-                fileInfo.bytesPerPixel = 2;
+            	// The above statement is not true 7/19/2007
+                //fileInfo.setDataType(ModelStorageBase.SHORT);
+                //fileInfo.displayType = ModelStorageBase.SHORT;
+                //fileInfo.bytesPerPixel = 2;
             } else {
                 fileInfo.setDataType(ModelStorageBase.USHORT);
                 fileInfo.displayType = ModelStorageBase.USHORT;
@@ -946,14 +947,14 @@ public class FileDicom extends FileDicomBase {
 
         if (((fileInfo.getDataType() == ModelStorageBase.UBYTE) ||
                  (fileInfo.getDataType() == ModelStorageBase.USHORT)) && (fileInfo.getRescaleIntercept() < 0)) { // if image originally was unsigned and rescale makes a negative, change
-
-            // display type so image shows up properly
+//        	 The above statement is not true 7/19/2007 - a negative rescale intercept is not sufficient to impose signed image.
+//			 This if statement should be deleted most likely.
             if (fileInfo.getDataType() == ModelStorageBase.UBYTE) {
                 fileInfo.displayType = ModelStorageBase.BYTE;
                 fileInfo.setDataType(ModelStorageBase.BYTE);
             } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                fileInfo.displayType = ModelStorageBase.SHORT;
-                fileInfo.setDataType(ModelStorageBase.SHORT);
+            //    fileInfo.displayType = ModelStorageBase.SHORT;
+            //    fileInfo.setDataType(ModelStorageBase.SHORT);
             }
         }
 
