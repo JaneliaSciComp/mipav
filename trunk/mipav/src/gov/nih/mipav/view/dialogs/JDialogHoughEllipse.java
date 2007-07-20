@@ -18,7 +18,7 @@ import javax.swing.*;
  * Dialog to create Hough transform with p, q, r1, r2, and theta output for ellipse detection in
  * binary image, where p is the x coordinate of the ellipse center, q is the y coordinate of the
  * ellipse center, r1 is the semimajor axis (or major radius), r2 is the semiminor axis (or
- * minor radius),and theta is the angle of the major axis.
+ * minor radius), and theta is the angle of the major axis with the x axis.
  */
 public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
 
@@ -38,55 +38,65 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
     /** DOCUMENT ME! */
     private ModelImage resultImage = null;
 
-    /** DOCUMENT ME! */
+    /** Minimum percentage of the perimiter of a found ellipse that must be covered by points for it to be valid. */
     private double minCoverage;
 
     /** DOCUMENT ME! */
     private JTextField minCoverageText;
 
-    /** DOCUMENT ME! */
+    /** Maximum number of points to take from each side of a point on a curve in determining a tangent */
     private int sidePointsForTangent;
     
     private JTextField sideText;
     
-    private JTextField pixelDiffText;
+    private JTextField pixelWidthText;
     
-    private double maxPixelDiff;
+    /** For xCenter, yCenter, r1, and r2 must bin width <= maxPixelBinWidth */
+    private double maxPixelBinWidth;
     
-    private JTextField degreesDiffText;
+    private JTextField degreesWidthText;
     
-    private double maxDegreesDiff;
+    /** For theta must have bin width <= maxDegreesBinWidth */
+    private double maxDegreesBinWidth;
     
+    /** number of ellipses to be found */
     private int numEllipses;
     
     private JTextField numEllipsesText;
     
+    /** Smallest allowable distance between 2 of 3 picked points */
     private double minPointDistance;
     
     private JTextField minPointText;
     
+    /** Largest allowable distance between 2 of 3 picked points */
     private double maxPointDistance;
     
     private JTextField maxPointText;
     
+    /** Number of point triplets required before each ellipse find is performed */
     private int pointSetsRequired;
     
     private JTextField pointSetsText;
     
+    /** Number of counts required to find an ellipse */
     private int countThreshold;
     
     private JTextField countText;
     
+    /** Maximum percent by which perimiter pixels can deviate from the ellipse equation */
     private double ellipseRangeTolerance;
     
     private JTextField toleranceText;
     
-    private double maxAxesRatio;
+    private JTextField maxCyclesText;
     
-    private JTextField maxRatioText;
+    /** Maximum number of pointSetsRequired triplet point acqusitions that is allowed to occur */
+    private int maxEllipseFindCycles;
     
     private JTextField maxBufferText;
     
+    /** The maximum Hough transform size in megabytes - default is currently 256 */
     private int maxBufferSize;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -221,11 +231,11 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
             resultImage.setImageName(name);
 
             // Make algorithm
-            hAlgo = new AlgorithmHoughEllipse(resultImage, image, minCoverage, sidePointsForTangent, maxPixelDiff,
-                                              maxDegreesDiff, minPointDistance,
+            hAlgo = new AlgorithmHoughEllipse(resultImage, image, minCoverage, sidePointsForTangent, maxPixelBinWidth,
+                                              maxDegreesBinWidth, minPointDistance,
                                               maxPointDistance, pointSetsRequired, countThreshold,
-                                              ellipseRangeTolerance, maxAxesRatio, numEllipses,
-                                              maxBufferSize);
+                                              ellipseRangeTolerance, numEllipses, 
+                                              maxEllipseFindCycles, maxBufferSize);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -266,18 +276,15 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         JLabel minCoverageLabel;
         JLabel sideLabel;
         JLabel pixelDiffLabel;
-        JLabel degreesDiffLabel;
+        JLabel degreesWidthLabel;
         JLabel minPointLabel;
         JLabel maxPointLabel;
         JLabel pointSetsLabel;
         JLabel countLabel;
         JLabel toleranceLabel;
-        JLabel maxRatioLabel;
         JLabel numEllipsesLabel;
+        JLabel maxCyclesLabel;
         JLabel maxBufferLabel;
-        int xDim = Math.min(512, image.getExtents()[0]);
-        int yDim = Math.min(512, image.getExtents()[1]);
-        int rDim = Math.min(512, Math.max(image.getExtents()[0], image.getExtents()[1]));
         setForeground(Color.black);
         setTitle("Hough transform for ellipse detection");
 
@@ -317,7 +324,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         paramPanel.add(minCoverageLabel, gbc);
 
         minCoverageText = new JTextField(10);
-        minCoverageText.setText("10.0");
+        minCoverageText.setText("30.0");
         minCoverageText.setFont(serif12);
         minCoverageText.setEnabled(true);
         gbc.gridx = 1;
@@ -338,7 +345,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         gbc.gridx = 1;
         paramPanel.add(sideText, gbc);
         
-        pixelDiffLabel = new JLabel("Maximum pixel difference for p, q, r1, or r2 value ");
+        pixelDiffLabel = new JLabel("Desired maximum pixel difference for p, q, r1, or r2 value ");
         pixelDiffLabel.setForeground(Color.black);
         pixelDiffLabel.setFont(serif12);
         pixelDiffLabel.setEnabled(true);
@@ -346,27 +353,27 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         gbc.gridy = 4;
         paramPanel.add(pixelDiffLabel, gbc);
         
-        pixelDiffText = new JTextField(10);
-        pixelDiffText.setText("2.0");
-        pixelDiffText.setFont(serif12);
-        pixelDiffText.setEnabled(true);
+        pixelWidthText = new JTextField(10);
+        pixelWidthText.setText("2.0");
+        pixelWidthText.setFont(serif12);
+        pixelWidthText.setEnabled(true);
         gbc.gridx = 1;
-        paramPanel.add(pixelDiffText, gbc);
+        paramPanel.add(pixelWidthText, gbc);
         
-        degreesDiffLabel = new JLabel("Maximum degrees difference for theta value ");
-        degreesDiffLabel.setForeground(Color.black);
-        degreesDiffLabel.setFont(serif12);
-        degreesDiffLabel.setEnabled(true);
+        degreesWidthLabel = new JLabel("Desired maximum degrees difference for theta value ");
+        degreesWidthLabel.setForeground(Color.black);
+        degreesWidthLabel.setFont(serif12);
+        degreesWidthLabel.setEnabled(true);
         gbc.gridx = 0;
         gbc.gridy = 5;
-        paramPanel.add(degreesDiffLabel, gbc);
+        paramPanel.add(degreesWidthLabel, gbc);
         
-        degreesDiffText = new JTextField(10);
-        degreesDiffText.setText("3.0");
-        degreesDiffText.setFont(serif12);
-        degreesDiffText.setEnabled(true);
+        degreesWidthText = new JTextField(10);
+        degreesWidthText.setText("3.0");
+        degreesWidthText.setFont(serif12);
+        degreesWidthText.setEnabled(true);
         gbc.gridx = 1;
-        paramPanel.add(degreesDiffText, gbc);
+        paramPanel.add(degreesWidthText, gbc);
         
         minPointLabel = new JLabel("Minimum distance between 2 of 3 picked points ");
         minPointLabel.setForeground(Color.black);
@@ -428,7 +435,7 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         gbc.gridx = 1;
         paramPanel.add(countText, gbc);
         
-        toleranceLabel = new JLabel("Maximum pixel distance from ellipse for perimiter pixels ");
+        toleranceLabel = new JLabel("Maximum percent deviation for perimiter pixels ");
         toleranceLabel.setForeground(Color.black);
         toleranceLabel.setFont(serif12);
         toleranceLabel.setEnabled(true);
@@ -437,41 +444,41 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         paramPanel.add(toleranceLabel, gbc);
         
         toleranceText = new JTextField(10);
-        toleranceText.setText("4.0");
+        toleranceText.setText("15.0");
         toleranceText.setFont(serif12);
         toleranceText.setEnabled(true);
         gbc.gridx = 1;
         paramPanel.add(toleranceText, gbc);
-        
-        maxRatioLabel = new JLabel("Maximum major to minor axis ratio");
-        maxRatioLabel.setForeground(Color.black);
-        maxRatioLabel.setFont(serif12);
-        maxRatioLabel.setEnabled(true);
-        gbc.gridx = 0;
-        gbc.gridy = 11;
-        paramPanel.add(maxRatioLabel, gbc);
-        
-        maxRatioText = new JTextField(10);
-        maxRatioText.setText("2.0");
-        maxRatioText.setFont(serif12);
-        maxRatioText.setEnabled(true);
-        gbc.gridx = 1;
-        paramPanel.add(maxRatioText, gbc);
         
         numEllipsesLabel = new JLabel("Number of ellipses ");
         numEllipsesLabel.setForeground(Color.black);
         numEllipsesLabel.setFont(serif12);
         numEllipsesLabel.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 11;
         paramPanel.add(numEllipsesLabel, gbc);
         
-        numEllipsesText = new JTextField(3);
+        numEllipsesText = new JTextField(5);
         numEllipsesText.setText("1");
         numEllipsesText.setFont(serif12);
         numEllipsesText.setEnabled(true);
         gbc.gridx = 1;
         paramPanel.add(numEllipsesText, gbc);
+        
+        maxCyclesLabel = new JLabel("Maximum number of ellipse find cycles ");
+        maxCyclesLabel.setForeground(Color.black);
+        maxCyclesLabel.setFont(serif12);
+        maxCyclesLabel.setEnabled(true);
+        gbc.gridx = 0;
+        gbc.gridy = 12;
+        paramPanel.add(maxCyclesLabel, gbc);
+        
+        maxCyclesText = new JTextField(10);
+        maxCyclesText.setText("80");
+        maxCyclesText.setFont(serif12);
+        maxCyclesText.setEnabled(true);
+        gbc.gridx = 1;
+        paramPanel.add(maxCyclesText, gbc);
         
         maxBufferLabel = new JLabel("Maximum Hough transform in megabytes ");
         maxBufferLabel.setForeground(Color.black);
@@ -520,22 +527,22 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
             sidePointsForTangent = Integer.valueOf(sideText.getText()).intValue();
         }
         
-        if (!testParameter(pixelDiffText.getText(), 0.1, 20.0)) {
-            pixelDiffText.requestFocus();
-            pixelDiffText.selectAll();
+        if (!testParameter(pixelWidthText.getText(), 0.1, 20.0)) {
+            pixelWidthText.requestFocus();
+            pixelWidthText.selectAll();
 
             return false;
         } else {
-            maxPixelDiff = Double.valueOf(pixelDiffText.getText()).doubleValue();
+            maxPixelBinWidth = Double.valueOf(pixelWidthText.getText()).doubleValue();
         }
         
-        if (!testParameter(degreesDiffText.getText(), 0.1, 20.0)) {
-            degreesDiffText.requestFocus();
-            degreesDiffText.selectAll();
+        if (!testParameter(degreesWidthText.getText(), 0.1, 20.0)) {
+            degreesWidthText.requestFocus();
+            degreesWidthText.selectAll();
 
             return false;
         } else {
-            maxDegreesDiff = Double.valueOf(degreesDiffText.getText()).doubleValue();
+            maxDegreesBinWidth = Double.valueOf(degreesWidthText.getText()).doubleValue();
         }
         
         if (!testParameter(minPointText.getText(), 1.0, Math.max(image.getExtents()[0],image.getExtents()[1])/2.0)) {
@@ -583,16 +590,6 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
             ellipseRangeTolerance = Double.valueOf(toleranceText.getText()).doubleValue();
         }
         
-        
-        if (!testParameter(maxRatioText.getText(), 1.0, 100.0)) {
-            maxRatioText.requestFocus();
-            maxRatioText.selectAll();
-
-            return false;
-        } else {
-            maxAxesRatio = Double.valueOf(maxRatioText.getText()).intValue();
-        }
-        
         if (!testParameter(numEllipsesText.getText(), 1, 100)) {
             numEllipsesText.requestFocus();
             numEllipsesText.selectAll();
@@ -600,6 +597,15 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
             return false;
         } else {
             numEllipses = Integer.valueOf(numEllipsesText.getText()).intValue();
+        }
+        
+        if (!testParameter(maxCyclesText.getText(), 1, 1000000)) {
+            maxCyclesText.requestFocus();
+            maxCyclesText.selectAll();
+
+            return false;
+        } else {
+            maxEllipseFindCycles = Integer.valueOf(maxCyclesText.getText()).intValue();
         }
         
         if (!testParameter(maxBufferText.getText(), 1, 10000)) {
