@@ -21,14 +21,71 @@ import java.io.*;
  *  3   4
  *  5 6 7
  *  
- *  If more ellipses are to be found, then zero the houghBuffer and run through the
- *  same Hough transform a second time, but on this second run instead of incrementing
- *  the Hough buffer, zero the values in the source buffer that contributed to the peak
- *  point in the Hough buffer. So on the next run of the Hough transform the source points that
- *  contributed to the Hough peak value just detected will not be present.
- *  
- *  Create a dialog with numEllipsesFound pArray[i], qArray[i], r1Array[i], r2Array[i], thetaArray[i], and
- *  countArray[i] values, where the user will select a check box to have that ellipse drawn.
+ *  The algorithm works as follows:
+ *  1.) Skeletonization is performed.  Branches with 2 or less pixels are pruned off.
+ *  2.) When a pixel has a diagonal neighbor adjacent to a horizontal or vertical neighbor, 
+ *      the horizontal or vertical neighbor is deleted.
+ *  3.) Remove points with 2 or more neighbors.
+ *  4.) Find the 1 or 2 neighbors of every point
+ *      Find the number of end points, that is, points with only 1 neighbor
+ *      Delete isolated points with no neighbors
+ *  5.) Find the starting positions and lengths of the open curves
+ *      Delete all open curves with only 2 points
+ *  6.) For the open curves find the slope and y axis intercept of the tangent line to the curve at a point
+ *      With a user specified sidePointsForTangent on each side of a point find the tangent line that
+ *      minimizes the sum of the squared distances from these side points to the tangent line
+ *  7.) Find a position and length of closed curve 
+ *  8.) For the closed curve find the slope and y axis intercept of the tangent line to the curve at a point
+ *      With a user specified sidePointsForTangent on each side of a point find the tangent line that
+ *      minimizes the sum of the squared distances from these side points to the tangent line 
+ *  9.) Calculate the desired number of bins that would be used for each parameter if memory were not a
+ *      limitation.
+ *  10.) Shrink the number of each bins used by the fifth root of actualBytesAvailable/desiredBytes
+         to keep the buffer size down to user specified actualBytesAvailable.
+ *  11.) User a random number generator to select 3 of the points.  If 2 of the 3 points are closer than
+ *       the user specified minimum distance or farther than the user specified maximum distance, then
+ *       run the random number generator again to find another point within the permissible distance
+ *       range.  If 2 of the points have tangents with the same slope, then run the random number
+ *       generator again.
+ *  12.) Find the intersection of the tangent line for point 1 and the tangent line for point2, t12.
+ *       Find the point midway between point 1 and point 2, point m12.
+ *       Find the intersection of the tangent line for point 3 and the tangent line for point3, t23.
+ *       Find the point midway between point 2 and point 3, point m23.
+ *       The center is found at the intersection of t12m12 and t23m23.  If the center is not inside
+ *       the bounds of the image, go back and run the random number generator for 3 new points.
+ *  13.) Translate the center of the ellipse to the origin by subtracting xCenter, yCenter from 
+ *       point 1, point 2, and point 3.
+ *  14.) Solve for the other 3 ellipse parameters a, b, and c in a*x**2 + 2*b*x*y + c*y**2 = 1 by solving:
+ *       [x1**2  2*x1*y1  y1**2] [a]   [1]
+ *       [x2**2  2*x2*y2  y2**2] [b] = [1]
+ *       [x3**2  2*x3*y3  y3**2] [c]   [1]
+ *  15.) The inequality a*c - b**2 > 0 is true if the parameters represent a valid ellipse.
+ *       If this inequality is false, it implies that either the 3 pixels do not lie on the same ellipse,
+ *       or that the estimates of the tangents were inaccurate.  In either case, we discard the 
+ *       parameters and run the random number generator to find a new pixel triplet.
+ *  16.) Convert a, b, and c to semi major axis r1, semi minor axis r2, and orientation angle theta.
+ *       Find the index value for these 5 parameters and add the respective parameters to xCenterArray[index],
+ *       yCenterArray[index], r1Array[index], r2Array[index], and thetaArray[index].
+ *       Increment countArray[index].
+ *  17.) Keep collecting point triplets until the user specified pointSetsRequired have been collected.
+ *  18.) Find the maxIndex yielding the largest value of countArray[index].  If countArray[index] > countThreshold,
+ *       then proceed with step 19.  Otherwise zero the Hough buffer and start to collect a new set of
+ *       pointSetsRequired point triplets.
+ *  19.) Divide xCenterArray[maxIndex], yCenterArray[maxIndex], r1Array[maxIndex], r2Array[maxIndex],
+ *       and thetaArray[maxIndex] by countArray[maxIndex].  For xCenter, yCenter, r1, r2, and theta,
+ *       find the number of pixels near the perimiter of the ellipse.  For xCenter, yCenter, r1, r2,
+ *       and theta - 90 degrees, find the number of pixels near the perimiter of the ellipse.  The
+ *       correct one of these 2 cases has the largest number of pixels near the perimiter of the
+ *       ellipse.  If the correct case find more pixels than minCoverage percent of the perimiter
+ *       length, then the ellipse is considered as valid.  If the correct case has fewer than minCoverage
+ *       percent of the ellipse perimiter, then this set of parameters is discarded and we return to step 18.
+ *  20.) If an ellipse has been found, but the algorithm still has not found the user specified numEllipses
+ *       number of ellipses, then If an ellipse was found, then delete the points found along its perimiter
+ *       from indexArray, slopeArray, and interceptArray before running the Hough transform again
+ *  21.) Perform no more than maxEllipseFindCycles of pointSetsRequired triplet set acquisitions.  When
+ *       this number of triplet set acquisitions has occurred, stop trying to find new ellipses.
+ *  22.) Create a dialog with numEllipsesFound pArray[i], qArray[i], r1Array[i], r2Array[i], thetaArray[i], 
+ *       and countArray[i] values, where the user will select a check box to have that ellipse drawn.
  *  
  *  References: 1.) The Randomized Hough Transform used for ellipse detection by Andrew Schuler
  *  
@@ -58,19 +115,14 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
     
     // Maximum number of points to take from each side of a point on a curve in determining a tangent
     // If only 1 point is available on each side, simply use avarage of slopes to each of the
-    // neigboring points.  If at least 2 or more points are available on each side, use 
-    // bspline.bSplineJetXY.
+    // neigboring points.  
     private int sidePointsForTangent;
     
-    // For p, q, r1, and r2 must have the abs(var(i) - var) <= maxPixelDiff if the set of 5 values is to
-    // be placed into an existing bin.  If any of the 4 variables exceeds this difference, then a
-    // new bin must be created.
-    private double maxPixelDiff;
+    // For xCenter, yCenter, r1, and r2 must bin width <= maxPixelBinWidth
+    private double maxPixelBinWidth;
     
-    // For theta must have abs(theta(i) - theta) <= maxDegreesDiff if the set of 5 values is to be
-    // placed into an existing bin.  If the difference exceeds maxDegreesDiff, then a new bin
-    // must be created.
-    private double maxDegreesDiff;
+    // For theta must have bin width <= maxDegreesBinWidth
+    private double maxDegreesBinWidth;
     
     // Smallest allowable distance between 2 of 3 picked points
     private double minPointDistance;
@@ -81,12 +133,10 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
     // Number of point triplets required before each ellipse find is performed
     private int pointSetsRequired;
     
-    // Maximum ratio of major axis to minor axis - default is 2.0;
-    private double maxAxesRatio;
-    
     // number of ellipses to be found
     private int numEllipses;
     
+    // Maximum number of pointSetsRequired triplet point acqusitions that is allowed to occur
     private int maxEllipseFindCycles = 80;
     
     // The maximum Hough transform size in megabytes - default is currently 256
@@ -95,7 +145,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
     // Number of counts required to find an ellipse
     private int countThreshold;
     
-    // Maximum pixel distance by which ellipse perimiter pixels can deviate from the calculated curve
+    // Maximum percent by which perimiter pixels can deviate from the ellipse equation
     private double ellipseRangeTolerance;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -114,37 +164,38 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
      *                     for it to be valid.
      * @param  sidePointsForTangent  Maximum number of points to take from each side of a point on a curve
      *                               in determining the tangent
-     * @param  maxPixelDiff  Maximum pixel difference allowed for p, q, r1, and r2 for 5 values to be placed
-     *                       into an existing bin
-     * @param  maxDegreesDiff Maximum degrees difference allowed for theta for 5 values to be placed into
-     *                        an existing bin
+     * @param  maxPixelBinWidth  Maximum pixel difference allowed for p, q, r1, and r2 for 5 values to be placed
+     *                           into an existing bin
+     * @param  maxDegreesBinWidth Maximum degrees difference allowed for theta for 5 values to be placed into
+     *                            an existing bin
      * @param  minPointDistance Smallest allowable distance between 2 of 3 picked points
      * @param  maxPointDistance Largest allowable distance between 2 of 3 picked points
      * @param  pointSetsRequired Number of point triplets acquired before each ellipse find is performed
      * @param  countThreshold Number of counts required to find an ellipse
-     * @param  ellipseRangeTolerance Maximum pixel distance by which ellipse perimiter pixels can deviate from
-     *                               the calculated space
-     * @param  maxAxesRatio  Maximum ratio of major axis to minor axis
+     * @param  ellipseRangeTolerance Maximum percent by which perimiter pixels can deviate from the
+     *                                ellipse equation
      * @param  numEllipses number of ellipses to be found
+     * @param  maxEllipseFindCycles Maximum number of pointSetsRequired triplet point acqusitions that
+     *                              is allowed to occur
      * @param  maxBufferSize maximum Hough transform size in megabytes
      */
     public AlgorithmHoughEllipse(ModelImage destImg, ModelImage srcImg, double minCoverage, int sidePointsForTangent,
-                                 double maxPixelDiff, double maxDegreesDiff, double minPointDistance,
+                                 double maxPixelBinWidth, double maxDegreesBinWidth, double minPointDistance,
                                  double maxPointDistance, int pointSetsRequired, int countThreshold, 
-                                 double ellipseRangeTolerance, double maxAxesRatio, int numEllipses,
-                                 int maxBufferSize) {
+                                 double ellipseRangeTolerance, int numEllipses, 
+                                 int maxEllipseFindCycles, int maxBufferSize) {
         super(destImg, srcImg);
         this.minCoverage = minCoverage;
         this.sidePointsForTangent = sidePointsForTangent;
-        this.maxPixelDiff = maxPixelDiff;
-        this.maxDegreesDiff = maxDegreesDiff;
+        this.maxPixelBinWidth = maxPixelBinWidth;
+        this.maxDegreesBinWidth = maxDegreesBinWidth;
         this.minPointDistance = minPointDistance;
         this.maxPointDistance = maxPointDistance;
         this.pointSetsRequired = pointSetsRequired;
         this.countThreshold = countThreshold;
         this.ellipseRangeTolerance = ellipseRangeTolerance;
-        this.maxAxesRatio = maxAxesRatio;
         this.numEllipses = numEllipses;
+        this.maxEllipseFindCycles = maxEllipseFindCycles;
         this.maxBufferSize = maxBufferSize;
     }
 
@@ -175,8 +226,10 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int i, j, k, n;
         int index;
         double theta;
+        double theta1;
+        double theta2;
         byte[] srcBuffer;
-        boolean test = true;
+        boolean test = false;
         double xCenter;
         double yCenter;
         float xCenterArray[];
@@ -209,7 +262,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         boolean foundArray[];
         int openStart[];
         int openLength[];
-        int closedStart;
         int closedLength;
         int indexPtr = 0;
         int nextPoint;
@@ -225,8 +277,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int presentSidePoints;
         float xPoints[];
         float yPoints[];
-        AlgorithmBSpline bSpline = null;
-        Point2Df tangentDir = null;
         int endPtr;
         int startWrapPoints;
         int endWrapPoints;
@@ -289,9 +339,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         Matrix A;
         Matrix B;
         Matrix X = null;
-        double a;
-        double b;
-        double c;
+        double a = 1.0;
+        double b = 0.0;
+        double c = 1.0;
         double r1;
         double r2;
         double aminusc;
@@ -308,7 +358,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         float minR2;
         float maxR2;
         float minTheta;
-        float maxTheta;
         int bytesPerCell;
         int xCenterBins;
         int yCenterBins;
@@ -330,7 +379,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int scale12;
         int scale123;
         int scale1234;
-        boolean countThresholdFound;
         int maxIndex = -1;
         int maxCount = 0;
         double h;
@@ -339,17 +387,20 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         byte foundPoint[];
         double xc;
         double yc;
-        double costheta;
-        double sintheta;
+        double costheta1;
+        double costheta2;
+        double sintheta1;
+        double sintheta2;
         double r1Sq;
         double r2Sq;
         double var1;
         double var2;
         double checkVal;
-        double ellipseTolerance = 0.15;
-        double upperLimit = 1.0 + ellipseTolerance;
-        double lowerLimit = 1.0 - ellipseTolerance;
+        double upperLimit = 1.0 + 0.01 * ellipseRangeTolerance;
+        double lowerLimit = 1.0 - 0.01 * ellipseRangeTolerance;
         short pointsOnEllipse;
+        short pointsOnEllipse1;
+        short pointsOnEllipse2;
         float xCenterTable[];
         float yCenterTable[];
         float r1Table[];
@@ -359,10 +410,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         int pointsDeleted;
         int newNumPoints;
         boolean testedArray[];
-        AlgorithmArcLength arcLength;
-        float pct;
-        float pos;
-        int nPts;
         float xpc;
         float ypc;
         double xSqSum;
@@ -372,11 +419,10 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         double x2t;
         double y1t;
         double y2t;
-        double xdist;
-        double ydist;
         double d1;
         double d2;
         double slope;
+        boolean ellipseDetected;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -428,7 +474,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 srcBuffer[index] = 1; 
             }
             
-            /*a1 = 75.0;
+            a1 = 75.0;
             b1 = 37.5;
             angle = Math.PI/4.0;
             beta = -angle;
@@ -442,7 +488,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
-            }*/
+            }
             /*for (i = 0; i < 90; i++) {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
@@ -483,9 +529,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 srcBuffer[index] = 1; 
             }*/
             
-            /*a1 = 50.0;
+            a1 = 50.0;
             b1 = 25.0;
-            angle = -Math.PI/4.0;
+            /*angle = -Math.PI/4.0;
             beta = -angle;
             cosbeta = Math.cos(beta);
             sinbeta = Math.sin(beta);
@@ -498,7 +544,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
             }*/
-            /*for (i = 0; i < 90; i++) {
+            for (i = 0; i < 90; i++) {
                 alpha = i * Math.PI/360.0;
                 cosalpha = Math.cos(alpha);
                 sinalpha = Math.sin(alpha);
@@ -536,7 +582,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
                 index = x + (xDim*y);
                 srcBuffer[index] = 1; 
-            }*/
+            }
    
             //setCompleted(true);
             //return;
@@ -552,6 +598,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             return;
         }
         
+        // Skeletonize the binary image
+        //Prune off branches with 2 or less pixels
         pruningPix = 2;
         entireImage = true;
         algoMorph2D = new AlgorithmMorphology2D(destImage, 0, 0.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, pruningPix, 0, entireImage);
@@ -575,8 +623,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             }
         }
         
-        // Reduce the number of 8-connected neighbors to 2
-        // Remove 4-connected neighbor and leave adjacent 8 connected neighbor
+        // When a diagonal neighbor is adjacent to a horizontal or vertical neighbor,
+        // remove the horizontal or vertical neighbor
         for (y = 0; y < yDim; y++) {
             offset = y * xDim;
             for (x = 0; x < xDim; x++) {
@@ -733,6 +781,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         } // for (y = 0; y < yDim; y++)
         
         
+        // Find the 1 or 2 neighbors of every point
+        // Find the number of end points, that is, points with only 1 neighbor
+        // Delete isolated points with no neighbors
         numPoints = 0;
         endPoints = 0;
         neighbor1 = new int[sourceSlice];
@@ -849,7 +900,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         openStart = new int[numOpenCurves];
         openLength = new int[numOpenCurves];
         foundArray = new boolean[sourceSlice];
-        i = 0;
+        // Set foundArray to true at every zero location
         for (y = 0; y < yDim; y++) {
             offset = y * xDim;
             for (x = 0; x < xDim; x++) {
@@ -903,6 +954,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         
         ViewUserInterface.getReference().setDataText("Number of open curves = " + numOpenCurves + "\n");
         
+        // For the open curves find the slope and y axis intercept of the tangent line to the curve at a point
+        // With a user specified sidePointsForTangent on each side of a point find the tangent line that
+        // minimizes the sum of the squared distances from these side points to the tangent line 
         indexArray = new int[numPoints];
         slopeArray = new float[numPoints];
         interceptArray = new float[numPoints];
@@ -912,10 +966,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             }
         }
         indexPtr = 0;
-        if (sidePointsForTangent > 1) {
-            bSpline = new AlgorithmBSpline();
-            tangentDir = new Point2Df();
-        }
         for (i = 0; i < numOpenCurves; i++) {
             startPtr = indexPtr;
             xArray = new float[openLength[i]];
@@ -961,7 +1011,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                         xPoints[k] = xArray[j];
                         yPoints[k] = yArray[j];
                     }
-//                  Center all points for at (0, 0)
+                    // Center all points for tangent point touching curve at (0, 0)
+                    // That is, use an x axis and a y axis going thru the tangent point
                     xpc = xPoints[sidePointsForTangent];
                     ypc = yPoints[sidePointsForTangent];
                     for (k = 0; k < xPoints.length; k++) {
@@ -984,11 +1035,19 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                         y2t = 1.0;
                     }
                     else {
+                        // If all points are symmetric to either this new x axis or this new y axis, then
+                        // their product sum is 0 and the tangentX, tangentY must be 1,0 or 0,1
                         x1t = 1.0;
                         x2t = 0.0;
                         y1t = 0.0;
                         y2t = 1.0;
                     }
+                    // x1t, y1t and x2t, y2t are perpindicular.  To find the solution, calculate the sum of
+                    // distances from the tangent point to the line for the 2 cases
+                    // The shortest distance is the correct solution
+                    // Distance from AX + BY + C = 0 to P1 is 
+                    // abs((A*x1 + B*y1 + C))/sqrt(A**2 + B**2)
+                    // Here A = slope, B = -1, and C = 0.
                     d1 = 0.0;
                     for (k = 0; k < xPoints.length; k++) {
                         if (x1t == 0.0) {
@@ -1033,7 +1092,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     }
                     else {
                         slopeArray[indexPtr] = tangentY/tangentX;
-                        System.out.println("slopeArray[indexPtr] = " + slopeArray[indexPtr]);
                         interceptArray[indexPtr] = yArray[n] - slopeArray[indexPtr] * xArray[n];
                         indexPtr++;
                     }    
@@ -1057,7 +1115,6 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     startPtr = indexPtr;
                     foundArray[index] = true;
                     numClosedCurves++;
-                    closedStart = index;
                     closedLength = 1;
                     indexArray[indexPtr++] = index;
                     while ((!foundArray[neighbor1[index]]) || (!foundArray[neighbor2[index]])) {
@@ -1074,6 +1131,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     endPtr = indexPtr - 1;
                     indexPtr = startPtr;
                     for (n = 0; n <= closedLength - 1; n++) {
+                        // Put the tangent point at index sidePointsForTangent in the
+                        // center of the xPoints and yPoints array with sidePointsForTangent points
+                        // to each side.
                         startWrapPoints = Math.max(0, sidePointsForTangent - n);
                         endWrapPoints =  Math.max(0, sidePointsForTangent - (closedLength - 1 - n));
                         for (k = 0; k < startWrapPoints; k++) {
@@ -1089,6 +1149,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                             xPoints[k] = indexArray[startPtr + j] % xDim;
                             yPoints[k] = indexArray[startPtr + j] / xDim;
                         }
+                        // For the closed curve find the slope and y axis intercept of the tangent line to the curve at a point
+                        // With a user specified sidePointsForTangent on each side of a point find the tangent line that
+                        // minimizes the sum of the squared distances from these side points to the tangent line 
                         if (sidePointsForTangent == 1) {
                             tangentX = (xPoints[2] - xPoints[0])/2.0f;
                             tangentY = (yPoints[2] - yPoints[0])/2.0f;
@@ -1102,7 +1165,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                             }    
                         } // if (sidePointsForTangent == 1)
                         else {
-                            // Center all points for at (0, 0)
+                            // Center all points for tangent point touching curve at (0, 0)
+                            // That is, use an x axis and a y axis going thru the tangent point
                             xpc = xPoints[sidePointsForTangent];
                             ypc = yPoints[sidePointsForTangent];
                             for (k = 0; k < xPoints.length; k++) {
@@ -1125,11 +1189,19 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                                 y2t = 1.0;
                             }
                             else {
+                                // If all points are symmetric to either this new x axis or this new y axis, then
+                                // their product sum is 0 and the tangentX, tangentY must be 1,0 or 0,1
                                 x1t = 1.0;
                                 x2t = 0.0;
                                 y1t = 0.0;
                                 y2t = 1.0;
                             }
+                            // x1t, y1t and x2t, y2t are perpindicular.  To find the solution, calculate the sum of
+                            // distances from the tangent point to the line for the 2 cases
+                            // The shortest distance is the correct solution
+                            // Distance from AX + BY + C = 0 to P1 is 
+                            // abs((A*x1 + B*y1 + C))/sqrt(A**2 + B**2)
+                            // Here A = slope, B = -1, and C = 0.
                             d1 = 0.0;
                             for (k = 0; k < xPoints.length; k++) {
                                 if (x1t == 0.0) {
@@ -1174,8 +1246,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                             }
                             else {
                                 slopeArray[indexPtr] = tangentY/tangentX;
-                                System.out.println("slopeArray[indexPtr] = " + slopeArray[indexPtr]);
-                                interceptArray[indexPtr] = yPoints[sidePointsForTangent] - slopeArray[indexPtr] * xPoints[sidePointsForTangent];
+                                // Add xpc, ypc back in to return from tangent point origin to original origin
+                                interceptArray[indexPtr] = (yPoints[sidePointsForTangent] + ypc)- slopeArray[indexPtr] * (xPoints[sidePointsForTangent] + xpc);
                                 indexPtr++;
                             }    
                         }
@@ -1192,6 +1264,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         
         ViewUserInterface.getReference().setDataText("Number of closed curves = " + numClosedCurves + "\n");
         
+        // Calculate the desired number of bins that would be used for each parameter if memory were not a
+        // limitation.
         minXCenter = 0.0f;
         maxXCenter = xDim - 1;
         minYCenter = 0.0f;
@@ -1201,13 +1275,12 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         minR2 = 0.0f;
         maxR2 = (float)Math.min(2.0 * maxPointDistance, Math.min(xDim-1, yDim-1));
         minTheta = (float)(-Math.PI/2.0);
-        maxTheta = (float)(Math.PI/2.0);
         bytesPerCell = 4 * 5 + 2; // float for each of 5 parameters and short for count;
-        xCenterBins = (int)Math.ceil((maxXCenter - minXCenter)/maxPixelDiff);
-        yCenterBins = (int)Math.ceil((maxYCenter - minYCenter)/maxPixelDiff);
-        r1Bins = (int)Math.ceil((maxR1 - minR1)/maxPixelDiff);
-        r2Bins = (int)Math.ceil((maxR2 - minR2)/maxPixelDiff);
-        maxRadiansDiff = maxDegreesDiff * Math.PI/180.0;
+        xCenterBins = (int)Math.ceil((maxXCenter - minXCenter)/maxPixelBinWidth);
+        yCenterBins = (int)Math.ceil((maxYCenter - minYCenter)/maxPixelBinWidth);
+        r1Bins = (int)Math.ceil((maxR1 - minR1)/maxPixelBinWidth);
+        r2Bins = (int)Math.ceil((maxR2 - minR2)/maxPixelBinWidth);
+        maxRadiansDiff = maxDegreesBinWidth * Math.PI/180.0;
         thetaBins = (int)Math.ceil(Math.PI/maxRadiansDiff);
         longNumBins = (long)xCenterBins * (long)yCenterBins * (long)r1Bins * (long)r2Bins * (long)thetaBins;
         numBins = (int)longNumBins;
@@ -1215,13 +1288,14 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         actualBytesAvailable = (long)maxBufferSize * 1024L * 1024L;
         if (actualBytesAvailable < desiredBytes) {
             // Must shrink the number of each bins used by the fifth root of actualBytesAvailable/desiredBytes
+            // to keep the buffer size down to actualBytesAvailable
             shrinkFactor = Math.pow((double)desiredBytes/(double)actualBytesAvailable, 0.2);
-            maxPixelDiff = maxPixelDiff * shrinkFactor;
+            maxPixelBinWidth = maxPixelBinWidth * shrinkFactor;
             maxRadiansDiff = maxRadiansDiff * shrinkFactor;
-            xCenterBins = (int)Math.ceil((maxXCenter - minXCenter)/maxPixelDiff);
-            yCenterBins = (int)Math.ceil((maxYCenter - minYCenter)/maxPixelDiff);
-            r1Bins = (int)Math.ceil((maxR1 - minR1)/maxPixelDiff);
-            r2Bins = (int)Math.ceil((maxR2 - minR2)/maxPixelDiff);
+            xCenterBins = (int)Math.ceil((maxXCenter - minXCenter)/maxPixelBinWidth);
+            yCenterBins = (int)Math.ceil((maxYCenter - minYCenter)/maxPixelBinWidth);
+            r1Bins = (int)Math.ceil((maxR1 - minR1)/maxPixelBinWidth);
+            r2Bins = (int)Math.ceil((maxR2 - minR2)/maxPixelBinWidth);
             thetaBins = (int)Math.ceil(Math.PI/maxRadiansDiff);
             numBins = xCenterBins * yCenterBins * r1Bins * r2Bins * thetaBins;
         } // if (actualBytesAvailable < desiredBytes)
@@ -1273,6 +1347,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     xDiff = x1 - x2;
                     yDiff = y1 - y2;
                     distanceSquared = xDiff * xDiff + yDiff * yDiff;
+                    // Don't use if points 1 and 2 are less than a minimum distance or greater than
+                    // a maximum distance apart
                     if ((distanceSquared < minDistanceSquared) || (distanceSquared > maxDistanceSquared)) {
                         continue;
                     }
@@ -1304,7 +1380,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 // Find point midway between point 1 and point 2
                 midx12 = (x1 + x2)/2.0f;
                 midy12 = (y1 + y2)/2.0f;
-                // Find slope and intercept of line connecting intsection point of tangent1 and tangent2 and midpoint of 1 and 2
+                // Find slope and intercept of line connecting intersection point of tangent1 and tangent2 and midpoint of 1 and 2
                 tangentx12 = tx12 - midx12;
                 tangenty12 = ty12 - midy12;
                 if (tangentx12 == 0.0f) {
@@ -1324,12 +1400,16 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     xDiff = x1 - x3;
                     yDiff = y1 - y3;
                     distanceSquared = xDiff * xDiff + yDiff * yDiff;
+                    // Don't use if points 1 and 3 are less than a minimum distance or greater than
+                    // a maximum distance apart
                     if ((distanceSquared < minDistanceSquared) || (distanceSquared > maxDistanceSquared)) {
                         continue;
                     }
                     xDiff = x2 - x3;
                     yDiff = y2 - y3;
                     distanceSquared = xDiff * xDiff + yDiff * yDiff;
+                    // Don't use if points 2 and 3 are less than a minimum distance or greater than
+                    // a maximum distance apart
                     if ((distanceSquared < minDistanceSquared) || (distanceSquared > maxDistanceSquared)) {
                         continue;
                     }
@@ -1360,7 +1440,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 // Find point midway between point 2 and point 3
                 midx23 = (x2 + x3)/2.0f;
                 midy23 = (y2 + y3)/2.0f;
-                // Find slope and intercept of line connecting intsection point of tangent2 and tangent3 and midpoint of 2 and 3
+                // Find slope and intercept of line connecting intersection point of tangent2 and tangent3 and midpoint of 2 and 3
                 tangentx23 = tx23 - midx23;
                 tangenty23 = ty23 - midy23;
                 if (tangentx23 == 0.0f) {
@@ -1452,9 +1532,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 // a - c = ((cos(theta))**2 - (sin(theta))**2)*(1/r1**2 - 1/r2**2)
                 // a - c = (cos(2*theta)) * (1/r1*2 - 1/r2**2)
                 // b/(a - c)= tan(2*theta)/2
-                // tan(2*theta) = (2*b)/(a - c)
-                // 2*theta = arctan((2*b)/(a - c))
-                // theta = 0.5 * arctan((2*b)/(a - c))
+                // tan(2*theta) = tan(2*theta + PI) = (2*b)/(a - c)
+                // 2*theta = arctan((2*b)/(a - c)) and 2*theta + PI = arctan((2*b)/(a - c))
+                // theta = 0.5 * arctan((2*b)/(a - c)) and theta = 0.5 * arctan((2*b)/(a - c)) - PI/2
                 // sin(2*theta) = (2*b)/(1/r1**2 - 1/r2**2)
                 // cos(2*theta) = (a - c)/(1/r1**2 - 1/r2**2)
                 // 1 = (4*b**2 + (a - c)**2)/((1/r1**2 - 1/r2**2)**2)
@@ -1491,11 +1571,10 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     continue;
                 }
                 pointSetsAcquired++;
-                //System.out.println("pointsSetsAcquired = " + pointSetsAcquired);
-                xCenterIndex = (int)((xCenter - minXCenter)/maxPixelDiff);
-                yCenterIndex = (int)((yCenter - minYCenter)/maxPixelDiff);
-                r1Index = (int)((r1 - minR1)/maxPixelDiff);
-                r2Index = (int)((r2 - minR2)/maxPixelDiff);
+                xCenterIndex = (int)((xCenter - minXCenter)/maxPixelBinWidth);
+                yCenterIndex = (int)((yCenter - minYCenter)/maxPixelBinWidth);
+                r1Index = (int)((r1 - minR1)/maxPixelBinWidth);
+                r2Index = (int)((r2 - minR2)/maxPixelBinWidth);
                 thetaIndex = (int)((theta - minTheta)/maxRadiansDiff);
                 index = xCenterIndex + scale1 * yCenterIndex + scale12 * r1Index + scale123 * r2Index + scale1234 * thetaIndex;
                 xCenterArray[index] += xCenter;
@@ -1505,60 +1584,80 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 thetaArray[index] += theta;
                 countArray[index]++;
             } // while (pointSetsAcquired < pointSetsRequired)
-            countThresholdFound = true;
             for (i = 0; i < numBins; i++) {
                 testedArray[i] = false;
             }
-            countThresholdFound = false;
-            maxIndex = -1;
-            maxCount = 0;
-            for (i = 0; i < numBins; i++) {
-                if ((!testedArray[i]) && (countArray[i] > maxCount)) {
-                    maxIndex = i;
-                    maxCount = countArray[i];
-                    testedArray[i] = true;
+            ellipseDetected = false;
+            while (!ellipseDetected) {
+                // Keep checking all bins that meet the countThreshold until an ellipse which
+                // has minCoverage percent of pixels along the perimiter is found
+                maxIndex = -1;
+                maxCount = 0;
+                for (i = 0; i < numBins; i++) {
+                    if ((!testedArray[i]) && (countArray[i] > maxCount)) {
+                        maxIndex = i;
+                        maxCount = countArray[i];
+                    }
+                } // for (i = 0; i < numBins; i++)
+                testedArray[maxIndex] = true;
+                if (maxCount < countThreshold) {
+                    break;
                 }
-            } // for (i = 0; i < numBins; i++)
-            if (maxCount >= countThreshold) {
-                countThresholdFound = true;
+                
                 // Check to see if ellipse perimiter has at least minCoverage percent pixels set
                 xCenter = xCenterArray[maxIndex]/maxCount;
                 yCenter = yCenterArray[maxIndex]/maxCount;
                 r1 = r1Array[maxIndex]/maxCount;
                 r2 = r2Array[maxIndex]/maxCount;
-                theta = thetaArray[maxIndex]/maxCount;
+                theta1 = thetaArray[maxIndex]/maxCount;
+                theta2 = theta1 - Math.PI/2.0;
                 h = ((r1 - r2)/(r1 + r2));
                 h = h * h;
                 perimiter = Math.PI * (r1 + r2) * (1 + (3*h)/(10 + Math.sqrt(4 - 3*h)));
                 minPixels = (int)(minCoverage * 0.01 * perimiter);
-                costheta = Math.cos(theta);
-                sintheta = Math.sin(theta);
+                // 2 theta values separated by 90 degrees must both be examined to see which one
+                // yields the largest number of pixels along the perimiter
+                costheta1 = Math.cos(theta1);
+                sintheta1 = Math.sin(theta1);
+                costheta2 = Math.cos(theta2);
+                sintheta2 = Math.sin(theta2);
                 r1Sq = r1 * r1;
                 r2Sq = r2 * r2;
-                pointsOnEllipse = 0;
+                pointsOnEllipse1 = 0;
+                pointsOnEllipse2 = 0;
                 for (i = 0; i < numPoints; i++) {
                     x = indexArray[i] % xDim;
                     y = indexArray[i] / xDim;
                     // Check on a zero centered ellipse
                     xc = x - xCenter;
                     yc = y - yCenter;
-                    var1 = yc * sintheta + xc*costheta;
-                    var2 = yc * costheta - xc*sintheta;
+                    var1 = yc * sintheta1 + xc*costheta1;
+                    var2 = yc * costheta1 - xc*sintheta1;
                     checkVal = var1*var1/r1Sq + var2*var2/r2Sq;
                     if ((checkVal >= lowerLimit) && (checkVal <= upperLimit)) {
-                        pointsOnEllipse++;
+                        pointsOnEllipse1++;
                         if (foundPoint[i] == 0) {
                             foundPoint[i] = 1;
                         }
                     }
+                    var1 = yc * sintheta2 + xc*costheta2;
+                    var2 = yc * costheta2 - xc*sintheta2;
+                    checkVal = var1*var1/r1Sq + var2*var2/r2Sq;
+                    if ((checkVal >= lowerLimit) && (checkVal <= upperLimit)) {
+                        pointsOnEllipse2++;
+                        if ((foundPoint[i] == 0) || (foundPoint[i] == 1)) {
+                            foundPoint[i] += 2;
+                        }
+                    }
                 } // for (i = 0; i < numPoints; i++)
-                System.out.println("pointsOnEllipse = " + pointsOnEllipse);
-                System.out.println("minPixels = " + minPixels);
-                System.out.println("xCenter = " + xCenter);
-                System.out.println("yCenter = " + yCenter);
-                System.out.println("r1 = " + r1);
-                System.out.println("r2 = " + r2);
-                System.out.println("theta = " + (theta * 180.0/Math.PI));
+                if (pointsOnEllipse1 > pointsOnEllipse2) {
+                    pointsOnEllipse = pointsOnEllipse1;
+                    theta = theta1;
+                }
+                else {
+                    pointsOnEllipse = pointsOnEllipse2;
+                    theta = theta2;
+                }
                 if (pointsOnEllipse >= minPixels) {
                     xCenterTable[ellipsesFound] = (float)xCenter;
                     yCenterTable[ellipsesFound] = (float)yCenter;
@@ -1567,27 +1666,42 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     thetaTable[ellipsesFound] = (float)(theta);
                     countTable[ellipsesFound] = pointsOnEllipse;
                     ellipsesFound++;
-                    System.out.println("ellipses found = " + ellipsesFound);
+                    ellipseDetected = true;
                     ViewUserInterface.getReference().setDataText("Ellipse # " + ellipsesFound + " found\n");
                     ViewUserInterface.getReference().setDataText(" x center = " + xCenter + "\n");
                     ViewUserInterface.getReference().setDataText(" y center = " + yCenter + "\n");
                     ViewUserInterface.getReference().setDataText(" r1 = " + r1 + "\n");
                     ViewUserInterface.getReference().setDataText(" r2 = " + r2 + "\n");
                     ViewUserInterface.getReference().setDataText(" theta = " + (theta * 180/Math.PI) + "\n");
-                    for (i = 0; i < numPoints; i++) {
-                        if (foundPoint[i] == 1) {
-                            foundPoint[i] = 2;
+                    if (pointsOnEllipse1 > pointsOnEllipse2) {
+                        for (i = 0; i < numPoints; i++) {
+                            if ((foundPoint[i] == 1) || (foundPoint[i] == 3)) {
+                                foundPoint[i] = 4;
+                            }
+                            else if (foundPoint[i] == 2) {
+                                foundPoint[i] = 0;
+                            }
                         }
-                    }
+                    } // if (pointsOnEllipse1 > pointsOnEllipse2)
+                    else { // else pointsOnEllipse1 <= pointsOnEllipse2
+                        for (i = 0; i < numPoints; i++) {
+                            if ((foundPoint[i] == 2) || (foundPoint[i] == 3)) {
+                                foundPoint[i] = 4;
+                            }
+                            else if (foundPoint[i] == 1) {
+                                foundPoint[i] = 0;
+                            }
+                        }   
+                    } // else pointsOnEllipse
                 }
                 else { // pointsOnEllipse < minPixels
                     for (i = 0; i < numPoints; i++) {
-                        if (foundPoint[i] == 1) {
+                        if ((foundPoint[i] >= 1) && (foundPoint[i] <= 3)) {
                             foundPoint[i] = 0;
                         }
                     }
                 }
-            } // if (maxCount >= countThreshold)
+            } // while (!ellipseDetected)
             if (ellipsesFound == numEllipses) {
                 break;
             }
@@ -1599,6 +1713,9 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                 thetaArray[i] = 0.0f;
                 countArray[i] = 0;
             }
+            // If an ellipse was found, then delete the points found along its perimiter
+            // from indexArray, slopeArray, and interceptArray before running the
+            // Hough transform again
             pointsDeleted = 0;
             for (i = 0; i < numPoints; i++) {
                 if (foundPoint[i] != 0) {
@@ -1693,7 +1810,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         // Draw selected elipses
         for (i = 0; i < ellipsesFound; i++) {
             if (selectedEllipse[i]) {
-                beta = -thetaTable[i];
+                beta = thetaTable[i];
                 cosbeta = Math.cos(beta);
                 sinbeta = Math.sin(beta);
                 for (j = 0; j < 720; j++) {
@@ -1737,14 +1854,14 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
 
         historyString = new String("HoughEllipse(" + String.valueOf(minCoverage) + ", " +
                                    String.valueOf(sidePointsForTangent) + ", " +
-                                   String.valueOf(maxPixelDiff) + ", " +
-                                   String.valueOf(maxDegreesDiff) + ", " + 
+                                   String.valueOf(maxPixelBinWidth) + ", " +
+                                   String.valueOf(maxDegreesBinWidth) + ", " + 
                                    String.valueOf(minPointDistance) + ", " +
                                    String.valueOf(maxPointDistance) + ", " +
                                    String.valueOf(pointSetsRequired) + ", " +
                                    String.valueOf(countThreshold) + ", " +
                                    String.valueOf(ellipseRangeTolerance) + ", " +
-                                   String.valueOf(maxAxesRatio) + ", " + 
+                                   String.valueOf(maxEllipseFindCycles) + ", " +
                                    String.valueOf(maxBufferSize) + ")\n");
     }
 }
