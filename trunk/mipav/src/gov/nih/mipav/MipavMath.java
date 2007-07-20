@@ -177,6 +177,9 @@ public class MipavMath {
 
     /**
      * Round the value of type float to the closest integer. Java's Math.round is incredibly slow.
+     * Note that this function does not work correctly for a = -0.49999997f, the closest floating point
+     * number to -0.5f, and returns -1, while the slower Java Math.round at least returns the
+     * correct value of 0. 
      *
      * @param   a  float the value to be rounded.
      *
