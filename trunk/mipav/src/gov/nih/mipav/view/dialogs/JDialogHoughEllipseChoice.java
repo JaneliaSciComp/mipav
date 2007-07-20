@@ -184,7 +184,7 @@ public class JDialogHoughEllipseChoice extends JDialogBase {
         createPanel.add(r2Label, gbc);
         
         gbc.gridx = 4;
-        JLabel thetaLabel = new JLabel("theta(-90.0 to +90.0 )");
+        JLabel thetaLabel = new JLabel("theta in degrees ");
         thetaLabel.setFont(serif12);
         createPanel.add(thetaLabel, gbc);
         
