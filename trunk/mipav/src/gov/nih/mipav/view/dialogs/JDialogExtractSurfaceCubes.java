@@ -556,7 +556,7 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         fileButton.setActionCommand("File");
 
         fileTF = new JTextField();
-        fileTF.setText(makeImageName(image.getImageName(), ".sur"));
+        fileTF.setText(makeImageName(image.getImageName()+ "_surface", ".sur"));
 
         if (userInterface.getDefaultDirectory() != null) {
             fileLocation = userInterface.getDefaultDirectory();
