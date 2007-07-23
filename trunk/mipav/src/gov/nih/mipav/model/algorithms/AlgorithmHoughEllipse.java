@@ -14,7 +14,14 @@ import java.io.*;
  *  This Hough transform uses (xi, yi) points in the original image space to generate p, q, r1, r2, and theta points in the Hough
  *  transform.  This Hough transform module only works with binary images.   Before it is used the user must 
  *  compute the gradient of an image and threshold it to obtain a binary image.  Noise removal and thinning should also
- *  be performed, if necessary, before this program is run. 
+ *  be performed, if necessary, before this program is run.
+ *  
+ *  The code for finding the best tangent for a point on a curve uses a port of findOptimalTangent.m from the Randomized Hough
+ *  transform used for ellipse detection MATLAB code by Andrew Schuler.  The rest of the code is not ported, but is derived
+ *  from the writeups by Andrew Schuler and Robert A. Mclaughlin.  Robert A. Mclaughlin uses a linked list to save memory at
+ *  the cost of slower speed.  Andrew Schuler uses an array to achieve higher speed at the cost of more memory usage.  In
+ *  this application I use the array for higher speed and incur a higher memory cost.  If need be, memory can be saved by
+ *  rewriting this application to used a linked list.
  *  
  *  Pixel neighbors:
  *  0 1 2
@@ -39,8 +46,8 @@ import java.io.*;
  *      With a user specified sidePointsForTangent on each side of a point find the tangent line that
  *      minimizes the sum of the squared distances from these side points to the tangent line 
  *  9.) Calculate the desired number of bins that would be used for each parameter if memory were not a
- *      limitation.
- *  10.) Shrink the number of each bins used by the fifth root of actualBytesAvailable/desiredBytes
+ *      limitation.  This desired bin number = (maximum parameter value - minimum parameter value)/maximum bin width
+ *  10.) Shrink the number of each bins used for each parameter by the fifth root of desiredBytes/actualBytesAvailable
          to keep the buffer size down to user specified actualBytesAvailable.
  *  11.) User a random number generator to select 3 of the points.  If 2 of the 3 points are closer than
  *       the user specified minimum distance or farther than the user specified maximum distance, then
@@ -49,7 +56,7 @@ import java.io.*;
  *       generator again.
  *  12.) Find the intersection of the tangent line for point 1 and the tangent line for point2, t12.
  *       Find the point midway between point 1 and point 2, point m12.
- *       Find the intersection of the tangent line for point 3 and the tangent line for point3, t23.
+ *       Find the intersection of the tangent line for point 2 and the tangent line for point3, t23.
  *       Find the point midway between point 2 and point 3, point m23.
  *       The center is found at the intersection of t12m12 and t23m23.  If the center is not inside
  *       the bounds of the image, go back and run the random number generator for 3 new points.
@@ -64,7 +71,8 @@ import java.io.*;
  *       or that the estimates of the tangents were inaccurate.  In either case, we discard the 
  *       parameters and run the random number generator to find a new pixel triplet.
  *  16.) Convert a, b, and c to semi major axis r1, semi minor axis r2, and orientation angle theta.
- *       Find the index value for these 5 parameters and add the respective parameters to xCenterArray[index],
+ *       Find the combined index value for these 5 parameters from the 5 individual index values and the bin
+ *       numbers for the 5 parameters.  Add the respective parameters to xCenterArray[index],
  *       yCenterArray[index], r1Array[index], r2Array[index], and thetaArray[index].
  *       Increment countArray[index].
  *  17.) Keep collecting point triplets until the user specified pointSetsRequired have been collected.
@@ -76,16 +84,19 @@ import java.io.*;
  *       find the number of pixels near the perimiter of the ellipse.  For xCenter, yCenter, r1, r2,
  *       and theta - 90 degrees, find the number of pixels near the perimiter of the ellipse.  The
  *       correct one of these 2 cases has the largest number of pixels near the perimiter of the
- *       ellipse.  If the correct case find more pixels than minCoverage percent of the perimiter
+ *       ellipse.  If the correct case finds more pixels than minCoverage percent of the perimiter
  *       length, then the ellipse is considered as valid.  If the correct case has fewer than minCoverage
  *       percent of the ellipse perimiter, then this set of parameters is discarded and we return to step 18.
  *  20.) If an ellipse has been found, but the algorithm still has not found the user specified numEllipses
- *       number of ellipses, then If an ellipse was found, then delete the points found along its perimiter
- *       from indexArray, slopeArray, and interceptArray before running the Hough transform again
+ *       number of ellipses, then delete the points found along its perimiter from indexArray, slopeArray,
+ *       and interceptArray before running the Hough transform again.  xCenterArray, yCenterArray,
+ *       r1Array, r2Array, thetaArray, and countArray are zeroed before the next Hough transform
+ *       is acquired.
  *  21.) Perform no more than maxEllipseFindCycles of pointSetsRequired triplet set acquisitions.  When
  *       this number of triplet set acquisitions has occurred, stop trying to find new ellipses.
- *  22.) Create a dialog with numEllipsesFound pArray[i], qArray[i], r1Array[i], r2Array[i], thetaArray[i], 
- *       and countArray[i] values, where the user will select a check box to have that ellipse drawn.
+ *  22.) Create a dialog with numEllipsesFound xCenterArray[i], yCenterArray[i], r1Array[i], r2Array[i],
+ *       thetaArray[i], and countArray[i] values, where the user will select a check box to have that
+ *       ellipse drawn.
  *  
  *  References: 1.) The Randomized Hough Transform used for ellipse detection by Andrew Schuler
  *  
@@ -104,7 +115,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
     // Minimum percentage of the perimiter of a found ellipse that must be covered by points for it to be
     // valid.  The perimiter of an ellipse = 4 * a * E(e), where E is the complete elliptic integral of
     // the second kind and e = the eccentricity = sqrt(r1**2 - r2**2)/r1
-    // An approximation is perimiter equals approximately PI * sqrt(2*(r1**2 + r2**2))
+    // The perimiter equals approximately PI * sqrt(2*(r1**2 + r2**2))
     // A more exact approximation is perimiter equals approximately
     // PI * [3*(r1 + r2) - sqrt((r1 + 3*r2)*(3*r1 + r2))]
     // More exact still is perimiter equals approximately 
@@ -118,10 +129,10 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
     // neigboring points.  
     private int sidePointsForTangent;
     
-    // For xCenter, yCenter, r1, and r2 must bin width <= maxPixelBinWidth
+    // xCenter, yCenter, r1, and r2 must have bin width <= maxPixelBinWidth
     private double maxPixelBinWidth;
     
-    // For theta must have bin width <= maxDegreesBinWidth
+    // theta must have bin width <= maxDegreesBinWidth
     private double maxDegreesBinWidth;
     
     // Smallest allowable distance between 2 of 3 picked points
@@ -158,14 +169,14 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
     /**
      * AlgorithmHoughEllipse.
      *
-     * @param  destImg  Image with lines filled in
-     * @param  srcImg   Binary source image that has lines with gaps
+     * @param  destImg  Image with ellipses filled in
+     * @param  srcImg   Binary source image that has ellipses and near ellipse shapes with gaps
      * @param  minCoverage Minimum percentage of the perimiter of a found ellipse that must be covered by points
      *                     for it to be valid.
      * @param  sidePointsForTangent  Maximum number of points to take from each side of a point on a curve
      *                               in determining the tangent
-     * @param  maxPixelBinWidth  Maximum pixel difference allowed for p, q, r1, and r2 for 5 values to be placed
-     *                           into an existing bin
+     * @param  maxPixelBinWidth  Maximum pixel difference allowed for xCenter, yCenter, r1, and r2 for 5 values
+     *                           to be placed into an existing bin
      * @param  maxDegreesBinWidth Maximum degrees difference allowed for theta for 5 values to be placed into
      *                            an existing bin
      * @param  minPointDistance Smallest allowable distance between 2 of 3 picked points
@@ -599,7 +610,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         }
         
         // Skeletonize the binary image
-        //Prune off branches with 2 or less pixels
+        // Prune off branches with 2 or less pixels
         pruningPix = 2;
         entireImage = true;
         algoMorph2D = new AlgorithmMorphology2D(destImage, 0, 0.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, pruningPix, 0, entireImage);
@@ -1043,7 +1054,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                         y2t = 1.0;
                     }
                     // x1t, y1t and x2t, y2t are perpindicular.  To find the solution, calculate the sum of
-                    // distances from the tangent point to the line for the 2 cases
+                    // distances from the curve points to the line for the 2 cases
                     // The shortest distance is the correct solution
                     // Distance from AX + BY + C = 0 to P1 is 
                     // abs((A*x1 + B*y1 + C))/sqrt(A**2 + B**2)
@@ -1197,7 +1208,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                                 y2t = 1.0;
                             }
                             // x1t, y1t and x2t, y2t are perpindicular.  To find the solution, calculate the sum of
-                            // distances from the tangent point to the line for the 2 cases
+                            // distances from the curve points to the line for the 2 cases
                             // The shortest distance is the correct solution
                             // Distance from AX + BY + C = 0 to P1 is 
                             // abs((A*x1 + B*y1 + C))/sqrt(A**2 + B**2)
@@ -1246,7 +1257,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                             }
                             else {
                                 slopeArray[indexPtr] = tangentY/tangentX;
-                                // Add xpc, ypc back in to return from tangent point origin to original origin
+                                // Add xpc, ypc back in to return from tangent point (0, 0) origin to original origin
                                 interceptArray[indexPtr] = (yPoints[sidePointsForTangent] + ypc)- slopeArray[indexPtr] * (xPoints[sidePointsForTangent] + xpc);
                                 indexPtr++;
                             }    
@@ -1287,8 +1298,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         desiredBytes = longNumBins * (long)bytesPerCell;
         actualBytesAvailable = (long)maxBufferSize * 1024L * 1024L;
         if (actualBytesAvailable < desiredBytes) {
-            // Must shrink the number of each bins used by the fifth root of actualBytesAvailable/desiredBytes
-            // to keep the buffer size down to actualBytesAvailable
+            // Must shrink the number of each bins used for each parameter by the fifth root of
+            // deisredBytes/actualBytesAvailable to keep the buffer size down to actualBytesAvailable
             shrinkFactor = Math.pow((double)desiredBytes/(double)actualBytesAvailable, 0.2);
             maxPixelBinWidth = maxPixelBinWidth * shrinkFactor;
             maxRadiansDiff = maxRadiansDiff * shrinkFactor;
@@ -1352,7 +1363,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     if ((distanceSquared < minDistanceSquared) || (distanceSquared > maxDistanceSquared)) {
                         continue;
                     }
-                    // Don't use if lines are parallel
+                    // Don't use if tangent lines 1 and 2 are parallel
                     slope2 = slopeArray[number2];
                     if (Float.isInfinite(slope1) && Float.isInfinite(slope2)) {
                         continue;
@@ -1413,7 +1424,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     if ((distanceSquared < minDistanceSquared) || (distanceSquared > maxDistanceSquared)) {
                         continue;
                     }
-                    // Don't use if lines are parallel
+                    // Don't use if tangent lines 2 and 3 are parallel
                     slope3 = slopeArray[number3];
                     if (Float.isInfinite(slope2) && Float.isInfinite(slope3)) {
                         continue;
@@ -1604,7 +1615,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     break;
                 }
                 
-                // Check to see if ellipse perimiter has at least minCoverage percent pixels set
+                // Check to see if ellipse perimiter and nearby has at least minCoverage percent pixels set
                 xCenter = xCenterArray[maxIndex]/maxCount;
                 yCenter = yCenterArray[maxIndex]/maxCount;
                 r1 = r1Array[maxIndex]/maxCount;
@@ -1705,6 +1716,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             if (ellipsesFound == numEllipses) {
                 break;
             }
+            // If an ellipse was found, then zero the Hough transform array before acquiring a
+            // new set of point triplets.
             for (i = 0; i < numBins; i++) {
                 xCenterArray[i] = 0.0f;
                 yCenterArray[i] = 0.0f;
