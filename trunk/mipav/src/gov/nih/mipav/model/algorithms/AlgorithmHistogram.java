@@ -58,6 +58,13 @@ public class AlgorithmHistogram extends AlgorithmBase {
     private int summaryBins = 256;
     
     private boolean displayGraph = false;
+    
+    // If true, histogram covers from userMin to userMax instead of image.getMin() to image.getMax()
+    private boolean userLimits = false;
+    
+    private float userMin;
+    
+    private float userMax;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -117,13 +124,20 @@ public class AlgorithmHistogram extends AlgorithmBase {
      * @param  maskFlag     Flag that indicates that the histogram will be calculated for the whole image if equal to
      *                      true
      * @param displayGraph  If true, produces a graph for display
+     * @param userLimits    If true, histogram goes from userMin to userMax instead of image.getMin() to image.getMax()
+     * @param userMin
+     * @param usermax
      */
-    public AlgorithmHistogram(ModelImage image, int summaryBins, boolean maskFlag, boolean displayGraph) {
+    public AlgorithmHistogram(ModelImage image, int summaryBins, boolean maskFlag, boolean displayGraph,
+                              boolean userLimits, float userMin, float userMax) {
         this.image = image;
         this.summaryBins = summaryBins;
         dataOutput = true;
         this.entireImage = maskFlag;
         this.displayGraph = displayGraph;
+        this.userLimits = userLimits;
+        this.userMin = userMin;
+        this.userMax = userMax;
 
         if (entireImage == false) {
             mask = image.generateVOIMask();
@@ -193,14 +207,21 @@ public class AlgorithmHistogram extends AlgorithmBase {
      * @param  maskFlag     Flag that indicates that the histogram will be calculated for the whole image if equal to
      *                      true
      * @param  displayGraph If true, produces a graph for display
+     * * @param userLimits    If true, histogram goes from userMin to userMax instead of image.getMin() to image.getMax()
+     * @param userMin
+     * @param usermax
      */
-    public AlgorithmHistogram(ModelImage image, int summaryBins, int RGBOffset, boolean maskFlag, boolean displayGraph) {
+    public AlgorithmHistogram(ModelImage image, int summaryBins, int RGBOffset, boolean maskFlag, boolean displayGraph,
+                              boolean userLimits, float userMin, float userMax) {
         this.image = image;
         this.summaryBins = summaryBins;
         this.RGBOffset = RGBOffset;
         dataOutput = true;
         this.entireImage = maskFlag;
         this.displayGraph = displayGraph;
+        this.userLimits = userLimits;
+        this.userMin = userMin;
+        this.userMax = userMax;
 
         if (entireImage == false) {
             mask = image.generateVOIMask();
@@ -557,6 +578,11 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 imageMax = (double) image.getMax();
                 break;
         }
+        
+        if (userLimits) {
+            imageMin = userMin;
+            imageMax = userMax;
+        }
 
         if ((image.getType() != ModelStorageBase.FLOAT) && (image.getType() != ModelStorageBase.DOUBLE) &&
                 (image.getType() != ModelStorageBase.ARGB_FLOAT)) {
@@ -630,24 +656,26 @@ public class AlgorithmHistogram extends AlgorithmBase {
             for (i = 0; i < length; i++) {
 
                 if (((entireImage == false) && mask.get(i + (length * z))) || (entireImage == true)) {
-                    value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5f);
-                    histoBuffer[value]++;
-                    if (displayGraph) {
-                        count[value] += 1.0f;
-                    }
-
-                    if (histoBuffer[value] == 1) {
-                        lowValue[value] = imgBuffer[i];
-                        highValue[value] = imgBuffer[i];
-                    } // if histoBuffer[value] == 1)
-                    else {
-
-                        if (imgBuffer[i] < lowValue[value]) {
-                            lowValue[value] = imgBuffer[i];
-                        } else if (imgBuffer[i] > highValue[value]) {
-                            highValue[value] = imgBuffer[i];
+                    if ((imgBuffer[i] >= imageMin) && (imgBuffer[i] <= imageMax)) {
+                        value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5f);
+                        histoBuffer[value]++;
+                        if (displayGraph) {
+                            count[value] += 1.0f;
                         }
-                    } // else
+    
+                        if (histoBuffer[value] == 1) {
+                            lowValue[value] = imgBuffer[i];
+                            highValue[value] = imgBuffer[i];
+                        } // if histoBuffer[value] == 1)
+                        else {
+    
+                            if (imgBuffer[i] < lowValue[value]) {
+                                lowValue[value] = imgBuffer[i];
+                            } else if (imgBuffer[i] > highValue[value]) {
+                                highValue[value] = imgBuffer[i];
+                            }
+                        } // else
+                    }
                 }
             }
             
