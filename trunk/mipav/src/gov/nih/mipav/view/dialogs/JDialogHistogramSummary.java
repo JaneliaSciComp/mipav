@@ -84,6 +84,22 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
     private int RGBOffset = RED_OFFSET;
     
     private boolean displayGraph = true;
+    
+    private JCheckBox userLimitsCheckBox;
+    
+    private boolean userLimits = false;
+    
+    private JTextField userMinText;
+    
+    private JLabel userMinLabel;
+    
+    private float userMin = 0.0f;
+    
+    private JTextField userMaxText;
+    
+    private JLabel userMaxLabel;
+    
+    private float userMax = 0.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -204,6 +220,45 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
     public void setRGBOffset(int RGBoffset) {
         this.RGBOffset = RGBoffset;
     }
+    
+    /**
+     * If true, use userMin to userMax instead of image.getMin() to image.getMax() as histogram limits
+     * @param userLimits
+     */
+    public void setUserLimits(boolean userLimits) {
+        this.userLimits = userLimits;
+    }
+    
+    public void setUserMin(float userMin) {
+        this.userMin = userMin;
+    }
+    
+    public void setUserMax(float userMax) {
+        this.userMax = userMax;
+    }
+    
+    /**
+     * Watches the font descriptor checkboxes (bold/italic) and the font name (style) combo box, updates displayed font
+     * with each change.
+     *
+     * @param  event  ItemEvent the item change event that occured
+     */
+    public void itemStateChanged(ItemEvent event) {
+        if (event.getSource() == userLimitsCheckBox) {
+            if (userLimitsCheckBox.isSelected()) {
+                userMinLabel.setEnabled(true);
+                userMinText.setEnabled(true);
+                userMaxLabel.setEnabled(true);
+                userMaxText.setEnabled(true);
+            }
+            else {
+                userMinLabel.setEnabled(false);
+                userMinText.setEnabled(false);
+                userMaxLabel.setEnabled(false);
+                userMaxText.setEnabled(false);    
+            }
+        }
+    }
 
     /**
      * Once all the necessary variables are set, call the Histogram algorithm based on whehter the image is color or
@@ -216,9 +271,11 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
 
             // Make algorithm
             if (image.isColorImage()) {
-                histAlgo = new AlgorithmHistogram(image, bins, RGBOffset, radWholeImage.isSelected(), displayGraph);
+                histAlgo = new AlgorithmHistogram(image, bins, RGBOffset, radWholeImage.isSelected(), displayGraph,
+                                                  userLimits, userMin, userMax);
             } else {
-                histAlgo = new AlgorithmHistogram(image, bins, radWholeImage.isSelected(), displayGraph);
+                histAlgo = new AlgorithmHistogram(image, bins, radWholeImage.isSelected(), displayGraph,
+                                                  userLimits, userMin, userMax);
             }
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -268,6 +325,9 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
 
         radWholeImage = new JRadioButton("Whole image");
         radWholeImage.setSelected(scriptParameters.doProcessWholeImage());
+        userLimits = scriptParameters.getParams().getBoolean("user_limits");
+        userMin = scriptParameters.getParams().getFloat("user_min");
+        userMax = scriptParameters.getParams().getFloat("user_max");
     }
 
     /**
@@ -283,6 +343,9 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
         }
 
         scriptParameters.storeProcessWholeImage(radWholeImage.isSelected());
+        scriptParameters.getParams().put(ParameterFactory.newParameter("user_limits", userLimits));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("user_min", userMin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("user_max", userMax));
     }
 
     /**
@@ -352,7 +415,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
         }
 
 
-        JPanel binPanel = new JPanel(new GridLayout(3, 2));
+        JPanel binPanel = new JPanel(new GridLayout(6, 2));
         binPanel.setForeground(Color.black);
         binPanel.setBorder(buildTitledBorder("Bins"));
 
@@ -380,8 +443,45 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
         binPanel.add(radVOIs);
         radVOIs.setFont(serif12);
         buttonGroup.add(radVOIs);
+        
+        binPanel.add(new JLabel(" "));
+        
+        userLimitsCheckBox = new JCheckBox("User specified minimum and maximum");
+        userLimitsCheckBox.setSelected(false);
+        userLimitsCheckBox.setFont(serif12);
+        userLimitsCheckBox.setForeground(Color.black);
+        userLimitsCheckBox.addItemListener(this);
+        binPanel.add(userLimitsCheckBox);
+        
+        binPanel.add(new JLabel(" "));
+        
+        userMinLabel = new JLabel("User specified minimum");
+        userMinLabel.setEnabled(false);
+        userMinLabel.setFont(serif12);
+        userMinLabel.setForeground(Color.black);
+        binPanel.add(userMinLabel);
 
+        userMinText = new JTextField(10);
+        userMinText.setText(String.valueOf(image.getMin()));
+        userMinText.setEnabled(false);
+        userMinText.setFont(serif12);
+        userMinText.setForeground(Color.black);
+        binPanel.add(userMinText);
+        
+        userMaxLabel = new JLabel("User specified maximum");
+        userMaxLabel.setEnabled(false);
+        userMaxLabel.setFont(serif12);
+        userMaxLabel.setForeground(Color.black);
+        binPanel.add(userMaxLabel);
 
+        userMaxText = new JTextField(10);
+        userMaxText.setText(String.valueOf(image.getMax()));
+        userMaxText.setEnabled(false);
+        userMaxText.setFont(serif12);
+        userMaxText.setForeground(Color.black);
+        binPanel.add(userMaxText);
+        
+        
         JPanel buttonPanel = new JPanel();
 
 
@@ -431,6 +531,30 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
             binText.selectAll();
 
             return false;
+        }
+        
+        userLimits = userLimitsCheckBox.isSelected();
+        
+        if (userLimits) {
+            tmpStr = userMinText.getText();
+            if (testParameter(tmpStr, -Float.MAX_VALUE, Float.MAX_VALUE)) {
+                userMin = Float.valueOf(tmpStr).floatValue();
+            } else {
+                userMinText.requestFocus();
+                userMinText.selectAll();
+
+                return false;
+            }
+            
+            tmpStr = userMaxText.getText();
+            if (testParameter(tmpStr, userMin, Float.MAX_VALUE)) {
+                userMax = Float.valueOf(tmpStr).floatValue();
+            } else {
+                userMaxText.requestFocus();
+                userMaxText.selectAll();
+
+                return false;
+            }    
         }
 
         return true;
