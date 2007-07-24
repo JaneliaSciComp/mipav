@@ -56,6 +56,8 @@ public class AlgorithmHistogram extends AlgorithmBase {
      * object.
      */
     private int summaryBins = 256;
+    
+    private boolean displayGraph = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -101,6 +103,27 @@ public class AlgorithmHistogram extends AlgorithmBase {
         this.summaryBins = summaryBins;
         dataOutput = true;
         this.entireImage = maskFlag;
+
+        if (entireImage == false) {
+            mask = image.generateVOIMask();
+        }
+    }
+    
+    /**
+     * Constructs the histogram calculation object for an image.
+     *
+     * @param  image        ModelImage the image
+     * @param  summaryBins  number of bins in the histogram
+     * @param  maskFlag     Flag that indicates that the histogram will be calculated for the whole image if equal to
+     *                      true
+     * @param displayGraph  If true, produces a graph for display
+     */
+    public AlgorithmHistogram(ModelImage image, int summaryBins, boolean maskFlag, boolean displayGraph) {
+        this.image = image;
+        this.summaryBins = summaryBins;
+        dataOutput = true;
+        this.entireImage = maskFlag;
+        this.displayGraph = displayGraph;
 
         if (entireImage == false) {
             mask = image.generateVOIMask();
@@ -155,6 +178,29 @@ public class AlgorithmHistogram extends AlgorithmBase {
         this.RGBOffset = RGBOffset;
         dataOutput = true;
         this.entireImage = maskFlag;
+
+        if (entireImage == false) {
+            mask = image.generateVOIMask();
+        }
+    }
+    
+    /**
+     * Constructs the histogram calculation object for an RGB image.
+     *
+     * @param  image        ModelImage the image
+     * @param  summaryBins  number of bins in the histogram
+     * @param  RGBOffset    correct offset for RED = 1 , GREEN = 2, or BLUE = 3 component to be exported
+     * @param  maskFlag     Flag that indicates that the histogram will be calculated for the whole image if equal to
+     *                      true
+     * @param  displayGraph If true, produces a graph for display
+     */
+    public AlgorithmHistogram(ModelImage image, int summaryBins, int RGBOffset, boolean maskFlag, boolean displayGraph) {
+        this.image = image;
+        this.summaryBins = summaryBins;
+        this.RGBOffset = RGBOffset;
+        dataOutput = true;
+        this.entireImage = maskFlag;
+        this.displayGraph = displayGraph;
 
         if (entireImage == false) {
             mask = image.generateVOIMask();
@@ -473,6 +519,8 @@ public class AlgorithmHistogram extends AlgorithmBase {
         double factor;
         int i;
         ViewUserInterface UI;
+        float[] intensity = null;
+        float[] count = null;
 
         if (image == null) {
             displayError("Source Image is null");
@@ -521,6 +569,13 @@ public class AlgorithmHistogram extends AlgorithmBase {
         imgBuffer = new float[length];
         lowValue = new double[bins];
         highValue = new double[bins];
+        if (displayGraph) {
+            intensity = new float[bins];
+            count = new float[bins];
+            for (i = 0; i < bins; i++) {
+                intensity[i] = (float)(imageMin + i * (imageMax - imageMin)/(bins - 1));
+            }
+        }
 
 
         if (image.getNDims() > 2) {
@@ -577,6 +632,9 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 if (((entireImage == false) && mask.get(i + (length * z))) || (entireImage == true)) {
                     value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5f);
                     histoBuffer[value]++;
+                    if (displayGraph) {
+                        count[value] += 1.0f;
+                    }
 
                     if (histoBuffer[value] == 1) {
                         lowValue[value] = imgBuffer[i];
@@ -597,6 +655,10 @@ public class AlgorithmHistogram extends AlgorithmBase {
         }
 
         image.releaseLock();
+        
+        if (displayGraph) {
+            new ViewJFrameGraph(intensity, count, "Histogram", "Intensity", "Count");
+        }
 
         if (image.getNDims() == 2) {
             int[] units = image.getFileInfo()[0].getUnitsOfMeasure();
