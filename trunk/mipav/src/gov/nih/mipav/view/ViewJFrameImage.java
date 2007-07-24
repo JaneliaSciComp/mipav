@@ -2865,7 +2865,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                 b = (new Float(intensityMapB[k + 3])).intValue();
 
                                 if (!((r == 0) && (g == 0) && (b == 0))) {
-                                    bitSet.set((currentSlice * intensityMapB.length) + (k / 4)); // turn the paint bit
+                                    bitSet.set((currentSlice * (intensityMapB.length/ 4)) + (k / 4)); // turn the paint bit
                                                                                                  // set index to ON
                                     intensityMapB[k + 1] = 0; // erase the painted mask from this index
                                     intensityMapB[k + 2] = 0; // erase the painted mask from this index
