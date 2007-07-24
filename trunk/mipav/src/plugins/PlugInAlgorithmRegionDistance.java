@@ -14,11 +14,13 @@ import java.text.*;
 
 import java.util.*;
 
+import javax.swing.*;
+
 
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  February 6, 2006
+ * @version  July 23, 2007
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -397,6 +399,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         int countsFound;
         boolean adaptiveSize = false;
         int maximumSize = 0;
+        boolean initiallyOneObject;
+        int response;
 
 
         nf = NumberFormat.getNumberInstance();
@@ -678,6 +682,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             fireProgressStateChanged(23);
         }
 
+        if (numObjects == 1) {
+            initiallyOneObject = true;
+        }
+        else {
+            initiallyOneObject = false;
+        }
+        
         for (id = 1; id <= numObjects; id++) {
             removeID = false;
 
@@ -691,6 +702,14 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     }
                 } // for (x = 0; x < xDim; x++)
             } // for (j = 0, y = 0; y < yDim; y++, j += xDim)
+            
+            if (initiallyOneObject && removeID) {
+                response = JOptionPane.showConfirmDialog(UI.getMainFrame(), "Delete the one blue object with edge touching?", 
+                           "Deletion", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response == JOptionPane.NO_OPTION) {
+                    removeID = false;
+                }
+            } // if (initiallyOneObject && removeID)
 
 
             if (removeID) {
@@ -1827,7 +1846,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 02/06/06 version\n");
+        UI.setDataText("Plugin 07/23/07 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -2328,6 +2347,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         double[] axes;
         float[][] sAxisPer;
         float tempf;
+        boolean initiallyOneObject;
+        int response;
 
         nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
@@ -2350,7 +2371,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Processing image ...");
-
 
         try {
             sliceLength = xDim * yDim;
@@ -2730,6 +2750,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             fireProgressStateChanged(23);
         }
 
+        if (numObjects == 1) {
+            initiallyOneObject = true;
+        }
+        else {
+            initiallyOneObject = false;
+        }
+        
         for (id = 1; id <= numObjects; id++) {
             removeID = false;
 
@@ -2748,6 +2775,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     }
                 }
             }
+            if (initiallyOneObject && removeID) {
+                response = JOptionPane.showConfirmDialog(UI.getMainFrame(), "Delete the one blue object with edge touching?", 
+                           "Deletion", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response == JOptionPane.NO_OPTION) {
+                    removeID = false;
+                }
+            } // if (initiallyOneObject && removeID)
 
             if (removeID) {
 
@@ -4185,7 +4219,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 06/14/06 version\n");
+        UI.setDataText("Plugin 07/23/07 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
