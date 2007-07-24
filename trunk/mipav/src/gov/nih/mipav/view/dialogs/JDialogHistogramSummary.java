@@ -82,6 +82,8 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
 
     /** DOCUMENT ME! */
     private int RGBOffset = RED_OFFSET;
+    
+    private boolean displayGraph = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -214,9 +216,9 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
 
             // Make algorithm
             if (image.isColorImage()) {
-                histAlgo = new AlgorithmHistogram(image, bins, RGBOffset, radWholeImage.isSelected());
+                histAlgo = new AlgorithmHistogram(image, bins, RGBOffset, radWholeImage.isSelected(), displayGraph);
             } else {
-                histAlgo = new AlgorithmHistogram(image, bins, radWholeImage.isSelected());
+                histAlgo = new AlgorithmHistogram(image, bins, radWholeImage.isSelected(), displayGraph);
             }
 
             // This is very important. Adding this object as a listener allows the algorithm to
