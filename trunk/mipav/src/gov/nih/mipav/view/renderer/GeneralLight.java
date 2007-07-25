@@ -290,58 +290,28 @@ public class GeneralLight {
             case TYPE_AMBIENT:
                 kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
                     Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_AMBIENT);
-                kLight.Ambient = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Intensity = m_fIntensity;
                 break;
 
             case TYPE_DIRECTIONAL:
                 kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
                     Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_DIRECTIONAL);
-                kLight.DVector = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    Vector3f(kDirection.x, kDirection.y, kDirection.z);
-                kLight.Ambient = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Diffuse = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Specular = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Intensity = m_fIntensity;
                 break;
 
             case TYPE_POINT:
                 kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
                     Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_POINT);
                 kLight.Position = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    Vector3f(kPosition.x, kPosition.y, kPosition.z);
-                kLight.DVector = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    Vector3f(0, 0, 0);
+                    Vector3f(kPosition.x, kPosition.y, -kPosition.z);
                 kLight.Constant = m_fAttenuationC0;
                 kLight.Linear = m_fAttenuationC1;
                 kLight.Quadratic = m_fAttenuationC2;
-                kLight.Ambient = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Diffuse = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Specular = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Intensity = m_fIntensity;
                 break;
 
             case TYPE_SPOT:
                 kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
                     Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_SPOT);
                 kLight.Position = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    Vector3f(kPosition.x, kPosition.y, kPosition.z);
-                kLight.DVector = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    Vector3f(kDirection.x, kDirection.y, kDirection.z);
-                kLight.Ambient = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Diffuse = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Specular = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
-                kLight.Intensity = m_fIntensity;
+                    Vector3f(kPosition.x, kPosition.y, -kPosition.z);
                 
                 kLight.Exponent = m_fSpotExponent;
                 kLight.SetAngle(m_fSpotAngle);
@@ -350,6 +320,16 @@ public class GeneralLight {
                 kLight.Quadratic = m_fAttenuationC2;
                 break;
         }
+
+        kLight.DVector = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+            Vector3f(kDirection.x, kDirection.y, -kDirection.z);
+        kLight.Ambient = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+            ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
+        kLight.Diffuse = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+            ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
+        kLight.Specular = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
+            ColorRGB( m_kLightColor.getRed()/255.0f, m_kLightColor.getGreen()/255.0f, m_kLightColor.getBlue()/255.0f );
+        kLight.Intensity = m_fIntensity;
 
         return kLight;
     }

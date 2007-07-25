@@ -1283,6 +1283,8 @@ public class GPUVolumeRender extends JavaApplication3
         m_kVolumeShaderEffect.MIPMode(0, m_pkRenderer);
 
         m_kShaderParamsWindow.AddUserVariables(m_kVolumeShaderEffect.GetPProgram());
+        m_kShaderParamsWindow.Display();
+        m_kShaderParamsWindow.setParent(this);
     }
 
     public void setVisible( boolean bVisible )
@@ -1407,6 +1409,7 @@ public class GPUVolumeRender extends JavaApplication3
         m_kShaderParamsWindow.close();
         m_kShaderParamsWindow.AddUserVariables(m_kVolumeShaderEffect.GetPProgram());
         m_kShaderParamsWindow.Display();
+        m_kShaderParamsWindow.setParent(this);
     }
     
     public void SetBackgroundColor( ColorRGBA kColor )

@@ -453,8 +453,8 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                       uniform float4 Light0Specular,
                       uniform float4 Light0SpotCutoff,
                       uniform float4 Light0Attenuation,
-                      uniform float4 Light0WorldPosition,
-                      uniform float4 Light0WorldDirection,
+                      uniform float4 Light0ModelPosition,
+                      uniform float4 Light0ModelDirection,
 
                       uniform float4 Light1Ambient,
                       uniform float4 Light1Attenuation,
@@ -540,6 +540,10 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
     float4 color2;
     float4 color3;
 
+
+    float3 LocalMaterialAmbient = MaterialAmbient;
+    float3 LocalMaterialEmissive = MaterialEmissive;
+
     // For some profiles the number of loop iterations must be determined at
     // compile time:
     for( int i = 0; i < 450; i++ )
@@ -592,28 +596,29 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
         {
             // Surface and Composite surface display:
             normal = tex3D(normalmap,position);
+            normal.w = 0;
 
-            // Get the color based on lighting:
-            normal.w = 1;
-            worldNormal = mul( normal, WVMatrix );
             color0 = color;
-            computeColor( inPos, worldNormal, CameraWorldPosition,
+            computeColor( inPos, normal, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light0Ambient, Light0Diffuse, Light0Specular,
-                          Light0WorldPosition, Light0WorldDirection,
+                          Light0ModelPosition, Light0ModelDirection,
                           Light0SpotCutoff, Light0Attenuation,
                           Light0Type,
                           Composite, color0 );
                 
 
-            normal.w = 0;
             color1 = color;
-            computeColor( inPos, normal, CameraWorldPosition,
-                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                          Light1Ambient, Light0Diffuse, Light0Specular,
-                          Light0WorldPosition, Light0WorldDirection,
-                          Light0SpotCutoff, Light1Attenuation,
-                          0, Composite, color1 );
+            if ( Composite != 0 )
+            {
+                LocalMaterialAmbient = color1 * MaterialAmbient;
+                LocalMaterialEmissive = color1 * MaterialEmissive;
+            }
+            AmbientLight( LocalMaterialEmissive,
+                          LocalMaterialAmbient,
+                          Light1Ambient,
+                          Light1Attenuation,
+                          color1 );
 
             color2 = color;
             computeColor( inPos, normal, CameraWorldPosition,
