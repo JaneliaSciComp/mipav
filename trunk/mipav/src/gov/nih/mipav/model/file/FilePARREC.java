@@ -526,7 +526,7 @@ public class FilePARREC extends FileBase {
         int bpp = 0;
         s= (String)VolParameters.get("scn_pix_bits");
         if(s!=null)
-            Integer.valueOf(s);
+			bpp=Integer.valueOf(s).intValue();
 
         int idx =0;
         for(int j=0;j<SliceParameters.size();j++) {
@@ -683,10 +683,9 @@ public class FilePARREC extends FileBase {
                 }
 
                 image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] },
-                        fileInfo.getFileName(), ViewUserInterface.getReference());
+                        fileInfo.getFileName());
             } else {
-                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(),
-                        ViewUserInterface.getReference());
+                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
             }
         } catch (OutOfMemoryError error) {
             throw (error);
