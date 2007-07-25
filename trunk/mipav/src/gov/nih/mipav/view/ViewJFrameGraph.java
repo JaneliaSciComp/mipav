@@ -3219,7 +3219,7 @@ public class ViewJFrameGraph extends JFrame
 
         pointsCheckbox.addActionListener(this);
         pointsCheckbox.setActionCommand("Points");
-        pointsCheckbox.setBounds(20, 5, 90, 22);
+        pointsCheckbox.setBounds(20, 5, 150, 22);
         pointsCheckbox.setFont(font12);
         pointsVisiblePanel.add(pointsCheckbox);
 
