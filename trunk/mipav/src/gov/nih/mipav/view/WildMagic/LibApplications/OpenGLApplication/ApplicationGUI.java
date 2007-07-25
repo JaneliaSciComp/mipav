@@ -23,8 +23,7 @@ import java.util.Hashtable;
 
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 
-public class ApplicationGUI
-    implements ActionListener
+public class ApplicationGUI implements ActionListener
 {
 
     /**
@@ -80,7 +79,6 @@ public class ApplicationGUI
         for (Enumeration kE = m_kShaderMap.keys() ; kE.hasMoreElements() ;) {
             String kKey = (String)kE.nextElement();
             Vector<UserConstant> kUserVariables = m_kShaderMap.get(kKey);
-            //Vector<UserConstant> kUserVariables =(Vector<UserConstant>)kE.nextElement();
 
             JPanel kPanel = new JPanel( new GridBagLayout() );
             kPanel.setBorder( new TitledBorder( kKey + " Shader Parameters" ) );

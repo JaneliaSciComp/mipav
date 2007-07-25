@@ -402,6 +402,7 @@ public class SurfaceRender extends RenderViewBase {
         probePanel = new JPanelProbe(this, parent, xBox, yBox, zBox);
         _pBar.updateValueImmed(10);
         clipPanel = new JPanelClip(this, xBox, yBox, zBox);
+        System.err.println("surface render " + xBox + " " + yBox + " " + zBox);
         _pBar.updateValueImmed(15);
         viewPanel = new JPanelView(this);
         _pBar.updateValueImmed(20);

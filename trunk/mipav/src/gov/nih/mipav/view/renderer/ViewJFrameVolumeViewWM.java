@@ -16,7 +16,7 @@ import gov.nih.mipav.view.renderer.surfaceview.flythruview.*;
 import gov.nih.mipav.view.renderer.surfaceview.rfaview.*;
 import gov.nih.mipav.view.renderer.volumeview.*;
 
-import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import javax.media.opengl.GLCanvas;
 
 import com.sun.j3d.utils.universe.*;
@@ -1949,6 +1949,17 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
         if (flythruControl != null) {
             flythruControl.setColor(_color);
+        }
+    }
+
+    /**
+     *
+     * @param  color  
+     */
+    public void setBackgroundColor(Color color)
+    {
+        if (raycastRenderWM != null) {
+            raycastRenderWM.SetBackgroundColor(new ColorRGBA( color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f, 1.0f ) );
         }
     }
 

@@ -286,7 +286,8 @@ public class VolumeShaderEffect extends ShaderEffect
                      kRenderer.GetMaxVShaderImages(),
                      kRenderer.GetMaxPShaderImages());
 
-        ResetClip();
+        //ResetClip();
+        SetBackgroundColor( m_kBackgroundColor );
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("blend") != null ) 
         {
@@ -380,7 +381,7 @@ public class VolumeShaderEffect extends ShaderEffect
         SetProgram(m_kPShaderSUR, kRenderer);
     }
 
-    public byte[] calcImageNormals( ModelImage kImage )
+    private byte[] calcImageNormals( ModelImage kImage )
     {
 
         ModelSimpleImage kValueImageA;
@@ -466,9 +467,6 @@ public class VolumeShaderEffect extends ShaderEffect
                         afDataN[i*3+0] = fDX;
                         afDataN[i*3+1] = fDY;
                         afDataN[i*3+2] = fDZ;
-//                         acData[i*3+0] = (byte)(fDX*127 + 127);
-//                         acData[i*3+1] = (byte)(fDY*127 + 127);
-//                         acData[i*3+2] = (byte)(fDZ*127 + 127);
                     }
                 }
             }
@@ -742,10 +740,10 @@ public class VolumeShaderEffect extends ShaderEffect
                      kRenderer.GetMaxTCoords(),
                      kRenderer.GetMaxVShaderImages(),
                      kRenderer.GetMaxPShaderImages());
-        ResetClip();
+        //ResetClip();
     }
 
-    public void ResetClip()
+    public void ResetClip( float[] afData )
     {
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("DoClip") != null ) 
@@ -757,12 +755,7 @@ public class VolumeShaderEffect extends ShaderEffect
         {
             if ( pkProgram.GetUC(m_akClip[i]) != null ) 
             {
-                float[] data = new float[4];
-                if ( i%2 == 0 )
-                    data[0] = 0;
-                else
-                    data[0] = 1;
-                pkProgram.GetUC(m_akClip[i]).SetDataSource(data);
+                pkProgram.GetUC(m_akClip[i]).SetDataSource(new float[]{afData[i],0,0,0});
             }       
         }
     }
@@ -874,6 +867,22 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    public void SetBackgroundColor( ColorRGBA kColor )
+    {
+        m_kBackgroundColor = kColor;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("BackgroundColor") != null ) 
+        {
+            float[] afColor = new float[4];
+            afColor[0] = kColor.R();
+            afColor[1] = kColor.G();
+            afColor[2] = kColor.B();
+            afColor[3] = kColor.A();
+            pkProgram.GetUC("BackgroundColor").SetDataSource(afColor);
+        }
+        
+    }
+
     private ModelImage m_kImageA;
     private ModelLUT m_kLUTA;
     private ModelRGB m_kRGBA;
@@ -916,4 +925,5 @@ public class VolumeShaderEffect extends ShaderEffect
 
     private Texture m_kSceneTarget;
     private float[] m_afBlend = new float[]{.5f,0,0,0};
+    private ColorRGBA m_kBackgroundColor = ColorRGBA.BLACK;
 }
