@@ -1782,6 +1782,11 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
 
             return;
         }
+        
+        if ((minDomain == 0.0f) && (maxDomain == 0.0f) && (minRange == 0.0f) && (maxRange == 0.0f)) {
+            // No visible functions to plot
+            return;
+        }
 
         xScale = graphBounds.width / (xMax - xMin);
         yScale = graphBounds.height / (yMax - yMin);
