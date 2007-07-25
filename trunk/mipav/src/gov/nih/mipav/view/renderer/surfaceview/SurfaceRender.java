@@ -510,6 +510,10 @@ public class SurfaceRender extends RenderViewBase {
         if (!cubicBG.isLive()) {
             objRootBG.addChild(cubicBG);
         }
+        if ( parent instanceof ViewJFrameVolumeViewWM )
+        {
+            ((ViewJFrameVolumeViewWM)parent).setShowOrientationCube(true);
+        }  
     }
 
     /**
@@ -1242,6 +1246,10 @@ public class SurfaceRender extends RenderViewBase {
      */
     public void hideBoxFrame() {
         objBoxFrameBG.detach();
+        if ( parent instanceof ViewJFrameVolumeViewWM )
+        {
+            ((ViewJFrameVolumeViewWM)parent).setShowBoxFrame(true);
+        }
     }
 
     /**
@@ -1364,6 +1372,10 @@ public class SurfaceRender extends RenderViewBase {
         if (cubicBG.isLive()) {
             cubicBG.detach();
         }
+        if ( parent instanceof ViewJFrameVolumeViewWM )
+        {
+            ((ViewJFrameVolumeViewWM)parent).setShowOrientationCube(false);
+        }  
     }
 
     /**
@@ -1970,6 +1982,10 @@ public class SurfaceRender extends RenderViewBase {
      */
     public void showBoxFrame() {
         sceneRootTG.addChild(objBoxFrameBG);
+        if ( parent instanceof ViewJFrameVolumeViewWM )
+        {
+            ((ViewJFrameVolumeViewWM)parent).setShowBoxFrame(true);
+        }  
     }
 
     /**

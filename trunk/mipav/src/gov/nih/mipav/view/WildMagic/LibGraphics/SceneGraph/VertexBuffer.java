@@ -31,10 +31,13 @@ public class VertexBuffer extends Bindable
         m_afChannel = new float[m_iChannelQuantity];
     }
 
+    /**
+     * Copy constructor:
+     */
     public VertexBuffer (VertexBuffer pkVBuffer)
     {
         assert(pkVBuffer != null);
-        m_kAttributes = pkVBuffer.m_kAttributes;
+        m_kAttributes = new Attributes( pkVBuffer.m_kAttributes );
         m_iVertexQuantity = pkVBuffer.m_iVertexQuantity;
         m_iVertexSize = m_kAttributes.GetChannelQuantity();
         m_iChannelQuantity = m_iVertexQuantity*m_iVertexSize;

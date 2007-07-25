@@ -8,6 +8,7 @@ import javax.media.opengl.*;
 import com.sun.opengl.util.*;
 import java.awt.event.*;
 
+import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
@@ -39,6 +40,8 @@ public class GPUVolumeRender extends JavaApplication3
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+
+        m_pkRenderer.SetLineWidth(3);
 
         ImageCatalog.SetActive( new ImageCatalog("Main") );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
@@ -146,6 +149,18 @@ public class GPUVolumeRender extends JavaApplication3
                     m_pkRenderer.Draw(m_kClipEyeInv);
                 }
                 m_pkRenderer.SetCamera(m_spkCamera);
+            }
+
+            if ( m_bDisplayOrientationCube )
+            {
+                for ( int i = 0; i < 6; i++ )
+                {
+                    m_akOrientationCube[i].Local.SetRotate(m_spkScene.Local.GetRotate());
+                    m_akOrientationCube[i].UpdateGS();
+                    m_akOrientationCube[i].UpdateRS();
+                    m_pkRenderer.LoadResources(m_akOrientationCube[i]);
+                    m_pkRenderer.Draw(m_akOrientationCube[i]);
+                }
             }
 
             /*
@@ -361,7 +376,7 @@ public class GPUVolumeRender extends JavaApplication3
         int iXBound = m_kImageA.getExtents()[0];
         int iYBound = m_kImageA.getExtents()[1];
         int iZBound = m_kImageA.getExtents()[2];
-        InitClippingPlanes(iXBound,iYBound,iZBound);
+        InitDisplay(iXBound,iYBound,iZBound);
 
         for ( int i = 0; i < m_pkRenderer.GetMaxLights(); i++ )
         {
@@ -681,9 +696,24 @@ public class GPUVolumeRender extends JavaApplication3
         m_kVolumeShaderEffect.UpdateData(kImage, 0);
     }
 
-    private void InitClippingPlanes(int iXBound, int iYBound, int iZBound)
+    private void InitDisplay(int iXBound, int iYBound, int iZBound)
     {
         m_akPolyline = new Polyline[6];
+        m_akBoundingBox = new Polyline[6];
+        m_akOrientationCube = new TriMesh[6];
+        IndexBuffer kIndexBuffer = new IndexBuffer(6);
+        int[] aiIndexData = kIndexBuffer.GetData();
+        aiIndexData[0] = 0;
+        aiIndexData[1] = 1;
+        aiIndexData[2] = 2;
+        aiIndexData[3] = 0;
+        aiIndexData[4] = 2;
+        aiIndexData[5] = 3;
+
+        InitCubicTextures();
+
+        m_kCubeTranslate = new Vector3f( -1.5f, 1f, 1.5f );
+        Vector3f kCubeScale = new Vector3f( .5f, .5f, .5f );
 
         float fMaxX = (float) (iXBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[0];
         float fMaxY = (float) (iYBound - 1) * m_kImageA.getFileInfo(0).getResolutions()[1];
@@ -703,104 +733,99 @@ public class GPUVolumeRender extends JavaApplication3
         Attributes kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetCChannels(0,3);
+        kAttributes.SetTChannels(0,2);
 
-        // neg x clipping:
-        VertexBuffer kClipView = new VertexBuffer(kAttributes, 4 );
-        for ( int i = 0; i < 4; i++ )
+        VertexBuffer[] akOutlineSquare = new VertexBuffer[6];
+        for ( int i = 0; i < 6; i++ )
         {
-            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            akOutlineSquare[i] = new VertexBuffer(kAttributes, 4 );
+            for ( int j = 0; j < 4; j++ )
+            {
+                akOutlineSquare[i].Color3( 0, j, new ColorRGB( 1, 0, 0 ) );
+            }
+
+            akOutlineSquare[i].TCoord2( 0, 0, new Vector2f( 1, 1 ) );
+            akOutlineSquare[i].TCoord2( 0, 1, new Vector2f( 0, 1 ) );
+            akOutlineSquare[i].TCoord2( 0, 2, new Vector2f( 0, 0 ) );
+            akOutlineSquare[i].TCoord2( 0, 3, new Vector2f( 1, 0 ) );
         }
-        kClipView.Position3( 0, new Vector3f( 0, 0, 0 ) );
-        kClipView.Position3( 1, new Vector3f( 0, 0, m_fZ ) );
-        kClipView.Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
-        kClipView.Position3( 3, new Vector3f( 0, m_fY, 0 ) );
-        m_akPolyline[0] = new Polyline( kClipView, true, true );
-        m_akPolyline[0].AttachEffect( m_spkVertexColor3Shader );
-        m_akPolyline[0].Local.SetTranslate(m_kTranslate);
+        // neg x clipping:
+        akOutlineSquare[0].Position3( 0, new Vector3f( 0, 0, 0 ) );
+        akOutlineSquare[0].Position3( 1, new Vector3f( 0, 0, m_fZ ) );
+        akOutlineSquare[0].Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
+        akOutlineSquare[0].Position3( 3, new Vector3f( 0, m_fY, 0 ) );
 
         // pos x clipping:
-        kClipView = new VertexBuffer(kAttributes, 4 );
-        for ( int i = 0; i < 4; i++ )
-        {
-            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
-        }
-        kClipView.Position3( 0, new Vector3f( m_fX, 0, 0 ) );
-        kClipView.Position3( 1, new Vector3f( m_fX, 0, m_fZ ) );
-        kClipView.Position3( 2, new Vector3f( m_fX, m_fY, m_fZ ) );
-        kClipView.Position3( 3, new Vector3f( m_fX, m_fY, 0 ) );
-        m_akPolyline[1] = new Polyline( kClipView, true, true );
-        m_akPolyline[1].AttachEffect( m_spkVertexColor3Shader );
-        m_akPolyline[1].Local.SetTranslate(m_kTranslate);
+        akOutlineSquare[1].Position3( 0, new Vector3f( m_fX, 0, m_fZ ) );
+        akOutlineSquare[1].Position3( 1, new Vector3f( m_fX, 0, 0 ) );
+        akOutlineSquare[1].Position3( 2, new Vector3f( m_fX, m_fY, 0 ) );
+        akOutlineSquare[1].Position3( 3, new Vector3f( m_fX, m_fY, m_fZ ) );
 
         // neg y clipping:
-        kClipView = new VertexBuffer(kAttributes, 4 );
-        for ( int i = 0; i < 4; i++ )
-        {
-            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
-        }
-        kClipView.Position3( 0, new Vector3f( 0, 0, 0 ) );
-        kClipView.Position3( 1, new Vector3f( 0, 0, m_fZ ) );
-        kClipView.Position3( 2, new Vector3f( m_fX, 0, m_fZ ) );
-        kClipView.Position3( 3, new Vector3f( m_fX, 0, 0 ) );
-        m_akPolyline[2] = new Polyline( kClipView, true, true );
-        m_akPolyline[2].AttachEffect( m_spkVertexColor3Shader );
-        m_akPolyline[2].Local.SetTranslate(m_kTranslate);
-
+        akOutlineSquare[2].Position3( 0, new Vector3f( m_fX, 0, m_fZ ) );
+        akOutlineSquare[2].Position3( 1, new Vector3f( 0, 0, m_fZ ) );
+        akOutlineSquare[2].Position3( 2, new Vector3f( 0, 0, 0 ) );
+        akOutlineSquare[2].Position3( 3, new Vector3f( m_fX, 0, 0 ) );
         // pos y clipping:
-        kClipView = new VertexBuffer(kAttributes, 4 );
-        for ( int i = 0; i < 4; i++ )
-        {
-            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
-        }
-        kClipView.Position3( 0, new Vector3f( 0, m_fY, 0 ) );
-        kClipView.Position3( 1, new Vector3f( 0, m_fY, m_fZ ) );
-        kClipView.Position3( 2, new Vector3f( m_fX, m_fY, m_fZ ) );
-        kClipView.Position3( 3, new Vector3f( m_fX, m_fY, 0 ) );
-        m_akPolyline[3] = new Polyline( kClipView, true, true );
-        m_akPolyline[3].AttachEffect( m_spkVertexColor3Shader );
-        m_akPolyline[3].Local.SetTranslate(m_kTranslate);
-
+        akOutlineSquare[3].Position3( 0, new Vector3f( m_fX, m_fY, 0 ) );
+        akOutlineSquare[3].Position3( 1, new Vector3f( 0, m_fY, 0 ) );
+        akOutlineSquare[3].Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
+        akOutlineSquare[3].Position3( 3, new Vector3f( m_fX, m_fY, m_fZ ) );
 
         // neg z clipping:
-        kClipView = new VertexBuffer(kAttributes, 4 );
-        for ( int i = 0; i < 4; i++ )
-        {
-            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
-        }
-        kClipView.Position3( 0, new Vector3f( 0, 0, 0 ) );
-        kClipView.Position3( 1, new Vector3f( 0, m_fY, 0 ) );
-        kClipView.Position3( 2, new Vector3f( m_fX, m_fY, 0 ) );
-        kClipView.Position3( 3, new Vector3f( m_fX, 0, 0 ) );
-        m_akPolyline[4] = new Polyline( kClipView, true, true );
-        m_akPolyline[4].AttachEffect( m_spkVertexColor3Shader );
-        m_akPolyline[4].Local.SetTranslate(m_kTranslate);
+        akOutlineSquare[4].Position3( 0, new Vector3f( m_fX, 0, 0 ) );
+        akOutlineSquare[4].Position3( 1, new Vector3f( 0, 0, 0 ) );
+        akOutlineSquare[4].Position3( 2, new Vector3f( 0, m_fY, 0 ) );
+        akOutlineSquare[4].Position3( 3, new Vector3f( m_fX, m_fY, 0 ) );
 
         // pos z clipping:
-        kClipView = new VertexBuffer(kAttributes, 4 );
-        for ( int i = 0; i < 4; i++ )
-        {
-            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
-        }
-        kClipView.Position3( 0, new Vector3f( 0, 0, m_fZ ) );
-        kClipView.Position3( 1, new Vector3f( 0, m_fY, m_fZ ) );
-        kClipView.Position3( 2, new Vector3f( m_fX, m_fY, m_fZ ) );
-        kClipView.Position3( 3, new Vector3f( m_fX, 0, m_fZ ) );
-        m_akPolyline[5] = new Polyline( kClipView, true, true );
-        m_akPolyline[5].AttachEffect( m_spkVertexColor3Shader );
-        m_akPolyline[5].Local.SetTranslate(m_kTranslate);
+        akOutlineSquare[5].Position3( 0, new Vector3f( 0, 0, m_fZ ) );
+        akOutlineSquare[5].Position3( 1, new Vector3f( m_fX, 0, m_fZ ) );
+        akOutlineSquare[5].Position3( 2, new Vector3f( m_fX, m_fY, m_fZ ) );
+        akOutlineSquare[5].Position3( 3, new Vector3f( 0, m_fY, m_fZ ) );
 
+        Vector3f kHalf = new Vector3f( m_fX/2.0f, m_fY/2.0f, m_fZ/2.0f );
+        Vector3f kPos;
+
+        for ( int i = 0; i < 6; i++ )
+        {
+            m_akPolyline[i] = new Polyline( new VertexBuffer(akOutlineSquare[i]), true, true );
+            m_akPolyline[i].AttachEffect( m_spkVertexColor3Shader );
+            m_akPolyline[i].Local.SetTranslate(m_kTranslate);
+
+            m_akBoundingBox[i] = new Polyline( new VertexBuffer(akOutlineSquare[i]), true, true );
+            m_akBoundingBox[i].AttachEffect( m_spkVertexColor3Shader );
+            m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
+
+            System.err.println(m_aakAxisFiles[i]);
+
+            for ( int j = 0; j < 4; j++ )
+            {
+                kPos = akOutlineSquare[i].Position3( j );
+                kPos.subEquals(kHalf);
+                akOutlineSquare[i].Position3( j, kPos );
+            }
+            m_akOrientationCube[i] = new TriMesh( new VertexBuffer(akOutlineSquare[i]), kIndexBuffer );
+            m_akOrientationCube[i].AttachEffect( new TextureEffect( m_aakAxisFiles[i] ) );
+            m_akOrientationCube[i].Local.SetTranslate(m_kCubeTranslate);
+            m_akOrientationCube[i].Local.SetScale(kCubeScale);
+            m_akOrientationCube[i].UpdateGS();
+            m_akOrientationCube[i].UpdateRS();
+            m_pkRenderer.LoadResources(m_akOrientationCube[i]);
+        }
+
+
+        VertexBuffer kOutlineSquare = new VertexBuffer( kAttributes, 4);
         // arbitrary clipping:
-        kClipView = new VertexBuffer(kAttributes, 4 );
         for ( int i = 0; i < 4; i++ )
         {
-            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            kOutlineSquare.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
         }
-        kClipView.Position3( 0, new Vector3f( 0, 0, 0 ) );
-        kClipView.Position3( 1, new Vector3f( 0, 0, m_fZ ) );
-        kClipView.Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
-        kClipView.Position3( 3, new Vector3f( 0, m_fY, 0 ) );
-
-        m_kClipArb = new Polyline( kClipView, true, true );
+        kOutlineSquare.Position3( 0, new Vector3f( 0, 0, 0 ) );
+        kOutlineSquare.Position3( 1, new Vector3f( 0, 0, m_fZ ) );
+        kOutlineSquare.Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
+        kOutlineSquare.Position3( 3, new Vector3f( 0, m_fY, 0 ) );
+        m_kClipArb = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipArb.AttachEffect( m_spkVertexColor3Shader );
         m_kClipArb.Local.SetTranslate(m_kTranslate);
         m_kArbRotate.AttachChild( m_kClipArb );
@@ -815,32 +840,30 @@ public class GPUVolumeRender extends JavaApplication3
         Vector3f kCLoc = kCDir.scale(-4.0f);
         m_spkEyeCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
-        kClipView = new VertexBuffer(kAttributes, 4 );
         for ( int i = 0; i < 4; i++ )
         {
-            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            kOutlineSquare.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
         }
-        kClipView.Position3( 0, new Vector3f( -.2f, -.2f, m_fZ ) );
-        kClipView.Position3( 1, new Vector3f( m_fX +.2f, -.2f, m_fZ ) );
-        kClipView.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, m_fZ ) );
-        kClipView.Position3( 3, new Vector3f( -.2f, m_fY +.2f, m_fZ ) );
-        m_kClipEye = new Polyline( kClipView, true, true );
+        kOutlineSquare.Position3( 0, new Vector3f( -.2f, -.2f, m_fZ ) );
+        kOutlineSquare.Position3( 1, new Vector3f( m_fX +.2f, -.2f, m_fZ ) );
+        kOutlineSquare.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, m_fZ ) );
+        kOutlineSquare.Position3( 3, new Vector3f( -.2f, m_fY +.2f, m_fZ ) );
+        m_kClipEye = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipEye.Local.SetTranslate(m_kTranslate);
         m_kClipEye.AttachEffect( m_spkVertexColor3Shader );
         m_kClipEye.UpdateGS();
         m_kClipEye.UpdateRS();
         m_pkRenderer.LoadResources(m_kClipEye);
 
-        kClipView = new VertexBuffer(kAttributes, 4 );
         for ( int i = 0; i < 4; i++ )
         {
-            kClipView.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            kOutlineSquare.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
         }
-        kClipView.Position3( 0, new Vector3f( -.2f, -.2f, 1.0f ) );
-        kClipView.Position3( 1, new Vector3f( m_fX +.2f, -.2f, 1.0f ) );
-        kClipView.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, 1.0f ) );
-        kClipView.Position3( 3, new Vector3f( -.2f, m_fY +.2f, 1.0f ) );
-        m_kClipEyeInv = new Polyline( kClipView, true, true );
+        kOutlineSquare.Position3( 0, new Vector3f( -.2f, -.2f, 1.0f ) );
+        kOutlineSquare.Position3( 1, new Vector3f( m_fX +.2f, -.2f, 1.0f ) );
+        kOutlineSquare.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, 1.0f ) );
+        kOutlineSquare.Position3( 3, new Vector3f( -.2f, m_fY +.2f, 1.0f ) );
+        m_kClipEyeInv = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipEyeInv.Local.SetTranslate(m_kTranslate);
         m_kClipEyeInv.AttachEffect( m_spkVertexColor3Shader );
         m_kClipEyeInv.UpdateGS();
@@ -921,6 +944,49 @@ public class GPUVolumeRender extends JavaApplication3
         m_spkScene.UpdateRS();
     }
 
+
+    public void DisplayBoundingBox( boolean bDisplay )
+    {
+        if ( bDisplay != m_bDisplayBoundingBox )
+        {
+            m_bDisplayBoundingBox = bDisplay;
+            if ( bDisplay )
+            {
+                for ( int i = 0; i < 6; i++ )
+                {
+                    m_spkScene.AttachChild(m_akBoundingBox[i]);
+                }
+            }
+            else
+            {
+                for ( int i = 0; i < 6; i++ )
+                {
+                    m_spkScene.DetachChild(m_akBoundingBox[i]);
+                }
+            }
+        }
+        m_spkScene.UpdateGS();
+        m_spkScene.UpdateRS();
+    }
+
+    public void DisplayOrientationCube( boolean bDisplay )
+    {
+        m_bDisplayOrientationCube = bDisplay;
+    }
+
+    public void SetBoundingBoxColor( ColorRGB kColor )
+    {
+        for ( int i = 0; i < 6; i++ )
+        {
+            for ( int j = 0; j < 4; j++ )
+            {
+                m_akBoundingBox[i].VBuffer.Color3( 0, j, kColor );
+            }
+            m_akBoundingBox[i].VBuffer.Release();
+        }
+    }
+
+
     public boolean getDisplayClipPlane( int iWhich )
     {
         return m_abDisplayPolyline[iWhich];
@@ -947,8 +1013,8 @@ public class GPUVolumeRender extends JavaApplication3
             }
         }
         else
-        {
-            if ( iWhich%2 == 0 )
+        { 
+           if ( iWhich%2 == 0 )
                 fValue = 0;
             else
                 fValue = 1;
@@ -1349,10 +1415,50 @@ public class GPUVolumeRender extends JavaApplication3
         m_kVolumeShaderEffect.SetBackgroundColor( kColor );
     }
 
+
+
+    /**
+     * Create the rotation control cubic box.
+     *
+     * @return A cube representing the image orientation, with labels painted
+     * on the cube faces showing which axis corresponds to which axis in
+     * patient coordinates.
+     */
+    private void InitCubicTextures() {
+
+        /* Read the axis strings from the FileInfo data structure: */
+        String[] akAxisLabels = new String[3];
+        int[] axisOrientation = MipavCoordinateSystems.getAxisOrientation(m_kImageA); 
+        if ( axisOrientation != null )
+        {
+            for ( int i = 0; i < 3; i++ )
+            {
+                akAxisLabels[i] = FileInfoBase.getAxisOrientationStr( axisOrientation[i] ).toLowerCase();
+                // System.out.println(akAxisLabels[i]);
+                /* The file name correspond to the axis strings, read the file
+                 * names from the axis strings: */
+                m_aakAxisFiles[i*2 +0] = new String( String.valueOf( akAxisLabels[i].charAt(0) ) );
+                m_aakAxisFiles[i*2 +1] = new String( String.valueOf( akAxisLabels[i].charAt( akAxisLabels[i].lastIndexOf( " " ) + 1 ) ) );
+                //System.err.println( aakAxisFiles[i][0] + " " + aakAxisFiles[i][1] );
+            }
+        }
+    }
+
+
+
+
     private Node m_spkScene;
     private WireframeState m_spkWireframe;
     private CullState m_spkCull;
     private Culler m_kCuller = new Culler(0,0,null);
+
+    private Polyline[] m_akBoundingBox;
+    private boolean m_bDisplayBoundingBox = false;
+
+    private TriMesh[] m_akOrientationCube;
+    private boolean m_bDisplayOrientationCube = false;
+    private String[] m_aakAxisFiles = new String[]{ "u", "u", "u", "u", "u", "u"};
+    private Vector3f m_kCubeTranslate = Vector3f.ZERO;
 
     private Polyline[] m_akPolyline;
     private Polyline m_kClipArb;
@@ -1402,4 +1508,6 @@ public class GPUVolumeRender extends JavaApplication3
     private int m_iActive = 0;
 
     ApplicationGUI m_kShaderParamsWindow = null;
+
+
 }
