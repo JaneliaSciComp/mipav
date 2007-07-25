@@ -1964,6 +1964,39 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     }
 
     /**
+     *
+     * @param  color  
+     */
+    public void setBoundingBoxColor(Color color)
+    {
+        if (raycastRenderWM != null) {
+            raycastRenderWM.SetBoundingBoxColor(new ColorRGB( color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f ) );
+        }
+    }
+
+    /**
+     *
+     * @param  color  
+     */
+    public void setShowBoxFrame(boolean bShow)
+    {
+        if (raycastRenderWM != null) {
+            raycastRenderWM.DisplayBoundingBox(bShow);
+        }
+    }
+
+    /**
+     *
+     * @param  color  
+     */
+    public void setShowOrientationCube(boolean bShow)
+    {
+        if (raycastRenderWM != null) {
+            raycastRenderWM.DisplayOrientationCube(bShow);
+        }
+    }
+
+    /**
      * Required by the parent super class, do nothing.
      *
      * @param  _imageB  image to set the frame to

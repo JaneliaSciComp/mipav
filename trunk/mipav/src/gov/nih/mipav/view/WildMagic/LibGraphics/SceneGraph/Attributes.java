@@ -32,6 +32,16 @@ public class Attributes
         m_iPChannels = rkA.m_iPChannels;
         m_iNOffset = rkA.m_iNOffset;
         m_iNChannels = rkA.m_iNChannels;
+
+
+        for (int iUnit = 0; iUnit < rkA.m_kCChannels.size(); iUnit++)
+        {
+            SetCChannels( iUnit, rkA.m_kCChannels.get(iUnit) );
+        }
+        for (int iUnit = 0; iUnit < rkA.m_kTChannels.size(); iUnit++)
+        {
+            SetTChannels( iUnit, rkA.m_kTChannels.get(iUnit) );
+        }
     }
 
     // Set the attributes you want.  The currently supported attributes are

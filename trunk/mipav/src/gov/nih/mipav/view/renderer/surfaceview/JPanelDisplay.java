@@ -296,7 +296,13 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
 
         if (button == colorButton) {
             renderBase.setBoxColor(color);
-        } else if (button == colorButtonBackground) {
+            if (renderBase instanceof SurfaceRender) {
+                ViewJFrameVolumeView kParent = ((SurfaceRender) renderBase).getParentFrame();
+                if ( kParent instanceof ViewJFrameVolumeViewWM )
+                {
+                    ((ViewJFrameVolumeViewWM)kParent).setBoundingBoxColor(color);
+                }                    
+            }        } else if (button == colorButtonBackground) {
             renderBase.setBackgroundColor(color);
             if (renderBase instanceof SurfaceRender) {
                 ViewJFrameVolumeView kParent = ((SurfaceRender) renderBase).getParentFrame();
