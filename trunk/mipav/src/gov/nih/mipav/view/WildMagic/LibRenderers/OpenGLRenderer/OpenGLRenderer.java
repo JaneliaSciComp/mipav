@@ -50,7 +50,6 @@ public class OpenGLRenderer extends Renderer
     {
         GLCapabilities kGlCapabilities = new GLCapabilities();
         kGlCapabilities.setHardwareAccelerated(true);
-        //m_kCanvas = new GLCanvas(kGlCapabilities);
         m_kCanvas = new GLCanvas(kGlCapabilities);
     }
 
@@ -503,7 +502,6 @@ public class OpenGLRenderer extends Renderer
         gl.glPixelZoom(1.0f,-1.0f);
         ByteBuffer kBuffer = ByteBuffer.wrap(aucBuffer);
         kBuffer.rewind();
-        //gl.glDrawPixels(m_iWidth,m_iHeight,GL.GL_BGR,GL.GL_UNSIGNED_BYTE,kBuffer);
         
         boolean bBlend = gl.glIsEnabled( GL.GL_BLEND );
         if ( !bBlend )
@@ -622,20 +620,8 @@ public class OpenGLRenderer extends Renderer
                 (double)rkPlane.Normal.Z(),
                 (double)-rkPlane.Constant
             };
-        //gl.glEnable(GL.GL_CLIP_PLANE0 + i);
-        gl.glEnable(GL.GL_CLIP_PLANE0);
-        gl.glEnable(GL.GL_CLIP_PLANE1);
-        gl.glEnable(GL.GL_CLIP_PLANE2);
-        gl.glEnable(GL.GL_CLIP_PLANE3);
-        gl.glEnable(GL.GL_CLIP_PLANE4);
-        gl.glEnable(GL.GL_CLIP_PLANE5);
-        //gl.glClipPlane(GL.GL_CLIP_PLANE0 + i,adPlane,0);
-        //gl.glClipPlane(GL.GL_CLIP_PLANE0,adPlane,0);
-//         System.err.println( i + " " +
-//                             adPlane[0] + " " +
-//                             adPlane[1] + " " +
-//                             adPlane[2] + " " +
-//                             adPlane[3] );
+        gl.glEnable(GL.GL_CLIP_PLANE0 + i);
+        gl.glClipPlane(GL.GL_CLIP_PLANE0 + i,adPlane,0);
     }
 
     /** Disables additional clip planes.
@@ -1997,11 +1983,9 @@ public class OpenGLRenderer extends Renderer
     /** Returns the GLCanvas for drawing.
      * @return the current GLCanvas.
      */
-    //public GLCanvas GetCanvas() { return m_kCanvas; }
     public GLCanvas GetCanvas() { return m_kCanvas; }
 
     /** GLCanvas for Java/JOGL */
-    //private GLCanvas m_kCanvas;
     private GLCanvas m_kCanvas;
     /** JOGL GLAutoDrawable reference */
     private GLAutoDrawable m_kDrawable = null;

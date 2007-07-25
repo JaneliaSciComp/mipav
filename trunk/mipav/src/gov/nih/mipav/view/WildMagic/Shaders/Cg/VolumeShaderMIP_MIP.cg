@@ -54,6 +54,7 @@ void p_VolumeShaderMIP_MIP(  in float3 inTexCoord1    : TEXCOORD0,
                                  uniform float IsColorA,
                                  uniform float IsColorB,
                                  uniform float DoClip,
+                             uniform float GradientMagnitude,
                                  uniform float clipX,
                                  uniform float clipXInv,
                                  uniform float clipY,
@@ -127,6 +128,12 @@ void p_VolumeShaderMIP_MIP(  in float3 inTexCoord1    : TEXCOORD0,
     float length_acc = 0;
     bool bClipped = false;
 
+    if ( GradientMagnitude != 0 )
+    {
+        blend = 1.0; // all a
+    }
+
+
 
     // For some profiles the number of loop iterations must be determined at
     // compile time:
@@ -173,6 +180,12 @@ void p_VolumeShaderMIP_MIP(  in float3 inTexCoord1    : TEXCOORD0,
                 colorB = tex3D(volume_texB,position);
                 opacityB = tex1D(opacitymapB,colorB.r).r;
             }
+        }
+        if ( GradientMagnitude != 0 )
+        {
+            opacityA *= opacityB;
+            opacityA += 0.5;
+            opacityB = 0;
         }
         // If the opacity is not zero:
         if ( opacityA > 0 )

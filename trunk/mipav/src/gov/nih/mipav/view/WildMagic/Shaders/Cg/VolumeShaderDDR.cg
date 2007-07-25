@@ -48,6 +48,8 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
                       uniform float stepsize,
                       uniform float IsColor,
                       uniform float DoClip,
+                      uniform float Composite,
+                      uniform float4 BackgroundColor,
                       uniform float clipX,
                       uniform float clipXInv,
                       uniform float clipY,
@@ -83,7 +85,7 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
     float alpha_acc = 0;
 
     // output color:
-    kColor = (0,0,0,0);
+    kColor = BackgroundColor;
     if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
     {
         return;
@@ -172,6 +174,6 @@ void p_VolumeShaderDDR(  in float3 inTexCoord1    : TEXCOORD0,
         }
     } 
 
-    kColor.rgb = color_acc.rgb;
+    kColor.rgb = alpha_acc * color_acc.rgb + (1 - alpha_acc)*BackgroundColor.rgb;
     kColor.a = 1;
 }

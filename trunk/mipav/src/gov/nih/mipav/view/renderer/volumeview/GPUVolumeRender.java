@@ -116,6 +116,7 @@ public class GPUVolumeRender extends JavaApplication3
             m_kCuller.ComputeVisibleSet(m_spkScene);
 
             m_pkPBuffer.Enable();
+            m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
             m_pkRenderer.ClearBuffers();
             m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
@@ -128,8 +129,8 @@ public class GPUVolumeRender extends JavaApplication3
 
             // Draw the scene to the main window and also to a regular screen
             // polygon, placed in the lower-left corner of the main window.
+            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
             m_pkRenderer.ClearBuffers();
-
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
 
             if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
@@ -425,6 +426,8 @@ public class GPUVolumeRender extends JavaApplication3
         m_fX = fMaxX/m_fMax;
         m_fY = fMaxY/m_fMax;
         m_fZ = fMaxZ/m_fMax;
+        
+        System.err.println( "GPU " + m_fX + " " + m_fY + " " + m_fZ);
 
         int iVQuantity = 24;
         int iTQuantity = 12;
@@ -844,7 +847,9 @@ public class GPUVolumeRender extends JavaApplication3
         m_kClipEyeInv.UpdateRS();
         m_pkRenderer.LoadResources(m_kClipEyeInv);
 
-        m_kVolumeShaderEffect.ResetClip();
+        float[] afData = 
+            new float[] { 0, m_fX, 0, m_fY, 0, m_fZ };
+        m_kVolumeShaderEffect.ResetClip(afData);
     }
 
 
@@ -1073,9 +1078,7 @@ public class GPUVolumeRender extends JavaApplication3
     }
     
     private void doClip() 
-    {
-        System.err.println(m_kTranslate.X() + " " + m_kTranslate.Y() + " " + m_kTranslate.Z());
-        
+    {        
         // update position of the bounding box:
         m_kClipArb.Local.SetTranslate( m_kTranslate.add( new Vector3f( m_kArbitraryClip.W(), 0, 0 ) ) );
 
@@ -1092,9 +1095,11 @@ public class GPUVolumeRender extends JavaApplication3
         afEquation[3] = m_kArbitraryClip.W();
 
         Vector3f kPos = new Vector3f( m_kArbitraryClip.W(), 0, 0 );
-        kPos.addEquals(m_kTranslate);
+        //kPos.addEquals(m_kTranslate);
+        kPos.subEquals( new Vector3f( .5f, .5f, .5f ));
         kPos = kClipRotate.mult(kPos);
-        kPos.subEquals( m_kTranslate );
+        //kPos.subEquals( m_kTranslate );
+        kPos.addEquals( new Vector3f( .5f, .5f, .5f ));
         afEquation[3] = kNormal.Dot(kPos);
 
         // Update shader with rotated normal and distance:
@@ -1286,26 +1291,39 @@ public class GPUVolumeRender extends JavaApplication3
     public void MIPMode( int iImage )
     {
         m_kVolumeShaderEffect.MIPMode( iImage, m_pkRenderer );
+        ResetShaderParamsWindow();
     }
 
     public void DDRMode( int iImage )
     {
         m_kVolumeShaderEffect.DDRMode( iImage, m_pkRenderer );
+        ResetShaderParamsWindow();
     }
 
     public void CMPMode( int iImage )
     {
         m_kVolumeShaderEffect.CMPMode( iImage, m_pkRenderer );
+        ResetShaderParamsWindow();
     }
 
     public void SURMode( int iImage )
     {
         m_kVolumeShaderEffect.SURMode( iImage, m_pkRenderer );
+        ResetShaderParamsWindow();
     }
 
     public void SURFASTMode( int iImage )
     {
         m_kVolumeShaderEffect.SURFASTMode( iImage, m_pkRenderer );
+        ResetShaderParamsWindow();
+    }
+
+    private void ResetShaderParamsWindow()
+    {
+        if ( m_kShaderParamsWindow != null )
+        {
+            m_kShaderParamsWindow.close();
+        }
     }
 
     public void Blend( float fValue )
@@ -1325,7 +1343,11 @@ public class GPUVolumeRender extends JavaApplication3
         m_kShaderParamsWindow.Display();
     }
     
-
+    public void SetBackgroundColor( ColorRGBA kColor )
+    {
+        m_kBackgroundColor = kColor;
+        m_kVolumeShaderEffect.SetBackgroundColor( kColor );
+    }
 
     private Node m_spkScene;
     private WireframeState m_spkWireframe;

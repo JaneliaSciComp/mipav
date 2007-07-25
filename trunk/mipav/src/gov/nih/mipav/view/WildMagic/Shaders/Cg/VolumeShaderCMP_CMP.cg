@@ -53,6 +53,7 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
                              uniform float IsColorA,
                              uniform float IsColorB,
                              uniform float DoClip,
+                             uniform float GradientMagnitude,
                              uniform float clipX,
                              uniform float clipXInv,
                              uniform float clipY,
@@ -120,6 +121,11 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
     float length_acc = 0;
     bool bClipped = false;
 
+    if ( GradientMagnitude != 0 )
+    {
+        blend = 1.0; // all a
+    }
+
     // For some profiles the number of loop iterations must be determined at
     // compile time:
     for( int i = 0; i < 450; i++ )
@@ -184,6 +190,13 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
                 }
             }
         }
+        if ( GradientMagnitude != 0 )
+        {
+            opacityA *= opacityB;
+            opacityA += 0.5;
+            opacityB = 0;
+        }
+
         // If the opacity is not zero:
         if ( opacityA > 0 )
         {
@@ -207,5 +220,18 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
     } 
 
     kColor.rgb = blend * color_accA.rgb + (1 - blend) * color_accB.rgb;
+    if ( blend > 3 )
+    {
+        kColor = saturate(color_accA + color_accB );
+    }
+    else if ( blend > 2 )
+    {
+        kColor = color_accA * color_accB;
+    }
+    else if ( blend > 1 )
+    {
+        kColor = (1.0f - color_accA)*color_accB + color_accA;
+    }
+    kColor.a = 1;
     kColor.a = 1;
 }
