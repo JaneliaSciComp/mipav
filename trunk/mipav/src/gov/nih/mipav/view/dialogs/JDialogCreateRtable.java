@@ -54,6 +54,11 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private JTextField sideText;
+    
+    /** Number of points to take from each side of a point on a curve in determining a tangent */
+    private int sidePointsForTangent;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -167,6 +172,7 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         scriptParameters.storeInputImage(image);
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("bin_number", binNumber));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("side_points_for_tangent", sidePointsForTangent));
         scriptParameters.getParams().put(ParameterFactory.newParameter("file_name", fileName));
     }
     
@@ -179,6 +185,7 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         parentFrame = image.getParentFrame();
         
         setBinNumber(scriptParameters.getParams().getInt("bin_number"));
+        setSidePointsForTangent(scriptParameters.getParams().getInt("side_points_for_tangent"));
         setFileName(scriptParameters.getParams().getString("file_name"));
     }
 
@@ -224,8 +231,14 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         this.binNumber = binNumber;
     }
 
-    
-
+    /**
+     * Accessor that set the number of points to take from each side of a point on a curve in determining a tangent
+     * @param sidePointsForTangent
+     */
+    public void setSidePointsForTangent(int sidePointsForTangent) {
+        this.sidePointsForTangent = sidePointsForTangent;
+    }
+ 
     /**
      * Once all the necessary variables are set, call the createRtable algorithm
      */
@@ -233,7 +246,7 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
 
 
         // Make algorithm
-        createRtableAlgo = new AlgorithmCreateRtable(image, binNumber, fileName);
+        createRtableAlgo = new AlgorithmCreateRtable(image, binNumber, sidePointsForTangent, fileName);
 
         // This is very important. Adding this object as a listener allows the algorithm to
         // notify this object when it has completed of failed. See algorithm performed event.
@@ -291,10 +304,10 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         gbc.gridy = 1;
         informationPanel.add(coverLabel, gbc);
 
-        JPanel binPanel = new JPanel(new GridBagLayout());
+        JPanel paramPanel = new JPanel(new GridBagLayout());
 
-        binPanel.setForeground(Color.black);
-        binPanel.setBorder(buildTitledBorder("Select bin number"));
+        paramPanel.setForeground(Color.black);
+        paramPanel.setBorder(buildTitledBorder("User parameters"));
         
         JLabel binLabel = new JLabel("Number of tangent bins  ");
         binLabel.setForeground(Color.black);
@@ -307,6 +320,16 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         binText.setFont(serif12);
         binText.setEnabled(true);
         
+        JLabel sideLabel = new JLabel("Maximum curve points on each side for tangent ");
+        sideLabel.setForeground(Color.black);
+        sideLabel.setFont(serif12);
+        sideLabel.setEnabled(true);
+
+        sideText = new JTextField(10);
+        sideText.setText("3");
+        sideText.setFont(serif12);
+        sideText.setEnabled(true);
+        
         gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -315,9 +338,14 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         
         gbc.gridx = 0;
         gbc.gridy = 0;
-        binPanel.add(binLabel, gbc);
+        paramPanel.add(binLabel, gbc);
         gbc.gridx = 1;
-        binPanel.add(binText, gbc);
+        paramPanel.add(binText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        paramPanel.add(sideLabel, gbc);
+        gbc.gridx = 1;
+        paramPanel.add(sideText, gbc);
 
         gbc = new GridBagConstraints();
         gbc.gridwidth = 2;
@@ -367,7 +395,7 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         gbc.gridy = 0;
         mainPanel.add(informationPanel, gbc);
         gbc.gridy = 1;
-        mainPanel.add(binPanel, gbc);
+        mainPanel.add(paramPanel, gbc);
         gbc.gridy = 2;
         mainPanel.add(filePanel, gbc);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -456,6 +484,15 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
             binText.selectAll();
 
             return false;
+        }
+        
+        if (!testParameter(sideText.getText(), 1, 10)) {
+            sideText.requestFocus();
+            sideText.selectAll();
+
+            return false;
+        } else {
+            sidePointsForTangent = Integer.valueOf(sideText.getText()).intValue();
         }
 
         return true;
