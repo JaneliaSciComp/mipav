@@ -2,7 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -33,9 +32,6 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
     private int binNumber = 45;
     
     private JTextField binText;
-
-    /** DOCUMENT ME! */
-    private String directory = null;
 
     /** DOCUMENT ME! */
     private AlgorithmCreateRtable createRtableAlgo;
@@ -109,7 +105,6 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
-                    directory = chooser.getCurrentDirectory().getName() + File.separatorChar;
                     fileTF.setText(fileName);
 
                     if (userInterface.getDefaultDirectory() != null) {
@@ -200,7 +195,6 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
      * @param  event  Event that triggered this method.
      */
     public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
 
         
     }
@@ -463,7 +457,6 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         
         fileName = fileTF.getText();
 
-        String extension;
         int idx = fileName.lastIndexOf('.');
 
         if (idx < 0) {
