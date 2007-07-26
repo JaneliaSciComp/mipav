@@ -8,11 +8,6 @@ import java.io.*;
 import java.util.*;
 
 /**
- 
- *  Pixel neighbors:
- *  0 1 2
- *  3   4
- *  5 6 7
  *  
  *  The algorithm works as follows:
  * 
@@ -655,6 +650,6 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
 
         historyString = new String("CreateRtable(" + String.valueOf(binNumber) + ", " +
                                    String.valueOf(sidePointsForTangent) + ", " +
-                                   fileName + ", " + ")\n");
+                                   fileName + ")\n");
     }
 }
