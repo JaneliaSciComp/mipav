@@ -81,6 +81,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** User defined */
     public static final int UDEF = 21;
     
+    /** R-table (*.rtb) */
+    public static final int RTABLE = 22;
+    
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
     private static String[] descriptions = {
@@ -105,7 +108,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Dynamic", 
         "Plugin Files",
         "XML-based Clinical and Experimental Data Exchange Schema(*.bxh)", // XCEDE schema
-        "User Defined"
+        "User Defined",
+        "R-table (*.rtb)"
     }; // NLT
 
     /** short description strings for each filterType. */
@@ -132,7 +136,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Dynamic", 
         "Plugin", 
         "XCEDE Schema",
-        "User Defined"
+        "User Defined",
+        "R-table"
     };
     
     
@@ -400,6 +405,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
 	                }
 	            }
         	}
+        }
+        else if (filterType == RTABLE && extension.equalsIgnoreCase("rtb")){
+            return true;
         }
 
         
