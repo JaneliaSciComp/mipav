@@ -102,6 +102,8 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
                 } else {
                     chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
                 }
+                
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.RTABLE));
 
                 int returnVal = chooser.showSaveDialog(this);
 
@@ -365,7 +367,7 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         fileButton.setActionCommand("File");
 
         fileTF = new JTextField();
-        fileTF.setText(makeImageName(image.getImageName()+ "_contour", ".r"));
+        fileTF.setText(makeImageName(image.getImageName()+ "_contour", ".rtb"));
 
         if (userInterface.getDefaultDirectory() != null) {
             fileLocation = userInterface.getDefaultDirectory();
@@ -373,7 +375,7 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
             fileLocation = System.getProperties().getProperty("user.dir");
         }
 
-        fileLocation += makeImageName(image.getImageName(), ".r");
+        fileLocation += makeImageName(image.getImageName(), ".rtb");
 
         fileTF.setToolTipText(fileLocation);
         fileTF.setFont(serif12);
@@ -465,7 +467,7 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         int idx = fileName.lastIndexOf('.');
 
         if (idx < 0) {
-            fileName = makeImageName(fileTF.getText(), ".r");
+            fileName = makeImageName(fileTF.getText(), ".rtb");
         }
 
         if (fileName.equals("")) {
