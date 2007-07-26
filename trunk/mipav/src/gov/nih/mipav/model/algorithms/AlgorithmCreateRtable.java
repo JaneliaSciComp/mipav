@@ -600,7 +600,6 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             rOut.writeInt(binNumber);
             rOut.writeInt(sidePointsForTangent);
             for (i = 0; i < binNumber; i++) {
-                rOut.writeInt(i); // omega
                 rOut.writeInt(omegaRBetaList[i].size());
                 for (j = 0; j < omegaRBetaList[i].size(); j++) {
                     floatArray = (float[])omegaRBetaList[i].get(j);
