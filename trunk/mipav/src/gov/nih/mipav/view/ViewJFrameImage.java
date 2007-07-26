@@ -1699,7 +1699,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHoughLine(this, getActiveImage());
         } else if (command.equals("Rtable")) {
             new JDialogCreateRtable(this, getActiveImage());
-        } else if (command.equals("gFilter")) {
+        } else if (command.equals("FindRObject")) {
+            new JDialogFindRtableObject(this, getActiveImage())
+;        } else if (command.equals("gFilter")) {
             new JDialogGaborFilter(this, getActiveImage());
         } else if (command.equals("hFilter")) {
             new JDialogHomomorphicFilter(this, getActiveImage());
