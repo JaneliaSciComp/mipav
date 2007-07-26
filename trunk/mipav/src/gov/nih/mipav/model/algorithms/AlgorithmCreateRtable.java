@@ -1,14 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
-
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.*;
 
-import java.awt.Dimension;
 import java.io.*;
 import java.util.*;
 
@@ -90,7 +85,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         int index;
         
         byte[] srcBuffer;
-        boolean test = true;
+        boolean test = false;
         int indexArray[];
         int neighbors;
         boolean foundArray[];
@@ -137,6 +132,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         int omegaIndex;
         double binWidth;
         float floatArray[];
+        RandomAccessFile rOut;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -582,7 +578,59 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             floatArray[1] = (float)Math.atan2(distY, distX);
             omegaRBetaList[omegaIndex].add(floatArray);
         } // for (n = 0; n <= numPoints - 1; n++)
-               
+        
+        //      Make storage string
+        fileName = ViewUserInterface.getReference().getDefaultDirectory() + File.separator + fileName;
+        try {
+            rOut = new RandomAccessFile(new File(fileName), "rw");   
+        }
+        catch (FileNotFoundException e) {
+            MipavUtil.displayError("File not found exception on " + fileName);
+            setCompleted(false);
+            return;
+        }
+        
+        // Necessary so that if this is an overwritten file there isn't any
+        // junk at the end
+        try {
+            rOut.setLength(0);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on rOut.setLength(0) for " + fileName);
+            setCompleted(false);
+            return;
+        }
+        
+        try {
+            rOut.writeInt(binNumber);
+            rOut.writeInt(sidePointsForTangent);
+            for (i = 0; i < binNumber; i++) {
+                if (omegaRBetaList[i].size() > 1) {
+                    rOut.writeInt(i); // omega
+                    rOut.writeInt(omegaRBetaList[i].size());
+                    for (j = 0; j < omegaRBetaList[i].size(); j++) {
+                        floatArray = (float[])omegaRBetaList[i].get(j);
+                        rOut.writeFloat(floatArray[0]); // r
+                        rOut.writeFloat(floatArray[1]); // beta
+                    }
+                }
+            }
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on write to " + fileName);
+            setCompleted(false);
+            return;
+        }
+        try {
+            rOut.close();
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on " + fileName + " close");
+            setCompleted(false);
+            return;
+        }
+        
+        ViewUserInterface.getReference().setDataText("Have written R-table to " + fileName + "\n");
         
         if (test) {
             
