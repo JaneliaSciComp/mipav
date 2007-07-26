@@ -310,7 +310,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                         
                         String fileDir = ((MuscleImageDisplayTest)parentFrame).getImageA().getFileInfo(0).getFileDirectory();
 
-                        MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + fileDir + "defaultVOIs_DICOM");
+                        MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + fileDir + MuscleImageDisplayTest.VOI_DIR);
                         
                         completed = true;
                         novelVoiProduced = true; //not necessarily
@@ -366,7 +366,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         
         private boolean savedVoiExists() {
-            String fileName = new String(((MuscleImageDisplayTest)parentFrame).getImageA().getFileInfo(0).getFileDirectory()+"\\defaultVOIs_DICOM\\"+objectName+".xml");
+            String fileName = new String(((MuscleImageDisplayTest)parentFrame).getImageA().getFileInfo(0).getFileDirectory()+MuscleImageDisplayTest.VOI_DIR+objectName+".xml");
             return new File(fileName).exists();
         }
         
@@ -737,7 +737,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                                                     imageType, symmetry);
                 
                 tabs[i].addListener(this);
-                imagePane.addTab(i+": "+titles[i], tabs[i]);
+                imagePane.addTab((i+1)+": "+titles[i], tabs[i]);
                 
                 zeroStatus.putAll(tabs[i].getZeroStatus());
                                                                             
@@ -879,9 +879,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             BitSet fullMask = getImageA().generateVOIMask();
 
-            for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
-                getImageA().set(i, REMOVED_INTENSITY);
-            }
+            //for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
+            //    getImageA().set(i, REMOVED_INTENSITY);
+            //}
             
             srcImage.setMask(fullMask);
             
@@ -911,7 +911,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private Color hasColor(VOI[] voiVec) {
             Color c = null;
-            VOIVector tempVec = imageA.getVOIs();
+            VOIVector tempVec = componentImage.getImageA().getVOIs();
             for(int i=0; i<tempVec.size(); i++) {
                 if(voiVec[0].getName().contains("Left") || voiVec[0].getName().contains("Right")) {
                     if( !(((VOI)tempVec.get(i)).getName().contains("Left")  &&  voiVec[0].getName().contains("Left")) && 
