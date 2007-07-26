@@ -247,6 +247,7 @@ public class ViewMenuBar {
                                                                   menuBuilder.buildMenuItem("Circle detection", "HoughCircle", 0, null, false),
                                                                   menuBuilder.buildMenuItem("Create R-table", "Rtable", 0, null, false),
                                                                   menuBuilder.buildMenuItem("Ellipse detection", "HoughEllipse", 0, null, false),
+                                                                  menuBuilder.buildMenuItem("Find R-table object", "FindRObject", 0, null, false),
                                                                   menuBuilder.buildMenuItem("Line filling", "HoughLine", 0, null, false)
                                                                   }),
                                         menuBuilder.makeMenu("Insight toolkit (ITK)", false,
