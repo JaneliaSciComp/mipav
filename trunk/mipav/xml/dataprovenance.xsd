@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2005 rel. 3 U (http://www.altova.com) by Matthew Mcauliffe (National Institutes of Health) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="dataprovenance">
+		<xs:annotation>
+			<xs:documentation>Comment describing your root element</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence maxOccurs="unbounded">
+				<xs:element name="entry">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="timestamp"/>
+							<xs:element name="javaversion"/>
+							<xs:element name="mipav">
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute name="version" type="xs:string"/>
+											<xs:attribute name="arguments" type="xs:string"/>
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="OS">
+								<xs:complexType>
+									<xs:attribute name="version"/>
+									<xs:attribute name="name"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="user"/>
+							<xs:element name="action"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
