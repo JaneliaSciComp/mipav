@@ -2403,9 +2403,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         }
 
         if (raycastRenderWM != null) {
+            ViewJComponentVolOpacityBase kSelectedComp = surRender.getVolOpacityPanel().getSelectedComponent();
             if ( imageB != null )
             {
-                ViewJComponentVolOpacityBase kSelectedComp = surRender.getVolOpacityPanel().getSelectedComponent();
                 if ( kSelectedComp == surRender.getVolOpacityPanel().getCompA() )
                 {
                     TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
@@ -2419,8 +2419,16 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             }
             else
             {
-                TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
-                raycastRenderWM.updateImages(0, kTransfer);
+                if ( kSelectedComp == surRender.getVolOpacityPanel().getCompA() )
+                {
+                    TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA().getOpacityTransferFunction();
+                    raycastRenderWM.updateImages(0, kTransfer);
+                }
+                else
+                {
+                    TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA_GM().getOpacityTransferFunction();
+                    raycastRenderWM.updateImages(2, kTransfer);
+                }
             }
         }
 
@@ -3272,6 +3280,14 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     public GPUVolumeRender getRaycastRenderWM()
     {
         return raycastRenderWM;
+    }
+
+    public void setGradientMagnitude( boolean bShow )
+    {
+        if ( raycastRenderWM != null )
+        {
+            raycastRenderWM.SetGradientMagnitude(bShow);
+        }
     }
 
 }

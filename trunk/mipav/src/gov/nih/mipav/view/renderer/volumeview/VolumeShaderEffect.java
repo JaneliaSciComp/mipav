@@ -12,6 +12,7 @@
 
 package gov.nih.mipav.view.renderer.volumeview;
 
+import java.io.File;
 import java.io.IOException;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
@@ -20,8 +21,12 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 
 
+import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.algorithms.utilities.*;
 
 /** The shader effect is a manager of the vertex and pixel shaders.  It
  * reimplements the user-relevant interfaces for the managed objects as a
@@ -41,6 +46,7 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kSceneTarget = kSceneTarget;
         m_kColorMapA = InitColorMap(kLUTA, kRGBTA, new String("A"));
         m_kOpacityMapA = InitOpacityMap(m_kImageA, new String("A"));
+//         m_kOpacityMapA_GM = InitOpacityMap(m_kImageA, new String("A_GM"));
         if ( kImageB == null )
         {
             CreateVolumeTexture();
@@ -68,11 +74,14 @@ public class VolumeShaderEffect extends ShaderEffect
         SetPassQuantity(1);
 
         m_kVolumeA = UpdateData(m_kImageA, null, m_kVolumeTargetA, new String("A") );
+//         CalcHistogramsGM();
+//         m_kVolumeA_GM = UpdateData(m_kImageA_GM, null, m_kVolumeTargetA_GM, new String("A_GM") );
         
         VertexShader pkVShader = new VertexShader("VolumeShaderVertex");
 
         // setup mip shader effect:
         m_kPShaderMIP = new PixelShader("VolumeShaderMIP");
+        //m_kPShaderMIP.SetTextureQuantity(6);
         m_kPShaderMIP.SetTextureQuantity(4);
         m_kPShaderMIP.SetImageName(0,"SceneImage");
         m_kPShaderMIP.SetTexture(0,m_kSceneTarget);
@@ -86,6 +95,13 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kColorMapTargetA = m_kPShaderMIP.GetTexture(2);
         m_kPShaderMIP.SetImageName(3, "OpacityMapA");
         m_kOpacityMapTargetA = m_kPShaderMIP.GetTexture(3);
+//         m_kPShaderMIP.SetImageName(4,"VolumeImageA_GM");
+//         m_kPShaderMIP.GetTexture(4).SetFilterType(Texture.FilterType.LINEAR);
+//         m_kPShaderMIP.GetTexture(4).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+//         m_kPShaderMIP.GetTexture(4).SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+//         m_kPShaderMIP.GetTexture(4).SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+//         m_kPShaderMIP.SetImageName(5, "OpacityMapA_GM");
+//         m_kOpacityMapTargetA_GM = m_kPShaderMIP.GetTexture(5);
 
         m_kPShaderDDR = new PixelShader("VolumeShaderDDR");
         m_kPShaderDDR.SetTextureQuantity(4);
@@ -600,10 +616,14 @@ public class VolumeShaderEffect extends ShaderEffect
         {
             return UpdateImages( m_kImageA, m_kOpacityMapTargetA, m_kOpacityMapA, kTransfer );
         }
-        else if ( m_kImageB != null )
+        else if ( (iImage == 1) && m_kImageB != null )
         {
             return UpdateImages( m_kImageB, m_kOpacityMapTargetB, m_kOpacityMapB, kTransfer );
         }
+//         else if ( iImage == 2 )
+//         {
+//             return UpdateImages( m_kImageA_GM, m_kOpacityMapTargetA_GM, m_kOpacityMapA_GM, kTransfer );
+//         }
         return false;
     }
 
@@ -651,7 +671,7 @@ public class VolumeShaderEffect extends ShaderEffect
             return false;
         }
         byte[] oldData = kColorMap.GetData();
-        byte[] aucData = ModelLUT.exportIndexedLUTMin( kLUT.getTransferFunction(), kLUT.getExtents()[1],
+        byte[] aucData = ModelLUT.exportIndexedLUTMin( kLUT, kLUT.getTransferFunction(), kLUT.getExtents()[1],
                 kLUT.getIndexedLUT());
 
         kColorMap.SetData(aucData, aucData.length/4);
@@ -677,7 +697,7 @@ public class VolumeShaderEffect extends ShaderEffect
         }
         else
         {
-            aucData = ModelLUT.exportIndexedLUTMin( kLUTa.getTransferFunction(), kLUTa.getExtents()[1],
+            aucData = ModelLUT.exportIndexedLUTMin( kLUTa, kLUTa.getTransferFunction(), kLUTa.getExtents()[1],
                                                     kLUTa.getIndexedLUT());
         }
         return new GraphicsImage(
@@ -883,6 +903,105 @@ public class VolumeShaderEffect extends ShaderEffect
         
     }
 
+    /**
+     * Loads the gradient magnitude image instead of recalculating the image.
+     *
+     * @param   dName     String User specified directory name.
+     * @param   fName     String GM image file name.
+     * @param   isImageA  boolean Indicates GM imageA or GM imageB
+     *
+     * @return  boolean Indicates loading GM image successful or not.
+     */
+    private ModelImage loadGMImage(String dName, String fName)
+    {
+        FileIO fileIO = new FileIO();
+        fileIO.setQuiet(true);
+
+        if (new File(dName + File.separator + fName).exists()) {
+
+            return fileIO.readImage(fName, dName, false, null, false);
+        }
+        return null;
+    }
+
+    /**
+     * Calculates histogram for the gradient magnitude m_kImageA, B.
+     */
+    private void CalcHistogramsGM() {
+
+        int[] dimExtentsGM_A = new int[1];
+
+        ModelImage gradMag_A;
+        float[] sigma = new float[3];
+
+        boolean loadImageA = false;
+
+        sigma[0] = 0.5f;
+        sigma[1] = 0.5f;
+        sigma[2] = 0.5f;
+
+        if (m_kImageA != null) {
+            gradMag_A = new ModelImage(ModelImage.FLOAT, m_kImageA.getExtents(), m_kImageA.getImageName() + "_gm");
+            m_kImageA_GM = loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
+                                           m_kImageA.getImageName() + "_gm_rescale" + ".xml");
+
+            if ( m_kImageA_GM == null )
+            {
+                m_kImageA_GM = new ModelImage(ModelImage.USHORT, m_kImageA.getExtents(),
+                                                  m_kImageA.getImageName() + "_gm_rescale");
+                loadImageA = false;
+            }
+
+            if (!loadImageA) {
+                AlgorithmGradientMagnitude gradMagAlgo_A = new AlgorithmGradientMagnitude(gradMag_A, m_kImageA, sigma,
+                                                                                          true, false);
+
+                gradMagAlgo_A.setRunningInSeparateThread(false); // progress bar junk.
+                gradMagAlgo_A.run();
+
+                if (gradMagAlgo_A.isCompleted()) {
+                    gradMagAlgo_A.finalize();
+                    gradMagAlgo_A = null;
+                }
+
+                /** Scale the intensity range to 1024. */
+                AlgorithmChangeType changeTypeAlgo_A = new AlgorithmChangeType(m_kImageA_GM, gradMag_A,
+                                                                               gradMag_A.getMin(), gradMag_A.getMax(),
+                                                                               0, 1023, false);
+
+                changeTypeAlgo_A.setRunningInSeparateThread(false);
+                changeTypeAlgo_A.run();
+                m_kImageA_GM.calcMinMax();
+
+                if (changeTypeAlgo_A.isCompleted()) {
+                    ModelImage.saveImage(m_kImageA_GM);
+                    changeTypeAlgo_A.finalize();
+                    changeTypeAlgo_A = null;
+                }
+            }
+            if (gradMag_A != null) {
+                gradMag_A.disposeLocal();
+                gradMag_A = null;
+            }
+        }
+    }
+
+
+
+    public void SetGradientMagnitude(boolean bShow)
+    {
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("GradientMagnitude") != null ) 
+        {
+            float[] afData = {0,0,0,0};
+            if ( bShow )
+            {
+                afData[0] = 1;
+            }
+            pkProgram.GetUC("GradientMagnitude").SetDataSource(afData);
+        }
+    }
+
     private ModelImage m_kImageA;
     private ModelLUT m_kLUTA;
     private ModelRGB m_kRGBA;
@@ -893,6 +1012,13 @@ public class VolumeShaderEffect extends ShaderEffect
     private ModelRGB m_kRGBB;
     private TransferFunction m_kTransferB;
 
+    /** Model image of the gradient magnitude of image A rescaled to have value in the range [0:255]. */
+    private ModelImage m_kImageA_GM;
+    private GraphicsImage m_kOpacityMapA_GM = null;
+    private Texture m_kOpacityMapTargetA_GM;
+    private GraphicsImage m_kVolumeA_GM;
+    private Texture m_kVolumeTargetA_GM;
+    
     private GraphicsImage m_kVolumeA;
     private GraphicsImage m_kNormalA;
     private GraphicsImage m_kColorMapA;

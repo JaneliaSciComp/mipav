@@ -411,6 +411,19 @@ public class JPanelHistoLUT
                 setLUTB(LUTb);
                 updateFrames(false);
             }
+        } else if (event.getActionCommand().equals("muscle_boneLUT")) {
+
+            if (tabbedPane.getSelectedComponent() == panelA) {
+                LUTa.makeMuscleBonesLUT();
+                lutAdjustCheckboxA.setSelected(false);
+                setLUTA(LUTa);
+                updateFrames(false);
+            } else {
+                LUTb.makeMuscleBonesLUT();
+                lutAdjustCheckboxB.setSelected(false);
+                setLUTB(LUTb);
+                updateFrames(false);
+            }
         } else if (event.getActionCommand().equals("invertLUT")) {
 
             if (tabbedPane.getSelectedComponent() == panelA) {

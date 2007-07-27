@@ -59,6 +59,9 @@ public class ModelLUT extends ModelStorageBase {
     /** Sets up the transfer function to be yellow-ish orange which is supposed to make bones look good. */
     public static final int BONE = 10;
 
+    /** Sets up the transfer function to be yellow-ish orange which is supposed to make bones look good. */
+    public static final int MUSCLE_BONE = 11;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Fucntion that attenuates image values. */
@@ -172,6 +175,10 @@ public class ModelLUT extends ModelStorageBase {
                 makeLUT(nColors);
                 break;
 
+            case MUSCLE_BONE:
+                makeMuscleBonesLUT();
+                break;
+
             default:
                 break;
         }
@@ -219,22 +226,41 @@ public class ModelLUT extends ModelStorageBase {
 
     /**
      */
-    public static byte[] exportIndexedLUTMin( TransferFunction kTransferLine, int iHeight, int[] iTable )
+    public static byte[] exportIndexedLUTMin( ModelLUT kLut, TransferFunction kTransferLine, int iHeight, int[] iTable )
     {
-        int nPts = kTransferLine.size();
-        byte[] remappedLUTMin = new byte[nPts * 4];
-        float xMax = ((Point2Df) (kTransferLine.getPoint(nPts-1))).x;
-        float xMin = ((Point2Df) (kTransferLine.getPoint(0))).x;
+        byte[] remappedLUTMin = null;
         int remappedValue;
         int count = 0;
-        float fNew;
-        for (int i = 0; i < nPts; i++) {
-            fNew = (float) (xMin + (((float) i / (nPts - 1)) * (xMax - xMin)));
-            remappedValue = iTable[(int) (kTransferLine.getRemappedValue(fNew, iHeight) + 0.5f)];
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
-            remappedLUTMin[count++] = (byte)( (remappedValue & 0xff000000) >> 24);
+        if ((kLut.type == STRIPED) || (kLut.type == MUSCLE_BONE)) {
+            int nPts = kTransferLine.size();
+            float xMax = ((Point2Df) (kTransferLine.getPoint(nPts-1))).x;
+            float xMin = ((Point2Df) (kTransferLine.getPoint(0))).x;
+            float fNew;
+
+            int lutHeight = kLut.getExtents()[1];
+            remappedLUTMin = new byte[lutHeight * 4];
+            for (int i = 0; i < lutHeight; i++) {
+                fNew = (float) (xMin + (((float) i / (lutHeight - 1)) * (xMax - xMin)));
+                remappedValue = kLut.indexedLUT[(int) (kTransferLine.getRemappedValue(fNew, iHeight) + 0.5f)];
+                remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
+                remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
+                remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
+                remappedLUTMin[count++] = (byte)( (remappedValue & 0xff000000) >> 24);
+            }
+        } else {
+            int nPts = kTransferLine.size();
+            remappedLUTMin = new byte[nPts * 4];
+            float xMax = ((Point2Df) (kTransferLine.getPoint(nPts-1))).x;
+            float xMin = ((Point2Df) (kTransferLine.getPoint(0))).x;
+            float fNew;
+            for (int i = 0; i < nPts; i++) {
+                fNew = (float) (xMin + (((float) i / (nPts - 1)) * (xMax - xMin)));
+                remappedValue = iTable[(int) (kTransferLine.getRemappedValue(fNew, iHeight) + 0.5f)];
+                remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
+                remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
+                remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
+                remappedLUTMin[count++] = (byte)( (remappedValue & 0xff000000) >> 24);
+            }
         }
         return remappedLUTMin;
     }
@@ -1267,6 +1293,7 @@ public class ModelLUT extends ModelStorageBase {
         float bri = 1.0f;
         int m = 53;
 
+
         for (i = 0; i < (height - 1); i++) {
             color = Color.getHSBColor(((i * m) % 360) / 360.0f, sat, bri);
             set(0, i + 1, 1);
@@ -1290,6 +1317,70 @@ public class ModelLUT extends ModelStorageBase {
         }
 
         type = STRIPED;
+
+        // make special Java LUT that is an int array where MSB is alpha, and then red, green
+        // and blue follow;
+        makeIndexedLUT(null);
+    }
+
+    /**
+     * makeVR Muscle-Bones
+     */
+    public void makeMuscleBonesLUT() {
+        nColors = 256;
+        int height = getExtents()[1]; // number of entries in the LUT (i.e. 256)
+
+        try {
+            indexedLUT = new int[height];
+            remappedLUT = new int[height];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ModelLUT: makeLUT");
+
+            return;
+        }
+
+        File kFile = new File("VR Muscles-Bones.txt");
+        if ( !kFile.exists() || !kFile.canRead() )
+        {
+            return;
+        }
+        int iLength = (int)kFile.length();
+        if ( iLength <= 0 )
+        {
+            return;
+        }
+
+        try {
+            BufferedReader in = new BufferedReader(new FileReader(kFile));
+            String str;
+            int i = 0;
+
+            while ((str = in.readLine()) != null) {
+                //System.err.print(str + " ==> " );
+                set(0, i, 1);
+                java.util.StringTokenizer st = new java.util.StringTokenizer(str);
+                if (st.hasMoreTokens()) {
+                    int iValue = Integer.valueOf(st.nextToken()).intValue();
+                    //System.err.print(iValue + " " );
+                    set(1, i, iValue);
+                }
+                if (st.hasMoreTokens()) {
+                    int iValue = Integer.valueOf(st.nextToken()).intValue();
+                    //System.err.print(iValue + " " );
+                    set(2, i, iValue);
+                }
+                if (st.hasMoreTokens()) {
+                    int iValue = Integer.valueOf(st.nextToken()).intValue();
+                    //System.err.println(iValue + " " );
+                    set(3, i, iValue);
+                }
+                i++;
+            }
+            in.close();
+        } catch (IOException e) {}
+
+        type = MUSCLE_BONE;
 
         // make special Java LUT that is an int array where MSB is alpha, and then red, green
         // and blue follow;

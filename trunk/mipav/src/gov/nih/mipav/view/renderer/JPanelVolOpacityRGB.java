@@ -742,7 +742,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                     if (gradMagRescale_A != null) {
                         rendererProgressBar.setValue(30);
                         rendererProgressBar.update(rendererProgressBar.getGraphics());
-                        saveGMImage(gradMagRescale_A);
+                        ModelImage.saveImage(gradMagRescale_A);
                         rendererProgressBar.setValue(40);
                         rendererProgressBar.update(rendererProgressBar.getGraphics());
                         histogramGM_ARed = calcHistogram(gradMagRescale_A, RED);
@@ -811,7 +811,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 if (changeTypeAlgo_B.isCompleted()) {
 
                     if (gradMagRescale_B != null) {
-                        saveGMImage(gradMagRescale_B);
+                        ModelImage.saveImage(gradMagRescale_B);
                         rendererProgressBar.setValue(80);
                         rendererProgressBar.update(rendererProgressBar.getGraphics());
                         histogramGM_BRed = calcHistogram(gradMagRescale_B, RED);

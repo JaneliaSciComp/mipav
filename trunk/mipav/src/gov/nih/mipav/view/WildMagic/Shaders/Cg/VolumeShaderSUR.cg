@@ -168,7 +168,7 @@ void AmbientLight( uniform float3   MaterialEmissive,
     kVertexColor.rgb = MaterialEmissive + MaterialAmbient*kLAmb;
 }
 
-void DirectionalLight( uniform float4 kModelPosition,
+void DirectionalLight( uniform float3 kModelPosition,
                        uniform float3 kModelNormal,
                        uniform float3   CameraWorldPosition,
                        uniform float3   MaterialEmissive,
@@ -201,7 +201,7 @@ void DirectionalLight( uniform float4 kModelPosition,
     kVertexColor.rgb = MaterialEmissive + LightAttenuation.w*kColor;
 }
 
-void PointLight(    uniform float4 kModelPosition,
+void PointLight(    uniform float3 kModelPosition,
                     uniform float3 kModelNormal,
                     uniform float3   CameraWorldPosition,
                     uniform float3   MaterialEmissive,
@@ -237,7 +237,7 @@ void PointLight(    uniform float4 kModelPosition,
     kVertexColor.a = MaterialDiffuse.a;
 }
 
-void SpotLight(    uniform float4 kModelPosition,
+void SpotLight(    uniform float3 kModelPosition,
                    uniform float3 kModelNormal,
                    uniform float3 CameraWorldPosition,
                    uniform float3 MaterialEmissive,
@@ -283,7 +283,7 @@ void SpotLight(    uniform float4 kModelPosition,
 /**
  * Compute the surface color based on lighting.
  */
-void computeColor( float4 kModelPosition, float3 kModelNormal, float3 CameraWorldPosition, 
+void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorldPosition, 
                    float3 MaterialEmissive, float3 MaterialAmbient, float4 MaterialDiffuse, float4 MaterialSpecular,
                    float4 LightAmbient, float4 LightDiffuse, float4 LightSpecular,
                    float4 LightWorldPosition, float4 LightWorldDirection,
@@ -430,6 +430,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                       uniform float stepsize,
                       uniform float IsColor,
                       uniform float DoClip,
+                      uniform float DoShadow,
                       uniform float Composite,
                       uniform float4 BackgroundColor,
                       uniform float clipX,
@@ -599,7 +600,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             normal.w = 0;
 
             color0 = color;
-            computeColor( inPos, normal, CameraWorldPosition,
+            computeColor( position, normal, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light0Ambient, Light0Diffuse, Light0Specular,
                           Light0ModelPosition, Light0ModelDirection,
@@ -621,7 +622,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                           color1 );
 
             color2 = color;
-            computeColor( inPos, normal, CameraWorldPosition,
+            computeColor( position, normal, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light2Ambient, Light2Diffuse, Light2Specular,
                           Light2WorldPosition, Light2WorldDirection,
@@ -630,7 +631,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                           Composite, color2 );
 
             color3 = color;
-            computeColor( inPos, normal, CameraWorldPosition,
+            computeColor( position, normal, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light3Ambient, Light3Diffuse, Light3Specular,
                           Light3WorldPosition, Light3WorldDirection,
@@ -668,6 +669,62 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             break;
         }
     } 
+
+
+
+    // Self-shadowing is possible for Surface mode:
+    if ( (DoShadow != 0) && ( Composite == 0 ) && (alpha_acc == 1.0) ) {
+        // for each light, determine whether it is blocked by an opaque surface.
+        // start at position + incr, step to light position
+
+        // save start position, reuse for the next light
+        start = position;
+
+        // for each light that can cause shadows:
+        // XXX is the light position in the right coords? Model instead?
+        // Is the light too far outside the volume, so the steps are too big?
+        dir = Light2WorldPosition - start;
+        norm_dir = normalize(dir);
+        delta = stepsize;
+        delta_dir = norm_dir * delta;
+        delta_dir_len = length(delta_dir);
+        length_acc = 0;
+
+        // start looking just beyond the surface position that set the color
+        position = start + delta_dir;
+        position += delta_dir;
+
+        int surfaceHits = 0;
+        for( int i = 0; i < 450; i++ )
+        {
+            // If we find a non-zero opacity, remove the color contribution
+            color = tex3D(volume_tex,position);
+            opacity = tex1D(opacitymap,color.r).r;
+            if (opacity > 0)
+            {
+                surfaceHits++;
+            }
+            if ( surfaceHits >= 2 )
+            {
+                color_acc -= color2;
+                break;
+            }
+            // Increment position along the ray:
+            position += delta_dir;
+            length_acc += delta_dir_len;
+            // Break when the end of the ray is reached
+            if ( length_acc >= len )
+            {
+                break;
+            }
+            if ( (position.x < 0.0) || (position.x > 1.0) ||
+                 (position.y < 0.0) || (position.y > 1.0) ||
+                 (position.z < 0.0) || (position.z > 1.0)    )
+            {
+                break;
+            }
+        }
+    }
 
     kColor.rgb = alpha_acc * color_acc.rgb + (1 - alpha_acc)*BackgroundColor.rgb;
     kColor.a = 1;

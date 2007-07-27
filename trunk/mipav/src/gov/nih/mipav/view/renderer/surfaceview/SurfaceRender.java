@@ -402,7 +402,6 @@ public class SurfaceRender extends RenderViewBase {
         probePanel = new JPanelProbe(this, parent, xBox, yBox, zBox);
         _pBar.updateValueImmed(10);
         clipPanel = new JPanelClip(this, xBox, yBox, zBox);
-        System.err.println("surface render " + xBox + " " + yBox + " " + zBox);
         _pBar.updateValueImmed(15);
         viewPanel = new JPanelView(this);
         _pBar.updateValueImmed(20);
@@ -1248,7 +1247,7 @@ public class SurfaceRender extends RenderViewBase {
         objBoxFrameBG.detach();
         if ( parent instanceof ViewJFrameVolumeViewWM )
         {
-            ((ViewJFrameVolumeViewWM)parent).setShowBoxFrame(true);
+            ((ViewJFrameVolumeViewWM)parent).setShowBoxFrame(false);
         }
     }
 
@@ -2853,7 +2852,6 @@ public class SurfaceRender extends RenderViewBase {
                  * names from the axis strings: */
                 aakAxisFiles[i][0] = new String( String.valueOf( akAxisLabels[i].charAt(0) ) );
                 aakAxisFiles[i][1] = new String( String.valueOf( akAxisLabels[i].charAt( akAxisLabels[i].lastIndexOf( " " ) + 1 ) ) );
-                //System.err.println( aakAxisFiles[i][0] + " " + aakAxisFiles[i][1] );
             }
         }
 
