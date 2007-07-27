@@ -691,7 +691,10 @@ public class GPUVolumeRender extends JavaApplication3
     {
         m_kImageA = kImage;
         m_kSculptor.setImage(m_kImageA, m_kImageB);
-        m_kVolumeShaderEffect.UpdateData(kImage, 0);
+        if ( m_kVolumeShaderEffect != null )
+        {
+            m_kVolumeShaderEffect.UpdateData(kImage, 0);
+        }
     }
 
     private void InitDisplay(int iXBound, int iYBound, int iZBound)
