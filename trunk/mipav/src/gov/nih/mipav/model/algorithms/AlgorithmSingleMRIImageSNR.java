@@ -288,7 +288,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Calculating MRI SNR ...");
 
-        constructLog();
+        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         sliceSize = xDim * yDim;
@@ -632,15 +632,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
         return fx;
     } // brent
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("SingleMRIImageSNR(" + signalIndex + ", " + signal2Index + ", " + backgroundIndex +
-                                   ", " + numReceivers + "\n");
-    }
 
     /**
      * This routine iterates to find the solution to the first moment equation for the Generalized Rice distribution.

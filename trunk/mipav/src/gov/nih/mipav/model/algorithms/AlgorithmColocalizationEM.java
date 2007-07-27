@@ -403,7 +403,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.isColorImage()) {
 
@@ -2652,16 +2652,6 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         }
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("ColocalizationEM(" + bin1 + ", " + bin2 + ", " + threshold1 + ", " + threshold2 +
-                                   ", " + doOr + ", " + useRed + ", " + useGreen + ", " + useBlue + ", " + entireImage +
-                                   ", " + register + ", " + cost + ", " + gaussians + ", " + iterations + ", " + ")\n");
     }
 
     /**

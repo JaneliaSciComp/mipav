@@ -419,7 +419,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(0, null, "Filtering ...");
         
@@ -1195,20 +1195,6 @@ public class AlgorithmMedian extends AlgorithmBase {
         }
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = new String("Median(" + String.valueOf(kernelShape) + ", " + String.valueOf(minimumSize) + ", " +
-                                   String.valueOf(iterations) + ", " + String.valueOf(stdDevLimit) + ", " +
-                                   String.valueOf(adaptiveSize) + ", " + String.valueOf(maximumSize) + ", " +
-                                   String.valueOf(entireImage) + ")");
-
-        historyString += "\n"; // append a newline onto the string
     }
 
     /**

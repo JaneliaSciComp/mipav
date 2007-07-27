@@ -118,15 +118,6 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
         }
     }
 
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("NonparametricSegmentation(" + ")\n");
-    }
-
     /**
      * DOCUMENT ME!
      */
@@ -197,7 +188,7 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
         short closestLabel;
 
         try {
-            constructLog();
+            
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing Nonparametric segmentation...");
 
@@ -663,7 +654,7 @@ loop1:
         short closestLabel;
 
         try {
-            constructLog();
+            
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing Nonparametric segmentation...");
 
@@ -1164,7 +1155,7 @@ loop1:
 
 
         try {
-            constructLog();
+            
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing Nonparametric segmentation...");
 

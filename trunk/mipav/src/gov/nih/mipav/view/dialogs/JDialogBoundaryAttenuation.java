@@ -250,7 +250,7 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(srcImage);
-        AlgorithmParameters.storeImageInRecorder(destImage);
+        scriptParameters.storeImageInRecorder(destImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_attenuation", maxAttenuation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_erosions", numErosions));

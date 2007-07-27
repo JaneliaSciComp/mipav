@@ -405,7 +405,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing FRAP ...");
 
-        constructLog();
+        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         zDim = srcImage.getExtents()[2];
@@ -2812,16 +2812,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
      */
     private double actInt(double x) {
         return 2.0 * Math.sqrt(x);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("FRAP(" + useRed + ", " + useGreen + ", " + useBlue + ", " + firstSliceNum + ", " +
-                                   photoBleachedIndex + ", " + wholeOrganIndex + ", " + backgroundIndex + ", " + model +
-                                   ", " + register + ", " + cost + ", " + createRegImage + ", " + paramVary + "\n");
     }
 
     /**

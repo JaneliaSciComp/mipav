@@ -3683,7 +3683,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.isColorImage()) {
 
@@ -13461,19 +13461,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("ColocalizationRegression(" + bin1 + ", " + bin2 + ", " + background1 + ", " +
-                                   background2 + ", " + useRed + ", " + useGreen + ", " + useBlue + ", " +
-                                   doColocWithThresholds + ", " + entireImage + ", " + register + ", " + cost + ", " +
-                                   doSecondIteration + ", " + doVOISubtraction + ", " + pointCalculation + ", " +
-                                   point1 + ", " + point2 + ", " + ")\n");
-    }
-
+    
     /**
      * DOCUMENT ME!
      *

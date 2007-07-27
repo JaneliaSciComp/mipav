@@ -313,7 +313,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
         
 
-        constructLog();
+        
 
         if (filterType == PWT) {
 
@@ -997,16 +997,6 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         setCompleted(true);
 
         
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = new String("WaveletThreshold(" + String.valueOf(cNum) + String.valueOf(thresholdType) +
-                                   String.valueOf(threshold) + String.valueOf(doWaveletImage) + ")\n");
     }
 
     /**

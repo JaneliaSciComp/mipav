@@ -221,7 +221,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             timeStep = 0.15f;
         }
 
-        constructLog();
+        
 
         if (srcImage.isColorImage()) {
 
@@ -573,18 +573,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         } // for (slice = 0; slice < zDim; slice++)
     } // end computeDz(...)
 
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = new String("CoherenceDiffusion(" + ", " + gaussianScale + ", " + String.valueOf(numIterations) +
-                                   ", " + String.valueOf(k) + ", " + String.valueOf(entireImage) + ", " +
-                                   String.valueOf(image25D) + ")\n");
-    }
-
+  
     /**
      * DOCUMENT ME!
      *

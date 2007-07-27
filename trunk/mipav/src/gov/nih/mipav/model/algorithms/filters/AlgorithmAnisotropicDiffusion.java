@@ -172,7 +172,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
 
@@ -834,23 +834,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = new String();
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += (" " + String.valueOf(sigmas[i]) + ", ");
-        }
-
-        historyString = new String("AnisotropicDiffusion(" + sigmaStr + String.valueOf(iterations) + ", " +
-                                   String.valueOf(konsnt) + ", " + String.valueOf(entireImage) + ", " +
-                                   String.valueOf(image25D) + ")\n");
-    }
-
+   
     /**
      * Creates the derivative kernels used to calculate the gradient magnitude and kernel for the diffusion process.
      */

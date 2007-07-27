@@ -79,7 +79,7 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         calcStoreInDest();
     }
 
@@ -204,14 +204,6 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
         destImageB.calcMinMax();
         
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("RGB to Grays \n");
     }
 
 }

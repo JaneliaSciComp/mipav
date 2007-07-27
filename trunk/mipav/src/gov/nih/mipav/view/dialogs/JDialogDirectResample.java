@@ -609,10 +609,10 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
 
-        AlgorithmParameters.storeImageInRecorder(resultImage);
+        scriptParameters.storeImageInRecorder(resultImage);
 
         if (resultImageB != null) {
-            AlgorithmParameters.storeImageInRecorder(resultImageB);
+            scriptParameters.storeImageInRecorder(resultImageB);
         }
 
     }

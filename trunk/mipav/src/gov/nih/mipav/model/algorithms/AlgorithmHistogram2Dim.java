@@ -132,7 +132,7 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.isColorImage()) {
             calcStoreInDestColor();
@@ -512,20 +512,4 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
         
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        if (baseImage != null) {
-            historyString = new String("Histogram2Dim(" + doLinearRescale + ", " + bin1 + ", " + bin2 + ", " + "\n");
-        } // if (bsaseImage != null)
-        else {
-            historyString = new String("Histogram2Dim(" + doLinearRescale + ", " + bin1 + ", " + bin2 + ", " + useRed +
-                                       ", " + useGreen + ", " + useBlue + ", " + "\n");
-        }
-    }
-
 }

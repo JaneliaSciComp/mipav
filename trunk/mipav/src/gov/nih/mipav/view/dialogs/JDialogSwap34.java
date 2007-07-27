@@ -208,6 +208,6 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(resultImage);
+        scriptParameters.storeImageInRecorder(resultImage);
     }
 }

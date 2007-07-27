@@ -123,7 +123,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
         int tOldOffset, tNewOffset;
         DecimalFormat nf;
 
-        constructLog();
+        
 
         // create  <FileInfoBase fileInfoBuffer;> buffer; may be of type FileInfoDicom
         try {
@@ -836,28 +836,4 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
         this.weightPrevious = wp;
     }
 
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String insertStr = new String();
-        insertStr = "Insert before slice " + String.valueOf(insertSlice);
-
-        if (sliceType == WEIGHTED_AVERAGE) {
-            insertStr += " using weighted averaging";
-        } else if (sliceType == AVERAGE) {
-            insertStr += " using averaging";
-        } else if (sliceType == BLANK) {
-            insertStr += " making blank";
-        } else if (sliceType == ADJACENT_DOWN) {
-            insertStr += " copying previous";
-        } else if (sliceType == ADJACENT_UP) {
-            insertStr += " copying next";
-        } else if (sliceType == ORIGINAL) {
-            insertStr += " using " + insertedImage.getImageName();
-        }
-
-        historyString = new String("InsertSlice(" + insertStr + ")\n");
-    }
 }

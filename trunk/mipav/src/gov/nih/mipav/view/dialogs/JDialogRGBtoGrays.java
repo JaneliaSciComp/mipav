@@ -251,8 +251,8 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(imageA);
 
-        AlgorithmParameters.storeImageInRecorder(getResultImageR());
-        AlgorithmParameters.storeImageInRecorder(getResultImageG());
-        AlgorithmParameters.storeImageInRecorder(getResultImageB());
+        scriptParameters.storeImageInRecorder(getResultImageR());
+        scriptParameters.storeImageInRecorder(getResultImageG());
+        scriptParameters.storeImageInRecorder(getResultImageB());
     }
 }

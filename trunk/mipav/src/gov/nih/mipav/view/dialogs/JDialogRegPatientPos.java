@@ -234,7 +234,7 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(imageB);
         scriptParameters.storeImage(imageA, "reference_image");
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doMatch));
     }

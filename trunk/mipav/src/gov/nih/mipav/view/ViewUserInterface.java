@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.srb.*;
@@ -168,6 +169,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** The current progress bar prefix to use. */
     private String progressBarPrefix = OPENING_STR;
 
+    /** String holding the command line arguments for data provenance usage */
+    private String cmdLineArguments = new String();
+    
     /** Indicates whether the user is currently recording a new keyboard shortcut using the shortcut editor dialog. */
     private boolean shortcutRecording = false;
 
@@ -1126,6 +1130,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
+     * Returns the Command line arguments (as one string, each separated by a space)
+     * @return command line arguments concatenated with spaces
+     */
+    public String getCmdLineArguments() {
+    	return this.cmdLineArguments;
+    }
+    
+    /**
      * Accessor to get directory location of last file access.
      *
      * @return  The last file directory
@@ -1945,6 +1957,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         Preferences.debug("Command line argument list:\n");
 
         for (i = 0; i < args.length; i++) {
+        	cmdLineArguments += args[i] + " ";
             System.err.println("argument[" + i + "]= " + args[i]);
             Preferences.debug("argument[" + i + "]= " + args[i] + "\n");
 
@@ -3233,6 +3246,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             Preferences.print();
         }
 
+        //start the Provenance recorder here if the preference is set
+        if (Preferences.is(Preferences.PREF_DATA_PROVENANCE)) {
+        	ProvenanceRecorder.getReference().startRecording();
+        }
+        
         initPrefsTrim();
     }
 

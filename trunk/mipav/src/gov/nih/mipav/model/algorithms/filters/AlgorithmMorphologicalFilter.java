@@ -113,7 +113,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
 
@@ -950,23 +950,6 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
 
         
         setCompleted(true);
-    }
-
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String sizeStr = new String();
-
-        for (int i = 0; i < sizes.length; i++) {
-            sizeStr += (" " + String.valueOf(sizes[i]) + ", ");
-        }
-
-        historyString = new String("Morphological Filter(" + sizeStr + String.valueOf(entireImage) + ", " +
-                                   String.valueOf(image25D) + ")\n");
-
     }
 
     /**

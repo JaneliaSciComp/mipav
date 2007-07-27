@@ -164,7 +164,7 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Ellipse to circle ...");
 
@@ -587,17 +587,5 @@ public class AlgorithmEllipseToCircle extends AlgorithmBase {
         double var;
         var = (Math.exp(x) - Math.exp(-x))/2.0;
         return var;
-    }
-
-    
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("EllipseToCirlce(" + String.valueOf(destImage.getExtents()[0]) + ", " +
-                                   String.valueOf(destImage.getExtents()[1]) + ")\n");
     }
 }

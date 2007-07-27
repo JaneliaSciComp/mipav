@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.scripting.actions;
 
 
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -64,15 +65,19 @@ public class ActionPaintToMask extends ActionImageProcessorBase {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(createInputImageParameter());
+            parameters.put(createInputImageParameter(isScript));
             parameters.put(ParameterFactory.newString(MASK_DATA_TYPE, recordingMaskType));
-            storeImageInRecorder(recordingResultImage);
+            storeImageInRecorder(recordingResultImage, isScript);
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered creating parameters while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        if (isScript) {
+        	ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

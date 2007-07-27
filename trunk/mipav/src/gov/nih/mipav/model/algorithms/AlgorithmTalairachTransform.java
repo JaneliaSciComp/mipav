@@ -173,7 +173,6 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
         setStartTime();
 
         if (destImage != null) { // if there exists a destination image
-            constructLog(true);
 
             if (srcImage.getNDims() == 2) {
                 displayError("Source Image is 2D");
@@ -286,20 +285,12 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
             transformTalairachVolume(buffer, result);
         }
         
-        constructLog();
+        
 
         if (!threadStopped) {
             setCompleted(true);
         } else {
             setCompleted(false);
-        }
-    }
-    
-    private void constructLog() {
-        if (isCompleted() && !threadStopped) {
-            historyString = new String("# Talairach Transform (Completed successfully!)\n");
-        } else {
-            historyString = new String("# Talairach Transform (Algorithm failed!)\n");
         }
     }
 
@@ -532,25 +523,6 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
 
         return;
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     *
-     * @param  destinationFlag  If true the log includes the name of the destination flag.
-     */
-    private void constructLog(boolean destinationFlag) {
-
-        if (destinationFlag == false) {
-            historyString = new String("Talairach Transform (" + ")");
-        } else {
-            historyString = new String("Talairach Transform (" + ")");
-        }
-
-        historyString += "\n"; // append a newline onto the string
-        writeLog();
-    }
-
 
     /**
      * extract a VOI from a binary mask image.

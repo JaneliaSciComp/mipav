@@ -180,7 +180,7 @@ public class AlgorithmAHE extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         // destinationImage being null sets the algo to
         // put replace the source image with the
@@ -816,16 +816,6 @@ public class AlgorithmAHE extends AlgorithmBase {
             histogram[maxChannel] -= 1;
             histogram[minChannel] += 1;
         }
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String clFrac = (clamped) ? (" clipped at " + Float.toString(clipLevel) + " max") : "";
-        historyString = new String("RegionalAdaptiveHistogramEqualization(" + String.valueOf(wDivisions) + ", " +
-                                   String.valueOf(hDivisions) + ")" + clFrac + "\n");
     }
 
     /**

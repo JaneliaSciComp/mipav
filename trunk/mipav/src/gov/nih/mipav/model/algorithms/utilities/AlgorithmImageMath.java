@@ -197,7 +197,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destFlag == true) { // use a destination image.
 
@@ -1452,15 +1452,6 @@ public class AlgorithmImageMath extends AlgorithmBase {
         destImage.calcMinMax();
         
         setCompleted(true);
-
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the message frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("ImageMath(" + opString[opType] + ", " + String.valueOf(entireImage) + ")\n");
 
     }
 

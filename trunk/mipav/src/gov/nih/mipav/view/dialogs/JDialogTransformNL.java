@@ -577,7 +577,7 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(resultImage);
+        scriptParameters.storeImageInRecorder(resultImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
                                                                        new int[] { targetXDim, targetYDim, targetZDim }));

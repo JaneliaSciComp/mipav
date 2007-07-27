@@ -139,7 +139,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4057");
+            MipavUtil.showHelp("U4041");
         } else if (command.equals("Script")) {
             callAlgorithm();
         }

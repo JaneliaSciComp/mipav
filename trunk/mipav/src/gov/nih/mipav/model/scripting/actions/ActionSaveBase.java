@@ -329,6 +329,8 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         if (options.isSaveAs()) {
             parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE,
                                                       FileUtility.getDefaultSuffix(options.getFileType())));
+            //added this here specifically for ProvenanceRecorder so that the save-as filename will be shown
+            parameters.put(ParameterFactory.newString(SAVE_FILE_NAME, options.getFileName()));
         }
 
         if ((options.getFileType() == FileUtility.TIFF) && options.isPackBitEnabled()) {

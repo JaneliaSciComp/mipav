@@ -502,7 +502,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
         // initProgressBar();
 
-        constructLog();
+        
 
         int [] progressValues = getProgressValues();
         
@@ -774,17 +774,6 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
       
         
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Morphology25D(" + String.valueOf(kernelType) + ", " +
-                                   String.valueOf(circleDiameter) + ", " + algorithmName[algorithm] + ", " +
-                                   String.valueOf(iterationsD) + ", " + String.valueOf(iterationsE) + ", " +
-                                   String.valueOf(entireImage) + ")" + "\n");
     }
 
     /**

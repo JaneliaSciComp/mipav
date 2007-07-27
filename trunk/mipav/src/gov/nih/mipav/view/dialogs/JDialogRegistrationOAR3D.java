@@ -1175,7 +1175,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             scriptParameters.storeImage(refWeightImage, "reference_weight_image");
         }
 
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));

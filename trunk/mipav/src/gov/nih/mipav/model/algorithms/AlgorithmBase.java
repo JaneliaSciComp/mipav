@@ -30,12 +30,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /** Destination image. */
     protected ModelImage destImage;
 
-    /**
-     * String for successfully completed algorithms that will go into the history of the model image that was changed
-     * (based on destFlag).
-     */
-    protected String historyString = new String();
-
     /** If true process each image of a 3D volume independently. */
     protected boolean image25D = false;
 
@@ -385,20 +379,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     /**
-     * Appends the elapsed time in seconds to the log.
-     */
-    public void logElapsedTime() {
-
-        NumberFormat nf = NumberFormat.getInstance();
-
-        nf.setMaximumFractionDigits(2);
-        nf.setMinimumFractionDigits(2);
-
-        historyString = new String("Elapsed Time = " + nf.format(getElapsedTime()) + " sec.\n");
-        writeLog();
-    }
-
-    /**
      * Used to notify all listeners that the algorithm has completed.
      *
      * @param  algorithm  algorithm class that has completed the function
@@ -440,20 +420,9 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public void run() {
         setStartTime();
-        ///if ( this instanceof AlgorithmHistoryInterface ) {
-        ///    constructLog();
-        ///}
-
         runAlgorithm();
 
-        // write out anything that the algorithm put into the (history) logging string(s)
-        writeLog();
-
         computeElapsedTime();
-
-        if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
-            logElapsedTime();
-        }
 
         notifyListeners(this);
 
@@ -759,36 +728,4 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
             }
         }
     }
-
-    /**
-     * Writes the logString to the appropriate history area. If algorithm was completed successfully, write the history
-     * string to the algorithm (and copy the source history into destination if there is a destination image)
-     */
-    protected void writeLog() {
-
-        // get the current date/time
-        DateFormat df1 = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
-
-        // write to the history area
-        if (Preferences.is(Preferences.PREF_HISTORY) && completed) {
-
-            if (destImage != null) {
-
-                if (srcImage != null) {
-                    destImage.getHistoryArea().setText(srcImage.getHistoryArea().getText());
-                }
-
-                if (historyString != null) {
-                    destImage.getHistoryArea().append("[" + df1.format(new Date()) + "] " + historyString);
-                }
-            } else if (srcImage != null) {
-
-                if (historyString != null) {
-                    srcImage.getHistoryArea().append("[" + df1.format(new Date()) + "] " + historyString);
-                }
-            }
-        }
-    }
-
-
 }

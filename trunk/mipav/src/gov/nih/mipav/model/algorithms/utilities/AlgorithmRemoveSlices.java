@@ -496,7 +496,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) { // if there exists a destination image
             calcStoreInDest();
@@ -595,23 +595,6 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         return extents;
 
     } // end computeNewExtents()
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String removeStr = new String();
-
-        for (int i = 0; i < remove.length; i++) {
-
-            if (remove[i] == true) {
-                removeStr += (" " + String.valueOf(i + 1) + ", ");
-            }
-        }
-
-        historyString = new String("RemoveSlices(" + removeStr + ")" + "\n");
-    }
 
     /**
      * computes and returns the number of slices to remove.

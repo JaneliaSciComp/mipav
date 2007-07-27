@@ -553,7 +553,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         if (isRefImageSourceSlice()) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("ref_slice_in_src_img", m_iTargetSlice));
         } else {
-            AlgorithmParameters.storeImageInRecorder(m_kImageReg);
+            scriptParameters.storeImageInRecorder(m_kImageReg);
         }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("cost_measure",

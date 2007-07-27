@@ -456,7 +456,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if ((uVal == null) || (vVal == null) || (wVal == null)) {
             calcGVF3D();
@@ -2783,14 +2783,6 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
 
         return;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("ExtractObject()\n");
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------

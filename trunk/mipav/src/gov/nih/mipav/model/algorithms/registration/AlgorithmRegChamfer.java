@@ -218,7 +218,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
      * Starts the algorithm.
      */
     public void runAlgorithm() {
-        constructLog();
+        
 
         try {
             tmpXfrm = new TransMatrix(DIM + 1);
@@ -294,14 +294,6 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
 
             tMatrixMatchtoBase[matchSlice].timesEquals(tMatrixMatchtoBase[i]);
         }
-    }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("RegisterChamfer()\n");
     }
 
     /**

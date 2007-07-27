@@ -479,7 +479,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             }
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
             calcStoreInDest();
@@ -1740,23 +1740,6 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         }
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = new String("ImageCalculator (" + opString[opType] + ", " + String.valueOf(entireImage) + ", " +
-                                   clipMode);
-
-        if (adOpString != null) {
-            historyString += ", " + adOpString + ")\n";
-        } else {
-            historyString += ")\n";
-        }
-
     }
 
     /**

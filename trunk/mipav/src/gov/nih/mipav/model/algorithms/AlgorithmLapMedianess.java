@@ -194,7 +194,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
 
@@ -679,21 +679,6 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         destImage.releaseLock();
         
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = new String();
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += (" " + String.valueOf(sigmas[i]) + ", ");
-        }
-
-        historyString = new String("Laplacian(" + sigmaStr + String.valueOf(entireImage) + ", " +
-                                   String.valueOf(image25D) + ", " + String.valueOf(amplificationFactor) + ")\n");
     }
 
     /**

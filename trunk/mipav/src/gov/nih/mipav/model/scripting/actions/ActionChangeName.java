@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.scripting.actions;
 
 
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -54,7 +55,7 @@ public class ActionChangeName extends ActionImageProcessorBase {
      */
     public void insertScriptLine() {
         // change the image name stored in the image table if it has been used in the script before.
-        // if it hasn't been used before storing it will be handled in createInputImageParameter()
+        // if it hasn't been used before storing it will be handled in createInputImageParameter(isScript)
         ImageVariableTable imageTable = ScriptRecorder.getReference().getImageTable();
         if (imageTable.isImageStored(recordingOldImageName)) {
             imageTable.changeImageName(recordingOldImageName, recordingNewImageName);
@@ -62,14 +63,18 @@ public class ActionChangeName extends ActionImageProcessorBase {
         
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(createInputImageParameter());
+            parameters.put(createInputImageParameter(isScript));
             parameters.put(ParameterFactory.newString(IMAGE_NAME_LABEL, recordingNewImageName));
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        if (isScript) {
+            ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

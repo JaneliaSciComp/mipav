@@ -425,7 +425,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
         fireProgressStateChanged(sourceImage.getImageName(), "Registering source image...");
         
 
-        constructLog();
+        
 
         if (targetImage.getNDims() == 2) {
             turbo2D();
@@ -911,16 +911,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
         c3v = (-uv12 + uv13 - uv23) / det;
         c3uv = ((-u3 * v1) + (u2 * v13) + (u3 * v2) - (u1 * v23)) / det;
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Turbo Registration(" + String.valueOf(entireTarget) + ", " +
-                                   String.valueOf(entireSource) + ", " + String.valueOf(transformation) + ", " +
-                                   String.valueOf(interpolation) + ", " + String.valueOf(automan) + ")" + "\n");
-    }
+ 
 
     /**
      * Compute the final image.

@@ -274,7 +274,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(srcImage);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.storeProcess3DAs25D(do25D);
         scriptParameters.storeProcessWholeImage(entireImage);

@@ -473,7 +473,7 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.storeProcessWholeImage(regionFlag);
         scriptParameters.getParams().put(ParameterFactory.newParameter("signal_threshold", threshold));

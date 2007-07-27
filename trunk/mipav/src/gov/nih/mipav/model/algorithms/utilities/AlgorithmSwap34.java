@@ -58,18 +58,10 @@ public class AlgorithmSwap34 extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         swap34();
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Swap34()\n");
-    }
-
+    
     /**
      * Swaps the image third and fourth dimensions and replaces the source image with the swapped dimension image.
      */

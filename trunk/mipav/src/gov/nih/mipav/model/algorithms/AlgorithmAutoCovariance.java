@@ -148,7 +148,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.isColorImage()) {
 
@@ -2470,14 +2470,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         } // if (destImageB != null)
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Autocovariance coefficients()\n");
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------

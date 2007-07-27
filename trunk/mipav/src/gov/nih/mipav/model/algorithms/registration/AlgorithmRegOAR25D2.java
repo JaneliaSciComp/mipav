@@ -862,7 +862,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         Preferences.debug(getConstructionInfo());
 
         fireProgressStateChanged("Registering images", "Beginning registration");
@@ -2238,14 +2238,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     }
 
     /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = getConstructionInfo();
-    }
-
-    /**
      * DOCUMENT ME!
      *
      * @param  srcImage     DOCUMENT ME!
@@ -2265,18 +2257,14 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      */
     private String getConstructionInfo() {
         String s;
-        historyString = new String("RegistrationOAR25D(");
 
         s = new String("RegistrationOAR25D(" + inputImage.getImageName() + ", ");
         s += String.valueOf(refImageNo) + ", ";
-        historyString += String.valueOf(refImageNo) + ", ";
 
         if (regToAdjImage) {
             s += "Adjacent mode, ";
-            historyString += "Adjacent mode, ";
         } else {
             s += "Reference mode, ";
-            historyString += "Reference mode, ";
         }
 
         if (weighted) {
@@ -2287,189 +2275,152 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
             case AlgorithmCostFunctions.CORRELATION_RATIO:
                 s += "Correlation ratio, ";
-                historyString += "Correlation ratio, ";
                 break;
 
             case AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED:
                 s += "Correlation ratio smoothed, ";
-                historyString += "Correlation ratio smoothed, ";
                 break;
 
             case AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED_WGT:
                 s += "Correlation ratio smoothed weighted, ";
-                historyString += "Correlation ratio smoothed weighted, ";
                 break;
 
             case AlgorithmCostFunctions.LEAST_SQUARES:
                 s += "Least squares, ";
-                historyString += "Least squares, ";
                 break;
 
             case AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED:
                 s += "Least squares smoothed, ";
-                historyString += "Least squares smoothed, ";
                 break;
 
             case AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_WGT:
                 s += "Least squares smoothed weighted, ";
-                historyString += "Least squares smoothed weighted, ";
                 break;
 
             case AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_COLOR:
                 s += "Least squares smoothed color, ";
-                historyString += "Least squares smoothed weighted, ";
                 break;
 
             case AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_WGT_COLOR:
                 s += "Least squares smoothed weighted color, ";
-                historyString += "Least squares smoothed weighted color, ";
                 break;
 
             case AlgorithmCostFunctions.MUTUAL_INFORMATION:
                 s += "Mutual information, ";
-                historyString += "Mutual information, ";
                 break;
 
             case AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED:
                 s += "Mutual information smoothed, ";
-                historyString += "Mutual information smoothed, ";
                 break;
 
             case AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED_WGT:
                 s += "Mutual information smoothed weighted, ";
-                historyString += "Mutual information smoothed weighted, ";
                 break;
 
             case AlgorithmCostFunctions.NORMALIZED_XCORRELATION:
                 s += "Normalized cross correlation, ";
-                historyString += "Normalized cross correlation, ";
                 break;
 
             case AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED:
                 s += "Normalized cross correlation smoothed, ";
-                historyString += "Normalized cross correlation smoothed, ";
                 break;
 
             case AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED_WGT:
                 s += "Normalized cross correlation smoothed weight, ";
-                historyString += "Normalized cross correlation smoothed weight, ";
                 break;
 
             case AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION:
                 s += "Normalized mutual information, ";
-                historyString += "Normalized mutual information, ";
                 break;
 
             case AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED:
                 s += "Normalized mutual information smoothed, ";
-                historyString += "Normalized mutual information smoothed, ";
                 break;
 
             case AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
                 s += "Normalized mutual information smoothed weighted, ";
-                historyString += "Normalized mutual information smoothed weighted, ";
                 break;
 
             default:
                 s += "Correlation ratio, ";
-                historyString += "Correlation ratio, ";
                 break;
         }
 
         s += DOF + ", ";
-        historyString += DOF + ", ";
 
         switch (interp) {
 
             case AlgorithmTransform.BILINEAR:
                 s += "Bilinear, ";
-                historyString += "Bilinear, ";
                 break;
 
             case AlgorithmTransform.BSPLINE3:
                 s += "Bspline 3rd order, ";
-                historyString += "Bspline 3rd order, ";
                 break;
 
             case AlgorithmTransform.BSPLINE4:
                 s += "Bspline 4th order, ";
-                historyString += "Bspline 4th order, ";
                 break;
 
             case AlgorithmTransform.CUBIC_LAGRANGIAN:
                 s += "Cubic lagrangian, ";
-                historyString += "Cubic lagrangian, ";
                 break;
 
             case AlgorithmTransform.QUINTIC_LAGRANGIAN:
                 s += "Quintic lagrangian, ";
-                historyString += "Quintic lagrangian, ";
                 break;
 
             case AlgorithmTransform.HEPTIC_LAGRANGIAN:
                 s += "Heptic lagrangian, ";
-                historyString += "Heptic lagrangian, ";
                 break;
 
             case AlgorithmTransform.WSINC:
                 s += "Windowed sinc, ";
-                historyString += "Windowed sinc, ";
                 break;
 
             default:
-                historyString += "Bilinear, ";
                 s += "Bilinear, ";
                 break;
         }
 
         s += "Output interpolation = ";
-        historyString += "Output interpolation = ";
 
         switch (interp2) {
 
             case AlgorithmTransform.BILINEAR:
                 s += "Bilinear, ";
-                historyString += "Bilinear, ";
                 break;
 
             case AlgorithmTransform.BSPLINE3:
                 s += "Bspline 3rd order, ";
-                historyString += "Bspline 3rd order, ";
                 break;
 
             case AlgorithmTransform.BSPLINE4:
                 s += "Bspline 4th order, ";
-                historyString += "Bspline 4th order, ";
                 break;
 
             case AlgorithmTransform.CUBIC_LAGRANGIAN:
                 s += "Cubic lagrangian, ";
-                historyString += "Cubic lagrangian, ";
                 break;
 
             case AlgorithmTransform.QUINTIC_LAGRANGIAN:
                 s += "Quintic lagrangian, ";
-                historyString += "Quintic lagrangian, ";
                 break;
 
             case AlgorithmTransform.HEPTIC_LAGRANGIAN:
                 s += "Heptic lagrangian, ";
-                historyString += "Heptic lagrangian, ";
                 break;
 
             case AlgorithmTransform.WSINC:
                 s += "Windowed sinc, ";
-                historyString += "Windowed sinc, ";
                 break;
 
             default:
                 s += "Bilinear, ";
-                historyString += "Bilinear, ";
                 break;
         }
 
         s += rotateBegin + ", " + rotateEnd + ", " + coarseRate + ", " + fineRate + ")\n";
-        historyString += rotateBegin + ", " + rotateEnd + ", " + coarseRate + ", " + fineRate + ")\n";
 
         return s;
     }

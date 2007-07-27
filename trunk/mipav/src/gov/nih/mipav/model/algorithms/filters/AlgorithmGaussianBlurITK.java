@@ -501,7 +501,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         setCompleted(true);
     }
 
@@ -530,26 +530,5 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
      */
     public void setRed(boolean flag) {
         abProcessChannel[1] = flag;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = new String();
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += (" " + String.valueOf(sigmas[i]) + ", ");
-        }
-
-        if (srcImage.isColorImage()) {
-            historyString = new String("GaussianBlur(" + sigmaStr + String.valueOf(null == mask) + ", " +
-                                       String.valueOf(image25D) + ", " + abProcessChannel[0] + ", " +
-                                       abProcessChannel[1] + ", " + abProcessChannel[2] + ")\n");
-        } else {
-            historyString = new String("GaussianBlur(" + sigmaStr + String.valueOf(null == mask) + ", " +
-                                       String.valueOf(image25D) + ")\n");
-        }
     }
 }

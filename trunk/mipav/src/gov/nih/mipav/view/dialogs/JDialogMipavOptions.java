@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.provenance.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -122,7 +123,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private String logFilename;
 
     /** DOCUMENT ME! */
-    private JCheckBox logModeCheckBox;
+    private JCheckBox provenanceCheckBox;
 
     /** DOCUMENT ME! */
     private JPanel otherPanel;
@@ -294,7 +295,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         makeSaveDefaultsOptions(gbc, gbl);
-        makeLogModeOptions(gbc, gbl);
+        makeProvenanceOptions(gbc, gbl);
         makeLaxCheckOptions(gbc, gbl);
         makeCheckOnCloseFrameOptions(gbc, gbl);
         makeLoggingOptions(gbc, gbl);
@@ -402,7 +403,17 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
 
             Preferences.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, String.valueOf(showPaintBorderBox.isSelected()));
-            Preferences.setProperty(Preferences.PREF_HISTORY_MODE, String.valueOf(logModeCheckBox.isSelected()));
+            
+            //check to see if provenance should be turned on (if it was off)
+            if (Preferences.is(Preferences.PREF_DATA_PROVENANCE) != provenanceCheckBox.isSelected()) {
+            	if(provenanceCheckBox.isSelected()) {
+            		ProvenanceRecorder.getReference().startRecording();
+            	} else {
+            		ProvenanceRecorder.getReference().stopRecording();
+            	}
+            }
+            
+            Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE, String.valueOf(provenanceCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE,
                                     String.valueOf(saveImgAsAnalyzeCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_XML_ON_HDR_SAVE, String.valueOf(saveXMLOnHDRSaveCheckBox.isSelected()));
@@ -498,16 +509,16 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 }
             }
 
-            if (Preferences.is(Preferences.PREF_HISTORY) && !enableLoggingBox.isSelected()) {
+            if (Preferences.is(Preferences.PREF_DATA_PROVENANCE) && !enableLoggingBox.isSelected()) {
                 Preferences.setProperty(Preferences.PREF_LOGGING_ENABLED, "false");
                 LogStdStreams.turnOffLogging();
                 Preferences.debug("Turned off logging");
-            } else if ((Preferences.is(Preferences.PREF_HISTORY) && enableLoggingBox.isSelected()) &&
+            } else if ((Preferences.is(Preferences.PREF_DATA_PROVENANCE) && enableLoggingBox.isSelected()) &&
                            !Preferences.getProperty(Preferences.PREF_LOG_FILENAME).equalsIgnoreCase(logFilename)) {
                 LogStdStreams.turnOffLogging();
                 LogStdStreams.initializeErrorLogging(logFilename, "\n" + "Mipav Log: " + new Date(), true, true);
                 Preferences.setProperty(Preferences.PREF_LOG_FILENAME, logFilename);
-            } else if (!Preferences.is(Preferences.PREF_HISTORY) && enableLoggingBox.isSelected()) {
+            } else if (!Preferences.is(Preferences.PREF_DATA_PROVENANCE) && enableLoggingBox.isSelected()) {
                 Preferences.debug("Turning on logging");
                 LogStdStreams.initializeErrorLogging(logFilename, "\n" + "Mipav Log: " + new Date(), true, true);
                 Preferences.setProperty(Preferences.PREF_LOGGING_ENABLED, "true");
@@ -1189,7 +1200,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  the layout used in the globablChangesPanel
      */
     protected void makeLoggingOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        boolean loggingOn = Preferences.is(Preferences.PREF_HISTORY);
+        boolean loggingOn = Preferences.is(Preferences.PREF_DATA_PROVENANCE);
 
         enableLoggingBox = new JCheckBox("Log errors to:", loggingOn);
         enableLoggingBox.setFont(MipavUtil.font12);
@@ -1227,19 +1238,19 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbc  the constraints used in the globalChangesPanel
      * @param  gbl  the layout used in the globablChangesPanel
      */
-    protected void makeLogModeOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        logModeCheckBox = new JCheckBox("Record history");
-        logModeCheckBox.setFont(MipavUtil.font12);
-        logModeCheckBox.setForeground(Color.black);
-        logModeCheckBox.addActionListener(this);
+    protected void makeProvenanceOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+        provenanceCheckBox = new JCheckBox("Data provenance");
+        provenanceCheckBox.setFont(MipavUtil.font12);
+        provenanceCheckBox.setForeground(Color.black);
+        provenanceCheckBox.addActionListener(this);
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbl.setConstraints(logModeCheckBox, gbc);
-        otherPanel.add(logModeCheckBox);
+        gbl.setConstraints(provenanceCheckBox, gbc);
+        otherPanel.add(provenanceCheckBox);
 
         // preset the choices.
-        logModeCheckBox.setSelected(Preferences.is(Preferences.PREF_HISTORY));
+        provenanceCheckBox.setSelected(Preferences.is(Preferences.PREF_DATA_PROVENANCE));
     }
 
     /**

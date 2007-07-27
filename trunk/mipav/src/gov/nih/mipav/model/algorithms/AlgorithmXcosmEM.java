@@ -280,7 +280,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
             return;
         }
 
-        // constructLog();
+        // 
 
         if (originalImage.isColorImage()) {
             MipavUtil.displayError("AlgorithmXcosmEM.runAlgorithm()  Source Image must be GrayScale");

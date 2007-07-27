@@ -160,7 +160,7 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Nearly circle to circle ...");
 
@@ -465,16 +465,5 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
         ci[0] = cb;
 
         return;
-    }
-    
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("NearlyCircleToCirlce(" + String.valueOf(destImage.getExtents()[0]) + ", " +
-                                   String.valueOf(destImage.getExtents()[1]) + ")\n");
     }
 }

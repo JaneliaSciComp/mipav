@@ -125,7 +125,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
 
@@ -459,26 +459,6 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
         destImage.releaseLock();
         
         setCompleted(true);
-    }
-
-
-    /**
-     * constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = " [";
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += String.valueOf(sigmas[i]);
-            sigmaStr += (i < (sigmas.length - 1)) ? ", " : ""; // append a comma when there are more sigmas
-        }
-
-        sigmaStr += "]";
-
-        historyString = new String("UnsharpMask(" + sigmaStr + ", " + String.valueOf(weightA) + ", " +
-                                   String.valueOf(entireImage) + ", " + String.valueOf(image25D) + ")\n");
-
     }
 
     /**

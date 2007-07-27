@@ -133,7 +133,7 @@ public class AlgorithmBarrelDistortion extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Correcting barrel distortion ...");
 
@@ -261,15 +261,5 @@ public class AlgorithmBarrelDistortion extends AlgorithmBase {
         setCompleted(true);
 
         return;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("BarrelDistortion(" +  ")\n");
     }
 }

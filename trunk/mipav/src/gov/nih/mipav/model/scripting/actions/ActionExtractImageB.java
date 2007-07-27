@@ -43,8 +43,8 @@ public class ActionExtractImageB extends ActionImageProcessorBase {
         ParameterTable parameters = new ParameterTable();
 
         try {
-            parameters.put(createInputImageParameter());
-            storeImageInRecorder(recordingResultImage);
+            parameters.put(createInputImageParameter(isScript));
+            storeImageInRecorder(recordingResultImage, isScript);
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered creating input image parameter while recording " +
                                    getActionName() + " script action:\n" + pe);

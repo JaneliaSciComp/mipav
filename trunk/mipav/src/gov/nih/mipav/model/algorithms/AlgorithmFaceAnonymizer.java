@@ -755,7 +755,7 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         anonymizeFace();
     }
 
@@ -863,14 +863,5 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
         }
 
         m_bFinish = true;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("AnonymizeFace(" + m_iState + ", (" + m_aiAxis[0] + ", " + m_aiAxis[1] + ", " +
-                                   m_aiAxis[2] + "), " + this.m_iMin + ", " + m_iMax + ", " + m_iRange + ")\n");
     }
 }

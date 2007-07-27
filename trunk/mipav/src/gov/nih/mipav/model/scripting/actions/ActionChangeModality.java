@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.scripting.actions;
 
 
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -41,14 +42,18 @@ public class ActionChangeModality extends ActionImageProcessorBase {
         
         ParameterTable parameters = new ParameterTable();
         try {
-        	parameters.put(createInputImageParameter());
+        	parameters.put(createInputImageParameter(isScript));
             parameters.put(ParameterFactory.newParameter(MODALITY, recordingInputImage.getFileInfo(0).getModality()));
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        if (isScript) {
+            ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

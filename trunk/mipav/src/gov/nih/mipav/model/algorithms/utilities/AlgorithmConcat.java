@@ -90,7 +90,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if ((srcImage1.getNDims() == 2) && (srcImage2.getNDims() == 2)) {
             cat2D_2D_3D();
@@ -1114,13 +1114,4 @@ public class AlgorithmConcat extends AlgorithmBase {
         fileInfo = null;
         fileInfoDicom = null;
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Concatenate images()\n");
-    }
-
 }

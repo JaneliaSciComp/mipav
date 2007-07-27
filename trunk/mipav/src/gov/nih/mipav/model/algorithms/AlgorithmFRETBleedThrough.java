@@ -180,7 +180,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing FRET bleed thru...");
 
-        constructLog();
+        
 
         nDims = srcImage.getNDims();
         imageSize = srcImage.getExtents()[0];
@@ -551,15 +551,4 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
 
         setCompleted(true);
     }
-
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("FRETBleedThrough(" + useRed + ", " + useGreen + ", " + useBlue + ", " +
-                                   acceptorRun + "\n");
-    }
-
 }

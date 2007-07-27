@@ -191,7 +191,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             return;
         }
 
-        constructLog();
+        
         fireProgressStateChanged(srcImage.getImageName(), "Principal component ...");
 
 
@@ -267,48 +267,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         }
 
-    }
-
-    /**
-     * Writes the logString to the appropriate log area. Overrides the AlgorithmBase <code>writeLog()</code> to append
-     * the history to all of the destination images we've created.
-     */
-    protected void writeLog() {
-
-        // write to the history area
-        if (Preferences.is(Preferences.PREF_HISTORY) && isCompleted()) {
-
-            if (destImage != null) {
-
-                for (int i = 0; i < destImage.length; i++) {
-
-                    if ((destImage[i] != null) && (destImage[i].getHistoryArea() != null)) {
-
-                        if (srcImage != null) {
-                            destImage[i].getHistoryArea().setText(srcImage.getHistoryArea().getText());
-                        }
-
-                        if (historyString != null) {
-                            destImage[i].getHistoryArea().append(historyString);
-                        }
-                    }
-                }
-            } else if (srcImage != null) {
-
-                if (historyString != null) {
-                    srcImage.getHistoryArea().append(historyString);
-                }
-            }
-        }
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("PComponent(" + doFilter + ", " + doAveraging + ", " + pNumber + ")\n");
-    }
+    }  
 
     /**
      * DOCUMENT ME!

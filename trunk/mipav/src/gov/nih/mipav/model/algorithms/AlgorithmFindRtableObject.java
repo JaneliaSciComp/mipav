@@ -166,8 +166,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
             return;
         }
 
-        constructLog();
-
         fireProgressStateChanged(srcImage.getImageName(), "Create R-table ...");
 
         xDim = srcImage.getExtents()[0];
@@ -667,25 +665,5 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         
         setCompleted(true);
         return;
-    }
-    
-    
-    
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("CreateRtable(" + String.valueOf(omegaBins) + ", " +
-                                   String.valueOf(sidePointsForTangent) + ", " +
-                                   String.valueOf(allowRotation) + ", " +
-                                   String.valueOf(rotationBins) + ", " +
-                                   String.valueOf(allowScaling) + ", " + 
-                                   String.valueOf(minScaleFactor) + ", " + 
-                                   String.valueOf(maxScaleFactor) + ", " + 
-                                   String.valueOf(scalingBins) + ", " +
-                                   String.valueOf(objectsToFind) + ")\n");
     }
 }

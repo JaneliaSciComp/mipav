@@ -1336,7 +1336,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(resultImage);
+        scriptParameters.storeImageInRecorder(resultImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_transform_VOIs", doVOI));

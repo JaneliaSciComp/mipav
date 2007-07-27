@@ -594,7 +594,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.getNDims() == 2) {
             nDimensions = 2;
@@ -670,18 +670,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         workingBuffer = null;
 
         fieldImage = null;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("IHN3Correction(" + String.valueOf(threshold) + ", " + String.valueOf(maxIters) +
-                                   ", " + String.valueOf(endTol) + ", " + String.valueOf(fieldDistance) + ", " +
-                                   String.valueOf(shrink) + ", " + String.valueOf(kernelfwhm) + ", " +
-                                   String.valueOf(noise) + ", " + String.valueOf(entireImage) + ", " +
-                                   String.valueOf(autoThreshold) + ")" + "\n");
     }
 
     /**

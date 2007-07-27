@@ -128,7 +128,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
 
@@ -946,26 +946,6 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = new String();
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += (" " + String.valueOf(sigmas[i]) + ", ");
-        }
-
-        if (srcImage.isColorImage()) {
-            historyString = new String("GaussianBlur(" + sigmaStr + String.valueOf(entireImage) + ", " +
-                                       String.valueOf(image25D) + ", " + red + ", " + green + ", " + blue + ")\n");
-        } else {
-            historyString = new String("GaussianBlur(" + sigmaStr + String.valueOf(entireImage) + ", " +
-                                       String.valueOf(image25D) + ")\n");
-        }
     }
 
     /**

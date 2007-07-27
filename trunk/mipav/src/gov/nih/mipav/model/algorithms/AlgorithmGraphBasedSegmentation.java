@@ -393,16 +393,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         }
     }
 
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("GraphBasedSegmentation(" + sigma + ", " + thresh + ", " + minComponentSize + ")\n");
-    }
-
-
     /**
      * DOCUMENT ME!
      */
@@ -448,7 +438,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         String srcName;
 
         try {
-            constructLog();
+            
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing graph based segmentation...");
 
@@ -794,7 +784,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
 
 
         try {
-            constructLog();
+            
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing graph based segmentation...");
 
@@ -1135,7 +1125,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         String srcName;
 
         try {
-            constructLog();
+            
 
             fireProgressStateChanged(srcImage.getImageName(), "Performing graph based segmentation...");
 

@@ -157,7 +157,7 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Hough circle ...");
 
@@ -414,19 +414,5 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
         
         setCompleted(true);
         return;
-    }
-    
-    
-    
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("HoughCircles(" + String.valueOf(x0) + ", " +
-                                   String.valueOf(y0) + ", " +
-                                   String.valueOf(rad)+ ")\n");
     }
 }

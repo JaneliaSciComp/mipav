@@ -90,7 +90,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) { // if there exists a destination image
             calcStoreInDest();
@@ -615,17 +615,5 @@ public class AlgorithmColorEdge extends AlgorithmBase {
 
     } // end calcStoreInDest()
 
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = "color edge(" + String.valueOf(red1) + ", " + String.valueOf(green1) + ", " +
-                        String.valueOf(blue1) + ", " + String.valueOf(red2) + ", " +
-                        String.valueOf(green2) + ", " + String.valueOf(blue2) + ")\n";
-    }
-
-
-    
+   
 }

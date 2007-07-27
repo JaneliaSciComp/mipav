@@ -916,7 +916,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             return;
         }
 
-        constructLog();
+        
 
         try {
             extractBrain();
@@ -1118,15 +1118,5 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         range[1] = min + Math.round((accumulatedRatio + ratios[index]) * (max - min));
 
         return range;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("BrainSurfaceExtractor(" + filterIterations + ", " + filterKernel + ", " +
-                                   edgeKernel + ", " + erosion25D + ", " + erosionIterations + ", " + closeKernelSize +
-                                   ", " + closeIterations + ", " + fillHolesFlag + ")\n");
     }
 }

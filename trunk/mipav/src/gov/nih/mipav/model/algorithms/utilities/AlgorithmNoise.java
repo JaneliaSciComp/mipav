@@ -101,7 +101,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
 
@@ -424,14 +424,6 @@ public class AlgorithmNoise extends AlgorithmBase {
         destImage.releaseLock();
         
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Noise(" + algorithmName[noiseType] + ", " + String.valueOf(level) + ")\n");
     }
 
     /**

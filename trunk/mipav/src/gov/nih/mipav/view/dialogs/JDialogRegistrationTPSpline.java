@@ -217,7 +217,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
             DIM = 2;
         } else if (matchImage.getNDims() == 3) {
             DIM = 3;
-            constructLog();
+            
         }
 
         // Hide dialog
@@ -487,18 +487,7 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         scriptParameters.storeInputImage(matchImage);
         scriptParameters.storeImage(baseImage, "reference_image");
 
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
-    }
-
-    /**
-     * constructLog - constructs a string of the construction parameters and outputs the string to the messsage frame if
-     * the logging procedure is turned on.
-     */
-    private void constructLog() {
-
-        String logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
-                                      "\n");
-        // Preferences.log(matchImage.getUserInterface(), logString);
+        scriptParameters.storeImageInRecorder(getResultImage());
     }
 
     /**

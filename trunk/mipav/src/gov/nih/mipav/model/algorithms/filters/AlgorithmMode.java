@@ -342,7 +342,7 @@ public class AlgorithmMode extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) { // if there exists a destination image
 
@@ -722,24 +722,6 @@ public class AlgorithmMode extends AlgorithmBase {
 
         
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        if (destImage != null) {
-            historyString = new String("Mode(" + destImage.getImageName() + ", " + String.valueOf(kernelShape) + ", " +
-                                       String.valueOf(kernelSize) + ", " + String.valueOf(entireImage) + ")");
-        } else {
-            historyString = new String("Mode(" + String.valueOf(kernelShape) + ", " + String.valueOf(kernelSize) +
-                                       ", " + String.valueOf(entireImage) + ")");
-        }
-
-        historyString += "\n"; // append a newline onto the string
-
     }
 
     /**

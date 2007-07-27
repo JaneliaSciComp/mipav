@@ -872,7 +872,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         Preferences.debug(getConstructionInfo());
 
         fireProgressStateChanged("Registering images", "Beginning registration");
@@ -2324,14 +2324,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
     }
 
     /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = getConstructionInfo();
-    }
-
-    /**
      * DOCUMENT ME!
      *
      * @param  srcImage     DOCUMENT ME!
@@ -2518,7 +2510,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         s += rotateBegin + ", " + rotateEnd + ", " + coarseRate + ", " + fineRate + ")\n";
 
-        historyString = new String("RegistrationOAR35D(" + s);
         s = "RegistrationOAR35D(" + inputImage.getImageName() + ", " + s;
 
         return s;

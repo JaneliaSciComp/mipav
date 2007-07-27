@@ -366,7 +366,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         /*int test = 1;
          * if (test == 1) { createCylinder(); setCompleted(true); return;}*/
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing 3D skeletonization...");
 
@@ -1967,16 +1967,6 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
         return -1;
     } // closeToSkel
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Skeletonization3D(" + minObjectValue + ", " + sliceHoleFilling + ", " + saveVF +
-                                   ", " + distCharges + ", " + fieldStrength + ", " + perHDPoints + ", " +
-                                   outputPoints + "\n");
-    }
 
     /**
      * DOCUMENT ME!

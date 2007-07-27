@@ -40,8 +40,8 @@ public class Preferences {
     /** Constant indicating if VOI statistics file should be overwritten. */
     public static final String PREF_OVERWRITE_VOI_STATS = "OverwriteStatistics";
 
-    /** Constant that indicates if logging is turned on. */
-    public static final String PREF_HISTORY = "RecordHistory";
+    /** Constant that indicates if data provenance is turned on. */
+    public static final String PREF_DATA_PROVENANCE = "RecordDataProvenance";
 
     /** Constant for debug s. */
     public static final String PREF_DEBUG = "DEBUG";
@@ -265,7 +265,7 @@ public class Preferences {
     public static final String PREF_VOI_START_COLOR = "VOIColor";
 
     /** constant for logging. */
-    public static final String PREF_HISTORY_MODE = "Log";
+    public static final String PREF_DATA_PROVENANCE_MODE = "Log";
 
     /** Constant indicating which channels should be used for applying paint to a RGB image*/
     public static final String PREF_RGB_PAINT_COMPONENTS = "RGBPaintComponents";

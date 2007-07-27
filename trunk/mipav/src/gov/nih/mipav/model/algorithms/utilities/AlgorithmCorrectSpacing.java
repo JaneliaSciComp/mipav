@@ -125,7 +125,7 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
         int t, z, Z; // z is slice-depth of srcImage; Z is slice-depth of destination
         float[] imageBuffer;
 
-        constructLog();
+        
 
         try {
             imageBuffer = new float[sliceArea]; // assuming here 3D image set and grayscale
@@ -232,15 +232,5 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
         imageBuffer = null;
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String correctSpcStr = new String();
-        correctSpcStr = " with " + numRepIm + " repeats of image slices and " + numBlanks +
-                        " blanks between images.  Total number of new images is " + newZdim + ".";
-        historyString = new String("CorrectSpacing" + correctSpcStr + "\n");
-    }
+   
 }

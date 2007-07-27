@@ -466,7 +466,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.storeProcess3DAs25D(processIndep);
         scriptParameters.getParams().put(ParameterFactory.newParameter("subsample_factor", denom));

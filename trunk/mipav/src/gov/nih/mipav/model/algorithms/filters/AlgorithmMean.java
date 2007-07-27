@@ -282,7 +282,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
         fireProgressStateChanged(0, null, "Filtering image ...");
         
-        constructLog();
+        
 
         if (destImage != null) { // if there exists a destination image
 
@@ -690,19 +690,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = new String("Mean(" + String.valueOf(kernelSize) + ", " + String.valueOf(entireImage) + ")" +
-                                   "\n");
-
-    }
-
-
+    
     /**
      * DOCUMENT ME!
      *

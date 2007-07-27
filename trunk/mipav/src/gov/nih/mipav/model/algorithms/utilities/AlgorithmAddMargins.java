@@ -636,7 +636,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
      * Runs the add image margins algorithm.
      */
     public void runAlgorithm() {
-        constructLog();
+        
 
         if (destImage != null) {
             calcStoreInDest();
@@ -1852,28 +1852,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
         return newImgOriginLPS;
     }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String margin;
-
-        if (colorFactor == 1) {
-            margin = "AddImageMargins(left side: " + leftMargin + ", right side: " + rightMargin + ", top/bottom: " +
-                     topMargin + ", front: " + frontMargin + ", back: " + backMargin + " with pixel value " +
-                     marginValue + ")";
-        } else {
-            margin = "AddImageMargins(left side: " + leftMargin + ", right side: " + rightMargin + ", top/bottom: " +
-                     topMargin + ", front: " + frontMargin + ", back: " + backMargin + " with red pixel value " +
-                     redValue + ", green pixel value " + greenValue + ", blue pixel value " + blueValue + ")";
-        }
-
-        historyString = margin;
-    }
-
-
+   
     /**
      * Switch origin order from image order to LPS order.
      *

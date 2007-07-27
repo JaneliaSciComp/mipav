@@ -156,7 +156,7 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Hough line ...");
 
@@ -414,18 +414,5 @@ public class AlgorithmHoughLine extends AlgorithmBase {
         
         setCompleted(true);
         return;
-    }
-    
-    
-    
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("HoughLine(" + String.valueOf(n1) + ", " +
-                                   String.valueOf(n2) + ")\n");
     }
 }

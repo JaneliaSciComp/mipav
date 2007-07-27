@@ -442,7 +442,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Hough ellipse ...");
 
@@ -1854,27 +1854,5 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         
         setCompleted(true);
         return;
-    }
-    
-    
-    
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("HoughEllipse(" + String.valueOf(minCoverage) + ", " +
-                                   String.valueOf(sidePointsForTangent) + ", " +
-                                   String.valueOf(maxPixelBinWidth) + ", " +
-                                   String.valueOf(maxDegreesBinWidth) + ", " + 
-                                   String.valueOf(minPointDistance) + ", " +
-                                   String.valueOf(maxPointDistance) + ", " +
-                                   String.valueOf(pointSetsRequired) + ", " +
-                                   String.valueOf(countThreshold) + ", " +
-                                   String.valueOf(ellipseRangeTolerance) + ", " +
-                                   String.valueOf(maxEllipseFindCycles) + ", " +
-                                   String.valueOf(maxBufferSize) + ")\n");
     }
 }

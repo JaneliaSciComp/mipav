@@ -448,7 +448,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
         scriptParameters.storeInputImage(image);
 
         if (!extractPaint) {
-            AlgorithmParameters.storeImageInRecorder(resultImage);
+            scriptParameters.storeImageInRecorder(resultImage);
         }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("filter_iterations", filterIterations));

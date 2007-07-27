@@ -936,7 +936,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.isColorImage()) {
 
@@ -1843,14 +1843,4 @@ public class AlgorithmMask extends AlgorithmBase {
         setCompleted(true);
 
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Mask(" + String.valueOf(imageFill) + String.valueOf(polarity) + ")\n");
-
-    }
-
 }

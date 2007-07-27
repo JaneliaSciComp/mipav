@@ -285,7 +285,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(originalImage);
         scriptParameters.storeImage(psfImage, "psf_image");
-        AlgorithmParameters.storeImageInRecorder(resultImage);
+        scriptParameters.storeImageInRecorder(resultImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("window_lower_limit", windowLowerLimit));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_estimate_decay", estimateDecay));

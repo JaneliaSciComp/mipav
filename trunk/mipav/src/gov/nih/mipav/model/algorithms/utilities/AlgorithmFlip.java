@@ -113,7 +113,7 @@ public class AlgorithmFlip extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.getNDims() == 2) {
             calcInPlace(1);
@@ -480,30 +480,7 @@ public class AlgorithmFlip extends AlgorithmBase {
 
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        if (flipAxis == Y_AXIS) {
-            historyString = new String("Flip(Y_AXIS)\n");
-        } else if (flipAxis == X_AXIS) {
-            historyString = new String("Flip(X_AXIS)\n");
-        } else {
-            historyString = new String("Flip(Z_AXIS)\n");
-        }
-
-        if (flipObject == IMAGE) {
-            historyString = historyString + "Object(IMAGE)\n";
-        } else if (flipObject == VOI_TYPE) {
-            historyString = historyString + "Object(VOI)\n";
-        } else {
-            historyString = historyString + "Object(IMAGE_AND_VOI)\n";
-        }
-    }
-
+    
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**

@@ -207,7 +207,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing FRET ...");
 
-        constructLog();
+        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         srcExtents[0] = xDim;
@@ -877,15 +877,6 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
 
         ViewUserInterface.getReference().setDataText("Efficiency = " + efficiency + "\n");
 
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("FRET(" + useRed + ", " + useGreen + ", " + useBlue + ", " + donorIndex + ", " +
-                                   backgroundIndex + ", " + signalIndex + ", " + register + ", " + cost + "\n");
     }
 
 }

@@ -767,7 +767,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         scriptParameters.storeInputImage(image);
 
         for (int i = 0; i < resultNumber; i++) {
-            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
+            scriptParameters.storeImageInRecorder(getResultImage()[i]);
         }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("window_size", windowSize));

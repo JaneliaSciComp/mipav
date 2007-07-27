@@ -181,7 +181,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
      * starts the program.
      */
     public void runAlgorithm() {
-        constructLog();
+        
 
         try {
 
@@ -418,29 +418,5 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
         disposeLocal();
 
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        if (have25D) {
-            historyString = new String("B-Spline Transformation(" + Integer.toString(m_kImageSource.getExtents()[2]) +
-                                       ", " + ", " + Integer.toString(m_iBSplineDegree) + ", " +
-                                       Integer.toString(m_iBSplineNumControlPoints) + ")\n");
-
-        } else if (m_kImageSource.getNDims() == 2) {
-            historyString = new String("B-Spline Transformation(" + Integer.toString(destExtents[0]) + ", " +
-                                       Integer.toString(destExtents[1]) + ", " + Integer.toString(m_iBSplineDegree) +
-                                       ", " + Integer.toString(m_iBSplineNumControlPoints) + ")\n");
-        } // if (m_kImageSource.getNDims() == 2)
-        else {
-            historyString = new String("B-Spline Transformation(" + Integer.toString(destExtents[0]) + ", " +
-                                       Integer.toString(destExtents[1]) + ", " + Integer.toString(destExtents[2]) +
-                                       ", " + Integer.toString(m_iBSplineDegree) + ", " +
-                                       Integer.toString(m_iBSplineNumControlPoints) + ")\n");
-        }
     }
 }

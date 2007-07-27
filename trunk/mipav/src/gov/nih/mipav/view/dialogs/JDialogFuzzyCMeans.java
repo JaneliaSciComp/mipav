@@ -544,7 +544,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
         scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_result_images", resultNumber));
 
         for (int i = 0; i < resultNumber; i++) {
-            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
+            scriptParameters.storeImageInRecorder(getResultImage()[i]);
         }
 
         scriptParameters.storeProcessWholeImage(regionFlag);
