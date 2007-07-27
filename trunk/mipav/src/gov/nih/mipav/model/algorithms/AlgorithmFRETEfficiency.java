@@ -211,7 +211,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing FRETEfficiency ...");
 
-        constructLog();
+        
 
         nDims = srcImage.getNDims();
         imageSize = srcImage.getExtents()[0];
@@ -587,15 +587,4 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
 
         setCompleted(true);
     }
-
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("FRETEfficiency(" + useRed + ", " + useGreen + ", " + useBlue + ", " + DFPintoFRET +
-                                   ", " + AFPintoFRET + ", " + DFPintoAFP + ", " + AFPintoDFP + "\n");
-    }
-
 }

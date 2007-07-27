@@ -377,7 +377,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
 
@@ -873,21 +873,6 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         }
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = new String();
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += (" " + String.valueOf(sigmas[i]) + ", ");
-        }
-
-        historyString = new String("Non-maximum suppression(" + sigmaStr + String.valueOf(entireImage) +
-                                   String.valueOf(image25D) + ")\n");
     }
 
     /**

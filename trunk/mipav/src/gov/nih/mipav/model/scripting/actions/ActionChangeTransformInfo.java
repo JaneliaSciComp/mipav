@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.scripting.actions;
 
 
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.view.MipavUtil;
@@ -62,7 +63,7 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
     	
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(createInputImageParameter());
+            parameters.put(createInputImageParameter(isScript));
             parameters.put(ParameterFactory.newParameter(TRANSFORM_MATRIX, tMat));
             parameters.put(ParameterFactory.newParameter(TRANSFORM_ID, transMatrix.getTransformID()));
         } catch (ParserException pe) {
@@ -70,7 +71,11 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
             return;
         }
         
-        ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        if (isScript) {
+            ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

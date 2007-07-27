@@ -2,6 +2,7 @@ package gov.nih.mipav.model.scripting.actions;
 
 
 import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.parameters.*;
@@ -37,14 +38,18 @@ public class ActionSaveImageAs extends ActionSaveBase {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(createInputImageParameter());
+            parameters.put(createInputImageParameter(isScript));
             addSaveOptionsToParameters(parameters, recordingOptions, recordingInputImage.getExtents());
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered creating input image parameter while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        if (isScript) {
+            ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

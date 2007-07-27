@@ -230,7 +230,7 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         String axis;
 

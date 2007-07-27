@@ -296,7 +296,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("gaussian_std_dev_or_influence_distance",
                                                                        distance));

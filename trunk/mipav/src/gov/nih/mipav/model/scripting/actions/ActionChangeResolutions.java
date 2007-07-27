@@ -2,6 +2,7 @@ package gov.nih.mipav.model.scripting.actions;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -75,7 +76,7 @@ public class ActionChangeResolutions extends ActionImageProcessorBase {
         ParameterTable parameters = new ParameterTable();
 
         try {
-            parameters.put(createInputImageParameter());
+            parameters.put(createInputImageParameter(isScript));
             parameters.put(ParameterFactory.newParameter(IMAGE_RESOLUTIONS,
                                                          recordingInputImage.getResolutions(sliceIndex)));
             parameters.put(ParameterFactory.newParameter(SLICE_INDEX, sliceIndex));
@@ -87,7 +88,11 @@ public class ActionChangeResolutions extends ActionImageProcessorBase {
             return;
         }
 
-        ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        if (isScript) {
+            ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

@@ -425,7 +425,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
         /*int test = 1;
          * if (test == 1) { createCylinder(); setCompleted(true); return;}*/
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing 3D skeletonization...");
 
@@ -1418,15 +1418,6 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
 
         return;
     } // private void connect(simplex s)
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("SkelGeom3D(" + minObjectValue + ", " + sliceHoleFilling + ", " + estR + ", " + bad +
-                                   ", " + defer + ", " + deep + "\n");
-    }
 
     /**
      * DOCUMENT ME!

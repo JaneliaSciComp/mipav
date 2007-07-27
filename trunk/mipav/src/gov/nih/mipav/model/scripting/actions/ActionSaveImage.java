@@ -37,7 +37,7 @@ public class ActionSaveImage extends ActionSaveBase {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(createInputImageParameter());
+            parameters.put(createInputImageParameter(isScript));
             addSaveOptionsToParameters(parameters, recordingOptions, recordingInputImage.getExtents());
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered creating input image parameter while recording " + getActionName() + " script action:\n" + pe);

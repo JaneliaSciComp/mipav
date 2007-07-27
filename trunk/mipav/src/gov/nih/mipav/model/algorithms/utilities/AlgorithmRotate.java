@@ -117,7 +117,7 @@ public class AlgorithmRotate extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         calcInPlace();
     }
 
@@ -795,27 +795,6 @@ public class AlgorithmRotate extends AlgorithmBase {
             if (Math.abs(newLoc[m]) < .000001f) {
                 newLoc[m] = 0f;
             }
-        }
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the message frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        if (rotateAxis == Y_AXIS_PLUS) {
-            historyString = new String("Rotate(Y_AXIS_PLUS" + ")\n");
-        } else if (rotateAxis == Y_AXIS_MINUS) {
-            historyString = new String("Rotate(Y_AXIS_MINUS" + ")\n");
-        } else if (rotateAxis == X_AXIS_PLUS) {
-            historyString = new String("Rotate(X_AXIS_PLUS" + ")\n");
-        } else if (rotateAxis == X_AXIS_MINUS) {
-            historyString = new String("Rotate(X_AXIS_MINUS" + ")\n");
-        } else if (rotateAxis == Z_AXIS_PLUS) {
-            historyString = new String("Rotate(Z_AXIS_PLUS" + ")\n");
-        } else {
-            historyString = new String("Rotate(Z_AXIS_MINUS" + ")\n");
         }
     }
 

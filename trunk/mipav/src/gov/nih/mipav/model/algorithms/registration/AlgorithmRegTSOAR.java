@@ -756,14 +756,6 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
     }
 
     /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = getConstructionInfo();
-    }
-
-    /**
      * Creates a string with the parameters that the image was constructed with.
      *
      * @return  Construction info.
@@ -888,7 +880,6 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
         s += ")\n";
 
-        historyString = new String("RegistrationTSOAR(" + s);
         s = "RegistrationTSOAR(" + srcImage.getImageName() + ", " + s;
 
         return s;

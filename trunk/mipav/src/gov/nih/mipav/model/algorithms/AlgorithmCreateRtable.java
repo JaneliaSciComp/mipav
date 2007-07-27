@@ -136,7 +136,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Create R-table ...");
 
@@ -634,19 +634,5 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         
         setCompleted(true);
         return;
-    }
-    
-    
-    
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("CreateRtable(" + String.valueOf(binNumber) + ", " +
-                                   String.valueOf(sidePointsForTangent) + ", " +
-                                   fileName + ")\n");
     }
 }

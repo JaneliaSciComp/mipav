@@ -134,7 +134,7 @@ public class AlgorithmFastMarching extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.getNDims() == 2) {
             calc2D();
@@ -526,21 +526,6 @@ public class AlgorithmFastMarching extends AlgorithmBase {
 
         
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = new String();
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += (" " + String.valueOf(sigmas[i]) + ", ");
-        }
-
-        historyString = new String("LevelSet(" + sigmaStr + String.valueOf(iterations) + ", " + String.valueOf(kValue) +
-                                   ")" + "\n");
     }
 
     /**

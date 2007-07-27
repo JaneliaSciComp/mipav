@@ -489,19 +489,8 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         scriptParameters.storeInputImage(matchImage);
         scriptParameters.storeImage(baseImage, "reference_image");
 
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
     }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
-                                      "\n");
-        // Preferences.log(matchImage.getUserInterface(), logString);
-    }
-
 
     /**
      * Initializes GuserInterface components and displays dialog.
@@ -544,7 +533,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
             DIM = 2;
         } else if (matchImage.getNDims() == 3) {
             DIM = 3;
-            constructLog();
+            
         }
 
         return true;

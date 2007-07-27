@@ -96,7 +96,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destFlag == true) { // use a destination image.
             calcStoreInDest();
@@ -372,22 +372,6 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
         setCompleted(true);
 
     } // end calcStoreInDest()
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the message frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        String extractStr = new String();
-
-        Iterator iter = extractList.iterator();
-
-        while (iter.hasNext()) {
-            extractStr += (" " + iter.next() + ", ");
-        }
-
-        historyString = new String("ExtractSlices(" + extractStr + ")" + "\n");
-    }
+   
 
 } // end class AlgorithmExtractSlices

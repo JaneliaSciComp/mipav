@@ -317,7 +317,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
     }
 
     /**

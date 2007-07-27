@@ -71,7 +71,7 @@ public class AlgorithmSubset extends AlgorithmBase {
         int[] destUnitsOfMeasure;
         float[] imageBuffer;
 
-        constructLog();
+        
 
         try {
             destResolutions = new float[3];
@@ -224,26 +224,5 @@ public class AlgorithmSubset extends AlgorithmBase {
         
         // Clean up and let the calling dialog know that algorithm did its job
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the
-     * string to the messsage frame if the logging procedure is turned on.
-     */
-    private void constructLog() {
-        String subsetStr = new String();
-
-        if (removeDim == REMOVE_X) {
-            subsetStr = "remove at x = ";
-        } else if (removeDim == REMOVE_Y) {
-            subsetStr = "remove at y = ";
-        } else if (removeDim == REMOVE_Z) {
-            subsetStr = "remove at z = ";
-        } else {
-            subsetStr = "remove at t = ";
-        }
-
-        subsetStr = subsetStr + sliceNum;
-        historyString = new String("AlgorithmSubset(" + subsetStr + ")" + "\n");
     }
 }

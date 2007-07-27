@@ -286,7 +286,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) { // if there exists a destination image
 
@@ -1080,17 +1080,6 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             histogram[minChannel] += 1;
         }
 
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    protected void constructLog() {
-        String clFrac = (clampingIsNecessary) ? (" clipped at " + Float.toString(clipLevel) + " max") : "";
-
-        historyString = new String("NeighborhoodAdaptiveHistogramEqualization(" + String.valueOf(kernelSize) + ", " +
-                                   String.valueOf(kernelShape) + ")" + clFrac + "\n");
     }
 
     /**

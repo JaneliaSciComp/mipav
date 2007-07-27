@@ -78,7 +78,7 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         calcStereoDepth();
     }
@@ -764,13 +764,4 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
         setCompleted(true);
 
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("StereoDepth()\n");
-    }
-
 }

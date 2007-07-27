@@ -113,7 +113,7 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         // destinationImage being null sets the algo to
         // put replace the source image with the
@@ -354,14 +354,6 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
         
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("HistogramMatch()\n");
     }
 
     /**

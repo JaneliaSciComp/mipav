@@ -245,8 +245,8 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(imageA);
 
-        AlgorithmParameters.storeImageInRecorder(getResultImageH());
-        AlgorithmParameters.storeImageInRecorder(getResultImageS());
-        AlgorithmParameters.storeImageInRecorder(getResultImageB());
+        scriptParameters.storeImageInRecorder(getResultImageH());
+        scriptParameters.storeImageInRecorder(getResultImageS());
+        scriptParameters.storeImageInRecorder(getResultImageB());
     }
 }

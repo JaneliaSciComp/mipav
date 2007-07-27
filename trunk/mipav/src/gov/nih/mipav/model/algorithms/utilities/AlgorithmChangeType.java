@@ -119,16 +119,13 @@ public class AlgorithmChangeType extends AlgorithmBase {
         }
 
         if (destImage != null) {
-            constructLog(true);
-
+          
             if (srcImage.getNDims() == 2) {
                 calcStoreInDest2D();
             } else if (srcImage.getNDims() > 2) {
                 calcStoreInDest34D();
             }
         } else {
-            constructLog(false);
-
             if (srcImage.getNDims() == 2) {
                 calcInPlace2D();
             } else if (srcImage.getNDims() > 2) {
@@ -562,15 +559,5 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     *
-     * @param  destinationFlag  - if true the log includes the name of the destination image
-     */
-    private void constructLog(boolean destinationFlag) {
-        historyString = new String("ChangeType(" + stRange1 + ", " + endRange1 + ", " + stRange2 + ", " + endRange2 +
-                                   ")" + "\n");
-    }
+  
 }

@@ -652,7 +652,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         newA = false;
         newB = false;
 
-        constructLog();
+        
 
         fireProgressStateChanged("Retrieving data ...");
 
@@ -782,19 +782,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
      */
     public void setPadValue(int pad) {
         padValue = (double) pad;
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    private void constructLog() {
-
-        /**
-         *   Constructs a string of the construction parameters and  outputs the string to the messsage frame if the
-         * logging  procedure is turned on.
-         */
-        historyString = new String("Matching image properties()\n");
-    }
+    } 
 
     /**
      * Return the 3 axis orientation codes that correspond to the closest standard anatomical orientation of the (i,j,k)

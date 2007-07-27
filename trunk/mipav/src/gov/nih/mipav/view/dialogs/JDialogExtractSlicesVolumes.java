@@ -340,7 +340,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
         scriptParameters.storeInputImage(srcImage);
 
         for (int i = 0; i < extractedImages.length; i++) {
-            AlgorithmParameters.storeImageInRecorder(extractedImages[i]);
+            scriptParameters.storeImageInRecorder(extractedImages[i]);
         }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("slices",

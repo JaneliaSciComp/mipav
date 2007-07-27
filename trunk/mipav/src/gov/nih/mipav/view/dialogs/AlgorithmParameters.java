@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.provenance.*;
 
 import gov.nih.mipav.view.components.*;
 
@@ -76,7 +77,8 @@ public class AlgorithmParameters {
      * previously stored parameters.
      */
     protected ParameterTable params;
-
+   
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -105,7 +107,7 @@ public class AlgorithmParameters {
      *
      * @return  The label/name which should be used for this input image in the parameter table.
      */
-    public static final String getInputImageLabel(int inputImageNumber) {
+    public static String getInputImageLabel(int inputImageNumber) {
         return INPUT_IMAGE_LABEL_BASE + "_" + inputImageNumber;
     }
 
@@ -117,8 +119,8 @@ public class AlgorithmParameters {
      *
      * @return  The image placeholder variable assigned to the image by the variable table.
      */
-    public static final String storeImageInRecorder(ModelImage image) {
-        return ScriptRecorder.getReference().storeImage(image.getImageName());
+    public String storeImageInRecorder(ModelImage image) {
+    	return ScriptRecorder.getReference().storeImage(image.getImageName());
     }
 
     /**
@@ -129,7 +131,7 @@ public class AlgorithmParameters {
      *
      * @return  The image placeholder variable assigned to the image by the variable table.
      */
-    public static final String storeImageInRunner(ModelImage image) {
+    public static String storeImageInRunner(ModelImage image) {
         return ScriptRunner.getReference().storeImage(image.getImageName());
     }
 
@@ -333,7 +335,7 @@ public class AlgorithmParameters {
 
         return var;
     }
-
+    
     /**
      * Stores an input image in the list of parameters for the algorithm. This image is stored with a new parameter
      * label incremented with each new call to this method.
@@ -381,7 +383,7 @@ public class AlgorithmParameters {
         params.put(ParameterFactory.newBoolean(DO_OUTPUT_NEW_IMAGE, isNewImage));
 
         if (isNewImage) {
-            return storeImageInRecorder(outputImage);
+        	return storeImageInRecorder(outputImage);            
         }
 
         return null;
@@ -491,7 +493,7 @@ public class AlgorithmParameters {
      * @return  <code>True</code> if the image has been stored in the recorder's image table, <code>false</code>
      *          otherwise.
      */
-    protected static final boolean isImageStoredInRecorder(ModelImage image) {
-        return ScriptRecorder.getReference().getImageTable().isImageStored(image.getImageName());
+    protected static boolean isImageStoredInRecorder(ModelImage image) {
+    	return ScriptRecorder.getReference().getImageTable().isImageStored(image.getImageName());   	
     }
 }

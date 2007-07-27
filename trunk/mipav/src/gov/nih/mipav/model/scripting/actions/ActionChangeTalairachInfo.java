@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.scripting.actions;
 
 
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -42,7 +43,7 @@ public class ActionChangeTalairachInfo extends ActionImageProcessorBase {
     	
         try {
         	ParameterTable parameters = new ParameterTable();
-        	parameters.put(createInputImageParameter());
+        	parameters.put(createInputImageParameter(isScript));
         	
         	parameters.put(ParameterFactory.newParameter("is_acpc", tInfo.isAcpc()));
         	tempPoint = tInfo.getOrigAC();
@@ -88,7 +89,11 @@ public class ActionChangeTalairachInfo extends ActionImageProcessorBase {
         		 
         	 }
 
-             ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        	 if (isScript) {
+                 ScriptRecorder.getReference().addLine(getActionName(), parameters);
+             } else {
+             	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+             }
            
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered while recording " + getActionName() + " script action:\n" + pe);

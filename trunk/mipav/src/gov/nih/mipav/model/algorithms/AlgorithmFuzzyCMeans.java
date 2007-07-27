@@ -420,7 +420,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.getNDims() == 2) {
             cMeans2();
@@ -440,39 +440,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
         for (int i = 0; i < centroids.length; i++) {
             centroids[i] = cent[i];
-        }
-    }
-
-    /**
-     * Writes the logString to the appropriate log area. Overrides the AlgorithmBase <code>writeLog()</code> to append
-     * the history to all of the destination images we've created.
-     */
-    protected void writeLog() {
-
-        // write to the history area
-        if (Preferences.is(Preferences.PREF_HISTORY) && isCompleted()) {
-
-            if (destImage != null) {
-
-                for (int i = 0; i < destImage.length; i++) {
-
-                    if ((destImage[i] != null) && (destImage[i].getHistoryArea() != null)) {
-
-                        if (srcImage != null) {
-                            destImage[i].getHistoryArea().setText(srcImage.getHistoryArea().getText());
-                        }
-
-                        if (historyString != null) {
-                            destImage[i].getHistoryArea().append(historyString);
-                        }
-                    }
-                }
-            } else if (srcImage != null) {
-
-                if (historyString != null) {
-                    srcImage.getHistoryArea().append(historyString);
-                }
-            }
         }
     }
 
@@ -1653,21 +1620,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         if (threadStopped) {
             return;
         }
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Fuzzy C-means(" + String.valueOf(nClass) + ", " + String.valueOf(pyramidLevels) +
-                                   ", " + String.valueOf(jacobiIters1) + ", " + String.valueOf(jacobiIters2) + ", " +
-                                   String.valueOf(qValue) + ", " + String.valueOf(exponent) + ", " +
-                                   String.valueOf(smooth1) + ", " + String.valueOf(smooth2) + ", " +
-                                   String.valueOf(outputGainField) + ", " + String.valueOf(segmentation) + ", " +
-                                   String.valueOf(cropBackground) + ", " + String.valueOf(threshold) + ", " +
-                                   String.valueOf(maxIter) + ", " + String.valueOf(tolerance) + ", " +
-                                   String.valueOf(wholeImage) + ")" + "\n");
     }
 
     /******************* Next functions are used in the Adaptive Fuzzy C Means that we do NOT yet support  ***********/

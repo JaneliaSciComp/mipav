@@ -123,7 +123,7 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         calc();
     }
@@ -182,13 +182,5 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
         destImage.setImageName(srcImage.getImageName() + "_midsag");
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Midsagittal(" + ")\n");
     }
 }

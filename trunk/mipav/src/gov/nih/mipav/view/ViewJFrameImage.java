@@ -8,6 +8,7 @@ import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
+import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.util.*;
 
@@ -771,6 +772,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 System.gc();
 
                 ScriptRecorder.getReference().addLine(new ActionExtractImageB(getImageA(), clonedImage));
+                ProvenanceRecorder.getReference().addLine(new ActionExtractImageB(getImageA(), clonedImage));
             } catch (OutOfMemoryError error) {
 
                 if (clonedImage != null) {
@@ -1120,6 +1122,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), maskImage,
                                                                       ActionVOIToMask.MASK_BINARY));
+            ProvenanceRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), maskImage,
+                    ActionVOIToMask.MASK_BINARY));
         } else if (command.equals("ShortMask")) {
             ModelImage shortImage = null;
 
@@ -1149,6 +1153,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), shortImage,
                                                                       ActionVOIToMask.MASK_SHORT));
+            ProvenanceRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), shortImage,
+                    ActionVOIToMask.MASK_SHORT));
         } else if (command.equals("UnsignedByteMask")) {
             ModelImage uByteImage = null;
 
@@ -1178,6 +1184,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), uByteImage,
                                                                       ActionVOIToMask.MASK_UBYTE));
+            ProvenanceRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), uByteImage,
+                    ActionVOIToMask.MASK_UBYTE));
         } else if (command.equals("MaskToVOI")) {
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
 
@@ -1190,7 +1198,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             VOIExtractionAlgo.run();
 
             ScriptRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
-
+            ProvenanceRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
             updateImages();
         } else if (command.equals("MaskToPaint")) {
 
@@ -1199,6 +1207,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             if (success) {
                 ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
+                ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
             }
         } else if (command.equals("CollapseAllToSinglePaint")) {
             collapseAlltoSinglePaint(false);
@@ -1234,6 +1243,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             algoPaintToVOI.run();
 
             ScriptRecorder.getReference().addLine(new ActionPaintToVOI(getActiveImage()));
+            ProvenanceRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
 
             updateImages();
         } else if (command.equals("PaintToShortMask")) {
@@ -1241,6 +1251,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage,
                                                                         ActionPaintToMask.MASK_SHORT));
+            ProvenanceRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage,
+                    ActionPaintToMask.MASK_SHORT));
         } else if (command.equals("Open labels")) {
             openVOI(false, true);
         } else if (command.equals("Open VOI")) {
@@ -1248,11 +1260,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             if (success) {
                 ScriptRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
+                ProvenanceRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
             }
         } else if (command.equals("Open all VOIs")) {
             loadAllVOIs(false);
 
             ScriptRecorder.getReference().addLine(new ActionOpenAllVOIs(getActiveImage()));
+            ProvenanceRecorder.getReference().addLine(new ActionOpenAllVOIs(getActiveImage()));
         } else if (command.equals("Open all VOIs from...")) {
 
             // get the voi directory
@@ -1297,6 +1311,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             saveAllVOIs();
 
             ScriptRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage()));
+            ProvenanceRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage()));
         } else if (command.equals("Save all VOIs to...")) {
 
             // get the voi directory
@@ -1326,6 +1341,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 saveAllVOIsTo(voiDir);
 
                 ScriptRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage(), voiDir));
+                ProvenanceRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage(), voiDir));
             }
         } else if (command.equals("Snake")) {
             new JDialogSnake(this, getActiveImage());
@@ -1424,6 +1440,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 System.gc();
 
                 ScriptRecorder.getReference().addLine(new ActionClone(getActiveImage(), clonedImage));
+                ProvenanceRecorder.getReference().addLine(new ActionClone(getActiveImage(), clonedImage));
             } catch (OutOfMemoryError error) {
 
                 if (clonedImage != null) {

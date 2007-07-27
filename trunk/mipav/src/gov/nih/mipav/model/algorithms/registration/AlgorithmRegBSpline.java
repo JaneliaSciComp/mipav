@@ -113,25 +113,6 @@ public abstract class AlgorithmRegBSpline extends AlgorithmBase {
         super.finalize();
     }
 
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = new String();
-        historyString += "B-Spline Registration(";
-        historyString += m_kRegMeasure.getName() + ", ";
-        historyString += (null == m_kOptionsPass2) ? "1, " : "2, ";
-        historyString += m_kOptionsPass1.toString(", ");
-
-        if (null != m_kOptionsPass2) {
-            historyString += ", " + m_kOptionsPass2.toString(", ");
-        }
-
-        historyString += ")\n";
-    }
-
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**

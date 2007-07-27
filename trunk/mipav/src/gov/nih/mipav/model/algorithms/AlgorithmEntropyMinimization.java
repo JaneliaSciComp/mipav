@@ -490,17 +490,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         return fx;
     } // brent
 
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("EntropyMinimization(" + thresholdSelected + ", " + thresholdLevel + ", " +
-                                   subsample + ", " + noiseType + ")\n");
-    }
-
-
     /**
      * DOCUMENT ME!
      *
@@ -1298,7 +1287,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         xicom = new double[nParams];
         xt = new double[nParams];
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         
@@ -1798,7 +1787,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         xicom = new double[nParams];
         xt = new double[nParams];
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         
@@ -2239,7 +2228,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         xicom = new double[nParams];
         xt = new double[nParams];
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         
@@ -2730,7 +2719,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         xicom = new double[nParams];
         xt = new double[nParams];
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         
@@ -3365,7 +3354,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         xicom = new double[nParams];
         xt = new double[nParams];
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization ...");
         
@@ -3900,7 +3889,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         xicom = new double[nParams];
         xt = new double[nParams];
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
         

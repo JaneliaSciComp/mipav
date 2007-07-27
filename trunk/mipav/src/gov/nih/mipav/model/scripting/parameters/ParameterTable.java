@@ -64,6 +64,26 @@ public class ParameterTable {
         return str;
     }
 
+    public String convertToDPString(ImageVariableTable table) {
+    	String str = new String();
+    	
+    	Parameter[] params = getParameters();
+
+        for (int i = 0; i < params.length; i++) {
+
+            if (i > 0) {
+                str += ", ";
+            }
+            if (params[i] instanceof ParameterImage) {
+            	str += table.getImageName(((ParameterImage)params[i]).getValue());
+            } else {
+            	str += params[i].convertToString();
+            }
+        }
+    	
+    	return str;
+    }
+    
     /**
      * Return the boolean value of one of the parameters from the table.
      *

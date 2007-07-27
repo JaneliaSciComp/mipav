@@ -194,7 +194,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
         float preserveMean;
         int imageType;
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing MRI shading correction...");
 
@@ -718,15 +718,4 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
 
 
     }
-
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("MRIShadingCorrection(" + norm + ", " + scaleX + ", " + scaleY + ", " + iters +
-                                   ", " + thresholdSelected + ", " + thresholdLevel + ")\n");
-    }
-
 }

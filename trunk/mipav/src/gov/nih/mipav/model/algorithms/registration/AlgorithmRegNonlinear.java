@@ -875,7 +875,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
         double[][][] q7 = new double[1][1][1];
         Color voiColor;
 
-        constructLog();
+        
 
         if (doParam) {
             paramRun();
@@ -2644,14 +2644,6 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
     /* From material Copyright 1995-2001 Roger P. Woods, M.D. */
 
     /* Modified 5/16/01 */
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Nonlinear Registration(" + String.valueOf(fmodel) + ")\n");
-    }
 
     /**
      * From material Copyright 1995-2001 Roger P. Woods, M.D. Modified 5/10/01 void dmodposl() This routine will solve

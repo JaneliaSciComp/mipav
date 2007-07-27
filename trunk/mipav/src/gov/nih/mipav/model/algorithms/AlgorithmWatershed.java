@@ -104,7 +104,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged("Watershed ...");
 
@@ -1321,23 +1321,6 @@ Found:
 
         imgBuffer = null;
         System.gc();
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Watershed(");
-
-        if ((sigmas != null) && (historyString != null)) {
-
-            for (int i = 0; i < sigmas.length; i++) {
-                historyString += sigmas[i] + ", ";
-            }
-
-            historyString += ")\n";
-        }
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------

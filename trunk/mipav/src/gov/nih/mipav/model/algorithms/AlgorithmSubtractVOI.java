@@ -148,7 +148,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
         
 
-        constructLog();
+        
 
         if (destFlag == true) { // use a destination image.
             getAverage();
@@ -876,15 +876,6 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         destImage.calcMinMax();
         
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the message frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("SubtractVOI(" + averageString[averageMode] + ", " + clipString[clipMode] + ", " +
-                                   ")\n");
     }
 
     /**

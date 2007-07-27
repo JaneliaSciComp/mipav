@@ -38,7 +38,7 @@ public class ActionMaskToVOI extends ActionImageProcessorBase {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(createInputImageParameter());
+            parameters.put(createInputImageParameter(isScript));
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered creating input image parameter while recording " + getActionName() + " script action:\n" + pe);
             return;

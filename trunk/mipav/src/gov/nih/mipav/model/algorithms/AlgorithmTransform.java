@@ -3652,7 +3652,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             disposeLocal();
             setCompleted(false);
         } else {
-            constructLog();
+            
             transform();
 
             // copy the src image's matrices into the destination image
@@ -3959,24 +3959,6 @@ public class AlgorithmTransform extends AlgorithmBase {
             imgOrigin[1] = tempOrigin[1];
             imgOrigin[2] = tempOrigin[2];
         }
-    }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the message frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String resDimString = new String();
-
-        if (DIM == 2) {
-            resDimString = (" " + oXres + ", " + oYres + ", " + oXdim + ", " + oYdim + " ");
-        } else {
-            resDimString = (" " + oXres + ", " + oYres + ", " + oZres + ", " + oXdim + ", " + oYdim + ", " + oZdim +
-                            " ");
-        }
-
-        historyString = new String("Transform(" + resDimString + do25D + " " + transformVOI + " " + clip + " " +
-                                   interp + " " + transMatrix.toDialogString() + "\n");
     }
 
     /**

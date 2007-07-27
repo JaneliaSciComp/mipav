@@ -614,7 +614,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_25D", do25D));
     }
 

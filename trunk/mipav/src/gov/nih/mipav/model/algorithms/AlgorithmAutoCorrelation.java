@@ -107,7 +107,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.isColorImage()) {
 
@@ -1654,14 +1654,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         } // if (destImageB != null)
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Autocorrelation coefficients()\n");
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------

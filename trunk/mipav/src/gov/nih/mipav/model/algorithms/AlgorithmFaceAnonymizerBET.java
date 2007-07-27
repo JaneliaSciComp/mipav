@@ -131,7 +131,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         try {
             anonymizeFace();
@@ -565,14 +565,6 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
             removeRegion = bitUtil.connectNearNeighbors(i, removeRegion, removeRegionTemp, levelCut);               
         }
         return removeRegionTemp;
-    }
-    
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the message frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("AnonymizeFaceBET(" + ")\n");
     }
     
     /**

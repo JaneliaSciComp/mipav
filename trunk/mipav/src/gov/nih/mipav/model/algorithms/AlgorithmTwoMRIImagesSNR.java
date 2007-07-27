@@ -160,7 +160,7 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "Performing Two MRI Image SNR ...");
 
-        constructLog();
+        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         srcExtents[0] = xDim;
@@ -395,14 +395,5 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
         setCompleted(true);
 
         return;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("TwoMRIImagesSNR(" + signalIndex + ", " + signalImage + ", " + signal2Index + ", " +
-                                   register + ", " + cost + ", " + createRegImage + "\n");
     }
 }

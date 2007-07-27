@@ -919,7 +919,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             }
         }
 
-        constructLog();
+        
         Preferences.debug(getConstructionInfo());
 
         if (blurRef) {
@@ -1672,15 +1672,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         finalize();
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = getConstructionInfo();
-    }
-
+   
     /**
      * Creates a string with the parameters that the image was constructed with.
      *

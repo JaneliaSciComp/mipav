@@ -81,7 +81,7 @@ public class AlgorithmRGBtoHSB extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         calcStoreInDest();
     }
 
@@ -211,13 +211,4 @@ public class AlgorithmRGBtoHSB extends AlgorithmBase {
         
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("RGB to HSB \n");
-    }
-
 }

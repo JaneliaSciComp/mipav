@@ -787,7 +787,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         
         
 
-        constructLog();
+        
 
         switch (model) {
 
@@ -12951,24 +12951,6 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         ecff[parameters][parameters] = (dscale * dscale * ecf[6][6]) + (dcf[6] * escale);
 
         return cf;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("AIR Registration(" + String.valueOf(entireTarget) + ", " +
-                                   String.valueOf(entireSource) + ", " + String.valueOf(model) + ", " +
-                                   String.valueOf(interpolation) + ", " + String.valueOf(sourceThreshold) + ", " +
-                                   String.valueOf(targetThreshold) + ", " + String.valueOf(sourceGaussX) + ", " +
-                                   String.valueOf(sourceGaussY) + ", " + String.valueOf(sourceGaussZ) + ", " +
-                                   String.valueOf(targetGaussX) + ", " + String.valueOf(targetGaussY) + ", " +
-                                   String.valueOf(targetGaussZ) + ", " + String.valueOf(sourcePartitions) + ", " +
-                                   String.valueOf(targetPartitions) + ", " + String.valueOf(costFxn) + ", " +
-                                   String.valueOf(cubicInterpolation) + ", " + String.valueOf(interaction) + ", " +
-                                   String.valueOf(precision) + ", " + String.valueOf(iterations) + ", " + ")\n");
-
     }
 
     /**

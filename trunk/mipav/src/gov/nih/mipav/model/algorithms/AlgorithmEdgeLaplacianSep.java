@@ -528,7 +528,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         }
 
         if (destImage != null) { // NEW
-            constructLog();
+            
 
             if (srcImage.getNDims() == 2) {
                 calcStoreInDest2D(1, zeroDetectionType);
@@ -876,25 +876,6 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = new String();
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += (" " + String.valueOf(sigmas[i]) + ", ");
-        }
-
-        historyString = new String("EdgeLap(" + sigmaStr + String.valueOf(entireImage) + ", " +
-                                   String.valueOf(image25D) + ", " + loThres + ", " + hiThres + ")\n");
-
-        if (Preferences.is(Preferences.PREF_HISTORY) && (zXMask.getHistoryArea() != null)) {
-            zXMask.getHistoryArea().append(historyString);
-        }
     }
 
     /**

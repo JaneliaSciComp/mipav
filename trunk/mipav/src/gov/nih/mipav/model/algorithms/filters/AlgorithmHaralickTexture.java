@@ -206,7 +206,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(0, null, "Running Haralick textures ...");
         
@@ -715,24 +715,6 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         setCompleted(true);
 
         return;
-    }
-
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("HaralickTexture(" + String.valueOf(windowSize) + ", " +
-                                   String.valueOf(offsetDistance) + ", " + String.valueOf(ns) + ", " +
-                                   String.valueOf(nesw) + ", " + String.valueOf(ew) + ", " + String.valueOf(senw) +
-                                   ", " + String.valueOf(invariantDir) + ", " + String.valueOf(contrast) + "," +
-                                   String.valueOf(dissimilarity) + "," + String.valueOf(homogeneity) + "," +
-                                   String.valueOf(inverseOrder1) + "," + String.valueOf(asm) + "," +
-                                   String.valueOf(energy) + "," + String.valueOf(maxProbability) + "," +
-                                   String.valueOf(entropy) + "," + String.valueOf(mean) + "," +
-                                   String.valueOf(variance) + "," + String.valueOf(standardDeviation) + "," +
-                                   String.valueOf(correlation) + ")" + "\n");
     }
 
 }

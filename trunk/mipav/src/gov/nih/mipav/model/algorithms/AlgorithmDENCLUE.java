@@ -88,7 +88,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) { // if there exists a destination image
 
@@ -533,16 +533,4 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         setCompleted(true);
 
     } // calcStoreInDest3D()
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = "DENCLUE(" + String.valueOf(isGaussian) + ", " + String.valueOf(distance) + ", " +
-                        String.valueOf(threshold) + ", " + String.valueOf(isArbitrary) + ")\n";
-    }
-
-
 }

@@ -147,7 +147,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) { // if there exists a destination image
             calcStoreInDest();
@@ -309,27 +309,6 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
         setCompleted(true);
 
     } // end calcStoreInDest()
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = " [";
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += String.valueOf(sigmas[i]);
-
-            // append a comma when there are more sigmas:
-            sigmaStr += (i < (sigmas.length - 1)) ? ", " : "";
-        }
-
-        sigmaStr += "]";
-
-        historyString = "local normalization(" + sigmaStr + ", " + String.valueOf(kernelDiameter) + ", " +
-                        String.valueOf(weightingFactor) + ", " + String.valueOf(frequency) + ")\n";
-    }
-
 
     /**
      * takes the data of the two images, one unsharp'd and the other gaussian blur'd, and divides the two pixel-by-pixel

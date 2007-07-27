@@ -113,11 +113,11 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
         scriptParameters.storeInputImage(image);
         
         if (image.isColorImage()) {
-            AlgorithmParameters.storeImageInRecorder(getResultImageR());
-            AlgorithmParameters.storeImageInRecorder(getResultImageG());
-            AlgorithmParameters.storeImageInRecorder(getResultImageB());
+            scriptParameters.storeImageInRecorder(getResultImageR());
+            scriptParameters.storeImageInRecorder(getResultImageG());
+            scriptParameters.storeImageInRecorder(getResultImageB());
         } else {
-            AlgorithmParameters.storeImageInRecorder(getResultImage());
+            scriptParameters.storeImageInRecorder(getResultImage());
         }
     }
 

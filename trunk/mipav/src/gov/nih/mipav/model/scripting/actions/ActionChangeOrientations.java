@@ -3,6 +3,7 @@ package gov.nih.mipav.model.scripting.actions;
 
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -48,7 +49,7 @@ public class ActionChangeOrientations extends ActionImageProcessorBase {
         
         ParameterTable parameters = new ParameterTable();
         try {
-        	parameters.put(createInputImageParameter());
+        	parameters.put(createInputImageParameter(isScript));
             parameters.put(ParameterFactory.newParameter(IMAGE_ORIENTATION, recordingInputImage.getImageOrientation()));
             if (recordingInputImage.getNDims() > 2) {
             	parameters.put(ParameterFactory.newParameter(AXIS_ORIENTATIONS, recordingInputImage.getFileInfo()[0].getAxisOrientation()));
@@ -59,7 +60,11 @@ public class ActionChangeOrientations extends ActionImageProcessorBase {
             return;
         }
         
-        ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        if (isScript) {
+            ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

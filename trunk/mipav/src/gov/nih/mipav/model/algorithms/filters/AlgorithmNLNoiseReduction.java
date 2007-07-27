@@ -282,7 +282,7 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
         
         progressValue = 0;
 
-        constructLog();
+        
 
         xSize = srcImage.getExtents()[0];
         ySize = srcImage.getExtents()[1];
@@ -630,18 +630,6 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
 
         srcMax = max;
         srcMin = min;
-    }
-
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = new String("Nonlinear Noise reduction(" + String.valueOf(brightThres) + ", " +
-                                   String.valueOf(maskStdDev) + ", " + String.valueOf(useMedian) + ", " +
-                                   String.valueOf(image25D) + ")\n");
     }
 
     /**

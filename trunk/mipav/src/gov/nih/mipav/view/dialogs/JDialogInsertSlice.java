@@ -409,7 +409,7 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         if ((sliceType == ORIGINAL_SLICE) && (insertedImage != null)) {
             scriptParameters.storeImage(insertedImage, "insert_from_image");

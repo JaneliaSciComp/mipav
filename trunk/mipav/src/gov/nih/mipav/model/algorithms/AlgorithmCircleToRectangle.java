@@ -117,7 +117,7 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Circle to rectangle ...");
 
@@ -343,7 +343,7 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Circle to rectangle ...");
 
@@ -583,7 +583,7 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Circle to rectangle ...");
 
@@ -854,15 +854,4 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
 
         return;
     } // private void sqrtc
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("CircleToRectangle(" + String.valueOf(destImage.getExtents()[0]) + ", " +
-                                   String.valueOf(destImage.getExtents()[1]) + ")\n");
-    }
 }

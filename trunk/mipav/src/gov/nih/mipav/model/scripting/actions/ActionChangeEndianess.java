@@ -3,6 +3,7 @@ package gov.nih.mipav.model.scripting.actions;
 
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 
@@ -41,14 +42,17 @@ public class ActionChangeEndianess extends ActionImageProcessorBase {
         
         ParameterTable parameters = new ParameterTable();
         try {
-        	parameters.put(createInputImageParameter());
+        	parameters.put(createInputImageParameter(isScript));
             parameters.put(ParameterFactory.newParameter(ENDIANESS, recordingInputImage.getFileInfo(0).getEndianess()));
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
-        
+        if (isScript) {
         ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

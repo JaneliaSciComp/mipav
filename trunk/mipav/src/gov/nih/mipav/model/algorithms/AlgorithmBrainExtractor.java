@@ -782,7 +782,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (abort != true) {
             extractBrain();
@@ -2545,16 +2545,6 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         float fUpdate3 = imageFactor * fRatio * m_fMeanEdgeLength;
 
         return fUpdate3;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("ExtractBrain(" + orientationFlag + ", " + runOneIter + ", " + useSphere + ", " +
-                                   nIterations + ", " + m_iMaxDepth + ", " + imageFactor + ", " + m_fStiffness + ", " +
-                                   secondStageErosion + ", " + aboveMedian + ")\n");
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------

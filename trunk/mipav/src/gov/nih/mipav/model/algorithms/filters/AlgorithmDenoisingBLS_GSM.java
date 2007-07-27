@@ -387,7 +387,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
         fireProgressStateChanged(srcImage.getImageName(), "DenoisingBLS_GSM...");
 
-        constructLog();
+        
 
         nx = srcImage.getExtents()[0];
         ny = srcImage.getExtents()[1];
@@ -2243,16 +2243,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
 
     } // center
-
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = new String("DenoisingBLS_GSM(" + ")\n");
-    }
 
     /**
      * 1D convolution.

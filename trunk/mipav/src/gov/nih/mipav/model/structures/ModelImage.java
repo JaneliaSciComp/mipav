@@ -6,6 +6,7 @@ import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
+import gov.nih.mipav.model.provenance.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -85,6 +86,9 @@ public class ModelImage extends ModelStorageBase {
     /** Holds all of the images associated matrices. */
     private MatrixHolder matrixHolder;
 
+    /** Holds the data provenance (image history)*/
+    private ProvenanceHolder provenanceHolder;
+    
     /** Reference to talairach transform information. */
     private TalairachTransformInfo talairach;
 
@@ -154,8 +158,12 @@ public class ModelImage extends ModelStorageBase {
         mask = new BitSet(length);
         maskBU = new BitSet(length);
 
+        //create Matrix Holder to store matrices
         this.matrixHolder = new MatrixHolder(dimExtents.length);
 
+        //create the data provenance holder to store the image history
+        this.provenanceHolder = new ProvenanceHolder();
+        
         if (dimExtents.length == 2) {
             fileInfo = new FileInfoBase[1];
 
@@ -1189,6 +1197,10 @@ public class ModelImage extends ModelStorageBase {
         return matrixHolder;
     }
 
+    public ProvenanceHolder getProvenanceHolder() {
+    	return this.provenanceHolder;
+    }
+    
     /**
      * If no LUT or RGB color table is defined, this returns the packed int value for the color at iIndexs for the input
      * ModelImage kImage:

@@ -271,7 +271,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("volume_length", volumeLength));
         scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_resolution", res3));

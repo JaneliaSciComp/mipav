@@ -45,16 +45,8 @@ public class AlgorithmConvert4Dto3D extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         convert4Dto3D();
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Convert4Dto3D()\n");
     }
 
     /**

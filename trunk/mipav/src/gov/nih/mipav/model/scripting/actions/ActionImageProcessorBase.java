@@ -3,6 +3,7 @@ package gov.nih.mipav.model.scripting.actions;
 
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
@@ -68,6 +69,10 @@ public abstract class ActionImageProcessorBase extends ActionBase {
      */
     public void setInputImage(ModelImage inputImage) {
         recordingInputImage = inputImage;
+        
+        if (!isScript) {
+        	ProvenanceRecorder.getReference().addInputImage(inputImage.getImageName());
+        }
     }
     
     /**
@@ -86,8 +91,12 @@ public abstract class ActionImageProcessorBase extends ActionBase {
      * 
      * @return  <code>True</code> if the image has been stored in the recorder's image table, <code>false</code> otherwise.
      */
-    protected static final boolean isImageStoredInRecorder(ModelImage image) {
-        return ScriptRecorder.getReference().getImageTable().isImageStored(image.getImageName());
+    protected static final boolean isImageStoredInRecorder(ModelImage image, boolean isScript) {
+    	if (isScript) {
+    		return ScriptRecorder.getReference().getImageTable().isImageStored(image.getImageName());
+    	} else {
+    		return ProvenanceRecorder.getReference().getImageTable().isImageStored(image.getImageName());
+    	}
     }
     
     /**
@@ -97,10 +106,13 @@ public abstract class ActionImageProcessorBase extends ActionBase {
      * 
      * @throws  ParserException  If there is a problem encountered while creating the new parameter.
      */
-    protected ParameterImage createInputImageParameter() throws ParserException {
-        boolean isExternalImage = !isImageStoredInRecorder(recordingInputImage);
+    protected ParameterImage createInputImageParameter(boolean isScript) throws ParserException {
+        boolean isExternalImage = !isImageStoredInRecorder(recordingInputImage, isScript);
         
-        String var = storeImageInRecorder(recordingInputImage);
+        String var = storeImageInRecorder(recordingInputImage, isScript);
+        if (!isScript) {
+        	ProvenanceRecorder.getReference().addInputImage(var);
+        }
         
         return ParameterFactory.newImage(INPUT_IMAGE_LABEL, var, isExternalImage);
     }
@@ -112,8 +124,12 @@ public abstract class ActionImageProcessorBase extends ActionBase {
      *
      * @return  The image placeholder variable assigned to the image by the variable table.
      */
-    protected static final String storeImageInRecorder(ModelImage image) {
-        return ScriptRecorder.getReference().storeImage(image.getImageName());
+    protected static final String storeImageInRecorder(ModelImage image, boolean isScript) {
+        if (isScript) {    	
+        	return ScriptRecorder.getReference().storeImage(image.getImageName());
+        } else {
+        	return ProvenanceRecorder.getReference().storeImage(image.getImageName());
+        }
     }
     
     /**

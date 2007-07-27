@@ -97,7 +97,7 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         fireProgressStateChanged(srcImage.getImageName(), "Slice averaging ...");
         
 
@@ -109,17 +109,6 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
             return;
         }
     }
-
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        historyString = new String("SliceAveraging(" + averagingNumber + ")" + "\n");
-    }
-
 
     /**
      * Averages image slices together.

@@ -221,7 +221,7 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation_type", mode));
     }

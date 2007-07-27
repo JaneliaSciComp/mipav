@@ -148,7 +148,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         fireProgressStateChanged(srcImage.getImageName(), "Circular sector to rectangle ...");
 
@@ -344,16 +344,5 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         setCompleted(true);
 
         return;
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
-     * logging procedure is turned on.
-     */
-    private void constructLog() {
-
-
-        historyString = new String("CircularSectorToRectangle(" + String.valueOf(destImage.getExtents()[0]) + ", " +
-                                   String.valueOf(destImage.getExtents()[1]) + ")\n");
     }
 }

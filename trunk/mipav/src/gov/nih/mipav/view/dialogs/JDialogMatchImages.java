@@ -296,11 +296,11 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_dimensions", doDimensions));
 
         if (getResultImageA() != null) {
-            AlgorithmParameters.storeImageInRecorder(getResultImageA());
+            scriptParameters.storeImageInRecorder(getResultImageA());
         }
 
         if (getResultImageB() != null) {
-            AlgorithmParameters.storeImageInRecorder(getResultImageB());
+            scriptParameters.storeImageInRecorder(getResultImageB());
         }
     }
 

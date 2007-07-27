@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.xcede.*;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -1362,7 +1363,6 @@ public class FileIO {
         int fileType = FileUtility.UNDEFINED;
         int userDefinedFileType = 0;
         String userDefinedSuffix = null;
-
         if ((fileName == null) || (fileDir == null)) {
             return null;
         }
@@ -1560,7 +1560,17 @@ public class FileIO {
             }
 
             if (image != null) {
-
+            	if (ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING) {
+            		try {
+            			FileDataProvenance fdp = new FileDataProvenance(fileName, fileDir, image);
+            			if (fdp.readXML()) {
+            			//	System.err.println("Success on read!");
+            			}
+            		} catch (Exception e) {
+            			e.printStackTrace();
+            		}
+            	}
+            	
                 if (progressBar != null) {
                     progressBar.dispose();
                 }
@@ -2240,7 +2250,26 @@ public class FileIO {
             progressBar.dispose();
         }
 
+        if (success && ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING) {
+        	
+        	ScriptableActionInterface action;
 
+        	if (options.isSaveAs()) {
+        		action = new ActionSaveImageAs(image, options);
+        	} else {
+        		action = new ActionSaveImage(image, options);
+        	}
+        	
+        	ProvenanceRecorder.getReference().addLine(action);
+                
+        	
+        	FileDataProvenance fdp = new FileDataProvenance(options.getFileName(), options.getFileDirectory(), image);
+        	try {
+        		fdp.writeXML();
+        	} catch (Exception e) {}
+        }
+        
+        
         // if the flag is set to put the image into the quicklist, do so
         if (success && options.doPutInQuicklist()) {
 

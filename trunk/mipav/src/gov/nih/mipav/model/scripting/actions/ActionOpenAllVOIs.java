@@ -32,7 +32,7 @@ public class ActionOpenAllVOIs extends ActionImageProcessorBase {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(createInputImageParameter());
+            parameters.put(createInputImageParameter(isScript));
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered creating parameters while recording " + getActionName() + " script action:\n" + pe);
             return;

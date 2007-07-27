@@ -77,7 +77,7 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
         float[] imageBuffer;
         int t, T; // t is time-depth of srcImage; T is time-depth of destination
 
-        constructLog();
+        
 
         try {
 
@@ -155,21 +155,4 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
         setCompleted(true);
     }
 
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String removeStr = new String();
-
-        for (int i = 0; i < remove.length; i++) {
-
-            if (remove[i] == true) {
-                removeStr += (" " + String.valueOf(i + 1) + ", ");
-            }
-        }
-
-        historyString = new String("RemoveTSlices(" + removeStr + ")" + "\n");
-
-    }
 }

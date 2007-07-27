@@ -128,7 +128,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
         Object value;
         String s;
 
-        constructLog();
+        
 
         nf = new DecimalFormat("##0.000000");
 
@@ -607,27 +607,6 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
 
         setCompleted(true);
     }
-
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String padStr = new String();
-        padStr = "Pad with slices ";
-
-        if (padMode == PAD_FRONT) {
-            padStr += " using front slices";
-        } else if (padMode == PAD_BACK) {
-            padStr += " using back slices";
-        } else if (padMode == PAD_HALF) {
-            padStr += " using front and back slices";
-        }
-
-        historyString = new String("PadWithSlices(" + padStr + ")\n");
-    }
-
 
     /**
      * Calculate the dimension value to power of 2.

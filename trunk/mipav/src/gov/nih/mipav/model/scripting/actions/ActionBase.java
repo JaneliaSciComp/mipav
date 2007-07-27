@@ -11,6 +11,9 @@ import gov.nih.mipav.view.Preferences;
  * A base class for all non-algorithmic (not JDialog*) script actions.
  */
 public abstract class ActionBase implements ScriptableActionInterface {
+	
+	protected boolean isScript = true;
+	
     /**
      * {@inheritDoc}
      */
@@ -51,4 +54,10 @@ public abstract class ActionBase implements ScriptableActionInterface {
             return name.substring(index + 6);
         }
     }
+    
+    public void setIsScript(boolean isScript) {
+    	this.isScript = isScript;
+    }
+    
+    public boolean isScript() { return this.isScript; }
 }

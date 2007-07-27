@@ -256,7 +256,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        constructLog();
+        
 
         reOrient();
 
@@ -285,15 +285,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
 
         return c;
     }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("RegisterPatientPosition()\n");
-    }
-
+  
     /**
      * Get indices for reordering data from Image B to the Axial coordinate system (LPS) and to the coordinate system of
      * Image A.

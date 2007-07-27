@@ -650,7 +650,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
             calcStoreInDest();
@@ -1705,30 +1705,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
 
         } // end of else if (ndim == 3)
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-
-        if (constructionMethod == GABOR) {
-            historyString = new String("FFT(" + String.valueOf(transformDir) + ", " + String.valueOf(logMagDisplay) +
-                                       ", " + String.valueOf(unequalDim) + ", " + String.valueOf(image25D) + ", " +
-                                       String.valueOf(imageCrop) + ", " + String.valueOf(constructionMethod) + "," +
-                                       String.valueOf(freqU) + ", " + String.valueOf(freqV) + ", " +
-                                       String.valueOf(sigmaU) + "," + String.valueOf(sigmaV) + "," +
-                                       String.valueOf(theta) + ")" + "\n");
-        } else {
-            historyString = new String("FFT(" + String.valueOf(transformDir) + ", " + String.valueOf(logMagDisplay) +
-                                       ", " + String.valueOf(unequalDim) + ", " + String.valueOf(image25D) + ", " +
-                                       String.valueOf(imageCrop) + ", " + String.valueOf(kDim) + ", " +
-                                       String.valueOf(filterType) + ", " + String.valueOf(f1) + "," +
-                                       String.valueOf(f2) + "," + String.valueOf(constructionMethod) + "," +
-                                       String.valueOf(butterworthOrder) + ")" + "\n");
-        }
-
     }
 
     /**

@@ -397,7 +397,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
         scriptParameters.storeInputImage(srcImage);
 
         for (int i = 0; i < getResultImage().length; i++) {
-            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
+            scriptParameters.storeImageInRecorder(getResultImage()[i]);
         }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_filter", doFilter));

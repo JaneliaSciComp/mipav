@@ -149,7 +149,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage == null) {
             calcStoreInPlace();
@@ -714,17 +714,4 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("RGB to Gray(" + String.valueOf(redValue) + ", " + String.valueOf(greenValue) +
-                                   ", " + String.valueOf(blueValue) + String.valueOf(thresholdAverage) +
-                                   String.valueOf(threshold) + String.valueOf(intensityAverage) + ")\n");
-
-    }
-
-
 }

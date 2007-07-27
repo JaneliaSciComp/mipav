@@ -443,7 +443,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage[0].getNDims() == 2) {
             cMeans2();
@@ -468,42 +468,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
      */
     public void setThreshold(float[] threshold) {
         this.threshold = threshold;
-    }
-
-    /**
-     * Writes the logString to the appropriate log area. Overrides the AlgorithmBase <code>writeLog()</code> to append
-     * the history to all of the destination images we've created.
-     */
-    protected void writeLog() {
-
-        // write to the history area
-        if (Preferences.is(Preferences.PREF_HISTORY) && isCompleted()) {
-
-            if (destImage != null) {
-
-                for (int i = 0; i < destImage.length; i++) {
-
-                    if ((destImage[i] != null) && (destImage[i].getHistoryArea() != null)) {
-
-                        if (srcImage != null) {
-                            destImage[i].getHistoryArea().setText(srcImage[Math.min(i, srcImage.length - 1)].getHistoryArea().getText());
-                        }
-
-                        if (historyString != null) {
-                            destImage[i].getHistoryArea().append(historyString);
-                        }
-                    }
-                }
-            } else if (srcImage != null) {
-
-                if (historyString != null) {
-
-                    for (int i = 0; i < srcImage.length; i++) {
-                        srcImage[i].getHistoryArea().append(historyString);
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -1711,22 +1675,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         if (threadStopped) {
             return;
         }
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Fuzzy C-means(" + String.valueOf(nClass) + ", " + String.valueOf(pyramidLevels) +
-                                   ", " + String.valueOf(jacobiIters1) + ", " + String.valueOf(jacobiIters2) + ", " +
-                                   String.valueOf(qVal) + ", " + String.valueOf(exponent) + ", " +
-                                   String.valueOf(smooth1) + ", " + String.valueOf(smooth2) + ", " +
-                                   String.valueOf(outputGainField) + ", " + String.valueOf(segmentation) + ", " +
-                                   String.valueOf(cropBackground) + ", " + String.valueOf(threshold) + ", " +
-                                   String.valueOf(maxIter) + ", " + String.valueOf(tolerance) + ", " +
-                                   String.valueOf(doRed) + ", " + String.valueOf(doGreen) + ", " +
-                                   String.valueOf(doBlue) + ", " + String.valueOf(wholeImage) + ")" + "\n");
     }
 
     /**

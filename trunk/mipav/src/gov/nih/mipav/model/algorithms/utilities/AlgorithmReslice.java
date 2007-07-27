@@ -90,7 +90,7 @@ public class AlgorithmReslice extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (interpMode == LINEAR) {
             linearReslice();
@@ -149,14 +149,6 @@ public class AlgorithmReslice extends AlgorithmBase {
         } else {
             return (((-0.5f * uu * u) + (2.5f * uu) - (4.0f * u) + 2.0f));
         }
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Reslice( " + algorithmName[interpMode] + " )\n");
     }
 
     /**

@@ -124,7 +124,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
 
@@ -668,16 +668,5 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
         destImage.releaseLock();
         
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Threshold(" + String.valueOf(thresholdR[0]) + ", " + String.valueOf(thresholdR[1]) +
-                                   ", " + String.valueOf(thresholdG[0]) + ", " + String.valueOf(thresholdG[1]) + ", " +
-                                   String.valueOf(thresholdB[0]) + ", " + String.valueOf(thresholdB[1]) + ", " +
-                                   String.valueOf(fillValues[0]) + ", " + String.valueOf(entireImage) + ")\n");
     }
 }

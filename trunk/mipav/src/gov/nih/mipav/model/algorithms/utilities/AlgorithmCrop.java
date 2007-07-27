@@ -114,7 +114,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             RGBImage = false;
         }
 
-        constructLog();
+        
 
         if (destImage != null) {
 
@@ -1436,21 +1436,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         setCompleted(true);
     }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String paramString = "";
-
-        paramString += "x bounds: " + x[0] + " " + x[1] + ", y bounds: " + y[0] + " " + y[1] + ", z bounds: " + z[0] +
-                       " " + z[1] + ", " + cushion;
-
-        historyString = new String("Crop image(" + paramString + ")\n");
-    }
-
-
+   
     /**
      * Switch origin order from image order to LPS order.
      *

@@ -279,7 +279,7 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             scriptParameters.getParams().put(ParameterFactory.newParameter("data_type", dataType));
         }
 
-        AlgorithmParameters.storeImageInRecorder(resultImage);
+        scriptParameters.storeImageInRecorder(resultImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("load_type", loadType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doOrigins));

@@ -55,7 +55,7 @@ public class JDialogRendererAVI extends JDialogBase {
      * @param  theParentFrame  Parent frame.
      */
     public JDialogRendererAVI(Frame theParentFrame) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         init();
     }
 

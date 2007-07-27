@@ -354,7 +354,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(srcImage);
-        AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_convert_4D_to_3D", convert4Dto3D));
 

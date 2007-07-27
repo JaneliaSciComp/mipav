@@ -560,7 +560,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         }
 
         if (destImage != null) { // NEW
-            constructLog();
+            
 
             if (srcImage.getNDims() == 2) {
                 calcStoreInDest2D(1, zeroDetectionType);
@@ -868,25 +868,6 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
 
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = new String();
-
-        for (int i = 0; i < sigmas.length; i++) {
-            sigmaStr += (" " + String.valueOf(sigmas[i]) + ", ");
-        }
-
-        historyString = new String("EdgeNMSup(" + sigmaStr + String.valueOf(entireImage) + ", " +
-                                   String.valueOf(image25D) + ")\n");
-
-        if (Preferences.is(Preferences.PREF_HISTORY) && (zXMask.getHistoryArea() != null)) {
-            zXMask.getHistoryArea().append(historyString);
-        }
     }
 
     /**

@@ -469,7 +469,9 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 resultImage = null;
             }
 
-            insertScriptLine();
+            if (algorithm.isCompleted()) {
+            	insertScriptLine();
+            }
         }
 
 

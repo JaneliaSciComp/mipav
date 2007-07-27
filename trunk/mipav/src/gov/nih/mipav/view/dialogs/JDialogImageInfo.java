@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
+import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -547,6 +548,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
                 updateMatrixBox(true);
                 ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, nMatrix));
+                ProvenanceRecorder.getReference().addLine(new ActionChangeTransformInfo(image, nMatrix));
             }
         } else if (command.equals("Remove")) {
             image.getMatrixHolder().removeMatrix(matrixBox.getSelectedItem());
@@ -3104,6 +3106,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
         }
         ScriptRecorder.getReference().addLine(new ActionChangeEndianess(image));
+        ProvenanceRecorder.getReference().addLine(new ActionChangeEndianess(image));
     }
 
     /**
@@ -3135,6 +3138,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
         }
         ScriptRecorder.getReference().addLine(new ActionChangeModality(image));
+        ProvenanceRecorder.getReference().addLine(new ActionChangeModality(image));
     }
 
     /**
@@ -3172,6 +3176,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 	
         // if script recording, show the change of image orientation/axis orientations
         ScriptRecorder.getReference().addLine(new ActionChangeOrientations(image));
+        ProvenanceRecorder.getReference().addLine(new ActionChangeOrientations(image));
     }
 
     /**
@@ -3258,6 +3263,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         // script line if recording
         ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, tMat));
+        ProvenanceRecorder.getReference().addLine(new ActionChangeTransformInfo(image, tMat));
 
     }
 
@@ -3314,6 +3320,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         // add to script recorder if we are on the origin tab
         if (tabbedPane.getSelectedIndex() == 2) {
             ScriptRecorder.getReference().addLine(new ActionChangeOrigin(image));
+            ProvenanceRecorder.getReference().addLine(new ActionChangeOrigin(image));
         }
     }
 
@@ -3415,8 +3422,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         // add the new script action
         ScriptRecorder.getReference().addLine(new ActionChangeResolutions(image, resolutionBox.isSelected(), resIndex,
                                                                           sliceThickness));
-
         ScriptRecorder.getReference().addLine(new ActionChangeUnits(image));
+
+        
+        //also add to provenance
+        ProvenanceRecorder.getReference().addLine(new ActionChangeResolutions(image, resolutionBox.isSelected(), resIndex,
+                sliceThickness));
+        ProvenanceRecorder.getReference().addLine(new ActionChangeUnits(image));
     }
 
     /**
@@ -3493,6 +3505,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             if (tabbedPane.getSelectedIndex() == 5) {
                 ScriptRecorder.getReference().addLine(new ActionChangeTalairachInfo(image));
+                ProvenanceRecorder.getReference().addLine(new ActionChangeTalairachInfo(image));
             }
 
 
