@@ -69,7 +69,7 @@ public class PlugInDialogRemoveBlinks
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(resultImage);
+        scriptParameters.storeImageInRecorder(resultImage);
     }
 
     /**

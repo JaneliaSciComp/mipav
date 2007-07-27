@@ -29,7 +29,7 @@ public class PlugInDTISortingProcess implements PlugInGeneric {
 	 */
 	public void run() {
 		// TODO Auto-generated method stub
-		new PlugInDialogDTISortingProcess(false);
+	//	new PlugInDialogDTISortingProcess(false);
 	}
 
 }

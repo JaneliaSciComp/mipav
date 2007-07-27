@@ -83,6 +83,8 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
+    private String versionNum = ".5";
+    
             //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -340,7 +342,7 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
      */
     private void init() {
 
-        setTitle("Process ICG");
+        setTitle("NEI Plugin - version " + versionNum);
 
         PanelManager optionsPanel = new PanelManager("Options");
         sdField = WidgetFactory.buildTextField(Double.toString(distortionThreshold));

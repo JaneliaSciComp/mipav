@@ -217,7 +217,7 @@ public class PlugInDialogNCISeg extends JDialogScriptableBase implements Algorit
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(imageA);
-        AlgorithmParameters.storeImageInRecorder(resultImage);
+        scriptParameters.storeImageInRecorder(resultImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("doBrown", doBrown));
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));

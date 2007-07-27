@@ -214,9 +214,9 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(imageA);
-        AlgorithmParameters.storeImageInRecorder(resultImageFinal);
-        AlgorithmParameters.storeImageInRecorder(resultImageHSB_Hue);
-        AlgorithmParameters.storeImageInRecorder(resultImageRGB);
-        AlgorithmParameters.storeImageInRecorder(resultImageRGB_AllRatios);
+        scriptParameters.storeImageInRecorder(resultImageFinal);
+        scriptParameters.storeImageInRecorder(resultImageHSB_Hue);
+        scriptParameters.storeImageInRecorder(resultImageRGB);
+        scriptParameters.storeImageInRecorder(resultImageRGB_AllRatios);
     }
 }

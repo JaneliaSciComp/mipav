@@ -35,8 +35,6 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase {
             return;
         }
 
-        constructLog();
-
         if (srcImage.getNDims() == 2) {
             calc2D();
         } else if (srcImage.getNDims() > 2) {
@@ -53,14 +51,6 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase {
         destImage = null;
         srcImage = null;
         super.finalize();
-    }
-    
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("KidneySegmentation(" + ")\n");
     }
     
     private void calc2D() {
