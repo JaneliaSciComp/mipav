@@ -64,7 +64,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.getNDims() == 2) {
             calc2D();
@@ -1749,14 +1749,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         }
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("RegionDistance(" + ")\n");
     }
 
     /**

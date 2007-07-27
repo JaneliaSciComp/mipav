@@ -99,7 +99,7 @@ public class PlugInAlgorithmNCISeg extends AlgorithmBase {
             }
         }
 
-        constructLog();
+        
         calcStoreInDest();
     }
 
@@ -244,13 +244,5 @@ public class PlugInAlgorithmNCISeg extends AlgorithmBase {
         srcBuffer = null;
 
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("NCI Segmentation()\n");
     }
 }

@@ -84,7 +84,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.getNDims() == 2) {
             calc2D();
@@ -415,12 +415,4 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         setCompleted(true);
     }
 
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("ObjectDistanceKruhlak(" + String.valueOf(useRed) + ", " + String.valueOf(useGreen) +
-                                   ", " + String.valueOf(useBlue) + ", " + threshold1 + ", " + threshold2 + ")\n");
-    }
 }

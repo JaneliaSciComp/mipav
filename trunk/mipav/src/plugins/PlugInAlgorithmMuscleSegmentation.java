@@ -87,8 +87,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             return;
         }
 
-        constructLog();
-
         switch (imageType) {
             
             case ABDOMEN:
@@ -114,14 +112,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         destImage = null;
         srcImage = null;
         super.finalize();
-    }
-    
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("MuscleSegmentation(" + ")\n");
     }
     
     private void performAbdomenDialog() {

@@ -141,7 +141,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
         calcStoreInDest();
     }
 
@@ -525,14 +525,6 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
         System.err.println("Exclude Blue Red Ratio: " + excludeBRRatio);
         System.err.println("Include min Hue: " + includeMinH + " , max Hue: " + includeMaxH);
         System.err.println("Exclude min Hue: " + excludeMinH + " , max Hue: " + excludeMaxH);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("Eye Segmentation()\n");
     }
 
     /**

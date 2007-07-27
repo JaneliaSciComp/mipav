@@ -137,7 +137,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
             return;
         }
 
-        constructLog();
+        
 
         if (srcImage.getNDims() == 2) {
             calc2D();
@@ -1001,15 +1001,5 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         ViewUserInterface.getReference().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory +
                                                                                          File.separator + voiName);
         setCompleted(true);
-    }
-
-    /**
-     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("SUV_PET(" + male + ", " + height + ", " + weight + ", " + dose + ", " +
-                                   decayCorrection + ", " + radStartStr + ", " + radStartTime + ", " + acqTimeStr +
-                                   ", " + acqTime + ", " + halfLife + ")\n");
     }
 }

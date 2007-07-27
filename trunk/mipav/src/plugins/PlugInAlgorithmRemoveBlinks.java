@@ -46,18 +46,10 @@ public class PlugInAlgorithmRemoveBlinks
     }
 
     /**
-     *   Constructs a string of the contruction parameters and out puts the
-     *   string to the messsage frame if the logging procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("RemoveBlinks()\n");
-    }
-
-    /**
      *   Starts the program
      */
     public void runAlgorithm() {
-        constructLog();
+        
         removeBlinks();
     }
 
