@@ -351,50 +351,50 @@ public class VolumeShaderEffect extends ShaderEffect
 
     public void SURMode(int iImage, gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
-        if ( m_iWhichShader == SUR )
+
+        if ( m_iWhichShader == CMP_SUR )
         {
-            Program pkProgram = GetPProgram(0);
-            if ( pkProgram.GetUC("Composite") != null )
-            {
-                pkProgram.GetUC("Composite").SetDataSource(new float[] {1,0,0,0});
-            }
-            if ( pkProgram.GetUC("CompositeA") != null )
-            {
-                pkProgram.GetUC("CompositeA").SetDataSource(new float[] {1,0,0,0});
-            }
-            if ( pkProgram.GetUC("CompositeB") != null )
-            {
-                pkProgram.GetUC("CompositeB").SetDataSource(new float[] {1,0,0,0});
-            }
             return;
         }
 
-        m_iWhichShader = SUR;
+        m_iWhichShader = CMP_SUR;
         SetProgram(m_kPShaderSUR, kRenderer);
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("Composite") != null )
+        {
+            pkProgram.GetUC("Composite").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("CompositeA") != null )
+        {
+            pkProgram.GetUC("CompositeA").SetDataSource(new float[] {1,0,0,0});
+        }
+        if ( pkProgram.GetUC("CompositeB") != null )
+        {
+            pkProgram.GetUC("CompositeB").SetDataSource(new float[] {1,0,0,0});
+        }
     }
 
     public void SURFASTMode(int iImage, gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == SUR )
         {
-            Program pkProgram = GetPProgram(0);
-            if ( pkProgram.GetUC("Composite") != null )
-            {
-                pkProgram.GetUC("Composite").SetDataSource(new float[] {0,0,0,0});
-            }
-            if ( pkProgram.GetUC("CompositeA") != null )
-            {
-                pkProgram.GetUC("CompositeA").SetDataSource(new float[] {0,0,0,0});
-            }
-            if ( pkProgram.GetUC("CompositeB") != null )
-            {
-                pkProgram.GetUC("CompositeB").SetDataSource(new float[] {0,0,0,0});
-            }
             return;
         }
-
         m_iWhichShader = SUR;
         SetProgram(m_kPShaderSUR, kRenderer);
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("Composite") != null )
+        {
+            pkProgram.GetUC("Composite").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("CompositeA") != null )
+        {
+            pkProgram.GetUC("CompositeA").SetDataSource(new float[] {0,0,0,0});
+        }
+        if ( pkProgram.GetUC("CompositeB") != null )
+        {
+            pkProgram.GetUC("CompositeB").SetDataSource(new float[] {0,0,0,0});
+        }
     }
 
     private byte[] calcImageNormals( ModelImage kImage )
@@ -1046,6 +1046,7 @@ public class VolumeShaderEffect extends ShaderEffect
     private static int DDR = 1;
     private static int CMP = 2;
     private static int SUR = 3;
+    private static int CMP_SUR = 4;
     private int m_iWhichShader = -1;
     private String[] m_akClip = new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
 
