@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -157,6 +158,12 @@ public class JPanelHistoLUT
      * tri-planar volume view.
      */
     private JTextField yRangeTextA, yRangeTextB;
+    
+    /**
+     * Referenct to CT dialog.   The CT dialog only works with the componentHistogram. 
+     */
+    private JDialogCTHistoLUT ctDialogA, ctDialogB;
+	
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -552,16 +559,21 @@ public class JPanelHistoLUT
                     // Double.toString( imageB.getMin() ) );
                 }
             }
-        } else if (event.getActionCommand().equals("ctPresetsLUT")) { /* if ( tabbedPane.getSelectedComponent() ==
-                                                                       * panelA ) {
-                                                                       * if ( getHistoLUTComponentA() != null ) {
-                                                                       * ctDialogA = new JDialogCT(
-                                                                       * userInterface.getActiveImageFrame() );
-                                                                       * ctDialogA.setVisible( true ); } } else { if (
-                                                                       * getHistoLUTComponentB() != null ) { ctDialogB =
-                                                                       * new JDialogCT(
-                                                                       * userInterface.getActiveImageFrame() );
-                                                                       * ctDialogB.setVisible( true ); }}*/
+        } else if (event.getActionCommand().equals("ctPresetsLUT")) { 
+        	if (tabbedPane.getSelectedComponent() == panelA) {
+
+                if (getHistoLUTComponentA() != null) {
+                	ctDialogA = new JDialogCTHistoLUT((ViewJComponentHistoLUT)getHistoLUTComponentA());
+                    ctDialogA.setVisible(true);
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                	ctDialogB = new JDialogCTHistoLUT((ViewJComponentHistoLUT)getHistoLUTComponentB());
+                    ctDialogB.setVisible(true);
+                }
+            }
+
         } else if (event.getActionCommand().equals("alpha")) {
 
             if (tabbedPane.getSelectedComponent() == panelA) {
@@ -776,6 +788,9 @@ public class JPanelHistoLUT
             histoPanelB.finalize();
             histoPanelB = null;
         }
+        
+        if ( ctDialogA != null ) ctDialogA = null;
+        if ( ctDialogB != null ) ctDialogB = null;
     }
 
     /**
