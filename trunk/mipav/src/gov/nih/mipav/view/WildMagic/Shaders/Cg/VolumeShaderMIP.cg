@@ -42,13 +42,16 @@ bool myClip(float3 vec,
 void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
                       in float4 inPos,
                       out float4 kColor	    : COLOR0,
-                      uniform sampler2D tex, 
-                      uniform sampler3D volume_tex, 
-                      uniform sampler1D colormap, 
-                      uniform sampler1D opacitymap, 
+                      uniform sampler2D SceneImage, 
+                      uniform sampler3D VolumeImageA, 
+                      uniform sampler1D ColorMapA, 
+                      uniform sampler1D OpacityMapA, 
+//                       uniform sampler3D VolumeImageA_GM, 
+//                       uniform sampler1D OpacityMapA_GM, 
                       uniform float stepsize,
                       uniform float IsColor,
                       uniform float DoClip,
+//                          uniform float GradientMagnitude,
                       uniform float4 BackgroundColor,
                       uniform float clipX,
                       uniform float clipXInv,
@@ -63,7 +66,7 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
 {
     // find the right place to lookup in the backside buffer
     float2 texc = ((inPos.xy / inPos.w) + 1) / 2.0;
-    float4 back_position  = tex2D(tex, texc);
+    float4 back_position  = tex2D(SceneImage, texc);
 
     // the start position of the ray is stored in the texturecoordinate
     float3 start = inTexCoord1; 
@@ -99,6 +102,12 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
 
     // The opacity at the current position along the ray:
     float opacity = 0;
+
+    // The color at the current position along the ray:
+    float4 colorGM = (0,0,0,0);
+
+    // The opacity at the current position along the ray:
+    float opacityGM = 0;
 
     // Maximum value along the ray for MIP
     float fMax = 0;
@@ -147,8 +156,15 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
             // The value is not clipped, compute the color:
             if ( !bClipped )
             {
-                color = tex3D(volume_tex,position);
-                opacity = tex1D(opacitymap,color.r).r;
+                color = tex3D(VolumeImageA,position);
+                opacity = tex1D(OpacityMapA,color.r).r;
+
+//                 if ( GradientMagnitude != 0 )
+//                 {
+//                     colorGM = tex3D(VolumeImageA_GM,position);
+//                     opacityGM = tex1D(OpacityMapA_GM,colorGM.r).r;
+//                     opacity = opacity * opacityGM;
+//                 }
             }
         }
         // If the opacity is not zero:
@@ -179,13 +195,13 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
 
     if ( IsColor != 0 )
     {
-        kColor.r = tex1D(colormap,color_max.r).r;
-        kColor.g = tex1D(colormap,color_max.g).g;
-        kColor.b = tex1D(colormap,color_max.b).b;
+        kColor.r = tex1D(ColorMapA,color_max.r).r;
+        kColor.g = tex1D(ColorMapA,color_max.g).g;
+        kColor.b = tex1D(ColorMapA,color_max.b).b;
     }
     else
     {
-        kColor.rgb = tex1D(colormap,fMax).rgb;
+        kColor.rgb = tex1D(ColorMapA,fMax).rgb;
     }
     kColor = fMax * kColor + (1 - fMax) * BackgroundColor;
     kColor.a = 1;

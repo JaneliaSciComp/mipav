@@ -64,7 +64,6 @@ public class GPUVolumeRender extends JavaApplication3
         m_kAnimator.stop();
         m_kAnimator = null;
 
-        //System.err.println("GPUVolumeRender: finalize()");
         m_spkScene.finalize();
         m_spkScene = null;
 
@@ -76,9 +75,10 @@ public class GPUVolumeRender extends JavaApplication3
         }
         m_kSculptor = null;
         m_kLUTa = null;
-        m_akTransfer[0] = null;
-        m_akTransfer[1] = null;
-
+        for ( int i = 0; i < 4; i++ )
+        {
+            m_akTransfer[i] = null;
+        }
         if ( m_kShaderParamsWindow != null )
         {
             m_kShaderParamsWindow.close();
@@ -357,7 +357,7 @@ public class GPUVolumeRender extends JavaApplication3
         m_kVolumeShaderEffect.MIPMode(0, m_pkRenderer);
         m_kVolumeShaderEffect.Blend(0.5f);
 
-        for ( int i = 0; i < 2; i++ )
+        for ( int i = 0; i < 4; i++ )
         {
             if ( m_akTransfer[i] != null )
             {
@@ -442,8 +442,6 @@ public class GPUVolumeRender extends JavaApplication3
         m_fY = fMaxY/m_fMax;
         m_fZ = fMaxZ/m_fMax;
         
-        System.err.println( "GPU " + m_fX + " " + m_fY + " " + m_fZ);
-
         int iVQuantity = 24;
         int iTQuantity = 12;
         VertexBuffer pkVB = new VertexBuffer(kAttr,iVQuantity);
@@ -796,8 +794,6 @@ public class GPUVolumeRender extends JavaApplication3
             m_akBoundingBox[i] = new Polyline( new VertexBuffer(akOutlineSquare[i]), true, true );
             m_akBoundingBox[i].AttachEffect( m_spkVertexColor3Shader );
             m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
-
-            System.err.println(m_aakAxisFiles[i]);
 
             for ( int j = 0; j < 4; j++ )
             {
@@ -1442,11 +1438,17 @@ public class GPUVolumeRender extends JavaApplication3
                  * names from the axis strings: */
                 m_aakAxisFiles[i*2 +0] = new String( String.valueOf( akAxisLabels[i].charAt(0) ) );
                 m_aakAxisFiles[i*2 +1] = new String( String.valueOf( akAxisLabels[i].charAt( akAxisLabels[i].lastIndexOf( " " ) + 1 ) ) );
-                //System.err.println( aakAxisFiles[i][0] + " " + aakAxisFiles[i][1] );
             }
         }
     }
 
+    public void SetGradientMagnitude(boolean bShow)
+    {
+        if ( m_kVolumeShaderEffect != null )
+        {
+            m_kVolumeShaderEffect.SetGradientMagnitude(bShow);
+        }
+    }
 
 
 
@@ -1493,7 +1495,7 @@ public class GPUVolumeRender extends JavaApplication3
 
     private SculptorWm m_kSculptor;
 
-    private TransferFunction[] m_akTransfer = new TransferFunction[2];
+    private TransferFunction[] m_akTransfer = new TransferFunction[4];
 
     private boolean m_bInit = false;
     private Vector3f m_kTranslate;

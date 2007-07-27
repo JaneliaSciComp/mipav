@@ -121,6 +121,16 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                 }
             }
         }
+        if ( renderBase instanceof 
+                gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+        {
+            gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
+            ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            {
+                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(true);
+            }
+        }            
     }
 
     /**
@@ -230,6 +240,16 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         if (imageB != null) {
             tabbedPane.remove(panelOpacityGM_B);
         }
+        if ( renderBase instanceof 
+                gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+        {
+            gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
+            ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            {
+                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(false);
+            }
+        }  
     }
 
     /**
@@ -500,7 +520,7 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
                 if (changeTypeAlgo_A.isCompleted()) {
-                    saveGMImage(gradMagRescale_A);
+                    ModelImage.saveImage(gradMagRescale_A);
                     rendererProgressBar.setValue(40);
                     rendererProgressBar.update(rendererProgressBar.getGraphics());
 
@@ -593,7 +613,7 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                 if (changeTypeAlgo_B.isCompleted()) {
                     rendererProgressBar.setValue(80);
                     rendererProgressBar.update(rendererProgressBar.getGraphics());
-                    saveGMImage(gradMagRescale_B);
+                    ModelImage.saveImage(gradMagRescale_B);
 
                     if (gradMagRescale_B != null) {
                         dimExtentsGM_B[0] = 1024;

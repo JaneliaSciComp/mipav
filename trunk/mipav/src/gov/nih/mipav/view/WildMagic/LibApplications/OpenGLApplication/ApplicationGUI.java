@@ -1,14 +1,20 @@
-// Geometric Tools, Inc.
+// Wild Magic Source Code
+// David Eberly
 // http://www.geometrictools.com
-// Copyright (c) 1998-2006.  All Rights Reserved
+// Copyright (c) 1998-2007
 //
-// The Wild Magic Version 4 Restricted Libraries source code is supplied
-// under the terms of the license agreement
-//     http://www.geometrictools.com/License/Wm4RestrictedLicense.pdf
-// and may not be copied or disclosed except in accordance with the terms
-// of that agreement.
+// This library is free software; you can redistribute it and/or modify it
+// under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation; either version 2.1 of the License, or (at
+// your option) any later version.  The license is available for reading at
+// either of the locations:
+//     http://www.gnu.org/copyleft/lgpl.html
+//     http://www.geometrictools.com/License/WildMagicLicense.pdf
 //
-// Version: 4.0.1 (2006/10/28)
+// Version: 4.0.0 (2006/06/28
+//
+// Ported to Java by Alexandra Bokinsky, PhD, Geometric Tools, Inc.
+//
 
 package gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication;
 
@@ -27,7 +33,7 @@ public class ApplicationGUI implements ActionListener
 {
 
     /**
-     * Constructs the singleton ApplicationGUI
+     * Constructs an ApplicationGUI object.
      */
     public ApplicationGUI ()
     {
@@ -127,6 +133,9 @@ public class ApplicationGUI implements ActionListener
         ms_bInit = true;
     }
 
+    /** 
+     * Closes the ApplicationGUI frame, and clears all data members.
+     */
     public void close()
     {
         if ( m_kFrame != null )
@@ -196,6 +205,10 @@ public class ApplicationGUI implements ActionListener
         m_kParent = kParent;
     }
 
+    /** 
+     * Adds the User-Defined variables from the input Program to the use-interface.
+     * @param kProgram Program containing User-Defined shader parameters that will be added to the user-interface.
+     */
     public void AddUserVariables( Program kProgram )
     {
         for ( int i = 0; i < kProgram.GetUCQuantity(); i++ )

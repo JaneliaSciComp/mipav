@@ -456,6 +456,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         LUTToolBar.add(buildButton("coolHotLUT", "Cool hot LUT", "coolhot"));
         LUTToolBar.add(buildButton("skinLUT", "Skin LUT", "skin"));
         LUTToolBar.add(buildButton("boneLUT", "Bone LUT", "bone"));
+        LUTToolBar.add(buildButton("muscle_boneLUT", "Muscle Bone LUT", "muscleBoneLUT"));
         LUTToolBar.add(buildButton("stripedLUT", "Striped LUT", "stripedLUT"));
         LUTToolBar.add(buildButton("invertLUT", "Invert LUT", "invert"));
 

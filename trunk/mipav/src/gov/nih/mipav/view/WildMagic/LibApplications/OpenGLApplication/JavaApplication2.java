@@ -11,7 +11,10 @@
 //     http://www.gnu.org/copyleft/lgpl.html
 //     http://www.geometrictools.com/License/WildMagicLicense.pdf
 //
-// Version: 4.0.0 (2006/06/28)
+// Version: 4.0.0 (2006/06/28
+//
+// Ported to Java by Alexandra Bokinsky, PhD, Geometric Tools, Inc.
+//
 
 package gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication;
 
@@ -429,6 +432,13 @@ public abstract class JavaApplication2 extends JavaApplication
         }
     }
 
+    /**
+     * Flood fill operation.
+     * @param iX start x-coordinate in pixels
+     * @param iY start y-coordinate in pixels
+     * @param kFColor the fill color.
+     * @param kBColor the back-ground color.
+     */
     public void Fill (int iX, int iY, ColorRGB kFColor, ColorRGB kBColor)
     {
         // Allocate the maximum amount of space needed.  If you prefer less, you

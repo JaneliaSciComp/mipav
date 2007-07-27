@@ -840,7 +840,7 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         opacitySliderLabelsGM_B[1].setFont(MipavUtil.font12);
         opacitySliderLabelsGM_B[2].setFont(MipavUtil.font12);
     }
-
+    
     /**
      * Loads the gradient magnitude image instead of recalculating the image.
      *
@@ -871,27 +871,6 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         }
 
         return false;
-    }
-
-    /**
-     * Save the gradient magnitude image into the MIPAV default dir.
-     *
-     * @param  gmImage  ModelImage gradient magnitude image to save
-     */
-    protected void saveGMImage(ModelImage gmImage) {
-        String fName = gmImage.getImageName();
-        String dName = ViewUserInterface.getReference().getDefaultDirectory();
-        FileIO fileIO = new FileIO();
-
-        fileIO.setQuiet(true);
-
-        FileWriteOptions options = new FileWriteOptions(false);
-
-        options.setFileDirectory(dName);
-        options.setFileName(fName);
-        options.setBeginSlice(0);
-        options.setEndSlice(gmImage.getExtents()[2] - 1);
-        fileIO.writeImage(gmImage, options);
     }
     
     public void update()
