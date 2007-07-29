@@ -1564,7 +1564,7 @@ public class JPanelClip extends JPanelRendererBase
         clipSliderX.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
         clipSliderX.addChangeListener(this);
         clipSliderX.addMouseListener(this);
-        xSlice = clipSliderX.getValue();
+        xSlice = clipSliderX.getValue() - 1;
         clipSliderX.setVisible(true);
         clipSliderX.setEnabled(false);
 
@@ -1650,7 +1650,7 @@ public class JPanelClip extends JPanelRendererBase
         sliderXInv.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
         sliderXInv.addChangeListener(this);
         sliderXInv.addMouseListener(this);
-        xSliceInv = sliderXInv.getValue();
+        xSliceInv = sliderXInv.getValue() - 1;
         sliderXInv.setVisible(true);
         sliderXInv.setEnabled(false);
 
@@ -1736,7 +1736,7 @@ public class JPanelClip extends JPanelRendererBase
         clipSliderY.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
         clipSliderY.addChangeListener(this);
         clipSliderY.addMouseListener(this);
-        ySlice = clipSliderY.getValue();
+        ySlice = clipSliderY.getValue() - 1;
         clipSliderY.setVisible(true);
         clipSliderY.setEnabled(false);
 
@@ -1822,7 +1822,7 @@ public class JPanelClip extends JPanelRendererBase
         sliderYInv.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
         sliderYInv.addChangeListener(this);
         sliderYInv.addMouseListener(this);
-        ySliceInv = sliderYInv.getValue();
+        ySliceInv = sliderYInv.getValue() - 1;
         sliderYInv.setVisible(true);
         sliderYInv.setEnabled(false);
 
@@ -1908,7 +1908,7 @@ public class JPanelClip extends JPanelRendererBase
         clipSliderZ.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
         clipSliderZ.addChangeListener(this);
         clipSliderZ.addMouseListener(this);
-        zSlice = clipSliderZ.getValue();
+        zSlice = clipSliderZ.getValue() - 1;
         clipSliderZ.setVisible(true);
         clipSliderZ.setEnabled(false);
 
@@ -1994,7 +1994,7 @@ public class JPanelClip extends JPanelRendererBase
         sliderZInv.addChangeListener(((SurfaceRender) renderBase).getMouseDialog());
         sliderZInv.addChangeListener(this);
         sliderZInv.addMouseListener(this);
-        zSliceInv = sliderZInv.getValue();
+        zSliceInv = sliderZInv.getValue() -1;
         sliderZInv.setVisible(true);
         sliderZInv.setEnabled(false);
 

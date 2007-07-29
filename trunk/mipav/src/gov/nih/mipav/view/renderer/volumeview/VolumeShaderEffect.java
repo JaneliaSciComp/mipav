@@ -302,7 +302,7 @@ public class VolumeShaderEffect extends ShaderEffect
                      kRenderer.GetMaxVShaderImages(),
                      kRenderer.GetMaxPShaderImages());
 
-        //ResetClip();
+        ResetClip();
         SetBackgroundColor( m_kBackgroundColor );
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("blend") != null ) 
@@ -760,10 +760,10 @@ public class VolumeShaderEffect extends ShaderEffect
                      kRenderer.GetMaxTCoords(),
                      kRenderer.GetMaxVShaderImages(),
                      kRenderer.GetMaxPShaderImages());
-        //ResetClip();
+        ResetClip();
     }
 
-    public void ResetClip( float[] afData )
+    public void InitClip( float[] afData )
     {
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("DoClip") != null ) 
@@ -780,14 +780,38 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    private void ResetClip()
+    {
+        for ( int i = 0; i < 6; i++ )
+        {
+            if ( m_aafClipData[i] != null )
+            {
+                SetClip( i, m_aafClipData[i] );
+            }
+        }
+        if ( m_afClipEyeData != null )
+        {
+            SetClipEye(m_afClipEyeData);
+        }
+        if ( m_afClipEyeInvData != null )
+        {
+            SetClipEyeInv(m_afClipEyeInvData);
+        }
+        if ( m_afClipArbData != null )
+        {
+            SetClipArb(m_afClipArbData);
+        }
+    }
+
     public void SetClip(int iWhich, float[] data)
     {
+        m_aafClipData[iWhich] = data;
         EnableClip();
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC(m_akClip[iWhich]) != null ) 
         {
             pkProgram.GetUC(m_akClip[iWhich]).SetDataSource(data);
-        }       
+        }
     }
     private void EnableClip()
     {
@@ -800,6 +824,7 @@ public class VolumeShaderEffect extends ShaderEffect
 
     public void SetClipEye(float[] afEquation)
     {
+        m_afClipEyeData = afEquation;
         EnableClip();
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("clipEye") != null ) 
@@ -810,6 +835,7 @@ public class VolumeShaderEffect extends ShaderEffect
 
     public void SetClipEyeInv(float[] afEquation)
     {
+        m_afClipEyeInvData = afEquation;
         EnableClip();
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("clipEyeInv") != null ) 
@@ -820,6 +846,7 @@ public class VolumeShaderEffect extends ShaderEffect
 
     public void SetClipArb(float[] afEquation)
     {
+        m_afClipArbData = afEquation;
         EnableClip();
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("clipArb") != null ) 
@@ -1049,7 +1076,11 @@ public class VolumeShaderEffect extends ShaderEffect
     private static int CMP_SUR = 4;
     private int m_iWhichShader = -1;
     private String[] m_akClip = new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
-
+    private float[][] m_aafClipData = new float[6][];
+    private float[] m_afClipEyeData = null;
+    private float[] m_afClipEyeInvData = null;
+    private float[] m_afClipArbData = null;
+    
     private Texture m_kSceneTarget;
     private float[] m_afBlend = new float[]{.5f,0,0,0};
     private ColorRGBA m_kBackgroundColor = ColorRGBA.BLACK;
