@@ -869,29 +869,24 @@ public class GPUVolumeRender extends JavaApplication3
         m_kClipEyeInv.UpdateRS();
         m_pkRenderer.LoadResources(m_kClipEyeInv);
 
-        float[] afData = 
-            new float[] { 0, m_fX, 0, m_fY, 0, m_fZ };
-        m_kVolumeShaderEffect.ResetClip(afData);
+       m_kVolumeShaderEffect.InitClip(new float[] { 0, 1, 0, 1, 0, 1 });
     }
 
 
     public void setClipPlane( int iWhich, float fValue, String cmd )
     {
-        fValue -= 1;
         if ( iWhich < 2 )
         {
-            fValue = fValue * m_kImageA.getFileInfo(0).getResolutions()[0];
+            fValue /= (m_kImageA.getExtents()[0] -1);
         }
         else if ( iWhich < 4 )
         {
-            fValue = fValue * m_kImageA.getFileInfo(0).getResolutions()[1];
+            fValue /= (m_kImageA.getExtents()[1]-1);
         }
         else
         {
-            fValue = fValue * m_kImageA.getFileInfo(0).getResolutions()[2];
+            fValue /= (m_kImageA.getExtents()[2] -1);
         }
-        fValue /= m_fMax;
-        
         for ( int i = 0; i < 4; i++ )
         {
             Vector3f kPos = m_akPolyline[iWhich].VBuffer.Position3( i );
@@ -905,7 +900,7 @@ public class GPUVolumeRender extends JavaApplication3
             }
             else
             {
-                kPos.Z(fValue);
+                kPos.Z(fValue * m_fZ);
             }
             m_akPolyline[iWhich].VBuffer.Position3( i, kPos );
         }
@@ -1031,6 +1026,7 @@ public class GPUVolumeRender extends JavaApplication3
         if ( !bEnable )
         {
             setEyeClipPlane(0, bDisplay);
+            setEyeInvClipPlane(m_kImageA.getExtents()[2] - 1, bDisplay);
         }
     }
 
@@ -1041,25 +1037,20 @@ public class GPUVolumeRender extends JavaApplication3
         if ( !bEnable )
         {
             setEyeInvClipPlane(m_kImageA.getExtents()[2] - 1, bDisplay);
+            setEyeClipPlane(0, bDisplay);
         }
     }
 
     public void setEyeClipPlane( float f4, boolean bDisplay )
     {
-        f4 -= 1;
-        f4 *= m_kImageA.getResolutions(0)[2];
-        f4 /= m_fMax;
-
+        f4 /= (m_kImageA.getExtents()[2] -1);
         Vector4f kEyeClipV = new Vector4f(0,0,1,f4);
-        
         float[] afEquation = new float[4];
         afEquation[0] = kEyeClipV.X();
         afEquation[1] = kEyeClipV.Y();
         afEquation[2] = kEyeClipV.Z();;
         afEquation[3] = kEyeClipV.W();
-
-
-        float fZ = kEyeClipV.W();
+        float fZ = kEyeClipV.W() * m_fZ;
         
         m_kClipEye.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
         m_kClipEye.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
@@ -1076,19 +1067,14 @@ public class GPUVolumeRender extends JavaApplication3
 
     public void setEyeInvClipPlane( float f4, boolean bDisplay )
     {
-        f4 -= 1;
-        f4 *= m_kImageA.getResolutions(0)[2];
-        f4 /= m_fMax;
+        f4 /= (m_kImageA.getExtents()[2] -1);
         Vector4f kEyeClipV = new Vector4f(0,0,1,f4);
-
         float[] afEquation = new float[4];
         afEquation[0] = kEyeClipV.X();
         afEquation[1] = kEyeClipV.Y();
         afEquation[2] = kEyeClipV.Z();;
         afEquation[3] = kEyeClipV.W();
-
-
-        float fZ = kEyeClipV.W();
+        float fZ = kEyeClipV.W() * m_fZ;
         
         m_kClipEyeInv.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
         m_kClipEyeInv.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
@@ -1135,9 +1121,7 @@ public class GPUVolumeRender extends JavaApplication3
 
     public void setArbitraryClipPlane( float f4 )
     {
-        f4 -= 1;
-        f4 *= m_kImageA.getResolutions(0)[0];
-        f4 /= m_fMax;
+        f4 /= (m_kImageA.getExtents()[0] -1);
         m_kArbitraryClip = new Vector4f(1,0,0,f4);
         doClip();
     }
@@ -1145,7 +1129,7 @@ public class GPUVolumeRender extends JavaApplication3
     private void doClip() 
     {        
         // update position of the bounding box:
-        m_kClipArb.Local.SetTranslate( m_kTranslate.add( new Vector3f( m_kArbitraryClip.W(), 0, 0 ) ) );
+        m_kClipArb.Local.SetTranslate( m_kTranslate.add( new Vector3f( m_kArbitraryClip.W() * m_fX, 0, 0 ) ) );
 
         // Rotate normal vector:
         Matrix3f kClipRotate = m_kArbRotate.Local.GetRotate();
@@ -1160,10 +1144,8 @@ public class GPUVolumeRender extends JavaApplication3
         afEquation[3] = m_kArbitraryClip.W();
 
         Vector3f kPos = new Vector3f( m_kArbitraryClip.W(), 0, 0 );
-        //kPos.addEquals(m_kTranslate);
         kPos.subEquals( new Vector3f( .5f, .5f, .5f ));
         kPos = kClipRotate.mult(kPos);
-        //kPos.subEquals( m_kTranslate );
         kPos.addEquals( new Vector3f( .5f, .5f, .5f ));
         afEquation[3] = kNormal.Dot(kPos);
 
