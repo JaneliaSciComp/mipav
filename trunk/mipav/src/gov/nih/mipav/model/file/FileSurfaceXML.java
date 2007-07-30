@@ -127,7 +127,6 @@ public class FileSurfaceXML extends FileXML {
         SurfaceXMLHandler kSurfaceXMLHandler = new SurfaceXMLHandler((FileInfoSurfaceXML) fileInfo);
 
         /* Output file: */
-        BufferedWriter bw;
         FileWriter fw;
         File headerFile;
 
@@ -141,7 +140,7 @@ public class FileSurfaceXML extends FileXML {
         bw.newLine();
 
         /* Open the surface tag: */
-        openTag(bw, "Surface xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+        openTag("Surface xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
 
         /***************************************************************************************/
 
@@ -168,43 +167,43 @@ public class FileSurfaceXML extends FileXML {
             kMesh[index].getCoordinateIndices(0, aiIndex);
 
             /* Write the Unique-ID: */
-            closedTag(bw, m_kSurfaceStr[0], new String("22"));
+            closedTag( m_kSurfaceStr[0], new String("22"));
 
             /* Open the Material tag and write the material values (ambient,
              * diffuse, emissive, specular, shininess: */
-            openTag(bw, m_kSurfaceStr[1], true);
-            closedTag(bw, m_kMaterialStr[0], kSurfaceXMLHandler.getColorString(kAmbient));
-            closedTag(bw, m_kMaterialStr[1], kSurfaceXMLHandler.getColorString(kDiffuse));
-            closedTag(bw, m_kMaterialStr[2], kSurfaceXMLHandler.getColorString(kEmissive));
-            closedTag(bw, m_kMaterialStr[3], kSurfaceXMLHandler.getColorString(kSpecular));
-            closedTag(bw, m_kMaterialStr[4], new String(" " + kShininess + " "));
-            openTag(bw, m_kSurfaceStr[1], false);
+            openTag(m_kSurfaceStr[1], true);
+            closedTag( m_kMaterialStr[0], kSurfaceXMLHandler.getColorString(kAmbient));
+            closedTag( m_kMaterialStr[1], kSurfaceXMLHandler.getColorString(kDiffuse));
+            closedTag( m_kMaterialStr[2], kSurfaceXMLHandler.getColorString(kEmissive));
+            closedTag( m_kMaterialStr[3], kSurfaceXMLHandler.getColorString(kSpecular));
+            closedTag( m_kMaterialStr[4], new String(" " + kShininess + " "));
+            openTag(m_kSurfaceStr[1], false);
 
             /* Write the type of Mesh (TMesh) */
-            closedTag(bw, m_kSurfaceStr[2], "TMesh");
+            closedTag( m_kSurfaceStr[2], "TMesh");
 
             /* Write the surface opacity */
-            closedTag(bw, m_kSurfaceStr[3], new String(" " + opacity + " "));
+            closedTag( m_kSurfaceStr[3], new String(" " + opacity + " "));
 
             /* Write the surface level of detial */
-            closedTag(bw, m_kSurfaceStr[4], new String(" " + levelDetail + " "));
+            closedTag( m_kSurfaceStr[4], new String(" " + levelDetail + " "));
 
 
             /* Write the TriangleMesh, Vertices, (Normals), Connectivity */
-            openTag(bw, m_kSurfaceStr[5], true);
-            closedTag(bw, m_kMeshStr[0], kSurfaceXMLHandler.getVertexString(akCoordinates));
+            openTag(m_kSurfaceStr[5], true);
+            closedTag( m_kMeshStr[0], kSurfaceXMLHandler.getVertexString(akCoordinates));
 
             if (akNormals != null) {
-                closedTag(bw, m_kMeshStr[1], kSurfaceXMLHandler.getNormalString(akNormals));
+                closedTag( m_kMeshStr[1], kSurfaceXMLHandler.getNormalString(akNormals));
             }
 
             if (akColors != null) {
-                closedTag(bw, m_kMeshStr[2], kSurfaceXMLHandler.getColorString(akColors));
+                closedTag( m_kMeshStr[2], kSurfaceXMLHandler.getColorString(akColors));
             }
 
-            closedTag(bw, m_kMeshStr[3], kSurfaceXMLHandler.getIndexString(aiIndex));
+            closedTag( m_kMeshStr[3], kSurfaceXMLHandler.getIndexString(aiIndex));
 
-            openTag(bw, m_kSurfaceStr[5], false);
+            openTag(m_kSurfaceStr[5], false);
 
             /* Delete local variables: */
             for (int i = 0; i < iVertexCount; i++) {
@@ -222,7 +221,7 @@ public class FileSurfaceXML extends FileXML {
 
         /********************************************************************************/
         /* Close the surface tag: */
-        openTag(bw, "Surface", false);
+        openTag("Surface", false);
 
         bw.close();
 
@@ -285,7 +284,7 @@ public class FileSurfaceXML extends FileXML {
         bw.newLine();
 
         /* Open the surface tag: */
-        openTag(bw, "Surface xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+        openTag("Surface xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
 
         /***************************************************************************************/
 
@@ -311,44 +310,44 @@ public class FileSurfaceXML extends FileXML {
             kMesh.getCoordinateIndices(0, aiIndex);
 
             /* Write the Unique-ID: */
-            closedTag(bw, m_kSurfaceStr[0], new String("22"));
+            closedTag( m_kSurfaceStr[0], new String("22"));
 
             /* Open the Material tag and write the material values (ambient,
              * diffuse, emissive, specular, shininess: */
-            openTag(bw, m_kSurfaceStr[1], true);
-            closedTag(bw, m_kMaterialStr[0], kSurfaceXMLHandler.getColorString(kAmbient));
-            closedTag(bw, m_kMaterialStr[1], kSurfaceXMLHandler.getColorString(kDiffuse));
-            closedTag(bw, m_kMaterialStr[2], kSurfaceXMLHandler.getColorString(kEmissive));
-            closedTag(bw, m_kMaterialStr[3], kSurfaceXMLHandler.getColorString(kSpecular));
-            closedTag(bw, m_kMaterialStr[4], new String(" " + kShininess + " "));
-            openTag(bw, m_kSurfaceStr[1], false);
+            openTag(m_kSurfaceStr[1], true);
+            closedTag( m_kMaterialStr[0], kSurfaceXMLHandler.getColorString(kAmbient));
+            closedTag( m_kMaterialStr[1], kSurfaceXMLHandler.getColorString(kDiffuse));
+            closedTag( m_kMaterialStr[2], kSurfaceXMLHandler.getColorString(kEmissive));
+            closedTag( m_kMaterialStr[3], kSurfaceXMLHandler.getColorString(kSpecular));
+            closedTag( m_kMaterialStr[4], new String(" " + kShininess + " "));
+            openTag(m_kSurfaceStr[1], false);
 
             /* Write the type of Mesh (TMesh) */
-            closedTag(bw, m_kSurfaceStr[2], "TMesh");
+            closedTag( m_kSurfaceStr[2], "TMesh");
 
             /* Write the surface opacity */
-            closedTag(bw, m_kSurfaceStr[3], new String(" " + opacity + " "));
+            closedTag( m_kSurfaceStr[3], new String(" " + opacity + " "));
 
             /* Write the surface level of detial */
-            closedTag(bw, m_kSurfaceStr[4], new String(" " + levelDetail + " "));
+            closedTag( m_kSurfaceStr[4], new String(" " + levelDetail + " "));
 
 
             /* Write the TriangleMesh, Vertices, (Normals), Connectivity */
-            openTag(bw, m_kSurfaceStr[5], true);
-            closedTag(bw, m_kMeshStr[0], kSurfaceXMLHandler.getVertexString(akCoordinates));
+            openTag(m_kSurfaceStr[5], true);
+            closedTag( m_kMeshStr[0], kSurfaceXMLHandler.getVertexString(akCoordinates));
 
             /*
             if (akNormals != null) {
-                closedTag(bw, m_kMeshStr[1], kSurfaceXMLHandler.getNormalString(akNormals));
+                closedTag( m_kMeshStr[1], kSurfaceXMLHandler.getNormalString(akNormals));
             }
 
             if (akColors != null) {
-                closedTag(bw, m_kMeshStr[2], kSurfaceXMLHandler.getColorString(akColors));
+                closedTag( m_kMeshStr[2], kSurfaceXMLHandler.getColorString(akColors));
             }
             */
-            closedTag(bw, m_kMeshStr[3], kSurfaceXMLHandler.getIndexString(aiIndex));
+            closedTag( m_kMeshStr[3], kSurfaceXMLHandler.getIndexString(aiIndex));
 
-            openTag(bw, m_kSurfaceStr[5], false);
+            openTag(m_kSurfaceStr[5], false);
 
             /* Delete local variables: */
             for (int i = 0; i < iVertexCount; i++) {
@@ -366,7 +365,7 @@ public class FileSurfaceXML extends FileXML {
 
         /********************************************************************************/
         /* Close the surface tag: */
-        openTag(bw, "Surface", false);
+        openTag("Surface", false);
 
         bw.close();
 
