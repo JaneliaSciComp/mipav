@@ -473,6 +473,8 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             // With a user specified sidePointsForTangent on each side of a point find the tangent line that
             // minimizes the sum of the squared distances from these side points to the tangent line 
             if (sidePointsForTangent == 1) {
+                xpc = xPoints[1];
+                ypc = yPoints[1];
                 tangentX = (xPoints[2] - xPoints[0])/2.0f;
                 tangentY = (yPoints[2] - yPoints[0])/2.0f;
                 if (tangentX == 0.0f) {
@@ -566,12 +568,15 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
                     omegaIndex = (int)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/binWidth);
                 }    
             }
-            distX = centerX - xPoints[sidePointsForTangent];
-            distY = centerY - yPoints[sidePointsForTangent];
+            distX = centerX - xpc;
+            distY = centerY - ypc;
             floatArray = new float[2];
             floatArray[0] = (float)Math.sqrt(distX*distX + distY*distY);
             floatArray[1] = (float)Math.atan2(distY, distX);
             omegaRBetaList[omegaIndex].add(floatArray);
+            //centerX = xpc + floatArray[0] * Math.cos(floatArray[1]);
+            //centerY = ypc + floatArray[0] * Math.sin(floatArray[1]);
+            //System.out.println("centerX = " + centerX + " centerY = " + centerY);
         } // for (n = 0; n <= numPoints - 1; n++)
         
         //      Make storage string
