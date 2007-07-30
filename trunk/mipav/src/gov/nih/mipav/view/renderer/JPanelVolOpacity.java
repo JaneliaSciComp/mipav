@@ -89,6 +89,16 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
             ViewJComponentVolOpacityBase selectedComponent = getSelectedComponent();
             selectedComponent.horizonMode();
         }
+        if ( renderBase instanceof 
+                gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+        {
+            gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
+            ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            {
+                ((ViewJFrameVolumeViewWM)kParentFrame).updateImages(true);
+            }
+        }
     } // end actionPerformed()
 
     /**

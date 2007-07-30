@@ -46,12 +46,12 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
                       uniform sampler3D VolumeImageA, 
                       uniform sampler1D ColorMapA, 
                       uniform sampler1D OpacityMapA, 
-//                       uniform sampler3D VolumeImageA_GM, 
-//                       uniform sampler1D OpacityMapA_GM, 
+                         uniform sampler3D VolumeImageA_GM, 
+                         uniform sampler1D OpacityMapA_GM, 
                       uniform float stepsize,
                       uniform float IsColor,
                       uniform float DoClip,
-//                          uniform float GradientMagnitude,
+                          uniform float GradientMagnitude,
                       uniform float4 BackgroundColor,
                       uniform float clipX,
                       uniform float clipXInv,
@@ -103,10 +103,8 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
     // The opacity at the current position along the ray:
     float opacity = 0;
 
-    // The color at the current position along the ray:
+    // Gradient magnitude values along the ray:
     float4 colorGM = (0,0,0,0);
-
-    // The opacity at the current position along the ray:
     float opacityGM = 0;
 
     // Maximum value along the ray for MIP
@@ -159,12 +157,12 @@ void p_VolumeShaderMIP(  in float3 inTexCoord1    : TEXCOORD0,
                 color = tex3D(VolumeImageA,position);
                 opacity = tex1D(OpacityMapA,color.r).r;
 
-//                 if ( GradientMagnitude != 0 )
-//                 {
-//                     colorGM = tex3D(VolumeImageA_GM,position);
-//                     opacityGM = tex1D(OpacityMapA_GM,colorGM.r).r;
-//                     opacity = opacity * opacityGM;
-//                 }
+                if ( GradientMagnitude != 0 )
+                {
+                    colorGM = tex3D(VolumeImageA_GM,position);
+                    opacityGM = tex1D(OpacityMapA_GM,colorGM.r).r;
+                    opacity = opacity * opacityGM;
+                }
             }
         }
         // If the opacity is not zero:

@@ -457,6 +457,7 @@ public class JPanelHistoLUT
                     histoPanelB.updateLUTRecorder();
                 }
             }
+            updateFrames(false);
         } else if (event.getActionCommand().equals("resetLinearLUT")) {
 
             if (tabbedPane.getSelectedComponent() == panelA) {
@@ -472,6 +473,7 @@ public class JPanelHistoLUT
                     histoPanelB.updateLUTRecorder();
                 }
             }
+            updateFrames(false);
         } else if (event.getActionCommand().equals("evendistriLUT")) {
 
             if (tabbedPane.getSelectedComponent() == panelA) {
@@ -487,6 +489,7 @@ public class JPanelHistoLUT
                     histoPanelB.updateLUTRecorder();
                 }
             }
+            updateFrames(false);
         } else if (event.getActionCommand().equals("thresholdLUT")) {
 
             if (tabbedPane.getSelectedComponent() == panelA) {

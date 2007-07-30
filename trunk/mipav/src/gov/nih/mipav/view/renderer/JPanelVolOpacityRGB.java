@@ -174,6 +174,16 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
             ViewJComponentVolOpacityBase selectedComponent = getSelectedComponent();
             selectedComponent.horizonMode();
         }
+        if ( renderBase instanceof 
+                gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+        {
+            gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
+            ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            {
+                ((ViewJFrameVolumeViewWM)kParentFrame).updateImages(true);
+            }
+        }
     }
 
     /**
@@ -206,6 +216,16 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 }
             }
         }
+        if ( renderBase instanceof 
+                gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+        {
+            gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
+            ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            {
+                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(true);
+            }
+        }            
     }
 
     /**
@@ -487,6 +507,16 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
         if (imageB != null) {
             tabbedPane.remove(panelOpacityGM_B);
         }
+        if ( renderBase instanceof 
+                gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+        {
+            gov.nih.mipav.view.renderer.surfaceview.SurfaceRender kParent = (gov.nih.mipav.view.renderer.surfaceview.SurfaceRender) renderBase;
+            ViewJFrameVolumeView kParentFrame = kParent.getParentFrame();
+            if ( kParentFrame instanceof ViewJFrameVolumeViewWM )
+            {
+                ((ViewJFrameVolumeViewWM)kParentFrame).setGradientMagnitude(false);
+            }
+        }            
     }
 
     /**

@@ -873,7 +873,7 @@ public class GPUVolumeRender extends JavaApplication3
     }
 
 
-    public void setClipPlane( int iWhich, float fValue, String cmd )
+    public void setClipPlane( int iWhich, float fValue )
     {
         if ( iWhich < 2 )
         {
@@ -1435,6 +1435,13 @@ public class GPUVolumeRender extends JavaApplication3
         }
     }
 
+    public void SelfShadow(boolean bShadow)
+    {
+        if ( m_kVolumeShaderEffect != null )
+        {
+            m_kVolumeShaderEffect.SelfShadow(bShadow);
+        }
+    }
 
 
     private Node m_spkScene;
