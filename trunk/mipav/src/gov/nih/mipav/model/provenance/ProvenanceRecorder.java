@@ -54,7 +54,10 @@ public class ProvenanceRecorder {
     /** The table containing image-placeholder-to-image-name mappings for the script we are currently recording. */
     protected ImageVariableTable imageTable;
 
+    /** Vector of Strings holding the registers of images used as input*/
     protected Vector<String> inputImages;
+    
+    /** Vector of Strings holding the registers of images used as output*/
     protected Vector<String> outputImages;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -67,15 +70,15 @@ public class ProvenanceRecorder {
         inputImages = new Vector<String>();
         outputImages = new Vector<String>();
         recorderStatus = STOPPED;
-        Preferences.debug("script recorder:\tCreated" + "\n", Preferences.DEBUG_SCRIPTING);
+        Preferences.debug("script recorder:\tCreated" + LINE_SEPARATOR, Preferences.DEBUG_SCRIPTING);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Returns a reference to the script recorder.
+     * Returns a reference to the provenance recorder.
      *
-     * @return  A reference to the script recorder.
+     * @return  A reference to the provenance recorder.
      */
     public synchronized static final ProvenanceRecorder getReference() {
 
@@ -86,6 +89,10 @@ public class ProvenanceRecorder {
         return singletonReference;
     }
     
+    /**
+     * Adds an image register as an input-image
+     * @param var
+     */
     public synchronized void addInputImage(String var) {
     	inputImages.addElement(var);
     }
@@ -95,8 +102,8 @@ public class ProvenanceRecorder {
     }
     
     /**
-     * Add a line to the current script by requesting a script action to generate its script line.
-     * @param  scriptAction  The script action to add to the current script we are recording.
+     * Adds a scriptable action to an image's data provenance
+     * @param scriptAction script action such as changing name, changing resolutions etc
      */
     public synchronized void addLine(ScriptableActionInterface scriptAction) {
     	//set this to be recognized as a provenance action (not script)
@@ -105,9 +112,7 @@ public class ProvenanceRecorder {
     	}
     	
         if (getRecorderStatus() == RECORDING) {
-        	System.err.println("here");
             scriptAction.insertScriptLine();
-            // no notification is necessary since the scriptAction must call the other addLine() method to actually add to the script
         }
     }
 
@@ -143,7 +148,7 @@ public class ProvenanceRecorder {
         		   imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder().addElement(entry);
         		   imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder().sort();
         		   
-        		   System.err.println("Output Provenance: " + imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder() + "\n");
+        		   System.err.println("Output Provenance: " + imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder() + LINE_SEPARATOR);
         		   
         	   }
            } 
@@ -168,10 +173,10 @@ public class ProvenanceRecorder {
     /**
      * Erases the current script.
      */
-    public synchronized void resetScript() {
+    public synchronized void resetRecorder() {
         imageTable = new ImageVariableTable();
         
-        Preferences.debug("script recorder:\tScript reset" + "\n", Preferences.DEBUG_SCRIPTING);
+        Preferences.debug("script recorder:\tScript reset" + LINE_SEPARATOR, Preferences.DEBUG_SCRIPTING);
     }
     
     /**
@@ -184,7 +189,7 @@ public class ProvenanceRecorder {
             return imageTable;
         }
         
-        Preferences.debug("script recorder:\tRetrieved image table while no script is being recorded." + "\n", Preferences.DEBUG_SCRIPTING);
+        Preferences.debug("script recorder:\tRetrieved image table while no script is being recorded." + LINE_SEPARATOR, Preferences.DEBUG_SCRIPTING);
         return null;
     }
 
@@ -203,7 +208,8 @@ public class ProvenanceRecorder {
      * @param  status  The new status for the script recorder.
      */
     protected synchronized void setRecorderStatus(int status) {
-        Preferences.debug("provenance recorder:\tStatus changed from\t" + statusStrings[recorderStatus] + "\tto\t" + statusStrings[status] + "\n", Preferences.DEBUG_SCRIPTING);
+        Preferences.debug("provenance recorder:\tStatus changed from\t" + statusStrings[recorderStatus] + "\tto\t" + statusStrings[status] + 
+        		LINE_SEPARATOR, Preferences.DEBUG_SCRIPTING);
         
         recorderStatus = status;
     }
@@ -216,12 +222,12 @@ public class ProvenanceRecorder {
      */
     public synchronized boolean startRecording() {
         if (getRecorderStatus() == STOPPED) {
-            Preferences.debug("provenance recorder:\tNew script started." + "\n", Preferences.DEBUG_SCRIPTING);
-            resetScript();
+            Preferences.debug("provenance recorder:\tNew script started." + LINE_SEPARATOR, Preferences.DEBUG_SCRIPTING);
+            resetRecorder();
             setRecorderStatus(RECORDING);
             return true;
         } else if (getRecorderStatus() == PAUSED) {
-            Preferences.debug("provenance recorder:\tresumed." + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("provenance recorder:\tresumed." + LINE_SEPARATOR, Preferences.DEBUG_SCRIPTING);
             setRecorderStatus(RECORDING);
             return true;
         } else {
@@ -235,7 +241,7 @@ public class ProvenanceRecorder {
      */
     public synchronized void pauseRecording() {
         if (getRecorderStatus() == RECORDING) {
-            Preferences.debug("script recorder:\tPaused." + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("script recorder:\tPaused." + LINE_SEPARATOR, Preferences.DEBUG_SCRIPTING);
             setRecorderStatus(PAUSED);
         } else {
             MipavUtil.displayError("Cannot pause script recording.  Recording is either already paused or is stopped.");
@@ -248,7 +254,7 @@ public class ProvenanceRecorder {
      */
     public synchronized void stopRecording() {
         if (getRecorderStatus() != STOPPED) {
-            Preferences.debug("script recorder:\tStopped." + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("script recorder:\tStopped." + LINE_SEPARATOR, Preferences.DEBUG_SCRIPTING);
             setRecorderStatus(STOPPED);
         } else {
             MipavUtil.displayError("Cannot stop script recording.  No recording is currently taking place.");

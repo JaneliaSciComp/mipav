@@ -88,7 +88,7 @@ public abstract class ActionImageProcessorBase extends ActionBase {
      * Returns whether an image has been registered in the script recorder.  If it has not been used, it must be specified externally when this script is run later.
      * 
      * @param   image  The image to look for in the recorder's image table.
-     * 
+     * @param   isScript boolean telling whether this operation involves the script recorder (or provenance recorder)
      * @return  <code>True</code> if the image has been stored in the recorder's image table, <code>false</code> otherwise.
      */
     protected static final boolean isImageStoredInRecorder(ModelImage image, boolean isScript) {
@@ -102,6 +102,7 @@ public abstract class ActionImageProcessorBase extends ActionBase {
     /**
      * Creates a new image parameter for the action's input image, determining whether it needs to be externally-specified or will be generated from another script action.
      * 
+     * @param   isScript boolean telling whether this operation involves the script recorder (or provenance recorder)
      * @return  A new image parameter pointing to this action's input image.
      * 
      * @throws  ParserException  If there is a problem encountered while creating the new parameter.
@@ -121,7 +122,8 @@ public abstract class ActionImageProcessorBase extends ActionBase {
      * Store an image in the script recorder image variable table.  Used to store input/output images while recording a script.  Should not be used while running a script.
      *
      * @param   image  The image to store in the variable table.
-     *
+     * @param   isScript boolean telling whether this operation involves the script recorder (or provenance recorder)
+     * 
      * @return  The image placeholder variable assigned to the image by the variable table.
      */
     protected static final String storeImageInRecorder(ModelImage image, boolean isScript) {

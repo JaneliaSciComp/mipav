@@ -471,7 +471,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             try {
                 BufferedWriter br = new BufferedWriter(new FileWriter(directory + fileName));
-                image.getHistoryArea().write(br);
+              //  image.getHistoryArea().write(br);
                 br.flush();
                 br.close();
             } catch (IOException error) {
@@ -479,13 +479,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
 
         } else if (command.equals("Clear")) {
-            image.getHistoryArea().setText("");
         } else if (command.equals("Copy")) {
-            image.getHistoryArea().copy();
         } else if (command.equals("Cut")) {
-            image.getHistoryArea().cut();
         } else if (command.equals("Paste")) {
-            image.getHistoryArea().paste();
         } else if (command.equals("Invert")) {
 
             TransMatrix invertedMatrix = new TransMatrix(image.getNDims() + 1, transformIDBox.getSelectedIndex());
@@ -1100,16 +1096,15 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     }
 
     /**
-     * Builds the panel for displaying/editing history of image.
+     * Builds the panel for displaying/editing the image's data provenance
      *
      * @return  history panel
      */
-    private JPanel buildHistoryPanel() {
+    private JPanel buildDPPanel() {
         JPanel historyPanel = new JPanel(new BorderLayout());
 
         buildToolBar();
         historyPanel.add(tBar, BorderLayout.NORTH);
-        historyPanel.add(image.getHistoryPane(), BorderLayout.CENTER);
 
         return historyPanel;
     }
@@ -2241,7 +2236,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         tabbedPane.addTab("Resolutions", null, buildResolutionPanel());
         tabbedPane.addTab("Orientations\\Origin", null, buildOrientPanel());
         tabbedPane.addTab("Transform matrix", null, buildMatrixPanel());
-        tabbedPane.addTab("History", null, buildHistoryPanel());
+        tabbedPane.addTab("History", null, buildDPPanel());
         tabbedPane.addTab("Talairach", null, buildTalairachPanel());
 
         /**

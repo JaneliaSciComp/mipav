@@ -80,9 +80,6 @@ public class FileImageXML extends FileXML {
     /** Vector to store the LUT functions when reading xml header. */
     private Vector functionVector = new Vector();
 
-    /** Vector of strings storing the history information (modifications to file). */
-    private Vector historyVector = new Vector();
-
     /** Vector to hold matrices while they are being read in for the header (until they are added to the image */
     private Vector matrixVector = new Vector();
     
@@ -310,15 +307,6 @@ public class FileImageXML extends FileXML {
     }
 
     /**
-     * Returns the history vector associated with the file.
-     *
-     * @return  Vector history vector
-     */
-    public Vector getHistory() {
-        return this.historyVector;
-    }
-
-    /**
      * Gets the LUT.
      *
      * @return  ModelLUT the LUT
@@ -359,7 +347,7 @@ public class FileImageXML extends FileXML {
     public float[][] readHeader(String headerFileName, String headerDir, TalairachTransformInfo talairach)
             throws IOException {
         MyXMLHandler myHandler = null;
-        myHandler = new MyXMLHandler((FileInfoImageXML) fileInfo, historyVector, annotationVector, matrixVector, talairach);
+        myHandler = new MyXMLHandler((FileInfoImageXML) fileInfo, annotationVector, matrixVector, talairach);
         m_kHandler = myHandler;
 
         /* Pass the .xsd file to the base class for parsing: */
@@ -449,13 +437,6 @@ public class FileImageXML extends FileXML {
             } else {
                 image = new ModelImage(((FileInfoImageXML) fileInfo).getDataType(),
                                        ((FileInfoImageXML) fileInfo).getExtents(), fileInfo.getFileName());
-            }
-
-            if ((historyVector != null) && !historyVector.isEmpty()) {
-
-                for (int i = 0; i < historyVector.size(); i++) {
-                    image.getHistoryArea().append((String) historyVector.elementAt(i) + "\n");
-                }
             }
         } catch (OutOfMemoryError error) {
             image.disposeLocal();
@@ -798,17 +779,7 @@ public class FileImageXML extends FileXML {
                 closedTag( datasetAttributesStr[0], temp);
             }
         }
-
-        String historyText = img.getHistoryArea().getText();
-
-        if (historyText != null) {
-            StringTokenizer st = new StringTokenizer(historyText, "\n");
-
-            while (st.hasMoreElements()) {
-                closedTag( "History", st.nextToken());
-            }
-        }
-
+        
         if (!simple) {
 
             if (linkedFilename == null) {
@@ -2478,9 +2449,6 @@ public class FileImageXML extends FileXML {
         float[] firstResolutions = null;
 
         /** DOCUMENT ME! */
-        Vector historyVector;
-
-        /** DOCUMENT ME! */
         boolean isColor = false;
 
         
@@ -2595,10 +2563,9 @@ public class FileImageXML extends FileXML {
          * @param  anVector   DOCUMENT ME!
          * @param  tal        DOCUMENT ME!
          */
-        public MyXMLHandler(FileInfoImageXML fInfo, Vector hisVector, Vector anVector, 
+        public MyXMLHandler(FileInfoImageXML fInfo, Vector anVector, 
         		Vector mVector, TalairachTransformInfo tal) {
             fileInfo = fInfo;
-            historyVector = hisVector;
             annotationVector = anVector;
             matrixVector = mVector;
             this.talairach = tal;
@@ -2654,7 +2621,7 @@ public class FileImageXML extends FileXML {
                 Preferences.debug("Description: " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
                 fileInfo.setImageDescription(elementBuffer);
             } else if (currentKey.equals("History")) {
-                historyVector.add(elementBuffer);
+            	//do nothing
             } else if (currentKey.equals("Linked-image")) {
 
                 if (new File(elementBuffer).exists()) {
@@ -2957,15 +2924,6 @@ public class FileImageXML extends FileXML {
             		matrixVector.add(matrix);
             	}
             }
-        }
-
-        /**
-         * Accessor to return the history vector containing strings.
-         *
-         * @return  history vector
-         */
-        public Vector getHistory() {
-            return historyVector;
         }
 
         /**
