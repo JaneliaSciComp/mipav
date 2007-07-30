@@ -1,11 +1,10 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.Matrix;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogHoughEllipseChoice;
 
+import java.awt.Color;
 import java.io.*;
 import java.util.*;
 
@@ -67,9 +66,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
     
     /** Number of instances of R-table object to find in the image */
     private int objectsToFind;
-    
-    /** Minimum distances between instances of R-table objects */
-    private float minDistance;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -100,13 +96,12 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
      * @param scaleBins Desired number of scaling bins of entry.  If maxBufferSize is not large enough,
      *                    this number is reduced.
      * @param objectsToFind Number of instances of R-table object to find in the image
-     * @param minDistance Minimum distances between instances of R-table objects
      */
     public AlgorithmFindRtableObject(ModelImage srcImg, int omegaBins, int sidePointsForTangent, 
                                      LinkedList omegaRBetaList[], float maxPixelBinWidth, int maxBufferSize, 
                                      boolean allowRotation, float maxDegreesBinWidth,
                                      boolean allowScaling, float minScaleFactor, float maxScaleFactor,
-                                     int scaleBins, int objectsToFind, float minDistance) {
+                                     int scaleBins, int objectsToFind) {
         super(null, srcImg);
         this.omegaBins = omegaBins;
         this.sidePointsForTangent = sidePointsForTangent;
@@ -120,7 +115,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         this.maxScaleFactor = maxScaleFactor;
         this.scaleBins = scaleBins;
         this.objectsToFind = objectsToFind;
-        this.minDistance = minDistance;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -149,9 +143,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
 
         int i, j, k, m, n;
         int index;
-        double theta;
-        double theta1;
-        double theta2;
         byte[] srcBuffer;
         boolean test = false;
         double xCenter;
@@ -159,21 +150,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         float xCenterArray[][][];
         float yCenterArray[][][];
         int countArray[][][];
-        boolean selectedEllipse[];
-        JDialogHoughEllipseChoice choice;
-        byte value = 0;
-        int x1;
-        int y1;
-        int x2;
-        int y2;
-        int x3;
-        int y3;
-        double x1c;
-        double y1c;
-        double x2c;
-        double y2c;
-        double x3c;
-        double y3c;
         int indexArray[];
         int newIndexArray[];
         int neighbors;
@@ -192,8 +168,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         float tangentY;
         short omegaArray[];
         short newOmegaArray[];
-        float interceptArray[];
-        float newInterceptArray[];
         int startPtr;
         int presentSidePoints;
         float xPoints[];
@@ -224,67 +198,14 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         int neigh7;
         int pruningPix;
         boolean entireImage;
-        int ellipsesFound = 0;
-        int ellipseFindCycles = 0;
-        int pointSetsAcquired = 0;
-        RandomNumberGen randomGen;
-        int number1;
-        int number2;
-        int number3;
-        double minDistanceSquared;
-        double maxDistanceSquared;
-        int distanceSquared;
-        int xDiff;
-        int yDiff;
-        float slope1;
-        float slope2;
-        float slope3;
-        float intercept1;
-        float intercept2;
-        float intercept3;
-        float tx12;
-        float ty12;
-        float midx12;
-        float midy12;
-        float tangentx12;
-        float tangenty12;
-        float slope12;
-        float intercept12 = 0.0f;
-        float tx23;
-        float ty23;
-        float midx23;
-        float midy23;
-        float tangentx23;
-        float tangenty23;
-        float slope23;
-        float intercept23 = 0.0f;
-        Matrix A;
-        Matrix B;
-        Matrix X = null;
-        double a = 1.0;
-        double b = 0.0;
-        double c = 1.0;
-        double r1;
-        double r2;
-        double aminusc;
-        double sqr2 = Math.sqrt(2.0);
-        double twob;
         double var;
-        double aplusc;
         float minXCenter;
         float maxXCenter;
         float minYCenter;
         float maxYCenter;
-        float minR1;
-        float maxR1;
-        float minR2;
-        float maxR2;
-        float minTheta;
         int bytesPerCell;
         int xCenterBins;
         int yCenterBins;
-        int r1Bins;
-        int r2Bins;
         int thetaBins;
         double maxRadiansDiff;
         long desiredBytes;
@@ -294,35 +215,8 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         int numBins;
         int xCenterIndex;
         int yCenterIndex;
-        int r1Index;
-        int r2Index;
-        int thetaIndex;
-        int scale1;
-        int scale12;
-        int scale123;
-        int scale1234;
-        int maxIndex = -1;
         int maxCount = 0;
-        double h;
-        double perimiter;
-        int minPixels;
         boolean foundPoint[];
-        double xc;
-        double yc;
-        double costheta1;
-        double costheta2;
-        double sintheta1;
-        double sintheta2;
-        double r1Sq;
-        double r2Sq;
-        double var1;
-        double var2;
-        double checkVal;
-        double upperLimit = 1.0 + 0.01;
-        double lowerLimit = 1.0 - 0.01;
-        short pointsOnEllipse;
-        short pointsOnEllipse1;
-        short pointsOnEllipse2;
         float xCenterTable[];
         float yCenterTable[];
         float thetaTable[] = null;
@@ -330,7 +224,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         short countTable[];
         int pointsDeleted;
         int newNumPoints;
-        boolean testedArray[];
         float xpc;
         float ypc;
         double xSqSum;
@@ -343,7 +236,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         double d1;
         double d2;
         double slope;
-        boolean ellipseDetected;
         int objectsFound = 0;
         int omegaIndex;
         int rBetaLength;
@@ -353,8 +245,17 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         float scaleArray[] = null;
         int xyBins;
         int maxXYIndex = 0;
+        int maxXIndex = 0;
+        int maxYIndex = 0;
         int maxThetaIndex = 0;
         int maxScaleIndex = 0;
+        VOI centerPtVOI;
+        float xArr[] = new float[1];
+        float yArr[] = new float[1];
+        float zArr[] = new float[1];
+        ModelImage maskImage;
+        double omegaBinWidth = Math.PI/omegaBins;
+        double omega;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -518,39 +419,24 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
             //return;
         } // if (test)
         
-        try {
-            destImage.importData(0, srcBuffer, true);
-        } catch (IOException e) {
-            MipavUtil.displayError("IOException " + e + " on destImage.importData");
-
-            setCompleted(true);
-
-            return;
-        }
+        maskImage = (ModelImage)srcImage.clone();
         
         // Skeletonize the binary image
         // Prune off branches with 2 or less pixels
         pruningPix = 2;
         entireImage = true;
-        algoMorph2D = new AlgorithmMorphology2D(destImage, 0, 0.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, pruningPix, 0, entireImage);
+        algoMorph2D = new AlgorithmMorphology2D(maskImage, 0, 0.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, pruningPix, 0, entireImage);
         algoMorph2D.run();
         algoMorph2D.finalize();
         
         try {
-            destImage.exportData(0, sourceSlice, srcBuffer);
+            maskImage.exportData(0, sourceSlice, srcBuffer);
         } catch (IOException e) {
             MipavUtil.displayError("IOException " + e + " on destImage.exportData");
 
             setCompleted(false);
 
             return;
-        }
-        
-        for (i = 0; i < sourceSlice; i++) {
-            if (srcBuffer[i] != 0) {
-                value = srcBuffer[i];
-                break;
-            }
         }
         
         // When a diagonal neighbor is adjacent to a horizontal or vertical neighbor,
@@ -889,7 +775,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         // minimizes the sum of the squared distances from these side points to the tangent line 
         indexArray = new int[numPoints];
         omegaArray = new short[numPoints];
-        interceptArray = new float[numPoints];
         for (i = 0; i < sourceSlice; i++) {
             if (srcBuffer[i] != 0) {
                 foundArray[i] = false;
@@ -1019,7 +904,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                         
                     }
                     else {
-                        omegaArray[indexPtr++] = (short)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/omegaBins);
+                        omegaArray[indexPtr++] = (short)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/omegaBinWidth);
                     }    
                 }
             } // for (n = 2; n <= openLength[i] - 2; n++)
@@ -1169,7 +1054,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                                 
                             }
                             else {
-                                omegaArray[indexPtr++] = (short)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/omegaBins);
+                                omegaArray[indexPtr++] = (short)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/omegaBinWidth);
                             }    
                         }
                     } // for (n = 0; n <= closedLength[i] - 1; n++)
@@ -1191,7 +1076,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         maxXCenter = xDim - 1;
         minYCenter = 0.0f;
         maxYCenter = yDim - 1;
-        minTheta = (float)(-Math.PI/2.0);
         bytesPerCell = 2 * 4 + 2; // xCenter float, yCenter float, and short count
         xCenterBins = (int)Math.ceil((maxXCenter - minXCenter)/maxPixelBinWidth);
         yCenterBins = (int)Math.ceil((maxYCenter - minYCenter)/maxPixelBinWidth);
@@ -1262,49 +1146,71 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         }
         countTable = new short[objectsToFind];
         
-        minDistanceSquared = minDistance * minDistance;
         while (objectsFound < objectsToFind) {
             for (i = 0; i < numPoints; i++) {
-                omegaIndex = omegaArray[i];
                 x = indexArray[i] % xDim;
                 y = indexArray[i] / xDim;
+                omegaIndex = omegaArray[i];
+                omega = -Math.PI/2.0 + omegaIndex * omegaBinWidth;
+                for (j = 0; j < thetaBins; j++) {
+                if (allowRotation) {
+                    omega = omega - thetaArray[j];
+                    if (omega < -2.0*Math.PI) {
+                        omega = omega + 2.0*Math.PI;
+                    }
+                    else if (omega > 2.0*Math.PI) {
+                        omega = omega - 2.0*Math.PI;
+                    }
+                    else if (omega < -Math.PI/2.0) {
+                        omega = omega + Math.PI;
+                    }
+                    else if (omega >= Math.PI/2.0) {
+                        omega = omega - Math.PI;
+                    }
+                    omegaIndex = (int)((omega + Math.PI/2.0)/omegaBinWidth);
+                }
                 rBetaLength = omegaRBetaList[omegaIndex].size();
-                for (j = 0; j < rBetaLength; j++) {
-                    floatArray = (float[])omegaRBetaList[omegaIndex].get(j);
+                for (k = 0; k < rBetaLength; k++) {
+                    floatArray = (float[])omegaRBetaList[omegaIndex].get(k);
                     r = floatArray[0];
                     beta = floatArray[1];
-                    for (k = 0; k < thetaBins; k++) {
                         if (allowRotation) {
-                            beta = floatArray[1] + thetaArray[k];
+                            beta = floatArray[1] + thetaArray[j];
                         }
                         for (m = 0; m < scaleBins; m++) {
                             if (allowScaling) {
                                 r = scaleArray[m] * floatArray[0];
                             }
                             xCenter = x + r * Math.cos(beta);
-                            yCenter = y + r * Math.sin(beta);
                             xCenterIndex = (int)((xCenter - minXCenter)/maxPixelBinWidth);
                             if ((xCenterIndex >= 0) && (xCenterIndex < xCenterBins)) {
+                                yCenter = y + r * Math.sin(beta);
                                 yCenterIndex = (int)((yCenter - minYCenter)/maxPixelBinWidth);
                                 if ((yCenterIndex >= 0) && (yCenterIndex < yCenterBins)) {
                                     index = xCenterIndex + xCenterBins * yCenterIndex;
-                                    xCenterArray[index][k][m] += xCenter;
-                                    yCenterArray[index][k][m] += yCenter;
-                                    countArray[index][k][m]++;
+                                    xCenterArray[index][j][m] += xCenter;
+                                    yCenterArray[index][j][m] += yCenter;
+                                    countArray[index][j][m]++;
                                 } // if (yCenterIndex >= 0) && (yCenterIndex < yCenterBins))
                             }  // if (xCenterIndex >= 0) && (xCenterIndex < xCenterBins))
                         } // for (m = 0; m < scaleBins; m+++)
-                    } // for (k = 0; k < thetaBins; k++)
-                } // for (j = 0; j < rBetaLength; j++)
+                    } // for (k = 0; k < rBetaLength; k++)
+                } // for (j = 0; j < thetaBins; j++)
             } // for (i = 0; i < numPoints; i++)
             
-            maxIndex = -1;
+            maxXYIndex = -1;
+            maxXIndex = -1;
+            maxYIndex = -1;
+            maxThetaIndex = -1;
+            maxScaleIndex = -1;
             maxCount = 0;
             for (i = 0; i < xyBins; i++) {
                 for (k = 0; k < thetaBins; k++) {
                     for (m = 0; m < scaleBins; m++) {
                         if (countArray[i][k][m] > maxCount) {
                             maxXYIndex = i;
+                            maxXIndex = i % xCenterBins;
+                            maxYIndex = i / xCenterBins;
                             maxThetaIndex = k;
                             maxScaleIndex = m;
                             maxCount = countArray[i][k][m];
@@ -1337,6 +1243,15 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
             if (allowScaling) {
                 ViewUserInterface.getReference().setDataText(" scale factor = " + scaleTable[objectsFound-1] + "\n");
             }
+            centerPtVOI = new VOI((short) (objectsFound), "center" + objectsFound + ".voi", 1, VOI.POINT, -1.0f);
+            centerPtVOI.setColor(Color.white);
+            xArr[0] = (float)xCenter;
+            yArr[0] = (float)yCenter;
+            zArr[0] = 0.0f;
+            centerPtVOI.importCurve(xArr, yArr, zArr, 0);
+            ((VOIPoint) (centerPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
+            ((VOIPoint) (centerPtVOI.getCurves()[0].elementAt(0))).setLabel(String.valueOf(objectsFound));
+            srcImage.registerVOI(centerPtVOI);
                     
             if (objectsFound == objectsToFind) {
                 break;
@@ -1357,10 +1272,50 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
             // Hough transform again
             pointsDeleted = 0;
             for (i = 0; i < numPoints; i++) {
-                if (foundPoint[i]) {
-                    pointsDeleted++;
+                x = indexArray[i] % xDim;
+                y = indexArray[i] / xDim;
+                omegaIndex = omegaArray[i];
+                omega = -Math.PI/2.0 + omegaIndex * omegaBinWidth;
+                if (allowRotation) {
+                    omega = omega - thetaArray[maxThetaIndex];
+                    if (omega < -2.0*Math.PI) {
+                        omega = omega + 2.0*Math.PI;
+                    }
+                    else if (omega > 2.0*Math.PI) {
+                        omega = omega - 2.0*Math.PI;
+                    }
+                    else if (omega < -Math.PI/2.0) {
+                        omega = omega + Math.PI;
+                    }
+                    else if (omega >= Math.PI/2.0) {
+                        omega = omega - Math.PI;
+                    }
+                    omegaIndex = (int)((omega + Math.PI/2.0)/omegaBinWidth);
                 }
+                rBetaLength = omegaRBetaList[omegaIndex].size();
+                for (k = 0; k < rBetaLength; k++) {
+                    floatArray = (float[])omegaRBetaList[omegaIndex].get(k);
+                    r = floatArray[0];
+                    beta = floatArray[1];
+                    if (allowRotation) {
+                        beta = floatArray[1] + thetaArray[maxThetaIndex];
+                    }
+                    if (allowScaling) {
+                        r = scaleArray[maxScaleIndex] * floatArray[0];
+                    }
+                    xCenter = x + r * Math.cos(beta);  
+                    xCenterIndex = (int)((xCenter - minXCenter)/maxPixelBinWidth);
+                    if (xCenterIndex == maxXIndex) {
+                        yCenter = y + r * Math.sin(beta);
+                        yCenterIndex = (int)((yCenter - minYCenter)/maxPixelBinWidth);
+                        if ((yCenterIndex == maxYIndex) && (!foundPoint[i])) {
+                            foundPoint[i] = true;
+                            pointsDeleted++;
+                        } // if ((yCenterIndex == maxYIndex) && (!foundPoint[i]))
+                    }  // if (xCenterIndex == maxXIndex)
+                } // for (k = 0; k < rBetaLength; k++)
             } // for (i = 0; i < numPoints; i++)
+            
             if (pointsDeleted > 0) {
                 newNumPoints = numPoints - pointsDeleted;
                 if (newNumPoints == 0) {
@@ -1368,12 +1323,10 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 }
                 newIndexArray = new int[newNumPoints];
                 newOmegaArray = new short[newNumPoints];
-                newInterceptArray = new float[newNumPoints];
                 for (i = 0, j = 0; i < numPoints; i++) {
                     if (!foundPoint[i]) {
                         newIndexArray[j] = indexArray[i];
                         newOmegaArray[j] = omegaArray[i];
-                        newInterceptArray[j] = interceptArray[i];
                         j++;
                     }
                 } // for (i = 0, j = 0; i < numPoints; i++)
@@ -1384,28 +1337,16 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 indexArray = new int[numPoints];
                 omegaArray = null;
                 omegaArray = new short[numPoints];
-                interceptArray = null;
-                interceptArray = new float[numPoints];
                 for (i = 0; i < numPoints; i++) {
                     indexArray[i] = newIndexArray[i];
                     omegaArray[i] = newOmegaArray[i];
-                    interceptArray[i] = newInterceptArray[i];
                 }
                 newIndexArray = null;
                 newOmegaArray = null;
-                newInterceptArray = null;
             } // if (pointsDeleted > 0)
         } // while (objectsFound < objectsToFind)
-        xCenterArray = null;
-        yCenterArray = null;
-        thetaArray = null;
-        foundPoint = null;
-        indexArray = null;
-        omegaArray = null;
-        interceptArray = null;
-        testedArray = null;
         
-        
+        srcImage.notifyImageDisplayListeners();
         
         // Restore original source values
         if (!test) {
@@ -1419,52 +1360,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 return;
             }
         } // if (!test)
-        
-        // Create a dialog with numEllipsesFound xCenterTable[i], yCenterTable[i], r1Table[i],
-        // r2Table[i], thetaTable[i], and countTable[i] values, where the user will select a check box
-        // to have the selected ellipse drawn.
-        selectedEllipse = new boolean[ellipsesFound];
-        
-        //choice = new JDialogHoughEllipseChoice(ViewUserInterface.getReference().getMainFrame(), xCenterTable,
-                 //xDim, yCenterTable, yDim, r1Table, minR1, maxR1, r2Table, minR2, maxR2, thetaTable,
-                 //countTable, selectedEllipse);
-        
-        //if (!choice.okayPressed() ) {
-            //setCompleted(false);
-            //return;
-        //}
-        
-        // Draw selected elipses
-        /*for (i = 0; i < ellipsesFound; i++) {
-            if (selectedEllipse[i]) {
-                beta = thetaTable[i];
-                cosbeta = Math.cos(beta);
-                sinbeta = Math.sin(beta);
-                for (j = 0; j < 720; j++) {
-                    alpha = j * Math.PI/360.0;
-                    cosalpha = Math.cos(alpha);
-                    sinalpha = Math.sin(alpha);
-                    x = (int)(xCenterTable[i] + r1Table[i] * cosalpha * cosbeta - r2Table[i] * sinalpha * sinbeta);
-                    if ((x >= 0) && (x < xDim)) {
-                        y = (int)(yCenterTable[i] + r1Table[i] * cosalpha * sinbeta + r2Table[i] * sinalpha * cosbeta);
-                        if ((y >= 0) && (y < yDim)) {
-                            index = x + (xDim*y);
-                            srcBuffer[index] = value;
-                        }
-                    }
-                }
-            } // if (selectedEllipse[i])
-        } // for (i = 0; i < ellipsesFound; i++)*/
-        
-        try {
-            destImage.importData(0, srcBuffer, true);
-        } catch (IOException e) {
-            MipavUtil.displayError("IOException " + e + " on destImage.importData");
-
-            setCompleted(false);
-
-            return;
-        }
         
         setCompleted(true);
         return;
@@ -1491,7 +1386,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                                    String.valueOf(minScaleFactor) + ", " + 
                                    String.valueOf(maxScaleFactor) + ", " + 
                                    String.valueOf(scaleBins) + ", " +
-                                   String.valueOf(objectsToFind) + 
-                                   String.valueOf(minDistance) + ")\n");
+                                   String.valueOf(objectsToFind) + ")\n");
     }
 }
