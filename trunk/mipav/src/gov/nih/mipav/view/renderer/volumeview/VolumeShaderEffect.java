@@ -18,6 +18,7 @@ import java.io.IOException;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 
 
@@ -33,7 +34,17 @@ import gov.nih.mipav.model.algorithms.utilities.*;
  * convenience to avoid long expressions involving pointer dereferencing.
  */
 public class VolumeShaderEffect extends ShaderEffect
+    implements StreamInterface
 {
+
+    private final static int MIP = 0;
+    private final static int DDR = 1;
+    private final static int CMP = 2;
+    private final static int SUR = 3;
+    private final static int CMP_SUR = 4;
+    private final static String[] m_akClip =
+        new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
+
 
     /** 
      */
@@ -46,7 +57,8 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kSceneTarget = kSceneTarget;
         m_kColorMapA = InitColorMap(kLUTA, kRGBTA, new String("A"));
         m_kOpacityMapA = InitOpacityMap(m_kImageA, new String("A"));
-//         m_kOpacityMapA_GM = InitOpacityMap(m_kImageA, new String("A_GM"));
+        m_kOpacityMapA_GM = InitOpacityMap(m_kImageA, new String("A_GM"));
+        m_kOpacityMapB_GM = InitOpacityMap(m_kImageA, new String("B_GM"));
         if ( kImageB == null )
         {
             CreateVolumeTexture();
@@ -74,15 +86,14 @@ public class VolumeShaderEffect extends ShaderEffect
         SetPassQuantity(1);
 
         m_kVolumeA = UpdateData(m_kImageA, null, m_kVolumeTargetA, new String("A") );
-//         CalcHistogramsGM();
-//         m_kVolumeA_GM = UpdateData(m_kImageA_GM, null, m_kVolumeTargetA_GM, new String("A_GM") );
+        m_kImageA_GM = CalcHistogramsGM( m_kImageA );
+        m_kVolumeA_GM = UpdateData(m_kImageA_GM, null, m_kVolumeTargetA_GM, new String("A_GM") );
         
         VertexShader pkVShader = new VertexShader("VolumeShaderVertex");
 
         // setup mip shader effect:
         m_kPShaderMIP = new PixelShader("VolumeShaderMIP");
-        //m_kPShaderMIP.SetTextureQuantity(6);
-        m_kPShaderMIP.SetTextureQuantity(4);
+        m_kPShaderMIP.SetTextureQuantity(6);
         m_kPShaderMIP.SetImageName(0,"SceneImage");
         m_kPShaderMIP.SetTexture(0,m_kSceneTarget);
         m_kPShaderMIP.SetImageName(1,"VolumeImageA");
@@ -95,16 +106,17 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kColorMapTargetA = m_kPShaderMIP.GetTexture(2);
         m_kPShaderMIP.SetImageName(3, "OpacityMapA");
         m_kOpacityMapTargetA = m_kPShaderMIP.GetTexture(3);
-//         m_kPShaderMIP.SetImageName(4,"VolumeImageA_GM");
-//         m_kPShaderMIP.GetTexture(4).SetFilterType(Texture.FilterType.LINEAR);
-//         m_kPShaderMIP.GetTexture(4).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
-//         m_kPShaderMIP.GetTexture(4).SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
-//         m_kPShaderMIP.GetTexture(4).SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
-//         m_kPShaderMIP.SetImageName(5, "OpacityMapA_GM");
-//         m_kOpacityMapTargetA_GM = m_kPShaderMIP.GetTexture(5);
+        m_kPShaderMIP.SetImageName(4,"VolumeImageA_GM");
+        m_kPShaderMIP.GetTexture(4).SetFilterType(Texture.FilterType.LINEAR);
+        m_kPShaderMIP.GetTexture(4).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_kPShaderMIP.GetTexture(4).SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+        m_kPShaderMIP.GetTexture(4).SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+        m_kVolumeTargetA_GM = m_kPShaderMIP.GetTexture(4);
+        m_kPShaderMIP.SetImageName(5, "OpacityMapA_GM");
+        m_kOpacityMapTargetA_GM = m_kPShaderMIP.GetTexture(5);
 
         m_kPShaderDDR = new PixelShader("VolumeShaderDDR");
-        m_kPShaderDDR.SetTextureQuantity(4);
+        m_kPShaderDDR.SetTextureQuantity(6);
         m_kPShaderDDR.SetImageName(0,"SceneImage");
         m_kPShaderDDR.SetTexture(0,m_kSceneTarget);
         m_kPShaderDDR.SetImageName(1,"VolumeImageA");
@@ -113,9 +125,13 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kPShaderDDR.SetTexture(2,m_kColorMapTargetA);
         m_kPShaderDDR.SetImageName(3, "OpacityMapA");
         m_kPShaderDDR.SetTexture(3,m_kOpacityMapTargetA);
+        m_kPShaderDDR.SetImageName(4,"VolumeImageA_GM");
+        m_kPShaderDDR.SetTexture(4,m_kVolumeTargetA_GM);
+        m_kPShaderDDR.SetImageName(5, "OpacityMapA_GM");
+        m_kPShaderDDR.SetTexture(5, m_kOpacityMapTargetA_GM);
 
         m_kPShaderCMP = new PixelShader("VolumeShaderCMP");
-        m_kPShaderCMP.SetTextureQuantity(4);
+        m_kPShaderCMP.SetTextureQuantity(6);
         m_kPShaderCMP.SetImageName(0,"SceneImage");
         m_kPShaderCMP.SetTexture(0,m_kSceneTarget);
         m_kPShaderCMP.SetImageName(1,"VolumeImageA");
@@ -124,10 +140,14 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kPShaderCMP.SetTexture(2,m_kColorMapTargetA);
         m_kPShaderCMP.SetImageName(3, "OpacityMapA");
         m_kPShaderCMP.SetTexture(3,m_kOpacityMapTargetA);
+        m_kPShaderCMP.SetImageName(4,"VolumeImageA_GM");
+        m_kPShaderCMP.SetTexture(4,m_kVolumeTargetA_GM);
+        m_kPShaderCMP.SetImageName(5, "OpacityMapA_GM");
+        m_kPShaderCMP.SetTexture(5, m_kOpacityMapTargetA_GM);
 
 
         m_kPShaderSUR = new PixelShader("VolumeShaderSUR");
-        m_kPShaderSUR.SetTextureQuantity(5);
+        m_kPShaderSUR.SetTextureQuantity(7);
         m_kPShaderSUR.SetImageName(0,"SceneImage");
         m_kPShaderSUR.SetTexture(0,m_kSceneTarget);
         m_kPShaderSUR.SetImageName(1,"VolumeImageA");
@@ -152,6 +172,11 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kPShaderSUR.GetTexture(4).SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
         m_kNormalMapTargetA = m_kPShaderSUR.GetTexture(4);
 
+        m_kPShaderSUR.SetImageName(5,"VolumeImageA_GM");
+        m_kPShaderSUR.SetTexture(5,m_kVolumeTargetA_GM);
+        m_kPShaderSUR.SetImageName(6, "OpacityMapA_GM");
+        m_kPShaderSUR.SetTexture(7, m_kOpacityMapTargetA_GM);
+
         SetVShader(0,pkVShader);
         SetPShader(0,m_kPShaderMIP);
     }
@@ -163,6 +188,12 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kVolumeA = UpdateData(m_kImageA, m_kVolumeA, m_kVolumeTargetA, new String("A") );
         m_kVolumeB = UpdateData(m_kImageB, m_kVolumeB, m_kVolumeTargetB, new String("B") );
         
+        m_kImageA_GM = CalcHistogramsGM( m_kImageA );
+        m_kVolumeA_GM = UpdateData(m_kImageA_GM, null, m_kVolumeTargetA_GM, new String("A_GM") );
+
+        m_kImageB_GM = CalcHistogramsGM( m_kImageB );
+        m_kVolumeB_GM = UpdateData(m_kImageB_GM, null, m_kVolumeTargetB_GM, new String("B_GM") );
+
         VertexShader pkVShader = new VertexShader("VolumeShaderVertex");
 
         // setup mip shader effect:
@@ -213,7 +244,7 @@ public class VolumeShaderEffect extends ShaderEffect
 
 
         m_kPShaderCMP = new PixelShader("VolumeShaderCMP_CMP");
-        m_kPShaderCMP.SetTextureQuantity(7);
+        m_kPShaderCMP.SetTextureQuantity(11);
         m_kPShaderCMP.SetImageName(0,"SceneImage");
         m_kPShaderCMP.SetTexture(0,m_kSceneTarget);
         m_kPShaderCMP.SetImageName(1,"VolumeImageA");
@@ -222,12 +253,29 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kPShaderCMP.SetTexture(2, m_kColorMapTargetA);
         m_kPShaderCMP.SetImageName(3, "OpacityMapA");
         m_kPShaderCMP.SetTexture(3, m_kOpacityMapTargetA);
-        m_kPShaderCMP.SetImageName(4,"VolumeImageB");
-        m_kPShaderCMP.SetTexture(4, m_kVolumeTargetB);
-        m_kPShaderCMP.SetImageName(5, "ColorMapB");
-        m_kPShaderCMP.SetTexture(5,m_kColorMapTargetB);
-        m_kPShaderCMP.SetImageName(6, "OpacityMapB");
-        m_kPShaderCMP.SetTexture(6,m_kOpacityMapTargetB);
+        m_kPShaderCMP.SetImageName(4,"VolumeImageA_GM");
+        m_kPShaderCMP.GetTexture(4).SetFilterType(Texture.FilterType.LINEAR);
+        m_kPShaderCMP.GetTexture(4).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_kPShaderCMP.GetTexture(4).SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+        m_kPShaderCMP.GetTexture(4).SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+        m_kVolumeTargetA_GM = m_kPShaderCMP.GetTexture(4);
+        m_kPShaderMIP.SetImageName(5, "OpacityMapA_GM");
+        m_kOpacityMapTargetA_GM = m_kPShaderCMP.GetTexture(5);
+        m_kPShaderCMP.SetImageName(6,"VolumeImageB");
+        m_kPShaderCMP.SetTexture(6, m_kVolumeTargetB);
+        m_kPShaderCMP.SetImageName(7, "ColorMapB");
+        m_kPShaderCMP.SetTexture(7,m_kColorMapTargetB);
+        m_kPShaderCMP.SetImageName(8, "OpacityMapB");
+        m_kPShaderCMP.SetTexture(8,m_kOpacityMapTargetB);
+        m_kPShaderCMP.SetImageName(9,"VolumeImageB_GM");
+        m_kPShaderCMP.GetTexture(9).SetFilterType(Texture.FilterType.LINEAR);
+        m_kPShaderCMP.GetTexture(9).SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_kPShaderCMP.GetTexture(9).SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+        m_kPShaderCMP.GetTexture(9).SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+        m_kVolumeTargetB_GM = m_kPShaderCMP.GetTexture(9);
+        m_kPShaderMIP.SetImageName(10, "OpacityMapB_GM");
+        m_kOpacityMapTargetB_GM = m_kPShaderCMP.GetTexture(10);
+
 
         m_kPShaderSUR = new PixelShader("VolumeShaderSUR_SUR");
         m_kPShaderSUR.SetTextureQuantity(9);
@@ -327,6 +375,8 @@ public class VolumeShaderEffect extends ShaderEffect
                 pkProgram.GetUC("IsColorB").SetDataSource(new float[]{1,0,0,0});
             }
         }
+        SetGradientMagnitude();
+        SetSelfShadow();
     }
 
     public void DDRMode(int iImage, gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
@@ -620,10 +670,13 @@ public class VolumeShaderEffect extends ShaderEffect
         {
             return UpdateImages( m_kImageB, m_kOpacityMapTargetB, m_kOpacityMapB, kTransfer );
         }
-//         else if ( iImage == 2 )
-//         {
-//             return UpdateImages( m_kImageA_GM, m_kOpacityMapTargetA_GM, m_kOpacityMapA_GM, kTransfer );
-//         }
+        else if ( (iImage == 2) &&
+                  (m_kImageA_GM != null) &&
+                  (m_kOpacityMapTargetA_GM != null) &&
+                  (m_kOpacityMapA_GM != null)  )
+        {
+            return UpdateImages( m_kImageA_GM, m_kOpacityMapTargetA_GM, m_kOpacityMapA_GM, kTransfer );
+        }
         return false;
     }
 
@@ -954,79 +1007,168 @@ public class VolumeShaderEffect extends ShaderEffect
     /**
      * Calculates histogram for the gradient magnitude m_kImageA, B.
      */
-    private void CalcHistogramsGM() {
+    private ModelImage CalcHistogramsGM( ModelImage kImage )
+    {
+        ModelImage kImage_GM = null;
+        if (kImage != null) {
+            kImage_GM = loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
+                                           kImage.getImageName() + "_gm_rescale" + ".xml");
 
-        int[] dimExtentsGM_A = new int[1];
-
-        ModelImage gradMag_A;
-        float[] sigma = new float[3];
-
-        boolean loadImageA = false;
-
-        sigma[0] = 0.5f;
-        sigma[1] = 0.5f;
-        sigma[2] = 0.5f;
-
-        if (m_kImageA != null) {
-            gradMag_A = new ModelImage(ModelImage.FLOAT, m_kImageA.getExtents(), m_kImageA.getImageName() + "_gm");
-            m_kImageA_GM = loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
-                                           m_kImageA.getImageName() + "_gm_rescale" + ".xml");
-
-            if ( m_kImageA_GM == null )
+            if ( kImage_GM == null )
             {
-                m_kImageA_GM = new ModelImage(ModelImage.USHORT, m_kImageA.getExtents(),
-                                                  m_kImageA.getImageName() + "_gm_rescale");
-                loadImageA = false;
-            }
+                kImage_GM = new ModelImage(ModelImage.USHORT, kImage.getExtents(),
+                                                  kImage.getImageName() + "_gm_rescale");
 
-            if (!loadImageA) {
-                AlgorithmGradientMagnitude gradMagAlgo_A = new AlgorithmGradientMagnitude(gradMag_A, m_kImageA, sigma,
-                                                                                          true, false);
+                float[] sigma = new float[] { 0.5f, 0.5f, 0.5f };
+                AlgorithmGradientMagnitude gradMagAlgo_A =
+                    new AlgorithmGradientMagnitude(kImage_GM, kImage, sigma,true, false);
 
-                gradMagAlgo_A.setRunningInSeparateThread(false); // progress bar junk.
+                gradMagAlgo_A.setRunningInSeparateThread(false);
                 gradMagAlgo_A.run();
 
                 if (gradMagAlgo_A.isCompleted()) {
                     gradMagAlgo_A.finalize();
                     gradMagAlgo_A = null;
                 }
-
+                kImage_GM.calcMinMax();
                 /** Scale the intensity range to 1024. */
-                AlgorithmChangeType changeTypeAlgo_A = new AlgorithmChangeType(m_kImageA_GM, gradMag_A,
-                                                                               gradMag_A.getMin(), gradMag_A.getMax(),
-                                                                               0, 1023, false);
+                AlgorithmChangeType changeTypeAlgo_A =
+                    new AlgorithmChangeType(kImage_GM, kImage_GM.getType(),
+                                            kImage_GM.getMin(), kImage_GM.getMax(),
+                                            0, 1023, false);
 
                 changeTypeAlgo_A.setRunningInSeparateThread(false);
                 changeTypeAlgo_A.run();
-                m_kImageA_GM.calcMinMax();
+                kImage_GM.calcMinMax();
 
                 if (changeTypeAlgo_A.isCompleted()) {
-                    ModelImage.saveImage(m_kImageA_GM);
+                    ModelImage.saveImage(kImage_GM);
                     changeTypeAlgo_A.finalize();
                     changeTypeAlgo_A = null;
                 }
             }
-            if (gradMag_A != null) {
-                gradMag_A.disposeLocal();
-                gradMag_A = null;
-            }
         }
+        return kImage_GM;
     }
 
 
+    public void SelfShadow( boolean bShadow )
+    {
+        m_afSelfShadow[0] = 0;
+        if ( bShadow )
+        {
+            m_afSelfShadow[0] = 1;
+        }
+        SetSelfShadow();
+    }
+
+    private void SetSelfShadow()
+    {
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("SelfShadow") != null ) 
+        {
+            pkProgram.GetUC("SelfShadow").SetDataSource(m_afSelfShadow);
+        }
+    }
 
     public void SetGradientMagnitude(boolean bShow)
+    {
+        m_afGradientMagnitude[0] = 0;
+        if ( bShow )
+        {
+            m_afGradientMagnitude[0] = 1;
+        }
+        SetGradientMagnitude();
+    }
+
+    private void SetGradientMagnitude()
     {
         Program pkProgram = GetPProgram(0);
         if ( pkProgram.GetUC("GradientMagnitude") != null ) 
         {
-            float[] afData = {0,0,0,0};
-            if ( bShow )
-            {
-                afData[0] = 1;
-            }
-            pkProgram.GetUC("GradientMagnitude").SetDataSource(afData);
+            pkProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
         }
+    }
+
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
+    public void Load (Stream rkStream, Stream.Link pkLink)
+    {
+        super.Load(rkStream,pkLink);
+
+        // native data
+    }
+
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
+    public void Link (Stream rkStream, Stream.Link pkLink)
+    {
+        super.Link(rkStream,pkLink);
+    }
+
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
+    public boolean Register (Stream rkStream)
+    {
+        if (!super.Register(rkStream))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
+    public void Save (Stream rkStream)
+    {
+        super.Save(rkStream);
+    }
+
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
+    public int GetDiskUsed (StreamVersion rkVersion)
+    {
+        int iSize = super.GetDiskUsed(rkVersion);
+
+        return iSize;
+    }
+
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
+    public StringTree SaveStrings (final String acTitle)
+    {
+        StringTree pkTree = new StringTree();
+        // strings
+        pkTree.Append(StringTree.Format("VolumeShaderEffect",GetName()));
+        pkTree.Append(super.SaveStrings(null));
+
+        return pkTree;
     }
 
     private ModelImage m_kImageA;
@@ -1039,13 +1181,19 @@ public class VolumeShaderEffect extends ShaderEffect
     private ModelRGB m_kRGBB;
     private TransferFunction m_kTransferB;
 
-    /** Model image of the gradient magnitude of image A rescaled to have value in the range [0:255]. */
-    private ModelImage m_kImageA_GM;
+    private ModelImage m_kImageA_GM = null;
     private GraphicsImage m_kOpacityMapA_GM = null;
-    private Texture m_kOpacityMapTargetA_GM;
-    private GraphicsImage m_kVolumeA_GM;
-    private Texture m_kVolumeTargetA_GM;
+    private Texture m_kOpacityMapTargetA_GM = null;
+    private GraphicsImage m_kVolumeA_GM = null;
+    private Texture m_kVolumeTargetA_GM = null;
     
+    private ModelImage m_kImageB_GM = null;
+    private GraphicsImage m_kOpacityMapB_GM = null;
+    private Texture m_kOpacityMapTargetB_GM = null;
+    private GraphicsImage m_kVolumeB_GM = null;
+    private Texture m_kVolumeTargetB_GM = null;
+
+
     private GraphicsImage m_kVolumeA;
     private GraphicsImage m_kNormalA;
     private GraphicsImage m_kColorMapA;
@@ -1069,19 +1217,17 @@ public class VolumeShaderEffect extends ShaderEffect
     private PixelShader m_kPShaderCMP = null;
     private PixelShader m_kPShaderSUR = null;
 
-    private static int MIP = 0;
-    private static int DDR = 1;
-    private static int CMP = 2;
-    private static int SUR = 3;
-    private static int CMP_SUR = 4;
+
     private int m_iWhichShader = -1;
-    private String[] m_akClip = new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
     private float[][] m_aafClipData = new float[6][];
     private float[] m_afClipEyeData = null;
     private float[] m_afClipEyeInvData = null;
     private float[] m_afClipArbData = null;
-    
     private Texture m_kSceneTarget;
     private float[] m_afBlend = new float[]{.5f,0,0,0};
     private ColorRGBA m_kBackgroundColor = ColorRGBA.BLACK;
+
+    private float[] m_afSelfShadow = new float[]{0,0,0,0};
+    private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
+
 }

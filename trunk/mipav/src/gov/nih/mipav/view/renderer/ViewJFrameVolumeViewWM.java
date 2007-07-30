@@ -282,6 +282,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
     /** Radio button of the surface render composite mode. */
     private JRadioButton radioSurrenderCOMPOSITE;
 
+    //** Check box to enable/disable surface self-shadowing */
+    JCheckBox kSelfShadow;
+
     /** Radio button of the surface render lighting mode. */
     private JRadioButton radioSurrenderLIGHT;
 
@@ -1678,7 +1681,12 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
                 raycastRenderWM.SURFASTMode( iImage );
                 surRender.getSurfaceDialog().getLightDialog().refreshLighting();
-           }
+            } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
+                raycastRenderWM.SelfShadow( kSelfShadow.isSelected() );
+        }
+        if ( (imageB == null) )
+        {
+            kSelfShadow.setEnabled(radioSURFACEFAST.isSelected());
         }
     }
 
@@ -2937,6 +2945,14 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         surfaceToolBar.add(radioSURFACEFAST);
         surfaceToolBar.add(radioSURFACE);
 
+        kSelfShadow = new JCheckBox("Self Shadow", false);
+        kSelfShadow.setFont(MipavUtil.font12);
+        kSelfShadow.addItemListener(this);
+        kSelfShadow.setEnabled(false);
+        if ( (imageB == null) )
+        {
+            surfaceToolBar.add(kSelfShadow);
+        }
         surfaceToolBar.add(ViewToolBarBuilder.makeSeparator());
         JButton kShaderButton = new JButton( "Shader Parameters" );
         kShaderButton.addActionListener(this);
@@ -3287,6 +3303,8 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         if ( raycastRenderWM != null )
         {
             raycastRenderWM.SetGradientMagnitude(bShow);
+            TransferFunction kTransfer = surRender.getVolOpacityPanel().getCompA_GM().getOpacityTransferFunction();
+            raycastRenderWM.updateImages(2, kTransfer);
         }
     }
 

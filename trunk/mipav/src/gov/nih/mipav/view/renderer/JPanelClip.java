@@ -3452,36 +3452,36 @@ public class JPanelClip extends JPanelRendererBase
                                                new ColorRGB( colorButtonXInv.getBackground().getRed(),
                                                              colorButtonXInv.getBackground().getGreen(),
                                                              colorButtonXInv.getBackground().getBlue() ) );
-            rayBasedRenderWM.setClipPlane( 0, xSliceInv, "clipXInv" );
+            rayBasedRenderWM.setClipPlane( 0, xSliceInv );
 
             rayBasedRenderWM.displayClipPlane( 1, true, 
                                                new ColorRGB( colorButtonX.getBackground().getRed(),
                                                              colorButtonX.getBackground().getGreen(),
                                                              colorButtonX.getBackground().getBlue() ) );
-            rayBasedRenderWM.setClipPlane( 1, xSlice, "clipX" );
+            rayBasedRenderWM.setClipPlane( 1, xSlice );
             rayBasedRenderWM.displayClipPlane( 2, true, 
                                                new ColorRGB( colorButtonYInv.getBackground().getRed(),
                                                              colorButtonYInv.getBackground().getGreen(),
                                                              colorButtonYInv.getBackground().getBlue() ) );
-            rayBasedRenderWM.setClipPlane( 2, ySliceInv, "clipYInv" );
+            rayBasedRenderWM.setClipPlane( 2, ySliceInv );
 
             rayBasedRenderWM.displayClipPlane( 3, true, 
                                                new ColorRGB( colorButtonY.getBackground().getRed(),
                                                              colorButtonY.getBackground().getGreen(),
                                                              colorButtonY.getBackground().getBlue() ) );
-            rayBasedRenderWM.setClipPlane( 3, ySlice, "clipY" );
+            rayBasedRenderWM.setClipPlane( 3, ySlice );
 
             rayBasedRenderWM.displayClipPlane( 4, true, 
                                                new ColorRGB( colorButtonZInv.getBackground().getRed(),
                                                              colorButtonZInv.getBackground().getGreen(),
                                                              colorButtonZInv.getBackground().getBlue() ) );
-            rayBasedRenderWM.setClipPlane( 4, zSliceInv, "clipZInv" );
+            rayBasedRenderWM.setClipPlane( 4, zSliceInv );
 
             rayBasedRenderWM.displayClipPlane( 5, true, 
                                                new ColorRGB( colorButtonZ.getBackground().getRed(),
                                                              colorButtonZ.getBackground().getGreen(),
                                                              colorButtonZ.getBackground().getBlue() ) );
-            rayBasedRenderWM.setClipPlane( 5, zSlice, "clipZ" );
+            rayBasedRenderWM.setClipPlane( 5, zSlice );
 
 
             rayBasedRenderWM.enableArbitraryClipPlane( boxA.isSelected(), boundingCheckA.isSelected(),
@@ -4638,7 +4638,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 1, xSlice, "clipX" );
+                rayBasedRenderWM.setClipPlane( 1, xSlice );
             }
             
             if (!clipSliderX.getValueIsAdjusting()) {
@@ -4663,7 +4663,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 3, ySlice, "clipY" );
+                rayBasedRenderWM.setClipPlane( 3, ySlice );
             }
 
             if (!clipSliderY.getValueIsAdjusting()) {
@@ -4688,7 +4688,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 5, zSlice, "clipZ" );
+                rayBasedRenderWM.setClipPlane( 5, zSlice );
             }
 
             if (!clipSliderZ.getValueIsAdjusting()) {
@@ -4713,7 +4713,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 0, xSliceInv, "clipXInv" );
+                rayBasedRenderWM.setClipPlane( 0, xSliceInv );
             }
 
             if (!sliderXInv.getValueIsAdjusting()) {
@@ -4738,7 +4738,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 2, ySliceInv, "clipYInv" );
+                rayBasedRenderWM.setClipPlane( 2, ySliceInv );
             }
 
             if (!sliderYInv.getValueIsAdjusting()) {
@@ -4763,7 +4763,7 @@ public class JPanelClip extends JPanelRendererBase
 
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setClipPlane( 4, zSliceInv, "clipZInv" );
+                rayBasedRenderWM.setClipPlane( 4, zSliceInv );
             }
 
             if (!sliderZInv.getValueIsAdjusting()) {

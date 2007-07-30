@@ -45,10 +45,12 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
                       uniform sampler3D volume_tex, 
                       uniform sampler1D colormap, 
                       uniform sampler1D opacitymap, 
-                      uniform sampler3D normalmap, 
+                         uniform sampler3D VolumeImageA_GM, 
+                         uniform sampler1D OpacityMapA_GM, 
                       uniform float stepsize,
                       uniform float IsColor,
                          uniform float DoClip,
+                          uniform float GradientMagnitude,
                          uniform float4 BackgroundColor,
                       uniform float clipX,
                       uniform float clipXInv,
@@ -82,7 +84,6 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
 
     // The accumulated color and alpha values:
     float4 color_acc = float4(0,0,0,0);
-    //float4 color_acc = BackgroundColor;
     float alpha_acc = 0;
 
     // output color:
@@ -104,6 +105,10 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
 
     // The opacity at the current position along the ray:
     float opacity = 0;
+
+    // Gradient magnitude values along the ray:
+    float4 colorGM = (0,0,0,0);
+    float opacityGM = 0;
 
     float alpha_sample = stepsize;
     float delta = stepsize;
@@ -147,6 +152,13 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
             {
                 color = tex3D(volume_tex,position);
                 opacity = tex1D(opacitymap,color.r).r;
+                if ( GradientMagnitude != 0 )
+                {
+                    colorGM = tex3D(VolumeImageA_GM,position);
+                    opacityGM = tex1D(OpacityMapA_GM,colorGM.r).r;
+                    opacity = opacity * opacityGM;
+                }
+
                 if ( IsColor != 0 )
                 {
                     color.r = tex1D(colormap,color.r).r;

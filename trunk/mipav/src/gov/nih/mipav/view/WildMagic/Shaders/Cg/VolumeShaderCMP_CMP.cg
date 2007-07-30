@@ -45,15 +45,21 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
                              uniform sampler3D volume_texA, 
                              uniform sampler1D colormapA, 
                              uniform sampler1D opacitymapA, 
+                             uniform sampler3D VolumeImageA_GM, 
+                             uniform sampler1D OpacityMapA_GM, 
                              uniform sampler3D volume_texB, 
                              uniform sampler1D colormapB, 
                              uniform sampler1D opacitymapB, 
+                             uniform sampler3D VolumeImageB_GM, 
+                             uniform sampler1D OpacityMapB_GM, 
                              uniform float stepsize,
                              uniform float blend,
                              uniform float IsColorA,
                              uniform float IsColorB,
                              uniform float DoClip,
-                             uniform float GradientMagnitude,
+                             uniform float4 BackgroundColor,
+                             uniform float GradientMagnitudeA,
+                             uniform float GradientMagnitudeB,
                              uniform float clipX,
                              uniform float clipXInv,
                              uniform float clipY,
@@ -93,7 +99,7 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
     float alpha_accB = 0;
 
     // output color:
-    kColor = (0,0,0,0);
+    kColor = BackgroundColor;
     if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
     {
         return;
@@ -114,17 +120,18 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
     float opacityA = 0;
     float opacityB = 0;
 
+    // Gradient magnitude values along the ray:
+    float4 colorGM_A = (0,0,0,0);
+    float opacityGM_A = 0;
+    float4 colorGM_B = (0,0,0,0);
+    float opacityGM_B = 0;
+
     float alpha_sample = stepsize;
     float delta = stepsize;
     float3 delta_dir = norm_dir * delta;
     float delta_dir_len = length(delta_dir);
     float length_acc = 0;
     bool bClipped = false;
-
-    if ( GradientMagnitude != 0 )
-    {
-        blend = 1.0; // all a
-    }
 
     // For some profiles the number of loop iterations must be determined at
     // compile time:
@@ -165,6 +172,13 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
             {
                 colorA = tex3D(volume_texA,position);
                 opacityA = tex1D(opacitymapA,colorA.r).r;
+                if ( GradientMagnitudeA != 0 )
+                {
+                    colorGM_A = tex3D(VolumeImageA_GM,position);
+                    opacityGM_A = tex1D(OpacityMapA_GM,colorGM_A.r).r;
+                    opacityA = opacityA * opacityGM_A;
+                }
+
                 if ( IsColorA != 0 )
                 {
                     colorA.r = tex1D(colormapA,colorA.r).r;
@@ -178,6 +192,12 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
 
                 colorB = tex3D(volume_texB,position);
                 opacityB = tex1D(opacitymapB,colorB.r).r;
+                if ( GradientMagnitudeB != 0 )
+                {
+                    colorGM_B = tex3D(VolumeImageB_GM,position);
+                    opacityGM_B = tex1D(OpacityMapB_GM,colorGM_B.r).r;
+                    opacityB = opacityB * opacityGM_B;
+                }
                 if ( IsColorB != 0 )
                 {
                     colorB.r = tex1D(colormapB,colorB.r).r;
@@ -189,12 +209,6 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
                     colorB = tex1D(colormapB,colorB.r);
                 }
             }
-        }
-        if ( GradientMagnitude != 0 )
-        {
-            opacityA *= opacityB;
-            opacityA += 0.5;
-            opacityB = 0;
         }
 
         // If the opacity is not zero:
@@ -220,18 +234,7 @@ void p_VolumeShaderCMP_CMP(  in float3 inTexCoord1    : TEXCOORD0,
     } 
 
     kColor.rgb = blend * color_accA.rgb + (1 - blend) * color_accB.rgb;
-    if ( blend > 3 )
-    {
-        kColor = saturate(color_accA + color_accB );
-    }
-    else if ( blend > 2 )
-    {
-        kColor = color_accA * color_accB;
-    }
-    else if ( blend > 1 )
-    {
-        kColor = (1.0f - color_accA)*color_accB + color_accA;
-    }
-    kColor.a = 1;
+    float fAlpha = blend * alpha_accA + (1 - blend) * alpha_accB;
+    kColor.rgb = fAlpha * kColor.rgb + (1-fAlpha)*BackgroundColor.rgb;
     kColor.a = 1;
 }

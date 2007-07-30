@@ -3,13 +3,13 @@
 //----------------------------------------------------------------------------
 void GetDirectionalLightFactors
 (
- float3    kModelPosition,
- float3    kModelNormal,
- float3    kCameraPosition,
- float3    kLightDirection,
- float     fSpecularExponent,
- out float fDiffuseFactor,
- out float fSpecularFactor)
+    float3    kModelPosition,
+    float3    kModelNormal,
+    float3    kCameraPosition,
+    float3    kLightDirection,
+    float     fSpecularExponent,
+    out float fDiffuseFactor,
+    out float fSpecularFactor)
 {
     float fDiff, fSpec;
     kLightDirection = normalize(kLightDirection);
@@ -40,13 +40,13 @@ void GetDirectionalLightFactors
 //----------------------------------------------------------------------------
 void GetPointLightFactors
 (
- float3    kModelPosition,
- float3    kModelNormal,
- float3    kCameraPosition,
- float3    kLightPosition,
- float     fSpecularExponent,
- out float fDiffuseFactor,
- out float fSpecularFactor)
+    float3    kModelPosition,
+    float3    kModelNormal,
+    float3    kCameraPosition,
+    float3    kLightPosition,
+    float     fSpecularExponent,
+    out float fDiffuseFactor,
+    out float fSpecularFactor)
 {
     float fDiff, fSpec;
 
@@ -78,17 +78,17 @@ void GetPointLightFactors
 //----------------------------------------------------------------------------
 void GetSpotLightFactors
 (
- float3    kModelPosition,
- float3    kModelNormal,
- float3    kCameraPosition,
- float3    kLightPosition,
- float     fSpecularExponent,
- float3    kSpotAxis,
- float     fSpotCosAngle,
- float     fSpotExponent,
- out float fDiffuseFactor,
- out float fSpecularFactor,
- out float fSpotFactor)
+    float3    kModelPosition,
+    float3    kModelNormal,
+    float3    kCameraPosition,
+    float3    kLightPosition,
+    float     fSpecularExponent,
+    float3    kSpotAxis,
+    float     fSpotCosAngle,
+    float     fSpotExponent,
+    out float fDiffuseFactor,
+    out float fSpecularFactor,
+    out float fSpotFactor)
 {
     float fDiff, fSpec, fSpot;
 
@@ -133,9 +133,9 @@ void GetSpotLightFactors
 
 float GetAttenuation
 (
- float3   kModelPos,
- float3   kLightPos, 
- float4   kAttenuation)
+    float3   kModelPos,
+    float3   kLightPos, 
+    float4   kAttenuation)
 {
     // Attenuate the color (x=constant, y=linear, z=quadratic, w=intensity).
     // Attenuation is not active when the x component is zero.  The distance
@@ -147,148 +147,150 @@ float GetAttenuation
     //float3 kVertexModelDir = kModelPos - kLightPos;
     //float3 kVertexWorldDir = mul(kVertexModelDir,kWMatrix);
     float fDistance = sqrt(
-                           kVertexWorldDir.x*kVertexWorldDir.x +
-                           kVertexWorldDir.y*kVertexWorldDir.y +
-                           kVertexWorldDir.z*kVertexWorldDir.z);
+        kVertexWorldDir.x*kVertexWorldDir.x +
+        kVertexWorldDir.y*kVertexWorldDir.y +
+        kVertexWorldDir.z*kVertexWorldDir.z);
 
     float fAttn = kAttenuation.w/(kAttenuation.x + fDistance*(kAttenuation.y
-                                                              + fDistance*kAttenuation.z));
+        + fDistance*kAttenuation.z));
     
     return fAttn;
 }
 
 void AmbientLight( uniform float3   MaterialEmissive,
                    uniform float3   MaterialAmbient,
-                   uniform float4   LightAmbient,
+                   uniform float3   LightAmbient,
                    uniform float4   LightAttenuation,
-                   out     float3 kVertexColor)
+                   out     float4 kVertexColor)
 
 {
-    float3 kLAmb = LightAttenuation.w*LightAmbient.xyz;
+    float3 kLAmb = LightAttenuation.w*LightAmbient;
     kVertexColor.rgb = MaterialEmissive + MaterialAmbient*kLAmb;
 }
 
-void DirectionalLight( uniform float4 kModelPosition,
+void DirectionalLight( uniform float3 kModelPosition,
                        uniform float3 kModelNormal,
                        uniform float3   CameraWorldPosition,
                        uniform float3   MaterialEmissive,
                        uniform float3   MaterialAmbient,
                        uniform float4   MaterialDiffuse,
                        uniform float4   MaterialSpecular,
-                       uniform float4   LightDirection,
-                       uniform float4   LightAmbient,
-                       uniform float4   LightDiffuse,
-                       uniform float4   LightSpecular,
+                       uniform float3   LightDirection,
+                       uniform float3   LightAmbient,
+                       uniform float3   LightDiffuse,
+                       uniform float3   LightSpecular,
                        uniform float4   LightAttenuation,
-                       out     float3 kVertexColor)
+                       out     float4 kVertexColor)
     
 {
     float fDiff, fSpec;
     GetDirectionalLightFactors((float3)kModelPosition,kModelNormal,
-                               CameraWorldPosition,LightDirection.xyz,MaterialSpecular.a,
-                               fDiff,fSpec);
+        CameraWorldPosition,LightDirection,MaterialSpecular.a,
+        fDiff,fSpec);
 
-    float3 kColor = MaterialAmbient*LightAmbient.xyz;
+    float3 kColor = MaterialAmbient*LightAmbient;
     if (fDiff > 0.0f)
     {
-        kColor += fDiff*MaterialDiffuse.rgb*LightDiffuse.xyz;
+        kColor += fDiff*MaterialDiffuse.rgb*LightDiffuse;
         if (fSpec > 0.0f)
         {
-            kColor += fSpec*MaterialSpecular.rgb*LightSpecular.xyz;
+            kColor += fSpec*MaterialSpecular.rgb*LightSpecular;
         }
     }
 
     kVertexColor.rgb = MaterialEmissive + LightAttenuation.w*kColor;
 }
 
-void PointLight(    uniform float4 kModelPosition,
+void PointLight(    uniform float3 kModelPosition,
                     uniform float3 kModelNormal,
                     uniform float3   CameraWorldPosition,
                     uniform float3   MaterialEmissive,
                     uniform float3   MaterialAmbient,
                     uniform float4   MaterialDiffuse,
                     uniform float4   MaterialSpecular,
-                    uniform float4   LightWorldPosition,
-                    uniform float4   LightAmbient,
-                    uniform float4   LightDiffuse,
-                    uniform float4   LightSpecular,
+                    uniform float3   LightWorldPosition,
+                    uniform float3   LightAmbient,
+                    uniform float3   LightDiffuse,
+                    uniform float3   LightSpecular,
                     uniform float4   LightAttenuation,
-                    out     float3 kVertexColor)
+                    out     float4 kVertexColor)
 {
     float fDiff, fSpec;
     GetPointLightFactors(kModelPosition.xyz,kModelNormal,
-                         CameraWorldPosition,LightWorldPosition.xyz,MaterialSpecular.a,
+                         CameraWorldPosition,LightWorldPosition,MaterialSpecular.a,
                          fDiff,fSpec);
 
     float fAttn = GetAttenuation(kModelPosition.xyz,
-                                 LightWorldPosition.xyz,LightAttenuation);
+                                 LightWorldPosition,LightAttenuation);
 
-    float3 kColor = MaterialAmbient*LightAmbient.xyz;
+    float3 kColor = MaterialAmbient*LightAmbient;
     if (fDiff > 0.0f)
     {
-        kColor += fDiff*MaterialDiffuse.xyz*LightDiffuse.xyz;
+        kColor += fDiff*MaterialDiffuse.xyz*LightDiffuse;
         if (fSpec > 0.0f)
         {
-            kColor += fSpec*MaterialSpecular.xyz*LightSpecular.xyz;
+            kColor += fSpec*MaterialSpecular.xyz*LightSpecular;
         }
     }
 
     kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
+    kVertexColor.a = MaterialDiffuse.a;
 }
 
-void SpotLight(    uniform float4 kModelPosition,
+void SpotLight(    uniform float3 kModelPosition,
                    uniform float3 kModelNormal,
                    uniform float3 CameraWorldPosition,
                    uniform float3 MaterialEmissive,
                    uniform float3 MaterialAmbient,
                    uniform float4 MaterialDiffuse,
                    uniform float4 MaterialSpecular,
-                   uniform float4 LightWorldPosition,
-                   uniform float4 LightWorldDirection,
-                   uniform float4 LightAmbient,
-                   uniform float4 LightDiffuse,
-                   uniform float4 LightSpecular,
+                   uniform float3 LightWorldPosition,
+                   uniform float3 LightWorldDirection,
+                   uniform float3 LightAmbient,
+                   uniform float3 LightDiffuse,
+                   uniform float3 LightSpecular,
                    uniform float4 LightSpotCutoff,
                    uniform float4 LightAttenuation,
-                   out     float3 kVertexColor)
+                   out     float4 kVertexColor)
 {
     float fDiff, fSpec, fSpot;
     GetSpotLightFactors(kModelPosition.xyz,kModelNormal,
-                        CameraWorldPosition,LightWorldPosition.xyz,MaterialSpecular.a,
-                        LightWorldDirection.xyz,LightSpotCutoff.y,LightSpotCutoff.w,
-                        fDiff,fSpec,fSpot);
+                        CameraWorldPosition,LightWorldPosition,MaterialSpecular.a,
+                        LightWorldDirection,LightSpotCutoff.y,LightSpotCutoff.w,fDiff,
+                        fSpec,fSpot);
 
     float fAttn = GetAttenuation(kModelPosition.xyz,
-                                 LightWorldPosition.xyz,LightAttenuation);
+                                 LightWorldPosition,LightAttenuation);
 
-    float3 kColor = MaterialAmbient*LightAmbient.xyz;
+    float3 kColor = MaterialAmbient*LightAmbient;
     if (fSpot > 0.0f)
     {
         if (fDiff > 0.0f)
         {
-            kColor += (fSpot*fDiff)*MaterialDiffuse.rgb*LightDiffuse.xyz;
+            kColor += (fSpot*fDiff)*MaterialDiffuse.rgb*LightDiffuse;
             if (fSpec > 0.0f)
             {
-                kColor += (fSpot*fSpec)*MaterialSpecular.rgb*LightSpecular.xyz;
+                kColor += (fSpot*fSpec)*MaterialSpecular.rgb*LightSpecular;
             }
         }
     }
     
     kVertexColor.rgb = MaterialEmissive + fAttn*kColor;
+    kVertexColor.a = MaterialDiffuse.a;
 }
 
 
 /**
  * Compute the surface color based on lighting.
  */
-void computeColor( float4 kModelPosition, float3 kModelNormal, float3 CameraWorldPosition, 
+void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorldPosition, 
                    float3 MaterialEmissive, float3 MaterialAmbient, float4 MaterialDiffuse, float4 MaterialSpecular,
                    float4 LightAmbient, float4 LightDiffuse, float4 LightSpecular,
                    float4 LightWorldPosition, float4 LightWorldDirection,
                    float4 LightSpotCutoff, float4 LightAttenuation,
                    float LightType,
                    float Composite,
-                   inout float3 color_sample)
+                   inout float4 color_sample)
 {
     if ( LightType == -1 )
     {
@@ -308,10 +310,10 @@ void computeColor( float4 kModelPosition, float3 kModelNormal, float3 CameraWorl
 
         if ( Composite != 0 )
         {
-            LocalMaterialAmbient = color_sample.rgb * MaterialAmbient;
-            LocalMaterialDiffuse.rgb = color_sample * MaterialDiffuse.rgb;
-            LocalMaterialEmissive = color_sample.rgb * MaterialEmissive;
-            LocalMaterialSpecular.rgb = color_sample * MaterialSpecular.rgb;
+            LocalMaterialAmbient = color_sample * MaterialAmbient;
+            LocalMaterialDiffuse = color_sample * MaterialDiffuse;
+            LocalMaterialEmissive = color_sample * MaterialEmissive;
+            LocalMaterialSpecular = color_sample * MaterialSpecular;
         }
 
         if ( LightType == 0 )
@@ -390,31 +392,30 @@ bool myClip(float3 vec,
 {
     if ( vec.x > clipX )
     {
-        return true;
+        return 1;
     }
     if ( vec.x < clipXInv )
     {
-        return true;
+        return 1;
     }
     if ( vec.y > clipY )
     {
-        return true;
+        return 1;
     }
     if ( vec.y < clipYInv )
     {
-        return true;
+        return 1;
     }
     if ( vec.z > clipZ )
     {
-        return true;
+        return 1;
     }
     if ( vec.z < clipZInv )
     {
-        return true;
+        return 1;
     }
-    return false;
+    return 0;
 }
-
 
 /** Raycasting fragment program implementation */
 void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
@@ -434,6 +435,8 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
                              uniform float IsColorA,
                              uniform float IsColorB,
                              uniform float DoClip,
+                             uniform float GradientMagnitude,
+                             uniform float4 BackgroundColor,
                              uniform float CompositeA,
                              uniform float CompositeB,
                              uniform float clipX,
@@ -457,8 +460,8 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
                              uniform float4 Light0Specular,
                              uniform float4 Light0SpotCutoff,
                              uniform float4 Light0Attenuation,
-                             uniform float4 Light0WorldPosition,
-                             uniform float4 Light0WorldDirection,
+                             uniform float4 Light0ModelPosition,
+                             uniform float4 Light0ModelDirection,
 
                              uniform float4 Light1Ambient,
                              uniform float4 Light1Attenuation,
@@ -482,7 +485,6 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
                              uniform float4 Light3WorldDirection,
 
                              uniform float3 CameraWorldPosition,
-                             uniform float4x4 WVMatrix,
                              uniform float4x4 WVPMatrix)
 {
     // find the right place to lookup in the backside buffer
@@ -513,7 +515,7 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
     float alpha_accB = 0;
 
     // output color:
-    kColor = (0,0,0,0);
+    kColor = BackgroundColor;
     if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
     {
         return;
@@ -550,10 +552,13 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
     bool breakB = false;
 
     float4 worldNormal;
-    float3 color0;
-    float3 color1;
-    float3 color2;
-    float3 color3;
+    float4 color0;
+    float4 color1;
+    float4 color2;
+    float4 color3;
+
+    float3 LocalMaterialAmbient = MaterialAmbient;
+    float3 LocalMaterialEmissive = MaterialEmissive;
 
     // For some profiles the number of loop iterations must be determined at
     // compile time:
@@ -627,28 +632,29 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
             normal = tex3D(normalmapA,position);
 
             // Get the color based on lighting:
-            normal.w = 1;
-            worldNormal = mul( normal, WVMatrix );
-            color0 = colorA.rgb;
-            computeColor( inPos, worldNormal.xyz, CameraWorldPosition,
+            color0 = colorA;
+            computeColor( position, normal, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light0Ambient, Light0Diffuse, Light0Specular,
-                          Light0WorldPosition, Light0WorldDirection,
+                          Light0ModelPosition, Light0ModelDirection,
                           Light0SpotCutoff, Light0Attenuation,
                           Light0Type,
                           CompositeA, color0 );
                 
 
-            normal.w = 0;
-            color1 = colorA.rgb;
-            computeColor( inPos, normal.xyz, CameraWorldPosition,
-                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                          Light1Ambient, Light0Diffuse, Light0Specular,
-                          Light0WorldPosition, Light0WorldDirection,
-                          Light0SpotCutoff, Light1Attenuation,
-                          0, CompositeA, color1 );
+            color1 = colorA;
+            if ( CompositeA != 0 )
+            {
+                LocalMaterialAmbient = color1 * MaterialAmbient;
+                LocalMaterialEmissive = color1 * MaterialEmissive;
+            }
+            AmbientLight( LocalMaterialEmissive,
+                          LocalMaterialAmbient,
+                          Light1Ambient,
+                          Light1Attenuation,
+                          color1 );
 
-            color2 = colorA.rgb;
+            color2 = colorA;
             computeColor( inPos, normal.xyz, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light2Ambient, Light2Diffuse, Light2Specular,
@@ -657,7 +663,7 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
                           Light2Type,
                           CompositeA, color2 );
 
-            color3 = colorA.rgb;
+            color3 = colorA;
             computeColor( inPos, normal.xyz, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light3Ambient, Light3Diffuse, Light3Specular,
@@ -666,7 +672,7 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
                           Light3Type,
                           CompositeA, color3 );
 
-            colorA.rgb = color0 + color1 + color2 + color3;
+            colorA = color0 + color1 + color2 + color3;
 
             // Composite surface:
             if ( CompositeA != 0 )
@@ -678,6 +684,7 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
             else if ( (colorA.x != 0) || (colorA.y != 0) || (colorA.z != 0) )
             {
                 color_accA   = colorA;
+                alpha_accA = 1.0;
                 breakA = true;
             }
         }
@@ -688,28 +695,29 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
             normal = tex3D(normalmapB,position);
 
             // Get the color based on lighting:
-            normal.w = 1;
-            worldNormal = mul( normal, WVMatrix );
-            color0 = colorB.rgb;
-            computeColor( inPos, worldNormal.xyz, CameraWorldPosition,
+            color0 = colorB;
+            computeColor( position, normal, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light0Ambient, Light0Diffuse, Light0Specular,
-                          Light0WorldPosition, Light0WorldDirection,
+                          Light0ModelPosition, Light0ModelDirection,
                           Light0SpotCutoff, Light0Attenuation,
                           Light0Type,
                           CompositeB, color0 );
                 
 
-            normal.w = 0;
-            color1 = colorB.rgb;
-            computeColor( inPos, normal.xyz, CameraWorldPosition,
-                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-                          Light1Ambient, Light0Diffuse, Light0Specular,
-                          Light0WorldPosition, Light0WorldDirection,
-                          Light0SpotCutoff, Light1Attenuation,
-                          0, CompositeB, color1 );
+            color1 = colorB;
+            if ( CompositeB != 0 )
+            {
+                LocalMaterialAmbient = color1 * MaterialAmbient;
+                LocalMaterialEmissive = color1 * MaterialEmissive;
+            }
+            AmbientLight( LocalMaterialEmissive,
+                          LocalMaterialAmbient,
+                          Light1Ambient,
+                          Light1Attenuation,
+                          color1 );
 
-            color2 = colorB.rgb;
+            color2 = colorB;
             computeColor( inPos, normal.xyz, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light2Ambient, Light2Diffuse, Light2Specular,
@@ -718,16 +726,16 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
                           Light2Type,
                           CompositeB, color2 );
 
-//             color3 = colorB.rgb;
-//             computeColor( inPos, normal.xyz, CameraWorldPosition,
-//                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
-//                           Light3Ambient, Light3Diffuse, Light3Specular,
-//                           Light3WorldPosition, Light3WorldDirection,
-//                           Light3SpotCutoff, Light3Attenuation,
-//                           Light3Type,
-//                           CompositeB, color3 );
+            color3 = colorB;
+            computeColor( inPos, normal.xyz, CameraWorldPosition,
+                          MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
+                           Light3Ambient, Light3Diffuse, Light3Specular,
+                          Light3WorldPosition, Light3WorldDirection,
+                          Light3SpotCutoff, Light3Attenuation,
+                          Light3Type,
+                          CompositeB, color3 );
 
-            colorB.rgb = color0 + color1 + color2;// + color3;
+            colorB = color0 + color1 + color2 + color3;
 
             // Composite surface:
             if ( CompositeB != 0 )
@@ -739,6 +747,7 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
             else if ( (colorB.x != 0) || (colorB.y != 0) || (colorB.z != 0) )
             {
                 color_accB   = colorB;
+                alpha_accB = 1.0;
                 breakB = true;
             }
         }
@@ -763,18 +772,7 @@ void p_VolumeShaderSUR_SUR(  in float3 inTexCoord1    : TEXCOORD0,
     } 
 
     kColor.rgb = blend * color_accA.rgb + (1 - blend) * color_accB.rgb;
-
-    if ( blend > 3 )
-    {
-        kColor = saturate(color_accA + color_accB );
-    }
-    else if ( blend > 2 )
-    {
-        kColor = color_accA * color_accB;
-    }
-    else if ( blend > 1 )
-    {
-        kColor = (1.0f - color_accA)*color_accB + color_accA;
-    }
+    float fAlpha = blend * alpha_accA + (1 - blend) * alpha_accB;
+    kColor.rgb = fAlpha * kColor.rgb + (1-fAlpha)*BackgroundColor.rgb;
     kColor.a = 1;
 }

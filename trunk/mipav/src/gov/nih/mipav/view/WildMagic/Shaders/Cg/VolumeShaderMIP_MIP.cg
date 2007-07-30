@@ -54,6 +54,7 @@ void p_VolumeShaderMIP_MIP(  in float3 inTexCoord1    : TEXCOORD0,
                                  uniform float IsColorA,
                                  uniform float IsColorB,
                                  uniform float DoClip,
+                             uniform float4 BackgroundColor,
                              uniform float GradientMagnitude,
                                  uniform float clipX,
                                  uniform float clipXInv,
@@ -86,7 +87,7 @@ void p_VolumeShaderMIP_MIP(  in float3 inTexCoord1    : TEXCOORD0,
     float3 position = start.xyz;
 
     // output color:
-    kColor = (0,0,0,0);
+    kColor = BackgroundColor;
     if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
     {
         return;
@@ -127,13 +128,6 @@ void p_VolumeShaderMIP_MIP(  in float3 inTexCoord1    : TEXCOORD0,
     float delta_dir_len = length(delta_dir);
     float length_acc = 0;
     bool bClipped = false;
-
-    if ( GradientMagnitude != 0 )
-    {
-        blend = 1.0; // all a
-    }
-
-
 
     // For some profiles the number of loop iterations must be determined at
     // compile time:
@@ -181,12 +175,6 @@ void p_VolumeShaderMIP_MIP(  in float3 inTexCoord1    : TEXCOORD0,
                 opacityB = tex1D(opacitymapB,colorB.r).r;
             }
         }
-        if ( GradientMagnitude != 0 )
-        {
-            opacityA *= opacityB;
-            opacityA += 0.5;
-            opacityB = 0;
-        }
         // If the opacity is not zero:
         if ( opacityA > 0 )
         {
@@ -233,7 +221,6 @@ void p_VolumeShaderMIP_MIP(  in float3 inTexCoord1    : TEXCOORD0,
     {
         kColor.rgb = blend * tex1D(colormapA,fMaxA).rgb;
     }
-    kColor.a = blend * fMaxA;
 
 
     if ( IsColorB != 0 )
@@ -246,5 +233,7 @@ void p_VolumeShaderMIP_MIP(  in float3 inTexCoord1    : TEXCOORD0,
     {
         kColor.rgb += (1 - blend) * tex1D(colormapB,fMaxB).rgb;
     }
-    kColor.a += (1 - blend) * fMaxB;
+    float fMax = blend * fMaxA + (1 - blend) * fMaxB;
+    kColor = fMax * kColor + (1 - fMax) * BackgroundColor;
+    kColor.a = 1;
 }
