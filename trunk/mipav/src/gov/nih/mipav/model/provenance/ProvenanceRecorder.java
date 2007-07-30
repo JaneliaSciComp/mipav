@@ -13,7 +13,12 @@ import java.util.Vector;
 
 
 /**
- * A singleton class used to add lines to the script currently being recorded (if one is being recorded at all).
+ * Singleton class modelled after ScriptRecorder that is turned on when Mipav starts if
+ * DATA_PROVENANCE boolean is set to true in preferences (set through Mipav-Options)
+ * Records data provenance line by line (after running algorithms or doing other important actions (Change name) etc
+ * images are placed in registers (similar to the script recorder) but there are also Vectors of input and output images
+ * so that the data provenance is placed into the correct place(s)
+ *
  */
 public class ProvenanceRecorder {
 
