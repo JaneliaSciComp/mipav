@@ -14,6 +14,7 @@ import org.xml.sax.helpers.*;
 import java.io.*;
 
 import java.net.*;
+import java.util.Vector;
 
 import javax.xml.parsers.*;
 
@@ -74,100 +75,8 @@ public class FileDataProvenance extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * simple function to write an xml formatted closed tag including the tag value.
-     *
-     * @param  bw   write to use
-     * @param  tag  tag name
-     * @param  val  tag value
-     */
-    public final void closedTag(BufferedWriter bw, String tag, String val) {
 
-        try {
-
-            for (int i = 0; i < tabLevel; i++) {
-                bw.write(TAB);
-            }
-
-            // entity-ize some xml-unfriendly characters and convert to the XML
-            // charset
-            String writeVal = val.trim().replaceAll("&", "&amp;");
-
-            writeVal = writeVal.trim().replaceAll("\"", "&quot;");
-            writeVal = writeVal.trim().replaceAll("<", "&lt;");
-            writeVal = writeVal.trim().replaceAll(">", "&gt;");
-            writeVal = new String(writeVal.getBytes(XML_ENCODING));
-
-            bw.write("<" + tag + ">" + writeVal + "</" + tag + ">");
-            bw.newLine();
-        } catch (IOException ex) { }
-    }
-
-    /**
-     * simple function to write an xml formatted closed tag including the tag value.
-     *
-     * @param  bw   write to use
-     * @param  tag  tag name
-     * @param  attr attributes
-     * @param  val  tag value
-     */
-    public final void closedTag(BufferedWriter bw, String tag, String attr, String val) {
-
-        try {
-
-            for (int i = 0; i < tabLevel; i++) {
-                bw.write(TAB);
-            }
-
-            // entity-ize some xml-unfriendly characters and convert to the XML
-            // charset
-            
-            attr = new String(attr.getBytes(XML_ENCODING));
-            
-            String writeVal = val.trim().replaceAll("&", "&amp;");
-            writeVal = writeVal.trim().replaceAll("\"", "&quot;");
-            writeVal = writeVal.trim().replaceAll("<", "&lt;");
-            writeVal = writeVal.trim().replaceAll(">", "&gt;");
-            writeVal = new String(writeVal.getBytes(XML_ENCODING));
-
-            bw.write("<" + tag + " " + attr + ">" + writeVal + "</" + tag + ">");
-            bw.newLine();
-        } catch (IOException ex) { }
-    }
     
-    /**
-     * simple function to write an xml formatted open ended tag (value not included).
-     *
-     * @param  bw     writer to use
-     * @param  tag    tag name
-     * @param  start  whether this is the start of a container tag
-     */
-    public final void openTag(BufferedWriter bw, String tag, boolean start) {
-
-        try {
-
-            if (!start) {
-
-                // done with this container
-                tabLevel--;
-            }
-
-            for (int i = 0; i < tabLevel; i++) {
-                bw.write(TAB);
-            }
-
-            if (start) {
-                bw.write("<" + tag + ">");
-
-                // indent the contained tags
-                tabLevel++;
-            } else {
-                bw.write("</" + tag + ">");
-            }
-
-            bw.newLine();
-        } catch (IOException ex) { }
-    }
 
     /**
      * Writes VOI to an XML formatted file.
@@ -192,13 +101,16 @@ public class FileDataProvenance extends FileBase {
             fw = new FileWriter(file);
             bw = new BufferedWriter(fw);
 
+            XMLHelper xHelp = new XMLHelper(bw);
 
+            Vector<XMLHelper.XMLAttributes> atVector = new Vector<XMLHelper.XMLAttributes>();
+            
             bw.write(XML_HEADER);
             bw.newLine();
             bw.write(DATA_PROVENANCE);
             bw.newLine();
 
-            openTag(bw, "dataprovenance", true);
+            xHelp.openTag("dataprovenance", true);
             
             int numEntries = image.getProvenanceHolder().size();
             
@@ -207,22 +119,29 @@ public class FileDataProvenance extends FileBase {
             for (int i = 0; i < numEntries; i++) {
             	entry = image.getProvenanceHolder().elementAt(i);
             	
-            	openTag(bw, "entry", true);
+            	xHelp.openTag("entry", true);
             	
-            	closedTag(bw, "timestamp", Long.toString(entry.getTimeStamp()));
-            	closedTag(bw, "javaversion", entry.getJavaVersion());
+            	xHelp.closedTag("timestamp", Long.toString(entry.getTimeStamp()));
+            	xHelp.closedTag("javaversion", entry.getJavaVersion());
+            	            	
+            	atVector.add(xHelp.new XMLAttributes("version", entry.getMipavVersion()));
+            	atVector.add(xHelp.new XMLAttributes("arguments", entry.getMipavArguments()));
             	
-            	closedTag(bw, "mipav", "version=\"" + entry.getMipavVersion() + "\" arguments=\"" + entry.getMipavArguments() + "\"", "");
-            	closedTag(bw, "OS", "version=\"" + entry.getOSVersion() + "\" name=\"" + entry.getOSName() + "\"", "");
-            	closedTag(bw, "user", entry.getUser());
-            	closedTag(bw, "action", entry.getAction());
+            	xHelp.closedTag("mipav", "", atVector);
             	
-            	openTag(bw, "entry", false);
+            	atVector.add(xHelp.new XMLAttributes("version", entry.getOSVersion()));
+            	atVector.add(xHelp.new XMLAttributes("name", entry.getOSName()));
+            	xHelp.closedTag("OS", "", atVector);
+            	
+            	xHelp.closedTag("user", entry.getUser());
+            	xHelp.closedTag("action", entry.getAction());
+            	
+            	xHelp.openTag("entry", false);
             }
             
             
             
-            openTag(bw, "dataprovenance", false);
+            xHelp.openTag("dataprovenance", false);
             bw.close();
         } catch (Exception e) {
             System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileDataProvenance");
