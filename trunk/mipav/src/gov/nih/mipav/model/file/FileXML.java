@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.XMLHelper.XMLAttributes;
 import gov.nih.mipav.view.*;
 
 import org.apache.xerces.jaxp.*;
@@ -11,6 +12,7 @@ import org.xml.sax.helpers.*;
 import java.io.*;
 
 import java.net.*;
+import java.util.Vector;
 
 import javax.xml.parsers.*;
 
@@ -61,6 +63,10 @@ public abstract class FileXML extends FileBase {
     /** tab level counter for writing xml header. */
     protected int tabLevel = 0;
 
+    /** Buffered writer for writing to XML file*/
+    protected BufferedWriter bw;
+
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -98,7 +104,7 @@ public abstract class FileXML extends FileBase {
      * @param  tag    tag name
      * @param  start  is this a start or end tag
      */
-    public final void openTag(BufferedWriter bw, String tag, boolean start) {
+    public final void openTag(String tag, boolean start) {
 
         try {
 
@@ -220,7 +226,7 @@ public abstract class FileXML extends FileBase {
      * @param  tag  tag name
      * @param  val  tag value
      */
-    protected final void closedTag(BufferedWriter bw, String tag, String val) {
+    protected final void closedTag(String tag, String val) {
 
         try {
 
@@ -240,4 +246,69 @@ public abstract class FileXML extends FileBase {
         } catch (IOException ex) { }
     }
 
+    /**
+	 * Writes a closed tag (tag, end tag) with the addition of attributes (name="value")
+	 * from within a Vector (can do any number of XMLAttributes ...class included below)
+	 * @param tag the tag name
+	 * @param val the tag's value
+	 * @param attr vector of XMLAttributes
+	 */
+	public final void closedTag(String tag, String val, Vector<XMLAttributes> attr) {
+    	
+		try {
+
+            for (int i = 0; i < tabLevel; i++) {
+                bw.write(TAB);
+            }
+
+            bw.write("<" + tag);
+            
+            String attrStr;
+            for (int i = 0; i < attr.size(); i++) {
+            	
+            	attrStr = attr.elementAt(i).getValue().trim().replaceAll("&", "&amp;");
+            	attrStr = attrStr.trim().replaceAll("\"", "&quot;");
+            	attrStr = attrStr.trim().replaceAll("<", "&lt;");
+            	attrStr = attrStr.trim().replaceAll(">", "&gt;");
+            	attrStr = new String(attrStr.getBytes(XML_ENCODING));
+            	
+            	bw.write(" " + attr.elementAt(i).getName() + "=\"" + attrStr + "\"");
+            }
+            
+            String writeVal = val.trim().replaceAll("&", "&amp;");
+            writeVal = writeVal.trim().replaceAll("\"", "&quot;");
+            writeVal = writeVal.trim().replaceAll("<", "&lt;");
+            writeVal = writeVal.trim().replaceAll(">", "&gt;");
+            writeVal = new String(writeVal.getBytes(XML_ENCODING));
+            bw.write(">" + writeVal + "</" + tag + ">");
+
+            bw.newLine();
+        } catch (IOException ex) { }
+		
+		attr.clear();
+    }
+    
+	 /**
+     * Class used to store an xml tag's attribute (name and value)
+     *
+     */
+    public class XMLAttributes {
+    	
+    	private String name;
+    	private String value;
+    	
+    	public XMLAttributes(String n, String v) {
+    		name = n;
+    		value = v;
+    	}
+    	
+    	public String getName() {
+    		return name;
+    	}
+    	public String getValue() {
+    		return value;
+    	}
+    	
+    }
+	
 }

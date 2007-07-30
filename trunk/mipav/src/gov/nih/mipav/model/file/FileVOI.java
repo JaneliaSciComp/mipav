@@ -39,7 +39,7 @@ import javax.xml.parsers.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      VOI
  */
-public class FileVOI extends FileBase {
+public class FileVOI extends FileXML {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -101,7 +101,7 @@ public class FileVOI extends FileBase {
      * @exception  IOException  if there is an error making the files
      */
     public FileVOI(String fileName, String fileDir, ModelImage image) throws IOException {
-
+    	super(fileName, fileDir);
         this.fileName = fileName;
 
         int idx = fileName.lastIndexOf(".");
@@ -136,68 +136,6 @@ public class FileVOI extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * simple function to write an xml formatted closed tag including the tag value.
-     *
-     * @param  bw   write to use
-     * @param  tag  tag name
-     * @param  val  tag value
-     */
-    public final void closedTag(BufferedWriter bw, String tag, String val) {
-
-        try {
-
-            for (int i = 0; i < tabLevel; i++) {
-                bw.write(TAB);
-            }
-
-            // entity-ize some xml-unfriendly characters and convert to the XML
-            // charset
-            String writeVal = val.trim().replaceAll("&", "&amp;");
-
-            writeVal = writeVal.trim().replaceAll("\"", "&quot;");
-            writeVal = writeVal.trim().replaceAll("<", "&lt;");
-            writeVal = writeVal.trim().replaceAll(">", "&gt;");
-            writeVal = new String(writeVal.getBytes(XML_ENCODING));
-
-            bw.write("<" + tag + ">" + writeVal + "</" + tag + ">");
-            bw.newLine();
-        } catch (IOException ex) { }
-    }
-
-    /**
-     * simple function to write an xml formatted open ended tag (value not included).
-     *
-     * @param  bw     writer to use
-     * @param  tag    tag name
-     * @param  start  whether this is the start of a container tag
-     */
-    public final void openTag(BufferedWriter bw, String tag, boolean start) {
-
-        try {
-
-            if (!start) {
-
-                // done with this container
-                tabLevel--;
-            }
-
-            for (int i = 0; i < tabLevel; i++) {
-                bw.write(TAB);
-            }
-
-            if (start) {
-                bw.write("<" + tag + ">");
-
-                // indent the contained tags
-                tabLevel++;
-            } else {
-                bw.write("</" + tag + ">");
-            }
-
-            bw.newLine();
-        } catch (IOException ex) { }
-    }
 
     /**
      * This method read a VOI file that has been saved in the MIPAV VOI format.
@@ -298,8 +236,6 @@ public class FileVOI extends FileBase {
      */
     public void writeAnnotationXML(boolean writeAll) throws IOException {
         FileWriter fw;
-        BufferedWriter bw;
-
         while (file.exists() == true) {
             int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists",
                                                          JOptionPane.YES_NO_OPTION);
@@ -337,7 +273,7 @@ public class FileVOI extends FileBase {
             bw.write(TEXT_HEADER);
             bw.newLine();
 
-            openTag(bw, "Annotation xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+            openTag("Annotation xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
 
             VOIVector VOIs = image.getVOIs();
 
@@ -369,7 +305,7 @@ public class FileVOI extends FileBase {
 
                         for (int k = 0; k < curves[j].size(); k++) {
 
-                            openTag(bw, "Label", true);
+                            openTag("Label", true);
 
                             // there's only one per VOI
                             vText = (VOIText) curves[j].elementAt(k);
@@ -383,15 +319,15 @@ public class FileVOI extends FileBase {
                             fontName = vText.getFontName();
                             fontDescriptors = vText.getFontDescriptors();
 
-                            closedTag(bw, "Text", voiString);
+                            closedTag( "Text", voiString);
 
                             if (image.getNDims() > 2) {
                                 MipavCoordinateSystems.fileToScanner(textPt, textPtScanner, image);
                                 MipavCoordinateSystems.fileToScanner(arrowPt, arrowPtScanner, image);
-                                closedTag(bw, "TextLocation",
+                                closedTag( "TextLocation",
                                           Float.toString(textPtScanner.x) + "," + Float.toString(textPtScanner.y) +
                                           "," + Float.toString(textPtScanner.z));
-                                closedTag(bw, "ArrowLocation",
+                                closedTag( "ArrowLocation",
                                           Float.toString(arrowPtScanner.x) + "," + Float.toString(arrowPtScanner.y) +
                                           "," + Float.toString(arrowPtScanner.z));
                                 // System.err.println("Text location: " + textPtScanner + ", arrow location: " +
@@ -399,40 +335,40 @@ public class FileVOI extends FileBase {
                             } else {
                                 textPt.z = j;
                                 arrowPt.z = j;
-                                closedTag(bw, "TextLocation",
+                                closedTag( "TextLocation",
                                           Float.toString(textPt.x) + "," + Float.toString(textPt.y) + "," +
                                           Float.toString(textPt.z));
-                                closedTag(bw, "ArrowLocation",
+                                closedTag( "ArrowLocation",
                                           Float.toString(arrowPt.x) + "," + Float.toString(arrowPt.y) + "," +
                                           Float.toString(arrowPt.z));
                             }
 
-                            closedTag(bw, "UseMarker", Boolean.toString(useMarker));
+                            closedTag( "UseMarker", Boolean.toString(useMarker));
 
-                            closedTag(bw, "Color",
+                            closedTag( "Color",
                                       Integer.toString(voiColor.getAlpha()) + "," +
                                       Integer.toString(voiColor.getRed()) + "," +
                                       Integer.toString(voiColor.getGreen()) + "," +
                                       Integer.toString(voiColor.getBlue()));
-                            closedTag(bw, "BackgroundColor",
+                            closedTag( "BackgroundColor",
                                       Integer.toString(voiBackgroundColor.getAlpha()) + "," +
                                       Integer.toString(voiBackgroundColor.getRed()) + "," +
                                       Integer.toString(voiBackgroundColor.getGreen()) + "," +
                                       Integer.toString(voiBackgroundColor.getBlue()));
-                            closedTag(bw, "FontName", fontName);
-                            closedTag(bw, "FontSize", Integer.toString(fontSize));
+                            closedTag( "FontName", fontName);
+                            closedTag( "FontSize", Integer.toString(fontSize));
 
                             if (fontDescriptors == Font.BOLD) {
-                                closedTag(bw, "FontStyle", "BOLD");
+                                closedTag( "FontStyle", "BOLD");
                             } else if (fontDescriptors == Font.ITALIC) {
-                                closedTag(bw, "FontStyle", "ITALIC");
+                                closedTag( "FontStyle", "ITALIC");
                             } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
-                                closedTag(bw, "FontStyle", "BOLDITALIC");
+                                closedTag( "FontStyle", "BOLDITALIC");
                             } else {
-                                closedTag(bw, "FontStyle", "");
+                                closedTag( "FontStyle", "");
                             }
 
-                            openTag(bw, "Label", false);
+                            openTag("Label", false);
                         }
                     }
 
@@ -440,7 +376,7 @@ public class FileVOI extends FileBase {
                 }
             }
 
-            openTag(bw, "Annotation", false);
+            openTag("Annotation", false);
             bw.close();
 
         } catch (Exception e) { }
@@ -780,15 +716,15 @@ public class FileVOI extends FileBase {
             bw.write(VOI_HEADER);
             bw.newLine();
 
-            openTag(bw, "VOI xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
-            closedTag(bw, "Unique-ID", Integer.toString(voi.getUID()));
-            closedTag(bw, "Curve-type", Integer.toString(voi.getCurveType()));
-            closedTag(bw, "Color",
+            openTag("VOI xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+            closedTag( "Unique-ID", Integer.toString(voi.getUID()));
+            closedTag( "Curve-type", Integer.toString(voi.getCurveType()));
+            closedTag( "Color",
                       Integer.toString(voi.getColor().getAlpha()) + "," + Integer.toString(voi.getColor().getRed()) +
                       "," + Integer.toString(voi.getColor().getGreen()) + "," +
                       Integer.toString(voi.getColor().getBlue()));
 
-            closedTag(bw, "Thickness", Integer.toString(voi.getThickness()));
+            closedTag( "Thickness", Integer.toString(voi.getThickness()));
             
 
             if ((voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE) ||
@@ -847,11 +783,11 @@ public class FileVOI extends FileBase {
                     tempVOIItem = (VOISortItem) pointVector.elementAt(i);
                     tempBase = tempVOIItem.getVOIBase();
 
-                    openTag(bw, "Contour", true);
+                    openTag("Contour", true);
 
                     // save old format if image dim is 2
                     if (is2D || !saveAsLPS) {
-                        closedTag(bw, "Slice-number", Integer.toString(tempVOIItem.getSlice()));
+                        closedTag( "Slice-number", Integer.toString(tempVOIItem.getSlice()));
                     }
 
                     nPts = tempBase.size();
@@ -876,7 +812,7 @@ public class FileVOI extends FileBase {
                             MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
 
                             // System.err.println("Pt in: " + ptIn + ", Pt out: " + ptOut);
-                            closedTag(bw, "Pt",
+                            closedTag( "Pt",
                                       Float.toString(ptOut.x) + "," + Float.toString(ptOut.y) + "," +
                                       Float.toString(ptOut.z));
                         }
@@ -884,12 +820,12 @@ public class FileVOI extends FileBase {
                         // image dim is 2 (or SaveAsLPS false).... save to old format
 
                         for (m = 0; m < nPts; m++) {
-                            closedTag(bw, "Pt", Float.toString(x[m]) + "," + Float.toString(y[m]));
+                            closedTag( "Pt", Float.toString(x[m]) + "," + Float.toString(y[m]));
                         }
 
                     }
 
-                    openTag(bw, "Contour", false);
+                    openTag("Contour", false);
                 }
 
                 pointVector.removeAllElements();
@@ -918,11 +854,11 @@ public class FileVOI extends FileBase {
                         for (j = 0; j < nContours; j++) {
 
                             if (saveAllContours || ((VOIBase) contours[i].elementAt(j)).isActive()) {
-                                openTag(bw, "Contour", true);
+                                openTag("Contour", true);
 
                                 // save old format if image dim is 2
                                 if (image.getNDims() == 2) {
-                                    closedTag(bw, "Slice-number", Integer.toString(i));
+                                    closedTag( "Slice-number", Integer.toString(i));
                                 }
 
                                 nPts = ((Vector) (contours[i].elementAt(j))).size();
@@ -945,7 +881,7 @@ public class FileVOI extends FileBase {
                                         ptIn.y = y[m];
                                         ptIn.z = slice;
                                         MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
-                                        closedTag(bw, "Pt",
+                                        closedTag( "Pt",
                                                   Float.toString(ptOut.x) + "," + Float.toString(ptOut.y) + "," +
                                                   Float.toString(ptOut.z));
                                     }
@@ -953,18 +889,18 @@ public class FileVOI extends FileBase {
                                     // image is 2d
 
                                     for (k = 0; k < nPts; k++) {
-                                        closedTag(bw, "Pt", Float.toString(x[k]) + "," + Float.toString(y[k]));
+                                        closedTag( "Pt", Float.toString(x[k]) + "," + Float.toString(y[k]));
                                     }
                                 }
 
-                                openTag(bw, "Contour", false);
+                                openTag("Contour", false);
                             }
                         }
                     }
                 }
             }
 
-            openTag(bw, "VOI", false);
+            openTag("VOI", false);
             bw.close();
         } catch (Exception e) {
             System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileVOI");

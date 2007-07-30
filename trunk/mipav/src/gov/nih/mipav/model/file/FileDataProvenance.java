@@ -19,7 +19,7 @@ import java.util.Vector;
 import javax.xml.parsers.*;
 
 
-public class FileDataProvenance extends FileBase {
+public class FileDataProvenance extends FileXML {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -65,9 +65,7 @@ public class FileDataProvenance extends FileBase {
      *
      */
     public FileDataProvenance(String fn, String fileDir, ModelImage image)  {
-    	    	
-        this.fileName = fn.substring(0, fn.lastIndexOf(".")) + ".xmp";        
-        this.fileDir = fileDir;
+    	super(fn.substring(0, fn.lastIndexOf(".")) + ".xmp", fileDir); 
         this.image = image;
         
         file = new File(fileDir + fileName);
@@ -89,8 +87,6 @@ public class FileDataProvenance extends FileBase {
     public void writeXML() throws IOException {
        
         FileWriter fw;
-        BufferedWriter bw;
-
         if (file.exists() == true) {
         	file.delete();
         	file = new File(fileDir + fileName);
@@ -101,16 +97,14 @@ public class FileDataProvenance extends FileBase {
             fw = new FileWriter(file);
             bw = new BufferedWriter(fw);
 
-            XMLHelper xHelp = new XMLHelper(bw);
-
-            Vector<XMLHelper.XMLAttributes> atVector = new Vector<XMLHelper.XMLAttributes>();
+            Vector<XMLAttributes> atVector = new Vector<XMLAttributes>();
             
             bw.write(XML_HEADER);
             bw.newLine();
             bw.write(DATA_PROVENANCE);
             bw.newLine();
 
-            xHelp.openTag("dataprovenance", true);
+            openTag("dataprovenance", true);
             
             int numEntries = image.getProvenanceHolder().size();
             
@@ -119,29 +113,29 @@ public class FileDataProvenance extends FileBase {
             for (int i = 0; i < numEntries; i++) {
             	entry = image.getProvenanceHolder().elementAt(i);
             	
-            	xHelp.openTag("entry", true);
+            	openTag("entry", true);
             	
-            	xHelp.closedTag("timestamp", Long.toString(entry.getTimeStamp()));
-            	xHelp.closedTag("javaversion", entry.getJavaVersion());
+            	closedTag("timestamp", Long.toString(entry.getTimeStamp()));
+            	closedTag("javaversion", entry.getJavaVersion());
             	            	
-            	atVector.add(xHelp.new XMLAttributes("version", entry.getMipavVersion()));
-            	atVector.add(xHelp.new XMLAttributes("arguments", entry.getMipavArguments()));
+            	atVector.add(new XMLAttributes("version", entry.getMipavVersion()));
+            	atVector.add(new XMLAttributes("arguments", entry.getMipavArguments()));
             	
-            	xHelp.closedTag("mipav", "", atVector);
+            	closedTag("mipav", "", atVector);
             	
-            	atVector.add(xHelp.new XMLAttributes("version", entry.getOSVersion()));
-            	atVector.add(xHelp.new XMLAttributes("name", entry.getOSName()));
-            	xHelp.closedTag("OS", "", atVector);
+            	atVector.add(new XMLAttributes("version", entry.getOSVersion()));
+            	atVector.add(new XMLAttributes("name", entry.getOSName()));
+            	closedTag("OS", "", atVector);
             	
-            	xHelp.closedTag("user", entry.getUser());
-            	xHelp.closedTag("action", entry.getAction());
+            	closedTag("user", entry.getUser());
+            	closedTag("action", entry.getAction());
             	
-            	xHelp.openTag("entry", false);
+            	openTag("entry", false);
             }
             
             
             
-            xHelp.openTag("dataprovenance", false);
+            openTag("dataprovenance", false);
             bw.close();
         } catch (Exception e) {
             System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileDataProvenance");

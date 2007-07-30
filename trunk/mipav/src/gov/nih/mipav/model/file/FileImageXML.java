@@ -715,7 +715,6 @@ public class FileImageXML extends FileXML {
         float sliceSpacing;
         float[] origin;
         FileInfoBase myFileInfo;
-        BufferedWriter bw;
         FileWriter fw;
         File headerFile;
 
@@ -782,22 +781,21 @@ public class FileImageXML extends FileXML {
 
             // the xml image reader assumes that if filename is not specified, it is the same as the header file with
             // the .raw extension
-            openTag(bw, "image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" nDimensions=\"" + nDims + "\"", true);
+            openTag("image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" nDimensions=\"" + nDims + "\"", true);
         } else {
 
             // we want to connect the header to a non-default file (e.g., an xml pointing to an analyze .img file)
-            openTag(bw,
-                    "image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" filename=\"" + fileName + "\" nDimensions=\"" +
+            openTag("image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" filename=\"" + fileName + "\" nDimensions=\"" +
                     nDims + "\"", true);
         }
 
-        openTag(bw, imageStr[0], true);
+        openTag(imageStr[0], true);
 
         if (!simple) {
             temp = fileInfo.getImageDescription();
 
             if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                closedTag(bw, datasetAttributesStr[0], temp);
+                closedTag( datasetAttributesStr[0], temp);
             }
         }
 
@@ -807,7 +805,7 @@ public class FileImageXML extends FileXML {
             StringTokenizer st = new StringTokenizer(historyText, "\n");
 
             while (st.hasMoreElements()) {
-                closedTag(bw, "History", st.nextToken());
+                closedTag( "History", st.nextToken());
             }
         }
 
@@ -817,28 +815,28 @@ public class FileImageXML extends FileXML {
                 temp = ((FileInfoImageXML) fileInfo).getLinkedImagePath();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, datasetAttributesStr[2], temp);
+                    closedTag( datasetAttributesStr[2], temp);
                 }
             }
         }
 
         // for save image set only
         if (linkedFilename != null) {
-            closedTag(bw, datasetAttributesStr[2], linkedFilename);
+            closedTag( datasetAttributesStr[2], linkedFilename);
         }
 
-        closedTag(bw, datasetAttributesStr[3], new Integer(myFileInfo.getOffset()).toString());
+        closedTag( datasetAttributesStr[3], new Integer(myFileInfo.getOffset()).toString());
 
-        closedTag(bw, datasetAttributesStr[4], ModelStorageBase.getBufferTypeStr(img.getType()));
+        closedTag( datasetAttributesStr[4], ModelStorageBase.getBufferTypeStr(img.getType()));
 
         if (myFileInfo.getEndianess()) {
-            closedTag(bw, datasetAttributesStr[5], "Big");
+            closedTag( datasetAttributesStr[5], "Big");
         } else {
-            closedTag(bw, datasetAttributesStr[5], "Little");
+            closedTag( datasetAttributesStr[5], "Little");
         }
 
         for (i = 0; i < nDims; i++) {
-            closedTag(bw, datasetAttributesStr[6], new Integer(extents[i]).toString());
+            closedTag( datasetAttributesStr[6], new Integer(extents[i]).toString());
         }
 
         int numRes = 1;
@@ -887,13 +885,13 @@ public class FileImageXML extends FileXML {
 
         for (int resIndex = startSlice; resIndex < numRes; resIndex++) {
             resolutions = img.getFileInfo()[resIndex].getResolutions();
-            openTag(bw, "Resolutions", true);
+            openTag("Resolutions", true);
 
             for (i = 0; i < nDims; i++) {
-                closedTag(bw, "Resolution", new Float(resolutions[i]).toString());
+                closedTag( "Resolution", new Float(resolutions[i]).toString());
             }
 
-            openTag(bw, "Resolutions", false);
+            openTag("Resolutions", false);
         }
 
 
@@ -903,24 +901,24 @@ public class FileImageXML extends FileXML {
         if (nDims > 2) {
             sliceSpacing = myFileInfo.getResolution(2);
 
-            closedTag(bw, datasetAttributesStr[8], String.valueOf(sliceSpacing));
+            closedTag( datasetAttributesStr[8], String.valueOf(sliceSpacing));
         }
 
         units = myFileInfo.getUnitsOfMeasure();
 
         for (i = 0; i < nDims; i++) {
-            closedTag(bw, datasetAttributesStr[9], FileInfoBase.getUnitsOfMeasureStr(units[i]));
+            closedTag( datasetAttributesStr[9], FileInfoBase.getUnitsOfMeasureStr(units[i]));
         }
 
         if (!Preferences.is(Preferences.PREF_SAVE_XML_ZIP)) {
-            closedTag(bw, "Compression", "none");
+            closedTag( "Compression", "none");
         } else {
-            closedTag(bw, "Compression", "zipped");
+            closedTag( "Compression", "zipped");
         }
 
         int orient = myFileInfo.getImageOrientation();
 
-        closedTag(bw, datasetAttributesStr[10], FileInfoBase.getImageOrientationStr(orient));
+        closedTag( datasetAttributesStr[10], FileInfoBase.getImageOrientationStr(orient));
 
         axis = myFileInfo.getAxisOrientation();
 
@@ -928,7 +926,7 @@ public class FileImageXML extends FileXML {
             temp = FileInfoBase.getAxisOrientationStr(axis[i]);
 
             if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                closedTag(bw, datasetAttributesStr[11], temp);
+                closedTag( datasetAttributesStr[11], temp);
             }
         }
 
@@ -938,7 +936,7 @@ public class FileImageXML extends FileXML {
             temp = new Float(origin[i]).toString();
 
             if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                closedTag(bw, datasetAttributesStr[12], temp);
+                closedTag( datasetAttributesStr[12], temp);
             }
         }
 
@@ -963,7 +961,7 @@ public class FileImageXML extends FileXML {
             
             TransMatrix tMatrix =  (TransMatrix)matrixMap.get(currentKey);
             if (tMatrix != null && tMatrix.getNCols() >= img.getNDims()) {
-            	openTag(bw, datasetAttributesStr[13], true);
+            	openTag(datasetAttributesStr[13], true);
             	
             	// if the dimensions arent correct for image/matrix, switch it to correct dim and identity
             	if (tMatrix.getNCols() != (nDims + 1)) {
@@ -971,7 +969,7 @@ public class FileImageXML extends FileXML {
                 	tMatrix.identity();
                 }
             	
-                closedTag(bw, "Transform-ID", TransMatrix.getTransformIDStr(tMatrix.getTransformID()));
+                closedTag( "Transform-ID", TransMatrix.getTransformIDStr(tMatrix.getTransformID()));
                 if (tMatrix.getTransformID() == TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX) {
                 	useTal = true;
                 } 
@@ -1022,11 +1020,11 @@ public class FileImageXML extends FileXML {
                 for (i = 0; i < tMatrix.getNRows(); i++) {
 
                     for (j = 0; j < tMatrix.getNCols(); j++) {
-                        closedTag(bw, "Data", new Double(matrix[i][j]).toString());
+                        closedTag( "Data", new Double(matrix[i][j]).toString());
                     }
                 }
 
-                openTag(bw, datasetAttributesStr[13], false);
+                openTag(datasetAttributesStr[13], false);
             }
             
         }
@@ -1037,8 +1035,8 @@ public class FileImageXML extends FileXML {
        
 
         if ((tMat != null) && (tMat.getNCols() >= img.getNDims())) {
-            openTag(bw, datasetAttributesStr[13], true);
-            closedTag(bw, "Transform-ID", TransMatrix.getTransformIDStr(myFileInfo.getTransformID()));
+            openTag(datasetAttributesStr[13], true);
+            closedTag( "Transform-ID", TransMatrix.getTransformIDStr(myFileInfo.getTransformID()));
 
             if (FileInfoBase.getTransformIDStr(myFileInfo.getTransformID()).equals("Talairach Tournoux")) {
                 useTal = true;
@@ -1089,16 +1087,16 @@ public class FileImageXML extends FileXML {
             for (i = 0; i < tMat.getNRows(); i++) {
 
                 for (j = 0; j < tMat.getNCols(); j++) {
-                    closedTag(bw, "Data", new Double(matrix[i][j]).toString());
+                    closedTag( "Data", new Double(matrix[i][j]).toString());
                 }
             }
 
-            openTag(bw, datasetAttributesStr[13], false);
+            openTag(datasetAttributesStr[13], false);
         }
 
         */
 
-        closedTag(bw, datasetAttributesStr[14], FileInfoBase.getModalityStr(myFileInfo.getModality()));
+        closedTag( datasetAttributesStr[14], FileInfoBase.getModalityStr(myFileInfo.getModality()));
 
 
         // If model RGB is null and the LUT is not null, only write out the LUT values and
@@ -1112,8 +1110,8 @@ public class FileImageXML extends FileXML {
             TransferFunction function = null;
 
             // transfer
-            openTag(bw, "LUT-functions", true);
-            closedTag(bw, "Function-type", "transfer");
+            openTag("LUT-functions", true);
+            closedTag( "Function-type", "transfer");
             function = LUT.getTransferFunction();
             nPts = function.size();
             x = new float[nPts];
@@ -1121,14 +1119,14 @@ public class FileImageXML extends FileXML {
             function.exportArrays(x, y);
 
             for (int ind = 0; ind < nPts; ind++) {
-                closedTag(bw, "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
+                closedTag( "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
             }
 
-            openTag(bw, "LUT-functions", false);
+            openTag("LUT-functions", false);
 
             // alpha
-            openTag(bw, "LUT-functions", true);
-            closedTag(bw, "Function-type", "alpha");
+            openTag("LUT-functions", true);
+            closedTag( "Function-type", "alpha");
             function = LUT.getAlphaFunction();
             nPts = function.size();
             x = new float[nPts];
@@ -1136,14 +1134,14 @@ public class FileImageXML extends FileXML {
             function.exportArrays(x, y);
 
             for (int ind = 0; ind < nPts; ind++) {
-                closedTag(bw, "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
+                closedTag( "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
             }
 
-            openTag(bw, "LUT-functions", false);
+            openTag("LUT-functions", false);
 
             // red
-            openTag(bw, "LUT-functions", true);
-            closedTag(bw, "Function-type", "red");
+            openTag("LUT-functions", true);
+            closedTag( "Function-type", "red");
             function = LUT.getRedFunction();
             nPts = function.size();
             x = new float[nPts];
@@ -1151,14 +1149,14 @@ public class FileImageXML extends FileXML {
             function.exportArrays(x, y);
 
             for (int ind = 0; ind < nPts; ind++) {
-                closedTag(bw, "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
+                closedTag( "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
             }
 
-            openTag(bw, "LUT-functions", false);
+            openTag("LUT-functions", false);
 
             // green
-            openTag(bw, "LUT-functions", true);
-            closedTag(bw, "Function-type", "green");
+            openTag("LUT-functions", true);
+            closedTag( "Function-type", "green");
             function = LUT.getGreenFunction();
             nPts = function.size();
             x = new float[nPts];
@@ -1166,14 +1164,14 @@ public class FileImageXML extends FileXML {
             function.exportArrays(x, y);
 
             for (int ind = 0; ind < nPts; ind++) {
-                closedTag(bw, "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
+                closedTag( "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
             }
 
-            openTag(bw, "LUT-functions", false);
+            openTag("LUT-functions", false);
 
             // blue
-            openTag(bw, "LUT-functions", true);
-            closedTag(bw, "Function-type", "blue");
+            openTag("LUT-functions", true);
+            closedTag( "Function-type", "blue");
             function = LUT.getBlueFunction();
             nPts = function.size();
             x = new float[nPts];
@@ -1181,25 +1179,25 @@ public class FileImageXML extends FileXML {
             function.exportArrays(x, y);
 
             for (int ind = 0; ind < nPts; ind++) {
-                closedTag(bw, "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
+                closedTag( "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
             }
 
-            openTag(bw, "LUT-functions", false);
+            openTag("LUT-functions", false);
 
             // Now get LUT itself
             int height;
 
             height = LUT.getExtents()[1];
 
-            openTag(bw, "LUT", true);
+            openTag("LUT", true);
 
             for (int k = 0; k < height; k++) {
-                closedTag(bw, "LUValue",
+                closedTag( "LUValue",
                           Float.toString(LUT.getFloat(0, k)) + "," + Float.toString(LUT.getFloat(1, k)) + "," +
                           Float.toString(LUT.getFloat(2, k)) + "," + Float.toString(LUT.getFloat(3, k)));
             }
 
-            openTag(bw, "LUT", false);
+            openTag("LUT", false);
         } // endif LUT !=null
         else if (modelRGB != null) {
 
@@ -1210,8 +1208,8 @@ public class FileImageXML extends FileXML {
             TransferFunction function = null;
 
             // red
-            openTag(bw, "LUT-functions", true);
-            closedTag(bw, "Function-type", "red");
+            openTag("LUT-functions", true);
+            closedTag( "Function-type", "red");
             function = modelRGB.getRedFunction();
             nPts = function.size();
             x = new float[nPts];
@@ -1219,14 +1217,14 @@ public class FileImageXML extends FileXML {
             function.exportArrays(x, y);
 
             for (int ind = 0; ind < nPts; ind++) {
-                closedTag(bw, "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
+                closedTag( "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
             }
 
-            openTag(bw, "LUT-functions", false);
+            openTag("LUT-functions", false);
 
             // green
-            openTag(bw, "LUT-functions", true);
-            closedTag(bw, "Function-type", "green");
+            openTag("LUT-functions", true);
+            closedTag( "Function-type", "green");
             function = modelRGB.getGreenFunction();
             nPts = function.size();
             x = new float[nPts];
@@ -1234,14 +1232,14 @@ public class FileImageXML extends FileXML {
             function.exportArrays(x, y);
 
             for (int ind = 0; ind < nPts; ind++) {
-                closedTag(bw, "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
+                closedTag( "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
             }
 
-            openTag(bw, "LUT-functions", false);
+            openTag("LUT-functions", false);
 
             // blue
-            openTag(bw, "LUT-functions", true);
-            closedTag(bw, "Function-type", "blue");
+            openTag("LUT-functions", true);
+            closedTag( "Function-type", "blue");
             function = modelRGB.getBlueFunction();
             nPts = function.size();
             x = new float[nPts];
@@ -1249,30 +1247,30 @@ public class FileImageXML extends FileXML {
             function.exportArrays(x, y);
 
             for (int ind = 0; ind < nPts; ind++) {
-                closedTag(bw, "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
+                closedTag( "Point", Float.toString(x[ind]) + "," + Float.toString(y[ind]));
             }
 
-            openTag(bw, "LUT-functions", false);
+            openTag("LUT-functions", false);
 
             // Now get LUT itself
             int height;
 
             height = modelRGB.getExtents()[1];
 
-            openTag(bw, "LUT", true);
+            openTag("LUT", true);
 
             for (int k = 0; k < height; k++) {
-                closedTag(bw, "LUValue",
+                closedTag( "LUValue",
                           Float.toString(modelRGB.getFloat(0, k)) + "," + Float.toString(modelRGB.getFloat(1, k)) +
                           "," + Float.toString(modelRGB.getFloat(2, k)) + "," +
                           Float.toString(modelRGB.getFloat(3, k)));
             }
 
-            openTag(bw, "LUT", false);
+            openTag("LUT", false);
 
         }
 
-        openTag(bw, imageStr[0], false);
+        openTag(imageStr[0], false);
 
         // if this is being saved from an XML file, save off XML specific information if included
         // otherwise ignore these fields as they do not exist in the file info
@@ -1281,87 +1279,87 @@ public class FileImageXML extends FileXML {
             // IFF there is a subject ID, we will include this tag
             if ((((FileInfoImageXML) fileInfo).getSubjectID() != null) &&
                     !((FileInfoImageXML) fileInfo).getSubjectID().equalsIgnoreCase("")) {
-                openTag(bw, imageStr[1], true);
+                openTag(imageStr[1], true);
 
                 temp = ((FileInfoImageXML) fileInfo).getSubjectName();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, subjectInformationStr[0], temp);
+                    closedTag( subjectInformationStr[0], temp);
                 }
 
                 temp = ((FileInfoImageXML) fileInfo).getRace();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, subjectInformationStr[1], temp);
+                    closedTag( subjectInformationStr[1], temp);
                 }
 
-                closedTag(bw, subjectInformationStr[2], ((FileInfoImageXML) fileInfo).getSubjectID());
+                closedTag( subjectInformationStr[2], ((FileInfoImageXML) fileInfo).getSubjectID());
 
                 temp = ((FileInfoImageXML) fileInfo).getDiagnosis();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, subjectInformationStr[3], temp);
+                    closedTag( subjectInformationStr[3], temp);
                 }
 
                 temp = ((FileInfoImageXML) fileInfo).getDOB();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, subjectInformationStr[4], temp);
+                    closedTag( subjectInformationStr[4], temp);
                 }
 
                 int hw = ((FileInfoImageXML) fileInfo).getHeight();
 
                 if (hw > 0) {
-                    closedTag(bw, subjectInformationStr[5], new Integer(hw).toString());
+                    closedTag( subjectInformationStr[5], new Integer(hw).toString());
                 }
 
                 hw = ((FileInfoImageXML) fileInfo).getWeight();
 
                 if (hw > 0) {
-                    closedTag(bw, subjectInformationStr[6], new Integer(hw).toString());
+                    closedTag( subjectInformationStr[6], new Integer(hw).toString());
                 }
 
                 temp = ((FileInfoImageXML) fileInfo).getSex();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, subjectInformationStr[7], temp);
+                    closedTag( subjectInformationStr[7], temp);
                 }
 
                 temp = ((FileInfoImageXML) fileInfo).getBodyPart();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, subjectInformationStr[8], temp);
+                    closedTag( subjectInformationStr[8], temp);
                 }
 
-                openTag(bw, imageStr[1], false);
+                openTag(imageStr[1], false);
             } // end if contains subject ID
 
             if ((((FileInfoImageXML) fileInfo).getScanDate() != null) &&
                     (((FileInfoImageXML) fileInfo).getScanTime() != null)) {
-                openTag(bw, imageStr[2], true);
+                openTag(imageStr[2], true);
 
                 temp = ((FileInfoImageXML) fileInfo).getEquipmentName();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, scanAttributesStr[0], temp);
+                    closedTag( scanAttributesStr[0], temp);
                 }
 
                 temp = ((FileInfoImageXML) fileInfo).getScanID();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, scanAttributesStr[1], temp);
+                    closedTag( scanAttributesStr[1], temp);
                 }
 
                 temp = ((FileInfoImageXML) fileInfo).getProtocol();
 
                 if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                    closedTag(bw, scanAttributesStr[2], temp);
+                    closedTag( scanAttributesStr[2], temp);
                 }
 
                 temp = ((FileInfoImageXML) fileInfo).getScanDate() + "T" + ((FileInfoImageXML) fileInfo).getScanTime();
-                closedTag(bw, scanAttributesStr[3], temp);
+                closedTag( scanAttributesStr[3], temp);
 
-                openTag(bw, imageStr[2], false);
+                openTag(imageStr[2], false);
             } // end if contains scan attributes
 
             boolean[] invest = ((FileInfoImageXML) fileInfo).getInvestigatorsComplete();
@@ -1370,35 +1368,35 @@ public class FileImageXML extends FileXML {
 
                 if (invest[i]) {
 
-                    openTag(bw, imageStr[3], true);
+                    openTag(imageStr[3], true);
 
-                    closedTag(bw, investigatorsStr[0], ((FileInfoImageXML) fileInfo).getInvestigator(i).getName());
+                    closedTag( investigatorsStr[0], ((FileInfoImageXML) fileInfo).getInvestigator(i).getName());
 
                     temp = ((FileInfoImageXML) fileInfo).getInvestigator(i).getTitle();
 
                     if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                        closedTag(bw, investigatorsStr[1], temp);
+                        closedTag( investigatorsStr[1], temp);
                     }
 
                     temp = ((FileInfoImageXML) fileInfo).getInvestigator(i).getAffiliation();
 
                     if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                        closedTag(bw, investigatorsStr[2], temp);
+                        closedTag( investigatorsStr[2], temp);
                     }
 
                     temp = ((FileInfoImageXML) fileInfo).getInvestigator(i).getEmail();
 
                     if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                        closedTag(bw, investigatorsStr[3], temp);
+                        closedTag( investigatorsStr[3], temp);
                     }
 
                     temp = ((FileInfoImageXML) fileInfo).getInvestigator(i).getPhone();
 
                     if ((temp != null) && !temp.equalsIgnoreCase("")) {
-                        closedTag(bw, investigatorsStr[4], temp);
+                        closedTag( investigatorsStr[4], temp);
                     }
 
-                    openTag(bw, imageStr[3], false);
+                    openTag(imageStr[3], false);
                 }
 
             }
@@ -1440,7 +1438,7 @@ public class FileImageXML extends FileXML {
 
             // System.err.println("XDim: " + xDim + " YDim: " + yDim);
 
-            openTag(bw, "Thumbnail xDim=\"" + xDim + "\" yDim=\"" + yDim + "\"", true);
+            openTag("Thumbnail xDim=\"" + xDim + "\" yDim=\"" + yDim + "\"", true);
 
             // first create a transformed smaller image
             float[] res = new float[] {
@@ -1508,10 +1506,10 @@ public class FileImageXML extends FileXML {
 
             // System.err.println("Number of lines: " + numIterations);
             for (int idx = 0, thumbIndex = 0; idx < numIterations; idx++, thumbIndex += 24) {
-                closedTag(bw, "Thumbnail-data", getFormattedThumbnailLine(thumbnailData, thumbIndex));
+                closedTag( "Thumbnail-data", getFormattedThumbnailLine(thumbnailData, thumbIndex));
             }
 
-            openTag(bw, "Thumbnail", false);
+            openTag("Thumbnail", false);
 
         }
 
@@ -1522,24 +1520,24 @@ public class FileImageXML extends FileXML {
             Enumeration voiEnum = ((FileInfoImageXML) fileInfo).getVOIKeys();
 
             while (voiEnum.hasMoreElements()) {
-                openTag(bw, imageStr[5], true);
+                openTag(imageStr[5], true);
                 temp = (String) voiEnum.nextElement();
-                closedTag(bw, voiStr[0], temp);
-                closedTag(bw, voiStr[1], Boolean.toString(((FileInfoImageXML) fileInfo).getVOI(temp).getDisplay()));
-                openTag(bw, imageStr[5], false);
+                closedTag( voiStr[0], temp);
+                closedTag( voiStr[1], Boolean.toString(((FileInfoImageXML) fileInfo).getVOI(temp).getDisplay()));
+                openTag(imageStr[5], false);
             }
 
             Enumeration surfaceEnum = ((FileInfoImageXML) fileInfo).getSurfaceKeys();
 
             while (surfaceEnum.hasMoreElements()) {
-                openTag(bw, imageStr[6], true);
+                openTag(imageStr[6], true);
                 temp = (String) surfaceEnum.nextElement();
-                closedTag(bw, surfaceStr[0], temp);
-                closedTag(bw, surfaceStr[1],
+                closedTag( surfaceStr[0], temp);
+                closedTag( surfaceStr[1],
                           Boolean.toString(((FileInfoImageXML) fileInfo).getSurface(temp).getDisplay()));
-                closedTag(bw, surfaceStr[2],
+                closedTag( surfaceStr[2],
                           Float.toString(((FileInfoImageXML) fileInfo).getSurface(temp).getOpacity()));
-                openTag(bw, imageStr[6], false);
+                openTag(imageStr[6], false);
             }
 
         }
@@ -1555,59 +1553,59 @@ public class FileImageXML extends FileXML {
         // into the XML header
         if (useTal && (talairach != null)) {
 
-            openTag(bw, "Talairach", true);
-            closedTag(bw, "origAC", Float.toString(talairach.getOrigAC().x));
-            closedTag(bw, "origAC", Float.toString(talairach.getOrigAC().y));
-            closedTag(bw, "origAC", Float.toString(talairach.getOrigAC().z));
+            openTag("Talairach", true);
+            closedTag( "origAC", Float.toString(talairach.getOrigAC().x));
+            closedTag( "origAC", Float.toString(talairach.getOrigAC().y));
+            closedTag( "origAC", Float.toString(talairach.getOrigAC().z));
 
-            closedTag(bw, "origPC", Float.toString(talairach.getOrigPC().x));
-            closedTag(bw, "origPC", Float.toString(talairach.getOrigPC().y));
-            closedTag(bw, "origPC", Float.toString(talairach.getOrigPC().z));
+            closedTag( "origPC", Float.toString(talairach.getOrigPC().x));
+            closedTag( "origPC", Float.toString(talairach.getOrigPC().y));
+            closedTag( "origPC", Float.toString(talairach.getOrigPC().z));
 
             for (i = 0; i < 3; i++) {
-                closedTag(bw, "origDim", Integer.toString(talairach.getOrigDim()[i]));
+                closedTag( "origDim", Integer.toString(talairach.getOrigDim()[i]));
             }
 
             for (i = 0; i < 3; i++) {
-                closedTag(bw, "origRes", Float.toString(talairach.getOrigRes()[i]));
+                closedTag( "origRes", Float.toString(talairach.getOrigRes()[i]));
             }
 
             for (i = 0; i < 3; i++) {
 
                 for (j = 0; j < 3; j++) {
-                    closedTag(bw, "origOrient", Float.toString(talairach.getOrigOrient()[i][j]));
+                    closedTag( "origOrient", Float.toString(talairach.getOrigOrient()[i][j]));
                 }
             }
 
-            closedTag(bw, "acpcPC", Float.toString(talairach.getAcpcPC().x));
-            closedTag(bw, "acpcPC", Float.toString(talairach.getAcpcPC().y));
-            closedTag(bw, "acpcPC", Float.toString(talairach.getAcpcPC().z));
+            closedTag( "acpcPC", Float.toString(talairach.getAcpcPC().x));
+            closedTag( "acpcPC", Float.toString(talairach.getAcpcPC().y));
+            closedTag( "acpcPC", Float.toString(talairach.getAcpcPC().z));
 
-            closedTag(bw, "acpcRes", Float.toString(talairach.getAcpcRes()));
+            closedTag( "acpcRes", Float.toString(talairach.getAcpcRes()));
 
 
             if (talairach.isTlrc()) {
-                openTag(bw, "tlrcInfo", true);
+                openTag("tlrcInfo", true);
 
-                closedTag(bw, "acpcMin", Float.toString(talairach.getAcpcMin().x));
-                closedTag(bw, "acpcMin", Float.toString(talairach.getAcpcMin().y));
-                closedTag(bw, "acpcMin", Float.toString(talairach.getAcpcMin().z));
+                closedTag( "acpcMin", Float.toString(talairach.getAcpcMin().x));
+                closedTag( "acpcMin", Float.toString(talairach.getAcpcMin().y));
+                closedTag( "acpcMin", Float.toString(talairach.getAcpcMin().z));
 
-                closedTag(bw, "acpcMax", Float.toString(talairach.getAcpcMax().x));
-                closedTag(bw, "acpcMax", Float.toString(talairach.getAcpcMax().y));
-                closedTag(bw, "acpcMax", Float.toString(talairach.getAcpcMax().z));
+                closedTag( "acpcMax", Float.toString(talairach.getAcpcMax().x));
+                closedTag( "acpcMax", Float.toString(talairach.getAcpcMax().y));
+                closedTag( "acpcMax", Float.toString(talairach.getAcpcMax().z));
 
                 for (i = 0; i < 7; i++) {
-                    closedTag(bw, "tlrcRes", Float.toString(talairach.getTlrcRes()[i]));
+                    closedTag( "tlrcRes", Float.toString(talairach.getTlrcRes()[i]));
                 }
 
-                openTag(bw, "tlrcInfo", false);
+                openTag("tlrcInfo", false);
             }
 
-            openTag(bw, "Talairach", false);
+            openTag("Talairach", false);
         }
 
-        openTag(bw, "image", false);
+        openTag("image", false);
 
         bw.close();
 
@@ -2197,11 +2195,11 @@ public class FileImageXML extends FileXML {
             FileInfoImageXML.PSet currentSet = (FileInfoImageXML.PSet) setEnum.nextElement();
             Enumeration paramEnum = currentSet.getTable().elements();
 
-            openTag(bw, imageStr[4], true);
+            openTag(imageStr[4], true);
 
             String temp = currentSet.getDescription();
 
-            closedTag(bw, setStr[0], temp);
+            closedTag( setStr[0], temp);
 
             while (paramEnum.hasMoreElements()) {
                 FileInfoImageXML.Parameter currentParam = (FileInfoImageXML.Parameter) paramEnum.nextElement();
@@ -2209,35 +2207,35 @@ public class FileImageXML extends FileXML {
                 // if (!(currentParam.getValue() == null) &&
                 // !(currentParam.getValue().equals("")))
                 // {
-                openTag(bw, setStr[1], true); // begin parameter
+                openTag(setStr[1], true); // begin parameter
 
                 // write in Parameter NAME
-                closedTag(bw, parameterStr[0], currentParam.getName());
+                closedTag( parameterStr[0], currentParam.getName());
 
                 // Parameter DESCRIPTION
                 String temp2 = currentParam.getDescription();
 
                 if ((temp2 != null) && !temp2.equalsIgnoreCase("")) {
-                    closedTag(bw, parameterStr[1], temp2);
+                    closedTag( parameterStr[1], temp2);
                 }
 
                 // Paramter VALUE TYPE
-                closedTag(bw, parameterStr[2], currentParam.getValueType());
+                closedTag( parameterStr[2], currentParam.getValueType());
 
                 // Parameter VALUE
-                closedTag(bw, parameterStr[3], currentParam.getValue());
+                closedTag( parameterStr[3], currentParam.getValue());
 
                 // Parameter DATE and TIME
                 if ((currentParam.getDate() != null) && (currentParam.getDate() != null)) {
-                    closedTag(bw, parameterStr[4], currentParam.getDate() + "T" + currentParam.getTime());
+                    closedTag( parameterStr[4], currentParam.getDate() + "T" + currentParam.getTime());
                 }
 
-                openTag(bw, setStr[1], false); // end Parameter
+                openTag(setStr[1], false); // end Parameter
 
                 // }
             }
 
-            openTag(bw, imageStr[4], false);
+            openTag(imageStr[4], false);
         }
     }
 
