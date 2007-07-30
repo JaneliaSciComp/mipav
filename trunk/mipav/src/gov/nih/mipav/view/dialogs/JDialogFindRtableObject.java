@@ -56,22 +56,40 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
     
+    /** For each omega angle index, a linked list of R and B values is present
+     *  omega is the tangent angle to the curve, and R and B give the distance
+     *  and angle from the center of the VOI to the tangent point */
     private LinkedList omegaRBetaList[] = null;
     
+    /** Number of bins for tangent angle omega going from -PI/2 to +PI/2 */
     private int omegaBins;
     
+    /** Number of points to take from each side of a point on a curve in determining a tangent */
     private int sidePointsForTangent;
+    
+    /** Desired maximum pixel bin width for x, y center value */
+    private float maxPixelBinWidth;
+    
+    private JTextField pixelWidthText;
+    
+    /** The maximum Hough transform size in megabytes - default is currently 256 */
+    private int maxBufferSize;
+    
+    private JTextField maxBufferText;
     
     private JCheckBox rotationCheckBox;
     
-    private JLabel rotationLabel;
+    private JLabel degreesWidthLabel;
     
-    private JTextField rotationText;
+    private JTextField degreesWidthText;
     
+    /** If true, allow rotation of R-table object */
     private boolean allowRotation = true;
     
-    private int rotationBins = 20;
+    /** Desired maximum rotation angle. */
+    private float maxDegreesBinWidth = 3.0f;
     
+    /** If true, allow scaling of R-table object */
     private boolean allowScaling = true;
     
     private JCheckBox scalingCheckBox;
@@ -88,16 +106,24 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     
     private JTextField maxScaleText;
     
-    private int scalingBins = 20;
+    /** Desired number of scaling bins */
+    private int scaleBins = 20;
     
     private JLabel scalingLabel;
     
     private JTextField scalingText;
     
+    /** Number of instances of R-table of to find in the image */
     private int objectsToFind = 1;
     
+    /** Minimum pixel distances between instances of R-table objects */
     private JTextField numObjectsText;
     
+    private float minDistance;
+    
+    private JTextField minDistanceText;
+    
+    /** File containing omegaBins, sidePointsForTangent, and omegaRBetaList, the R-table */
     private String parametersFile = null;
     
     private boolean endianess = true;
@@ -362,6 +388,22 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     
     /**
      * 
+     * @param maxPixelBinWidth Desired maximum pixel bin width for x, y center value
+     */
+    public void setMaxPixelBinWidth(float maxPixelBinWidth) {
+        this.maxPixelBinWidth = maxPixelBinWidth;
+    }
+    
+    /**
+     * 
+     * @param maxBufferSize  The maximum Hough transform size in megabytes - default is currently 256 
+     */
+    public void setMaxBufferSize(int maxBufferSize) {
+        this.maxBufferSize = maxBufferSize;
+    }
+    
+    /**
+     * 
      * @param allowRotation If true, rotate tested objects
      */
     public void setAllowRotation(boolean allowRotation) {
@@ -370,10 +412,10 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     
     /**
      * 
-     * @param rotationBins
+     * @param maxDegreesBinWidth Desired maximum rotation angle
      */
-    public void setRotationBins(int rotationBins) {
-        this.rotationBins = rotationBins;
+    public void setMaxDegreesBinWidth(float maxDegreesBinWidth) {
+        this.maxDegreesBinWidth = maxDegreesBinWidth;
     }
     
     /**
@@ -402,10 +444,10 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     
     /**
      * 
-     * @param scalingBins
+     * @param scaleBins
      */
-    public void setScalingBins(int scalingBins) {
-        this.scalingBins = scalingBins;
+    public void setScalingBins(int scaleBins) {
+        this.scaleBins = scaleBins;
     }
     
     /**
@@ -414,6 +456,14 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
      */
     public void setObjectsToFind(int objectsToFind) {
         this.objectsToFind = objectsToFind;
+    }
+    
+    /**
+     * 
+     * @param minDistance minimum pixel distance between 2 objects
+     */
+    public void setMinDistance(float minDistance) {
+        this.minDistance = minDistance;
     }
 
     /**
@@ -432,8 +482,10 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         try {
 
             findAlgo = new AlgorithmFindRtableObject(srcImage, omegaBins, sidePointsForTangent,
-                           omegaRBetaList, allowRotation, rotationBins, allowScaling,
-                           minScaleFactor, maxScaleFactor, scalingBins, objectsToFind);
+                           omegaRBetaList, maxPixelBinWidth, maxBufferSize, 
+                           allowRotation, maxDegreesBinWidth, allowScaling,
+                           minScaleFactor, maxScaleFactor, scaleBins, objectsToFind,
+                           minDistance);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -475,13 +527,16 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
 
         setParametersFile(scriptParameters.getParams().getString("params_file"));
         readTransformParameters();
+        setMaxPixelBinWidth(scriptParameters.getParams().getFloat("max_pixel_bin_width"));
+        setMaxBufferSize(scriptParameters.getParams().getInt("max_buffer_size"));
         setAllowRotation(scriptParameters.getParams().getBoolean("allow_rotation"));
-        setRotationBins(scriptParameters.getParams().getInt("rotation_bins"));
+        setMaxDegreesBinWidth(scriptParameters.getParams().getFloat("max_degrees_bin_width"));
         setAllowScaling(scriptParameters.getParams().getBoolean("allow_scaling"));
         setMinScaleFactor(scriptParameters.getParams().getFloat("min_scale_factor"));
         setMaxScaleFactor(scriptParameters.getParams().getFloat("max_scale_factor"));
         setScalingBins(scriptParameters.getParams().getInt("scaling_bins"));
         setObjectsToFind(scriptParameters.getParams().getInt("objects_to_find"));
+        setMinDistance(scriptParameters.getParams().getFloat("min_distance"));
     }
 
     /**
@@ -491,13 +546,16 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         scriptParameters.storeInputImage(srcImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("params_file", parametersFile));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_pixel_bin_width", maxPixelBinWidth));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_buffer_size", maxBufferSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("allow_rotation", allowRotation));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotation_bins", rotationBins));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_degrees_bin_width", maxDegreesBinWidth));
         scriptParameters.getParams().put(ParameterFactory.newParameter("allow_scaling", allowScaling));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_scale_factor", minScaleFactor));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_scale_factor", maxScaleFactor));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("scaling_bins", scalingBins));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaling_bins", scaleBins));
         scriptParameters.getParams().put(ParameterFactory.newParameter("objects_to_find", objectsToFind));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_distance", minDistance));
     }
 
 
@@ -506,10 +564,14 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
      */
     private void init() {
         int yPos = 0;
+        JPanel essentialPanel;
         JPanel scalingPanel;
         JPanel rotationPanel;
         JPanel numObjectsPanel;
+        JLabel pixelWidthLabel;
+        JLabel maxBufferLabel;
         JLabel numObjectsLabel;
+        JLabel minDistanceLabel;
         setForeground(Color.black);
 
         setTitle("Find R-table object");
@@ -523,9 +585,43 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         gbc4.fill = GridBagConstraints.HORIZONTAL;
         gbc4.gridx = 0;
         gbc4.gridy = 0;
+        
+        essentialPanel = new JPanel(new GridBagLayout());
+        essentialPanel.setBorder(buildTitledBorder("Essential parameters"));
+        
+        pixelWidthLabel = new JLabel("Desired maximum pixel bin width for x, y center value ");
+        pixelWidthLabel.setForeground(Color.black);
+        pixelWidthLabel.setFont(serif12);
+        pixelWidthLabel.setEnabled(true);
+        essentialPanel.add(pixelWidthLabel, gbc4);
+        
+        gbc4.gridx = 1;
+        pixelWidthText = new JTextField(15);
+        pixelWidthText.setText("2.0");
+        pixelWidthText.setFont(serif12);
+        pixelWidthText.setEnabled(true);
+        essentialPanel.add(pixelWidthText, gbc4);
+        
+        gbc4.gridx = 0;
+        gbc4.gridy = 1;
+        maxBufferLabel = new JLabel("Maximum Hough transform in megabytes ");
+        maxBufferLabel.setForeground(Color.black);
+        maxBufferLabel.setFont(serif12);
+        maxBufferLabel.setEnabled(true);
+        essentialPanel.add(maxBufferLabel, gbc4);
+        
+        gbc4.gridx = 1;
+        maxBufferText = new JTextField(15);
+        maxBufferText.setText("256");
+        maxBufferText.setFont(serif12);
+        maxBufferText.setEnabled(true);
+        essentialPanel.add(maxBufferText, gbc4);
 
         rotationPanel = new JPanel(new GridBagLayout());
+        rotationPanel.setBorder(buildTitledBorder("Rotation"));
 
+        gbc4.gridx = 0;
+        gbc4.gridy = 0;
         rotationCheckBox = new JCheckBox("Allow rotation of R-table object");
         rotationCheckBox.setSelected(true);
         rotationCheckBox.setFont(serif12);
@@ -534,22 +630,21 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         rotationPanel.add(rotationCheckBox, gbc4);
         
         gbc4.gridy = 1;
-        rotationLabel = new JLabel("Number of rotation bins");
-        rotationLabel.setEnabled(true);
-        rotationLabel.setFont(serif12);
-        rotationLabel.setForeground(Color.black);
-        rotationPanel.add(rotationLabel, gbc4);
+        degreesWidthLabel = new JLabel("Desired maximum degrees difference for rotation angle ");
+        degreesWidthLabel.setForeground(Color.black);
+        degreesWidthLabel.setFont(serif12);
+        degreesWidthLabel.setEnabled(true);
+        rotationPanel.add(degreesWidthLabel, gbc4);
         
         gbc4.gridx = 1;
-        rotationText = new JTextField(15);
-        rotationText.setEnabled(true);
-        rotationText.setText("20");
-        rotationText.setFont(serif12);
-        rotationText.setForeground(Color.black);
-        rotationPanel.add(rotationText, gbc4);
+        degreesWidthText = new JTextField(15);
+        degreesWidthText.setText("3.0");
+        degreesWidthText.setFont(serif12);
+        degreesWidthText.setEnabled(true);
+        rotationPanel.add(degreesWidthText, gbc4);
 
         scalingPanel = new JPanel(new GridBagLayout());
-        scalingPanel.setBorder(buildTitledBorder("Select VOIs"));
+        scalingPanel.setBorder(buildTitledBorder("Scaling"));
 
         gbc4.gridx = 0;
         gbc4.gridy = 0;
@@ -593,7 +688,7 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         
         gbc4.gridx = 0;
         gbc4.gridy = 3;
-        scalingLabel = new JLabel("Number of scaling bins");
+        scalingLabel = new JLabel("Desired number of scaling bins");
         scalingLabel.setEnabled(true);
         scalingLabel.setFont(serif12);
         scalingLabel.setForeground(Color.black);
@@ -608,6 +703,7 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         scalingPanel.add(scalingText, gbc4);
         
         numObjectsPanel = new JPanel(new GridBagLayout());
+        numObjectsPanel.setBorder(buildTitledBorder("Object number"));
 
         gbc4.gridx = 0;
         gbc4.gridy = 0;
@@ -622,6 +718,21 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         numObjectsText.setForeground(Color.black);
         numObjectsText.setFont(serif12);
         numObjectsPanel.add(numObjectsText, gbc4);
+        
+        gbc4.gridx = 0;
+        gbc4.gridy = 1;
+        minDistanceLabel = new JLabel("Minimum pixel distance between objects");
+        minDistanceLabel.setForeground(Color.black);
+        minDistanceLabel.setFont(serif12);
+        numObjectsPanel.add(minDistanceLabel, gbc4);
+        
+        gbc4.gridx = 1;
+        minDistanceText = new JTextField(15);
+        minDistance = 0.1f * Math.min(srcImage.getExtents()[0], srcImage.getExtents()[1]);
+        minDistanceText.setText(String.valueOf(minDistance));
+        minDistanceText.setForeground(Color.black);
+        minDistanceText.setFont(serif12);
+        numObjectsPanel.add(minDistanceText, gbc4);
 
         paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
@@ -635,6 +746,8 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
+        paramPanel.add(essentialPanel, gbc);
+        gbc.gridy = yPos++;
         paramPanel.add(rotationPanel, gbc);
         gbc.gridy = yPos++;
         paramPanel.add(scalingPanel, gbc);
@@ -693,12 +806,12 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         Object source = event.getSource();
         if (source == rotationCheckBox) {
             if (rotationCheckBox.isSelected()) {
-                rotationLabel.setEnabled(true);
-                rotationText.setEnabled(true);
+                degreesWidthLabel.setEnabled(true);
+                degreesWidthText.setEnabled(true);
             }
             else {
-                rotationLabel.setEnabled(false);
-                rotationText.setEnabled(false);
+                degreesWidthLabel.setEnabled(false);
+                degreesWidthText.setEnabled(false);
             }
         }
         else if (source == scalingCheckBox) {
@@ -729,19 +842,35 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
      */
     private boolean setVariables() {
         String tmpStr;
+        
+        tmpStr = pixelWidthText.getText();
+        if (testParameter(tmpStr, 0.1, 20)) {
+            maxPixelBinWidth = Float.valueOf(tmpStr).floatValue();
+        } else {
+            pixelWidthText.requestFocus();
+            pixelWidthText.selectAll();
+            return false;
+        }
+        
+        if (!testParameter(maxBufferText.getText(), 1, 10000)) {
+            maxBufferText.requestFocus();
+            maxBufferText.selectAll();
+
+            return false;
+        } else {
+            maxBufferSize = Integer.valueOf(maxBufferText.getText()).intValue();
+        }
 
         allowRotation = rotationCheckBox.isSelected();
         if (allowRotation) {
-            tmpStr = rotationText.getText();
-
-            if (testParameter(tmpStr, 2, 1000)) {
-                rotationBins = Integer.valueOf(tmpStr).intValue();
-            } else {
-                rotationText.requestFocus();
-                rotationText.selectAll();
+            if (!testParameter(degreesWidthText.getText(), 0.1, 20.0)) {
+                degreesWidthText.requestFocus();
+                degreesWidthText.selectAll();
 
                 return false;
-            }    
+            } else {
+                maxDegreesBinWidth = Float.valueOf(degreesWidthText.getText()).floatValue();
+            }
         } // if (allowRotation)
         
         allowScaling = scalingCheckBox.isSelected();
@@ -768,7 +897,7 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
             
             tmpStr = scalingText.getText();
             if (testParameter(tmpStr, 2, 1000)) {
-                scalingBins = Integer.valueOf(tmpStr).intValue();
+                scaleBins = Integer.valueOf(tmpStr).intValue();
             }
             else {
                 scalingText.requestFocus();
@@ -786,6 +915,19 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
             numObjectsText.selectAll();
             return false;
         }
+        
+        if (objectsToFind > 1) {
+            tmpStr = minDistanceText.getText();
+            if (testParameter(tmpStr, 1.0, Math.sqrt(srcImage.getExtents()[0] * srcImage.getExtents()[0] + 
+                                                     srcImage.getExtents()[1] * srcImage.getExtents()[1]))) {
+                minDistance = Float.valueOf(tmpStr).floatValue();
+            }
+            else {
+                minDistanceText.requestFocus();
+                minDistanceText.selectAll();
+                return false;
+            }
+        } // if (objectsToFind > 1)
         
         if (omegaRBetaList == null) {
             MipavUtil.displayError("R-table list has not been read");
