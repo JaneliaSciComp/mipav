@@ -1,7 +1,5 @@
 package gov.nih.mipav.model.file;
 
-
-import gov.nih.mipav.model.file.XMLHelper.XMLAttributes;
 import gov.nih.mipav.view.*;
 
 import org.apache.xerces.jaxp.*;

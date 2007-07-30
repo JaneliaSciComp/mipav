@@ -58,12 +58,6 @@ public class ModelImage extends ModelStorageBase {
      */
     private transient Vector frameList = null;
 
-    /** JTextArea for history. */
-    private transient JTextArea historyArea = null;
-
-    /** Reference to the history scroll pane. */
-    private transient JScrollPane historySPane = null;
-
     /**
      * ImageName is patient's name when using DICOM images. It is filename for any other image something other than
      * filename must be used for DICOM because one DICOM image is made of many seperate files. ** Not necessarily the
@@ -201,7 +195,6 @@ public class ModelImage extends ModelStorageBase {
 
         frameList = new Vector();
         voiVector = new VOIVector();
-        makeInfoPanes();
     }
 
     /**
@@ -499,11 +492,6 @@ public class ModelImage extends ModelStorageBase {
         }
 
         image.setUserInterface(UI);
-        image.makeInfoPanes();
-
-        if (this.historyArea != null) {
-            image.getHistoryArea().setText(this.getHistoryArea().getText());
-        }
 
         image.releaseLock(); // this.image was cloned when it was locked, therefore
 
@@ -958,25 +946,7 @@ public class ModelImage extends ModelStorageBase {
 
         return null;
     }
-
-    /**
-     * Accessor to get the history pane.
-     *
-     * @return  history pane
-     */
-    public JTextArea getHistoryArea() {
-        return this.historyArea;
-    }
-
-    /**
-     * Accessor to get the history scroll pane.
-     *
-     * @return  history pane
-     */
-    public JScrollPane getHistoryPane() {
-        return this.historySPane;
-    }
-
+  
     /**
      * Calculates translation offset for transforming image about the center of the image.
      *
@@ -2561,24 +2531,6 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Accessor to set the history vector.
-     *
-     * @param  ha  history vector
-     */
-    public void setHistory(JTextArea ha) {
-        this.historyArea = ha;
-    }
-
-    /**
-     * Accessor to set the history scroll pane.
-     *
-     * @param  hp  history pane
-     */
-    public void setHistoryPane(JScrollPane hp) {
-        this.historySPane = hp;
-    }
-
-    /**
      * Sets the image directory.
      *
      * @param  dir  string representing the directory
@@ -3448,24 +3400,6 @@ public class ModelImage extends ModelStorageBase {
                 fileInfo[i].setFileName("mask." + image.getFileInfo()[0].getFileSuffix());
             }
         }
-    }
-
-    /**
-     * Makes the information panes attached to each image.
-     */
-    private void makeInfoPanes() {
-
-
-        historyArea = new JTextArea();
-        historyArea.setBackground(Color.lightGray);
-        historyArea.setEditable(true);
-        historyArea.setFont(MipavUtil.font12);
-        historyArea.setMargin(new Insets(3, 3, 3, 3));
-
-        historySPane = new JScrollPane(historyArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                       JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        historySPane.setPreferredSize(new Dimension(595, 178));
-
     }
 
     /**
