@@ -325,7 +325,7 @@ public class VolumeShaderEffect extends ShaderEffect
     }
 
 
-    public void MIPMode(int iImage, gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void MIPMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == MIP )
         {
@@ -379,7 +379,7 @@ public class VolumeShaderEffect extends ShaderEffect
         SetSelfShadow();
     }
 
-    public void DDRMode(int iImage, gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void DDRMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == DDR )
         {
@@ -389,7 +389,7 @@ public class VolumeShaderEffect extends ShaderEffect
         SetProgram( m_kPShaderDDR, kRenderer );
     }
 
-    public void CMPMode(int iImage, gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void CMPMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == CMP )
         {
@@ -399,7 +399,7 @@ public class VolumeShaderEffect extends ShaderEffect
         SetProgram(m_kPShaderCMP, kRenderer);
     }
 
-    public void SURMode(int iImage, gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void SURMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
 
         if ( m_iWhichShader == CMP_SUR )
@@ -424,7 +424,7 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
-    public void SURFASTMode(int iImage, gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
+    public void SURFASTMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == SUR )
         {
@@ -813,7 +813,32 @@ public class VolumeShaderEffect extends ShaderEffect
                      kRenderer.GetMaxTCoords(),
                      kRenderer.GetMaxVShaderImages(),
                      kRenderer.GetMaxPShaderImages());
-        ResetClip();
+
+        if ( m_iWhichShader == MIP )
+        {
+            m_iWhichShader = -1;
+            MIPMode(kRenderer);
+        }
+        else if ( m_iWhichShader == DDR )
+        {
+            m_iWhichShader = -1;
+            DDRMode(kRenderer);
+        }
+        else if ( m_iWhichShader == CMP )
+        {
+            m_iWhichShader = -1;
+            CMPMode(kRenderer);
+        }
+        else if ( m_iWhichShader == SUR )
+        {
+            m_iWhichShader = -1;
+            SURFASTMode(kRenderer);
+        }
+        else if ( m_iWhichShader == CMP_SUR )
+        {
+            m_iWhichShader = -1;
+            SURMode(kRenderer);
+        }
     }
 
     public void InitClip( float[] afData )

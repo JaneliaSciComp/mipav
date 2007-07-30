@@ -1662,24 +1662,17 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         Object source = event.getSource();
 
         if (raycastRenderWM != null) {
-            int iImage = 0;
-            ViewJComponentVolOpacityBase kSelectedComp = surRender.getVolOpacityPanel().getSelectedComponent();
-            if ( kSelectedComp == surRender.getVolOpacityPanel().getCompB() )
-            {
-                iImage = 1;
-            }
-
             if (radioMIP.isSelected() && (source == radioMIP)) {
-                raycastRenderWM.MIPMode( iImage );
+                raycastRenderWM.MIPMode();
             } else if (radioXRAY.isSelected() && (source == radioXRAY)) {
-                raycastRenderWM.DDRMode( iImage );
+                raycastRenderWM.DDRMode();
             } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
-                raycastRenderWM.CMPMode( iImage );
+                raycastRenderWM.CMPMode();
             } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
-                raycastRenderWM.SURMode( iImage );
+                raycastRenderWM.SURMode();
                 surRender.getSurfaceDialog().getLightDialog().refreshLighting();
             } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
-                raycastRenderWM.SURFASTMode( iImage );
+                raycastRenderWM.SURFASTMode();
                 surRender.getSurfaceDialog().getLightDialog().refreshLighting();
             } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
                 raycastRenderWM.SelfShadow( kSelfShadow.isSelected() );

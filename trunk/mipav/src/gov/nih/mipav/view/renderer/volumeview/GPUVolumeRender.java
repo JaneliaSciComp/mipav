@@ -164,9 +164,11 @@ public class GPUVolumeRender extends JavaApplication3
             }
 
             /*
+              // Draw screne polygon:
             m_pkRenderer.SetCamera(m_spkScreenCamera);
             m_pkRenderer.Draw(m_spkScenePolygon);
 
+            //Draw frame rate:
             m_pkRenderer.SetCamera(m_spkCamera);
             DrawFrameRate(8,16,ColorRGBA.WHITE);
             */
@@ -354,7 +356,7 @@ public class GPUVolumeRender extends JavaApplication3
                                                        m_pkSceneTarget);
         m_pkRenderer.LoadResources(m_kVolumeShaderEffect);
         m_kVolumeShaderEffect.SetPassQuantity(1);
-        m_kVolumeShaderEffect.MIPMode(0, m_pkRenderer);
+        m_kVolumeShaderEffect.MIPMode(m_pkRenderer);
         m_kVolumeShaderEffect.Blend(0.5f);
 
         for ( int i = 0; i < 4; i++ )
@@ -1261,11 +1263,7 @@ public class GPUVolumeRender extends JavaApplication3
     public void reloadShaders()
     {
         m_kVolumeShaderEffect.Reload( m_pkRenderer );
-        m_kVolumeShaderEffect.MIPMode(0, m_pkRenderer);
-
-        m_kShaderParamsWindow.AddUserVariables(m_kVolumeShaderEffect.GetPProgram());
-        m_kShaderParamsWindow.Display();
-        m_kShaderParamsWindow.setParent(this);
+        updateLighting(m_akLights);
     }
 
     public void setVisible( boolean bVisible )
@@ -1275,6 +1273,11 @@ public class GPUVolumeRender extends JavaApplication3
 
     public void updateLighting(GeneralLight[] akGLights )
     {
+        if ( akGLights == null )
+        {
+            return;
+        }
+        m_akLights = akGLights;
         if ( m_bInit )
         {
             for ( int i = 0; i < akGLights.length; i++ )
@@ -1337,33 +1340,33 @@ public class GPUVolumeRender extends JavaApplication3
         m_kVolumeShaderEffect.SetRGBT( RGBT, iImage );
     }
 
-    public void MIPMode( int iImage )
+    public void MIPMode()
     {
-        m_kVolumeShaderEffect.MIPMode( iImage, m_pkRenderer );
+        m_kVolumeShaderEffect.MIPMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
-    public void DDRMode( int iImage )
+    public void DDRMode()
     {
-        m_kVolumeShaderEffect.DDRMode( iImage, m_pkRenderer );
+        m_kVolumeShaderEffect.DDRMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
-    public void CMPMode( int iImage )
+    public void CMPMode()
     {
-        m_kVolumeShaderEffect.CMPMode( iImage, m_pkRenderer );
+        m_kVolumeShaderEffect.CMPMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
-    public void SURMode( int iImage )
+    public void SURMode()
     {
-        m_kVolumeShaderEffect.SURMode( iImage, m_pkRenderer );
+        m_kVolumeShaderEffect.SURMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
-    public void SURFASTMode( int iImage )
+    public void SURFASTMode()
     {
-        m_kVolumeShaderEffect.SURFASTMode( iImage, m_pkRenderer );
+        m_kVolumeShaderEffect.SURFASTMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
@@ -1504,7 +1507,6 @@ public class GPUVolumeRender extends JavaApplication3
     private TriMesh m_kMesh;
     private int m_iActive = 0;
 
-    ApplicationGUI m_kShaderParamsWindow = null;
-
-
+    private ApplicationGUI m_kShaderParamsWindow = null;
+    private GeneralLight[] m_akLights = null;
 }
