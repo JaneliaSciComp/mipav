@@ -18,9 +18,10 @@ import java.util.*;
 public class ImageCatalog
 {
 
-    public ImageCatalog (String rkName)
+    public ImageCatalog (String rkName, String rkDefaultDir)
     {
         m_kName = new String( rkName );
+        m_kDefaultDir = new String(rkDefaultDir);
         // A magenta image to catch your attention that your requested image was
         // not found.
         byte[] aucData = new byte[3];
@@ -35,7 +36,11 @@ public class ImageCatalog
     {
         return m_kName;
     }
-
+    
+    public String GetDefaultDir ()
+    {
+        return m_kDefaultDir;
+    }
     public boolean Insert (GraphicsImage pkImage)
     {
         if (pkImage == null)
@@ -107,7 +112,7 @@ public class ImageCatalog
         }
 
         // Attempt to load the image from disk.
-        pkImage = GraphicsImage.Load(rkImageName);
+        pkImage = GraphicsImage.Load(rkImageName, m_kDefaultDir);
         if (pkImage != null)
         {
             // The image exists on disk and is already in the catalog.  The
@@ -165,6 +170,7 @@ public class ImageCatalog
     }
 
     private String m_kName;
+    private String m_kDefaultDir;
     HashMap<String,GraphicsImage> m_kEntry = new HashMap<String,GraphicsImage>();
     GraphicsImage m_spkDefaultImage;
 

@@ -20,7 +20,7 @@ package gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 
-public abstract class JavaApplication2 extends JavaApplication
+public abstract class JavaApplication2D extends JavaApplication
 {
     /** Constructs a 2D application.
      * @param acWindowTitle, the window title
@@ -30,7 +30,7 @@ public abstract class JavaApplication2 extends JavaApplication
      * @param iHeight, window height
      * @param rkBackgroundColor, background color
      */
-    public JavaApplication2 (final String acWindowTitle, int iXPosition,
+    public JavaApplication2D (final String acWindowTitle, int iXPosition,
                              int iYPosition, int iWidth, int iHeight,
                              final ColorRGBA rkBackgroundColor)
     {

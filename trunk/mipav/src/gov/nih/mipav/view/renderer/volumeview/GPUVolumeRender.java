@@ -24,7 +24,7 @@ import gov.nih.mipav.view.renderer.volumeview.*;
 
 /**
  */
-public class GPUVolumeRender extends JavaApplication3
+public class GPUVolumeRender extends JavaApplication3D
     implements GLEventListener, KeyListener, MouseMotionListener
 {
     public GPUVolumeRender( ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
@@ -43,7 +43,7 @@ public class GPUVolumeRender extends JavaApplication3
 
         m_pkRenderer.SetLineWidth(3);
 
-        ImageCatalog.SetActive( new ImageCatalog("Main") );      
+        ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
         
