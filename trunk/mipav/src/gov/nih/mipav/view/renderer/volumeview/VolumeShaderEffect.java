@@ -1165,6 +1165,23 @@ public class VolumeShaderEffect extends ShaderEffect
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
+
+        // native data
+        //rkStream.Write(m_iPassQuantity);
+
+        // link data
+//         for (int iPass = 0; iPass < m_iPassQuantity; iPass++)
+//         {
+//             rkStream.Write(m_kVShader.get(iPass).GetID());
+//             rkStream.Write(m_kPShader.get(iPass).GetID());
+//         }
+//         int iQuantity = m_kAlphaState.size();
+//         rkStream.Write(iQuantity);
+//         for (int i = 0; i < iQuantity; i++)
+//         {
+//             rkStream.Write(m_kAlphaState.get(i).GetID());
+//         }
+
     }
 
     /**

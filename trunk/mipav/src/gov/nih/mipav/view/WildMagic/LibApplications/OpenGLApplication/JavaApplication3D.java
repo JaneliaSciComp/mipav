@@ -25,7 +25,7 @@ import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 
-public abstract class JavaApplication3 extends JavaApplication
+public abstract class JavaApplication3D extends JavaApplication
     implements KeyListener, MouseListener, MouseMotionListener
 {
     /**
@@ -37,7 +37,7 @@ public abstract class JavaApplication3 extends JavaApplication
      * @param iHeight, window height
      * @param rkBackgroundColor, background color
      */
-    public JavaApplication3 ( final String acWindowTitle, int iXPosition,
+    public JavaApplication3D ( final String acWindowTitle, int iXPosition,
                               int iYPosition, int iWidth, int iHeight,
                               final ColorRGBA rkBackgroundColor )
     {

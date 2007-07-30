@@ -436,11 +436,11 @@ public class GraphicsImage extends GraphicsObject
     // already in memory, then that image is returned (i.e. shared).
     // Otherwise, a new image is created and returned.  The filename is used
     // as the image name.
-    public static GraphicsImage Load (String acImageName)
+    public static GraphicsImage Load (String acImageName, String rkDirectory)
     {
         assert(acImageName != null);
 
-        String kFilename = new String(acImageName + ".wmif");
+        String kFilename = new String( rkDirectory + "\\Shaders\\Images\\" + acImageName + ".wmif");
 
         ByteArrayInputStream acBuffer = GraphicsImage.LoadFile(kFilename);
         if (acBuffer == null)
