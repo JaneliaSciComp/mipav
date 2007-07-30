@@ -611,6 +611,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             normal = tex3D(normalmap,position);
             normal.w = 0;
 
+            // First light is static light:
             color0 = color;
             computeColor( position, normal, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
@@ -621,6 +622,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                           Composite, color0 );
                 
 
+            // Assume second light is alwasy an ambient light:
             color1 = color;
             if ( Composite != 0 )
             {
@@ -633,6 +635,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                           Light1Attenuation,
                           color1 );
 
+            // Remaining lights:
             color2 = color;
             computeColor( position, normal, CameraWorldPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
@@ -685,6 +688,14 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
 
     // Self-shadowing is possible for Surface mode:
     if ( (SelfShadow != 0) && (Composite == 0) && (alpha_acc == 1.0) ) {
+        // Use the normal at the start position:
+        float3 local_normal = normal.xyz - (0.5, 0.5, 0.5);
+        local_normal = normalize( local_normal );
+
+        // normal at occluding position:
+        float4 normal2;
+        float3 local_normal2;
+
         // for each light, determine whether it is blocked by an opaque surface.
         // start at position + incr, step to light position
 
@@ -692,50 +703,146 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
         start = position;
 
         // for each light that can cause shadows:
-        // XXX is the light position in the right coords? Model instead?
-        // Is the light too far outside the volume, so the steps are too big?
+        // Light0:
         float3 dir1 = Light0ModelPosition - start;
-        //len = length(dir1);
         float3 norm_dir1 = normalize(dir1);
         float3 delta_dir1 = norm_dir1 * stepsize;
         float3 delta_dir_len1 = length(delta_dir1);
-        float length_acc1 = 0;
-
-        float3 local_normal = normal.xyz - (0.5, 0.5, 0.5);
-        local_normal = normalize( local_normal );
-        float4 normal2;
-        float3 local_normal2;
-
-
-        // start looking just beyond the surface position that set the color
         float3 position1 = start;
+        // Light2:
+        float3 dir2 = Light2WorldPosition - start;
+        float3 norm_dir2 = normalize(dir2);
+        float3 delta_dir2 = norm_dir2 * stepsize;
+        float3 delta_dir_len2 = length(delta_dir2);
+        float3 position2 = start;
+        // Light3:
+        float3 dir3 = Light3WorldPosition - start;
+        float3 norm_dir3 = normalize(dir3);
+        float3 delta_dir3 = norm_dir3 * stepsize;
+        float3 delta_dir_len3 = length(delta_dir3);
+        float3 position3 = start;
+
+        bool break1 = false;
+        bool break2 = false;
+        bool break3 = false;
+
+        if ( Light0Type == -1 )
+        {
+            break1 = true;
+        }
+        if ( Light2Type == -1 )
+        {
+            break2 = true;
+        }
+        if ( Light3Type == -1 )
+        {
+            break3 = true;
+        }
+
         for( int i = 0; i < 450; i++ )
         {
-            // If we find a non-zero opacity, remove the color contribution
-            color = tex3D(volume_tex,position1);
-            opacity = tex1D(opacitymap,color.r).r;
-            if (opacity > 0)
+            // Light0:
+            if ( !break1 )
             {
-                normal2 = tex3D(normalmap,position1);
-                local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
-                local_normal2 = normalize( local_normal2 );
-                if ( dot(local_normal.xyz, local_normal2.xyz) < 0 )
+                // If we find a non-zero opacity, remove the color contribution
+                color = tex3D(volume_tex,position1);
+                opacity = tex1D(opacitymap,color.r).r;
+                if (opacity > 0)
                 {
-                    color_acc -= color0;
-                    break;
+                    normal2 = tex3D(normalmap,position1);
+                    local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
+                    local_normal2 = normalize( local_normal2 );
+                    if ( dot(local_normal.xyz, local_normal2.xyz) < 0 )
+                    {
+                        color_acc -= color0;
+                        break1 = true;
+                    }
+                }
+                // Increment position along the ray:
+                if ( Light0Type == 1 )
+                {
+                    position1 -= delta_dir1;
+                }
+                else
+                {
+                    position1 += delta_dir1;
+                }
+                if ( (position1.x < 0.0) || (position1.x > 1.0) ||
+                     (position1.y < 0.0) || (position1.y > 1.0) ||
+                     (position1.z < 0.0) || (position1.z > 1.0)    )
+                {
+                    break1 = true;
                 }
             }
-            // Increment position along the ray:
-            position1 += delta_dir1;
-            length_acc1 += delta_dir_len1;
-            // Break when the end of the ray is reached
-//             if ( length_acc1 >= len )
-//             {
-//                 break;
-//             }
-            if ( (position1.x < 0.0) || (position1.x > 1.0) ||
-                 (position1.y < 0.0) || (position1.y > 1.0) ||
-                 (position1.z < 0.0) || (position1.z > 1.0)    )
+
+            // Light2:
+            if ( !break2 )
+            {
+                // If we find a non-zero opacity, remove the color contribution
+                color = tex3D(volume_tex,position2);
+                opacity = tex1D(opacitymap,color.r).r;
+                if (opacity > 0)
+                {
+                    normal2 = tex3D(normalmap,position2);
+                    local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
+                    local_normal2 = normalize( local_normal2 );
+                    if ( dot(local_normal.xyz, local_normal2.xyz) < 0 )
+                    {
+                        color_acc -= color2;
+                        break2 = true;
+                    }
+                }
+                // Increment position along the ray:
+                if ( Light2Type == 1 )
+                {
+                    position2 -= delta_dir2;
+                }
+                else
+                {
+                    position2 += delta_dir2;
+                }
+                if ( (position2.x < 0.0) || (position2.x > 1.0) ||
+                     (position2.y < 0.0) || (position2.y > 1.0) ||
+                     (position2.z < 0.0) || (position2.z > 1.0)    )
+                {
+                    break2 = true;
+                }
+            }            
+            // Light3:
+            if ( !break3 )
+            {
+                // If we find a non-zero opacity, remove the color contribution
+                color = tex3D(volume_tex,position3);
+                opacity = tex1D(opacitymap,color.r).r;
+                if (opacity > 0)
+                {
+                    normal2 = tex3D(normalmap,position3);
+                    local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
+                    local_normal2 = normalize( local_normal2 );
+                    if ( dot(local_normal.xyz, local_normal2.xyz) < 0 )
+                    {
+                        color_acc -= color3;
+                        break3 = true;
+                    }
+                }
+                // Increment position along the ray:
+                if ( Light3Type == 1 )
+                {
+                    position3 -= delta_dir3;
+                }
+                else
+                {
+                    position3 += delta_dir3;
+                }
+                if ( (position3.x < 0.0) || (position3.x > 1.0) ||
+                     (position3.y < 0.0) || (position3.y > 1.0) ||
+                     (position3.z < 0.0) || (position3.z > 1.0)    )
+                {
+                    break3 = true;
+                }
+            }            
+
+            if ( break1 && break2 && break3 )
             {
                 break;
             }
