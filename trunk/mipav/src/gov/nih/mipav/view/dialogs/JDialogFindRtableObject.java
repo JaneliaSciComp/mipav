@@ -119,10 +119,6 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     /** Minimum pixel distances between instances of R-table objects */
     private JTextField numObjectsText;
     
-    private float minDistance;
-    
-    private JTextField minDistanceText;
-    
     /** File containing omegaBins, sidePointsForTangent, and omegaRBetaList, the R-table */
     private String parametersFile = null;
     
@@ -457,14 +453,6 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     public void setObjectsToFind(int objectsToFind) {
         this.objectsToFind = objectsToFind;
     }
-    
-    /**
-     * 
-     * @param minDistance minimum pixel distance between 2 objects
-     */
-    public void setMinDistance(float minDistance) {
-        this.minDistance = minDistance;
-    }
 
     /**
      * Sets the remove index based on the selected index in the list.
@@ -484,8 +472,7 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
             findAlgo = new AlgorithmFindRtableObject(srcImage, omegaBins, sidePointsForTangent,
                            omegaRBetaList, maxPixelBinWidth, maxBufferSize, 
                            allowRotation, maxDegreesBinWidth, allowScaling,
-                           minScaleFactor, maxScaleFactor, scaleBins, objectsToFind,
-                           minDistance);
+                           minScaleFactor, maxScaleFactor, scaleBins, objectsToFind);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -536,7 +523,6 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         setMaxScaleFactor(scriptParameters.getParams().getFloat("max_scale_factor"));
         setScalingBins(scriptParameters.getParams().getInt("scaling_bins"));
         setObjectsToFind(scriptParameters.getParams().getInt("objects_to_find"));
-        setMinDistance(scriptParameters.getParams().getFloat("min_distance"));
     }
 
     /**
@@ -555,7 +541,6 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_scale_factor", maxScaleFactor));
         scriptParameters.getParams().put(ParameterFactory.newParameter("scaling_bins", scaleBins));
         scriptParameters.getParams().put(ParameterFactory.newParameter("objects_to_find", objectsToFind));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("min_distance", minDistance));
     }
 
 
@@ -571,7 +556,6 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         JLabel pixelWidthLabel;
         JLabel maxBufferLabel;
         JLabel numObjectsLabel;
-        JLabel minDistanceLabel;
         setForeground(Color.black);
 
         setTitle("Find R-table object");
@@ -696,7 +680,7 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         
         gbc4.gridx = 1;
         scalingText = new JTextField(15);
-        scalingText.setText("20");
+        scalingText.setText("21");
         scalingText.setEnabled(true);
         scalingText.setFont(serif12);
         scalingText.setForeground(Color.black);
@@ -718,21 +702,6 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         numObjectsText.setForeground(Color.black);
         numObjectsText.setFont(serif12);
         numObjectsPanel.add(numObjectsText, gbc4);
-        
-        gbc4.gridx = 0;
-        gbc4.gridy = 1;
-        minDistanceLabel = new JLabel("Minimum pixel distance between objects");
-        minDistanceLabel.setForeground(Color.black);
-        minDistanceLabel.setFont(serif12);
-        numObjectsPanel.add(minDistanceLabel, gbc4);
-        
-        gbc4.gridx = 1;
-        minDistanceText = new JTextField(15);
-        minDistance = 0.1f * Math.min(srcImage.getExtents()[0], srcImage.getExtents()[1]);
-        minDistanceText.setText(String.valueOf(minDistance));
-        minDistanceText.setForeground(Color.black);
-        minDistanceText.setFont(serif12);
-        numObjectsPanel.add(minDistanceText, gbc4);
 
         paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
@@ -915,19 +884,6 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
             numObjectsText.selectAll();
             return false;
         }
-        
-        if (objectsToFind > 1) {
-            tmpStr = minDistanceText.getText();
-            if (testParameter(tmpStr, 1.0, Math.sqrt(srcImage.getExtents()[0] * srcImage.getExtents()[0] + 
-                                                     srcImage.getExtents()[1] * srcImage.getExtents()[1]))) {
-                minDistance = Float.valueOf(tmpStr).floatValue();
-            }
-            else {
-                minDistanceText.requestFocus();
-                minDistanceText.selectAll();
-                return false;
-            }
-        } // if (objectsToFind > 1)
         
         if (omegaRBetaList == null) {
             MipavUtil.displayError("R-table list has not been read");
