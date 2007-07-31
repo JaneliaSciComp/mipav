@@ -2705,6 +2705,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     adjustOpacityFor000Color();
                     offscreenGraphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
                                                                                 1 - alphaBlend));
+
                 } else {
                     makeCheckerboard();
                 }
@@ -4770,20 +4771,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 Color zeroIndexColor = modelLUT.getColor(0); // get the color at index 0 of LUT a
 
                 // test to see if the color is R == 0, G == 0, B == 0
-                boolean zeroIndexColorIs000 = ((zeroIndexColor.getRed() == 0) && (zeroIndexColor.getGreen() == 0) &&
-                                                   (zeroIndexColor.getBlue() == 0));
-
-                if (zeroIndexColorIs000) {
-
-                    for (int i = 0; i < pixBuffer.length; i++) {
-                        int temp = pixBuffer[i];
-                        temp = temp & 0x00ffffff; // apply mask. temp will equal zero if the pixel should be transparent
-
-                        if (temp == 0) {
-                            pixBuffer[i] = pixBuffer[i] & 0x00ffffff; // make pixel transparent
-                        }
-                    }
-                }
+                boolean zeroIndexColorIs000;
 
                 modelLUT = vjfb.getLUTb();
 
@@ -4808,6 +4796,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     }
                 }
             }
+            
+            if(imageA.isColorImage() && imageB != null) {
+                    for (int i = 0; i < pixBufferB.length; i++) {
+                        int temp = pixBufferB[i];
+                        temp = temp & 0x00ffffff; // apply mask. temp will equal zero if the pixel should be
+                                                  // transparent
+
+                        if (temp == 0) {
+                            pixBufferB[i] = pixBufferB[i] & 0x00ffffff; // make pixel transparent
+                        }
+                    }
+                }       
         }
     }
 
