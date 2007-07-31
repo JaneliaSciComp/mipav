@@ -260,7 +260,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeGrayTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -275,7 +275,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeRedTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -290,7 +290,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeGreenTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -305,7 +305,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeBlueTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -320,7 +320,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeGrayBRTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -335,7 +335,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeHotMetalTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -350,7 +350,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeSpectrumTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -365,7 +365,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeCoolHotTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -380,7 +380,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeSkinTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -395,7 +395,7 @@ public class JPanelHistoLUT
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeBoneTransferFunctions();
                 LUTa.makeLUT(nColors);
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -409,7 +409,7 @@ public class JPanelHistoLUT
 
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeStripedLUT();
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -422,7 +422,7 @@ public class JPanelHistoLUT
 
             if (tabbedPane.getSelectedComponent() == panelA) {
                 LUTa.makeMuscleBonesLUT();
-                lutAdjustCheckboxA.setSelected(false);
+                //lutAdjustCheckboxA.setSelected(false);
                 setLUTA(LUTa);
                 updateFrames(false);
             } else {
@@ -724,7 +724,7 @@ public class JPanelHistoLUT
         } else if (event.getActionCommand().equals("UpdateB")) {
             updateHistoLUT(null, null, imageB, LUTb, false);
             // menuObj.setMenuItemEnabled( "Reset histogram & LUT B", false );
-        } else if (event.getSource() == lutAdjustCheckboxA) {
+        } /*else if (event.getSource() == lutAdjustCheckboxA) {
 
             if (LUTa != null) {
 
@@ -736,7 +736,7 @@ public class JPanelHistoLUT
 
                 updateFrames(false);
             }
-        } else if (event.getSource() == lutAdjustCheckboxB) {
+        }*/ else if (event.getSource() == lutAdjustCheckboxB) {
 
             if (LUTb != null) {
 
@@ -2029,9 +2029,9 @@ public class JPanelHistoLUT
         logCheckBoxA.setFont(MipavUtil.font12);
         logCheckBoxA.addItemListener(this);
 
-        lutAdjustCheckboxA = new JCheckBox("0 to 1 LUT adjustment");
-        lutAdjustCheckboxA.setFont(MipavUtil.font12);
-        lutAdjustCheckboxA.addActionListener(this);
+        //lutAdjustCheckboxA = new JCheckBox("0 to 1 LUT adjustment");
+        //lutAdjustCheckboxA.setFont(MipavUtil.font12);
+        //lutAdjustCheckboxA.addActionListener(this);
 
         JLabel nColorsLabel = new JLabel("Number of colors: ");
 
@@ -2079,10 +2079,10 @@ public class JPanelHistoLUT
         gbc.insets = new Insets(0, 5, 0, -5);
         controlPanel.add(logCheckBoxA, gbc);
 
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        controlPanel.add(lutAdjustCheckboxA, gbc);
+        //gbc.gridx = 1;
+        //gbc.gridy = 0;
+        //gbc.insets = new Insets(0, 0, 0, 0);
+        //controlPanel.add(lutAdjustCheckboxA, gbc);
 
         gbc.gridy = 2;
         gbc.gridx = 0;

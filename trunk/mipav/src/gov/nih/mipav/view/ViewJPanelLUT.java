@@ -80,7 +80,7 @@ public class ViewJPanelLUT extends JPanel
     private JTextField nColorsATextF, nColorsBTextF;
 
     /** DOCUMENT ME! */
-    private JCheckBox oneBasedLUTCheckBoxImageA;
+    //private JCheckBox oneBasedLUTCheckBoxImageA;
 
     /** DOCUMENT ME! */
     private JCheckBox oneBasedLUTCheckBoxImageB;
@@ -210,7 +210,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeGrayTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeGrayTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -223,7 +223,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeRedTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeRedTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -236,7 +236,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeGreenTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeGreenTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -249,7 +249,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeBlueTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeBlueTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -262,7 +262,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeGrayBRTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeGrayBRTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -275,7 +275,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeHotMetalTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeHotMetalTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -288,7 +288,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeSpectrumTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeSpectrumTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -301,7 +301,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeCoolHotTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeCoolHotTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -314,7 +314,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeSkinTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeSkinTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -327,7 +327,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeBoneTransferFunctions();
                 panelParent.getLUTa().makeLUT(nColors);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeBoneTransferFunctions();
                 panelParent.getLUTb().makeLUT(nColors);
@@ -339,7 +339,7 @@ public class ViewJPanelLUT extends JPanel
             if (isImageASelected()) {
                 panelParent.getLUTa().makeStripedLUT();
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             } else {
                 panelParent.getLUTb().makeStripedLUT();
                 panelParent.setLUTB(panelParent.getLUTb());
@@ -443,7 +443,7 @@ public class ViewJPanelLUT extends JPanel
                     panelParent.getLUTa().makeLUT(nColors);
                     panelParent.getLUTa().setColor(255, new Color(200, 0, 0));
                     panelParent.setLUTA(panelParent.getLUTa());
-                    oneBasedLUTCheckBoxImageA.setSelected(false);
+                    //oneBasedLUTCheckBoxImageA.setSelected(false);
                     getHistoLUTComponentA().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD);
                     threshLowerF.setEnabled(true);
                     threshUpperF.setEnabled(true);
@@ -510,7 +510,7 @@ public class ViewJPanelLUT extends JPanel
                     toolBarThreshold.getComponentAtIndex(4).setEnabled(true);
                     panelParent.getLUT().setColor(255, new Color(200, 0, 0));
                     panelParent.setLUTA(panelParent.getLUTa());
-                    oneBasedLUTCheckBoxImageA.setSelected(false);
+                    //oneBasedLUTCheckBoxImageA.setSelected(false);
                     getHistoLUTComponentA().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD_INV);
                     threshLowerF.setEnabled(true);
                     threshUpperF.setEnabled(true);
@@ -1182,7 +1182,7 @@ public class ViewJPanelLUT extends JPanel
             threshFillF.setEnabled(outputBox.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE);
         } else if (source == outputBoxB) {
             threshFillBF.setEnabled(outputBoxB.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE);
-        } else if (source == oneBasedLUTCheckBoxImageA) {
+        } /*else if (source == oneBasedLUTCheckBoxImageA) {
 
             // get the color of the LUT index 0
             Color zeroIndexColor = getLUTa().getColor(0);
@@ -1209,7 +1209,7 @@ public class ViewJPanelLUT extends JPanel
             }
 
             updateFrames(false);
-        } else if (source == oneBasedLUTCheckBoxImageB) {
+        } */else if (source == oneBasedLUTCheckBoxImageB) {
 
             // get the color of the LUT index 0
             Color zeroIndexColor = getLUTb().getColor(0);
@@ -1381,7 +1381,7 @@ public class ViewJPanelLUT extends JPanel
 
         if (isImageASelected()) {
             panelParent.setLUTA(newLUT);
-            oneBasedLUTCheckBoxImageA.setSelected(false);
+            //oneBasedLUTCheckBoxImageA.setSelected(false);
         } else {
             panelParent.setLUTB(newLUT);
             oneBasedLUTCheckBoxImageB.setSelected(false);
@@ -1395,7 +1395,7 @@ public class ViewJPanelLUT extends JPanel
      */
     public final void setLUTa(ModelLUT lut) {
         ((ViewJComponentHistoLUT) getHistoLUTComponentA()).setLUT(lut);
-        oneBasedLUTCheckBoxImageA.setSelected(false);
+        //oneBasedLUTCheckBoxImageA.setSelected(false);
     }
 
     /**
@@ -1815,11 +1815,11 @@ public class ViewJPanelLUT extends JPanel
         threshFillLabel.setFont(MipavUtil.font12);
         threshFillLabel.setForeground(Color.black);
 
-        oneBasedLUTCheckBoxImageA = new JCheckBox("0 to 1 LUT adjustment", false);
-        oneBasedLUTCheckBoxImageA.setFont(MipavUtil.font12);
-        oneBasedLUTCheckBoxImageA.setToolTipText("Only relevant when the LUT's first index is either the color (0, 0, 0) or (1, 1, 1)");
-        oneBasedLUTCheckBoxImageA.setSelected(isLUT1Based(LUT));
-        oneBasedLUTCheckBoxImageA.addItemListener(this);
+        //oneBasedLUTCheckBoxImageA = new JCheckBox("0 to 1 LUT adjustment", false);
+        //oneBasedLUTCheckBoxImageA.setFont(MipavUtil.font12);
+        //oneBasedLUTCheckBoxImageA.setToolTipText("Only relevant when the LUT's first index is either the color (0, 0, 0) or (1, 1, 1)");
+        //oneBasedLUTCheckBoxImageA.setSelected(isLUT1Based(LUT));
+        //oneBasedLUTCheckBoxImageA.addItemListener(this);
 
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -1862,10 +1862,10 @@ public class ViewJPanelLUT extends JPanel
         gbc.insets = new Insets(0, 10, 0, -20);
         controlPanel.add(threshLabel2, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.insets = new Insets(0, 5, 0, -5);
-        controlPanel.add(oneBasedLUTCheckBoxImageA, gbc);
+        //gbc.gridx = 0;
+        //gbc.gridy = 3;
+        //gbc.insets = new Insets(0, 5, 0, -5);
+        //controlPanel.add(oneBasedLUTCheckBoxImageA, gbc);
 
         gbc.gridx = 2;
         gbc.gridy = 2;
@@ -2343,7 +2343,7 @@ public class ViewJPanelLUT extends JPanel
                 panelParent.getLUTa().makeGrayTransferFunctions();
                 panelParent.getLUTa().makeLUT(256);
                 panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
+                //oneBasedLUTCheckBoxImageA.setSelected(false);
             }
         } else {
             thresholds[0] = ((Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
