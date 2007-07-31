@@ -383,6 +383,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     private boolean useGComp = true;
     private boolean useBComp = true;
     
+    
+    /** flag indicating whethere there is 0 to 1 LUT Adjustment **/
+    private boolean zeroToOneLUTAdj = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -4798,14 +4802,24 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
             
             if(imageA.isColorImage() && imageB != null) {
+            		int temp2, temp3;
                     for (int i = 0; i < pixBufferB.length; i++) {
                         int temp = pixBufferB[i];
-                        temp = temp & 0x00ffffff; // apply mask. temp will equal zero if the pixel should be
+                        if(!zeroToOneLUTAdj) {
+                        	temp2 = temp & 0x00ffffff; // apply mask. temp will equal zero if the pixel should be
                                                   // transparent
-
-                        if (temp == 0) {
-                            pixBufferB[i] = pixBufferB[i] & 0x00ffffff; // make pixel transparent
+                        	if (temp2 == 0) {
+                        		pixBufferB[i] = pixBufferB[i] & 0x00ffffff; // make pixel transparent
+                        	}
                         }
+                        else {
+                        	temp3 = temp & 0xffffffff;
+                        	
+                        	if(temp3 == 0) {
+                        		pixBufferB[i] = pixBufferB[i] & 0xffffffff;
+                        	}
+                        }
+                        
                     }
                 }       
         }
@@ -5538,5 +5552,24 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
+    
+    /**
+     * 
+     * @param zeroToOneLUTAdj
+     */
+	public void setZeroToOneLUTAdj(boolean zeroToOneLUTAdj) {
+		this.zeroToOneLUTAdj = zeroToOneLUTAdj;
+	}
 
+	/**
+	 * 
+	 * @return
+	 */
+	public boolean isZeroToOneLUTAdj() {
+		return zeroToOneLUTAdj;
+	}
+
+
+	
+	
 }

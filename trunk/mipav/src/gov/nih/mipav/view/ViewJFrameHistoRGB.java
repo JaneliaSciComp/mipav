@@ -131,6 +131,9 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JLabel voxelVolumeLabel, voxelVolumeLabelB;
+    
+    /** DOCUMENT ME **/
+    private JCheckBox lutAdjustCheckboxB;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -846,6 +849,15 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                 // regComponent.setBbOn(RGBTB.getBOn());
                 regComponent.show(0, 0, null, null, true);
             }
+        } else if (source == lutAdjustCheckboxB) {
+        	if(lutAdjustCheckboxB.isSelected()) {
+        		imageA.getParentFrame().getComponentImage().setZeroToOneLUTAdj(true);
+        	}
+        	else {
+        		imageA.getParentFrame().getComponentImage().setZeroToOneLUTAdj(false);
+        	}
+
+            updateFrames(false);
         }
     }
 
@@ -1783,7 +1795,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
      * @param  entireFlag  Flag indicating if histogram should be made of entire image.
      */
     private void buildPanelB(ModelImage image, boolean entireFlag) {
-
+    	System.out.println("testing");
         // go calc histo
         calcHistogram(IMAGE_B, entireFlag, false);
 
@@ -1804,6 +1816,11 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
         logCheckBoxB = new JCheckBox("Log scale (Histogram)", true);
         logCheckBoxB.setFont(MipavUtil.font12);
         logCheckBoxB.addItemListener(this);
+        
+        lutAdjustCheckboxB = new JCheckBox("0 to 1 LUT adjustment");
+        lutAdjustCheckboxB.setFont(MipavUtil.font12);
+        lutAdjustCheckboxB.setSelected(imageA.getParentFrame().getComponentImage().isZeroToOneLUTAdj());
+        lutAdjustCheckboxB.addItemListener(this);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
@@ -1813,6 +1830,9 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
         gbc.gridy = 1;
         optionsPanel.add(logCheckBoxB, gbc);
+        
+        gbc.gridy = 2;
+        optionsPanel.add(lutAdjustCheckboxB, gbc);
 
         gbc = new GridBagConstraints();
 
