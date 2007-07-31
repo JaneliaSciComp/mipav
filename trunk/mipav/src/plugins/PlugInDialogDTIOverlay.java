@@ -65,9 +65,6 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
 	
 	/** Radio Buttons **/
 	private JRadioButton newImage, replaceImage;
-	
-	 /** current directory  **/
-    private String currDir = null;
     
     /** handle to algorithm **/
     private PlugInAlgorithmDTIOverlay alg;
@@ -261,16 +258,13 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if(command.equalsIgnoreCase("fiberPathBrowse")) {
-			JFileChooser chooser = new JFileChooser();
-			if (currDir != null) {
-				chooser.setCurrentDirectory(new File(currDir));
-            }
+			JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
 	        chooser.setDialogTitle("Select Fiber file");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	fiberPathTextField.setText(chooser.getSelectedFile().getAbsolutePath());
 	        	filepath = chooser.getSelectedFile().getAbsolutePath();
-	        	currDir = chooser.getSelectedFile().getAbsolutePath();
+	        	Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
 	        }
 		}
 		else if(command.equalsIgnoreCase("ok")) {
@@ -288,9 +282,9 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
 			}
 		}
 		else if(command.equalsIgnoreCase("cancel")) {
-			//if(alg != null) {
-			//	alg.setThreadStopped(true);
-			//}
+			if(alg != null) {
+				alg.setThreadStopped(true);
+			}
 			dispose();
 		}
 	}
