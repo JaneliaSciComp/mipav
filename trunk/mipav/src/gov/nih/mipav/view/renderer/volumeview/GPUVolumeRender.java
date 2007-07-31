@@ -94,14 +94,12 @@ public class GPUVolumeRender extends JavaApplication3D
         }
 
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-
         MeasureTime();
         
         if (MoveCamera())
         {
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }        
-
         if (MoveObject())
         {
             m_spkScene.UpdateGS();
@@ -113,25 +111,29 @@ public class GPUVolumeRender extends JavaApplication3D
         {
             m_pkPBuffer.SetDrawable( arg0 );
 
-            // Draw the scene to a color buffer.
+            // First rendering pass:
+            // Draw the proxy geometry to a color buffer, to generate the
+            // back-facing texture-coordinates:
             m_kMesh.DetachAllEffects();
             m_kMesh.AttachEffect( m_spkVertexColor3Shader );
             m_kCuller.ComputeVisibleSet(m_spkScene);
-
+            // Enable rendering to the PBuffer:
             m_pkPBuffer.Enable();
             m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
             m_pkRenderer.ClearBuffers();
+            // Cull front-facing polygons:
             m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+            // Undo culling:
             m_spkCull.CullFace = CullState.CullMode.CT_BACK;
+            // Disable the PBuffer
             m_pkPBuffer.Disable();
 
+            // Second rendering pass:
+            // Draw the proxy grometry with the volume ray-tracing shader:
             m_kMesh.DetachAllEffects();
             m_kMesh.AttachEffect( m_kVolumeShaderEffect );
             m_kCuller.ComputeVisibleSet(m_spkScene);
-
-            // Draw the scene to the main window and also to a regular screen
-            // polygon, placed in the lower-left corner of the main window.
             m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
             m_pkRenderer.ClearBuffers();
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());

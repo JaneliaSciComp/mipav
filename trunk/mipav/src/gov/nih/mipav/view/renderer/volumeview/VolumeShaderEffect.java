@@ -81,17 +81,41 @@ public class VolumeShaderEffect extends ShaderEffect
         super.finalize();
     }
 
+    /**
+     * The VolumeShaderEffect.CreateVolumeTexture() function constructs and
+     * initializes the vertex and pixel shader programs for volume
+     * rendering. The vertex shader is the same for each rendering type: MIP,
+     * DDR, Composite, Surface, and Composite Surface. The pixel shaders are
+     * different for each.
+     */
     private void CreateVolumeTexture ()
     {
+        /* Set single-pass rendering: */
         SetPassQuantity(1);
 
+        /* Map the ModelImage volume data to a texture image, including for
+         * the ModelImage gradient magnitude data: */
         m_kVolumeA = UpdateData(m_kImageA, null, m_kVolumeTargetA, new String("A") );
         m_kImageA_GM = CalcHistogramsGM( m_kImageA );
         m_kVolumeA_GM = UpdateData(m_kImageA_GM, null, m_kVolumeTargetA_GM, new String("A_GM") );
-        
+
+        /* Create the vertex shader program, shared by all rendering types. It
+         * is implemented in the VolumeShaderVertex.cg file: */        
         VertexShader pkVShader = new VertexShader("VolumeShaderVertex");
 
-        // setup mip shader effect:
+        /* The following code block creates the MIP pixel shader, implemented
+         * in VolumeShaderMIP.cg. It also sets up and stores references to the
+         * texture images used by the pixel shader. The MIP pixel-shader uses
+         * 6 textures. The SceneImage texture, storing the texture-coordinates
+         * of the back-facing polygons. VolumeImageA texture stores the
+         * ModelImage data. ColorMapA stores the color
+         * lookup-table. OpacityMapA stores the opacity transfer
+         * function. VolumeImageA_GM has the gradient magnitude data for the
+         * ModelImage. OpacityMapA_GM has the gradient magnitude opacity
+         * transfer function.  The references m_kVolumeTargetA,
+         * m_kColorMapTargetA, m_kOpacityMapTargetA, m_kVolumeTargetA_GM, and
+         * m_kOpacityTargetA_GM are stored so the images can be re-used by the
+         * other pixel shaders. */
         m_kPShaderMIP = new PixelShader("VolumeShaderMIP");
         m_kPShaderMIP.SetTextureQuantity(6);
         m_kPShaderMIP.SetImageName(0,"SceneImage");
@@ -115,6 +139,10 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kPShaderMIP.SetImageName(5, "OpacityMapA_GM");
         m_kOpacityMapTargetA_GM = m_kPShaderMIP.GetTexture(5);
 
+        /* The following block creates the DDR volume shader, implemented in
+         * VolumShaderDDR.cg. The DDR shader uses the same texture images and
+         * data as the MIP shader. The textures are not duplicated in CPU or
+         * GPU memory. */
         m_kPShaderDDR = new PixelShader("VolumeShaderDDR");
         m_kPShaderDDR.SetTextureQuantity(6);
         m_kPShaderDDR.SetImageName(0,"SceneImage");
@@ -130,6 +158,10 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kPShaderDDR.SetImageName(5, "OpacityMapA_GM");
         m_kPShaderDDR.SetTexture(5, m_kOpacityMapTargetA_GM);
 
+        /* The following block creates the Composite volume shader,
+         * implemented in VolumShaderCMP.cg. The Composite shader uses the
+         * same texture images and data as the MIP shader. The textures are
+         * not duplicated in CPU or GPU memory. */
         m_kPShaderCMP = new PixelShader("VolumeShaderCMP");
         m_kPShaderCMP.SetTextureQuantity(6);
         m_kPShaderCMP.SetImageName(0,"SceneImage");
@@ -145,7 +177,11 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kPShaderCMP.SetImageName(5, "OpacityMapA_GM");
         m_kPShaderCMP.SetTexture(5, m_kOpacityMapTargetA_GM);
 
-
+        /* The following block creates the Surface and Composite Surface
+         * volume shader, both are implemented in a single pixel program in
+         * VolumShaderSUR.cg. The shader uses the same texture images and data
+         * as the MIP shader, with the addition of another 3D volume texture
+         * storing the normal data. */
         m_kPShaderSUR = new PixelShader("VolumeShaderSUR");
         m_kPShaderSUR.SetTextureQuantity(7);
         m_kPShaderSUR.SetImageName(0,"SceneImage");
@@ -177,7 +213,12 @@ public class VolumeShaderEffect extends ShaderEffect
         m_kPShaderSUR.SetImageName(6, "OpacityMapA_GM");
         m_kPShaderSUR.SetTexture(7, m_kOpacityMapTargetA_GM);
 
+        /* The vertex shader is set, it never changes. The first parameter is
+         * the pass number used when applying different shaders during
+         * multiple rendering passes, it is 0 because this effect is
+         * implemented in single-pass rendering. */
         SetVShader(0,pkVShader);
+        /* The pixel shader defaults to MIP: */
         SetPShader(0,m_kPShaderMIP);
     }
 
@@ -338,11 +379,6 @@ public class VolumeShaderEffect extends ShaderEffect
     private void SetProgram(PixelShader kShader,
                             gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
-        PixelProgram kPProgram = GetPProgram(0);
-        kPProgram.Release();
-        PixelProgramCatalog.GetActive().Remove(kPProgram);
-        PixelShader pkPShader = GetPShader(0);
-        pkPShader.OnReleaseProgram();
         SetPShader(0,kShader);
         
         LoadPrograms(0,kRenderer.GetMaxColors(),
@@ -352,29 +388,8 @@ public class VolumeShaderEffect extends ShaderEffect
 
         ResetClip();
         SetBackgroundColor( m_kBackgroundColor );
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("blend") != null ) 
-        {
-            pkProgram.GetUC("blend").SetDataSource(m_afBlend);
-        }
-        if ( m_kImageA.isColorImage() )
-        {
-            if ( pkProgram.GetUC("IsColor") != null ) 
-            {
-                pkProgram.GetUC("IsColor").SetDataSource(new float[]{1,0,0,0});
-            }
-            if ( pkProgram.GetUC("IsColorA") != null ) 
-            {
-                pkProgram.GetUC("IsColorA").SetDataSource(new float[]{1,0,0,0});
-            }
-        }
-        if ( (m_kImageB != null) && m_kImageB.isColorImage() )
-        {
-            if ( pkProgram.GetUC("IsColorB") != null ) 
-            {
-                pkProgram.GetUC("IsColorB").SetDataSource(new float[]{1,0,0,0});
-            }
-        }
+        Blend(m_afBlend[0]);
+        SetColorImage();
         SetGradientMagnitude();
         SetSelfShadow();
     }
@@ -447,6 +462,29 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    private void SetColorImage()
+    {
+        Program pkProgram = GetPProgram(0);
+        if ( m_kImageA.isColorImage() )
+        {
+            if ( pkProgram.GetUC("IsColor") != null ) 
+            {
+                pkProgram.GetUC("IsColor").SetDataSource(new float[]{1,0,0,0});
+            }
+            if ( pkProgram.GetUC("IsColorA") != null ) 
+            {
+                pkProgram.GetUC("IsColorA").SetDataSource(new float[]{1,0,0,0});
+            }
+        }
+        if ( (m_kImageB != null) && m_kImageB.isColorImage() )
+        {
+            if ( pkProgram.GetUC("IsColorB") != null ) 
+            {
+                pkProgram.GetUC("IsColorB").SetDataSource(new float[]{1,0,0,0});
+            }
+        }
+    }
+    
     private byte[] calcImageNormals( ModelImage kImage )
     {
 
@@ -588,7 +626,8 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
-    private GraphicsImage UpdateData( ModelImage kImage, GraphicsImage kVolumeImage, Texture kVolumeTexture, String kPostFix )
+    private GraphicsImage UpdateData( ModelImage kImage, GraphicsImage kVolumeImage,
+                                      Texture kVolumeTexture, String kPostFix )
     {
         int iXBound = kImage.getExtents()[0];
         int iYBound = kImage.getExtents()[1];
@@ -612,14 +651,14 @@ public class VolumeShaderEffect extends ShaderEffect
                     aucData[i+3] = tmp;
                 }
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             if ( kVolumeImage == null )
             {
-                kVolumeImage = new GraphicsImage(
-                                                 GraphicsImage.FormatMode.IT_RGBA8888,iXBound,iYBound,iZBound,aucData,
-                                                 new String( "VolumeImage" + kPostFix));
+                kVolumeImage =
+                    new GraphicsImage( GraphicsImage.FormatMode.IT_RGBA8888,
+                                       iXBound,iYBound,iZBound,aucData,
+                                       new String( "VolumeImage" + kPostFix));
             }
             if ( kVolumeTexture != null )
             {
@@ -645,9 +684,10 @@ public class VolumeShaderEffect extends ShaderEffect
             }
             if ( kVolumeImage == null )
             {
-                kVolumeImage = new GraphicsImage(
-                                                 GraphicsImage.FormatMode.IT_L8,iXBound,iYBound,iZBound,afData,
-                                                 new String( "VolumeImage" + kPostFix));
+                kVolumeImage =
+                    new GraphicsImage( GraphicsImage.FormatMode.IT_L8,
+                                       iXBound,iYBound,iZBound,afData,
+                                       new String( "VolumeImage" + kPostFix));
             }
 
             if ( kVolumeTexture != null )
@@ -1005,7 +1045,6 @@ public class VolumeShaderEffect extends ShaderEffect
             afColor[3] = kColor.A();
             pkProgram.GetUC("BackgroundColor").SetDataSource(afColor);
         }
-        
     }
 
     /**
