@@ -51,6 +51,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
      * @param  srcImgB  image model where result image of the Blue channel is to be stored
      * @param  remap    if true and srcImage data max is < 255 data will be remapped [0-255] else if image max > 255
      *                  data will automatically be remapped [0-255].
+     * @param performBoundsChecking  flag for performing bounds checking...normally should be set to true unless negative numbers are desired             
      */
     public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, boolean remap, boolean performBoundsChecking) {
 
