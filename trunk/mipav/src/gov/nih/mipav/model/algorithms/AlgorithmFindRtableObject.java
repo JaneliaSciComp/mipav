@@ -175,16 +175,8 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         int endPtr;
         int startWrapPoints;
         int endWrapPoints;
-        double a1;
-        double b1;
-        double alpha;
-        double cosalpha;
-        double sinalpha;
-        double angle;
         double r;
         double beta;
-        double cosbeta;
-        double sinbeta;
         int neighbor1[];
         int neighbor2[];
         AlgorithmMorphology2D algoMorph2D;
@@ -281,143 +273,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
 
             return;
         }
-        
-        if (test) {
-            for (y = 0; y < yDim; y++) {
-                offset = y * xDim;
-                for (x = 0; x < xDim; x++) {
-                    index = offset + x; 
-                    srcBuffer[index] = 0;
-                } // for (x = 0; x < xDim; x++)
-            } // for (y = 0; y < yDim; y++)
-            
-            xCenter = (xDim-1)/2.0;
-            yCenter = (yDim-1)/2.0;
-            a1 = 50.0;
-            b1 = 25.0;
-            for (i = 0; i < 360; i++) {
-                alpha = i * Math.PI/180.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + a1 * cosalpha);
-                y = (int)(yCenter + b1 * sinalpha);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-            
-            a1 = 75.0;
-            b1 = 37.5;
-            angle = Math.PI/4.0;
-            beta = -angle;
-            cosbeta = Math.cos(beta);
-            sinbeta = Math.sin(beta);
-            for (i = 0; i < 720; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-            /*for (i = 0; i < 90; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-            
-            for (i = 180; i < 270; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-            
-            for (i = 360; i < 450; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-            
-            for (i = 540; i < 630; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter + 50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter + 50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }*/
-            
-            a1 = 50.0;
-            b1 = 25.0;
-            /*angle = -Math.PI/4.0;
-            beta = -angle;
-            cosbeta = Math.cos(beta);
-            sinbeta = Math.sin(beta);
-            for (i = 0; i < 720; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }*/
-            for (i = 0; i < 90; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-            
-            for (i = 180; i < 270; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-            
-            for (i = 360; i < 450; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-            
-            for (i = 540; i < 630; i++) {
-                alpha = i * Math.PI/360.0;
-                cosalpha = Math.cos(alpha);
-                sinalpha = Math.sin(alpha);
-                x = (int)(xCenter -50.0 + a1 * cosalpha * cosbeta - b1 * sinalpha * sinbeta);
-                y = (int)(yCenter -50.0 + a1 * cosalpha * sinbeta + b1 * sinalpha * cosbeta);
-                index = x + (xDim*y);
-                srcBuffer[index] = 1; 
-            }
-   
-            //setCompleted(true);
-            //return;
-        } // if (test)
         
         maskImage = (ModelImage)srcImage.clone();
         
@@ -1109,23 +964,27 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
             if (allowRotation) {
                 maxRadiansDiff = maxRadiansDiff * shrinkFactor;
                 thetaBins = (int)Math.ceil((2.0 * Math.PI)/maxRadiansDiff);
-                thetaArray = new float[thetaBins];
-                for (i = 0; i < thetaBins; i++) {
-                    thetaArray[i] = (float)(i * 2.0 * Math.PI)/thetaBins;
-                }
             }
             if (allowScaling) {
                 scaleBins = (int)Math.ceil(scaleBins/shrinkFactor);
-                maxToMinRatio = maxScaleFactor/minScaleFactor;
-                scaleArray = new float[scaleBins];
-                scaleArray[0] = minScaleFactor;
-                scaleArray[scaleBins - 1] = maxScaleFactor;
-                for (i = 1; i < scaleBins - 1; i++) {
-                    scaleArray[i] = (float)(minScaleFactor * Math.pow(maxToMinRatio, (double)i/(double)(scaleBins - 1)));
-                }
             }
             numBins = xCenterBins * yCenterBins * thetaBins * scaleBins;
         } // if (actualBytesAvailable < desiredBytes)
+        if (allowRotation) {
+            thetaArray = new float[thetaBins];
+            for (i = 0; i < thetaBins; i++) {
+                thetaArray[i] = (float)(i * 2.0 * Math.PI)/thetaBins;
+            }
+        }
+        if (allowScaling) {
+            maxToMinRatio = maxScaleFactor/minScaleFactor;
+            scaleArray = new float[scaleBins];
+            scaleArray[0] = minScaleFactor;
+            scaleArray[scaleBins - 1] = maxScaleFactor;
+            for (i = 1; i < scaleBins - 1; i++) {
+                scaleArray[i] = (float)(minScaleFactor * Math.pow(maxToMinRatio, (double)i/(double)(scaleBins - 1)));
+            }
+        }
         xyBins = xCenterBins * yCenterBins;
         ViewUserInterface.getReference().setDataText("xCenterBins = " + xCenterBins + "\n");
         ViewUserInterface.getReference().setDataText("yCenterBins = " + yCenterBins + "\n");
@@ -1135,7 +994,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         xCenterArray = new float[xyBins][thetaBins][scaleBins];
         yCenterArray = new float[xyBins][thetaBins][scaleBins];
         countArray = new int[xyBins][thetaBins][scaleBins];
-        foundPoint = new boolean[xyBins];
+        foundPoint = new boolean[numPoints];
         xCenterTable = new float[objectsToFind];
         yCenterTable = new float[objectsToFind];
         if (allowRotation) {
@@ -1155,10 +1014,10 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 for (j = 0; j < thetaBins; j++) {
                 if (allowRotation) {
                     omega = omega - thetaArray[j];
-                    if (omega < -2.0*Math.PI) {
+                    if (omega < -1.5*Math.PI) {
                         omega = omega + 2.0*Math.PI;
                     }
-                    else if (omega > 2.0*Math.PI) {
+                    else if (omega >= 1.5*Math.PI) {
                         omega = omega - 2.0*Math.PI;
                     }
                     else if (omega < -Math.PI/2.0) {
@@ -1175,7 +1034,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                     r = floatArray[0];
                     beta = floatArray[1];
                         if (allowRotation) {
-                            beta = floatArray[1] + thetaArray[j];
+                            beta = floatArray[1] - thetaArray[j];
                         }
                         for (m = 0; m < scaleBins; m++) {
                             if (allowScaling) {
@@ -1278,10 +1137,10 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 omega = -Math.PI/2.0 + omegaIndex * omegaBinWidth;
                 if (allowRotation) {
                     omega = omega - thetaArray[maxThetaIndex];
-                    if (omega < -2.0*Math.PI) {
+                    if (omega < -1.5*Math.PI) {
                         omega = omega + 2.0*Math.PI;
                     }
-                    else if (omega > 2.0*Math.PI) {
+                    else if (omega >= 1.5*Math.PI) {
                         omega = omega - 2.0*Math.PI;
                     }
                     else if (omega < -Math.PI/2.0) {
@@ -1298,21 +1157,21 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                     r = floatArray[0];
                     beta = floatArray[1];
                     if (allowRotation) {
-                        beta = floatArray[1] + thetaArray[maxThetaIndex];
+                        beta = floatArray[1] - thetaArray[maxThetaIndex];
                     }
                     if (allowScaling) {
                         r = scaleArray[maxScaleIndex] * floatArray[0];
                     }
                     xCenter = x + r * Math.cos(beta);  
                     xCenterIndex = (int)((xCenter - minXCenter)/maxPixelBinWidth);
-                    if (xCenterIndex == maxXIndex) {
+                    if ((xCenterIndex >= Math.max(0,maxXIndex-1)) && (xCenterIndex <= Math.min(xCenterBins-1, maxXIndex+1))) {
                         yCenter = y + r * Math.sin(beta);
                         yCenterIndex = (int)((yCenter - minYCenter)/maxPixelBinWidth);
-                        if ((yCenterIndex == maxYIndex) && (!foundPoint[i])) {
+                        if ((yCenterIndex >= Math.max(0, maxYIndex-1)) && (yCenterIndex <= Math.min(yCenterBins-1, maxYIndex+1)) && (!foundPoint[i])) {
                             foundPoint[i] = true;
                             pointsDeleted++;
-                        } // if ((yCenterIndex == maxYIndex) && (!foundPoint[i]))
-                    }  // if (xCenterIndex == maxXIndex)
+                        } // if ((yCenterIndex >= Math.max(0, maxYIndex-1)) && (yCenterIndex <= Math.min(yCenterBins-1, maxYIndex+1)) && (!foundPoint[i])) 
+                    }  // if ((xCenterIndex >= Math.max(0,maxXIndex-1)) && (xCenterIndex <= Math.min(xCenterBins-1, maxXIndex+1)))
                 } // for (k = 0; k < rBetaLength; k++)
             } // for (i = 0; i < numPoints; i++)
             
