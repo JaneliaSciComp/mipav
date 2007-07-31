@@ -820,6 +820,11 @@ public abstract class JavaApplication3D extends JavaApplication
         }
 
         String kMessage = new String( "fps: " + m_dFrameRate);
+        int iLength = kMessage.length();
+        if ( iLength > 10 )
+        {
+            kMessage = kMessage.substring(0,10);
+        }
         m_pkRenderer.Draw(iX,iY,rkColor,kMessage.toCharArray());
     }
 

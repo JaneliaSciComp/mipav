@@ -2497,10 +2497,6 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         if (surRender != null) {
             surRender.setDisplayMode3D(flag);
         }
-
-//         if (raycastRenderWM != null) {
-//             raycastRenderWM.setWindlevelUpdate(flag);
-//         }
     }
 
 

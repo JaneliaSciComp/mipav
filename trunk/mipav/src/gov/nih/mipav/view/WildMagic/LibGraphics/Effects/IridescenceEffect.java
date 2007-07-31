@@ -27,19 +27,26 @@ public class IridescenceEffect extends ShaderEffect
      */
     public IridescenceEffect (final String acBaseName, final String acGradName)
     {
+        // initialize single-pass rendering:
         super(1);
+        // set the vertex and pixel shaders to be the Iridescence shaders
+        // defined in Iridescence.cg:
         m_kVShader.set(0, new VertexShader("Iridescence"));
         m_kPShader.set(0, new PixelShader("Iridescence"));
 
+        // The pixel-shader has two textres parameters:
         m_kPShader.get(0).SetTextureQuantity(2);
+        // Set the pixel-shader texture image names:
         m_kPShader.get(0).SetImageName(0,acBaseName);
         m_kPShader.get(0).SetImageName(1,acGradName);
 
+        // Set the texture wrapping and filter types:
         Texture pkBase = m_kPShader.get(0).GetTexture(0);
         pkBase.SetFilterType(Texture.FilterType.LINEAR);
         pkBase.SetWrapType(0,Texture.WrapType.REPEAT);
         pkBase.SetWrapType(1,Texture.WrapType.REPEAT);
 
+        // Set the texture filter type:
         Texture pkGrad = m_kPShader.get(0).GetTexture(1);
         pkGrad.SetFilterType(Texture.FilterType.LINEAR);
     }
@@ -95,30 +102,6 @@ public class IridescenceEffect extends ShaderEffect
 
         // native data
         m_afInterpolate[0] = rkStream.ReadFloat();
-    }
-
-    /**
-     * Copies this objects children objects from the input Stream's HashTable,
-     * based on the LinkID of the child stored in the pkLink paramter.
-     * @param rkStream, the Stream where the child objects are stored.
-     * @param pkLink, the Link class from which the child object IDs are read.
-     */
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    /**
-     * Registers this object with the input Stream parameter. All objects
-     * streamed to disk are registered with the Stream so that a unique list
-     * of objects is maintained.
-     * @param rkStream, the Stream where the child objects are stored.
-     * @return true if this object is registered, false if the object has
-     * already been registered.
-     */
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
     }
 
     /**

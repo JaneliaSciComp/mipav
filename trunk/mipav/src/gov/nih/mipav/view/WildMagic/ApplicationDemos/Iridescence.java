@@ -1,7 +1,22 @@
+// Wild Magic Source Code
+// David Eberly
+// http://www.geometrictools.com
+// Copyright (c) 1998-2007
+//
+// This library is free software; you can redistribute it and/or modify it
+// under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation; either version 2.1 of the License, or (at
+// your option) any later version.  The license is available for reading at
+// either of the locations:
+//     http://www.gnu.org/copyleft/lgpl.html
+//     http://www.geometrictools.com/License/WildMagicLicense.pdf
+//
+// Version: 4.0.0 (2006/06/28
+//
+// Ported to Java by Alexandra Bokinsky, PhD, Geometric Tools, Inc.
+//
+
 package gov.nih.mipav.view.WildMagic.ApplicationDemos;
-/**
- * 
- */
 
 import javax.media.opengl.*;
 import com.sun.opengl.util.*;
@@ -12,22 +27,25 @@ import java.awt.event.*;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Detail.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
-import gov.nih.mipav.view.WildMagic.LibGraphics.Sorting.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
-/**
- * @author Alexandra
- *
- */
 public class Iridescence extends JavaApplication3D
     implements GLEventListener, KeyListener
 {
-    public Iridescence()
-    {
+    /**
+     * The constructor initializes the OpenGLRender, and sets up the GLEvent,
+     * KeyEvent, and Mouse listeners.  The last three statements initialize
+     * the ImageCatalog, VertexProgramCatalog, and PixelProgramCatalog. The
+     * three catalogs enable sharing of texture images, vertex program, and
+     * pixel programs in a program. The catalogs keep track of images and
+     * programs that are currently loaded. If multiple effects use the same
+     * images and shader programs, the loaded version is re-used. This saves
+     * graphics hardware memory as well as time for re-loading large textures.
+     *
+     */
+    public Iridescence() {
         super("Iridescence",0,0,640,480, new ColorRGBA(0.5f,0.0f,1.0f,1.0f));
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                           m_eBuffering, m_eMultisampling,
@@ -42,21 +60,14 @@ public class Iridescence extends JavaApplication3D
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
     }
 
-
     /**
-     * @param args
-     */
+     * Iridescence.main creates the Iridescence object and window frame to
+     * contain the GLCanvas. An Animator object is created with the GLCanvas
+     * as an argument. The Animator provides the same function as the
+     * glutMainLoop() function call commonly used in OpenGL applications. */
     public static void main(String[] args) {
-        Vector3f testVec = new Vector3f(2.0f, 3.0f, 4.0f);
-        System.out.println(testVec.X() + " " + testVec.Y() + " " +testVec.Z() + " done.");
-        //System.out.println("Hello world!");
         Iridescence kWorld = new Iridescence();        
         Frame frame = new Frame(m_acWindowTitle);
-
-        //GLCanvas canvas = new GLCanvas();
-  
-
-
         frame.add( kWorld.GetCanvas() );
         frame.setSize(m_iWidth, m_iHeight);
         /* Animator serves the purpose of the idle function, calls display: */
@@ -76,25 +87,29 @@ public class Iridescence extends JavaApplication3D
         frame.setVisible(true);
         animator.start();
         // and all the rest happens in the display function...
-
     }
 
+    /**
+     * Iridescence.display() displays the scene. The frame rate is
+     * measured. Any camera motion that has occurred since the last frame was
+     * displayed is applied and the culling system updated. Any object motions
+     * that has occurred is also applied and the culling system
+     * updated. Renderer.ClearBuffers() is called, the scene and framerate are
+     * drawn, and the back-buffer displayed with Renderer.DisplayBackBuffer().
+     */
     public void display(GLAutoDrawable arg0) {
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         MeasureTime();
-        
         if (MoveCamera())
         {
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }        
-
         if (MoveObject())
         {
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }
-
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
@@ -104,17 +119,17 @@ public class Iridescence extends JavaApplication3D
         }
         m_pkRenderer.DisplayBackBuffer();
         UpdateFrameCount();
-
         ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
-
-        //ApplicationGUI.TheApplicationGUI.Display();
     }
 
-    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
-        // TODO Auto-generated method stub
-        
-    }
+    public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
 
+    /**
+     * Iridescence.init is called only once when the GLCanvas is initialized. It
+     * initializes the renderer object, sets up the camera model, creates the
+     * scene, and initializes the culling object with the camera and scene
+     * objects.
+     */
     public void init(GLAutoDrawable arg0) {
         arg0.setAutoSwapBufferMode( false );
 
@@ -161,17 +176,19 @@ public class Iridescence extends JavaApplication3D
         ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
-    /*
-    public GLCanvas GetCanvas()
-    {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
-    }
-    */
     public GLCanvas GetCanvas()
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
 
+    /**
+     * Iridescence.CreateScene() creates the scene graph. The root node is
+     * m_spkScene. It contains a single TriMesh object, the torus. The TriMesh
+     * object is created with a set of rendering Attributes with three
+     * channels for point data (x,y,z); three channels for normal data
+     * (x,y,z); and two channels for texture-coordinate data (s,t).  An
+     * IridescenceEffect is created and attached to the torus.
+     */
     private void CreateScene ()
     {
         m_spkScene = new Node();
@@ -195,13 +212,17 @@ public class Iridescence extends JavaApplication3D
         pkMesh.AttachEffect(m_spkEffect);
     }
 
+    /**
+     * Iridescence.keyPressed() processes key-input from the user. The
+     * iridescence factor shader parameter can be increased and decreased by
+     * pressing the + and – keys. A shader-editor GUI can be launched by
+     * pressing 'l'. The scene-graph is streamed to disk by pressing the 's'
+     * key.
+     */
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
-        
         super.keyPressed(e);
-
         float fInterpolateFactor;
-
         switch (ucKey)
         {
         case '+':
@@ -212,10 +233,8 @@ public class Iridescence extends JavaApplication3D
             {
                 fInterpolateFactor = 1.0f;
             }
-
             m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
             return;
-
         case '-':
         case '_':
             fInterpolateFactor = m_spkEffect.GetInterpolateFactor();
@@ -224,8 +243,15 @@ public class Iridescence extends JavaApplication3D
             {
                 fInterpolateFactor = 0.0f;
             }
-
             m_spkEffect.SetInterpolateFactor(fInterpolateFactor);
+            return;
+        case 'l':
+        case 'L':
+            ApplicationGUI kShaderParamsWindow = new ApplicationGUI();
+            kShaderParamsWindow.setParent(this);
+            kShaderParamsWindow.AddUserVariables(m_spkEffect.GetVProgram(0));
+            kShaderParamsWindow.AddUserVariables(m_spkEffect.GetPProgram(0));
+            kShaderParamsWindow.Display();
             return;
         case 's':
         case 'S':

@@ -13,6 +13,7 @@
 package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
 import java.nio.Buffer;
+import com.sun.opengl.util.BufferUtil;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.io.File;
@@ -49,7 +50,7 @@ public class GraphicsImage extends GraphicsObject
         IT_CUBE_RGBA8888 ( 4, "IT_CUBE_RGBA8888" ),
         IT_RGB32 ( 12, "IT_RGB32" ),
         IT_RGBA32 ( 16, "IT_RGBA32" ),
-        IT_L8 ( 1, "IT_L8" ),
+        IT_L8 ( BufferUtil.SIZEOF_FLOAT, "IT_L8" ),
         IT_QUANTITY ( 0, "" );
 
         private final int ms_aiBytesPerPixel;
@@ -105,7 +106,7 @@ public class GraphicsImage extends GraphicsObject
 
     // 1D image
     public GraphicsImage (FormatMode eFormat, int iBound0,
-                  float[] afData, String acImageName )
+                          float[] afData, String acImageName )
     {
         assert(BitHacks.IsPowerOfTwo(iBound0));
         assert(acImageName != null);
@@ -127,31 +128,31 @@ public class GraphicsImage extends GraphicsObject
     }
 
     public GraphicsImage (FormatMode eFormat, int iBound0,
-            byte[] aucData, String acImageName )
-{
-  assert(BitHacks.IsPowerOfTwo(iBound0));
-  assert(acImageName != null);
+                          byte[] aucData, String acImageName )
+    {
+        assert(BitHacks.IsPowerOfTwo(iBound0));
+        assert(acImageName != null);
   
-  m_eFormat = eFormat;
-  m_iDimension = 1;
-  m_aiBound[0] = iBound0;
-  m_aiBound[1] = 1;
-  m_aiBound[2] = 1;
-  m_iQuantity = iBound0;
-  m_aucData = aucData;
-  SetName(acImageName);
+        m_eFormat = eFormat;
+        m_iDimension = 1;
+        m_aiBound[0] = iBound0;
+        m_aiBound[1] = 1;
+        m_aiBound[2] = 1;
+        m_iQuantity = iBound0;
+        m_aucData = aucData;
+        SetName(acImageName);
 
-  if( acImageName == ImageCatalog.ms_kDefaultString )
-  {
-      return;
-  }
-  ImageCatalog.GetActive().Insert(this);
-}
+        if( acImageName == ImageCatalog.ms_kDefaultString )
+        {
+            return;
+        }
+        ImageCatalog.GetActive().Insert(this);
+    }
 
     
     // 2D image
     public GraphicsImage (FormatMode eFormat, int iBound0, int iBound1,
-                  byte[] aucData, String acImageName)
+                          byte[] aucData, String acImageName)
     {
         assert(BitHacks.IsPowerOfTwo(iBound0)
                && BitHacks.IsPowerOfTwo(iBound1));
@@ -171,7 +172,7 @@ public class GraphicsImage extends GraphicsObject
 
     // 3D image
     public GraphicsImage (FormatMode eFormat, int iBound0, int iBound1, int iBound2,
-                  byte[] aucData, String acImageName)
+                          byte[] aucData, String acImageName)
     {
         assert(BitHacks.IsPowerOfTwo(iBound0)
                && BitHacks.IsPowerOfTwo(iBound1)
@@ -191,7 +192,7 @@ public class GraphicsImage extends GraphicsObject
 
     // 3D image
     public GraphicsImage (FormatMode eFormat, int iBound0, int iBound1, int iBound2,
-                  float[] afData, String acImageName)
+                          float[] afData, String acImageName)
     {
         assert(BitHacks.IsPowerOfTwo(iBound0)
                && BitHacks.IsPowerOfTwo(iBound1)
@@ -223,6 +224,7 @@ public class GraphicsImage extends GraphicsObject
     public void finalize ()
     {
         m_aucData = null;
+        m_afData = null;
         ImageCatalog.GetActive().Remove(this);
     }
 
@@ -517,11 +519,11 @@ public class GraphicsImage extends GraphicsObject
             break;
         case 2:
             pkImage = new GraphicsImage(eFormat,aiBound[0],aiBound[1],aucData,
-                                acImageName);
+                                        acImageName);
             break;
         case 3:
             pkImage = new GraphicsImage(eFormat,aiBound[0],aiBound[1],aiBound[2],
-                                aucData,acImageName);
+                                        aucData,acImageName);
             break;
         default:
             assert(false);
