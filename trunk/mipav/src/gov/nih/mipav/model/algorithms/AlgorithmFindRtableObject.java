@@ -24,8 +24,9 @@ import java.util.*;
 public class AlgorithmFindRtableObject extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    /** Number of bins covering tangent angle going from -PI/2 to PI/2 */
-    private int omegaBins = 45;
+    /** Number of bins covering gradient angle going from 0 to 2*PI
+     *  The gradient is defined as going into the object */
+    private int omegaBins = 90;
     
     /** Number of points to take from each side of a point on a curve in determining a tangent
      * If only 1 point is used on each side, simply use avarage of slopes to each of the
@@ -33,7 +34,8 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
     private int sidePointsForTangent;
     
     /** For each omega angle index, a linked list of R and B values is present
-     *  omega is the tangent angle to the curve, and R and B give the distance
+     *  omega is the gradient angle to the curve, defined as perpindicular to the
+     *  tangent and going into the object, and R and B give the distance
      *  and angle from the center of the VOI to the tangent point */
     private LinkedList omegaRBetaList[];
     
@@ -78,7 +80,8 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
      * AlgorithmFindRtableObject.
      *
      * @param  srcImg   Binary image that has 1 or more instances of the R-table object
-     * @param  omegaBins Number of bins for tangent angle at point on curve going from -90 to +90
+     * @param  omegaBins Number of bins for gradient angle at point on curve going from 0 to +360 degrees
+     *                   The gradient angle is defined as going into the object
      * @param  sidePointsForTangent  Maximum number of points to take from each side of a point on a curve
      *                               in determining the tangent
      * @param  omegaRBetaList For each omega angle index, a linked list of R and B values is present
@@ -166,6 +169,10 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         float yArray[];
         float tangentX;
         float tangentY;
+        float normalX;
+        float normalY;
+        boolean openArray[];
+        boolean newOpenArray[];
         short omegaArray[];
         short newOmegaArray[];
         int startPtr;
@@ -246,8 +253,19 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         float yArr[] = new float[1];
         float zArr[] = new float[1];
         ModelImage maskImage;
-        double omegaBinWidth = Math.PI/omegaBins;
+        double omegaBinWidth = (2.0 * Math.PI)/omegaBins;
         double omega;
+        VOI closedVOI;
+        int closedX[];
+        int closedY[];
+        int xVal[];
+        int yVal[];
+        int zVal[];
+        short VOIMask[];
+        int xt;
+        int yt;
+        int indext;
+        
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -608,7 +626,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                     // Delete all open curves with only 2 points
                     // Also don't determine tangents of end points on longer curves,
                     // but use these 2 end points in determining tangents of more inner points
-                    // These 2 end points will not be used in generating random 3 point sets.
                     numPoints = numPoints - 2;
                     if (openLength[i] == 2) {
                         srcBuffer[openStart[i]] = 0;
@@ -625,10 +642,11 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         
         ViewUserInterface.getReference().setDataText("Number of open curves = " + numOpenCurves + "\n");
         
-        // For the open curves find the slope and y axis intercept of the tangent line to the curve at a point
+        // For the open curves find the tangent and normal to a point on a curve
         // With a user specified sidePointsForTangent on each side of a point find the tangent line that
         // minimizes the sum of the squared distances from these side points to the tangent line 
         indexArray = new int[numPoints];
+        openArray = new boolean[numPoints];
         omegaArray = new short[numPoints];
         for (i = 0; i < sourceSlice; i++) {
             if (srcBuffer[i] != 0) {
@@ -665,11 +683,17 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 if (presentSidePoints == 1) {
                     tangentX = (xArray[n+1] - xArray[n-1])/2.0f;
                     tangentY = (yArray[n+1] - yArray[n-1])/2.0f;
-                    if (tangentX == 0.0f) {
-                        omegaArray[indexPtr++] = (short)0;
+                    if (tangentX == 0) {
+                        normalX = 1;
+                        normalY = 0;
+                    }
+                    else if (tangentY == 0) {
+                        normalX = 0;
+                        normalY = 1;
                     }
                     else {
-                        omegaArray[indexPtr++] = (short)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/omegaBins);
+                        normalX = -tangentY/tangentX;
+                        normalY = 1;
                     }
                 } // if (presentSidePoints == 1)
                 else {
@@ -749,19 +773,23 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                     if (d1 < d2) {
                         tangentX = (float)x1t;
                         tangentY = (float)y1t;
+                        normalX = (float)x2t;
+                        normalY = (float)y2t;
                     }
                     else {
                         tangentX = (float)x2t;
                         tangentY = (float)y2t;
-                    }
-                    if (tangentX == 0.0f) {
-                        omegaArray[indexPtr++] = (short)0;
-                        
-                    }
-                    else {
-                        omegaArray[indexPtr++] = (short)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/omegaBinWidth);
+                        normalX = (float)x1t;
+                        normalY = (float)y1t;
                     }    
                 }
+                omega = Math.atan2(normalY, normalX);
+                // Change omega range from -PI to PI to 0 to 2*PI
+                if (omega < 0.0) {
+                    omega = omega + 2.0 * Math.PI;
+                }
+                omegaArray[indexPtr] = (short)(omega/omegaBinWidth);
+                openArray[indexPtr++] = true;
             } // for (n = 2; n <= openLength[i] - 2; n++)
         } // for (i = 0; i < numOpenCurves; i++)
         openStart = null;
@@ -773,6 +801,9 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         numClosedCurves = 0;
         xPoints = new float[2*sidePointsForTangent + 1];
         yPoints = new float[2*sidePointsForTangent + 1];
+        closedX = new int[2*(xDim + yDim)];
+        closedY = new int[2*(xDim + yDim)];
+        VOIMask = new short[sourceSlice];
         for (y = 0; y < yDim; y++) {
             offset = y * xDim;
             for (x = 0; x < xDim; x++) {
@@ -781,6 +812,9 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                     startPtr = indexPtr;
                     foundArray[index] = true;
                     numClosedCurves++;
+                    closedVOI = new VOI((short)numClosedCurves, "VOI" + numClosedCurves, 1, VOI.CONTOUR, -1.0f);
+                    closedX[0] = x;
+                    closedY[0] = y;
                     closedLength = 1;
                     indexArray[indexPtr++] = index;
                     while ((!foundArray[neighbor1[index]]) || (!foundArray[neighbor2[index]])) {
@@ -791,9 +825,27 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                             index = neighbor2[index];
                         }
                         foundArray[index] = true;
+                        closedX[closedLength] = index % xDim;
+                        closedY[closedLength] = index / xDim;
                         closedLength++;
                         indexArray[indexPtr++] = index;
                     } // while ((!foundArray[neighbor1[index]]) || (!foundArray[neighbor2[index]]))
+                    xVal = new int[closedLength];
+                    yVal = new int[closedLength];
+                    zVal = new int[closedLength];
+                    for (i = 0; i < closedLength; i++) {
+                        xVal[i] = closedX[i];
+                        yVal[i] = closedY[i];
+                    }
+                    closedVOI.importCurve(xVal, yVal, zVal, 0);
+                    VOIMask = closedVOI.createShortMask(xDim, yDim, VOIMask, false);
+                    try {
+                        closedVOI.finalize();
+                    }
+                    catch (Throwable e){
+                        ViewUserInterface.getReference().setDataText("Exception on closedVOI.finalize()\n");    
+                    }
+                    closedVOI = null;
                     endPtr = indexPtr - 1;
                     indexPtr = startPtr;
                     for (n = 0; n <= closedLength - 1; n++) {
@@ -819,14 +871,22 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                         // With a user specified sidePointsForTangent on each side of a point find the tangent line that
                         // minimizes the sum of the squared distances from these side points to the tangent line 
                         if (sidePointsForTangent == 1) {
+                            xpc = xPoints[1];
+                            ypc = yPoints[1];
                             tangentX = (xPoints[2] - xPoints[0])/2.0f;
                             tangentY = (yPoints[2] - yPoints[0])/2.0f;
-                            if (tangentX == 0.0f) {
-                                omegaArray[indexPtr++] = (short)0;
+                            if (tangentX == 0) {
+                                normalX = 1;
+                                normalY = 0;
+                            }
+                            else if (tangentY == 0) {
+                                normalX = 0;
+                                normalY = 1;
                             }
                             else {
-                                omegaArray[indexPtr++] = (short)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/omegaBins);
-                            }    
+                                normalX = -tangentY/tangentX;
+                                normalY = 1;
+                            }
                         } // if (sidePointsForTangent == 1)
                         else {
                             // Center all points for tangent point touching curve at (0, 0)
@@ -899,19 +959,35 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                             if (d1 < d2) {
                                 tangentX = (float)x1t;
                                 tangentY = (float)y1t;
+                                normalX = (float)x2t;
+                                normalY = (float)y2t;
                             }
                             else {
                                 tangentX = (float)x2t;
                                 tangentY = (float)y2t;
-                            }
-                            if (tangentX == 0.0f) {
-                                omegaArray[indexPtr++] = (short)0;
-                                
-                            }
-                            else {
-                                omegaArray[indexPtr++] = (short)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/omegaBinWidth);
-                            }    
+                                normalX = (float)x1t;
+                                normalY = (float)y1t;
+                            }  
                         }
+                        omega = Math.atan2(normalY, normalX);
+                        // Change omega range from -PI to PI to 0 to 2*PI
+                        if (omega < 0.0) {
+                            omega = omega + 2.0 * Math.PI;
+                        }
+                        xt = (int)Math.round(xpc + Math.cos(omega));
+                        yt = (int)Math.round(ypc + Math.sin(omega));
+                        indext = xt + xDim * yt;
+                        if (VOIMask[indext] != numClosedCurves) {
+                          // Not in VOI - take normal going the opposite way
+                          if (omega < Math.PI) {
+                              omega = omega + Math.PI;
+                          }
+                          else {
+                              omega = omega - Math.PI;
+                          }
+                        }
+                        omegaIndex = (int)(omega/omegaBinWidth);
+                        omegaArray[indexPtr++] = (short)omegaIndex;
                     } // for (n = 0; n <= closedLength[i] - 1; n++)
                 }
             } // for (x = 0; x < xDim; x++)
@@ -1010,50 +1086,79 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 x = indexArray[i] % xDim;
                 y = indexArray[i] / xDim;
                 omegaIndex = omegaArray[i];
-                omega = -Math.PI/2.0 + omegaIndex * omegaBinWidth;
+                omega = omegaIndex * omegaBinWidth;
                 for (j = 0; j < thetaBins; j++) {
-                if (allowRotation) {
-                    omega = omega - thetaArray[j];
-                    if (omega < -1.5*Math.PI) {
-                        omega = omega + 2.0*Math.PI;
-                    }
-                    else if (omega >= 1.5*Math.PI) {
-                        omega = omega - 2.0*Math.PI;
-                    }
-                    else if (omega < -Math.PI/2.0) {
-                        omega = omega + Math.PI;
-                    }
-                    else if (omega >= Math.PI/2.0) {
-                        omega = omega - Math.PI;
-                    }
-                    omegaIndex = (int)((omega + Math.PI/2.0)/omegaBinWidth);
-                }
-                rBetaLength = omegaRBetaList[omegaIndex].size();
-                for (k = 0; k < rBetaLength; k++) {
-                    floatArray = (float[])omegaRBetaList[omegaIndex].get(k);
-                    r = floatArray[0];
-                    beta = floatArray[1];
-                        if (allowRotation) {
-                            beta = floatArray[1] - thetaArray[j];
+                    if (allowRotation) {
+                        omega = omega - thetaArray[j];
+                        if (omega < 0.0) {
+                            omega = omega + 2.0*Math.PI;
                         }
-                        for (m = 0; m < scaleBins; m++) {
-                            if (allowScaling) {
-                                r = scaleArray[m] * floatArray[0];
+                        else if (omega >= 2.0*Math.PI) {
+                            omega = omega - 2.0*Math.PI;
+                        }
+                        omegaIndex = (int)(omega/omegaBinWidth);
+                    }
+                    rBetaLength = omegaRBetaList[omegaIndex].size();
+                    for (k = 0; k < rBetaLength; k++) {
+                        floatArray = (float[])omegaRBetaList[omegaIndex].get(k);
+                        r = floatArray[0];
+                        beta = floatArray[1];
+                            if (allowRotation) {
+                                beta = floatArray[1] - thetaArray[j];
                             }
-                            xCenter = x + r * Math.cos(beta);
-                            xCenterIndex = (int)((xCenter - minXCenter)/maxPixelBinWidth);
-                            if ((xCenterIndex >= 0) && (xCenterIndex < xCenterBins)) {
-                                yCenter = y + r * Math.sin(beta);
-                                yCenterIndex = (int)((yCenter - minYCenter)/maxPixelBinWidth);
-                                if ((yCenterIndex >= 0) && (yCenterIndex < yCenterBins)) {
-                                    index = xCenterIndex + xCenterBins * yCenterIndex;
-                                    xCenterArray[index][j][m] += xCenter;
-                                    yCenterArray[index][j][m] += yCenter;
-                                    countArray[index][j][m]++;
-                                } // if (yCenterIndex >= 0) && (yCenterIndex < yCenterBins))
-                            }  // if (xCenterIndex >= 0) && (xCenterIndex < xCenterBins))
-                        } // for (m = 0; m < scaleBins; m+++)
-                    } // for (k = 0; k < rBetaLength; k++)
+                            for (m = 0; m < scaleBins; m++) {
+                                if (allowScaling) {
+                                    r = scaleArray[m] * floatArray[0];
+                                }
+                                xCenter = x + r * Math.cos(beta);
+                                xCenterIndex = (int)((xCenter - minXCenter)/maxPixelBinWidth);
+                                if ((xCenterIndex >= 0) && (xCenterIndex < xCenterBins)) {
+                                    yCenter = y + r * Math.sin(beta);
+                                    yCenterIndex = (int)((yCenter - minYCenter)/maxPixelBinWidth);
+                                    if ((yCenterIndex >= 0) && (yCenterIndex < yCenterBins)) {
+                                        index = xCenterIndex + xCenterBins * yCenterIndex;
+                                        xCenterArray[index][j][m] += xCenter;
+                                        yCenterArray[index][j][m] += yCenter;
+                                        countArray[index][j][m]++;
+                                    } // if (yCenterIndex >= 0) && (yCenterIndex < yCenterBins))
+                                }  // if (xCenterIndex >= 0) && (xCenterIndex < xCenterBins))
+                            } // for (m = 0; m < scaleBins; m+++)
+                        } // for (k = 0; k < rBetaLength; k++)
+                        if (openArray[i]) {
+                            if (omega < Math.PI) {
+                                omega = omega + Math.PI;
+                            }
+                            else {
+                                omega = omega - Math.PI;
+                            }
+                            omegaIndex = (int)(omega/omegaBinWidth);
+                            rBetaLength = omegaRBetaList[omegaIndex].size();
+                            for (k = 0; k < rBetaLength; k++) {
+                                floatArray = (float[])omegaRBetaList[omegaIndex].get(k);
+                                r = floatArray[0];
+                                beta = floatArray[1];
+                                if (allowRotation) {
+                                    beta = floatArray[1] - thetaArray[j];
+                                }
+                                for (m = 0; m < scaleBins; m++) {
+                                    if (allowScaling) {
+                                        r = scaleArray[m] * floatArray[0];
+                                    }
+                                    xCenter = x + r * Math.cos(beta);
+                                    xCenterIndex = (int)((xCenter - minXCenter)/maxPixelBinWidth);
+                                    if ((xCenterIndex >= 0) && (xCenterIndex < xCenterBins)) {
+                                        yCenter = y + r * Math.sin(beta);
+                                        yCenterIndex = (int)((yCenter - minYCenter)/maxPixelBinWidth);
+                                        if ((yCenterIndex >= 0) && (yCenterIndex < yCenterBins)) {
+                                            index = xCenterIndex + xCenterBins * yCenterIndex;
+                                            xCenterArray[index][j][m] += xCenter;
+                                            yCenterArray[index][j][m] += yCenter;
+                                            countArray[index][j][m]++;
+                                        } // if (yCenterIndex >= 0) && (yCenterIndex < yCenterBins))
+                                    }  // if (xCenterIndex >= 0) && (xCenterIndex < xCenterBins))
+                                } // for (m = 0; m < scaleBins; m+++)
+                            } // for (k = 0; k < rBetaLength; k++)
+                        } // if (openArray[i])
                 } // for (j = 0; j < thetaBins; j++)
             } // for (i = 0; i < numPoints; i++)
             
@@ -1134,22 +1239,16 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 x = indexArray[i] % xDim;
                 y = indexArray[i] / xDim;
                 omegaIndex = omegaArray[i];
-                omega = -Math.PI/2.0 + omegaIndex * omegaBinWidth;
+                omega = omegaIndex * omegaBinWidth;
                 if (allowRotation) {
                     omega = omega - thetaArray[maxThetaIndex];
-                    if (omega < -1.5*Math.PI) {
+                    if (omega < 0.0) {
                         omega = omega + 2.0*Math.PI;
                     }
-                    else if (omega >= 1.5*Math.PI) {
+                    else if (omega >= 2.0*Math.PI) {
                         omega = omega - 2.0*Math.PI;
                     }
-                    else if (omega < -Math.PI/2.0) {
-                        omega = omega + Math.PI;
-                    }
-                    else if (omega >= Math.PI/2.0) {
-                        omega = omega - Math.PI;
-                    }
-                    omegaIndex = (int)((omega + Math.PI/2.0)/omegaBinWidth);
+                    omegaIndex = (int)(omega/omegaBinWidth);
                 }
                 rBetaLength = omegaRBetaList[omegaIndex].size();
                 for (k = 0; k < rBetaLength; k++) {
@@ -1173,6 +1272,37 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                         } // if ((yCenterIndex >= Math.max(0, maxYIndex-1)) && (yCenterIndex <= Math.min(yCenterBins-1, maxYIndex+1)) && (!foundPoint[i])) 
                     }  // if ((xCenterIndex >= Math.max(0,maxXIndex-1)) && (xCenterIndex <= Math.min(xCenterBins-1, maxXIndex+1)))
                 } // for (k = 0; k < rBetaLength; k++)
+                if (openArray[i]) {
+                    if (omega < Math.PI) {
+                        omega = omega + Math.PI;
+                    }
+                    else {
+                        omega = omega - Math.PI;
+                    }
+                    omegaIndex = (int)(omega/omegaBinWidth);
+                    rBetaLength = omegaRBetaList[omegaIndex].size();
+                    for (k = 0; k < rBetaLength; k++) {
+                        floatArray = (float[])omegaRBetaList[omegaIndex].get(k);
+                        r = floatArray[0];
+                        beta = floatArray[1];
+                        if (allowRotation) {
+                            beta = floatArray[1] - thetaArray[maxThetaIndex];
+                        }
+                        if (allowScaling) {
+                            r = scaleArray[maxScaleIndex] * floatArray[0];
+                        }
+                        xCenter = x + r * Math.cos(beta);
+                        xCenterIndex = (int)((xCenter - minXCenter)/maxPixelBinWidth);
+                        if ((xCenterIndex >= Math.max(0,maxXIndex-1)) && (xCenterIndex <= Math.min(xCenterBins-1, maxXIndex+1))) {
+                            yCenter = y + r * Math.sin(beta);
+                            yCenterIndex = (int)((yCenter - minYCenter)/maxPixelBinWidth);
+                            if ((yCenterIndex >= Math.max(0, maxYIndex-1)) && (yCenterIndex <= Math.min(yCenterBins-1, maxYIndex+1)) && (!foundPoint[i])) {
+                                foundPoint[i] = true;
+                                pointsDeleted++;
+                            } // if ((yCenterIndex >= Math.max(0, maxYIndex-1)) && (yCenterIndex <= Math.min(yCenterBins-1, maxYIndex+1)) && (!foundPoint[i])) 
+                        }  // if ((xCenterIndex >= Math.max(0,maxXIndex-1)) && (xCenterIndex <= Math.min(xCenterBins-1, maxXIndex+1)))
+                    } // for (k = 0; k < rBetaLength; k++)
+                } // if (openArray[i])
             } // for (i = 0; i < numPoints; i++)
             
             if (pointsDeleted > 0) {
@@ -1182,10 +1312,12 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 }
                 newIndexArray = new int[newNumPoints];
                 newOmegaArray = new short[newNumPoints];
+                newOpenArray = new boolean[newNumPoints];
                 for (i = 0, j = 0; i < numPoints; i++) {
                     if (!foundPoint[i]) {
                         newIndexArray[j] = indexArray[i];
                         newOmegaArray[j] = omegaArray[i];
+                        newOpenArray[j] = openArray[i];
                         j++;
                     }
                 } // for (i = 0, j = 0; i < numPoints; i++)
@@ -1196,12 +1328,16 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                 indexArray = new int[numPoints];
                 omegaArray = null;
                 omegaArray = new short[numPoints];
+                openArray = null;
+                openArray = new boolean[numPoints];
                 for (i = 0; i < numPoints; i++) {
                     indexArray[i] = newIndexArray[i];
                     omegaArray[i] = newOmegaArray[i];
+                    openArray[i] = newOpenArray[i];
                 }
                 newIndexArray = null;
                 newOmegaArray = null;
+                newOpenArray = null;
             } // if (pointsDeleted > 0)
         } // while (objectsFound < objectsToFind)
         
