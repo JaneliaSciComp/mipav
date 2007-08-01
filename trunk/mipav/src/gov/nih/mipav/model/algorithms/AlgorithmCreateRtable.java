@@ -18,8 +18,9 @@ import java.util.*;
 public class AlgorithmCreateRtable extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    // Number of bins covering tangent angle going from -90 degrees to + 90 degrees
-    private int binNumber = 45;
+    // Number of bins covering gradient direction, normal to the tangent angle, going from 0 degrees to +360 degrees
+    // The gradient direction is defined as going into the object
+    private int binNumber = 90;
     
     // Name of file in which R-table is stored
     private String fileName;
@@ -40,7 +41,9 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
      * AlgorithmCreateRtable.
      *
      * @param  srcImg   Binary source image that has contour VOI for R-table generation
-     * @param  binNumber Number of bins for tangent angle at point on curve goifn from -90 to + 90 degrees
+     * @param  binNumber Number of bins for gradient direction, normal to the tangent angle, going
+     *                   form 0 degrees to +360 degrees.  The gradient direction is defined as going
+     *                   into the object.
      * @param  sidePointsForTangent  Number of points to take from each side of a point on a curve
      *                               in determining the tangent
      * @param  fileName Name of file to store R-table in
@@ -80,6 +83,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         int index;
         
         byte[] srcBuffer;
+        byte[] maskBuffer;
         boolean test = false;
         int indexArray[];
         int neighbors;
@@ -87,6 +91,8 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         int indexPtr = 0;
         float tangentX;
         float tangentY;
+        float normalX;
+        float normalY;
         float xPoints[];
         float yPoints[];
         int endPtr;
@@ -123,6 +129,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         double centerY;
         double distX;
         double distY;
+        double omega;
         LinkedList omegaRBetaList[];
         int omegaIndex;
         double binWidth;
@@ -135,8 +142,6 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
 
             return;
         }
-
-        
 
         fireProgressStateChanged(srcImage.getImageName(), "Create R-table ...");
 
@@ -230,6 +235,12 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        }
+        
+        // Keep a copy of all pixels in the selectedVOI;
+        maskBuffer = new byte[sourceSlice];
+        for (i = 0; i < sourceSlice; i++) {
+            maskBuffer[i] = srcBuffer[i];
         }
         
         // Find all set pixels that have 4 set nearest neighbors
@@ -432,7 +443,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         for (i = 0; i < binNumber; i++) {
             omegaRBetaList[i] = new LinkedList();
         }
-        binWidth = Math.PI/binNumber;
+        binWidth = (2.0 * Math.PI)/binNumber;
         
         index = startPos;
         indexPtr = 0;
@@ -477,12 +488,18 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
                 ypc = yPoints[1];
                 tangentX = (xPoints[2] - xPoints[0])/2.0f;
                 tangentY = (yPoints[2] - yPoints[0])/2.0f;
-                if (tangentX == 0.0f) {
-                    omegaIndex = 0;
+                if (tangentX == 0) {
+                    normalX = 1;
+                    normalY = 0;
+                }
+                else if (tangentY == 0) {
+                    normalX = 0;
+                    normalY = 1;
                 }
                 else {
-                    omegaIndex = (int)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/binWidth);
-                }    
+                    normalX = -tangentY/tangentX;
+                    normalY = 1;
+                }
             } // if (sidePointsForTangent == 1)
             else {
                 // Center all points for tangent point touching curve at (0, 0)
@@ -555,19 +572,34 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
                 if (d1 < d2) {
                     tangentX = (float)x1t;
                     tangentY = (float)y1t;
+                    normalX = (float)x2t;
+                    normalY = (float)y2t;
                 }
                 else {
                     tangentX = (float)x2t;
                     tangentY = (float)y2t;
-                }
-                if (tangentX == 0.0f) {
-                    omegaIndex = 0;
-                    
-                }
-                else {
-                    omegaIndex = (int)((Math.atan(tangentY/tangentX) + Math.PI/2.0)/binWidth);
-                }    
+                    normalX = (float)x1t;
+                    normalY = (float)y1t;
+                } 
             }
+            omega = Math.atan2(normalY, normalX);
+            // Change omega range from -PI to PI to 0 to 2*PI
+            if (omega < 0.0) {
+                omega = omega + 2.0 * Math.PI;
+            }
+            x = (int)Math.round(xpc + Math.cos(omega));
+            y = (int)Math.round(ypc + Math.sin(omega));
+            index = x + xDim * y;
+            if (maskBuffer[index] == 0) {
+              // Not in VOI - take normal going the opposite way
+              if (omega < Math.PI) {
+                  omega = omega + Math.PI;
+              }
+              else {
+                  omega = omega - Math.PI;
+              }
+            }
+            omegaIndex = (int)(omega/binWidth);
             distX = centerX - xpc;
             distY = centerY - ypc;
             floatArray = new float[2];
@@ -632,10 +664,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         if (test) {
             
             new ViewJFrameImage(maskImage);
-        }
-        
-        
-        
+        }  
         
         setCompleted(true);
         return;
