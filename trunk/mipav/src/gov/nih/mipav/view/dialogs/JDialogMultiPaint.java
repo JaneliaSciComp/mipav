@@ -1805,31 +1805,33 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 }
             }
         } else {
-
-            for (int i = 1; i < (imgBSize * 4); i = i + 4) {
+        	boolean match = false;
+            for (int i = 0; i < (imgBSize * 4); i = i + 4) {
                 short r, g, b;
                 int k;
-                r = imgB.getUByte(i);
-                g = imgB.getUByte(i + 1);
-                b = imgB.getUByte(i + 2);
+                r = imgB.getUByte(i + 1);
+                g = imgB.getUByte(i + 2);
+                b = imgB.getUByte(i + 3);
 
                 if ((r != 0) || (g != 0) || (b != 0)) {
 
 
-                    for (k = 1; k < (lutB.getExtents()[1] * 4); k = k + 4) {
+                    for (k = 0; k < (lutB.getExtents()[1] * 4); k = k + 4) {
 
-                        if ((lutB.getUByte(k) == r) && (lutB.getUByte(k + 1) == g) && (lutB.getUByte(k + 2) == b)) {
+                        if ((lutB.getUByte(k + 1) == r) && (lutB.getUByte(k + 2) == g) && (lutB.getUByte(k + 3) == b)) {
                             break;
                         }
                     }
-
-                    int val = k / 4;
-
-                    if (val == selected) {
-                        test = true;
-
-                        break;
+                    if(match) {
+	                    int val = k / 4;
+	
+	                    if (val == selected) {
+	                        test = true;
+	
+	                        break;
+	                    }
                     }
+                    match = false;
                 }
             }
         }
