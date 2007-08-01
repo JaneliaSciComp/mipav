@@ -57,11 +57,12 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     private ViewUserInterface userInterface;
     
     /** For each omega angle index, a linked list of R and B values is present
-     *  omega is the tangent angle to the curve, and R and B give the distance
+     *  omega is the gradient angle to the curve, defined as perpindicular to the
+     *  tangent and going into the object, and R and B give the distance
      *  and angle from the center of the VOI to the tangent point */
     private LinkedList omegaRBetaList[] = null;
     
-    /** Number of bins for tangent angle omega going from -PI/2 to +PI/2 */
+    /** Number of bins for tangent angle omega going from 0 to 2*PI */
     private int omegaBins;
     
     /** Number of points to take from each side of a point on a curve in determining a tangent */
@@ -87,7 +88,7 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     private boolean allowRotation = true;
     
     /** Desired maximum rotation angle. */
-    private float maxDegreesBinWidth = 3.0f;
+    private float maxDegreesBinWidth = 1.0f;
     
     /** If true, allow scaling of R-table object */
     private boolean allowScaling = true;
@@ -622,7 +623,7 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         
         gbc4.gridx = 1;
         degreesWidthText = new JTextField(15);
-        degreesWidthText.setText("3.0");
+        degreesWidthText.setText("1.0");
         degreesWidthText.setFont(serif12);
         degreesWidthText.setEnabled(true);
         rotationPanel.add(degreesWidthText, gbc4);
