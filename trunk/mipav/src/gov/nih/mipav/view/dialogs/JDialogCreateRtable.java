@@ -28,8 +28,9 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Number of bins for tangent angle going from -90 to +90 degrees */
-    private int binNumber = 45;
+    /** Number of bins for gradient angle, defined as normal to the tangent angle that goes into the object.
+     *  The gradient angle goes from 0 degrees to +360 degrees. */
+    private int binNumber = 90;
     
     private JTextField binText;
 
@@ -219,7 +220,7 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
     }
 
     /**
-     * Accessor that sets the number of tangent bins to be used.
+     * Accessor that sets the number of gradient angle bins to be used.
      *
      * @param  binNumber
      */
@@ -283,7 +284,7 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         VOILabel.setFont(serif12);
         VOILabel.setEnabled(true);
         
-        JLabel coverLabel = new JLabel("Tangent angle bins cover -90 to +90 degrees");
+        JLabel coverLabel = new JLabel("Gradient angle bins cover 0 to 360 degrees");
         coverLabel.setForeground(Color.black);
         coverLabel.setFont(serif12);
         coverLabel.setEnabled(true);
@@ -305,13 +306,13 @@ public class JDialogCreateRtable extends JDialogScriptableBase implements Algori
         paramPanel.setForeground(Color.black);
         paramPanel.setBorder(buildTitledBorder("User parameters"));
         
-        JLabel binLabel = new JLabel("Number of tangent bins  ");
+        JLabel binLabel = new JLabel("Number of gradient angle bins  ");
         binLabel.setForeground(Color.black);
         binLabel.setFont(serif12);
         binLabel.setEnabled(true);
         
         binText = new JTextField(10);
-        binText.setText("45");
+        binText.setText("90");
         binText.setForeground(Color.black);
         binText.setFont(serif12);
         binText.setEnabled(true);
