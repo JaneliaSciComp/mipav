@@ -19,6 +19,7 @@ import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 
 
 /**
@@ -235,6 +236,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     /** If true change matrix to the world coordinate system. */
     private boolean wcSystem = false;
 
+    
+    /** text area showing the */
+    private JTextArea provenanceArea;
+    
+    /** Column names for data provenance*/
+    private static final String [] dpColumnNames = new String[] {"Time","Action","JVM","Mipav","User"};
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -1106,6 +1114,58 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         buildToolBar();
         historyPanel.add(tBar, BorderLayout.NORTH);
 
+        ViewTableModel dpModel = new ViewTableModel();
+        JTable dpTable = new JTable(dpModel);
+
+        for (int i = 0; i < dpColumnNames.length; i++) {
+            dpModel.addColumn(dpColumnNames[i]);
+        }
+        dpTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        dpTable.getColumn("Time").setMinWidth(60);
+        dpTable.getColumn("Time").setMaxWidth(200);
+    //    dpTable.getColumn("Action").setMinWidth(100);
+        dpTable.getColumn("JVM").setMinWidth(60);
+        dpTable.getColumn("JVM").setMaxWidth(60);
+        dpTable.getColumn("Mipav").setMinWidth(40);
+        dpTable.getColumn("Mipav").setMaxWidth(40);
+        dpTable.getColumn("User").setMinWidth(80);
+        dpTable.getColumn("User").setMaxWidth(100);
+
+        dpTable.getTableHeader().setReorderingAllowed(false);
+        
+        
+        
+        ProvenanceHolder ph = image.getProvenanceHolder();
+        int size = ph.size();
+        String rose [] = null;
+        for (int i = 0; i < size; i++) {
+        	rose = new String[dpColumnNames.length];
+
+        	rose[0] = Long.toString(ph.elementAt(i).getTimeStamp());
+        	rose[1] = ph.elementAt(i).getAction();
+        	rose[2] = ph.elementAt(i).getJavaVersion();
+        	rose[3] = ph.elementAt(i).getMipavVersion();
+        	rose[4] = ph.elementAt(i).getUser();        	
+            dpModel.addRow(rose);
+        }
+        Box scrollingBox = new Box(BoxLayout.Y_AXIS);
+        scrollingBox.add(dpTable.getTableHeader());
+        scrollingBox.add(dpTable);
+        
+        provenanceArea = new JTextArea();
+        
+        provenanceArea.setLineWrap(true);
+        provenanceArea.setEditable(false);
+        scrollingBox.add(provenanceArea);
+        
+        SelectionListener listener = new SelectionListener(dpTable, provenanceArea);
+        dpTable.getSelectionModel().addListSelectionListener(listener);
+        dpTable.getColumnModel().getSelectionModel().addListSelectionListener(listener);
+        
+        JScrollPane scrollPane = new JScrollPane(scrollingBox);
+        historyPanel.add(scrollPane, BorderLayout.CENTER);
+        
         return historyPanel;
     }
 
@@ -3539,6 +3599,24 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
         } else {
             System.err.println("THIS IS NOT AN XML FILE!!!");
+        }
+    }
+    
+  
+    public class SelectionListener implements ListSelectionListener {
+        JTable table;
+        JTextArea textArea;
+        
+        SelectionListener(JTable table, JTextArea textArea) {
+            this.table = table;
+            this.textArea = textArea;
+        }
+        public void valueChanged(ListSelectionEvent e) {	
+        	 if (e.getValueIsAdjusting()) {
+                 // The mouse button has not yet been released
+        		 return;
+             }
+        	 textArea.setText((String)table.getModel().getValueAt(table.getSelectedRow(), table.getSelectedColumn()));
         }
     }
 }
