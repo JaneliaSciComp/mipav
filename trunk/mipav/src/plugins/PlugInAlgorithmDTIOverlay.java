@@ -1,4 +1,7 @@
+import java.awt.Color;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import dtioverlay.utils.DTIStudioReader;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -6,6 +9,7 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -38,6 +42,12 @@ public class PlugInAlgorithmDTIOverlay extends AlgorithmBase {
 	
 	/** image b **/
 	private ModelImage imageB;
+	
+	/** LUT for imageB **/
+	private ModelLUT lutb;
+	
+	/** Mask Colors added to LUT **/
+	private ArrayList addedColors = new ArrayList();
 	
 	
 	
@@ -92,27 +102,61 @@ public class PlugInAlgorithmDTIOverlay extends AlgorithmBase {
 		
 		
 		//ok now create a blank image b based on fiber array
-		int bufferSize = 4 * xdim * ydim * zdim;
+		int bufferSize = xdim * ydim * zdim;
 		int[] extents = new int[3];
 		extents[0] = xdim;
 		extents[1] = ydim;
 		extents[2] = zdim;
-        imageB = new ModelImage(ModelStorageBase.ARGB, extents, frecImage.getImageName() + "_imageB");
+        imageB = new ModelImage(ModelStorageBase.SHORT, extents, frecImage.getImageName() + "_imageB");
+        
+        //set up lutB
+        int[] dimExtentsLUT = new int[2];
+        dimExtentsLUT[0] = 4;
+        dimExtentsLUT[1] = 256;
+        lutb = new ModelLUT(ModelLUT.STRIPED, 256, dimExtentsLUT);
+
         
         //set up the data buffer
 		short[] buffer = new short[bufferSize];
 		int index=0;
+		int k;
+		boolean match = false;
 		for(int z=0;z<zdim;z++) {
 			for(int y=0;y<ydim;y++) {
 				for(int x=0;x<xdim;x++) {
-					buffer[index] = 1;
-					buffer[index + 1] = (short)fiberArray[x][y][z][0];
-					buffer[index + 2] = (short)fiberArray[x][y][z][1];
-					buffer[index + 3] = (short)fiberArray[x][y][z][2];
-					index = index + 4;
+					short r = (short)fiberArray[x][y][z][0];
+					short g = (short)fiberArray[x][y][z][1];
+					short b = (short)fiberArray[x][y][z][2];
+					if(r != 0 || g != 0 || b != 0) {
+						Color maskColor = new Color(r,g,b);
+						loop: for (k = 1; k < 256; k++) {
+								Color currColor = lutb.getColor(k);
+								if(currColor.getRed() == maskColor.getRed() && currColor.getGreen() == maskColor.getGreen() && currColor.getBlue() == maskColor.getBlue()) {
+									buffer[index] = (short)k;
+									break loop;
+								}
+								else {
+									for(int i=0;i<addedColors.size();i++) {
+										if(((Color)addedColors.get(i)).equals(currColor)) {
+											continue loop;
+										}
+									}
+									lutb.setColor(k, maskColor);
+									addedColors.add(maskColor);
+									buffer[index] = (short)k;
+									break loop;
+								}
+	                    	}	
+					}
+					else {
+						buffer[index] = 0;
+					}
+					
+					++ index;
 				}
 			}
 		}
+		
 		
 		//import buffer into image b
 		try {
@@ -124,7 +168,7 @@ public class PlugInAlgorithmDTIOverlay extends AlgorithmBase {
         }
 
         FileInfoBase fileInfo = new FileInfoImageXML(frecImage.getImageName() + "_imageB", null, FileUtility.XML);
-        fileInfo.setDataType(ModelStorageBase.ARGB);
+        fileInfo.setDataType(ModelStorageBase.SHORT);
         fileInfo.setExtents(extents);
         fileInfo.setUnitsOfMeasure(frecImage.getFileInfo()[0].getUnitsOfMeasure());
         fileInfo.setResolutions(frecImage.getFileInfo()[0].getResolutions());
@@ -144,6 +188,15 @@ public class PlugInAlgorithmDTIOverlay extends AlgorithmBase {
 	 */
 	public ModelImage getImageB() {
 		return imageB;
+	}
+
+
+	/**
+	 * get lutb
+	 * @return
+	 */
+	public ModelLUT getLutb() {
+		return lutb;
 	}
 	
 	

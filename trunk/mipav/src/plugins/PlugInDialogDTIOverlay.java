@@ -21,6 +21,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJComponentEditImage;
@@ -49,7 +50,7 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
 	private GridBagConstraints gbc;
 	
 	/** panels **/
-	private JPanel mainPanel, OKCancelPanel, destinationPanel;
+	private JPanel mainPanel, OKCancelPanel;
 	
 	/** label **/
 	private JLabel fiberPathLabel;
@@ -59,12 +60,6 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
 	
 	/** browse button **/
 	private JButton fiberPathBrowseButton;
-	
-	/** radio button group **/
-	private ButtonGroup destinationGroup;
-	
-	/** Radio Buttons **/
-	private JRadioButton newImage, replaceImage;
     
     /** handle to algorithm **/
     private PlugInAlgorithmDTIOverlay alg;
@@ -75,14 +70,12 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
     /** result image b **/
     private ModelImage imageB;
     
+    /** lut b **/
+    private ModelLUT lutb;
+    
     /** Frame of src image **/
-    private ViewJFrameImage srcFrame, resultFrame;
+    private ViewJFrameImage srcFrame;
     
-    /** src image after been through rbg transform **/
-    private ModelImage resultImage;
-    
-    /** Algorithm Concat **/
-    private AlgorithmRGBConcat mathAlgo;
     
     
     
@@ -132,29 +125,8 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
 		gbc.gridy = 0;
 		gbc.insets = new Insets(15,5,5,0);
 		mainPanel.add(fiberPathBrowseButton, gbc);
-		
-		
-		destinationPanel = new JPanel(new BorderLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-        destinationPanel.add(newImage, BorderLayout.NORTH);
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-        destinationPanel.add(replaceImage, BorderLayout.CENTER);
-        gbc.gridx = 0;
-		gbc.gridy = 1;
-		gbc.gridwidth = 3;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.insets = new Insets(15,5,35,0);
-        mainPanel.add(destinationPanel, gbc);
-        
-        
-        
+
+    
         OKCancelPanel = new JPanel();
         buildOKButton();
         OKButton.setActionCommand("ok");
@@ -182,33 +154,15 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
 		if(alg.isCompleted()) {
 			
 			imageB = alg.getImageB();
+			lutb = alg.getLutb();
 			
 			if(imageB != null) {
-				//need to convert frec image to color if grayscale so that imageB and frcImage are both color
-				if(!frecImage.isColorImage()) {
-					resultImage = new ModelImage(ModelImage.ARGB, frecImage.getExtents(),frecImage.getImageName() + "_DTI_Overlay");
-					mathAlgo = new AlgorithmRGBConcat(frecImage, frecImage, frecImage, resultImage, true, true);
-					mathAlgo.setRunningInSeparateThread(false);
-					mathAlgo.run();
-		        
-					updateFileInfo(frecImage, resultImage);
-				}
-				else {
-					resultImage = (ModelImage)frecImage.clone();
-					if(frecImage.getImageName().endsWith("DTI_Overlay")) {
-						resultImage.setImageName(frecImage.getImageName());
-					}else {
-						resultImage.setImageName(frecImage.getImageName() + "_DTI_Overlay");
-					}
-				}
 				
-				resultFrame = new ViewJFrameImage(resultImage);
-				resultFrame.setImageB(imageB);
-				resultFrame.setControls();
+				srcFrame.setImageB(imageB);
+				srcFrame.setLUTb(lutb);
+				srcFrame.setControls();
 				
-				if(replaceImage.isSelected()) {
-					srcFrame.close();
-				}
+				srcFrame.updateImages(true);
 				
 				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 				
