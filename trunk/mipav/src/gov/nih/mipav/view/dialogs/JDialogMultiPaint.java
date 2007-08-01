@@ -637,7 +637,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         while (iter.hasNext()) {
             Integer maskVal = (Integer) iter.next();
             int maskVal_int = maskVal.intValue();
-
+          
             if (maskVal_int == 1) {
                 hasOne = true;
             }
@@ -664,7 +664,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 for (int n = 1; n <= (nbx * nby); n++) {
 
                     if (!hasOne) {
-
                         if (color[1].getRGB() == lutB.getColor(1).getRGB()) {
                             color[1] = lutB.getColor(maskVal_int);
                             multiButton[1].setBackground(color[1]);
@@ -809,7 +808,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      */
     public void keyTyped(KeyEvent e) {
         String key = Character.toString(e.getKeyChar());
-        System.out.println("key: " + key);
+
 
         if (key.equals("1")) {
 
@@ -1274,28 +1273,32 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 }
             }
         } else {
-
-            for (int i = 1; i < (imgBSize * 4); i = i + 4) {
+        	boolean match = false;
+            for (int i = 0; i < (imgBSize * 4); i = i + 4) {
                 short r, g, b;
                 int k;
-                r = imgB.getUByte(i);
-                g = imgB.getUByte(i + 1);
-                b = imgB.getUByte(i + 2);
+                r = imgB.getUByte(i + 1);
+                g = imgB.getUByte(i + 2);
+                b = imgB.getUByte(i + 3);
 
                 if ((r != 0) || (g != 0) || (b != 0)) {
 
                     // there is at least some mask...so set blank image to flase
                     blankImage = false;
 
-                    for (k = 1; k < (lutB.getExtents()[1] * 4); k = k + 4) {
-
-                        if ((lutB.getUByte(k) == r) && (lutB.getUByte(k + 1) == g) && (lutB.getUByte(k + 2) == b)) {
+                    for (k = 0; k < (lutB.getExtents()[1] * 4); k = k + 4) {
+                        if ((lutB.getUByte(k + 1) == r) && (lutB.getUByte(k + 2) == g) && (lutB.getUByte(k + 3) == b)) {
+                        	match = true;
                             break;
                         }
                     }
-
-                    int val = k / 4;
-                    vals.add(new Integer(val));
+                    if(match) {
+                    	
+                    	int val = k / 4;
+                    	System.out.println("val is " + val);
+                    	vals.add(new Integer(val));
+                    }
+                    match = false;
                 }
             }
         }
