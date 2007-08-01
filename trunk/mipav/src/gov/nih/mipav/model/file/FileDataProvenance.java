@@ -43,12 +43,6 @@ public class FileDataProvenance extends FileXML {
     /** File reference. */
     private File file;
 
-    /** File directory where the data provenance is to read or written. */
-    private String fileDir;
-
-    /** File name of the Data provenance. */
-    private String fileName;
-
     private ModelImage image;
 
     /** The current level of tab nesting we are on. Used to auto-indent nested xml tags. */
@@ -64,8 +58,8 @@ public class FileDataProvenance extends FileXML {
      * @param      image     image model: needed during the read process to ensure the VOI "fits" in the image space.
      *
      */
-    public FileDataProvenance(String fn, String fileDir, ModelImage image)  {
-    	super(fn.substring(0, fn.lastIndexOf(".")) + ".xmp", fileDir); 
+    public FileDataProvenance(String fn, String fDir, ModelImage image)  {
+    	super(fn.substring(0, fn.lastIndexOf(".")) + ".xmp", fDir); 
         this.image = image;
         
         file = new File(fileDir + fileName);
@@ -85,7 +79,7 @@ public class FileDataProvenance extends FileXML {
      * @throws  IOException  exception thrown if there is an error writing the file
      */
     public void writeXML() throws IOException {
-       
+      System.err.println("Writing"); 
         FileWriter fw;
         if (file.exists() == true) {
         	file.delete();
