@@ -167,17 +167,21 @@ public class PlugInAlgorithmDTIOverlay extends AlgorithmBase {
             return;
         }
 
-        FileInfoBase fileInfo = new FileInfoImageXML(frecImage.getImageName() + "_imageB", null, FileUtility.XML);
-        fileInfo.setDataType(ModelStorageBase.SHORT);
-        fileInfo.setExtents(extents);
-        fileInfo.setUnitsOfMeasure(frecImage.getFileInfo()[0].getUnitsOfMeasure());
-        fileInfo.setResolutions(frecImage.getFileInfo()[0].getResolutions());
-        fileInfo.setEndianess(frecImage.getFileInfo()[0].getEndianess());
-        fileInfo.setOffset(frecImage.getFileInfo()[0].getOffset());
-        for (int i = 0; i < fileInfo.getExtents()[2]; i++) {
-            imageB.setFileInfo(fileInfo, i);
+        
+        FileInfoBase[] fileInfoBases = new FileInfoBase[imageB.getExtents()[2]];
+        for (int i=0;i<fileInfoBases.length;i++) {
+
+        	 fileInfoBases[i] = new FileInfoImageXML(frecImage.getImageName() + "_imageB", null, FileUtility.XML);
+        }
+        
+        
+        FileInfoBase.copyCoreInfo(frecImage.getFileInfo(), fileInfoBases);
+        for (int i=0;i<fileInfoBases.length;i++) {
+       	 	fileInfoBases[i].setDataType(ModelStorageBase.SHORT); 
+       	 	fileInfoBases[i].setModality(FileInfoBase.UNKNOWN_MODALITY);
         }
 
+        imageB.setFileInfo(fileInfoBases);
         setCompleted(true);	
 
 	}
