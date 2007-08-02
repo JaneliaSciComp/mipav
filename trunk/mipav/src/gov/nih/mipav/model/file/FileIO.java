@@ -1561,13 +1561,15 @@ public class FileIO {
 
             if (image != null) {
             	if (ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING) {
+            		if (new File(fileDir + File.separator + fileName.substring(0, fileName.lastIndexOf(".")) + ".xmp").exists()) {
             		try {
             			FileDataProvenance fdp = new FileDataProvenance(fileName, fileDir, image);
-            			if (fdp.readXML()) {
-            			//	System.err.println("Success on read!");
-            			}
+            			
+            			fdp.readHeader(fileName.substring(0, fileName.lastIndexOf(".")) + ".xmp", fileDir, "dataprovenance.xsd");
+            			
             		} catch (Exception e) {
             			e.printStackTrace();
+            		}
             		}
             	}
             	

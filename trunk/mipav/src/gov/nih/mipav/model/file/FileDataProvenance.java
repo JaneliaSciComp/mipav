@@ -63,6 +63,7 @@ public class FileDataProvenance extends FileXML {
         this.image = image;
         
         file = new File(fileDir + fileName);
+        this.m_kHandler = new ProvenanceXMLHandler(image.getProvenanceHolder());
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -127,8 +128,6 @@ public class FileDataProvenance extends FileXML {
             	openTag("entry", false);
             }
             
-            
-            
             openTag("dataprovenance", false);
             bw.close();
         } catch (Exception e) {
@@ -136,62 +135,13 @@ public class FileDataProvenance extends FileXML {
             e.printStackTrace();
         }
     }
-   
-    /**
-     * Reads the data provenance XML information from a file and places it in the supplied ProvenanceHolder
-     * @param ph
-     * @return
-     */
-    public boolean readXML() {
-
-        SAXParserFactory spf = SAXParserFactory.newInstance();
-
-        spf.setNamespaceAware(true);
-        spf.setValidating(true);
-
-        try {
-
-            // Create a JAXP SAXParser
-            SAXParser saxParser = spf.newSAXParser();
-
-            // Validation part 2a: set the schema language if necessary
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
-
-            URL xsdURL = getClass().getClassLoader().getResource("dataprovenance.xsd");
-
-            if (xsdURL == null) {
-                MipavUtil.displayError("Unable to find VOI XML schema.");
-
-                return false;
-            }
-
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
-
-            // Get the encapsulated SAX XMLReader
-            XMLReader xmlReader = saxParser.getXMLReader();
-
-            // Set the ContentHandler of the XMLReader
-            xmlReader.setContentHandler(new MyXMLHandler(image.getProvenanceHolder()));
-
-            // Set an ErrorHandler before parsing
-            xmlReader.setErrorHandler(new XMLErrorHandler());
-
-            // Tell the XMLReader to parse the XML document
-            xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
-        } catch (Exception error) {
-        	//System.err.println(error);
-            return false;
-        }
-
-        return true;
-    }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
      * Handle events generated while parsing the XML file.
      */
-    private class MyXMLHandler extends DefaultHandler {
+    private class ProvenanceXMLHandler extends DefaultHandler {
       
         /** The current XML tag we are parsing. */
         private String currentKey;
@@ -209,7 +159,7 @@ public class FileDataProvenance extends FileXML {
          *
          * @param  voi  the VOI we should build from the XML file data
          */
-        public MyXMLHandler(ProvenanceHolder ph) {
+        public ProvenanceXMLHandler(ProvenanceHolder ph) {
            this.holder = ph;
         }
 

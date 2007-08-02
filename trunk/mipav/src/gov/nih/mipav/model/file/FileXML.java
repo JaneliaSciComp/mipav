@@ -145,8 +145,9 @@ public abstract class FileXML extends FileBase {
         // this writing it probably is the most portable solution for a JAXP compatible parser.  After bootstrapping a
         // parser/XMLReader, there are several ways to begin a parse.  In this example, we use the SAX API.
 
-        fileInfo.setFileName(headerFileName);
-
+    	if (fileInfo != null) {
+    		fileInfo.setFileName(headerFileName);
+    	}
         // Create a JAXP SAXParserFactory and configure it
         SAXParserFactory spf = SAXParserFactory.newInstance();
 
