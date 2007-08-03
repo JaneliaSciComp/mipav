@@ -130,6 +130,7 @@ public class SurfaceAttributes {
         this.mCenter.x /= mTriangleMesh.length;
         this.mCenter.y /= mTriangleMesh.length;
         this.mCenter.z /= mTriangleMesh.length;
+        
     }
 
     // Access functions: 
@@ -213,6 +214,34 @@ public class SurfaceAttributes {
         }
     }
 
+    /**
+     * Get the per-vertex color array. 
+     * @return   mPerVertexColors_Backup  surface color array.
+     */
+    public Color4f[][] getPerVertexColorArray() { 
+         return mPerVertexColors_Backup;
+    }
+    
+    
+    /**
+     * Set the per-vertex color array.
+     * @param color    stored per vertex color array reference.  
+     */
+    public void setPerVertexColorArray(Color4f[] color, int index) {
+    	if ( mPerVertexColors_Backup == null ) {
+    	    mPerVertexColors_Backup = new Color4f[ mTriangleMesh.length ][];
+    	}
+        
+    	mPerVertexColors_Backup[index] = new Color4f[mTriangleMesh[index].getVertexCount()];
+        for ( int j = 0; j < color.length; j++ )
+        {
+        	mPerVertexColors_Backup[index][j] = color[j];
+            mTriangleMesh[index].setColorDelay( j,  mPerVertexColors_Backup[index][j] );
+        }
+        // updates the geometry all at once (faster):
+        mTriangleMesh[index].setColorUpdate( );
+    }
+    
     /**
      * returns a new copy of the Material.
      * @return mMaterial, a new copy of the surface Material.
