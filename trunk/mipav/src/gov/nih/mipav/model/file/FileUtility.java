@@ -205,6 +205,8 @@ public class FileUtility {
     /** extension: "par","parv2","rec","frec". */
     public static final int PARREC = 59;
 
+    /** MIPAV Surface XML file format. extension: .xml */
+    public static final int SURFACEREF_XML = 60;
 
     /** Arrary of strings describing the file formats. These are in synch with the above constants (same order) */
     private static String[] fileFormatStr = {
@@ -213,7 +215,7 @@ public class FileUtility {
         "Interfile", "JIMI", "JPEG", "LSM", "LSM multifile", "Magnetom Vision", "Map", "Medvision", "MGH", "Micro CAT",
         "MINC", "MIPAV", "MRC", "NIFTI", "NIFTI multifile", "NRRD", "OSM", "PCX", "PIC", "PICT", "PNG", "Project",
         "PSD", "QT", "Raw", "Raw multifile", "SPM", "STK", "Surface XML", "TGA", "Tiff", "Tiff multifile", "TMG", "VOI",
-        "XBM", "XML", "XML multifile", "XPM", "Philips PARREC"
+        "XBM", "XML", "XML multifile", "XPM", "Philips PARREC", "Surface Reference XML"
     };
 
     /**
