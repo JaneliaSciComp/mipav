@@ -978,7 +978,7 @@ public class ModelClodMesh {
      */
     protected void save(RandomAccessFile kOut, boolean flip, int[] direction, float[] startLocation, float[] box,
                         double[][] inverseDicomArray) throws IOException {
-        m_kMesh.save(kOut, flip, direction, startLocation, box, inverseDicomArray);
+        m_kMesh.save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
 
         // write collapse records
         kOut.writeInt(m_akRecord.length);
