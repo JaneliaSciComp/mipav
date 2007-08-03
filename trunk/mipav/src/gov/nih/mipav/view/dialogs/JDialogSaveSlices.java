@@ -126,7 +126,7 @@ public class JDialogSaveSlices extends JDialogBase {
      */
     public JDialogSaveSlices(Frame theParentFrame, int mnValue, int mxValue, FileWriteOptions options) {
 
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         minValue = mnValue;
         maxValue = mxValue;
         timeEnabled = false;
