@@ -87,6 +87,7 @@ public class FileSurfaceXML extends FileXML {
             return null;
         }
 
+
         return (FileInfoSurfaceXML) fileInfo;
     }
 
@@ -233,7 +234,7 @@ public class FileSurfaceXML extends FileXML {
 
         return true;
     }
-    
+
     /**
      * Writes the XML file information, including the ModelTriangleMesh surface out to the given filename and path:
      *
@@ -361,7 +362,7 @@ public class FileSurfaceXML extends FileXML {
             akColors = null;
             aiIndex = null;
 
-       
+
 
         /********************************************************************************/
         /* Close the surface tag: */
@@ -376,7 +377,7 @@ public class FileSurfaceXML extends FileXML {
         kSurfaceXMLHandler = null;
 
         return true;
-    }    
+    }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 

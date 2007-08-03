@@ -12,6 +12,7 @@ import java.io.*;
 
 import java.util.*;
 
+import javax.media.j3d.Material;
 import javax.swing.*;
 
 import javax.vecmath.*;
@@ -61,11 +62,13 @@ public class FileSurface {
 
         for (int i = 0; i < akFiles.length; i++) {
             String kName = akFiles[i].getName();
+            
             Color4f kColor = JPanelSurface.getNewSurfaceColor(iListSize + i);
 
             if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1)) {
                 kSurface[i] = readSurface(kImage, akFiles[i], kColor);
             } else if (kName.indexOf(".xml") != -1) {
+            	/*
                 FileSurfaceXML kSurfaceXML = new FileSurfaceXML(kName, akFiles[i].getParent());
 
                 try {
@@ -78,6 +81,25 @@ public class FileSurface {
                 } catch (IOException e) {
                     kSurface[i] = null;
                 }
+         
+                */
+	             FileSurfaceRefXML kSurfaceXML = new FileSurfaceRefXML(kName, akFiles[i].getParent());
+	           	 try {
+	                    FileInfoSurfaceRefXML kFileInfo = kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
+	                    // System.err.println("afa" + (akFiles[i].getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName()));
+	                    akFiles[i] = new File(akFiles[i].getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
+	                    kSurface[i] = readSurface(kImage, akFiles[i], kColor);
+	                    kSurface[i].setOpacity(kFileInfo.getOpacity());
+	                    kSurface[i].setMaterial(kFileInfo.getMaterial());
+	                    kSurface[i].setLevelDetail(kFileInfo.getLevelDetail());
+	                   
+	                    if ( kSurface[i].getPerVertexColorArray() != null ) {
+	                       kSurface[i].setPerVertexColorArray(kSurface[i].getPerVertexColorArray()[0], 0);
+	                    }
+	                    
+	           	 } catch (IOException e) {
+	                	return null;
+	             }
             }
         }
 
@@ -96,7 +118,7 @@ public class FileSurface {
      */
     public static SurfaceAttributes readSurface(ModelImage kImage, File file, Color4f color) {
 
-        int iType, iQuantity;
+        int iType = 0, iQuantity = 0;
         boolean isSur = true;
         int[] direction;
         float[] startLocation;
@@ -121,10 +143,12 @@ public class FileSurface {
         int iV1, iV2, iV3;
         float d1, d2, d3;
 
+        FileSurfaceRefXML kSurfaceXML;
+        FileInfoSurfaceRefXML kFileInfo = null;
         RandomAccessFile in;
-
+        boolean isXMLSurface = false;
+        
         if (file.getName().endsWith("sur")) {
-
             try {
                 in = new RandomAccessFile(file, "r");
                 iType = in.readInt();
@@ -133,7 +157,8 @@ public class FileSurface {
             } catch (IOException e) {
                 return null;
             }
-        } else if ( file.getName().endsWith("xml") ) { 
+        } else if ( file.getName().endsWith("xml") ) {
+        	/*
         	FileSurfaceXML kSurfaceXML = new FileSurfaceXML(file.getName(), file.getParent());
         	SurfaceAttributes surface = null;
             try {
@@ -147,7 +172,24 @@ public class FileSurface {
             	surface = null;
             }
             return surface;
-            
+        	*/
+        	 isXMLSurface = true;
+        	 kSurfaceXML = new FileSurfaceRefXML(file.getName(), file.getParent());
+           	 try {
+                    kFileInfo = kSurfaceXML.readSurfaceXML(file.getName(), file.getParent());
+                    
+                    file = new File(file.getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
+                    try {
+                        in = new RandomAccessFile(file, "r");
+                        iType = in.readInt();
+                        iQuantity = in.readInt();
+                        isSur = true;
+                    } catch (IOException e) {
+                        return null;
+                    }
+           	 } catch (IOException e) {
+                	return null;
+             }
         } else {
 
             try {
@@ -281,8 +323,23 @@ public class FileSurface {
         progress.dispose();
 
         SurfaceAttributes surface = new SurfaceAttributes(akComponent, file.getPath(), file.getName());
-        surface.setColor(color);
-
+        // surface.setColor(color);
+       
+        if ( isXMLSurface ) {
+	        surface.setOpacity(kFileInfo.getOpacity());
+	        surface.setMaterial(kFileInfo.getMaterial());
+	        surface.setLevelDetail(kFileInfo.getLevelDetail());
+        } else {
+        	surface.setColor(color);
+        	System.err.println("ruida1");
+        	
+        	for ( int i = 0; i < akComponent.length; i++ ) {
+        	
+	        	if ( akComponent[i].getPerVertexColor() != null ) {
+	        	   surface.setPerVertexColorArray(akComponent[i].getPerVertexColor(), i);
+	        	}
+        	}
+        } 
         return surface;
     }
 
@@ -308,7 +365,7 @@ public class FileSurface {
             for (int i = 0; i < akSurfaces.length; i++) {
                 ModelTriangleMesh[] akMeshes = akSurfaces[i].getMesh();
                 Color4f kColor = akSurfaces[i].getColor();
-                saveSingleMesh(kImage, akMeshes, kCommand.equals("LevelS"), kColor);
+                saveSingleMesh(kImage, akMeshes, kCommand.equals("LevelS"), kColor, akSurfaces[i]);
             }
         } else if (kCommand.equals("LevelW")) {
             saveMultiMesh(kImage, akSurfaces);
@@ -316,7 +373,9 @@ public class FileSurface {
 
             for (int i = 0; i < akSurfaces.length; i++) {
                 ModelTriangleMesh[] kMesh = akSurfaces[i].getMesh();
-                writeTriangleMeshXML(kMesh, akSurfaces[i]);
+                Color4f kColor = akSurfaces[i].getColor();
+                writeTriangleMeshXML(kImage, kMesh, akSurfaces[i], kColor);
+                
             }
         }
     }
@@ -518,7 +577,7 @@ public class FileSurface {
      * @param  isSur   true if .sur file, otherwise .wrl file
      * @param  color   surface color
      */
-    private static void saveSingleMesh(ModelImage kImage, ModelTriangleMesh[] meshes, boolean isSur, Color4f color) {
+    private static void saveSingleMesh(ModelImage kImage, ModelTriangleMesh[] meshes, boolean isSur, Color4f color, SurfaceAttributes surfacesAttribute) {
         String name = getFileName(false);
 
         if (name == null) {
@@ -545,7 +604,7 @@ public class FileSurface {
             name = name + ".wrl";
         }
 
-        saveSingleMesh(name, kImage, meshes, isSur, color);
+        saveSingleMesh(name, kImage, meshes, isSur, color, surfacesAttribute.getPerVertexColorArray());
     }
 
     /**
@@ -556,9 +615,10 @@ public class FileSurface {
      * @param  meshes  The triangle meshes that make up that level of detail surface.
      * @param  isSur   true if .sur file, otherwise .wrl file
      * @param  color   surface color
+     * @param  perVertexColorArray    color per vertex array
      */
     private static void saveSingleMesh(String name, ModelImage kImage, ModelTriangleMesh[] meshes, boolean isSur,
-                                       Color4f color) {
+                                       Color4f color, Color4f[][] perVertexColorArray) {
         ModelTriangleMesh[] meshesCopy = new ModelTriangleMesh[meshes.length];
         ModelTriangleMesh meshCopy;
 
@@ -635,7 +695,7 @@ public class FileSurface {
                         inverseDicomArray = inverseDicomMatrix.getMatrix();
                     }
 
-                    ModelTriangleMesh.save(name, meshesCopy, true, direction, startLocation, box, inverseDicomArray);
+                    ModelTriangleMesh.save(name, meshesCopy, true, direction, startLocation, box, inverseDicomArray, perVertexColorArray);
                 } else {
                     ModelTriangleMesh.saveAsVRML(name, meshesCopy, true, direction, startLocation, box,
                                                  new Color3f(color.x, color.y, color.z));
@@ -745,10 +805,11 @@ public class FileSurface {
      * @param  kMesh    ModelTriangleMesh surface mesh
      * @param  surface  Material material reference.
      */
-    private static void writeTriangleMeshXML(ModelTriangleMesh[] kMesh, SurfaceAttributes surface) {
+    private static void writeTriangleMeshXML(ModelImage kImage, ModelTriangleMesh[] kMesh, SurfaceAttributes surface, Color4f color) {
 
         // Dialog: Prompt the user to select the filename:
         String name = getFileName(false);
+        String surfaceName = null;
 
         if (name == null) {
             return;
@@ -756,7 +817,7 @@ public class FileSurface {
 
         // Check the filename extension:
         int i = name.lastIndexOf('.');
-
+        surfaceName = name.substring(0, i) + ".sur";
         if ((i > 0) && (i < (name.length() - 1))) {
             String extension = name.substring(i + 1).toLowerCase();
 
@@ -765,15 +826,19 @@ public class FileSurface {
 
                 return;
             }
+            
         } else {
-            name = name + ".xml";
+        	surfaceName = name + ".sur";
+            name = name + ".xml"; 
         }
-
+        
+      /*
         i = name.lastIndexOf(File.separator);
-
+   
         String dir = name.substring(0, i + 1);
         name = name.substring(i + 1);
-
+   */
+        /*
         // Create the FileSurfaceXML to write the mesh:
         FileSurfaceXML kSurfaceXML = new FileSurfaceXML(null, null);
 
@@ -781,5 +846,12 @@ public class FileSurface {
             kSurfaceXML.writeHeader(name, dir, kMesh, surface.getMaterial(), surface.getOpacity(),
                                     surface.getLevelDetail());
         } catch (IOException kError) { }
+        */
+        try {
+            FileSurfaceRefXML kSurfaceXML = new FileSurfaceRefXML(null, null);
+            kSurfaceXML.writeXMLsurface(name, surface.getMaterial(), surface.getOpacity(),
+                    surface.getLevelDetail());
+            saveSingleMesh(surfaceName, kImage, kMesh, true, color, surface.getPerVertexColorArray());
+        } catch ( IOException kError ) { }
     }
 }
