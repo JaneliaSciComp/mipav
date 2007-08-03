@@ -1,7 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
-import gov.nih.mipav.model.file.FileSurfaceXML;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -92,7 +92,11 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 
     /** Store the mesh colors: */
     private Color4f[] m_kColors;
-
+    
+    /** Per vertex color array, which store the color data saved in .sur file. */
+    private Color4f[] perVertexColor = null;
+    
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -153,6 +157,46 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         m_kGenerator = null;
     }
 
+    /**
+     * A triangle mesh whose vertex normal vectors have been precomputed.
+     *
+     * @param  akVertex   array of vertices in the mesh
+     * @param  akNormal   array of vertex normals for the mesh
+     * @param  aiConnect  Connectivity array for the triangles. Each triple of indices represents one triangle. The
+     *                    triangle is counterclockwise ordered as viewed by an observer outside the mesh.
+     */
+    public ModelTriangleMesh(Point3f[] akVertex, Vector3f[] akNormal, int[] aiConnect, Color4f[] vertexColor) {
+        super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_4,
+              2, new int[]{0, 0},
+              aiConnect.length);
+
+        init();
+
+        setCoordinates(0, akVertex);
+        setCoordinateIndices(0, aiConnect);
+        setNormals(0, akNormal);
+        setNormalIndices(0, aiConnect);
+       
+        m_kColors = new Color4f[ akVertex.length ];
+        if ( vertexColor != null ) {
+          perVertexColor = new Color4f[ akVertex.length ];
+        }
+        for ( int i = 0; i < akVertex.length; i++ )
+        {
+            m_kColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+            if ( vertexColor != null ) {
+               perVertexColor[i] = vertexColor[i];
+            }
+            // m_kColors[i] = new Color4f( vertexColor[i].x, vertexColor[i].y, vertexColor[i].z, vertexColor[i].w  );
+            // System.err.println("x = " + m_kColors[i].x + " y = " + m_kColors[i].y + " z = " + m_kColors[i].z + " w = " + m_kColors[i].w);
+        }
+        
+        
+        setColors( 0, m_kColors );
+        setColorIndices(0, aiConnect);
+        m_kGenerator = null;
+    }
+    
     /**
      * A triangle mesh whose vertex normal vectors have been precomputed.
      *
@@ -343,6 +387,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     }
 
 
+    public Color4f[] getPerVertexColor() {
+    	return perVertexColor;
+    }
+    
     /**
      * DOCUMENT ME!
      *
@@ -899,9 +947,59 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 // System.out.println("connect[" + i + "]" + aiConnect[i]);
             }
 
+            // read per vertex color array
+            int R, G, B, A;
+            int isPerVertexColor = kIn.readInt();
+            Color4f[] perVertexColor = null;
+            if ( isPerVertexColor == 1 ) {
+	            perVertexColor = new Color4f[iVertexCount];
+	            byte[] bufferPerVertexColor = new byte[iVertexCount * 4 * 4];
+	            kIn.read(bufferPerVertexColor);
+	            for (i = 0, index = 0; i < iVertexCount; i++) {
+	            	perVertexColor[i] = new Color4f();
+	
+	                b1 = bufferPerVertexColor[index++] & 0xff;
+	                b2 = bufferPerVertexColor[index++] & 0xff;
+	                b3 = bufferPerVertexColor[index++] & 0xff;
+	                b4 = bufferPerVertexColor[index++] & 0xff;
+	
+	                R = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+	
+	                perVertexColor[i].x = Float.intBitsToFloat(R);
+	
+	                b1 = bufferPerVertexColor[index++] & 0xff;
+	                b2 = bufferPerVertexColor[index++] & 0xff;
+	                b3 = bufferPerVertexColor[index++] & 0xff;
+	                b4 = bufferPerVertexColor[index++] & 0xff;
+	
+	                G = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+	
+	                perVertexColor[i].y = Float.intBitsToFloat(G);
+	
+	                b1 = bufferPerVertexColor[index++] & 0xff;
+	                b2 = bufferPerVertexColor[index++] & 0xff;
+	                b3 = bufferPerVertexColor[index++] & 0xff;
+	                b4 = bufferPerVertexColor[index++] & 0xff;
+	
+	                B = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+	
+	                perVertexColor[i].z = Float.intBitsToFloat(B);
+	                
+	                b1 = bufferPerVertexColor[index++] & 0xff;
+	                b2 = bufferPerVertexColor[index++] & 0xff;
+	                b3 = bufferPerVertexColor[index++] & 0xff;
+	                b4 = bufferPerVertexColor[index++] & 0xff;
+	
+	                A = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+	
+	                perVertexColor[i].w = Float.intBitsToFloat(A);
+	                
+	            }
+            }
+            
             progress.updateValueImmed(added + (100 / total));
 
-            ModelTriangleMesh mesh = new ModelTriangleMesh(akVertex, akNormal, aiConnect);
+            ModelTriangleMesh mesh = new ModelTriangleMesh(akVertex, akNormal, aiConnect, perVertexColor);
 
             // mesh.getConsistentComponents();
             // ModelTriangleMesh mesh2 = new ModelTriangleMesh(mesh.getVertexCopy(), mesh.getIndexCopy());
@@ -1223,11 +1321,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @param      startLocation      DOCUMENT ME!
      * @param      box                (dim-1)*res
      * @param      inverseDicomArray  DOCUMENT ME!
+     * @param 	   perVertexColorArray  color per vertex array.
      *
      * @exception  IOException  if there is an error writing to the file
      */
     public static void save(String kName, ModelTriangleMesh[] akComponent, boolean flip, int[] direction,
-                            float[] startLocation, float[] box, double[][] inverseDicomArray) throws IOException {
+                            float[] startLocation, float[] box, double[][] inverseDicomArray, Color4f[][] perVertexColorArray) throws IOException {
 
         if (akComponent.length == 0) {
             return;
@@ -1252,7 +1351,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 kOut.writeInt(akComponent.length);
 
                 for (i = 0; i < akComponent.length; i++) {
-                    akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray);
+                    akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, perVertexColorArray[i]);
                 }
             }
         }
@@ -1940,8 +2039,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         int i = kName.lastIndexOf('.');
         String extension;
         Color3f color = new Color3f(Color.blue);
+        String surfaceFileName;
 
         if ((i > 0) && (i < (kName.length() - 1))) {
+        	surfaceFileName = kName.substring(0, i);
             extension = kName.substring(i + 1).toLowerCase();
 
             if (extension.equals("txt")) {
@@ -1954,16 +2055,34 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 RandomAccessFile kOut = new RandomAccessFile(new File(kName), "rw");
                 kOut.writeInt(0); // object is ModelTriangleMesh
                 kOut.writeInt(1); // one component
-                save(kOut, flip, direction, startLocation, box, inverseDicomArray);
+                save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
                 kOut.close();
             } else if ( extension.equals("xml") ) {
-            	saveAsXML( kName, direction, startLocation, box);
+            	// saveAsXML( kName, direction, startLocation, box);
+            	saveXMLHeader(kName);
+            	surfaceFileName = surfaceFileName + ".sur";
+            	RandomAccessFile kOut = new RandomAccessFile(new File(surfaceFileName), "rw");
+                kOut.writeInt(0); // object is ModelTriangleMesh
+                kOut.writeInt(1); // one component
+                save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
+                kOut.close();
             }
         }
         /*
          * if ( Preferences.isDebug() ) { saveAsTextFile( JDialogBase.makeImageName( kName, "_sur.txt" ) );} */
     }
 
+    public void saveXMLHeader(String kName) {
+    	try {
+    	   FileSurfaceRefXML kSurfaceXML = new FileSurfaceRefXML(null, null);
+    	   Material material = new Material();
+       	// For the material, opacity, LOD, save as default values. 
+           kSurfaceXML.writeXMLsurface(kName, material, 0f, 100);
+    	} catch (IOException kError) { 
+    		kError.printStackTrace();
+    	}
+    }
+    
     /**
      * Saves the triangle mesh in VRML97 (VRML 2.0) format (text format).
      *
@@ -2643,11 +2762,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @param      startLocation      DOCUMENT ME!
      * @param      box                (dim-1)*res
      * @param      inverseDicomArray  DOCUMENT ME!
+     * @param 	   perVertexColorArray   color per vertex array.
      *
      * @exception  IOException  if there is an error writing to the file
      */
     protected void save(RandomAccessFile kOut, boolean flip, int[] direction, float[] startLocation, float[] box,
-                        double[][] inverseDicomArray) throws IOException {
+                        double[][] inverseDicomArray, Color4f[] perVertexColorArray) throws IOException {
         Point3f[] akVertex = getVertexCopy();
         Point3f kVertex = new Point3f();
         Vector3f kNormal = new Vector3f();
@@ -2787,7 +2907,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         }
 
         kOut.write(bufferByte);
-
+        // System.err.println("buffer byte size = " + index + "  actual size = " + (getVertexCount() * 24));
         // write connectivity
         kOut.writeInt(getIndexCount());
 
@@ -2803,6 +2923,48 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         }
 
         kOut.write(bufferInt);
+        
+       
+        if ( perVertexColorArray == null )  {
+        	kOut.writeInt(0);
+        	return;
+        } else {
+        	kOut.writeInt(1);
+        }
+        
+        byte[] bufferColor = new byte[getVertexCount() * 4 * 4];
+        Color4f vertexColor = new Color4f();
+        int R, G, B ,A;
+        for (i = 0, index = 0; i < getVertexCount(); i++) {
+        	 vertexColor = perVertexColorArray[i];
+        	
+        	 R = Float.floatToIntBits(vertexColor.x);
+        	 bufferColor[index++] = (byte) (R >>> 24);
+        	 bufferColor[index++] = (byte) (R >>> 16);
+        	 bufferColor[index++] = (byte) (R >>> 8);
+        	 bufferColor[index++] = (byte) (R & 0xff);
+
+             G = Float.floatToIntBits(vertexColor.y);
+             bufferColor[index++] = (byte) (G >>> 24);
+             bufferColor[index++] = (byte) (G >>> 16);
+             bufferColor[index++] = (byte) (G >>> 8);
+             bufferColor[index++] = (byte) (G & 0xff);
+
+             B = Float.floatToIntBits(vertexColor.z);
+             bufferColor[index++] = (byte) (B >>> 24);
+             bufferColor[index++] = (byte) (B >>> 16);
+             bufferColor[index++] = (byte) (B >>> 8);
+             bufferColor[index++] = (byte) (B & 0xff);
+             
+             A = Float.floatToIntBits(vertexColor.w);
+             bufferColor[index++] = (byte) (A >>> 24);
+             bufferColor[index++] = (byte) (A >>> 16);
+             bufferColor[index++] = (byte) (A >>> 8);
+             bufferColor[index++] = (byte) (A & 0xff);
+        	
+        }
+        kOut.write(bufferColor);
+        // System.err.println("bufferColor = "  + bufferColor.length + " index length = " + index);
     }
 
     /**
