@@ -2453,7 +2453,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         ModelTriangleMesh[] newMesh = new ModelTriangleMesh[1];
         newMesh[0] = new ModelTriangleMesh(m_akVertex, m_aiConnect);
 
-        ModelTriangleMesh.save(kName, newMesh, flip, direction, startLocation, box, inverseDicomArray);
+        ModelTriangleMesh.save(kName, newMesh, flip, direction, startLocation, box, inverseDicomArray, null);
     }
 
     /**
