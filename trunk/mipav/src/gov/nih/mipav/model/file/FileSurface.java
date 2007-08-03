@@ -331,7 +331,6 @@ public class FileSurface {
 	        surface.setLevelDetail(kFileInfo.getLevelDetail());
         } else {
         	surface.setColor(color);
-        	System.err.println("ruida1");
         	
         	for ( int i = 0; i < akComponent.length; i++ ) {
         	
