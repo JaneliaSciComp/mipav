@@ -18,8 +18,8 @@ import java.util.*;
 public class AlgorithmCreateRtable extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    // Number of bins covering gradient direction, normal to the tangent angle, going from 0 degrees to +360 degrees
-    // The gradient direction is defined as going into the object
+    // Number of bins covering tangent direction where VOI contour ordering is made counterclockwise
+    // The angle goes from 0 to 2*PI.
     private int binNumber = 90;
     
     // Name of file in which R-table is stored
@@ -41,9 +41,8 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
      * AlgorithmCreateRtable.
      *
      * @param  srcImg   Binary source image that has contour VOI for R-table generation
-     * @param  binNumber Number of bins for gradient direction, normal to the tangent angle, going
-     *                   form 0 degrees to +360 degrees.  The gradient direction is defined as going
-     *                   into the object.
+     * @param  binNumber Number of bins for tangent direction going from 0 degrees to +360 degrees.  
+     *                   The VOI point ordering is made counterclockwise.
      * @param  sidePointsForTangent  Number of points to take from each side of a point on a curve
      *                               in determining the tangent
      * @param  fileName Name of file to store R-table in
@@ -84,7 +83,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         
         byte[] srcBuffer;
         byte[] maskBuffer;
-        boolean test = false;
+        boolean test = true;
         int indexArray[];
         int neighbors;
         boolean foundArray[];
@@ -196,6 +195,8 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
                 }
             }   
         }
+        
+        ((VOIContour)(selectedVOI.getCurves()[0].elementAt(0))).makeCounterClockwise();
         
         center = selectedVOI.getCenterOfMass();
         centerX = center.x;
@@ -582,22 +583,10 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
                     normalY = (float)y1t;
                 } 
             }
-            omega = Math.atan2(normalY, normalX);
+            omega = Math.atan2(tangentY, tangentX);
             // Change omega range from -PI to PI to 0 to 2*PI
             if (omega < 0.0) {
                 omega = omega + 2.0 * Math.PI;
-            }
-            x = (int)Math.round(xpc + Math.cos(omega));
-            y = (int)Math.round(ypc + Math.sin(omega));
-            index = x + xDim * y;
-            if (maskBuffer[index] == 0) {
-              // Not in VOI - take normal going the opposite way
-              if (omega < Math.PI) {
-                  omega = omega + Math.PI;
-              }
-              else {
-                  omega = omega - Math.PI;
-              }
             }
             omegaIndex = (int)(omega/binWidth);
             distX = centerX - xpc;
