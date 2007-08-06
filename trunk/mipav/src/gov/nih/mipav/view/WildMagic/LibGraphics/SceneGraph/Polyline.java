@@ -12,6 +12,9 @@
 //     http://www.geometrictools.com/License/WildMagicLicense.pdf
 //
 // Version: 4.0.0 (2006/06/28)
+//
+// Ported to Java by Alexandra Bokinsky, PhD, Geometric Tools, Inc. (July 2007)
+//
 
 package gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph;
 
