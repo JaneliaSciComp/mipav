@@ -1,7 +1,3 @@
-/**
- * 
- */
-
 package gov.nih.mipav.view.renderer.volumeview;
 
 import javax.media.opengl.*;
@@ -23,10 +19,50 @@ import gov.nih.mipav.view.renderer.GeneralLight;
 import gov.nih.mipav.view.renderer.volumeview.*;
 
 /**
+ * 
+ * GPUVolumeRender and VolumeShaderEffect implement ray-cast volume shading.
+ *
+ * GPUVolumeRender applies a VolumeShaderEffect to the proxy geometry. The
+ * VolumeShaderEffect contains the shader programs, texture images, and shader
+ * UserConstant parameters needed for producing the ray-traced images. It
+ * extends the ShaderEffect class in Wild Magic.  Volume rendering with proxy
+ * geometry is presented in chapters 39 and 40 of GPU Gems: Programming
+ * Techniques, Tips, and Tricks for Real-Time Graphics by Randima
+ * Fernando. The volume shaders need to compute the start- and end-points of
+ * the ray to trace in the 3D volume texture. The proxy geometry provides a
+ * way of generating this information.
+ * 
+ * In the GPUVolumeRender class, the proxy geometry is a cube with x,y,z
+ * dimensions based on the ModelImage data. During every rendering pass, cube
+ * proxy-geometry is rendered twice. The first rendering pass renders to an
+ * off-screen buffer, creating a texture image named SceneImage, which is used
+ * during the second rendering pass.
+ * 
+ * In the first rendering pass the cube is rendered with the vertex colors set
+ * equal to the texture coordinates, and with all front-facing polygons
+ * removed. The resulting texture image, SceneImage shows the back faces of
+ * the cube, where the color represents the texture coordinate of that
+ * pixel the cube face.
+ *
+ * The SceneImage texture is passed to the volume pixel-shader on the second
+ * rendering pass. The front-facing polygons of the cube are rendered, and the
+ * texture-coordinates for each pixel calculated in the vertex-shader. The
+ * pixel-shader thus has both the texture-coordinates of the front-facing
+ * polygons and the back-facing polygons and can calculate a ray through the
+ * volume in texture coordinates to trace.
  */
 public class GPUVolumeRender extends JavaApplication3D
     implements GLEventListener, KeyListener, MouseMotionListener
 {
+    /**
+     * Constructs a new GPUVolumeRender object.
+     * @param kImageA ModelImage A
+     * @param kLUTa, LUT for ModelImage A
+     * @param kRGBTa, RGB lookup table for ModelImage A
+     * @param kImageB ModelImage B
+     * @param kLUTb, LUT for ModelImage B
+     * @param kRGBTb, RGB lookup table for ModelImage B
+     */
     public GPUVolumeRender( ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
                             ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
     {
@@ -59,6 +95,9 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kSculptor.setImage(m_kImageA, m_kImageB);
     }
 
+    /**
+     * memory cleanup.
+     */
     public void finalize()
     {
         m_kAnimator.stop();
@@ -70,7 +109,6 @@ public class GPUVolumeRender extends JavaApplication3D
         try {
             m_kSculptor.finalize();
         } catch (Throwable e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         m_kSculptor = null;
@@ -87,6 +125,11 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kVolumeShaderEffect.finalize();
     }
 
+    /**
+     * Part of the GLEventListener interface.
+     * display is called by the Animator object.
+     * @param arg0, the GLAutoDrawable (GLCanvas) to display.
+     */
     public void display(GLAutoDrawable arg0) {
         if ( !m_bVisible )
         {
@@ -206,8 +249,18 @@ public class GPUVolumeRender extends JavaApplication3D
         UpdateFrameCount();
     }
 
+    /**
+     * Part of the GLEventListener interface.
+     */
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
 
+    /**
+     * Part of the GLEventListener interface. Init is called once when the
+     * GLCanvas is first displayed. Called again if the GLCanvas is removed
+     * from the frame and added to another window or panel. Initializes the
+     * display.
+     * @param arg0, GLCanvas
+     */
     public void init(GLAutoDrawable arg0) {
         if ( m_bInit )
         {
@@ -254,20 +307,15 @@ public class GPUVolumeRender extends JavaApplication3D
         //m_kAnimator.setRunAsFastAsPossible(true); 
         m_kAnimator.start();
     }
-    
-    public void stopAnimator()
-    {
-        if ( (m_kAnimator != null) && m_kAnimator.isAnimating() )
-        {
-            m_kAnimator.stop();
-        }        
-    }
 
-    public void startAnimator()
-    {
-        m_kAnimator.start();
-    }
-
+    /**
+     * Part of the GLEventListener interface. Called when the GLCanvas is resized.
+     * @param arg0, the GLCanvas
+     * @param iX, the new x-position in screen coordinates.
+     * @param iY, the new y-position in screen coordinates.
+     * @param iWidth, the new width
+     * @param iHeight, the new height
+     */
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
         if (iWidth > 0 && iHeight > 0)
         {
@@ -285,11 +333,19 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Returns the GLCanvas in the m_pkRenderer object.
+     * @return OpenGLRenderer.GLCanvas
+     */
     public GLCanvas GetCanvas()
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
 
+    /**
+     * Called by the init() function. Creates and initialized the scene-graph.
+     * @param arg0, the GLCanvas
+     */
     private void CreateScene (GLAutoDrawable arg0)
     {
         // The screen camera is designed to map (x,y,z) in [0,1]^3 to (x',y,'z')
@@ -407,8 +463,13 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
-
-
+    /**
+     * Called when the opacity transfer function changes.
+     * @param iImage, the image the transfer function modifies (ImageA = 0,
+     * ImageB = 1, ImageAGM = 2, ImageBGM = 3)
+     * @param kTransfer, the new transfer function
+     * @return returns if the image has been modified.
+     */
     public boolean updateImages(int iImage, TransferFunction kTransfer)
     {
         if ( m_kVolumeShaderEffect == null )
@@ -433,15 +494,26 @@ public class GPUVolumeRender extends JavaApplication3D
         return m_kVolumeShaderEffect.UpdateImages(kLUTa, kLUTb);
     }
 
+    /**
+     * Called by CreateScene. Creates the bounding-box proxy geometry scene
+     * node.
+     */
     private void CreateBox ()
     {
-         int iXBound = m_kImageA.getExtents()[0];
-         int iYBound = m_kImageA.getExtents()[1];
-         int iZBound = m_kImageA.getExtents()[2];
+        int iXBound = m_kImageA.getExtents()[0];
+        int iYBound = m_kImageA.getExtents()[1];
+        int iZBound = m_kImageA.getExtents()[2];
         Box(iXBound,iYBound,iZBound);
         m_spkVertexColor3Shader = new VertexColor3Effect();
     }
 
+    /**
+     * Called by CreateBox. Creates the bounding-box proxy geometry (VertexBuffer, IndexBuffer).
+     * @param iXBound image x-extent.
+     * @param iYBound image y-extent.
+     * @param iZBound image z-extent.
+     * @return TriMesh, new geometry.
+     */
     private TriMesh Box (int iXBound, int iYBound, int iZBound)
     {
         Attributes kAttr = new Attributes();
@@ -594,9 +666,11 @@ public class GPUVolumeRender extends JavaApplication3D
         return m_kMesh;
     }
 
-
-
-
+    /**
+     * Part of the KeyListener interface. Pressing 'b' toggles displaying the
+     * proxy-geometry versus the ray-traced volume.
+     * @param e, the key event.
+     */
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
         
@@ -613,38 +687,61 @@ public class GPUVolumeRender extends JavaApplication3D
         return;
     }
 
+    /** 
+     * Changes the projection to Orthographic Projection.
+     */
     public void setOrthographicProjection()
     {
         m_spkCamera.Perspective = false;
         m_pkRenderer.OnFrustumChange();
     }
 
+    /** 
+     * Changes the projection to Perspective Projection.
+     */
     public void setPerspectiveProjection()
     {
         m_spkCamera.Perspective = true;
         m_pkRenderer.OnFrustumChange();
     }
 
+    /**
+     * Returns true when sculpting is enabled.
+     * @return true when sculpting is enabled, false otherwise.
+     */
     public boolean getSculptEnabled()
     {
         return m_kSculptor.getEnable();
     }
     
+    /**
+     * Enables and disables sculpting.
+     * @param bSculpt, true to enable sculpting, false to disable.
+     */
     public void enableSculpt( boolean bSculpt )
     {
         m_kSculptor.enableSculpt(bSculpt);
     }
 
+    /**
+     * Invert the sculpt region.
+     */
     public void invertSculpt()
     {
         m_kSculptor.invertSculpt();
     }
 
+    /**
+     * Clear the sculpt region.
+     */
     public void clearSculpt()
     {
         m_kSculptor.clearSculpt();
     }
     
+    /**
+     * Undo applying the sculpt region to the volume.
+     */
     public void undoSculpt()
     {
         if ( m_kVolumeShaderEffect.GetVolumeTargetA().GetImage().GetData() != null )
@@ -670,6 +767,9 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kVolumeShaderEffect.ReleaseVolume();
     }
 
+    /**
+     * Apply the sculpt region to the volume.
+     */
     public void applySculpt()
     {
         float[] afData = new float[16];
@@ -701,16 +801,31 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Save the sculpted volume.
+     * @param options, file writing options
+     * @param filtertype, 
+     * @return boolean, true on sucess.
+     */
     public boolean save(FileWriteOptions options, int filterType)
     {
         return m_kSculptor.save(options, filterType);
     }
 
+    /**
+     * Sets the sculpt drawing shape.
+     * @param shape, (0 = free-hand, 1 = rectangular)
+     */
     public void setDrawingShape(int shape)
     {
         m_kSculptor.setDrawingShape(shape);
     }
 
+    /**
+     * Causes the VolumeShader to update the copy of the ModelImage on the
+     * GPU.
+     * @param kImage, the new image.
+     */
     public void updateData( ModelImage kImage )
     {
         m_kImageA = kImage;
@@ -721,6 +836,13 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Initializes the objects in the scene other than the ray-traced
+     * volume. Bounding cube, clip planes, orientation cube, etc.
+     * @param iXBound image x-extent.
+     * @param iYBound image y-extent.
+     * @param iZBound image z-extent.
+     */
     private void InitDisplay(int iXBound, int iYBound, int iZBound)
     {
         m_akPolyline = new Polyline[6];
@@ -896,7 +1018,12 @@ public class GPUVolumeRender extends JavaApplication3D
        m_kVolumeShaderEffect.InitClip(new float[] { 0, 1, 0, 1, 0, 1 });
     }
 
-
+    /**
+     * Called from JPanelClip. Sets the axis-aligned clip plane.
+     * @param iWhich, the clip plane to set.
+     * @param fValue, the new position of the clip plane (the same value as
+     * the slider in JPanelClip).
+     */
     public void setClipPlane( int iWhich, float fValue )
     {
         if ( iWhich < 2 )
@@ -938,12 +1065,23 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kVolumeShaderEffect.SetClip(iWhich, data);
     }
 
+    /**
+     * Called from JPanelClip. Sets the axis-aligned clip plane display on/off and color.
+     * @param iWhich, the clip plane to set.
+     * @param bDisplay on/off.
+     * @param kColor, the clipping plane color.
+     */
     public void displayClipPlane( int iWhich, boolean bDisplay, ColorRGB kColor )
     {
         setClipPlaneColor( iWhich, kColor );
         displayClipPlane( iWhich, bDisplay );
     }
 
+    /**
+     * Called from JPanelClip. Sets the axis-aligned clip plane display on/off.
+     * @param iWhich, the clip plane to set.
+     * @param bDisplay on/off.
+     */
     public void displayClipPlane( int iWhich, boolean bDisplay )
     {
         if ( bDisplay != m_abDisplayPolyline[iWhich] )
@@ -962,7 +1100,10 @@ public class GPUVolumeRender extends JavaApplication3D
         m_spkScene.UpdateRS();
     }
 
-
+    /**
+     * Called from JPanelDisplay. Sets the bounding box display on/off.
+     * @param bDisplay on/off.
+     */
     public void DisplayBoundingBox( boolean bDisplay )
     {
         if ( bDisplay != m_bDisplayBoundingBox )
@@ -987,11 +1128,19 @@ public class GPUVolumeRender extends JavaApplication3D
         m_spkScene.UpdateRS();
     }
 
+    /**
+     * Called from JPanelDisplay. Sets the orientation cube display on/off.
+     * @param bDisplay on/off.
+     */
     public void DisplayOrientationCube( boolean bDisplay )
     {
         m_bDisplayOrientationCube = bDisplay;
     }
 
+    /**
+     * Called from JPanelDisplay. Sets the bounding box color.
+     * @param kColor bounding box color.
+     */
     public void SetBoundingBoxColor( ColorRGB kColor )
     {
         for ( int i = 0; i < 6; i++ )
@@ -1004,12 +1153,12 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
-
-    public boolean getDisplayClipPlane( int iWhich )
-    {
-        return m_abDisplayPolyline[iWhich];
-    }
-
+    /**
+     * Enables the axis-aligned clipping planes.
+     * @param iWhich, the clip plane to enable.
+     * @param bEnable clipping enabled
+     * @param bDisplay on/off.
+     */
     public void enableClipPlane( int iWhich, boolean bEnable, boolean bDisplay )
     {
         displayClipPlane( iWhich, bDisplay );
@@ -1043,6 +1192,12 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kVolumeShaderEffect.SetClip(iWhich,data);
     }
 
+    /**
+     * Enables the eye clip plane.
+     * @param bEnable clipping enabled
+     * @param bDisplay on/off.
+     * @param kColor, the eye clip plane color.
+     */
     public void enableEyeClipPlane( boolean bEnable, boolean bDisplay, ColorRGB kColor )
     {
         setEyeColor(kColor);
@@ -1054,6 +1209,12 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Enables the inverse-eye clip plane.
+     * @param bEnable clipping enabled
+     * @param bDisplay on/off.
+     * @param kColor, the inverse-eye clip plane color.
+     */
     public void enableEyeInvClipPlane( boolean bEnable, boolean bDisplay, ColorRGB kColor )
     {
         setEyeInvColor(kColor);
@@ -1065,6 +1226,11 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Sets the eye clip plane position.
+     * @param f4 clip position (same value as sSlice in JPanelClip)
+     * @param bDisplay on/off.
+     */
     public void setEyeClipPlane( float f4, boolean bDisplay )
     {
         f4 /= (m_kImageA.getExtents()[2] -1);
@@ -1089,6 +1255,11 @@ public class GPUVolumeRender extends JavaApplication3D
         m_bDisplayClipEye = bDisplay;
     }
 
+    /**
+     * Sets the inverse-eye clip plane position.
+     * @param f4 clip position (same value as sSliceInv in JPanelClip)
+     * @param bDisplay on/off.
+     */
     public void setEyeInvClipPlane( float f4, boolean bDisplay )
     {
         f4 /= (m_kImageA.getExtents()[2] -1);
@@ -1114,6 +1285,12 @@ public class GPUVolumeRender extends JavaApplication3D
     }
 
     
+    /**
+     * Enables the arbitrary clip plane position.
+     * @param bEnable clipping enabled
+     * @param bDisplay on/off.
+     * @param kColor, the arbitrary clip plane color.
+     */
     public void enableArbitraryClipPlane( boolean bEnable, boolean bDisplay, ColorRGB kColor )
     {
         setArbColor(kColor);
@@ -1124,6 +1301,10 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Displays the arbitrary clip plane position.
+     * @param bDisplay on/off.
+     */
     public void displayArbitraryClipPlane( boolean bDisplay )
     {
         if ( m_bDisplayClipArb != bDisplay )
@@ -1143,6 +1324,10 @@ public class GPUVolumeRender extends JavaApplication3D
     }
         
 
+    /**
+     * Enables the arbitrary clip plane position.
+     * @param f4 clip position (same value as aSlice in JPanelClip)
+     */
     public void setArbitraryClipPlane( float f4 )
     {
         f4 /= (m_kImageA.getExtents()[0] -1);
@@ -1150,6 +1335,9 @@ public class GPUVolumeRender extends JavaApplication3D
         doClip();
     }
     
+    /**
+     * Calculates the rotation for the arbitrary clip plane.
+     */
     private void doClip() 
     {        
         // update position of the bounding box:
@@ -1179,6 +1367,11 @@ public class GPUVolumeRender extends JavaApplication3D
         m_spkScene.UpdateRS();
     }
 
+    /**
+     * Sets the axis-aligned clip plane color.
+     * @param iWhich, one of the 6 clip planes
+     * @param kColor, the new color.
+     */
     public void setClipPlaneColor( int iWhich, ColorRGB kColor )
     {
         kColor.R( (float)(kColor.R()/255.0) );
@@ -1192,6 +1385,10 @@ public class GPUVolumeRender extends JavaApplication3D
         m_akPolyline[iWhich].VBuffer.Release();
     }
 
+    /**
+     * Sets the eye clip plane color.
+     * @param kColor, the new color.
+     */
     public void setEyeColor( ColorRGB kColor )
     {
         kColor.R( (float)(kColor.R()/255.0) );
@@ -1204,6 +1401,10 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kClipEye.VBuffer.Release();
     }
     
+    /**
+     * Sets the arbitrary clip plane color.
+     * @param kColor, the new color.
+     */
     public void setArbColor( ColorRGB kColor )
     {
         kColor.R( (float)(kColor.R()/255.0) );
@@ -1216,6 +1417,10 @@ public class GPUVolumeRender extends JavaApplication3D
        m_kClipArb.VBuffer.Release();
     }
     
+    /**
+     * Sets the inverse-eye clip plane color.
+     * @param kColor, the new color.
+     */
     public void setEyeInvColor( ColorRGB kColor )
     {
         kColor.R( (float)(kColor.R()/255.0) );
@@ -1267,6 +1472,11 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Called when the tri-planar view is rotated, so the matching rotation
+     * can be applied to the volume
+     * @param data, the rotation matrix.
+     */
     public void transformUpdate( float[] data )
     {
         Matrix3f kRotate = new Matrix3f( -1, 0, 0,
@@ -1282,17 +1492,30 @@ public class GPUVolumeRender extends JavaApplication3D
         m_spkScene.UpdateGS();
     }
 
+    /**
+     * Called by the ApplicationGUI. Causes the current shader to be reloaded
+     * from file, compiled and applied to the proxy-geometry.
+     */
     public void reloadShaders()
     {
         m_kVolumeShaderEffect.Reload( m_pkRenderer );
         updateLighting(m_akLights);
     }
 
+    /**
+     * Sets the currently visible flag. Used when the GLCanvas is removed from
+     * the display panel or frame.
+     * @param bVisible, set to false when the GLCanvas container is not displayed.
+     */
     public void setVisible( boolean bVisible )
     {
         m_bVisible = bVisible;
     }
 
+    /**
+     * Called from JPanelLight. Updates the lighting parameters.
+     * @param akGLights, the set of GeneralLight objects.
+     */
     public void updateLighting(GeneralLight[] akGLights )
     {
         if ( akGLights == null )
@@ -1343,6 +1566,12 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Called from the AdvancedMaterialProperties dialog. Sets the material
+     * properties for the VolumeShaderSUR (Surface and Composite Surface
+     * volume shaders.)
+     * @param kMaterial, new material properties for the surface mode.
+     */
     public void SetMaterialState( MaterialState kMaterial )
     {
         m_kMesh.DetachGlobalState(GlobalState.StateType.MATERIAL);
@@ -1352,6 +1581,11 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kMesh.UpdateRS();
     }
 
+    /**
+     * Sets the color lut for the ModelImage image.
+     * @param RGBT, new ModelRGB
+     * @param iImage, the image it applies to.
+     */
     public void setRGBT(ModelRGB RGBT, int iImage)
     {
         if ( m_kVolumeShaderEffect == null )
@@ -1362,36 +1596,54 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kVolumeShaderEffect.SetRGBT( RGBT, iImage );
     }
 
+    /**
+     * Display the volume in MIP mode.
+     */
     public void MIPMode()
     {
         m_kVolumeShaderEffect.MIPMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
+    /**
+     * Display the volume in DDR mode.
+     */
     public void DDRMode()
     {
         m_kVolumeShaderEffect.DDRMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
+    /**
+     * Display the volume in Composite mode.
+     */
     public void CMPMode()
     {
         m_kVolumeShaderEffect.CMPMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
+    /**
+     * Display the volume in Composite Surface mode.
+     */
     public void SURMode()
     {
         m_kVolumeShaderEffect.SURMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
+    /**
+     * Display the volume in Surface mode.
+     */
     public void SURFASTMode()
     {
         m_kVolumeShaderEffect.SURFASTMode(m_pkRenderer);
         ResetShaderParamsWindow();
     }
 
+    /**
+     * Closes the shader parameters window.
+     */
     private void ResetShaderParamsWindow()
     {
         if ( m_kShaderParamsWindow != null )
@@ -1400,11 +1652,19 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Sets blending between imageA and imageB.
+     * @param fValue, the blend value (0-1)
+     */
     public void Blend( float fValue )
     {
         m_kVolumeShaderEffect.Blend(fValue);
     }
     
+    /**
+     * Launches the ApplicationGUI window displaying the currently-loaded
+     * shader parameters.
+     */
     public void displayShaderParameters()
     {
         if ( m_kShaderParamsWindow == null )
@@ -1418,6 +1678,10 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kShaderParamsWindow.setParent(this);
     }
     
+    /**
+     * Sets the background color.
+     * @param kColor, new background color.
+     */
     public void SetBackgroundColor( ColorRGBA kColor )
     {
         m_kBackgroundColor = kColor;
@@ -1425,13 +1689,10 @@ public class GPUVolumeRender extends JavaApplication3D
     }
 
 
-
     /**
-     * Create the rotation control cubic box.
-     *
-     * @return A cube representing the image orientation, with labels painted
-     * on the cube faces showing which axis corresponds to which axis in
-     * patient coordinates.
+     * Create the rotation control cubic box. A cube representing the image
+     * orientation, with labels painted on the cube faces showing which axis
+     * corresponds to which axis in patient coordinates.
      */
     private void InitCubicTextures() {
 
@@ -1452,6 +1713,10 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Enables/Disables Gradient Magnitude filter.
+     * @param bShow, gradient magnitude filter on/off
+     */
     public void SetGradientMagnitude(boolean bShow)
     {
         if ( m_kVolumeShaderEffect != null )
@@ -1460,6 +1725,10 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /**
+     * Enables/Disables self-shadowing in the Surface mode.
+     * @param bShadow, shadow on/off.
+     */
     public void SelfShadow(boolean bShadow)
     {
         if ( m_kVolumeShaderEffect != null )
