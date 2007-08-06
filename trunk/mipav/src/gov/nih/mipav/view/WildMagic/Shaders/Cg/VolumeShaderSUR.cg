@@ -3,13 +3,13 @@
 //----------------------------------------------------------------------------
 void GetDirectionalLightFactors
 (
-    float3    kModelPosition,
-    float3    kModelNormal,
-    float3    kCameraPosition,
-    float3    kLightDirection,
-    float     fSpecularExponent,
-    out float fDiffuseFactor,
-    out float fSpecularFactor)
+ float3    kModelPosition,
+ float3    kModelNormal,
+ float3    kCameraPosition,
+ float3    kLightDirection,
+ float     fSpecularExponent,
+ out float fDiffuseFactor,
+ out float fSpecularFactor)
 {
     float fDiff, fSpec;
     kLightDirection = normalize(kLightDirection);
@@ -40,13 +40,13 @@ void GetDirectionalLightFactors
 //----------------------------------------------------------------------------
 void GetPointLightFactors
 (
-    float3    kModelPosition,
-    float3    kModelNormal,
-    float3    kCameraPosition,
-    float3    kLightPosition,
-    float     fSpecularExponent,
-    out float fDiffuseFactor,
-    out float fSpecularFactor)
+ float3    kModelPosition,
+ float3    kModelNormal,
+ float3    kCameraPosition,
+ float3    kLightPosition,
+ float     fSpecularExponent,
+ out float fDiffuseFactor,
+ out float fSpecularFactor)
 {
     float fDiff, fSpec;
 
@@ -78,17 +78,17 @@ void GetPointLightFactors
 //----------------------------------------------------------------------------
 void GetSpotLightFactors
 (
-    float3    kModelPosition,
-    float3    kModelNormal,
-    float3    kCameraPosition,
-    float3    kLightPosition,
-    float     fSpecularExponent,
-    float3    kSpotAxis,
-    float     fSpotCosAngle,
-    float     fSpotExponent,
-    out float fDiffuseFactor,
-    out float fSpecularFactor,
-    out float fSpotFactor)
+ float3    kModelPosition,
+ float3    kModelNormal,
+ float3    kCameraPosition,
+ float3    kLightPosition,
+ float     fSpecularExponent,
+ float3    kSpotAxis,
+ float     fSpotCosAngle,
+ float     fSpotExponent,
+ out float fDiffuseFactor,
+ out float fSpecularFactor,
+ out float fSpotFactor)
 {
     float fDiff, fSpec, fSpot;
 
@@ -133,9 +133,9 @@ void GetSpotLightFactors
 
 float GetAttenuation
 (
-    float3   kModelPos,
-    float3   kLightPos, 
-    float4   kAttenuation)
+ float3   kModelPos,
+ float3   kLightPos, 
+ float4   kAttenuation)
 {
     // Attenuate the color (x=constant, y=linear, z=quadratic, w=intensity).
     // Attenuation is not active when the x component is zero.  The distance
@@ -147,12 +147,12 @@ float GetAttenuation
     //float3 kVertexModelDir = kModelPos - kLightPos;
     //float3 kVertexWorldDir = mul(kVertexModelDir,kWMatrix);
     float fDistance = sqrt(
-        kVertexWorldDir.x*kVertexWorldDir.x +
-        kVertexWorldDir.y*kVertexWorldDir.y +
-        kVertexWorldDir.z*kVertexWorldDir.z);
+                           kVertexWorldDir.x*kVertexWorldDir.x +
+                           kVertexWorldDir.y*kVertexWorldDir.y +
+                           kVertexWorldDir.z*kVertexWorldDir.z);
 
     float fAttn = kAttenuation.w/(kAttenuation.x + fDistance*(kAttenuation.y
-        + fDistance*kAttenuation.z));
+                                                              + fDistance*kAttenuation.z));
     
     return fAttn;
 }
@@ -185,8 +185,8 @@ void DirectionalLight( uniform float3 kModelPosition,
 {
     float fDiff, fSpec;
     GetDirectionalLightFactors((float3)kModelPosition,kModelNormal,
-        CameraWorldPosition,LightDirection,MaterialSpecular.a,
-        fDiff,fSpec);
+                               CameraWorldPosition,LightDirection,MaterialSpecular.a,
+                               fDiff,fSpec);
 
     float3 kColor = MaterialAmbient*LightAmbient;
     if (fDiff > 0.0f)
@@ -420,73 +420,73 @@ bool myClip(float3 vec,
 
 /** Raycasting fragment program implementation */
 void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
-                      in float4 inPos,
-                      out float4 kColor	    : COLOR0,
-                      uniform sampler2D tex, 
-                      uniform sampler3D volume_tex, 
-                      uniform sampler1D colormap, 
-                      uniform sampler1D opacitymap, 
-                      uniform sampler3D normalmap, 
+                         in float4 inPos,
+                         out float4 kColor	    : COLOR0,
+                         uniform sampler2D SceneImage, 
+                         uniform sampler3D VolumeImageA, 
+                         uniform sampler1D ColorMapA, 
+                         uniform sampler1D OpacityMapA, 
+                         uniform sampler3D normalmap, 
                          uniform sampler3D VolumeImageA_GM, 
                          uniform sampler1D OpacityMapA_GM, 
-                      uniform float stepsize,
-                      uniform float IsColor,
-                      uniform float DoClip,
-                      uniform float SelfShadow,
-                          uniform float GradientMagnitude,
-                      uniform float Composite,
-                      uniform float4 BackgroundColor,
-                      uniform float clipX,
-                      uniform float clipXInv,
-                      uniform float clipY,
-                      uniform float clipYInv,
-                      uniform float clipZ,
-                      uniform float clipZInv,
-                      uniform float4 clipArb,
-                      uniform float4 clipEye,
-                      uniform float4 clipEyeInv,
+                         uniform float stepsize,
+                         uniform float IsColor,
+                         uniform float DoClip,
+                         uniform float SelfShadow,
+                         uniform float GradientMagnitude,
+                         uniform float Composite,
+                         uniform float4 BackgroundColor,
+                         uniform float clipX,
+                         uniform float clipXInv,
+                         uniform float clipY,
+                         uniform float clipYInv,
+                         uniform float clipZ,
+                         uniform float clipZInv,
+                         uniform float4 clipArb,
+                         uniform float4 clipEye,
+                         uniform float4 clipEyeInv,
 
-                      uniform float3 MaterialEmissive,
-                      uniform float3 MaterialAmbient,
-                      uniform float4 MaterialDiffuse,
-                      uniform float4 MaterialSpecular,
+                         uniform float3 MaterialEmissive,
+                         uniform float3 MaterialAmbient,
+                         uniform float4 MaterialDiffuse,
+                         uniform float4 MaterialSpecular,
 
-                      uniform float  Light0Type,
-                      uniform float4 Light0Ambient,
-                      uniform float4 Light0Diffuse,
-                      uniform float4 Light0Specular,
-                      uniform float4 Light0SpotCutoff,
-                      uniform float4 Light0Attenuation,
-                      uniform float4 Light0ModelPosition,
-                      uniform float4 Light0ModelDirection,
+                         uniform float  Light0Type,
+                         uniform float4 Light0Ambient,
+                         uniform float4 Light0Diffuse,
+                         uniform float4 Light0Specular,
+                         uniform float4 Light0SpotCutoff,
+                         uniform float4 Light0Attenuation,
+                         uniform float4 Light0ModelPosition,
+                         uniform float4 Light0ModelDirection,
 
-                      uniform float4 Light1Ambient,
-                      uniform float4 Light1Attenuation,
+                         uniform float4 Light1Ambient,
+                         uniform float4 Light1Attenuation,
 
-                      uniform float  Light2Type,
-                      uniform float4 Light2Ambient,
-                      uniform float4 Light2Diffuse,
-                      uniform float4 Light2Specular,
-                      uniform float4 Light2SpotCutoff,
-                      uniform float4 Light2Attenuation,
-                      uniform float4 Light2WorldPosition,
-                      uniform float4 Light2WorldDirection,
+                         uniform float  Light2Type,
+                         uniform float4 Light2Ambient,
+                         uniform float4 Light2Diffuse,
+                         uniform float4 Light2Specular,
+                         uniform float4 Light2SpotCutoff,
+                         uniform float4 Light2Attenuation,
+                         uniform float4 Light2WorldPosition,
+                         uniform float4 Light2WorldDirection,
 
-                      uniform float  Light3Type,
-                      uniform float4 Light3Ambient,
-                      uniform float4 Light3Diffuse,
-                      uniform float4 Light3Specular,
-                      uniform float4 Light3SpotCutoff,
-                      uniform float4 Light3Attenuation,
-                      uniform float4 Light3WorldPosition,
-                      uniform float4 Light3WorldDirection,
+                         uniform float  Light3Type,
+                         uniform float4 Light3Ambient,
+                         uniform float4 Light3Diffuse,
+                         uniform float4 Light3Specular,
+                         uniform float4 Light3SpotCutoff,
+                         uniform float4 Light3Attenuation,
+                         uniform float4 Light3WorldPosition,
+                         uniform float4 Light3WorldDirection,
 
-                      uniform float3 CameraWorldPosition,
-                      uniform float4x4 WVPMatrix)
+                         uniform float3 CameraWorldPosition,
+                         uniform float4x4 WVPMatrix)
 {
     // find the right place to lookup in the backside buffer
     float2 texc = ((inPos.xy / inPos.w) + 1) / 2.0;
-    float4 back_position  = tex2D(tex, texc);
+    float4 back_position  = tex2D(SceneImage, texc);
 
     // the start position of the ray is stored in the texturecoordinate
     float3 start = inTexCoord1; 
@@ -583,8 +583,8 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             // The value is not clipped, compute the color:
             if ( !bClipped )
             {
-                color = tex3D(volume_tex,position);
-                opacity = tex1D(opacitymap,color.r).r;
+                color = tex3D(VolumeImageA,position);
+                opacity = tex1D(OpacityMapA,color.r).r;
                 if ( GradientMagnitude != 0 )
                 {
                     colorGM = tex3D(VolumeImageA_GM,position);
@@ -594,13 +594,13 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
 
                 if ( IsColor != 0 )
                 {
-                    color.r = tex1D(colormap,color.r).r;
-                    color.g = tex1D(colormap,color.g).g;
-                    color.b = tex1D(colormap,color.b).b;
+                    color.r = tex1D(ColorMapA,color.r).r;
+                    color.g = tex1D(ColorMapA,color.g).g;
+                    color.b = tex1D(ColorMapA,color.b).b;
                 }
                 else
                 {
-                    color = tex1D(colormap,color.r);
+                    color = tex1D(ColorMapA,color.r);
                 }
             }
         }
@@ -659,13 +659,13 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             // Composite surface:
             if ( Composite != 0 )
             {
-                color_acc   = (1.0 - alpha_acc) * color * opacity + color_acc;
+                color_acc += (1.0 - alpha_acc) * color * opacity;
                 alpha_acc += (1 - alpha_acc) * opacity;
             }
             // Surface:
             else if ( (color.x != 0) || (color.y != 0) || (color.z != 0) )
             {
-                color_acc   = color;
+                color_acc = color;
                 alpha_acc = 1.0;
                 break;
             }
@@ -745,8 +745,8 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             if ( !break1 )
             {
                 // If we find a non-zero opacity, remove the color contribution
-                color = tex3D(volume_tex,position1);
-                opacity = tex1D(opacitymap,color.r).r;
+                color = tex3D(VolumeImageA,position1);
+                opacity = tex1D(OpacityMapA,color.r).r;
                 if (opacity > 0)
                 {
                     normal2 = tex3D(normalmap,position1);
@@ -779,8 +779,8 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             if ( !break2 )
             {
                 // If we find a non-zero opacity, remove the color contribution
-                color = tex3D(volume_tex,position2);
-                opacity = tex1D(opacitymap,color.r).r;
+                color = tex3D(VolumeImageA,position2);
+                opacity = tex1D(OpacityMapA,color.r).r;
                 if (opacity > 0)
                 {
                     normal2 = tex3D(normalmap,position2);
@@ -812,8 +812,8 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             if ( !break3 )
             {
                 // If we find a non-zero opacity, remove the color contribution
-                color = tex3D(volume_tex,position3);
-                opacity = tex1D(opacitymap,color.r).r;
+                color = tex3D(VolumeImageA,position3);
+                opacity = tex1D(OpacityMapA,color.r).r;
                 if (opacity > 0)
                 {
                     normal2 = tex3D(normalmap,position3);

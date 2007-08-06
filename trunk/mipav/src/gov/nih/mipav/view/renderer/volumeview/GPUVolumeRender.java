@@ -111,75 +111,94 @@ public class GPUVolumeRender extends JavaApplication3D
         {
             m_pkPBuffer.SetDrawable( arg0 );
 
-            // First rendering pass:
-            // Draw the proxy geometry to a color buffer, to generate the
-            // back-facing texture-coordinates:
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-            // Enable rendering to the PBuffer:
-            m_pkPBuffer.Enable();
-            m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-            m_pkRenderer.ClearBuffers();
-            // Cull front-facing polygons:
-            m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-            // Undo culling:
-            m_spkCull.CullFace = CullState.CullMode.CT_BACK;
-            // Disable the PBuffer
-            m_pkPBuffer.Disable();
-
-            // Second rendering pass:
-            // Draw the proxy grometry with the volume ray-tracing shader:
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_kVolumeShaderEffect );
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
-            m_pkRenderer.ClearBuffers();
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-
-            if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
+            if ( !m_bDisplaySecond )
             {
-                m_spkEyeCamera.SetLocation(m_spkCamera.GetLocation());
-                m_pkRenderer.SetCamera(m_spkEyeCamera);
-                if ( m_bDisplayClipEye )
+                // First rendering pass:
+                // Draw the proxy geometry to a color buffer, to generate the
+                // back-facing texture-coordinates:
+                m_kMesh.DetachAllEffects();
+                m_kMesh.AttachEffect( m_spkVertexColor3Shader );
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                // Enable rendering to the PBuffer:
+                m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+                m_pkRenderer.ClearBuffers();
+                // Cull front-facing polygons:
+                m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
+                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                // Undo culling:
+                m_spkCull.CullFace = CullState.CullMode.CT_BACK;
+            }
+            else
+            {
+                // First rendering pass:
+                // Draw the proxy geometry to a color buffer, to generate the
+                // back-facing texture-coordinates:
+                m_kMesh.DetachAllEffects();
+                m_kMesh.AttachEffect( m_spkVertexColor3Shader );
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                // Enable rendering to the PBuffer:
+                m_pkPBuffer.Enable();
+                m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+                m_pkRenderer.ClearBuffers();
+                // Cull front-facing polygons:
+                m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
+                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                // Undo culling:
+                m_spkCull.CullFace = CullState.CullMode.CT_BACK;
+                // Disable the PBuffer
+                m_pkPBuffer.Disable();
+
+                // Second rendering pass:
+                // Draw the proxy grometry with the volume ray-tracing shader:
+                m_kMesh.DetachAllEffects();
+                m_kMesh.AttachEffect( m_kVolumeShaderEffect );
+                m_kCuller.ComputeVisibleSet(m_spkScene);
+                m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
+                m_pkRenderer.ClearBuffers();
+                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+
+                if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
                 {
-                    m_pkRenderer.Draw(m_kClipEye);
+                    m_spkEyeCamera.SetLocation(m_spkCamera.GetLocation());
+                    m_pkRenderer.SetCamera(m_spkEyeCamera);
+                    if ( m_bDisplayClipEye )
+                    {
+                        m_pkRenderer.Draw(m_kClipEye);
+                    }
+                    if ( m_bDisplayClipEyeInv )
+                    {
+                        m_pkRenderer.Draw(m_kClipEyeInv);
+                    }
+                    m_pkRenderer.SetCamera(m_spkCamera);
                 }
-                if ( m_bDisplayClipEyeInv )
+
+                if ( m_bDisplayOrientationCube )
                 {
-                    m_pkRenderer.Draw(m_kClipEyeInv);
+                    for ( int i = 0; i < 6; i++ )
+                    {
+                        m_akOrientationCube[i].Local.SetRotate(m_spkScene.Local.GetRotate());
+                        m_akOrientationCube[i].UpdateGS();
+                        m_akOrientationCube[i].UpdateRS();
+                        m_pkRenderer.LoadResources(m_akOrientationCube[i]);
+                        m_pkRenderer.Draw(m_akOrientationCube[i]);
+                    }
                 }
+
+                /*
+                // Draw screne polygon:
+                m_pkRenderer.SetCamera(m_spkScreenCamera);
+                m_pkRenderer.Draw(m_spkScenePolygon);
+
+                //Draw frame rate:
                 m_pkRenderer.SetCamera(m_spkCamera);
-            }
+                DrawFrameRate(8,16,ColorRGBA.WHITE);
+                */
 
-            if ( m_bDisplayOrientationCube )
-            {
-                for ( int i = 0; i < 6; i++ )
+                if ( m_kSculptor.IsSculptDrawn() )
                 {
-                    m_akOrientationCube[i].Local.SetRotate(m_spkScene.Local.GetRotate());
-                    m_akOrientationCube[i].UpdateGS();
-                    m_akOrientationCube[i].UpdateRS();
-                    m_pkRenderer.LoadResources(m_akOrientationCube[i]);
-                    m_pkRenderer.Draw(m_akOrientationCube[i]);
+                    m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
                 }
-            }
-
-            /*
-              // Draw screne polygon:
-            m_pkRenderer.SetCamera(m_spkScreenCamera);
-            m_pkRenderer.Draw(m_spkScenePolygon);
-
-            //Draw frame rate:
-            m_pkRenderer.SetCamera(m_spkCamera);
-            DrawFrameRate(8,16,ColorRGBA.WHITE);
-            */
-
-            if ( m_kSculptor.IsSculptDrawn() )
-            {
-                m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
-            }
-            
+            }            
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
@@ -588,8 +607,9 @@ public class GPUVolumeRender extends JavaApplication3D
         case 'S':
              TestStreaming(m_spkScene,"VolumeTextures.wmof");
              return;
+        case 'b':
+            m_bDisplaySecond = !m_bDisplaySecond;
         }
-
         return;
     }
 
@@ -1511,4 +1531,5 @@ public class GPUVolumeRender extends JavaApplication3D
 
     private ApplicationGUI m_kShaderParamsWindow = null;
     private GeneralLight[] m_akLights = null;
+    private boolean m_bDisplaySecond = true;
 }
