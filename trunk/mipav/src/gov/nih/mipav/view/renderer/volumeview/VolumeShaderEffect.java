@@ -21,7 +21,7 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 /** 
  * VolumeShaderEffect is the workhorse of the GPU-based rendering in MIPAV. It
  * manages several Cg shaders for volume rendering. Each of the different
- * volume modes – MIP, DDR, Composite, Surface, and Composite Surface –
+ * volume modes MIP, DDR, Composite, Surface, and Composite Surface
  * are implemented with different Cg shaders. The volume data and lookup table
  * information are stored and passed to the shaders as texture images;
  * VolumeShaderEffect manages these images. All UserConstant shader parameters
@@ -30,12 +30,13 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 public class VolumeShaderEffect extends ShaderEffect
     implements StreamInterface
 {
-
+    /** View Mode Constants: */
     private final static int MIP = 0;
     private final static int DDR = 1;
     private final static int CMP = 2;
     private final static int SUR = 3;
     private final static int CMP_SUR = 4;
+    /** Axis-aligned clip plane shader paramter names: */
     private final static String[] m_akClip =
         new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
 
@@ -1433,63 +1434,112 @@ public class VolumeShaderEffect extends ShaderEffect
         return pkTree;
     }
 
+    /** Reference to ModelImage imageA in ViewJFrameVolumeView */
     private ModelImage m_kImageA;
+    /** ModelLUT applied to m_kImageA */
     private ModelLUT m_kLUTA;
+    /** ModelRGB applied to m_kImageA */
     private ModelRGB m_kRGBA;
+    /** Opacity transfer function applied to m_kImageA */
     private TransferFunction m_kTransferA;
 
+    /** Reference to ModelImage imageB in ViewJFrameVolumeView */
     private ModelImage m_kImageB;
+    /** ModelLUT applied to m_kImageB */
     private ModelLUT m_kLUTB;
+    /** ModelRGB applied to m_kImageB */
     private ModelRGB m_kRGBB;
+    /** Opacity transfer function applied to m_kImageB */
     private TransferFunction m_kTransferB;
 
+    /** Gradient magnitude for m_kImageA */
     private ModelImage m_kImageA_GM = null;
+    /** GraphicsImage contains GM opacity tranfer function data: */
     private GraphicsImage m_kOpacityMapA_GM = null;
+    /** Texture contains texture filter modes and GraphicsImage for opacity
+     * transfer function: */
     private Texture m_kOpacityMapTargetA_GM = null;
+    /** GraphicsImage contains volume data for gradient magnitude */
     private GraphicsImage m_kVolumeA_GM = null;
+    /** Texture contains the texture filter modes and GraphicsImage for
+     * gradient magnitude */
     private Texture m_kVolumeTargetA_GM = null;
     
+    /** Gradient magnitude for m_kImageB */
     private ModelImage m_kImageB_GM = null;
+    /** GraphicsImage contains GM opacity tranfer function data: */
     private GraphicsImage m_kOpacityMapB_GM = null;
+    /** Texture contains texture filter modes and GraphicsImage for opacity
+     * transfer function: */
     private Texture m_kOpacityMapTargetB_GM = null;
+    /** GraphicsImage contains volume data for gradient magnitude */
     private GraphicsImage m_kVolumeB_GM = null;
+    /** Texture contains the texture filter modes and GraphicsImage for
+     * gradient magnitude */
     private Texture m_kVolumeTargetB_GM = null;
 
-
+    /** Data storage for imageA volume: */
     private GraphicsImage m_kVolumeA;
+    /** Data storage for imageA normals: */
     private GraphicsImage m_kNormalA;
+    /** Data storage for imageA color map: */
     private GraphicsImage m_kColorMapA;
+    /** Data storage for imageA opacity map: */
     private GraphicsImage m_kOpacityMapA = null;
+    /** Texture object for imageA data: */
     private Texture m_kVolumeTargetA;
+    /** Texture object for imageA color map: */
     private Texture m_kColorMapTargetA;
+    /** Texture object for imageA opacity map: */
     private Texture m_kOpacityMapTargetA;
+    /** Texture object for imageA normal map: */
     private Texture m_kNormalMapTargetA;
 
+    /** Data storage for imageB volume: */
     private GraphicsImage m_kVolumeB;
+    /** Data storage for imageB normals: */
     private GraphicsImage m_kNormalB;
+    /** Data storage for imageB color map: */
     private GraphicsImage m_kColorMapB;
+    /** Data storage for imageB opacity map: */
     private GraphicsImage m_kOpacityMapB = null;
+    /** Texture object for imageB data: */
     private Texture m_kVolumeTargetB;
+    /** Texture object for imageB color map: */
     private Texture m_kColorMapTargetB;
+    /** Texture object for imageB opacity map: */
     private Texture m_kOpacityMapTargetB;
+    /** Texture object for imageB normal map: */
     private Texture m_kNormalMapTargetB;
 
+    /** PixelShader program and data for MIP mode: */
     private PixelShader m_kPShaderMIP = null;
+    /** PixelShader program and data for DDR mode: */
     private PixelShader m_kPShaderDDR = null;
+    /** PixelShader program and data for Composite mode: */
     private PixelShader m_kPShaderCMP = null;
+    /** PixelShader program and data for Composite Surface and Surface modes: */
     private PixelShader m_kPShaderSUR = null;
 
-
+    /** Indicates which shader to use (MIP, DDR, CMP, SUR, CMP_SUR): */
     private int m_iWhichShader = -1;
+    /** stores the axis-aligned clip plane information: */
     private float[][] m_aafClipData = new float[6][];
+    /** stores the eye clip plane information: */
     private float[] m_afClipEyeData = null;
+    /** stores the inverse-eye clip plane information: */
     private float[] m_afClipEyeInvData = null;
+    /** stores the arbitrary clip plane information: */
     private float[] m_afClipArbData = null;
+    /** Reference to the SceneImage texture: */
     private Texture m_kSceneTarget;
+    /** stores the blend function */
     private float[] m_afBlend = new float[]{.5f,0,0,0};
+    /** stores the background color */
     private ColorRGBA m_kBackgroundColor = ColorRGBA.BLACK;
-
+    /** stores the self-shadow paramter on/off value: */
     private float[] m_afSelfShadow = new float[]{0,0,0,0};
+    /** stores the gradient magnitude filter on/off value: */
     private float[] m_afGradientMagnitude = new float[]{0,0,0,0};
 
 }
