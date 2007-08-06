@@ -57,8 +57,8 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     private ViewUserInterface userInterface;
     
     /** For each omega angle index, a linked list of R and B values is present
-     *  omega is the gradient angle to the curve, defined as perpindicular to the
-     *  tangent and going into the object, and R and B give the distance
+     *  omega is the tangent angle to the curve, with closed counters being
+     *  made counterclockwise, and R and B give the distance
      *  and angle from the center of the VOI to the tangent point */
     private LinkedList omegaRBetaList[] = null;
     
