@@ -7,6 +7,7 @@ import gov.nih.mipav.view.*;
 import java.awt.Color;
 import java.io.*;
 import java.util.*;
+import java.awt.*;
 
 /**
  
@@ -24,8 +25,8 @@ import java.util.*;
 public class AlgorithmFindRtableObject extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    /** Number of bins covering gradient angle going from 0 to 2*PI
-     *  The gradient is defined as going into the object */
+    /** Number of bins covering tangent angle going from 0 to 2*PI
+     *  Point ordering is made counterclockwise on closed countours. */
     private int omegaBins = 90;
     
     /** Number of points to take from each side of a point on a curve in determining a tangent
@@ -34,8 +35,8 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
     private int sidePointsForTangent;
     
     /** For each omega angle index, a linked list of R and B values is present
-     *  omega is the gradient angle to the curve, defined as perpindicular to the
-     *  tangent and going into the object, and R and B give the distance
+     *  omega is the tangent angle to the curve, where closed contour curves
+     *  are made counterclockwise, and R and B give the distance
      *  and angle from the center of the VOI to the tangent point */
     private LinkedList omegaRBetaList[];
     
@@ -80,8 +81,8 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
      * AlgorithmFindRtableObject.
      *
      * @param  srcImg   Binary image that has 1 or more instances of the R-table object
-     * @param  omegaBins Number of bins for gradient angle at point on curve going from 0 to +360 degrees
-     *                   The gradient angle is defined as going into the object
+     * @param  omegaBins Number of bins for tangent angle at point on curve going from 0 to +360 degrees
+     *                   Points on closed curve contours are made counterclockwise.
      * @param  sidePointsForTangent  Maximum number of points to take from each side of a point on a curve
      *                               in determining the tangent
      * @param  omegaRBetaList For each omega angle index, a linked list of R and B values is present
@@ -261,10 +262,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         int xVal[];
         int yVal[];
         int zVal[];
-        short VOIMask[];
-        int xt;
-        int yt;
-        int indext;
+        Polygon gon = null;
         
 
         if (srcImage == null) {
@@ -783,7 +781,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                         normalY = (float)y1t;
                     }    
                 }
-                omega = Math.atan2(normalY, normalX);
+                omega = Math.atan2(tangentY, tangentX);
                 // Change omega range from -PI to PI to 0 to 2*PI
                 if (omega < 0.0) {
                     omega = omega + 2.0 * Math.PI;
@@ -803,7 +801,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         yPoints = new float[2*sidePointsForTangent + 1];
         closedX = new int[2*(xDim + yDim)];
         closedY = new int[2*(xDim + yDim)];
-        VOIMask = new short[sourceSlice];
         for (y = 0; y < yDim; y++) {
             offset = y * xDim;
             for (x = 0; x < xDim; x++) {
@@ -838,14 +835,23 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                         yVal[i] = closedY[i];
                     }
                     closedVOI.importCurve(xVal, yVal, zVal, 0);
-                    VOIMask = closedVOI.createShortMask(xDim, yDim, VOIMask, false);
-                    try {
-                        closedVOI.finalize();
-                    }
-                    catch (Throwable e){
-                        ViewUserInterface.getReference().setDataText("Exception on closedVOI.finalize()\n");    
-                    }
-                    closedVOI = null;
+                    if (!((VOIContour)closedVOI.getCurves()[0].elementAt(0)).isCounterClockwise()) {
+                        ((VOIContour)closedVOI.getCurves()[0].elementAt(0)).makeCounterClockwise();
+                        gon = ((VOIContour)closedVOI.getCurves()[0].elementAt(0)).exportPolygon();
+                        try {
+                            closedVOI.finalize();
+                        }
+                        catch (Throwable e){
+                            ViewUserInterface.getReference().setDataText("Exception on closedVOI.finalize()\n");    
+                        }
+                        closedVOI = null;
+                        indexPtr = startPtr;
+                        for (i = 0; i < closedLength; i++) {
+                            index = gon.xpoints[i] + xDim * gon.ypoints[i];
+                            indexArray[indexPtr++] = index;
+                        }
+                        gon = null;
+                    } // if (!((VOIContour)closedVOI.getCurves()[0].elementAt(0)).isCounterClockwise())
                     endPtr = indexPtr - 1;
                     indexPtr = startPtr;
                     for (n = 0; n <= closedLength - 1; n++) {
@@ -969,22 +975,10 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                                 normalY = (float)y1t;
                             }  
                         }
-                        omega = Math.atan2(normalY, normalX);
+                        omega = Math.atan2(tangentY, tangentX);
                         // Change omega range from -PI to PI to 0 to 2*PI
                         if (omega < 0.0) {
                             omega = omega + 2.0 * Math.PI;
-                        }
-                        xt = (int)Math.round(xpc + Math.cos(omega));
-                        yt = (int)Math.round(ypc + Math.sin(omega));
-                        indext = xt + xDim * yt;
-                        if (VOIMask[indext] != numClosedCurves) {
-                          // Not in VOI - take normal going the opposite way
-                          if (omega < Math.PI) {
-                              omega = omega + Math.PI;
-                          }
-                          else {
-                              omega = omega - Math.PI;
-                          }
                         }
                         omegaIndex = (int)(omega/omegaBinWidth);
                         omegaArray[indexPtr++] = (short)omegaIndex;
