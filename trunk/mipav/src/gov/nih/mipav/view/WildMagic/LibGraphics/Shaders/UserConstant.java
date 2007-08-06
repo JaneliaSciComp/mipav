@@ -45,7 +45,7 @@ public class UserConstant
     {
         return m_kName;
     }
-
+ 
     public int GetBaseRegister ()
     {
         return m_iBaseRegister;
