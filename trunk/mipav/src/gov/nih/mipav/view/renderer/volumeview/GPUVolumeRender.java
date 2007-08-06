@@ -1737,68 +1737,105 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
-
+    /** Scene-graph root node: */
     private Node m_spkScene;
+    /** Turns wireframe on/off: */
     private WireframeState m_spkWireframe;
+    /** Culling: turns backface/frontface culling on/off: */
     private CullState m_spkCull;
+    /** Culling out-of-view objects: */
     private Culler m_kCuller = new Culler(0,0,null);
-
+    /** Bounding box polyline object: */
     private Polyline[] m_akBoundingBox;
+    /** enables/disables displaying the bounding box: */
     private boolean m_bDisplayBoundingBox = false;
-
+    /** Orientation cube grometry: */
     private TriMesh[] m_akOrientationCube;
+    /** enables/disables displaying the orientation cube: */
     private boolean m_bDisplayOrientationCube = false;
+    /** Orientation cube texture names: */
     private String[] m_aakAxisFiles = new String[]{ "u", "u", "u", "u", "u", "u"};
+    /** Orientation cube translation offset: */
     private Vector3f m_kCubeTranslate = Vector3f.ZERO;
-
+    /** axis-aligned clip plane polylines: */
     private Polyline[] m_akPolyline;
+    /** arbitrary clip plane polyline: */
     private Polyline m_kClipArb;
+    /** eye clip plane polyline: */
     private Polyline m_kClipEye;
+    /** inverse-eye clip plane polyline: */
     private Polyline m_kClipEyeInv;
+    /** enables/disables displaying clip planes*/
     private boolean[] m_abDisplayPolyline = new boolean[]{false,false,false,false,false,false};
-
-    private TriMesh m_spkMesh;
+    /** VolumeShaderEffect applied to proxy-geometry: */
     private VolumeShaderEffect m_kVolumeShaderEffect = null;
-
+    /** Reference to imageA in ViewJFrameVolumeView: */
     private ModelImage m_kImageA = null;
+    /** ModelLUT applied to m_kImageA */
     private ModelLUT m_kLUTa = null;
+    /** ModelRGB applied to m_kImageA */
     private ModelRGB m_kRGBTa = null;
 
+    /** Reference to ModelImage imageB in ViewJFrameVolumeView */
     private ModelImage m_kImageB = null;
+    /** ModelLUT applied to m_kImageB */
     private ModelLUT m_kLUTb = null;
+    /** ModelRGB applied to m_kImageB */
     private ModelRGB m_kRGBTb = null;
 
+    /** Screen camera for displaying the screen polygon: */
     private Camera m_spkScreenCamera;
+    /** Screen camera for displaying the eye clip planes in screen-coordinates: */
     private Camera m_spkEyeCamera;
+    /** Scene polygon displaying the first-pass rendering of the proxy-geometry: */
     private TriMesh m_spkScenePolygon;
+    /** GraphicsImage with the first-pass rendering of the proxy-geometry: */
     private GraphicsImage m_spkSceneImage;
+    /** Texture for the first-pass rendering of the proxy-geometry: */
     private Texture m_pkSceneTarget;
+    /** Off-screen buffer the first-pass rendering is drawn into: */
     private OpenGLFrameBuffer m_pkPBuffer;
 
+    /** Vertex-color shader effect used for the polylines and the first-pass
+     * rendering of the proxy-geometry:*/
     private ShaderEffect m_spkVertexColor3Shader;
 
+    /** Animator object, displays scene in rendering loop (similar to GLUTMainLoop() */
     private Animator m_kAnimator;
 
+    /** New sculpting object for WM-based sculpting. */
     private SculptorWm m_kSculptor;
 
+    /** Stores the transfer functions: */
     private TransferFunction[] m_akTransfer = new TransferFunction[4];
 
+    /** Set to true when init() is called: */
     private boolean m_bInit = false;
+    /** Scene translation, centers the scene: */
     private Vector3f m_kTranslate;
+    /** Arbitrary clip plane equation: */
     private Vector4f m_kArbitraryClip;
+    /** Enables/Disables displaying the arbitrary clip plane: */
     private boolean m_bDisplayClipArb = false;
+    /** Enables/Disables displaying the eye clip plane: */
     private boolean m_bDisplayClipEye = false;
+    /** Enables/Disables displaying the inverse-eye clip plane: */
     private boolean m_bDisplayClipEyeInv = false;
+    /** Normalized volume extents: */
     private float m_fX, m_fY, m_fZ, m_fMax;
-
+    /** Flag for indicating the that Java Container is visible or not: */
     private boolean m_bVisible = true;
+    /** Node for rotating the arbitrary clip plane with the mouse trackball: */
     private Node m_kArbRotate = new Node();
-
+    /** Material properties for Volume Surface (and Composite Surface) mode*/
     private MaterialState m_kMaterial;
+    /** Volume proxy-geometry (cube) */
     private TriMesh m_kMesh;
-    private int m_iActive = 0;
-
+    /** Window with the shader paramter interface: */
     private ApplicationGUI m_kShaderParamsWindow = null;
+    /** Lights from JPanelLight */
     private GeneralLight[] m_akLights = null;
+    /** Enables/Disables rendering the second pass. When disabled, the
+     * back-facing polygons of the proxy-geometry are shown instead of the volume: */
     private boolean m_bDisplaySecond = true;
 }
