@@ -298,7 +298,7 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kCuller.SetCamera(m_spkCamera);
         m_kCuller.ComputeVisibleSet(m_spkScene);
 
-        InitializeCameraMotion(.5f,0.001f);
+        InitializeCameraMotion(.05f,0.001f);
         InitializeObjectMotion(m_spkScene);
 
         ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
@@ -321,7 +321,7 @@ public class GPUVolumeRender extends JavaApplication3D
         {
             m_iWidth = iWidth;
             m_iHeight = iHeight;
-            m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,1.0f,1000.0f);
+            m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
 
 
             if (m_pkRenderer != null)
