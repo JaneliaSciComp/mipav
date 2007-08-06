@@ -1,14 +1,3 @@
-// Geometric Tools, Inc.
-// http://www.geometrictools.com
-// Copyright (c) 1998-2006.  All Rights Reserved
-//
-// The Wild Magic Version 4 Restricted Libraries source code is supplied
-// under the terms of the license agreement
-//     http://www.geometrictools.com/License/Wm4RestrictedLicense.pdf
-// and may not be copied or disclosed except in accordance with the terms
-// of that agreement.
-//
-// Version: 4.0.0 (2006/06/28)
 
 package gov.nih.mipav.view.renderer.volumeview;
 
@@ -29,9 +18,14 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 
-/** The shader effect is a manager of the vertex and pixel shaders.  It
- * reimplements the user-relevant interfaces for the managed objects as a
- * convenience to avoid long expressions involving pointer dereferencing.
+/** 
+ * VolumeShaderEffect is the workhorse of the GPU-based rendering in MIPAV. It
+ * manages several Cg shaders for volume rendering. Each of the different
+ * volume modes – MIP, DDR, Composite, Surface, and Composite Surface –
+ * are implemented with different Cg shaders. The volume data and lookup table
+ * information are stored and passed to the shaders as texture images;
+ * VolumeShaderEffect manages these images. All UserConstant shader parameters
+ * are also managed by the VolumeShaderEffect class.
  */
 public class VolumeShaderEffect extends ShaderEffect
     implements StreamInterface
@@ -47,6 +41,14 @@ public class VolumeShaderEffect extends ShaderEffect
 
 
     /** 
+     * Creates a new VolumeShaderEffect object.
+     * @param kImageA ModelImage A
+     * @param kLUTa, LUT for ModelImage A
+     * @param kRGBTa, RGB lookup table for ModelImage A
+     * @param kImageB ModelImage B
+     * @param kLUTb, LUT for ModelImage B
+     * @param kRGBTb, RGB lookup table for ModelImage B
+     * @param kSceneTarget, the SceneImage texture with the back-facing polygon texture coordinates.
      */
     public VolumeShaderEffect ( ModelImage kImageA, ModelLUT kLUTA, ModelRGB kRGBTA, 
                                 ModelImage kImageB, ModelLUT kLUTB, ModelRGB kRGBTB, 
@@ -71,6 +73,9 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
     
+    /**
+     * memory cleanup.
+     */
     public void finalize()
     {
 
@@ -222,6 +227,13 @@ public class VolumeShaderEffect extends ShaderEffect
         SetPShader(0,m_kPShaderMIP);
     }
 
+    /**
+     * The VolumeShaderEffect.CreateVolumeTextureAM() function constructs and
+     * initializes the vertex and pixel shader programs for volume rendering
+     * of two images (imageA, imageB). The vertex shader is the same for each
+     * rendering type: MIP, DDR, Composite, Surface, and Composite
+     * Surface. The pixel shaders are different for each.
+     */
     private void CreateVolumeTextureAB ()
     {
         SetPassQuantity(1);
@@ -365,7 +377,11 @@ public class VolumeShaderEffect extends ShaderEffect
 
     }
 
-
+    /**
+     * Change to the MIP mode pixel shader program.
+     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
     public void MIPMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == MIP )
@@ -376,6 +392,12 @@ public class VolumeShaderEffect extends ShaderEffect
         SetProgram( m_kPShaderMIP, kRenderer );
     }
 
+    /**
+     * Change to the input pixel shader program.
+     * @param kShader, the new pixel shader program to use.
+     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
     private void SetProgram(PixelShader kShader,
                             gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
@@ -394,6 +416,11 @@ public class VolumeShaderEffect extends ShaderEffect
         SetSelfShadow();
     }
 
+    /**
+     * Change to the DDR mode pixel shader program.
+     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
     public void DDRMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == DDR )
@@ -404,6 +431,11 @@ public class VolumeShaderEffect extends ShaderEffect
         SetProgram( m_kPShaderDDR, kRenderer );
     }
 
+    /**
+     * Change to the Composite mode pixel shader program.
+     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
     public void CMPMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == CMP )
@@ -414,6 +446,11 @@ public class VolumeShaderEffect extends ShaderEffect
         SetProgram(m_kPShaderCMP, kRenderer);
     }
 
+    /**
+     * Change to the Composite Surface mode pixel shader program.
+     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
     public void SURMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
 
@@ -439,6 +476,11 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Change to the Surface mode pixel shader program.
+     * @param kRenderer, the Renderer displaying the scene-graph, to which the
+     * new shader program is passed.
+     */
     public void SURFASTMode(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         if ( m_iWhichShader == SUR )
@@ -462,6 +504,9 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Sets the IsColor shader parameter values.
+     */
     private void SetColorImage()
     {
         Program pkProgram = GetPProgram(0);
@@ -485,6 +530,11 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
     
+    /**
+     * Calculates the image normals for the input ModelImage. Stores them in a byte[].
+     * @param kImage, the ModelImage to calculate the normals for.
+     * @return byte[] the image normals in byte format. 
+     */
     private byte[] calcImageNormals( ModelImage kImage )
     {
 
@@ -617,6 +667,11 @@ public class VolumeShaderEffect extends ShaderEffect
         return acData;
     }
 
+    /**
+     * Update the image data.
+     * @param kImage, the modified ModelImage
+     * @param iImage, which image (imageA, imageB)
+     */
     public void UpdateData( ModelImage kImage, int iImage )
     {
         if ( iImage == 0 )
@@ -626,6 +681,13 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Update the image volume data on the GPU.
+     * @param kImage, the new ModelImage
+     * @param kVolumeImage, the volume data image.
+     * @param kVolumeTexture, the volume data texture.
+     * @param kPostFix, the postfix string for the image name.
+     */
     private GraphicsImage UpdateData( ModelImage kImage, GraphicsImage kVolumeImage,
                                       Texture kVolumeTexture, String kPostFix )
     {
@@ -700,6 +762,12 @@ public class VolumeShaderEffect extends ShaderEffect
         return kVolumeImage;
     }
 
+    /**
+     * Update the transfer function for the image iImage.
+     * @param kTransfer, the new opacity transfer function
+     * @param iImage, the image to modify (0 = imageA, 1 = imageB, 2 = imageA_GM, 3 = imageB_GM)
+     * @return boolean true when updated, false otherwise.
+     */
     public boolean UpdateImages(TransferFunction kTransfer, int iImage)
     {
         if ( iImage == 0 )
@@ -717,10 +785,25 @@ public class VolumeShaderEffect extends ShaderEffect
         {
             return UpdateImages( m_kImageA_GM, m_kOpacityMapTargetA_GM, m_kOpacityMapA_GM, kTransfer );
         }
+        else if ( (iImage == 3) &&
+                  (m_kImageB_GM != null) &&
+                  (m_kOpacityMapTargetB_GM != null) &&
+                  (m_kOpacityMapB_GM != null)  )
+        {
+            return UpdateImages( m_kImageB_GM, m_kOpacityMapTargetB_GM, m_kOpacityMapB_GM, kTransfer );
+        }
         return false;
     }
 
-    private boolean UpdateImages(ModelImage kImage, Texture kOpacityTexture, GraphicsImage kOpacityMap, TransferFunction kTransfer)
+    /**
+     * Update the opacity transfer function.
+     * @param kImage, the ModelImage the transfer function applies to.
+     * @param kOpacityTexture, the opacity Texture passed to the GPU
+     * @param kOpacityMap, the opacity data stored in the GraphicsImage
+     * @param kTransfer, the new transfer function.
+     */
+    private boolean UpdateImages(ModelImage kImage, Texture kOpacityTexture,
+                                 GraphicsImage kOpacityMap, TransferFunction kTransfer)
     {
          int iLutHeight = 256;
          float[] afData = kOpacityMap.GetFloatData();
@@ -736,32 +819,31 @@ public class VolumeShaderEffect extends ShaderEffect
          return true;
     }
 
-
-    public boolean UpdateImages(ModelLUT kLUTa, ModelLUT kLUTb)
+    /**
+     * Update the LUT for imageA and imageB.
+     * @param kLUTa, new LUT for imageA.
+     * @param kLUTb, new LUT for imageB.
+     */
+    public void UpdateImages(ModelLUT kLUTa, ModelLUT kLUTb)
     {
         this.UpdateImages( m_kColorMapTargetA, m_kColorMapA, kLUTa );
         if ( m_kImageB != null )
         {
             this.UpdateImages( m_kColorMapTargetB, m_kColorMapB, kLUTb );
         }
-        return true;
     }
 
     /**
-     * This methods calls corresponding render to update images with LUT changes.
-     *
-     * @param   LUTa        LUT used to update imageA
-     * @param   LUTb        LUT used to update imageB
-     * @param   forceShow   forces show to reimport image and calc. java image
-     * @param   interpMode  image interpolation method (Nearest or Smooth)
-     *
-     * @return  boolean confirming successful update
+     * Update the LUT texture sent to the GPU.
+     * @param kColorTexture, the color-map Texture object.
+     * @param kColorMap, the color-map GraphicsImage object (stores data).
+     * @param kLUT, the new LUT.
      */
-    private boolean UpdateImages(Texture kColorTexture, GraphicsImage kColorMap, ModelLUT kLUT)
+    private void UpdateImages(Texture kColorTexture, GraphicsImage kColorMap, ModelLUT kLUT)
     {
         if ( kLUT == null )
         {
-            return false;
+            return;
         }
         byte[] oldData = kColorMap.GetData();
         byte[] aucData = ModelLUT.exportIndexedLUTMin( kLUT, kLUT.getTransferFunction(), kLUT.getExtents()[1],
@@ -776,13 +858,19 @@ public class VolumeShaderEffect extends ShaderEffect
         {
             kColorTexture.Reload(true);
         }
-        return true;
     }
 
-    public GraphicsImage InitColorMap ( ModelLUT kLUTa, ModelRGB kRGBT, String kPostFix )
+    /**
+     * Initialize the textures for the color lookup table.
+     * @param kLUT, the new LUT.
+     * @param kRGBT, the new RGB table.
+     * @param kPostfix, the string postfix to concatenate to the "ColorMap" image name.
+     * @return GraphicsImage, the new GraphicsImage storing the colormap lookup table.
+     */
+    public GraphicsImage InitColorMap ( ModelLUT kLUT, ModelRGB kRGBT, String kPostFix )
     {
         byte[] aucData;
-        if ( kLUTa == null )
+        if ( kLUT == null )
         {
             aucData = ModelLUT.exportIndexedLUTMin( kRGBT.getRedFunction(), kRGBT.getGreenFunction(), kRGBT.getBlueFunction(),
                                                     kRGBT.getExtents()[1], kRGBT.exportIndexedRGB());
@@ -790,14 +878,20 @@ public class VolumeShaderEffect extends ShaderEffect
         }
         else
         {
-            aucData = ModelLUT.exportIndexedLUTMin( kLUTa, kLUTa.getTransferFunction(), kLUTa.getExtents()[1],
-                                                    kLUTa.getIndexedLUT());
+            aucData = ModelLUT.exportIndexedLUTMin( kLUT, kLUT.getTransferFunction(), kLUT.getExtents()[1],
+                                                    kLUT.getIndexedLUT());
         }
         return new GraphicsImage(
                                  GraphicsImage.FormatMode.IT_RGBA8888,aucData.length/4,aucData,
                                  new String( "ColorMap" + kPostFix ) );
     }
 
+    /**
+     * Initialize the textures for the opacity lookup table.
+     * @param kImage, the ModelImage the opacity transfer function applies to.
+     * @param kPostfix, the string postfix to concatenate to the "OpacityMap" image name.
+     * @return GraphicsImage, the new GraphicsImage storing the colormap lookup table.
+     */
     public GraphicsImage InitOpacityMap (ModelImage kImage, String kPostFix )
     {
         int iLutHeight = 256;
@@ -815,16 +909,29 @@ public class VolumeShaderEffect extends ShaderEffect
                                  new String( "OpacityMap" + kPostFix ));
     }
 
+    /**
+     * Return the Texture containing the imageA volume data.
+     * @return Texture containing the imageA volume data.
+     */
     public Texture GetVolumeTargetA()
     {
         return m_kVolumeTargetA;
     }
 
+    /**
+     * Return the Texture containing the imageB volume data.
+     * @return Texture containing the imageB volume data.
+     */
     public Texture GetVolumeTargetB()
     {
         return m_kVolumeTargetB;
     }
 
+    /**
+     * Release the Textures containing the imageA (imageB) volume data. Once
+     * Textures are released, they will be re-loaded onto the GPU during the
+     * next frame.
+     */
     public void ReleaseVolume()
     {
         m_kVolumeTargetA.Release();
@@ -834,6 +941,12 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Reload the current shader programs from disk, compile and parse and
+     * send to the GPU.
+     * @param kRenderer, the Renderer object displaying the scene-graph which
+     * will apply the shader programs.
+     */
     public void Reload( gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
         VertexProgram kVProgram = GetVProgram(0);
@@ -881,6 +994,9 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Init the axis-aligned clip planes.
+     */
     public void InitClip( float[] afData )
     {
         Program pkProgram = GetPProgram(0);
@@ -898,6 +1014,10 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Reset the axis-aligned clip planes, eye, inverse-eye and arbitrary clip
+     * planes to neutral.
+     */
     private void ResetClip()
     {
         for ( int i = 0; i < 6; i++ )
@@ -921,6 +1041,11 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Enable and set the axis-aligned clip plane.
+     * @param iWhich, one of 6 clip-planes to set.
+     * @param data, the distance to the clip-plane.
+     */
     public void SetClip(int iWhich, float[] data)
     {
         m_aafClipData[iWhich] = data;
@@ -931,6 +1056,9 @@ public class VolumeShaderEffect extends ShaderEffect
             pkProgram.GetUC(m_akClip[iWhich]).SetDataSource(data);
         }
     }
+    /**
+     * Enable clipping.
+     */
     private void EnableClip()
     {
         Program pkProgram = GetPProgram(0);
@@ -940,6 +1068,10 @@ public class VolumeShaderEffect extends ShaderEffect
         }       
     }
 
+    /**
+     * Enable and set the eye clip plane.
+     * @param afEquation, the clip-plane equation.
+     */
     public void SetClipEye(float[] afEquation)
     {
         m_afClipEyeData = afEquation;
@@ -951,6 +1083,10 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Enable and set the inverse-eye clip plane.
+     * @param afEquation, the clip-plane equation.
+     */
     public void SetClipEyeInv(float[] afEquation)
     {
         m_afClipEyeInvData = afEquation;
@@ -962,6 +1098,10 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Enable and set the arbitrary clip plane.
+     * @param afEquation, the clip-plane equation.
+     */
     public void SetClipArb(float[] afEquation)
     {
         m_afClipArbData = afEquation;
@@ -973,6 +1113,11 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Sets the light type for the given light.
+     * @param kLightType, the name of the light to set (Light0, Light1, etc.)
+     * @param afType, the type of light (Ambient = 0, Directional = 1, Point = 2, Spot = 3).
+     */
     public void SetLight( String kLightType, float[] afType )
     {
         Program pkProgram = GetPProgram(0);
@@ -982,6 +1127,11 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Sets the ModelRGB for the iImage.
+     * @param kRGBT, new ModelRGB
+     * @param iImage, set imageA when iImage = 0, set imageB when iImage = 1.
+     */
     public void SetRGBT(ModelRGB kRGBT, int iImage)
     {
         if ( iImage == 0 )
@@ -994,6 +1144,12 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Sets the Texture object containing the color lookup table based on the ModelRGB.
+     * @param kTexture, the Texture object containing the colormap GraphicsImage.
+     * @param kImage, the GraphicsImage containing the colormap data.
+     * @param kRGBT, the new ModelRGB.
+     */
     private void SetRGBT( Texture kTexture, GraphicsImage kImage, ModelRGB kRGBT )
     {
         if ( kRGBT == null )
@@ -1017,11 +1173,19 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Returns the current pixel program.
+     * @return the current pixel program.
+     */
     public Program GetPProgram()
     {
         return GetPProgram(0);
     }
 
+    /**
+     * Sets the blend factor shader parameter between imageA and imageB.
+     * @param fBlend, blend factor (range = 0-1).
+     */
     public void Blend(float fBlend)
     {
         m_afBlend[0] = fBlend;
@@ -1032,6 +1196,10 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /**
+     * Sets the BackgroundColor shader parameter.
+     * @param kColor, new BackgroundColor.
+     */
     public void SetBackgroundColor( ColorRGBA kColor )
     {
         m_kBackgroundColor = kColor;
@@ -1052,9 +1220,7 @@ public class VolumeShaderEffect extends ShaderEffect
      *
      * @param   dName     String User specified directory name.
      * @param   fName     String GM image file name.
-     * @param   isImageA  boolean Indicates GM imageA or GM imageB
-     *
-     * @return  boolean Indicates loading GM image successful or not.
+     * @return  ModelImage containing GM image, null when no image loaded.
      */
     private ModelImage loadGMImage(String dName, String fName)
     {
@@ -1069,7 +1235,9 @@ public class VolumeShaderEffect extends ShaderEffect
     }
 
     /**
-     * Calculates histogram for the gradient magnitude m_kImageA, B.
+     * Calculates histogram for the gradient magnitude ModelImage
+     * @param kImage, the image to calculate the gradient magnitude.
+     * @return  ModelImage containing GM image, null when no image calculated.
      */
     private ModelImage CalcHistogramsGM( ModelImage kImage )
     {
@@ -1115,7 +1283,10 @@ public class VolumeShaderEffect extends ShaderEffect
         return kImage_GM;
     }
 
-
+    /** 
+     * Enables/Disables self-shadowing for the Surface mode.
+     * @param bShadow, self-shadowing on/off.
+     */
     public void SelfShadow( boolean bShadow )
     {
         m_afSelfShadow[0] = 0;
@@ -1126,6 +1297,9 @@ public class VolumeShaderEffect extends ShaderEffect
         SetSelfShadow();
     }
 
+    /**
+     * Sets the SelfShadow shader parameter.
+     */
     private void SetSelfShadow()
     {
         Program pkProgram = GetPProgram(0);
@@ -1135,6 +1309,10 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
 
+    /** 
+     * Enables/Disables gradient magnitude filter.
+     * @param bShow, gradient magnitude filter on/off.
+     */
     public void SetGradientMagnitude(boolean bShow)
     {
         m_afGradientMagnitude[0] = 0;
@@ -1145,6 +1323,9 @@ public class VolumeShaderEffect extends ShaderEffect
         SetGradientMagnitude();
     }
 
+    /**
+     * Sets the GradientMagnitude shader parameter.
+     */
     private void SetGradientMagnitude()
     {
         Program pkProgram = GetPProgram(0);

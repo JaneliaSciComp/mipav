@@ -489,9 +489,9 @@ public class GPUVolumeRender extends JavaApplication3D
      *
      * @return  boolean confirming successful update
      */
-    public boolean updateImages(ModelLUT kLUTa, ModelLUT kLUTb)
+    public void updateImages(ModelLUT kLUTa, ModelLUT kLUTb)
     {
-        return m_kVolumeShaderEffect.UpdateImages(kLUTa, kLUTb);
+        m_kVolumeShaderEffect.UpdateImages(kLUTa, kLUTb);
     }
 
     /**
