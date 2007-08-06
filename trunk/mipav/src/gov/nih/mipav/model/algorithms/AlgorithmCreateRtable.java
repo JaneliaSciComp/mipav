@@ -83,7 +83,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         
         byte[] srcBuffer;
         byte[] maskBuffer;
-        boolean test = true;
+        boolean test = false;
         int indexArray[];
         int neighbors;
         boolean foundArray[];
