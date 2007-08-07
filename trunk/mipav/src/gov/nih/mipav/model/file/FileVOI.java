@@ -670,7 +670,10 @@ public class FileVOI extends FileXML {
         Vector[] contours;
 
         FileWriter fw;
-        BufferedWriter bw;
+        //TODO: Make sure other local instances of bw do not cause NullPointerExceptions
+        //BufferedWriter already exists in FileXML.   FileVOI extends FileXML as of version 2209
+        //single copy is necessary for correct implementation of openTag(), closeTag(), etc
+        //BufferedWriter bw;
 
         while (file.exists() == true) {
             int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists",
