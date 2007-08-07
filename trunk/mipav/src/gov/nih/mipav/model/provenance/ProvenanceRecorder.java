@@ -7,6 +7,7 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.Preferences;
 
 import java.util.Vector;
@@ -59,6 +60,7 @@ public class ProvenanceRecorder {
     
     /** Vector of Strings holding the registers of images used as output*/
     protected Vector<String> outputImages;
+    
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -124,44 +126,51 @@ public class ProvenanceRecorder {
      */
     public synchronized void addLine(String action, ParameterTable parameterList) {
         if (getRecorderStatus() == RECORDING) {
-        	System.err.println("in addLine(action, plist)");
         	//create new DataProvenanceEntry
         	//   add entry to the correct
         	String entryString = action + "(" + parameterList.convertToDPString(imageTable) + ")" + LINE_SEPARATOR;
             
-            ProvenanceEntry entry = new ProvenanceEntry(entryString, System.currentTimeMillis());
-                       
-            boolean doOutput = false;
+        	
+            ProvenanceEntry entry = new ProvenanceEntry(entryString);
             
-            try {
-            	doOutput = parameterList.getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE);
+            ViewUserInterface.getReference().getProvenanceHolder().addElement(entry);
+            
+            //only add to the image's data provenance
+            if (Preferences.is(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE)) {
+            	ProvenanceEntry imageEntry = (ProvenanceEntry)entry.clone();
+           
+            	boolean doOutput = false;
+            
+            	try {
+    	        	doOutput = parameterList.getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE);
             	
-            } catch (ParameterException e) { }
+            	} catch (ParameterException e) { }
             
-            System.err.println("Do output: " + doOutput + ", inputimages size: " + inputImages.size() + ", outputimages size: " + outputImages.size());
+            //System.err.println("Do output: " + doOutput + ", inputimages size: " + inputImages.size() + ", outputimages size: " + outputImages.size());
             
-           if (doOutput) {                	
+            	if (doOutput) {                	
                 	//output image created... get provenance from srcImage, put that into output image,
                 	//  and add the new entry
                 	
-        	   for (int i = 0; i < outputImages.size(); i++) {
-        		   imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder().addElement(entry);
-        		   imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder().sort();
+            		for (int i = 0; i < outputImages.size(); i++) {
+            			imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder().addElement(imageEntry);
+            			imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder().sort();
         		   
-        		   System.err.println("Output Provenance: " + imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder() + LINE_SEPARATOR);
+        		   //System.err.println("Output Provenance: " + imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder() + LINE_SEPARATOR);
         		   
-        	   }
-           } 
-           else {
+            		}
+            	} 
+            	else {
 //            	add the new entry to the srcImage(s) provenance
             	
-        	   for (int i = 0; i < inputImages.size(); i++) {
-        		   imageTable.getImage(inputImages.elementAt(i)).getProvenanceHolder().addElement(entry);
-        		   imageTable.getImage(inputImages.elementAt(i)).getProvenanceHolder().sort();
-        	   }
-           }      	
+            		for (int i = 0; i < inputImages.size(); i++) {
+        		   //System.err.println("added: " + imageEntry + ", to: " + inputImages.elementAt(i));
+            			imageTable.getImage(inputImages.elementAt(i)).getProvenanceHolder().addElement(imageEntry);
+            			imageTable.getImage(inputImages.elementAt(i)).getProvenanceHolder().sort();
+            		}
+            	}      	
             
-           
+            }
            
             //clear out the vectors holding input and output registers            
            inputImages.clear();
@@ -270,8 +279,6 @@ public class ProvenanceRecorder {
      * @return  The image variable placeholder which has been assigned to the image name (may not be a new variable if the name is already in the table).
      */
     public synchronized String storeImage(String imageName) {
-    	System.err.println("Calling storeImage: " + imageName);
-    	
     	return getImageTable().storeImageName(imageName);
     }
    

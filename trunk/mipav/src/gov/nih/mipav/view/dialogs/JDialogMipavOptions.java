@@ -125,6 +125,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** DOCUMENT ME! */
     private JCheckBox provenanceCheckBox;
 
+    private String provenanceFilename;
+    
+    private JButton provenanceFileButton;
+    
+    private JCheckBox provenanceImageCheckBox;
+
     /** DOCUMENT ME! */
     private JPanel otherPanel;
 
@@ -332,7 +338,67 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
-        if (command.equalsIgnoreCase("color")) {
+        if (event.getSource().equals(provenanceCheckBox)) {
+        	provenanceImageCheckBox.setEnabled(provenanceCheckBox.isSelected());
+        	provenanceFileButton.setEnabled(provenanceCheckBox.isSelected());
+        	if (!provenanceCheckBox.isSelected()) {
+        		provenanceImageCheckBox.setSelected(false);
+        	}
+        } else if (command.equalsIgnoreCase("ChooseProvenance")) {
+        	if (Preferences.is(Preferences.PREF_USE_AWT)) {
+                FileDialog fd = new FileDialog(userInterface.getMainFrame(), "Choose provenance file");
+
+                try {
+                    fd.setDirectory(new File(provenanceFilename).getParentFile().getPath());
+                } catch (Exception ex) {
+                    fd.setDirectory(System.getProperty("user.home"));
+                }
+
+                Dimension d = new Dimension(700, 400);
+                fd.setSize(d);
+
+                fd.setVisible(true);
+
+                String fileName = fd.getFile();
+                String directory = fd.getDirectory();
+
+                if (fileName != null) {
+                	provenanceFilename = directory + fileName;
+
+                    String shortName = logFilename;
+
+                    if (provenanceFilename.length() > 24) {
+                        shortName = ".." + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename.length());
+                    }
+
+                    provenanceFileButton.setText(shortName);
+                    provenanceFileButton.setToolTipText(provenanceFilename);
+                }
+            } else {
+                JFileChooser chooser = new JFileChooser();
+
+                try {
+                    chooser.setCurrentDirectory(new File(provenanceFilename).getParentFile());
+                } catch (Exception ex) {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+                }
+
+                int returnVal = chooser.showSaveDialog(this);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                	provenanceFilename = chooser.getSelectedFile().getPath();
+
+                    String shortName = provenanceFilename;
+
+                    if (provenanceFilename.length() > 24) {
+                        shortName = ".." + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename.length());
+                    }
+
+                    provenanceFileButton.setText(shortName);
+                    provenanceFileButton.setToolTipText(provenanceFilename);
+                }
+            }
+        } else if (command.equalsIgnoreCase("color")) {
             int index = voiColorChoices.getSelectedIndex();
             voiColorChoices.setBackground(voiColors[index]);
 
@@ -414,6 +480,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             }
             
             Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE, String.valueOf(provenanceCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE, String.valueOf(provenanceImageCheckBox.isSelected()));
+            
             Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE,
                                     String.valueOf(saveImgAsAnalyzeCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_XML_ON_HDR_SAVE, String.valueOf(saveXMLOnHDRSaveCheckBox.isSelected()));
@@ -1233,24 +1301,68 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     /**
-     * Makes the "Log Mode" option line in the globalChangesPanel.
+     * Makes the Data provenance option line in the globalChangesPanel.
      *
      * @param  gbc  the constraints used in the globalChangesPanel
      * @param  gbl  the layout used in the globablChangesPanel
      */
     protected void makeProvenanceOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+    	
         provenanceCheckBox = new JCheckBox("Data provenance");
         provenanceCheckBox.setFont(MipavUtil.font12);
         provenanceCheckBox.setForeground(Color.black);
         provenanceCheckBox.addActionListener(this);
+        provenanceCheckBox.setToolTipText("");
+        
         gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbl.setConstraints(provenanceCheckBox, gbc);
         otherPanel.add(provenanceCheckBox);
-
+                
         // preset the choices.
         provenanceCheckBox.setSelected(Preferences.is(Preferences.PREF_DATA_PROVENANCE));
+        
+        provenanceFilename = Preferences.getProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME);
+        if (provenanceFilename == null) {
+        	provenanceFilename = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dataprovenance.xmp";        	
+        	Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, provenanceFilename);
+        }
+        
+        String shortName = provenanceFilename;
+
+        if (provenanceFilename.length() > 24) {
+            shortName = ".." + provenanceFilename.substring(provenanceFilename.length() - 22, provenanceFilename.length());
+        }
+
+        provenanceFileButton = new JButton(shortName);
+        provenanceFileButton.setToolTipText(provenanceFilename);
+        provenanceFileButton.setFont(MipavUtil.font12);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        provenanceFileButton.setEnabled(provenanceCheckBox.isSelected());
+        provenanceFileButton.addActionListener(this);
+        provenanceFileButton.setActionCommand("ChooseProvenance");
+        otherPanel.add(provenanceFileButton, gbc);
+        
+        
+        
+        provenanceImageCheckBox = new JCheckBox("Image level data provenance");
+        provenanceImageCheckBox.setFont(MipavUtil.font12);
+        provenanceImageCheckBox.setForeground(Color.black);
+        provenanceImageCheckBox.addActionListener(this);
+        provenanceImageCheckBox.setToolTipText("Data provenance per image (eg saving file_test.jpg will create file_test.xmp");
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbl.setConstraints(provenanceImageCheckBox, gbc);
+        otherPanel.add(provenanceImageCheckBox);
+
+        provenanceImageCheckBox.setEnabled(provenanceCheckBox.isSelected());
+        
+        // preset the choices.
+        provenanceImageCheckBox.setSelected(Preferences.is(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE));
     }
 
     /**

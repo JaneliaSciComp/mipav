@@ -178,6 +178,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** DOCUMENT ME! */
     private JXCEDEExplorer xcedeExplorer;
 
+    /** System DP holder (separate from images data provenance...this has everything)*/
+    private ProvenanceHolder systemDPHolder;
+  
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -317,6 +320,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
     }
 
+    /**
+     * Displays the system data provenance using a simple dialog with table and jtextarea (for current selection)
+     *
+     */
+    public void aboutDataProvenance() {
+    	
+    	JDialogDataProvenance dp = new JDialogDataProvenance(mainFrame, "Mipav system data provenance", true, this.getProvenanceHolder());
+    	
+    }
+    
     // ************************************************************************
     // **************************** Action Events *****************************
     // ************************************************************************
@@ -617,6 +630,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             showLicense();
         } else if (command.equals("AboutJava")) {
             aboutJava();
+        } else if (command.equals("DataProvenance")) {
+            aboutDataProvenance();
         } else if (command.equals("Help")) {
             MipavUtil.showHelp(null);
         } else if (command.equals("MemoryUsage")) {
@@ -1329,6 +1344,38 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return progressBarPrefix;
     }
 
+    /**
+     * Accessor for the mipav's data provenance
+     * @return mipav's data provenance holder
+     */
+    public ProvenanceHolder getProvenanceHolder() {
+    	return this.systemDPHolder;
+    }
+    
+    /**
+     * Writes Mipav's data provenance to the default location
+     *
+     */
+    public void writeDataProvenance() {
+    	//only write data provenance when there is something to write
+    	if (systemDPHolder != null && systemDPHolder.size() > 0) {
+    		
+    		String provenanceFilename = Preferences.getProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME);
+            if (provenanceFilename == null) {
+            	provenanceFilename = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dataprovenance.xmp";        	
+            	Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, provenanceFilename);
+            }
+    		
+            File pFile = new File(provenanceFilename);
+            
+    		FileDataProvenance fdp = new FileDataProvenance(pFile.getName(),
+					pFile.getParent(), systemDPHolder);
+    		try {
+    			fdp.writeXML();
+    		} catch (Exception e) {}
+    	}
+    }
+    
     /**
      * Return an num of images with frames(elements) from the image hashtable.
      *
@@ -2784,7 +2831,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                   JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (reply == JOptionPane.YES_OPTION) {
-
+        	
+        	if (Preferences.is(Preferences.PREF_DATA_PROVENANCE)) {
+        		writeDataProvenance();
+        	}
+        	
             memoryUsageThread.shutdown();
 
             if (DICOMQueryFrame != null) {
@@ -3246,8 +3297,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             Preferences.print();
         }
 
+        
+        //create the system data provenance holder to catch all events
+        systemDPHolder = new ProvenanceHolder();
+        
         //start the Provenance recorder here if the preference is set
         if (Preferences.is(Preferences.PREF_DATA_PROVENANCE)) {
+        	
         	ProvenanceRecorder.getReference().startRecording();
         }
         

@@ -13,26 +13,42 @@ public class ProvenanceEntry extends ModelSerialCloneable {
     /** The timestamp */
     private long time;
 
+    /** action describing the event */
     private String action;
     
+    /** the name of the operating system */
     private String osName;
+    
+    /** the operating system's version*/
     private String osVersion;
+    
+    /** the user name*/
     private String user;
+    
+    /** mipav's version */
     private String mipavVersion;
+ 
+    /** mipav's command-line arguments */
     private String mipavArguments;
+    
+    /** java's version */
     private String javaVersion;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     public ProvenanceEntry() {}
     
-    public ProvenanceEntry(String action, long time) {
+    /**
+     * Constructor created when an action happens
+     * @param action the action performed
+     */
+    public ProvenanceEntry(String action) {
        this.action = action;
-       this.time = time;
        setToCurrent();
     }
 
     public void setToCurrent() {
+    	time = System.currentTimeMillis();
     	osName = System.getProperties().getProperty("os.name");
     	osVersion = System.getProperties().getProperty("os.version");
     	user = System.getProperties().getProperty("user.name");

@@ -43,10 +43,8 @@ public class FileDataProvenance extends FileXML {
     /** File reference. */
     private File file;
 
-    private ModelImage image;
-
-    /** The current level of tab nesting we are on. Used to auto-indent nested xml tags. */
-    private int tabLevel = 0;
+    /** The provenance holder to write from and read into */
+    private ProvenanceHolder pHolder;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -58,35 +56,29 @@ public class FileDataProvenance extends FileXML {
      * @param      image     image model: needed during the read process to ensure the VOI "fits" in the image space.
      *
      */
-    public FileDataProvenance(String fn, String fDir, ModelImage image)  {
-    	super(fn.substring(0, fn.lastIndexOf(".")) + ".xmp", fDir); 
-        this.image = image;
+    public FileDataProvenance(String fn, String fDir, ProvenanceHolder ph)  {
+    	super(fn, fDir); 
+        this.pHolder = ph;
         
-        file = new File(fileDir + fileName);
-        this.m_kHandler = new ProvenanceXMLHandler(image.getProvenanceHolder());
+        file = new File(fileDir + File.separator + fileName);
+        this.m_kHandler = new ProvenanceXMLHandler(pHolder);
     }
-
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
 
     
 
     /**
-     * Writes VOI to an XML formatted file.
-     *
-     * @param   voi              VOI to be saved
-     * @param   saveAllContours  if true save all contours, not just the active ones
-     *
-     * @throws  IOException  exception thrown if there is an error writing the file
+     * Writes the data provenance into xml formatted file
      */
     public void writeXML() throws IOException {
-      System.err.println("Writing"); 
         FileWriter fw;
         if (file.exists() == true) {
         	file.delete();
-        	file = new File(fileDir + fileName);
+        	file = new File(fileDir + File.separator + fileName);
         }
-
+        
         try {
 
             fw = new FileWriter(file);
@@ -101,12 +93,12 @@ public class FileDataProvenance extends FileXML {
 
             openTag("dataprovenance", true);
             
-            int numEntries = image.getProvenanceHolder().size();
+            int numEntries = pHolder.size();
             
             ProvenanceEntry entry;
                         
             for (int i = 0; i < numEntries; i++) {
-            	entry = image.getProvenanceHolder().elementAt(i);
+            	entry = pHolder.elementAt(i);
             	
             	openTag("entry", true);
             	
@@ -149,15 +141,15 @@ public class FileDataProvenance extends FileXML {
         /** The data for the current element being parsed. */
         private String elementBuffer = new String();
 
-        
+        /** the provenance holder to read information into*/
         private ProvenanceHolder holder;
         
+        /** the current provenance entry (to be inserted into the holder)*/
         private ProvenanceEntry currentEntry;
         
         /**
-         * Construct our custom XML data handler.
-         *
-         * @param  voi  the VOI we should build from the XML file data
+         * Default constructor
+         * @param ph the provenance holder to read the information into
          */
         public ProvenanceXMLHandler(ProvenanceHolder ph) {
            this.holder = ph;

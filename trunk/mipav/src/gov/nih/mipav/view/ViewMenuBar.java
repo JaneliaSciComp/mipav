@@ -613,7 +613,9 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Memory usage", "MemoryUsage", 0, null, true),
                                         menuBuilder.buildMenuItem("Memory allocation", "MemoryAdjust", 0, null, true),
                                         menuBuilder.buildMenuItem("Image registry monitor", "ImageRegistryMonitor", 0,
-                                                                  null, true), separator,
+                                                                  null, true), 
+                                        menuBuilder.buildMenuItem("MIPAV data provenance", "DataProvenance", 0,
+                                                                          null, true),separator,
                                         menuBuilder.buildMenuItem("MIPAV options", "Options", 0, null, true),
                                         menuBuilder.buildMenuItem("Shortcut editor", Preferences.PREF_SHORTCUTS, 0, null, true),
                                     });
@@ -665,7 +667,9 @@ public class ViewMenuBar {
                                                                                            0, "header.gif", false),
                                                                  menuBuilder.buildMenuItem("Edit attributes",
                                                                                            "EditImageInfo", 0,
-                                                                                           "attributes.gif", false)
+                                                                                           "attributes.gif", false),
+                                                                menuBuilder.buildMenuItem("Data provenance",
+                                                                                                   "ImageDataProvenance", 0,null, true)
                                                              }),
                                         menuBuilder.makeMenu("Zoom", true,
                                                              new JMenuItem[] {

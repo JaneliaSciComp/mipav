@@ -83,9 +83,6 @@ public class FileVOI extends FileXML {
     /** File directory where the VOI is to read or written. */
     private int sliceNum;
 
-    /** The current level of tab nesting we are on. Used to auto-indent nested xml tags. */
-    private int tabLevel = 0;
-
     /** File name without the extension. */
     private String trimmedFileName;
 
