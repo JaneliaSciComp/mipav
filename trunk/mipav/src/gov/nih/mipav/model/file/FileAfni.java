@@ -4308,7 +4308,7 @@ public class FileAfni extends FileBase {
         byte[] byteBuffer;
         int progress, progressLength, mod;
         int tmpInt;
-
+  
         switch (brikDataType) {
 
             case ModelStorageBase.UBYTE:
@@ -7238,7 +7238,7 @@ public class FileAfni extends FileBase {
             } // if ((!readACPC) && (!readTLRC))
         } // if (doDicom)
         else {
-
+      
             if (ModelImage.isColorImage(fileInfo.getDataType())) {
                 bufferSize = 4 * xDim * yDim;
                 volSize = 4 * xDim * yDim * zDim;
@@ -7381,6 +7381,7 @@ public class FileAfni extends FileBase {
         int newY = 0;
         int newZ = 0;
         int progress, progressLength, mod;
+        int tmpInt;
 
         fireProgressStateChanged(ViewUserInterface.getReference().getProgressBarPrefix() + "AFNI...");
 
@@ -7480,10 +7481,12 @@ public class FileAfni extends FileBase {
                     b4 = getUnsignedByte(byteBuffer, j + 3);
 
                     if (endianess) {
-                        buffer[i] = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
+                        tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4); // Big Endian
                     } else {
-                        buffer[i] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
+                        tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1); // Little Endian
                     }
+                    
+                    buffer[i] = Float.intBitsToFloat(tmpInt);
                 } // for (j =0; j < nBytes; j+=4, i++ )
 
                 break;
