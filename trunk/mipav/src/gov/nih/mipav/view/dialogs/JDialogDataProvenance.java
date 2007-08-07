@@ -129,7 +129,7 @@ public class JDialogDataProvenance extends JDialogBase {
         for (int i = 0; i < size; i++) {
         	rose = new String[dpColumnNames.length];
 
-        	rose[0] = Long.toString(pHolder.elementAt(i).getTimeStamp());
+        	rose[0] = pHolder.elementAt(i).getTimeStamp();
         	rose[1] = pHolder.elementAt(i).getAction();
         	rose[2] = pHolder.elementAt(i).getJavaVersion();
         	rose[3] = pHolder.elementAt(i).getMipavVersion();

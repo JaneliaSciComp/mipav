@@ -1308,7 +1308,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      */
     protected void makeProvenanceOptions(GridBagConstraints gbc, GridBagLayout gbl) {
     	
-        provenanceCheckBox = new JCheckBox("Data provenance");
+        provenanceCheckBox = new JCheckBox("Global data provenance");
         provenanceCheckBox.setFont(MipavUtil.font12);
         provenanceCheckBox.setForeground(Color.black);
         provenanceCheckBox.addActionListener(this);

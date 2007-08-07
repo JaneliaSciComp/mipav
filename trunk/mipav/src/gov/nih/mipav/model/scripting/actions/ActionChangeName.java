@@ -56,7 +56,15 @@ public class ActionChangeName extends ActionImageProcessorBase {
     public void insertScriptLine() {
         // change the image name stored in the image table if it has been used in the script before.
         // if it hasn't been used before storing it will be handled in createInputImageParameter(isScript)
-        ImageVariableTable imageTable = ScriptRecorder.getReference().getImageTable();
+        ImageVariableTable imageTable = null;
+        if (isScript) {
+        	imageTable = ScriptRecorder.getReference().getImageTable();
+        } else {
+        	imageTable = ProvenanceRecorder.getReference().getImageTable();
+        }
+        	
+        	
+        	
         if (imageTable.isImageStored(recordingOldImageName)) {
             imageTable.changeImageName(recordingOldImageName, recordingNewImageName);
         }
