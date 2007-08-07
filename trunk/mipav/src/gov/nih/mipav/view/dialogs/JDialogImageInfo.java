@@ -1104,72 +1104,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     }
 
     /**
-     * Builds the panel for displaying/editing the image's data provenance
-     *
-     * @return  history panel
-     */
-    private JPanel buildDPPanel() {
-        JPanel historyPanel = new JPanel(new BorderLayout());
-
-        buildToolBar();
-        historyPanel.add(tBar, BorderLayout.NORTH);
-
-        ViewTableModel dpModel = new ViewTableModel();
-        JTable dpTable = new JTable(dpModel);
-
-        for (int i = 0; i < dpColumnNames.length; i++) {
-            dpModel.addColumn(dpColumnNames[i]);
-        }
-        dpTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        dpTable.getColumn("Time").setMinWidth(60);
-        dpTable.getColumn("Time").setMaxWidth(200);
-    //    dpTable.getColumn("Action").setMinWidth(100);
-        dpTable.getColumn("JVM").setMinWidth(60);
-        dpTable.getColumn("JVM").setMaxWidth(60);
-        dpTable.getColumn("Mipav").setMinWidth(40);
-        dpTable.getColumn("Mipav").setMaxWidth(40);
-        dpTable.getColumn("User").setMinWidth(80);
-        dpTable.getColumn("User").setMaxWidth(100);
-
-        dpTable.getTableHeader().setReorderingAllowed(false);
-        
-        
-        
-        ProvenanceHolder ph = image.getProvenanceHolder();
-        int size = ph.size();
-        String rose [] = null;
-        for (int i = 0; i < size; i++) {
-        	rose = new String[dpColumnNames.length];
-
-        	rose[0] = Long.toString(ph.elementAt(i).getTimeStamp());
-        	rose[1] = ph.elementAt(i).getAction();
-        	rose[2] = ph.elementAt(i).getJavaVersion();
-        	rose[3] = ph.elementAt(i).getMipavVersion();
-        	rose[4] = ph.elementAt(i).getUser();        	
-            dpModel.addRow(rose);
-        }
-        Box scrollingBox = new Box(BoxLayout.Y_AXIS);
-        scrollingBox.add(dpTable.getTableHeader());
-        scrollingBox.add(dpTable);
-        
-        provenanceArea = new JTextArea();
-        
-        provenanceArea.setLineWrap(true);
-        provenanceArea.setEditable(false);
-        scrollingBox.add(provenanceArea);
-        
-        SelectionListener listener = new SelectionListener(dpTable, provenanceArea);
-        dpTable.getSelectionModel().addListSelectionListener(listener);
-        dpTable.getColumnModel().getSelectionModel().addListSelectionListener(listener);
-        
-        JScrollPane scrollPane = new JScrollPane(scrollingBox);
-        historyPanel.add(scrollPane, BorderLayout.CENTER);
-        
-        return historyPanel;
-    }
-
-    /**
      * Builds the panel usd in the tabbed pane "transform" as appropriate for the number of dimensions of the image.
      *
      * @return  The newly created matrix panel.
@@ -2216,73 +2150,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     }
 
     /**
-     * Builds the toolbar.
-     */
-    private void buildToolBar() {
-
-        tBar = new JToolBar();
-        tBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        tBar.setBorder(BorderFactory.createEtchedBorder());
-        tBar.setBorderPainted(true);
-
-        JButton saveButton = new JButton(MipavUtil.getIcon("save.gif"));
-        saveButton.addActionListener(this);
-        saveButton.setToolTipText("Save history");
-        saveButton.setActionCommand("SaveHistory");
-        saveButton.setBorderPainted(false);
-        saveButton.setRolloverEnabled(true);
-        saveButton.setRolloverIcon(MipavUtil.getIcon("saverollover.gif"));
-        saveButton.setBorder(BorderFactory.createLoweredBevelBorder());
-
-        // saveButton.addItemListener(this);
-        saveButton.setFocusPainted(false);
-        tBar.add(saveButton);
-        // tBar.add(makeSeparator());
-
-        JButton newButton = new JButton(MipavUtil.getIcon("clear.gif"));
-        newButton.addActionListener(this);
-        newButton.setToolTipText("Clears the message area");
-        newButton.setActionCommand("Clear");
-        newButton.setBorderPainted(false);
-        newButton.setRolloverEnabled(true);
-        newButton.setRolloverIcon(MipavUtil.getIcon("clearroll.gif"));
-        newButton.setMargin(new Insets(0, 0, 0, 0));
-        tBar.add(newButton);
-
-        JButton cutButton = new JButton(MipavUtil.getIcon("cutpaint.gif"));
-        cutButton.addActionListener(this);
-        cutButton.setToolTipText("Cuts selected text");
-        cutButton.setActionCommand("Cut");
-        cutButton.setBorderPainted(false);
-        cutButton.setRolloverEnabled(true);
-        cutButton.setRolloverIcon(MipavUtil.getIcon("cutpaintroll.gif"));
-        cutButton.setMargin(new Insets(0, 0, 0, 0));
-        tBar.add(cutButton);
-
-        JButton copyButton = new JButton(MipavUtil.getIcon("copypaint.gif"));
-        copyButton.addActionListener(this);
-        copyButton.setToolTipText("Copies selected text");
-        copyButton.setActionCommand("Copy");
-        copyButton.setBorderPainted(false);
-        copyButton.setRolloverEnabled(true);
-        copyButton.setRolloverIcon(MipavUtil.getIcon("copypaintroll.gif"));
-        copyButton.setMargin(new Insets(0, 0, 0, 0));
-        tBar.add(copyButton);
-
-        JButton pasteButton = new JButton(MipavUtil.getIcon("pastepaint.gif"));
-        pasteButton.addActionListener(this);
-        pasteButton.setToolTipText("Pastes text");
-        pasteButton.setActionCommand("Paste");
-        pasteButton.setBorderPainted(false);
-        pasteButton.setRolloverEnabled(true);
-        pasteButton.setRolloverIcon(MipavUtil.getIcon("pastepaintroll.gif"));
-        pasteButton.setMargin(new Insets(0, 0, 0, 0));
-        tBar.add(pasteButton);
-
-        tBar.setFloatable(false);
-    }
-
-    /**
      * Initializes the dialog box and adds the components.
      *
      * @param  addTitle  DOCUMENT ME!
@@ -2296,7 +2163,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         tabbedPane.addTab("Resolutions", null, buildResolutionPanel());
         tabbedPane.addTab("Orientations\\Origin", null, buildOrientPanel());
         tabbedPane.addTab("Transform matrix", null, buildMatrixPanel());
-        tabbedPane.addTab("History", null, buildDPPanel());
         tabbedPane.addTab("Talairach", null, buildTalairachPanel());
 
         /**
@@ -3558,7 +3424,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             image.setTalairachTransformInfo(tInfo);
 
-            if (tabbedPane.getSelectedIndex() == 5) {
+            if (tabbedPane.getSelectedIndex() == 4) {
                 ScriptRecorder.getReference().addLine(new ActionChangeTalairachInfo(image));
                 ProvenanceRecorder.getReference().addLine(new ActionChangeTalairachInfo(image));
             }
@@ -3599,24 +3465,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
         } else {
             System.err.println("THIS IS NOT AN XML FILE!!!");
-        }
-    }
-    
-  
-    public class SelectionListener implements ListSelectionListener {
-        JTable table;
-        JTextArea textArea;
-        
-        SelectionListener(JTable table, JTextArea textArea) {
-            this.table = table;
-            this.textArea = textArea;
-        }
-        public void valueChanged(ListSelectionEvent e) {	
-        	 if (e.getValueIsAdjusting()) {
-                 // The mouse button has not yet been released
-        		 return;
-             }
-        	 textArea.setText((String)table.getModel().getValueAt(table.getSelectedRow(), table.getSelectedColumn()));
         }
     }
 }

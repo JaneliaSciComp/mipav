@@ -43,6 +43,12 @@ public class Preferences {
     /** Constant that indicates if data provenance is turned on. */
     public static final String PREF_DATA_PROVENANCE = "RecordDataProvenance";
 
+    /** Constant that indicates if data provenance is turned on for individual images (and saved on image-save). */
+    public static final String PREF_IMAGE_LEVEL_DATA_PROVENANCE = "ImageLevelDataProvenance";
+    
+    /** Constant that indicates the path where the system data provenance should be stored*/
+    public static final String PREF_DATA_PROVENANCE_FILENAME = "DataProvenanceFilename";
+    
     /** Constant for debug s. */
     public static final String PREF_DEBUG = "DEBUG";
 
@@ -395,7 +401,12 @@ public class Preferences {
 
     /** Constant used to identify debugging level for output of scripting system messages. */
     public static final int DEBUG_SCRIPTING = 4;
-
+    
+    /** The schema for the data provenance xml files*/
+    public static final String DATA_PROVENANCE_SCHEMA = "dataprovenance.xsd";
+    
+    
+    
     /** A list of MIPAV properties. */
     private static Properties mipavProps;
 
@@ -414,6 +425,8 @@ public class Preferences {
     /** The MIPAV preferences file path and name. */
     private static String preferencesFile = preferencesDir + File.separator + preferencesFileName;
 
+   
+        
     /** Hashtable that holds all user-defined shortcuts */
     private static Hashtable userShortcutTable;
 

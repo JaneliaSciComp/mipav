@@ -1563,9 +1563,12 @@ public class FileIO {
             	if (ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING) {
             		if (new File(fileDir + File.separator + fileName.substring(0, fileName.lastIndexOf(".")) + ".xmp").exists()) {
             		try {
-            			FileDataProvenance fdp = new FileDataProvenance(fileName, fileDir, image);
+            			FileDataProvenance fdp = 
+            				new FileDataProvenance(fileName.substring(0, fileName.lastIndexOf(".")) + ".xmp", 
+            						fileDir, image.getProvenanceHolder());
             			
-            			fdp.readHeader(fileName.substring(0, fileName.lastIndexOf(".")) + ".xmp", fileDir, "dataprovenance.xsd");
+            			fdp.readHeader(fileName.substring(0, fileName.lastIndexOf(".")) + ".xmp", fileDir, 
+            					Preferences.DATA_PROVENANCE_SCHEMA);
             			
             		} catch (Exception e) {
             			e.printStackTrace();
@@ -2264,11 +2267,14 @@ public class FileIO {
         	
         	ProvenanceRecorder.getReference().addLine(action);
                 
-        	
-        	FileDataProvenance fdp = new FileDataProvenance(options.getFileName(), options.getFileDirectory(), image);
-        	try {
-        		fdp.writeXML();
-        	} catch (Exception e) {}
+        	if (Preferences.is(Preferences.PREF_IMAGE_LEVEL_DATA_PROVENANCE)) {
+        		FileDataProvenance fdp = 
+        			new FileDataProvenance(options.getFileName().substring(0, options.getFileName().lastIndexOf(".")) + ".xmp", 
+        				options.getFileDirectory(), image.getProvenanceHolder());
+        		try {
+        			fdp.writeXML();
+        		} catch (Exception e) {}
+        	}
         }
         
         
