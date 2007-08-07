@@ -16,6 +16,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.image.PixelGrabber;
 import java.io.File;
@@ -49,6 +51,8 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
@@ -85,34 +89,37 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
  *
  */
 public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
-		implements AlgorithmInterface, ChangeListener, ItemListener, MouseListener {
+		implements AlgorithmInterface, ChangeListener, ItemListener, MouseListener, MouseWheelListener {
+	
+	/** dialog title and version **/
+	private String title = " DTI Color Display  v1.1      ";
 	
 	/** panels **/
-	private JPanel mainPanel,topPanel, filesPanel, okPanel, bottomPanel, colorPanel, colorWheelPanel, resultImagePanel, optionsPanel, colorWheelChoicesPanel, heuristicParametersPanel, latticeMaxPanel, latticeMinPanel, gammaPanel, stevensBetaPanel, satBluePanel, dimGreenPanel, colorRangePanel, satVsThetaPanel, resultPanel, resultImageSliderPanel, tempPanel, toolbarPanel;
+	private JPanel mainPanel,topPanel, filesPanel, okPanel, bottomPanel, colorPanel, colorWheelPanel, resultImagePanel, optionsPanel, colorWheelChoicesPanel, heuristicParametersPanel, anisotropyMaxPanel, anisotropyMinPanel, gammaPanel, stevensBetaPanel, satBluePanel, dimGreenPanel, colorRangePanel, satVsThetaPanel, resultPanel, resultImageSliderPanel, tempPanel, toolbarPanel, adjustExpPanel, truncMultPanel;
 	
 	/** labels **/
-	private JLabel eigenvectorLabel, eigenvalueLabel, minLatticeMaxLabel, maxLatticeMaxLabel, minLatticeMinLabel, maxLatticeMinLabel, minGammaLabel, maxGammaLabel, minStevensBetaLabel, maxStevensBetaLabel, minSatBlueLabel, maxSatBlueLabel, minDimGreenLabel, maxDimGreenLabel, minColorRangeLabel, maxColorRangeLabel, minSatVsThetaLabel, maxSatVsThetaLabel, minResultImageSlicesLabel, maxResultImageSlicesLabel, magLabel, refLabel;
+	private JLabel eigenvectorLabel, anisotropyLabel, minAnisotropyMaxLabel, maxAnisotropyMaxLabel, minAnisotropyMinLabel, maxAnisotropyMinLabel, minGammaLabel, maxGammaLabel, minStevensBetaLabel, maxStevensBetaLabel, minSatBlueLabel, maxSatBlueLabel, minDimGreenLabel, maxDimGreenLabel, minColorRangeLabel, maxColorRangeLabel, minSatVsThetaLabel, maxSatVsThetaLabel, minResultImageSlicesLabel, maxResultImageSlicesLabel, magLabel, refLabel, minAdjustExpLabel, maxAdjustExpLabel;
 	
 	/** scroll pane for result image **/
     private JScrollPane resultScrollPanel;
     
 	/** textfields **/
-	private JTextField eigenvectorPath,eigenvaluePath, latticeMaxTextField, latticeMinTextField, gammaTextField, stevensBetaTextField, satBlueTextField, dimGreenTextField, colorRangeTextField, satVsThetaTextField;
+	private JTextField eigenvectorPath,anisotropyPath, anisotropyMaxTextField, anisotropyMinTextField, gammaTextField, stevensBetaTextField, satBlueTextField, dimGreenTextField, colorRangeTextField, satVsThetaTextField, adjustExpTextField;
 	
 	/** buttons **/
-	private JButton eigenvectorBrowseButton,eigenvalueBrowseButton, okButton, magButton, unMagButton, zoomOneButton, captureImageButton;
+	private JButton eigenvectorBrowseButton,anisotropyBrowseButton, okButton, magButton, unMagButton, zoomOneButton, captureImageButton;
 	
 	/** current directory  **/
-    private String currDir = null;
+    //private String currDir = null;
     
     /** eigenvector src image **/
     private ModelImage eigvecSrcImage;
     
-    /** eigenvalue src image **/
-    private ModelImage eigvalSrcImage;
+    /** anisotropy src image **/
+    private ModelImage anisotropyImage;
     
-    /** names of eigenvector and eigenvalue files**/
-    private String eigvecFilename, eigvalFilename;
+    /** names of eigenvector and anisotropy files**/
+    private String eigvecFilename, anisotropyFilename;
     
     /** result image **/
     private ModelImage resultImage;
@@ -133,7 +140,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     private GridBagConstraints gbc;
     
     /** various sliders in dialog **/
-    public JSlider latticeMaxSlider, latticeMinSlider, gammaSlider, stevensBetaSlider, satBlueSlider, dimGreenSlider, colorRangeSlider, satVsThetaSlider, resultImageSlider;
+    public JSlider anisotropyMaxSlider, anisotropyMinSlider, gammaSlider, stevensBetaSlider, satBlueSlider, dimGreenSlider, colorRangeSlider, satVsThetaSlider, resultImageSlider, adjustExpSlider;
     
     /** titled border for certain components **/
     private TitledBorder titledBorder;
@@ -141,11 +148,14 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     /** color wheel choices combo box **/
     private JComboBox colorWheelComboBox;
     
-    /** lattice max **/
-    private float latticeMax = 0.7f;
+    /** anisotropy max **/
+    private float anisotropyMax = 0.7f;
     
-    /** lattice min **/
-    private float latticeMin = 0.0f;
+    /** anisotropy min **/
+    private float anisotropyMin = 0.0f;
+    
+    /** adjust exp **/
+    private float adjustExp = 0.5f;
     
     /** gamma correction **/
     private float gamma = 1.8f;
@@ -213,8 +223,14 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     /** rectangle for screen capture**/
     private Rectangle currentRectangle;
     
+    /** radio group for truncate/multiply **/
+    private ButtonGroup truncMultRadioGroup;
     
+    /** radio buttons for truncate/multiply **/
+    private JRadioButton truncRadio, multRadio;
     
+    /** boolean for truncate/multiply **/
+    private boolean isMultiply = true;
     
     
 	/**
@@ -230,7 +246,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("DTI Color Display " + " v1.0");
+        setTitle(title);
         
         gbl = new GridBagLayout();
         gbc = new GridBagConstraints();
@@ -260,20 +276,20 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		filesPanel.add(eigenvectorBrowseButton, gbc);
 		gbc.gridx = 0;
 		gbc.gridy = 1;
-        eigenvalueLabel = new JLabel(" eigenvalue file: ");
-        filesPanel.add(eigenvalueLabel, gbc);
+		anisotropyLabel = new JLabel(" anisotropy file: ");
+        filesPanel.add(anisotropyLabel, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
-		eigenvaluePath = new JTextField(35);
-		eigenvaluePath.setEditable(false);
-		eigenvaluePath.setBackground(Color.white);
-		filesPanel.add(eigenvaluePath, gbc);
+        anisotropyPath = new JTextField(35);
+        anisotropyPath.setEditable(false);
+        anisotropyPath.setBackground(Color.white);
+		filesPanel.add(anisotropyPath, gbc);
 		gbc.gridx = 2;
 		gbc.gridy = 1;
-		eigenvalueBrowseButton = new JButton("Browse");
-		eigenvalueBrowseButton.addActionListener(this);
-		eigenvalueBrowseButton.setActionCommand("eigenvalueBrowse");
-		filesPanel.add(eigenvalueBrowseButton, gbc);
+		anisotropyBrowseButton = new JButton("Browse");
+		anisotropyBrowseButton.addActionListener(this);
+		anisotropyBrowseButton.setActionCommand("anisotropyBrowse");
+		filesPanel.add(anisotropyBrowseButton, gbc);
 		okPanel = new JPanel();
 		okButton = new JButton("OK");
 		okButton.addActionListener(this);
@@ -338,102 +354,102 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		heuristicParametersPanel.setForeground(Color.black);
 		titledBorder = new TitledBorder(new EtchedBorder(), " Heuristic Parameters ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		heuristicParametersPanel.setBorder(titledBorder);
-		//lattice max
-		latticeMaxPanel = new JPanel(gbl);
-		titledBorder = new TitledBorder(new EtchedBorder(), " Lattice Max ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
-		latticeMaxPanel.setBorder(titledBorder);
-		latticeMaxSlider = new JSlider(JSlider.HORIZONTAL, 0, 1000, 700);
-		latticeMaxSlider.setMajorTickSpacing(100);
-		latticeMaxSlider.setPaintTicks(true);
-		latticeMaxSlider.addChangeListener(this);
-		latticeMaxSlider.addMouseListener(this);
-		maxLatticeMaxLabel = new JLabel("1.0");
-		maxLatticeMaxLabel.setForeground(Color.black);
-		maxLatticeMaxLabel.setFont(MipavUtil.font12);
-		minLatticeMaxLabel = new JLabel("0.0");
-		minLatticeMaxLabel.setForeground(Color.black);
-		minLatticeMaxLabel.setFont(MipavUtil.font12);
+		//anisotropy max
+		anisotropyMaxPanel = new JPanel(gbl);
+		titledBorder = new TitledBorder(new EtchedBorder(), " Anisotropy Max ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+		anisotropyMaxPanel.setBorder(titledBorder);
+		anisotropyMaxSlider = new JSlider(JSlider.HORIZONTAL, 0, 1000, 700);
+		anisotropyMaxSlider.setMajorTickSpacing(100);
+		anisotropyMaxSlider.setPaintTicks(true);
+		anisotropyMaxSlider.addChangeListener(this);
+		anisotropyMaxSlider.addMouseListener(this);
+		maxAnisotropyMaxLabel = new JLabel("1.0");
+		maxAnisotropyMaxLabel.setForeground(Color.black);
+		maxAnisotropyMaxLabel.setFont(MipavUtil.font12);
+		minAnisotropyMaxLabel = new JLabel("0.0");
+		minAnisotropyMaxLabel.setForeground(Color.black);
+		minAnisotropyMaxLabel.setFont(MipavUtil.font12);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
 		gbc.weightx = 1;
 		gbc.gridheight = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
-		latticeMaxPanel.add(latticeMaxSlider,gbc);
-		latticeMaxTextField = new JTextField(8);
-		latticeMaxTextField.setEditable(false);
-		latticeMaxTextField.setBackground(Color.white);
-		latticeMaxTextField.setText(String.valueOf((float) (latticeMaxSlider.getValue() / 1000.000000f)));
+		anisotropyMaxPanel.add(anisotropyMaxSlider,gbc);
+		anisotropyMaxTextField = new JTextField(8);
+		anisotropyMaxTextField.setEditable(false);
+		anisotropyMaxTextField.setBackground(Color.white);
+		anisotropyMaxTextField.setText(String.valueOf((float) (anisotropyMaxSlider.getValue() / 1000.000000f)));
 		gbc.gridx = 3;
 		gbc.gridy = 0;
 		gbc.gridwidth = 1;
-		latticeMaxPanel.add(latticeMaxTextField,gbc);
+		anisotropyMaxPanel.add(anisotropyMaxTextField,gbc);
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 		gbc.gridwidth = 1;
 		gbc.weightx = 0;
 		gbc.anchor = GridBagConstraints.WEST;
 		gbc.fill = GridBagConstraints.NONE;
-		latticeMaxPanel.add(minLatticeMaxLabel,gbc);
+		anisotropyMaxPanel.add(minAnisotropyMaxLabel,gbc);
 		gbc.gridx = 2;
 		gbc.anchor = GridBagConstraints.EAST;
 		gbc.weightx = 0;
-		latticeMaxPanel.add(maxLatticeMaxLabel, gbc);
+		anisotropyMaxPanel.add(maxAnisotropyMaxLabel, gbc);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 1;
-		heuristicParametersPanel.add(latticeMaxPanel, gbc);
-		//lattice min
-		latticeMinPanel = new JPanel(gbl);
-		titledBorder = new TitledBorder(new EtchedBorder(), " Lattice Min ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
-		latticeMinPanel.setBorder(titledBorder);
-		latticeMinSlider = new JSlider(JSlider.HORIZONTAL, 0, 1000, 0);
-		latticeMinSlider.setMajorTickSpacing(100);
-		latticeMinSlider.setPaintTicks(true);
-		latticeMinSlider.addChangeListener(this);
-		latticeMinSlider.addMouseListener(this);
-		maxLatticeMinLabel = new JLabel("1.0");
-		maxLatticeMinLabel.setForeground(Color.black);
-		maxLatticeMinLabel.setFont(MipavUtil.font12);
-		minLatticeMinLabel = new JLabel("0.0");
-		minLatticeMinLabel.setForeground(Color.black);
-		minLatticeMinLabel.setFont(MipavUtil.font12);
+		heuristicParametersPanel.add(anisotropyMaxPanel, gbc);
+		//anisotropy min
+		anisotropyMinPanel = new JPanel(gbl);
+		titledBorder = new TitledBorder(new EtchedBorder(), " Anisotropy Min ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+		anisotropyMinPanel.setBorder(titledBorder);
+		anisotropyMinSlider = new JSlider(JSlider.HORIZONTAL, 0, 1000, 0);
+		anisotropyMinSlider.setMajorTickSpacing(100);
+		anisotropyMinSlider.setPaintTicks(true);
+		anisotropyMinSlider.addChangeListener(this);
+		anisotropyMinSlider.addMouseListener(this);
+		maxAnisotropyMinLabel = new JLabel("1.0");
+		maxAnisotropyMinLabel.setForeground(Color.black);
+		maxAnisotropyMinLabel.setFont(MipavUtil.font12);
+		minAnisotropyMinLabel = new JLabel("0.0");
+		minAnisotropyMinLabel.setForeground(Color.black);
+		minAnisotropyMinLabel.setFont(MipavUtil.font12);
         gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
 		gbc.weightx = 1;
 		gbc.gridheight = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;;
-		latticeMinPanel.add(latticeMinSlider,gbc);
-		latticeMinTextField = new JTextField(8);
-		latticeMinTextField.setEditable(false);
-		latticeMinTextField.setBackground(Color.white);
+		anisotropyMinPanel.add(anisotropyMinSlider,gbc);
+		anisotropyMinTextField = new JTextField(8);
+		anisotropyMinTextField.setEditable(false);
+		anisotropyMinTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
 		gbc.gridwidth = 1;
-		latticeMinPanel.add(latticeMinTextField,gbc);
-		latticeMinTextField.setText(String.valueOf((float) (latticeMinSlider.getValue() / 1000.000000f)));
+		anisotropyMinPanel.add(anisotropyMinTextField,gbc);
+		anisotropyMinTextField.setText(String.valueOf((float) (anisotropyMinSlider.getValue() / 1000.000000f)));
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 		gbc.gridwidth = 1;
 		gbc.weightx = 0;
 		gbc.anchor = GridBagConstraints.WEST;
 		gbc.fill = GridBagConstraints.NONE;
-		latticeMinPanel.add(minLatticeMinLabel,gbc);
+		anisotropyMinPanel.add(minAnisotropyMinLabel,gbc);
 		gbc.gridx = 2;
 		gbc.anchor = GridBagConstraints.EAST;
 		gbc.weightx = 0;
-		latticeMinPanel.add(maxLatticeMinLabel, gbc);
+		anisotropyMinPanel.add(maxAnisotropyMinLabel, gbc);
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 		gbc.gridwidth = 1;
-		heuristicParametersPanel.add(latticeMinPanel, gbc);
+		heuristicParametersPanel.add(anisotropyMinPanel, gbc);
 		//gamma
 		gammaPanel = new JPanel(gbl);
 		titledBorder = new TitledBorder(new EtchedBorder(), " Gamma Correction ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		gammaPanel.setBorder(titledBorder);
 		gammaSlider = new JSlider(JSlider.HORIZONTAL, 100, 400, 180);
-		gammaSlider.setMajorTickSpacing(100);
+		gammaSlider.setMajorTickSpacing(50);
 		gammaSlider.setPaintTicks(true);
 		gammaSlider.addChangeListener(this);
 		gammaSlider.addMouseListener(this);
@@ -473,51 +489,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.gridy = 2;
 		gbc.gridwidth = 1;
 		heuristicParametersPanel.add(gammaPanel, gbc);
-		//steven's beta
-		stevensBetaPanel = new JPanel(gbl);
-		titledBorder = new TitledBorder(new EtchedBorder(), " Stevens Beta ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
-		stevensBetaPanel.setBorder(titledBorder);
-		stevensBetaSlider = new JSlider(JSlider.HORIZONTAL, 30, 60, 40);
-		stevensBetaSlider.setMajorTickSpacing(3);
-		stevensBetaSlider.setPaintTicks(true);
-		stevensBetaSlider.addChangeListener(this);
-		stevensBetaSlider.addMouseListener(this);
-		maxStevensBetaLabel = new JLabel("0.6");
-		maxStevensBetaLabel.setForeground(Color.black);
-		maxStevensBetaLabel.setFont(MipavUtil.font12);
-		minStevensBetaLabel = new JLabel("0.3");
-		minStevensBetaLabel.setForeground(Color.black);
-		minStevensBetaLabel.setFont(MipavUtil.font12);
-        gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.gridwidth = 3;
-		gbc.weightx = 1;
-		gbc.gridheight = 1;
-		gbc.fill = GridBagConstraints.HORIZONTAL;;
-		stevensBetaPanel.add(stevensBetaSlider,gbc);
-		stevensBetaTextField = new JTextField(8);
-		stevensBetaTextField.setEditable(false);
-		stevensBetaTextField.setBackground(Color.white);
-		gbc.gridx = 3;
-		gbc.gridy = 0;
-		gbc.gridwidth = 1;
-		stevensBetaPanel.add(stevensBetaTextField,gbc);
-		stevensBetaTextField.setText(String.valueOf((float) (stevensBetaSlider.getValue() / 100.000000f)));
-		gbc.gridx = 0;
-		gbc.gridy = 1;
-		gbc.gridwidth = 1;
-		gbc.weightx = 0;
-		gbc.anchor = GridBagConstraints.WEST;
-		gbc.fill = GridBagConstraints.NONE;
-		stevensBetaPanel.add(minStevensBetaLabel,gbc);
-		gbc.gridx = 2;
-		gbc.anchor = GridBagConstraints.EAST;
-		gbc.weightx = 0;
-		stevensBetaPanel.add(maxStevensBetaLabel, gbc);
-		gbc.gridx = 0;
-		gbc.gridy = 3;
-		gbc.gridwidth = 1;
-		heuristicParametersPanel.add(stevensBetaPanel, gbc);
 		//blue sat
 		satBluePanel = new JPanel(gbl);
 		titledBorder = new TitledBorder(new EtchedBorder(), " pB Sat. Blue ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
@@ -560,19 +531,19 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.weightx = 0;
 		satBluePanel.add(maxSatBlueLabel, gbc);
 		gbc.gridx = 0;
-		gbc.gridy = 4;
+		gbc.gridy = 3;
 		gbc.gridwidth = 1;
 		heuristicParametersPanel.add(satBluePanel, gbc);
 		//green dim
 		dimGreenPanel = new JPanel(gbl);
 		titledBorder = new TitledBorder(new EtchedBorder(), " pG Dim Green ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		dimGreenPanel.setBorder(titledBorder);
-		dimGreenSlider = new JSlider(JSlider.HORIZONTAL, 0, 1000, 800);
-		dimGreenSlider.setMajorTickSpacing(100);
+		dimGreenSlider = new JSlider(JSlider.HORIZONTAL, 0, 300, 80);
+		dimGreenSlider.setMajorTickSpacing(50);
 		dimGreenSlider.setPaintTicks(true);
 		dimGreenSlider.addChangeListener(this);
 		dimGreenSlider.addMouseListener(this);
-		maxDimGreenLabel = new JLabel("10.0");
+		maxDimGreenLabel = new JLabel("3.0");
 		maxDimGreenLabel.setForeground(Color.black);
 		maxDimGreenLabel.setFont(MipavUtil.font12);
 		minDimGreenLabel = new JLabel("0.0");
@@ -592,7 +563,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.gridy = 0;
 		gbc.gridwidth = 1;
 		dimGreenPanel.add(dimGreenTextField,gbc);
-		dimGreenTextField.setText(String.valueOf((float) (dimGreenSlider.getValue() / 1000.000000f)));
+		dimGreenTextField.setText(String.valueOf((float) (dimGreenSlider.getValue() / 100.000000f)));
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 		gbc.gridwidth = 1;
@@ -605,7 +576,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.weightx = 0;
 		dimGreenPanel.add(maxDimGreenLabel, gbc);
 		gbc.gridx = 0;
-		gbc.gridy = 5;
+		gbc.gridy = 4;
 		gbc.gridwidth = 1;
 		heuristicParametersPanel.add(dimGreenPanel, gbc);
 		//color range
@@ -650,7 +621,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.weightx = 0;
 		colorRangePanel.add(maxColorRangeLabel, gbc);
 		gbc.gridx = 0;
-		gbc.gridy = 6;
+		gbc.gridy = 5;
 		gbc.gridwidth = 1;
 		heuristicParametersPanel.add(colorRangePanel, gbc);
 		//sat vs theta
@@ -696,10 +667,132 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.weightx = 0;
 		satVsThetaPanel.add(maxSatVsThetaLabel, gbc);
 		gbc.gridx = 0;
-		gbc.gridy = 7;
+		gbc.gridy = 6;
 		gbc.gridwidth = 1;
 		heuristicParametersPanel.add(satVsThetaPanel, gbc);
+		//adjustExp
+		adjustExpPanel = new JPanel(gbl);
+		titledBorder = new TitledBorder(new EtchedBorder(), " Adjust Exp ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+		adjustExpPanel.setBorder(titledBorder);
+		adjustExpSlider = new JSlider(JSlider.HORIZONTAL, 50, 100, 50);
+		adjustExpSlider.setMajorTickSpacing(10);
+		adjustExpSlider.setPaintTicks(true);
+		adjustExpSlider.addChangeListener(this);
+		adjustExpSlider.addMouseListener(this);
+		maxAdjustExpLabel = new JLabel("1.0");
+		maxAdjustExpLabel.setForeground(Color.black);
+		maxAdjustExpLabel.setFont(MipavUtil.font12);
+		minAdjustExpLabel = new JLabel("0.5");
+		minAdjustExpLabel.setForeground(Color.black);
+		minAdjustExpLabel.setFont(MipavUtil.font12);
+        gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 3;
+		gbc.weightx = 1;
+		gbc.gridheight = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;;
+		adjustExpPanel.add(adjustExpSlider,gbc);
+		adjustExpTextField = new JTextField(8);
+		adjustExpTextField.setEditable(false);
+		adjustExpTextField.setBackground(Color.white);
+		gbc.gridx = 3;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		adjustExpPanel.add(adjustExpTextField,gbc);
+		adjustExpTextField.setText(String.valueOf((float) (adjustExpSlider.getValue() / 100.000000f)));
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.fill = GridBagConstraints.NONE;
+		adjustExpPanel.add(minAdjustExpLabel,gbc);
+		gbc.gridx = 2;
+		gbc.anchor = GridBagConstraints.EAST;
+		gbc.weightx = 0;
+		adjustExpPanel.add(maxAdjustExpLabel, gbc);
+		gbc.gridx = 0;
+		gbc.gridy = 7;
+		gbc.gridwidth = 1;
+		heuristicParametersPanel.add(adjustExpPanel, gbc);
+		//steven's beta
+		stevensBetaPanel = new JPanel(gbl);
+		titledBorder = new TitledBorder(new EtchedBorder(), " Stevens Beta ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+		stevensBetaPanel.setBorder(titledBorder);
+		stevensBetaSlider = new JSlider(JSlider.HORIZONTAL, 30, 60, 40);
+		stevensBetaSlider.setMajorTickSpacing(3);
+		stevensBetaSlider.setPaintTicks(true);
+		stevensBetaSlider.addChangeListener(this);
+		stevensBetaSlider.addMouseListener(this);
+		maxStevensBetaLabel = new JLabel("0.6");
+		maxStevensBetaLabel.setForeground(Color.black);
+		maxStevensBetaLabel.setFont(MipavUtil.font12);
+		minStevensBetaLabel = new JLabel("0.3");
+		minStevensBetaLabel.setForeground(Color.black);
+		minStevensBetaLabel.setFont(MipavUtil.font12);
+        gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 3;
+		gbc.weightx = 1;
+		gbc.gridheight = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;;
+		stevensBetaPanel.add(stevensBetaSlider,gbc);
+		stevensBetaTextField = new JTextField(8);
+		stevensBetaTextField.setEditable(false);
+		stevensBetaTextField.setBackground(Color.white);
+		gbc.gridx = 3;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		stevensBetaPanel.add(stevensBetaTextField,gbc);
+		stevensBetaTextField.setText(String.valueOf((float) (stevensBetaSlider.getValue() / 100.000000f)));
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.fill = GridBagConstraints.NONE;
+		stevensBetaPanel.add(minStevensBetaLabel,gbc);
+		gbc.gridx = 2;
+		gbc.anchor = GridBagConstraints.EAST;
+		gbc.weightx = 0;
+		stevensBetaPanel.add(maxStevensBetaLabel, gbc);
+		gbc.gridx = 0;
+		gbc.gridy = 8;
+		gbc.gridwidth = 1;
+		heuristicParametersPanel.add(stevensBetaPanel, gbc);
+		//truncate-multiply
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.insets = new Insets(0,30,0,30);
+		truncMultPanel = new JPanel(gbl);
+		titledBorder = new TitledBorder(new EtchedBorder(), " Truncate/Multiply ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+		truncMultPanel.setBorder(titledBorder);
+		truncMultRadioGroup = new ButtonGroup();
+		truncRadio = new JRadioButton("Truncate");
+		truncRadio.setSelected(false);
+		truncRadio.addActionListener(this);
+		truncRadio.setActionCommand("truncRadio");
+		truncMultRadioGroup.add(truncRadio);
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		truncMultPanel.add(truncRadio, gbc);
+		multRadio = new JRadioButton("Multiply");
+		multRadio.setSelected(true);
+		multRadio.addActionListener(this);
+		multRadio.setActionCommand("multRadio");
+		truncMultRadioGroup.add(multRadio);
+		gbc.gridx = 1;
+		gbc.gridy = 0;
+		truncMultPanel.add(multRadio, gbc);
+		gbc.insets = new Insets(0,0,0,0);
+		gbc.gridx = 0;
+		gbc.gridy = 9;
+		gbc.gridwidth = 1;
+		heuristicParametersPanel.add(truncMultPanel, gbc);
 		
+		
+		
+		gbc.insets = new Insets(0,0,0,0);
+		gbc.fill = GridBagConstraints.NONE;
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 		optionsPanel.add(heuristicParametersPanel,gbc);
@@ -744,7 +837,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(refLabel,gbc);
         getContentPane().add(mainPanel);
-
+        
         pack();
         setResizable(false);
         setVisible(true);
@@ -757,7 +850,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	 */
 	protected void callAlgorithm() {
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
-		alg = new PlugInAlgorithmDTIColorDisplay(eigvecSrcImage,eigvalSrcImage);
+		alg = new PlugInAlgorithmDTIColorDisplay(eigvecSrcImage,anisotropyImage);
 		
 		alg.addListener(this);
 		
@@ -774,10 +867,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		if(alg.isCompleted()) {
 			
 			eigvecFilename = eigvecSrcImage.getImageName();
-			eigvalFilename = eigvalSrcImage.getImageName();
+			anisotropyFilename = anisotropyImage.getImageName();
 			eigenvectorPath.setText("");
-			eigenvaluePath.setText("");
+			anisotropyPath.setText("");
 			
+			//get result Model Image
 			resultImage = alg.getResultImage();
 			imageBufferA = initImageBuffer(resultImage.getExtents(), true);
 	        pixBuffer = initPixelBuffer(resultImage.getExtents());
@@ -789,8 +883,20 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	        zSlice = (resultImage.getExtents()[2] - 1) / 2;
 	        zSlice = zSlice - 1;
 	        
-			componentImage = new ViewJComponentDTIImage(this,resultImage,null,imageBufferA,pixBuffer,1,resultImage.getExtents(),false,FileInfoBase.UNKNOWN_ORIENT);
-			
+	        //get data from anisotropy file to send into ViewJComponentEditImage constructor
+	        float[] anisotropyBuffer;
+	        int length = anisotropyImage.getExtents()[0] * anisotropyImage.getExtents()[1] * anisotropyImage.getExtents()[2];
+	        anisotropyBuffer = new float[length];
+	        try {
+	        	anisotropyImage.exportData(0, length, anisotropyBuffer);
+	        }
+	        catch (IOException error) {
+	        	System.out.println("IO exception");
+	            return;
+	        }
+	        
+			componentImage = new ViewJComponentDTIImage(this,resultImage,null,imageBufferA,pixBuffer,1,resultImage.getExtents(),false,FileInfoBase.UNKNOWN_ORIENT,anisotropyBuffer);
+			componentImage.addMouseWheelListener(this);
 			componentImage.setBuffers(imageBufferA, null, pixBuffer, null);
 			if (resols[1] >= resols[0]) {
 	            componentImage.setResolutions(1, heightResFactor);
@@ -820,7 +926,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				type = "MIRRORSYMM";
 			}
 			
-			componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+			
+			componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			
 			gbc = new GridBagConstraints();
 			
@@ -832,6 +939,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			resultScrollPanel.setBorder(titledBorder);
 			resultScrollPanel.setPreferredSize(new Dimension(400, 400));
 			resultScrollPanel.setMinimumSize(new Dimension(400,400));
+			resultScrollPanel.addMouseWheelListener(this);
 			gbc.gridx = 0;
 	        gbc.gridy = 0;
 	        gbc.insets = new Insets(0,0,0,0);
@@ -841,7 +949,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			resultImageSliderPanel = new JPanel(gbl);
 			titledBorder = new TitledBorder(new EtchedBorder(), " Image slice ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 			resultImageSliderPanel.setBorder(titledBorder);
-			resultImageSlider = new JSlider(JSlider.HORIZONTAL, 1, nImage, zSlice);
+			resultImageSlider = new JSlider(JSlider.HORIZONTAL, 1, nImage, zSlice + 1);
 			resultImageSlider.setMajorTickSpacing(10);
 			resultImageSlider.setPaintTicks(true);
 			resultImageSlider.addChangeListener(this);
@@ -875,14 +983,14 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			toolbarBuilder = new ViewToolBarBuilder(this);
 			magButton = toolbarBuilder.buildButton("MagImage", "Magnify Image", "zoomin");
 			magButton.addMouseListener(this);
-			unMagButton = toolbarBuilder.buildButton("UnMagImage", "Un-Magnify Image", "zoomout");
+			unMagButton = toolbarBuilder.buildButton("UnMagImage", "Un-Mag Image", "zoomout");
 			unMagButton.addMouseListener(this);
-			zoomOneButton = toolbarBuilder.buildButton("ZoomOne", "Magnify image 1.0x", "zoom1");
+			zoomOneButton = toolbarBuilder.buildButton("ZoomOne", "Magnify Image 1.0x", "zoom1");
 			zoomOneButton.addMouseListener(this);
 			captureImageButton = toolbarBuilder.buildButton("CaptureImage", "Capture image slices to new frame", "camera");
 			captureImageButton.addMouseListener(this);
 			magLabel = new JLabel("M:"+zoom);
-			setTitle("DTI Color Display " + " v1.0       " + eigvecFilename + " , " + eigvalFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
 			
 			gbc.anchor = GridBagConstraints.CENTER;
 			gbc.insets = new Insets(0,5,0,5);
@@ -946,23 +1054,31 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		if(command.equalsIgnoreCase("eigenvectorBrowse")) {
-			JFileChooser chooser = new JFileChooser();
+			JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
 			chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-			if (currDir != null) {
-				chooser.setCurrentDirectory(new File(currDir));
-            }
 	        chooser.setDialogTitle("Choose eigenvector file");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
 	        	FileIO fileIO = new FileIO();
 	        	eigvecSrcImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
+	        	if(eigvecSrcImage.getNDims() != 4) {
+	        		MipavUtil.displayError("Eigenvector file does not have correct dimensions");
+	        		if(eigvecSrcImage != null) {
+	        			eigvecSrcImage.disposeLocal();
+	        		}
+	        		eigvecSrcImage = null;
+					return;
+	        	}
 	        	if(eigvecSrcImage.getExtents()[3] != 9) {
 					MipavUtil.displayError("Eigenvector file does not have correct dimensions");
-					finalize();
+					if(eigvecSrcImage != null) {
+						eigvecSrcImage.disposeLocal();
+					}
+					eigvecSrcImage = null;
 					return;
 	        	}
 	        	eigenvectorPath.setText(chooser.getSelectedFile().getAbsolutePath());
-	        	currDir = chooser.getSelectedFile().getAbsolutePath();
+	        	Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
 	        	int[] dimExtentsLUT;
 	            dimExtentsLUT = new int[2];
 	            dimExtentsLUT[0] = 4;
@@ -977,29 +1093,29 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	            extents[3] = Math.round(eigvecSrcImage.getExtents()[3]);   
 	        }
 		}
-		else if(command.equalsIgnoreCase("eigenvalueBrowse")) {
-			JFileChooser chooser = new JFileChooser();
+		else if(command.equalsIgnoreCase("anisotropyBrowse")) {
+			JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
 			chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-			if (currDir != null) {
-				chooser.setCurrentDirectory(new File(currDir));
-            }
-	        chooser.setDialogTitle("Choose eigenvalue file");
+	        chooser.setDialogTitle("Choose anisotropy file");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	FileIO fileIO = new FileIO();
-	        	eigvalSrcImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
-	        	if(eigvalSrcImage.getExtents()[3]!= 3) {
-					MipavUtil.displayError("Eigenvalue file does not have correct dimensions");
-					finalize();
+	        	anisotropyImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
+	        	if(anisotropyImage.getNDims() > 3) {
+					MipavUtil.displayError("anisotropy file does not have correct dimensions");
+					if(anisotropyImage != null) {
+						anisotropyImage.disposeLocal();
+					}
+					anisotropyImage = null;
 					return;
 	        	}
-	        	eigenvaluePath.setText(chooser.getSelectedFile().getAbsolutePath());
-	        	currDir = chooser.getSelectedFile().getAbsolutePath();
+	        	anisotropyPath.setText(chooser.getSelectedFile().getAbsolutePath());
+	        	Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
 	        }
 		}
 		else if(command.equalsIgnoreCase("ok")) {
-			if(eigvecSrcImage == null || eigvalSrcImage == null) {
-				MipavUtil.displayError("Both eigenvector and eigenvalue files are needed");
+			if(eigvecSrcImage == null || anisotropyImage == null) {
+				MipavUtil.displayError("Both eigenvector and anisotropy files are needed");
 				return;
 			}
 			if(bottomPanel.getComponent(2) == resultPanel) {
@@ -1038,13 +1154,14 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
             }
             componentImage.setZoom(newZoom, newZoom);
             validate();
-            componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+            componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
             
             magLabel.setText("M:"+zoom);
-			setTitle("DTI Color Display " + " v1.0       " + eigvecFilename + " , " + eigvalFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
             if(componentImage.getZoomX() >= 32) {
 				magButton.setEnabled(false);
 			}
+ 
 		}
 		else if (command.equals("UnMagImage")) {
 			if(!magButton.isEnabled()) {
@@ -1067,12 +1184,13 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
             }
             componentImage.setZoom(newZoom, newZoom);
             validate();
-            componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+            componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
             magLabel.setText("M:"+zoom);
-			setTitle("DTI Color Display " + " v1.0       " + eigvecFilename + " , " + eigvalFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
             if(componentImage.getZoomX() <= 0.125) {
 				unMagButton.setEnabled(false);
 			}
+
 			
         }
 		else if (command.equals("ZoomOne")) {
@@ -1087,13 +1205,25 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			captureImageButton.setEnabled(true);
             componentImage.setZoom(newZoom, newZoom);
 			validate();
-            componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+            componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
             magLabel.setText("M:"+zoom);
-			setTitle("DTI Color Display " + " v1.0       " + eigvecFilename + " , " + eigvalFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
-			
+			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+
 		}
 		else if(command.equals("CaptureImage")) {
 			writeImage();
+		}
+		else if(command.equals("truncRadio")) {
+			isMultiply = false;
+			if(componentImage != null) {
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+			}
+		}
+		else if(command.equals("multRadio")) {
+			isMultiply = true;
+			if(componentImage != null) {
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+			}
 		}
 		
 	}
@@ -1108,67 +1238,78 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	public void stateChanged(ChangeEvent e) {
 		Object source = e.getSource();
 
-        if (source == latticeMaxSlider) {
-        	latticeMaxTextField.setText(String.valueOf(latticeMaxSlider.getValue() / 1000.000000f));
-        	latticeMax = Float.valueOf(latticeMaxTextField.getText());
+        if (source == anisotropyMaxSlider) {
+        	anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
+        	anisotropyMax = Float.valueOf(anisotropyMaxTextField.getText());
         	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+        		if(anisotropyMax > anisotropyMin) {
+        			componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+        		}
 			}
         }
-        else if (source == latticeMinSlider) {
-        	latticeMinTextField.setText(String.valueOf(latticeMinSlider.getValue() / 1000.000000f));
-        	latticeMin = Float.valueOf(latticeMinTextField.getText());
+        else if (source == anisotropyMinSlider) {
+        	anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
+        	anisotropyMin = Float.valueOf(anisotropyMinTextField.getText());
         	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+        		if(anisotropyMin < anisotropyMax) {
+        			componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+        		}
+			}
+        }
+        else if (source == adjustExpSlider) {
+        	adjustExpTextField.setText(String.valueOf(adjustExpSlider.getValue() / 100.000000f));
+        	adjustExp = Float.valueOf(adjustExpTextField.getText());
+        	if(componentImage != null) {
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == gammaSlider) {
         	gammaTextField.setText(String.valueOf(gammaSlider.getValue() / 100.000000f));
         	gamma = Float.valueOf(gammaTextField.getText());
         	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == stevensBetaSlider) {
         	stevensBetaTextField.setText(String.valueOf(stevensBetaSlider.getValue() / 100.000000f));
         	stevensBeta = Float.valueOf(stevensBetaTextField.getText());
         	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == satBlueSlider) {
         	satBlueTextField.setText(String.valueOf(satBlueSlider.getValue() / 1000.000000f));
         	pB = Float.valueOf(satBlueTextField.getText());
         	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == dimGreenSlider) {
         	dimGreenTextField.setText(String.valueOf(dimGreenSlider.getValue() / 100.000000f));
         	pG = Float.valueOf(dimGreenTextField.getText());
         	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == colorRangeSlider) {
         	colorRangeTextField.setText(String.valueOf(colorRangeSlider.getValue() / 1000.000000f));
         	pC = Float.valueOf(colorRangeTextField.getText());
         	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == satVsThetaSlider) {
         	satVsThetaTextField.setText(String.valueOf(satVsThetaSlider.getValue() / 1000.000000f));
         	pS = Float.valueOf(satVsThetaTextField.getText());
         	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if(source == resultImageSlider) {
         	zSlice = resultImageSlider.getValue() - 1;
         	componentImage.setSlice(zSlice);
 			componentImage.show(tSlice, zSlice, true);
-			setTitle("DTI Color Display " + " v1.0       " + eigvecFilename + " , " + eigvalFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
         }
 	}
 
@@ -1188,7 +1329,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			int index = colorWheelComboBox.getSelectedIndex();
 			if(index == 0) {
 				if(currentColorWheel != absValColorWheel) {
-					absValColorWheel = new ColorWheel("ABSVAL",150,pB,pC,pS,gamma);
+					absValColorWheel = new ColorWheel("ABSVAL",150,pB,pC,pS,pG,stevensBeta,gamma);
 					colorWheelPanel.add(absValColorWheel,gbc);
 					colorWheelPanel.validate();
 					colorWheelPanel.repaint();
@@ -1196,7 +1337,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 					currentColorWheel = absValColorWheel;
 					if(componentImage != null) {
 						type = "ABSVAL";
-						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 					}
 				}
 				satVsThetaSlider.setEnabled(false);
@@ -1204,7 +1345,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			}
 			else if(index == 1) {
 				if(currentColorWheel != noSymmColorWheel) {
-					noSymmColorWheel = new ColorWheel("NOSYMM",150,pB,pC,pS,gamma);
+					noSymmColorWheel = new ColorWheel("NOSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
 					colorWheelPanel.add(noSymmColorWheel,gbc);
 					colorWheelPanel.validate();
 					colorWheelPanel.repaint();
@@ -1212,7 +1353,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 					currentColorWheel = noSymmColorWheel;
 					if(componentImage != null) {
 						type = "NOSYMM";
-						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 					}
 				}
 				satVsThetaSlider.setEnabled(true);
@@ -1220,7 +1361,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			}
 			else if(index == 2) {
 				if(currentColorWheel != rotationalSymmColorWheel) {
-					rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",150,pB,pC,pS,gamma);
+					rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
 					colorWheelPanel.add(rotationalSymmColorWheel,gbc);
 					colorWheelPanel.validate();
 					colorWheelPanel.repaint();
@@ -1228,7 +1369,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 					currentColorWheel = rotationalSymmColorWheel;
 					if(componentImage != null) {
 						type = "ROTATIONALSYMM";
-						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 					}
 				}
 				satVsThetaSlider.setEnabled(true);
@@ -1236,7 +1377,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			}
 			else if(index == 3) {
 				if(currentColorWheel != mirrorSymmColorWheel) {
-					mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",150,pB,pC,pS,gamma);
+					mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
 					colorWheelPanel.add(mirrorSymmColorWheel,gbc);
 					colorWheelPanel.validate();
 					colorWheelPanel.repaint();
@@ -1244,7 +1385,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 					currentColorWheel = mirrorSymmColorWheel;
 					if(componentImage != null) {
 						type = "MIRRORSYMM";
-						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, gamma);
+						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 					}
 				}
 				satVsThetaSlider.setEnabled(true);
@@ -1268,7 +1409,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         gbc.insets = new Insets(0,0,0,0);
 		gbc.anchor = GridBagConstraints.CENTER;
 		if(currentColorWheel == absValColorWheel) {
-			absValColorWheel = new ColorWheel("ABSVAL",150,pB,pC,pS,gamma);
+			absValColorWheel = new ColorWheel("ABSVAL",150,pB,pC,pS,pG,stevensBeta,gamma);
 			colorWheelPanel.add(absValColorWheel,gbc);
 			colorWheelPanel.validate();
 			colorWheelPanel.repaint();
@@ -1276,7 +1417,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			currentColorWheel = absValColorWheel;
 		}
 		else if(currentColorWheel == noSymmColorWheel) {
-			noSymmColorWheel = new ColorWheel("NOSYMM",150,pB,pC,pS,gamma);
+			noSymmColorWheel = new ColorWheel("NOSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
 			colorWheelPanel.add(noSymmColorWheel,gbc);
 			colorWheelPanel.validate();
 			colorWheelPanel.repaint();
@@ -1284,7 +1425,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			currentColorWheel = noSymmColorWheel;
 		}
 		else if(currentColorWheel == rotationalSymmColorWheel) {
-			rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",150,pB,pC,pS,gamma);
+			rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
 			colorWheelPanel.add(rotationalSymmColorWheel,gbc);
 			colorWheelPanel.validate();
 			colorWheelPanel.repaint();
@@ -1292,7 +1433,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			currentColorWheel = rotationalSymmColorWheel;
 		}
 		else if(currentColorWheel == mirrorSymmColorWheel) {
-			mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",150,pB,pC,pS,gamma);
+			mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
 			colorWheelPanel.add(mirrorSymmColorWheel,gbc);
 			colorWheelPanel.validate();
 			colorWheelPanel.repaint();
@@ -1527,12 +1668,12 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		if(eigvecSrcImage != null) {
 			eigvecSrcImage.disposeLocal();
 		}
-		if(eigvalSrcImage != null) {
-			eigvalSrcImage.disposeLocal();
+		if(anisotropyImage != null) {
+			anisotropyImage.disposeLocal();
 		}
 		
 		eigvecSrcImage = null;
-		eigvalSrcImage = null;
+		anisotropyImage = null;
 	}
 	
 	
@@ -1592,18 +1733,24 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	public void mouseReleased(MouseEvent e) {
 		Object source = e.getSource();
 
-        if (source == latticeMaxSlider) {
+        if (source == anisotropyMaxSlider) {
+        	if(anisotropyMaxSlider.getValue() < anisotropyMinSlider.getValue()) {
+        		anisotropyMaxSlider.setValue(anisotropyMinSlider.getValue() + 10);
+        	}
         	updateCurrentColorWheel();
         }
-        else if (source == latticeMinSlider) {
+        else if (source == anisotropyMinSlider) {
+        	if(anisotropyMinSlider.getValue() > anisotropyMaxSlider.getValue()) {
+        		anisotropyMinSlider.setValue(anisotropyMaxSlider.getValue() - 10);
+        	}
         	updateCurrentColorWheel();
         }
         else if (source == gammaSlider) {
         	updateCurrentColorWheel();
         }
-        else if (source == stevensBetaSlider) {
-        	updateCurrentColorWheel();
-        }
+        //else if (source == stevensBetaSlider) {
+        //	updateCurrentColorWheel();
+        //}
         else if (source == satBlueSlider) {
         	updateCurrentColorWheel();
         }
@@ -1845,7 +1992,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         int bufferSize, xDim, yDim;
         short[] buffer = null;
         int[] extents = new int[3];
-        ModelImage testImage = null;
+        ModelImage screenCaptureImage = null;
         Robot robot = null;
         Image imagePix = null;
 
@@ -1872,8 +2019,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
             extents[2] = numSlices;
             pixels = new int[extents[0] * extents[1]];
             bufferSize = 4 * extents[0] * extents[1];
-            testImage = new ModelImage(ModelStorageBase.ARGB, extents, resultImage.getImageName() + "_screen_capture");
-            testImage.getFileInfo()[0].setFileDirectory(resultImage.getFileInfo(0).getFileDirectory());
+            screenCaptureImage = new ModelImage(ModelStorageBase.ARGB, extents, resultImage.getImageName() + "_" + type);
+            screenCaptureImage.getFileInfo()[0].setFileDirectory(resultImage.getFileInfo(0).getFileDirectory());
             buffer = new short[bufferSize];
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("JDialogScreenCapture: unable to allocate enough memory for RGB image");
@@ -1924,31 +2071,106 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
              * Import the ARGB buffer into the model image
              */
             try {
-                testImage.importData((buffer.length * slice), buffer, false);
+            	screenCaptureImage.importData((buffer.length * slice), buffer, false);
             } catch (IOException error) {
                 MipavUtil.displayError("JDialogScreenCapture: Problems grabbing image!");
             }
 
-            testImage.getFileInfo()[0].setPhotometric((short) 2); // Indicates RGB tiff file format
+            screenCaptureImage.getFileInfo()[0].setPhotometric((short) 2); // Indicates RGB tiff file format
 
 
         }
 
         componentImage.setShowSliceNumber(true);
-
-        testImage.calcMinMax();
-        testImage.getFileInfo()[0].setResolutions(resultImage.getFileInfo()[0].getResolutions());
-        testImage.getFileInfo()[0].setUnitsOfMeasure(resultImage.getFileInfo()[0].getUnitsOfMeasure());
-        testImage.getFileInfo()[0].setAxisOrientation(resultImage.getFileInfo()[0].getAxisOrientation());
-        testImage.getFileInfo()[0].setImageOrientation(resultImage.getFileInfo()[0].getImageOrientation());
-        testImage.getFileInfo()[0].setSliceThickness(resultImage.getFileInfo()[0].getSliceThickness());
-        testImage.getFileInfo()[0].setOrigin(resultImage.getFileInfo()[0].getOrigin());
+        /*
+        screenCaptureImage.calcMinMax();
+        screenCaptureImage.getFileInfo()[0].setResolutions(resultImage.getFileInfo()[0].getResolutions());
+        screenCaptureImage.getFileInfo()[0].setUnitsOfMeasure(resultImage.getFileInfo()[0].getUnitsOfMeasure());
+        screenCaptureImage.getFileInfo()[0].setAxisOrientation(resultImage.getFileInfo()[0].getAxisOrientation());
+        screenCaptureImage.getFileInfo()[0].setImageOrientation(resultImage.getFileInfo()[0].getImageOrientation());
+        screenCaptureImage.getFileInfo()[0].setSliceThickness(resultImage.getFileInfo()[0].getSliceThickness());
+        screenCaptureImage.getFileInfo()[0].setOrigin(resultImage.getFileInfo()[0].getOrigin());
 
         for (int m = 1; m < extents[2]; m++) {
-            testImage.setFileInfo((FileInfoBase) testImage.getFileInfo()[0].clone(), m);
+        	screenCaptureImage.setFileInfo((FileInfoBase) screenCaptureImage.getFileInfo()[0].clone(), m);
         }
-
-        new ViewJFrameImage(testImage, null, new Dimension(610, 200));
+        */
+        
+        //FileInfoBase[] fileInfoBases = new FileInfoBase[resultImage.getExtents()[2]];
+        FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[resultImage.getExtents()[2]];
+        String psetDesc = "Color Display Parameters";
+        String name;
+        String value;
+        for (int i=0;i<fileInfoBases.length;i++) {
+       	 	fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName() + "_imageB", null, FileUtility.XML);
+       	 	fileInfoBases[i].createPSet(psetDesc);
+       	 	name = "Eigenvector File";
+       	 	value = eigvecFilename;
+       	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+       	 	name = "Anisotropy File";
+    	 	value = anisotropyFilename;
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Color Wheel";
+    	 	value = type;
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Anisotropy Max";
+    	 	value = String.valueOf(anisotropyMax);
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Anisotropy Min";
+    	 	value = String.valueOf(anisotropyMin);
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Gamma Correction";
+    	 	value = String.valueOf(gamma);
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Blue Saturation";
+    	 	value = String.valueOf(pB);
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Green Adjustment";
+    	 	value = String.valueOf(pG);
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Color Range";
+    	 	value = String.valueOf(pC);
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Saturation vs Theta";
+    	 	value = String.valueOf(pS);
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Adjust Exponent";
+    	 	value = String.valueOf(adjustExp);
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Stevens Beta";
+    	 	value = String.valueOf(stevensBeta);
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	name = "Truncate / Multiply";
+    	 	if(isMultiply) {
+    	 		value = "Multiply";
+    	 	}
+    	 	else {
+    	 		value = "Truncate";
+    	 	}
+    	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+       	 	
+        }
+        FileInfoBase.copyCoreInfo(resultImage.getFileInfo(), fileInfoBases);
+        screenCaptureImage.setFileInfo(fileInfoBases);
+        
+        
+        
+        new ViewJFrameImage(screenCaptureImage, null, new Dimension(610, 200));
+        
+        resultImageSlider.setValue(numSlices/2);
 
         return true;
     }
@@ -1968,5 +2190,30 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 
 		dispose();
 	}
+
+	/**
+	 * mouse wheel moved
+	 * @param arg0
+	 */
+	public void mouseWheelMoved(MouseWheelEvent event) {
+		int wheelRotation = event.getWheelRotation();
+		if (wheelRotation < 0) {
+			if(zSlice != numSlices-1) {
+				zSlice = zSlice + 1;
+				resultImageSlider.setValue(zSlice + 1);
+				setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+			}
+		}else {
+			if(zSlice != 0) {
+				zSlice = zSlice -1;
+				resultImageSlider.setValue(zSlice + 1);
+				setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+			}
+		}
+
+	}
+	
+	
+	
 
 }

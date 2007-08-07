@@ -6,7 +6,7 @@ import java.awt.Image;
 /**
  * @author pandyan
  * 
- * This is the main dialog for the DTI Color Display
+ * This is the Color Wheel class for the DTI Color Display Plugin
  * 
  * References: This algorithm was developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group and
  * Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS of
@@ -47,9 +47,18 @@ public class ColorWheel extends Canvas {
 	
 	/** gamma correction **/
 	private float gamma = 1.8f;
+	
+	/** green adj **/
+	private float pG = .800f;
+	
+	/** Stevens Beta **/
+	private float stevensBeta = .4f;
 
 	/** array of r,g,b values after blue sgifting **/
-	private float blueShiftColors[] = new float[3];
+	private float[] blueShiftColors = new float[3];
+	
+	/** array of r,g,b values after green adj **/
+	private float[] greenAdjColors = new float[3];
 	
 	
 	/**
@@ -77,7 +86,7 @@ public class ColorWheel extends Canvas {
 	 * @param type
 	 * @param radius
 	 */
-	public ColorWheel(String type, int radius, float pB, float pC, float pS, float gamma ) {
+	public ColorWheel(String type, int radius, float pB, float pC, float pS, float pG, float stevensBeta, float gamma ) {
 		setSize(radius*2,radius*2);
 		setBackground(Color.BLACK);
 		this.r6 = radius;
@@ -85,6 +94,8 @@ public class ColorWheel extends Canvas {
 		this.pB = pB;
 		this.pC = pC;
 		this.pS = pS;
+		this.pG = pG;
+		this.stevensBeta = stevensBeta;
 		this.gamma = gamma;
 		
 		//calculates radii of interior circles using Lambertian equal areas
@@ -271,6 +282,12 @@ public class ColorWheel extends Canvas {
 				green = blueShiftColors[1];
 				blue = blueShiftColors[2];
 				
+				//adjust green
+				greenAdjColors = adjustGreen(red,green,blue);
+				red = greenAdjColors[0];
+				green = greenAdjColors[1];
+				blue = greenAdjColors[2];
+				
 				//gamma correction
 				red = (float)Math.pow(red,(1/gamma));
 				green = (float)Math.pow(green,(1/gamma));
@@ -316,6 +333,12 @@ public class ColorWheel extends Canvas {
 				red = blueShiftColors[0];
 				green = blueShiftColors[1];
 				blue = blueShiftColors[2];
+				
+				//adjust green
+				greenAdjColors = adjustGreen(red,green,blue);
+				red = greenAdjColors[0];
+				green = greenAdjColors[1];
+				blue = greenAdjColors[2];
 				
 				//gamma correction
 				red = (float)Math.pow(red,(1/gamma));
@@ -366,6 +389,12 @@ public class ColorWheel extends Canvas {
 				red = blueShiftColors[0];
 				green = blueShiftColors[1];
 				blue = blueShiftColors[2];
+				
+				//adjust green
+				greenAdjColors = adjustGreen(red,green,blue);
+				red = greenAdjColors[0];
+				green = greenAdjColors[1];
+				blue = greenAdjColors[2];
 				
 				//gamma correction
 				red = (float)Math.pow(red,(1/gamma));
@@ -428,6 +457,12 @@ public class ColorWheel extends Canvas {
 				green = blueShiftColors[1];
 				blue = blueShiftColors[2];
 				
+				//adjust green
+				greenAdjColors = adjustGreen(red,green,blue);
+				red = greenAdjColors[0];
+				green = greenAdjColors[1];
+				blue = greenAdjColors[2];
+				
 				//gamma correction
 				red = (float)Math.pow(red,(1/gamma));
 				green = (float)Math.pow(green,(1/gamma));
@@ -466,6 +501,48 @@ public class ColorWheel extends Canvas {
 		colors[1] = gS;
 		colors[2] = bS;
 		
+		return colors;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * adjust green intensity
+	 * @param r1
+	 * @param g1
+	 * @param b1
+	 * @return
+	 */
+	public float[] adjustGreen(float r1, float g1, float b1) {
+		//System.out.println(r1 + " " + g1 + " " + b1);
+		float colors[] = new float[3];
+		float max1 = Math.max(r1, g1);
+		float max2 = Math.max(max1, b1);
+		float maxVal = Math.max(max2, .0000001f);
+		r1 = r1/maxVal;
+		g1 = g1/maxVal;
+		b1 = b1/maxVal;
+		float thrd = 1/3;
+		float c1 = thrd - (pG/25);
+		float c2 = thrd + (pG/4);
+		float leql = 0.7f;
+		float totalVal = (float)(((c1*r1) + (c2*g1) + ((1 - c2 - stevensBeta) * b1))/Math.pow(leql, (1/stevensBeta)));
+		if(totalVal < 1) {
+			totalVal = 1;
+		}
+		r1 = r1/(pC * totalVal + (1 - pC));
+		g1 = g1/(pC * totalVal + (1 - pC));
+		b1 = b1/(pC * totalVal + (1 - pC));
+
+		//System.out.println(" " + r1 + " " + g1 + " " + b1);
+		colors[0] = r1;
+		colors[1] = g1;
+		colors[2] = b1;
 		return colors;
 	}
 	

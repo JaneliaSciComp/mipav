@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.ViewJComponentDTIImage;
@@ -33,8 +36,8 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 	/** eigenvector src image **/
 	private ModelImage eigvecSrcImage;
 	
-	/** eigenvalue src Image **/
-	private ModelImage eigvalSrcImage;
+	/** anisotropy src Image     MAY NOT NEED THIS HERE**/
+	private ModelImage anisotropyImage;
 	
 	/** result dec map image **/
     private ModelImage decImage;
@@ -64,9 +67,9 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
     
     
 	/** constructor **/
-	public PlugInAlgorithmDTIColorDisplay(ModelImage eigvecSrcImage, ModelImage eigvalSrcImage) {
+	public PlugInAlgorithmDTIColorDisplay(ModelImage eigvecSrcImage, ModelImage anisotropyImage) {
 		this.eigvecSrcImage = eigvecSrcImage;
-		this.eigvalSrcImage = eigvalSrcImage;
+		this.anisotropyImage = anisotropyImage;
 	}
 
 	/** run algorithm **/
@@ -148,17 +151,21 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 			subsetAlgo.setRunningInSeparateThread(false);
 			subsetAlgo.run();
 		}
+  
+        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, channelImages[0].getExtents(),eigvecSrcImage.getImageName() + "_ColorDisplay");
 
-        //fractional anisotropy
-        //float[] buff;
-        //buff = new float[channelImages[0].getExtents()[0] * channelImages[1].getExtents()[0] * channelImages[0].getExtents()[2] ];
-        
-        
-        
-        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, channelImages[0].getExtents(),"test");
         mathAlgo = new AlgorithmRGBConcat(channelImages[0], channelImages[1], channelImages[2], resultImage, remapMode, false);
         mathAlgo.setRunningInSeparateThread(false);
         mathAlgo.run();
+        
+        FileInfoBase[] fileInfoBases = new FileInfoBase[resultImage.getExtents()[2]];
+        for (int i=0;i<fileInfoBases.length;i++) {
+       	 	fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName(), null, FileUtility.XML);
+        }
+        FileInfoBase.copyCoreInfo(eigvecSrcImage.getFileInfo(), fileInfoBases);
+        resultImage.setFileInfo(fileInfoBases);
+        
+        
         
         
         finalize();
