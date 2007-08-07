@@ -251,9 +251,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         gbl = new GridBagLayout();
         gbc = new GridBagConstraints();
         
-        //main panel
-        mainPanel = new JPanel(gbl);
-        
         //topPanel
         topPanel = new JPanel(gbl);
         filesPanel = new JPanel(gbl);
@@ -302,9 +299,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         gbc.gridx = 1;
         gbc.gridy = 0;
         topPanel.add(okPanel, gbc);
-		
-        
-        
+		 
 		//color panel
 		colorPanel = new JPanel(gbl);
 		colorWheelPanel = new JPanel(gbl);
@@ -343,8 +338,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		colorPanel.add(colorWheelChoicesPanel,gbc);
 
-		
-		
 		//options panel
         gbc.anchor = GridBagConstraints.NORTHWEST;
 		optionsPanel = new JPanel(gbl);
@@ -788,9 +781,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.gridy = 9;
 		gbc.gridwidth = 1;
 		heuristicParametersPanel.add(truncMultPanel, gbc);
-		
-		
-		
 		gbc.insets = new Insets(0,0,0,0);
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.gridx = 0;
@@ -805,12 +795,10 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		tempPanel.setBorder(titledBorder);
 		
-		
 		//reference label
 		refLabel = new JLabel();
 		refLabel.setText("<html>Developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group and Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker MS from the NIH/NICHD/LIMB/STBB group </html>");
 
-		
 		//bottom panel
         gbc.anchor = GridBagConstraints.NORTH;
         bottomPanel = new JPanel(gbl);
@@ -824,7 +812,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         gbc.gridy = 0;
         bottomPanel.add(tempPanel, gbc);
         
-        
+        //main panel
+        mainPanel = new JPanel(gbl);
 		gbc.gridx = 0;
         gbc.gridy = 0;
 		mainPanel.add(topPanel,gbc);
@@ -850,13 +839,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	 */
 	protected void callAlgorithm() {
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
-		alg = new PlugInAlgorithmDTIColorDisplay(eigvecSrcImage,anisotropyImage);
-		
+		alg = new PlugInAlgorithmDTIColorDisplay(eigvecSrcImage);
 		alg.addListener(this);
-		
 		alg.run();
-	
-
 	}
 
 
@@ -866,6 +851,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if(alg.isCompleted()) {
 			
+			//grab the eigenvector and anisotropy file names and clear the textfields
 			eigvecFilename = eigvecSrcImage.getImageName();
 			anisotropyFilename = anisotropyImage.getImageName();
 			eigenvectorPath.setText("");
@@ -895,6 +881,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	            return;
 	        }
 	        
+	        //create component image
 			componentImage = new ViewJComponentDTIImage(this,resultImage,null,imageBufferA,pixBuffer,1,resultImage.getExtents(),false,FileInfoBase.UNKNOWN_ORIENT,anisotropyBuffer);
 			componentImage.addMouseWheelListener(this);
 			componentImage.setBuffers(imageBufferA, null, pixBuffer, null);
@@ -926,11 +913,12 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				type = "MIRRORSYMM";
 			}
 			
-			
+			//call show
 			componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			
 			gbc = new GridBagConstraints();
 			
+			//result panel, resultImage panel, resultScroll panel
 			resultPanel = new JPanel(gbl);
 			resultImagePanel = new JPanel(gbl);
 			resultScrollPanel = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);		
@@ -946,6 +934,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			gbc.anchor = GridBagConstraints.CENTER;
 			resultImagePanel.add(componentImage,gbc);
 			resultScrollPanel.setViewportView(resultImagePanel);
+			//resultImageSlider panel
 			resultImageSliderPanel = new JPanel(gbl);
 			titledBorder = new TitledBorder(new EtchedBorder(), " Image slice ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 			resultImageSliderPanel.setBorder(titledBorder);
@@ -977,6 +966,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			gbc.anchor = GridBagConstraints.EAST;
 			gbc.weightx = 0;
 			resultImageSliderPanel.add(maxResultImageSlicesLabel, gbc);
+			//toolbar panel
 			toolbarPanel = new JPanel(new GridBagLayout());
 			titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 			toolbarPanel.setBorder(titledBorder);
@@ -1118,6 +1108,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				MipavUtil.displayError("Both eigenvector and anisotropy files are needed");
 				return;
 			}
+			//this is if user hits ok for a new set of eigenvector and anisotropy files
 			if(bottomPanel.getComponent(2) == resultPanel) {
 				tempPanel = new JPanel(gbl);
 				tempPanel.setPreferredSize(new Dimension(400, 400));
@@ -1161,7 +1152,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
             if(componentImage.getZoomX() >= 32) {
 				magButton.setEnabled(false);
 			}
- 
 		}
 		else if (command.equals("UnMagImage")) {
 			if(!magButton.isEnabled()) {
@@ -1169,7 +1159,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			}
             float newZoom;
             if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (componentImage.getZoomX() > 1.0f)) {
-
                 // linear zoom is prevented if getZoomX() <= 1.0
                 newZoom = componentImage.getZoomX() - 1.0f;
             } else {
@@ -1190,8 +1179,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
             if(componentImage.getZoomX() <= 0.125) {
 				unMagButton.setEnabled(false);
 			}
-
-			
         }
 		else if (command.equals("ZoomOne")) {
 			if(!unMagButton.isEnabled()) {

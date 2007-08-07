@@ -178,7 +178,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
         	//first lets clip the anisotropyBuffer depending on anisotropy max and min values
         	clipAnisotropyBuffer();
         	
-        	
+        	//call appropriate method based on color wheel selected
             if(type.equals("ABSVAL")) {
             	absoluteValue(zSlice,buff);	
             }
@@ -235,7 +235,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 				b = greenAdjColors[2];
     		}
 			
-			
 			//truncate
 			truncMultColors = truncateRGB(r,g,b,clippedBuffer[j]);
 			r = truncMultColors[0];
@@ -246,7 +245,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 			r = (float)Math.pow(r,(1/gamma));
 			g = (float)Math.pow(g,(1/gamma));
 			b = (float)Math.pow(b,(1/gamma));
-			
 			
 			//now get r,g,b to 0 - 255 range
 			red = Math.round(r * 255);
@@ -328,7 +326,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 					g = greenAdjColors[1];
 					b = greenAdjColors[2];
 	    		}
-				
 				
 				//truncate
 				truncMultColors = truncateRGB(r,g,b,clippedBuffer[j]);
@@ -436,10 +433,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 				//now get r,g,b to 0 - 255 range
 				red = Math.round(r * 255);
 	    		green = Math.round(g * 255);
-	    		blue = Math.round(b * 255);
-				
-				
-				
+	    		blue = Math.round(b * 255);	
     		}
     		
 			//now do the orring
@@ -522,7 +516,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 					b = blueShiftColors[2];
 				}
 				
-				
 				//adjust green
 	    		if(r != 0 && g != 0 && b != 0) {
 					greenAdjColors = adjustGreen(r,g,b);
@@ -530,7 +523,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 					g = greenAdjColors[1];
 					b = greenAdjColors[2];
 	    		}
-				
 				
 				//truncate
 				truncMultColors = truncateRGB(r,g,b,clippedBuffer[j]);
@@ -547,9 +539,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 				red = Math.round(r * 255);
 	    		green = Math.round(g * 255);
 	    		blue = Math.round(b * 255);
-				
-				
-				
     		}
     		
 			//now do the orring
@@ -606,7 +595,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 				g1 = 0;
 				b1 = 0;
 			}
-
 		}
 		colors[0] = r1;
 		colors[1] = g1;
@@ -649,8 +637,8 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 	 * @return
 	 */
 	public float[] adjustGreen(float r1, float g1, float b1) {
-		//System.out.println(r1 + " " + g1 + " " + b1);
 		float colors[] = new float[3];
+		
 		float max1 = Math.max(r1, g1);
 		float max2 = Math.max(max1, b1);
 		float maxVal = Math.max(max2, .0000001f);
@@ -668,8 +656,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 		r1 = r1/(pC * totalVal + (1 - pC));
 		g1 = g1/(pC * totalVal + (1 - pC));
 		b1 = b1/(pC * totalVal + (1 - pC));
-
-		//System.out.println(" " + r1 + " " + g1 + " " + b1);
+		
 		colors[0] = r1;
 		colors[1] = g1;
 		colors[2] = b1;

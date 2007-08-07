@@ -320,7 +320,6 @@ public class ColorWheel extends Canvas {
 			
 			int hueAngle = 360;
 			for(int angle=0;angle<=360;angle++) {
-				//float hue = ((angle - 90 + 360)%360)/360f; (cited in paper, but resulted in incorrect colour wheel b/c of mismatch between coordinate systems
 				float hue = ((hueAngle + 90 + 360)%360)/360f; 
 				Color c = Color.getHSBColor(hue, sat, 1f);
 				
@@ -429,7 +428,6 @@ public class ColorWheel extends Canvas {
 				pS = .001f;
 			}
 			float sat = (float)(Math.sin(pS*theta)/Math.sin(pS * (Math.PI/2))); 
-			//int hueAngle = 360;
 			for(int angle=0;angle<=360;angle++) {
 				float hue;
 				float mirrorAngle;
@@ -444,7 +442,7 @@ public class ColorWheel extends Canvas {
 				else {
 					hue = ((angle - 45 + 180)%180)/180f; 
 				}
-				//float hue = ((2 * (hueAngle + 90 + 360 ))%360)/360f;
+
 				Color c = Color.getHSBColor(hue, sat, 1f);
 				
 				float red = c.getRed()/255f;
@@ -472,7 +470,6 @@ public class ColorWheel extends Canvas {
 				
 				offGraphics.setColor(c);
 				offGraphics.fillArc(x, y, arcw, arch, angle, 1);
-				//hueAngle--;
 			}
 		}
 	}
@@ -519,7 +516,6 @@ public class ColorWheel extends Canvas {
 	 * @return
 	 */
 	public float[] adjustGreen(float r1, float g1, float b1) {
-		//System.out.println(r1 + " " + g1 + " " + b1);
 		float colors[] = new float[3];
 		float max1 = Math.max(r1, g1);
 		float max2 = Math.max(max1, b1);
@@ -539,7 +535,6 @@ public class ColorWheel extends Canvas {
 		g1 = g1/(pC * totalVal + (1 - pC));
 		b1 = b1/(pC * totalVal + (1 - pC));
 
-		//System.out.println(" " + r1 + " " + g1 + " " + b1);
 		colors[0] = r1;
 		colors[1] = g1;
 		colors[2] = b1;

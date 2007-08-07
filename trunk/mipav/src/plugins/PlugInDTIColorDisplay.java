@@ -3,7 +3,7 @@ import gov.nih.mipav.plugins.PlugInGeneric;
 /**
  * @author pandyan
  * 
- * This is the main dialog for the DTI Color Display
+ * This is the main entry point for the DTI Color Display plugin
  * 
  * References: This algorithm was developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group and
  * Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS of
