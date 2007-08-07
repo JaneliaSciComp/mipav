@@ -126,7 +126,7 @@ public class JDialogSaveSlices extends JDialogBase {
      */
     public JDialogSaveSlices(Frame theParentFrame, int mnValue, int mxValue, FileWriteOptions options) {
 
-        super(theParentFrame, false);
+        super(theParentFrame, true);
         minValue = mnValue;
         maxValue = mxValue;
         timeEnabled = false;
@@ -200,6 +200,9 @@ public class JDialogSaveSlices extends JDialogBase {
             }
 
             tmpStr = textLastSlice.getText();
+            System.out.println("JDialogSaveSlices = " + tmpStr);
+            System.out.println("minValue = " + minValue);
+            System.out.println("maxValue = " + maxValue);
 
             if (testParameter(tmpStr, minValue, maxValue)) {
                 options.setEndSlice(Integer.parseInt(tmpStr) - 1);
