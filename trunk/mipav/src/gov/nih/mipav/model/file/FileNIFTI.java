@@ -3497,7 +3497,7 @@ public class FileNIFTI extends FileBase {
             } // if (matrixArray != null)
         } // if (matHolder != null)
 
-        if ((matrixQ == null) && (matrixS == null)) {
+        if ((matrixQ == null) && (matrixS == null) && isNIFTI) {
             matrixQ = image.getMatrix();
             transformIDQ = matrixQ.getTransformID();
         }
@@ -3671,18 +3671,110 @@ public class FileNIFTI extends FileBase {
                         niftiOrigin[2] = Math.abs(niftiOrigin[2]);
                     }
                 }
-            } else {
+            } else { // matrixQ == null
                 qform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
-                r00 = -1.0;
-                r01 = 0.0;
-                r02 = 0.0;
-                r10 = 0.0;
-                r11 = 1.0;
-                r12 = 0.0;
-                r20 = 0.0;
-                r21 = 0.0;
-                r22 = 1.0;
-            }
+                if ((axisOrientation != null) && 
+                    (axisOrientation[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
+                    (axisOrientation[1] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
+                    (axisOrientation[2] != FileInfoBase.ORI_UNKNOWN_TYPE)) {
+                    r00 = 0.0;
+                    r01 = 0.0;
+                    r02 = 0.0;
+                    r10 = 0.0;
+                    r11 = 0.0;
+                    r12 = 0.0;
+                    r20 = 0.0;
+                    r21 = 0.0;
+                    r22 = 0.0;
+                    switch (axisOrientation[0]) {
+                        case FileInfoBase.ORI_R2L_TYPE:
+                            r00 = -1.0;
+                            break;
+                        case FileInfoBase.ORI_L2R_TYPE:
+                            r00 = 1.0;
+                            break;
+                        case FileInfoBase.ORI_A2P_TYPE:
+                            r10 = -1.0;
+                            break;
+                        case FileInfoBase.ORI_P2A_TYPE:
+                            r10 = 1.0;
+                            break;
+                        case FileInfoBase.ORI_I2S_TYPE:
+                            r20 = 1.0;
+                            break;
+                        case FileInfoBase.ORI_S2I_TYPE:
+                            r20 = -1.0;
+                    } // switch (axisOrientation[0])
+                    
+                    switch (axisOrientation[1]) {
+                        case FileInfoBase.ORI_R2L_TYPE:
+                            r01 = 1.0;
+                            break;
+                        case FileInfoBase.ORI_L2R_TYPE:
+                            r01 = -1.0;
+                            break;
+                        case FileInfoBase.ORI_A2P_TYPE:
+                            r11 = 1.0;
+                            break;
+                        case FileInfoBase.ORI_P2A_TYPE:
+                            r11 = -1.0;
+                            break;
+                        case FileInfoBase.ORI_I2S_TYPE:
+                            r21 = -1.0;
+                            break;
+                        case FileInfoBase.ORI_S2I_TYPE:
+                            r21 = 1.0;
+                    } // switch (axisOrientation[1])
+                    
+                    switch (axisOrientation[2]) {
+                        case FileInfoBase.ORI_R2L_TYPE:
+                            r02 = -1.0;
+                            break;
+                        case FileInfoBase.ORI_L2R_TYPE:
+                            r02 = 1.0;
+                            break;
+                        case FileInfoBase.ORI_A2P_TYPE:
+                            r12 = -1.0;
+                            break;
+                        case FileInfoBase.ORI_P2A_TYPE:
+                            r12 = 1.0;
+                            break;
+                        case FileInfoBase.ORI_I2S_TYPE:
+                            r22 = 1.0;
+                            break;
+                        case FileInfoBase.ORI_S2I_TYPE:
+                            r22 = -1.0;
+                    } // switch (axisOrientation[2])
+                    
+                    for (j = 0; j < 3; j++) {
+
+                        if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE) {
+                            niftiOrigin[0] = -Math.abs(origin[0]);
+                        } else if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
+                            niftiOrigin[0] = Math.abs(origin[0]);
+                        } else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE) {
+                            niftiOrigin[1] = -Math.abs(origin[1]);
+                        } else if (axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE) {
+                            niftiOrigin[1] = Math.abs(origin[1]);
+                        } else if (axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE) {
+                            niftiOrigin[2] = -Math.abs(origin[2]);
+                        } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
+                            niftiOrigin[2] = Math.abs(origin[2]);
+                        }
+                    }
+                }
+                else {
+                    r00 = -1.0;
+                    r01 = 0.0;
+                    r02 = 0.0;
+                    r10 = 0.0;
+                    r11 = 1.0;
+                    r12 = 0.0;
+                    r20 = 0.0;
+                    r21 = 0.0;
+                    r22 = 1.0;
+                }
+            } // else matrixQ == null
 
             // Compute lengths of each column; these determine grid spacings
             xd = Math.sqrt((r00 * r00) + (r10 * r10) + (r20 * r20));
