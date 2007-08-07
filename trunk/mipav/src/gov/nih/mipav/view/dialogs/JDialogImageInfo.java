@@ -1355,17 +1355,17 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         // dim5.setForeground(Color.black);
         // if (nDims < 5) dim5.setEnabled(false);
 
-        textSt1 = new JTextField(5);
+        textSt1 = new JTextField(8);
         textSt1.setText(String.valueOf(image.getFileInfo()[0].getOrigin(0)));
         textSt1.setFont(serif12);
         textSt1.addFocusListener(this);
 
-        textSt2 = new JTextField(5);
+        textSt2 = new JTextField(8);
         textSt2.setText(String.valueOf(image.getFileInfo()[0].getOrigin(1)));
         textSt2.setFont(serif12);
         textSt2.addFocusListener(this);
 
-        textSt3 = new JTextField(5);
+        textSt3 = new JTextField(8);
         textSt3.setText("1");
         textSt3.setFont(serif12);
         textSt3.addFocusListener(this);
@@ -1469,6 +1469,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         gbc.gridy++;
         orientPanel.add(dim4, gbc);
 
+        gbc.weightx = 2;
+        gbc.gridwidth = gbc.REMAINDER;
         gbc.gridx = 3;
         gbc.gridy = 3;
         orientPanel.add(textSt1, gbc);

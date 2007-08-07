@@ -154,7 +154,6 @@ public class ProvenanceRecorder {
                 	
             		for (int i = 0; i < outputImages.size(); i++) {
             			imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder().addElement(imageEntry);
-            			imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder().sort();
         		   
         		   //System.err.println("Output Provenance: " + imageTable.getImage(outputImages.elementAt(i)).getProvenanceHolder() + LINE_SEPARATOR);
         		   
@@ -166,7 +165,6 @@ public class ProvenanceRecorder {
             		for (int i = 0; i < inputImages.size(); i++) {
         		   //System.err.println("added: " + imageEntry + ", to: " + inputImages.elementAt(i));
             			imageTable.getImage(inputImages.elementAt(i)).getProvenanceHolder().addElement(imageEntry);
-            			imageTable.getImage(inputImages.elementAt(i)).getProvenanceHolder().sort();
             		}
             	}      	
             

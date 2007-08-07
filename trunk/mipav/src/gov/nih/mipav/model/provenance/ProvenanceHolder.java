@@ -29,10 +29,6 @@ public class ProvenanceHolder extends Vector<ProvenanceEntry> {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
     
-    public void sort() {
-    	Collections.sort(this, new ProvenanceComparator());
-    }
-    
     /**
      * Copies the object.
      *
@@ -42,31 +38,6 @@ public class ProvenanceHolder extends Vector<ProvenanceEntry> {
         Object base = super.clone();
 
         return (base);
-    }
-    
-    private class ProvenanceComparator implements Comparator {
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param   o1  DOCUMENT ME!
-         * @param   o2  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
-         */
-        public int compare(Object o1, Object o2) {
-            long a = ((ProvenanceEntry) o1).getTimeStamp();
-            long b = ((ProvenanceEntry) o2).getTimeStamp();
-
-            if (a < b) {
-                return -1;
-            } else if (a > b) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-
     }
     
 }

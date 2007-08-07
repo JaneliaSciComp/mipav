@@ -91,7 +91,7 @@ public class FileDataProvenance extends FileXML {
             bw.write(DATA_PROVENANCE);
             bw.newLine();
 
-            openTag("dataprovenance", true);
+            openTag("provenance", true);
             
             int numEntries = pHolder.size();
             
@@ -100,27 +100,33 @@ public class FileDataProvenance extends FileXML {
             for (int i = 0; i < numEntries; i++) {
             	entry = pHolder.elementAt(i);
             	
-            	openTag("entry", true);
+            	openTag("processStep", true);
             	
-            	closedTag("timestamp", Long.toString(entry.getTimeStamp()));
-            	closedTag("javaversion", entry.getJavaVersion());
-            	            	
             	atVector.add(new XMLAttributes("version", entry.getMipavVersion()));
-            	atVector.add(new XMLAttributes("arguments", entry.getMipavArguments()));
+            	this.closedTag("program", entry.getProgramName(), atVector);
             	
-            	closedTag("mipav", "", atVector);
+            	atVector.add(new XMLAttributes("inputs", entry.getProgramInputs()));
+            	closedTag("programArguments", entry.getAction(), atVector);
             	
-            	atVector.add(new XMLAttributes("version", entry.getOSVersion()));
-            	atVector.add(new XMLAttributes("name", entry.getOSName()));
-            	closedTag("OS", "", atVector);
+            	closedTag("timeStamp", entry.getTimeStamp());            	            	
             	
             	closedTag("user", entry.getUser());
-            	closedTag("action", entry.getAction());
             	
-            	openTag("entry", false);
+            	closedTag("hostName", entry.getHostName());
+            	
+            	closedTag("architecture", entry.getArchitecture());
+            	
+            	atVector.add(new XMLAttributes("version", entry.getPlatformVersion()));
+            	closedTag("platform", entry.getPlatform(), atVector);
+            	
+            	
+            	atVector.add(new XMLAttributes("version", entry.getJavaVersion()));
+            	closedTag("compiler", "java", atVector);
+            	
+            	openTag("processStep", false);
             }
             
-            openTag("dataprovenance", false);
+            openTag("provenance", false);
             bw.close();
         } catch (Exception e) {
             System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileDataProvenance");
@@ -185,15 +191,21 @@ public class FileDataProvenance extends FileXML {
         public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
             currentKey = localName;
 
-            if (currentKey.equals("timestamp")) {
-              currentEntry.setTimeStamp(Long.parseLong(elementBuffer));
+            if (currentKey.equals("program")) {
+            	currentEntry.setProgramName(elementBuffer);
+            } else if (currentKey.equals("programArguments")) {
+              currentEntry.setAction(elementBuffer);
+            } else if (currentKey.equals("timeStamp")) {
+              currentEntry.setTimeStamp(elementBuffer);
             } else if (currentKey.equals("user")) {
             	currentEntry.setUser(elementBuffer);
-            } else if (currentKey.equals("javaversion")) {
-            	currentEntry.setJavaVersion(elementBuffer);
-            } else if (currentKey.equals("action")) {
-            	currentEntry.setAction(elementBuffer);
-            	
+            } else if (currentKey.equals("hostName")) {
+            	currentEntry.setHostName(elementBuffer);
+            } else if (currentKey.equals("architecture")) {
+            	currentEntry.setArchitecture(elementBuffer);
+            } else if (currentKey.equals("platform")) {
+            	currentEntry.setPlatform(elementBuffer);
+            } else if (currentKey.equals("compiler")) {
             	//last to be read in, so add to ProvenanceHolder
             	holder.add(currentEntry);
             }
@@ -215,12 +227,16 @@ public class FileDataProvenance extends FileXML {
             currentKey = localName;
             elementBuffer = "";
 
-            if (currentKey.equals("entry")) {
+            if (currentKey.equals("processStep")) {
             	currentEntry = new ProvenanceEntry();
-            } else if (currentKey.equals("OS")){
-            	currentEntry.setOS(atts.getValue("name"), atts.getValue("version"));
-            } else if (currentKey.equals("mipav")){
-            	currentEntry.setMipavInfo(atts.getValue("version"), atts.getValue("arguments"));
+            } else if (currentKey.equals("program")){
+            	currentEntry.setProgram(atts.getValue("version"), atts.getValue("build"));
+            } else if (currentKey.equals("programArguments")){
+            	currentEntry.setProgramArguments(atts.getValue("inputs"), atts.getValue("outputs"));
+            }  else if (currentKey.equals("platform")){
+            	currentEntry.setPlatformVersion(atts.getValue("version"));
+            } else if (currentKey.equals("compiler")) {
+            	currentEntry.setJavaVersion(atts.getValue("version"));
             }
         }
 

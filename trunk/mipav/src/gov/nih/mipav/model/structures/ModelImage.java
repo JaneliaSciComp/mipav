@@ -3131,7 +3131,8 @@ public class ModelImage extends ModelStorageBase {
         setImageName(newImageName);
 
         ScriptRecorder.getReference().addLine(new ActionChangeName(this, oldImageName, newImageName));
-
+        ProvenanceRecorder.getReference().addLine(new ActionChangeName(this, oldImageName, newImageName));
+        
         try {
             UI.getFrameContainingImage(this).setTitle();
         } catch (Exception e) { // was not in frame..

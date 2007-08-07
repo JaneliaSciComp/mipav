@@ -1,38 +1,54 @@
 package gov.nih.mipav.model.provenance;
 
 import java.io.IOException;
+import java.util.*;
+import java.text.SimpleDateFormat;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
+
 
 
 public class ProvenanceEntry extends ModelSerialCloneable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+	private String programName;
+	
     /** The timestamp */
-    private long time;
+    private String timeStamp;
 
     /** action describing the event */
     private String action;
     
     /** the name of the operating system */
-    private String osName;
+    private String platform;
     
     /** the operating system's version*/
-    private String osVersion;
+    private String platformVersion;
     
     /** the user name*/
     private String user;
     
+    /** the machine host name */
+    private String hostName;
+    
     /** mipav's version */
     private String mipavVersion;
- 
-    /** mipav's command-line arguments */
-    private String mipavArguments;
+
+    /** probably unused */
+    private String mipavBuild;
+    
+    /** mipav cmd line arguments */
+    private String mipavInputs;
+    
+    /** probably unused */
+    private String mipavOutputs;
     
     /** java's version */
-    private String javaVersion;
+    private String compilerVersion;
+    
+    private String architecture;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -47,30 +63,90 @@ public class ProvenanceEntry extends ModelSerialCloneable {
        setToCurrent();
     }
 
+    /**
+     * Sets the variables to the current system
+     *
+     */
     public void setToCurrent() {
-    	time = System.currentTimeMillis();
-    	osName = System.getProperties().getProperty("os.name");
-    	osVersion = System.getProperties().getProperty("os.version");
+    	Calendar cal = Calendar.getInstance();
+    	timeStamp = cal.get(Calendar.YEAR) + "/" + cal.get(Calendar.MONTH) + "/" 
+    		+ cal.get(Calendar.DAY_OF_MONTH) + "-" + cal.get(Calendar.HOUR_OF_DAY) + "-" 
+    		+ cal.get(Calendar.MINUTE) + "-" + cal.get(Calendar.SECOND) + "-"
+    		+ cal.get(Calendar.MILLISECOND) + "-" + cal.getTimeZone().getDisplayName();
+    	platform = System.getProperties().getProperty("os.name");
+    	platformVersion = System.getProperties().getProperty("os.version");
+    	architecture = System.getProperties().getProperty("os.arch");
     	user = System.getProperties().getProperty("user.name");
-    	javaVersion = System.getProperties().getProperty("java.version");
+    	compilerVersion = System.getProperties().getProperty("java.version");
+    	
     	mipavVersion = MipavUtil.getVersion();
-    	mipavArguments = ViewUserInterface.getReference().getCmdLineArguments();
+    	programName = "MIPAV";
+    	mipavInputs = ViewUserInterface.getReference().getCmdLineArguments();
+    	
+    	try
+    	{
+    		java.net.InetAddress localMachine = java.net.InetAddress.getLocalHost();	
+    		hostName = localMachine.getHostName();
+    	}
+    	catch(java.net.UnknownHostException uhe)
+    	{
+    		hostName = "";
+    		//handle exception
+    	}
+    	
     }
     
+    /**
+     * prints out a few things (not done)
+     */
     public String toString() {
     	String desc = new String();
     	
-    	desc = "action: " + action + ", time (ms): " + time;
+    	desc = "action: " + action + ", time: " + timeStamp;
     	
     	return desc;
     }
     
-    public long getTimeStamp() {
-    	return time;
+    public void setArchitecture(String arch) {
+    	this.architecture = arch;
     }
     
-    public void setTimeStamp(long ts) {
-    	this.time = ts;
+    public String getArchitecture() {
+    	return this.architecture;
+    }
+    
+    public void setProgram(String version, String build) {
+    	this.mipavVersion = version;
+    	this.mipavBuild = build;
+    }
+    
+    public String getProgramName() {
+    	return this.programName;
+    }
+    
+    public void setProgramName(String pn) {
+    	this.programName = pn;
+    }
+    
+    public void setProgramArguments(String inputs, String outputs) {
+    	this.mipavInputs = inputs;
+    	this.mipavOutputs = outputs;
+    }
+    
+    public String getProgramInputs() {
+    	return this.mipavInputs;
+    }
+    
+    public String getProgramOutputs() {
+    	return this.mipavOutputs;
+    }
+    
+    public String getTimeStamp() {
+    	return timeStamp;
+    }
+    
+    public void setTimeStamp(String ts) {
+    	this.timeStamp = ts;
     }
     
     public String getUser() {
@@ -81,6 +157,14 @@ public class ProvenanceEntry extends ModelSerialCloneable {
     	this.user = us;
     }
     
+    public void setHostName(String hn) {
+    	this.hostName = hn;
+    }
+    
+    public String getHostName() {
+    	return this.hostName;
+    }
+    
     public String getAction() {
     	return this.action;
     }
@@ -89,38 +173,33 @@ public class ProvenanceEntry extends ModelSerialCloneable {
     	this.action = act;
     }
     
-    public void setOS(String name, String version) {
-    	this.osName = name;
-    	this.osVersion = version;
+    public void setPlatform(String name) {
+    	this.platform = name;
     }
     
-    public String getOSName() {
-    	return this.osName;
+        
+    public String getPlatform() {
+    	return this.platform;
     }
     
-    public String getOSVersion() {
-    	return this.osVersion;
+    public void setPlatformVersion(String pv) {
+    	this.platformVersion = pv;
     }
     
-    public void setMipavInfo(String version, String arguments) {
-    	this.mipavVersion = version;
-    	this.mipavArguments = arguments;
+    public String getPlatformVersion() {
+    	return this.platformVersion;
     }
     
     public String getMipavVersion() {
     	return this.mipavVersion;
     }
     
-    public String getMipavArguments() {
-    	return this.mipavArguments;
-    }
-    
     public String getJavaVersion() {
-    	return this.javaVersion;
+    	return this.compilerVersion;
     }
     
     public void setJavaVersion(String ver) {
-    	this.javaVersion = ver;
+    	this.compilerVersion = ver;
     }
     
     /**
