@@ -10,7 +10,7 @@ import java.io.IOException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 
-public class ViewJComponentDTIImage extends ViewJComponentEditImage implements MouseListener{
+public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 	
 	/** type of color wheel 	ABSVAL, NOSYMM, ROTATIONALSYMM, MIRRORSYMM  **/
 	private String type;
@@ -27,6 +27,9 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 	/** blue saturation **/
 	private float pB = .350f;
 	
+	/** green adj **/
+	private float pG = .800f;
+	
 	/** gamma correction **/
 	private float gamma = 1.8f;
 	
@@ -38,6 +41,36 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 	
 	/** arry of r,g,b after blue shift **/
 	private float blueShiftColors[] = new float[3];
+	
+	/** arry of r,g,b after green adj **/
+	private float greenAdjColors[] = new float[3];
+	
+	/** anisotropy max **/
+	private float anisotropyMax = .7f;
+	
+	/** anisotropy min **/
+	private float anisotropyMin = 0f;
+	
+	/** anisotropy file data buffer **/
+	private float[] anisotropyBuffer;
+	
+	/** anisotropy file data buffer **/
+	private float[] clippedBuffer;
+	
+	/** Stevens Beta **/
+	private float stevensBeta = .4f;
+	
+	/** adjust exp **/
+	private float adjustExp = .5f;
+	
+	/** boolean for truncate/multiply **/
+	private boolean isMultiply = true;
+	
+	/** arry of r,g,b after scaling/truncating **/
+	private float truncMultColors[] = new float[3];
+	 
+
+	
 
 	
 	/**
@@ -54,11 +87,13 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 	 */
 	public ViewJComponentDTIImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
             int[] pixelBuffer, float zoom, int[] extents, boolean logMagDisplay,
-            int _orientation) {
+            int _orientation, float[] anisotropyBuffer) {
 		
         super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay,
                 _orientation);
         this.imageA = _imageA;
+        this.anisotropyBuffer = anisotropyBuffer;
+        clippedBuffer = new float[anisotropyBuffer.length];
 		
 	}
 	
@@ -74,12 +109,18 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
      *
      * @return  boolean to indicate if the show was successful
      */
-    public boolean show(int tSlice, int zSlice, boolean forceShow, String type, float pS, float pB, float pC, float gamma) {
+    public boolean show(int tSlice, int zSlice, boolean forceShow, String type, float pS, float pB, float pC, float pG, float gamma, float anisotropyMin, float anisotropyMax, float stevensBeta, float adjustExp, boolean isMultiply) {
     	this.type = type;
     	this.pS = pS;
     	this.pB = pB;
     	this.pC = pC;
+    	this.pG = pG;
     	this.gamma = gamma;
+    	this.anisotropyMin = anisotropyMin;
+    	this.anisotropyMax = anisotropyMax;
+    	this.stevensBeta = stevensBeta;
+    	this.adjustExp = adjustExp;
+    	this.isMultiply = isMultiply;
         return show(tSlice, zSlice, null, null, forceShow, interpMode);
     }
     
@@ -98,6 +139,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
      * @return  boolean to indicate if the show was successful
      */
     public boolean show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow, int interpMode) {
+    	//System.out.println("in show    " +  isMultiply + " " + stevensBeta + " " + adjustExp);
     
         if (interpMode > -1) {
             setInterpolationMode(interpMode);
@@ -132,6 +174,11 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
         	catch(IOException e) {
         			
         	}
+        	
+        	//first lets clip the anisotropyBuffer depending on anisotropy max and min values
+        	clipAnisotropyBuffer();
+        	
+        	
             if(type.equals("ABSVAL")) {
             	absoluteValue(zSlice,buff);	
             }
@@ -166,17 +213,34 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
     	float r,g,b;
     	int red,green,blue;
     	int val,index;
-    	for(int i=0;i<=(buff.length-4);i=i+4) {
+    	for(int i=0,j=(zSlice*buff.length)/4;i<=(buff.length-4);i=i+4,j++) {
     		
     		r = Math.abs(buff[i+1]);
     		g = Math.abs(buff[i+2]);
     		b = Math.abs(buff[i+3]);
     		
     		//shift blue
-			blueShiftColors = shiftBlue(r,g,b);
-			r = blueShiftColors[0];
-			g = blueShiftColors[1];
-			b = blueShiftColors[2];
+    		if(r != 0 && g != 0 && b != 0) {
+				blueShiftColors = shiftBlue(r,g,b);
+				r = blueShiftColors[0];
+				g = blueShiftColors[1];
+				b = blueShiftColors[2];
+    		}
+			
+			//adjust green
+    		if(r != 0 && g != 0 && b != 0) {
+				greenAdjColors = adjustGreen(r,g,b);
+				r = greenAdjColors[0];
+				g = greenAdjColors[1];
+				b = greenAdjColors[2];
+    		}
+			
+			
+			//truncate
+			truncMultColors = truncateRGB(r,g,b,clippedBuffer[j]);
+			r = truncMultColors[0];
+			g = truncMultColors[1];
+			b = truncMultColors[2];
 			
 			//gamma correction
 			r = (float)Math.pow(r,(1/gamma));
@@ -213,7 +277,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
     	int val,index;
     	float r,g,b;
     	int red,green,blue;
-    	for(int i=0;i<=(buff.length-4);i=i+4) {
+    	for(int i=0,j=(zSlice*buff.length)/4;i<=(buff.length-4);i=i+4,j++) {
     		vx = buff[i+1];
     		vy = buff[i+2];
     		vz = buff[i+3];
@@ -250,10 +314,27 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 				b = blue/255f;
 				
 				//shift blue
-				blueShiftColors = shiftBlue(r,g,b);
-				r = blueShiftColors[0];
-				g = blueShiftColors[1];
-				b = blueShiftColors[2];
+				if(r != 0 && g != 0 && b != 0) {
+					blueShiftColors = shiftBlue(r,g,b);
+					r = blueShiftColors[0];
+					g = blueShiftColors[1];
+					b = blueShiftColors[2];
+				}
+				
+				//adjust green
+	    		if(r != 0 && g != 0 && b != 0) {
+					greenAdjColors = adjustGreen(r,g,b);
+					r = greenAdjColors[0];
+					g = greenAdjColors[1];
+					b = greenAdjColors[2];
+	    		}
+				
+				
+				//truncate
+				truncMultColors = truncateRGB(r,g,b,clippedBuffer[j]);
+				r = truncMultColors[0];
+				g = truncMultColors[1];
+				b = truncMultColors[2];
 				
 				//gamma correction
 				r = (float)Math.pow(r,(1/gamma));
@@ -290,7 +371,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
     	int val,index;
     	int red,green,blue;
     	float r,g,b;
-    	for(int i=0;i<=(buff.length-4);i=i+4) {
+    	for(int i=0,j=(zSlice*buff.length)/4;i<=(buff.length-4);i=i+4,j++) {
     		vx = buff[i+1];
     		vy = buff[i+2];
     		vz = buff[i+3];
@@ -326,10 +407,26 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 				b = blue/255f;
 				
 				//shift blue
-				blueShiftColors = shiftBlue(r,g,b);
-				r = blueShiftColors[0];
-				g = blueShiftColors[1];
-				b = blueShiftColors[2];
+				if(r != 0 && g != 0 && b != 0) {
+					blueShiftColors = shiftBlue(r,g,b);
+					r = blueShiftColors[0];
+					g = blueShiftColors[1];
+					b = blueShiftColors[2];
+				}
+				
+				//adjust green
+	    		if(r != 0 && g != 0 && b != 0) {
+					greenAdjColors = adjustGreen(r,g,b);
+					r = greenAdjColors[0];
+					g = greenAdjColors[1];
+					b = greenAdjColors[2];
+	    		}
+				
+				//truncate
+				truncMultColors = truncateRGB(r,g,b,clippedBuffer[j]);
+				r = truncMultColors[0];
+				g = truncMultColors[1];
+				b = truncMultColors[2];
 				
 				//gamma correction
 				r = (float)Math.pow(r,(1/gamma));
@@ -369,7 +466,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
     	int val,index;
     	int red,green,blue;
     	float r,g,b;
-    	for(int i=0;i<=(buff.length-4);i=i+4) {
+    	for(int i=0,j=(zSlice*buff.length)/4;i<=(buff.length-4);i=i+4,j++) {
     		vx = buff[i+1];
     		vy = buff[i+2];
     		vz = buff[i+3];
@@ -418,10 +515,28 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 				b = blue/255f;
 				
 				//shift blue
-				blueShiftColors = shiftBlue(r,g,b);
-				r = blueShiftColors[0];
-				g = blueShiftColors[1];
-				b = blueShiftColors[2];
+				if(r != 0 && g != 0 && b != 0) {
+					blueShiftColors = shiftBlue(r,g,b);
+					r = blueShiftColors[0];
+					g = blueShiftColors[1];
+					b = blueShiftColors[2];
+				}
+				
+				
+				//adjust green
+	    		if(r != 0 && g != 0 && b != 0) {
+					greenAdjColors = adjustGreen(r,g,b);
+					r = greenAdjColors[0];
+					g = greenAdjColors[1];
+					b = greenAdjColors[2];
+	    		}
+				
+				
+				//truncate
+				truncMultColors = truncateRGB(r,g,b,clippedBuffer[j]);
+				r = truncMultColors[0];
+				g = truncMultColors[1];
+				b = truncMultColors[2];
 				
 				//gamma correction
 				r = (float)Math.pow(r,(1/gamma));
@@ -447,7 +562,58 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 	}
 	
 	
+	/**
+	 * clipAnisotropyBuffer
+	 *
+	 */
+	public void clipAnisotropyBuffer() {
+		for(int i=0;i<anisotropyBuffer.length;i++) {
+			float temp = anisotropyBuffer[i];
+			temp = (temp - anisotropyMin)/(anisotropyMax - anisotropyMin);
+			if(temp > 1) {
+				temp = 1;
+			}
+			else if(temp < 0) {
+				temp = 0;
+			}
+			clippedBuffer[i] = temp;	
+		}
+	}
 	
+	
+	
+	
+	/**
+	 * truncat RGB based on heuristic parameters
+	 * @param r1
+	 * @param g1
+	 * @param b1
+	 * @param scale
+	 * @return
+	 */
+	public float[] truncateRGB(float r1, float g1, float b1, float scale) {
+		float colors[] = new float[3];
+		float exponent = adjustExp/stevensBeta;
+		float value = (float)Math.pow(scale, exponent);
+		if(isMultiply) {
+			r1 = r1 * value;
+			g1 = g1 * value;
+			b1 = b1 * value;
+		}
+		else {
+			if(scale < 0.000001f) {
+				r1 = 0;
+				g1 = 0;
+				b1 = 0;
+			}
+
+		}
+		colors[0] = r1;
+		colors[1] = g1;
+		colors[2] = b1;
+
+		return colors;
+	}
 	
 	
 	/**
@@ -459,7 +625,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 	 */
 	public float[] shiftBlue(float r1, float g1, float b1) {
 		float colors[] = new float[3];
-		
+
 		float b = b1/(r1+g1+b1);
 		float cB = Math.max((3/2) * pB * (b-(1/3)) * pC, 0);
 		float rS = (cB*b1) + ((1-cB)*r1);
@@ -469,7 +635,44 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 		colors[0] = rS;
 		colors[1] = gS;
 		colors[2] = bS;
-		
+
+		return colors;
+	}
+	
+	
+	
+	/**
+	 * adjust green intensity
+	 * @param r1
+	 * @param g1
+	 * @param b1
+	 * @return
+	 */
+	public float[] adjustGreen(float r1, float g1, float b1) {
+		//System.out.println(r1 + " " + g1 + " " + b1);
+		float colors[] = new float[3];
+		float max1 = Math.max(r1, g1);
+		float max2 = Math.max(max1, b1);
+		float maxVal = Math.max(max2, .0000001f);
+		r1 = r1/maxVal;
+		g1 = g1/maxVal;
+		b1 = b1/maxVal;
+		float thrd = 1/3;
+		float c1 = thrd - (pG/25);
+		float c2 = thrd + (pG/4);
+		float leql = 0.7f;
+		float totalVal = (float)(((c1*r1) + (c2*g1) + ((1 - c2 - stevensBeta) * b1))/Math.pow(leql, (1/stevensBeta)));
+		if(totalVal < 1) {
+			totalVal = 1;
+		}
+		r1 = r1/(pC * totalVal + (1 - pC));
+		g1 = g1/(pC * totalVal + (1 - pC));
+		b1 = b1/(pC * totalVal + (1 - pC));
+
+		//System.out.println(" " + r1 + " " + g1 + " " + b1);
+		colors[0] = r1;
+		colors[1] = g1;
+		colors[2] = b1;
 		return colors;
 	}
 
@@ -534,7 +737,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage implements M
 	 * mouse wheel moved
 	 */
 	public void mouseWheelMoved(MouseWheelEvent mouseWheelEvent) {
-		
+
 	}
 	
 	
