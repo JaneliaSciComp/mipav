@@ -114,6 +114,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         super.finalize();
     }
     
+    
+    
     private void performAbdomenDialog() {
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -888,6 +890,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             initMuscleImage(activeTab);
         }
         
+        
+        
         private void initMuscleImage(int pane) {
             
             imageDiff[pane].unregisterAllVOIs();
@@ -949,6 +953,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             }
             
             getImageA().clearMask();
+            
+            ctMode(getImageA(), -175, 275);
+            
             updateImages(true);
             componentRock = true;
         }
@@ -1441,5 +1448,144 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         }
         
+        /** Three arrays to save the coordinates of the LUT's transfer fucntion. z[] not used. */
+        private float[] x = new float[4];
+
+        /** DOCUMENT ME! */
+        private float[] y = new float[4];
+
+        /** DOCUMENT ME! */
+        private float[] z = new float[4];
+        
+        /**
+         * Reference to the image data of the slice presently displayed. Needed to calculate the max/min of the slice used
+         * to adjust the transfer function.
+         */
+        private float[] dataSlice;
+        
+        /** Image's minimum intensity. */
+        private float minImage;
+        
+        /** Image's maximum intensity. */
+        private float maxImage;
+        
+        /** DOCUMENT ME! */
+        protected Dimension dim = new Dimension(256, 256);
+        
+        /**
+         * Sets mode to CT and sets range to CT presets.
+         *
+         * @param  preset1  first CT preset
+         * @param  preset2  second CT preset
+         */
+        public void ctMode(ModelImage image, int preset1, int preset2) {
+            float min = Float.MAX_VALUE;
+            float max = -Float.MIN_VALUE;
+            int i;
+            
+            ModelLUT LUT = getComponentImage().getLUTa();
+          
+            calcMinMax(image);
+            
+            dataSlice = getComponentImage().getActiveImageBuffer();
+            min = Float.MAX_VALUE;
+            max = -Float.MAX_VALUE;
+
+            for (i = 0; i < dataSlice.length; i++) {
+
+                if (dataSlice[i] > max) {
+                    max = dataSlice[i];
+                }
+
+                if (dataSlice[i] < min) {
+                    min = dataSlice[i];
+                }
+            }
+            
+            //Set LUT min max values of the image slice !!
+            x[0] = minImage;
+            y[0] = 255;
+            z[0] = 0;
+            x[1] = min;
+            y[1] = 255;
+            z[1] = 0;
+            x[2] = max;
+            y[2] = 0;
+            z[2] = 0;
+            x[3] = maxImage;
+            y[3] = 0;
+            z[3] = 0;
+            LUT.getTransferFunction().importArrays(x, y, 4);
+            
+            float yVal, m, b;
+            min = (float) image.getMin();
+            max = (float) image.getMax();
+
+            x[0] = min; // -1024;
+            y[0] = dim.height - 1;
+            z[0] = 0;
+
+            if (preset2 < max) {
+                x[2] = preset2;
+            } else {
+                x[2] = max;
+            }
+
+            y[2] = 0;
+            z[2] = 0;
+
+            if (preset1 < min) {
+
+                // y = m * x + b, line equation
+                // Assume given points: pt1 ( preset1, 255 ),  pt2 ( x[2], y[2])
+                // find point: pt3 ( -1024, yVal);
+                m = (255 - y[2]) / (preset1 - x[2]);
+                b = 255 - (m * preset1);
+                yVal = (m * (-1024)) + b;
+                x[1] = -1024;
+                y[1] = yVal;
+                z[1] = 0;
+                Preferences.debug("yVal = " + yVal);
+            } else {
+                x[1] = preset1;
+                y[1] = dim.height - 1;
+                z[1] = 0;
+            }
+
+            if (y[1] > 255) {
+                y[1] = 255;
+            }
+
+            x[3] = max; // 3071;
+            y[3] = 0;
+            z[3] = 0;
+            //((ViewJFrameImage) parentFrame).updateWinLevel((int) (x[1] + 0.5), (int) (x[2] + 0.5));
+            LUT.getTransferFunction().importArrays(x, y, 4);
+            image.notifyImageDisplayListeners(LUT, false);
+
+            //if (image.getHistoLUTFrame() != null) {
+            //    updateHistoLUTFrame();
+            //}
+        }
+        
+        /**
+         * Calculate the maximum and minimum valuse to setup the window and level sliders.
+         */
+        private void calcMinMax(ModelImage image) {
+
+            if (image.getType() == ModelStorageBase.UBYTE) {
+                minImage = 0;
+                maxImage = 255;
+            } else if (image.getType() == ModelStorageBase.BYTE) {
+                minImage = -128;
+                maxImage = 127;
+            } else {
+                minImage = (float) image.getMin();
+                maxImage = (float) image.getMax();
+            }
+        }
+        
     }
+    
+    
 }
