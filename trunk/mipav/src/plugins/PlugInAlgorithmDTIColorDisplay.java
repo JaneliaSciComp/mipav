@@ -36,10 +36,7 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 	/** eigenvector src image **/
 	private ModelImage eigvecSrcImage;
 	
-	/** anisotropy src Image     MAY NOT NEED THIS HERE**/
-	private ModelImage anisotropyImage;
-	
-	/** result dec map image **/
+	/** the eigvecSrcImage without the last 6 time volumes **/
     private ModelImage decImage;
     
     /** result image extents **/
@@ -48,7 +45,7 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
     /** extraced 3D Model Images from  image...red Image is [0], green image is [1], blue image is [2] **/
     private ModelImage[] channelImages;
     
-    /** DOCUMENT ME **/
+    /** handle for Algorithm Subset **/
     private AlgorithmSubset subsetAlgo;
     
     /** result image **/
@@ -67,16 +64,13 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
     
     
 	/** constructor **/
-	public PlugInAlgorithmDTIColorDisplay(ModelImage eigvecSrcImage, ModelImage anisotropyImage) {
+	public PlugInAlgorithmDTIColorDisplay(ModelImage eigvecSrcImage) {
 		this.eigvecSrcImage = eigvecSrcImage;
-		this.anisotropyImage = anisotropyImage;
 	}
 
 	/** run algorithm **/
 	public void runAlgorithm() {
-	
 		createModelImage();
-
 		setCompleted(true);
 	}
 	
@@ -85,59 +79,46 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 	
 	
 	/**
-	 * create model image
+	 * create result model image
 	 *
 	 */
 	private void createModelImage() {
-		//create the dest extents of the result image
+		//create the dest extents of the dec image...the 4th dim will only have 3 as the value
 		destExtents = new int[4];
         destExtents[0] = eigvecSrcImage.getExtents()[0];
         destExtents[1] = eigvecSrcImage.getExtents()[1];
         destExtents[2] = eigvecSrcImage.getExtents()[2];
         destExtents[3] = 3;
 		
-        //to do ...remove the EG part from name
         decImage = new ModelImage(ModelStorageBase.FLOAT, destExtents, eigvecSrcImage.getImageName() + "_DEC");
         
-        //src buffer
-        float[] srcBuffer;
+        //buffer
+        float[] buffer;
         
-        //result buffer
-        float[] resultBuffer;
-        
+        //determine length of dec image
         int length = eigvecSrcImage.getExtents()[0] * eigvecSrcImage.getExtents()[1] * eigvecSrcImage.getExtents()[2] * 3;
-        srcBuffer = new float[length];
-        resultBuffer = new float[length];
+        buffer = new float[length];
+        
+        //export eigvecSrcImage into buffer based on length
         try {
-        	eigvecSrcImage.exportData(0, length, srcBuffer);
+        	eigvecSrcImage.exportData(0, length, buffer);
+        }
+        catch (IOException error) {
+        	System.out.println("IO exception");
+            return;
+        }
+
+        //import resultBuffer into decImage
+        try {
+        	decImage.importData(0, buffer, true);
         }
         catch (IOException error) {
         	System.out.println("IO exception");
 
             return;
         }
-        
-        
-        for(int i=0;i<srcBuffer.length;i++) {
 
-        	//int roundedInt = Math.round((float)srcBuffer[i] * 255);
-
-        	resultBuffer[i] = srcBuffer[i];
-        }
-        
-        
-        try {
-        	decImage.importData(0, resultBuffer, true);
-        }
-        catch (IOException error) {
-        	System.out.println("IO exception");
-
-            return;
-        }
-        
-        //new ViewJFrameImage(resultImage);
-        
-        
+        //extract dec image into channel images
         destExtents = new int[3];
         destExtents[0] = decImage.getExtents()[0];
         destExtents[1] = decImage.getExtents()[1];
@@ -152,36 +133,28 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 			subsetAlgo.run();
 		}
   
+        //set up result image
         resultImage = new ModelImage(ModelImage.ARGB_FLOAT, channelImages[0].getExtents(),eigvecSrcImage.getImageName() + "_ColorDisplay");
 
+        //cocatenate channel images into an RGB image
         mathAlgo = new AlgorithmRGBConcat(channelImages[0], channelImages[1], channelImages[2], resultImage, remapMode, false);
         mathAlgo.setRunningInSeparateThread(false);
         mathAlgo.run();
         
-        FileInfoBase[] fileInfoBases = new FileInfoBase[resultImage.getExtents()[2]];
+        //copy core file info over
+        FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[resultImage.getExtents()[2]];
         for (int i=0;i<fileInfoBases.length;i++) {
        	 	fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName(), null, FileUtility.XML);
         }
         FileInfoBase.copyCoreInfo(eigvecSrcImage.getFileInfo(), fileInfoBases);
         resultImage.setFileInfo(fileInfoBases);
         
-        
-        
-        
+
         finalize();
         
 	}
 
-	
-	
-	public ArrayList getFractionalAnisotropyArrayList() {
-		ArrayList faArrayList = new ArrayList();
-		
-		
-		
-		return faArrayList;
-	}
-	
+
 
 	/**
 	 * get Result Image
@@ -190,8 +163,6 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 	public ModelImage getResultImage() {
 		return resultImage;
 	}
-	
-	
 	
 
 	
