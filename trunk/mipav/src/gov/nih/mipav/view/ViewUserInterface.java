@@ -97,6 +97,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Vector to hold clipped VOIs (multiple). */
     private ViewVOIVector clippedVOIs = new ViewVOIVector();
 
+    /** String holding the command line arguments for data provenance usage. */
+    private String cmdLineArguments = new String();
+
     /** Reference to the DICOM receiver that listens for DICOM formatted images sent by a DICOM server. */
     private DICOM_Receiver DICOMcatcher = null;
 
@@ -169,18 +172,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** The current progress bar prefix to use. */
     private String progressBarPrefix = OPENING_STR;
 
-    /** String holding the command line arguments for data provenance usage */
-    private String cmdLineArguments = new String();
-    
     /** Indicates whether the user is currently recording a new keyboard shortcut using the shortcut editor dialog. */
     private boolean shortcutRecording = false;
+
+    /** System DP holder (separate from images data provenance...this has everything). */
+    private ProvenanceHolder systemDPHolder;
 
     /** DOCUMENT ME! */
     private JXCEDEExplorer xcedeExplorer;
 
-    /** System DP holder (separate from images data provenance...this has everything)*/
-    private ProvenanceHolder systemDPHolder;
-  
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -293,6 +293,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
+     * Displays the system data provenance using a simple dialog with table and jtextarea (for current selection).
+     *
+     * <p>.</p>
+     */
+    public void aboutDataProvenance() {
+
+        JDialogDataProvenance dp = new JDialogDataProvenance(mainFrame, "Mipav system data provenance", true,
+                                                             this.getProvenanceHolder());
+
+    }
+
+    /**
      * Creates simple dialog that describes basic info about the version of Java.
      */
     public void aboutJava() {
@@ -320,16 +332,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
     }
 
-    /**
-     * Displays the system data provenance using a simple dialog with table and jtextarea (for current selection)
-     *
-     */
-    public void aboutDataProvenance() {
-    	
-    	JDialogDataProvenance dp = new JDialogDataProvenance(mainFrame, "Mipav system data provenance", true, this.getProvenanceHolder());
-    	
-    }
-    
     // ************************************************************************
     // **************************** Action Events *****************************
     // ************************************************************************
@@ -538,6 +540,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     MipavUtil.displayError("PlugIn " + plugInName +
                                            " claims to be an File PlugIn, but does not implement PlugInFile.");
                 }
+            } catch (UnsupportedClassVersionError ucve) {
+                Preferences.debug("Unable to load plugin: " + plugInName +
+                                  " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
+                                  Preferences.DEBUG_MINOR);
+                ucve.printStackTrace();
             } catch (ClassNotFoundException e) {
                 MipavUtil.displayError("PlugIn not found: " + plugInName);
             } catch (InstantiationException e) {
@@ -565,6 +572,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     MipavUtil.displayError("PlugIn " + plugInName +
                                            " claims to be an File PlugIn, but does not implement PlugInFile.");
                 }
+            } catch (UnsupportedClassVersionError ucve) {
+                Preferences.debug("Unable to load plugin: " + plugInName +
+                                  " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
+                                  Preferences.DEBUG_MINOR);
+                ucve.printStackTrace();
             } catch (ClassNotFoundException e) {
                 MipavUtil.displayError("PlugIn not found: " + plugInName);
             } catch (InstantiationException e) {
@@ -586,6 +598,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     MipavUtil.displayError("PlugIn " + plugInName +
                                            " claims to be an File Transfer PlugIn, but does not implement PlugInFileTransfer.");
                 }
+            } catch (UnsupportedClassVersionError ucve) {
+                Preferences.debug("Unable to load plugin: " + plugInName +
+                                  " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
+                                  Preferences.DEBUG_MINOR);
+                ucve.printStackTrace();
             } catch (ClassNotFoundException e) {
                 MipavUtil.displayError("PlugIn not found: " + plugInName);
             } catch (InstantiationException e) {
@@ -608,6 +625,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     MipavUtil.displayError("Plug-in " + plugInName +
                                            " claims to be an generic PlugIn, but does not implement PlugInGeneric.");
                 }
+            } catch (UnsupportedClassVersionError ucve) {
+                Preferences.debug("Unable to load plugin: " + plugInName +
+                                  " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
+                                  Preferences.DEBUG_MINOR);
+                ucve.printStackTrace();
             } catch (ClassNotFoundException e) {
                 MipavUtil.displayError("PlugIn not found: " + plugInName);
             } catch (InstantiationException e) {
@@ -889,6 +911,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         viewMenu.add(menuItem);
                         menuItem.setName(name);
                     }
+                } catch (UnsupportedClassVersionError ucve) {
+                    Preferences.debug("Unable to load plugin: " + name +
+                                      " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
+                                      Preferences.DEBUG_MINOR);
+                    ucve.printStackTrace();
                 } catch (Exception ex) { // System.err.println(ex.toString());
                     Preferences.debug("Unable to find plugin: " + name + " -- " + ex.getMessage() + "\n",
                                       Preferences.DEBUG_MINOR);
@@ -968,7 +995,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritDoc}.* @param recorderStatus DOCUMENT ME!
      */
     public void changeRecordingStatus(int recorderStatus) {
         Enumeration e = this.getRegisteredImages();
@@ -1145,13 +1172,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Returns the Command line arguments (as one string, each separated by a space)
-     * @return command line arguments concatenated with spaces
+     * Returns the Command line arguments (as one string, each separated by a space) .@return command line arguments
+     * concatenated with spaces
+     *
+     * @return  DOCUMENT ME!
      */
     public String getCmdLineArguments() {
-    	return this.cmdLineArguments;
+        return this.cmdLineArguments;
     }
-    
+
     /**
      * Accessor to get directory location of last file access.
      *
@@ -1345,37 +1374,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Accessor for the mipav's data provenance
-     * @return mipav's data provenance holder
+     * Accessor for the mipav's data provenance .@return mipav's data provenance holder
+     *
+     * @return  DOCUMENT ME!
      */
     public ProvenanceHolder getProvenanceHolder() {
-    	return this.systemDPHolder;
+        return this.systemDPHolder;
     }
-    
-    /**
-     * Writes Mipav's data provenance to the default location
-     *
-     */
-    public void writeDataProvenance() {
-    	//only write data provenance when there is something to write
-    	if (systemDPHolder != null && systemDPHolder.size() > 0) {
-    		
-    		String provenanceFilename = Preferences.getProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME);
-            if (provenanceFilename == null) {
-            	provenanceFilename = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "dataprovenance.xmp";        	
-            	Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, provenanceFilename);
-            }
-    		
-            File pFile = new File(provenanceFilename);
-            
-    		FileDataProvenance fdp = new FileDataProvenance(pFile.getName(),
-					pFile.getParent(), systemDPHolder);
-    		try {
-    			fdp.writeXML();
-    		} catch (Exception e) {}
-    	}
-    }
-    
+
     /**
      * Return an num of images with frames(elements) from the image hashtable.
      *
@@ -2004,7 +2010,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         Preferences.debug("Command line argument list:\n");
 
         for (i = 0; i < args.length; i++) {
-        	cmdLineArguments += args[i] + " ";
+            cmdLineArguments += args[i] + " ";
             System.err.println("argument[" + i + "]= " + args[i]);
             Preferences.debug("argument[" + i + "]= " + args[i] + "\n");
 
@@ -2119,13 +2125,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     // imageFileNames.add(args[++i]);
 
                 } else if (arg.equalsIgnoreCase("-r")) {
-                	//this is for specifying raw image parameters
-                	String rawString = args[++i];
-                	
-                	//set the openfileinfo's rawInfo variable (for raw instructions)
-                	((OpenFileInfo)imageList.lastElement()).setRawImageInfo(new RawImageInfo(rawString));
-                	
-                }  else if (arg.equalsIgnoreCase("-hide")) {
+
+                    // this is for specifying raw image parameters
+                    String rawString = args[++i];
+
+                    // set the openfileinfo's rawInfo variable (for raw instructions)
+                    ((OpenFileInfo) imageList.lastElement()).setRawImageInfo(new RawImageInfo(rawString));
+
+                } else if (arg.equalsIgnoreCase("-hide")) {
                     isAppFrameVisible = false;
                 } else if (arg.equalsIgnoreCase("-s")) {
 
@@ -2831,11 +2838,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                   JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (reply == JOptionPane.YES_OPTION) {
-        	
-        	if (Preferences.is(Preferences.PREF_DATA_PROVENANCE)) {
-        		writeDataProvenance();
-        	}
-        	
+
+            if (Preferences.is(Preferences.PREF_DATA_PROVENANCE)) {
+                writeDataProvenance();
+            }
+
             memoryUsageThread.shutdown();
 
             if (DICOMQueryFrame != null) {
@@ -2942,6 +2949,34 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param  event  the window event.
      */
     public void windowOpened(WindowEvent event) { }
+
+    /**
+     * Writes Mipav's data provenance to the default location.
+     *
+     * <p>.</p>
+     */
+    public void writeDataProvenance() {
+
+        // only write data provenance when there is something to write
+        if ((systemDPHolder != null) && (systemDPHolder.size() > 0)) {
+
+            String provenanceFilename = Preferences.getProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME);
+
+            if (provenanceFilename == null) {
+                provenanceFilename = System.getProperty("user.home") + File.separator + "mipav" + File.separator +
+                                     "dataprovenance.xmp";
+                Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, provenanceFilename);
+            }
+
+            File pFile = new File(provenanceFilename);
+
+            FileDataProvenance fdp = new FileDataProvenance(pFile.getName(), pFile.getParent(), systemDPHolder);
+
+            try {
+                fdp.writeXML();
+            } catch (Exception e) { }
+        }
+    }
 
     /**
      * Construct the panel which displays the current memory usage/limit and a garbage collection button.
@@ -3297,16 +3332,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             Preferences.print();
         }
 
-        
-        //create the system data provenance holder to catch all events
+
+        // create the system data provenance holder to catch all events
         systemDPHolder = new ProvenanceHolder();
-        
-        //start the Provenance recorder here if the preference is set
+
+        // start the Provenance recorder here if the preference is set
         if (Preferences.is(Preferences.PREF_DATA_PROVENANCE)) {
-        	
-        	ProvenanceRecorder.getReference().startRecording();
+
+            ProvenanceRecorder.getReference().startRecording();
         }
-        
+
         initPrefsTrim();
     }
 
@@ -3324,6 +3359,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         Vector imageNames = new Vector();
 
         if (imageList.size() >= 0) {
+
             for (int i = 0; i < imageList.size(); i++) {
                 OpenFileInfo file = (OpenFileInfo) imageList.elementAt(i);
                 String fileName = file.getFullFileName();
@@ -3455,9 +3491,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         /** Whether the file is opened as a multifile image. */
         private boolean isMulti = false;
 
-        /** Instructions for opening raw images*/
+        /** Instructions for opening raw images. */
         private RawImageInfo rawInfo = null;
-        
+
         /**
          * Creates a new OpenFileInfo object.
          *
@@ -3504,6 +3540,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public RawImageInfo getRawImageInfo() {
+            return this.rawInfo;
+        }
+
+        /**
          * Return whether the file should be opened as a multifile image.
          *
          * @return  Whether the file should be opened as a multifile image.
@@ -3511,12 +3556,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         public boolean isMulti() {
             return isMulti;
         }
-        
-        public RawImageInfo getRawImageInfo() {
-        	return this.rawInfo;
-        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  rI  DOCUMENT ME!
+         */
         public void setRawImageInfo(RawImageInfo rI) {
-        	this.rawInfo = rI;
+            this.rawInfo = rI;
         }
     }
 }
