@@ -38,10 +38,14 @@ public abstract class Application
         Stream kOStream = new Stream();
         kOStream.Insert(pkScene);
         kOStream.Save(acFilename);
+        kOStream.finalize();
+        kOStream = null;
 
         Stream kIStream = new Stream();
         kIStream.Load(acFilename);
         Spatial spkScene = (Spatial)(kIStream.GetObjectAt(0));
+        kIStream.finalize();
+        kIStream = null;
         spkScene.SetName(acFilename);
 
         StringTree pkRoot = spkScene.SaveStrings( null );

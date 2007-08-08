@@ -25,6 +25,7 @@ import java.nio.*;
 import com.sun.opengl.util.BufferUtil;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 
@@ -50,6 +51,21 @@ public class OpenGLRenderer extends Renderer
     {
         super(eFormat,eDepth,eStencil,eBuffering,eMultisampling,iWidth,iHeight);
         initCanvas();
+    }
+
+    /** Delete memory: */
+    public void finalize()
+    {
+        if ( m_aspkLight != null )
+        {
+            for ( int i = 0; i < m_iMaxLights; i++ )
+            {
+                m_aspkLight[i] = null;
+            }
+        }
+        m_kCanvas = null;
+        m_kDrawable = null;
+        super.finalize();
     }
 
     public void initCanvas()
@@ -132,7 +148,7 @@ public class OpenGLRenderer extends Renderer
         gl.glGetIntegerv(GL.GL_MAX_LIGHTS,aiParams,0);
         m_iMaxLights = aiParams[0];
         assert(m_iMaxLights > 0);
-        m_aspkLight = new Object[m_iMaxLights];
+        m_aspkLight = new GraphicsObject[m_iMaxLights];
 
         gl.glLightModelfv(GL.GL_LIGHT_MODEL_AMBIENT,ColorRGBA.BLACK.GetData(),0);
         gl.glLightModeli(GL.GL_LIGHT_MODEL_LOCAL_VIEWER,GL.GL_FALSE);
@@ -1194,7 +1210,6 @@ public class OpenGLRenderer extends Renderer
     {
         if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
-
 
         OnEnableTexture(pkID);
         

@@ -30,6 +30,14 @@ public class VisibleSet
 
     public void finalize ()
     {
+        for ( int i = 0; i < m_iQuantity; i++ )
+        {
+            if ( m_akVisible[i] != null )
+            {
+                m_akVisible[i].finalize();
+                m_akVisible[i] = null;
+            }
+        }
         m_akVisible = null;
         try {
             super.finalize();

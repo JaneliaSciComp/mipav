@@ -61,6 +61,22 @@ public class BspNode extends Node
         m_kChild.add(null);  // right child
     }
 
+    /** Delete memory */
+    public void finalize()
+    {
+        if ( m_kModelPlane != null )
+        {
+            m_kModelPlane.finalize();
+            m_kModelPlane = null;
+        }
+        if ( m_kWorldPlane != null )
+        {
+            m_kWorldPlane.finalize();
+            m_kWorldPlane = null;
+        }
+        super.finalize();
+    }
+
     /** These methods should be used instead of the attach/detach methods in
      * the Node base class.
      * @param pkChild the child to attach on the "positive" side.

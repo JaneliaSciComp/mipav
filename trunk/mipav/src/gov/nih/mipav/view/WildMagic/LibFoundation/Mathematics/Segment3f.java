@@ -28,14 +28,24 @@ package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
  */
 public class Segment3f
 {
-    // construction
+    /** construction -- uninitialized */
     public Segment3f () {}  // uninitialized
+    /** construction 
+     * @param rkOrigin, segment origin
+     * @param rkDirection, segment direction, unit-length
+     * @param fExtent, segment extent
+     */
     public Segment3f (Vector3f rkOrigin, Vector3f rkDirection, float fExtent)
     {
         Origin = new Vector3f(rkOrigin);
         Direction = new Vector3f(rkDirection);
         Extent = fExtent;
     }
+
+    /**
+     * Copy constructor.
+     * @param rkSegment, the segment to copy.
+     */
     public Segment3f (Segment3f rkSegment)
     {
         Origin = new Vector3f(rkSegment.Origin);
@@ -43,17 +53,35 @@ public class Segment3f
         Extent = rkSegment.Extent;
     }
 
-    // end points
-    public Vector3f GetPosEnd ()  // P+e*D
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        Origin.finalize();
+        Origin = null;
+        Direction.finalize();
+        Direction = null;
+    }
+
+    /** Returns the positive end point: P+e*D
+     * @return P+e*D
+     */
+    public Vector3f GetPosEnd ()
     {
         return Origin.add( Direction.scale(Extent) );
     }
 
-    public Vector3f GetNegEnd ()  // P-e*D
+    /** Returns the negative end point: P-e*D
+     * @return P-e*D
+     */
+    public Vector3f GetNegEnd ()
     {
         return Origin.sub( Direction.scale(Extent) );
     }
 
+    /** Segment origin, and unit-length direction. */
     public Vector3f Origin, Direction;
+    /** Segment extent: */
     public float Extent;
 }

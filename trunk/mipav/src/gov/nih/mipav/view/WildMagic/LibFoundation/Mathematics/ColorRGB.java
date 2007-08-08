@@ -73,7 +73,14 @@ public class ColorRGB
         m_afTuple[2] = rkC.m_afTuple[2];
     }
 
-    // member access
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        m_afTuple = null;
+    }
+
     /** Returns the color red value
      * @return  the color red value
      */
@@ -99,7 +106,7 @@ public class ColorRGB
     }
 
     /** Sets the color red value
-     * @param  the new red value
+     * @param fValue the new red value
      */
     public void R (float fValue)
     {
@@ -107,7 +114,7 @@ public class ColorRGB
     }
 
     /** Sets the color green value
-     * @param  the new green value
+     * @param fValue the new green value
      */
     public void G (float fValue)
     {
@@ -115,14 +122,14 @@ public class ColorRGB
     }
 
     /** Sets the color blue value
-     * @param  the new blue value
+     * @param fValue the new blue value
      */
     public void B (float fValue)
     {
         m_afTuple[2] = fValue;
     }
 
-    /** Sets the color red,green,blue value
+    /** Gets the color red,green,blue value
      * @return float[3] with [r,g,b]
      */
     public float[] GetData ()

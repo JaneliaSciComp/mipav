@@ -48,6 +48,49 @@ public class PlanarShadowEffect extends Effect
         m_spkMEffect = new MaterialEffect();
     }
 
+    /** Delete data members: */
+    public void finalize ()
+    {
+        for ( int i = 0; i < m_iQuantity; i++ )
+        {
+            m_aspkPlane[i].finalize();
+            m_aspkPlane[i] = null;
+            m_aspkProjector[i].finalize();
+            m_aspkProjector[i] = null;
+            m_akShadowColor[i].finalize();
+            m_akShadowColor[i] = null;
+        }
+        m_aspkPlane = null;
+        m_akShadowColor = null;
+
+        if ( m_spkAState != null )
+        {
+            m_spkAState.finalize();
+            m_spkAState = null;
+        }
+        if ( m_spkSState != null )
+        {
+            m_spkSState.finalize();
+            m_spkSState = null;
+        }
+        if ( m_spkZState != null )
+        {
+            m_spkZState.finalize();
+            m_spkZState = null;
+        }
+        if ( m_spkMState != null )
+        {
+            m_spkMState.finalize();
+            m_spkMState = null;
+        }
+        if ( m_spkMEffect != null )
+        {
+            m_spkMEffect.finalize();
+            m_spkMEffect = null;
+        }
+        super.finalize();
+    }
+
     /**
      * Draw the planar shadows
      * @param pkRenderer the Renderer object.

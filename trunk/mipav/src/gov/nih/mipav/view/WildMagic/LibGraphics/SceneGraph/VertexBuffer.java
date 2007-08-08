@@ -54,6 +54,17 @@ public class VertexBuffer extends Bindable
         }
     }
 
+    public void finalize()
+    {
+        if ( m_kAttributes != null )
+        {
+            m_kAttributes.finalize();
+            m_kAttributes = null;
+        }
+        m_afChannel = null;
+        super.finalize();
+    }
+
     // The format of a single vertex in the buffer.
     public Attributes GetAttributes ()
     {

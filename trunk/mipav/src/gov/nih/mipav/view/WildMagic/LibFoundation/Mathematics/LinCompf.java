@@ -41,6 +41,9 @@ public abstract class LinCompf
 
     };
 
+    /** Gets the type of linear component
+     * @return component type.
+     */
     public ComponentType GetType ()
     {
         return m_iType;
@@ -61,6 +64,8 @@ public abstract class LinCompf
      *   CT_EMPTY:
      *     [min,max], where min > max or min = max = MAX_REAL or
      *                min = max = -MAX_REAL
+     * @param fMin, min
+     * @param fMax, max
      */
     public void SetInterval (float fMin, float fMax)
     {
@@ -72,6 +77,8 @@ public abstract class LinCompf
 
     /** Determine the type of an interval without having to create an instance
      * of a LinComp object.
+     * @param fMin, min
+     * @param fMax, max
      */
     public static ComponentType GetTypeFromInterval (float fMin, float fMax)
     {
@@ -134,6 +141,27 @@ public abstract class LinCompf
      */
     public abstract void MakeCanonical ();
 
+    /** The canonical intervals are [-MAX_REAL,MAX_REAL] for a line;
+     * [0,MAX_REAL] for a ray; [-e,e] for a segment, where e > 0; [0,0] for
+     * a point, and [MAX_REAL,-MAX_REAL] for the empty set.  If the interval
+     * is [min,max], the adjustments are as follows.
+     * 
+     * CT_RAY:  If max is MAX_REAL and if min is not zero, then P is modified
+     * to P' = P+min*D so that the ray is represented by P'+t*D for t >= 0.
+     * If min is -MAX_REAL and max is finite, then the origin and direction
+     * are modified to P' = P+max*D and D' = -D.
+     *
+     * CT_SEGMENT:  If min is not -max, then P is modified to
+     * P' = P + ((min+max)/2)*D and the extent is e' = (max-min)/2.
+     *
+     * CT_POINT:  If min is not zero, the P is modified to P' = P+min*D.
+     *
+     * CT_EMPTY:  Set max to -MAX_REAL and min to MAX_REAL.
+     *
+     * The first function is virtual since the updates are dependent on the
+     * dimension of the vector space.
+     * @return true if this is a canonical interval
+     */
     public boolean IsCanonical ()
     {
         if (m_iType == ComponentType.CT_RAY)
@@ -161,24 +189,33 @@ public abstract class LinCompf
         return true;
     }
 
-    /** access the interval [min,max] */
+    /** access the interval [min,max]
+     * @return interval min-value
+     */
     public float GetMin ()
     {
         return m_fMin;
     }
 
+    /** access the interval [min,max]
+     * @return interval max-value
+     */
     public float GetMax ()
     {
         return m_fMax;
     }
 
-    /** Determine if the specified parameter is in the interval. */
+    /** Determine if the specified parameter is in the interval.
+     * @param value to test
+     * @return true if in the interval
+     */
     public boolean Contains (float fParam)
     {
         return m_fMin <= fParam && fParam <= m_fMax;
     }
 
-    protected LinCompf ()  // default is CT_NONE
+    /** Constructs an new LinComf object: default is CT_NONE */
+    protected LinCompf ()
     {
         m_iType = ComponentType.CT_EMPTY;
         m_fMin = Float.MAX_VALUE;

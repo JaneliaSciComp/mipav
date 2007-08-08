@@ -82,7 +82,10 @@ public class SamplerInformation
         }
     }
 
-    public void finalize () {}
+    public void finalize ()
+    {
+        m_kName = null;
+    }
 
     // Member read-only access.
     public String GetName ()

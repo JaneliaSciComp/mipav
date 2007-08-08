@@ -22,13 +22,18 @@ import java.util.Random;
 
 public final class Mathf
 {
-     public static float InvSqrt (float fValue)
+    /** Calculation of 1/sqrt(fValue)
+     * @param fValue, value to calculate 1/sqrt(fValue)
+     * @return 1/sqrt(fValue)
+     */
+    public static float InvSqrt (float fValue)
     {
         return (float)(1.0/Math.sqrt((double)fValue));
     }
 
     /** Generate a random number in [-1,1).  The random number generator may
      * be seeded by a first call to SymmetricRandom with a positive seed.
+     * @return a random number in [-1,1)
      */
     public static float SymmetricRandom (/*unsigned int uiSeed = 0*/)
     {

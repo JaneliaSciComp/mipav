@@ -44,6 +44,28 @@ public class Culler
         }
     }
 
+    public void finalize()
+    {
+        if ( m_pkCamera != null )
+        {
+            m_pkCamera.finalize();
+            m_pkCamera = null;
+        }
+        m_afFrustum = null;
+        for ( int i = 0; i < VS_MAX_PLANE_QUANTITY; i++ )
+        {
+            m_akPlane[i].finalize();
+            m_akPlane[i] = null;
+        }
+        m_akPlane = null;
+
+        if ( m_kVisible != null )
+        {
+            m_kVisible.finalize();
+            m_kVisible = null;
+        }
+    }
+
     // Access to the camera, frustum copy, and potentially visible set.
     public void SetCamera (final Camera pkCamera)
     {

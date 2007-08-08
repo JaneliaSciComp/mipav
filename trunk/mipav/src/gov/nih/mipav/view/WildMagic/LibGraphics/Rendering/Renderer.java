@@ -19,6 +19,7 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
+import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 
@@ -27,6 +28,62 @@ public abstract class Renderer
     // Abstract API for renderers.  Each graphics API must implement this
     // layer.
 
+    // The Renderer is an abstract base class.
+    public void finalize()
+    {
+        if ( m_kBackgroundColor != null )
+        {
+            m_kBackgroundColor.finalize();
+            m_kBackgroundColor = null;
+        }
+        if ( m_kWorldMatrix != null )
+        {
+            m_kWorldMatrix.finalize();
+            m_kWorldMatrix = null;
+        }
+        if ( m_kSaveWorldMatrix != null )
+        {
+            m_kSaveWorldMatrix.finalize();
+            m_kSaveWorldMatrix = null;
+        }
+        if ( m_kViewMatrix != null )
+        {
+            m_kViewMatrix.finalize();
+            m_kViewMatrix = null;
+        }
+        if ( m_kSaveViewMatrix != null )
+        {
+            m_kSaveViewMatrix.finalize();
+            m_kSaveViewMatrix = null;
+        }
+        if ( m_kProjectionMatrix != null )
+        {
+            m_kProjectionMatrix.finalize();
+            m_kProjectionMatrix = null;
+        }
+        if ( m_kSaveProjectionMatrix != null )
+        {
+            m_kSaveProjectionMatrix.finalize();
+            m_kSaveProjectionMatrix = null;
+        }
+        
+        if ( m_aspkState != null )
+        {
+            for ( int i = 0;
+            i < GlobalState.StateType.MAX_STATE_TYPE.Value(); i++ )
+            {
+                if ( m_aspkState[i] != null )
+                {
+                    m_aspkState[i].finalize();
+                    m_aspkState[i] = null;
+                }
+            }
+            m_aspkState = null;
+        }
+        m_aspkLight = null;
+    }
+    
+    
     // Run-time type information.
     public enum RendererType
     {
@@ -969,15 +1026,6 @@ public abstract class Renderer
                                 pkRC.GetRegisterQuantity(),pkRC.GetData());
         }
 
-        // Process the numerical constants.
-        for (i = 0; i < pkVProgram.GetNCQuantity(); i++)
-        {
-            NumericalConstant pkNC = pkVProgram.GetNC(i);
-            assert(pkNC != null);
-            SetVProgramConstant(ConstantType.CT_NUMERICAL,pkNC.GetRegister(),1,
-                                pkNC.GetData());
-        }
-
         // Process the user-defined constants.
         for (i = 0; i < pkVProgram.GetUCQuantity(); i++)
         {
@@ -1014,15 +1062,6 @@ public abstract class Renderer
             SetRendererConstant(pkRC.GetType(),pkRC.GetData());
             SetPProgramConstant(ConstantType.CT_RENDERER,pkRC.GetBaseRegister(),
                                 pkRC.GetRegisterQuantity(),pkRC.GetData());
-        }
-
-        // Process the numerical constants.
-        for (i = 0; i < pkPProgram.GetNCQuantity(); i++)
-        {
-            NumericalConstant pkNC = pkPProgram.GetNC(i);
-            assert(pkNC != null);
-            SetPProgramConstant(ConstantType.CT_NUMERICAL,pkNC.GetRegister(),1,
-                                pkNC.GetData());
         }
 
         // Process the user-defined constants.
@@ -1944,7 +1983,7 @@ public abstract class Renderer
     // The Renderer-derived classes must allocate this array during
     // construction, creating m_iMaxLights elements.  The Renderer class
     // deallocates the array during destruction.
-    protected Object[] m_aspkLight;
+    protected GraphicsObject[] m_aspkLight;
 
     // The projector for various effects such as projected textures and
     // shadow maps.

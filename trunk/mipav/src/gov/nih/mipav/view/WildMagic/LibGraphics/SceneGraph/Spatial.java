@@ -35,6 +35,17 @@ public abstract class Spatial extends GraphicsObject
         DetachAllGlobalStates();
         DetachAllLights();
         DetachAllEffects();
+        m_pkParent = null;
+        if ( Local != null )
+        {
+            Local.finalize();
+            Local = null;
+        }
+        if ( World != null )
+        {
+            World.finalize();
+            World = null;
+        }
         super.finalize();
     }
 

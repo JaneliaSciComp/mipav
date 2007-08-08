@@ -57,6 +57,20 @@ public class RipplingOceanEffect extends ShaderEffect
         pkEnv.SetFilterType(Texture.FilterType.LINEAR);
     }
 
+    /** Delete data members: */
+    public void finalize ()
+    {
+        m_afLightDir = null;
+        m_afWaveDirX = null;
+        m_afWaveDirY = null;
+        m_afWaveSpeed = null;
+        m_afWaveOffset = null;
+        m_afWaveHeight = null;
+        m_afBumpSpeed = null;
+        m_afConstants = null;
+        super.finalize();
+    }
+
     /** Sets the Light direction
      * @param rkLightDir the light direction vector.
      */
@@ -294,11 +308,17 @@ public class RipplingOceanEffect extends ShaderEffect
     protected float[] m_afLightDir = new float[4];
 
     /** The rippling ocean is made up of 4 waves. */
+    /** Wave x-direction: */
     protected float[] m_afWaveDirX = new float[4];
+    /** Wave y-direction: */
     protected float[] m_afWaveDirY = new float[4];
+    /** Wave speed: */
     protected float[] m_afWaveSpeed = new float[4];
+    /** Wave offset: */
     protected float[] m_afWaveOffset = new float[4];
+    /** Wave height: */
     protected float[] m_afWaveHeight = new float[4];
+    /** Bump-map speed: */
     protected float[] m_afBumpSpeed = new float[4];
 
     /** Index 0 is averageDuDxDvDy, index 1 is ambient, index 2 is

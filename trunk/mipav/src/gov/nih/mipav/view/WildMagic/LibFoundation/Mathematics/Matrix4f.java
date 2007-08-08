@@ -39,7 +39,7 @@ package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
  */
 public class Matrix4f
 {
-    /** special matrices */
+    /** Zero matrix: */
     public static final Matrix4f ZERO =
         new Matrix4f(
                      0.0f,0.0f,0.0f,0.0f,
@@ -47,6 +47,7 @@ public class Matrix4f
                      0.0f,0.0f,0.0f,0.0f,
                      0.0f,0.0f,0.0f,0.0f);
 
+    /** Identity matrix: */
     public static final Matrix4f IDENTITY = 
         new Matrix4f(
                      1.0f,0.0f,0.0f,0.0f,
@@ -64,6 +65,7 @@ public class Matrix4f
 
     /** If bZero is true, create the zero matrix.  Otherwise, create the
      * identity matrix.
+     * @param bZero, when true create the zero matrix, othersize create identity.
      */
     public Matrix4f (boolean bZero)
     {
@@ -78,7 +80,9 @@ public class Matrix4f
     }
     
 
-    /** copy constructor */
+    /** copy constructor
+     * @param rkM, matrix to copy
+     */
     public Matrix4f (Matrix4f rkM)
     {
         m_afEntry[ 0] = rkM.m_afEntry[ 0];
@@ -100,7 +104,24 @@ public class Matrix4f
     }
 
 
-    /** input Mrc is in row r, column c. */
+    /** input Mrc is in row r, column c.
+     * @param fM00, matrix[0] entry
+     * @param fM01, matrix[1] entry
+     * @param fM02, matrix[2] entry
+     * @param fM03, matrix[3] entry
+     * @param fM10, matrix[4] entry
+     * @param fM11, matrix[5] entry
+     * @param fM12, matrix[6] entry
+     * @param fM13, matrix[7] entry
+     * @param fM20, matrix[8] entry
+     * @param fM21, matrix[9] entry
+     * @param fM22, matrix[10] entry
+     * @param fM23, matrix[11] entry
+     * @param fM30, matrix[12] entry
+     * @param fM31, matrix[13] entry
+     * @param fM32, matrix[14] entry
+     * @param fM33, matrix[15] entry
+     */
     public Matrix4f (float fM00, float fM01, float fM02, float fM03,
                      float fM10, float fM11, float fM12, float fM13,
                      float fM20, float fM21, float fM22, float fM23,
@@ -131,6 +152,8 @@ public class Matrix4f
      *                        m23,m30,m31,m32,m33} [row major]
      * false: entry[0..15]={m00,m10,m20,m30,m01,m11,m21,m31,m02,m12,m22,
      *                        m32,m03,m13,m23,m33} [col major]
+     * @param afEntry, array of values to put in matrix
+     * @param bRowMajor, when true copy in row major order.
      */
     public Matrix4f (float[] afEntry, boolean bRowMajor)
     {
@@ -174,6 +197,15 @@ public class Matrix4f
         }
     }
 
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        m_afEntry = null;
+    }
+
+    /** make this the zero matrix */
     public void MakeZero ()
     {
         m_afEntry[ 0] = (float)0.0;
@@ -194,6 +226,7 @@ public class Matrix4f
         m_afEntry[15] = (float)0.0;
     }
 
+    /** make this the identity matrix */
     public void MakeIdentity ()
     {
         m_afEntry[ 0] = (float)1.0;
@@ -214,17 +247,30 @@ public class Matrix4f
         m_afEntry[15] = (float)1.0;
     }
 
-    // member access
+    /** Set member access
+     * @param iRow, row to set
+     * @param iCol, column to set
+     * @param fValue, new value
+     */
     public void SetData( int iRow, int iCol, float fValue )
     {
         m_afEntry[iRow*4 + iCol] = fValue;
     }
 
+    /** Get member access
+     * @param iRow, row to get
+     * @param iCol, column to get
+     * @return value at m_afEntry[iRow*4 + iCol];
+     */
     public float GetData( int iRow, int iCol )
     {
         return m_afEntry[iRow*4 + iCol];
     }
 
+    /** Set member access
+     * @param iRow, row to set
+     * @param rkV, new row vector values
+     */
     public void SetRow (int iRow, Vector4f rkV)
     {
         int i0 = 4*iRow, i1 = i0+1, i2 = i1+1, i3 = i2+1;
@@ -234,6 +280,10 @@ public class Matrix4f
         m_afEntry[i3] = rkV.W();
     }
 
+    /** Get member access
+     * @param iRow, row to get
+     * @return row vector values
+     */
     public Vector4f GetRow (int iRow)
     {
         int i0 = 4*iRow, i1 = i0+1, i2 = i1+1, i3 = i2+1;
@@ -241,6 +291,10 @@ public class Matrix4f
                             m_afEntry[i3]);
     }
 
+    /** Set member access
+     * @param iCol, column to set
+     * @param rkV, new column vector values
+     */
     public void SetColumn (int iCol, Vector4f rkV)
     {
         m_afEntry[iCol] = rkV.X();
@@ -249,12 +303,19 @@ public class Matrix4f
         m_afEntry[iCol+12] = rkV.W();
     }
 
+    /** Get member access
+     * @param iCol, column to get
+     * @return column vector values
+     */
     public Vector4f GetColumn (int iCol)
     {
         return new Vector4f(m_afEntry[iCol],m_afEntry[iCol+4],m_afEntry[iCol+8],
                             m_afEntry[iCol+12]);
     }
 
+    /** Get member access. Copies matrix into input array.
+     * @param afData, copy matrix into array.
+     */
     public void GetData (float[] afData)
     {
         afData[ 0] = m_afEntry[ 0];
@@ -275,6 +336,9 @@ public class Matrix4f
         afData[15] = m_afEntry[15];
     }
 
+    /** Get member access. Copies matrix into input array in Column-Major order.
+     * @param afData, copy matrix into array.
+     */
     public void GetColumnMajor (float[] afCMajor)
     {
         afCMajor[ 0] = m_afEntry[ 0];
@@ -295,7 +359,10 @@ public class Matrix4f
         afCMajor[15] = m_afEntry[15];
     }
 
-    // arithmetic operations
+    /** Multiply this matrix to the input matrix, return result, this is unchanged. 
+     * @param rkM, input matrix
+     * @return this*rkM
+     */
     public Matrix4f mult( Matrix4f rkM )
     {
         return new Matrix4f(
@@ -380,7 +447,11 @@ public class Matrix4f
                              m_afEntry[15]*rkM.m_afEntry[15]);
     }
 
-    /** matrix times vector */
+    /** matrix times vector
+     * M * v
+     * @param rkV, vector
+     * @return M * v
+     */
     public Vector4f mult ( Vector4f rkV)   // M * v
     {
         return new Vector4f(
@@ -407,6 +478,9 @@ public class Matrix4f
 
     /** matrix times vector
      * v^T * M
+     * @param rkV, vector
+     * @param rkM, matrix
+     * @return v^T * M 
      */
     public static Vector4f mult(Vector4f rkV, Matrix4f rkM)
     {
@@ -419,7 +493,9 @@ public class Matrix4f
     }
 
 
-    // other operations
+    /** Transpose this matrix and return the result, this matrix is unchanged.
+     * @return  M^T
+     */
     public Matrix4f Transpose ()  // M^T
     {
         return new Matrix4f(
@@ -441,6 +517,11 @@ public class Matrix4f
                             m_afEntry[15]);
     }
 
+    /** Transpose this matrix and multiply by input, return the result, this
+     * matrix is unchanged.
+     * @param rkM, matrix
+     * @return  this^T * M
+     */
     public Matrix4f TransposeTimes (Matrix4f rkM)  // this^T * M
     {
         // P = A^T*B
@@ -526,6 +607,11 @@ public class Matrix4f
                              m_afEntry[15]*rkM.m_afEntry[15]);
     }
 
+    /** Multiply this matrix by transpose of the input matrix, return the
+     * result, this matrix is unchanged.
+     * @param rkM, matrix
+     * @return this * M^T
+     */
     public Matrix4f TimesTranspose (Matrix4f rkM)  // this * M^T
     {
         // P = A*B^T
@@ -611,6 +697,10 @@ public class Matrix4f
                              m_afEntry[15]*rkM.m_afEntry[15]);
     }
 
+    /** Invert a 4x4 using cofactors.  This is faster than using a generic
+     * Gaussian elimination because of the loop overhead of such a method.
+     * @return resulting matrix
+     */
     public Matrix4f Inverse ()
     {
         float fA0 = m_afEntry[ 0]*m_afEntry[ 5] - m_afEntry[ 1]*m_afEntry[ 4];
@@ -687,6 +777,9 @@ public class Matrix4f
         return kInv;
     }
 
+    /** Return adjoint of this matrix, this is unchanged.
+     * @return adjoint of this matrix, this is unchanged.
+     */
     public Matrix4f Adjoint ()
     {
         float fA0 = m_afEntry[ 0]*m_afEntry[ 5] - m_afEntry[ 1]*m_afEntry[ 4];
@@ -721,6 +814,10 @@ public class Matrix4f
                             + m_afEntry[ 8]*fA3 - m_afEntry[ 9]*fA1 + m_afEntry[10]*fA0);
     }
 
+    /** 
+     * Return the determinant of this matrix.
+     * @return the determinant of this matrix.
+     */
     public float Determinant ()
     {
         float fA0 = m_afEntry[ 0]*m_afEntry[ 5] - m_afEntry[ 1]*m_afEntry[ 4];
@@ -740,6 +837,12 @@ public class Matrix4f
     }
 
 
+    /**
+     * Calculate and return u^T*M*v
+     * @param rkU, u
+     * @param rkV, v
+     * @return u^T*M*v
+     */
     public float QForm ( Vector4f rkU,
                   Vector4f rkV)  // u^T*M*v
     {
@@ -767,6 +870,9 @@ public class Matrix4f
      * where M applies to [U^T 1]^T by M*[U^T 1]^T.  The matrix is chosen so
      * that M[3][3] > 0 whenever Dot(N,D) < 0 (projection is onto the
      * "positive side" of the plane).
+     * @param rkNormal, normal vector
+     * @param rkpoint, point
+     * @param rkDirection, direction vector
      */
     public void MakeObliqueProjection ( Vector3f rkNormal,
                                         Vector3f rkPoint, Vector3f rkDirection)
@@ -800,6 +906,9 @@ public class Matrix4f
      *
      * where E is the eye point, P is a point on the plane, and N is a
      * unit-length plane normal.
+     * @param rkNormal, normal vector
+     * @param rkpoint, point
+     * @param rkEye, eye vector
      */
     public void MakePerspectiveProjection (Vector3f rkNormal,
                                            Vector3f rkPoint, Vector3f rkEye)
@@ -836,6 +945,8 @@ public class Matrix4f
      *     +-                         -+
      *
      * where P is a point on the plane and N is a unit-length plane normal.
+     * @param rkNormal, normal vector
+     * @param rkpoint, point
      */
     public void MakeReflection ( Vector3f rkNormal,
                                  Vector3f rkPoint)
@@ -861,5 +972,6 @@ public class Matrix4f
         m_afEntry[15] = (float)1.0;
     }
  
+    /** Matrix data: */
     private float[] m_afEntry = new float[16];
 }

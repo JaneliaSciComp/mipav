@@ -100,11 +100,134 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public void finalize()
     {
+        if ( m_spkScene != null )
+        {
+            m_spkScene.finalize();
+            m_spkScene = null;
+        }
+        if ( m_spkWireframe != null )
+        {
+            m_spkWireframe.finalize();
+            m_spkWireframe = null;
+        }
+        if ( m_spkCull != null )
+        {
+            m_spkCull.finalize();
+            m_spkCull = null;
+        }
+        if ( m_kCuller != null )
+        {
+            m_kCuller.finalize();
+            m_kCuller = null;
+        }
+        for ( int i = 0; i < 6; i++ )
+        {
+            m_akBoundingBox[i].finalize();
+            m_akBoundingBox[i] = null;
+            m_akOrientationCube[i].finalize();
+            m_akOrientationCube[i] = null;
+            m_akPolyline[i].finalize();
+            m_akPolyline[i] = null;
+        }
+        m_akBoundingBox = null;
+        m_akOrientationCube = null;
+        m_akPolyline = null;
+
+        m_aakAxisFiles = null;
+        if ( m_kCubeTranslate != null )
+        {
+            m_kCubeTranslate.finalize();
+            m_kCubeTranslate = null;
+        }
+        if ( m_kClipArb != null )
+        {
+            m_kClipArb.finalize();
+            m_kClipArb = null;
+        }
+        if ( m_kClipEye != null )
+        {
+            m_kClipEye.finalize();
+            m_kClipEye = null;
+        }
+        if ( m_kClipEyeInv != null )
+        {
+            m_kClipEyeInv.finalize();
+            m_kClipEyeInv = null;
+        }
+        m_abDisplayPolyline = null;
+        if ( m_kVolumeShaderEffect != null )
+        {
+            m_kVolumeShaderEffect.finalize();
+            m_kVolumeShaderEffect = null;
+        }
+        m_kImageA = null;
+        m_kLUTa = null;
+        m_kRGBTa = null;
+        m_kImageB = null;
+        m_kLUTb = null;
+        m_kRGBTb = null;
+
+        if ( m_spkScreenCamera != null )
+        {
+            m_spkScreenCamera.finalize();
+            m_spkScreenCamera = null;
+        }
+        if ( m_spkEyeCamera != null )
+        {
+            m_spkEyeCamera.finalize();
+            m_spkEyeCamera = null;
+        }
+        if ( m_spkScenePolygon != null )
+        {
+            m_spkScenePolygon.finalize();
+            m_spkScenePolygon = null;
+        }
+        if ( m_spkSceneImage != null )
+        {
+            m_spkSceneImage.finalize();
+            m_spkSceneImage = null;
+        }
+        if ( m_pkSceneTarget != null )
+        {
+            m_pkSceneTarget.finalize();
+            m_pkSceneTarget = null;
+        }
+        if ( m_pkPBuffer != null )
+        {
+            m_pkPBuffer.finalize();
+            m_pkPBuffer = null;
+        }
+
+        if ( m_spkVertexColor3Shader != null )
+        {
+            m_spkVertexColor3Shader.finalize();
+            m_spkVertexColor3Shader = null;
+        }
+
+        if ( m_kTranslate != null )
+        {
+            m_kTranslate.finalize();
+            m_kTranslate = null;
+        }
+        if ( m_kArbitraryClip != null )
+        {
+            m_kArbitraryClip.finalize();
+            m_kArbitraryClip = null;
+        }
+        if ( m_kMaterial != null )
+        {
+            m_kMaterial.finalize();
+            m_kMaterial = null;
+        }
+        if ( m_kMesh != null )
+        {
+            m_kMesh.finalize();
+            m_kMesh = null;
+        }
+        m_akLights = null;
+
         m_kAnimator.stop();
         m_kAnimator = null;
-
-        m_spkScene.finalize();
-        m_spkScene = null;
 
         try {
             m_kSculptor.finalize();
@@ -121,8 +244,8 @@ public class GPUVolumeRender extends JavaApplication3D
         {
             m_kShaderParamsWindow.close();
         }
-
-        m_kVolumeShaderEffect.finalize();
+        super.finalize();
+        System.gc();
     }
 
     /**

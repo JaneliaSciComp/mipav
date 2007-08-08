@@ -56,6 +56,16 @@ public class LightNode extends Node
         }
     }
 
+    public void finalize()
+    {
+        if ( m_spkLight != null )
+        {
+            m_spkLight.finalize();
+            m_spkLight = null;
+        }
+        super.finalize();
+    }
+
     // When you set the light, the node's local transformation is set to the
     // light's current current coordinate system.  The node's world
     // transformation is computed, and the light's coordinate system is set

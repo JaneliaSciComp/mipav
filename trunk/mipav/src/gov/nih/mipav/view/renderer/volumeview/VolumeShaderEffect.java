@@ -79,11 +79,180 @@ public class VolumeShaderEffect extends ShaderEffect
      */
     public void finalize()
     {
+        m_kImageA = null;
+        m_kLUTA = null;
+        m_kRGBA = null;
+        m_kTransferA = null;
+        m_kImageB = null;
+        m_kLUTB = null;
+        m_kRGBB = null;
+        m_kTransferB = null;
 
-        m_kVolumeA.finalize();
-        m_kVolumeA = null;
-        m_kVolumeTargetA.finalize();
-        m_kVolumeTargetA = null;
+        if ( m_kImageA_GM != null )
+        {
+            m_kImageA_GM.disposeLocal();
+            m_kImageA_GM = null;
+        }
+        if ( m_kOpacityMapA_GM != null )
+        {
+            m_kOpacityMapA_GM.finalize();
+            m_kOpacityMapA_GM = null;
+        }
+        if ( m_kOpacityMapTargetA_GM != null )
+        {
+            m_kOpacityMapTargetA_GM.finalize();
+            m_kOpacityMapTargetA_GM = null;
+        }
+        if ( m_kVolumeA_GM != null )
+        {
+            m_kVolumeA_GM.finalize();
+            m_kVolumeA_GM = null;
+        }
+        if ( m_kVolumeTargetA_GM != null )
+        {
+            m_kVolumeTargetA_GM.finalize();
+            m_kVolumeTargetA_GM = null;
+        }
+        if ( m_kImageB_GM != null )
+        {
+            m_kImageB_GM.disposeLocal();
+            m_kImageB_GM = null;
+        }
+        if ( m_kOpacityMapB_GM != null )
+        {
+            m_kOpacityMapB_GM.finalize();
+            m_kOpacityMapB_GM = null;
+        }
+        if ( m_kOpacityMapTargetB_GM != null )
+        {
+            m_kOpacityMapTargetB_GM.finalize();
+            m_kOpacityMapTargetB_GM = null;
+        }
+        if ( m_kVolumeB_GM != null )
+        {
+            m_kVolumeB_GM.finalize();
+            m_kVolumeB_GM = null;
+        }
+        if ( m_kVolumeTargetB_GM != null )
+        {
+            m_kVolumeTargetB_GM.finalize();
+            m_kVolumeTargetB_GM = null;
+        }
+        if ( m_kVolumeA != null )
+        {
+            m_kVolumeA.finalize();
+            m_kVolumeA = null;
+        }
+        if ( m_kNormalA != null )
+        {
+            m_kNormalA.finalize();
+            m_kNormalA = null;
+        }
+        if ( m_kColorMapA != null )
+        {
+            m_kColorMapA.finalize();
+            m_kColorMapA = null;
+        }
+        if ( m_kOpacityMapA != null )
+        {
+            m_kOpacityMapA.finalize();
+            m_kOpacityMapA = null;
+        }
+        if ( m_kVolumeTargetA != null )
+        {
+            m_kVolumeTargetA.finalize();
+            m_kVolumeTargetA = null;
+        }
+        if ( m_kColorMapTargetA != null )
+        {
+            m_kColorMapTargetA.finalize();
+            m_kColorMapTargetA = null;
+        }
+        if ( m_kOpacityMapTargetA != null )
+        {
+            m_kOpacityMapTargetA.finalize();
+            m_kOpacityMapTargetA = null;
+        }
+        if ( m_kNormalMapTargetA != null )
+        {
+            m_kNormalMapTargetA.finalize();
+            m_kNormalMapTargetA = null;
+        }
+        if ( m_kVolumeB != null )
+        {
+            m_kVolumeB.finalize();
+            m_kVolumeB = null;
+        }
+        if ( m_kNormalB != null )
+        {
+            m_kNormalB.finalize();
+            m_kNormalB = null;
+        }
+        if ( m_kColorMapB != null )
+        {
+            m_kColorMapB.finalize();
+            m_kColorMapB = null;
+        }
+        if ( m_kOpacityMapB != null )
+        {
+            m_kOpacityMapB.finalize();
+            m_kOpacityMapB = null;
+        }
+        if ( m_kVolumeTargetB != null )
+        {
+            m_kVolumeTargetB.finalize();
+            m_kVolumeTargetB = null;
+        }
+        if ( m_kColorMapTargetB != null )
+        {
+            m_kColorMapTargetB.finalize();
+            m_kColorMapTargetB = null;
+        }
+        if ( m_kOpacityMapTargetB != null )
+        {
+            m_kOpacityMapTargetB.finalize();
+            m_kOpacityMapTargetB = null;
+        }
+        if ( m_kNormalMapTargetB != null )
+        {
+            m_kNormalMapTargetB.finalize();
+            m_kNormalMapTargetB = null;
+        }
+        if ( m_kPShaderMIP != null )
+        {
+            m_kPShaderMIP.finalize();
+            m_kPShaderMIP = null;
+        }
+        if ( m_kPShaderDDR != null )
+        {
+            m_kPShaderDDR.finalize();
+            m_kPShaderDDR = null;
+        }
+        if ( m_kPShaderCMP != null )
+        {
+            m_kPShaderCMP.finalize();
+            m_kPShaderCMP = null;
+        }
+        if ( m_kPShaderSUR != null )
+        {
+            m_kPShaderSUR.finalize();;
+            m_kPShaderSUR = null;
+        }
+
+        m_aafClipData = null;
+        m_afClipEyeData = null;
+        m_afClipEyeInvData = null;
+        m_afClipArbData = null;
+        m_kSceneTarget = null;
+        m_afBlend = null;
+        if ( m_kBackgroundColor != null )
+        {
+            m_kBackgroundColor.finalize();
+            m_kBackgroundColor = null;
+        }
+        m_afSelfShadow = null;
+        m_afGradientMagnitude = null;
+
         super.finalize();
     }
 

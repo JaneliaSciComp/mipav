@@ -20,54 +20,91 @@ package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
 
 public class Vector2f
 {
-    // special vectors
+    /** Zero vector: */
     public static final Vector2f ZERO = new Vector2f(0.0f,0.0f);    // (0,0)
+    /** Unit-X vector: */
     public static final Vector2f UNIT_X = new Vector2f(1.0f,0.0f);  // (1,0)
+    /** Unit-Y vector: */
     public static final Vector2f UNIT_Y = new Vector2f(0.0f,1.0f);  // (0,1)
+    /** One vector: */
     public static final Vector2f ONE = new Vector2f(1.0f,1.0f);     // (1,1)
 
-    // construction
-    public Vector2f () {}  // uninitialized
+    /** construction, uninitialized */
+    public Vector2f () {}  
+
+    /** construction
+     * @param fX, x-value
+     * @param fY, y-value
+     */
     public Vector2f (float fX, float fY)
     {
         m_afTuple[0] = fX;
         m_afTuple[1] = fY;
     }
 
+    /** construction
+     * @param afTuple, x,y values
+     */
     public Vector2f (final float[] afTuple)
     {
         m_afTuple[0] = afTuple[0];
         m_afTuple[1] = afTuple[1];
     }
 
+    /** copy construction
+     * @param rkV, vector to copy.
+     */
     public Vector2f (final Vector2f rkV)
     {
         m_afTuple[0] = rkV.m_afTuple[0];
         m_afTuple[1] = rkV.m_afTuple[1];
     }
 
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        m_afTuple = null;
+    }
 
+    /** Return x-value
+     * @return x-value
+     */
     public float X ()
     {
         return m_afTuple[0];
     }
 
+    /** Return y-value
+     * @return y-value
+     */
     public float Y ()
     {
         return m_afTuple[1];
     }
 
+    /** Set x-value
+     * @param fValue x-value
+     */
     public void X (float fValue)
     {
         m_afTuple[0] = fValue;
     }
 
+    /** Set y-value
+     * @param fValue y-value
+     */
     public void Y (float fValue)
     {
         m_afTuple[1] = fValue;
     }
 
-    // arithmetic operations
+    /** Add the input vector to this, return result, this vector is
+     * unchanged:
+     * @param rkV, input vector to add to this
+     * @return this+rkV
+     */
     public Vector2f add( final Vector2f rkV )
     {
         return new Vector2f(
@@ -75,6 +112,11 @@ public class Vector2f
                            m_afTuple[1]+rkV.m_afTuple[1]);
     }
 
+    /** Subtract the input vector from this, return result, this vector is
+     * unchanged:
+     * @param rkV, input vector to subtract from this
+     * @return this-rkV
+     */
     public Vector2f sub( final Vector2f rkV )
     {
         return new Vector2f(
@@ -82,6 +124,10 @@ public class Vector2f
                            m_afTuple[1]-rkV.m_afTuple[1]);
     }
 
+    /** Scale this vector by input, return result, this vector is unchanged:
+     * @param fScalar, scale value
+     * @return this*fScalar
+     */
     public Vector2f scale( float fScalar )
     {
         return new Vector2f(
@@ -89,7 +135,9 @@ public class Vector2f
                             fScalar*m_afTuple[1]);
     }
 
-    // vector operations
+    /** Compute length this vector:
+     * @return length this vector
+     */
     public float Length ()
     {
         return (float)Math.sqrt(
@@ -97,6 +145,9 @@ public class Vector2f
                          m_afTuple[1]*m_afTuple[1]);
     }
 
+    /** Compute squared-length this vector:
+     * @return squared-length this vector
+     */
     public float SquaredLength ()
     {
         return
@@ -104,6 +155,9 @@ public class Vector2f
             m_afTuple[1]*m_afTuple[1];
     }
 
+    /** Compute dot-product of this vector with input vector:
+     * @return dot-product of this vector with input vector:
+     */
     public float Dot (final Vector2f rkV) 
     {
         return
@@ -111,6 +165,9 @@ public class Vector2f
             m_afTuple[1]*rkV.m_afTuple[1];
     }
 
+    /** Normalize this vector, return original length:
+     * @return original length:
+     */
     public float Normalize ()
     {
         float fLength = Length();
@@ -131,5 +188,6 @@ public class Vector2f
         return fLength;
     }
 
+    /** Vector data: */
     private float[] m_afTuple = new float[2];
 }

@@ -31,62 +31,94 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 
 public class StringTree
 {
-    // construction and destruction
+    /** default construction */
     public StringTree () {}
 
+    /** delete memory */
     public void finalize ()
     {
         m_kStrings.clear();
+        m_kStrings = null;
         m_kChildren.clear();
+        m_kChildren = null;
     }
 
-    // strings
+    /** return number of strings */
     public int GetStringQuantity ()
     {
         return m_kStrings.size();
     }
-
+    /**
+     * Set string at position i
+     * @param i, index into list
+     * @param acString string to add to list
+     */
     public void SetString (int i, String acString)
     {
         assert(0 <= i && i < m_kStrings.size());
         m_kStrings.set(i, acString);
     }
-
+    /**
+     * Get string at position i
+     * @param i, index into list
+     * @return string at position i
+     */
     public String GetString (int i)
     {
         assert(0 <= i && i < m_kStrings.size());
         return m_kStrings.get(i);
     }
-
+    /**
+     * Append string to the end of the list
+     * @param acString, string to append
+     */
     public void Append (String acString)
     {
         m_kStrings.add(acString);
     }
 
-    // children
+    /**
+     * Return the number of children StringTree nodes
+     * @return the number of children StringTree nodes
+     */
     public int GetChildQuantity ()
     {
         return m_kChildren.size();
     }
-
+    /**
+     * Set child i
+     * @param i, index to set
+     * @param pkChild, StringTree child
+     */
     public void SetChild (int i, StringTree pkChild)
     {
         assert(0 <= i && i < m_kStrings.size());
         m_kChildren.set(i, pkChild);
     }
-
+    /**
+     * Get child at position i
+     * @param i, index
+     * @return child at index i
+     */
     public StringTree GetChild (int i)
     {
         assert(0 <= i && i < m_kChildren.size());
         return m_kChildren.get(i);
     }
-
+    /**
+     * Append child to end of list.
+     * @param pkChild, child to append.
+     */
     public void Append (StringTree pkChild)
     {
         m_kChildren.add(pkChild);
     }
-
-    // streaming
+    /**
+     * Save the StringTree and children to the file.
+     * @param acFilename, filename
+     * @param iTabSize, number of spaces in a 'tab'
+     * @return true on success.
+     */
     public boolean Save (final String acFilename, int iTabSize/* = 4*/)
     {
         File kFile = new File(acFilename);
@@ -120,7 +152,12 @@ public class StringTree
         }
         return true;
     }
-
+    /**
+     * Format float into String, prints INFINITY or -INFINITY if < or >
+     * Float.MAX_VALUE
+     * @param fValue value to print
+     * @return formatted string
+     */
     public static String FormatFloat (float fValue)
     {
         if (fValue > -Float.MAX_VALUE)
@@ -139,7 +176,12 @@ public class StringTree
             return new String( "-INFINITY" ); 
         }
     }
-
+    /**
+     * Format double into String, prints INFINITY or -INFINITY if < or >
+     * Double.MAX_VALUE
+     * @param dValue value to print
+     * @return formatted string
+     */
     public static String FormatDouble (double dValue)
     {
         if (dValue > -Double.MAX_VALUE)
@@ -159,7 +201,13 @@ public class StringTree
         }
     }
 
-    // streaming (recursive)
+    /**
+     * Save this StringTree to the FileOutputStream
+     * @param pkOFile, output stream
+     * @param iLevel, current level to indent
+     * @param iTabSize, number os spaces in a 'tab'
+     * @throws IOException
+     */
     private void Save (FileOutputStream pkOFile, int iLevel, int iTabSize) throws IOException
     {
         // indent to proper location
@@ -219,7 +267,10 @@ public class StringTree
             m_kChildren.get(j).Save(pkOFile,iLevel,iTabSize);
         }
     }
-
+    /**
+     * Creates nodes for the JTree GUI
+     * @param kTop, top-level node.
+     */
     public void CreateNodes (DefaultMutableTreeNode kTop)
     {
         // header string
@@ -250,11 +301,16 @@ public class StringTree
     }
 
 
-
+    /** String belonging to the current node: */
     private Vector<String> m_kStrings = new Vector<String>();
+    /** StringTree children: */
     private Vector<StringTree> m_kChildren = new Vector<StringTree>();
 
-    // string creation helpers (native types)
+    /** string creation helpers (native types)
+     * @param pkRTTI, Class object
+     * @param acName, Name
+     * @return formatted string
+     */
     public static String Format (final Class pkRTTI, final String acName)
     {
         assert(pkRTTI != null);
@@ -267,6 +323,10 @@ public class StringTree
         return new String( acRTTIName );
     }
 
+    /** string creation helpers (native types)
+     * @param acString string to format or <no title>
+     * @return formatted string
+     */
     public static String Format (final String acString)
     {
         if (acString != null)
@@ -276,6 +336,11 @@ public class StringTree
         return new String("<no title>");
     }
 
+    /** string creation helpers (native types)
+     * @param acPrefix string prefix
+     * @param bValue boolean value to print 
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, boolean bValue)
     {
         assert(acPrefix != null);
@@ -286,48 +351,88 @@ public class StringTree
         return new String( acPrefix + " false" );
     }
 
+    /** string creation helpers (native types)
+     * @param acPrefix string prefix
+     * @param cValue char value to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, char cValue)
     {
         assert(acPrefix != null);
         return new String( acPrefix + " " + cValue );
     }
 
+    /** string creation helpers (native types)
+     * @param acPrefix string prefix
+     * @param ucValue byte value to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, byte ucValue)
     {
         assert(acPrefix != null);
         return new String( acPrefix + " " + ucValue );
     }
 
+    /** string creation helpers (native types)
+     * @param acPrefix string prefix
+     * @param sValue short value to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, short sValue)
     {
         assert(acPrefix != null);
         return new String( acPrefix + " " + sValue );
     }
 
+    /** string creation helpers (native types)
+     * @param acPrefix string prefix
+     * @param iValue int value to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, int iValue)
     {
         assert(acPrefix != null);
         return new String( acPrefix + " " + iValue );
     }
 
+    /** string creation helpers (native types)
+     * @param acPrefix string prefix
+     * @param lValue long value to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, long lValue)
     {
         assert(acPrefix != null);
         return new String( acPrefix + " " + lValue );
     }
 
+    /** string creation helpers (native types)
+     * @param acPrefix string prefix
+     * @param fValue float value to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, float fValue)
     {
         assert(acPrefix != null);
         return new String( acPrefix + " " + fValue );
     }
 
+    /** string creation helpers (native types)
+     * @param acPrefix string prefix
+     * @param dValue double value to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, double dValue)
     {
         assert(acPrefix != null);
         return new String( acPrefix + " " + dValue );
     }
 
+    /** string creation helpers (native types)
+     * @param acPrefix string prefix
+     * @param sValue string to append
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, final String sValue)
     {
         assert(acPrefix != null);
@@ -339,7 +444,11 @@ public class StringTree
     }
 
 
-    // string creation helpers (nonnative types)
+    /** string creation helpers (non-native types)
+     * @param acPrefix string prefix
+     * @param pkValue Boundvolume to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, final BoundingVolume pkValue)
     {
         assert(acPrefix != null);
@@ -352,6 +461,11 @@ public class StringTree
                            "(x: " + acX + ", y: " + acY + ", z: " + acZ + ", r: " + acR + ")" );
     }
 
+    /** string creation helpers (non-native types)
+     * @param acPrefix string prefix
+     * @param rkValue ColorRGBA to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, final ColorRGBA rkValue)
     {
         assert(acPrefix != null);
@@ -359,6 +473,11 @@ public class StringTree
                            "(r: " + rkValue.R() + ", g: " + rkValue.G() + ", b: " + rkValue.B() + ", a: " + rkValue.A() + ")" );
     }
 
+    /** string creation helpers (non-native types)
+     * @param acPrefix string prefix
+     * @param rkValue ColorRGB to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, final ColorRGB rkValue)
     {
         assert(acPrefix != null);
@@ -366,6 +485,11 @@ public class StringTree
                            "(r: " + rkValue.R() + ", g: " + rkValue.G() + ", b: " + rkValue.B() + ")" );
     }
 
+    /** string creation helpers (non-native types)
+     * @param acPrefix string prefix
+     * @param rkValue Line3f to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, final Line3f rkValue)
     {
         assert(acPrefix != null);
@@ -378,6 +502,11 @@ public class StringTree
                            ", dz: " + rkValue.Direction.Z() + ")" );
     }
 
+    /** string creation helpers (non-native types)
+     * @param acPrefix string prefix
+     * @param rkValue Matrix3f to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, final Matrix3f rkValue)
     {
         assert(acPrefix != null);
@@ -394,6 +523,11 @@ public class StringTree
     }
 
 
+    /** string creation helpers (non-native types)
+     * @param acPrefix string prefix
+     * @param rkValue Plane3f to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, final Plane3f rkValue)
     {
         assert(acPrefix != null);
@@ -404,6 +538,11 @@ public class StringTree
                           ", c: " + rkValue.Constant + ")" );
     }
 
+    /** string creation helpers (non-native types)
+     * @param acPrefix string prefix
+     * @param rkValue Vector values to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, final Vector2f rkValue )
     {
         assert(acPrefix != null);
@@ -415,6 +554,11 @@ public class StringTree
                            ", y: " + acY + ")" );
     }
 
+    /** string creation helpers (non-native types)
+     * @param acPrefix string prefix
+     * @param rkValue Vector values to print
+     * @return formatted string
+     */
     public static String Format (final String acPrefix, final Vector3f rkValue )
     {
         assert(acPrefix != null);
@@ -427,6 +571,13 @@ public class StringTree
                            ", y: " + acY +
                            ", z: " + acZ + ")" );
     }
+
+    /** string creation helpers (non-native types)
+     * @param acTitle title of sub-string
+     * @param iQuantity number of ints
+     * @param aiValue int array to print
+     * @return formatted string
+     */
     public static StringTree Format (final String acTitle, int iQuantity, final int[] aiValue)
     {
         StringTree pkTree = new StringTree();
@@ -442,6 +593,12 @@ public class StringTree
         return pkTree;
     }
 
+    /** string creation helpers (non-native types)
+     * @param acTitle title of sub-string
+     * @param iQuantity number of floats
+     * @param afValue float array to print
+     * @return formatted string
+     */
     public static StringTree Format (final String acTitle, int iQuantity, final float[] afValue)
     {
         StringTree pkTree = new StringTree();

@@ -23,8 +23,14 @@ package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
  */
 public class Triangle3f
 {
-    // construction
-    public Triangle3f () {}  // uninitialized
+    /** construction, uninitialized. */
+    public Triangle3f () {}  
+
+    /** construction
+     * @param rkV0, triangle point0
+     * @param rkV1, triangle point1
+     * @param rkV2, triangle point2
+     */
     public Triangle3f (final Vector3f rkV0, final Vector3f rkV1,
                        final Vector3f rkV2)
     {
@@ -33,6 +39,9 @@ public class Triangle3f
         V[2] = rkV2;
     }
 
+    /** construction
+     * @param akV, triangle points [3]
+     */
     public Triangle3f (final Vector3f[] akV)
     {
         for (int i = 0; i < 3; i++)
@@ -41,8 +50,24 @@ public class Triangle3f
         }
     }
 
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        for ( int i = 0; i < 3; i++ )
+        {
+            V[i].finalize();
+            V[i] = null;
+        }
+        V = null;
+    }
 
-    /** distance from the point Q to the triangle */
+
+    /** Calculate distance from the point Q to the triangle
+     * @param rkQ, point Q
+     * @return distance to triangle.
+     */
     public float DistanceTo (final Vector3f rkQ)
     {
         Vector3f kDiff = V[0].sub( rkQ );
@@ -238,6 +263,6 @@ public class Triangle3f
 
         return (float)Math.sqrt(Math.abs(fSqrDist));
     }
-
-        public Vector3f[] V = new Vector3f[3];
+    /** Three triangle points: */
+    public Vector3f[] V = new Vector3f[3];
 }

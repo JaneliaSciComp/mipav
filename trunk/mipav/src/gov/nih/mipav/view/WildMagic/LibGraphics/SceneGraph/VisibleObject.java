@@ -29,5 +29,12 @@ public class VisibleObject
     {
         return (Object != null) && (GlobalEffect == null);
     }
+
+    public void finalize()
+    {
+        Object = null;
+        GlobalEffect = null;
+    }
+
 }
 

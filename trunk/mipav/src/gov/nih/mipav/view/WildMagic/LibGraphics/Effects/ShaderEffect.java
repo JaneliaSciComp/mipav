@@ -43,6 +43,18 @@ public class ShaderEffect extends Effect
         SetPassQuantity(iPassQuantity);
     }
 
+    /** Delete data members: */
+    public void finalize ()
+    {
+        m_kVShader.clear();
+        m_kVShader = null;
+        m_kPShader.clear();
+        m_kPShader = null;
+        m_kAlphaState.clear();
+        m_kAlphaState = null;
+        super.finalize();
+    }
+
     /** The number of vertex/pixel shader pairs.  The Set* call reallocates the
      * vertex shader, pixel shader, and alpha state arrays.
      * @param iPassQuantity The number of vertex/pixel shader pairs.

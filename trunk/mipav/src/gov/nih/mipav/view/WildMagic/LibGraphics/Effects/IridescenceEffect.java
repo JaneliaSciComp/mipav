@@ -57,6 +57,13 @@ public class IridescenceEffect extends ShaderEffect
         pkGrad.SetFilterType(Texture.FilterType.LINEAR);
     }
 
+    /** Delete memory */
+    public void finalize()
+    {
+        m_afInterpolate = null;
+        super.finalize();
+    }
+
     /**
      * Sets the interpolation factor
      * @param fInterpolateFactor

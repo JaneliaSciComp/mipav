@@ -40,7 +40,20 @@ public class BillboardNode extends Node
         m_spkCamera = pkCamera;
     }
 
+    /** Default constructor, uninitialized */
     public BillboardNode () {}
+
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        if ( m_spkCamera != null )
+        {
+            m_spkCamera.finalize();
+            m_spkCamera = null;
+        }
+    }
 
     /** the camera to which the billboard is aligned
      * @param pkCamera to which the billboard is aligned

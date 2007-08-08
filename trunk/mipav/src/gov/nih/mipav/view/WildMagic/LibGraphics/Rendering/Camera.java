@@ -38,6 +38,39 @@ public class Camera extends GraphicsObject
         Perspective = true;
     }
 
+    /** Delete memory */
+    public void finalize()
+    {
+        if ( m_kLocation != null )
+        {
+            m_kLocation.finalize();
+            m_kLocation = null;
+        }
+        if ( m_kDVector != null )
+        {
+            m_kDVector.finalize();
+            m_kDVector = null;
+        }
+        if ( m_kUVector != null )
+        {
+            m_kUVector.finalize();
+            m_kUVector = null;
+        }
+        if ( m_kRVector != null )
+        {
+            m_kRVector.finalize();
+            m_kRVector = null;
+        }
+        m_afFrustum = null;
+        if ( m_pkRenderer != null )
+        {
+            m_pkRenderer.finalize();
+            m_pkRenderer = null;
+        }
+
+        super.finalize();
+    }
+
     // The camera frame is always in world coordinates.
     //   default location  E = (0,0,0)
     //   default direction D = (0,0,-1)

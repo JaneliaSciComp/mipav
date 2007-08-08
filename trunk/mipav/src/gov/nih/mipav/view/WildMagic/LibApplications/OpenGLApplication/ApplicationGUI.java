@@ -39,6 +39,15 @@ public class ApplicationGUI implements ActionListener
     {
         m_kShaderMap = new Hashtable<String,Vector<UserConstant>>();
     }
+    
+    /**
+     * Delete memory.
+     */
+    public void finalize()
+    {
+        close();
+        m_kShaderMap = null;
+    }
 
     /** Adds a user-parameter to the shader with the specified shader name. A
      * label and text field user-interface components are created for the

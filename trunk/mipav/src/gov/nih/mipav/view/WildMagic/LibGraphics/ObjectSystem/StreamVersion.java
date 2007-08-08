@@ -26,24 +26,38 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem;
  */
 public class StreamVersion
 {
+    /** Version major number: */
     public static final int MAJOR = 4;     // 4
+    /** Version minor number: */
     public static final int MINOR = 0;     // 1
+    /** Version label: */
     public static final String LABEL = new String( "Wild Magic Object File 4.02" );
+    /** Version label length: */
     public static final int LENGTH = LABEL.length();    // 28 = strlen(LABEL)+1
+    /** Current Version: */
     public static final StreamVersion CURRENT = new StreamVersion(MAJOR,MINOR);
 
+    /** Create a new StreamVersion with default iMajor and iMinor version numbers
+     */
     public StreamVersion ()
     {
         m_iMajor = MAJOR;
         m_iMinor = MINOR;
     }
 
+    /** Create a new StreamVersion with the iMajor and iMinor version numbers
+     * @param iMajor the major version number
+     * @param iMinor the minor version number
+     */
     public StreamVersion (int iMajor, int iMinor)
     {
         m_iMajor = iMajor;
         m_iMinor = iMinor;
     }
 
+    /** Create a new StreamVersion from a Header String
+     * @param acString the Header string containing the major and minor version numbers
+     */
     public StreamVersion (final String acString)
     {
         m_iMajor = -1;
@@ -64,36 +78,50 @@ public class StreamVersion
         }
     }
 
-
+    /** Return the major version number
+     * @return the major version number
+     */
     public int GetMajor ()
     {
         return m_iMajor;
     }
 
+    /** Return the minor version number
+     * @return the minor version number
+     */
     public int GetMinor ()
     {
         return m_iMinor;
     }
 
-    // The version is valid if major is 4 and minor in [0,99].
+    /** The version is valid if major is 4 and minor in [0,99].
+     * @return valid if major is 4 and minor in [0,99].
+     */
     public boolean IsValid ()
     {
         return m_iMajor == StreamVersion.MAJOR
             && 0 <= m_iMinor && m_iMinor < 100;
     }
 
-    // For comparisons of versions.  This is useful in the Stream support in
-    // an Object-derived class whenever a change to that class causes a file
-    // format change.
+    /** For comparisons of versions.  This is useful in the Stream support in
+     * an Object-derived class whenever a change to that class causes a file
+     * format change.
+     * @param rkVersion the StreamVersion to comare with
+     * @return if this StreamVersion is greater or equal to the input StreamVersion
+     */
     public boolean GreaterEqual (final StreamVersion rkVersion)
     {
         return GetCombined() >= rkVersion.GetCombined();
     }
 
+    /** Returns the combined version number values: 100*major + minor
+     * @return the combined version number values: 100*major + minor
+     */
     protected int GetCombined ()  // 100*major + minor
     {
         return 100*m_iMajor + m_iMinor;
     }
 
+    /** Major and Minor version numbers: */
     protected int m_iMajor, m_iMinor;
 }

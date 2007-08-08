@@ -24,6 +24,10 @@ public abstract class ReleaseFunction
     {
         m_kRenderer = kRenderer;
     }
+    public void finalize()
+    {
+        m_kRenderer = null;
+    }
     public abstract void Release ( Bindable kBindable );
     protected Renderer m_kRenderer;
 }

@@ -24,18 +24,42 @@ package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
  */
 public class Ray3f
 {
-    // construction
+    /** construction */
     public Ray3f () {}  // uninitialized
+    /** construction
+     * @param rkOrigin, ray origin
+     * @param rkDirection, direction, unit-length
+     */
     public Ray3f (Vector3f rkOrigin, Vector3f rkDirection)
     {
         Origin = new Vector3f(rkOrigin);
         Direction = new Vector3f(rkDirection);
     }
+
+    /**
+     * Copy constructor
+     * @param rkRay, the ray to copy.
+     */
     public Ray3f (Ray3f rkRay)
     {
         Origin = new Vector3f(rkRay.Origin);
         Direction = new Vector3f(rkRay.Direction);
     }
 
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        Origin.finalize();
+        Origin = null;
+        Direction.finalize();
+        Direction = null;
+    }
+
+    /** The ray is represented as P+t*D, where P is the ray origin, D is a
+     * unit-length direction vector, and t >= 0.  The user must ensure that
+     * the direction vector satisfies this condition.
+     */
     public Vector3f Origin, Direction;
 }

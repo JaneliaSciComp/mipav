@@ -50,6 +50,21 @@ public class Attributes
         }
     }
 
+    public void finalize()
+    {
+        // colors
+        m_kCOffset.clear();
+        m_kCOffset = null;
+        m_kCChannels.clear();
+        m_kCChannels = null;
+
+        // texture coordinates
+        m_kTOffset.clear();
+        m_kTOffset = null;
+        m_kTChannels.clear();
+        m_kTChannels = null;
+    }
+
     // Set the attributes you want.  The currently supported attributes are
     //    p  = position
     //         3 or 4 channels (xyz,xyzw)

@@ -44,6 +44,16 @@ public abstract class JavaApplication3D extends JavaApplication
         super(acWindowTitle,iXPosition,iYPosition,iWidth,iHeight, rkBackgroundColor);
     }
 
+    /**
+     * Delete memory.
+     */
+    public void finalize()
+    {
+        m_kSaveRotate = null;
+        m_spkCamera = null;
+        super.finalize();
+    }
+    
     /** 
      * OnInitialize callback, called when the application is created.
      */
@@ -465,6 +475,8 @@ public abstract class JavaApplication3D extends JavaApplication
         Vector3f kUVector = kIncr.mult(m_spkCamera.GetUVector());
         Vector3f kRVector = kIncr.mult(m_spkCamera.GetRVector());
         m_spkCamera.SetAxes(kDVector,kUVector,kRVector);
+        kIncr.finalize();
+        kIncr = null;
     }
 
     /** 
@@ -480,6 +492,8 @@ public abstract class JavaApplication3D extends JavaApplication
         Vector3f kUVector = kIncr.mult(m_spkCamera.GetUVector());
         Vector3f kRVector = kIncr.mult(m_spkCamera.GetRVector());
         m_spkCamera.SetAxes(kDVector,kUVector,kRVector);
+        kIncr.finalize();
+        kIncr = null;
     }
 
     /** 
@@ -493,6 +507,8 @@ public abstract class JavaApplication3D extends JavaApplication
         Vector3f kUVector = kIncr.mult(m_spkCamera.GetUVector());
         Vector3f kRVector = kIncr.mult(m_spkCamera.GetRVector());
         m_spkCamera.SetAxes(kDVector,kUVector,kRVector);
+        kIncr.finalize();
+        kIncr = null;
     }
 
     /** 
@@ -506,6 +522,8 @@ public abstract class JavaApplication3D extends JavaApplication
         Vector3f kUVector = kIncr.mult(m_spkCamera.GetUVector());
         Vector3f kRVector = kIncr.mult(m_spkCamera.GetRVector());
         m_spkCamera.SetAxes(kDVector,kUVector,kRVector);
+        kIncr.finalize();
+        kIncr = null;
     }
 
     /** Camera object. */
@@ -517,19 +535,33 @@ public abstract class JavaApplication3D extends JavaApplication
                         new Vector3f( Vector3f.ZERO ),
                         new Vector3f( Vector3f.ZERO ) };
 
+    /** Translation speed */
     protected float m_fTrnSpeed = 0.0f;
+    /** Rotation speed */
     protected float m_fRotSpeed = 0.0f;
+    /** Increase/Decrease translation speed factor */
     protected float m_fTrnSpeedFactor = 2.0f;
+    /** Increase/Decrease rotation speed factor */
     protected float m_fRotSpeedFactor = 2.0f;
+    /** flag indicating the up arrow was pressed */
     protected boolean m_bUArrowPressed = false;
+    /** flag indicating the down arrow was pressed */
     protected boolean m_bDArrowPressed = false;
+    /** flag indicating the left arrow was pressed */
     protected boolean m_bLArrowPressed = false;
+    /** flag indicating the right arrow was pressed */
     protected boolean m_bRArrowPressed = false;
+    /** flag indicating page up was pressed */
     protected boolean m_bPgUpPressed = false;
+    /** flag indicating page down was pressed */
     protected boolean m_bPgDnPressed = false;
+    /** flag indicating the home key was pressed */
     protected boolean m_bHomePressed = false;
+    /** flag indicating the end key was pressed */
     protected boolean m_bEndPressed = false;
+    /** flag indicating the camera is moveable */
     protected boolean m_bCameraMoveable = false;
+    /** The last button on the mouse to be pressed/released */
     protected int m_iMouseButton = 0;
 
     /** Initializes Object Motion */
@@ -592,6 +624,8 @@ public abstract class JavaApplication3D extends JavaApplication
             kRot = kIncr.mult(kRot);
             kRot.Orthonormalize();
             m_spkMotionObject.Local.SetRotate(kRot);
+            kIncr.finalize();
+            kIncr = null;
             return true;
         }
 
@@ -613,6 +647,8 @@ public abstract class JavaApplication3D extends JavaApplication
             kRot = kIncr.mult(kRot);
             kRot.Orthonormalize();
             m_spkMotionObject.Local.SetRotate(kRot);
+            kIncr.finalize();
+            kIncr = null;
             return true;
         }
 
@@ -634,9 +670,12 @@ public abstract class JavaApplication3D extends JavaApplication
             kRot = kIncr.mult(kRot);
             kRot.Orthonormalize();
             m_spkMotionObject.Local.SetRotate(kRot);
+            kIncr.finalize();
+            kIncr = null;
             return true;
         }
-
+        kIncr.finalize();
+        kIncr = null;
         return false;
     }
 
@@ -751,15 +790,28 @@ public abstract class JavaApplication3D extends JavaApplication
         }
         kLocalRot.Orthonormalize();
         m_spkMotionObject.Local.SetRotate(kLocalRot);
+
+        kVec0.finalize();
+        kVec0 = null;
+        kVec1.finalize();
+        kVec1 = null;
+        kTrackRotate.finalize();
+        kTrackRotate = null;
     }
 
-    /** Object rotation parameters: */
+    /** Object rotation node: */
     protected Spatial m_spkMotionObject = null;
+    /** Roll, yaw, picth: */
     protected int m_iDoRoll = 0, m_iDoYaw = 0, m_iDoPitch = 0;
+    /** Trackball start and end xy pixel coordinates: */
     protected float m_fXTrack0 = 0.0f, m_fYTrack0 = 0.0f, m_fXTrack1 = 0.0f, m_fYTrack1 = 0.0f;
+    /** Drag xy pixel coordinates: */
     protected float m_fXDrag0 = 0.0f;
+    /** Drag xy pixel coordinates: */
     protected float m_fYDrag0 = 0.0f;
+    /** Current rotation, saved during trackball rotate: */
     protected Matrix3f m_kSaveRotate;
+    /** Trackball rotation flags: */
     protected boolean m_bUseTrackBall = true, m_bTrackBallDown = false;
 
     /** performance measurements */
@@ -828,18 +880,25 @@ public abstract class JavaApplication3D extends JavaApplication
         m_pkRenderer.Draw(iX,iY,rkColor,kMessage.toCharArray());
     }
 
-    /** Performance paramters: */
+    /** Framerate Performance paramters: */
     protected double m_dLastTime = -1.0f, m_dAccumulatedTime = 0.0f, m_dFrameRate = 0.0f;
+    /** Framerate Performance paramters: */
     protected int m_iFrameCount = 0, m_iAccumulatedFrameCount = 0, m_iTimer = 30, m_iMaxTimer = 30;
 
-    /** User input: */
-    public void keyTyped(KeyEvent arg0) {}
+    /** User input: stub
+     * @param e, the MouseEvent
+     */
+    public void mouseClicked(MouseEvent e) {}
 
-    public void mouseClicked(MouseEvent arg0) {}
+    /** User input: stub
+     * @param e, the MouseEvent
+     */
+    public void mouseEntered(MouseEvent e) {}
 
-    public void mouseEntered(MouseEvent arg0) {}
-
-    public void mouseExited(MouseEvent arg0) {}
+    /** User input: stub 
+     * @param e, the MouseEvent
+     */
+    public void mouseExited(MouseEvent e) {}
 
     /** Ends trackball rotation:
      * @param e, the MouseEvent
@@ -856,7 +915,10 @@ public abstract class JavaApplication3D extends JavaApplication
         m_bTrackBallDown = false;
     }
     
-    public void mouseMoved(MouseEvent arg0) {}
+    /** User input: stub
+     * @param e, the MouseEvent
+     */
+    public void mouseMoved(MouseEvent e) {}
     
     /** Initializes trackball rotation:
      * @param e, the MouseEvent

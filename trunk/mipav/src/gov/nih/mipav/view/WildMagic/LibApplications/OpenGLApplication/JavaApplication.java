@@ -49,6 +49,20 @@ public abstract class JavaApplication extends Application
     }
 
     /**
+     * Delete memory.
+     */
+    public void finalize()
+    {
+        m_acWindowTitle = null;
+        m_kBackgroundColor = null;
+        if ( m_pkRenderer != null )
+        {
+            m_pkRenderer.finalize();
+            m_pkRenderer = null;
+        }
+    }
+    
+    /**
      * Retuns the window title.
      * @return the window title.
      */

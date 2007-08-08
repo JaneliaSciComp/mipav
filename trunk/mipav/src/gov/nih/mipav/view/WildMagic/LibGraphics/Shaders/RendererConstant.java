@@ -193,6 +193,11 @@ public class RendererConstant
         m_iRegisterQuantity = iRegisterQuantity;
     }
 
+    public void finalize()
+    {
+        m_afData = null;
+    }
+
     // Member access.  The renderer will use these to set the registers with
     // the appropriate values.
     public Type GetType ()

@@ -51,6 +51,13 @@ public class OpenGLFrameBuffer extends FrameBuffer
         }
     }
 
+    /** Delete memory */
+    public void finalize()
+    {
+        m_kDrawable = null;
+        super.finalize();
+    }
+
     /**
      * Sets the GLAutoDrawable object for accessing JOGL function calls.
      * @param drawable, the GLAutoDrawable object.

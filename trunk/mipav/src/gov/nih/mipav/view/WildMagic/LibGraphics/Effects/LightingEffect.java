@@ -37,6 +37,19 @@ public class LightingEffect extends ShaderEffect
         // off.
     }
 
+    /** Delete memory */
+    public void finalize()
+    {
+        if ( m_kSaveEmissive != null )
+        {
+            m_kSaveEmissive.finalize();
+            m_kSaveEmissive = null;
+        }
+        m_kLights.clear();
+        m_kLights = null;
+        super.finalize();
+    }
+
     /** Returns the number of lights in this Effect 
      * @return the number of lights
      */

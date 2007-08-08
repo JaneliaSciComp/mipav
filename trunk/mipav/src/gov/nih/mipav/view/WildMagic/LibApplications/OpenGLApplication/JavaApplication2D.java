@@ -43,6 +43,17 @@ public abstract class JavaApplication2D extends JavaApplication
         m_akFlipScreen = null;
     }
 
+    /**
+     * Delete memory.
+     */
+    public void finalize()
+    {
+        m_akScreen = null;
+        m_akFlipScreen = null;
+        super.finalize();
+    }
+
+
     /** Initialize event callback.
      * @return true if sucessful initialization, false otherwise.
      */

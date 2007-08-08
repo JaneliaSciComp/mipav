@@ -33,6 +33,35 @@ public class IntrLine3Sphere3f extends Intersector
         m_iQuantity = 0;
     }
 
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        if ( m_rkLine != null )
+        {
+            m_rkLine.finalize();
+            m_rkLine = null;
+        }
+        m_rkLine = null;
+        m_rkSphere.finalize();
+        if ( m_rkLine != null )
+        {
+            m_rkSphere.finalize();
+            m_rkSphere = null;
+        }
+        for ( int i = 0; i < 2; i++ )
+        {
+            if ( m_akPoint[i] != null )
+            {
+                m_akPoint[i].finalize();
+                m_akPoint[i] = null;
+            }
+        }
+        m_akPoint = null;
+        m_afLineT = null;
+    }
+
     /** 
      * object access 
      * @return the current line
@@ -129,12 +158,16 @@ public class IntrLine3Sphere3f extends Intersector
         return m_afLineT[i];
     }
 
-    /** the objects to intersect */
-    private final Line3f m_rkLine;
-    private final Sphere3f m_rkSphere;
+    /** the objects to intersect: Line */
+    private Line3f m_rkLine;
+    /** the objects to intersect: Sphere */
+    private Sphere3f m_rkSphere;
 
-    /** information about the intersection set */
+    /** information about the intersection set: number of intersections */
     private int m_iQuantity;
+    /** information about the intersection set: intersection points */
     private Vector3f[] m_akPoint = new Vector3f[2];
+    /** information about the intersection set: line equation T-values of
+     * intersections */
     private float[] m_afLineT = new float[2];
 }
