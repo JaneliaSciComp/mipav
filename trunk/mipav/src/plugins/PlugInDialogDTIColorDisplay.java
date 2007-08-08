@@ -2313,16 +2313,18 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			}
 		}
 		else if(source == satVsThetaSlider) {
-			if (wheelRotation < 0) {
-				if(satVsThetaSlider.getValue() < satVsThetaSlider.getMaximum()) {
-					satVsThetaSlider.setValue(satVsThetaSlider.getValue() + 1);
-					updateCurrentColorWheel();
+			if(satVsThetaSlider.isEnabled()) {
+				if (wheelRotation < 0) {
+					if(satVsThetaSlider.getValue() < satVsThetaSlider.getMaximum()) {
+						satVsThetaSlider.setValue(satVsThetaSlider.getValue() + 1);
+						updateCurrentColorWheel();
+					}
 				}
-			}
-			else {
-				if(satVsThetaSlider.getValue() > satVsThetaSlider.getMinimum()) {
-					satVsThetaSlider.setValue(satVsThetaSlider.getValue() - 1);
-					updateCurrentColorWheel();
+				else {
+					if(satVsThetaSlider.getValue() > satVsThetaSlider.getMinimum()) {
+						satVsThetaSlider.setValue(satVsThetaSlider.getValue() - 1);
+						updateCurrentColorWheel();
+					}
 				}
 			}
 		}
