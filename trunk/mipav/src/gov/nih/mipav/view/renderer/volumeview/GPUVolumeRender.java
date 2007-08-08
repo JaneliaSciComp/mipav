@@ -77,8 +77,6 @@ public class GPUVolumeRender extends JavaApplication3D
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
 
-        m_pkRenderer.SetLineWidth(3);
-
         ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
@@ -100,6 +98,8 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public void finalize()
     {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( GetCanvas() );
+
         if ( m_spkScene != null )
         {
             m_spkScene.finalize();
@@ -226,9 +226,6 @@ public class GPUVolumeRender extends JavaApplication3D
         }
         m_akLights = null;
 
-        m_kAnimator.stop();
-        m_kAnimator = null;
-
         try {
             m_kSculptor.finalize();
         } catch (Throwable e) {
@@ -245,6 +242,10 @@ public class GPUVolumeRender extends JavaApplication3D
             m_kShaderParamsWindow.close();
         }
         super.finalize();
+
+        m_kAnimator.stop();
+        m_kAnimator = null;
+
         System.gc();
     }
 
@@ -400,6 +401,7 @@ public class GPUVolumeRender extends JavaApplication3D
 
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         ((OpenGLRenderer)m_pkRenderer).InitializeState();
+        m_pkRenderer.SetLineWidth(3);
 
         super.OnInitialize();
 

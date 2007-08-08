@@ -103,7 +103,7 @@ public class OpenGLRenderer extends Renderer
      * vertex and pixel programs, etc.) */
     public void InitializeState ()
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "InitializeState GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         // vertices always exist
@@ -186,7 +186,7 @@ public class OpenGLRenderer extends Renderer
     public void SetBackgroundColor (ColorRGBA rkColor)
     {
         super.SetBackgroundColor(rkColor);
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetBackgroundColor GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
         gl.glClearColor(rkColor.R(),rkColor.G(),rkColor.B(),rkColor.A());
     }
@@ -196,7 +196,7 @@ public class OpenGLRenderer extends Renderer
     /** Clear back buffer. */
     public void ClearBackBuffer ()
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "ClearBackBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
         gl.glEnable( GL.GL_SCISSOR_TEST );
         gl.glScissor( 0, 0, m_iWidth, m_iHeight );
@@ -207,7 +207,7 @@ public class OpenGLRenderer extends Renderer
     /** Clear depth buffer. */
     public void ClearZBuffer ()
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "ClearZBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
         gl.glEnable(GL.GL_SCISSOR_TEST);
         gl.glScissor(0,0,m_iWidth,m_iHeight);
@@ -220,7 +220,7 @@ public class OpenGLRenderer extends Renderer
     /** Clear stencil buffer. */
     public void ClearStencilBuffer ()
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "ClearStencilBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
         gl.glEnable(GL.GL_SCISSOR_TEST);
         gl.glScissor(0,0,m_iWidth,m_iHeight);
@@ -232,7 +232,7 @@ public class OpenGLRenderer extends Renderer
     /** Clear all buffers. */
     public void ClearBuffers ()
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "ClearBuffers GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
         gl.glEnable(GL.GL_SCISSOR_TEST);
         gl.glScissor(0,0,m_iWidth,m_iHeight);
@@ -251,7 +251,7 @@ public class OpenGLRenderer extends Renderer
     /** Display the back buffer. */
     public void DisplayBackBuffer ()
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "DisplayBackBuffer GLDrawable null" ); return; }
         /* Call swapBuffers to render on-screen: */
         m_kDrawable.swapBuffers();
     }
@@ -265,7 +265,7 @@ public class OpenGLRenderer extends Renderer
     public void ClearBackBuffer (int iXPos, int iYPos,
                                  int iWidth,int iHeight)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "ClearBackBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
         gl.glEnable(GL.GL_SCISSOR_TEST);
         gl.glScissor(iXPos,iYPos,iWidth,iHeight);
@@ -282,7 +282,7 @@ public class OpenGLRenderer extends Renderer
     public void ClearZBuffer (int iXPos, int iYPos,
                               int iWidth,int iHeight)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "ClearZBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
         gl.glEnable(GL.GL_SCISSOR_TEST);
         gl.glScissor(iXPos,iYPos,iWidth,iHeight);
@@ -301,7 +301,7 @@ public class OpenGLRenderer extends Renderer
     public void ClearStencilBuffer (int iXPos, int iYPos,
                                     int iWidth,int iHeight)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "ClearStencilBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
         gl.glEnable(GL.GL_SCISSOR_TEST);
         gl.glScissor(iXPos,iYPos,iWidth,iHeight);
@@ -319,7 +319,7 @@ public class OpenGLRenderer extends Renderer
     public void ClearBuffers (int iXPos, int iYPos,
                               int iWidth,int iHeight)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "ClearBuffers GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
         gl.glEnable(GL.GL_SCISSOR_TEST);
         gl.glScissor(iXPos,iYPos,iWidth,iHeight);
@@ -360,7 +360,7 @@ public class OpenGLRenderer extends Renderer
             return;
         }
 
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "UnloadFont GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         for (int i = 0; i < m_kDLInfo.size(); i++ )
@@ -385,7 +385,7 @@ public class OpenGLRenderer extends Renderer
     public void Draw (int iX, int iY, final ColorRGBA rkColor,
                       final char[] acText)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "Draw GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         assert(acText != null);
@@ -476,7 +476,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void Draw (final byte[] aucBuffer)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "Draw GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         if (aucBuffer == null)
@@ -564,7 +564,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetPointSize (float fSize)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetPointSize GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetPointSize(fSize);
@@ -576,7 +576,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetLineWidth (float fWidth)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetLineWidth GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetLineWidth(fWidth);
@@ -589,7 +589,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetLineStipple (int iRepeat, short usPattern)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetLineStipple GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetLineStipple(iRepeat,usPattern);
@@ -614,7 +614,7 @@ public class OpenGLRenderer extends Renderer
     public void SetColorMask (boolean bAllowRed, boolean bAllowGreen,
                               boolean bAllowBlue, boolean bAllowAlpha)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetColorMask GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetColorMask(bAllowRed,bAllowGreen,bAllowBlue,bAllowAlpha);
@@ -632,7 +632,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void EnableUserClipPlane (int i, Plane3f rkPlane)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "EnableUserClipPlane GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         double adPlane[] = new double[]
@@ -651,7 +651,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void DisableUserClipPlane (int i)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "DisableUserClipPlane GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         gl.glDisable(GL.GL_CLIP_PLANE0 + i);
@@ -662,7 +662,7 @@ public class OpenGLRenderer extends Renderer
     /** Called when the viewport changes. Updates the camera. */
     public void OnViewportChange ()
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnViewportChange GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         float fPortL, fPortR, fPortT, fPortB;
@@ -698,7 +698,7 @@ public class OpenGLRenderer extends Renderer
     /** Called when the depth range changes. Updates the camera. */
     public void OnDepthRangeChange ()
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnDepthRangeChange GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         if (m_pkCamera != null)
@@ -721,7 +721,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetAlphaState (AlphaState pkState)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetAlphaState GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetAlphaState(pkState);
@@ -756,7 +756,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetCullState (CullState pkState)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetCullState GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetCullState(pkState);
@@ -794,7 +794,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetPolygonOffsetState (PolygonOffsetState pkState)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetPolygonOffsetState GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetPolygonOffsetState(pkState);
@@ -834,7 +834,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetStencilState (StencilState pkState)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetStencilState GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetStencilState(pkState);
@@ -863,7 +863,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetWireframeState (WireframeState pkState)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetWireframeState GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetWireframeState(pkState);
@@ -883,7 +883,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void SetZBufferState (ZBufferState pkState)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetZBufferState GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         super.SetZBufferState(pkState);
@@ -913,7 +913,7 @@ public class OpenGLRenderer extends Renderer
     /** The entry point to drawing a geometry object. */
     public void DrawElements ()
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "DrawElements GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         IndexBuffer pkIBuffer = m_pkGeometry.IBuffer;
@@ -930,7 +930,7 @@ public class OpenGLRenderer extends Renderer
      */
     public ResourceIdentifier OnLoadVProgram (VertexProgram pkVProgram)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return null; }
+        if ( m_kDrawable == null ) { System.err.println( "OnLoadVProgram GLDrawable null" ); return null; }
         GL gl = m_kDrawable.getGL();
 
         // Generate binding information and compile the program.
@@ -958,7 +958,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnReleaseVProgram (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnReleaseVProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         boolean bIsActive = IsActive();
@@ -981,7 +981,7 @@ public class OpenGLRenderer extends Renderer
      */
     public ResourceIdentifier OnLoadPProgram (PixelProgram pkPProgram)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return null; }
+        if ( m_kDrawable == null ) { System.err.println( "OnLoadPProgram GLDrawable null" ); return null; }
         GL gl = m_kDrawable.getGL();
 
         // Generate binding information and compile the shader.
@@ -1009,7 +1009,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnReleasePProgram (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnReleasePProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         boolean bIsActive = IsActive();
@@ -1032,7 +1032,7 @@ public class OpenGLRenderer extends Renderer
      */
     public ResourceIdentifier OnLoadTexture (Texture pkTexture)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return null; }
+        if ( m_kDrawable == null ) { System.err.println( "OnLoadTexture GLDrawable null" ); return null; }
         GL gl = m_kDrawable.getGL();
 
         // Activate the texture unit in hardware that will manage this texture.
@@ -1208,7 +1208,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnReloadTexture (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnReloadTexture GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         OnEnableTexture(pkID);
@@ -1330,7 +1330,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnReleaseTexture (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnReleaseTexture GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         boolean bIsActive = IsActive();
@@ -1353,7 +1353,7 @@ public class OpenGLRenderer extends Renderer
     public ResourceIdentifier OnLoadVBuffer (final Attributes rkIAttr, final Attributes rkOAttr,
                                              VertexBuffer pkVBuffer)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return null; }
+        if ( m_kDrawable == null ) { System.err.println( "OnLoadVBuffer GLDrawable null" ); return null; }
         GL gl = m_kDrawable.getGL();
 
         VBufferID pkResource = new VBufferID();
@@ -1384,7 +1384,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnReleaseVBuffer (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnReleaseVBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         boolean bIsActive = IsActive();
@@ -1407,7 +1407,7 @@ public class OpenGLRenderer extends Renderer
      */
     public ResourceIdentifier OnLoadIBuffer (IndexBuffer pkIBuffer)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return null; }
+        if ( m_kDrawable == null ) { System.err.println( "OnLoadIBuffer GLDrawable null" ); return null; }
         GL gl = m_kDrawable.getGL();
 
         IBufferID pkResource = new IBufferID();
@@ -1433,7 +1433,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnReleaseIBuffer (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnReleaseIBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         boolean bIsActive = IsActive();
@@ -1463,7 +1463,7 @@ public class OpenGLRenderer extends Renderer
                                      int iRegisterQuantity,
                                      float[] afData)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetVProgramConstant GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         float[] afParam = new float[4];
@@ -1495,7 +1495,7 @@ public class OpenGLRenderer extends Renderer
                                       int iRegisterQuantity,
                                       float[] afData)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "SetPProgramConstant GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         float[] afParam = new float[4];
@@ -1521,7 +1521,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnEnableVProgram (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnEnableVProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         VProgramID pkResource = (VProgramID)pkID;
@@ -1535,7 +1535,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnDisableVProgram (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnDisableVProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         gl.glDisable(GL.GL_VERTEX_PROGRAM_ARB);
@@ -1547,7 +1547,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnEnablePProgram (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnEnablePProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         PProgramID pkResource = (PProgramID)pkID;
@@ -1561,7 +1561,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnDisablePProgram (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnDisablePProgram GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         gl.glDisable(GL.GL_FRAGMENT_PROGRAM_ARB);
@@ -1573,7 +1573,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnEnableTexture (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnEnableTexture GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         TextureID pkResource = (TextureID)pkID;
@@ -1604,7 +1604,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnEnableVBuffer (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnEnableVBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         // Bind the current vertex buffer.
@@ -1663,7 +1663,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnDisableVBuffer (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnDisableVBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         VBufferID pkResource = (VBufferID)pkID;
@@ -1709,7 +1709,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnEnableIBuffer (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnEnableIBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         // Bind the current index buffer.
@@ -1723,7 +1723,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void OnDisableIBuffer (ResourceIdentifier pkID)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "OnDisableIBuffer GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         // Unbind the current index buffer.
@@ -1738,7 +1738,7 @@ public class OpenGLRenderer extends Renderer
      */
     public void DrawCharacter (final BitmapFont rkFont, char cChar)
     {
-        if ( m_kDrawable == null ) { System.err.println( "GLDrawable null" ); return; }
+        if ( m_kDrawable == null ) { System.err.println( "DrawCharacter GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
         int uiIndex = (int)cChar;

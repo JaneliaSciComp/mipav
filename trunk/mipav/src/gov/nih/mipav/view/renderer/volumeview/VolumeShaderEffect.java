@@ -725,7 +725,6 @@ public class VolumeShaderEffect extends ShaderEffect
         System.gc();
 
         // Access intensity values as a linear array.
-
         int iXBound = kImage.getExtents()[0];;
         int iYBound = kImage.getExtents()[1];;
         int iZBound = kImage.getExtents()[2];;

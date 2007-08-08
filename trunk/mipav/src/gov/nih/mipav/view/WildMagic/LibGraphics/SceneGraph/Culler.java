@@ -46,11 +46,7 @@ public class Culler
 
     public void finalize()
     {
-        if ( m_pkCamera != null )
-        {
-            m_pkCamera.finalize();
-            m_pkCamera = null;
-        }
+        m_pkCamera = null;
         m_afFrustum = null;
         for ( int i = 0; i < VS_MAX_PLANE_QUANTITY; i++ )
         {
