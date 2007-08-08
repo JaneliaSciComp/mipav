@@ -27,10 +27,15 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem;
 public class ImageVersion
 {
 
+    /** Version major number: */
     public static final int MAJOR = 4;
+    /** Version minor number: */
     public static final int MINOR = 0;
+    /** Version label: */
     public static final String LABEL = new String("Wild Magic Image File 4.00");
+    /** Version label length: */
     public static final int LENGTH = LABEL.length(); //27;  // 27 = strlen(LABEL)+1
+    /** Current Version: */
     public static final ImageVersion CURRENT = new ImageVersion(MAJOR,MINOR);
 
     /** Create a new ImageVersion with the iMajor and iMinor version numbers

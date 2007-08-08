@@ -72,12 +72,28 @@ public class ColorRGBA
         m_afTuple[2] = rkC.m_afTuple[2];
     }
 
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        m_afTuple = null;
+    }
 
-    // member access
+    /** Gets the color red,green,blue,alpha value
+     * @return float[4] with [r,g,b,a]
+     */
     public float[] GetData () 
     {
         return m_afTuple;
     }
+
+    /** Sets the color red,green,blue value
+     * @param fR, red
+     * @param fG, green
+     * @param fB, blue
+     * @param fA, alpha
+     */
     public void SetData ( float fR, float fG, float fB, float fA ) 
     {
         m_afTuple[0] = fR;
@@ -86,34 +102,65 @@ public class ColorRGBA
         m_afTuple[3] = fA;
     }
 
+    /** Returns the color red value
+     * @return  the color red value
+     */
     public float R () 
     {
         return m_afTuple[0];
     }
+
+    /** Returns the color green value
+     * @return  the color green value
+     */
     public float G ()
     {
         return m_afTuple[1];
     }
+
+    /** Returns the color blue value
+     * @return  the color blue value
+     */
     public float B ()
     {
         return m_afTuple[2];
     }
+
+    /** Returns the color alpha value
+     * @return  the color alpha value
+     */
     public float A ()
     {
         return m_afTuple[3];
     }
+
+    /** Sets the color red value
+     * @param fR the new red value
+     */
     public void R ( float fR ) 
     {
         m_afTuple[0] = fR;
     }
+
+    /** Sets the color green value
+     * @param fG the new green value
+     */
     public void G ( float fG ) 
     {
         m_afTuple[1] = fG;
     }
+
+    /** Sets the color blue value
+     * @param fB  the new blue value
+     */
     public void B ( float fB ) 
     {
         m_afTuple[2] = fB;
     }
+
+    /** Sets the color alpha value
+     * @param fA the new alpha value
+     */
     public void A ( float fA ) 
     {
         m_afTuple[3] = fA;

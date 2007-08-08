@@ -114,5 +114,3 @@ public class MaterialTextureEffect extends ShaderEffect
         return pkTree;
     }
 }
-
-// WM4_REGISTER_STREAM(MaterialTextureEffect);

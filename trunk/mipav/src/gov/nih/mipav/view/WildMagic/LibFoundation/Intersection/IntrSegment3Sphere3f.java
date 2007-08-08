@@ -35,6 +35,34 @@ public class IntrSegment3Sphere3f extends Intersector
         ZeroThreshold = Mathf.ZERO_TOLERANCE;
     }
 
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        if ( m_rkSegment != null )
+        {
+            m_rkSegment.finalize();
+            m_rkSegment = null;
+        }
+        if ( m_rkSphere != null )
+        {
+            m_rkSphere.finalize();
+            m_rkSphere = null;
+        }
+        for ( int i = 0; i < 2; i++ )
+        {
+            if ( m_akPoint[i] != null )
+            {
+                m_akPoint[i].finalize();
+                m_akPoint[i] = null;
+            }
+        }
+        m_akPoint = null;
+        m_afSegmentT = null;
+    }
+
+
     /** 
      * object access 
      * @return the current segment
@@ -55,7 +83,7 @@ public class IntrSegment3Sphere3f extends Intersector
 
     /**
      * test-intersection query
-     * returns true if the segment and sphere intersect, false otherwise
+     * @return true if the segment and sphere intersect, false otherwise
      */
     public boolean Test ()
     {
@@ -82,7 +110,7 @@ public class IntrSegment3Sphere3f extends Intersector
 
     /**
      * find-intersection query
-     * returns true if the segment and sphere intersect, false otherwise
+     * @return true if the segment and sphere intersect, false otherwise
      */
     public boolean Find ()
     {
@@ -174,12 +202,16 @@ public class IntrSegment3Sphere3f extends Intersector
     /** default = Mathf::ZERO_TOLERANCE */
     public float ZeroThreshold = Mathf.ZERO_TOLERANCE; 
 
-    /** the objects to intersect */
-    private final Segment3f m_rkSegment;
-    private final Sphere3f m_rkSphere;
+    /** the objects to intersect: Segment */
+    private Segment3f m_rkSegment;
+    /** the objects to intersect: Sphere */
+    private Sphere3f m_rkSphere;
 
-    /** information about the intersection set */
+    /** information about the intersection set: number of intersections */
     private int m_iQuantity;
+    /** information about the intersection set: intersection points */
     private Vector3f[] m_akPoint = new Vector3f[2];
+    /** information about the intersection set: line equation T-values of
+     * intersections */
     private float[] m_afSegmentT = new float[2];
 }

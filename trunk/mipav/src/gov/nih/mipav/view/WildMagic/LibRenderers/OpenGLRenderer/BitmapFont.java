@@ -34,6 +34,21 @@ public class BitmapFont
         Chars = pkChars;
     }
 
+    /** Delete memory */
+    public void finalize()
+    {
+        Name = null;
+        for ( int i = 0; i < Quantity; i++ )
+        {
+            if ( Chars[i] != null )
+            {
+                Chars[i].finalize();
+                Chars[i] = null;
+            }
+        }
+        Chars = null;
+    }
+
     /** Font name: */
     public String Name;
     /** Number of characters */

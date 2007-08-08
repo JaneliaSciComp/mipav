@@ -31,6 +31,50 @@ public class IntrSphere3Sphere3f extends Intersector
         m_rkSphere0 = new Sphere3f(rkSphere0);
         m_rkSphere1 = new Sphere3f(rkSphere1);
     }
+
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        if ( m_rkSphere0 != null )
+        {
+            m_rkSphere0.finalize();
+            m_rkSphere0 = null;
+        }
+        if ( m_rkSphere1 != null )
+        {
+            m_rkSphere1.finalize();
+            m_rkSphere1 = null;
+        }
+        if ( m_kCenter != null )
+        {
+            m_kCenter.finalize();
+            m_kCenter = null;
+        }
+        if ( m_kUAxis != null )
+        {
+            m_kUAxis.finalize();
+            m_kUAxis = null;
+        }
+        if ( m_kVAxis != null )
+        {
+            m_kVAxis.finalize();
+            m_kVAxis = null;
+        }
+        if ( m_kNormal != null )
+        {
+            m_kNormal.finalize();
+            m_kNormal = null;
+        }
+        if ( m_kContactPoint != null )
+        {
+            m_kContactPoint.finalize();
+            m_kContactPoint = null;
+        }
+    }
+
+
     /** 
      * object access 
      * @return the sphere0
@@ -51,7 +95,7 @@ public class IntrSphere3Sphere3f extends Intersector
 
     /**
      * static test-intersection query
-     * returns true if the two spheres intersect, false otherwise
+     * @return true if the two spheres intersect, false otherwise
      */
     public boolean Test ()
     {
@@ -62,7 +106,7 @@ public class IntrSphere3Sphere3f extends Intersector
 
     /**
      * static find-intersection query
-     * returns true if the two spheres intersect, false otherwise
+     * @return true if the two spheres intersect, false otherwise
      */
     public boolean Find ()
     {
@@ -103,27 +147,41 @@ public class IntrSphere3Sphere3f extends Intersector
         return true;
     }
 
-    /** intersection set for static find-intersection query */
+    /** Intersection center
+     * @return center
+     */
     public Vector3f GetCenter ()
     {
         return m_kCenter;
     }
 
+    /** Intersection U-Vector
+     * @return U-Vector
+     */
     public Vector3f GetUAxis ()
     {
         return m_kUAxis;
     }
 
+    /** Intersection V-Vector
+     * @return V-Vector
+     */
     public Vector3f GetVAxis ()
     {
         return m_kVAxis;
     }
 
+    /** Intersection plane normal
+     * @return plane normal
+     */
     public Vector3f GetNormal ()
     {
         return m_kNormal;
     }
 
+    /** Intersection radius
+     * @return radius
+     */
     public float GetRadius ()
     {
         return m_fRadius;
@@ -131,7 +189,7 @@ public class IntrSphere3Sphere3f extends Intersector
 
     /**
      * dynamic test-intersection query
-     * returns true if the two spheres intersect, false otherwise
+     * @return true if the two spheres intersect, false otherwise
      */
     public boolean Test (float fTMax,  Vector3f rkVelocity0,
                          Vector3f rkVelocity1)
@@ -164,7 +222,7 @@ public class IntrSphere3Sphere3f extends Intersector
 
     /**
      * dynamic find-intersection query
-     * returns true if the two spheres intersect, false otherwise
+     * @return true if the two spheres intersect, false otherwise
      */
     public boolean Find (float fTMax, Vector3f rkVelocity0,
                          Vector3f rkVelocity1)
@@ -237,14 +295,17 @@ public class IntrSphere3Sphere3f extends Intersector
     }
 
 
-    /** intersection set for dynamic find-intersection query */
+    /** intersection set for dynamic find-intersection query
+     * @return contact point
+     */
     public Vector3f GetContactPoint ()
     {
         return m_kContactPoint;
     }
 
-    /** the objects to intersect */
+    /** the objects to intersect: Sphere0 */
     private Sphere3f m_rkSphere0;
+    /** the objects to intersect: Sphere1 */
     private Sphere3f m_rkSphere1;
 
     /** Circle of intersection for static spheres.  The center is C and lies

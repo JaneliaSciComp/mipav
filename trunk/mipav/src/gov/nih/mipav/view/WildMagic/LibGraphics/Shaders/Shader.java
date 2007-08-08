@@ -108,6 +108,22 @@ public abstract class Shader extends GraphicsObject
     // Support for streaming.
     public Shader () {}
 
+    public void finalize()
+    {
+        m_kShaderName = null;
+        if ( m_spkProgram != null )
+        {
+            m_spkProgram.finalize();
+            m_spkProgram = null;
+        }
+        m_kUserData.clear();
+        m_kUserData = null;
+        m_kImageNames.clear();
+        m_kImageNames = null;
+        m_kTextures.clear();
+        m_kTextures = null;
+    }
+
     // The constructor called by the derived classes VertexShader and
     // PixelShader.
     protected Shader (String rkShaderName)

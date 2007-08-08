@@ -38,8 +38,14 @@ public class BitmapFontChar
         Bitmap = aucBitmap;
     }
 
+    /** Delete memory */
+    public void finalize()
+    {
+        Bitmap = null;
+    }
+
     /** BitmapFontChar position and size: */
     public int XOrigin, YOrigin, XSize, YSize;
     /** Bitmap representing a character: */
-    public final byte[] Bitmap;
+    public byte[] Bitmap;
 }

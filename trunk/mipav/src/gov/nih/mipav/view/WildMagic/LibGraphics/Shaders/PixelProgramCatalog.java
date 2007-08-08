@@ -31,6 +31,20 @@ public class PixelProgramCatalog
         m_cCommentChar = 0;
     }
 
+    public void finalize()
+    {
+        m_kName = null;
+        m_kDefaultDir = null;
+        m_kRendererType = null;
+        m_kEntry.clear();
+        m_kEntry = null;
+        if ( m_spkDefaultPProgram != null )
+        {
+            m_spkDefaultPProgram.finalize();
+            m_spkDefaultPProgram = null;
+        }
+    }
+
     // For deferred setting of the renderer type and comment character.  This
     // cannot be called until the application layer has created a renderer.
     // The layer does so in WindowApplication::SetRenderer.

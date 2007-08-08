@@ -38,6 +38,19 @@ public class ImageCatalog
                                       ms_kDefaultString);
     }
 
+    public void finalize()
+    {
+        m_kName = null;
+        m_kDefaultDir = null;
+        m_kEntry.clear();
+        m_kEntry = null;
+        if ( m_spkDefaultImage != null )
+        {
+            m_spkDefaultImage.finalize();
+            m_spkDefaultImage = null;
+        }
+    }
+
     public String GetName ()
     {
         return m_kName;
@@ -177,8 +190,8 @@ public class ImageCatalog
 
     private String m_kName;
     private String m_kDefaultDir;
-    HashMap<String,GraphicsImage> m_kEntry = new HashMap<String,GraphicsImage>();
-    GraphicsImage m_spkDefaultImage;
+    private HashMap<String,GraphicsImage> m_kEntry = new HashMap<String,GraphicsImage>();
+    private GraphicsImage m_spkDefaultImage;
 
     private static final String ms_kNullString = new String("");;
     public static final String ms_kDefaultString = new String("Default");

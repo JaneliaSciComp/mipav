@@ -47,32 +47,9 @@ public abstract class Intersector
         return false;
     }
 
-    /** Dynamic intersection queries.  The default implementations return
-     * 'false'.  The Find query produces a set of first contact.  The derived
-     * class is responsible for providing access to that set, since the nature
-     * of the set is dependent on the object types.
-     */
-    public boolean Test (float fTMax, Vector3f rkVelocity0, Vector3f rkVelocity1)
-    {
-        // stub for derived class
-        assert(false);
-        return false;
-    }
-
-    /** Dynamic intersection queries.  The default implementations return
-     * 'false'.  The Find query produces a set of first contact.  The derived
-     * class is responsible for providing access to that set, since the nature
-     * of the set is dependent on the object types.
-     */
-    public boolean Find (float fTMax, Vector3f rkVelocity0, Vector3f rkVelocity1)
-    {
-        // stub for derived class
-        assert(false);
-        return false;
-    }
-
     /** The time at which two objects are in first contact for the dynamic
      * intersection queries.
+     * @return first contact time.
      */
     public float GetContactTime ()
     {

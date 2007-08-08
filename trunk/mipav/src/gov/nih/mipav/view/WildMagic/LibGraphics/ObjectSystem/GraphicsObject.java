@@ -30,6 +30,7 @@ public abstract class GraphicsObject
     }
     public void finalize ()
     {
+        m_kName = null;
         //DetachAllControllers();
     }
     // copying system

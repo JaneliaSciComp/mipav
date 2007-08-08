@@ -67,8 +67,19 @@ public class StandardMesh
         m_bInside = false;
     }
 
-    public void finalize() {}
-    //~StandardMesh ();
+    public void finalize()
+    {
+        if ( m_kAttr != null )
+        {
+            m_kAttr.finalize();
+            m_kAttr = null;
+        }
+        if ( m_kXFrm != null )
+        {
+            m_kXFrm.finalize();
+            m_kXFrm = null;
+        }
+    }
 
     public void SetTransformation (final Transformation rkXFrm)
     {

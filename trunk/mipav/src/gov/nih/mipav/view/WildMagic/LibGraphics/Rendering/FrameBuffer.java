@@ -69,10 +69,11 @@ public abstract class FrameBuffer
         m_pkTarget = pkTarget;
     }
 
-//     public static FrameBuffer Create (FormatType eFormat, DepthType eDepth,
-//                                StencilType eStencil, BufferingType eBuffering,
-//                                MultisamplingType eMultisampling,
-//                                Renderer pkRenderer, Texture pkTarget) { return null; }
+    public void finalize()
+    {
+        m_pkRenderer = null;
+        m_pkTarget = null;
+    }
 
     // Member access.
     public FormatType GetFormatType ()

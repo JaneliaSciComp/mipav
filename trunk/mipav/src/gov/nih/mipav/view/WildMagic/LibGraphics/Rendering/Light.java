@@ -54,6 +54,47 @@ public class Light extends GraphicsObject
     {
         init(eType);
     }
+
+    /** delete memory */
+    public void finalize ()
+    {
+        if ( Ambient != null )
+        {
+            Ambient.finalize();
+            Ambient = null;
+        }
+        if ( Diffuse!= null )
+        {
+            Diffuse.finalize();
+            Diffuse = null;
+        }
+        if ( Specular != null )
+        {
+            Specular.finalize();
+            Specular = null;
+        }
+        if ( Position != null )
+        {
+            Position.finalize();
+            Position = null;
+        }
+        if ( DVector != null )
+        {
+            DVector.finalize();
+            DVector = null;
+        }
+        if ( UVector != null )
+        {
+            UVector.finalize();
+            UVector = null;
+        }
+        if ( RVector != null )
+        {
+            RVector.finalize();
+            RVector = null;
+        }
+        super.finalize();
+    }
     
     private void init(LightType eType)
     {

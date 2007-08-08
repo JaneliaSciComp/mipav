@@ -39,6 +39,12 @@ public class UserConstant
         m_iNumFloats = iNumFloats;
     }
 
+    public void finalize()
+    {
+        m_kName = null;
+        m_afData = null;
+    }
+
     // Member access.  The renderer will use these to pass the information to
     // the graphics API.
     public String GetName ()

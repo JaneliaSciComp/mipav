@@ -71,6 +71,15 @@ public class StringTreeGUI extends JFrame
         kPanel.setSize( 300, 400 );
     }
 
+    /**
+     * Delete memory.
+     */
+    public void finalize()
+    {
+        m_kTree = null;
+    }
+
+
     /** Required by TreeSelectionListener interface.
      * @param e, the TreeSelectionEvent
      */

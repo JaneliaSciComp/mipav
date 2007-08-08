@@ -37,6 +37,15 @@ public class SphereBV extends BoundingVolume
         m_kSphere = rkSphere;
     }
 
+    public void finalize()
+    {
+        if ( m_kSphere != null )
+        {
+            m_kSphere.finalize();
+            m_kSphere = null;
+        }
+        super.finalize();
+    }
 
     public BVType GetBVType ()
     {

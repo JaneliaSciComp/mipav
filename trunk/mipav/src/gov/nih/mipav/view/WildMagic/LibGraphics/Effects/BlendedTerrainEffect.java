@@ -70,6 +70,14 @@ public class BlendedTerrainEffect extends ShaderEffect
         m_afPowerFactor[0] = 0.5f;
     }
 
+    /** Delete memory */
+    public void finalize()
+    {
+        m_afFlowDirection = null;
+        m_afPowerFactor = null;
+        super.finalize();
+    }
+
     /** Parameters for the vertex program
      * @param rkFlowDirection, the direction of flow for the cloud effect.
      */

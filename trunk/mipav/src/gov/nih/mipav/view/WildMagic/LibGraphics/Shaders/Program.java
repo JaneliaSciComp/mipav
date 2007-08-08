@@ -41,6 +41,26 @@ public abstract class Program extends Bindable
     public void finalize ()
     {
         CgGL.cgDestroyContext( m_kContext );
+        m_kContext = null;
+        m_kCGProgram = null;
+        m_kProgramText = null;
+        if ( m_kInputAttributes != null )
+        {
+            m_kInputAttributes.finalize();
+            m_kInputAttributes = null;
+        }
+        if ( m_kOutputAttributes != null )
+        {
+            m_kOutputAttributes.finalize();
+            m_kOutputAttributes = null;
+        }
+        m_kRendererConstants.clear();
+        m_kRendererConstants = null;
+        m_kUserConstants.clear();
+        m_kUserConstants = null;
+        m_kSamplerInformation.clear();
+        m_kSamplerInformation = null;
+
         super.finalize();
     }
     
@@ -85,24 +105,6 @@ public abstract class Program extends Bindable
             {
                 return m_kRendererConstants.get(i);
             }
-        }
-
-        assert(false);
-        return null;
-    }
-
-
-    // Access to numerical constants.
-    public int GetNCQuantity ()
-    {
-        return (int)m_kNumericalConstants.size();
-    }
-
-    public NumericalConstant GetNC (int i)
-    {
-        if (0 <= i && i < (int)m_kNumericalConstants.size())
-        {
-            return m_kNumericalConstants.get(i);
         }
 
         assert(false);
@@ -353,9 +355,6 @@ public abstract class Program extends Bindable
 
     // The renderer constants required by the shader program.
     protected Vector<RendererConstant> m_kRendererConstants = new Vector<RendererConstant>();
-
-    // The numerical constants required by the shader program.
-    protected Vector<NumericalConstant> m_kNumericalConstants = new Vector<NumericalConstant>();
 
     // The user constants required by the shader program.  These are set by
     // the applications as needed.

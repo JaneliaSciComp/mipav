@@ -38,6 +38,17 @@ public class MultitextureEffect extends ShaderEffect
         SetTextureQuantity(iTextureQuantity);
     }
 
+    /** Delete memory */
+    public void finalize()
+    {
+        for ( int i = 0; i < m_iTextureQuantity; i++ )
+        {
+            m_akImageName[i] = null;
+        }
+        m_akImageName = null;
+        super.finalize();
+    }
+
     /** Selection of the textures to be used by the effect.  The first call
      * should be SetTextureQuantity for the desired number of textures.  For
      * each texture, specify its image with SetImageName.  Texture 0 is

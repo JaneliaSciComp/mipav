@@ -181,6 +181,12 @@ public class SculptorWm implements MouseMotionListener, MouseListener {
             m_kImageBackupB.disposeLocal(true);
             m_kImageBackupB = null;
         }
+
+        m_kWVPMatrix = null;
+        m_aucTextureImageDataA = null;
+        m_afTextureImageDataA = null;
+        m_aucTextureImageDataB = null;
+        m_afTextureImageDataB = null;
    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

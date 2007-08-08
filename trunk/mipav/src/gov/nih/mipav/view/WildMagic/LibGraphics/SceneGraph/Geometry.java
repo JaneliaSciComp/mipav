@@ -61,6 +61,50 @@ public abstract class Geometry extends Spatial
         UpdateModelBound();
     }
 
+    public void finalize()
+    {
+        if ( ModelBound != null )
+        {
+            ModelBound.finalize();
+            ModelBound = null;
+        }
+        if ( m_spkLEffect != null )
+        {
+            m_spkLEffect.finalize();
+            m_spkLEffect = null;
+        }
+
+        if ( States != null )
+        {
+            for ( int i = 0; i < GlobalState.StateType.MAX_STATE_TYPE.Value(); i++ )
+            {
+                if ( States[i] != null )
+                {
+                    States[i].finalize();
+                    States[i] = null;
+                }
+            }
+            States = null;
+        }
+        if ( HWorld != null )
+        {
+            HWorld.finalize();
+            HWorld = null;
+        }
+
+        if ( VBuffer != null )
+        {
+            VBuffer.finalize();
+            VBuffer = null;
+        }
+        if ( IBuffer != null )
+        {
+            IBuffer.finalize();
+            IBuffer = null;
+        }
+
+        super.finalize();
+    }
 
     // geometric updates
     protected void UpdateModelBound ()

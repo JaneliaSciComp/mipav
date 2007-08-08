@@ -33,6 +33,33 @@ public class MaterialState extends GlobalState
             Default[StateType.MATERIAL.Value()] = new MaterialState();
         }
     }
+    /** delete memory */
+    public void finalize ()
+    {
+        if ( Emissive != null )
+        {
+            Emissive.finalize();
+            Emissive = null;
+        }
+        if ( Ambient != null )
+        {
+            Ambient.finalize();
+            Ambient = null;
+        }
+        if ( Diffuse != null )
+        {
+            Diffuse.finalize();
+            Diffuse = null;
+        }
+        if ( Specular != null )
+        {
+            Specular.finalize();
+            Specular = null;
+        }
+        super.finalize();
+    }
+
+
     public ColorRGB Emissive = new ColorRGB(0f,0f,0f);        // default: ColorRGB(0,0,0)
     public ColorRGB Ambient = new ColorRGB(0.2f,0.2f,0.2f);   // default: ColorRGB(0.2,0.2,0.2)
     public ColorRGB Diffuse = new ColorRGB(0.8f,0.8f,0.8f);   // default: ColorRGB(0.8,0.8,0.8)

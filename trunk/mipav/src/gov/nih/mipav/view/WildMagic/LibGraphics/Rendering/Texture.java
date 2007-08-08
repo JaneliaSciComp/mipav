@@ -154,6 +154,13 @@ public class Texture extends Bindable
             m_pkSamplerInformation.finalize();
             m_pkSamplerInformation = null;
         }
+
+        m_aeWType = null;
+        if ( m_kBorderColor != null )
+        {
+            m_kBorderColor.finalize();
+            m_kBorderColor = null;
+        }
         
         // Inform all renderers using this texture that it is being destroyed.
         // This allows the renderer to free up any associated resources.

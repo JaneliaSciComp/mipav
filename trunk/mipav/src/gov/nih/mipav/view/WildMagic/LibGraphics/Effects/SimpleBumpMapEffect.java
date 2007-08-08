@@ -45,6 +45,17 @@ public class SimpleBumpMapEffect extends ShaderEffect
         m_kPShader.get(0).SetImageName(1,acNormalName);
     }
 
+    /** Delete data members: */
+    public void finalize ()
+    {
+        if ( m_kLightDirection != null )
+        {
+            m_kLightDirection.finalize();
+            m_kLightDirection = null;
+        }
+        super.finalize();
+    }
+
     /** Sets the light direction
      * @param rkLightDirection, the light direction vector
      */

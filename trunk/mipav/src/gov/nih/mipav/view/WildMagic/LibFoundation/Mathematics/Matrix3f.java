@@ -54,14 +54,15 @@ package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
  */
 public class Matrix3f
 {
-    /** special matrices*/
+    /** Zero matrix: */
     public static final Matrix3f ZERO = new Matrix3f(0.0f,0.0f,0.0f,
                                                      0.0f,0.0f,0.0f,
                                                      0.0f,0.0f,0.0f);
+    /** Identity matrix: */
     public static final Matrix3f IDENTITY = new Matrix3f(1.0f,0.0f,0.0f,
                                                          0.0f,1.0f,0.0f,
                                                          0.0f,0.0f,1.0f);;
-
+    /** Constructor, defaults to zero-matrix: */
     public Matrix3f ()
     {
         MakeZero();
@@ -69,6 +70,7 @@ public class Matrix3f
 
     /** If bZero is true, create the zero matrix.  Otherwise, create the
      * identity matrix.
+     * @param bZero, when true create zero matrix, when false create identity.
      */
     public Matrix3f (boolean bZero)
     {
@@ -83,7 +85,9 @@ public class Matrix3f
     }
 
 
-    /** copy constructor */
+    /** copy constructor
+     * @param rkM, matrix to copy.
+     */
     public Matrix3f ( Matrix3f rkM)
     {
         m_afEntry[0] = rkM.m_afEntry[0];
@@ -98,7 +102,17 @@ public class Matrix3f
     }
 
 
-    // input Mrc is in row r, column c.
+    /** input Mrc is in row r, column c.
+     * @param fM00, matrix[0] entry
+     * @param fM01, matrix[1] entry
+     * @param fM02, matrix[2] entry
+     * @param fM10, matrix[3] entry
+     * @param fM11, matrix[4] entry
+     * @param fM12, matrix[5] entry
+     * @param fM20, matrix[6] entry
+     * @param fM21, matrix[7] entry
+     * @param fM22, matrix[8] entry
+     */
     public Matrix3f (float fM00, float fM01, float fM02,
                      float fM10, float fM11, float fM12,
                      float fM20, float fM21, float fM22)
@@ -119,6 +133,8 @@ public class Matrix3f
      * interpreted based on the Boolean input as
      *   true:  entry[0..8]={m00,m01,m02,m10,m11,m12,m20,m21,m22} [row major]
      *   false: entry[0..8]={m00,m10,m20,m01,m11,m21,m02,m12,m22} [col major]
+     * @param afEntry, array of values to put in matrix
+     * @param bRowMajor, when true copy in row major order.
      */
     public Matrix3f ( float[] afEntry, boolean bRowMajor)
     {
@@ -152,6 +168,10 @@ public class Matrix3f
     /** Create matrices based on vector input.  The Boolean is interpreted as
      *   true: vectors are columns of the matrix
      *   false: vectors are rows of the matrix
+     * @param rkU, input vector1
+     * @param rkV, input vector2
+     * @param rkW, input vector3
+     * @param bColumns, when true vectors are columns of matrix.
      */
     public Matrix3f (Vector3f rkU, Vector3f rkV,
                      Vector3f rkW, boolean bColumns)
@@ -182,6 +202,12 @@ public class Matrix3f
         }
     }
 
+    /** Create matrices based on vector input.  The Boolean is interpreted as
+     *   true: vectors are columns of the matrix
+     *   false: vectors are rows of the matrix
+     * @param akV, input vector[3]
+     * @param bColumns, when true vectors are columns of matrix.
+     */
     public Matrix3f ( Vector3f[] akV, boolean bColumns)
     {
         if (bColumns)
@@ -211,7 +237,11 @@ public class Matrix3f
     }
 
 
-    /** create a diagonal matrix */
+    /** create a diagonal matrix
+     * @param fM00, 0-diagonal value
+     * @param fM11, 1-diagonal value
+     * @param fM22, 2-diagonal value
+     */
     public Matrix3f (float fM00, float fM11, float fM22)
     {
         MakeDiagonal(fM00,fM11,fM22);
@@ -220,20 +250,33 @@ public class Matrix3f
 
     /** Create rotation matrices (positive angle - counterclockwise).  The
      * angle must be in radians, not degrees.
+     * @param rkAxis, rotation axis
+     * @param fAngle, rotation angle in radians
      */
     public Matrix3f (Vector3f rkAxis, float fAngle)
     {
         FromAxisAngle(rkAxis,fAngle);
     }
 
-    /** create a tensor product U*V^T */
+    /** create a tensor product U*V^T
+     * @param rkU, U-Vector
+     * @param rkV, V-Vector
+     */
     public Matrix3f (Vector3f rkU, Vector3f rkV)
     {
         MakeTensorProduct(rkU,rkV);
     }
 
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        m_afEntry = null;
+    }
 
-    // create various matrices
+
+    /** make this the zero matrix */
     public void MakeZero ()
     {
         m_afEntry[0] = (float)0.0;
@@ -247,6 +290,7 @@ public class Matrix3f
         m_afEntry[8] = (float)0.0;
     }
 
+    /** make this the identity matrix */
     public void MakeIdentity ()
     {
         m_afEntry[0] = (float)1.0;
@@ -260,6 +304,11 @@ public class Matrix3f
         m_afEntry[8] = (float)1.0;
     }
 
+    /** Create a diagonal matrix:
+     * @param fM00, matrix[0] entry
+     * @param fM11, matrix[4] entry
+     * @param fM22, matrix[8] entry
+     */
     public void MakeDiagonal (float fM00, float fM11, float fM22)
     {
         m_afEntry[0] = fM00;
@@ -273,6 +322,11 @@ public class Matrix3f
         m_afEntry[8] = fM22;
     }
 
+    /**
+     * Create a rotation matrix from an axis and angle in radians.
+     * @param rkAxis, rotation axis
+     * @param fAngle, rotation angle in radians
+     */
     public void FromAxisAngle (Vector3f rkAxis, float fAngle)
     {
         float fCos = (float)Math.cos(fAngle);
@@ -299,6 +353,10 @@ public class Matrix3f
         m_afEntry[8] = fZ2*fOneMinusCos+fCos;
     }
 
+    /** create a tensor product U*V^T
+     * @param rkU, U-Vector
+     * @param rkV, V-Vector
+     */
     public void MakeTensorProduct (Vector3f rkU, Vector3f rkV)
     {
         m_afEntry[0] = rkU.X()*rkV.X();
@@ -312,22 +370,38 @@ public class Matrix3f
         m_afEntry[8] = rkU.Z()*rkV.Z();
     }
 
-    // member access
+    /** Get member access
+     * @param iRow, row-value
+     * @param iCol, column-value
+     * @return matrix[iRow*3 + iCol]
+     */
     public float GetData( int iRow, int iCol )
     {
         return m_afEntry[iRow*3 + iCol];
     }
 
+    /** Get member access
+     * @param iIndex, matrix index
+     * @return matrix[iIndex]
+     */
     public float GetData( int iIndex )
     {
         return m_afEntry[iIndex];
     }
 
+    /** Set member access
+     * @param iIndex, matrix index
+     * @param fValue, matrix[iIndex] new value
+     */
     public void SetData( int iIndex, float fValue )
     {
         m_afEntry[iIndex] = fValue;
     }
 
+    /** Set member access
+     * @param iRow, row to set
+     * @param rkV, new row vector values
+     */
     public void SetRow (int iRow, Vector3f rkV)
     {
         int i0 = 3*iRow, i1 = i0+1, i2 = i1+1;
@@ -336,12 +410,20 @@ public class Matrix3f
         m_afEntry[i2] = rkV.Z();
     }
 
+    /** Get member access
+     * @param iRow, row to get
+     * @return row vector values
+     */
     public Vector3f GetRow (int iRow)
     {
         int i0 = 3*iRow, i1 = i0+1, i2 = i1+1;
         return new Vector3f(m_afEntry[i0],m_afEntry[i1],m_afEntry[i2]);
     }
 
+    /** Set member access
+     * @param iCol, column to set
+     * @param rkV, new column vector values
+     */
     public void SetColumn (int iCol, Vector3f rkV)
     {
         m_afEntry[iCol] = rkV.X();
@@ -349,11 +431,18 @@ public class Matrix3f
         m_afEntry[iCol+6] = rkV.Z();
     }
 
+    /** Get member access
+     * @param iCol, column to get
+     * @return column vector values
+     */
     public Vector3f GetColumn (int iCol)
     {
         return new Vector3f(m_afEntry[iCol],m_afEntry[iCol+3],m_afEntry[iCol+6]);
     }
 
+    /** Get member access. Copies matrix into input array.
+     * @param afData, copy matrix into array.
+     */
     public void GetData( float[] afData )
     {
         afData[0] = m_afEntry[0];
@@ -367,6 +456,9 @@ public class Matrix3f
         afData[8] = m_afEntry[8];
     }
 
+    /** Get member access. Copies matrix into input array in Column-Major order.
+     * @param afData, copy matrix into array.
+     */
     public void GetColumnMajor (float[] afCMajor)
     {
         afCMajor[0] = m_afEntry[0];
@@ -380,7 +472,10 @@ public class Matrix3f
         afCMajor[8] = m_afEntry[8];
     }
 
-    // arithmetic operations
+    /** Multiply this matrix to the input matrix, return result, this is unchanged. 
+     * @param rkM, input matrix
+     * @return this*rkM
+     */
     public Matrix3f mult ( Matrix3f rkM )
     {
         return new Matrix3f(
@@ -421,6 +516,10 @@ public class Matrix3f
                             m_afEntry[8]*rkM.m_afEntry[8]);
     }
     
+    /** Multiply this matrix by the scalar input, this matrix is unchanged. 
+     * @param fScalar, scalar value
+     * @return this*fScalar
+     */
     public Matrix3f scale (float fScalar)
     {
         return new Matrix3f(
@@ -437,6 +536,9 @@ public class Matrix3f
 
     /** matrix times vector
      * v^T * M
+     * @param rkV, vector
+     * @param rkM, matrix
+     * @return v^T * M 
      */
     public static Vector3f mult(Vector3f rkV, Matrix3f rkM)
     {
@@ -446,7 +548,11 @@ public class Matrix3f
                         rkV.X()*rkM.m_afEntry[2] + rkV.Y()*rkM.m_afEntry[5] + rkV.Z()*rkM.m_afEntry[8]);
     }
 
-    /** matrix times vector M * v */
+    /** matrix times vector
+     * M * v
+     * @param rkV, vector
+     * @return M * v
+     */
     public Vector3f mult (Vector3f rkV)  // M * v
     {
         return new Vector3f(
@@ -455,8 +561,10 @@ public class Matrix3f
                             m_afEntry[6]*rkV.X() + m_afEntry[7]*rkV.Y() + m_afEntry[8]*rkV.Z());
     }
 
-    // other operations
-    public Matrix3f Transpose ()  // M^T
+    /** Transpose this matrix and return the result, this matrix is unchanged.
+     * @return  M^T
+     */
+    public Matrix3f Transpose ()
     {
         return new Matrix3f(
                             m_afEntry[0],
@@ -470,7 +578,12 @@ public class Matrix3f
                             m_afEntry[8]);
     }
 
-    public Matrix3f TransposeTimes (Matrix3f rkM)  // this^T * M
+    /** Transpose this matrix and multiply by input, return the result, this
+     * matrix is unchanged.
+     * @param rkM, matrix
+     * @return  this^T * M
+     */
+    public Matrix3f TransposeTimes (Matrix3f rkM)
     {
         // P = A^T*B
         return new Matrix3f(
@@ -511,7 +624,12 @@ public class Matrix3f
                         m_afEntry[8]*rkM.m_afEntry[8]);
     }
 
-    public Matrix3f TimesTranspose (Matrix3f rkM)  // this * M^T
+    /** Multiply this matrix by transpose of the input matrix, return the
+     * result, this matrix is unchanged.
+     * @param rkM, matrix
+     * @return this * M^T
+     */
+    public Matrix3f TimesTranspose (Matrix3f rkM)
     {
         // P = A*B^T
         return new Matrix3f(
@@ -554,6 +672,7 @@ public class Matrix3f
 
     /** Invert a 3x3 using cofactors.  This is faster than using a generic
      * Gaussian elimination because of the loop overhead of such a method.
+     * @return resulting matrix
      */
     public Matrix3f Inverse ()
     {
@@ -602,6 +721,9 @@ public class Matrix3f
         return kInverse;
     }
 
+    /** Return adjoint of this matrix, this is unchanged.
+     * @return adjoint of this matrix, this is unchanged.
+     */
     public Matrix3f Adjoint ()
     {
         return new Matrix3f(
@@ -616,6 +738,10 @@ public class Matrix3f
                             m_afEntry[0]*m_afEntry[4] - m_afEntry[1]*m_afEntry[3]);
     }
 
+    /** 
+     * Return the determinant of this matrix.
+     * @return the determinant of this matrix.
+     */
     public float Determinant ()
     {
         float fCo00 = m_afEntry[4]*m_afEntry[8] - m_afEntry[5]*m_afEntry[7];
@@ -625,12 +751,22 @@ public class Matrix3f
         return fDet;
     }
 
+    /**
+     * Calculate and return u^T*M*v
+     * @param rkU, u
+     * @param rkV, v
+     * @return u^T*M*v
+     */
     public float QForm (Vector3f rkU,
                         Vector3f rkV)  // u^T*M*v
     {
         return rkU.Dot(this.mult(rkV));
     }
 
+    /** Return the this matrix times the diagonal vector, this is unchanged:
+     * @param rkDiag, diagonal vector
+     * @return M*D
+     */
     public Matrix3f TimesDiagonal (Vector3f rkDiag)  // M*D
     {
         return new Matrix3f(
@@ -639,7 +775,11 @@ public class Matrix3f
                             m_afEntry[6]*rkDiag.X(),m_afEntry[7]*rkDiag.Y(),m_afEntry[8]*rkDiag.Z());
     }
 
-    public Matrix3f DiagonalTimes (Vector3f rkDiag)   // D*M
+    /** Return the diagonal vector times this matrix, this is unchanged:
+     * @param rkDiag, diagonal vector
+     * @return D*M
+     */
+    public Matrix3f DiagonalTimes (Vector3f rkDiag)
     {
         return new Matrix3f(
                             rkDiag.X()*m_afEntry[0],rkDiag.X()*m_afEntry[1],rkDiag.X()*m_afEntry[2],
@@ -676,6 +816,8 @@ public class Matrix3f
      * P^2 = (R-I)/2.  The diagonal entries of P^2 are x^2-1, y^2-1, and
      * z^2-1.  We can solve these for axis (x,y,z).  Because the angle is pi,
      * it does not matter which sign you choose on the square roots.
+     * @param rkAxis, rotation axis
+     * @return, rotation angle
      */
     public float ToAxisAngle (Vector3f rkAxis)
     {
@@ -813,5 +955,6 @@ public class Matrix3f
         m_afEntry[8] *= fInvLength;
     }
 
+    /** Matrix data: */
     private float[] m_afEntry = new float[9];
 }

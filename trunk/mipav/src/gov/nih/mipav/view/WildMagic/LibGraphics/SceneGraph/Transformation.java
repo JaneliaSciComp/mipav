@@ -38,6 +38,25 @@ public class Transformation
     // consistent with the design of this class.
     public Transformation () {}
 
+    public void finalize()
+    {
+        if ( m_kMatrix != null )
+        {
+            m_kMatrix.finalize();
+            m_kMatrix = null;
+        }
+        if ( m_kTranslate != null )
+        {
+            m_kTranslate.finalize();
+            m_kTranslate = null;
+        }
+        if ( m_kScale != null )
+        {
+            m_kScale.finalize();
+            m_kScale = null;
+        }
+    }
+
     // set the transformation to the identity
     public void MakeIdentity ()
     {

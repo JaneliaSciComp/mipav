@@ -22,7 +22,19 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 
 public class Bindable extends GraphicsObject
 {
+    /** Default constructor: */
     public Bindable () {}
+
+    /** Delete memory */
+    public void finalize()
+    {
+        if ( m_kInfoArray != null )
+        {
+            m_kInfoArray.clear();
+            m_kInfoArray = null;
+        }
+        super.finalize();
+    }
 
     // Use this function when the resource has a unique representation in
     // VRAM (all resources except for vertex buffers).
@@ -66,6 +78,10 @@ public class Bindable extends GraphicsObject
 
     public void Release ()
     {
+        if ( m_kInfoArray == null )
+        {
+            return;
+        }
         while (m_kInfoArray.size() > 0)
         {
             Info rkInfo = m_kInfoArray.get(0);

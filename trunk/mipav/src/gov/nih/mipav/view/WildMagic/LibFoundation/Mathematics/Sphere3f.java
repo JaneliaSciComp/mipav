@@ -23,25 +23,53 @@ package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
  */
 public class Sphere3f
 {
-    public Sphere3f () {}  // uninitialized
+    /** Constructor: uninitialized */
+    public Sphere3f () {}  
+
+    /** Constructor 
+     * @param rkCenter, sphere center
+     * @param fRadius, sphere radius
+     */
     public Sphere3f ( Vector3f rkCenter, float fRadius)
     {
         Center = new Vector3f(rkCenter);
         Radius = fRadius;
     }
 
+    /** Copy Constructor 
+     * @param rkSphere, sphere to copy.
+     */
     public Sphere3f ( Sphere3f rkSphere )
     {
         Center = new Vector3f(rkSphere.Center);
         Radius = rkSphere.Radius;
     }
 
+    /**
+     * delete memory
+     */
+    public void finalize()
+    {
+        Center.finalize();
+        Center = null;
+    }
+
+    /** Copy 
+     * @param rkSphere, sphere to copy.
+     */
     public void Copy ( Sphere3f rkSphere )
     {
         Center = new Vector3f(rkSphere.Center);
         Radius = rkSphere.Radius;
     }
 
+    /**
+     * Creates a sphere containing all input points, with the center of the
+     * sphere the center of the points.
+     * @param iQuantity, number of input points.
+     * @param akPoint, input points
+     * @return new sphere containing all points.
+     */
     public static Sphere3f ContSphereAverage (int iQuantity, final Vector3f[] akPoint)
     {
         Sphere3f kSphere = new Sphere3f();
@@ -67,12 +95,23 @@ public class Sphere3f
         return kSphere;
     }
 
+    /**
+     * Test if input point is inside input sphere.
+     * @param rkPoint, point
+     * @param rkSphere, sphere
+     * @return true if point is inside sphere.
+     */
     public static boolean InSphere (final Vector3f rkPoint, final Sphere3f rkSphere)
     {
         Vector3f kDiff = rkPoint.sub( rkSphere.Center );
         return (kDiff.Length() <= rkSphere.Radius);
     }
 
+    /** Merge the two input spheres, return result.
+     * @param rkSphere0, sphere0 to merge
+     * @param rkSphere1, sphere1 to merge
+     * @return sphere result of merge
+     */
     public static Sphere3f MergeSpheres (final Sphere3f rkSphere0,
                                          final Sphere3f rkSphere1)
     {
@@ -106,6 +145,8 @@ public class Sphere3f
     }
 
 
+    /** The sphere is represented as |X-C| = R where C is the center */
     public Vector3f Center;
+    /** Sphere Radius*/
     public float Radius;
 }

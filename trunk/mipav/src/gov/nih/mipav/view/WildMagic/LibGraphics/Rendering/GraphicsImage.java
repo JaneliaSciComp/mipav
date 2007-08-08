@@ -227,11 +227,14 @@ public class GraphicsImage extends GraphicsObject
         m_aucData = null;
     }
     
+    /** delete memory */
     public void finalize ()
     {
+        m_aiBound = null;
         m_aucData = null;
         m_afData = null;
         ImageCatalog.GetActive().Remove(this);
+        super.finalize();
     }
 
     // member access
