@@ -952,6 +952,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			resultImageSlider.setMajorTickSpacing(10);
 			resultImageSlider.setPaintTicks(true);
 			resultImageSlider.addChangeListener(this);
+			resultImageSlider.addMouseWheelListener(this);
 			maxResultImageSlicesLabel = new JLabel(Integer.toString(nImage));
 			maxResultImageSlicesLabel.setForeground(Color.black);
 			maxResultImageSlicesLabel.setFont(MipavUtil.font12);
@@ -2209,7 +2210,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	public void mouseWheelMoved(MouseWheelEvent event) {
 		int wheelRotation = event.getWheelRotation();
 		Object source = event.getSource();
-		if(source == componentImage || source == resultScrollPanel) {	
+		if(source == componentImage || source == resultScrollPanel || source == resultImageSlider) {	
 			if (wheelRotation < 0) {
 				if(zSlice != numSlices-1) {
 					zSlice = zSlice + 1;
