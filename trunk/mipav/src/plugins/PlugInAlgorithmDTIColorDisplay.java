@@ -159,8 +159,6 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 	       	fileInfoBases[i].setFileDirectory(eigvecSrcImage.getFileInfo()[0].getFileDirectory());
         }
         
-        
-        System.out.println(eigvecSrcImage.getFileInfo()[0].getFileDirectory());
         resultImage.setFileInfo(fileInfoBases);
         resultImage.calcMinMax();
 

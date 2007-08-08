@@ -357,6 +357,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		anisotropyMaxSlider.setPaintTicks(true);
 		anisotropyMaxSlider.addChangeListener(this);
 		anisotropyMaxSlider.addMouseListener(this);
+		anisotropyMaxSlider.addMouseWheelListener(this);
 		maxAnisotropyMaxLabel = new JLabel("1.0");
 		maxAnisotropyMaxLabel.setForeground(Color.black);
 		maxAnisotropyMaxLabel.setFont(MipavUtil.font12);
@@ -402,6 +403,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		anisotropyMinSlider.setPaintTicks(true);
 		anisotropyMinSlider.addChangeListener(this);
 		anisotropyMinSlider.addMouseListener(this);
+		anisotropyMinSlider.addMouseWheelListener(this);
 		maxAnisotropyMinLabel = new JLabel("1.0");
 		maxAnisotropyMinLabel.setForeground(Color.black);
 		maxAnisotropyMinLabel.setFont(MipavUtil.font12);
@@ -447,6 +449,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gammaSlider.setPaintTicks(true);
 		gammaSlider.addChangeListener(this);
 		gammaSlider.addMouseListener(this);
+		gammaSlider.addMouseWheelListener(this);
 		maxGammaLabel = new JLabel("4");
 		maxGammaLabel.setForeground(Color.black);
 		maxGammaLabel.setFont(MipavUtil.font12);
@@ -492,6 +495,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		satBlueSlider.setPaintTicks(true);
 		satBlueSlider.addChangeListener(this);
 		satBlueSlider.addMouseListener(this);
+		satBlueSlider.addMouseWheelListener(this);
 		maxSatBlueLabel = new JLabel("0.5");
 		maxSatBlueLabel.setForeground(Color.black);
 		maxSatBlueLabel.setFont(MipavUtil.font12);
@@ -537,6 +541,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		dimGreenSlider.setPaintTicks(true);
 		dimGreenSlider.addChangeListener(this);
 		dimGreenSlider.addMouseListener(this);
+		dimGreenSlider.addMouseWheelListener(this);
 		maxDimGreenLabel = new JLabel("3.0");
 		maxDimGreenLabel.setForeground(Color.black);
 		maxDimGreenLabel.setFont(MipavUtil.font12);
@@ -582,6 +587,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		colorRangeSlider.setPaintTicks(true);
 		colorRangeSlider.addChangeListener(this);
 		colorRangeSlider.addMouseListener(this);
+		colorRangeSlider.addMouseWheelListener(this);
 		maxColorRangeLabel = new JLabel("1.0");
 		maxColorRangeLabel.setForeground(Color.black);
 		maxColorRangeLabel.setFont(MipavUtil.font12);
@@ -628,6 +634,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		satVsThetaSlider.addChangeListener(this);
 		satVsThetaSlider.addMouseListener(this);
 		satVsThetaSlider.setEnabled(false);
+		satVsThetaSlider.addMouseWheelListener(this);
 		maxSatVsThetaLabel = new JLabel("1.0");
 		maxSatVsThetaLabel.setForeground(Color.black);
 		maxSatVsThetaLabel.setFont(MipavUtil.font12);
@@ -673,6 +680,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		adjustExpSlider.setPaintTicks(true);
 		adjustExpSlider.addChangeListener(this);
 		adjustExpSlider.addMouseListener(this);
+		adjustExpSlider.addMouseWheelListener(this);
 		maxAdjustExpLabel = new JLabel("1.0");
 		maxAdjustExpLabel.setForeground(Color.black);
 		maxAdjustExpLabel.setFont(MipavUtil.font12);
@@ -718,6 +726,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		stevensBetaSlider.setPaintTicks(true);
 		stevensBetaSlider.addChangeListener(this);
 		stevensBetaSlider.addMouseListener(this);
+		stevensBetaSlider.addMouseWheelListener(this);
 		maxStevensBetaLabel = new JLabel("0.6");
 		maxStevensBetaLabel.setForeground(Color.black);
 		maxStevensBetaLabel.setFont(MipavUtil.font12);
@@ -1723,13 +1732,13 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 
         if (source == anisotropyMaxSlider) {
         	if(anisotropyMaxSlider.getValue() < anisotropyMinSlider.getValue()) {
-        		anisotropyMaxSlider.setValue(anisotropyMinSlider.getValue() + 10);
+        		anisotropyMaxSlider.setValue(anisotropyMinSlider.getValue() + 1);
         	}
         	updateCurrentColorWheel();
         }
         else if (source == anisotropyMinSlider) {
         	if(anisotropyMinSlider.getValue() > anisotropyMaxSlider.getValue()) {
-        		anisotropyMinSlider.setValue(anisotropyMaxSlider.getValue() - 10);
+        		anisotropyMinSlider.setValue(anisotropyMaxSlider.getValue() - 1);
         	}
         	updateCurrentColorWheel();
         }
@@ -2199,17 +2208,150 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	 */
 	public void mouseWheelMoved(MouseWheelEvent event) {
 		int wheelRotation = event.getWheelRotation();
-		if (wheelRotation < 0) {
-			if(zSlice != numSlices-1) {
-				zSlice = zSlice + 1;
-				resultImageSlider.setValue(zSlice + 1);
-				setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+		Object source = event.getSource();
+		if(source == componentImage || source == resultScrollPanel) {	
+			if (wheelRotation < 0) {
+				if(zSlice != numSlices-1) {
+					zSlice = zSlice + 1;
+					resultImageSlider.setValue(zSlice + 1);
+					setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+				}
+			}else {
+				if(zSlice != 0) {
+					zSlice = zSlice -1;
+					resultImageSlider.setValue(zSlice + 1);
+					setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+				}
 			}
-		}else {
-			if(zSlice != 0) {
-				zSlice = zSlice -1;
-				resultImageSlider.setValue(zSlice + 1);
-				setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+		}
+		else if(source == anisotropyMaxSlider) {
+			if (wheelRotation < 0) {
+				if(anisotropyMaxSlider.getValue() < anisotropyMaxSlider.getMaximum()) {
+					anisotropyMaxSlider.setValue(anisotropyMaxSlider.getValue() + 1);
+					updateCurrentColorWheel();
+				}
+			}
+			else {
+				if(anisotropyMaxSlider.getValue() > anisotropyMaxSlider.getMinimum()) {
+					if(anisotropyMaxSlider.getValue() - 1 > anisotropyMinSlider.getValue()) {
+						anisotropyMaxSlider.setValue(anisotropyMaxSlider.getValue() - 1);
+						updateCurrentColorWheel();
+					}
+				}
+			}
+		}
+		else if(source == anisotropyMinSlider) {
+			if (wheelRotation < 0) {
+				if(anisotropyMinSlider.getValue() < anisotropyMinSlider.getMaximum()) {
+					if(anisotropyMinSlider.getValue() + 1 < anisotropyMaxSlider.getValue()) {
+						anisotropyMinSlider.setValue(anisotropyMinSlider.getValue() + 1);
+						updateCurrentColorWheel();
+					}
+				}
+			}
+			else {
+				if(anisotropyMinSlider.getValue() > anisotropyMinSlider.getMinimum()) {
+					anisotropyMinSlider.setValue(anisotropyMinSlider.getValue() - 1);
+					updateCurrentColorWheel();
+				}
+			}
+		}
+		else if(source == gammaSlider) {
+			if (wheelRotation < 0) {
+				if(gammaSlider.getValue() < gammaSlider.getMaximum()) {
+					gammaSlider.setValue(gammaSlider.getValue() + 1);
+					updateCurrentColorWheel();
+				}
+			}
+			else {
+				if(gammaSlider.getValue() > gammaSlider.getMinimum()) {
+					gammaSlider.setValue(gammaSlider.getValue() - 1);
+					updateCurrentColorWheel();
+				}
+			}
+		}
+		else if(source == satBlueSlider) {
+			if (wheelRotation < 0) {
+				if(satBlueSlider.getValue() < satBlueSlider.getMaximum()) {
+					satBlueSlider.setValue(satBlueSlider.getValue() + 1);
+					updateCurrentColorWheel();
+				}
+			}
+			else {
+				if(satBlueSlider.getValue() > satBlueSlider.getMinimum()) {
+					satBlueSlider.setValue(satBlueSlider.getValue() - 1);
+					updateCurrentColorWheel();
+				}
+			}
+		}
+		else if(source == dimGreenSlider) {
+			if (wheelRotation < 0) {
+				if(dimGreenSlider.getValue() < dimGreenSlider.getMaximum()) {
+					dimGreenSlider.setValue(dimGreenSlider.getValue() + 1);
+					updateCurrentColorWheel();
+				}
+			}
+			else {
+				if(dimGreenSlider.getValue() > dimGreenSlider.getMinimum()) {
+					dimGreenSlider.setValue(dimGreenSlider.getValue() - 1);
+					updateCurrentColorWheel();
+				}
+			}
+		}
+		else if(source == colorRangeSlider) {
+			if (wheelRotation < 0) {
+				if(colorRangeSlider.getValue() < colorRangeSlider.getMaximum()) {
+					colorRangeSlider.setValue(colorRangeSlider.getValue() + 1);
+					updateCurrentColorWheel();
+				}
+			}
+			else {
+				if(colorRangeSlider.getValue() > colorRangeSlider.getMinimum()) {
+					colorRangeSlider.setValue(colorRangeSlider.getValue() - 1);
+					updateCurrentColorWheel();
+				}
+			}
+		}
+		else if(source == satVsThetaSlider) {
+			if (wheelRotation < 0) {
+				if(satVsThetaSlider.getValue() < satVsThetaSlider.getMaximum()) {
+					satVsThetaSlider.setValue(satVsThetaSlider.getValue() + 1);
+					updateCurrentColorWheel();
+				}
+			}
+			else {
+				if(satVsThetaSlider.getValue() > satVsThetaSlider.getMinimum()) {
+					satVsThetaSlider.setValue(satVsThetaSlider.getValue() - 1);
+					updateCurrentColorWheel();
+				}
+			}
+		}
+		else if(source == adjustExpSlider) {
+			if (wheelRotation < 0) {
+				if(adjustExpSlider.getValue() < adjustExpSlider.getMaximum()) {
+					adjustExpSlider.setValue(adjustExpSlider.getValue() + 1);
+					updateCurrentColorWheel();
+				}
+			}
+			else {
+				if(adjustExpSlider.getValue() > adjustExpSlider.getMinimum()) {
+					adjustExpSlider.setValue(adjustExpSlider.getValue() - 1);
+					updateCurrentColorWheel();
+				}
+			}
+		}
+		else if(source == stevensBetaSlider) {
+			if (wheelRotation < 0) {
+				if(stevensBetaSlider.getValue() < stevensBetaSlider.getMaximum()) {
+					stevensBetaSlider.setValue(stevensBetaSlider.getValue() + 1);
+					updateCurrentColorWheel();
+				}
+			}
+			else {
+				if(stevensBetaSlider.getValue() > stevensBetaSlider.getMinimum()) {
+					stevensBetaSlider.setValue(stevensBetaSlider.getValue() - 1);
+					updateCurrentColorWheel();
+				}
 			}
 		}
 
