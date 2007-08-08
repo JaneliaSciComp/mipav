@@ -62,11 +62,7 @@ public class Camera extends GraphicsObject
             m_kRVector = null;
         }
         m_afFrustum = null;
-        if ( m_pkRenderer != null )
-        {
-            m_pkRenderer.finalize();
-            m_pkRenderer = null;
-        }
+        m_pkRenderer = null;
 
         super.finalize();
     }
