@@ -22,6 +22,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.PixelGrabber;
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -2069,76 +2070,86 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         }
 
         componentImage.setShowSliceNumber(true);
-        /*
-        screenCaptureImage.calcMinMax();
-        screenCaptureImage.getFileInfo()[0].setResolutions(resultImage.getFileInfo()[0].getResolutions());
-        screenCaptureImage.getFileInfo()[0].setUnitsOfMeasure(resultImage.getFileInfo()[0].getUnitsOfMeasure());
-        screenCaptureImage.getFileInfo()[0].setAxisOrientation(resultImage.getFileInfo()[0].getAxisOrientation());
-        screenCaptureImage.getFileInfo()[0].setImageOrientation(resultImage.getFileInfo()[0].getImageOrientation());
-        screenCaptureImage.getFileInfo()[0].setSliceThickness(resultImage.getFileInfo()[0].getSliceThickness());
-        screenCaptureImage.getFileInfo()[0].setOrigin(resultImage.getFileInfo()[0].getOrigin());
 
-        for (int m = 1; m < extents[2]; m++) {
-        	screenCaptureImage.setFileInfo((FileInfoBase) screenCaptureImage.getFileInfo()[0].clone(), m);
-        }
-        */
-        
-        //FileInfoBase[] fileInfoBases = new FileInfoBase[resultImage.getExtents()[2]];
         FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[resultImage.getExtents()[2]];
         String psetDesc = "Color Display Parameters";
         String name;
         String value;
         for (int i=0;i<fileInfoBases.length;i++) {
-       	 	fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName() + "_imageB", null, FileUtility.XML);
+       	 	fileInfoBases[i] = new FileInfoImageXML(screenCaptureImage.getImageName(), null, FileUtility.XML);
        	 	fileInfoBases[i].createPSet(psetDesc);
        	 	name = "Eigenvector File";
        	 	value = eigvecFilename;
        	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
        	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
        	 	name = "Anisotropy File";
     	 	value = anisotropyFilename;
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Color Wheel";
     	 	value = type;
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Anisotropy Max";
     	 	value = String.valueOf(anisotropyMax);
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Anisotropy Min";
     	 	value = String.valueOf(anisotropyMin);
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Gamma Correction";
     	 	value = String.valueOf(gamma);
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Blue Saturation";
     	 	value = String.valueOf(pB);
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Green Adjustment";
     	 	value = String.valueOf(pG);
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Color Range";
     	 	value = String.valueOf(pC);
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Saturation vs Theta";
     	 	value = String.valueOf(pS);
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Adjust Exponent";
     	 	value = String.valueOf(adjustExp);
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Stevens Beta";
     	 	value = String.valueOf(stevensBeta);
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
     	 	name = "Truncate / Multiply";
     	 	if(isMultiply) {
     	 		value = "Multiply";
@@ -2148,11 +2159,15 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     	 	}
     	 	fileInfoBases[i].getPSet(psetDesc).addParameter(name);
     	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValue(value);
+    	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setDescription("");
+       	 	fileInfoBases[i].getPSet(psetDesc).getParameter(name).setValueType("string");
        	 	
+       	 	fileInfoBases[i].setFileDirectory(resultImage.getFileInfo()[0].getFileDirectory());
         }
         FileInfoBase.copyCoreInfo(resultImage.getFileInfo(), fileInfoBases);
-        screenCaptureImage.setFileInfo(fileInfoBases);
         
+        screenCaptureImage.setFileInfo(fileInfoBases);
+        screenCaptureImage.calcMinMax();
         
         
         new ViewJFrameImage(screenCaptureImage, null, new Dimension(610, 200));

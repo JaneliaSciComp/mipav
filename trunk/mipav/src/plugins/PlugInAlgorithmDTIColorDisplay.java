@@ -135,6 +135,7 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
   
         //set up result image
         resultImage = new ModelImage(ModelImage.ARGB_FLOAT, channelImages[0].getExtents(),eigvecSrcImage.getImageName() + "_ColorDisplay");
+        
 
         //cocatenate channel images into an RGB image
         mathAlgo = new AlgorithmRGBConcat(channelImages[0], channelImages[1], channelImages[2], resultImage, remapMode, false);
@@ -144,11 +145,24 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
         //copy core file info over
         FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[resultImage.getExtents()[2]];
         for (int i=0;i<fileInfoBases.length;i++) {
-       	 	fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName(), null, FileUtility.XML);
+       	 	fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName(), null, FileUtility.XML);	
+       	 	fileInfoBases[i].setEndianess(eigvecSrcImage.getFileInfo()[0].getEndianess());
+	       	fileInfoBases[i].setUnitsOfMeasure(eigvecSrcImage.getFileInfo()[0].getUnitsOfMeasure());
+	       	fileInfoBases[i].setResolutions(eigvecSrcImage.getFileInfo()[0].getResolutions());
+	       	fileInfoBases[i].setExtents(resultImage.getExtents());
+	       	fileInfoBases[i].setImageOrientation(eigvecSrcImage.getFileInfo()[0].getImageOrientation());
+	       	fileInfoBases[i].setAxisOrientation(eigvecSrcImage.getFileInfo()[0].getAxisOrientation());
+	       	fileInfoBases[i].setOrigin(eigvecSrcImage.getFileInfo()[0].getOrigin());
+	       	fileInfoBases[i].setPixelPadValue(eigvecSrcImage.getFileInfo()[0].getPixelPadValue());
+	       	fileInfoBases[i].setPhotometric(eigvecSrcImage.getFileInfo()[0].getPhotometric());
+	       	fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
+	       	fileInfoBases[i].setFileDirectory(eigvecSrcImage.getFileInfo()[0].getFileDirectory());
         }
-        FileInfoBase.copyCoreInfo(eigvecSrcImage.getFileInfo(), fileInfoBases);
-        resultImage.setFileInfo(fileInfoBases);
         
+        
+        System.out.println(eigvecSrcImage.getFileInfo()[0].getFileDirectory());
+        resultImage.setFileInfo(fileInfoBases);
+        resultImage.calcMinMax();
 
         finalize();
         
