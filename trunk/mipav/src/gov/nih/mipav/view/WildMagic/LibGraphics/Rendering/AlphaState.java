@@ -25,10 +25,15 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 public class AlphaState extends GlobalState
     implements StreamInterface
 {
+    /** Maps source blend enum to int values. */
     private static HashMap<Integer,SrcBlendMode> ms_pkSrcBlendModeMap = new HashMap<Integer,SrcBlendMode>();
+    /** Maps destination blend enum to int values. */
     private static HashMap<Integer,DstBlendMode> ms_pkDstBlendModeMap = new HashMap<Integer,DstBlendMode>();
+    /** Maps alpha-test enum to int values. */
     private static HashMap<Integer,TestMode> ms_pkTestModeMap = new HashMap<Integer,TestMode>();
 
+    /** Static initialization of the AlphaState in the GlobalState.Default
+     * array. */
     static
     {
         if ( !DefaultInitialized[StateType.ALPHA.Value()] )
@@ -39,6 +44,7 @@ public class AlphaState extends GlobalState
 
     }
      
+    /** Alpha blending: source blend modes. */
     public enum SrcBlendMode
     {
         SBF_ZERO ("SBF_ZERO"),
@@ -73,6 +79,7 @@ public class AlphaState extends GlobalState
         public String Name() { return m_kName; }
     };
 
+    /** Alpha blending: destination blend modes. */
     public enum DstBlendMode
     {
         DBF_ZERO ("DBF_ZERO"),
@@ -106,6 +113,7 @@ public class AlphaState extends GlobalState
         public String Name() { return m_kName; }
     };
 
+    /** Alpha blending: alpha-test modes. */
     public enum TestMode
     {
         TF_NEVER ("TF_NEVER"),
@@ -135,15 +143,29 @@ public class AlphaState extends GlobalState
         private static int m_iInitValue = 0;
     };
 
+    /** Initializes static enum for src blend modes. */
     private static SrcBlendMode ms_eSrcBlendModeStatic = SrcBlendMode.SBF_QUANTITY;
+    /** Initializes static enum for dst blend modes. */
     private static DstBlendMode ms_eDstBlendModeStatic = DstBlendMode.DBF_QUANTITY;
+    /** Initializes static enum for alpha-test modes. */
     private static TestMode ms_eTestModeStatic = TestMode.TF_QUANTITY;
 
-
+    /** Return type.
+     * @return StateType.ALPHA;
+     */
     public final StateType GetStateType () { return StateType.ALPHA; }
 
+    /** Default constructor. */
     public AlphaState () {}
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -160,16 +182,34 @@ public class AlphaState extends GlobalState
         Reference = rkStream.ReadFloat();
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         return super.Register(rkStream);
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -183,6 +223,12 @@ public class AlphaState extends GlobalState
         rkStream.Write(Reference);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (final StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -194,6 +240,12 @@ public class AlphaState extends GlobalState
             Stream.SIZEOF_FLOAT;
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String kString)
     {
         StringTree pkTree = new StringTree();
@@ -210,13 +262,20 @@ public class AlphaState extends GlobalState
         return pkTree;
     }
 
-    public boolean BlendEnabled = false;                                  // default: false
-    public SrcBlendMode SrcBlend = SrcBlendMode.SBF_SRC_ALPHA;            // default: SBF_SRC_ALPHA
-    public DstBlendMode DstBlend = DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;  // default: DBF_ONE_MINUS_SRC_ALPHA
-    public boolean TestEnabled = false;                                   // default: false;
-    public TestMode Test = TestMode.TF_ALWAYS;                            // default: TF_ALWAYS
-    public float Reference = 0.0f;                                        // default: 0, always in [0,1]
+    /** Alpha blending enabled: default: false. */
+    public boolean BlendEnabled = false;
+    /** Source blend mode default: SBF_SRC_ALPHA */
+    public SrcBlendMode SrcBlend = SrcBlendMode.SBF_SRC_ALPHA;
+    /** Destination blend mode default: DBF_ONE_MINUS_SRC_ALPHA */
+    public DstBlendMode DstBlend = DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
+    /** Alpha test enabled  default: false; */
+    public boolean TestEnabled = false;
+    /** Test mode: default: TF_ALWAYS */
+    public TestMode Test = TestMode.TF_ALWAYS;
+    /** Reference default: 0, always in [0,1] */
+    public float Reference = 0.0f;
 
     // TO DO.  New member, needs to be streamed.
-    public ColorRGBA ConstantColor = new ColorRGBA(0f,0f,0f,0f);          // default: (0,0,0,0)
+    /** Constant color default: (0,0,0,0) */
+    public ColorRGBA ConstantColor = new ColorRGBA(0f,0f,0f,0f);
 }

@@ -24,7 +24,7 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 public class Camera extends GraphicsObject
     implements StreamInterface
 {
-    // Construction and destruction.
+    /** Default constructor. */
     public Camera ()
     {
         m_pkRenderer = null;
@@ -67,13 +67,18 @@ public class Camera extends GraphicsObject
         super.finalize();
     }
 
-    // The camera frame is always in world coordinates.
-    //   default location  E = (0,0,0)
-    //   default direction D = (0,0,-1)
-    //   default up        U = (0,1,0)
-    //   default right     R = (1,0,0)
+    /** The camera frame is always in world coordinates.
+     *   default location  E = (0,0,0)
+     *   default direction D = (0,0,-1)
+     *   default up        U = (0,1,0)
+     *   default right     R = (1,0,0)
+     * @param rkLocation, location vector.
+     * @param rkDVector, direction vector.
+     * @param rkUVector, up vector.
+     * @param rkRVector, right vector.
+     */
     public void SetFrame ( Vector3f rkLocation, Vector3f rkDVector,
-                    Vector3f rkUVector, Vector3f rkRVector)
+                           Vector3f rkUVector, Vector3f rkRVector)
     {
         m_kLocation = rkLocation;
         m_kDVector = rkDVector;
@@ -86,6 +91,13 @@ public class Camera extends GraphicsObject
         }
     }
 
+    /** The camera frame is always in world coordinates.
+     *   default location  E = (0,0,0)
+     *   default direction D = (0,0,-1)
+     *   default up        U = (0,1,0)
+     *   default right     R = (1,0,0)
+     * @param rkLocation, location vector.
+     */
     public void SetLocation (Vector3f rkLocation)
     {
         m_kLocation = rkLocation;
@@ -96,8 +108,17 @@ public class Camera extends GraphicsObject
         }
     }
 
+    /** The camera frame is always in world coordinates.
+     *   default location  E = (0,0,0)
+     *   default direction D = (0,0,-1)
+     *   default up        U = (0,1,0)
+     *   default right     R = (1,0,0)
+     * @param rkDVector, direction vector.
+     * @param rkUVector, up vector.
+     * @param rkRVector, right vector.
+     */
     public void SetAxes (Vector3f rkDVector, Vector3f rkUVector,
-                  Vector3f rkRVector)
+                         Vector3f rkRVector)
     {
         m_kDVector = rkDVector;
         m_kUVector = rkUVector;
@@ -109,34 +130,63 @@ public class Camera extends GraphicsObject
         }
     }
 
+    /** The camera frame is always in world coordinates.
+     *   default location  E = (0,0,0)
+     *   default direction D = (0,0,-1)
+     *   default up        U = (0,1,0)
+     *   default right     R = (1,0,0)
+     * @return location vector.
+     */
     public final Vector3f GetLocation ()
     {
         return m_kLocation;
     }
 
+    /** The camera frame is always in world coordinates.
+     *   default location  E = (0,0,0)
+     *   default direction D = (0,0,-1)
+     *   default up        U = (0,1,0)
+     *   default right     R = (1,0,0)
+     * @return direction vector.
+     */
     public final Vector3f GetDVector ()
     {
         return m_kDVector;
     }
 
+    /** The camera frame is always in world coordinates.
+     *   default location  E = (0,0,0)
+     *   default direction D = (0,0,-1)
+     *   default up        U = (0,1,0)
+     *   default right     R = (1,0,0)
+     * @return up vector.
+     */
     public final Vector3f GetUVector ()
     {
         return m_kUVector;
     }
 
+    /** The camera frame is always in world coordinates.
+     *   default location  E = (0,0,0)
+     *   default direction D = (0,0,-1)
+     *   default up        U = (0,1,0)
+     *   default right     R = (1,0,0)
+     * @return right vector.
+     */
     public final Vector3f GetRVector ()
     {
         return m_kRVector;
     }
 
 
-    // The view frustum has parameters [rmin,rmax], [umin,umax], and
-    // [dmin,dmax].  The interval [rmin,rmax] is measured in the right
-    // direction R.  These are the "left" and "right" frustum values.  The
-    // interval [umin,umax] is measured in the up direction U.  These are
-    // the "bottom" and "top" values.  The interval [dmin,dmax] is measured
-    // in the view direction D.  These are the "near" and "far" values.
-    // The frustum values are stored in an array with the following mappings:
+    /** The view frustum has parameters [rmin,rmax], [umin,umax], and
+     * [dmin,dmax].  The interval [rmin,rmax] is measured in the right
+     * direction R.  These are the "left" and "right" frustum values.  The
+     * interval [umin,umax] is measured in the up direction U.  These are
+     * the "bottom" and "top" values.  The interval [dmin,dmax] is measured
+     * in the view direction D.  These are the "near" and "far" values.
+     * The frustum values are stored in an array with the following mappings:
+     */
     public enum ViewFrustum
     {
         VF_DMIN (0),     //= 0,  // near
@@ -155,11 +205,18 @@ public class Camera extends GraphicsObject
         public int Value() { return m_iValue; }
     };
 
-    // Set the view frustum.  The interval [rmin,rmax] is measured in the
-    // right direction R.  These are the "left" and "right" frustum values.
-    // The interval [umin,umax] is measured in the up direction U.  These are
-    // the "bottom" and "top" values.  The interval [dmin,dmax] is measured
-    // in the view direction D.  These are the "near" and "far" values.
+    /** Set the view frustum.  The interval [rmin,rmax] is measured in the
+     * right direction R.  These are the "left" and "right" frustum values.
+     * The interval [umin,umax] is measured in the up direction U.  These are
+     * the "bottom" and "top" values.  The interval [dmin,dmax] is measured
+     * in the view direction D.  These are the "near" and "far" values.
+     * @param fRMin, "left"
+     * @param fRMax, "right"
+     * @param fUMin, "bottom"
+     * @param fUMax, "top"
+     * @param fDMin, "near"
+     * @param fDMax, "far"
+     */
     public void SetFrustum (float fRMin, float fRMax, float fUMin, float fUMax,
                             float fDMin, float fDMax)
     {
@@ -176,13 +233,18 @@ public class Camera extends GraphicsObject
         }
     }
 
-    // Set a symmetric view frustum (umin = -umax, rmin = -rmax) using a field
-    // of view in the "up" direction and an aspect ratio "width/height".  This
-    // call is the equivalent of gluPerspective in OpenGL.  As such, the field
-    // of view in this function must be specified in degrees and be in the
-    // interval (0,180).
-    public void SetFrustum (float fUpFovDegrees, float fAspectRatio, float fDMin,
-        float fDMax)
+    /** Set a symmetric view frustum (umin = -umax, rmin = -rmax) using a field
+     * of view in the "up" direction and an aspect ratio "width/height".  This
+     * call is the equivalent of gluPerspective in OpenGL.  As such, the field
+     * of view in this function must be specified in degrees and be in the
+     * interval (0,180).
+     * @param fUpFovDegrees, field of view in the "up" direction.
+     * @param fAspectRatio, aspect ratio "width/height"
+     * @param fDMin, "near"
+     * @param fDMax, "far"
+     */
+    public void SetFrustum (float fUpFovDegrees, float fAspectRatio,
+                            float fDMin, float fDMax)
     {
         float fHalfAngleRadians = 0.5f*fUpFovDegrees*Mathf.DEG_TO_RAD;
         m_afFrustum[ViewFrustum.VF_UMAX.Value()] = (float)(fDMin*Math.tan(fHalfAngleRadians));
@@ -199,7 +261,8 @@ public class Camera extends GraphicsObject
     }
 
 
-    // Get the view frustum.
+    /** Get the view frustum.
+     * @return the view frustum. */
     public final float[] GetFrustum ()
     {
         return m_afFrustum;
@@ -210,43 +273,60 @@ public class Camera extends GraphicsObject
     // 'true' iff the current frustum is symmetric, in which case the output
     // parameters are valid.
 
-    // Get the individual frustum values.
+    /** Get the near frustum value.
+     * @return the near frustum value. */
     public final float GetDMin ()
     {
         return m_afFrustum[ViewFrustum.VF_DMIN.Value()];
     }
 
+    /** Get the far frustum value.
+     * @return the far frustum value. */
     public final float GetDMax ()
     {
         return m_afFrustum[ViewFrustum.VF_DMAX.Value()];
     }
 
+    /** Get the bottom frustum value.
+     * @return the bottom frustum value. */
     public final float GetUMin ()
     {
         return m_afFrustum[ViewFrustum.VF_UMIN.Value()];
     }
 
+    /** Get the top frustum value.
+     * @return the top frustum value. */
     public final float GetUMax ()
     {
         return m_afFrustum[ViewFrustum.VF_UMAX.Value()];
     }
 
+    /** Get the left frustum value.
+     * @return the left frustum value. */
     public final float GetRMin ()
     {
         return m_afFrustum[ViewFrustum.VF_RMIN.Value()];
     }
 
+    /** Get the right frustum value.
+     * @return the right frustum value. */
     public final float GetRMax ()
     {
         return m_afFrustum[ViewFrustum.VF_RMAX.Value()];
     }
 
-    // Allow for orthogonal cameras as well as perspective cameras.  The
-    // default is perspective (value is 'true').  Set to 'false' for an
-    // orthogonal camera.  TO DO.  Stream this member.
+    /** Allow for orthogonal cameras as well as perspective cameras.  The
+     * default is perspective (value is 'true').  Set to 'false' for an
+     * orthogonal camera.  TO DO.  Stream this member.
+     */
     public boolean Perspective;
 
-    // viewport (contained in [0,1]^2)
+    /** Set the viewport (contained in [0,1]^2)
+     * @param fLeft, left
+     * @param fRight, right
+     * @param fTop, top
+     * @param fBottom, bottom
+     */
     public void SetViewport (float fLeft, float fRight, float fTop, float fBottom)
     {
         m_fPortL = fLeft;
@@ -260,27 +340,42 @@ public class Camera extends GraphicsObject
         }
     }
 
+    /** Get the viewport (contained in [0,1]^2)
+     * @return left
+     */
     public final float GetPortL ()
     {
         return m_fPortL;
     }
 
+    /** Get the viewport (contained in [0,1]^2)
+     * @return right
+     */
     public final float GetPortR ()
     {
         return m_fPortR;
     }
 
+    /** Get the viewport (contained in [0,1]^2)
+     * @return top
+     */
     public final float GetPortT ()
     {
         return m_fPortT;
     }
 
+    /** Get the viewport (contained in [0,1]^2)
+     * @return bottom
+     */
     public final float GetPortB ()
     {
         return m_fPortB;
     }
 
-    // depth range (contained in [0,1])
+    /** Set depth range (contained in [0,1])
+     * @param fNear, near
+     * @param fFar, near
+     */
     public void SetDepthRange (float fNear, float fFar)
     {
         m_fPortN = fNear;
@@ -292,22 +387,37 @@ public class Camera extends GraphicsObject
         }
     }
 
+    /** Get depth range (contained in [0,1])
+     * @return near
+     */
     public final float GetPortN() 
     {
         return m_fPortN;
     }
 
+    /** Get depth range (contained in [0,1])
+     * @return far
+     */
     public final float GetPortF() 
     {
         return m_fPortF;
     }
 
-    // Mouse picking support.  The (x,y) input point is in left-handed screen
-    // coordinates (what you usually read from the windowing system).  The
-    // function returns 'true' if and only if the input point is located in
-    // the current viewport.  When 'true', the origin and direction values
-    // are valid and are in world coordinates.  The direction vector is unit
-    // length.
+    /** Mouse picking support.  The (x,y) input point is in left-handed screen
+     * coordinates (what you usually read from the windowing system).  The
+     * function returns 'true' if and only if the input point is located in
+     * the current viewport.  When 'true', the origin and direction values
+     * are valid and are in world coordinates.  The direction vector is unit
+     * length.
+     * @param iX, x screen coordinate (left-handed)
+     * @param iY, y screen coordinate (left-handed)
+     * @param iWidth, screen width
+     * @param iHeight, screen height
+     * @param rkOrigin, origin of PickRay, return value
+     * @param rkDirection, direction of PickRay, return value
+     * @return 'true' if and only if the input point is located in the current
+     * viewport.
+     */
     public boolean GetPickRay (int iX, int iY, int iWidth, int iHeight,
                                Vector3f rkOrigin, Vector3f rkDirection)
     {
@@ -339,27 +449,36 @@ public class Camera extends GraphicsObject
         rkDirection.Normalize();
         return true;
     }
-
-    // world coordinate frame
+    
+    /** world coordinate frame */
     protected Vector3f m_kLocation, m_kDVector, m_kUVector, m_kRVector;
 
-    // view frustum (near, far, bottom, top, left, right)
+    /** view frustum (near, far, bottom, top, left, right) */
     protected float[] m_afFrustum = new float[ViewFrustum.VF_QUANTITY.Value()];
 
-    // viewport
+    /** viewport */
     protected float m_fPortL, m_fPortR, m_fPortT, m_fPortB;
 
-    // depth range
+    /** depth range */
     protected float m_fPortN, m_fPortF;
 
-    // The renderer to which this camera has been attached.  The camera is
-    // considered to be active if this pointer is not null.  By necessity, a
-    // camera cannot be attached to multiple renderers, but a camera may be
-    // shared by renderers as long as only one renderer at a time uses the
-    // camera.  The renderer is responsible for setting this Camera member.
+    /** The renderer to which this camera has been attached.  The camera is
+     * considered to be active if this pointer is not null.  By necessity, a
+     * camera cannot be attached to multiple renderers, but a camera may be
+     * shared by renderers as long as only one renderer at a time uses the
+     * camera.  The renderer is responsible for setting this Camera member.
+     */
     protected Renderer m_pkRenderer;
 
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -383,16 +502,34 @@ public class Camera extends GraphicsObject
         m_fPortF = rkStream.ReadFloat();
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         return super.Register(rkStream);
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -416,6 +553,12 @@ public class Camera extends GraphicsObject
         rkStream.Write(m_fPortF);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (final StreamVersion rkVersion)
     {
         int iSize = super.GetDiskUsed(rkVersion) +
@@ -439,6 +582,12 @@ public class Camera extends GraphicsObject
         return iSize;
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();
@@ -464,5 +613,4 @@ public class Camera extends GraphicsObject
         pkTree.Append(StringTree.Format("port F =",m_fPortF));
         return pkTree;
     }
-
 }

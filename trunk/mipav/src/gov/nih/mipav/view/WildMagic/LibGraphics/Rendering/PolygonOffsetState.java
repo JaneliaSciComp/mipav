@@ -23,9 +23,9 @@ public class PolygonOffsetState extends GlobalState
     implements StreamInterface
 {
 
-    public final StateType GetStateType () { return StateType.POLYGONOFFSET; }
-
-    public PolygonOffsetState ()
+    /** Static initialization of the PolygonOffsetState in the
+     * GlobalState.Default array. */
+    static
     {
         if ( !DefaultInitialized[StateType.POLYGONOFFSET.Value()] )
         {
@@ -33,19 +33,49 @@ public class PolygonOffsetState extends GlobalState
             Default[StateType.POLYGONOFFSET.Value()] = new PolygonOffsetState();
         }
     }
-    // Set whether offset should be enabled for the various polygon drawing
-    // modes (fill, line, point).
+
+    /** Default constructor. */
+    public PolygonOffsetState () {}
+
+    /** Return type.
+     * @return StateType.POLYGONOFFSET;
+     */
+    public final StateType GetStateType () { return StateType.POLYGONOFFSET; }
+
+    /** Set whether offset should be enabled for the various polygon drawing
+     * modes (fill, line, point).
+     */
     public boolean FillEnabled = false;   // default: false
+    /** Set whether offset should be enabled for the various polygon drawing
+     * modes (fill, line, point).
+     */
     public boolean LineEnabled = false;   // default: false
+    /** Set whether offset should be enabled for the various polygon drawing
+     * modes (fill, line, point).
+     */
     public boolean PointEnabled = false;  // default: false
 
-    // The offset is Scale*dZ + Bias*r where dZ is the change in depth
-    // relative to the screen space area of the poly, and r is the smallest
-    // resolvable depth difference.  Negative values move polygons closer to
-    // the eye.
+    /** The offset is Scale*dZ + Bias*r where dZ is the change in depth
+     * relative to the screen space area of the poly, and r is the smallest
+     * resolvable depth difference.  Negative values move polygons closer to
+     * the eye.
+     */
     public float Scale = 0.0f;  // default: 0.0
+    /** The offset is Scale*dZ + Bias*r where dZ is the change in depth
+     * relative to the screen space area of the poly, and r is the smallest
+     * resolvable depth difference.  Negative values move polygons closer to
+     * the eye.
+     */
     public float Bias = 0.0f;   // default: 0.0
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -59,16 +89,10 @@ public class PolygonOffsetState extends GlobalState
 
     }
 
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
-    }
-
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -81,6 +105,12 @@ public class PolygonOffsetState extends GlobalState
         rkStream.Write(Bias);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (final StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -91,6 +121,12 @@ public class PolygonOffsetState extends GlobalState
             Stream.SIZEOF_FLOAT; //sizeof(Bias);
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

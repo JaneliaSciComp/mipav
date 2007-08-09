@@ -20,14 +20,21 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
 public abstract class ReleaseFunction
 {
+    /** Create a ReleaseFunction, store the Renderer to access the
+     * Renderer.ReleaseXXX function call.
+     * @param kRenderer, Renderer for calling the Release function.
+     */
     public ReleaseFunction ( Renderer kRenderer )
     {
         m_kRenderer = kRenderer;
     }
+    /** Free memory. */
     public void finalize()
     {
         m_kRenderer = null;
     }
+    /** Call the Renderer.ReleaseXXX function. */
     public abstract void Release ( Bindable kBindable );
+    /** store the Renderer to access the Renderer.ReleaseXXX function call. */
     protected Renderer m_kRenderer;
 }

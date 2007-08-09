@@ -25,13 +25,14 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 public class StencilState extends GlobalState
     implements StreamInterface
 {
-
+    /** Maps compare function enum to int values. */
     private static HashMap<Integer,CompareFunction> ms_pkCompareFunctionMap = new HashMap<Integer,CompareFunction>();
+    /** Maps operation type enum to int values. */
     private static HashMap<Integer,OperationType> ms_pkOperationTypeMap = new HashMap<Integer,OperationType>();
 
-    public final StateType GetStateType () { return StateType.STENCIL; }
-
-    public StencilState ()
+    /** Static initialization of the StencilState in the GlobalState.Default
+     * array. */
+    static
     {
         if ( !DefaultInitialized[StateType.STENCIL.Value()] )
         {
@@ -40,6 +41,15 @@ public class StencilState extends GlobalState
         }
     }
 
+    /** Default constructor. */
+    public StencilState () { }
+
+    /** Return type.
+     * @return StateType.STENCIL;
+     */
+    public final StateType GetStateType () { return StateType.STENCIL; }
+
+    /** Stencil compare function. */
     public enum CompareFunction
     {
         CF_NEVER ("CF_NEVER"),
@@ -69,6 +79,7 @@ public class StencilState extends GlobalState
         private static int m_iInitValue = 0;
     };
 
+    /** Stencil operation type. */
     public enum OperationType
     {
         OT_KEEP ("OT_KEEP"),
@@ -96,18 +107,36 @@ public class StencilState extends GlobalState
         private static int m_iInitValue = 0;
     };
 
+    /** Initializes static enum for compare function. */
     private static CompareFunction ms_eCompareFunctionStatic = CompareFunction.CF_QUANTITY;
+    /** Initializes static enum for operation type. */
     private static OperationType ms_eOperationTypeStatic = OperationType.OT_QUANTITY;
 
-    public boolean Enabled = false;                             // default: false
-    public CompareFunction Compare = CompareFunction.CF_NEVER;  // default: CF_NEVER
-    public int Reference = 0;                                   // default: 0
-    public int Mask = ~0;        // default: ~0
-    public int WriteMask = ~0;   // default: ~0
-    public OperationType OnFail = OperationType.OT_KEEP;     // default: OT_KEEP
-    public OperationType OnZFail = OperationType.OT_KEEP;    // default: OT_KEEP
-    public OperationType OnZPass = OperationType.OT_KEEP;    // default: OT_KEEP
+    /** Enabled  default: false */
+    public boolean Enabled = false;
+    /** Compare function  default: CF_NEVER */
+    public CompareFunction Compare = CompareFunction.CF_NEVER;
+    /** Renference  default: 0 */
+    public int Reference = 0;
+    /** Mask  default: ~0 */
+    public int Mask = ~0;
+    /** Write Mask  default: ~0 */
+    public int WriteMask = ~0;
+    /** OnFail  default: OT_KEEP */
+    public OperationType OnFail = OperationType.OT_KEEP;
+    /** OnZFail  default: OT_KEEP */
+    public OperationType OnZFail = OperationType.OT_KEEP;
+    /** OnZPass default: OT_KEEP */
+    public OperationType OnZPass = OperationType.OT_KEEP;
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -127,16 +156,10 @@ public class StencilState extends GlobalState
         OnZPass = ms_pkOperationTypeMap.get(iOnZPass);
     }
 
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
-    }
-
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -152,6 +175,12 @@ public class StencilState extends GlobalState
         rkStream.Write(OnZPass.Value());
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -165,6 +194,12 @@ public class StencilState extends GlobalState
             Stream.SIZEOF_INT; //sizeof(int);   // OnZPass
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

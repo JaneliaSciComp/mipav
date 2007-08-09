@@ -23,9 +23,9 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 public class MaterialState extends GlobalState
     implements StreamInterface
 {
-    public final StateType GetStateType () { return StateType.MATERIAL; }
-
-    public MaterialState ()
+    /** Static initialization of the MaterialState in the GlobalState.Default
+     * array. */
+    static
     {
         if ( !DefaultInitialized[StateType.MATERIAL.Value()] )
         {
@@ -33,6 +33,10 @@ public class MaterialState extends GlobalState
             Default[StateType.MATERIAL.Value()] = new MaterialState();
         }
     }
+
+    /** Default constructor. */
+    public MaterialState() {}
+
     /** delete memory */
     public void finalize ()
     {
@@ -59,14 +63,33 @@ public class MaterialState extends GlobalState
         super.finalize();
     }
 
+    /** Return type.
+     * @return StateType.MATERIAL;
+     */
+    public final StateType GetStateType () { return StateType.MATERIAL; }
 
-    public ColorRGB Emissive = new ColorRGB(0f,0f,0f);        // default: ColorRGB(0,0,0)
-    public ColorRGB Ambient = new ColorRGB(0.2f,0.2f,0.2f);   // default: ColorRGB(0.2,0.2,0.2)
-    public ColorRGB Diffuse = new ColorRGB(0.8f,0.8f,0.8f);   // default: ColorRGB(0.8,0.8,0.8)
-    public ColorRGB Specular = new ColorRGB(0.0f,0.0f,0.0f);  // default: ColorRGB(0,0,0)
-    public float Alpha = 1.0f;                                // default: 1
-    public float Shininess = 1.0f;                            // default: 1
 
+    /** Emissive color default: ColorRGB(0,0,0) */
+    public ColorRGB Emissive = new ColorRGB(0f,0f,0f);        
+    /** Ambient color default: ColorRGB(0.2,0.2,0.2) */
+    public ColorRGB Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+    /** Diffuse color default: ColorRGB(0.8,0.8,0.8) */
+    public ColorRGB Diffuse = new ColorRGB(0.8f,0.8f,0.8f);
+    /** Specular color default: ColorRGB(0,0,0) */
+    public ColorRGB Specular = new ColorRGB(0.0f,0.0f,0.0f);
+    /** Alpha, default: 1 */
+    public float Alpha = 1.0f;
+    /** Shininess default: 1 */
+    public float Shininess = 1.0f;
+
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -80,16 +103,10 @@ public class MaterialState extends GlobalState
         Shininess = rkStream.ReadFloat();
     }
 
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
-    }
-
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -103,6 +120,12 @@ public class MaterialState extends GlobalState
         rkStream.Write(Shininess);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (final StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -114,6 +137,12 @@ public class MaterialState extends GlobalState
             Stream.SIZEOF_FLOAT; //sizeof(Shininess);
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

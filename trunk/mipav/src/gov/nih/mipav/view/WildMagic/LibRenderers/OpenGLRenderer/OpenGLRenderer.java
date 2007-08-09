@@ -33,7 +33,7 @@ public class OpenGLRenderer extends Renderer
 {
    
     /**
-     * Create an OpgnGLRenderer
+     * Create an OpenGLRenderer
      * @param eFormat FormatType (NONE, RGB, RGBA, DEPTH)
      * @param eDepth DepthType (NONE, DEPTH_16, DEPTH_24, DEPTH_32)
      * @param eStencil StencilType (NONE, STENCIL_8)

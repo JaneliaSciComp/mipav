@@ -20,10 +20,41 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 
+/** If the Light class were to have no data, or just ambient color and
+ * intensity, you could use a standard class hierarchy:
+ *
+ *   class Light
+ *       [ambient, intensity]
+ *   class AmbientLight : public Light
+ *       [no additional data]
+ *   class DirectionalLight : public Light
+ *       [direction, diffuse, specular]
+ *   class PointLight : public Light
+ *       [position, diffuse, specular, attenuation]
+ *   class SpotLight : public PointLight
+ *       [cone axis, cone angle, spot exponent]
+ *
+ * The renderer holds onto lights via the base class Light.  The
+ * consequences of a standard class hierarchy are that the renderer must
+ * use dynamic casting to determine the type of a light in order to set
+ * shader program constants in the Renderer::SetConstantLightFOOBAR calls.
+ * This is an expense I wish to avoid.
+ *
+ * An alternative is to allow Light to store all the data in public scope,
+ * but to derive the specific light classes using a protected Light base
+ * class.  Thus, Renderer has access to all the data it needs without
+ * having to dynamically cast and the derived-class objects have functions
+ * to access only the data relevant to them.  Unfortunately, you run into
+ * problems with access rights to Object items (such as increment and
+ * decrement of reference counts for smart pointers).
+ *
+ * In the end, I chose to make the Light class a generic class that
+ * stores everything needed by the various light types.
+ */
 public class Light extends GraphicsObject
     implements StreamInterface
 {
-
+    /** Light types. */
     public enum LightType
     {
         LT_AMBIENT,
@@ -45,11 +76,15 @@ public class Light extends GraphicsObject
         public int Value() { return m_iValue; }
     };
 
+    /** Default light constructor, type defaults to ambient light. */
     public Light ()
     {
         init(LightType.LT_AMBIENT);
     }
     
+    /** Light constructor, creates a light of the given type.
+     * @param eType, type of light to create.
+     */
     public Light (LightType eType)
     {
         init(eType);
@@ -96,6 +131,9 @@ public class Light extends GraphicsObject
         super.finalize();
     }
     
+    /** Init the light parameters based on the type.
+     * @param eType, type of light to create.
+     */
     private void init(LightType eType)
     {
         Type = eType;
@@ -116,66 +154,41 @@ public class Light extends GraphicsObject
         Exponent = 1.0f;
     }
 
-    // If the Light class were to have no data, or just ambient color and
-    // intensity, you could use a standard class hierarchy:
-    //
-    //   class Light
-    //       [ambient, intensity]
-    //   class AmbientLight : public Light
-    //       [no additional data]
-    //   class DirectionalLight : public Light
-    //       [direction, diffuse, specular]
-    //   class PointLight : public Light
-    //       [position, diffuse, specular, attenuation]
-    //   class SpotLight : public PointLight
-    //       [cone axis, cone angle, spot exponent]
-    //
-    // The renderer holds onto lights via the base class Light.  The
-    // consequences of a standard class hierarchy are that the renderer must
-    // use dynamic casting to determine the type of a light in order to set
-    // shader program constants in the Renderer::SetConstantLightFOOBAR calls.
-    // This is an expense I wish to avoid.
-    //
-    // An alternative is to allow Light to store all the data in public scope,
-    // but to derive the specific light classes using a protected Light base
-    // class.  Thus, Renderer has access to all the data it needs without
-    // having to dynamically cast and the derived-class objects have functions
-    // to access only the data relevant to them.  Unfortunately, you run into
-    // problems with access rights to Object items (such as increment and
-    // decrement of reference counts for smart pointers).
-    //
-    // In the end, I chose to make the Light class a generic class that
-    // stores everything needed by the various light types.
+    /** Type default: LT_AMBIENT */
+    public LightType Type;     
 
-    public LightType Type;     // default: LT_AMBIENT
+    /** The Ambient color of the light. default: ColorRGB(0,0,0) */
+    public ColorRGB Ambient;   
+    /** The Diffuse color of the light. default: ColorRGB(0,0,0) */
+    public ColorRGB Diffuse;
+    /** The Specular color of the light. default: ColorRGB(0,0,0) */
+    public ColorRGB Specular;
 
-    // The colors of the light.
-    public ColorRGB Ambient;   // default: ColorRGB(0,0,0)
-    public ColorRGB Diffuse;   // default: ColorRGB(0,0,0)
-    public ColorRGB Specular;  // default: ColorRGB(0,0,0)
-
-    // Attenuation is typically specified as a modulator
-    //   m = 1/(C + L*d + Q*d*d)
-    // where C is the constant coefficient, L is the linear coefficient,
-    // Q is the quadratic coefficient, and d is the distance from the light
-    // position to the vertex position.  To allow for a linear adjustment of
-    // intensity, my choice is to use instead
-    //   m = I/(C + L*d + Q*d*d)
-    // where I is an "intensity" factor.
+    /** Attenuation is typically specified as a modulator
+     *   m = 1/(C + L*d + Q*d*d)
+     * where C is the constant coefficient, L is the linear coefficient,
+     * Q is the quadratic coefficient, and d is the distance from the light
+     * position to the vertex position.  To allow for a linear adjustment of
+     * intensity, my choice is to use instead
+     *   m = I/(C + L*d + Q*d*d)
+     * where I is an "intensity" factor.
+     */
     public float Constant;     // default: 1
     public float Linear;       // default: 0
     public float Quadratic;    // default: 0
     public float Intensity;    // default: 1
 
-    // Parameters for spot lights.  The cone angle must be in radians and
-    // should satisfy 0 < Angle <= pi.
+    /** Parameters for spot lights.  The cone angle must be in radians and
+     * should satisfy 0 < Angle <= pi. */
     public float Angle;        // default: pi
     public float CosAngle;     // default: -1
     public float SinAngle;     // default:  0
     public float Exponent;     // default:  1
 
-    // A helper function that lets you set Angle and have CosAngle and
-    // SinAngle computed for you.
+    /** A helper function that lets you set Angle and have CosAngle and
+     * SinAngle computed for you.
+     * @param fAngle, set the angle value.
+     */
     public void SetAngle (float fAngle)
     {
         assert(0.0f < fAngle && fAngle <= Math.PI);
@@ -185,29 +198,34 @@ public class Light extends GraphicsObject
     }
 
 
-    // Although the standard directional and spot lights need only a direction
-    // vector, to allow for new types of derived-class lights that would use
-    // a full coordinate frame, Light provides storage for such a frame.  The
-    // light frame is always in world coordinates.
-    //   default position  P = (0,0,0)
-    //   default direction D = (0,0,-1)
-    //   default up        U = (0,1,0)
-    //   default right     R = (1,0,0)
-    // The set {D,U,R} must be a right-handed orthonormal set.  That is, each
-    // vector is unit length, the vectors are mutually perpendicular, and
-    // R = Cross(D,U).
+    /** Although the standard directional and spot lights need only a direction
+     * vector, to allow for new types of derived-class lights that would use
+     * a full coordinate frame, Light provides storage for such a frame.  The
+     * light frame is always in world coordinates.
+     *   default position  P = (0,0,0)
+     *   default direction D = (0,0,-1)
+     *   default up        U = (0,1,0)
+     *   default right     R = (1,0,0)
+     * The set {D,U,R} must be a right-handed orthonormal set.  That is, each
+     * vector is unit length, the vectors are mutually perpendicular, and
+     * R = Cross(D,U).
+     */
     public Vector3f Position, DVector, UVector, RVector;
 
-    // A helper function that lets you set the direction vector and computes
-    // the up and right vectors automatically.
+    /** A helper function that lets you set the direction vector and computes
+     * the up and right vectors automatically.
+     * @param rkDirection, sets the direction vector.
+     */
     public void SetDirection (final Vector3f rkDirection)
     {
         DVector = new Vector3f(rkDirection);
         Vector3f.GenerateOrthonormalBasis(UVector,RVector,DVector);
     }
 
-    // This is for debug mode to allow you to check if the coordinate frame
-    // vectors form a right-handed orthonormal set.
+    /** This is for debug mode to allow you to check if the coordinate frame
+     * vectors form a right-handed orthonormal set.
+     * @return true if valid frame.
+     */
     public boolean IsValidFrame ()
     {
         float fTest = DVector.Dot(UVector);
@@ -232,6 +250,14 @@ public class Light extends GraphicsObject
         return Math.abs(1.0f - fTest) <= Mathf.ZERO_TOLERANCE;
     }
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -254,16 +280,10 @@ public class Light extends GraphicsObject
         Exponent = rkStream.ReadFloat();
     }
 
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
-    }
-
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -286,6 +306,12 @@ public class Light extends GraphicsObject
         rkStream.Write(Exponent);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (final StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -306,6 +332,12 @@ public class Light extends GraphicsObject
             Stream.SIZEOF_FLOAT; //sizeof(Exponent);
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();
