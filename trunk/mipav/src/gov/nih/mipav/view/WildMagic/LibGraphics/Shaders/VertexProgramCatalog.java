@@ -22,6 +22,11 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 
 public class VertexProgramCatalog
 {
+    /** Create the VertexProgramCatalog, with the name of the catalog and the
+     * default directory where the images are located.
+     * @param rkName, name of the vertex program catalog.
+     * @param rkDefaultDir, default directory where programs are located.
+     */
     public VertexProgramCatalog (String rkName, String rkDefaultDir)
     {
         m_kName = new String(rkName);
@@ -30,6 +35,7 @@ public class VertexProgramCatalog
         m_cCommentChar = 0;
     }
 
+    /** Delete memory. */
     public void finalize()
     {
         m_kName = null;
@@ -44,9 +50,12 @@ public class VertexProgramCatalog
         }
     }
 
-    // For deferred setting of the renderer type and comment character.  This
-    // cannot be called until the application layer has created a renderer.
-    // The layer does so in WindowApplication::SetRenderer.
+    /** For deferred setting of the renderer type and comment character.  This
+     * cannot be called until the application layer has created a renderer.
+     * The layer does so in WindowApplication::SetRenderer.
+     * @param rkRendererType, renderer type.
+     * @param cCommentChar, comment character.
+     */
     public void SetInformation (String rkRendererType,
                                 char cCommentChar)
     {
@@ -55,7 +64,7 @@ public class VertexProgramCatalog
 
         if (m_cCommentChar != 0)
         {
-            // Create the default shader, which sets every pixel to magenta.  This
+            // Create the default shader, which sets every vertex to magenta.  This
             // is used when your shader cannot be found.  The color should catch
             // your attention.
             m_spkDefaultVProgram = VertexProgram.Load(ms_kDefaultString,m_kDefaultDir);
@@ -68,16 +77,27 @@ public class VertexProgramCatalog
         }
     }
 
-    public String GetName ()
+   /** Get the name of the vertex program catalog.
+     * @return the name of the vertex program catalog.
+     */
+    public final String GetName ()
     {
         return m_kName;
     }
 
-    public String GetDefaultDir ()
+    /** Get the name of the default program directory.
+     * @return the name of the program directory.
+     */
+    public final String GetDefaultDir ()
     {
         return m_kDefaultDir;
     }
 
+    /** Add a program to the catalog, do not add if it already exists in the
+     * catalog.
+     * @param pkProgram, vertex program to add.
+     * @return true if the program is added, false otherwise.
+     */
     public boolean Insert (VertexProgram pkProgram)
     {
         if (pkProgram == null)
@@ -107,6 +127,10 @@ public class VertexProgramCatalog
         return true;
     }
 
+    /** Remove the vertex program from the catalog.
+     * @param pkProgram, program to remove.
+     * @return true if the program is removed, false otherwise.
+     */
     public boolean Remove (VertexProgram pkProgram)
     {
         if (pkProgram == null)
@@ -125,8 +149,6 @@ public class VertexProgramCatalog
 
         // Attempt to find the program in the catalog.
         VertexProgram kLocalProgram = m_kEntry.get(kProgramName);
-//         std::map<std::string,VertexProgram*>::iterator pkIter =
-//             m_kEntry.find(kProgramName);
         if (kLocalProgram == null)
         {
             // The program does not exist in the catalog.
@@ -138,6 +160,12 @@ public class VertexProgramCatalog
         return true;
     }
 
+    /** Find a vertex program in the catalog based on the program's name. If
+     * not in the catalog, try to load from disk.
+     * @param rkProgramName, name of the program to fine.
+     * @param rkDirectory, name of the directory.
+     * @return the desired vertex program, or the default program.
+     */
     public VertexProgram Find (String rkProgramName, String rkDirectory)
     {
         if (rkProgramName == ms_kNullString
@@ -172,50 +200,38 @@ public class VertexProgramCatalog
         return (VertexProgram)(m_spkDefaultVProgram);
     }
 
-    public boolean PrintContents (String rkFilename)
-    {
-        /*
-        const char* acDecorated = System::GetPath(rkFilename.c_str(),
-                                                  System::SM_WRITE);
-
-        if (acDecorated)
-        {
-            std::ofstream kOStr(acDecorated);
-            assert(kOStr);
-
-            std::map<std::string,VertexProgram*>::const_iterator pkIter;
-            for (pkIter = m_kEntry.begin(); pkIter != m_kEntry.end(); pkIter++)
-            {
-                // TO DO.  Print out information about the program?
-                kOStr << pkIter->first << std::endl;
-                kOStr << std::endl;
-            }
-            kOStr.close();
-            return true;
-        }
-        */
-        return false;
-    }
-
-
+    /** Set the active vertex program catalog.
+     * @param pkActive, new active vertex program catalog.
+     */
     public static void SetActive (VertexProgramCatalog pkActive)
     {
         ms_pkActive = pkActive;
     }
 
-    public static VertexProgramCatalog GetActive ()
+    /** Get the active vertex program catalog.
+     * @return the active vertex program catalog.
+     */
+    public static final VertexProgramCatalog GetActive ()
     {
         return ms_pkActive;
     }
 
+    /** Name of the VertexProgramCatalog -- typically "Main" */
     private String m_kName;
+    /** Default directory where programs are stored. */
     private String m_kDefaultDir;
+    /** Map <String,VertexProgram> for mapping an program to its name. */
     private HashMap<String,VertexProgram> m_kEntry = new HashMap<String,VertexProgram>();
+    /** Default program when no program can be found. */
     private GraphicsObject m_spkDefaultVProgram;
+    /** Renderer type. */
     private String m_kRendererType;
+    /** Comment character. */
     private char m_cCommentChar;
-
+    /** null string comparison */
     private static final String ms_kNullString = new String("");
+    /** default string comparison */
     private static final String ms_kDefaultString = new String("Default");
+    /** Active VertexProgramCatalog. */
     private static VertexProgramCatalog ms_pkActive = null;
 }

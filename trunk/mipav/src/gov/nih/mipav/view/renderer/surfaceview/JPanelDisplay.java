@@ -108,9 +108,28 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         if ( command.equals( "AdvancedMaterialOptions" ) ) {
             if ( renderBase instanceof SurfaceRender )
             {
+                Material kMaterial = new Material();
+                if ( ((SurfaceRender)renderBase).getGPURenderer() != null )
+                {
+                    MaterialState kMaterialSt = ((SurfaceRender)renderBase).getGPURenderer().GetMaterialState();
+                    kMaterial.setAmbientColor( new javax.vecmath.Color3f( kMaterialSt.Ambient.R(),
+                                                                          kMaterialSt.Ambient.G(),
+                                                                          kMaterialSt.Ambient.B() ) );
+
+                    kMaterial.setEmissiveColor(new javax.vecmath.Color3f( kMaterialSt.Emissive.R(),
+                                                                          kMaterialSt.Emissive.G(),
+                                                                          kMaterialSt.Emissive.B() ) );
+                    kMaterial.setDiffuseColor(new javax.vecmath.Color3f( kMaterialSt.Diffuse.R(),
+                                                                         kMaterialSt.Diffuse.G(),
+                                                                         kMaterialSt.Diffuse.B() ) );
+                    kMaterial.setSpecularColor(new javax.vecmath.Color3f( kMaterialSt.Specular.R(),
+                                                                          kMaterialSt.Specular.G(),
+                                                                          kMaterialSt.Specular.B() ) );
+                    kMaterial.setShininess(kMaterialSt.Shininess);
+                }
                 new JFrameSurfaceMaterialProperties(this, 0,
                                                     ((SurfaceRender)renderBase).getSurfaceDialog().getLightDialog().getGeneralLights(),
-                                                    0, new Material() );
+                                                    0, kMaterial );
             }
         }
         else if (source instanceof JButton) {

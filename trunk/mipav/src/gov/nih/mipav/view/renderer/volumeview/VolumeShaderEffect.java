@@ -700,6 +700,14 @@ public class VolumeShaderEffect extends ShaderEffect
         }
     }
     
+
+
+    private int get_index(int iX, int iY, int iZ, int iXBound, int iYBound)
+    {
+        return iX + iXBound * (iY + (iYBound * iZ));
+    }
+
+
     /**
      * Calculates the image normals for the input ModelImage. Stores them in a byte[].
      * @param kImage, the ModelImage to calculate the normals for.
@@ -724,6 +732,7 @@ public class VolumeShaderEffect extends ShaderEffect
         kSimpleImageA = null;
         System.gc();
 
+
         // Access intensity values as a linear array.
         int iXBound = kImage.getExtents()[0];;
         int iYBound = kImage.getExtents()[1];;
@@ -745,48 +754,47 @@ public class VolumeShaderEffect extends ShaderEffect
 
         float[] afDataN = new float[afData.length*3];
 
-        for (iZ = 1; iZ < (iZBound - 1); iZ++) {
-            boolean bMinZ = 0 == iZ;
-            boolean bMaxZ = (iZBound - 1) == iZ;
+        for (iZ = 0; iZ < iZBound ; iZ++) {
+           int iZplus1 = (iZBound - 1) == iZ ? iZ : iZ + 1;
+           int iZminus1 = (0) == iZ ? iZ : iZ - 1;
 
-            for (iY = 1; iY < (iYBound - 1); iY++) {
-                boolean bMinY = 0 == iY;
-                boolean bMaxY = (iYBound - 1) == iY;
-                int offset = iXBound * (iY + (iYBound * iZ));
+            for (iY = 0; iY < iYBound ; iY++) {
+               int iYplus1 = (iYBound - 1) == iY ? iY : iY + 1;
+               int iYminus1 = (0) == iY ? iY : iY - 1;
 
                 for (iX = 0; iX < iXBound; iX++) {
-                    boolean bMinX = 0 == iX;
-                    boolean bMaxX = (iXBound - 1) == iX;
+                   int iXplus1 = (iXBound - 1) == iX ? iX : iX + 1;
+                   int iXminus1 = (0) == iX ? iX : iX - 1;
 
-                    int i = iX + offset;
+                    fDX = (((afData[get_index(iXminus1, iYminus1, iZ, iXBound, iYBound)] -
+                             afData[get_index(iXplus1, iYminus1, iZ, iXBound, iYBound)]) * 0.71f) +
+                           
+                           (afData[get_index(iXminus1, iY, iZ, iXBound, iYBound)] -
+                            afData[get_index(iXplus1, iY, iZ, iXBound, iYBound)]) +
+                            
+                           ((afData[get_index(iXminus1, iYplus1, iZ, iXBound, iYBound)] -
+                             afData[get_index(iXplus1, iYplus1, iZ, iXBound, iYBound)]) * 0.71f) );
 
-                    fDX = (((bMinX ? afData[i] : afData[i - iOffX - iXBound]) -
-                            (bMaxX ? afData[i] : afData[i + iOffX - iXBound])) * 0.71f) +
+                    fDY = (((afData[get_index(iXminus1, iYminus1, iZ, iXBound, iYBound)] -
+                             afData[get_index(iXminus1, iYplus1, iZ, iXBound, iYBound)]) * 0.71f) +
+                           
+                           (afData[get_index(iX, iYminus1, iZ, iXBound, iYBound)] -
+                            afData[get_index(iX, iYplus1, iZ, iXBound, iYBound)]) +
                             
-                        (bMinX ? afData[i] : afData[i - iOffX]) - (bMaxX ? afData[i] : afData[i + iOffX]) +
-                        (
-                             
-                         ((bMinX ? afData[i] : afData[i - iOffX + iXBound]) -
-                          (bMaxX ? afData[i] : afData[i + iOffX + iXBound])) * 0.71f);
-                        
-                    fDY = (((bMinY ? afData[i] : afData[i - iOffY - 1]) - (bMaxY ? afData[i] : afData[i + iOffY - 1])) *
-                           0.71f) +
+                           ((afData[get_index(iXplus1, iYminus1, iZ, iXBound, iYBound)] -
+                             afData[get_index(iXplus1, iYplus1, iZ, iXBound, iYBound)]) * 0.71f) );
+                       
+                    fDZ = (((afData[get_index(iXminus1, iY, iZplus1, iXBound, iYBound)] -
+                             afData[get_index(iXminus1, iY, iZminus1, iXBound, iYBound)]) * 0.71f) +
+                           
+                           (afData[get_index(iX, iY, iZplus1, iXBound, iYBound)] -
+                            afData[get_index(iX, iY, iZminus1, iXBound, iYBound)]) +
                             
-                        (bMinY ? afData[i] : afData[i - iOffY]) - (bMaxY ? afData[i] : afData[i + iOffY]) +
-                        (
-                             
-                         ((bMinY ? afData[i] : afData[i - iOffY + 1]) - (bMaxY ? afData[i] : afData[i + iOffY + 1])) * 0.71f);
-                        
-                    fDZ = (((bMinZ ? afData[i] : afData[i - iOffZ - 1]) - (bMaxZ ? afData[i] : afData[i + iOffZ - 1])) *
-                           0.71f) +
-                            
-                        (bMinZ ? afData[i] : afData[i - iOffZ]) - (bMaxZ ? afData[i] : afData[i + iOffZ]) +
-                        (
-                             
-                         ((bMinZ ? afData[i] : afData[i - iOffZ + 1]) - (bMaxZ ? afData[i] : afData[i + iOffZ + 1])) * 0.71f);
-                        
-                        
+                           ((afData[get_index(iXplus1, iY, iZplus1, iXBound, iYBound)] -
+                             afData[get_index(iXplus1, iY, iZminus1, iXBound, iYBound)]) * 0.71f) );
+                       
                     if ((fDX != 0.0f) || (fDY != 0.0f) || (fDZ != 0.0f)) {
+                        int i = get_index (iX, iY, iZ, iXBound, iYBound);
                         afDataN[i*3+0] = fDX;
                         afDataN[i*3+1] = fDY;
                         afDataN[i*3+2] = fDZ;
@@ -799,7 +807,7 @@ public class VolumeShaderEffect extends ShaderEffect
         Vector3f kNormal = new Vector3f();
         Vector3f kNormalTmp = new Vector3f();
         byte[] acData = new byte[afData.length*3];
-                    
+                   
         // Catch any zero-vector normals and replace them by an average of
         // neighboring normals.
         for (iZ = 1; iZ < (iZBound - 1); iZ++) {
@@ -828,6 +836,111 @@ public class VolumeShaderEffect extends ShaderEffect
                 }
             }
         }
+
+//         // Access intensity values as a linear array.
+//         int iXBound = kImage.getExtents()[0];;
+//         int iYBound = kImage.getExtents()[1];;
+//         int iZBound = kImage.getExtents()[2];;
+//         int iXYBound = iXBound * iYBound;
+
+//         // normals from gradient which are computed using central finite
+//         // differences everywhere except forward/backward finite differences
+//         // are used at the edges
+
+//         float fDX = 0;
+//         float fDY = 0;
+//         float fDZ = 0;
+
+//         int iOffX = 1;
+//         int iOffY = iXBound;
+//         int iOffZ = iXBound * iYBound;
+//         int iX, iY, iZ;
+
+//         float[] afDataN = new float[afData.length*3];
+
+//         for (iZ = 1; iZ < (iZBound - 1); iZ++) {
+//             boolean bMinZ = 0 == iZ;
+//             boolean bMaxZ = (iZBound - 1) == iZ;
+
+//             for (iY = 1; iY < (iYBound - 1); iY++) {
+//                 boolean bMinY = 0 == iY;
+//                 boolean bMaxY = (iYBound - 1) == iY;
+//                 int offset = iXBound * (iY + (iYBound * iZ));
+
+//                 for (iX = 0; iX < iXBound; iX++) {
+//                     boolean bMinX = 0 == iX;
+//                     boolean bMaxX = (iXBound - 1) == iX;
+
+//                     int i = iX + offset;
+
+//                     fDX = (((bMinX ? afData[i] : afData[i - iOffX - iXBound]) -
+//                             (bMaxX ? afData[i] : afData[i + iOffX - iXBound])) * 0.71f) +
+                            
+//                         (bMinX ? afData[i] : afData[i - iOffX]) - (bMaxX ? afData[i] : afData[i + iOffX]) +
+//                         (
+                             
+//                          ((bMinX ? afData[i] : afData[i - iOffX + iXBound]) -
+//                           (bMaxX ? afData[i] : afData[i + iOffX + iXBound])) * 0.71f);
+                        
+//                     fDY = (((bMinY ? afData[i] : afData[i - iOffY - 1]) - (bMaxY ? afData[i] : afData[i + iOffY - 1])) *
+//                            0.71f) +
+                            
+//                         (bMinY ? afData[i] : afData[i - iOffY]) - (bMaxY ? afData[i] : afData[i + iOffY]) +
+//                         (
+                             
+//                          ((bMinY ? afData[i] : afData[i - iOffY + 1]) - (bMaxY ? afData[i] : afData[i + iOffY + 1])) * 0.71f);
+                        
+//                     fDZ = (((bMinZ ? afData[i] : afData[i - iOffZ - 1]) - (bMaxZ ? afData[i] : afData[i + iOffZ - 1])) *
+//                            0.71f) +
+                            
+//                         (bMinZ ? afData[i] : afData[i - iOffZ]) - (bMaxZ ? afData[i] : afData[i + iOffZ]) +
+//                         (
+                             
+//                          ((bMinZ ? afData[i] : afData[i - iOffZ + 1]) - (bMaxZ ? afData[i] : afData[i + iOffZ + 1])) * 0.71f);
+                        
+                        
+//                     if ((fDX != 0.0f) || (fDY != 0.0f) || (fDZ != 0.0f)) {
+//                         afDataN[i*3+0] = fDX;
+//                         afDataN[i*3+1] = fDY;
+//                         afDataN[i*3+2] = fDZ;
+//                     }
+//                 }
+//             }
+//         }
+
+//         int[] aiNormalAverageIndex = new int[]{ 0, -1, +1, -iXBound, +iXBound, -iXYBound, +iXYBound };
+//         Vector3f kNormal = new Vector3f();
+//         Vector3f kNormalTmp = new Vector3f();
+//         byte[] acData = new byte[afData.length*3];
+                    
+//         // Catch any zero-vector normals and replace them by an average of
+//         // neighboring normals.
+//         for (iZ = 1; iZ < (iZBound - 1); iZ++) {
+
+//             for (iY = 1; iY < (iYBound - 1); iY++) {
+//                 int offset = iXBound * (iY + (iYBound * iZ));
+
+//                 for (iX = 1; iX < (iXBound - 1); iX++) {
+//                     int i = iX + offset;
+
+//                     kNormal.copy(Vector3f.ZERO);
+//                     for ( int iN = 0; iN < aiNormalAverageIndex.length; iN++ )
+//                     {
+//                         int index = i + aiNormalAverageIndex[iN];
+//                         index *= 3;
+//                         kNormalTmp.X(afDataN[index + 0]);
+//                         kNormalTmp.Y(afDataN[index + 1]);
+//                         kNormalTmp.Z(afDataN[index + 2]);
+
+//                         kNormal.addEquals( kNormalTmp );
+//                     }
+//                     kNormal.Normalize();
+//                     acData[i*3+0] = (byte)(kNormal.X()*127 + 127);
+//                     acData[i*3+1] = (byte)(kNormal.Y()*127 + 127);
+//                     acData[i*3+2] = (byte)(kNormal.Z()*127 + 127);
+//                 }
+//             }
+//         }
         aiNormalAverageIndex = null;
         kNormal = null;
         kNormalTmp = null;

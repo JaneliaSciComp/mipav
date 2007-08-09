@@ -44,7 +44,7 @@ public abstract class LinCompf
     /** Gets the type of linear component
      * @return component type.
      */
-    public ComponentType GetType ()
+    public final ComponentType GetType ()
     {
         return m_iType;
     }
@@ -192,7 +192,7 @@ public abstract class LinCompf
     /** access the interval [min,max]
      * @return interval min-value
      */
-    public float GetMin ()
+    public final float GetMin ()
     {
         return m_fMin;
     }
@@ -200,7 +200,7 @@ public abstract class LinCompf
     /** access the interval [min,max]
      * @return interval max-value
      */
-    public float GetMax ()
+    public final float GetMax ()
     {
         return m_fMax;
     }

@@ -109,22 +109,22 @@ public class Camera extends GraphicsObject
         }
     }
 
-    public Vector3f GetLocation ()
+    public final Vector3f GetLocation ()
     {
         return m_kLocation;
     }
 
-    public Vector3f GetDVector ()
+    public final Vector3f GetDVector ()
     {
         return m_kDVector;
     }
 
-    public Vector3f GetUVector ()
+    public final Vector3f GetUVector ()
     {
         return m_kUVector;
     }
 
-    public Vector3f GetRVector ()
+    public final Vector3f GetRVector ()
     {
         return m_kRVector;
     }
@@ -200,7 +200,7 @@ public class Camera extends GraphicsObject
 
 
     // Get the view frustum.
-    public float[] GetFrustum ()
+    public final float[] GetFrustum ()
     {
         return m_afFrustum;
     }
@@ -211,32 +211,32 @@ public class Camera extends GraphicsObject
     // parameters are valid.
 
     // Get the individual frustum values.
-    public float GetDMin ()
+    public final float GetDMin ()
     {
         return m_afFrustum[ViewFrustum.VF_DMIN.Value()];
     }
 
-    public float GetDMax ()
+    public final float GetDMax ()
     {
         return m_afFrustum[ViewFrustum.VF_DMAX.Value()];
     }
 
-    public float GetUMin ()
+    public final float GetUMin ()
     {
         return m_afFrustum[ViewFrustum.VF_UMIN.Value()];
     }
 
-    public float GetUMax ()
+    public final float GetUMax ()
     {
         return m_afFrustum[ViewFrustum.VF_UMAX.Value()];
     }
 
-    public float GetRMin ()
+    public final float GetRMin ()
     {
         return m_afFrustum[ViewFrustum.VF_RMIN.Value()];
     }
 
-    public float GetRMax ()
+    public final float GetRMax ()
     {
         return m_afFrustum[ViewFrustum.VF_RMAX.Value()];
     }
@@ -260,22 +260,22 @@ public class Camera extends GraphicsObject
         }
     }
 
-    public float GetPortL ()
+    public final float GetPortL ()
     {
         return m_fPortL;
     }
 
-    public float GetPortR ()
+    public final float GetPortR ()
     {
         return m_fPortR;
     }
 
-    public float GetPortT ()
+    public final float GetPortT ()
     {
         return m_fPortT;
     }
 
-    public float GetPortB ()
+    public final float GetPortB ()
     {
         return m_fPortB;
     }
@@ -292,12 +292,12 @@ public class Camera extends GraphicsObject
         }
     }
 
-    public float GetPortN() 
+    public final float GetPortN() 
     {
         return m_fPortN;
     }
 
-    public float GetPortF() 
+    public final float GetPortF() 
     {
         return m_fPortF;
     }

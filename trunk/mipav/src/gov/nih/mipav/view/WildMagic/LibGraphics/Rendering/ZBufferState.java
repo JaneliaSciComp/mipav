@@ -27,7 +27,7 @@ public class ZBufferState extends GlobalState
 {
     private static HashMap<Integer,CompareMode> ms_pkCompareModeMap = new HashMap<Integer,CompareMode>();
 
-    public StateType GetStateType () { return StateType.ZBUFFER; }
+    public final StateType GetStateType () { return StateType.ZBUFFER; }
 
     public ZBufferState ()
     {

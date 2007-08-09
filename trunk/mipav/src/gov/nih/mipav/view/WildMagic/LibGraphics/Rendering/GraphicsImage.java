@@ -238,12 +238,12 @@ public class GraphicsImage extends GraphicsObject
     }
 
     // member access
-    public FormatMode GetFormat ()
+    public final FormatMode GetFormat ()
     {
         return m_eFormat;
     }
     
-    public String GetFormatName ()
+    public final String GetFormatName ()
     {
         return m_eFormat.FormatName();
     }
@@ -253,29 +253,29 @@ public class GraphicsImage extends GraphicsObject
         return eFormat.FormatName();
     }
 
-    public boolean IsDepthImage ()
+    public final boolean IsDepthImage ()
     {
-        return m_eFormat == FormatMode.IT_DEPTH16
+        return (m_eFormat == FormatMode.IT_DEPTH16
             || m_eFormat == FormatMode.IT_DEPTH24
-            || m_eFormat == FormatMode.IT_DEPTH32;
+            || m_eFormat == FormatMode.IT_DEPTH32);
     }
 
-    public boolean IsCubeImage ()
+    public final boolean IsCubeImage ()
     {
-        return m_eFormat == FormatMode.IT_CUBE_RGB888 || m_eFormat == FormatMode.IT_CUBE_RGBA8888;
+        return (m_eFormat == FormatMode.IT_CUBE_RGB888 || m_eFormat == FormatMode.IT_CUBE_RGBA8888);
     }
 
-    public int GetBytesPerPixel ()
+    public final int GetBytesPerPixel ()
     {
         return m_eFormat.BytesPerPixel();
     }
 
-    public static int GetBytesPerPixel (FormatMode eFormat)
+    public final static int GetBytesPerPixel (FormatMode eFormat)
     {
         return eFormat.BytesPerPixel();
     }
 
-    public int GetDimension ()
+    public final int GetDimension ()
     {
         return m_iDimension;
     }
@@ -286,12 +286,12 @@ public class GraphicsImage extends GraphicsObject
         return m_aiBound[i];
     }
 
-    public int GetQuantity ()
+    public final int GetQuantity ()
     {
         return m_iQuantity;
     }
 
-    public byte[] GetData ()
+    public final byte[] GetData ()
     {
         return m_aucData;
     }

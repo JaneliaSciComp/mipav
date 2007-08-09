@@ -24,7 +24,7 @@ public class WireframeState extends GlobalState
     implements StreamInterface
 {
 
-    public StateType GetStateType () { return StateType.WIREFRAME; }
+    public final StateType GetStateType () { return StateType.WIREFRAME; }
 
     public WireframeState ()
     {

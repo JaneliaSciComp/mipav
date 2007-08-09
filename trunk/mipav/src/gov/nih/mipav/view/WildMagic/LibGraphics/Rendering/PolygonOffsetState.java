@@ -23,7 +23,7 @@ public class PolygonOffsetState extends GlobalState
     implements StreamInterface
 {
 
-    public StateType GetStateType () { return StateType.POLYGONOFFSET; }
+    public final StateType GetStateType () { return StateType.POLYGONOFFSET; }
 
     public PolygonOffsetState ()
     {

@@ -83,7 +83,7 @@ public class ColorRGBA
     /** Gets the color red,green,blue,alpha value
      * @return float[4] with [r,g,b,a]
      */
-    public float[] GetData () 
+    public final float[] GetData () 
     {
         return m_afTuple;
     }
@@ -94,7 +94,7 @@ public class ColorRGBA
      * @param fB, blue
      * @param fA, alpha
      */
-    public void SetData ( float fR, float fG, float fB, float fA ) 
+    public final void SetData ( float fR, float fG, float fB, float fA ) 
     {
         m_afTuple[0] = fR;
         m_afTuple[1] = fG;
@@ -105,7 +105,7 @@ public class ColorRGBA
     /** Returns the color red value
      * @return  the color red value
      */
-    public float R () 
+    public final float R () 
     {
         return m_afTuple[0];
     }
@@ -113,7 +113,7 @@ public class ColorRGBA
     /** Returns the color green value
      * @return  the color green value
      */
-    public float G ()
+    public final float G ()
     {
         return m_afTuple[1];
     }
@@ -121,7 +121,7 @@ public class ColorRGBA
     /** Returns the color blue value
      * @return  the color blue value
      */
-    public float B ()
+    public final float B ()
     {
         return m_afTuple[2];
     }
@@ -129,7 +129,7 @@ public class ColorRGBA
     /** Returns the color alpha value
      * @return  the color alpha value
      */
-    public float A ()
+    public final float A ()
     {
         return m_afTuple[3];
     }
@@ -137,7 +137,7 @@ public class ColorRGBA
     /** Sets the color red value
      * @param fR the new red value
      */
-    public void R ( float fR ) 
+    public final void R ( float fR ) 
     {
         m_afTuple[0] = fR;
     }
@@ -145,7 +145,7 @@ public class ColorRGBA
     /** Sets the color green value
      * @param fG the new green value
      */
-    public void G ( float fG ) 
+    public final void G ( float fG ) 
     {
         m_afTuple[1] = fG;
     }
@@ -153,7 +153,7 @@ public class ColorRGBA
     /** Sets the color blue value
      * @param fB  the new blue value
      */
-    public void B ( float fB ) 
+    public final void B ( float fB ) 
     {
         m_afTuple[2] = fB;
     }
@@ -161,7 +161,7 @@ public class ColorRGBA
     /** Sets the color alpha value
      * @param fA the new alpha value
      */
-    public void A ( float fA ) 
+    public final void A ( float fA ) 
     {
         m_afTuple[3] = fA;
     }

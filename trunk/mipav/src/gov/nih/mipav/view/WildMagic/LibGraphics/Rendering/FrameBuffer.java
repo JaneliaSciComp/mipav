@@ -76,42 +76,41 @@ public abstract class FrameBuffer
     }
 
     // Member access.
-    public FormatType GetFormatType ()
+    public final FormatType GetFormatType ()
     {
         return m_eFormat;
     }
 
 
-    public DepthType GetDepthType ()
+    public final DepthType GetDepthType ()
     {
         return m_eDepth;
     }
 
-    public StencilType GetStencilType ()
+    public final StencilType GetStencilType ()
     {
         return m_eStencil;
     }
 
-    public BufferingType GetBufferingType ()
+    public final BufferingType GetBufferingType ()
     {
         return m_eBuffering;
     }
 
-    public MultisamplingType GetMultisamplingType ()
+    public final MultisamplingType GetMultisamplingType ()
     {
         return m_eMultisampling;
     }
 
-    public Renderer GetRenderer ()
+    public final Renderer GetRenderer ()
     {
         return m_pkRenderer;
     }
 
-    public Texture GetTarget ()
+    public final Texture GetTarget ()
     {
         return m_pkTarget;
     }
-
 
     public abstract void Enable ();
     public abstract void Disable ();

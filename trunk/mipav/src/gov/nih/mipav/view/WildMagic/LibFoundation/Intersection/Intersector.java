@@ -51,7 +51,7 @@ public abstract class Intersector
      * intersection queries.
      * @return first contact time.
      */
-    public float GetContactTime ()
+    public final float GetContactTime ()
     {
         return m_fContactTime;
     }
@@ -78,7 +78,7 @@ public abstract class Intersector
      * Returns the intersection type
      * @return IntersectionInfo intersection type
      */
-    public IntersectionInfo GetIntersectionType ()
+    public final IntersectionInfo GetIntersectionType ()
     {
         return m_iIntersectionType;
     }

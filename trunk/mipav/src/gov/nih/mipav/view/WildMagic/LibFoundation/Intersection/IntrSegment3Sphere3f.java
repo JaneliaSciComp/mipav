@@ -67,7 +67,7 @@ public class IntrSegment3Sphere3f extends Intersector
      * object access 
      * @return the current segment
      */
-    public Segment3f GetSegment ()
+    public final Segment3f GetSegment ()
     {
         return m_rkSegment;
     }
@@ -76,7 +76,7 @@ public class IntrSegment3Sphere3f extends Intersector
      * object access 
      * @return the current sphere
      */
-    public Sphere3f GetSphere ()
+    public final Sphere3f GetSphere ()
     {
         return m_rkSphere;
     }
@@ -172,7 +172,7 @@ public class IntrSegment3Sphere3f extends Intersector
      * Returns the number of intersections
      * @return the number of intersections
      */
-    public int GetQuantity ()
+    public final int GetQuantity ()
     {
         return m_iQuantity;
     }
@@ -182,7 +182,7 @@ public class IntrSegment3Sphere3f extends Intersector
      * @param i, the ith intersection
      * @return the ith intersection point 
      */
-    public Vector3f GetPoint (int i)
+    public final Vector3f GetPoint (int i)
     {
         assert(0 <= i && i < m_iQuantity);
         return m_akPoint[i];
@@ -193,7 +193,7 @@ public class IntrSegment3Sphere3f extends Intersector
      * @param i, the ith intersection
      * @return the ith intersection point  segment parameter t 
      */
-    public float GetSegmentT (int i)
+    public final float GetSegmentT (int i)
     {
         assert(0 <= i && i < m_iQuantity);
         return m_afSegmentT[i];

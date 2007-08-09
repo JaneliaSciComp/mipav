@@ -37,7 +37,7 @@ public class CullState extends GlobalState
         }
     }
 
-    public StateType GetStateType () { return StateType.CULL; }
+    public final StateType GetStateType () { return StateType.CULL; }
 
     public CullState () {}
 

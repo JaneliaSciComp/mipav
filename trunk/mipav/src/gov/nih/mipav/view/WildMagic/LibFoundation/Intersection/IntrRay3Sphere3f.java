@@ -66,7 +66,7 @@ public class IntrRay3Sphere3f extends Intersector
      * object access 
      * @return the current ray
      */
-    public Ray3f GetRay ()
+    public final Ray3f GetRay ()
     {
         return m_rkRay;
     }
@@ -75,7 +75,7 @@ public class IntrRay3Sphere3f extends Intersector
      * object access 
      * @return the current sphere
      */
-    public Sphere3f GetSphere ()
+    public final Sphere3f GetSphere ()
     {
         return m_rkSphere;
     }
@@ -162,7 +162,7 @@ public class IntrRay3Sphere3f extends Intersector
      * Returns the number of intersections
      * @return the number of intersections
      */
-    public int GetQuantity ()
+    public final int GetQuantity ()
     {
         return m_iQuantity;
     }
@@ -172,7 +172,7 @@ public class IntrRay3Sphere3f extends Intersector
      * @param i, the ith intersection
      * @return the ith intersection point 
      */
-    public Vector3f GetPoint (int i)
+    public final Vector3f GetPoint (int i)
     {
         assert(0 <= i && i < m_iQuantity);
         return m_akPoint[i];
@@ -183,7 +183,7 @@ public class IntrRay3Sphere3f extends Intersector
      * @param i, the ith intersection
      * @return the ith intersection point  ray parameter t 
      */
-    public float GetRayT (int i) 
+    public final float GetRayT (int i) 
     {
         assert(0 <= i && i < m_iQuantity);
         return m_afRayT[i];

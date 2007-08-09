@@ -27,7 +27,12 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 public class Polyline extends Geometry
     implements StreamInterface
 {
-    // construction and destruction
+    /** construction
+     * @param pkVBuffer, VertexBuffer containing Polyline data.
+     * @param bClosed, when true polyline is closed, when false polyline is open.
+     * @param bContiguous, when true polyline is contiguous or when false
+     * polyline is disjoint segments
+     */
     public Polyline (VertexBuffer pkVBuffer, boolean bClosed, boolean bContiguous)
     {
         super(pkVBuffer,null);
@@ -58,7 +63,9 @@ public class Polyline extends Geometry
         SetGeometryType();
     }
 
-    // member access
+    /** Set the number of active points.
+     * @param iActiveQuantity the number of active points.
+     */
     public void SetActiveQuantity (int iActiveQuantity)
     {
         int iVQuantity = VBuffer.GetVertexQuantity();
@@ -74,34 +81,49 @@ public class Polyline extends Geometry
         IBuffer.SetIndexQuantity(m_iActiveQuantity);
     }
 
-    public int GetActiveQuantity ()
+    /** Get the number of active points.
+     * @return the number of active points.
+     */
+    public final int GetActiveQuantity ()
     {
         return m_iActiveQuantity;
     }
 
-
+    /** Set closed value.
+     * @param bClosed polyline closed value.
+     */
     public void SetClosed (boolean bClosed)
     {
         m_bClosed = bClosed;
         SetGeometryType();
     }
 
-    public boolean GetClosed ()
+    /** Get closed value.
+     * @return polyline closed value.
+     */
+    public final boolean GetClosed ()
     {
         return m_bClosed;
     }
 
+    /** Set contiguous value.
+     * @param bContiguous polyline contiguous value.
+     */
     public void SetContiguous (boolean bContiguous)
     {
         m_bContiguous = bContiguous;
         SetGeometryType();
     }
 
-    public boolean GetContiguous ()
+    /** Get contiguous value.
+     * @return polyline contiguous value.
+     */
+    public final boolean GetContiguous ()
     {
         return m_bContiguous;
     }
 
+    /** Default constructor. */
     protected Polyline ()
     {
         m_iActiveQuantity = 0;
@@ -110,6 +132,7 @@ public class Polyline extends Geometry
         SetGeometryType();
     }
 
+    /** Sets the geometric type based on the closed and contiguous values. */
     protected void SetGeometryType ()
     {
         if (m_bContiguous)
@@ -150,7 +173,14 @@ public class Polyline extends Geometry
         }
     }
 
-    // streaming
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -163,16 +193,34 @@ public class Polyline extends Geometry
         SetGeometryType();
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         return super.Register(rkStream);
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -183,6 +231,12 @@ public class Polyline extends Geometry
         rkStream.Write(m_bContiguous);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (final StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -191,6 +245,12 @@ public class Polyline extends Geometry
             Stream.SIZEOF_BOOLEAN; //sizeof(char);  // m_bContiguous
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();
@@ -207,10 +267,13 @@ public class Polyline extends Geometry
         return pkTree;
     }
 
-    // Allow application to specify fewer than the maximum number of vertices
-    // to draw.
+    /** Allow application to specify fewer than the maximum number of vertices
+     * to draw.
+     */
     protected int m_iActiveQuantity;
 
-    // polyline is open or closed, contiguous or disjoint segments
-    protected boolean m_bClosed, m_bContiguous;
+    /** polyline is open or closed */
+    protected boolean m_bClosed;
+    /** polyline is contiguous or disjoint segments */
+    protected boolean m_bContiguous;
 }

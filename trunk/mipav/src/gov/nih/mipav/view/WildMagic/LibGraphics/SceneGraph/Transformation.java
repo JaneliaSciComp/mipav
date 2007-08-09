@@ -20,24 +20,26 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 
+/** The transformation is Y = M*X+T, where M is a 3-by-3 matrix and T is
+ * a translation vector.  In most cases, M = R, a rotation matrix, or
+ * M = R*S, where R is a rotation matrix and S is a diagonal matrix
+ * whose diagonal entries are positive scales.  To support modeling
+ * packages that allow reflections and nonuniform scales, I now allow
+ * the general transformation Y = M*X+T.  The vector X is transformed in
+ * the "forward" direction to Y.  The "inverse" direction transforms Y
+ * to X, namely X = M^{-1}*(Y-T) in the general case.  In the special
+ * case of M = R*S, the inverse direction is X = S^{-1}*R^t*(Y-T).
+ */
 public class Transformation
 {
-    // The transformation is Y = M*X+T, where M is a 3-by-3 matrix and T is
-    // a translation vector.  In most cases, M = R, a rotation matrix, or
-    // M = R*S, where R is a rotation matrix and S is a diagonal matrix
-    // whose diagonal entries are positive scales.  To support modeling
-    // packages that allow reflections and nonuniform scales, I now allow
-    // the general transformation Y = M*X+T.  The vector X is transformed in
-    // the "forward" direction to Y.  The "inverse" direction transforms Y
-    // to X, namely X = M^{-1}*(Y-T) in the general case.  In the special
-    // case of M = R*S, the inverse direction is X = S^{-1}*R^t*(Y-T).
 
-    // Construction and destruction.  The default constructor produces the
-    // identity transformation.  The default copy constructor is created by
-    // the compiler, as is the default assignment operator.  The defaults are
-    // consistent with the design of this class.
+    /** The default constructor produces the identity transformation.  The
+     * default copy constructor is created by the compiler, as is the default
+     * assignment operator.  The defaults are consistent with the design of
+     * this class.*/
     public Transformation () {}
 
+    /** Delete memory. */
     public void finalize()
     {
         if ( m_kMatrix != null )
@@ -57,7 +59,7 @@ public class Transformation
         }
     }
 
-    // set the transformation to the identity
+    /** Set the transformation to the identity. */
     public void MakeIdentity ()
     {
         m_kMatrix = new Matrix3f(Matrix3f.IDENTITY);
@@ -69,7 +71,7 @@ public class Transformation
     }
 
 
-    // set the scales to 1
+    /** Set the scales to 1. */
     public void MakeUnitScale ()
     {
         assert(m_bIsRSMatrix);
@@ -79,34 +81,38 @@ public class Transformation
     }
 
 
-    // Hints about the structure of the transformation.  In the common case
-    // of M = R*S, IsRSMatrix() returns true.
-    public boolean IsIdentity ()
+    /** Hints about the structure of the transformation.  In the common case
+     * of M = R*S, IsRSMatrix() returns true.
+     * @return true if identity.
+     */
+    public final boolean IsIdentity ()
     {
         return m_bIsIdentity;
     }
 
-    public boolean IsRSMatrix ()
+    /** Hints about the structure of the transformation.  In the common case
+     * of M = R*S, IsRSMatrix() returns true.
+     * @return true if rotation scale matrix.
+     */
+    public final boolean IsRSMatrix ()
     {
         return m_bIsRSMatrix;
     }
 
-    public boolean IsUniformScale ()
+    /** Hints about the structure of the transformation.  In the common case
+     * of M = R*S, IsRSMatrix() returns true.
+     * @return true if uniform scale matrix.
+     */
+    public final boolean IsUniformScale ()
     {
-        return m_bIsRSMatrix && m_bIsUniformScale;
+        return (m_bIsRSMatrix && m_bIsUniformScale);
     }
 
-
-    // Member access.
-    // (1) The Set* functions set the is-identity hint to false.
-    // (2) The SetRotate function sets the is-rsmatrix hint to true.  If this
-    //     hint is false,  GetRotate fires an "assert" in debug mode.
-    // (3) The SetMatrix function sets the is-rsmatrix and is-uniform-scale
-    //     hints to false.
-    // (4) The SetScale function sets the is-uniform-scale hint to false.
-    //     The SetUniformScale function sets the is-uniform-scale hint to
-    //     true.  If this hint is false, GetUniformScale fires an "assert" in
-    //     debug mode.
+    /** The Set* functions set the is-identity hint to false.  The SetRotate
+     * function sets the is-rsmatrix hint to true.  If this hint is false,
+     * GetRotate fires an "assert" in debug mode.
+     * @param rkRotate, new matrix.
+     */
     public void SetRotate (Matrix3f rkRotate)
     {
         m_kMatrix = rkRotate;
@@ -114,12 +120,19 @@ public class Transformation
         m_bIsRSMatrix = true;
     }
 
+    /** Get the rotation matrix.
+     * @return the rotation matrix.
+     */
     public Matrix3f GetRotate ()
     {
         assert(m_bIsRSMatrix);
         return m_kMatrix;
     }
 
+    /** The Set* functions set the is-identity hint to false. The SetMatrix
+     * function sets the is-rsmatrix and is-uniform-scale hints to false.
+     * @param rkRotate, new matrix.
+     */
     public void SetMatrix (Matrix3f rkMatrix)
     {
         m_kMatrix = rkMatrix;
@@ -128,22 +141,37 @@ public class Transformation
         m_bIsUniformScale = false;
     }
 
-    public Matrix3f GetMatrix ()
+    /** Get the matrix.
+     * @return the matrix.
+     */
+    public final Matrix3f GetMatrix ()
     {
         return m_kMatrix;
     }
 
+    /** Set the translation vector.
+     * @param the new translation vector.
+     */
     public void SetTranslate (Vector3f rkTranslate)
     {
         m_kTranslate = rkTranslate;
         m_bIsIdentity = false;
     }
 
-    public Vector3f GetTranslate ()
+    /** Get the translation vector.
+     * @return the translation vector.
+     */
+    public final Vector3f GetTranslate ()
     {
         return m_kTranslate;
     }
 
+    /** The Set* functions set the is-identity hint to false.  The SetScale
+     * function sets the is-uniform-scale hint to false.  The SetUniformScale
+     * function sets the is-uniform-scale hint to true.  If this hint is
+     * false, GetUniformScale fires an "assert" in debug mode.
+     * @param rkRotate, new scale vector.
+     */
     public void SetScale (Vector3f rkScale)
     {
         assert(m_bIsRSMatrix && rkScale.X() != 0.0f && rkScale.Y() != 0.0f
@@ -154,12 +182,18 @@ public class Transformation
         m_bIsUniformScale = false;
     }
 
+    /** Get the scale vector.
+     * @return the scale vector..
+     */
     public Vector3f GetScale ()
     {
         assert(m_bIsRSMatrix);
         return m_kScale;
     }
 
+    /** Set uniform scale factor.
+     * @param fScale, uniform scale factor.
+     */
     public void SetUniformScale (float fScale)
     {
         assert(m_bIsRSMatrix && fScale != 0.0f);
@@ -168,6 +202,9 @@ public class Transformation
         m_bIsUniformScale = true;
     }
 
+    /** Get uniform scale factor.
+     * @return uniform scale factor.
+     */
     public float GetUniformScale ()
     {
         assert(m_bIsRSMatrix && m_bIsUniformScale);
@@ -175,9 +212,11 @@ public class Transformation
     }
 
 
-    // For M = R*S, the largest value of S in absolute value is returned.
-    // For general M, the max-row-sum norm is returned (and is guaranteed to
-    // be larger or equal to the largest eigenvalue of S in absolute value).
+    /** For M = R*S, the largest value of S in absolute value is returned.
+     * For general M, the max-row-sum norm is returned (and is guaranteed to
+     * be larger or equal to the largest eigenvalue of S in absolute value).
+     * @return Norm.
+     */
     public float GetNorm ()
     {
         if (m_bIsRSMatrix)
@@ -225,7 +264,10 @@ public class Transformation
     }
 
 
-    // Compute Y = M*X+T where X is the input and Y is the output.
+    /** Compute Y = M*X+T where X is the input and Y is the output.
+     * @param rkInput, input vector X.
+     * @return output vector Y.
+     */
     public Vector3f ApplyForward (Vector3f rkInput) 
     {
         if (m_bIsIdentity)
@@ -249,7 +291,10 @@ public class Transformation
         return kOutput;
     }
 
-    // Compute X = M^{-1}*(Y-T) where Y is the input and X is the output.
+    /** Compute X = M^{-1}*(Y-T) where Y is the input and X is the output.
+     * @param rkInput, input vector Y.
+     * @return output vector X.
+     */
     public Vector3f ApplyInverse (Vector3f rkInput)
     {
         if (m_bIsIdentity)
@@ -294,8 +339,11 @@ public class Transformation
         return kOutput;
     }
 
-    // Inverse-transform the input vector V0.  The output vector is
-    // V1 = M^{-1}*V0.
+    /** Inverse-transform the input vector V0.  The output vector is
+     * V1 = M^{-1}*V0.
+     * @param rkInput, input vector V0.
+     * @return output vector V1 = M^{-1}*V0.
+     */
     public Vector3f InvertVector (final Vector3f rkInput)
     {
         if (m_bIsIdentity)
@@ -342,8 +390,11 @@ public class Transformation
     }
 
 
-    // Transform the plane Dot(N0,X) = c0 to Dot(N1,Y) = c1 where both N0 and
-    // N1 must be unit-length normals.
+    /** Transform the plane Dot(N0,X) = c0 to Dot(N1,Y) = c1 where both N0 and
+     * N1 must be unit-length normals.
+     * @param rkInput, input plane.
+     * @return output transformed plane.
+     */
     public Plane3f ApplyForward ( Plane3f rkInput)
     {
         if (m_bIsIdentity)
@@ -410,7 +461,11 @@ public class Transformation
         return kOutput;
     }
 
-    // Compute C = A*B.
+    /** Compute C = A*B.
+     * @param rkA, input A.
+     * @param rkB, input B.
+     * @return C = A*B.
+     */
     public void Product ( Transformation rkA, Transformation rkB)
     {
         if (rkA.IsIdentity())
@@ -474,8 +529,10 @@ public class Transformation
     // pair, the inverse is <M^{-1},-M^{-1}*T>.
     //void Inverse (Transformation& rkInverse) ;
 
-    // Pack the transformation into a 4-by-4 matrix, stored so that it may be
-    // applied to 1-by-4 vectors on the left.
+    /** Pack the transformation into a 4-by-4 matrix, stored so that it may be
+     * applied to 1-by-4 vectors on the left.
+     * @param rkHMatrix, matrix to pack the transformation into.
+     */
     public void GetHomogeneous (Matrix4f rkHMatrix)
     {
         if (m_bIsRSMatrix)
@@ -515,30 +572,47 @@ public class Transformation
     }
 
 
-    // Allow Stream directly read/write the data members and Spatial to
-    // access DISK_USED.
+    /** Allow Stream directly read/write the data members and Spatial to
+     * access DISK_USED. */
     public static int DISK_USED
         // bool written as char, so 3 is total bytes for the bools
         = 9*Stream.SIZEOF_FLOAT + //sizeof(Matrix3f) + 
         2*3*Stream.SIZEOF_FLOAT + 3*Stream.SIZEOF_BOOLEAN; //2*sizeof(Vector3f) + 3
 
+    /** Set IsIdentity flag.
+     * @param bValue, identity value.
+     */
     public void SetIsIdentity ( boolean bValue )
     {
         m_bIsIdentity = bValue;
     }
 
+    /** Set IsRSMatrix flag.
+     * @param bValue, rotation/scale matrix value.
+     */
     public void SetIsRSMatrix ( boolean bValue )
     {
         m_bIsRSMatrix = bValue;
     }
 
+    /** Set IsUniformScale flag.
+     * @param bValue, uniform scale matrix value.
+     */
     public void SetIsUniformScale ( boolean bValue )
     {
         m_bIsUniformScale = bValue;
     }
 
+    /** Transformation matrix. */
     private Matrix3f m_kMatrix = new Matrix3f(Matrix3f.IDENTITY);
+    /** Translation vector. */
     private Vector3f m_kTranslate = new Vector3f(Vector3f.ZERO);
+    /** Scale vector. */
     private Vector3f m_kScale = new Vector3f(Vector3f.ONE);
-    private boolean m_bIsIdentity = true, m_bIsRSMatrix = true, m_bIsUniformScale = true;
+    /** True if the Transformation is the identity matrix. */
+    private boolean m_bIsIdentity = true;
+    /** True if the Transformation is a rotation/scale matrix. */
+    private boolean m_bIsRSMatrix = true;
+    /** True if Transformation is a uniform scale. */
+    private boolean m_bIsUniformScale = true;
 }

@@ -28,17 +28,22 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 public abstract class Geometry extends Spatial
     implements NameIdInterface, StreamInterface
 {
-    // member access
+    /** member access: VertexBuffer */
     public VertexBuffer VBuffer;
+    /** member access: IndexBuffer */
     public IndexBuffer IBuffer;
+    /** member access: BoundingVolume */
     public BoundingVolume ModelBound;
 
-    // geometric updates
+    /** geometric updates */
     public void UpdateMS ()
     {
         this.UpdateMS (true);
     }
 
+    /** geometric updates
+     * @param bUpdateNormals, if true call UpdateModelNormals().
+     */
     public void UpdateMS (boolean bUpdateNormals)
     {
         UpdateModelBound();
@@ -48,11 +53,16 @@ public abstract class Geometry extends Spatial
         }
     }
 
+    /** Default constructor, creates a SphereBV bounding volume. */
     public Geometry ()
     {
         ModelBound = new SphereBV();
     }
 
+    /** Constructor, creates a SphereBV bounding volume.
+     * @param pkVBuffer, VertexBuffer
+     * @param pkIBuffer, IndexBuffer
+     */
     protected Geometry (VertexBuffer pkVBuffer, IndexBuffer pkIBuffer)
     {
         VBuffer = pkVBuffer;
@@ -61,6 +71,7 @@ public abstract class Geometry extends Spatial
         UpdateModelBound();
     }
 
+    /** Delete memory. */
     public void finalize()
     {
         if ( ModelBound != null )
@@ -106,23 +117,28 @@ public abstract class Geometry extends Spatial
         super.finalize();
     }
 
-    // geometric updates
+    /** geometric updates */
     protected void UpdateModelBound ()
     {
         ModelBound.ComputeFromData(VBuffer);
     }
 
+    /** geometric updates */
     protected void UpdateModelNormals ()
     {
         // stub for derived classes
     }
 
+    /** geometric updates */
     protected void UpdateWorldBound ()
     {
         ModelBound.TransformBy(World,WorldBound);
     }
 
-    // render state updates
+    /** render state updates
+     * @param akGStack, global states.
+     * @param akLStack, lights.
+     */
     protected void UpdateState ( Vector<Vector<GlobalState>> akGStack,
                                  Vector<Light> pkLStack)
     {
@@ -168,31 +184,33 @@ public abstract class Geometry extends Spatial
     }
 
 
-    // culling
+    /** culling
+     * @param rkCuller, culling object applied to this geometry.
+     * @param bNoCull (not currently used).
+     */
     protected void GetVisibleSet (Culler rkCuller, boolean bNoCull)
     {
         rkCuller.Insert(this,null);
     }
 
 
-    // Dynamic lighting.  The effect is pushed onto the front of Spatial's
-    // effect array so that lighting occurs before other shader effects.
+    /** Dynamic lighting.  The effect is pushed onto the front of Spatial's
+     * effect array so that lighting occurs before other shader effects.
+     */
     protected LightingEffect m_spkLEffect;
 
-    // internal use
-    // Compute the homogeneous world matrix from the components of the World
-    // transformation.
+    /** internal use
+     * Compute the homogeneous world matrix from the components of the World
+     * transformation.
+     * @param dAppTime, animation time step from the application.
+     */
     public void UpdateWorldData (double dAppTime)
     {
         super.UpdateWorldData(dAppTime);
         World.GetHomogeneous(HWorld);
     }
 
-
-    // Render state and lights in path to this object.  An attached effect
-    // provides additional render state, lights, and any other information
-    // needed to draw the object.
-
+    /** Type of geometry: */
     public enum GeometryType
     {
         GT_POLYPOINT,
@@ -217,11 +235,22 @@ public abstract class Geometry extends Spatial
         private static int m_iInitValue = 0;
     };
 
+    /** Type of geometry: */
     public GeometryType Type;
+    /** Render state and lights in path to this object.  An attached effect
+     * provides additional render state, lights, and any other information
+     * needed to draw the object.
+     */
     public GlobalState[] States = new GlobalState[GlobalState.StateType.MAX_STATE_TYPE.Value()];
-    public Matrix4f HWorld = new Matrix4f();  // homogeneous world matrix
+    /** homogeneous world matrix */
+    public Matrix4f HWorld = new Matrix4f();  
 
 
+    /**
+     * Returns the GraphicsObject with the name that matches the input paramter, rkName.
+     * @param rkName, the name of the object to return.
+     * @return the GraphicsObject that matches the input name.
+     */
     public GraphicsObject GetObjectByName (final String rkName)
     {
         GraphicsObject pkFound = super.GetObjectByName(rkName);
@@ -260,6 +289,12 @@ public abstract class Geometry extends Spatial
         return null;
     }
 
+    /**
+     * Writes all GraphicsObjects with the name that matches the input
+     * paramter, rkName into the Vector paramter rkObjects.
+     * @param rkName, the name of the objects to return.
+     * @param rkObjects, a Vector of all objects with the matching name.
+     */
     public void GetAllObjectsByName (final String rkName,
                                      Vector<GraphicsObject> rkObjects)
     {
@@ -281,6 +316,11 @@ public abstract class Geometry extends Spatial
         }
     }
 
+    /**
+     * Returns the GraphicsObject with the ID that matches the input paramter, uiID.
+     * @param uiID, the ID of the object to return.
+     * @return the GraphicsObject that matches the input name.
+     */
     public GraphicsObject GetObjectByID (int uiID)
     {
         GraphicsObject pkFound = super.GetObjectByID(uiID);
@@ -319,6 +359,14 @@ public abstract class Geometry extends Spatial
         return null;
     }
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -334,6 +382,12 @@ public abstract class Geometry extends Spatial
         pkLink.Add(iLinkID);
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
@@ -348,6 +402,14 @@ public abstract class Geometry extends Spatial
         IBuffer = (IndexBuffer)rkStream.GetFromMap(iLinkID);
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         if (!super.Register(rkStream))
@@ -373,6 +435,10 @@ public abstract class Geometry extends Spatial
         return true;
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -383,6 +449,12 @@ public abstract class Geometry extends Spatial
         rkStream.Write(IBuffer.GetID());
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -391,6 +463,12 @@ public abstract class Geometry extends Spatial
             Stream.SIZEOF_INT; //sizeof(IBuffer);
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

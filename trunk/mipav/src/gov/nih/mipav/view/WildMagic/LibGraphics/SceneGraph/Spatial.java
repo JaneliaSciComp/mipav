@@ -28,8 +28,10 @@ public abstract class Spatial extends GraphicsObject
     implements NameIdInterface, StreamInterface
 {
 
+    /** Map culling mode to type integer value.*/
     private static HashMap<Integer,CullingMode> ms_pkCullingModeMap = new HashMap<Integer,CullingMode>();
 
+    /** Delete memory. */
     public void finalize ()
     {
         DetachAllGlobalStates();
@@ -49,24 +51,28 @@ public abstract class Spatial extends GraphicsObject
         super.finalize();
     }
 
-    // Local and world transforms.  In some situations you might need to set
-    // the world transform directly and bypass the Spatial::Update()
-    // mechanism.  If World is set directly, the WorldIsCurrent flag should
-    // be set to true.  For example, inverse kinematic controllers and skin
-    // controllers need this capability.
+    /** Local transforms. */
     public Transformation Local = new Transformation();
+    /** World transforms.  In some situations you might need to set
+     * the world transform directly and bypass the Spatial::Update()
+     * mechanism.  If World is set directly, the WorldIsCurrent flag should
+     * be set to true.  For example, inverse kinematic controllers and skin
+     * controllers need this capability.
+     */
     public Transformation World = new Transformation();
+    /** Set when World transform is set directly. */
     public boolean WorldIsCurrent;
 
-    // World bound access.  In some situations you might want to set the
-    // world bound directly and bypass the Spatial::UpdateGS() mechanism.  If
-    // WorldBound is set directly, the WorldBoundIsCurrent flag should be set
-    // to true.
-    //public BoundingVolumePtr WorldBound;
+    /** World bound access.  In some situations you might want to set the
+     * world bound directly and bypass the Spatial::UpdateGS() mechanism.  If
+     * WorldBound is set directly, the WorldBoundIsCurrent flag should be set
+     * to true. */
     public BoundingVolume WorldBound;
+    /** If WorldBound is set directly, the WorldBoundIsCurrent flag should be
+     * set to true. */
     public boolean WorldBoundIsCurrent;
 
-    // Culling parameters.
+    /** Culling parameters. */
     public enum CullingMode
     {
         // Determine visibility state by comparing the world bounding volume
@@ -102,16 +108,16 @@ public abstract class Spatial extends GraphicsObject
         public String Name() { return m_kName; }
     };
 
+    /** Initializes static Culling enum. */
     private static CullingMode ms_eCullingModeStatic = CullingMode.MAX_CULLING_MODE;
 
+    /** Type of culling. */
     public CullingMode Culling;
 
-    // Update of geometric state and controllers.  The UpdateGS function
-    // computes world transformations on the downward pass and world bounding
-    // volumes on the upward pass.  The UpdateBS function just computes the
-    // world bounding volumes on an upward pass.  This is useful if model
-    // data changes, causing the model and world bounds to change, but no
-    // transformations need recomputing.
+    /** Update of geometric state and controllers.  The UpdateGS function
+     * computes world transformations on the downward pass and world bounding
+     * volumes on the upward pass.
+     */
     public void UpdateGS ( ) 
     {
         UpdateWorldData(Float.MIN_VALUE);
@@ -119,6 +125,12 @@ public abstract class Spatial extends GraphicsObject
         PropagateBoundToRoot();
     }
 
+    /** Update of geometric state and controllers.  The UpdateGS function
+     * computes world transformations on the downward pass and world bounding
+     * volumes on the upward pass.
+     * @param dAppTime, animation time step from application.
+     * @param bInitiator, when true propagate bound to root.
+     */
     public void UpdateGS (double dAppTime, boolean bInitiator)
     {
         UpdateWorldData(dAppTime);
@@ -129,24 +141,39 @@ public abstract class Spatial extends GraphicsObject
         }
     }
 
+    /** Update of geometric state and controllers. The UpdateBS function just
+     * computes the world bounding volumes on an upward pass.  This is useful
+     * if model data changes, causing the model and world bounds to change,
+     * but no transformations need recomputing.
+     */
     public void UpdateBS ()
     {
         UpdateWorldBound();
         PropagateBoundToRoot();
     }
 
-    // global state
+    /** global state size
+     * @return global state size
+     */
     public int GetGlobalStateQuantity ()
     {
         return (int)m_kGlobalStates.size();
     }
 
+    /** Get global state at position i.
+     * @param i, position of GlobalState to get.
+     * @return global state at position i.
+     */
     public GlobalState GetGlobalState (int i) 
     {
         assert(0 <= i && i < (int)m_kGlobalStates.size());
         return m_kGlobalStates.get(i);
     }
 
+    /** Get global state by type.
+     * @param eType, type of GlobalState to get.
+     * @return global state for the input type.
+     */
     public GlobalState GetGlobalState (GlobalState.StateType eType)
     {
         // check if type of state already exists
@@ -161,6 +188,9 @@ public abstract class Spatial extends GraphicsObject
         return null;
     }
 
+    /** Attach the input global state to this object.
+     * @param pkState state to attach.
+     */
     public void AttachGlobalState (GlobalState pkState)
     {
         assert(pkState != null);
@@ -180,6 +210,9 @@ public abstract class Spatial extends GraphicsObject
         m_kGlobalStates.add(pkState);
     }
 
+    /** Detach the global state specified by the input type.
+     * @param eType type of global state to detach.
+     */
     public void DetachGlobalState (GlobalState.StateType eType)
     {
         for ( int i = 0; i < m_kGlobalStates.size(); i++ )
@@ -192,24 +225,32 @@ public abstract class Spatial extends GraphicsObject
         }
     }
 
+    /** Detach all global states.  */
     public void DetachAllGlobalStates ()
     {
         m_kGlobalStates.clear();
     }
 
 
-    // light state
+    /** light state. Return the number of attached lights.
+     * @return the number of attached lights.  */
     public int GetLightQuantity ()
     {
         return (int)m_kLights.size();
     }
 
+    /** Return the light specified by the input index.
+     * @param i, the index of the light to return.
+     * @return the light at index i.  */
     public Light GetLight (int i)
     {
         assert(0 <= i && i < (int)m_kLights.size());
         return (Light)(m_kLights.get(i));
     }
 
+    /** Attach the input light.
+     * @param pkLight, the light to attach.
+     */
     public void AttachLight (Light pkLight)
     {
         assert(pkLight != null);
@@ -228,6 +269,9 @@ public abstract class Spatial extends GraphicsObject
         m_kLights.add(pkLight);
     }
 
+    /** Detach the input light.
+     * @param pkLight, the light to detach.
+     */
     public void DetachLight (Light pkLight)
     {
         for ( int i = 0; i < m_kLights.size(); i++ )
@@ -240,23 +284,30 @@ public abstract class Spatial extends GraphicsObject
         }
     }
 
+    /** Detach all lights. */
     public void DetachAllLights ()
     {
         m_kLights.clear();
     }
 
-    // effect state
+    /** Get the number of attached effects.
+     * @return the number of attached effects. */
     public int GetEffectQuantity ()
     {
         return (int)m_kEffects.size();
     }
 
+    /** Get the effect at index.
+     * @param i, index of the effect to return.
+     * @return the effect at index i. */
     public Effect GetEffect (int i)
     {
         assert(0 <= i && i < (int)m_kEffects.size());
         return (Effect)(m_kEffects.get(i));
     }
 
+    /** Attach a new effect.
+     * @param pkEffect, the effect to attach. */
     public void AttachEffect (Effect pkEffect)
     {
         assert(pkEffect != null);
@@ -275,6 +326,8 @@ public abstract class Spatial extends GraphicsObject
         m_kEffects.add(pkEffect);
     }
 
+    /** Detach the specified effect.
+     * @param pkEffect, the effect to detach. */
     public void DetachEffect (Effect pkEffect)
     {
         for ( int i = 0; i < m_kEffects.size(); i++ )
@@ -287,28 +340,39 @@ public abstract class Spatial extends GraphicsObject
         }
     }
 
+    /** Detach all effects. */
     public void DetachAllEffects ()
     {
         m_kEffects.clear();
     }
 
+    /** Set the start effect to the specified index.
+     * @param i, the index of the start effect.
+     */
     public void SetStartEffect (int i)
     {
         assert(0 <= i && i < (int)m_kEffects.size());
         m_iStartEffect = i;
     }
 
+    /** Get the start effect index.
+     * @return the start effect index.
+     */
     public int GetStartEffect () 
     {
         return m_iStartEffect;
     }
 
+    /** Update render state. */
     public void UpdateRS ( )
     {
         UpdateRS(null,null);
     }
 
-    // update of render state
+    /** update of render state 
+     * @param akGStack, global states.
+     * @param akLStack, lights.
+     */
     public void UpdateRS ( Vector<Vector<GlobalState>> akGStack,
                            Vector<Light> pkLStack)
     {
@@ -359,12 +423,15 @@ public abstract class Spatial extends GraphicsObject
     }
 
 
-    // parent access
+    /** Return parent node.
+     * @return parent.
+     */
     public Spatial GetParent ()
     {
         return m_pkParent;
     }
 
+    /** Default constructor. */
     public Spatial ()
     {
         WorldBound = new SphereBV();
@@ -375,7 +442,9 @@ public abstract class Spatial extends GraphicsObject
     }
 
 
-    // geometric updates
+    /** geometric updates
+     * @param dAppTime, animation time step from application.
+     */
     protected void UpdateWorldData (double dAppTime)
     {
         // update any controllers associated with this object
@@ -405,8 +474,10 @@ public abstract class Spatial extends GraphicsObject
         }
     }
 
+    /** Update world bound. */
     protected abstract void UpdateWorldBound ();
 
+    /** Propagate bound to root. */
     protected void PropagateBoundToRoot ()
     {
         if (m_pkParent != null)
@@ -417,7 +488,10 @@ public abstract class Spatial extends GraphicsObject
     }
 
 
-    // render state updates
+    /** render state updates
+     * @param akGStack, global states.
+     * @param akLStack, lights.
+     */
     protected void PropagateStateFromRoot ( Vector<Vector<GlobalState>> akGStack,
                                             Vector<Light> pkLStack)
     {
@@ -431,6 +505,10 @@ public abstract class Spatial extends GraphicsObject
         PushState(akGStack,pkLStack);
     }
 
+    /** Push state onto current render state stack.
+     * @param akGStack, global states.
+     * @param akLStack, lights.
+     */
     protected void PushState ( Vector<Vector<GlobalState>> akGStack,
                                Vector<Light> pkLStack)
     {
@@ -448,6 +526,10 @@ public abstract class Spatial extends GraphicsObject
         }
     }
 
+    /** Pop state from current render state stack.
+     * @param akGStack, global states.
+     * @param akLStack, lights.
+     */
     protected void PopState ( Vector<Vector<GlobalState>> akGStack,
                               Vector<Light> pkLStack)
     {
@@ -464,45 +546,51 @@ public abstract class Spatial extends GraphicsObject
         }
     }
 
+    /** Update state.
+     * @param akGStack, global states.
+     * @param akLStack, lights.
+     */
     protected abstract void UpdateState ( Vector<Vector<GlobalState>> akGStack,
                                           Vector<Light> pkLStack);
 
-    // support for hierarchical scene graph
+    /** support for hierarchical scene graph */
     protected Spatial m_pkParent;
 
-    // global render state
+    /** global render state */
     protected Vector<GlobalState> m_kGlobalStates = new Vector<GlobalState>();
 
-    // light state
+    /** light state */
     protected Vector<GraphicsObject> m_kLights =
         new Vector<GraphicsObject>();
 
-    // Effect state.  If the effect is attached to a Geometry object, it
-    // applies to that object alone.  If the effect is attached to a Node
-    // object, it applies to all Geometry objects in the subtree rooted at
-    // the Node.
+    /** Effect state.  If the effect is attached to a Geometry object, it
+     * applies to that object alone.  If the effect is attached to a Node
+     * object, it applies to all Geometry objects in the subtree rooted at
+     * the Node. */
     protected Vector<Effect> m_kEffects = new Vector<Effect>();
 
-    // Normally, all effects are applied to an object.  To allow overriding
-    // some of the effects, a starting index may be specified by the
-    // application.  This is useful for complex effects, where the current
-    // effects must be ignored and another effect is used instead.  Without
-    // this mechanism, you would have to detach and save the current effects,
-    // attach the desired effect, draw, detach the desired effect, and
-    // reattach the old effects.  With this mechanism, you attach the desired
-    // effect, set the starting index to that of the desired effect, draw,
-    // reset the starting index to zero, and detach the desired effect.
+    /** Normally, all effects are applied to an object.  To allow overriding
+     * some of the effects, a starting index may be specified by the
+     * application.  This is useful for complex effects, where the current
+     * effects must be ignored and another effect is used instead.  Without
+     * this mechanism, you would have to detach and save the current effects,
+     * attach the desired effect, draw, detach the desired effect, and
+     * reattach the old effects.  With this mechanism, you attach the desired
+     * effect, set the starting index to that of the desired effect, draw,
+     * reset the starting index to zero, and detach the desired effect. */
     protected int m_iStartEffect;
 
-    // internal use
-    // parent access (Node calls this during attach/detach of children)
+    /** Parent access (Node calls this during attach/detach of children)
+     * @param pkParent, set parent. */
     public void SetParent (Spatial pkParent)
     {
         m_pkParent = pkParent;
     }
 
-
-    // culling
+    /** Culling callback.
+     * @param rkCuller, Culler object.
+     * @param bNoCull, when true set to no-cull.
+     */
     public void OnGetVisibleSet (Culler rkCuller, boolean bNoCull)
     {
         if (Culling == CullingMode.CULL_ALWAYS)
@@ -523,8 +611,17 @@ public abstract class Spatial extends GraphicsObject
         rkCuller.SetPlaneState(uiSavePlaneState);
     }
 
+    /** Get visible set. 
+     * @param rkCuller, Culler
+     * @param bNoCull, when true set to no-cull.
+     */
     protected abstract void GetVisibleSet (Culler rkCuller, boolean bNoCull);
 
+    /**
+     * Returns the GraphicsObject with the name that matches the input paramter, rkName.
+     * @param rkName, the name of the object to return.
+     * @return the GraphicsObject that matches the input name.
+     */
     public GraphicsObject GetObjectByName (final String rkName)
     {
         GraphicsObject pkFound = super.GetObjectByName(rkName);
@@ -583,6 +680,13 @@ public abstract class Spatial extends GraphicsObject
         // with the specified name, the member m_pkParent is not checked.
         return null;
     }
+
+    /**
+     * Writes all GraphicsObjects with the name that matches the input
+     * paramter, rkName into the Vector paramter rkObjects.
+     * @param rkName, the name of the objects to return.
+     * @param rkObjects, a Vector of all objects with the matching name.
+     */
     public void GetAllObjectsByName (final String rkName,
                                      Vector<GraphicsObject> rkObjects)
     {
@@ -621,6 +725,12 @@ public abstract class Spatial extends GraphicsObject
         // To avoid cycles in a recursive search of a scene graph for an object
         // with the specified name, the member m_pkParent is not checked.
     }
+
+    /**
+     * Returns the GraphicsObject with the ID that matches the input paramter, uiID.
+     * @param uiID, the ID of the object to return.
+     * @return the GraphicsObject that matches the input name.
+     */
     public GraphicsObject GetObjectByID (int uiID)
     {
         GraphicsObject pkFound = super.GetObjectByID(uiID);
@@ -680,6 +790,14 @@ public abstract class Spatial extends GraphicsObject
         return null;
     }
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -723,6 +841,12 @@ public abstract class Spatial extends GraphicsObject
         }
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
@@ -749,6 +873,14 @@ public abstract class Spatial extends GraphicsObject
         }
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         if (!super.Register(rkStream))
@@ -790,6 +922,10 @@ public abstract class Spatial extends GraphicsObject
         return true;
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -829,6 +965,12 @@ public abstract class Spatial extends GraphicsObject
         // child in Node::Link.
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -843,6 +985,12 @@ public abstract class Spatial extends GraphicsObject
             Stream.SIZEOF_INT + (m_kEffects.size())*Stream.SIZEOF_INT; //sizeof(EffectPtr);
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

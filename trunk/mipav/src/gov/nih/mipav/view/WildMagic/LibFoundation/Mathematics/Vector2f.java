@@ -71,7 +71,7 @@ public class Vector2f
     /** Return x-value
      * @return x-value
      */
-    public float X ()
+    public final float X ()
     {
         return m_afTuple[0];
     }
@@ -79,7 +79,7 @@ public class Vector2f
     /** Return y-value
      * @return y-value
      */
-    public float Y ()
+    public final float Y ()
     {
         return m_afTuple[1];
     }
@@ -87,7 +87,7 @@ public class Vector2f
     /** Set x-value
      * @param fValue x-value
      */
-    public void X (float fValue)
+    public final void X (float fValue)
     {
         m_afTuple[0] = fValue;
     }
@@ -95,7 +95,7 @@ public class Vector2f
     /** Set y-value
      * @param fValue y-value
      */
-    public void Y (float fValue)
+    public final void Y (float fValue)
     {
         m_afTuple[1] = fValue;
     }

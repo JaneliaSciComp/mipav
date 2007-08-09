@@ -22,9 +22,10 @@ import java.util.HashMap;
 public class RendererConstant
 {
 
-    // For a lookup of the renderer constant type from its string name.
+    /**  For a lookup of the renderer constant type from its string name. */
     private static HashMap<String,Type> ms_pkTypeMap = new HashMap<String,Type>();
 
+    /** RendererConstant types: */
     public static enum Type
     {
         W_MATRIX ("WMatrix"),                          // 4x4 model-to-world matrix
@@ -178,11 +179,16 @@ public class RendererConstant
         public int Value() { return m_iValue; }
     };
     
+    /** Initializes type enum: */
     private static Type m_eTypeStatic = Type.MAX_TYPES;
 
-    // Construction and destruction.  The base register must be nonnegative.
-    // The register quantity is between 1 and 4.  Each register represents
-    // four floating-point values.
+    /** Construction and destruction.  The base register must be nonnegative.
+     * The register quantity is between 1 and 4.  Each register represents
+     * four floating-point values.
+     * @param eType, type of RendererConstant
+     * @param iBaseRegister, base register (nonnegative)
+     * @param iRegisterQuantity (values between 1-4)
+     */
     public RendererConstant (Type eType, int iBaseRegister, int iRegisterQuantity)
     {
         assert(iBaseRegister >= 0);
@@ -193,39 +199,61 @@ public class RendererConstant
         m_iRegisterQuantity = iRegisterQuantity;
     }
 
+    /** Delete memory. */
     public void finalize()
     {
         m_afData = null;
     }
 
-    // Member access.  The renderer will use these to set the registers with
-    // the appropriate values.
-    public Type GetType ()
+    /** Member access.  The renderer will use these to set the registers with
+     * the appropriate values.
+     * @return RendererConstant type.
+     */
+    public final Type GetType ()
     {
         return m_eType;
     }
 
-    public int GetBaseRegister ()
+    /** Member access.  The renderer will use these to set the registers with
+     * the appropriate values.
+     * @return base register value.
+     */
+    public final int GetBaseRegister ()
     {
         return m_iBaseRegister;
     }
 
-    public int GetRegisterQuantity ()
+    /** Member access.  The renderer will use these to set the registers with
+     * the appropriate values.
+     * @return base register quantity.
+     */
+    public final int GetRegisterQuantity ()
     {
         return m_iRegisterQuantity;
     }
 
-    public float[] GetData ()
+    /** Member access.  The renderer will use these to set the registers with
+     * the appropriate values.
+     * @return RendererConstant data values.
+     */
+    public final float[] GetData ()
     {
         return m_afData;
     }
 
-    // Mappings between enums and strings.
+    /** Mappings between enums and strings.
+     * @param eType, RendererConstant type
+     * @return String name of the RendererConstant type
+     */
     public static final String GetName (Type eType)
     {
         return eType.Name();
     }
 
+    /** Mappings between enums and strings.
+     * @param rkName, String name of the RendererConstant type
+     * @return RendererConstant type
+     */
     public static Type GetType (String rkName)
     {
         Type kType = ms_pkTypeMap.get(rkName);
@@ -236,8 +264,12 @@ public class RendererConstant
         return Type.MAX_TYPES;
     }
 
+    /** Type of RendererConstant */
     private Type m_eType;
+    /** Base register (nonnegative) */
     private int m_iBaseRegister;
-    private int m_iRegisterQuantity;  // maximum of 4
-    private float[] m_afData = new float[16];       // maximum storage, avoid dynamic allocation
+    /** Register quantity (maximum of 4) */
+    private int m_iRegisterQuantity; 
+    /** Data (maximum storage, avoid dynamic allocation) */
+    private float[] m_afData = new float[16];
 }

@@ -68,6 +68,7 @@ public class OpenGLRenderer extends Renderer
         super.finalize();
     }
 
+    /** Initialize canvas with hardware accelerated capabilites. */
     public void initCanvas()
     {
         GLCapabilities kGlCapabilities = new GLCapabilities();
@@ -94,10 +95,10 @@ public class OpenGLRenderer extends Renderer
     }
 
     /** Renderer-specific information for loading shader programs. */
-    public String GetExtension () { return "ogl"; }
+    public final String GetExtension () { return "ogl"; }
 
     /** Renderer-specific information for loading shader programs. */
-    public char GetCommentCharacter () { return '#'; }
+    public final char GetCommentCharacter () { return '#'; }
 
     /** Initialize the rendering state (vertices, colors, normals, textures,
      * vertex and pixel programs, etc.) */
@@ -190,8 +191,6 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
         gl.glClearColor(rkColor.R(),rkColor.G(),rkColor.B(),rkColor.A());
     }
-
-    // Full window buffer operations.
 
     /** Clear back buffer. */
     public void ClearBackBuffer ()
@@ -329,8 +328,6 @@ public class OpenGLRenderer extends Renderer
         gl.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT|GL.GL_STENCIL_BUFFER_BIT);
         gl.glDisable(GL.GL_SCISSOR_TEST);
     }
-
-    // Specialized drawing functions.
 
     /** Select a font based on ID. 
      * @param iFontID, the font to use.
@@ -557,8 +554,6 @@ public class OpenGLRenderer extends Renderer
         }
     }
 
-    // point size, line width, and line stipple
-
     /** Set the point size. 
      * @param fSize, new point size.
      */
@@ -657,8 +652,6 @@ public class OpenGLRenderer extends Renderer
         gl.glDisable(GL.GL_CLIP_PLANE0 + i);
     }
 
-    // camera updates
-
     /** Called when the viewport changes. Updates the camera. */
     public void OnViewportChange ()
     {
@@ -713,8 +706,6 @@ public class OpenGLRenderer extends Renderer
             gl.glDepthRange(0.0,1.0);
         }
     }
-
-    // global render state management
 
     /** Sets the AlphaState for the OpenGLRenderer.
      * @param pkState, the new AlphaState.
@@ -2019,8 +2010,10 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar0 = new BitmapFontChar(0,0,13,16,gs_aucChar0);
 
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar1 = new byte[] 
         {
             0x00,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
@@ -2028,8 +2021,10 @@ public class OpenGLRenderer extends Renderer
             0x1E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar1 = new BitmapFontChar(0,0,13,16,gs_aucChar1);
 
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar2 = new byte[] 
         {
             0x00,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
@@ -2037,8 +2032,10 @@ public class OpenGLRenderer extends Renderer
             (byte)0xF0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar2 = new BitmapFontChar(0,0,13,16,gs_aucChar2);
 
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar3 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2046,8 +2043,10 @@ public class OpenGLRenderer extends Renderer
             0x1E,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
             0x10,0x00,0x10,0x00,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar3 = new BitmapFontChar(0,0,13,16,gs_aucChar3);
 
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar4 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2055,8 +2054,10 @@ public class OpenGLRenderer extends Renderer
             (byte)0xF0,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
             0x10,0x00,0x10,0x00,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar4 = new BitmapFontChar(0,0,13,16,gs_aucChar4);
 
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar5 = new byte[] 
         {
             0x00,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
@@ -2064,8 +2065,10 @@ public class OpenGLRenderer extends Renderer
             0x10,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
             0x10,0x00,0x10,0x00,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar5 = new BitmapFontChar(0,0,13,16,gs_aucChar5);
 
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar6 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2073,8 +2076,9 @@ public class OpenGLRenderer extends Renderer
             (byte)0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar6 = new BitmapFontChar(0,0,13,16,gs_aucChar6);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar7 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2082,8 +2086,9 @@ public class OpenGLRenderer extends Renderer
             0x7C,0x00,0x7C,0x00,0x38,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar7 = new BitmapFontChar(0,0,13,16,gs_aucChar7);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar8 = new byte[] 
         {
             0x00,0x00,(byte)0xFE,0x00,(byte)0xFE,0x00,(byte)0xFE,0x00,
@@ -2091,8 +2096,9 @@ public class OpenGLRenderer extends Renderer
             (byte)0x82,0x00,(byte)0x82,0x00,(byte)0xC6,0x00,(byte)0xFE,0x00,
             (byte)0xFE,0x00,(byte)0xFE,0x00,(byte)0xFE,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar8 = new BitmapFontChar(0,0,13,16,gs_aucChar8);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar9 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2100,8 +2106,9 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar9 = new BitmapFontChar(0,0,13,16,gs_aucChar9);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar10 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2109,8 +2116,9 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar10 = new BitmapFontChar(0,0,13,16,gs_aucChar10);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar11 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x30,0x00,
@@ -2118,8 +2126,9 @@ public class OpenGLRenderer extends Renderer
             0x10,0x00,0x0A,0x00,0x0A,0x00,0x06,0x00,
             0x1E,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar11 = new BitmapFontChar(0,0,13,16,gs_aucChar11);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar12 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x3F,(byte)0xF0,
@@ -2127,8 +2136,9 @@ public class OpenGLRenderer extends Renderer
             0x20,0x10,0x20,0x10,0x20,0x10,0x20,0x10,
             0x3F,(byte)0xF0,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar12 = new BitmapFontChar(0,0,13,16,gs_aucChar12);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar13 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2136,8 +2146,9 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar13 = new BitmapFontChar(0,0,13,16,gs_aucChar13);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar14 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x60,0x00,
@@ -2145,8 +2156,9 @@ public class OpenGLRenderer extends Renderer
             0x22,0x00,0x3A,0x00,0x26,0x00,0x3A,0x00,
             0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar14 = new BitmapFontChar(0,0,13,16,gs_aucChar14);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar15 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2154,8 +2166,9 @@ public class OpenGLRenderer extends Renderer
             0x6C,0x00,0x28,0x00,0x28,0x00,0x54,0x00,
             0x54,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar15 = new BitmapFontChar(0,0,13,16,gs_aucChar15);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar16 = new byte[] 
         {
             0x00,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
@@ -2163,8 +2176,9 @@ public class OpenGLRenderer extends Renderer
             (byte)0xFE,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
             0x10,0x00,0x10,0x00,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar16 = new BitmapFontChar(0,0,13,16,gs_aucChar16);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar17 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,
@@ -2172,8 +2186,9 @@ public class OpenGLRenderer extends Renderer
             0x7E,0x00,0x3E,0x00,0x1E,0x00,0x0E,0x00,
             0x06,0x00,0x02,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar17 = new BitmapFontChar(0,0,13,16,gs_aucChar17);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar18 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x10,0x00,0x38,0x00,
@@ -2181,8 +2196,9 @@ public class OpenGLRenderer extends Renderer
             0x10,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
             0x54,0x00,0x38,0x00,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar18 = new BitmapFontChar(0,0,13,16,gs_aucChar18);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar19 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x24,0x00,0x24,0x00,
@@ -2190,8 +2206,9 @@ public class OpenGLRenderer extends Renderer
             0x24,0x00,0x24,0x00,0x24,0x00,0x24,0x00,
             0x24,0x00,0x24,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar19 = new BitmapFontChar(0,0,13,16,gs_aucChar19);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar20 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x14,0x00,0x14,0x00,
@@ -2199,8 +2216,9 @@ public class OpenGLRenderer extends Renderer
             0x54,0x00,0x54,0x00,0x54,0x00,0x54,0x00,
             0x54,0x00,0x34,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar20 = new BitmapFontChar(0,0,13,16,gs_aucChar20);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar21 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2208,8 +2226,9 @@ public class OpenGLRenderer extends Renderer
             (byte)0xFE,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
             0x10,0x00,0x10,0x00,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar21 = new BitmapFontChar(0,0,13,16,gs_aucChar21);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar22 = new byte[] 
         {
             0x00,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
@@ -2217,8 +2236,9 @@ public class OpenGLRenderer extends Renderer
             (byte)0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar22 = new BitmapFontChar(0,0,13,16,gs_aucChar22);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar23 = new byte[] 
         {
             0x00,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
@@ -2226,8 +2246,9 @@ public class OpenGLRenderer extends Renderer
             (byte)0xF0,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
             0x10,0x00,0x10,0x00,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar23 = new BitmapFontChar(0,0,13,16,gs_aucChar23);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar24 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x10,0x00,0x10,0x00,
@@ -2235,8 +2256,9 @@ public class OpenGLRenderer extends Renderer
             0x10,0x00,0x10,0x00,0x10,0x00,0x54,0x00,
             0x38,0x00,0x10,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar24 = new BitmapFontChar(0,0,13,16,gs_aucChar24);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar25 = new byte[] 
         {
             0x00,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
@@ -2244,8 +2266,9 @@ public class OpenGLRenderer extends Renderer
             0x1E,0x00,0x10,0x00,0x10,0x00,0x10,0x00,
             0x10,0x00,0x10,0x00,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar25 = new BitmapFontChar(0,0,13,16,gs_aucChar25);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar26 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2253,8 +2276,9 @@ public class OpenGLRenderer extends Renderer
             0x04,0x00,0x08,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar26 = new BitmapFontChar(0,0,13,16,gs_aucChar26);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar27 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2262,8 +2286,9 @@ public class OpenGLRenderer extends Renderer
             0x20,0x00,0x10,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar27 = new BitmapFontChar(0,0,13,16,gs_aucChar27);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar28 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2271,8 +2296,9 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar28 = new BitmapFontChar(0,0,13,16,gs_aucChar28);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar29 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2280,8 +2306,9 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar29 = new BitmapFontChar(0,0,13,16,gs_aucChar29);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar30 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2289,8 +2316,9 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar30 = new BitmapFontChar(0,0,13,16,gs_aucChar30);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar31 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2298,29 +2326,33 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar31 = new BitmapFontChar(0,0,13,16,gs_aucChar31);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar32 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar32 = new BitmapFontChar(0,0,5,16,gs_aucChar32);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar33 = new byte[] 
         {
             0x00,0x00,0x00,0x20,0x20,0x00,0x20,0x20,
             0x20,0x20,0x20,0x20,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar33 = new BitmapFontChar(0,0,5,16,gs_aucChar33);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar34 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x50,0x50,0x50,0x50,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar34 = new BitmapFontChar(0,0,5,16,gs_aucChar34);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar35 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2328,15 +2360,17 @@ public class OpenGLRenderer extends Renderer
             0x12,0x00,0x3F,(byte)0x80,0x09,0x00,0x09,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar35 = new BitmapFontChar(0,0,10,16,gs_aucChar35);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar36 = new byte[] 
         {
             0x00,0x10,0x10,0x7C,0x12,0x12,0x1C,0x30,
             0x50,0x50,0x3E,0x10,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar36 = new BitmapFontChar(0,0,8,16,gs_aucChar36);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar37 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x10,(byte)0xE0,
@@ -2344,8 +2378,9 @@ public class OpenGLRenderer extends Renderer
             0x45,0x00,0x45,0x00,0x44,(byte)0x80,0x38,0x40,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar37 = new BitmapFontChar(0,0,13,16,gs_aucChar37);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar38 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x39,(byte)0x80,
@@ -2353,29 +2388,33 @@ public class OpenGLRenderer extends Renderer
             0x44,0x00,0x44,0x00,0x44,0x00,0x38,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar38 = new BitmapFontChar(0,0,9,16,gs_aucChar38);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar39 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x40,0x40,0x40,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar39 = new BitmapFontChar(0,0,3,16,gs_aucChar39);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar40 = new byte[] 
         {
             0x08,0x10,0x20,0x20,0x40,0x40,0x40,0x40,
             0x40,0x20,0x20,0x10,0x08,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar40 = new BitmapFontChar(0,0,6,16,gs_aucChar40);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar41 = new byte[] 
         {
             0x40,0x20,0x10,0x10,0x08,0x08,0x08,0x08,
             0x08,0x10,0x10,0x20,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar41 = new BitmapFontChar(0,0,6,16,gs_aucChar41);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar42 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2383,8 +2422,9 @@ public class OpenGLRenderer extends Renderer
             0x08,0x00,0x2A,0x00,0x1C,0x00,0x2A,0x00,
             0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar42 = new BitmapFontChar(0,0,9,16,gs_aucChar42);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar43 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2392,120 +2432,137 @@ public class OpenGLRenderer extends Renderer
             0x08,0x00,0x08,0x00,0x08,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar43 = new BitmapFontChar(0,0,9,16,gs_aucChar43);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar44 = new byte[] 
         {
             0x00,0x40,0x20,0x20,0x20,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar44 = new BitmapFontChar(0,0,5,16,gs_aucChar44);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar45 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7C,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar45 = new BitmapFontChar(0,0,7,16,gs_aucChar45);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar46 = new byte[] 
         {
             0x00,0x00,0x00,0x20,0x20,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar46 = new BitmapFontChar(0,0,5,16,gs_aucChar46);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar47 = new byte[] 
         {
             0x00,(byte)0x80,(byte)0x80,0x40,0x40,0x20,0x20,0x10,
             0x10,0x08,0x08,0x04,0x04,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar47 = new BitmapFontChar(0,0,6,16,gs_aucChar47);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar48 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,
             0x42,0x42,0x42,0x3C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar48 = new BitmapFontChar(0,0,8,16,gs_aucChar48);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar49 = new byte[] 
         {
             0x00,0x00,0x00,0x3E,0x08,0x08,0x08,0x08,
             0x08,0x08,0x38,0x08,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar49 = new BitmapFontChar(0,0,8,16,gs_aucChar49);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar50 = new byte[] 
         {
             0x00,0x00,0x00,0x7E,0x40,0x20,0x18,0x04,
             0x02,0x42,0x42,0x3C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar50 = new BitmapFontChar(0,0,8,16,gs_aucChar50);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar51 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x02,0x02,0x1C,
             0x02,0x02,0x42,0x3C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar51 = new BitmapFontChar(0,0,8,16,gs_aucChar51);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar52 = new byte[] 
         {
             0x00,0x00,0x00,0x04,0x04,0x04,0x7F,0x44,
             0x24,0x14,0x0C,0x04,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar52 = new BitmapFontChar(0,0,8,16,gs_aucChar52);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar53 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x02,0x02,0x3C,
             0x20,0x20,0x20,0x3E,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar53 = new BitmapFontChar(0,0,8,16,gs_aucChar53);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar54 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,
             0x7C,0x40,0x20,0x1C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar54 = new BitmapFontChar(0,0,8,16,gs_aucChar54);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar55 = new byte[] 
         {
             0x00,0x00,0x00,0x10,0x10,0x10,0x08,0x08,
             0x04,0x04,0x02,0x7E,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar55 = new BitmapFontChar(0,0,8,16,gs_aucChar55);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar56 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x3C,
             0x42,0x42,0x42,0x3C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar56 = new BitmapFontChar(0,0,8,16,gs_aucChar56);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar57 = new byte[] 
         {
             0x00,0x00,0x00,0x38,0x04,0x02,0x3E,0x42,
             0x42,0x42,0x42,0x3C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar57 = new BitmapFontChar(0,0,8,16,gs_aucChar57);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar58 = new byte[] 
         {
             0x00,0x00,0x00,0x20,0x20,0x00,0x00,0x00,
             0x20,0x20,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar58 = new BitmapFontChar(0,0,6,16,gs_aucChar58);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar59 = new byte[] 
         {
             0x00,0x40,0x20,0x20,0x20,0x00,0x00,0x00,
             0x20,0x20,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar59 = new BitmapFontChar(0,0,6,16,gs_aucChar59);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar60 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,
@@ -2513,8 +2570,9 @@ public class OpenGLRenderer extends Renderer
             0x0C,0x00,0x03,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar60 = new BitmapFontChar(0,0,9,16,gs_aucChar60);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar61 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2522,8 +2580,9 @@ public class OpenGLRenderer extends Renderer
             0x7F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar61 = new BitmapFontChar(0,0,9,16,gs_aucChar61);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar62 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x60,0x00,
@@ -2531,15 +2590,17 @@ public class OpenGLRenderer extends Renderer
             0x18,0x00,0x60,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar62 = new BitmapFontChar(0,0,9,16,gs_aucChar62);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar63 = new byte[] 
         {
             0x00,0x00,0x00,0x10,0x10,0x00,0x10,0x10,
             0x08,0x04,0x44,0x38,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar63 = new BitmapFontChar(0,0,7,16,gs_aucChar63);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar64 = new byte[] 
         {
             0x00,0x00,0x0F,(byte)0x80,0x10,0x00,0x27,(byte)0xE0,
@@ -2547,8 +2608,9 @@ public class OpenGLRenderer extends Renderer
             0x48,(byte)0x90,0x27,(byte)0xA0,0x10,0x40,0x0F,(byte)0x80,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar64 = new BitmapFontChar(0,0,13,16,gs_aucChar64);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar65 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x41,0x00,
@@ -2556,15 +2618,17 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x14,0x00,0x08,0x00,0x08,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar65 = new BitmapFontChar(0,0,9,16,gs_aucChar65);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar66 = new byte[] 
         {
             0x00,0x00,0x00,0x7C,0x42,0x42,0x42,0x7C,
             0x44,0x44,0x44,0x78,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar66 = new BitmapFontChar(0,0,8,16,gs_aucChar66);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar67 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1E,0x00,
@@ -2572,8 +2636,9 @@ public class OpenGLRenderer extends Renderer
             0x40,0x00,0x40,0x00,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar67 = new BitmapFontChar(0,0,9,16,gs_aucChar67);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar68 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x7C,0x00,
@@ -2581,22 +2646,25 @@ public class OpenGLRenderer extends Renderer
             0x41,0x00,0x41,0x00,0x42,0x00,0x7C,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar68 = new BitmapFontChar(0,0,9,16,gs_aucChar68);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar69 = new byte[] 
         {
             0x00,0x00,0x00,0x7E,0x40,0x40,0x40,0x7E,
             0x40,0x40,0x40,0x7E,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar69 = new BitmapFontChar(0,0,8,16,gs_aucChar69);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar70 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x40,0x40,0x7C,
             0x40,0x40,0x40,0x7E,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar70 = new BitmapFontChar(0,0,8,16,gs_aucChar70);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar71 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1F,0x00,
@@ -2604,8 +2672,9 @@ public class OpenGLRenderer extends Renderer
             0x40,0x00,0x40,0x00,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar71 = new BitmapFontChar(0,0,9,16,gs_aucChar71);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar72 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x41,0x00,
@@ -2613,36 +2682,41 @@ public class OpenGLRenderer extends Renderer
             0x41,0x00,0x41,0x00,0x41,0x00,0x41,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar72 = new BitmapFontChar(0,0,9,16,gs_aucChar72);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar73 = new byte[] 
         {
             0x00,0x00,0x00,0x70,0x20,0x20,0x20,0x20,
             0x20,0x20,0x20,0x70,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar73 = new BitmapFontChar(0,0,5,16,gs_aucChar73);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar74 = new byte[] 
         {
             0x00,0x00,0x00,(byte)0xF0,0x08,0x08,0x08,0x08,
             0x08,0x08,0x08,0x38,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar74 = new BitmapFontChar(0,0,6,16,gs_aucChar74);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar75 = new byte[] 
         {
             0x00,0x00,0x00,0x42,0x44,0x48,0x50,0x60,
             0x50,0x48,0x44,0x42,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar75 = new BitmapFontChar(0,0,8,16,gs_aucChar75);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar76 = new byte[] 
         {
             0x00,0x00,0x00,0x7E,0x40,0x40,0x40,0x40,
             0x40,0x40,0x40,0x40,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar76 = new BitmapFontChar(0,0,7,16,gs_aucChar76);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar77 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x40,0x40,
@@ -2650,8 +2724,9 @@ public class OpenGLRenderer extends Renderer
             0x51,0x40,0x51,0x40,0x60,(byte)0xC0,0x60,(byte)0xC0,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar77 = new BitmapFontChar(0,0,11,16,gs_aucChar77);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar78 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x43,0x00,
@@ -2659,8 +2734,9 @@ public class OpenGLRenderer extends Renderer
             0x51,0x00,0x51,0x00,0x61,0x00,0x61,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar78 = new BitmapFontChar(0,0,9,16,gs_aucChar78);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar79 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1E,0x00,
@@ -2668,15 +2744,17 @@ public class OpenGLRenderer extends Renderer
             0x40,(byte)0x80,0x40,(byte)0x80,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar79 = new BitmapFontChar(0,0,10,16,gs_aucChar79);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar80 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x40,0x7C,0x42,
             0x42,0x42,0x42,0x7C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar80 = new BitmapFontChar(0,0,8,16,gs_aucChar80);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar81 = new byte[] 
         {
             0x00,0x00,0x01,(byte)0x80,0x02,0x00,0x1E,0x00,
@@ -2684,15 +2762,17 @@ public class OpenGLRenderer extends Renderer
             0x40,(byte)0x80,0x40,(byte)0x80,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar81 = new BitmapFontChar(0,0,10,16,gs_aucChar81);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar82 = new byte[] 
         {
             0x00,0x00,0x00,0x41,0x42,0x44,0x78,0x44,
             0x42,0x42,0x42,0x7C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar82 = new BitmapFontChar(0,0,8,16,gs_aucChar82);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar83 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x3E,0x00,
@@ -2700,8 +2780,9 @@ public class OpenGLRenderer extends Renderer
             0x40,0x00,0x40,0x00,0x41,0x00,0x3E,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar83 = new BitmapFontChar(0,0,9,16,gs_aucChar83);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar84 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,
@@ -2709,8 +2790,9 @@ public class OpenGLRenderer extends Renderer
             0x08,0x00,0x08,0x00,0x08,0x00,0x7F,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar84 = new BitmapFontChar(0,0,9,16,gs_aucChar84);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar85 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1C,0x00,
@@ -2718,8 +2800,9 @@ public class OpenGLRenderer extends Renderer
             0x41,0x00,0x41,0x00,0x41,0x00,0x41,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar85 = new BitmapFontChar(0,0,9,16,gs_aucChar85);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar86 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,
@@ -2727,8 +2810,9 @@ public class OpenGLRenderer extends Renderer
             0x22,0x00,0x41,0x00,0x41,0x00,0x41,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar86 = new BitmapFontChar(0,0,9,16,gs_aucChar86);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar87 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x40,
@@ -2736,8 +2820,9 @@ public class OpenGLRenderer extends Renderer
             0x45,0x10,0x45,0x10,0x42,0x10,0x42,0x10,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar87 = new BitmapFontChar(0,0,13,16,gs_aucChar87);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar88 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x41,0x00,
@@ -2745,8 +2830,9 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x22,0x00,0x41,0x00,0x41,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar88 = new BitmapFontChar(0,0,9,16,gs_aucChar88);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar89 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,
@@ -2754,8 +2840,9 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x22,0x00,0x22,0x00,0x41,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar89 = new BitmapFontChar(0,0,9,16,gs_aucChar89);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar90 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x7F,0x00,
@@ -2763,29 +2850,33 @@ public class OpenGLRenderer extends Renderer
             0x04,0x00,0x02,0x00,0x01,0x00,0x7F,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar90 = new BitmapFontChar(0,0,9,16,gs_aucChar90);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar91 = new byte[] 
         {
             0x00,0x38,0x20,0x20,0x20,0x20,0x20,0x20,
             0x20,0x20,0x20,0x20,0x38,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar91 = new BitmapFontChar(0,0,6,16,gs_aucChar91);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar92 = new byte[] 
         {
             0x00,0x04,0x04,0x08,0x08,0x10,0x10,0x20,
             0x20,0x40,0x40,(byte)0x80,(byte)0x80,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar92 = new BitmapFontChar(0,0,6,16,gs_aucChar92);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar93 = new byte[] 
         {
             0x00,0x70,0x10,0x10,0x10,0x10,0x10,0x10,
             0x10,0x10,0x10,0x10,0x70,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar93 = new BitmapFontChar(0,0,6,16,gs_aucChar93);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar94 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -2793,106 +2884,121 @@ public class OpenGLRenderer extends Renderer
             0x20,(byte)0x80,0x11,0x00,0x0A,0x00,0x04,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar94 = new BitmapFontChar(0,0,11,16,gs_aucChar94);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar95 = new byte[] 
         {
             0x00,(byte)0xFF,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar95 = new BitmapFontChar(0,0,8,16,gs_aucChar95);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar96 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x08,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar96 = new BitmapFontChar(0,0,8,16,gs_aucChar96);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar97 = new byte[] 
         {
             0x00,0x00,0x00,0x3E,0x42,0x42,0x3E,0x02,
             0x02,0x3C,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar97 = new BitmapFontChar(0,0,8,16,gs_aucChar97);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar98 = new byte[] 
         {
             0x00,0x00,0x00,0x7C,0x42,0x42,0x42,0x42,
             0x62,0x5C,0x40,0x40,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar98 = new BitmapFontChar(0,0,8,16,gs_aucChar98);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar99 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x40,0x40,0x40,
             0x42,0x3C,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar99 = new BitmapFontChar(0,0,8,16,gs_aucChar99);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar100 = new byte[] 
         {
             0x00,0x00,0x00,0x3A,0x46,0x42,0x42,0x42,
             0x42,0x3E,0x02,0x02,0x02,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar100 = new BitmapFontChar(0,0,8,16,gs_aucChar100);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar101 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x40,0x7E,0x42,
             0x42,0x3C,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar101 = new BitmapFontChar(0,0,8,16,gs_aucChar101);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar102 = new byte[] 
         {
             0x00,0x00,0x00,0x20,0x20,0x20,0x20,0x20,
             0x20,0x78,0x20,0x20,0x18,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar102 = new BitmapFontChar(0,0,5,16,gs_aucChar102);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar103 = new byte[] 
         {
             0x3C,0x02,0x02,0x3A,0x46,0x42,0x42,0x42,
             0x42,0x3E,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar103 = new BitmapFontChar(0,0,8,16,gs_aucChar103);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar104 = new byte[] 
         {
             0x00,0x00,0x00,0x42,0x42,0x42,0x42,0x42,
             0x62,0x5C,0x40,0x40,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar104 = new BitmapFontChar(0,0,8,16,gs_aucChar104);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar105 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x40,0x40,0x40,
             0x40,0x40,0x00,0x00,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar105 = new BitmapFontChar(0,0,3,16,gs_aucChar105);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar106 = new byte[] 
         {
             (byte)0xC0,0x20,0x20,0x20,0x20,0x20,0x20,0x20,
             0x20,0x60,0x00,0x00,0x20,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar106 = new BitmapFontChar(0,0,4,16,gs_aucChar106);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar107 = new byte[] 
         {
             0x00,0x00,0x00,0x44,0x48,0x50,0x60,0x50,
             0x48,0x44,0x40,0x40,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar107 = new BitmapFontChar(0,0,7,16,gs_aucChar107);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar108 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x40,0x40,0x40,
             0x40,0x40,0x40,0x40,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar108 = new BitmapFontChar(0,0,3,16,gs_aucChar108);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar109 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x44,0x40,
@@ -2900,71 +3006,81 @@ public class OpenGLRenderer extends Renderer
             0x66,0x40,0x59,(byte)0x80,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar109 = new BitmapFontChar(0,0,11,16,gs_aucChar109);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar110 = new byte[] 
         {
             0x00,0x00,0x00,0x42,0x42,0x42,0x42,0x42,
             0x62,0x5C,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar110 = new BitmapFontChar(0,0,8,16,gs_aucChar110);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar111 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,
             0x42,0x3C,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar111 = new BitmapFontChar(0,0,8,16,gs_aucChar111);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar112 = new byte[] 
         {
             0x40,0x40,0x40,0x7C,0x42,0x42,0x42,0x42,
             0x62,0x5C,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar112 = new BitmapFontChar(0,0,8,16,gs_aucChar112);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar113 = new byte[] 
         {
             0x02,0x02,0x02,0x3A,0x46,0x42,0x42,0x42,
             0x42,0x3E,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar113 = new BitmapFontChar(0,0,8,16,gs_aucChar113);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar114 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x40,0x40,0x40,
             0x60,0x58,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar114 = new BitmapFontChar(0,0,5,16,gs_aucChar114);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar115 = new byte[] 
         {
             0x00,0x00,0x00,0x78,0x04,0x04,0x38,0x40,
             0x40,0x3C,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar115 = new BitmapFontChar(0,0,7,16,gs_aucChar115);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar116 = new byte[] 
         {
             0x00,0x00,0x00,0x18,0x20,0x20,0x20,0x20,
             0x20,0x78,0x20,0x20,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar116 = new BitmapFontChar(0,0,6,16,gs_aucChar116);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar117 = new byte[] 
         {
             0x00,0x00,0x00,0x3A,0x46,0x42,0x42,0x42,
             0x42,0x42,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar117 = new BitmapFontChar(0,0,8,16,gs_aucChar117);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar118 = new byte[] 
         {
             0x00,0x00,0x00,0x18,0x18,0x24,0x24,0x24,
             0x42,0x42,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar118 = new BitmapFontChar(0,0,8,16,gs_aucChar118);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar119 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x11,0x00,
@@ -2972,50 +3088,57 @@ public class OpenGLRenderer extends Renderer
             0x44,0x40,0x44,0x40,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar119 = new BitmapFontChar(0,0,11,16,gs_aucChar119);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar120 = new byte[] 
         {
             0x00,0x00,0x00,0x44,0x44,0x28,0x10,0x28,
             0x44,0x44,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar120 = new BitmapFontChar(0,0,7,16,gs_aucChar120);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar121 = new byte[] 
         {
             0x20,0x10,0x10,0x18,0x18,0x24,0x24,0x24,
             0x42,0x42,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar121 = new BitmapFontChar(0,0,8,16,gs_aucChar121);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar122 = new byte[] 
         {
             0x00,0x00,0x00,0x7C,0x40,0x20,0x10,0x08,
             0x04,0x7C,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar122 = new BitmapFontChar(0,0,7,16,gs_aucChar122);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar123 = new byte[] 
         {
             0x00,0x0C,0x10,0x10,0x10,0x10,0x10,0x60,
             0x10,0x10,0x10,0x10,0x0C,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar123 = new BitmapFontChar(0,0,8,16,gs_aucChar123);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar124 = new byte[] 
         {
             0x00,0x10,0x10,0x10,0x10,0x10,0x10,0x10,
             0x10,0x10,0x10,0x10,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar124 = new BitmapFontChar(0,0,7,16,gs_aucChar124);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar125 = new byte[] 
         {
             0x00,0x30,0x08,0x08,0x08,0x08,0x08,0x06,
             0x08,0x08,0x08,0x08,0x30,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar125 = new BitmapFontChar(0,0,8,16,gs_aucChar125);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar126 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -3023,8 +3146,9 @@ public class OpenGLRenderer extends Renderer
             0x30,(byte)0x80,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar126 = new BitmapFontChar(0,0,11,16,gs_aucChar126);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar127 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x7E,0x00,
@@ -3032,15 +3156,17 @@ public class OpenGLRenderer extends Renderer
             0x42,0x00,0x42,0x00,0x42,0x00,0x42,0x00,
             0x42,0x00,0x7E,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar127 = new BitmapFontChar(0,0,13,16,gs_aucChar127);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar128 = new byte[] 
         {
             0x00,0x00,0x00,0x1C,0x22,0x40,(byte)0xF0,0x40,
             (byte)0xF8,0x40,0x22,0x1C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar128 = new BitmapFontChar(0,0,8,16,gs_aucChar128);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar129 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,(byte)0xE0,0x00,
@@ -3048,29 +3174,33 @@ public class OpenGLRenderer extends Renderer
             (byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,
             (byte)0xE0,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar129 = new BitmapFontChar(0,0,13,16,gs_aucChar129);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar130 = new byte[] 
         {
             0x00,(byte)0x80,0x40,0x40,0x40,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar130 = new BitmapFontChar(0,0,3,16,gs_aucChar130);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar131 = new byte[] 
         {
             0x00,0x00,(byte)0xC0,0x20,0x10,0x10,0x10,0x3E,
             0x08,0x08,0x08,0x07,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar131 = new BitmapFontChar(0,0,8,16,gs_aucChar131);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar132 = new byte[] 
         {
             0x00,(byte)0x90,0x48,0x48,0x48,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar132 = new BitmapFontChar(0,0,6,16,gs_aucChar132);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar133 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x44,0x40,
@@ -3078,29 +3208,33 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar133 = new BitmapFontChar(0,0,11,16,gs_aucChar133);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar134 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
             0x08,0x08,0x7F,0x08,0x08,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar134 = new BitmapFontChar(0,0,8,16,gs_aucChar134);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar135 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x08,0x08,0x7F,0x08,
             0x08,0x08,0x7F,0x08,0x08,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar135 = new BitmapFontChar(0,0,8,16,gs_aucChar135);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar136 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x24,0x18,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar136 = new BitmapFontChar(0,0,8,16,gs_aucChar136);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar137 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -3110,8 +3244,9 @@ public class OpenGLRenderer extends Renderer
             0x00,0x38,0x40,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar137 = new BitmapFontChar(0,0,20,16,gs_aucChar137);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar138 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x3E,0x00,
@@ -3119,15 +3254,17 @@ public class OpenGLRenderer extends Renderer
             0x40,0x00,0x40,0x00,0x41,0x00,0x3E,0x00,
             0x00,0x00,0x0C,0x00,0x12,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar138 = new BitmapFontChar(0,0,9,16,gs_aucChar138);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar139 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x10,0x20,0x40,0x40,
             0x20,0x10,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar139 = new BitmapFontChar(0,0,6,16,gs_aucChar139);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar140 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1F,(byte)0xF8,
@@ -3135,8 +3272,9 @@ public class OpenGLRenderer extends Renderer
             0x41,0x00,0x41,0x00,0x21,0x00,0x1F,(byte)0xF8,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar140 = new BitmapFontChar(0,0,14,16,gs_aucChar140);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar141 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,(byte)0xE0,0x00,
@@ -3144,8 +3282,9 @@ public class OpenGLRenderer extends Renderer
             (byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,
             (byte)0xE0,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar141 = new BitmapFontChar(0,0,13,16,gs_aucChar141);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar142 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x7F,0x00,
@@ -3153,8 +3292,9 @@ public class OpenGLRenderer extends Renderer
             0x04,0x00,0x02,0x00,0x01,0x00,0x7F,0x00,
             0x00,0x00,0x0C,0x00,0x12,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar142 = new BitmapFontChar(0,0,9,16,gs_aucChar142);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar143 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,(byte)0xE0,0x00,
@@ -3162,8 +3302,9 @@ public class OpenGLRenderer extends Renderer
             (byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,
             (byte)0xE0,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar143 = new BitmapFontChar(0,0,13,16,gs_aucChar143);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar144 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,(byte)0xE0,0x00,
@@ -3171,50 +3312,57 @@ public class OpenGLRenderer extends Renderer
             (byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,
             (byte)0xE0,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar144 = new BitmapFontChar(0,0,13,16,gs_aucChar144);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar145 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x20,0x40,0x40,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar145 = new BitmapFontChar(0,0,3,16,gs_aucChar145);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar146 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x40,0x20,0x20,0x20,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar146 = new BitmapFontChar(0,0,3,16,gs_aucChar146);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar147 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x24,0x48,0x48,0x48,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar147 = new BitmapFontChar(0,0,6,16,gs_aucChar147);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar148 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x48,0x24,0x24,0x24,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar148 = new BitmapFontChar(0,0,6,16,gs_aucChar148);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar149 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x38,0x7C,0x7C,
             0x7C,0x38,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar149 = new BitmapFontChar(0,0,7,16,gs_aucChar149);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar150 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7E,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar150 = new BitmapFontChar(0,0,8,16,gs_aucChar150);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar151 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -3222,15 +3370,17 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar151 = new BitmapFontChar(0,0,13,16,gs_aucChar151);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar152 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x2C,0x1A,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar152 = new BitmapFontChar(0,0,8,16,gs_aucChar152);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar153 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -3238,22 +3388,25 @@ public class OpenGLRenderer extends Renderer
             0x12,0x20,0x12,(byte)0xA0,0x13,0x60,0x3A,0x20,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar153 = new BitmapFontChar(0,0,13,16,gs_aucChar153);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar154 = new byte[] 
         {
             0x00,0x00,0x00,0x78,0x04,0x04,0x38,0x40,
             0x40,0x3C,0x00,0x18,0x24,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar154 = new BitmapFontChar(0,0,7,16,gs_aucChar154);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar155 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x40,0x20,0x10,0x10,
             0x20,0x40,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar155 = new BitmapFontChar(0,0,6,16,gs_aucChar155);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar156 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x3D,(byte)0xE0,
@@ -3261,8 +3414,9 @@ public class OpenGLRenderer extends Renderer
             0x42,0x10,0x3D,(byte)0xE0,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar156 = new BitmapFontChar(0,0,13,16,gs_aucChar156);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar157 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,(byte)0xE0,0x00,
@@ -3270,15 +3424,17 @@ public class OpenGLRenderer extends Renderer
             (byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,(byte)0xA0,0x00,
             (byte)0xE0,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar157 = new BitmapFontChar(0,0,13,16,gs_aucChar157);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar158 = new byte[] 
         {
             0x00,0x00,0x00,0x7C,0x40,0x20,0x10,0x08,
             0x04,0x7C,0x00,0x18,0x24,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar158 = new BitmapFontChar(0,0,7,16,gs_aucChar158);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar159 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,
@@ -3286,71 +3442,81 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x22,0x00,0x22,0x00,0x41,0x00,
             0x00,0x00,0x22,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar159 = new BitmapFontChar(0,0,9,16,gs_aucChar159);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar160 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar160 = new BitmapFontChar(0,0,5,16,gs_aucChar160);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar161 = new byte[] 
         {
             0x00,0x00,0x00,0x20,0x20,0x20,0x20,0x20,
             0x20,0x00,0x20,0x20,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar161 = new BitmapFontChar(0,0,5,16,gs_aucChar161);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar162 = new byte[] 
         {
             0x00,0x08,0x08,0x3E,0x48,0x48,0x48,0x48,
             0x48,0x3E,0x08,0x08,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar162 = new BitmapFontChar(0,0,8,16,gs_aucChar162);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar163 = new byte[] 
         {
             0x00,0x00,0x00,0x7E,0x40,0x20,0x20,0x7C,
             0x20,0x20,0x22,0x1C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar163 = new BitmapFontChar(0,0,8,16,gs_aucChar163);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar164 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x42,0x3C,0x24,0x24,
             0x3C,0x42,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar164 = new BitmapFontChar(0,0,8,16,gs_aucChar164);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar165 = new byte[] 
         {
             0x00,0x00,0x00,0x08,0x08,0x3E,0x08,0x08,
             0x14,0x22,0x22,0x41,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar165 = new BitmapFontChar(0,0,8,16,gs_aucChar165);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar166 = new byte[] 
         {
             0x00,0x10,0x10,0x10,0x10,0x10,0x00,0x00,
             0x10,0x10,0x10,0x10,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar166 = new BitmapFontChar(0,0,7,16,gs_aucChar166);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar167 = new byte[] 
         {
             0x00,0x3C,0x42,0x02,0x1C,0x22,0x42,0x44,
             0x38,0x40,0x42,0x3C,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar167 = new BitmapFontChar(0,0,8,16,gs_aucChar167);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar168 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x24,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar168 = new BitmapFontChar(0,0,8,16,gs_aucChar168);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar169 = new byte[] 
         {
             0x00,0x00,0x0F,(byte)0x80,0x10,0x40,0x27,0x20,
@@ -3358,22 +3524,25 @@ public class OpenGLRenderer extends Renderer
             0x48,(byte)0x90,0x27,0x20,0x10,0x40,0x0F,(byte)0x80,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar169 = new BitmapFontChar(0,0,13,16,gs_aucChar169);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar170 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x3C,0x44,
             0x44,0x3C,0x04,0x38,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar170 = new BitmapFontChar(0,0,7,16,gs_aucChar170);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar171 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x12,0x24,0x48,0x48,
             0x24,0x12,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar171 = new BitmapFontChar(0,0,8,16,gs_aucChar171);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar172 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -3381,15 +3550,17 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar172 = new BitmapFontChar(0,0,9,16,gs_aucChar172);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar173 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7C,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar173 = new BitmapFontChar(0,0,7,16,gs_aucChar173);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar174 = new byte[] 
         {
             0x00,0x00,0x0F,(byte)0x80,0x10,0x40,0x24,0x60,
@@ -3397,22 +3568,25 @@ public class OpenGLRenderer extends Renderer
             0x44,(byte)0x90,0x27,0x20,0x10,0x40,0x0F,(byte)0x80,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar174 = new BitmapFontChar(0,0,13,16,gs_aucChar174);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar175 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,(byte)0xFF,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar175 = new BitmapFontChar(0,0,8,16,gs_aucChar175);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar176 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x38,
             0x44,0x44,0x44,0x38,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar176 = new BitmapFontChar(0,0,7,16,gs_aucChar176);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar177 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -3420,78 +3594,89 @@ public class OpenGLRenderer extends Renderer
             0x7F,0x00,0x08,0x00,0x08,0x00,0x08,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar177 = new BitmapFontChar(0,0,9,16,gs_aucChar177);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar178 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x78,0x20,
             0x10,0x08,0x48,0x30,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar178 = new BitmapFontChar(0,0,7,16,gs_aucChar178);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar179 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x78,0x04,
             0x04,0x38,0x04,0x78,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar179 = new BitmapFontChar(0,0,7,16,gs_aucChar179);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar180 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x10,0x08,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar180 = new BitmapFontChar(0,0,8,16,gs_aucChar180);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar181 = new byte[] 
         {
             0x40,0x40,0x40,0x7E,0x42,0x42,0x42,0x42,
             0x42,0x42,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar181 = new BitmapFontChar(0,0,8,16,gs_aucChar181);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar182 = new byte[] 
         {
             0x00,0x0A,0x0A,0x0A,0x0A,0x0A,0x0A,0x3A,
             0x7A,0x7A,0x7A,0x3E,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar182 = new BitmapFontChar(0,0,8,16,gs_aucChar182);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar183 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x20,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar183 = new BitmapFontChar(0,0,5,16,gs_aucChar183);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar184 = new byte[] 
         {
             0x30,0x08,0x08,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar184 = new BitmapFontChar(0,0,8,16,gs_aucChar184);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar185 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x38,0x10,
             0x10,0x10,0x30,0x10,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar185 = new BitmapFontChar(0,0,7,16,gs_aucChar185);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar186 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x38,0x44,
             0x44,0x44,0x44,0x38,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar186 = new BitmapFontChar(0,0,7,16,gs_aucChar186);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar187 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x48,0x24,0x12,0x12,
             0x24,0x48,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar187 = new BitmapFontChar(0,0,8,16,gs_aucChar187);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar188 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x10,0x20,
@@ -3499,8 +3684,9 @@ public class OpenGLRenderer extends Renderer
             0x22,0x20,0x21,0x00,0x61,0x00,0x20,(byte)0x80,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar188 = new BitmapFontChar(0,0,13,16,gs_aucChar188);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar189 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x10,(byte)0xF0,
@@ -3508,8 +3694,9 @@ public class OpenGLRenderer extends Renderer
             0x22,0x60,0x21,0x00,0x61,0x00,0x20,(byte)0x80,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar189 = new BitmapFontChar(0,0,13,16,gs_aucChar189);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar190 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x20,
@@ -3517,15 +3704,17 @@ public class OpenGLRenderer extends Renderer
             0x09,0x20,0x31,0x00,0x08,(byte)0x80,0x70,(byte)0x80,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar190 = new BitmapFontChar(0,0,13,16,gs_aucChar190);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar191 = new byte[] 
         {
             0x00,0x00,0x00,0x38,0x44,0x40,0x20,0x10,
             0x10,0x00,0x10,0x10,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar191 = new BitmapFontChar(0,0,7,16,gs_aucChar191);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar192 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x41,0x00,
@@ -3533,8 +3722,9 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x14,0x00,0x08,0x00,0x08,0x00,
             0x00,0x00,0x04,0x00,0x08,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar192 = new BitmapFontChar(0,0,9,16,gs_aucChar192);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar193 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x41,0x00,
@@ -3542,8 +3732,9 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x14,0x00,0x08,0x00,0x08,0x00,
             0x00,0x00,0x08,0x00,0x04,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar193 = new BitmapFontChar(0,0,9,16,gs_aucChar193);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar194 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x41,0x00,
@@ -3551,8 +3742,9 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x14,0x00,0x08,0x00,0x08,0x00,
             0x00,0x00,0x12,0x00,0x0C,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar194 = new BitmapFontChar(0,0,9,16,gs_aucChar194);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar195 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x41,0x00,
@@ -3560,8 +3752,9 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x14,0x00,0x08,0x00,0x08,0x00,
             0x00,0x00,0x2C,0x00,0x1A,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar195 = new BitmapFontChar(0,0,9,16,gs_aucChar195);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar196 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x41,0x00,
@@ -3569,8 +3762,9 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x14,0x00,0x08,0x00,0x08,0x00,
             0x00,0x00,0x22,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar196 = new BitmapFontChar(0,0,9,16,gs_aucChar196);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar197 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x41,0x00,
@@ -3578,8 +3772,9 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x14,0x00,0x08,0x00,0x1C,0x00,
             0x22,0x00,0x22,0x00,0x1C,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar197 = new BitmapFontChar(0,0,9,16,gs_aucChar197);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar198 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x43,(byte)0xE0,
@@ -3587,8 +3782,9 @@ public class OpenGLRenderer extends Renderer
             0x12,0x00,0x12,0x00,0x0A,0x00,0x0F,(byte)0xE0,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar198 = new BitmapFontChar(0,0,12,16,gs_aucChar198);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar199 = new byte[] 
         {
             0x0C,0x00,0x02,0x00,0x02,0x00,0x1E,0x00,
@@ -3596,64 +3792,73 @@ public class OpenGLRenderer extends Renderer
             0x40,0x00,0x40,0x00,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar199 = new BitmapFontChar(0,0,9,16,gs_aucChar199);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar200 = new byte[] 
         {
             0x00,0x00,0x00,0x7E,0x40,0x40,0x40,0x7E,
             0x40,0x40,0x40,0x7E,0x00,0x08,0x10,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar200 = new BitmapFontChar(0,0,8,16,gs_aucChar200);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar201 = new byte[] 
         {
             0x00,0x00,0x00,0x7E,0x40,0x40,0x40,0x7E,
             0x40,0x40,0x40,0x7E,0x00,0x10,0x08,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar201 = new BitmapFontChar(0,0,8,16,gs_aucChar201);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar202 = new byte[] 
         {
             0x00,0x00,0x00,0x7E,0x40,0x40,0x40,0x7E,
             0x40,0x40,0x40,0x7E,0x00,0x24,0x18,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar202 = new BitmapFontChar(0,0,8,16,gs_aucChar202);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar203 = new byte[] 
         {
             0x00,0x00,0x00,0x7E,0x40,0x40,0x40,0x7E,
             0x40,0x40,0x40,0x7E,0x00,0x24,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar203 = new BitmapFontChar(0,0,8,16,gs_aucChar203);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar204 = new byte[] 
         {
             0x00,0x00,0x00,0x70,0x20,0x20,0x20,0x20,
             0x20,0x20,0x20,0x70,0x00,0x10,0x20,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar204 = new BitmapFontChar(0,0,5,16,gs_aucChar204);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar205 = new byte[] 
         {
             0x00,0x00,0x00,0x70,0x20,0x20,0x20,0x20,
             0x20,0x20,0x20,0x70,0x00,0x20,0x10,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar205 = new BitmapFontChar(0,0,5,16,gs_aucChar205);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar206 = new byte[] 
         {
             0x00,0x00,0x00,0x70,0x20,0x20,0x20,0x20,
             0x20,0x20,0x20,0x70,0x00,0x48,0x30,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar206 = new BitmapFontChar(0,0,5,16,gs_aucChar206);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar207 = new byte[] 
         {
             0x00,0x00,0x00,0x70,0x20,0x20,0x20,0x20,
             0x20,0x20,0x20,0x70,0x00,(byte)0x88,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar207 = new BitmapFontChar(0,0,5,16,gs_aucChar207);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar208 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x7C,0x00,
@@ -3661,8 +3866,9 @@ public class OpenGLRenderer extends Renderer
             0x41,0x00,0x41,0x00,0x42,0x00,0x7C,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar208 = new BitmapFontChar(0,0,9,16,gs_aucChar208);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar209 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x43,0x00,
@@ -3670,8 +3876,9 @@ public class OpenGLRenderer extends Renderer
             0x51,0x00,0x51,0x00,0x61,0x00,0x61,0x00,
             0x00,0x00,0x2C,0x00,0x1A,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar209 = new BitmapFontChar(0,0,9,16,gs_aucChar209);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar210 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1E,0x00,
@@ -3679,8 +3886,9 @@ public class OpenGLRenderer extends Renderer
             0x40,(byte)0x80,0x40,(byte)0x80,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x04,0x00,0x08,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar210 = new BitmapFontChar(0,0,10,16,gs_aucChar210);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar211 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1E,0x00,
@@ -3688,8 +3896,9 @@ public class OpenGLRenderer extends Renderer
             0x40,(byte)0x80,0x40,(byte)0x80,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x08,0x00,0x04,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar211 = new BitmapFontChar(0,0,10,16,gs_aucChar211);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar212 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1E,0x00,
@@ -3697,8 +3906,9 @@ public class OpenGLRenderer extends Renderer
             0x40,(byte)0x80,0x40,(byte)0x80,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x12,0x00,0x0C,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar212 = new BitmapFontChar(0,0,10,16,gs_aucChar212);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar213 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1E,0x00,
@@ -3706,8 +3916,9 @@ public class OpenGLRenderer extends Renderer
             0x40,(byte)0x80,0x40,(byte)0x80,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x16,0x00,0x0D,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar213 = new BitmapFontChar(0,0,10,16,gs_aucChar213);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar214 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1E,0x00,
@@ -3715,8 +3926,9 @@ public class OpenGLRenderer extends Renderer
             0x40,(byte)0x80,0x40,(byte)0x80,0x21,0x00,0x1E,0x00,
             0x00,0x00,0x12,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar214 = new BitmapFontChar(0,0,10,16,gs_aucChar214);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar215 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -3724,8 +3936,9 @@ public class OpenGLRenderer extends Renderer
             0x0A,0x00,0x11,0x00,0x20,(byte)0x80,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar215 = new BitmapFontChar(0,0,11,16,gs_aucChar215);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar216 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x40,0x00,0x3E,0x00,
@@ -3733,8 +3946,9 @@ public class OpenGLRenderer extends Renderer
             0x44,(byte)0x80,0x42,(byte)0x80,0x21,0x00,0x1F,0x00,
             0x00,(byte)0x80,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar216 = new BitmapFontChar(0,0,10,16,gs_aucChar216);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar217 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1C,0x00,
@@ -3742,8 +3956,9 @@ public class OpenGLRenderer extends Renderer
             0x41,0x00,0x41,0x00,0x41,0x00,0x41,0x00,
             0x00,0x00,0x04,0x00,0x08,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar217 = new BitmapFontChar(0,0,9,16,gs_aucChar217);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar218 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1C,0x00,
@@ -3751,8 +3966,9 @@ public class OpenGLRenderer extends Renderer
             0x41,0x00,0x41,0x00,0x41,0x00,0x41,0x00,
             0x00,0x00,0x08,0x00,0x04,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar218 = new BitmapFontChar(0,0,9,16,gs_aucChar218);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar219 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1C,0x00,
@@ -3760,8 +3976,9 @@ public class OpenGLRenderer extends Renderer
             0x41,0x00,0x41,0x00,0x41,0x00,0x41,0x00,
             0x00,0x00,0x12,0x00,0x0C,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar219 = new BitmapFontChar(0,0,9,16,gs_aucChar219);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar220 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x1C,0x00,
@@ -3769,8 +3986,9 @@ public class OpenGLRenderer extends Renderer
             0x41,0x00,0x41,0x00,0x41,0x00,0x41,0x00,
             0x00,0x00,0x22,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar220 = new BitmapFontChar(0,0,9,16,gs_aucChar220);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar221 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,
@@ -3778,64 +3996,73 @@ public class OpenGLRenderer extends Renderer
             0x14,0x00,0x22,0x00,0x22,0x00,0x41,0x00,
             0x00,0x00,0x08,0x00,0x04,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar221 = new BitmapFontChar(0,0,9,16,gs_aucChar221);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar222 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x7C,0x42,0x42,
             0x42,0x7C,0x40,0x40,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar222 = new BitmapFontChar(0,0,8,16,gs_aucChar222);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar223 = new byte[] 
         {
             0x00,0x00,0x00,0x5C,0x42,0x42,0x42,0x44,
             0x58,0x44,0x44,0x44,0x38,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar223 = new BitmapFontChar(0,0,8,16,gs_aucChar223);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar224 = new byte[] 
         {
             0x00,0x00,0x00,0x3E,0x42,0x42,0x3E,0x02,
             0x02,0x3C,0x00,0x08,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar224 = new BitmapFontChar(0,0,8,16,gs_aucChar224);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar225 = new byte[] 
         {
             0x00,0x00,0x00,0x3E,0x42,0x42,0x3E,0x02,
             0x02,0x3C,0x00,0x08,0x04,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar225 = new BitmapFontChar(0,0,8,16,gs_aucChar225);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar226 = new byte[] 
         {
             0x00,0x00,0x00,0x3E,0x42,0x42,0x3E,0x02,
             0x02,0x3C,0x00,0x12,0x0C,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar226 = new BitmapFontChar(0,0,8,16,gs_aucChar226);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar227 = new byte[] 
         {
             0x00,0x00,0x00,0x3E,0x42,0x42,0x3E,0x02,
             0x02,0x3C,0x00,0x2C,0x1A,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar227 = new BitmapFontChar(0,0,8,16,gs_aucChar227);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar228 = new byte[] 
         {
             0x00,0x00,0x00,0x3E,0x42,0x42,0x3E,0x02,
             0x02,0x3C,0x00,0x24,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar228 = new BitmapFontChar(0,0,8,16,gs_aucChar228);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar229 = new byte[] 
         {
             0x00,0x00,0x00,0x3E,0x42,0x42,0x3E,0x02,
             0x02,0x3C,0x00,0x0C,0x12,0x12,0x0C,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar229 = new BitmapFontChar(0,0,8,16,gs_aucChar229);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar230 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x3B,(byte)0x80,
@@ -3843,120 +4070,137 @@ public class OpenGLRenderer extends Renderer
             0x04,0x40,0x3B,(byte)0x80,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar230 = new BitmapFontChar(0,0,11,16,gs_aucChar230);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar231 = new byte[] 
         {
             0x18,0x04,0x04,0x3C,0x42,0x40,0x40,0x40,
             0x42,0x3C,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar231 = new BitmapFontChar(0,0,8,16,gs_aucChar231);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar232 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x40,0x7E,0x42,
             0x42,0x3C,0x00,0x08,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar232 = new BitmapFontChar(0,0,8,16,gs_aucChar232);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar233 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x40,0x7E,0x42,
             0x42,0x3C,0x00,0x08,0x04,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar233 = new BitmapFontChar(0,0,8,16,gs_aucChar233);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar234 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x40,0x7E,0x42,
             0x42,0x3C,0x00,0x24,0x18,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar234 = new BitmapFontChar(0,0,8,16,gs_aucChar234);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar235 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x40,0x7E,0x42,
             0x42,0x3C,0x00,0x24,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar235 = new BitmapFontChar(0,0,8,16,gs_aucChar235);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar236 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x40,0x40,0x40,
             0x40,0x40,0x00,0x20,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar236 = new BitmapFontChar(0,0,3,16,gs_aucChar236);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar237 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x40,0x40,0x40,
             0x40,0x40,0x00,0x40,0x20,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar237 = new BitmapFontChar(0,0,3,16,gs_aucChar237);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar238 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x40,0x40,0x40,
             0x40,0x40,0x00,(byte)0xA0,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar238 = new BitmapFontChar(0,0,3,16,gs_aucChar238);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar239 = new byte[] 
         {
             0x00,0x00,0x00,0x40,0x40,0x40,0x40,0x40,
             0x40,0x40,0x00,(byte)0xA0,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar239 = new BitmapFontChar(0,0,3,16,gs_aucChar239);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar240 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,
             0x3E,0x02,0x34,0x08,0x14,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar240 = new BitmapFontChar(0,0,8,16,gs_aucChar240);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar241 = new byte[] 
         {
             0x00,0x00,0x00,0x42,0x42,0x42,0x42,0x42,
             0x62,0x5C,0x00,0x2C,0x1A,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar241 = new BitmapFontChar(0,0,8,16,gs_aucChar241);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar242 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,
             0x42,0x3C,0x00,0x08,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar242 = new BitmapFontChar(0,0,8,16,gs_aucChar242);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar243 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,
             0x42,0x3C,0x00,0x10,0x08,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar243 = new BitmapFontChar(0,0,8,16,gs_aucChar243);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar244 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,
             0x42,0x3C,0x00,0x24,0x18,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar244 = new BitmapFontChar(0,0,8,16,gs_aucChar244);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar245 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,
             0x42,0x3C,0x00,0x2C,0x1A,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar245 = new BitmapFontChar(0,0,8,16,gs_aucChar245);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar246 = new byte[] 
         {
             0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,
             0x42,0x3C,0x00,0x24,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar246 = new BitmapFontChar(0,0,8,16,gs_aucChar246);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar247 = new byte[] 
         {
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -3964,64 +4208,73 @@ public class OpenGLRenderer extends Renderer
             0x00,0x00,0x08,0x00,0x08,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar247 = new BitmapFontChar(0,0,9,16,gs_aucChar247);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar248 = new byte[] 
         {
             0x00,0x00,0x40,0x3C,0x62,0x52,0x52,0x4A,
             0x46,0x3C,0x02,0x00,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar248 = new BitmapFontChar(0,0,8,16,gs_aucChar248);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar249 = new byte[] 
         {
             0x00,0x00,0x00,0x3A,0x46,0x42,0x42,0x42,
             0x42,0x42,0x00,0x08,0x10,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar249 = new BitmapFontChar(0,0,8,16,gs_aucChar249);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar250 = new byte[] 
         {
             0x00,0x00,0x00,0x3A,0x46,0x42,0x42,0x42,
             0x42,0x42,0x00,0x10,0x08,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar250 = new BitmapFontChar(0,0,8,16,gs_aucChar250);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar251 = new byte[] 
         {
             0x00,0x00,0x00,0x3A,0x46,0x42,0x42,0x42,
             0x42,0x42,0x00,0x24,0x18,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar251 = new BitmapFontChar(0,0,8,16,gs_aucChar251);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar252 = new byte[] 
         {
             0x00,0x00,0x00,0x3A,0x46,0x42,0x42,0x42,
             0x42,0x42,0x00,0x24,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar252 = new BitmapFontChar(0,0,8,16,gs_aucChar252);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar253 = new byte[] 
         {
             0x20,0x10,0x10,0x18,0x18,0x24,0x24,0x24,
             0x42,0x42,0x00,0x08,0x04,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar253 = new BitmapFontChar(0,0,8,16,gs_aucChar253);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar254 = new byte[] 
         {
             0x40,0x40,0x40,0x7C,0x42,0x42,0x42,0x42,
             0x62,0x5C,0x40,0x40,0x40,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar254 = new BitmapFontChar(0,0,8,16,gs_aucChar254);
-
+    /** Bitmap Fonts: */
     private static final byte[] gs_aucChar255 = new byte[] 
         {
             0x20,0x10,0x10,0x18,0x18,0x24,0x24,0x24,
             0x42,0x42,0x00,0x24,0x00,0x00,0x00,0x00
         };
+    /** Bitmap Fonts: */
     private static BitmapFontChar gs_kChar255 = new BitmapFontChar(0,0,8,16,gs_aucChar255);
-
+    /** Bitmap Fonts: */
     private static BitmapFontChar[] gs_kChars = new BitmapFontChar[]
         {
             gs_kChar0,
@@ -4282,5 +4535,6 @@ public class OpenGLRenderer extends Renderer
             gs_kChar255
         };
 
+    /** Bitmap Fonts: */
     private final BitmapFont g_kVerdana_S16B0I0 = new BitmapFont("Verdana_S16B0I0",256,gs_kChars);
 }

@@ -375,7 +375,7 @@ public class Matrix3f
      * @param iCol, column-value
      * @return matrix[iRow*3 + iCol]
      */
-    public float GetData( int iRow, int iCol )
+    public final float GetData( int iRow, int iCol )
     {
         return m_afEntry[iRow*3 + iCol];
     }
@@ -384,7 +384,7 @@ public class Matrix3f
      * @param iIndex, matrix index
      * @return matrix[iIndex]
      */
-    public float GetData( int iIndex )
+    public final float GetData( int iIndex )
     {
         return m_afEntry[iIndex];
     }
@@ -393,7 +393,7 @@ public class Matrix3f
      * @param iIndex, matrix index
      * @param fValue, matrix[iIndex] new value
      */
-    public void SetData( int iIndex, float fValue )
+    public final void SetData( int iIndex, float fValue )
     {
         m_afEntry[iIndex] = fValue;
     }

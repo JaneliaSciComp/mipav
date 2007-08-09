@@ -20,8 +20,21 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph;
 
 import java.util.Vector;
 
+/** Set the attributes you want.  The currently supported attributes are
+ *    p  = position
+ *         3 or 4 channels (xyz,xyzw)
+ *    n  = normal vector
+ *         3 or 4 channels (xyz,xyzw)
+ *    ci = color
+ *         1 to 4 channels (r,rg,rgb,rgba)
+ *    ti = texture coordinate
+ *         1 to 4 channels (s,st,str,strq)
+ * The attrbitues are organized internally to have the ordering:
+ * p, n, c0, c1, ..., t0, t1, ...
+ */
 public class Attributes
 {
+    /** Create default VertexBuffer Rendering Attributes: */
     public Attributes ()
     {
         m_iChannelQuantity = 0;
@@ -31,6 +44,9 @@ public class Attributes
         m_iNChannels = 0;
     }
 
+    /** Copy constructor:
+     * @param rkA, Attributes to copy.
+     */
     public Attributes ( Attributes rkA )
     {
         m_iChannelQuantity = rkA.m_iChannelQuantity;
@@ -49,7 +65,7 @@ public class Attributes
             SetTChannels( iUnit, rkA.m_kTChannels.get(iUnit) );
         }
     }
-
+    /** Delete memory. */
     public void finalize()
     {
         // colors
@@ -65,18 +81,9 @@ public class Attributes
         m_kTChannels = null;
     }
 
-    // Set the attributes you want.  The currently supported attributes are
-    //    p  = position
-    //         3 or 4 channels (xyz,xyzw)
-    //    n  = normal vector
-    //         3 or 4 channels (xyz,xyzw)
-    //    ci = color
-    //         1 to 4 channels (r,rg,rgb,rgba)
-    //    ti = texture coordinate
-    //         1 to 4 channels (s,st,str,strq)
-    // The attrbitues are organized internally to have the ordering:
-    // p, n, c0, c1, ..., t0, t1, ...
-
+    /** Set position attribute.
+     * @param iPChannels, number of floats per position.
+     */
     public void SetPChannels (int iPChannels)
     {
         assert(0 <= iPChannels && iPChannels <= 4);
@@ -85,6 +92,9 @@ public class Attributes
         UpdateOffsets();
     }
 
+    /** Set normal attribute.
+     * @param iNChannels, number of floats per normal.
+     */
     public void SetNChannels (int iNChannels)
     {
         assert(0 <= iNChannels && iNChannels <= 4);
@@ -93,6 +103,10 @@ public class Attributes
         UpdateOffsets();
     }
 
+    /** Set color attriubute.
+     * @param iUnit, color unit (0-4).
+     * @param iCChannels, number of floats per color.
+     */
     public void SetCChannels (int iUnit, int iCChannels)
     {
         assert(0 <= iUnit && 0 <= iCChannels && iCChannels <= 4);
@@ -101,6 +115,10 @@ public class Attributes
         UpdateOffsets();
     }
 
+    /** Set texture coordinate attriubute.
+     * @param iUnit, texture unit (0-4).
+     * @param iTChannels, number of floats per texture coordinate.
+     */
     public void SetTChannels (int iUnit, int iTChannels)
     {
         assert(0 <= iUnit && 0 <= iTChannels && iTChannels <= 4);
@@ -110,52 +128,72 @@ public class Attributes
     }
 
 
-    // The number of 'float' channels used by all the attributes.
-    public int GetChannelQuantity ()
+    /** The number of 'float' channels used by all the attributes. */
+    public final int GetChannelQuantity ()
     {
         return m_iChannelQuantity;
     }
 
-    // Access to position information.
-    public int GetPOffset ()
+    /** Access to position information.
+     * @return the position offset.
+     */
+    public final int GetPOffset ()
     {
         return m_iPOffset;
     }
 
-    public int GetPChannels ()
+    /** Access to position information.
+     * @return the number of floats per position.
+     */
+    public final int GetPChannels ()
     {
         return m_iPChannels;
     }
 
-    public boolean HasPosition ()
+    /** Access to position information.
+     * @return true if the position attribute is used.
+     */
+    public final boolean HasPosition ()
     {
-        return m_iPChannels > 0;
+        return (m_iPChannels > 0);
     }
 
 
-    // Access to normal information.
-    public int GetNOffset ()
+    /** Access to normal information.
+     * @return the normal offset.
+     */
+    public final int GetNOffset ()
     {
         return m_iNOffset;
     }
 
-    public int GetNChannels ()
+    /** Access to normal information.
+     * @return the number of floats per normal.
+     */
+    public final int GetNChannels ()
     {
         return m_iNChannels;
     }
 
-    public boolean HasNormal ()
+    /** Access to normal information.
+     * @return true if the normal attribute is used.
+     */
+    public final boolean HasNormal ()
     {
-        return m_iNChannels > 0;
+        return (m_iNChannels > 0);
     }
 
-
-    // Access to color information.
-    public int GetMaxColors ()
+    /** Access to color information.
+     * @return the number of used colors units.
+     */
+    public final int GetMaxColors ()
     {
         return (int)m_kCChannels.size();
     }
 
+    /** Access to color information.
+     * @return the color offset.
+     */
     public int GetCOffset (int iUnit)
     {
         if (0 <= iUnit && iUnit < (int)m_kCOffset.size())
@@ -165,6 +203,9 @@ public class Attributes
         return -1;
     }
 
+    /** Access to color information.
+     * @return the number of floats per color.
+     */
     public int GetCChannels (int iUnit)
     {
         if (0 <= iUnit && iUnit < (int)m_kCChannels.size())
@@ -174,6 +215,9 @@ public class Attributes
         return 0;
     }
 
+    /** Access to color information.
+     * @return true if the color attribute is used.
+     */
     public boolean HasColor (int iUnit)
     {
         if (0 <= iUnit && iUnit < (int)m_kCChannels.size())
@@ -184,12 +228,17 @@ public class Attributes
     }
 
 
-    // Access to texture coordinate information.
-    public int GetMaxTCoords ()
+    /** Access to texture coordinate information.
+     * @return the number of used texture coordinates units.
+     */
+    public final int GetMaxTCoords ()
     {
         return (int)m_kTChannels.size();
     }
 
+    /** Access to texture coordinate information.
+     * @return the texture coordinate offset.
+     */
     public int GetTOffset (int iUnit)
     {
         if (0 <= iUnit && iUnit < (int)m_kTOffset.size())
@@ -199,6 +248,9 @@ public class Attributes
         return -1;
     }
 
+    /** Access to texture coordinate information.
+     * @return the number of floats per texture coordinate.
+     */
     public int GetTChannels (int iUnit)
     {
         if (0 <= iUnit && iUnit < (int)m_kTChannels.size())
@@ -208,6 +260,9 @@ public class Attributes
         return 0;
     }
 
+    /** Access to texture coordinate information.
+     * @return true if the texture coordinate attribute is used.
+     */
     public boolean HasTCoord (int iUnit)
     {
         if (0 <= iUnit && iUnit < (int)m_kTChannels.size())
@@ -218,7 +273,14 @@ public class Attributes
     }
 
 
-    // Support for comparing vertex program outputs with pixel program inputs.
+    /** Support for comparing vertex program outputs with pixel program inputs.
+     * @param rkAttr, Attributes to compare this to.
+     * @param bIncludeP, include positions in the comparison.
+     * @param bIncludeN, include normals in the comparison.
+     * @param bIncludeC, include colors in the comparison.
+     * @param bIncludeT, include textures in the comparison.
+     * @return true if the input Attribute matches this.
+     */
     public boolean Matches ( Attributes rkAttr, boolean bIncludeP, boolean bIncludeN,
                              boolean bIncludeC, boolean bIncludeT)
     {
@@ -273,7 +335,7 @@ public class Attributes
         return true;
     }
 
-
+    /** Update offsets when attributes change. */
     private void UpdateOffsets ()
     {
         m_iChannelQuantity = 0;
@@ -315,22 +377,26 @@ public class Attributes
     }
 
 
-    // The number of 'float' channels used by all attributes.
+    /** The number of 'float' channels used by all attributes. */
     private int m_iChannelQuantity;
 
-    // positions
+    /** position offset. */
     private int m_iPOffset;
+    /** number of floats per position. */
     private int m_iPChannels;
 
-    // normals
+    /** normal offset. */
     private int m_iNOffset;
+    /** number of floats per normal. */
     private int m_iNChannels;
 
-    // colors
+    /** color offsets (1-4 color units). */
     private Vector<Integer> m_kCOffset = new Vector<Integer>();
+    /** color channels (1-4 color units). */
     private Vector<Integer> m_kCChannels = new Vector<Integer>();
 
-    // texture coordinates
+    /** texture coordinate offsets (1-4 texture coordinate units). */
     private Vector<Integer> m_kTOffset = new Vector<Integer>();
+    /** texture coordinate channels (1-4 texture coordinate units). */
     private Vector<Integer> m_kTChannels = new Vector<Integer>();
 }

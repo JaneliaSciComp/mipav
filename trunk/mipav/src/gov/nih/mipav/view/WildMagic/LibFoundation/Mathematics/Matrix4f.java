@@ -252,7 +252,7 @@ public class Matrix4f
      * @param iCol, column to set
      * @param fValue, new value
      */
-    public void SetData( int iRow, int iCol, float fValue )
+    public final void SetData( int iRow, int iCol, float fValue )
     {
         m_afEntry[iRow*4 + iCol] = fValue;
     }
@@ -262,7 +262,7 @@ public class Matrix4f
      * @param iCol, column to get
      * @return value at m_afEntry[iRow*4 + iCol];
      */
-    public float GetData( int iRow, int iCol )
+    public final float GetData( int iRow, int iCol )
     {
         return m_afEntry[iRow*4 + iCol];
     }
