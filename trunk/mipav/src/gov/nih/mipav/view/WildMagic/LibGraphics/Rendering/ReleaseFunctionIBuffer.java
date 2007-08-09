@@ -20,10 +20,17 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
 public class ReleaseFunctionIBuffer extends ReleaseFunction
 {
+    /** Create a ReleaseFunctionIBuffer, store the Renderer to access the
+     * Renderer.ReleaseIBuffer function call.
+     * @param kRenderer, Renderer for calling the Renderer.ReleaseIBuffer function.
+     */
     public ReleaseFunctionIBuffer ( Renderer kRenderer )
     {
         super(kRenderer);
     }
+    /** Call the Renderer.ReleaseIBuffer function.
+     * @param kBindable, parameter to ReleaseIBuffer.
+     */
     public final void Release ( Bindable kBindable )
     {
         m_kRenderer.ReleaseIBuffer( kBindable );

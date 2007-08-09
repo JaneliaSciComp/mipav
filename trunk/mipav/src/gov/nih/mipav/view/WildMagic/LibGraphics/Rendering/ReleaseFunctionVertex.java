@@ -19,10 +19,17 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
 public class ReleaseFunctionVertex extends ReleaseFunction
 {
+    /** Create a ReleaseFunctionVertex, store the Renderer to access the
+     * Renderer.ReleaseVProgram function call.
+     * @param kRenderer, Renderer for calling the Renderer.ReleaseVProgram function.
+     */
     public ReleaseFunctionVertex ( Renderer kRenderer )
     {
         super(kRenderer);
     }
+    /** Call the Renderer.ReleaseVProgram function.
+     * @param kBindable, parameter to ReleaseVProgram.
+     */
     public final void Release ( Bindable kBindable )
     {
         m_kRenderer.ReleaseVProgram( kBindable );

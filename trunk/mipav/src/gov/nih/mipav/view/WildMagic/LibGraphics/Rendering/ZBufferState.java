@@ -25,11 +25,12 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 public class ZBufferState extends GlobalState
     implements StreamInterface
 {
+    /** Maps compare mode enum to int values. */
     private static HashMap<Integer,CompareMode> ms_pkCompareModeMap = new HashMap<Integer,CompareMode>();
 
-    public final StateType GetStateType () { return StateType.ZBUFFER; }
-
-    public ZBufferState ()
+    /** Static initialization of the ZBufferState in the GlobalState.Default
+     * array. */
+    static
     {
         if ( !DefaultInitialized[StateType.ZBUFFER.Value()] )
         {
@@ -38,6 +39,7 @@ public class ZBufferState extends GlobalState
         }
     }
 
+    /** Depth compre modes. */
     public enum CompareMode
     {
         CF_NEVER("CF_NEVER"),
@@ -67,12 +69,32 @@ public class ZBufferState extends GlobalState
         private static int m_iInitValue = 0;
     };
 
+    /** Initializes static enum for depth compare modes. */
     private static CompareMode ms_eCompareModeStatic = CompareMode.CF_QUANTITY;
 
-    public boolean Enabled = true;         // default: true
-    public boolean Writable = true;        // default: true
-    public CompareMode Compare = CompareMode.CF_LEQUAL;  // default: CF_LEQUAL
+    /** Default constructor */
+    public ZBufferState () {}
 
+    /** Return type.
+     * @return StateType.ZBUFFER;
+     */
+    public final StateType GetStateType () { return StateType.ZBUFFER; }
+
+    /** ZBuffer enabled default: true */
+    public boolean Enabled = true;         
+    /** ZBuffer writeable  default: true */
+    public boolean Writable = true;
+    /** CompareMode default: CF_LEQUAL */
+    public CompareMode Compare = CompareMode.CF_LEQUAL;
+
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -84,16 +106,10 @@ public class ZBufferState extends GlobalState
         Compare = ms_pkCompareModeMap.get(iCompare);
     }
 
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
-    }
-
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -104,6 +120,12 @@ public class ZBufferState extends GlobalState
         rkStream.Write(Compare.Value());
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -112,6 +134,12 @@ public class ZBufferState extends GlobalState
             Stream.SIZEOF_INT; //sizeof(int);   // Compare
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

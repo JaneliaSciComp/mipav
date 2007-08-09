@@ -20,10 +20,17 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
 public class ReleaseFunctionPixel extends ReleaseFunction
 {
+    /** Create a ReleaseFunctionPixel, store the Renderer to access the
+     * Renderer.ReleasePProgram function call.
+     * @param kRenderer, Renderer for calling the Renderer.ReleasePProgram function.
+     */
     public ReleaseFunctionPixel ( Renderer kRenderer )
     {
         super(kRenderer);
     }
+    /** Call the Renderer.ReleasePProgram function.
+     * @param kBindable, parameter to ReleasePProgram.
+     */
     public final void Release ( Bindable kBindable )
     {
         m_kRenderer.ReleasePProgram( kBindable );

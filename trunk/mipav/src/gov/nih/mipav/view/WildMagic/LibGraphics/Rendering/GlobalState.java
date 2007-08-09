@@ -23,9 +23,7 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 public abstract class GlobalState extends GraphicsObject
     implements StreamInterface
 {
-    // abstract base class
-
-    // supported global states
+    /** supported global states */
     public enum StateType
     {
         ALPHA (0),
@@ -41,41 +39,26 @@ public abstract class GlobalState extends GraphicsObject
         private int m_iValue;
     };
 
+    /** Return the type of state.
+     * @return the type of state. */
     public abstract StateType GetStateType ();
 
-    // default states
+    /** default states */
     public static GlobalState[] Default = new GlobalState[StateType.MAX_STATE_TYPE.Value()];
+    /** default states initialized */
     public static boolean[] DefaultInitialized =
         new boolean[]{ false, false, false, false,
                        false, false, false };
 
+    /** Default constructor. */
     public GlobalState () {}
 
-    public void Load (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Load(rkStream,pkLink);
-    } 
-
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
-    }
-
-    public void Save (Stream rkStream)
-    {
-        super.Save(rkStream);
-    }
-
-    public int GetDiskUsed (StreamVersion rkVersion)
-    {
-        return super.GetDiskUsed(rkVersion);
-    }
-
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

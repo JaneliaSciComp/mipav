@@ -17,23 +17,22 @@
 //
 package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
+/** Abstract base class.  The destructor is *NOT* virtual so that the
+ * derived-class destructors hide it.  This is intentional to avoid a
+ * virtual function table pointer, a safe thing here because the base
+ * class has no data.  This allows the derived classes that represent
+ * vertex buffer information to store the input attributes first, and
+ * allow typecasting of the following form.
+ *
+ *   class VBufferIdentifier : public ResourceIdentifier
+ *   {
+ *   public:  Attributes IAttr;
+ *   }
+ *   VBufferIdentifier* pkID = <some identifier>;
+ *   Attributes& rkIAttr = *(Attributes*)pkID;
+ */
 public abstract class ResourceIdentifier
 {
-    // Abstract base class.  The destructor is *NOT* virtual so that the
-    // derived-class destructors hide it.  This is intentional to avoid a
-    // virtual function table pointer, a safe thing here because the base
-    // class has no data.  This allows the derived classes that represent
-    // vertex buffer information to store the input attributes first, and
-    // allow typecasting of the following form.
-    //
-    //   class VBufferIdentifier : public ResourceIdentifier
-    //   {
-    //   public:  Attributes IAttr;
-    //   }
-    //   VBufferIdentifier* pkID = <some identifier>;
-    //   Attributes& rkIAttr = *(Attributes*)pkID;
-
-    public void finalize () {} //~ResourceIdentifier () {/**/}
-
+    /** Abstract base class. */
     protected ResourceIdentifier () {/**/}
 };

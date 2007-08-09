@@ -28,10 +28,14 @@ public class Texture extends Bindable
     implements StreamInterface
 {
     
+    /** Maps filter type enum to int values. */
     private static HashMap<Integer,FilterType> ms_pkFilterTypeMap = new HashMap<Integer,FilterType>();
+    /** Maps wrap type enum to int values. */
     private static HashMap<Integer,WrapType> ms_pkWrapTypeMap = new HashMap<Integer,WrapType>();
+    /** Maps depth compare enum to int values. */
     private static HashMap<Integer,DepthCompare> ms_pkDepthCompareMap = new HashMap<Integer,DepthCompare>();
 
+    /** Texture filter type: */
     public enum FilterType
     {
         NEAREST ("NEAREST"),          // nearest neighbor
@@ -60,6 +64,7 @@ public class Texture extends Bindable
         private static int m_iInitValue = 0;
     };
 
+    /** Texture wrap type: */
     public enum WrapType
     {
         CLAMP ("CLAMP"),
@@ -86,6 +91,7 @@ public class Texture extends Bindable
         private static int m_iInitValue = 0;
     };
 
+    /** Texture depth comparison types: */
     public enum DepthCompare
     {
         DC_NEVER ("DC_NEVER"),
@@ -115,10 +121,14 @@ public class Texture extends Bindable
         private static int m_iInitValue = 0;
     };
 
+    /** Initializes static enum for filter type. */
     private static FilterType ms_eFilterTypeStatic = FilterType.MAX_FILTER_TYPES;
+    /** Initializes static enum for wrap type. */
     private static WrapType ms_eWrapTypeStatic = WrapType.MAX_WRAP_TYPES;
+    /** Initializes static enum for depth compare. */
     private static DepthCompare ms_eDepthCompareStatic = DepthCompare.DC_QUANTITY;
 
+    /** Default constructor. */
     public Texture ()
     {
         m_spkImage = null;
@@ -126,7 +136,12 @@ public class Texture extends Bindable
         m_bSIOwner = false;
     }
 
-    // Construction and destruction.
+    /** Construct a Texture object with the given GraphicsImage,
+     * SamplerInformation and sampler information owner flag.
+     * @param pkImage, GraphicsImage associated with this Texture.
+     * @param mpkSInfo, SamplerInformation for shader programs.
+     * @param bSIOwner, sampler information owner flag.
+     */
     public Texture ( GraphicsImage pkImage, SamplerInformation pkSInfo,
                     boolean bSIOwner)
     {
@@ -135,6 +150,10 @@ public class Texture extends Bindable
         m_bSIOwner = bSIOwner;
     }
 
+    /** Construct a texture with the depth image and depth compare type.
+     * @param pkDepthImage, depth image for this texture.
+     * @param eCompare, depth comparison type.
+     */
     public Texture (GraphicsImage pkDepthImage, DepthCompare eCompare)
     {
         m_spkImage = pkDepthImage;
@@ -147,6 +166,7 @@ public class Texture extends Bindable
         m_bSIOwner = true;
     }
 
+    /** Release memory. */
     public void finalize ()
     {
         if (m_bSIOwner)
@@ -169,48 +189,67 @@ public class Texture extends Bindable
     }
 
 
-    // Access to texture images.
+    /** Set texture image.
+     * @param pkImage, new GraphicsImage for this Texture.
+     */
     public void SetImage (GraphicsImage pkImage)
     {
         m_spkImage = pkImage;
     }
 
+    /** Get texture image.
+     * @return GraphicsImage for this Texture.
+     */
     public final GraphicsImage GetImage ()
     {
         return m_spkImage;
     }
 
-    // Access to sampler information.
+    /** Set sampler information.
+     * @param pkSamplerInformation, new sampler information object.
+     */
     public void SetSamplerInformation (SamplerInformation pkSamplerInformation)
     {
         m_pkSamplerInformation = pkSamplerInformation;
     }
 
+    /** Get sampler information.
+     * @return sampler information object.
+     */
     public final SamplerInformation GetSamplerInformation ()
     {
         return m_pkSamplerInformation;
     }
 
-    // Access to filter modes.  The default is LINEAR.
+    /** Set filter modes.  The default is LINEAR.
+     * @param eFType, new filter type.
+     */
     public void SetFilterType (FilterType eFType)
     {
         m_eFType = eFType;
     }
 
+    /** Fet filter modes.  The default is LINEAR.
+     * @return filter type.
+     */
     public final FilterType GetFilterType ()
     {
         return m_eFType;
     }
 
 
-    // Access to wrap modes.  The input i to SetWrapType and GetWrapType must
-    // satisfy 0 <= i < GetDimension().  The defaults are CLAMP_TO_EDGE.
+    /** Set to wrap modes. 
+     * @param i, must satisfy 0 <= i < GetDimension(). 
+     * @param eWType, new wrap type.  The defaults are CLAMP_TO_EDGE. */
     public void SetWrapType (int i, WrapType eWType)
     {
         assert(0 <= i && i < 3);
         m_aeWType[i] = eWType;
     }
 
+    /** Get to wrap modes. 
+     * @param i, must satisfy 0 <= i < GetDimension(). 
+     * @return wrap type.  The defaults are CLAMP_TO_EDGE. */
     public WrapType GetWrapType (int i)
     {
         assert(0 <= i && i < 3);
@@ -218,76 +257,114 @@ public class Texture extends Bindable
     }
 
 
-    // Access to the border color used for sampling outside the texture image.
-    // The default is ColorRGBA(0,0,0,1).
+    /** Access to the border color used for sampling outside the texture image.
+     * The default is ColorRGBA(0,0,0,1).
+     * @param rkBorderColor, new border color.
+     */
     public void SetBorderColor (ColorRGBA rkBorderColor)
     {
         m_kBorderColor = rkBorderColor;
     }
 
+    /** Access to the border color used for sampling outside the texture image.
+     * The default is ColorRGBA(0,0,0,1).
+     * @return border color.
+     */
     public final ColorRGBA GetBorderColor ()
     {
         return m_kBorderColor;
     }
 
 
-    // Support for depth textures.
+    /** Support for depth textures.
+     * @return true if this is a depth texture.
+     */
     public final boolean IsDepthTexture ()
     {
         return (m_eCompare != DepthCompare.DC_QUANTITY);
     }
 
+    /** Set depth compare type.
+     * @param eCompare, new depth compare type.
+     */
     public void SetDepthCompare (DepthCompare eCompare)
     {
         m_eCompare = eCompare;
     }
 
-
+    /** Get depth compare type.
+     * @return depth compare type.
+     */
     public final DepthCompare GetDepthCompare ()
     {
         return m_eCompare;
     }
 
-
-    // Support for offscreen textures.
+    /** Support for offscreen textures.
+     * @return true it this is an offscreen texture.
+     */
     public final boolean IsOffscreenTexture ()
     {
         return m_bOffscreenTexture;
     }
 
+    /** Set offscreen texture flag.
+     * @param bOffscreenTexture true sets this to an offscreen texture.
+     */
     public void SetOffscreenTexture (boolean bOffscreenTexture)
     {
         m_bOffscreenTexture = bOffscreenTexture;
     }
         
+    /** GraphicsImage texture data. */
     protected GraphicsImage m_spkImage;
+    /** SamplerInformation for shader programs. */
     protected SamplerInformation m_pkSamplerInformation;
+    /** Default filter type */
     protected FilterType m_eFType = FilterType.LINEAR;
+    /** Default wrap types. */
     protected WrapType[] m_aeWType = new WrapType[]{ WrapType.CLAMP_EDGE, WrapType.CLAMP_EDGE, WrapType.CLAMP_EDGE };
+    /** Default border color. */
     protected ColorRGBA m_kBorderColor = new ColorRGBA(ColorRGBA.BLACK);
 
-    // Support for depth textures.  The default value is DC_QUANTITY,
-    // indicating that the texture is *not* a depth texture.
+    /** Support for depth textures.  The default value is DC_QUANTITY,
+     * indicating that the texture is *not* a depth texture. */
     protected DepthCompare m_eCompare = DepthCompare.DC_QUANTITY;
 
-    // Support for offscreen textures.  The default value is 'false'.
+    /** Support for offscreen textures.  The default value is 'false'. */
     protected boolean m_bOffscreenTexture = false;
 
-    // If this object is the owner of m_pkSamplerInformation, the object was
-    // dynamically allocated and must be deallocated during destruction.
+    /** If this object is the owner of m_pkSamplerInformation, the object was
+     * dynamically allocated and must be deallocated during destruction. */
     protected boolean m_bSIOwner;
 
+    /** Set to true to reload the texture data to the GPU */
     protected boolean m_bReload = false;
+
+    /** Set to true to reload the texture data to the GPU
+     * @param bReload set to true to reload the texture data to the GPU
+     */
     public void Reload( boolean bReload )
     {
         m_bReload = bReload;
     }
     
+    /** Get reload flag.
+     * @return reload flag.
+     */
     public boolean Reload()
     {
         return m_bReload;
     }
     
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -308,16 +385,10 @@ public class Texture extends Bindable
         // are all set during resource loading at program runtime.
     }
 
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
-    }
-
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -335,6 +406,12 @@ public class Texture extends Bindable
         // are all set during resource loading at program runtime.
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion) 
     {
         return super.GetDiskUsed(rkVersion) +
@@ -345,6 +422,12 @@ public class Texture extends Bindable
             Stream.SIZEOF_BOOLEAN; //sizeof(char);  // m_bOffscreenTexture
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

@@ -34,17 +34,45 @@ import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 
+/** The color image data is stored so that the red channel is in low
+ * memory, the green channel is next, the blue channel after that, and the
+ * alpha channel in high memory.  For example, the first pixel has the
+ * following layout.
+ *
+ *   IT_RGB888:
+ *     r = aucData[0];
+ *     g = aucData[1];
+ *     b = aucData[2];
+ *
+ *   IT_RGBA8888:
+ *     r = aucData[0];
+ *     g = aucData[1];
+ *     b = aucData[2];
+ *     a = aucData[3];
+ *
+ * Depth image data is always 'float' with values in [0,1].  The
+ * specification of 16, 24, or 32 is for setting up the hardware with the
+ * correct size depth buffer.  Data read into a depth image from the depth
+ * buffer will be converted to [0,1] if necessary.
+ *
+ * Construction and destruction.  GraphicsImage accepts responsibility for
+ * deleting the input array.  The acImageName field is used as a unique
+ * identifier for the image for purposes of sharing.  The caller of
+ * the constructor may provided a name.  If not, the constructor generates
+ * a unique name "imageN.wmif" where N is the Object::m_uiID field. A
+ * global map of images is maintained for sharing purposes.
+ *
+ * NOTE:  GraphicsImage dimensions must be a power of two.  Assert statements are
+ * placed in the constructors to trap when the dimensions are not power
+ * of two.
+ */
 public class GraphicsImage extends GraphicsObject
     implements StreamInterface
 {
-  
-    // NOTE:  GraphicsImage dimensions must be a power of two.  Assert statements are
-    // placed in the constructors to trap when the dimensions are not power
-    // of two.
-
-    // For a lookup of the renderer constant type from its string name.
+    /** For a lookup of the renderer constant type from its string name. */
     private static HashMap<Integer,FormatMode> ms_pkFormatModeMap = new HashMap<Integer,FormatMode>();
 
+    /** GraphicsImage format mode: */
     public enum FormatMode
     {
         IT_RGB888 ( 3, "IT_RGB888" ),
@@ -80,37 +108,17 @@ public class GraphicsImage extends GraphicsObject
         private int m_iValue;
 
     };
+
+    /** Initializes format mode static enum: */
     private static FormatMode m_eFormatModeStatic = FormatMode.IT_QUANTITY;
 
-    // The color image data is stored so that the red channel is in low
-    // memory, the green channel is next, the blue channel after that, and the
-    // alpha channel in high memory.  For example, the first pixel has the
-    // following layout.
-    //
-    //   IT_RGB888:
-    //     r = aucData[0];
-    //     g = aucData[1];
-    //     b = aucData[2];
-    //
-    //   IT_RGBA8888:
-    //     r = aucData[0];
-    //     g = aucData[1];
-    //     b = aucData[2];
-    //     a = aucData[3];
-    //
-    // Depth image data is always 'float' with values in [0,1].  The
-    // specification of 16, 24, or 32 is for setting up the hardware with the
-    // correct size depth buffer.  Data read into a depth image from the depth
-    // buffer will be converted to [0,1] if necessary.
 
-    // Construction and destruction.  GraphicsImage accepts responsibility for
-    // deleting the input array.  The acImageName field is used as a unique
-    // identifier for the image for purposes of sharing.  The caller of
-    // the constructor may provided a name.  If not, the constructor generates
-    // a unique name "imageN.wmif" where N is the Object::m_uiID field. A
-    // global map of images is maintained for sharing purposes.
-
-    // 1D image
+    /** Construct a 1D image (float)
+     * @param eFormat, image format
+     * @param iBound0, size of image.
+     * @param afData, image data.
+     * @param acImageName, image name.
+     */
     public GraphicsImage (FormatMode eFormat, int iBound0,
                           float[] afData, String acImageName )
     {
@@ -133,6 +141,12 @@ public class GraphicsImage extends GraphicsObject
         ImageCatalog.GetActive().Insert(this);
     }
 
+    /** Construct a 1D image (byte)
+     * @param eFormat, image format
+     * @param iBound0, size of image.
+     * @param aucData, image data.
+     * @param acImageName, image name.
+     */
     public GraphicsImage (FormatMode eFormat, int iBound0,
                           byte[] aucData, String acImageName )
     {
@@ -156,7 +170,13 @@ public class GraphicsImage extends GraphicsObject
     }
 
     
-    // 2D image
+    /** Construct a 2D image (byte)
+     * @param eFormat, image format
+     * @param iBound0, image dimension 1.
+     * @param iBound1, image dimension 2.
+     * @param aucData, image data.
+     * @param acImageName, image name.
+     */
     public GraphicsImage (FormatMode eFormat, int iBound0, int iBound1,
                           byte[] aucData, String acImageName)
     {
@@ -176,7 +196,14 @@ public class GraphicsImage extends GraphicsObject
     }
 
 
-    // 3D image
+    /** Construct a 3D image (byte)
+     * @param eFormat, image format
+     * @param iBound0, image dimension 1.
+     * @param iBound1, image dimension 2.
+     * @param iBound1, image dimension 2.
+     * @param aucData, image data.
+     * @param acImageName, image name.
+     */
     public GraphicsImage (FormatMode eFormat, int iBound0, int iBound1, int iBound2,
                           byte[] aucData, String acImageName)
     {
@@ -196,7 +223,14 @@ public class GraphicsImage extends GraphicsObject
         ImageCatalog.GetActive().Insert(this);
     }
 
-    // 3D image
+    /** Construct a 3D image (float)
+     * @param eFormat, image format
+     * @param iBound0, image dimension 1.
+     * @param iBound1, image dimension 2.
+     * @param iBound1, image dimension 2.
+     * @param afData, image data.
+     * @param acImageName, image name.
+     */
     public GraphicsImage (FormatMode eFormat, int iBound0, int iBound1, int iBound2,
                           float[] afData, String acImageName)
     {
@@ -216,6 +250,7 @@ public class GraphicsImage extends GraphicsObject
         ImageCatalog.GetActive().Insert(this);
     }
 
+    /** Default constructor. */
     public GraphicsImage ()
     {
         m_eFormat = FormatMode.IT_QUANTITY;
@@ -237,22 +272,31 @@ public class GraphicsImage extends GraphicsObject
         super.finalize();
     }
 
-    // member access
+    /** Return image format.
+     * @return image format. */
     public final FormatMode GetFormat ()
     {
         return m_eFormat;
     }
     
+    /** Return image format name.
+     * @return image format name. */
     public final String GetFormatName ()
     {
         return m_eFormat.FormatName();
     }
 
+    /** Return image format name for the input enum.
+     * @param eFormat format enum.
+     * @return image format name. */
     public static String GetFormatName (FormatMode eFormat)
     {
         return eFormat.FormatName();
     }
 
+    /** Return true if this is a depth image.
+     * @return true if this is a depth image.
+     */
     public final boolean IsDepthImage ()
     {
         return (m_eFormat == FormatMode.IT_DEPTH16
@@ -260,42 +304,67 @@ public class GraphicsImage extends GraphicsObject
             || m_eFormat == FormatMode.IT_DEPTH32);
     }
 
+    /** Return true if this is a cube image.
+     * @return true if this is a cube image.
+     */
     public final boolean IsCubeImage ()
     {
         return (m_eFormat == FormatMode.IT_CUBE_RGB888 || m_eFormat == FormatMode.IT_CUBE_RGBA8888);
     }
 
+    /** Get the number of bytes per pixel in the image.
+     * @return the number of bytes per pixel in the image. */
     public final int GetBytesPerPixel ()
     {
         return m_eFormat.BytesPerPixel();
     }
 
+    /** Get the number of bytes per pixel for the given format enum.
+     * @param eFormat, format type.
+     * @return the number of bytes per pixel for the given format enum. */
     public final static int GetBytesPerPixel (FormatMode eFormat)
     {
         return eFormat.BytesPerPixel();
     }
 
+    /** Get the dimension of this image (1D, 2D, 3D).
+     * @return the dimension of this image (1D, 2D, 3D).
+     */
     public final int GetDimension ()
     {
         return m_iDimension;
     }
 
+    /** Get the image extent in the given dimension.
+     * @param i, dimension.
+     * @return the image extent in the given dimension.
+     */
     public int GetBound (int i)
     {
         assert(0 <= i && i < 3);
         return m_aiBound[i];
     }
 
+    /** Get the image size.
+     * @return the image size.
+     */
     public final int GetQuantity ()
     {
         return m_iQuantity;
     }
 
+    /** Get the image data.
+     * @return the image data.
+     */
     public final byte[] GetData ()
     {
         return m_aucData;
     }
 
+    /** Set the image data for 1D image.
+     * @param aucData, new image data.
+     * @param iSize, new image size.
+     */
     public void SetData ( byte[] aucData, int iSize )
     {
         if ( m_aucData != null )
@@ -306,6 +375,11 @@ public class GraphicsImage extends GraphicsObject
         m_aiBound[0] = iSize;
     }
 
+    /** Set the image data for 2D image.
+     * @param aucData, new image data.
+     * @param iXSize, new image x-size.
+     * @param iYSize, new image y-size.
+     */
     public void SetData ( byte[] aucData, int iXSize, int iYSize )
     {
         if ( m_aucData != null )
@@ -317,6 +391,12 @@ public class GraphicsImage extends GraphicsObject
         m_aiBound[1] = iYSize;
     }
 
+    /** Set the image data for 3D image.
+     * @param aucData, new image data.
+     * @param iXSize, new image x-size.
+     * @param iYSize, new image y-size.
+     * @param iZSize, new image z-size.
+     */
     public void SetData ( byte[] aucData, int iXSize, int iYSize, int iZSize )
     {
         if ( m_aucData != null )
@@ -329,11 +409,18 @@ public class GraphicsImage extends GraphicsObject
         m_aiBound[2] = iZSize;
     }
 
+    /** Get image float data.
+     * @return image float data.
+     */
     public float[] GetFloatData ()
     {
         return m_afData;
     }
 
+    /** Set the image data for 1D image.
+     * @param afData, new image data.
+     * @param iSize, new image size.
+     */
     public void SetFloatData ( float[] afData, int iSize )
     {
         if ( m_afData != null )
@@ -344,6 +431,11 @@ public class GraphicsImage extends GraphicsObject
         m_aiBound[0] = iSize;
     }
 
+    /** Set the image data for 2D image.
+     * @param afData, new image data.
+     * @param iXSize, new image x-size.
+     * @param iYSize, new image y-size.
+     */
     public void SetFloatData ( float[] afData, int iXSize, int iYSize )
     {
         if ( m_afData != null )
@@ -355,6 +447,12 @@ public class GraphicsImage extends GraphicsObject
         m_aiBound[1] = iYSize;
     }
 
+    /** Set the image data for 3D image.
+     * @param afData, new image data.
+     * @param iXSize, new image x-size.
+     * @param iYSize, new image y-size.
+     * @param iZSize, new image z-size.
+     */
     public void SetFloatData ( float[] afData, int iXSize, int iYSize, int iZSize )
     {
         if ( m_afData != null )
@@ -367,6 +465,9 @@ public class GraphicsImage extends GraphicsObject
         m_aiBound[2] = iZSize;
     }
 
+    /** Get the imag data in Buffer format.
+     * @return the imag data in Buffer format.
+     */
     public Buffer GetDataBuffer ()
     {
         Buffer imageBuf;
@@ -382,10 +483,12 @@ public class GraphicsImage extends GraphicsObject
         return imageBuf;                  
     }
 
-    // Create an image of ColorRGBA values.  The function returns an image
-    // of the same width and height for these formats.  The returned image
-    // is dynamically allocated; the caller is responsible for deleting it.
-    ColorRGBA[] CreateRGBA ()
+    /** Create an image of ColorRGBA values.  
+     * @return an image of the same width and height for these formats.  The
+     * returned image is dynamically allocated; the caller is responsible for
+     * deleting it.
+     */
+    public ColorRGBA[] CreateRGBA ()
     {
         if (!IsCubeImage())
         {
@@ -399,9 +502,11 @@ public class GraphicsImage extends GraphicsObject
         return null;
     }
 
-    // Copy to an already existing image of ColorRGBA values.  The input
-    // array must have the correct dimensions as the GraphicsImage itself.
-    void CopyRGBA (ColorRGBA[] akCImage)
+    /** Copy to an already existing image of ColorRGBA values.  
+     * @param akCImage, The input array must have the correct dimensions as the
+     * GraphicsImage itself.
+     */
+    public void CopyRGBA (ColorRGBA[] akCImage)
     {
         if (m_eFormat == FormatMode.IT_RGB888)
         {
@@ -442,11 +547,15 @@ public class GraphicsImage extends GraphicsObject
     }
 
 
-    // Streaming support.  The sharing system is automatically invoked by
-    // these calls.  In Load, if an image corresponding to the filename is
-    // already in memory, then that image is returned (i.e. shared).
-    // Otherwise, a new image is created and returned.  The filename is used
-    // as the image name.
+    /** Streaming support.  The sharing system is automatically invoked by
+     * these calls.  In Load, if an image corresponding to the filename is
+     * already in memory, then that image is returned (i.e. shared).
+     * Otherwise, a new image is created and returned.  The filename is used
+     * as the image name.
+     * @param acImageName, image name
+     * @param rkDirectory, directory where the image is located.
+     * @return new GraphicsImage or null if it cannot be loaded.
+     */
     public static GraphicsImage Load (String acImageName, String rkDirectory)
     {
         assert(acImageName != null);
@@ -541,7 +650,10 @@ public class GraphicsImage extends GraphicsObject
         acBuffer = null;
         return pkImage;
     }
-
+    /** Opens an input stream from the input filename.
+     * @param acFilename, image file name.
+     * @return  an input stream for reading the file.
+     */
     private static ByteArrayInputStream LoadFile (String acFilename)
     {
         File kFile = new File(acFilename);
@@ -566,16 +678,30 @@ public class GraphicsImage extends GraphicsObject
         return null;
     }
 
+    /** Image format mode. */
     protected FormatMode m_eFormat;
+    /** Image number of dimensions. */
     protected int m_iDimension;
+    /** Image extents. */
     protected int[] m_aiBound = new int[3];
+    /** Image size. */
     protected int m_iQuantity;
+    /** Image byte data. */
     protected byte[] m_aucData;
+    /** Image float data. */
     protected float[] m_afData = null;
-
+    /** Converting from 0-255 range to 0-1 range. */
     private static final float fInv255 = 1.0f/255.0f;
 
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -595,16 +721,10 @@ public class GraphicsImage extends GraphicsObject
         ImageCatalog.GetActive().Insert(this);
     }
 
-    public void Link (Stream rkStream, Stream.Link pkLink)
-    {
-        super.Link(rkStream,pkLink);
-    }
-
-    public boolean Register (Stream rkStream)
-    {
-        return super.Register(rkStream);
-    }
-
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -620,6 +740,12 @@ public class GraphicsImage extends GraphicsObject
         rkStream.Write(iBytes,m_aucData);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (final StreamVersion rkVersion)
     {
         int iSize = super.GetDiskUsed(rkVersion) +
@@ -656,6 +782,12 @@ public class GraphicsImage extends GraphicsObject
         return iSize;
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

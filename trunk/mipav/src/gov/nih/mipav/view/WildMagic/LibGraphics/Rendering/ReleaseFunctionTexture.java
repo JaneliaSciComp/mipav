@@ -20,10 +20,17 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.Rendering;
 
 public class ReleaseFunctionTexture extends ReleaseFunction
 {
+    /** Create a ReleaseFunctionTexture, store the Renderer to access the
+     * Renderer.ReleaseTexture function call.
+     * @param kRenderer, Renderer for calling the Renderer.ReleaseTexture function.
+     */
     public ReleaseFunctionTexture ( Renderer kRenderer )
     {
         super(kRenderer);
     }
+    /** Call the Renderer.ReleaseTexture function.
+     * @param kBindable, parameter to ReleaseTexture.
+     */
     public final void Release ( Bindable kBindable )
     {
         m_kRenderer.ReleaseTexture( kBindable );

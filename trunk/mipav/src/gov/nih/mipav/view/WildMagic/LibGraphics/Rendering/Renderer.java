@@ -23,12 +23,11 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 
+/** Abstract API for renderers.  Each graphics API must implement this
+ * layer. */
 public abstract class Renderer
 {
-    // Abstract API for renderers.  Each graphics API must implement this
-    // layer.
-
-    // The Renderer is an abstract base class.
+    /** Release memory. */
     public void finalize()
     {
         if ( m_kBackgroundColor != null )
@@ -84,7 +83,7 @@ public abstract class Renderer
     }
     
     
-    // Run-time type information.
+    /** Run-time type information. */
     public enum RendererType
     {
         OPENGL,
@@ -93,7 +92,7 @@ public abstract class Renderer
         MAX_RENDERER_TYPES
     };
 
-    // Make this renderer context the active one.
+    /** Make this renderer context the active one. */
     public void Activate ()
     {
         SetBackgroundColor(m_kBackgroundColor);
@@ -105,6 +104,9 @@ public abstract class Renderer
         }
     }
 
+    /** Return it this is the active renderer.
+     * @return true.
+     */
     public boolean IsActive ()
     {
         // stub for derived classes
@@ -112,11 +114,18 @@ public abstract class Renderer
     }
 
 
-    // Renderer-specific information for loading shader programs.
+    /** Renderer-specific information for loading shader programs.
+     * @return extension
+     */
     public abstract String GetExtension ();
+    /** Renderer-specific information for loading shader programs.
+     * @return comment characeter
+     */
     public abstract  char GetCommentCharacter ();
 
-    // Access to the camera.
+    /** Set the camera.
+     * @param pkCamera, new camera object.
+     */
     public void SetCamera (Camera pkCamera)
     {
         if (m_pkCamera != null)
@@ -139,59 +148,90 @@ public abstract class Renderer
         }
     }
 
+    /** Get the camera.
+     * @return the camera object.
+     */
     public final Camera GetCamera ()
     {
         return m_pkCamera;
     }
 
-    // Access to the geometry object that is to be drawn.
+    /** Set the geometry object that is to be drawn.
+     * @param pkGeometry new geometry.
+     */
     public final void SetGeometry (Geometry pkGeometry)
     {
         m_pkGeometry = pkGeometry;
     }
 
+    /** Get the geometry object.
+     * @return the geometry.
+     */
     public final Geometry GetGeometry ()
     {
         return m_pkGeometry;
     }
 
-    // Frame buffer parameters.
+    /** Get Frame buffer format type parameter.
+     * @return Frame buffer format type parameter.
+     */
     public final FrameBuffer.FormatType GetFormatType ()
     {
         return m_eFormat;
     }
 
+    /** Get Frame buffer depth type parameter.
+     * @return Frame buffer depth type parameter.
+     */
     public final FrameBuffer.DepthType GetDepthType ()
     {
         return m_eDepth;
     }
 
+    /** Get Frame buffer stencil type parameter.
+     * @return Frame buffer stencil type parameter.
+     */
     public final FrameBuffer.StencilType GetStencilType ()
     {
         return m_eStencil;
     }
 
+    /** Get Frame buffer buffering type parameter.
+     * @return Frame buffer buffering type parameter.
+     */
     public final FrameBuffer.BufferingType GetBufferingType ()
     {
         return m_eBuffering;
     }
 
+    /** Get Frame buffer multisampling type parameter.
+     * @return Frame buffer multisampling type parameter.
+     */
     public final FrameBuffer.MultisamplingType GetMultisamplingType ()
     {
         return m_eMultisampling;
     }
 
-    // Window parameters.
+    /** Get Window width parameter.
+     * @return Window width parameter.
+     */
     public final int GetWidth ()
     {
         return m_iWidth;
     }
 
+    /** Get Window height parameter.
+     * @return Window height parameter.
+     */
     public final int GetHeight ()
     {
         return m_iHeight;
     }
 
+    /** Set Window parameters.
+     * @param iWidth Window width parameter.
+     * @param iHeight Window height parameter.
+     */
     public void Resize (int iWidth, int iHeight)
     {
         m_iWidth = iWidth;
@@ -199,56 +239,95 @@ public abstract class Renderer
         OnViewportChange();
     }
 
+    /** Toggle full screen mode. */
     public void ToggleFullscreen ()
     {
         m_bFullscreen = !m_bFullscreen;
     }
 
-
-    // Background color access.
+    /** Set the Background color.
+     * @param rkColor, new background color.
+     */
     public void SetBackgroundColor (ColorRGBA rkColor)
     {
         m_kBackgroundColor = rkColor;
     }
 
+    /** Get the Background color.
+     * @return the background color.
+     */
     public final ColorRGBA GetBackgroundColor () 
     {
         return m_kBackgroundColor;
     }
 
-    // Support for predraw and postdraw semantics.
+    /** Support for predraw and postdraw semantics.
+     * @return true
+     */
     public boolean BeginScene ()
     {
         // stub for derived classes
         return true;
     }
 
+    /** Support for predraw and postdraw semantics.
+     */
     public void EndScene ()
     {
         // stub for derived classes
     }
 
-    // Support for full-sized window buffer operations.
+    /** Clear back buffer. */
     public abstract void ClearBackBuffer ();
+    /** Clear depth buffer. */
     public abstract void ClearZBuffer ();
+    /** Clear stencil buffer. */
     public abstract void ClearStencilBuffer ();
+    /** Clear all buffers. */
     public abstract void ClearBuffers ();
+    /** Display the back buffer. */
     public abstract void DisplayBackBuffer ();
 
-    // Clear the buffer in the specified subwindow.
+    /** Clear the back buffer in the specified subwindow.
+     * @param iXPos, the x-position for the subwindow
+     * @param iYPos, the y-position for the subwindow
+     * @param iWidth, the subwindow width
+     * @param iHeight, the subwindow height
+     */
     public abstract void ClearBackBuffer (int iXPos, int iYPos, int iWidth,
                                           int iHeight);
+    /** Clear the depth buffer in the specified subwindow.
+     * @param iXPos, the x-position for the subwindow
+     * @param iYPos, the y-position for the subwindow
+     * @param iWidth, the subwindow width
+     * @param iHeight, the subwindow height
+     */
     public abstract void ClearZBuffer (int iXPos, int iYPos, int iWidth,
                                        int iHeight);
+    /** Clear the stencil buffer in the specified subwindow.
+     * @param iXPos, the x-position for the subwindow
+     * @param iYPos, the y-position for the subwindow
+     * @param iWidth, the subwindow width
+     * @param iHeight, the subwindow height
+     */
     public abstract void ClearStencilBuffer (int iXPos, int iYPos, int iWidth,
                                              int iHeight);
+
+    /** Clear the all buffers in the specified subwindow.
+     * @param iXPos, the x-position for the subwindow
+     * @param iYPos, the y-position for the subwindow
+     * @param iWidth, the subwindow width
+     * @param iHeight, the subwindow height
+     */
     public abstract void ClearBuffers (int iXPos, int iYPos, int iWidth,
                                        int iHeight);
 
-    // The main entry point to drawing in the derived-class renderers.
+    /** The main entry point to drawing in the derived-class renderers. */
     public abstract void DrawElements ();
 
-    // Object drawing.
+    /** Object drawing.
+     * @param rkVisibleSet, set of objects to draw.
+     */
     public void DrawScene (VisibleSet rkVisibleSet)
     {
         // NOTE:  The stack of 2-tuples is limited to having 64 elements.  This
@@ -305,6 +384,9 @@ public abstract class Renderer
         }
     }
 
+    /** Draw the specified geometry.
+     * @param pkGeometry, geometry to draw.
+     */
     public void Draw (Geometry pkGeometry)
     {
         m_pkGeometry = pkGeometry;
@@ -349,19 +431,36 @@ public abstract class Renderer
         m_pkGeometry = null;
     }
 
-
-    // Text drawing.
-    //public abstract int LoadFont (const char* acFace, int iSize, boolean bBold,
-    //boolean bItalic);
+    /** Clear a font based on ID. 
+     * @param iFontID, the font to remove.
+     */
     public abstract void UnloadFont (int iFontID);
+    /** Select a font based on ID. 
+     * @param iFontID, the font to use.
+     * @return true if the font exists, false otherwise.
+     */
     public abstract boolean SelectFont (int iFontID);
+    /** 
+     * Draw text.
+     * @param iX, the x-position for the start of the text being drawn.
+     * @param iY, the y-position for the start of the text being drawn.
+     * @param rkColor, text color
+     * @param acText, text to draw
+     */
     public abstract void Draw (int iX, int iY, final ColorRGBA rkColor,
                                final char[] acText);
 
-    // 2D drawing
+    /**
+     * 2D drawing. Draw a byte bitmap.
+     * @param aucBuffer, the bitmap to draw.
+     */
     public abstract void Draw (final byte[] aucBuffer);
 
-    // Object drawing.
+    /** Object drawing.
+     * @param pkEffect, ShaderEffect to apply to geometry.
+     * @param rbPrimaryEffect, true if this is the primary effect.
+     * @return true on sucess.
+     */
     public boolean ApplyEffect (ShaderEffect pkEffect, boolean rbPrimaryEffect)
     {
         final int iPassQuantity = pkEffect.GetPassQuantity();
@@ -425,13 +524,9 @@ public abstract class Renderer
     }
 
 
-    // Point size, line width, and line stipple.  These translate nicely to
-    // OpenGL calls.  The point size is supported by Direct3D.  However, to
-    // draw thicker lines or stippled lines, a separate interface in Direct3D
-    // (ID3DXLine) must be used.  Until code is added to use this interface,
-    // the Direct3D renderer ignores the SetLineWidth and SetLineStipple
-    // function calls.  Line stippling is disabled when either of "repeat" or
-    // "pattern" is zero.
+    /** Set point size.
+     * @param fSize, point size.
+     */
     public void SetPointSize (float fSize)
     {
         if (fSize > 0.0f)
@@ -440,11 +535,17 @@ public abstract class Renderer
         }
     }
 
+    /** Get point size
+     * @return point size.
+     */
     public final float GetPointSize ()
     {
         return m_fPointSize;
     }
 
+    /** Set line width.
+     * @param fWidth, line width.
+     */
     public void SetLineWidth (float fWidth)
     {
         if (fWidth > 0.0f)
@@ -453,11 +554,19 @@ public abstract class Renderer
         }
     }
 
+    /** Get line width.
+     * @return line width.
+     */
     public final float GetLineWidth ()
     {
         return m_fLineWidth;
     }
 
+    /** Line stippling is disabled when either of "repeat" or "pattern" is
+     * zero.
+     * @param iRepeat, stiple repeat.
+     * @param usPattern, stiple pattern.
+     */
     public void SetLineStipple (int iRepeat, short usPattern)
     {
         if (iRepeat < 0)
@@ -468,54 +577,82 @@ public abstract class Renderer
         m_usLineStipplePattern = usPattern;
     }
 
+    /** Get Line stippling repeat.
+     * @return line stiple repeat.
+     */
     public final int GetLineStippleRepeat ()
     {
         return m_iLineStippleRepeat;
     }
 
+    /** Get Line stippling pattern.
+     * @return line stiple pattern.
+     */
     public final short GetLineStipplePattern ()
     {
         return m_usLineStipplePattern;
     }
 
 
-    // Resource limits.
+    /** Maximum lights resource limits.
+     * @return the maximum number of lights.
+     */
     public final int GetMaxLights ()
     {
         return m_iMaxLights;
     }
 
+    /** Maximum colors resource limits.
+     * @return the maximum number of color units.
+     */
     public final int GetMaxColors ()
     {
         return m_iMaxColors;
     }
 
+    /** Maximum texture coordinates resource limits.
+     * @return the maximum number of texture coordinates.
+     */
     public final int GetMaxTCoords ()
     {
         return m_iMaxTCoords;
     }
 
+    /** Maximum vertex shader images resource limits.
+     * @return the maximum number of vertex shader images.
+     */
     public final int GetMaxVShaderImages ()
     {
         return m_iMaxVShaderImages;
     }
 
+    /** Maximum pixel shader resource limits.
+     * @return the maximum number of pixel shader images.
+     */
     public final int GetMaxPShaderImages ()
     {
         return m_iMaxPShaderImages;
     }
 
+    /** Maximum stencil resource limits.
+     * @return the maximum number of stencil indices.
+     */
     public final int GetMaxStencilIndices ()
     {
         return m_iMaxStencilIndices;
     }
 
+    /** Maximum user clip planes resource limits.
+     * @return the maximum number of user clip planes.
+     */
     public final int GetMaxUserClipPlanes ()
     {
         return m_iMaxUserClipPlanes;
     }
 
-    // Global render state management.
+    /** Global render state management.
+     * @param aspkState, set new GlobalStates  
+     */
     public void SetGlobalState (GlobalState[] aspkState)
     {
         GlobalState pkState = aspkState[GlobalState.StateType.ALPHA.Value()];
@@ -561,6 +698,9 @@ public abstract class Renderer
         }
     }
 
+    /** Global render state management.
+     * @param aspkState, restore GlobalStates  
+     */
     public void RestoreGlobalState (GlobalState[] aspkState)
     {
         GlobalState pkState;
@@ -608,90 +748,140 @@ public abstract class Renderer
         }
     }
 
+    /** Alpha state management.
+     * @param pkState, new AlphaState  
+     */
     public void SetAlphaState (AlphaState pkState)
     {
         m_aspkState[GlobalState.StateType.ALPHA.Value()] = pkState;
     }
 
+    /** Cull state management.
+     * @param pkState, new CullState  
+     */
     public void SetCullState (CullState pkState)
     {
         m_aspkState[GlobalState.StateType.CULL.Value()] = pkState;
     }
 
+    /** Material state management.
+     * @param pkState, new MaterialState  
+     */
     public void SetMaterialState (MaterialState pkState)
     {
         m_aspkState[GlobalState.StateType.MATERIAL.Value()] = pkState;
     }
 
+    /** PolygonOffset state management.
+     * @param pkState, new PolygonOffsetState  
+     */
     public void SetPolygonOffsetState (PolygonOffsetState pkState)
     {
         m_aspkState[GlobalState.StateType.POLYGONOFFSET.Value()] = pkState;
     }
 
+    /** Stencil state management.
+     * @param pkState, new StencilState  
+     */
     public void SetStencilState (StencilState pkState)
     {
         m_aspkState[GlobalState.StateType.STENCIL.Value()] = pkState;
     }
 
+    /** Wireframe state management.
+     * @param pkState, new WireframeState  
+     */
     public void SetWireframeState (WireframeState pkState)
     {
         m_aspkState[GlobalState.StateType.WIREFRAME.Value()] = pkState;
     }
 
+    /** ZBuffer state management.
+     * @param pkState, new ZBufferState  
+     */
     public void SetZBufferState (ZBufferState pkState)
     {
         m_aspkState[GlobalState.StateType.ZBUFFER.Value()] = pkState;
     }
 
+    /** Get AlphaState.
+     * @return AlphaState  
+     */
     public final AlphaState GetAlphaState ()
     {
         return (AlphaState)(m_aspkState[GlobalState.StateType.ALPHA.Value()]);
     }
 
+    /** Get CullState.
+     * @return CullState  
+     */
     public final CullState GetCullState ()
     {
         return (CullState)(m_aspkState[GlobalState.StateType.CULL.Value()]);
     }
 
+    /** Get MaterialState.
+     * @return MaterialState  
+     */
     public final MaterialState GetMaterialState ()
     {
         return (MaterialState)(m_aspkState[GlobalState.StateType.MATERIAL.Value()]);
     }
 
+    /** Get PolygonOffsetState.
+     * @return PolygonOffsetState  
+     */
     public final PolygonOffsetState GetPolygonOffsetState ()
     {
         return (PolygonOffsetState)(m_aspkState[GlobalState.StateType.POLYGONOFFSET.Value()]);
     }
 
+    /** Get StencilState.
+     * @return StencilState  
+     */
     public final StencilState GetStencilState ()
     {
         return (StencilState)(m_aspkState[GlobalState.StateType.STENCIL.Value()]);
     }
 
+    /** Get WireframeState.
+     * @return WireframeState  
+     */
     public final WireframeState GetWireframeState ()
     {
         return (WireframeState)(m_aspkState[GlobalState.StateType.WIREFRAME.Value()]);
     }
 
+    /** Get ZBufferState.
+     * @return ZBufferState  
+     */
     public final ZBufferState GetZBufferState ()
     {
         return (ZBufferState)(m_aspkState[GlobalState.StateType.ZBUFFER.Value()]);
     }
 
+    /** Set reverse cull face.
+     * @param bReverseCullFace, when true do reverse culling.
+     */
     public void SetReverseCullFace (boolean bReverseCullFace)
     {
         m_bReverseCullFace = bReverseCullFace;
     }
 
+    /** Get reverse cull face.
+     * @return reverse culling.
+     */
     public final boolean GetReverseCullFace ()
     {
         return m_bReverseCullFace;
     }
 
-    // Function pointer types for binding and unbinding resources.
+    /** Function pointer types for binding and unbinding resources. */
     public ReleaseFunction m_kReleaseFunction;
 
-    // Resource loading and releasing.
+    /** Resource loading and releasing.
+     * @param pkScene, load all resources for this scene.
+     */
     public void LoadAllResources (Spatial pkScene)
     {
         Geometry pkGeometry = (Geometry)(pkScene);
@@ -715,6 +905,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkScene, release all resources for this scene.
+     */
     public void ReleaseAllResources (Spatial pkScene)
     {
         Geometry pkGeometry = (Geometry)(pkScene);
@@ -737,6 +930,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkGeometry, load all resources for this geometry object.
+     */
     public void LoadResources (Geometry pkGeometry)
     {
         assert(pkGeometry != null);
@@ -755,6 +951,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkGeometry, release all resources for this geometry object.
+     */
     public void ReleaseResources (Geometry pkGeometry)
     {
         assert(pkGeometry != null);
@@ -780,18 +979,27 @@ public abstract class Renderer
     }
 
 
+    /** Resource loading and releasing.
+     * @param pkEffect, load all resources for this effect.
+     */
     public void LoadResources (Effect pkEffect)
     {
         assert(pkEffect != null);
         pkEffect.LoadResources(this,null);
     }
 
+    /** Resource loading and releasing.
+     * @param pkEffect, release all resources for this effect.
+     */
     public void ReleaseResources (Effect pkEffect)
     {
         assert(pkEffect != null);
         pkEffect.ReleaseResources(this,null);
     }
 
+    /** Resource loading and releasing.
+     * @param pkVProgram, load all resources for the Vertex Program.
+     */
     public void LoadVProgram (VertexProgram pkVProgram)
     {
         if (pkVProgram == null)
@@ -807,6 +1015,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkVProgram, release all resources for the Vertex Program.
+     */
     public void ReleaseVProgram (Bindable pkVProgram)
     {
         if (pkVProgram == null)
@@ -822,6 +1033,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkPProgram, load all resources for the Pixel Program.
+     */
     public void LoadPProgram (PixelProgram pkPProgram)
     {
         if (pkPProgram == null)
@@ -837,6 +1051,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkPProgram, release all resources for the Pixel Program.
+     */
     public void ReleasePProgram (Bindable pkPProgram)
     {
         if (pkPProgram == null)
@@ -852,6 +1069,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkTexture, load all resources for the Texture.
+     */
     public void LoadTexture (Texture pkTexture)
     {
         if (pkTexture == null)
@@ -872,6 +1092,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkTexture, release all resources for the Texture.
+     */
     public void ReleaseTexture (Bindable pkTexture)
     {
         if (pkTexture == null)
@@ -887,6 +1110,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkTexture, reload all resources for the Texture.
+     */
     public void ReloadTexture (Bindable pkTexture)
     {
         if (pkTexture == null)
@@ -901,6 +1127,11 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param rkIAttr, vertex program input attributes.
+     * @param rkOAttr, vertex program output attributes.
+     * @param pkVBuffer, load all resources for the VertexBuffer.
+     */
     public void LoadVBuffer ( final Attributes rkIAttr, final Attributes rkOAttr,
                               VertexBuffer pkVBuffer)
     {
@@ -942,6 +1173,9 @@ public abstract class Renderer
         pkVBuffer.OnLoad(this,new ReleaseFunctionVBuffer(this),pkID);
     }
 
+    /** Resource loading and releasing.
+     * @param pkVBuffer, release all resources for the VertexBuffer.
+     */
     public void ReleaseVBuffer (Bindable pkVBuffer)
     {
         if (pkVBuffer == null)
@@ -961,6 +1195,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkIBuffer, load all resources for the IndexBuffer.
+     */
     public void LoadIBuffer (IndexBuffer pkIBuffer)
     {
         if (pkIBuffer == null)
@@ -977,6 +1214,9 @@ public abstract class Renderer
         }
     }
 
+    /** Resource loading and releasing.
+     * @param pkIBuffer, release all resources for the IndexBuffer.
+     */
     public void ReleaseIBuffer (Bindable pkIBuffer)
     {
         if (pkIBuffer == null)
@@ -992,20 +1232,36 @@ public abstract class Renderer
         }
     }
 
-
-    // Resource enabling and disabling.
-    public enum ConstantType  // ConstantType
+    /** ConstantType */
+    public enum ConstantType  
     {
         CT_RENDERER,
         CT_NUMERICAL,
         CT_USER
     };
 
+    /** Resource enabling and disabling.
+     * Sets the values for the Vertex Program constant parameters.
+     * @param eCTYpe, the ConstantType parameter (RENDERER, NUMERICAL, USER)
+     * @param iBaseRegister, the register to load the parameter values into
+     * @param iRegisterQuantity, the number of registers
+     * @param afData, the parameter values.
+     */
     public abstract void SetVProgramConstant ( Renderer.ConstantType eCType, int iBaseRegister,
                                                int iRegisterQuantity, float[] afData);
+    /** Resource enabling and disabling.
+     * Sets the values for the Pixel Program constant parameters.
+     * @param eCTYpe, the ConstantType parameter (RENDERER, NUMERICAL, USER)
+     * @param iBaseRegister, the register to load the parameter values into
+     * @param iRegisterQuantity, the number of registers
+     * @param afData, the parameter values.
+     */
     public abstract void SetPProgramConstant ( Renderer.ConstantType eCType, int iBaseRegister,
                                                int iRegisterQuantity, float[] afData);
 
+    /** Enable the vertex program parameter.
+     * @param pkVProgram, vertex program to enable.
+     */
     public void EnableVProgram (VertexProgram pkVProgram)
     {
         assert(pkVProgram != null);
@@ -1036,6 +1292,9 @@ public abstract class Renderer
         }
     }
 
+    /** Disable the vertex program parameter.
+     * @param pkVProgram, vertex program to disable.
+     */
     public void DisableVProgram (VertexProgram pkVProgram)
     {
         assert(pkVProgram != null);
@@ -1044,6 +1303,9 @@ public abstract class Renderer
         OnDisableVProgram(pkID);
     }
 
+    /** Enable the pixel program parameter.
+     * @param pkPProgram, pixel program to enable.
+     */
     public void EnablePProgram (PixelProgram pkPProgram)
     {
         assert(pkPProgram != null);
@@ -1074,6 +1336,9 @@ public abstract class Renderer
         }
     }
 
+    /** Disable the pixel program parameter.
+     * @param pkPProgram, pixel program to disable.
+     */
     public void DisablePProgram (PixelProgram pkPProgram)
     {
         assert(pkPProgram != null);
@@ -1082,6 +1347,9 @@ public abstract class Renderer
         OnDisablePProgram(pkID);
     }
 
+    /** Enable the texture parameter.
+     * @param pkTexture, texture to enable.
+     */
     public void EnableTexture (Texture pkTexture)
     {
         assert(pkTexture != null);
@@ -1091,6 +1359,9 @@ public abstract class Renderer
         OnEnableTexture(pkID);
     }
 
+    /** Disable the texture parameter.
+     * @param pkTexture, texture to disable.
+     */
     public void DisableTexture (Texture pkTexture)
     {
         ResourceIdentifier pkID = pkTexture.GetIdentifier(this);
@@ -1098,6 +1369,11 @@ public abstract class Renderer
         OnDisableTexture(pkID);
     }
 
+    /** Enable the vertex buffer attributes.
+     * @param rkIAttr, vertex shader program input attributes.
+     * @param rkOAttr, vertex shader program output attributes.
+     * @return resource identifier for vertex buffer.
+     */
     public ResourceIdentifier EnableVBuffer (final Attributes rkIAttr,
                                              final Attributes rkOAttr)
     {
@@ -1127,11 +1403,15 @@ public abstract class Renderer
         return pkID;
     }
 
+    /** Disable the vertex buffer.
+     * @param pkID, vertex buffer id.
+     */
     public void DisableVBuffer (ResourceIdentifier pkID)
     {
         OnDisableVBuffer(pkID);
     }
 
+    /** Enable the index buffer associated with the geometry object.  */
     public void EnableIBuffer ()
     {
         IndexBuffer pkIBuffer = m_pkGeometry.IBuffer;
@@ -1141,6 +1421,7 @@ public abstract class Renderer
         OnEnableIBuffer(pkID);
     }
 
+    /** Disable the index buffer associated with the geometry object.  */
     public void DisableIBuffer ()
     {
         IndexBuffer pkIBuffer = m_pkGeometry.IBuffer;
@@ -1150,34 +1431,50 @@ public abstract class Renderer
     }
 
 
-    // For use by effects with lights.
+    /** Set light. For use by effects with lights.
+     * @param i, light index to set.
+     * @param pkLight, new light.
+     */
     public void SetLight (int i, Light pkLight)
     {
         assert(0 <= i && i < m_iMaxLights);
         m_aspkLight[i] = pkLight;
     }
 
+    /** Get light. For use by effects with lights.
+     * @param i, light index to get.
+     * @return light at index i.
+     */
     public Light GetLight (int i)
     {
         assert(0 <= i && i < m_iMaxLights);
         return (Light)(m_aspkLight[i]);
     }
 
-    // For use by effects with projectors.
+    /** For use by effects with projectors.
+     * @param pkProjector Camera object projector.
+     */
     public void SetProjector (Camera pkProjector)
     {
         m_pkProjector = pkProjector;
     }
 
+    /** For use by effects with projectors.
+     * @return Camera object projector.
+     */
     public Camera GetProjector ()
     {
         return m_pkProjector;
     }
 
-    // Enable or disable which color channels will be written to the color
-    // buffer.
+    /** Enable which color channels will be written to the color buffer.
+     * @param bAllowRed, when true allow the red channel to be written.
+     * @param bAllowGreen, when true allow the green channel to be written.
+     * @param bAllowBlue, when true allow the blue channel to be written.
+     * @param bAllowAlpha, when true allow the alpha channel to be written.
+     */
     public void SetColorMask (boolean bAllowRed, boolean bAllowGreen,
-        boolean bAllowBlue, boolean bAllowAlpha)
+                              boolean bAllowBlue, boolean bAllowAlpha)
     {
         m_bAllowRed = bAllowRed;
         m_bAllowGreen = bAllowGreen;
@@ -1185,6 +1482,9 @@ public abstract class Renderer
         m_bAllowAlpha = bAllowAlpha;
     }
 
+    /** Get which color channels will be written to the color buffer.
+     * @param rbAllowColor, boolean[] to write with allow values.
+     */
     public void GetColorMask (boolean[] rbAllowColor)
     {
         rbAllowColor[0] = m_bAllowRed;
@@ -1193,38 +1493,57 @@ public abstract class Renderer
         rbAllowColor[3] = m_bAllowAlpha;
     }
 
-    // Include additional clip planes.  The input plane must be in model
-    // coordinates.  It is transformed internally to camera coordinates to
-    // support clipping in clip space.
+    /** Include additional clip planes.  The input plane must be in model
+     * coordinates.  It is transformed internally to camera coordinates to
+     * support clipping in clip space.
+     * @param i, the GL_CLIP_PLANE0 (+i) clip plane to include.
+     * @param rkPlane, the clip plane definition.
+     */
     public abstract void EnableUserClipPlane (int i, Plane3f rkPlane);
+    /** Disables additional clip planes.
+     * @param i, the clip plane to disable (GL_CLIP_PLANE0 + i).
+     */
     public abstract void DisableUserClipPlane (int i);
 
-    // Support for model-to-world transformation management.
+    /** Support for model-to-world transformation management. */
     public void SetWorldTransformation ()
     {
         m_kWorldMatrix = m_pkGeometry.HWorld;
     }
 
+    /** Support for model-to-world transformation management. */
     public void RestoreWorldTransformation ()
     {
         // Stub for derived classes.
     }
 
-    // The input transformation is applied to world-space vertices before
-    // the view matrix is applied.
+    /** The input transformation is applied to world-space vertices before the
+     * view matrix is applied.
+     * @param rkMatrix input transformation is applied to world-space vertices
+     * before the view matrix is applied.
+     */
     public void SetPostWorldTransformation (final Matrix4f rkMatrix)
     {
         m_kSaveViewMatrix = m_kViewMatrix;
         m_kViewMatrix = rkMatrix.TransposeTimes(m_kSaveViewMatrix);
     }
 
+    /** Restores view matrix. */
     public void RestorePostWorldTransformation ()
     {
         m_kViewMatrix = m_kSaveViewMatrix;
     }
 
 
-    // The Renderer is an abstract base class.
+    /**
+     * The Renderer is an abstract base class.
+     * @param eFormat FormatType (NONE, RGB, RGBA, DEPTH)
+     * @param eDepth DepthType (NONE, DEPTH_16, DEPTH_24, DEPTH_32)
+     * @param eStencil StencilType (NONE, STENCIL_8)
+     * @param eBuffering BufferingType (SINGLE, DOUBLE)
+     * @param iWidth, the window width
+     * @param iHeight, the window height
+     */
     protected Renderer (FrameBuffer.FormatType eFormat, FrameBuffer.DepthType eDepth,
                         FrameBuffer.StencilType eStencil,
                         FrameBuffer.BufferingType eBuffering,
@@ -1246,7 +1565,8 @@ public abstract class Renderer
         m_kProjectionMatrix = new Matrix4f(Matrix4f.IDENTITY);
         m_kSaveProjectionMatrix = new Matrix4f(Matrix4f.IDENTITY);
     }
-    // Support for camera access and transformation setting.
+
+    /** Support for camera access and transformation setting. */
     public void OnFrameChange ()
     {
         Vector3f rkEye = m_pkCamera.GetLocation();
@@ -1273,6 +1593,7 @@ public abstract class Renderer
                                      1.0f );
     }
 
+    /** Support for camera access and transformation setting. */
     public void OnFrustumChange ()
     {
         if (m_pkCamera == null)
@@ -1334,40 +1655,128 @@ public abstract class Renderer
         }
     }
 
+    /** Called when the viewport changes. Updates the camera. */
     public abstract void OnViewportChange ();
+    /** Called when the depth range changes. Updates the camera. */
     public abstract void OnDepthRangeChange ();
 
-    // Resource loading and releasing (to/from video memory).
+    /** Resource loading and releasing (to/from video memory).
+     * @param pkVProgram the vertex program to generate/bind
+     * @return the new ResourceIdentifier for the VertexProgram
+     */
     public abstract ResourceIdentifier OnLoadVProgram (VertexProgram pkVProgram);
+    /**
+     * Release the VertexProgram described in the ResourceIdentifier parameter.
+     * @param pkID, the ResourceIdentifier with the VertexProgram to release.
+     */
     public abstract void OnReleaseVProgram (ResourceIdentifier pkID);
+    /** Resource loading and releasing (to/from video memory).
+     * @param pkPProgram the pixel program to generate/bind
+     * @return the new ResourceIdentifier for the PixelProgram
+     */
     public abstract ResourceIdentifier OnLoadPProgram (PixelProgram pkPProgram);
+    /**
+     * Release the PixelProgram described in the ResourceIdentifier parameter.
+     * @param pkID, the ResourceIdentifier with the PixelProgram to release.
+     */
     public abstract void OnReleasePProgram (ResourceIdentifier pkID);
+    /** Resource loading and releasing (to/from video memory).
+     * @param pkTexture the Texture to generate/bind
+     * @return the new ResourceIdentifier for the Texture
+     */
     public abstract ResourceIdentifier OnLoadTexture (Texture pkTexture);
+    /** Resource loading and releasing (to/from video memory).
+     * @param pkTexture the Texture to generate/bind
+     * @return the new ResourceIdentifier for the Texture
+     */
     public abstract void OnReloadTexture (ResourceIdentifier pkID);
+    /**
+     * Release the Texture described in the ResourceIdentifier parameter.
+     * @param pkID, the ResourceIdentifier with the Texture to release.
+     */
     public abstract void OnReleaseTexture (ResourceIdentifier pkID);
+    /** Resource loading and releasing (to/from video memory).
+     * @param rkIAtr The Input Attributes for the VertexBuffer
+     * @param rkOAtr The Output Attributes for the VertexBuffer
+     * @param pkVBuffer The VertexBuffer to generate/enable
+     * @return the new ResourceIdentifier for the VertexBuffer
+     */
     public abstract ResourceIdentifier OnLoadVBuffer (final Attributes rkIAttr,
                                                       final Attributes rkOAttr,
                                                       VertexBuffer pkVBuffer);
+    /**
+     * Release the VertexBuffer described in the ResourceIdentifier parameter.
+     * @param pkID, the ResourceIdentifier with the VertexBuffer to release.
+     */
     public abstract void OnReleaseVBuffer (ResourceIdentifier pkID);
+    /** Resource loading and releasing (to/from video memory).
+     * @param pkIBuffer the IndexBuffer to generate/enable
+     * @return the new ResourceIdentifier for the IndexBuffer
+     */
     public abstract ResourceIdentifier OnLoadIBuffer (IndexBuffer pkIBuffer);
+    /**
+     * Release the IndexBuffer described in the ResourceIdentifier parameter.
+     * @param pkID, the ResourceIdentifier with the IndexBuffer to release.
+     */
     public abstract void OnReleaseIBuffer (ResourceIdentifier pkID);
 
+    /**
+     * Enable the VertexProgram spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the VertexProgram to enable.
+     */
     public abstract void OnEnableVProgram (ResourceIdentifier pkID);
+    /**
+     * Disable the VertexProgram spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the VertexProgram to disable.
+     */
     public abstract void OnDisableVProgram (ResourceIdentifier pkID);
+    /**
+     * Enable the PixelProgram spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the PixelProgram to enable.
+     */
     public abstract void OnEnablePProgram (ResourceIdentifier pkID);
+    /**
+     * Disable the PixelProgram spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the PixelProgram to disable.
+     */
     public abstract void OnDisablePProgram (ResourceIdentifier pkID);
+    /**
+     * Enable the Texture spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the Texture to enable.
+     */
     public abstract void OnEnableTexture (ResourceIdentifier pkID);
+    /**
+     * Disable the Texture spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the Texture to disable.
+     */
     public abstract void OnDisableTexture (ResourceIdentifier pkID);
+    /**
+     * Enable the VertexBuffer spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the VertexBuffer to enable.
+     */
     public abstract void OnEnableVBuffer (ResourceIdentifier pkID);
+    /**
+     * Disable the VertexBuffer spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the VertexBuffer to disable.
+     */
     public abstract void OnDisableVBuffer (ResourceIdentifier pkID);
+    /**
+     * Enable the IndexBuffer spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the Index to enable.
+     */
     public abstract void OnEnableIBuffer (ResourceIdentifier pkID);
+    /**
+     * Disable the IndexBuffer spefified by the ResourceIdentifer parameter pkID.
+     * @param pkID the ResourceIdentifier describing the Index to disable.
+     */
     public abstract void OnDisableIBuffer (ResourceIdentifier pkID);
-
-    // The operations are
-    //   0 = matrix
-    //   1 = transpose of matrix
-    //   2 = inverse of matrix
-    //   3 = inverse-transpose of matrix
+    
+    /** Get from Matrix parameter and write into float[] parameter.
+     * @param rkMat, matrix to read.
+     * @param iOperation, 0 = matrix; 1 = transpose of matrix; 2 = inverse of
+     * matrix; 3 = inverse-transpose of matrix
+     * @param afData, float[] to write.
+     */
     public void GetTransform ( Matrix4f rkMat, int iOperation, float[] afData)
     {
         if (iOperation == 0)
@@ -1395,43 +1804,71 @@ public abstract class Renderer
         }
     }
 
+    /** Set RendererConstant World matrix, store in float[] parameter.
+     * @param iOperation, transform operation
+     * @param afData, stores result.
+     */
     public void SetConstantWMatrix (int iOperation, float[] afData)
     {
         GetTransform(m_kWorldMatrix,iOperation,afData);
     }
 
+    /** Set RendererConstant View matrix, store in float[] parameter.
+     * @param iOperation, transform operation
+     * @param afData, stores result.
+     */
     public void SetConstantVMatrix (int iOperation, float[] afData)
     {
         GetTransform(m_kViewMatrix,iOperation,afData);
     }
 
+    /** Set RendererConstant Projection matrix, store in float[] parameter.
+     * @param iOperation, transform operation
+     * @param afData, stores result.
+     */
     public void SetConstantPMatrix (int iOperation, float[] afData)
     {
         GetTransform(m_kProjectionMatrix,iOperation,afData);
     }
 
+    /** Set RendererConstant World*View matrix, store in float[] parameter.
+     * @param iOperation, transform operation
+     * @param afData, stores result.
+     */
     public void SetConstantWVMatrix (int iOperation, float[] afData)
     {
         Matrix4f kWV = m_kWorldMatrix.mult(m_kViewMatrix);
         GetTransform(kWV,iOperation,afData);
     }
 
+    /** Set RendererConstant View*Projection matrix, store in float[] parameter.
+     * @param iOperation, transform operation
+     * @param afData, stores result.
+     */
     public void SetConstantVPMatrix (int iOperation, float[] afData)
     {
         Matrix4f kVP = m_kViewMatrix.mult(m_kProjectionMatrix);
         GetTransform(kVP,iOperation,afData);
     }
 
+    /** Set RendererConstant World*View*Projection matrix, store in float[]
+     * parameter.
+     * @param iOperation, transform operation
+     * @param afData, stores result.
+     */
     public void SetConstantWVPMatrix (int iOperation, float[] afData)
     {
         Matrix4f kWVP = m_kWorldMatrix.mult(m_kViewMatrix.mult(m_kProjectionMatrix));
         GetTransform(kWVP,iOperation,afData);
     }
 
-
-    // These functions do not use the option parameter, but the parameter is
-    // included to allow for a class-static array of function pointers to
-    // handle all shader constants.
+    /** Set RendererConstant Material Emissive color, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantMaterialEmissive (int iPlaceHolder, float[] afData)
     {
         MaterialState pkMaterial = (MaterialState)(m_aspkState[GlobalState.StateType.MATERIAL.Value()]);
@@ -1441,6 +1878,13 @@ public abstract class Renderer
         afData[3] = 1.0f;
     }
 
+    /** Set RendererConstant Material Ambient color, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantMaterialAmbient (int iPlaceHolder, float[] afData)
     {
         MaterialState pkMaterial = (MaterialState)(m_aspkState[GlobalState.StateType.MATERIAL.Value()]);
@@ -1450,6 +1894,13 @@ public abstract class Renderer
         afData[3] = 1.0f;
     }
 
+    /** Set RendererConstant Material Diffuse color, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantMaterialDiffuse (int iPlaceHolder, float[] afData)
     {
         MaterialState pkMaterial = (MaterialState)(m_aspkState[GlobalState.StateType.MATERIAL.Value()]);
@@ -1459,6 +1910,13 @@ public abstract class Renderer
         afData[3] = pkMaterial.Alpha;
     }
 
+    /** Set RendererConstant Material Specular color, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantMaterialSpecular (int iPlaceHolder, float[] afData)
     {
         MaterialState pkMaterial = (MaterialState)(m_aspkState[GlobalState.StateType.MATERIAL.Value()]);
@@ -1468,6 +1926,13 @@ public abstract class Renderer
         afData[3] = pkMaterial.Shininess;
     }
 
+    /** Set RendererConstant Camera Model Position, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantCameraModelPosition (int iPlaceHolder, float[] afData)
     {
         Vector3f kMLocation = m_pkGeometry.World.ApplyInverse(m_pkCamera.GetLocation());
@@ -1478,6 +1943,13 @@ public abstract class Renderer
         afData[3] = 1.0f;
     }
 
+    /** Set RendererConstant Camera Model Direction, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantCameraModelDirection (int iPlaceHolder, float[] afData)
     {
         Vector3f kMDVector = m_pkGeometry.World.InvertVector(m_pkCamera.GetDVector());
@@ -1488,6 +1960,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Camera Model Up Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantCameraModelUp (int iPlaceHolder, float[] afData)
     {
         Vector3f kMUVector = m_pkGeometry.World.InvertVector(m_pkCamera.GetUVector());
@@ -1498,6 +1977,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Camera Model Right Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantCameraModelRight (int iPlaceHolder, float[] afData)
     {
         Vector3f kMRVector = m_pkGeometry.World.InvertVector(m_pkCamera.GetRVector());
@@ -1508,6 +1994,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Camera World Position, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantCameraWorldPosition (int iPlaceHolder, float[] afData)
     {
         Vector3f kWLocation = m_pkCamera.GetLocation();
@@ -1518,6 +2011,13 @@ public abstract class Renderer
         afData[3] = 1.0f;
     }
 
+    /** Set RendererConstant Camera World Direction Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantCameraWorldDirection (int iPlaceHolder, float[] afData)
     {
         Vector3f kWDVector = m_pkCamera.GetDVector();
@@ -1528,6 +2028,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Camera World Up Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantCameraWorldUp (int iPlaceHolder, float[] afData)
     {
         Vector3f kWUVector = m_pkCamera.GetUVector();
@@ -1538,6 +2045,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Camera World Right Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantCameraWorldRight (int iPlaceHolder, float[] afData)
     {
         Vector3f kWRVector = m_pkCamera.GetRVector();
@@ -1548,6 +2062,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Projector Model Position, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantProjectorModelPosition (int iPlaceHolder, float[] afData)
     {
         assert(m_pkProjector != null);
@@ -1560,6 +2081,13 @@ public abstract class Renderer
         afData[3] = 1.0f;
     }
 
+    /** Set RendererConstant Projector Model Direction Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantProjectorModelDirection (int iPlaceHolder, float[] afData)
     {
         assert(m_pkProjector != null);
@@ -1572,6 +2100,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Projector Model Up Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantProjectorModelUp (int iPlaceHolder, float[] afData)
     {
         assert(m_pkProjector != null);
@@ -1584,6 +2119,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Projector Model Right Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantProjectorModelRight (int iPlaceHolder, float[] afData)
     {
         assert(m_pkProjector != null);
@@ -1596,6 +2138,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Projector World Position, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantProjectorWorldPosition (int iPlaceHolder, float[] afData)
     {
         assert(m_pkProjector != null);
@@ -1608,6 +2157,13 @@ public abstract class Renderer
         afData[3] = 1.0f;
     }
 
+    /** Set RendererConstant Projector World Direction Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantProjectorWorldDirection (int iPlaceHolder, float[] afData)
     {
         assert(m_pkProjector != null);
@@ -1620,6 +2176,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Projector World Up Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantProjectorWorldUp (int iPlaceHolder, float[] afData)
     {
         assert(m_pkProjector != null);
@@ -1632,6 +2195,13 @@ public abstract class Renderer
         afData[3] = 0.0f;
     }
 
+    /** Set RendererConstant Projector World Right Vector, store in float[]
+     * parameter.  These functions do not use the option parameter, but the
+     * parameter is included to allow for a class-static array of function
+     * pointers to handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantProjectorWorldRight (int iPlaceHolder, float[] afData)
     {
         assert(m_pkProjector != null);
@@ -1645,6 +2215,13 @@ public abstract class Renderer
     }
 
 
+    /** Set RendererConstant Projector Matrix, store in float[] parameter.
+     * These functions do not use the option parameter, but the parameter is
+     * included to allow for a class-static array of function pointers to
+     * handle all shader constants.
+     * @param iPlaceHolder, transform operation placeholder
+     * @param afData, stores result.
+     */
     public void SetConstantProjectorMatrix (int iPlaceHolder, float[] afData)
     {
         assert(m_pkProjector != null);
@@ -1700,9 +2277,11 @@ public abstract class Renderer
         GetTransform(kProjectorMatrix,0,afData);
     }
 
-
-    // These functions set the light state.  The index iLight is between 0
-    // and 7 (eight lights are currently supported).
+    /** Set RendererConstant Light Model Position, store in float[] parameter.
+     * @param iLight, index between 0 and 7 (eight lights are currently
+     * supported).
+     * @param afData, stores result.
+     */
     public void SetConstantLightModelPosition (int iLight, float[] afData)
     {
         Light pkLight = GetLight(iLight);
@@ -1724,6 +2303,11 @@ public abstract class Renderer
         }
     }
 
+    /** Set RendererConstant Light Model Direction, store in float[] parameter.
+     * @param iLight, index between 0 and 7 (eight lights are currently
+     * supported).
+     * @param afData, stores result.
+     */
     public void SetConstantLightModelDirection (int iLight, float[] afData)
     {
         Light pkLight = GetLight(iLight);
@@ -1746,6 +2330,11 @@ public abstract class Renderer
         }
     }
 
+    /** Set RendererConstant Light World Position, store in float[] parameter.
+     * @param iLight, index between 0 and 7 (eight lights are currently
+     * supported).
+     * @param afData, stores result.
+     */
     public void SetConstantLightWorldPosition (int iLight, float[] afData)
     {
         Light pkLight = GetLight(iLight);
@@ -1765,6 +2354,11 @@ public abstract class Renderer
         }
     }
 
+    /** Set RendererConstant Light World Direction, store in float[] parameter.
+     * @param iLight, index between 0 and 7 (eight lights are currently
+     * supported).
+     * @param afData, stores result.
+     */
     public void SetConstantLightWorldDirection (int iLight, float[] afData)
     {
         Light pkLight = GetLight(iLight);
@@ -1784,6 +2378,11 @@ public abstract class Renderer
         }
     }
 
+    /** Set RendererConstant Light Ambient color, store in float[] parameter.
+     * @param iLight, index between 0 and 7 (eight lights are currently
+     * supported).
+     * @param afData, stores result.
+     */
     public void SetConstantLightAmbient (int iLight, float[] afData)
     {
         Light pkLight = GetLight(iLight);
@@ -1794,6 +2393,11 @@ public abstract class Renderer
         afData[3] = 1.0f;
     }
 
+    /** Set RendererConstant Light Diffuse color, store in float[] parameter.
+     * @param iLight, index between 0 and 7 (eight lights are currently
+     * supported).
+     * @param afData, stores result.
+     */
     public void SetConstantLightDiffuse (int iLight, float[] afData)
     {
         Light pkLight = GetLight(iLight);
@@ -1813,6 +2417,11 @@ public abstract class Renderer
         }
     }
 
+    /** Set RendererConstant Light Specular color, store in float[] parameter.
+     * @param iLight, index between 0 and 7 (eight lights are currently
+     * supported).
+     * @param afData, stores result.
+     */
     public void SetConstantLightSpecular (int iLight, float[] afData)
     {
         Light pkLight = GetLight(iLight);
@@ -1823,6 +2432,11 @@ public abstract class Renderer
         afData[3] = 1.0f;
     }
 
+    /** Set RendererConstant Light Spot Cutoff, store in float[] parameter.
+     * @param iLight, index between 0 and 7 (eight lights are currently
+     * supported).
+     * @param afData, stores result.
+     */
     public void SetConstantLightSpotCutoff (int iLight, float[] afData)
     {
         Light pkLight = GetLight(iLight);
@@ -1842,6 +2456,11 @@ public abstract class Renderer
         }
     }
 
+    /** Set RendererConstant Light Attenuation, store in float[] parameter.
+     * @param iLight, index between 0 and 7 (eight lights are currently
+     * supported).
+     * @param afData, stores result.
+     */
     public void SetConstantLightAttenuation (int iLight, float[] afData)
     {
         Light pkLight = GetLight(iLight);
@@ -1861,6 +2480,11 @@ public abstract class Renderer
         }
     }
 
+    /** Set RendererConstant based on eRCType parameter, store in float[]
+     * parameter.
+     * @param eRCType, type of RendererConstant to set.
+     * @param afData, stores result.
+     */
     public void SetRendererConstant (RendererConstant.Type eRCType, float[] afData)
     {
         int iRCType = eRCType.Value();
@@ -1902,6 +2526,11 @@ public abstract class Renderer
         }
     }
 
+    /** Choose which Set RendererConstant function to call.
+     * @param iFunction, RendererConstant set function to use.
+     * @param iParam, parameter to set function.
+     * @param afData, stores result.
+     */
     private void SCFunction( int iFunction, int iParam, float[] afData )
     {
         //Replace function-pointer array with a case statement, since the
@@ -1951,63 +2580,76 @@ public abstract class Renderer
         }
     }
 
-    // data members
-
-    // Resource limits.  The values are set by the Renderer-derived objects.
+    /** Resource limits.  The values are set by the Renderer-derived objects. */
+    /** Maximum number of lights. */
     protected int m_iMaxLights;
+    /** Maximum number of color units. */
     protected int m_iMaxColors;
+    /** Maximum number of texture coordinates. */
     protected int m_iMaxTCoords;
+    /** Maximum number of vertex shader images. */
     protected int m_iMaxVShaderImages;
+    /** Maximum number of pixel shader images. */
     protected int m_iMaxPShaderImages;
+    /** Maximum number of stencil indices. */
     protected int m_iMaxStencilIndices;
+    /** Maximum number of user clip planes. */
     protected int m_iMaxUserClipPlanes;
 
-    // Parameters for the drawing window and frame buffer.
+    /** Parameters for the drawing window and frame buffer. */
+    /** Frame buffer format type. */
     FrameBuffer.FormatType m_eFormat;
+    /** Frame buffer depth type. */
     FrameBuffer.DepthType m_eDepth;
+    /** Frame buffer stencil type. */
     FrameBuffer.StencilType m_eStencil;
+    /** Frame buffer buffering type. */
     FrameBuffer.BufferingType m_eBuffering;
+    /** Frame buffer multisampling type. */
     FrameBuffer.MultisamplingType m_eMultisampling;
+    /** Window width, height. */
     protected int m_iWidth, m_iHeight;
+    /** Background color. */
     protected ColorRGBA m_kBackgroundColor;
+    /** Color mask filter flags. */
     protected boolean m_bAllowRed, m_bAllowGreen, m_bAllowBlue, m_bAllowAlpha;
 
-    // The camera for establishing the view frustum.
+    /** The camera for establishing the view frustum. */
     protected Camera m_pkCamera;
 
-    // Global render states.
+    /** Global render states. */
     protected GlobalState[] m_aspkState =
         new GlobalState[GlobalState.StateType.MAX_STATE_TYPE.Value()];
 
-    // Light storage for lookup by the shader-constant-setting functions.
-    // The Renderer-derived classes must allocate this array during
-    // construction, creating m_iMaxLights elements.  The Renderer class
-    // deallocates the array during destruction.
+    /** Light storage for lookup by the shader-constant-setting functions.
+     * The Renderer-derived classes must allocate this array during
+     * construction, creating m_iMaxLights elements.  The Renderer class
+     * deallocates the array during destruction. */
     protected GraphicsObject[] m_aspkLight;
 
-    // The projector for various effects such as projected textures and
-    // shadow maps.
+    /** The projector for various effects such as projected textures and
+     * shadow maps. */
     protected Camera m_pkProjector;
 
-    // Current Geometry object for drawing.
+    /** Current Geometry object for drawing. */
     protected Geometry m_pkGeometry;
 
-    // Transformations used in the geometric pipeline.  These matrices are
-    // stored to support 1x4 row vectors times 4x4 matrices.
+    /** Transformations used in the geometric pipeline.  These matrices are
+     * stored to support 1x4 row vectors times 4x4 matrices. */
     protected Matrix4f m_kWorldMatrix, m_kSaveWorldMatrix;
     protected Matrix4f m_kViewMatrix, m_kSaveViewMatrix;
     protected Matrix4f m_kProjectionMatrix, m_kSaveProjectionMatrix;
 
-    // Current font for text drawing.
+    /** Current font for text drawing. */
     protected int m_iFontID;
 
-    // Support for mirror effects (default 'false').
+    /** Support for mirror effects (default 'false'). */
     protected boolean m_bReverseCullFace;
 
-    // Toggle for fullscreen/window mode.
+    /** Toggle for fullscreen/window mode. */
     protected boolean m_bFullscreen;
 
-    // Data for point size, line width, and line stipple.
+    /** Data for point size, line width, and line stipple. */
     protected float m_fPointSize = 1;  // default = 1
     protected float m_fLineWidth = 1;  // default = 1
     protected int m_iLineStippleRepeat = 0;  // default = 0 (disabled)

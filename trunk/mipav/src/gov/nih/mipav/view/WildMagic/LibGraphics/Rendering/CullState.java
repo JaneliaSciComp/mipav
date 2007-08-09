@@ -24,10 +24,13 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 public class CullState extends GlobalState
     implements StreamInterface
 {
-
+    /** Maps front facing mode enum to int values. */
     private static HashMap<Integer,FrontMode> ms_pkFrontModeMap = new HashMap<Integer,FrontMode>();
+    /** Maps culling mode enum to int values. */
     private static HashMap<Integer,CullMode> ms_pkCullModeMap = new HashMap<Integer,CullMode>();
 
+    /** Static initialization of the CullState in the GlobalState.Default
+     * array. */
     static 
     {
         if ( !DefaultInitialized[StateType.CULL.Value()] )
@@ -37,10 +40,15 @@ public class CullState extends GlobalState
         }
     }
 
+    /** Return type.
+     * @return StateType.CULL;
+     */
     public final StateType GetStateType () { return StateType.CULL; }
 
+    /** Default constructor. */
     public CullState () {}
 
+    /** Front-facing polygon mode. */
     public enum FrontMode
     {
         FT_CCW ( "FT_CCW" ),  // front faces are counterclockwise ordered
@@ -64,6 +72,7 @@ public class CullState extends GlobalState
         private static int m_iInitValue = 0;
     };
 
+    /** Culling mode. */
     public enum CullMode
     {
         CT_FRONT ("CT_FRONT"),  // cull front-facing triangles
@@ -87,13 +96,26 @@ public class CullState extends GlobalState
         private static int m_iInitValue = 0;
     };
 
+    /** Initializes static FrontMode enum */
     private static FrontMode ms_eFrontModeStatic = FrontMode.FT_QUANTITY;
+    /** Initializes static CullMode enum */
     private static CullMode ms_eCullModeStatic = CullMode.CT_QUANTITY;
 
-    public boolean Enabled = true;                  // default: true
-    public FrontMode FrontFace = FrontMode.FT_CCW;  // default: FT_CCW
-    public CullMode CullFace = CullMode.CT_BACK;    // default: CT_BACK
+    /** Culling enabled default: true */
+    public boolean Enabled = true;
+    /** FrontMode default: FT_CCW */
+    public FrontMode FrontFace = FrontMode.FT_CCW;
+    /** CullMode default: CT_BACK */
+    public CullMode CullFace = CullMode.CT_BACK;
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -106,16 +128,34 @@ public class CullState extends GlobalState
         CullFace = ms_pkCullModeMap.get(iCullFace);
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         return super.Register(rkStream);
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -126,6 +166,12 @@ public class CullState extends GlobalState
         rkStream.Write(CullFace.Value());
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (final StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -134,6 +180,12 @@ public class CullState extends GlobalState
             Stream.SIZEOF_INT; //sizeof(int); // CullFace
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();
@@ -145,6 +197,4 @@ public class CullState extends GlobalState
         pkTree.Append(StringTree.Format("cull face = ",CullFace.Name()));
         return pkTree;
     }
-
-
 }
