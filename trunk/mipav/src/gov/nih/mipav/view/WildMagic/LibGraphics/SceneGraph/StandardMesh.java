@@ -22,7 +22,9 @@ import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 
 public class StandardMesh
 {
-
+    /** Create a StandardMesh with the input attributes.
+     * @param rkAttr, attributes to apply to the mesh.
+     */
     public StandardMesh ( Attributes rkAttr )
     {
         m_kAttr = rkAttr;
@@ -42,6 +44,11 @@ public class StandardMesh
         m_bInside = false;
     }
 
+    /** Create a StandardMesh with the input attributes.
+     * @param rkAttr, attributes to apply to the mesh.
+     * @param bInside, true if view point is inside mesh.
+     * @param pkXFrm, Transformation to apply to mesh.
+     */
     public StandardMesh ( Attributes rkAttr, boolean bInside,
                           final Transformation pkXFrm )
     {
@@ -67,6 +74,7 @@ public class StandardMesh
         m_bInside = false;
     }
 
+    /** Delete memory. */
     public void finalize()
     {
         if ( m_kAttr != null )
@@ -81,22 +89,33 @@ public class StandardMesh
         }
     }
 
+    /** Set mesh transformation.
+     * @param rkXFrm, new mesh transformation.
+     */
     public void SetTransformation (final Transformation rkXFrm)
     {
         m_kXFrm = rkXFrm;
     }
 
+    /** Get mesh transformation.
+     * @return mesh transformation.
+     */
     public Transformation GetTransformation ()
     {
         return m_kXFrm;
     }
 
-    // Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
-    // of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
-    // and (0,1,0).  An application may transform the meshes as necessary.
-
-    public TriMesh Rectangle (int iXSamples, int iYSamples, float fXExtent,
-                              float fYExtent)
+    /** Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
+     * of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
+     * and (0,1,0).  An application may transform the meshes as necessary.
+     * @param iXSamples, number of x-samples in mesh.
+     * @param iYSamples, number of y-samples in mesh.
+     * @param fXExtent, x-extent of rectangle.
+     * @param fYExtent, y-extent of rectangle.
+     * @return Rectangle TriMesh.
+     */
+    public TriMesh Rectangle (int iXSamples, int iYSamples,
+                              float fXExtent, float fYExtent)
     {
         int iVQuantity = iXSamples*iYSamples;
         int iTQuantity = 2*(iXSamples-1)*(iYSamples-1);
@@ -164,6 +183,14 @@ public class StandardMesh
     }
 
     
+    /** Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
+     * of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
+     * and (0,1,0).  An application may transform the meshes as necessary.
+     * @param iShellSamples, number of shell samples in mesh.
+     * @param iRadialSamples, number of radial samples.
+     * @param fRadius, radius of the Disk.
+     * @return Disk TriMesh.
+     */
     public TriMesh Disk (int iShellSamples, int iRadialSamples, float fRadius)
     {
         int iRSm1 = iRadialSamples - 1, iSSm1 = iShellSamples - 1;
@@ -264,7 +291,14 @@ public class StandardMesh
         return pkMesh;
     }
 
-
+    /** Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
+     * of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
+     * and (0,1,0).  An application may transform the meshes as necessary.
+     * @param fXExtent, x-extent of box.
+     * @param fYExtent, y-extent of box.
+     * @param fZExtent, z-extent of box.
+     * @return Box TriMesh.
+     */
     public TriMesh Box (float fXExtent, float fYExtent, float fZExtent)
     {
         int iVQuantity = 8;
@@ -326,6 +360,16 @@ public class StandardMesh
         return pkMesh;
     }
 
+    /** Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
+     * of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
+     * and (0,1,0).  An application may transform the meshes as necessary.
+     * @param iAxisSamples, number of axis samples.
+     * @param iRadialSamples, number of radial samples.
+     * @param fRadius, cylinder radius.
+     * @param fHeight, cylinder height.
+     * @param bOpen, true = open cylinder, false = closed cylinder.
+     * @return Cylinder TriMesh.
+     */
     public TriMesh Cylinder (int iAxisSamples, int iRadialSamples, float fRadius,
                              float fHeight, boolean bOpen)
     {
@@ -506,6 +550,14 @@ public class StandardMesh
         return pkMesh;
     }
 
+    /** Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
+     * of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
+     * and (0,1,0).  An application may transform the meshes as necessary.
+     * @param iZSamples, number of z-samples.
+     * @param iRadialSamples, number of radial samples.
+     * @param fRadius, sphere radius.
+     * @return Sphere TriMesh.
+     */
     public TriMesh Sphere (int iZSamples, int iRadialSamples, float fRadius)
     {
         int iZSm1 = iZSamples-1, iZSm2 = iZSamples-2, iZSm3 = iZSamples-3;
@@ -743,6 +795,15 @@ public class StandardMesh
         return pkMesh;
     }
 
+    /** Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
+     * of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
+     * and (0,1,0).  An application may transform the meshes as necessary.
+     * @param iCircleSamples, number of circle samples.
+     * @param iRadialSamples, number of radial samples.
+     * @param fOuterRadius, torus outer radius.
+     * @param fInnerRadius, torus inner radius.
+     * @return Torus TriMesh.
+     */
     public TriMesh Torus (int iCircleSamples, int iRadialSamples,
                           float fOuterRadius, float fInnerRadius)
     {
@@ -894,7 +955,8 @@ public class StandardMesh
         return pkMesh;
     }
 
-    // Platonic solids, inscribed in a unit sphere centered at (0,0,0).
+    /** Platonic solids, inscribed in a unit sphere centered at (0,0,0).
+     * @return tetrahedron TriMesh. */
     public TriMesh Tetrahedron ()
     {
         float fSqrt2Div3 = (float)Math.sqrt(2.0f)/3.0f;
@@ -929,6 +991,8 @@ public class StandardMesh
         return pkMesh;
     }
 
+    /** Platonic solids, inscribed in a unit sphere centered at (0,0,0).
+     * @return hexahedron TriMesh. */
     public TriMesh Hexahedron ()
     {
         float fSqrtThird = (float)Math.sqrt(1.0f/3.0f);
@@ -973,6 +1037,8 @@ public class StandardMesh
         return pkMesh;
     }
 
+    /** Platonic solids, inscribed in a unit sphere centered at (0,0,0).
+     * @return octahedron TriMesh. */
     public TriMesh Octahedron ()
     {
         int iVQuantity = 6;
@@ -1009,6 +1075,8 @@ public class StandardMesh
         return pkMesh;
     }
 
+    /** Platonic solids, inscribed in a unit sphere centered at (0,0,0).
+     * @return dodecahedron TriMesh. */
     public TriMesh Dodecahedron ()
     {
         float fA = (float)(1.0f/Math.sqrt(3.0));
@@ -1091,6 +1159,8 @@ public class StandardMesh
         return pkMesh;
     }
 
+    /** Platonic solids, inscribed in a unit sphere centered at (0,0,0).
+     * @return icosahedron TriMesh. */
     public TriMesh Icosahedron ()
     {
         float fGoldenRatio = (float)(0.5f*(1.0f+Math.sqrt(5.0)));
@@ -1150,6 +1220,8 @@ public class StandardMesh
         return pkMesh;
     }
 
+    /** Create Platonic normals
+     * @param pkVBuffer VertexBuffer to store normals in. */
     private void CreatePlatonicNormals (VertexBuffer pkVBuffer)
     {
         if (m_kAttr.HasNormal())
@@ -1161,6 +1233,8 @@ public class StandardMesh
         }
     }
 
+    /** Create Platonic u,v texture-coordinates.
+     * @param pkVBuffer VertexBuffer to store texture coordinates in. */
     private void CreatePlatonicUVs (VertexBuffer pkVBuffer)
     {
         if (m_kAttr.GetMaxTCoords() > 0)
@@ -1195,7 +1269,10 @@ public class StandardMesh
         }
     }
 
-
+    /** Reverse triangle order of a mesh.
+     * @param iTQuantity, number of triangles.
+     * @param aiIndex, index array to modify.
+     */
     private void ReverseTriangleOrder (int iTQuantity, int[] aiIndex)
     {
         for (int i = 0; i < iTQuantity; i++)
@@ -1207,6 +1284,9 @@ public class StandardMesh
         }
     }
 
+    /** Transform data in VertexBuffer
+     * @param pkVB, VertexBuffer to transform.
+     */
     private void TransformData (VertexBuffer pkVB)
     {
         if (m_kXFrm.IsIdentity())
@@ -1234,7 +1314,10 @@ public class StandardMesh
         }
     }
 
+    /** Mesh Attributes. */
     private Attributes m_kAttr;
+    /** Mesh Transformation */
     private Transformation m_kXFrm = new Transformation();
+    /** Inside mesh, or Outside mesh. */
     private boolean m_bInside;
 }

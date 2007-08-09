@@ -82,7 +82,7 @@ public class Vector4f
     /** Return x-value
      * @return x-value
      */
-    public float X ()
+    public final float X ()
     {
         return m_afTuple[0];
     }
@@ -90,7 +90,7 @@ public class Vector4f
     /** Return y-value
      * @return y-value
      */
-    public float Y ()
+    public final float Y ()
     {
         return m_afTuple[1];
     }
@@ -98,7 +98,7 @@ public class Vector4f
     /** Return z-value
      * @return z-value
      */
-    public float Z ()
+    public final float Z ()
     {
         return m_afTuple[2];
     }
@@ -106,7 +106,7 @@ public class Vector4f
     /** Return w-value
      * @return w-value
      */
-    public float W ()
+    public final float W ()
     {
         return m_afTuple[3];
     }
@@ -114,7 +114,7 @@ public class Vector4f
     /** Set x-value
      * @param fValue x-value
      */
-    public void X (float fValue)
+    public final void X (float fValue)
     {
          m_afTuple[0] = fValue;
     }
@@ -122,7 +122,7 @@ public class Vector4f
     /** Set y-value
      * @param fValue y-value
      */
-    public void Y (float fValue)
+    public final void Y (float fValue)
     {
         m_afTuple[1] = fValue;
     }
@@ -130,7 +130,7 @@ public class Vector4f
     /** Set z-value
      * @param fValue z-value
      */
-    public void Z (float fValue)
+    public final void Z (float fValue)
     {
         m_afTuple[2] = fValue;
     }
@@ -138,7 +138,7 @@ public class Vector4f
     /** Set w-value
      * @param fValue w-value
      */
-    public void W (float fValue)
+    public final void W (float fValue)
     {
         m_afTuple[3] = fValue;
     }

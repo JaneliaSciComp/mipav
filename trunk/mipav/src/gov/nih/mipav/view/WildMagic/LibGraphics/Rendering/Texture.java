@@ -175,7 +175,7 @@ public class Texture extends Bindable
         m_spkImage = pkImage;
     }
 
-    public GraphicsImage GetImage ()
+    public final GraphicsImage GetImage ()
     {
         return m_spkImage;
     }
@@ -186,7 +186,7 @@ public class Texture extends Bindable
         m_pkSamplerInformation = pkSamplerInformation;
     }
 
-    public SamplerInformation GetSamplerInformation ()
+    public final SamplerInformation GetSamplerInformation ()
     {
         return m_pkSamplerInformation;
     }
@@ -197,7 +197,7 @@ public class Texture extends Bindable
         m_eFType = eFType;
     }
 
-    public FilterType GetFilterType ()
+    public final FilterType GetFilterType ()
     {
         return m_eFType;
     }
@@ -225,16 +225,16 @@ public class Texture extends Bindable
         m_kBorderColor = rkBorderColor;
     }
 
-    public ColorRGBA GetBorderColor ()
+    public final ColorRGBA GetBorderColor ()
     {
         return m_kBorderColor;
     }
 
 
     // Support for depth textures.
-    public boolean IsDepthTexture ()
+    public final boolean IsDepthTexture ()
     {
-        return m_eCompare != DepthCompare.DC_QUANTITY;
+        return (m_eCompare != DepthCompare.DC_QUANTITY);
     }
 
     public void SetDepthCompare (DepthCompare eCompare)
@@ -243,14 +243,14 @@ public class Texture extends Bindable
     }
 
 
-    public DepthCompare GetDepthCompare ()
+    public final DepthCompare GetDepthCompare ()
     {
         return m_eCompare;
     }
 
 
     // Support for offscreen textures.
-    public boolean IsOffscreenTexture ()
+    public final boolean IsOffscreenTexture ()
     {
         return m_bOffscreenTexture;
     }

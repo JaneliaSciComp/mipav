@@ -24,7 +24,7 @@ public class ReleaseFunctionPixel extends ReleaseFunction
     {
         super(kRenderer);
     }
-    public void Release ( Bindable kBindable )
+    public final void Release ( Bindable kBindable )
     {
         m_kRenderer.ReleasePProgram( kBindable );
     }

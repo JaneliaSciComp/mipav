@@ -26,8 +26,10 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 public class Node extends Spatial
     implements NameIdInterface, StreamInterface
 {
-    // construction and destruction
+    /** Default construction. */
     public Node () {}
+
+    /** Delete memory. */
     public void finalize ()
     {
         for (int i = 0; i < (int)m_kChild.size(); i++)
@@ -42,12 +44,18 @@ public class Node extends Spatial
         super.finalize();
     }
 
-    // children
-    public int GetQuantity ()
+    /** children
+     * @return number of children nodes.
+     */
+    public final int GetQuantity ()
     {
         return (int)m_kChild.size();
     }
 
+    /** children
+     * @param pkChild, child node to add.
+     * @return number of children nodes.
+     */
     public int AttachChild (Spatial pkChild)
     {
         // Some folks are under the impression that a node can have multiple
@@ -94,6 +102,10 @@ public class Node extends Spatial
         return iQuantity;
     }
 
+    /** children
+     * @param pkChild, child node to detach.
+     * @return position of child node, or -1.
+     */
     public int DetachChild (Spatial pkChild)
     {
         if (pkChild != null)
@@ -114,6 +126,10 @@ public class Node extends Spatial
         return -1;
     }
 
+    /** children
+     * @param i, position of child node to detach.
+     * @return detached child node.
+     */
     public Spatial DetachChildAt (int i)
     {
         if (0 <= i && i < (int)m_kChild.size())
@@ -130,6 +146,11 @@ public class Node extends Spatial
         return null;
     }
 
+    /** children
+     * @param i, position of child node to set.
+     * @param pkChild, child node.
+     * @return previous child node at position i, or null.
+     */
     public Spatial SetChild (int i, Spatial pkChild)
     {
         // Some folks are under the impression that a node can have multiple
@@ -186,6 +207,10 @@ public class Node extends Spatial
         return null;
     }
 
+    /** children
+     * @param i, position of child node to set.
+     * @return child node at position i, or null.
+     */
     public Spatial GetChild (int i)
     {
         if (0 <= i && i < (int)m_kChild.size())
@@ -195,7 +220,9 @@ public class Node extends Spatial
         return null;
     }
 
-    // geometric updates
+    /** geometric updates
+     * @param dAppTime, animation time step from application.
+     */
     protected void UpdateWorldData (double dAppTime)
     {
         super.UpdateWorldData(dAppTime);
@@ -210,6 +237,7 @@ public class Node extends Spatial
         }
     }
 
+    /** geometric updates */
     protected void UpdateWorldBound ()
     {
         if (!WorldBoundIsCurrent)
@@ -236,7 +264,10 @@ public class Node extends Spatial
         }
     }
 
-    // render state updates
+    /** render state updates 
+     * @param akGStack, global states.
+     * @param akLStack, lights.
+     */
     protected void UpdateState ( Vector<Vector<GlobalState>> akGStack,
                                  Vector<Light> pkLStack)
     {
@@ -251,7 +282,10 @@ public class Node extends Spatial
     }
 
 
-    // culling
+    /** culling
+     * @param rkCuller, culling object applied to this node.
+     * @param bNoCull, when true don't cull.
+     */
     protected void GetVisibleSet (Culler rkCuller, boolean bNoCull)
     {
         int i;
@@ -282,9 +316,14 @@ public class Node extends Spatial
         }
     }
 
-    // children
+    /** children */
     protected Vector<Spatial> m_kChild = new Vector<Spatial>();
 
+    /**
+     * Returns the GraphicsObject with the name that matches the input paramter, rkName.
+     * @param rkName, the name of the object to return.
+     * @return the GraphicsObject that matches the input name.
+     */
     public GraphicsObject GetObjectByName (final String rkName)
     {
         GraphicsObject pkFound = super.GetObjectByName(rkName);
@@ -308,6 +347,13 @@ public class Node extends Spatial
 
         return null;
     }
+
+    /**
+     * Writes all GraphicsObjects with the name that matches the input
+     * paramter, rkName into the Vector paramter rkObjects.
+     * @param rkName, the name of the objects to return.
+     * @param rkObjects, a Vector of all objects with the matching name.
+     */
     public void GetAllObjectsByName (final String rkName,
                                      Vector<GraphicsObject> rkObjects)
     {
@@ -322,6 +368,12 @@ public class Node extends Spatial
             }
         }
     }
+
+    /**
+     * Returns the GraphicsObject with the ID that matches the input paramter, uiID.
+     * @param uiID, the ID of the object to return.
+     * @return the GraphicsObject that matches the input name.
+     */
     public GraphicsObject GetObjectByID (int uiID)
     {
         GraphicsObject pkFound = super.GetObjectByID(uiID);
@@ -346,6 +398,14 @@ public class Node extends Spatial
         return null;
     }
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -360,6 +420,12 @@ public class Node extends Spatial
         }
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
@@ -375,6 +441,14 @@ public class Node extends Spatial
         }
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         if (!super.Register(rkStream))
@@ -393,6 +467,10 @@ public class Node extends Spatial
         return true;
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -405,6 +483,12 @@ public class Node extends Spatial
         }
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -412,6 +496,12 @@ public class Node extends Spatial
             (m_kChild.size())*Stream.SIZEOF_INT; //sizeof(m_kChild[0]);
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

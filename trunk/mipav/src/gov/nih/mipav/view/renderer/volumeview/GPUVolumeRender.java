@@ -446,8 +446,14 @@ public class GPUVolumeRender extends JavaApplication3D
         {
             m_iWidth = iWidth;
             m_iHeight = iHeight;
-            m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
-
+            if ( m_spkCamera.Perspective )
+            {
+                m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+            }
+            else
+            {
+                m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
+            }
 
             if (m_pkRenderer != null)
             {
@@ -818,6 +824,7 @@ public class GPUVolumeRender extends JavaApplication3D
     public void setOrthographicProjection()
     {
         m_spkCamera.Perspective = false;
+        m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
         m_pkRenderer.OnFrustumChange();
     }
 
@@ -827,6 +834,7 @@ public class GPUVolumeRender extends JavaApplication3D
     public void setPerspectiveProjection()
     {
         m_spkCamera.Perspective = true;
+        m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         m_pkRenderer.OnFrustumChange();
     }
 
@@ -1704,6 +1712,16 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kMesh.AttachGlobalState(m_kMaterial);
         m_kMesh.UpdateMS(true);
         m_kMesh.UpdateRS();
+    }
+
+    /**
+     * Called from the JPanelDisplay dialog. Gets the material properties for
+     * the VolumeShaderSUR (Surface and Composite Surface volume shaders.)
+     * @return material properties for the surface mode.
+     */
+    public MaterialState GetMaterialState( )
+    {
+        return m_kMaterial;
     }
 
     /**

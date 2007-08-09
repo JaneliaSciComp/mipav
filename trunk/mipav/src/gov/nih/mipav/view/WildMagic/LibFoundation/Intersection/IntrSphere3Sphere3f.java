@@ -79,7 +79,7 @@ public class IntrSphere3Sphere3f extends Intersector
      * object access 
      * @return the sphere0
      */
-    public Sphere3f GetSphere0 ()
+    public final Sphere3f GetSphere0 ()
     {
         return m_rkSphere0;
     }
@@ -88,7 +88,7 @@ public class IntrSphere3Sphere3f extends Intersector
      * object access 
      * @return the sphere1
      */
-    public Sphere3f GetSphere1 ()
+    public final Sphere3f GetSphere1 ()
     {
         return m_rkSphere1;
     }
@@ -150,7 +150,7 @@ public class IntrSphere3Sphere3f extends Intersector
     /** Intersection center
      * @return center
      */
-    public Vector3f GetCenter ()
+    public final Vector3f GetCenter ()
     {
         return m_kCenter;
     }
@@ -158,7 +158,7 @@ public class IntrSphere3Sphere3f extends Intersector
     /** Intersection U-Vector
      * @return U-Vector
      */
-    public Vector3f GetUAxis ()
+    public final Vector3f GetUAxis ()
     {
         return m_kUAxis;
     }
@@ -166,7 +166,7 @@ public class IntrSphere3Sphere3f extends Intersector
     /** Intersection V-Vector
      * @return V-Vector
      */
-    public Vector3f GetVAxis ()
+    public final Vector3f GetVAxis ()
     {
         return m_kVAxis;
     }
@@ -174,7 +174,7 @@ public class IntrSphere3Sphere3f extends Intersector
     /** Intersection plane normal
      * @return plane normal
      */
-    public Vector3f GetNormal ()
+    public final Vector3f GetNormal ()
     {
         return m_kNormal;
     }
@@ -182,7 +182,7 @@ public class IntrSphere3Sphere3f extends Intersector
     /** Intersection radius
      * @return radius
      */
-    public float GetRadius ()
+    public final float GetRadius ()
     {
         return m_fRadius;
     }
@@ -298,7 +298,7 @@ public class IntrSphere3Sphere3f extends Intersector
     /** intersection set for dynamic find-intersection query
      * @return contact point
      */
-    public Vector3f GetContactPoint ()
+    public final Vector3f GetContactPoint ()
     {
         return m_kContactPoint;
     }

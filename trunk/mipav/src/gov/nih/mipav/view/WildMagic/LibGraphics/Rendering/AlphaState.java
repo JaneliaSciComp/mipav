@@ -140,7 +140,7 @@ public class AlphaState extends GlobalState
     private static TestMode ms_eTestModeStatic = TestMode.TF_QUANTITY;
 
 
-    public StateType GetStateType () { return StateType.ALPHA; }
+    public final StateType GetStateType () { return StateType.ALPHA; }
 
     public AlphaState () {}
 

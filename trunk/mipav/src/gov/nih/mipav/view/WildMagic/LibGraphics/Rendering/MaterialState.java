@@ -23,7 +23,7 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 public class MaterialState extends GlobalState
     implements StreamInterface
 {
-    public StateType GetStateType () { return StateType.MATERIAL; }
+    public final StateType GetStateType () { return StateType.MATERIAL; }
 
     public MaterialState ()
     {

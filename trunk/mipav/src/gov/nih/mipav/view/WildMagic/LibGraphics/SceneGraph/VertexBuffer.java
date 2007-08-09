@@ -66,7 +66,7 @@ public class VertexBuffer extends Bindable
     }
 
     // The format of a single vertex in the buffer.
-    public Attributes GetAttributes ()
+    public final Attributes GetAttributes ()
     {
         return m_kAttributes;
     }
@@ -75,13 +75,13 @@ public class VertexBuffer extends Bindable
     // The size of a single vertex in the buffer, measured as number of
     // 'float' values.  The number of bytes for a single vertex is
     // GetVertexSize()*sizeof(float).
-    public int GetVertexSize ()
+    public final int GetVertexSize ()
     {
         return m_iVertexSize;
     }
 
     // The number of vertices in the buffer.
-    public int GetVertexQuantity ()
+    public final int GetVertexQuantity ()
     {
         return m_iVertexQuantity;
     }
@@ -159,12 +159,12 @@ public class VertexBuffer extends Bindable
     // Direct access to the vertex buffer data.  The quantity is the number of
     // float elements.  The number of bytes for the entire vertex buffer is
     // GetChannelQuantity()*sizeof(float).
-    public int GetChannelQuantity ()
+    public final int GetChannelQuantity ()
     {
         return m_iChannelQuantity;
     }
 
-    public float[] GetData ()
+    public final float[] GetData ()
     {
         return m_afChannel;
     }
@@ -621,7 +621,7 @@ public class VertexBuffer extends Bindable
     // saving the full quantity of vertices and resetting this when finished
     // with the vertex buffer.  The caller also should not pass in a quantity
     // that is larger than the original full quantity.
-    public void SetVertexQuantity (int iVQuantity)
+    public final void SetVertexQuantity (int iVQuantity)
     {
         m_iVertexQuantity = iVQuantity;
     }

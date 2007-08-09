@@ -33,11 +33,12 @@ public abstract class Program extends Bindable
     implements StreamInterface
 {
     
+    /** Create a Program and GcGL context. */
     public Program ()
     {
         m_kContext = CgGL.cgCreateContext();
      }
-
+    /** Delete memory. Destroy the CgGL context. */
     public void finalize ()
     {
         CgGL.cgDestroyContext( m_kContext );
@@ -64,28 +65,42 @@ public abstract class Program extends Bindable
         super.finalize();
     }
     
-    // Member read-only access.
-    public String GetProgramText ()
+    /** Return the program text. 
+     * @return the program text. 
+     */
+    public final String GetProgramText ()
     {
         return m_kProgramText;
     }
     
-    public Attributes GetInputAttributes ()
+    /** Return the program input attributes. 
+     * @return the program input attribtues. 
+     */
+    public final Attributes GetInputAttributes ()
     {
         return m_kInputAttributes;
     }
     
-    public Attributes GetOutputAttributes ()
+    /** Return the program output attributes. 
+     * @return the program output attribtues. 
+     */
+    public final Attributes GetOutputAttributes ()
     {
         return m_kOutputAttributes;
     }
     
-    // Access to renderer constants.
-    public int GetRCQuantity ()
+    /** Access to renderer constants.
+     * @return number of renderer constants.
+     */
+    public final int GetRCQuantity ()
     {
         return (int)m_kRendererConstants.size();
     }
 
+    /** Access to renderer constants.
+     * @param i, RendererConstant to return.
+     * @return RendererConstant at position i.
+     */
     public RendererConstant GetRC (int i)
     {
         if (0 <= i && i < (int)m_kRendererConstants.size())
@@ -97,6 +112,10 @@ public abstract class Program extends Bindable
         return null;
     }
 
+    /** Access to renderer constants.
+     * @param eType, type of RendererConstant to return.
+     * @return RendererConstant matching input type.
+     */
     public RendererConstant GetRC (RendererConstant.Type eType)
     {
         for (int i = 0; i < (int)m_kRendererConstants.size(); i++)
@@ -112,12 +131,18 @@ public abstract class Program extends Bindable
     }
 
 
-    // Access to user constants.
-    public int GetUCQuantity ()
+    /** Access to user constants.
+     * @return number of use constants.
+     */
+    public final int GetUCQuantity ()
     {
         return (int)m_kUserConstants.size();
     }
 
+    /** Access to user constants.
+     * @param i, UserConstant to return.
+     * @return UserConstant at position i.
+     */
     public UserConstant GetUC (int i)
     {
         if (0 <= i && i < (int)m_kUserConstants.size())
@@ -129,6 +154,10 @@ public abstract class Program extends Bindable
         return null;
     }
 
+    /** Access to user constants.
+     * @param rkName, name of the UserConstant to return.
+     * @return UserConstant with the input name.
+     */
     public UserConstant GetUC ( String rkName)
     {
         for (int i = 0; i < (int)m_kUserConstants.size(); i++)
@@ -144,12 +173,18 @@ public abstract class Program extends Bindable
     }
 
 
-    // Access to samplers.
-    public int GetSIQuantity ()
+    /** Access to samplers.
+     * @return number of samplers.
+     */
+    public final int GetSIQuantity ()
     {
         return (int)m_kSamplerInformation.size();
     }
 
+    /** Access to samplers.
+     * @param i, sampler to return
+     * @return Sampler at position i.
+     */
     public SamplerInformation GetSI (int i)
     {
         if (0 <= i && i < (int)m_kSamplerInformation.size())
@@ -161,6 +196,10 @@ public abstract class Program extends Bindable
         return null;
     }
 
+    /** Access to samplers.
+     * @param rkName, name of sampler to return
+     * @return Sampler with input name.
+     */
     public SamplerInformation GetSI ( String rkName)
     {
         for (int i = 0; i < (int)m_kSamplerInformation.size(); i++)
@@ -189,6 +228,12 @@ public abstract class Program extends Bindable
         }
     }
 
+    /** Recurses on the CGparameter. if it is a struct or array the function
+     * recurses. If the parameter is a native type, the function parses the
+     * type, determines if it is a RendererConstant or UserConstant and sets
+     * up the appropriate data structures to contain the parameter.
+     * @param param, CGparameter to parse.
+     */
     private void RecurseParams( CGparameter param )
     {
         if (param == null)
@@ -339,31 +384,36 @@ public abstract class Program extends Bindable
         } while((param = CgGL.cgGetNextParameter(param)) != null);
     }
 
+    /** Recursively pase the program, setup the RendererConstants,
+     * UserConstants, and Samplers. */
     protected void RecurseParamsInProgram( )
     {
         RecurseParams( CgGL.cgGetFirstParameter( m_kCGProgram, CgGL.CG_PROGRAM ) );
     }
 
+    /** Current CGprogram. */
     protected CGprogram m_kCGProgram = null;
 
-    // The program as a text string.
+    /** The program as a text string. */
     protected String m_kProgramText = new String();
 
-    // The format of the input and output parameters to the shader program.
+    /** The format of the input and output parameters to the shader program. */
     protected Attributes m_kInputAttributes = new Attributes();
+    /** The format of the input and output parameters to the shader program. */
     protected Attributes m_kOutputAttributes = new Attributes();
 
-    // The renderer constants required by the shader program.
+    /** The renderer constants required by the shader program. */
     protected Vector<RendererConstant> m_kRendererConstants = new Vector<RendererConstant>();
 
-    // The user constants required by the shader program.  These are set by
-    // the applications as needed.
+    /** The user constants required by the shader program.  These are set by
+     * the applications as needed. */
     protected Vector<UserConstant> m_kUserConstants = new Vector<UserConstant>();
 
-    // Information about the sampler units required by a shader program.
+    /** Information about the sampler units required by a shader program. */
     protected Vector<SamplerInformation> m_kSamplerInformation = new Vector<SamplerInformation>();
 
-    // For use by the constructor for loading and parsing a shader program.
+    /** For use by the constructor for loading and parsing a shader
+     * program. */
     protected static final String ms_kSampler1DStr = new String("sampler1D");
     protected static final String ms_kSampler2DStr = new String("sampler2D");
     protected static final String ms_kSampler3DStr = new String("sampler3D");
@@ -383,31 +433,70 @@ public abstract class Program extends Bindable
     /** Cg Context */
     protected CGcontext m_kContext = null;
     
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
     } 
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         return super.Register(rkStream);
     }
 
+
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion);
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

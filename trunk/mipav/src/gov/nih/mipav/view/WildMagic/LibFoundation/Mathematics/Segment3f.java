@@ -67,7 +67,7 @@ public class Segment3f
     /** Returns the positive end point: P+e*D
      * @return P+e*D
      */
-    public Vector3f GetPosEnd ()
+    public final Vector3f GetPosEnd ()
     {
         return Origin.add( Direction.scale(Extent) );
     }
@@ -75,7 +75,7 @@ public class Segment3f
     /** Returns the negative end point: P-e*D
      * @return P-e*D
      */
-    public Vector3f GetNegEnd ()
+    public final Vector3f GetNegEnd ()
     {
         return Origin.sub( Direction.scale(Extent) );
     }

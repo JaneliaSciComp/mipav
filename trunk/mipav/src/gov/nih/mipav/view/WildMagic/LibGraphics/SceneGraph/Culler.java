@@ -24,10 +24,14 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 
 public class Culler
 {
-    // Construction and destruction.  The first two input parameters are used
-    // to create the set of potentially visible objects.  If the camera is
-    // not passed to the constructor, you should set it using SetCamera before
-    // calling ComputeVisibleSet.
+    /** Construction and destruction.  The first two input parameters are used
+     * to create the set of potentially visible objects.  If the camera is
+     * not passed to the constructor, you should set it using SetCamera before
+     * calling ComputeVisibleSet.
+     * @param iMaxQuantity, maximum number of visible objects.
+     * @param iGrowBy, number to grow by.
+     * @param pkCamera, Camera for computing what's visible.
+     */
     public Culler (int iMaxQuantity, int iGrowBy,
                    final Camera pkCamera)
     {
@@ -44,6 +48,7 @@ public class Culler
         }
     }
 
+    /** Delete memory. */
     public void finalize()
     {
         m_pkCamera = null;
@@ -62,17 +67,25 @@ public class Culler
         }
     }
 
-    // Access to the camera, frustum copy, and potentially visible set.
-    public void SetCamera (final Camera pkCamera)
+    /** Access to the camera.
+     * @param pkCamera, Camera for computing what's visible.
+     */
+    public final void SetCamera (final Camera pkCamera)
     {
         m_pkCamera = pkCamera;
     }
 
-    public Camera GetCamera ()
+    /** Access to the camera.
+     * @return Camera for computing what's visible.
+     */
+    public final Camera GetCamera ()
     {
         return m_pkCamera;
     }
 
+    /** Access to frustum copy.
+     * @param afFrustum, new frustum. 
+     */
     public void SetFrustum (final float[] afFrustum)
     {
         assert(m_pkCamera != null);
@@ -145,52 +158,79 @@ public class Culler
         m_uiPlaneState = ~0;
     }
 
-    public float[] GetFrustum ()
+    /** Access to frustum copy.
+     * @return current frustum. 
+     */
+    public final float[] GetFrustum ()
     {
         return m_afFrustum;
     }
 
-    public VisibleSet GetVisibleSet ()
+    /** Access to the potentially visible set.
+     * @return current visible set.
+     */
+    public final VisibleSet GetVisibleSet ()
     {
         return m_kVisible;
     }
 
-    // The base class behavior creates a VisibleObject from the input and
-    // appends it to the end of the VisibleObject array.  Derived classes
-    // may override this behavior; for example, the array might be maintained
-    // as a sorted array for minimizing render state changes or it might be
-    // maintained as a unique list of objects for a portal system.
+    /** The base class behavior creates a VisibleObject from the input and
+     * appends it to the end of the VisibleObject array.  Derived classes
+     * may override this behavior; for example, the array might be maintained
+     * as a sorted array for minimizing render state changes or it might be
+     * maintained as a unique list of objects for a portal system.
+     * @param pkObject, object to add to the visible object set.
+     * @param pkGlobalEffect, global effect applied to object.
+     */
     public void Insert (Spatial pkObject, Effect pkGlobalEffect)
     {
         m_kVisible.Insert(pkObject,pkGlobalEffect);
     }
 
-    // Access to the stack of world culling planes.  You may push and pop
-    // planes to be used in addition to the view frustum planes.  PushPlane
-    // requires the input plane to be in world coordinates.
-    //public enum { VS_MAX_PLANE_QUANTITY = 32 };
+    /** Access to the stack of world culling planes.  You may push and pop
+     * planes to be used in addition to the view frustum planes.  PushPlane
+     * requires the input plane to be in world coordinates.
+     * public enum { VS_MAX_PLANE_QUANTITY = 32 };
+     */
     public static final int VS_MAX_PLANE_QUANTITY = 32;
 
-    public int GetPlaneQuantity ()
+    /** Get the number of culling planes.
+     * @return the number of culling planes.
+     */
+    public final int GetPlaneQuantity ()
     {
         return m_iPlaneQuantity;
     }
 
-    public Plane3f[] GetPlanes ()
+    /** Get the culling planes.
+     * @return the culling planes.
+     */
+    public final Plane3f[] GetPlanes ()
     {
         return m_akPlane;
     }
 
-    public void SetPlaneState (int uiPlaneState)
+    /** Set the culling plane state.
+     * @param uiPlaneState the culling plane state.
+     */
+    public final void SetPlaneState (int uiPlaneState)
     {
         m_uiPlaneState = uiPlaneState;
     }
 
-    public int GetPlaneState ()
+    /** Get the culling plane state.
+     * @return the culling plane state.
+     */
+    public final int GetPlaneState ()
     {
         return m_uiPlaneState;
     }
 
+    /**
+     * Add a plane to the culling planes, if the current number of planes has not been
+     * exceeded.
+     * @param rkPlane, plane to add.
+     */
     public void PushPlane (Plane3f rkPlane)
     {
         if (m_iPlaneQuantity < VS_MAX_PLANE_QUANTITY)
@@ -200,6 +240,10 @@ public class Culler
         }
     }
 
+    /**
+     * Remove the last plane from the culling planes, if the current number of
+     * planes is not already 0.
+     */
     public void PopPlane ()
     {
         if (m_iPlaneQuantity > Camera.ViewFrustum.VF_QUANTITY.Value())
@@ -209,8 +253,12 @@ public class Culler
         }
     }
 
-    // Compare the object's world bounding volume against the culling planes.
-    // Only Spatial calls this function.
+    /** Compare the object's world bounding volume against the culling planes.
+     * Only Spatial calls this function.
+     * @param pkBound, input bounding volume to compare.
+     * @return false if object is on negative side of planes and is culled,
+     * true otherwise.
+     */
     public boolean IsVisible (final BoundingVolume pkBound)
     {
         // Start with the last pushed plane, which is potentially the most
@@ -243,9 +291,12 @@ public class Culler
         return true;
     }
 
-
-
-    // Support for Portal::GetVisibleSet.
+    /** Support for Portal::GetVisibleSet.
+     * @param iVertexQuantity, number of vertices
+     * @param akVertex, vertices.
+     * @param bIgnoreNearPlane.
+     * @return false if the polygon is totally outside this plane, true otherwise.
+     */
     public boolean IsVisible (int iVertexQuantity, final Vector3f[] akVertex,
                               boolean bIgnoreNearPlane)
     {
@@ -290,14 +341,16 @@ public class Culler
     }
 
 
-    // Support for BspNode::GetVisibleSet.  Determine if the view frustum is
-    // fully on one side of a plane.  The "positive side" of the plane is the
-    // half space to which the plane normal points.  The "negative side" is
-    // the other half space.  The function returns +1 if the view frustum is
-    // fully on the positive side of the plane, -1 if the view frustum is
-    // fully on the negative side of the plane, or 0 if the view frustum
-    // straddles the plane.  The input plane is in world coordinates and the
-    // world camera coordinate system is used for the test.
+    /** Support for BspNode::GetVisibleSet.  Determine if the view frustum is
+     * fully on one side of a plane.  The "positive side" of the plane is the
+     * half space to which the plane normal points.  The "negative side" is
+     * the other half space.
+     * @param rkPlane, The input plane is in world coordinates and the world
+     * camera coordinate system is used for the test.
+     * @return +1 if the view frustum is fully on the positive side of the
+     * plane, -1 if the view frustum is fully on the negative side of the
+     * plane, or 0 if the view frustum straddles the plane.
+     */
     public int WhichSide (final Plane3f rkPlane)
     {
         // The plane is N*(X-C) = 0 where the * indicates dot product.  The signed
@@ -439,9 +492,11 @@ public class Culler
     }
 
 
-    // This is the main function you should use for culling within a scene
-    // graph.  Traverse the scene and construct the potentially visible set
-    // relative to the world planes.
+    /** This is the main function you should use for culling within a scene
+     * graph.  Traverse the scene and construct the potentially visible set
+     * relative to the world planes.
+     * @param pkScene, root node of scene to cull.
+     */
     public void ComputeVisibleSet (Spatial pkScene)
     {
         assert((m_pkCamera != null) && (pkScene != null));
@@ -454,30 +509,32 @@ public class Culler
     }
 
 
-    // The input camera has information that might be needed during the
-    // culling pass over the scene.
+    /** The input camera has information that might be needed during the
+     * culling pass over the scene. */
     protected Camera m_pkCamera;
 
-    // A copy of the view frustum for the input camera.  This allows various
-    // subsystems to change the frustum parameters during culling (for
-    // example, the portal system) without affecting the camera, whose initial
-    // state is needed by the renderer.
+    /** A copy of the view frustum for the input camera.  This allows various
+     * subsystems to change the frustum parameters during culling (for
+     * example, the portal system) without affecting the camera, whose initial
+     * state is needed by the renderer. */
     protected float[] m_afFrustum = new float[Camera.ViewFrustum.VF_QUANTITY.Value()];
 
-    // The world culling planes corresponding to the view frustum plus any
-    // additional user-defined culling planes.  The member m_uiPlaneState
-    // represents bit flags to store whether or not a plane is active in the
-    // culling system.  A bit of 1 means the plane is active, otherwise the
-    // plane is inactive.  An active plane is compared to bounding volumes,
-    // whereas an inactive plane is not.  This supports an efficient culling
-    // of a hierarchy.  For example, if a node's bounding volume is inside
-    // the left plane of the view frustum, then the left plane is set to
-    // inactive because the children of the node are automatically all inside
-    // the left plane.
+    /** number of culling planes. */ 
     protected int m_iPlaneQuantity;
+    /** The world culling planes corresponding to the view frustum plus any
+     * additional user-defined culling planes. */ 
     protected Plane3f[] m_akPlane = new Plane3f[VS_MAX_PLANE_QUANTITY];
+    /**  The member m_uiPlaneState represents bit flags to store whether or
+     * not a plane is active in the culling system.  A bit of 1 means the
+     * plane is active, otherwise the plane is inactive.  An active plane is
+     * compared to bounding volumes, whereas an inactive plane is not.  This
+     * supports an efficient culling of a hierarchy.  For example, if a node's
+     * bounding volume is inside the left plane of the view frustum, then the
+     * left plane is set to inactive because the children of the node are
+     * automatically all inside the left plane.
+     */
     protected int m_uiPlaneState;
 
-    // The potentially visible set for a call to GetVisibleSet.
+    /** The potentially visible set for a call to GetVisibleSet. */
     protected VisibleSet m_kVisible;
 }

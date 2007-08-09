@@ -29,7 +29,7 @@ public class StencilState extends GlobalState
     private static HashMap<Integer,CompareFunction> ms_pkCompareFunctionMap = new HashMap<Integer,CompareFunction>();
     private static HashMap<Integer,OperationType> ms_pkOperationTypeMap = new HashMap<Integer,OperationType>();
 
-    public StateType GetStateType () { return StateType.STENCIL; }
+    public final StateType GetStateType () { return StateType.STENCIL; }
 
     public StencilState ()
     {

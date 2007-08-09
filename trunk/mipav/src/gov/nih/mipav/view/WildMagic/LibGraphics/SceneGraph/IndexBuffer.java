@@ -24,6 +24,9 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 public class IndexBuffer extends Bindable
     implements StreamInterface
 {
+    /** Create an IndexBuffer with the input number of indices.
+     * @param iIQuantity, the number of int elements.
+     */
     public IndexBuffer (int iIQuantity)
     {
         assert(iIQuantity > 0);
@@ -33,6 +36,9 @@ public class IndexBuffer extends Bindable
         m_iOffset = 0;
     }
 
+    /** Copy constructor.
+     * @param pkIBuffer, the IndexBuffer to copy into this.
+     */
     public IndexBuffer (IndexBuffer pkIBuffer)
     {
         assert(pkIBuffer != null);
@@ -45,6 +51,7 @@ public class IndexBuffer extends Bindable
         m_iOffset = pkIBuffer.m_iOffset;
     }
 
+    /** Delete memory. */
     public void finalize ()
     {
         // Inform all renderers using this index buffer that it is being
@@ -56,47 +63,65 @@ public class IndexBuffer extends Bindable
         super.finalize();
     }
 
-    // Direct access to the index buffer data.  The quantity is the number of
-    // int elements.  The number of bytes for the entire index buffer is
-    // GetIndexQuantity()*sizeof(int).
-    public int GetIndexQuantity ()
+    /** Direct access to the index buffer data.  The quantity is the number of
+     * int elements.  The number of bytes for the entire index buffer is
+     * GetIndexQuantity()*sizeof(int).
+     * @return number of int elements.
+     */
+    public final int GetIndexQuantity ()
     {
         return m_iIQuantity;
     }
 
-    public int[] GetData ()
+    /** Direct access to the index buffer data.  The quantity is the number of
+     * int elements.  The number of bytes for the entire index buffer is
+     * GetIndexQuantity()*sizeof(int).
+     * @return index data array.
+     */
+    public final int[] GetData ()
     {
         return m_aiIndex;
     }
 
-    // An application might want to vary the "active quantity" of indices.
-    // Use this function to do so.  It does not change the data storage,
-    // only the m_iQuantity member.  The caller is responsible for saving the
-    // full quantity of indices and resetting this when finished with the
-    // index buffer.  The caller also should not pass in a quantity that is
-    // larger than the original full quantity.
-    public void SetIndexQuantity (int iIQuantity)
+    /** An application might want to vary the "active quantity" of indices.
+     * Use this function to do so.  It does not change the data storage,
+     * only the m_iQuantity member.  The caller is responsible for saving the
+     * full quantity of indices and resetting this when finished with the
+     * index buffer.  The caller also should not pass in a quantity that is
+     * larger than the original full quantity.
+     * @param iIQuantity, number of int elements.
+     */
+    public final void SetIndexQuantity (int iIQuantity)
     {
         m_iIQuantity = iIQuantity;
     }
 
-    // The offset into the indices is used by the renderer for drawing.  The
-    // ability to set this is useful when multiple geometric primitives share
-    // an index buffer, each primitive using a continguous set of indices.  In
-    // this case, SetIndexQuantity and SetOffset will be called dynamically
-    // during the application for each such geometric primitive.
+    /** The offset into the indices is used by the renderer for drawing.  The
+     * ability to set this is useful when multiple geometric primitives share
+     * an index buffer, each primitive using a continguous set of indices.  In
+     * this case, SetIndexQuantity and SetOffset will be called dynamically
+     * during the application for each such geometric primitive.
+     * @param iOffset, index offset.
+     */
     public void SetOffset (int iOffset)
     {
         assert(iOffset >= 0);
         m_iOffset = iOffset;
     }
 
-    public int GetOffset ()
+    /** The offset into the indices is used by the renderer for drawing.  The
+     * ability to set this is useful when multiple geometric primitives share
+     * an index buffer, each primitive using a continguous set of indices.  In
+     * this case, SetIndexQuantity and SetOffset will be called dynamically
+     * during the application for each such geometric primitive.
+     * @return index offset.
+     */
+    public final int GetOffset ()
     {
         return m_iOffset;
     }
-
-    // streaming support
+    
+    /** streaming support */
     public IndexBuffer ()
     {
         m_iIQuantity = 0;
@@ -104,10 +129,21 @@ public class IndexBuffer extends Bindable
         m_iOffset = 0;
     }
 
+    /** Number of int elements. */
     protected int m_iIQuantity;
+    /** Index data array. */
     protected int[] m_aiIndex;
+    /** Index offset. */
     protected int m_iOffset;
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -122,16 +158,34 @@ public class IndexBuffer extends Bindable
         }
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         return super.Register(rkStream);
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -140,6 +194,12 @@ public class IndexBuffer extends Bindable
         rkStream.Write(m_iOffset);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -148,6 +208,12 @@ public class IndexBuffer extends Bindable
             Stream.SIZEOF_INT; //sizeof(m_iOffset);
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

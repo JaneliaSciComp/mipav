@@ -21,9 +21,15 @@ import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.Applicatio
 
 public class UserConstant
 {
-    // Construction and destruction.  The base register must be nonnegative.
-    // The register quantity must be positive.  Each register represents four
-    // floating-point values.
+    /** Construction and destruction.  The base register must be nonnegative.
+     * The register quantity must be positive.  Each register represents four
+     * floating-point values.
+     * @param kProgramName, the name of the program the UserConstant belogs to.
+     * @param rkName, the name of the UserConstant
+     * @param iBaseRegister (nonnegative)
+     * @param iRegisterQuantity (positive)
+     * @param iNumFloats, the number of floats represented by this parameter.
+     */
     public UserConstant (String kProgramName, String rkName, int iBaseRegister,
                          int iRegisterQuantity, int iNumFloats)
     {
@@ -39,45 +45,64 @@ public class UserConstant
         m_iNumFloats = iNumFloats;
     }
 
+    /** Delete memory. */
     public void finalize()
     {
         m_kName = null;
         m_afData = null;
     }
 
-    // Member access.  The renderer will use these to pass the information to
-    // the graphics API.
-    public String GetName ()
+    /** Return name of this UserConstant.
+     * @return name of this UserConstant.
+     */
+    public final String GetName ()
     {
         return m_kName;
     }
  
-    public int GetBaseRegister ()
+     /** Member access.  The renderer will use these to set the registers with
+     * the appropriate values.
+     * @return base register value.
+     */
+   public final int GetBaseRegister ()
     {
         return m_iBaseRegister;
     }
 
-    public int GetRegisterQuantity ()
+    /** Member access.  The renderer will use these to set the registers with
+     * the appropriate values.
+     * @return base register quantity.
+     */
+    public final int GetRegisterQuantity ()
     {
         return m_iRegisterQuantity;
     }
 
-    public float[] GetData ()
+    /** Member access.  The renderer will use these to set the registers with
+     * the appropriate values.
+     * @return UserConstant data values.
+     */
+    public final float[] GetData ()
     {
         return m_afData;
     }
 
-    public int GetDataSize()
+    /** Get the number of floats.
+     * @return UserConstant data size.
+     */
+    public final int GetDataSize()
     {
         return m_iNumFloats;
     }
 
-    // The Shader base class provides storage for the user constants and
-    // will set the float pointer to this storage when the shader program is
-    // loaded.  However, Shader-derived classes may provide their own
-    // storage and set the float pointer accordingly.  Such derived classes
-    // are responsible for deallocating the storage if it was dynamically
-    // allocated.
+    /** The Shader base class provides storage for the user constants and
+     * will set the float pointer to this storage when the shader program is
+     * loaded.  However, Shader-derived classes may provide their own
+     * storage and set the float pointer accordingly.  Such derived classes
+     * are responsible for deallocating the storage if it was dynamically
+     * allocated.
+     * @param afData, data source.
+     */
     public void SetDataSource (float[] afData)
     {
         assert(afData != null);
@@ -85,6 +110,15 @@ public class UserConstant
         m_afData = afData;
     }
 
+    /** The Shader base class provides storage for the user constants and
+     * will set the float pointer to this storage when the shader program is
+     * loaded.  However, Shader-derived classes may provide their own
+     * storage and set the float pointer accordingly.  Such derived classes
+     * are responsible for deallocating the storage if it was dynamically
+     * allocated.
+     * @param iPos, position in data array to write.
+     * @param fValue, new value.
+     */
     public void SetData ( int iPos, float fValue )
     {
         if ( (m_afData != null) && (iPos >= 0) && (iPos < m_afData.length) )
@@ -93,6 +127,15 @@ public class UserConstant
         }
     }
 
+    /** The Shader base class provides storage for the user constants and
+     * will set the float pointer to this storage when the shader program is
+     * loaded.  However, Shader-derived classes may provide their own
+     * storage and set the float pointer accordingly.  Such derived classes
+     * are responsible for deallocating the storage if it was dynamically
+     * allocated.
+     * @param iPos, position in data array to read.
+     * @return value at iPos.
+     */
     public float GetData ( int iPos )
     {
         if ( (m_afData != null) && (iPos >= 0) && (iPos < m_afData.length) )
@@ -101,10 +144,14 @@ public class UserConstant
         }
         return 0;
     }
-
+    /** UserConstant name. */
     private String m_kName;
+    /** Base register (nonnegative) */
     private int m_iBaseRegister;
+    /** Register quantity (positive) */
     private int m_iRegisterQuantity;
+    /** Data */
     private float[] m_afData;
+    /** Data size. */
     private int m_iNumFloats;
 }

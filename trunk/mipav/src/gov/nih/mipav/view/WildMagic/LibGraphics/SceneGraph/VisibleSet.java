@@ -46,12 +46,12 @@ public class VisibleSet
         }
     }
 
-    public int GetQuantity ()
+    public final int GetQuantity ()
     {
         return m_iQuantity;
     }
 
-    public VisibleObject[] GetVisible ()
+    public final VisibleObject[] GetVisible ()
     {
         return m_akVisible;
     }

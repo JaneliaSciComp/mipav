@@ -139,55 +139,55 @@ public abstract class Renderer
         }
     }
 
-    public Camera GetCamera ()
+    public final Camera GetCamera ()
     {
         return m_pkCamera;
     }
 
     // Access to the geometry object that is to be drawn.
-    public void SetGeometry (Geometry pkGeometry)
+    public final void SetGeometry (Geometry pkGeometry)
     {
         m_pkGeometry = pkGeometry;
     }
 
-    public Geometry GetGeometry ()
+    public final Geometry GetGeometry ()
     {
         return m_pkGeometry;
     }
 
     // Frame buffer parameters.
-    public FrameBuffer.FormatType GetFormatType ()
+    public final FrameBuffer.FormatType GetFormatType ()
     {
         return m_eFormat;
     }
 
-    public FrameBuffer.DepthType GetDepthType ()
+    public final FrameBuffer.DepthType GetDepthType ()
     {
         return m_eDepth;
     }
 
-    public FrameBuffer.StencilType GetStencilType ()
+    public final FrameBuffer.StencilType GetStencilType ()
     {
         return m_eStencil;
     }
 
-    public FrameBuffer.BufferingType GetBufferingType ()
+    public final FrameBuffer.BufferingType GetBufferingType ()
     {
         return m_eBuffering;
     }
 
-    public FrameBuffer.MultisamplingType GetMultisamplingType ()
+    public final FrameBuffer.MultisamplingType GetMultisamplingType ()
     {
         return m_eMultisampling;
     }
 
     // Window parameters.
-    public int GetWidth ()
+    public final int GetWidth ()
     {
         return m_iWidth;
     }
 
-    public int GetHeight ()
+    public final int GetHeight ()
     {
         return m_iHeight;
     }
@@ -211,7 +211,7 @@ public abstract class Renderer
         m_kBackgroundColor = rkColor;
     }
 
-    public ColorRGBA GetBackgroundColor () 
+    public final ColorRGBA GetBackgroundColor () 
     {
         return m_kBackgroundColor;
     }
@@ -440,7 +440,7 @@ public abstract class Renderer
         }
     }
 
-    public float GetPointSize ()
+    public final float GetPointSize ()
     {
         return m_fPointSize;
     }
@@ -453,7 +453,7 @@ public abstract class Renderer
         }
     }
 
-    public float GetLineWidth ()
+    public final float GetLineWidth ()
     {
         return m_fLineWidth;
     }
@@ -468,49 +468,49 @@ public abstract class Renderer
         m_usLineStipplePattern = usPattern;
     }
 
-    public int GetLineStippleRepeat ()
+    public final int GetLineStippleRepeat ()
     {
         return m_iLineStippleRepeat;
     }
 
-    public short GetLineStipplePattern ()
+    public final short GetLineStipplePattern ()
     {
         return m_usLineStipplePattern;
     }
 
 
     // Resource limits.
-    public int GetMaxLights ()
+    public final int GetMaxLights ()
     {
         return m_iMaxLights;
     }
 
-    public int GetMaxColors ()
+    public final int GetMaxColors ()
     {
         return m_iMaxColors;
     }
 
-    public int GetMaxTCoords ()
+    public final int GetMaxTCoords ()
     {
         return m_iMaxTCoords;
     }
 
-    public int GetMaxVShaderImages ()
+    public final int GetMaxVShaderImages ()
     {
         return m_iMaxVShaderImages;
     }
 
-    public int GetMaxPShaderImages ()
+    public final int GetMaxPShaderImages ()
     {
         return m_iMaxPShaderImages;
     }
 
-    public int GetMaxStencilIndices ()
+    public final int GetMaxStencilIndices ()
     {
         return m_iMaxStencilIndices;
     }
 
-    public int GetMaxUserClipPlanes ()
+    public final int GetMaxUserClipPlanes ()
     {
         return m_iMaxUserClipPlanes;
     }
@@ -643,37 +643,37 @@ public abstract class Renderer
         m_aspkState[GlobalState.StateType.ZBUFFER.Value()] = pkState;
     }
 
-    public AlphaState GetAlphaState ()
+    public final AlphaState GetAlphaState ()
     {
         return (AlphaState)(m_aspkState[GlobalState.StateType.ALPHA.Value()]);
     }
 
-    public CullState GetCullState ()
+    public final CullState GetCullState ()
     {
         return (CullState)(m_aspkState[GlobalState.StateType.CULL.Value()]);
     }
 
-    public MaterialState GetMaterialState ()
+    public final MaterialState GetMaterialState ()
     {
         return (MaterialState)(m_aspkState[GlobalState.StateType.MATERIAL.Value()]);
     }
 
-    public PolygonOffsetState GetPolygonOffsetState ()
+    public final PolygonOffsetState GetPolygonOffsetState ()
     {
         return (PolygonOffsetState)(m_aspkState[GlobalState.StateType.POLYGONOFFSET.Value()]);
     }
 
-    public StencilState GetStencilState ()
+    public final StencilState GetStencilState ()
     {
         return (StencilState)(m_aspkState[GlobalState.StateType.STENCIL.Value()]);
     }
 
-    public WireframeState GetWireframeState ()
+    public final WireframeState GetWireframeState ()
     {
         return (WireframeState)(m_aspkState[GlobalState.StateType.WIREFRAME.Value()]);
     }
 
-    public ZBufferState GetZBufferState ()
+    public final ZBufferState GetZBufferState ()
     {
         return (ZBufferState)(m_aspkState[GlobalState.StateType.ZBUFFER.Value()]);
     }
@@ -683,7 +683,7 @@ public abstract class Renderer
         m_bReverseCullFace = bReverseCullFace;
     }
 
-    public boolean GetReverseCullFace ()
+    public final boolean GetReverseCullFace ()
     {
         return m_bReverseCullFace;
     }

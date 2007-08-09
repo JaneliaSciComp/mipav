@@ -25,16 +25,20 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 public abstract class Shader extends GraphicsObject
     implements StreamInterface
 {
-    // The name of the shader object.  The program object has a name that
-    // contains the shader name as a substring, but adds additional text
-    // as needed (the path to a shader on disk, the identifying information
-    // for a procedurally generated shader).
-    public String GetShaderName ()
+    /** The name of the shader object.  The program object has a name that
+     * contains the shader name as a substring, but adds additional text
+     * as needed (the path to a shader on disk, the identifying information
+     * for a procedurally generated shader).
+     * @return shader name.
+     */
+    public final String GetShaderName ()
     {
         return m_kShaderName;
     }
     
-    // Access to textures and image names.
+    /** Set the number of textures in this shader.
+     * @param iQuantity, the number of textures in this shader.
+     */
     public void SetTextureQuantity (int iQuantity)
     {
         m_kTextures.clear();
@@ -48,11 +52,18 @@ public abstract class Shader extends GraphicsObject
         m_kImageNames.setSize(iQuantity);
     }
 
+    /** Return number of textures in this shader.
+     * @return number of textures in this shader.
+     */
     public int GetTextureQuantity ()
     {
         return (int)m_kTextures.size();
     }
 
+    /** Set the texture at position i.
+     * @param i, texture index.
+     * @param kTexture, texture to put at position i.
+     */
     public void SetTexture (int i, Texture kTexture)
     {
         if (0 <= i && i < (int)m_kTextures.size())
@@ -61,6 +72,10 @@ public abstract class Shader extends GraphicsObject
         }
     }
 
+    /** Get the texture at position i.
+     * @param i, texture index.
+     * @return texture at position i.
+     */
     public Texture GetTexture (int i)
     {
         if (0 <= i && i < (int)m_kTextures.size())
@@ -70,6 +85,10 @@ public abstract class Shader extends GraphicsObject
         return null;
     }
 
+    /** Get the texture by name.
+     * @param rkName, texture name.
+     * @return texture with the given name.
+     */
     public Texture GetTexture (String rkName)
     {
         if (m_spkProgram != null)
@@ -87,6 +106,10 @@ public abstract class Shader extends GraphicsObject
         return null;
     }
 
+    /** Set the image name.
+     * @param i, image position.
+     * @param rkName, image name.
+     */
     public void SetImageName (int i, String rkName)
     {
         int iQuantity = (int)m_kImageNames.size();
@@ -98,6 +121,10 @@ public abstract class Shader extends GraphicsObject
         m_kImageNames.set(i, rkName);
     }
 
+    /** Get the image name.
+     * @param i, image position.
+     * @return image name.
+     */
     public String GetImageName (int i)
     {
         assert(0 <= i && i < (int)m_kImageNames.size());
@@ -105,9 +132,10 @@ public abstract class Shader extends GraphicsObject
     }
 
 
-    // Support for streaming.
+    /** Support for streaming. */
     public Shader () {}
 
+    /** Delete memory. */
     public void finalize()
     {
         m_kShaderName = null;
@@ -124,36 +152,43 @@ public abstract class Shader extends GraphicsObject
         m_kTextures = null;
     }
 
-    // The constructor called by the derived classes VertexShader and
-    // PixelShader.
+    /** The constructor called by the derived classes VertexShader and
+     * PixelShader.
+     * @param rkShaderName, shader name.
+     */
     protected Shader (String rkShaderName)
     {
         m_kShaderName = new String(rkShaderName);
     }
 
 
-    // The shader name, which contributes to a uniquely identifying string
-    // for a shader program.
+    /** The shader name, which contributes to a uniquely identifying string
+     * for a shader program. */
     protected String m_kShaderName;
  
-    // The shader program, which is dependent on graphics API.
+    /** The shader program, which is dependent on graphics API. */
     protected Program m_spkProgram;
 
-    // The user-defined data are specific to each shader object.  The Program
-    // object knows only the name, which register to assign the value to, and
-    // how many registers to use.  The storage provided here is for the
-    // convenience of Shader-derived classes.  However, a derived class may
-    // provide alternate storage by calling UserConstant::SetDataSource for
-    // each user constant of interest.
+    /** The user-defined data are specific to each shader object.  The Program
+     * object knows only the name, which register to assign the value to, and
+     * how many registers to use.  The storage provided here is for the
+     * convenience of Shader-derived classes.  However, a derived class may
+     * provide alternate storage by calling UserConstant::SetDataSource for
+     * each user constant of interest. */
     protected Vector<Float> m_kUserData = new Vector<Float>();
 
-    // The names of images used by an instance of a shader program.  The
-    // Texture objects store the actual images and the samplers that are
-    // used to sample the images.
+    /** The names of images used by an instance of a shader program.  The
+     * Texture objects store the actual images and the samplers that are used
+     * to sample the images. */
     protected Vector<String> m_kImageNames = new Vector<String>();
+
+    /** Texture objects store the actual images and the samplers that are used
+     * to sample the images. */
     protected Vector<Texture> m_kTextures = new Vector<Texture>();
 
-    // internal use
+    /** Called when a program is loaded.
+     * @param pkProgram, the newly loaded program.
+     */
     public void OnLoadProgram (Program pkProgram)
     {
         assert((m_spkProgram == null) && (pkProgram != null));
@@ -204,6 +239,7 @@ public abstract class Shader extends GraphicsObject
         }
     }
 
+    /** Called when a program is released. */
     public void OnReleaseProgram ()
     {
         // Destroy the program.  The texture images, if any, will be destroyed
@@ -214,6 +250,14 @@ public abstract class Shader extends GraphicsObject
         m_spkProgram = null;
     }
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -241,6 +285,12 @@ public abstract class Shader extends GraphicsObject
         // resource loading at program runtime.
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
@@ -252,6 +302,14 @@ public abstract class Shader extends GraphicsObject
         }
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         if (!super.Register(rkStream))
@@ -270,6 +328,10 @@ public abstract class Shader extends GraphicsObject
         return true;
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -296,6 +358,12 @@ public abstract class Shader extends GraphicsObject
         // resource loading at program runtime.
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion) 
     {
         int iSize = super.GetDiskUsed(rkVersion) +
@@ -317,6 +385,12 @@ public abstract class Shader extends GraphicsObject
         return iSize;
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

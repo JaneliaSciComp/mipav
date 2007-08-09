@@ -30,7 +30,7 @@ public class TriMesh extends Triangles
     }
 
     // Interpretation of the index buffer data.
-    public int GetTriangleQuantity ()
+    public final int GetTriangleQuantity ()
     {
         return IBuffer.GetIndexQuantity()/3;
     }

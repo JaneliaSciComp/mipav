@@ -24,6 +24,11 @@ import java.util.*;
 public class ImageCatalog
 {
 
+    /** Create the image catalog, with the name of the catalog and the default
+     * directory where the images are located.
+     * @param rkName, name of the image catalog.
+     * @param rkDefaultDir, default directory where images are located.
+     */
     public ImageCatalog (String rkName, String rkDefaultDir)
     {
         m_kName = new String( rkName );
@@ -37,7 +42,7 @@ public class ImageCatalog
         m_spkDefaultImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,1,aucData,
                                       ms_kDefaultString);
     }
-
+    /** Delete memory. */
     public void finalize()
     {
         m_kName = null;
@@ -51,15 +56,27 @@ public class ImageCatalog
         }
     }
 
-    public String GetName ()
+   /** Get the name of the image catalog.
+     * @return the name of the image catalog.
+     */
+    public final String GetName ()
     {
         return m_kName;
     }
     
-    public String GetDefaultDir ()
+    /** Get the name of the default image directory.
+     * @return the name of the image directory.
+     */
+    public final String GetDefaultDir ()
     {
         return m_kDefaultDir;
     }
+
+    /** Add an image to the catalog, do not add if it already exists in the
+     * catalog.
+     * @param pkImage, image to add.
+     * @return true if the image is added, false otherwise.
+     */
     public boolean Insert (GraphicsImage pkImage)
     {
         if (pkImage == null)
@@ -88,6 +105,10 @@ public class ImageCatalog
         return true;
     }
 
+    /** Remove the image from the catalog.
+     * @param pkImage, image to remove.
+     * @return true if the image is removed, false otherwise.
+     */
     public boolean Remove (GraphicsImage pkImage)
     {
         if (pkImage == null)
@@ -114,6 +135,11 @@ public class ImageCatalog
         return true;
     }
 
+    /** Find an image in the catalog based on the image's name. If not in the
+     * catalog, try to load from disk.
+     * @param rkImageName, name of the image to fine.
+     * @return the desired image, or the default image.
+     */
     public GraphicsImage Find ( String rkImageName)
     {
         if (rkImageName == ms_kNullString 
@@ -145,55 +171,34 @@ public class ImageCatalog
         return m_spkDefaultImage;
     }
 
-    public boolean PrintContents (String rkFilename)
-    {
-//         const char* acDecorated = System::GetPath(rkFilename.c_str(),
-//                                                   System::SM_WRITE);
-
-//         if (acDecorated)
-//         {
-//             std::ofstream kOStr(acDecorated);
-//             assert(kOStr);
-
-//             std::map<std::string,Image*>::const_iterator pkIter;
-//             for (pkIter = m_kEntry.begin(); pkIter != m_kEntry.end(); pkIter++)
-//             {
-//                 Image* pkImage = pkIter->second;
-//                 kOStr << pkIter->first << ":" << std::endl;
-//                 kOStr << "    dimension = " << pkImage->GetDimension()
-//                       << std::endl;
-//                 for (int i = 0; i < pkImage->GetDimension(); i++)
-//                 {
-//                     kOStr << "    bound(" << i << ") = " << pkImage->GetBound(i)
-//                           << std::endl;
-//                 }
-//                 kOStr << "    format = " << pkImage->GetFormatName() << std::endl;
-//                 kOStr << std::endl;
-//             }
-//             kOStr.close();
-//             return true;
-//         }
-
-        return false;
-    }
-
-
+    /** Set the active image catalog.
+     * @param pkActive, new active image catalog.
+     */
     public static void SetActive (ImageCatalog pkActive)
     {
         ms_pkActive = pkActive;
     }
 
-    public static ImageCatalog GetActive ()
+    /** Get the active image catalog.
+     * @return the active image catalog.
+     */
+    public final static ImageCatalog GetActive ()
     {
         return ms_pkActive;
     }
 
+    /** Name of the ImageCatalog -- typically "Main" */
     private String m_kName;
+    /** Default directory where images are stored. */
     private String m_kDefaultDir;
+    /** Map <String,GraphicsImage> for mapping an image to its name. */
     private HashMap<String,GraphicsImage> m_kEntry = new HashMap<String,GraphicsImage>();
+    /** Default image when no image can be found. */
     private GraphicsImage m_spkDefaultImage;
-
+    /** null string comparison */
     private static final String ms_kNullString = new String("");;
+    /** default string comparison */
     public static final String ms_kDefaultString = new String("Default");
+    /** Active ImageCatalog. */
     private static ImageCatalog ms_pkActive = null;
 }
