@@ -20,15 +20,30 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
+
+/** These functions depend on the interpretation of the index buffer of
+ * the triangle primitive.  The triangle <V0,V1,V2> is counterclockwise
+ * order.
+ */
 public abstract class Triangles extends Geometry
     implements StreamInterface
 {
-    // These functions depend on the interpretation of the index buffer of
-    // the triangle primitive.  The triangle <V0,V1,V2> is counterclockwise
-    // order.
+    /** Get the number of triangles.
+     * @return the number of triangles.
+     */
     public abstract int GetTriangleQuantity ();
+    /** Get the triangle at given index.
+     * @param i, index.
+     * @param riV, int[3] array to contain 3 triangle indices.
+     */
     public abstract boolean GetTriangle (int i, int[] riV);
 
+    /**
+     * Get the triangle in model coodinates.
+     * @param i, index.
+     * @param rkMTri, triangle in model-coordinates.
+     * @return true if triangle exists, false otherwise.
+     */
     public boolean GetModelTriangle (int i, Triangle3f rkMTri)
     {
         int[] aiTris = new int[3];
@@ -44,6 +59,12 @@ public abstract class Triangles extends Geometry
         return false;
     }
 
+    /**
+     * Get the triangle in world coodinates.
+     * @param i, index.
+     * @param rkMTri, triangle in world-coordinates.
+     * @return true if triangle exists, false otherwise.
+     */
     public boolean GetWorldTriangle (int i, Triangle3f rkWTri)
     {
         int[] aiTris = new int[3];
@@ -59,6 +80,7 @@ public abstract class Triangles extends Geometry
         return false;
     }
 
+    /** Generate triangle normals. */
     public void GenerateNormals ()
     {
         if (!VBuffer.GetAttributes().HasNormal())
@@ -67,22 +89,27 @@ public abstract class Triangles extends Geometry
             kAttr.SetNChannels(3);
             VertexBuffer pkVBufferPlusNormals = new VertexBuffer(kAttr,
                                                                  VBuffer.GetVertexQuantity());
-            VBuffer.BuildCompatibleArray(kAttr,false,pkVBufferPlusNormals);
+            VBuffer.BuildCompatibleArray(kAttr,pkVBufferPlusNormals);
             VBuffer = pkVBufferPlusNormals;
         }
 
         UpdateModelNormals();
     }
 
+    /** Default constructor. */
     public Triangles () {}
 
+    /** Protected constructor. The Type value will be assigned by the derived
+     * class.
+     * @param pkVBuffer, vertex buffer.
+     * @param pkIBuffer, index buffer.
+     */
     protected Triangles (VertexBuffer pkVBuffer, IndexBuffer pkIBuffer)
     {
         super(pkVBuffer,pkIBuffer);
-        // The Type value will be assigned by the derived class.
     }
 
-    // geometric updates
+    /** Update model normals. */
     protected void UpdateModelNormals ()
     {
         // Calculate normals from vertices by weighted averages of facet planes
@@ -134,31 +161,69 @@ public abstract class Triangles extends Geometry
         }
     }
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
     } 
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         return super.Register(rkStream);
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion);
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();
