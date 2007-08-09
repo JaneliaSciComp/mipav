@@ -2767,7 +2767,7 @@ public class VOI extends ModelSerialCloneable {
      */
     public void importCurve(VOIContour curve, int slice) {
         curve.setName(name);
-        curves[slice].addElement(curve);
+        curves[slice].addElement(curve.clone());
 
         if (curveType == PROTRACTOR) {
 
