@@ -27,6 +27,11 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.*;
 public class VertexBuffer extends Bindable
     implements StreamInterface
 {
+    /** Create a VertexBuffer with the given attributes and number of vertices.
+     * Calculate the size of the VertexBuffer based on the Attributes.
+     * @param rkAttributes, vertex buffer attributes.
+     * @param iVertexQuantity, number of vertices.
+     */
     public VertexBuffer (Attributes rkAttributes, int iVertexQuantity)
     {
         m_kAttributes = rkAttributes;
@@ -38,7 +43,8 @@ public class VertexBuffer extends Bindable
     }
 
     /**
-     * Copy constructor:
+     * Copy constructor.
+     * @param pkVBuffer, VertexBuffer to copy into this.
      */
     public VertexBuffer (VertexBuffer pkVBuffer)
     {
@@ -54,6 +60,7 @@ public class VertexBuffer extends Bindable
         }
     }
 
+    /** Delete memory. */
     public void finalize()
     {
         if ( m_kAttributes != null )
@@ -65,28 +72,37 @@ public class VertexBuffer extends Bindable
         super.finalize();
     }
 
-    // The format of a single vertex in the buffer.
+    /** The format of a single vertex in the buffer.
+     * @return vertex attributes.
+     */
     public final Attributes GetAttributes ()
     {
         return m_kAttributes;
     }
 
 
-    // The size of a single vertex in the buffer, measured as number of
-    // 'float' values.  The number of bytes for a single vertex is
-    // GetVertexSize()*sizeof(float).
+    /** The size of a single vertex in the buffer, measured as number of
+     * 'float' values.  The number of bytes for a single vertex is
+     * GetVertexSize()*sizeof(float).
+     * @return vertex size.
+     */
     public final int GetVertexSize ()
     {
         return m_iVertexSize;
     }
 
-    // The number of vertices in the buffer.
+    /** The number of vertices in the buffer.
+     * @return number of vertices.
+     */
     public final int GetVertexQuantity ()
     {
         return m_iVertexQuantity;
     }
 
-    // Access to positions.
+    /** Access to positions.
+     * @param i, vertex index.
+     * @return position data at index i.
+     */
     public float[] PositionTuple (int i)
     {
         if (m_kAttributes.HasPosition() && 0 <= i && i < m_iVertexQuantity)
@@ -104,7 +120,10 @@ public class VertexBuffer extends Bindable
         return null;
     }
 
-    // Access to normals.
+    /** Access to normals.
+     * @param i, vertex index.
+     * @return normal data at index i.
+     */
     public float[] NormalTuple (int i)
     {
         if (m_kAttributes.HasNormal() && 0 <= i && i < m_iVertexQuantity)
@@ -121,7 +140,11 @@ public class VertexBuffer extends Bindable
         return null;
     }
 
-    // Access to colors.
+    /** Access to colors.
+     * @param iUnit, color unit (1-4).
+     * @param i, vertex index.
+     * @return color data at index i.
+     */
     public float[] ColorTuple (int iUnit, int i)
     {
         if (m_kAttributes.HasColor(iUnit) && 0 <= i && i < m_iVertexQuantity)
@@ -138,7 +161,11 @@ public class VertexBuffer extends Bindable
         return null;
     }
 
-    // Access to texture coordinates.
+    /** Access to texture coordinates.
+     * @param iUnit, texture coordinate unit (1-4).
+     * @param i, vertex index.
+     * @return texture coordinate data at index i.
+     */
      public float[] TCoordTuple (int iUnit, int i)
     {
         if (m_kAttributes.HasTCoord(iUnit) && 0 <= i && i < m_iVertexQuantity)
@@ -156,22 +183,30 @@ public class VertexBuffer extends Bindable
     }
 
 
-    // Direct access to the vertex buffer data.  The quantity is the number of
-    // float elements.  The number of bytes for the entire vertex buffer is
-    // GetChannelQuantity()*sizeof(float).
+    /** Direct access to the vertex buffer data.  The quantity is the number of
+     * float elements.  The number of bytes for the entire vertex buffer is
+     * GetChannelQuantity()*sizeof(float).
+     * @return channel quantity.
+     */
     public final int GetChannelQuantity ()
     {
         return m_iChannelQuantity;
     }
 
+    /** Direct access to the vertex buffer data.
+     * @return vertex buffer data.
+     */
     public final float[] GetData ()
     {
         return m_afChannel;
     }
 
-    // Use these accessors for convenience.  No range checking is performed,
-    // so you should be sure that the attribute exists and that the number of
-    // channels is correct.
+    /** Get the position at the given index. Use these accessors for
+     * convenience.  No range checking is performed, so you should be sure
+     * that the attribute exists and that the number of channels is correct.
+     * @param i, vertex index.
+     * @return position.
+     */
     public Vector3f Position3 (int i)
     {
         assert(m_kAttributes.GetPChannels() == 3);
@@ -180,6 +215,11 @@ public class VertexBuffer extends Bindable
                              m_afChannel[ iIndex + 1 ],
                              m_afChannel[ iIndex + 2 ] );
     }
+
+    /** Set the position at the given index.
+     * @param i, vertex index.
+     * @param kP, new position.
+     */
     public void Position3 (int i, Vector3f kP)
     {
         assert(m_kAttributes.GetPChannels() == 3);
@@ -189,6 +229,12 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex + 2 ] = kP.Z();
     }
 
+    /** Get the normal at the given index. Use these accessors for
+     * convenience.  No range checking is performed, so you should be sure
+     * that the attribute exists and that the number of channels is correct.
+     * @param i, vertex index.
+     * @return normal.
+     */
     public Vector3f Normal3 (int i)
     {
         assert(m_kAttributes.GetNChannels() == 3);
@@ -197,6 +243,11 @@ public class VertexBuffer extends Bindable
                              m_afChannel[ iIndex + 1 ],
                              m_afChannel[ iIndex + 2 ] );
     }
+
+    /** Set the normal at the given index.
+     * @param i, vertex index.
+     * @param kN, new normal.
+     */
     public void Normal3 (int i, Vector3f kN)
     {
         assert(m_kAttributes.GetNChannels() == 3);
@@ -206,6 +257,13 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex + 2 ] = kN.Z();
     }
    
+    /** Get the color at the given index. Use these accessors for convenience.
+     * No range checking is performed, so you should be sure that the
+     * attribute exists and that the number of channels is correct.
+     * @param iUnit, color unit (1-4).
+     * @param i, vertex index.
+     * @return color.
+     */
     public ColorRGB Color3 (int iUnit, int i)
     {
         assert(m_kAttributes.GetCChannels(iUnit) == 3);
@@ -215,6 +273,11 @@ public class VertexBuffer extends Bindable
                              m_afChannel[ iIndex + 2 ] );
     }
 
+    /** Set the color at the given index.
+     * @param iUnit, color unit (1-4).
+     * @param i, vertex index.
+     * @param kC, new color.
+     */
     public void Color3 (int iUnit, int i, ColorRGB kC)
     {
         assert(m_kAttributes.GetCChannels(iUnit) == 3);
@@ -224,6 +287,14 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex + 2 ] = kC.B();
     }
 
+    /** Get the texture coordinate (1D) at the given index. Use these
+     * accessors for convenience.  No range checking is performed, so you
+     * should be sure that the attribute exists and that the number of
+     * channels is correct.
+     * @param iUnit, texture coordinate unit (1-4).
+     * @param i, vertex index.
+     * @return texture coordinate.
+     */
     public float TCoord1 (int iUnit, int i)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 1);
@@ -231,6 +302,11 @@ public class VertexBuffer extends Bindable
         return m_afChannel[ iIndex ];
     }
 
+    /** Set the texture coordiante (1D) at the given index.
+     * @param iUnit, texture coordinate unit (1-4).
+     * @param i, vertex index.
+     * @param fValue, new texture coordinate.
+     */
     public void TCoord1 (int iUnit, int i, float fValue)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 1);
@@ -238,6 +314,14 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex ] = fValue;
     }
 
+    /** Get the texture coordinate (2D) at the given index. Use these
+     * accessors for convenience.  No range checking is performed, so you
+     * should be sure that the attribute exists and that the number of
+     * channels is correct.
+     * @param iUnit, texture coordinate unit (1-4).
+     * @param i, vertex index.
+     * @return texture coordinate.
+     */
     public Vector2f TCoord2 (int iUnit, int i)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 2);
@@ -245,6 +329,12 @@ public class VertexBuffer extends Bindable
         return new Vector2f( m_afChannel[ iIndex + 0 ],
                              m_afChannel[ iIndex + 1 ] );
     }
+
+    /** Set the texture coordiante (2D) at the given index.
+     * @param iUnit, texture coordinate unit (1-4).
+     * @param i, vertex index.
+     * @param kTC, new texture coordinate.
+     */
     public void TCoord2 (int iUnit, int i, Vector2f kTC)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 2);
@@ -253,6 +343,13 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex + 1 ] = kTC.Y();
     }
  
+    /** Get the texture coordinate (3D) at the given index. Use these
+     * accessors for convenience.  No range checking is performed, so you
+     * should be sure that the attribute exists and that the number of
+     * channels is correct.
+     * @param i, vertex index.
+     * @return texture coordinate.
+     */
     public Vector3f TCoord3 (int iUnit, int i)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 2);
@@ -262,6 +359,11 @@ public class VertexBuffer extends Bindable
                              m_afChannel[ iIndex + 2 ] );
     }
 
+    /** Set the texture coordiante (3D) at the given index.
+     * @param iUnit, texture coordinate unit (1-4).
+     * @param i, vertex index.
+     * @param kTC, new texture coordinate.
+     */
     public void TCoord3 (int iUnit, int i, Vector3f kTC)
     {
         assert(m_kAttributes.GetTChannels(iUnit) == 3);
@@ -271,20 +373,16 @@ public class VertexBuffer extends Bindable
         m_afChannel[ iIndex + 2 ] = kTC.Z();
     }
 
-    // Support for building an array from the vertex buffer data, but
-    // compatible with the vertex program inputs.  The output array,
-    // rafCompatible, if null on input is dynamically allocated.  The caller
-    // is responsible for deleting it.  You may pass in an already allocated
-    // array as long as you are certain it has enough channels to store the
-    // data.
-    //
-    // TO DO.  The bPackARGB flag exists for DirectX because of its need
-    // to have ARGB (8-bit channels) rather than floats in [0,1] like OpenGL
-    // prefers.  Set bPackARGB to 'true' for DirectX and to 'false' for the
-    // OpenGL and software renderers.  If we need other formats later, this
-    // parameter must be expanded to include the new possibilities.
-    public float[] BuildCompatibleArray (Attributes rkIAttr, boolean bPackARGB
-                                         /*int& riChannels, float[] rafCompatible */)
+    /** Support for building an array from the vertex buffer data, but
+     * compatible with the vertex program inputs.  The output array,
+     * rafCompatible, if null on input is dynamically allocated.  The caller
+     * is responsible for deleting it.  You may pass in an already allocated
+     * array as long as you are certain it has enough channels to store the
+     * data.
+     * @param rkIAttr, vertex program input attributes
+     * @return compatible array data.
+     */
+    public float[] BuildCompatibleArray (Attributes rkIAttr)
     {
         // The use of "unsigned int" is to allow storage of "float" channels and
         // of the ARGB-formatted colors, which are "unsigned int".  Typecasting
@@ -374,34 +472,6 @@ public class VertexBuffer extends Bindable
                             // with an opaque color.
                             kCompatible.add(1.0f);
                         }
-                        /*
-                        if (bPackARGB)
-                        {
-                            for (j = iIChannels; j < 4; j++)
-                            {
-                                // Fill with 1 so that the a-component is
-                                // compatible with an opaque color.
-                                kCompatible.push_back(*puiOne);
-                            }
-
-                            // Map from [0,1] to [0,255].
-                            for (j = 3; j >= 0; j--)
-                            {
-                                uiValue = kCompatible.back();
-                                fValue = *(float*)&uiValue;
-                                auiColor[j] = (unsigned int)(255.0f*fValue);
-                                kCompatible.pop_back();
-                            }
-
-                            uiPackColor =
-                                (auiColor[2]      ) |  // blue
-                                (auiColor[1] <<  8) |  // green
-                                (auiColor[0] << 16) |  // red
-                                (auiColor[3] << 24);   // alpha
-
-                            kCompatible.push_back(uiPackColor);
-                        }
-                        */
                     }
                     else
                     {
@@ -409,34 +479,6 @@ public class VertexBuffer extends Bindable
                         {
                             kCompatible.add(afData[j]);
                         }
-                        /*
-                        if (bPackARGB)
-                        {
-                            for (j = iIChannels; j < 4; j++)
-                            {
-                                // Fill with 1 so that the a-component is
-                                // compatible with an opaque color.
-                                kCompatible.push_back(*puiOne);
-                            }
-
-                            // Map from [0,1] to [0,255].
-                            for (j = 3; j >= 0; j--)
-                            {
-                                uiValue = kCompatible.back();
-                                fValue = *(float*)&uiValue;
-                                auiColor[j] = (unsigned int)(255.0f*fValue);
-                                kCompatible.pop_back();
-                            }
-
-                            uiPackColor =
-                                (auiColor[2]      ) |  // blue
-                                (auiColor[1] <<  8) |  // green
-                                (auiColor[0] << 16) |  // red
-                                (auiColor[3] << 24);   // alpha
-
-                            kCompatible.push_back(uiPackColor);
-                        }
-                        */
                     }
                 }
             }
@@ -481,7 +523,16 @@ public class VertexBuffer extends Bindable
         return afReturn;
     }
 
-    public void BuildCompatibleArray (Attributes rkIAttr, boolean bPackARGB, VertexBuffer kVB)
+    /** Support for building an array from the vertex buffer data, but
+     * compatible with the vertex program inputs.  The output array,
+     * rafCompatible, if null on input is dynamically allocated.  The caller
+     * is responsible for deleting it.  You may pass in an already allocated
+     * array as long as you are certain it has enough channels to store the
+     * data.
+     * @param rkIAttr, vertex program input attributes
+     * @param kVB compatible array VertexBuffer output.
+     */
+    public void BuildCompatibleArray (Attributes rkIAttr, VertexBuffer kVB)
     {
         // The use of "unsigned int" is to allow storage of "float" channels and
         // of the ARGB-formatted colors, which are "unsigned int".  Typecasting
@@ -615,19 +666,20 @@ public class VertexBuffer extends Bindable
         }
     }
 
-    // An application might want to vary the "active quantity" of vertices.
-    // Use this function to do so.  It does not change the data storage,
-    // only the m_iVertexQuantity member.  The caller is responsible for
-    // saving the full quantity of vertices and resetting this when finished
-    // with the vertex buffer.  The caller also should not pass in a quantity
-    // that is larger than the original full quantity.
+    /** An application might want to vary the "active quantity" of vertices.
+     * Use this function to do so.  It does not change the data storage,
+     * only the m_iVertexQuantity member.  The caller is responsible for
+     * saving the full quantity of vertices and resetting this when finished
+     * with the vertex buffer.  The caller also should not pass in a quantity
+     * that is larger than the original full quantity.
+     * @param iVQuantity, set vertex quantity.
+     */
     public final void SetVertexQuantity (int iVQuantity)
     {
         m_iVertexQuantity = iVQuantity;
     }
 
-
-    // streaming support
+    /** Default constructor. */
     public VertexBuffer () 
     {
         m_kAttributes = new Attributes();
@@ -638,19 +690,28 @@ public class VertexBuffer extends Bindable
     }
 
 
-    // The format of a single vertex in the buffer.
+    /** The format of a single vertex in the buffer. */
     private Attributes m_kAttributes;
 
-    // The size of a single vertex in the buffer.
+    /** The size of a single vertex in the buffer. */
     private int m_iVertexSize;
 
-    // The number of vertices in the buffer.
+    /** The number of vertices in the buffer. */
     private int m_iVertexQuantity;
 
-    // The vertex buffer data.
+    /** The vertex buffer data size. */
     private int m_iChannelQuantity;  // = m_iVertexQuantity*m_iVertexSize
+    /** The vertex buffer data. */
     private float[] m_afChannel;
 
+    /**
+     * Loads this object from the input parameter rkStream, using the input
+     * Stream.Link to store the IDs of children objects of this object
+     * for linking after all objects are loaded from the Stream.
+     * @param rkStream, the Stream from which this object is being read.
+     * @param pkLink, the Link class for storing the IDs of this object's
+     * children objcts.
+     */
     public void Load (Stream rkStream, Stream.Link pkLink)
     {
         super.Load(rkStream,pkLink);
@@ -682,16 +743,34 @@ public class VertexBuffer extends Bindable
         }
     }
 
+    /**
+     * Copies this objects children objects from the input Stream's HashTable,
+     * based on the LinkID of the child stored in the pkLink paramter.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @param pkLink, the Link class from which the child object IDs are read.
+     */
     public void Link (Stream rkStream, Stream.Link pkLink)
     {
         super.Link(rkStream,pkLink);
     }
 
+    /**
+     * Registers this object with the input Stream parameter. All objects
+     * streamed to disk are registered with the Stream so that a unique list
+     * of objects is maintained.
+     * @param rkStream, the Stream where the child objects are stored.
+     * @return true if this object is registered, false if the object has
+     * already been registered.
+     */
     public boolean Register (Stream rkStream)
     {
         return super.Register(rkStream);
     }
 
+    /**
+     * Write this object and all it's children to the Stream.
+     * @param rkStream, the Stream where the child objects are stored.
+     */
     public void Save (Stream rkStream)
     {
         super.Save(rkStream);
@@ -715,6 +794,12 @@ public class VertexBuffer extends Bindable
         }
     }
 
+    /**
+     * Returns the size of this object and it's children on disk for the
+     * current StreamVersion parameter.
+     * @param rkVersion, the current version of the Stream file being created.
+     * @return the size of this object on disk.
+     */
     public int GetDiskUsed (StreamVersion rkVersion)
     {
         return super.GetDiskUsed(rkVersion) +
@@ -727,6 +812,12 @@ public class VertexBuffer extends Bindable
             Stream.SIZEOF_INT*m_kAttributes.GetMaxTCoords(); //sizeof(int)*m_kAttributes.GetMaxTCoords();
     }
 
+    /**
+     * Write this object into a StringTree for the scene-graph visualization.
+     * @param acTitle, the header for this object in the StringTree.
+     * @return StringTree containing a String-based representation of this
+     * object and it's children.
+     */
     public StringTree SaveStrings (final String acTitle)
     {
         StringTree pkTree = new StringTree();

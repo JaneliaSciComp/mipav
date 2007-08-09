@@ -22,12 +22,18 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 
 public class VisibleSet
 {
+    /** Construct a visible set with the maximum size and grow step.
+     * @param iMaxQuantity, maximum size of the set.
+     * @param iGrowBy, the amount to grow the set when it reaches maximum
+     * size.
+     */
     public VisibleSet (int iMaxQuantity, int iGrowBy)
     {
         m_akVisible = null;
         Resize(iMaxQuantity,iGrowBy);
     }
 
+    /** Delete memory. */
     public void finalize ()
     {
         for ( int i = 0; i < m_iQuantity; i++ )
@@ -46,16 +52,26 @@ public class VisibleSet
         }
     }
 
+    /** Get the size of the set.
+     * @return the size of the set.
+     */
     public final int GetQuantity ()
     {
         return m_iQuantity;
     }
 
+    /** Get the visible objects in the set.
+     * @return the visible objects in the set.
+     */
     public final VisibleObject[] GetVisible ()
     {
         return m_akVisible;
     }
 
+    /** Get the visible object at the specified index.
+     * @param i, index.
+     * @return the visible object at the specified index.
+     */
     public VisibleObject GetVisible (int i)
     {
         assert(0 <= i && i < m_iQuantity);
@@ -63,8 +79,11 @@ public class VisibleSet
     }
 
 
-    // Creates a VisibleObject from the input and appends it to the end of the
-    // VisibleObject array.
+    /** Creates a VisibleObject from the input and appends it to the end of the
+     * VisibleObject array.
+     * @param pkObject, Spatial object to add.
+     * @param pkGlobalEffect, effect to add.
+     */
     public void Insert (Spatial pkObject, Effect pkGlobalEffect)
     {
         // Increase the array storage if necessary.
@@ -93,11 +112,17 @@ public class VisibleSet
         m_akVisible[iIndex].GlobalEffect = pkGlobalEffect;
     }
 
+    /** Clear the visible set. */
     public void Clear ()
     {
         m_iQuantity = 0;
     }
 
+    /** Resize based on the maximum quantity and the grow step size.
+     * @param iMaxQuantity, maximum size of the set.
+     * @param iGrowBy, the amount to grow the set when it reaches maximum
+     * size.
+     */
     public void Resize (int iMaxQuantity, int iGrowBy)
     {
         if (iMaxQuantity > 0)
@@ -127,9 +152,16 @@ public class VisibleSet
         }
     }
 
+    /** Default maximum set size. */
     private static final int VS_DEFAULT_MAX_QUANTITY = 32;
+    /** Default grow step size. */
     private static final int VS_DEFAULT_GROWBY = 32;
-
-    private int m_iMaxQuantity, m_iGrowBy, m_iQuantity;
+    /** Local maximum set size. */
+    private int m_iMaxQuantity;
+    /** Local grow step size. */
+    private int m_iGrowBy;
+    /** Current set size. */
+    private int m_iQuantity;
+    /** Set of visible objects. */
     private VisibleObject[] m_akVisible;
 }

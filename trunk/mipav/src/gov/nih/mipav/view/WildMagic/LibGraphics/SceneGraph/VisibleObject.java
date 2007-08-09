@@ -22,14 +22,20 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
 
 public class VisibleObject
 {
+    /** Object: see VisibleSet.java */
     public Spatial Object = null;
+    /** Effect: see VisibleSet.java */
     public Effect GlobalEffect = null;
 
+    /** Return true if this object is drawable (non-null).
+     * @return true if this object is drawable.
+     */
     public boolean IsDrawable ()
     {
         return (Object != null) && (GlobalEffect == null);
     }
 
+    /** Delete memory. */
     public void finalize()
     {
         Object = null;

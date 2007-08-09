@@ -1352,7 +1352,7 @@ public class OpenGLRenderer extends Renderer
         pkResource.IAttr = rkIAttr;
         pkResource.OAttr = rkOAttr;
 
-        float[] afCompatible = pkVBuffer.BuildCompatibleArray(rkIAttr,false);
+        float[] afCompatible = pkVBuffer.BuildCompatibleArray(rkIAttr);
         int iChannels = afCompatible.length;
 
         // Generate the name and binding information.
