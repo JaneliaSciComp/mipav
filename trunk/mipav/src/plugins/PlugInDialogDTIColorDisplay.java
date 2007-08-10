@@ -12,8 +12,12 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
@@ -90,16 +94,19 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
  *
  */
 public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
-		implements AlgorithmInterface, ChangeListener, ItemListener, MouseListener, MouseWheelListener {
+		implements AlgorithmInterface, ChangeListener, ItemListener, MouseListener, MouseWheelListener, KeyListener, FocusListener {
 	
 	/** dialog title and version **/
-	private String title = " DTI Color Display  v1.1      ";
+	private String title = " DTI Color Display  v1.2      ";
 	
 	/** panels **/
 	private JPanel mainPanel,topPanel, filesPanel, okPanel, bottomPanel, colorPanel, colorWheelPanel, resultImagePanel, optionsPanel, colorWheelChoicesPanel, heuristicParametersPanel, anisotropyMaxPanel, anisotropyMinPanel, gammaPanel, stevensBetaPanel, satBluePanel, dimGreenPanel, colorRangePanel, satVsThetaPanel, resultPanel, resultImageSliderPanel, tempPanel, toolbarPanel, adjustExpPanel, truncMultPanel;
 	
 	/** labels **/
 	private JLabel eigenvectorLabel, anisotropyLabel, minAnisotropyMaxLabel, maxAnisotropyMaxLabel, minAnisotropyMinLabel, maxAnisotropyMinLabel, minGammaLabel, maxGammaLabel, minStevensBetaLabel, maxStevensBetaLabel, minSatBlueLabel, maxSatBlueLabel, minDimGreenLabel, maxDimGreenLabel, minColorRangeLabel, maxColorRangeLabel, minSatVsThetaLabel, maxSatVsThetaLabel, minResultImageSlicesLabel, maxResultImageSlicesLabel, magLabel, refLabel, minAdjustExpLabel, maxAdjustExpLabel;
+	
+	/** mins and maxes for heuristic parameters**/
+	private float minAnisotropyMax, maxAnisotropyMax, minAnisotropyMin, maxAnisotropyMin, minGamma, maxGamma, minStevensBeta, maxStevensBeta, minSatBlue, maxSatBlue, minDimGreen, maxDimGreen, minColorRange, maxColorRange, minSatVsTheta, maxSatVsTheta, minAdjustExp, maxAdjustExp;
 	
 	/** scroll pane for result image **/
     private JScrollPane resultScrollPanel;
@@ -234,6 +241,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     private boolean isMultiply = true;
     
     
+    
+    
+    
 	/**
 	 * Constructor
 	 */
@@ -361,9 +371,21 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		maxAnisotropyMaxLabel = new JLabel("1.0");
 		maxAnisotropyMaxLabel.setForeground(Color.black);
 		maxAnisotropyMaxLabel.setFont(MipavUtil.font12);
+		try {
+			maxAnisotropyMax = Float.parseFloat(maxAnisotropyMaxLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		minAnisotropyMaxLabel = new JLabel("0.0");
 		minAnisotropyMaxLabel.setForeground(Color.black);
 		minAnisotropyMaxLabel.setFont(MipavUtil.font12);
+		try {
+			minAnisotropyMax = Float.parseFloat(minAnisotropyMaxLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
@@ -372,7 +394,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		anisotropyMaxPanel.add(anisotropyMaxSlider,gbc);
 		anisotropyMaxTextField = new JTextField(8);
-		anisotropyMaxTextField.setEditable(false);
+		anisotropyMaxTextField.addKeyListener(this);
+		anisotropyMaxTextField.addFocusListener(this);
+		//anisotropyMaxTextField.setEditable(false);
 		anisotropyMaxTextField.setBackground(Color.white);
 		anisotropyMaxTextField.setText(String.valueOf((float) (anisotropyMaxSlider.getValue() / 1000.000000f)));
 		gbc.gridx = 3;
@@ -407,9 +431,21 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		maxAnisotropyMinLabel = new JLabel("1.0");
 		maxAnisotropyMinLabel.setForeground(Color.black);
 		maxAnisotropyMinLabel.setFont(MipavUtil.font12);
+		try {
+			maxAnisotropyMin = Float.parseFloat(maxAnisotropyMinLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		minAnisotropyMinLabel = new JLabel("0.0");
 		minAnisotropyMinLabel.setForeground(Color.black);
 		minAnisotropyMinLabel.setFont(MipavUtil.font12);
+		try {
+			minAnisotropyMin = Float.parseFloat(minAnisotropyMinLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
         gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
@@ -418,7 +454,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;;
 		anisotropyMinPanel.add(anisotropyMinSlider,gbc);
 		anisotropyMinTextField = new JTextField(8);
-		anisotropyMinTextField.setEditable(false);
+		anisotropyMinTextField.addKeyListener(this);
+		anisotropyMinTextField.addFocusListener(this);
+		//anisotropyMinTextField.setEditable(false);
 		anisotropyMinTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -453,9 +491,21 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		maxGammaLabel = new JLabel("4");
 		maxGammaLabel.setForeground(Color.black);
 		maxGammaLabel.setFont(MipavUtil.font12);
+		try {
+			maxGamma = Float.parseFloat(maxGammaLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		minGammaLabel = new JLabel("1");
 		minGammaLabel.setForeground(Color.black);
 		minGammaLabel.setFont(MipavUtil.font12);
+		try {
+			minGamma = Float.parseFloat(minGammaLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
         gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
@@ -464,7 +514,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;;
 		gammaPanel.add(gammaSlider,gbc);
 		gammaTextField = new JTextField(8);
-		gammaTextField.setEditable(false);
+		gammaTextField.addKeyListener(this);
+		gammaTextField.addFocusListener(this);
+		//gammaTextField.setEditable(false);
 		gammaTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -499,9 +551,21 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		maxSatBlueLabel = new JLabel("0.5");
 		maxSatBlueLabel.setForeground(Color.black);
 		maxSatBlueLabel.setFont(MipavUtil.font12);
+		try {
+			maxSatBlue = Float.parseFloat(maxSatBlueLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		minSatBlueLabel = new JLabel("0.0");
 		minSatBlueLabel.setForeground(Color.black);
 		minSatBlueLabel.setFont(MipavUtil.font12);
+		try {
+			minSatBlue = Float.parseFloat(minSatBlueLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
         gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
@@ -510,7 +574,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;;
 		satBluePanel.add(satBlueSlider,gbc);
 		satBlueTextField = new JTextField(8);
-		satBlueTextField.setEditable(false);
+		satBlueTextField.addKeyListener(this);
+		satBlueTextField.addFocusListener(this);
+		//satBlueTextField.setEditable(false);
 		satBlueTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -545,9 +611,21 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		maxDimGreenLabel = new JLabel("3.0");
 		maxDimGreenLabel.setForeground(Color.black);
 		maxDimGreenLabel.setFont(MipavUtil.font12);
+		try {
+			maxDimGreen = Float.parseFloat(maxDimGreenLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		minDimGreenLabel = new JLabel("0.0");
 		minDimGreenLabel.setForeground(Color.black);
 		minDimGreenLabel.setFont(MipavUtil.font12);
+		try {
+			minDimGreen = Float.parseFloat(minDimGreenLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
         gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
@@ -556,7 +634,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;;
 		dimGreenPanel.add(dimGreenSlider,gbc);
 		dimGreenTextField = new JTextField(8);
-		dimGreenTextField.setEditable(false);
+		dimGreenTextField.addKeyListener(this);
+		dimGreenTextField.addFocusListener(this);
+		//dimGreenTextField.setEditable(false);
 		dimGreenTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -591,9 +671,21 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		maxColorRangeLabel = new JLabel("1.0");
 		maxColorRangeLabel.setForeground(Color.black);
 		maxColorRangeLabel.setFont(MipavUtil.font12);
+		try {
+			maxColorRange = Float.parseFloat(maxColorRangeLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		minColorRangeLabel = new JLabel("0.0");
 		minColorRangeLabel.setForeground(Color.black);
 		minColorRangeLabel.setFont(MipavUtil.font12);
+		try {
+			minColorRange = Float.parseFloat(minColorRangeLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
@@ -602,7 +694,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		colorRangePanel.add(colorRangeSlider,gbc);
 		colorRangeTextField = new JTextField(8);
-		colorRangeTextField.setEditable(false);
+		colorRangeTextField.addKeyListener(this);
+		colorRangeTextField.addFocusListener(this);
+		//colorRangeTextField.setEditable(false);
 		colorRangeTextField.setBackground(Color.white);
 		colorRangeTextField.setText(String.valueOf((float) (colorRangeSlider.getValue() / 1000.000000f)));
 		gbc.gridx = 3;
@@ -638,9 +732,21 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		maxSatVsThetaLabel = new JLabel("1.0");
 		maxSatVsThetaLabel.setForeground(Color.black);
 		maxSatVsThetaLabel.setFont(MipavUtil.font12);
+		try {
+			maxSatVsTheta = Float.parseFloat(maxSatVsThetaLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		minSatVsThetaLabel = new JLabel("0.0");
 		minSatVsThetaLabel.setForeground(Color.black);
 		minSatVsThetaLabel.setFont(MipavUtil.font12);
+		try {
+			minSatVsTheta = Float.parseFloat(minSatVsThetaLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
@@ -649,6 +755,10 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		satVsThetaPanel.add(satVsThetaSlider,gbc);
 		satVsThetaTextField = new JTextField(8);
+		satVsThetaTextField.addKeyListener(this);
+		satVsThetaTextField.addFocusListener(this);
+		satVsThetaTextField.setDisabledTextColor(Color.lightGray);
+		satVsThetaTextField.setEnabled(false);
 		satVsThetaTextField.setEditable(false);
 		satVsThetaTextField.setBackground(Color.lightGray);
 		satVsThetaTextField.setText(String.valueOf((float) (satVsThetaSlider.getValue() / 1000.000000f)));
@@ -675,7 +785,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		adjustExpPanel = new JPanel(gbl);
 		titledBorder = new TitledBorder(new EtchedBorder(), " Adjust Exp ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		adjustExpPanel.setBorder(titledBorder);
-		adjustExpSlider = new JSlider(JSlider.HORIZONTAL, 50, 100, 50);
+		adjustExpSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
 		adjustExpSlider.setMajorTickSpacing(10);
 		adjustExpSlider.setPaintTicks(true);
 		adjustExpSlider.addChangeListener(this);
@@ -684,9 +794,21 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		maxAdjustExpLabel = new JLabel("1.0");
 		maxAdjustExpLabel.setForeground(Color.black);
 		maxAdjustExpLabel.setFont(MipavUtil.font12);
-		minAdjustExpLabel = new JLabel("0.5");
+		try {
+			maxAdjustExp = Float.parseFloat(maxAdjustExpLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
+		minAdjustExpLabel = new JLabel("0.0");
 		minAdjustExpLabel.setForeground(Color.black);
 		minAdjustExpLabel.setFont(MipavUtil.font12);
+		try {
+			minAdjustExp = Float.parseFloat(minAdjustExpLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
         gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
@@ -695,7 +817,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;;
 		adjustExpPanel.add(adjustExpSlider,gbc);
 		adjustExpTextField = new JTextField(8);
-		adjustExpTextField.setEditable(false);
+		adjustExpTextField.addKeyListener(this);
+		adjustExpTextField.addFocusListener(this);
+		//adjustExpTextField.setEditable(false);
 		adjustExpTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -730,9 +854,21 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		maxStevensBetaLabel = new JLabel("0.6");
 		maxStevensBetaLabel.setForeground(Color.black);
 		maxStevensBetaLabel.setFont(MipavUtil.font12);
+		try {
+			maxStevensBeta = Float.parseFloat(maxStevensBetaLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
 		minStevensBetaLabel = new JLabel("0.3");
 		minStevensBetaLabel.setForeground(Color.black);
 		minStevensBetaLabel.setFont(MipavUtil.font12);
+		try {
+			minStevensBeta = Float.parseFloat(minStevensBetaLabel.getText());
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			return;
+		}
         gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 3;
@@ -741,7 +877,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.fill = GridBagConstraints.HORIZONTAL;;
 		stevensBetaPanel.add(stevensBetaSlider,gbc);
 		stevensBetaTextField = new JTextField(8);
-		stevensBetaTextField.setEditable(false);
+		stevensBetaTextField.addKeyListener(this);
+		stevensBetaTextField.addFocusListener(this);
+		//stevensBetaTextField.setEditable(false);
 		stevensBetaTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -1339,6 +1477,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 					}
 				}
 				satVsThetaSlider.setEnabled(false);
+				satVsThetaTextField.setEditable(false);
+				satVsThetaTextField.setEnabled(false);
 				satVsThetaTextField.setBackground(Color.lightGray);
 			}
 			else if(index == 1) {
@@ -1355,6 +1495,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 					}
 				}
 				satVsThetaSlider.setEnabled(true);
+				satVsThetaTextField.setEditable(true);
+				satVsThetaTextField.setEnabled(true);
 				satVsThetaTextField.setBackground(Color.white);
 			}
 			else if(index == 2) {
@@ -1371,6 +1513,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 					}
 				}
 				satVsThetaSlider.setEnabled(true);
+				satVsThetaTextField.setEditable(true);
+				satVsThetaTextField.setEnabled(true);
 				satVsThetaTextField.setBackground(Color.white);
 			}
 			else if(index == 3) {
@@ -1387,6 +1531,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 					}
 				}
 				satVsThetaSlider.setEnabled(true);
+				satVsThetaTextField.setEditable(true);
+				satVsThetaTextField.setEnabled(true);
 				satVsThetaTextField.setBackground(Color.white);
 			}
 		}
@@ -1732,13 +1878,13 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		Object source = e.getSource();
 
         if (source == anisotropyMaxSlider) {
-        	if(anisotropyMaxSlider.getValue() < anisotropyMinSlider.getValue()) {
+        	if(anisotropyMaxSlider.getValue() <= anisotropyMinSlider.getValue()) {
         		anisotropyMaxSlider.setValue(anisotropyMinSlider.getValue() + 1);
         	}
         	updateCurrentColorWheel();
         }
         else if (source == anisotropyMinSlider) {
-        	if(anisotropyMinSlider.getValue() > anisotropyMaxSlider.getValue()) {
+        	if(anisotropyMinSlider.getValue() >= anisotropyMaxSlider.getValue()) {
         		anisotropyMinSlider.setValue(anisotropyMaxSlider.getValue() - 1);
         	}
         	updateCurrentColorWheel();
@@ -2359,6 +2505,294 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		}
 
 	}
+
+	public void keyPressed(KeyEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void keyReleased(KeyEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void keyTyped(KeyEvent event) {
+		Object source = event.getSource();
+
+		if(event.getKeyChar() == KeyEvent.VK_ENTER) {
+			if(source == anisotropyMaxTextField) {
+				String numString = anisotropyMaxTextField.getText();
+				float num = validateCurrentNum(numString, minAnisotropyMax, maxAnisotropyMax);
+				if(num != -1) {
+					if((num * 1000) <= anisotropyMinSlider.getValue()) {
+		        		num = (anisotropyMinSlider.getValue() + 1) / 1000.000000f;
+		        	}
+					if(num == anisotropyMaxSlider.getValue() / 1000.000000f) {
+						anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
+					}
+					anisotropyMax = num;
+					updateCurrentColorWheel();
+					anisotropyMaxSlider.setValue((int)(num * 1000));
+				}
+				else {
+					anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
+				}
+			}
+			else if(source == anisotropyMinTextField) {
+				String numString = anisotropyMinTextField.getText();
+				float num = validateCurrentNum(numString, minAnisotropyMin, maxAnisotropyMin);
+				if(num != -1) {
+					if((num * 1000) >= anisotropyMaxSlider.getValue()) {
+		        		num = (anisotropyMaxSlider.getValue() - 1) / 1000.000000f;
+		        	}
+					if(num == anisotropyMinSlider.getValue() / 1000.000000f) {
+						anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
+					}
+					anisotropyMin = num;
+					updateCurrentColorWheel();
+					anisotropyMinSlider.setValue((int)(num * 1000));
+				}
+				else {
+					anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
+				}
+			}
+			else if(source == gammaTextField) {
+				String numString = gammaTextField.getText();
+				float num = validateCurrentNum(numString, minGamma, maxGamma);
+				if(num != -1) {
+					gamma = num;
+					updateCurrentColorWheel();
+					gammaSlider.setValue((int)(num * 100));
+				}
+				else {
+					gammaTextField.setText(String.valueOf(gammaSlider.getValue() / 100.000000f));
+				}
+			}
+			else if(source == satBlueTextField) {
+				String numString = satBlueTextField.getText();
+				float num = validateCurrentNum(numString, minSatBlue, maxSatBlue);
+				if(num != -1) {
+					pB = num;
+					updateCurrentColorWheel();
+					satBlueSlider.setValue((int)(num * 1000));
+				}
+				else {
+					satBlueTextField.setText(String.valueOf(satBlueSlider.getValue() / 1000.000000f));
+				}
+			}
+			else if(source == dimGreenTextField) {
+				String numString = dimGreenTextField.getText();
+				float num = validateCurrentNum(numString, minDimGreen, maxDimGreen);
+				if(num != -1) {
+					pG = num;
+					updateCurrentColorWheel();
+					dimGreenSlider.setValue((int)(num * 100));
+				}
+				else {
+					dimGreenTextField.setText(String.valueOf(dimGreenSlider.getValue() / 100.000000f));
+				}
+			}
+			else if(source == colorRangeTextField) {
+				String numString = colorRangeTextField.getText();
+				float num = validateCurrentNum(numString, minColorRange, maxColorRange);
+				if(num != -1) {
+					pC = num;
+					updateCurrentColorWheel();
+					colorRangeSlider.setValue((int)(num * 1000));
+				}
+				else {
+					colorRangeTextField.setText(String.valueOf(colorRangeSlider.getValue() / 1000.000000f));
+				}
+			}
+			else if(source == satVsThetaTextField) {
+				String numString = satVsThetaTextField.getText();
+				float num = validateCurrentNum(numString, minSatVsTheta, maxSatVsTheta);
+				if(num != -1) {
+					pS = num;
+					updateCurrentColorWheel();
+					satVsThetaSlider.setValue((int)(num * 1000));
+				}
+				else {
+					satVsThetaTextField.setText(String.valueOf(satVsThetaSlider.getValue() / 1000.000000f));
+				}
+			}
+			else if(source == adjustExpTextField) {
+				String numString = adjustExpTextField.getText();
+				float num = validateCurrentNum(numString, minAdjustExp, maxAdjustExp);
+				if(num != -1) {
+					adjustExp = num;
+					updateCurrentColorWheel();
+					adjustExpSlider.setValue((int)(num * 100));
+				}
+				else {
+					adjustExpTextField.setText(String.valueOf(adjustExpSlider.getValue() / 100.000000f));
+				}
+			}
+			else if(source == stevensBetaTextField) {
+				String numString = stevensBetaTextField.getText();
+				float num = validateCurrentNum(numString, minStevensBeta, maxStevensBeta);
+				if(num != -1) {
+					stevensBeta = num;
+					updateCurrentColorWheel();
+					stevensBetaSlider.setValue((int)(num * 100));
+				}
+				else {
+					stevensBetaTextField.setText(String.valueOf(stevensBetaSlider.getValue() / 100.000000f));
+				}
+			}	
+		}
+	}
+	
+	
+	
+	
+	public void focusGained(FocusEvent event) {
+		
+		
+	}
+
+	public void focusLost(FocusEvent event) {
+		Object source = event.getSource();
+
+		if(source == anisotropyMaxTextField) {
+			String numString = anisotropyMaxTextField.getText();
+			float num = validateCurrentNum(numString, minAnisotropyMax, maxAnisotropyMax);
+			if(num != -1) {
+				if((num * 1000) <= anisotropyMinSlider.getValue()) {
+	        		num = (anisotropyMinSlider.getValue() + 1) / 1000.000000f;
+	        	}
+				if(num == anisotropyMaxSlider.getValue() / 1000.000000f) {
+					anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
+				}
+				anisotropyMax = num;
+				updateCurrentColorWheel();
+				anisotropyMaxSlider.setValue((int)(num * 1000));
+			}
+			else {
+				anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
+			}
+		}
+		else if(source == anisotropyMinTextField) {
+			String numString = anisotropyMinTextField.getText();
+			float num = validateCurrentNum(numString, minAnisotropyMin, maxAnisotropyMin);
+			if(num != -1) {
+				if((num * 1000) >= anisotropyMaxSlider.getValue()) {
+	        		num = (anisotropyMaxSlider.getValue() - 1) / 1000.000000f;
+	        	}
+				if(num == anisotropyMinSlider.getValue() / 1000.000000f) {
+					anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
+				}
+				anisotropyMin = num;
+				updateCurrentColorWheel();
+				anisotropyMinSlider.setValue((int)(num * 1000));
+			}
+			else {
+				anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
+			}
+		}
+		else if(source == gammaTextField) {
+			String numString = gammaTextField.getText();
+			float num = validateCurrentNum(numString, minGamma, maxGamma);
+			if(num != -1) {
+				gamma = num;
+				updateCurrentColorWheel();
+				gammaSlider.setValue((int)(num * 100));
+			}
+			else {
+				gammaTextField.setText(String.valueOf(gammaSlider.getValue() / 100.000000f));
+			}
+		}
+		else if(source == satBlueTextField) {
+			String numString = satBlueTextField.getText();
+			float num = validateCurrentNum(numString, minSatBlue, maxSatBlue);
+			if(num != -1) {
+				pB = num;
+				updateCurrentColorWheel();
+				satBlueSlider.setValue((int)(num * 1000));
+			}
+			else {
+				satBlueTextField.setText(String.valueOf(satBlueSlider.getValue() / 1000.000000f));
+			}
+		}
+		else if(source == dimGreenTextField) {
+			String numString = dimGreenTextField.getText();
+			float num = validateCurrentNum(numString, minDimGreen, maxDimGreen);
+			if(num != -1) {
+				pG = num;
+				updateCurrentColorWheel();
+				dimGreenSlider.setValue((int)(num * 100));
+			}
+			else {
+				dimGreenTextField.setText(String.valueOf(dimGreenSlider.getValue() / 100.000000f));
+			}
+		}
+		else if(source == colorRangeTextField) {
+			String numString = colorRangeTextField.getText();
+			float num = validateCurrentNum(numString, minColorRange, maxColorRange);
+			if(num != -1) {
+				pC = num;
+				updateCurrentColorWheel();
+				colorRangeSlider.setValue((int)(num * 1000));
+			}
+			else {
+				colorRangeTextField.setText(String.valueOf(colorRangeSlider.getValue() / 1000.000000f));
+			}
+		}
+		else if(source == satVsThetaTextField) {
+			String numString = satVsThetaTextField.getText();
+			float num = validateCurrentNum(numString, minSatVsTheta, maxSatVsTheta);
+			if(num != -1) {
+				pS = num;
+				updateCurrentColorWheel();
+				satVsThetaSlider.setValue((int)(num * 1000));
+			}
+			else {
+				satVsThetaTextField.setText(String.valueOf(satVsThetaSlider.getValue() / 1000.000000f));
+			}
+		}
+		else if(source == adjustExpTextField) {
+			String numString = adjustExpTextField.getText();
+			float num = validateCurrentNum(numString, minAdjustExp, maxAdjustExp);
+			if(num != -1) {
+				adjustExp = num;
+				updateCurrentColorWheel();
+				adjustExpSlider.setValue((int)(num * 100));
+			}
+			else {
+				adjustExpTextField.setText(String.valueOf(adjustExpSlider.getValue() / 100.000000f));
+			}
+		}
+		else if(source == stevensBetaTextField) {
+			String numString = stevensBetaTextField.getText();
+			float num = validateCurrentNum(numString, minStevensBeta, maxStevensBeta);
+			if(num != -1) {
+				stevensBeta = num;
+				updateCurrentColorWheel();
+				stevensBetaSlider.setValue((int)(num * 100));
+			}
+			else {
+				stevensBetaTextField.setText(String.valueOf(stevensBetaSlider.getValue() / 100.000000f));
+			}
+		}
+		
+	}
+
+	public float validateCurrentNum(String numString, float min, float max) {
+		float num;
+
+		try {
+			num = Float.parseFloat(numString);
+		}catch(NumberFormatException e){
+			return -1;
+		}
+		if(num >= min && num <= max) {
+			return num;
+		}else {
+			return -1;
+		}
+	}
+	
+	
 	
 	
 	

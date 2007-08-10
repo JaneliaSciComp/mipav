@@ -42,6 +42,9 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 	/** arry of r,g,b after blue shift **/
 	private float blueShiftColors[] = new float[3];
 	
+	/** array of r,g,b values after red shifting **/
+	private float[] redShiftColors = new float[3];
+	
 	/** arry of r,g,b after green adj **/
 	private float greenAdjColors[] = new float[3];
 	
@@ -226,6 +229,14 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 				g = blueShiftColors[1];
 				b = blueShiftColors[2];
     		}
+    		
+    		//shift red
+    		if(r != 0 && g != 0 && b != 0) {
+				redShiftColors = shiftRed(r,g,b);
+				r = redShiftColors[0];
+				g = redShiftColors[1];
+				b = redShiftColors[2];
+    		}
 			
 			//adjust green
     		if(r != 0 && g != 0 && b != 0) {
@@ -295,7 +306,8 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 
 	    		theta = (float)Math.asin(xylength);
 	    		phi = (float)Math.atan2(vy,vx);
-	    		hue = ((phi - piDivTwo + twoPi)%twoPi)/twoPi;
+
+	    		hue = ((phi + piDivTwo + twoPi)%twoPi)/twoPi;
 	    		if(pS < .001) {
 					pS = .001f;
 				}
@@ -318,6 +330,15 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 					g = blueShiftColors[1];
 					b = blueShiftColors[2];
 				}
+				
+	    		//shift red
+				if(r != 0 && g != 0 && b != 0) {
+					redShiftColors = shiftRed(r,g,b);
+					r = redShiftColors[0];
+					g = redShiftColors[1];
+					b = redShiftColors[2];
+				}
+				
 				
 				//adjust green
 	    		if(r != 0 && g != 0 && b != 0) {
@@ -409,6 +430,14 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 					r = blueShiftColors[0];
 					g = blueShiftColors[1];
 					b = blueShiftColors[2];
+				}
+				
+	    		//shift red
+				if(r != 0 && g != 0 && b != 0) {
+					redShiftColors = shiftRed(r,g,b);
+					r = redShiftColors[0];
+					g = redShiftColors[1];
+					b = redShiftColors[2];
 				}
 				
 				//adjust green
@@ -514,6 +543,14 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 					r = blueShiftColors[0];
 					g = blueShiftColors[1];
 					b = blueShiftColors[2];
+				}
+				
+	    		//shift red
+				if(r != 0 && g != 0 && b != 0) {
+					redShiftColors = shiftRed(r,g,b);
+					r = redShiftColors[0];
+					g = redShiftColors[1];
+					b = redShiftColors[2];
 				}
 				
 				//adjust green
@@ -624,6 +661,35 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 		colors[1] = gS;
 		colors[2] = bS;
 
+		return colors;
+	}
+	
+	
+	
+	/**
+	 * red shift
+	 * @param r1
+	 * @param g1
+	 * @param b1
+	 * @return
+	 */
+	public float[] shiftRed(float r1, float g1, float b1) {
+		float colors[] = new float[3];
+		float pR = pB/4;
+		
+		float b = b1/(r1+g1+b1);
+		
+		float cB = Math.max((3/2) * pR * (b-(1/3)) * pC, 0);
+		
+		float rS = (cB*b1) + ((1-cB)*r1);
+		float gS = (cB*b1) + ((1-cB)*g1);
+		float bS = b1;
+		
+		colors[0] = rS;
+		colors[1] = gS;
+		colors[2] = bS;
+		
+		
 		return colors;
 	}
 	
