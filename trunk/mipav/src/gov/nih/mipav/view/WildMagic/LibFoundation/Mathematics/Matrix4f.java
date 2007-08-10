@@ -202,6 +202,10 @@ public class Matrix4f
      */
     public void finalize()
     {
+        if ( (this == Matrix4f.ZERO) || (this == Matrix4f.IDENTITY) )
+        {
+            System.err.println( "Matrix4f" );
+        }
         m_afEntry = null;
     }
 

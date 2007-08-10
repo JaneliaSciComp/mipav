@@ -73,6 +73,14 @@ public class Vector3f
      */
     public void finalize()
     {
+        if ( (this == Vector3f.ZERO) || (this ==  Vector3f.UNIT_X)
+                || (this ==  Vector3f.UNIT_Y)
+                || (this ==  Vector3f.UNIT_Z)
+                || (this ==  Vector3f.UNIT_Z_NEG)
+                || (this ==  Vector3f.ONE))
+        {
+            System.err.println( "Vector3f" );
+        }
         m_afTuple = null;
     }
 

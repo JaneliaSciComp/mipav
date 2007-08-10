@@ -78,6 +78,10 @@ public class ColorRGB
      */
     public void finalize()
     {
+        if ( (this == ColorRGB.BLACK) || (this == ColorRGB.WHITE) )
+        {
+            System.err.println( "ColorRGB" );
+        }
         m_afTuple = null;
     }
 

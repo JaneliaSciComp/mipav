@@ -225,56 +225,48 @@ public class ModelLUT extends ModelStorageBase {
     }
 
     /**
+     * @param kLUT, model lut
+     * @param kTransferLine, transfer function
+     * @param iHeight, lut height
+     * @param iTable
      */
-    public static byte[] exportIndexedLUTMin( ModelLUT kLut, TransferFunction kTransferLine, int iHeight, int[] iTable )
+    public static byte[] exportIndexedLUTMin( ModelLUT kLut )
     {
+        TransferFunction kTransferLine = kLut.getTransferFunction();
+        
         byte[] remappedLUTMin = null;
         int remappedValue;
         int count = 0;
-        if ((kLut.type == STRIPED) || (kLut.type == MUSCLE_BONE)) {
-            int nPts = kTransferLine.size();
-            float xMax = ((Point2Df) (kTransferLine.getPoint(nPts-1))).x;
-            float xMin = ((Point2Df) (kTransferLine.getPoint(0))).x;
-            float fNew;
+        int nPts = kTransferLine.size();
+        float xMax = ((Point2Df) (kTransferLine.getPoint(nPts-1))).x;
+        float xMin = ((Point2Df) (kTransferLine.getPoint(0))).x;
+        float fNew;
 
-            int lutHeight = kLut.getExtents()[1];
-            remappedLUTMin = new byte[lutHeight * 4];
-            for (int i = 0; i < lutHeight; i++) {
-                fNew = (float) (xMin + (((float) i / (lutHeight - 1)) * (xMax - xMin)));
-                remappedValue = kLut.indexedLUT[(int) (kTransferLine.getRemappedValue(fNew, iHeight) + 0.5f)];
-                remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
-                remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
-                remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
-                remappedLUTMin[count++] = (byte)( (remappedValue & 0xff000000) >> 24);
-            }
-        } else {
-            int nPts = kTransferLine.size();
-            remappedLUTMin = new byte[nPts * 4];
-            float xMax = ((Point2Df) (kTransferLine.getPoint(nPts-1))).x;
-            float xMin = ((Point2Df) (kTransferLine.getPoint(0))).x;
-            float fNew;
-            for (int i = 0; i < nPts; i++) {
-                fNew = (float) (xMin + (((float) i / (nPts - 1)) * (xMax - xMin)));
-                remappedValue = iTable[(int) (kTransferLine.getRemappedValue(fNew, iHeight) + 0.5f)];
-                remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
-                remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
-                remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
-                remappedLUTMin[count++] = (byte)( (remappedValue & 0xff000000) >> 24);
-            }
+        int lutHeight = kLut.getExtents()[1];
+        remappedLUTMin = new byte[lutHeight * 4];
+        for (int i = 0; i < lutHeight; i++) {
+            fNew = (float) (xMin + (((float) i / (lutHeight - 1)) * (xMax - xMin)));
+            remappedValue = kLut.indexedLUT[(int) (kTransferLine.getRemappedValue(fNew, lutHeight) + 0.5f)];
+            remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
+            remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
+            remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
+            remappedLUTMin[count++] = (byte)( (remappedValue & 0xff000000) >> 24);
         }
         return remappedLUTMin;
     }
 
     /**
      */
-    public static byte[] exportIndexedLUTMin( TransferFunction kTransferLineR, TransferFunction kTransferLineG,
-                                              TransferFunction kTransferLineB, int iHeight, int[] iTable )
+    public static byte[] exportIndexedLUTMin( ModelRGB kRGBT )
     {
+        TransferFunction kTransferLineR = kRGBT.getRedFunction();
+        TransferFunction kTransferLineG = kRGBT.getGreenFunction();
+        TransferFunction kTransferLineB = kRGBT.getBlueFunction();
+        int[] iTable = kRGBT.exportIndexedRGB();
+
         int nPtsR = kTransferLineR.size();
         int nPtsG = kTransferLineG.size();
         int nPtsB = kTransferLineB.size();
-        int nPts = Math.max(nPtsR, Math.max(nPtsG, nPtsB));
-        byte[] remappedLUTMin = new byte[nPts * 4];
         float xMaxR = ((Point2Df) (kTransferLineR.getPoint(nPtsR-1))).x;
         float xMinR = ((Point2Df) (kTransferLineR.getPoint(0))).x;
         
@@ -287,18 +279,21 @@ public class ModelLUT extends ModelStorageBase {
         int remappedValue;
         int count = 0;
         float fNewR, fNewG, fNewB;
-        for (int i = 0; i < nPts; i++) {
-            fNewR = (float) (xMinR + (((float) i / (nPts - 1)) * (xMaxR - xMinR)));
-            fNewG = (float) (xMinG + (((float) i / (nPts - 1)) * (xMaxG - xMinG)));
-            fNewB = (float) (xMinB + (((float) i / (nPts - 1)) * (xMaxB - xMinB)));
 
-            remappedValue = iTable[(int) (kTransferLineR.getRemappedValue(fNewR, iHeight) + 0.5f)];
+        int lutHeight = kRGBT.getExtents()[1];
+        byte[] remappedLUTMin = new byte[lutHeight * 4];
+        for (int i = 0; i < lutHeight; i++) {
+            fNewR = (float) (xMinR + (((float) i / (lutHeight - 1)) * (xMaxR - xMinR)));
+            fNewG = (float) (xMinG + (((float) i / (lutHeight - 1)) * (xMaxG - xMinG)));
+            fNewB = (float) (xMinB + (((float) i / (lutHeight - 1)) * (xMaxB - xMinB)));
+
+            remappedValue = iTable[(int) (kTransferLineR.getRemappedValue(fNewR, lutHeight) + 0.5f)];
             remappedLUTMin[count++] = (byte)( (remappedValue & 0x00ff0000) >> 16);
 
-            remappedValue = iTable[(int) (kTransferLineG.getRemappedValue(fNewG, iHeight) + 0.5f)];
+            remappedValue = iTable[(int) (kTransferLineG.getRemappedValue(fNewG, lutHeight) + 0.5f)];
             remappedLUTMin[count++] = (byte)( (remappedValue & 0x0000ff00) >> 8);
 
-            remappedValue = iTable[(int) (kTransferLineB.getRemappedValue(fNewB, iHeight) + 0.5f)];
+            remappedValue = iTable[(int) (kTransferLineB.getRemappedValue(fNewB, lutHeight) + 0.5f)];
             remappedLUTMin[count++] = (byte)( (remappedValue & 0x000000ff));
 
             //Alpha

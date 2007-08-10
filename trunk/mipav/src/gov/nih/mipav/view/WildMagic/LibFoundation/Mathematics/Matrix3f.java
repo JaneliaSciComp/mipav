@@ -272,6 +272,11 @@ public class Matrix3f
      */
     public void finalize()
     {
+        if ( (this == Matrix3f.ZERO) || (this == Matrix3f.IDENTITY) )
+        {
+            System.err.println( "Matrix3f" );
+        }
+
         m_afEntry = null;
     }
 

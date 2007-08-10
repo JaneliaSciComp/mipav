@@ -76,6 +76,14 @@ public class Vector4f
      */
     public void finalize()
     {
+        if ( (this == Vector4f.ZERO) || (this ==  Vector4f.UNIT_X)
+                || (this ==  Vector4f.UNIT_Y)
+                || (this ==  Vector4f.UNIT_Z)
+                || (this ==  Vector4f.UNIT_W)
+                || (this ==  Vector4f.ONE))
+        {
+            System.err.println( "Vector4f" );
+        }
         m_afTuple = null;
     }
 
