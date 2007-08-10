@@ -338,8 +338,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         tBar.add(makeSeparator());
 
         JButton triPlanarButton = buildButton("Tri-planar", "Tri-Planar View", "3plane");
-        JButton quadPlanarButton = buildButton("VolTriplanar", "Volume Tri-Planar View", "4plane");
-        JButton wmPlanarButton = buildButton("WMVolTriplanar", "Volume Tri-Planar View", "gpu");
+        JButton quadPlanarButton = buildButton("VolTriplanar", "Volume Renderer", "4plane");
+        JButton wmPlanarButton = buildButton("WMVolTriplanar", "GPU-based Volume Renderer - Beta", "gpu");
         JButton lightBoxButton = buildButton("Light box", "View Light Box", "lightbox");
         // JButton gpuButton = buildButton("GPU", "GPU rendering", "gpu");
         // JButton multiButton = buildButton("MultiHisto", "Multi-histo rendering", "multihisto");
