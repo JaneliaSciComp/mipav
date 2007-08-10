@@ -1199,12 +1199,17 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
 	        	FileIO fileIO = new FileIO();
+	        	if(eigvecSrcImage != null) {
+	        		eigvecSrcImage.disposeLocal();
+	        		eigvecSrcImage = null;
+	        	}
 	        	eigvecSrcImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
 	        	if(eigvecSrcImage.getNDims() != 4) {
 	        		MipavUtil.displayError("Eigenvector file does not have correct dimensions");
 	        		if(eigvecSrcImage != null) {
 	        			eigvecSrcImage.disposeLocal();
 	        		}
+	        		eigenvectorPath.setText("");
 	        		eigvecSrcImage = null;
 					return;
 	        	}
@@ -1213,6 +1218,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 					if(eigvecSrcImage != null) {
 						eigvecSrcImage.disposeLocal();
 					}
+					eigenvectorPath.setText("");
 					eigvecSrcImage = null;
 					return;
 	        	}
@@ -1239,12 +1245,17 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	FileIO fileIO = new FileIO();
+	        	if(anisotropyImage != null) {
+	        		anisotropyImage.disposeLocal();
+	        		anisotropyImage = null;
+	        	}
 	        	anisotropyImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
 	        	if(anisotropyImage.getNDims() > 3) {
 					MipavUtil.displayError("anisotropy file does not have correct dimensions");
 					if(anisotropyImage != null) {
 						anisotropyImage.disposeLocal();
 					}
+					anisotropyPath.setText("");
 					anisotropyImage = null;
 					return;
 	        	}
@@ -1266,7 +1277,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 				tempPanel.setBorder(titledBorder);
 				bottomPanel.add(tempPanel, 2);
-				bottomPanel.remove(resultPanel);
+				bottomPanel.remove(resultPanel);	
+			}
+			if(resultImage != null) {
+				resultImage.disposeLocal();
+				resultImage = null;
 			}
 			callAlgorithm();
 		}
@@ -2338,6 +2353,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	 * window closing
 	 */
 	public void windowClosing(WindowEvent event) {
+		finalize();
 		if(resultImage != null) {
 			resultImage.disposeLocal();
 		}
