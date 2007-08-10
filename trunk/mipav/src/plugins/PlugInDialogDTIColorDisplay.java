@@ -1896,20 +1896,20 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	if(anisotropyMaxSlider.getValue() <= anisotropyMinSlider.getValue()) {
         		anisotropyMaxSlider.setValue(anisotropyMinSlider.getValue() + 1);
         	}
-        	updateCurrentColorWheel();
+        	//updateCurrentColorWheel();
         }
         else if (source == anisotropyMinSlider) {
         	if(anisotropyMinSlider.getValue() >= anisotropyMaxSlider.getValue()) {
         		anisotropyMinSlider.setValue(anisotropyMaxSlider.getValue() - 1);
         	}
-        	updateCurrentColorWheel();
+        	//updateCurrentColorWheel();
         }
         else if (source == gammaSlider) {
         	updateCurrentColorWheel();
         }
-        //else if (source == stevensBetaSlider) {
-        //	updateCurrentColorWheel();
-        //}
+        else if (source == stevensBetaSlider) {
+        	updateCurrentColorWheel();
+        }
         else if (source == satBlueSlider) {
         	updateCurrentColorWheel();
         }
@@ -2391,14 +2391,14 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			if (wheelRotation < 0) {
 				if(anisotropyMaxSlider.getValue() < anisotropyMaxSlider.getMaximum()) {
 					anisotropyMaxSlider.setValue(anisotropyMaxSlider.getValue() + 1);
-					updateCurrentColorWheel();
+					//updateCurrentColorWheel();
 				}
 			}
 			else {
 				if(anisotropyMaxSlider.getValue() > anisotropyMaxSlider.getMinimum()) {
 					if(anisotropyMaxSlider.getValue() - 1 > anisotropyMinSlider.getValue()) {
 						anisotropyMaxSlider.setValue(anisotropyMaxSlider.getValue() - 1);
-						updateCurrentColorWheel();
+						//updateCurrentColorWheel();
 					}
 				}
 			}
@@ -2408,14 +2408,14 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				if(anisotropyMinSlider.getValue() < anisotropyMinSlider.getMaximum()) {
 					if(anisotropyMinSlider.getValue() + 1 < anisotropyMaxSlider.getValue()) {
 						anisotropyMinSlider.setValue(anisotropyMinSlider.getValue() + 1);
-						updateCurrentColorWheel();
+						//updateCurrentColorWheel();
 					}
 				}
 			}
 			else {
 				if(anisotropyMinSlider.getValue() > anisotropyMinSlider.getMinimum()) {
 					anisotropyMinSlider.setValue(anisotropyMinSlider.getValue() - 1);
-					updateCurrentColorWheel();
+					//updateCurrentColorWheel();
 				}
 			}
 		}
@@ -2540,15 +2540,17 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				String numString = anisotropyMaxTextField.getText();
 				float num = validateCurrentNum(numString, minAnisotropyMax, maxAnisotropyMax);
 				if(num != -1) {
-					if((num * 1000) <= anisotropyMinSlider.getValue()) {
+					if(((int)(num * 1000)) <= anisotropyMinSlider.getValue()) {
 		        		num = (anisotropyMinSlider.getValue() + 1) / 1000.000000f;
 		        	}
 					if(num == anisotropyMaxSlider.getValue() / 1000.000000f) {
 						anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
 					}
-					anisotropyMax = num;
-					updateCurrentColorWheel();
-					anisotropyMaxSlider.setValue((int)(num * 1000));
+					if(((int)(num * 1000)) != anisotropyMaxSlider.getValue()) {
+						anisotropyMax = num;
+						//updateCurrentColorWheel();
+						anisotropyMaxSlider.setValue((int)(num * 1000));
+					}
 				}
 				else {
 					anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
@@ -2558,15 +2560,17 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				String numString = anisotropyMinTextField.getText();
 				float num = validateCurrentNum(numString, minAnisotropyMin, maxAnisotropyMin);
 				if(num != -1) {
-					if((num * 1000) >= anisotropyMaxSlider.getValue()) {
+					if(((int)(num * 1000)) >= anisotropyMaxSlider.getValue()) {
 		        		num = (anisotropyMaxSlider.getValue() - 1) / 1000.000000f;
 		        	}
 					if(num == anisotropyMinSlider.getValue() / 1000.000000f) {
 						anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
 					}
-					anisotropyMin = num;
-					updateCurrentColorWheel();
-					anisotropyMinSlider.setValue((int)(num * 1000));
+					if(((int)(num * 1000)) != anisotropyMinSlider.getValue()) {
+						anisotropyMin = num;
+						//updateCurrentColorWheel();
+						anisotropyMinSlider.setValue((int)(num * 1000));
+					}
 				}
 				else {
 					anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
@@ -2576,9 +2580,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				String numString = gammaTextField.getText();
 				float num = validateCurrentNum(numString, minGamma, maxGamma);
 				if(num != -1) {
-					gamma = num;
-					updateCurrentColorWheel();
-					gammaSlider.setValue((int)(num * 100));
+					if(((int)(num * 100)) != gammaSlider.getValue()) {
+						gamma = num;
+						updateCurrentColorWheel();
+						gammaSlider.setValue((int)(num * 100));
+					}
 				}
 				else {
 					gammaTextField.setText(String.valueOf(gammaSlider.getValue() / 100.000000f));
@@ -2588,9 +2594,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				String numString = satBlueTextField.getText();
 				float num = validateCurrentNum(numString, minSatBlue, maxSatBlue);
 				if(num != -1) {
-					pB = num;
-					updateCurrentColorWheel();
-					satBlueSlider.setValue((int)(num * 1000));
+					if(((int)(num * 1000)) != satBlueSlider.getValue()) {
+						pB = num;
+						updateCurrentColorWheel();
+						satBlueSlider.setValue((int)(num * 1000));
+					}
 				}
 				else {
 					satBlueTextField.setText(String.valueOf(satBlueSlider.getValue() / 1000.000000f));
@@ -2600,9 +2608,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				String numString = dimGreenTextField.getText();
 				float num = validateCurrentNum(numString, minDimGreen, maxDimGreen);
 				if(num != -1) {
-					pG = num;
-					updateCurrentColorWheel();
-					dimGreenSlider.setValue((int)(num * 100));
+					if(((int)(num * 100)) != dimGreenSlider.getValue()) {
+						pG = num;
+						updateCurrentColorWheel();
+						dimGreenSlider.setValue((int)(num * 100));
+					}
 				}
 				else {
 					dimGreenTextField.setText(String.valueOf(dimGreenSlider.getValue() / 100.000000f));
@@ -2612,9 +2622,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				String numString = colorRangeTextField.getText();
 				float num = validateCurrentNum(numString, minColorRange, maxColorRange);
 				if(num != -1) {
-					pC = num;
-					updateCurrentColorWheel();
-					colorRangeSlider.setValue((int)(num * 1000));
+					if(((int)(num * 1000)) != colorRangeSlider.getValue()) {
+						pC = num;
+						updateCurrentColorWheel();
+						colorRangeSlider.setValue((int)(num * 1000));
+					}
 				}
 				else {
 					colorRangeTextField.setText(String.valueOf(colorRangeSlider.getValue() / 1000.000000f));
@@ -2624,9 +2636,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				String numString = satVsThetaTextField.getText();
 				float num = validateCurrentNum(numString, minSatVsTheta, maxSatVsTheta);
 				if(num != -1) {
-					pS = num;
-					updateCurrentColorWheel();
-					satVsThetaSlider.setValue((int)(num * 1000));
+					if(((int)(num * 1000)) != satVsThetaSlider.getValue()) {
+						pS = num;
+						updateCurrentColorWheel();
+						satVsThetaSlider.setValue((int)(num * 1000));
+					}
 				}
 				else {
 					satVsThetaTextField.setText(String.valueOf(satVsThetaSlider.getValue() / 1000.000000f));
@@ -2636,9 +2650,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				String numString = adjustExpTextField.getText();
 				float num = validateCurrentNum(numString, minAdjustExp, maxAdjustExp);
 				if(num != -1) {
-					adjustExp = num;
-					updateCurrentColorWheel();
-					adjustExpSlider.setValue((int)(num * 100));
+					if(((int)(num * 100)) != adjustExpSlider.getValue()) {
+						adjustExp = num;
+						updateCurrentColorWheel();
+						adjustExpSlider.setValue((int)(num * 100));
+					}
 				}
 				else {
 					adjustExpTextField.setText(String.valueOf(adjustExpSlider.getValue() / 100.000000f));
@@ -2648,9 +2664,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				String numString = stevensBetaTextField.getText();
 				float num = validateCurrentNum(numString, minStevensBeta, maxStevensBeta);
 				if(num != -1) {
-					stevensBeta = num;
-					updateCurrentColorWheel();
-					stevensBetaSlider.setValue((int)(num * 100));
+					if(((int)(num * 100)) != stevensBetaSlider.getValue()) {
+						stevensBeta = num;
+						updateCurrentColorWheel();
+						stevensBetaSlider.setValue((int)(num * 100));
+					}
 				}
 				else {
 					stevensBetaTextField.setText(String.valueOf(stevensBetaSlider.getValue() / 100.000000f));
@@ -2674,15 +2692,17 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			String numString = anisotropyMaxTextField.getText();
 			float num = validateCurrentNum(numString, minAnisotropyMax, maxAnisotropyMax);
 			if(num != -1) {
-				if((num * 1000) <= anisotropyMinSlider.getValue()) {
+				if(((int)(num * 1000)) <= anisotropyMinSlider.getValue()) {
 	        		num = (anisotropyMinSlider.getValue() + 1) / 1000.000000f;
 	        	}
 				if(num == anisotropyMaxSlider.getValue() / 1000.000000f) {
 					anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
 				}
-				anisotropyMax = num;
-				updateCurrentColorWheel();
-				anisotropyMaxSlider.setValue((int)(num * 1000));
+				if(((int)(num * 1000)) != anisotropyMaxSlider.getValue()) {
+					anisotropyMax = num;
+					//updateCurrentColorWheel();
+					anisotropyMaxSlider.setValue((int)(num * 1000));
+				}
 			}
 			else {
 				anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
@@ -2692,15 +2712,17 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			String numString = anisotropyMinTextField.getText();
 			float num = validateCurrentNum(numString, minAnisotropyMin, maxAnisotropyMin);
 			if(num != -1) {
-				if((num * 1000) >= anisotropyMaxSlider.getValue()) {
+				if(((int)(num * 1000)) >= anisotropyMaxSlider.getValue()) {
 	        		num = (anisotropyMaxSlider.getValue() - 1) / 1000.000000f;
 	        	}
 				if(num == anisotropyMinSlider.getValue() / 1000.000000f) {
 					anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
 				}
-				anisotropyMin = num;
-				updateCurrentColorWheel();
-				anisotropyMinSlider.setValue((int)(num * 1000));
+				if(((int)(num * 1000)) != anisotropyMinSlider.getValue()) {
+					anisotropyMin = num;
+					//updateCurrentColorWheel();
+					anisotropyMinSlider.setValue((int)(num * 1000));
+				}
 			}
 			else {
 				anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
@@ -2710,9 +2732,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			String numString = gammaTextField.getText();
 			float num = validateCurrentNum(numString, minGamma, maxGamma);
 			if(num != -1) {
-				gamma = num;
-				updateCurrentColorWheel();
-				gammaSlider.setValue((int)(num * 100));
+				if(((int)(num * 100)) != gammaSlider.getValue()) {
+					gamma = num;
+					updateCurrentColorWheel();
+					gammaSlider.setValue((int)(num * 100));
+				}
 			}
 			else {
 				gammaTextField.setText(String.valueOf(gammaSlider.getValue() / 100.000000f));
@@ -2722,9 +2746,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			String numString = satBlueTextField.getText();
 			float num = validateCurrentNum(numString, minSatBlue, maxSatBlue);
 			if(num != -1) {
-				pB = num;
-				updateCurrentColorWheel();
-				satBlueSlider.setValue((int)(num * 1000));
+				if(((int)(num * 1000)) != satBlueSlider.getValue()) {
+					pB = num;
+					updateCurrentColorWheel();
+					satBlueSlider.setValue((int)(num * 1000));
+				}
 			}
 			else {
 				satBlueTextField.setText(String.valueOf(satBlueSlider.getValue() / 1000.000000f));
@@ -2734,9 +2760,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			String numString = dimGreenTextField.getText();
 			float num = validateCurrentNum(numString, minDimGreen, maxDimGreen);
 			if(num != -1) {
-				pG = num;
-				updateCurrentColorWheel();
-				dimGreenSlider.setValue((int)(num * 100));
+				if(((int)(num * 100)) != dimGreenSlider.getValue()) {
+					pG = num;
+					updateCurrentColorWheel();
+					dimGreenSlider.setValue((int)(num * 100));
+				}
 			}
 			else {
 				dimGreenTextField.setText(String.valueOf(dimGreenSlider.getValue() / 100.000000f));
@@ -2746,9 +2774,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			String numString = colorRangeTextField.getText();
 			float num = validateCurrentNum(numString, minColorRange, maxColorRange);
 			if(num != -1) {
-				pC = num;
-				updateCurrentColorWheel();
-				colorRangeSlider.setValue((int)(num * 1000));
+				if(((int)(num * 1000)) != colorRangeSlider.getValue()) {
+					pC = num;
+					updateCurrentColorWheel();
+					colorRangeSlider.setValue((int)(num * 1000));
+				}
 			}
 			else {
 				colorRangeTextField.setText(String.valueOf(colorRangeSlider.getValue() / 1000.000000f));
@@ -2758,9 +2788,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			String numString = satVsThetaTextField.getText();
 			float num = validateCurrentNum(numString, minSatVsTheta, maxSatVsTheta);
 			if(num != -1) {
-				pS = num;
-				updateCurrentColorWheel();
-				satVsThetaSlider.setValue((int)(num * 1000));
+				if(((int)(num * 1000)) != satVsThetaSlider.getValue()) {
+					pS = num;
+					updateCurrentColorWheel();
+					satVsThetaSlider.setValue((int)(num * 1000));
+				}
 			}
 			else {
 				satVsThetaTextField.setText(String.valueOf(satVsThetaSlider.getValue() / 1000.000000f));
@@ -2770,9 +2802,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			String numString = adjustExpTextField.getText();
 			float num = validateCurrentNum(numString, minAdjustExp, maxAdjustExp);
 			if(num != -1) {
-				adjustExp = num;
-				updateCurrentColorWheel();
-				adjustExpSlider.setValue((int)(num * 100));
+				if(((int)(num * 100)) != adjustExpSlider.getValue()) {
+					adjustExp = num;
+					updateCurrentColorWheel();
+					adjustExpSlider.setValue((int)(num * 100));
+				}
 			}
 			else {
 				adjustExpTextField.setText(String.valueOf(adjustExpSlider.getValue() / 100.000000f));
@@ -2782,9 +2816,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			String numString = stevensBetaTextField.getText();
 			float num = validateCurrentNum(numString, minStevensBeta, maxStevensBeta);
 			if(num != -1) {
-				stevensBeta = num;
-				updateCurrentColorWheel();
-				stevensBetaSlider.setValue((int)(num * 100));
+				if(((int)(num * 100)) != stevensBetaSlider.getValue()) {
+					stevensBeta = num;
+					updateCurrentColorWheel();
+					stevensBetaSlider.setValue((int)(num * 100));
+				}
 			}
 			else {
 				stevensBetaTextField.setText(String.valueOf(stevensBetaSlider.getValue() / 100.000000f));
