@@ -54,8 +54,11 @@ public class ColorWheel extends Canvas {
 	/** Stevens Beta **/
 	private float stevensBeta = .4f;
 
-	/** array of r,g,b values after blue sgifting **/
+	/** array of r,g,b values after blue shifting **/
 	private float[] blueShiftColors = new float[3];
+	
+	/** array of r,g,b values after red shifting **/
+	private float[] redShiftColors = new float[3];
 	
 	/** array of r,g,b values after green adj **/
 	private float[] greenAdjColors = new float[3];
@@ -282,6 +285,12 @@ public class ColorWheel extends Canvas {
 				green = blueShiftColors[1];
 				blue = blueShiftColors[2];
 				
+				//shift red
+				redShiftColors = shiftRed(red,green,blue);
+				red = redShiftColors[0];
+				green = redShiftColors[1];
+				blue = redShiftColors[2];
+				
 				//adjust green
 				greenAdjColors = adjustGreen(red,green,blue);
 				red = greenAdjColors[0];
@@ -332,6 +341,12 @@ public class ColorWheel extends Canvas {
 				red = blueShiftColors[0];
 				green = blueShiftColors[1];
 				blue = blueShiftColors[2];
+				
+				//shift red
+				redShiftColors = shiftRed(red,green,blue);
+				red = redShiftColors[0];
+				green = redShiftColors[1];
+				blue = redShiftColors[2];
 				
 				//adjust green
 				greenAdjColors = adjustGreen(red,green,blue);
@@ -388,6 +403,12 @@ public class ColorWheel extends Canvas {
 				red = blueShiftColors[0];
 				green = blueShiftColors[1];
 				blue = blueShiftColors[2];
+				
+				//shift red
+				redShiftColors = shiftRed(red,green,blue);
+				red = redShiftColors[0];
+				green = redShiftColors[1];
+				blue = redShiftColors[2];
 				
 				//adjust green
 				greenAdjColors = adjustGreen(red,green,blue);
@@ -455,6 +476,12 @@ public class ColorWheel extends Canvas {
 				green = blueShiftColors[1];
 				blue = blueShiftColors[2];
 				
+				//shift red
+				redShiftColors = shiftRed(red,green,blue);
+				red = redShiftColors[0];
+				green = redShiftColors[1];
+				blue = redShiftColors[2];
+				
 				//adjust green
 				greenAdjColors = adjustGreen(red,green,blue);
 				red = greenAdjColors[0];
@@ -497,6 +524,39 @@ public class ColorWheel extends Canvas {
 		colors[0] = rS;
 		colors[1] = gS;
 		colors[2] = bS;
+		
+		
+		return colors;
+	}
+	
+	
+	
+	
+	
+	
+	/**
+	 * red shift
+	 * @param r1
+	 * @param g1
+	 * @param b1
+	 * @return
+	 */
+	public float[] shiftRed(float r1, float g1, float b1) {
+		float colors[] = new float[3];
+		float pR = pB/4;
+		
+		float b = b1/(r1+g1+b1);
+		
+		float cB = Math.max((3/2) * pR * (b-(1/3)) * pC, 0);
+		
+		float rS = (cB*b1) + ((1-cB)*r1);
+		float gS = (cB*b1) + ((1-cB)*g1);
+		float bS = b1;
+		
+		colors[0] = rS;
+		colors[1] = gS;
+		colors[2] = bS;
+		
 		
 		return colors;
 	}
