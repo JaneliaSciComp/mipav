@@ -245,11 +245,8 @@ public class VolumeShaderEffect extends ShaderEffect
         m_afClipArbData = null;
         m_kSceneTarget = null;
         m_afBlend = null;
-        if ( m_kBackgroundColor != null )
-        {
-            m_kBackgroundColor.finalize();
-            m_kBackgroundColor = null;
-        }
+        m_kBackgroundColor = null;
+
         m_afSelfShadow = null;
         m_afGradientMagnitude = null;
 
@@ -372,7 +369,8 @@ public class VolumeShaderEffect extends ShaderEffect
         int iYBound = m_kImageA.getExtents()[1];
         int iZBound = m_kImageA.getExtents()[2];
 
-        byte[] aucData = calcImageNormals( m_kImageA );
+        //byte[] aucData = calcImageNormals( m_kImageA );
+        byte[] aucData = calcImageNormals();
         m_kNormalA = new GraphicsImage(GraphicsImage.FormatMode.IT_RGB888,
                                        iXBound,iYBound,iZBound,aucData,
                                        "NormalMapA");
@@ -707,6 +705,25 @@ public class VolumeShaderEffect extends ShaderEffect
         return iX + iXBound * (iY + (iYBound * iZ));
     }
 
+
+    /**
+     * Calculates the image normals for the input ModelImage. Stores them in a byte[].
+     * @return byte[] the image normals in byte format. 
+     */
+    private byte[] calcImageNormals( )
+    {
+        javax.vecmath.Vector3f[] akNormalsImageA =
+            gov.nih.mipav.view.renderer.RenderViewBase.getNormals();
+
+        byte[] acData = new byte[akNormalsImageA.length*3];
+        for (int i = 0; i < akNormalsImageA.length; i++ )
+        {
+            acData[i*3+0] = (byte)(akNormalsImageA[i].x*127 + 127);
+            acData[i*3+1] = (byte)(akNormalsImageA[i].y*127 + 127);
+            acData[i*3+2] = (byte)(akNormalsImageA[i].z*127 + 127);
+        }
+        return acData;
+    }
 
     /**
      * Calculates the image normals for the input ModelImage. Stores them in a byte[].
@@ -1128,8 +1145,7 @@ public class VolumeShaderEffect extends ShaderEffect
             return;
         }
         byte[] oldData = kColorMap.GetData();
-        byte[] aucData = ModelLUT.exportIndexedLUTMin( kLUT, kLUT.getTransferFunction(), kLUT.getExtents()[1],
-                kLUT.getIndexedLUT());
+        byte[] aucData = ModelLUT.exportIndexedLUTMin( kLUT );
 
         kColorMap.SetData(aucData, aucData.length/4);
         if ( oldData.length != aucData.length )
@@ -1154,14 +1170,12 @@ public class VolumeShaderEffect extends ShaderEffect
         byte[] aucData;
         if ( kLUT == null )
         {
-            aucData = ModelLUT.exportIndexedLUTMin( kRGBT.getRedFunction(), kRGBT.getGreenFunction(), kRGBT.getBlueFunction(),
-                                                    kRGBT.getExtents()[1], kRGBT.exportIndexedRGB());
+            aucData = ModelLUT.exportIndexedLUTMin( kRGBT );
             
         }
         else
         {
-            aucData = ModelLUT.exportIndexedLUTMin( kLUT, kLUT.getTransferFunction(), kLUT.getExtents()[1],
-                                                    kLUT.getIndexedLUT());
+            aucData = ModelLUT.exportIndexedLUTMin( kLUT );
         }
         return new GraphicsImage(
                                  GraphicsImage.FormatMode.IT_RGBA8888,aucData.length/4,aucData,
@@ -1292,6 +1306,7 @@ public class VolumeShaderEffect extends ShaderEffect
             if ( pkProgram.GetUC(m_akClip[i]) != null ) 
             {
                 pkProgram.GetUC(m_akClip[i]).SetDataSource(new float[]{afData[i],0,0,0});
+                m_aafClipData[i][0] = afData[i];
             }       
         }
     }
@@ -1439,11 +1454,7 @@ public class VolumeShaderEffect extends ShaderEffect
             return;
         }
         byte[] oldData = kImage.GetData();
-        byte[] aucData = ModelLUT.exportIndexedLUTMin( kRGBT.getRedFunction(),
-                                                       kRGBT.getGreenFunction(),
-                                                       kRGBT.getBlueFunction(),
-                                                       kRGBT.getExtents()[1],
-                                                       kRGBT.exportIndexedRGB());
+        byte[] aucData = ModelLUT.exportIndexedLUTMin( kRGBT );
         kImage.SetData(aucData, aucData.length/4);
         if ( oldData.length != aucData.length )
         {
@@ -1805,7 +1816,7 @@ public class VolumeShaderEffect extends ShaderEffect
     /** Indicates which shader to use (MIP, DDR, CMP, SUR, CMP_SUR): */
     private int m_iWhichShader = -1;
     /** stores the axis-aligned clip plane information: */
-    private float[][] m_aafClipData = new float[6][];
+    private float[][] m_aafClipData = new float[6][4];
     /** stores the eye clip plane information: */
     private float[] m_afClipEyeData = null;
     /** stores the inverse-eye clip plane information: */

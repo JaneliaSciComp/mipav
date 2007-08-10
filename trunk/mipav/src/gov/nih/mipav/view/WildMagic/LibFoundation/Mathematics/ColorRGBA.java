@@ -77,6 +77,10 @@ public class ColorRGBA
      */
     public void finalize()
     {
+        if ( (this == ColorRGBA.BLACK) || (this == ColorRGBA.WHITE) )
+        {
+            System.err.println( "ColorRGBA" );
+        }
         m_afTuple = null;
     }
 

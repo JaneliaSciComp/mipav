@@ -41,26 +41,10 @@ public class Camera extends GraphicsObject
     /** Delete memory */
     public void finalize()
     {
-        if ( m_kLocation != null )
-        {
-            m_kLocation.finalize();
-            m_kLocation = null;
-        }
-        if ( m_kDVector != null )
-        {
-            m_kDVector.finalize();
-            m_kDVector = null;
-        }
-        if ( m_kUVector != null )
-        {
-            m_kUVector.finalize();
-            m_kUVector = null;
-        }
-        if ( m_kRVector != null )
-        {
-            m_kRVector.finalize();
-            m_kRVector = null;
-        }
+        m_kLocation = null;
+        m_kDVector = null;
+        m_kUVector = null;
+        m_kRVector = null;
         m_afFrustum = null;
         m_pkRenderer = null;
 

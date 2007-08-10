@@ -301,7 +301,7 @@ public class GeneralLight {
                 kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
                     Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_POINT);
                 kLight.Position = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    Vector3f(kPosition.x, kPosition.y, -kPosition.z);
+                    Vector3f(kPosition.x, kPosition.y, kPosition.z);
                 kLight.Constant = m_fAttenuationC0;
                 kLight.Linear = m_fAttenuationC1;
                 kLight.Quadratic = m_fAttenuationC2;
@@ -311,7 +311,7 @@ public class GeneralLight {
                 kLight = new gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.
                     Light(gov.nih.mipav.view.WildMagic.LibGraphics.Rendering.Light.LightType.LT_SPOT);
                 kLight.Position = new gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.
-                    Vector3f(kPosition.x, kPosition.y, -kPosition.z);
+                    Vector3f(kPosition.x, kPosition.y, kPosition.z);
                 
                 kLight.Exponent = m_fSpotExponent;
                 kLight.SetAngle(m_fSpotAngle);

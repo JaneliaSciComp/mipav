@@ -65,6 +65,12 @@ public class Vector2f
      */
     public void finalize()
     {
+        if ( (this == Vector2f.ZERO) || (this ==  Vector2f.UNIT_X)
+                || (this ==  Vector2f.UNIT_Y)
+                || (this ==  Vector2f.ONE))
+        {
+            System.err.println( "Vector2f" );
+        }
         m_afTuple = null;
     }
 
