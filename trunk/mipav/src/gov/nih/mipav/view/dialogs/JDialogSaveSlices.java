@@ -165,7 +165,8 @@ public class JDialogSaveSlices extends JDialogBase {
                               (options.getFileType() == FileUtility.FITS) ||
                               (options.getFileType() == FileUtility.ICS) ||
                               (options.getFileType() == FileUtility.INTERFILE) ||
-                              (options.getFileType() == FileUtility.AFNI) || (options.getFileType() == FileUtility.XML) ||
+                              (options.getFileType() == FileUtility.AFNI) ||
+                              (options.getFileType() == FileUtility.XML) ||
                               (options.getFileType() == FileUtility.PARREC)); // Modified to support PAR/REC
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
@@ -340,7 +341,7 @@ public class JDialogSaveSlices extends JDialogBase {
                 }
             }
         } else if (command.equalsIgnoreCase("help")) {
-        	MipavUtil.showHelp("U4019");
+            MipavUtil.showHelp("U4019");
         }
     }
 
@@ -563,7 +564,8 @@ public class JDialogSaveSlices extends JDialogBase {
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(buildOKButton());
         buttonPanel.add(buildCancelButton());
-        buttonPanel.add(buildHelpButton());
+
+        // buttonPanel.add(buildHelpButton());
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
