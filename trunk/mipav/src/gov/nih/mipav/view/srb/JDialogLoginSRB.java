@@ -22,11 +22,17 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2797550808781412556L;
 
-    /** the available authentication schema */
+    /** the available authentication schema. */
     private static final String[] auth_schemas = { "ENCRYPT1", "PASSWD_AUTH" };
 
     /** DOCUMENT ME! */
     public static SRBFileSystem srbFileSystem;
+
+    /**
+     * The maximum number of srb login failures that are allowed during a mipav session. The user cannot log in after
+     * this number is reached.
+     */
+    public static final int MAX_SRB_LOGIN_FAILURES = 10;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -75,6 +81,9 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
     /** the port number that the srb server listens. */
     private JLabel portLabel;
 
+    /** Keep track of the number of login failures to limit password guessing. */
+    private int srbLoginFailureCount = 0;
+
     /** DOCUMENT ME! */
     private JTextField storageResourceField;
 
@@ -95,75 +104,6 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Cleans memory.
-     *
-     * @throws  Throwable  the <code>Exception</code> raised by this method
-     */
-    protected void finalize() throws Throwable {
-
-        if(authenticationComboBox != null){
-            authenticationComboBox = null;
-        }
-        
-        if(authenticationLabel != null){
-            authenticationLabel = null;
-        }
-        
-        if(cancelButton != null){
-            cancelButton = null;
-        }
-        
-        if(domainField != null){
-            domainField = null;
-        }
-        
-        if(domainLabel != null){
-            domainLabel = null;
-        }
-        
-        if(hostField != null){
-            hostField = null;
-        }
-        
-        if(hostLabel != null){
-            hostLabel = null;
-        }
-        
-        if(nameField != null){
-            nameField = null;
-        }
-        
-        if(nameLabel != null){
-            nameLabel = null;
-        }
-        
-        if(passwordField != null){
-            passwordField = null;
-        }
-        
-        if(passwordLabel != null){
-            passwordLabel = null;
-        }
-        
-        if(portField != null){
-            portField = null;
-        }
-        
-        if(portLabel != null){
-            portLabel = null;
-        }
-        
-        if(storageResourceField != null){
-            storageResourceField = null;
-        }
-        
-        if(storageResourceLabel != null){
-            storageResourceLabel = null;
-        }
-        super.finalize();
-    }
-    
     /**
      * Returns whether the srb file system is valid.
      *
@@ -199,6 +139,12 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
         String command = e.getActionCommand();
 
         if (command.equals("Connect")) {
+
+            if (srbLoginFailureCount >= MAX_SRB_LOGIN_FAILURES) {
+                MipavUtil.displayError("The maximum number of SRB login failures has been reached.");
+
+                return;
+            }
 
             /**
              * First check every text field, make sure it has right input.
@@ -272,10 +218,11 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
             SRBAccount srbAccount = new SRBAccount(host, port, name, new String(password), "", domain, storageResource);
             // srbAccount.setMcatZone("birnzone");
 
-            if(Preferences.getSRBVersion() != null){
+            if (Preferences.getSRBVersion() != null) {
                 System.out.println(Preferences.getSRBVersion());
                 SRBAccount.setVersion(Preferences.getSRBVersion());
             }
+
             if (auth.equals(auth_schemas[0])) {
                 srbAccount.setOptions(SRBAccount.ENCRYPT1);
             } else if (auth.equals(auth_schemas[1])) {
@@ -285,10 +232,13 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
             try {
                 srbFileSystem = new SRBFileSystem(srbAccount);
                 System.out.println(srbFileSystem.getVersion());
+                srbLoginFailureCount = 0;
 
             } catch (Exception ex) {
                 srbFileSystem = null;
                 MipavUtil.displayError("Can't log you in the SRB server: " + host + ", please try again.");
+                srbLoginFailureCount++;
+
                 return;
             }
 
@@ -345,6 +295,76 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
         } else if (keyChar == KeyEvent.VK_ESCAPE) {
             actionPerformed(new ActionEvent(this, 11, "Cancel"));
         }
+    }
+
+    /**
+     * Cleans memory.
+     *
+     * @throws  Throwable  the <code>Exception</code> raised by this method
+     */
+    protected void finalize() throws Throwable {
+
+        if (authenticationComboBox != null) {
+            authenticationComboBox = null;
+        }
+
+        if (authenticationLabel != null) {
+            authenticationLabel = null;
+        }
+
+        if (cancelButton != null) {
+            cancelButton = null;
+        }
+
+        if (domainField != null) {
+            domainField = null;
+        }
+
+        if (domainLabel != null) {
+            domainLabel = null;
+        }
+
+        if (hostField != null) {
+            hostField = null;
+        }
+
+        if (hostLabel != null) {
+            hostLabel = null;
+        }
+
+        if (nameField != null) {
+            nameField = null;
+        }
+
+        if (nameLabel != null) {
+            nameLabel = null;
+        }
+
+        if (passwordField != null) {
+            passwordField = null;
+        }
+
+        if (passwordLabel != null) {
+            passwordLabel = null;
+        }
+
+        if (portField != null) {
+            portField = null;
+        }
+
+        if (portLabel != null) {
+            portLabel = null;
+        }
+
+        if (storageResourceField != null) {
+            storageResourceField = null;
+        }
+
+        if (storageResourceLabel != null) {
+            storageResourceLabel = null;
+        }
+
+        super.finalize();
     }
 
     /**
@@ -442,7 +462,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
 
         cancelButton = WidgetFactory.buildTextButton("Cancel", "Cancel connecting to the SRB server", "Cancel", this);
         cancelButton.setPreferredSize(new Dimension(90, 30));
-        
+
         helpButton = new JButton("Help");
         helpButton.addActionListener(this);
         helpButton.setPreferredSize(new Dimension(90, 30));
