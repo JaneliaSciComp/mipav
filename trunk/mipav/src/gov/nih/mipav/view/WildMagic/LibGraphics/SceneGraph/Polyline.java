@@ -60,7 +60,7 @@ public class Polyline extends Geometry
             IBuffer.SetIndexQuantity(iVQuantity);
         }
 
-        SetGeometryType();
+        SetGeometryType( true );
     }
 
     /** Set the number of active points.
@@ -95,7 +95,7 @@ public class Polyline extends Geometry
     public void SetClosed (boolean bClosed)
     {
         m_bClosed = bClosed;
-        SetGeometryType();
+        SetGeometryType( false );
     }
 
     /** Get closed value.
@@ -112,7 +112,7 @@ public class Polyline extends Geometry
     public void SetContiguous (boolean bContiguous)
     {
         m_bContiguous = bContiguous;
-        SetGeometryType();
+        SetGeometryType( false );
     }
 
     /** Get contiguous value.
@@ -129,11 +129,14 @@ public class Polyline extends Geometry
         m_iActiveQuantity = 0;
         m_bClosed = false;
         m_bContiguous = false;
-        SetGeometryType();
+        SetGeometryType( true );
     }
 
-    /** Sets the geometric type based on the closed and contiguous values. */
-    protected void SetGeometryType ()
+    /** Sets the geometric type based on the closed and contiguous values.
+     * @param bInit, when true the function is called from the Constructor, so
+     * do not increment/decrement index quantity.
+     */
+    protected void SetGeometryType ( boolean bInit )
     {
         if (m_bContiguous)
         {
@@ -141,10 +144,13 @@ public class Polyline extends Geometry
             {
                 if (Type != GeometryType.GT_POLYLINE_CLOSED)
                 {
-                    // Increase the index quantity to account for closing the
-                    // polyline.
-                    IBuffer.SetIndexQuantity(IBuffer.GetIndexQuantity()+1);
-                    IBuffer.Release();
+                    if ( !bInit )
+                    {
+                        // Increase the index quantity to account for closing the
+                        // polyline.
+                        IBuffer.SetIndexQuantity(IBuffer.GetIndexQuantity()+1);
+                        IBuffer.Release();
+                    }
                 }
                 Type = GeometryType.GT_POLYLINE_CLOSED;
             }
@@ -152,10 +158,13 @@ public class Polyline extends Geometry
             {
                 if (Type == GeometryType.GT_POLYLINE_CLOSED)
                 {
-                    // Decrease the index quantity to account for closing the
-                    // polyline.
-                    IBuffer.SetIndexQuantity(IBuffer.GetIndexQuantity()-1);
-                    IBuffer.Release();
+                    if ( !bInit )
+                    {
+                        // Decrease the index quantity to account for closing the
+                        // polyline.
+                        IBuffer.SetIndexQuantity(IBuffer.GetIndexQuantity()-1);
+                        IBuffer.Release();
+                    }
                 }
                 Type = GeometryType.GT_POLYLINE_OPEN;
             }
@@ -164,10 +173,13 @@ public class Polyline extends Geometry
         {
             if (Type == GeometryType.GT_POLYLINE_CLOSED)
             {
-                // Decrease the index quantity to account for closing the
-                // polyline.
-                IBuffer.SetIndexQuantity(IBuffer.GetIndexQuantity()-1);
-                IBuffer.Release();
+                if ( !bInit )
+                {
+                    // Decrease the index quantity to account for closing the
+                    // polyline.
+                    IBuffer.SetIndexQuantity(IBuffer.GetIndexQuantity()-1);
+                    IBuffer.Release();
+                }
             }
             Type = GeometryType.GT_POLYLINE_SEGMENTS;
         }
@@ -190,7 +202,7 @@ public class Polyline extends Geometry
         m_bClosed = rkStream.ReadBoolean();
         m_bContiguous = rkStream.ReadBoolean();
 
-        SetGeometryType();
+        SetGeometryType( false );
     }
 
     /**
