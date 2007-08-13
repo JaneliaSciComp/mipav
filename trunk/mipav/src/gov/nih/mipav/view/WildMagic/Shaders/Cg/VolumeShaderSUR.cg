@@ -11,8 +11,9 @@ void GetDirectionalLightFactors
  out float fDiffuseFactor,
  out float fSpecularFactor)
 {
-    float fDiff, fSpec;
-    kLightDirection = normalize(kLightDirection);
+    float fDiff = 0;
+    float fSpec = 0;
+
     fDiff = -dot(kModelNormal,kLightDirection);
     if (fDiff > 0.0f)
     {
@@ -166,6 +167,7 @@ void AmbientLight( uniform float3   MaterialEmissive,
 {
     float3 kLAmb = LightAttenuation.w*LightAmbient;
     kVertexColor.rgb = MaterialEmissive + MaterialAmbient*kLAmb;
+    kVertexColor.a = 1.0;
 }
 
 void DirectionalLight( uniform float3 kModelPosition,
@@ -184,10 +186,9 @@ void DirectionalLight( uniform float3 kModelPosition,
     
 {
     float fDiff, fSpec;
-    GetDirectionalLightFactors((float3)kModelPosition,kModelNormal,
+    GetDirectionalLightFactors(kModelPosition,kModelNormal,
                                CameraWorldPosition,LightDirection,MaterialSpecular.a,
                                fDiff,fSpec);
-
     float3 kColor = MaterialAmbient*LightAmbient;
     if (fDiff > 0.0f)
     {
@@ -199,6 +200,7 @@ void DirectionalLight( uniform float3 kModelPosition,
     }
 
     kVertexColor.rgb = MaterialEmissive + LightAttenuation.w*kColor;
+    kVertexColor.a = 1.0;
 }
 
 void PointLight(    uniform float3 kModelPosition,
@@ -310,9 +312,9 @@ void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorl
 
         if ( Composite != 0 )
         {
-            LocalMaterialAmbient = color_sample * MaterialAmbient;
+            LocalMaterialAmbient = color_sample.xyz * MaterialAmbient;
             LocalMaterialDiffuse = color_sample * MaterialDiffuse;
-            LocalMaterialEmissive = color_sample * MaterialEmissive;
+            LocalMaterialEmissive = color_sample.xyz * MaterialEmissive;
             LocalMaterialSpecular = color_sample * MaterialSpecular;
         }
 
@@ -382,39 +384,39 @@ void computeColor( float3 kModelPosition, float3 kModelNormal, float3 CameraWorl
  * Clip the volume based on the x,y,z axes.
  * returns 1 when the volume is clipped, 0 when not clipped.
  */
-bool myClip(float3 vec,
-            float clipX,
-            float clipXInv,
-            float clipY,
-            float clipYInv,
-            float clipZ,
-            float clipZInv )
+bool myClip ( float3 myVec,
+              float clipX,
+              float clipXInv,
+              float clipY,
+              float clipYInv,
+              float clipZ,
+              float clipZInv )
 {
-    if ( vec.x > clipX )
+    if ( myVec.x > clipX )
     {
-        return 1;
+        return true;
     }
-    if ( vec.x < clipXInv )
+    if ( myVec.x < clipXInv )
     {
-        return 1;
+        return true;
     }
-    if ( vec.y > clipY )
+    if ( myVec.y > clipY )
     {
-        return 1;
+        return true;
     }
-    if ( vec.y < clipYInv )
+    if ( myVec.y < clipYInv )
     {
-        return 1;
+        return true;
     }
-    if ( vec.z > clipZ )
+    if ( myVec.z > clipZ )
     {
-        return 1;
+        return true;
     }
-    if ( vec.z < clipZInv )
+    if ( myVec.z < clipZInv )
     {
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
 
@@ -426,7 +428,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                          uniform sampler3D VolumeImageA, 
                          uniform sampler1D ColorMapA, 
                          uniform sampler1D OpacityMapA, 
-                         uniform sampler3D normalmap, 
+                         uniform sampler3D NormalMapA, 
                          uniform sampler3D VolumeImageA_GM, 
                          uniform sampler1D OpacityMapA_GM, 
                          uniform float stepsize,
@@ -436,6 +438,8 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                          uniform float GradientMagnitude,
                          uniform float Composite,
                          uniform float4 BackgroundColor,
+                         uniform float3 Translation,
+
                          uniform float clipX,
                          uniform float clipXInv,
                          uniform float clipY,
@@ -481,7 +485,9 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                          uniform float4 Light3WorldPosition,
                          uniform float4 Light3WorldDirection,
 
+                         uniform float3 CameraModelPosition,
                          uniform float3 CameraWorldPosition,
+                         uniform float4x4 WMatrix,
                          uniform float4x4 WVPMatrix)
 {
     // find the right place to lookup in the backside buffer
@@ -541,10 +547,10 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
     bool bClipped = false;
 
     float4 worldNormal;
-    float4 color0;
-    float4 color1;
-    float4 color2;
-    float4 color3;
+    float4 color0 = (0,0,0,0);
+    float4 color1 = (0,0,0,0);
+    float4 color2 = (0,0,0,0);
+    float4 color3 = (0,0,0,0);
 
 
     float3 LocalMaterialAmbient = MaterialAmbient;
@@ -608,19 +614,18 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
         if ( opacity > 0 )
         {
             // Surface and Composite surface display:
-            normal = tex3D(normalmap,position);
+            normal = tex3D(NormalMapA,position);
             normal.w = 0;
 
             // First light is static light:
             color0 = color;
-            computeColor( position, normal, CameraWorldPosition,
+            computeColor( position, normal, CameraModelPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light0Ambient, Light0Diffuse, Light0Specular,
                           Light0ModelPosition, Light0ModelDirection,
                           Light0SpotCutoff, Light0Attenuation,
                           Light0Type,
                           Composite, color0 );
-                
 
             // Assume second light is alwasy an ambient light:
             color1 = color;
@@ -637,7 +642,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
 
             // Remaining lights:
             color2 = color;
-            computeColor( position, normal, CameraWorldPosition,
+            computeColor( position, normal, CameraModelPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light2Ambient, Light2Diffuse, Light2Specular,
                           Light2WorldPosition, Light2WorldDirection,
@@ -646,7 +651,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                           Composite, color2 );
 
             color3 = color;
-            computeColor( position, normal, CameraWorldPosition,
+            computeColor( position, normal, CameraModelPosition,
                           MaterialEmissive,  MaterialAmbient, MaterialDiffuse, MaterialSpecular,
                           Light3Ambient, Light3Diffuse, Light3Specular,
                           Light3WorldPosition, Light3WorldDirection,
@@ -659,13 +664,13 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
             // Composite surface:
             if ( Composite != 0 )
             {
-                color_acc += (1.0 - alpha_acc) * color * opacity;
+                color_acc   = (1.0 - alpha_acc) * color * opacity + color_acc;
                 alpha_acc += (1 - alpha_acc) * opacity;
             }
             // Surface:
             else if ( (color.x != 0) || (color.y != 0) || (color.z != 0) )
             {
-                color_acc = color;
+                color_acc   = color;
                 alpha_acc = 1.0;
                 break;
             }
@@ -704,19 +709,19 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
 
         // for each light that can cause shadows:
         // Light0:
-        float3 dir1 = Light0ModelPosition - start;
+        float3 dir1 = Light0ModelPosition.xyz - start;
         float3 norm_dir1 = normalize(dir1);
         float3 delta_dir1 = norm_dir1 * stepsize;
         float3 delta_dir_len1 = length(delta_dir1);
         float3 position1 = start;
         // Light2:
-        float3 dir2 = Light2WorldPosition - start;
+        float3 dir2 = Light2WorldPosition.xyz - start;
         float3 norm_dir2 = normalize(dir2);
         float3 delta_dir2 = norm_dir2 * stepsize;
         float3 delta_dir_len2 = length(delta_dir2);
         float3 position2 = start;
         // Light3:
-        float3 dir3 = Light3WorldPosition - start;
+        float3 dir3 = Light3WorldPosition.xyz - start;
         float3 norm_dir3 = normalize(dir3);
         float3 delta_dir3 = norm_dir3 * stepsize;
         float3 delta_dir_len3 = length(delta_dir3);
@@ -749,7 +754,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                 opacity = tex1D(OpacityMapA,color.r).r;
                 if (opacity > 0)
                 {
-                    normal2 = tex3D(normalmap,position1);
+                    normal2 = tex3D(NormalMapA,position1);
                     local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
                     local_normal2 = normalize( local_normal2 );
                     if ( dot(local_normal.xyz, local_normal2.xyz) < 0 )
@@ -783,7 +788,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                 opacity = tex1D(OpacityMapA,color.r).r;
                 if (opacity > 0)
                 {
-                    normal2 = tex3D(normalmap,position2);
+                    normal2 = tex3D(NormalMapA,position2);
                     local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
                     local_normal2 = normalize( local_normal2 );
                     if ( dot(local_normal.xyz, local_normal2.xyz) < 0 )
@@ -816,7 +821,7 @@ void p_VolumeShaderSUR(  in float3 inTexCoord1    : TEXCOORD0,
                 opacity = tex1D(OpacityMapA,color.r).r;
                 if (opacity > 0)
                 {
-                    normal2 = tex3D(normalmap,position3);
+                    normal2 = tex3D(NormalMapA,position3);
                     local_normal2 = normal2.xyz - (0.5, 0.5, 0.5);
                     local_normal2 = normalize( local_normal2 );
                     if ( dot(local_normal.xyz, local_normal2.xyz) < 0 )
