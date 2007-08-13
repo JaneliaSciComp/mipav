@@ -3399,6 +3399,7 @@ public class JPanelClip extends JPanelRendererBase
      * Invokes all the 6 clipping when 6 clipping checkbox is checked.
      */
     public void invokeClippingPlanes() {
+        disable6Planes();
         boundingCheckX.setSelected(true);
         boundingCheckY.setSelected(true);
         boundingCheckZ.setSelected(true);
