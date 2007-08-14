@@ -229,7 +229,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
      * by using a Gaussian differential kernel and a better arclength estimator."
      * 
      *"Another source of inaccuracy is the fact that the estimated derivative is divided by the length between discrete pixels.  The
-     * distance between pixels is restricted to either 1 or sqrt(2), a poor estimated of predigitized arclength."
+     * distance between pixels is restricted to either 1 or sqrt(2), a poor estimate of predigitized arclength."
      * 
      * This method does not work well with either only rotation or only scaling.
      * 
