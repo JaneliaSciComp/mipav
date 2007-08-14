@@ -56,7 +56,7 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
     
-    /** For each omega angle index, a linked list of R and B values is present
+    /** For each omega angle index, a linked list of R and values is present
      *  omega is the tangent angle to the curve, with closed counters being
      *  made counterclockwise, and R and B give the distance
      *  and angle from the center of the VOI to the tangent point */
@@ -126,6 +126,20 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
     private boolean endianess = true;
     
     private RandomAccessFile raFile;
+    
+    //private float creationCenterX;
+    
+    //private float creationCenterY;
+    
+    //private int creationXDim;
+    
+    //private int creationNumPoints;
+    
+    //private int creationIndexArray[] = null;
+    
+    //private float creationOmegaArray[] = null;
+    
+    //private float creationCurvatureArray[] = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -279,6 +293,19 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
                     omegaRBetaList[i].add(floatArray);
                 }
             }
+            /*creationCenterX = getFloat(endianess);
+            creationCenterY = getFloat(endianess);
+            sidePointsForTangent = getInt(endianess);
+            creationXDim = getInt(endianess);
+            creationNumPoints = getInt(endianess);
+            creationIndexArray = new int[creationNumPoints];
+            creationOmegaArray = new float[creationNumPoints];
+            creationCurvatureArray = new float[creationNumPoints];
+            for (i = 0; i < creationNumPoints; i++) {
+                creationIndexArray[i] = getInt(endianess);
+                creationOmegaArray[i] = getFloat(endianess);
+                creationCurvatureArray[i] = getFloat(endianess);
+            }*/
 
             raFile.close();
 
@@ -474,6 +501,12 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
                            omegaRBetaList, maxPixelBinWidth, maxBufferSize, 
                            allowRotation, maxDegreesBinWidth, allowScaling,
                            minScaleFactor, maxScaleFactor, scaleBins, objectsToFind);
+            
+            /*findAlgo = new AlgorithmFindRtableObject(srcImage, 
+                    creationCenterX, creationCenterY, sidePointsForTangent, creationXDim,
+                    creationIndexArray, creationOmegaArray, creationCurvatureArray, maxPixelBinWidth,
+                    allowRotation, maxDegreesBinWidth, allowScaling,
+                    minScaleFactor, maxScaleFactor, scaleBins, objectsToFind);*/
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -681,7 +714,8 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
         
         gbc4.gridx = 1;
         scalingText = new JTextField(15);
-        scalingText.setText("21");
+        //scalingText.setText("21");
+        scalingText.setText("201");
         scalingText.setEnabled(true);
         scalingText.setFont(serif12);
         scalingText.setForeground(Color.black);
@@ -866,7 +900,7 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
             }
             
             tmpStr = scalingText.getText();
-            if (testParameter(tmpStr, 2, 1000)) {
+            if (testParameter(tmpStr, 1, 5001)) {
                 scaleBins = Integer.valueOf(tmpStr).intValue();
             }
             else {
@@ -890,6 +924,11 @@ public class JDialogFindRtableObject extends JDialogScriptableBase implements Al
             MipavUtil.displayError("R-table list has not been read");
             return false;
         }
+        
+        /*if (creationIndexArray == null) {
+            MipavUtil.displayError("Hough transform creation file has not been read");
+            return false;
+        }*/
         return true;
     }
 
