@@ -24,7 +24,11 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowEvent;
 import java.awt.image.PixelGrabber;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Calendar;
 
@@ -72,6 +76,7 @@ import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 /**
@@ -97,13 +102,13 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		implements AlgorithmInterface, ChangeListener, ItemListener, MouseListener, MouseWheelListener, KeyListener, FocusListener {
 	
 	/** dialog title and version **/
-	private String title = " DTI Color Display  v1.2      ";
+	private String title = " DTI Color Display  v1.3      ";
 	
 	/** panels **/
-	private JPanel mainPanel,topPanel, filesPanel, okPanel, bottomPanel, colorPanel, colorWheelPanel, resultImagePanel, optionsPanel, colorWheelChoicesPanel, heuristicParametersPanel, anisotropyMaxPanel, anisotropyMinPanel, gammaPanel, stevensBetaPanel, satBluePanel, dimGreenPanel, colorRangePanel, satVsThetaPanel, resultPanel, resultImageSliderPanel, tempPanel, toolbarPanel, adjustExpPanel, truncMultPanel;
+	private JPanel mainPanel,topPanel, filesPanel, okPanel, bottomPanel, colorPanel, colorWheelPanel, resultImagePanel, optionsPanel, colorWheelChoicesPanel, heuristicParametersPanel, anisotropyMaxPanel, anisotropyMinPanel, gammaPanel, stevensBetaPanel, satBluePanel, dimGreenPanel, colorRangePanel, satVsThetaPanel, resultPanel, resultImageSliderPanel, tempPanel, toolbarPanel, adjustExpPanel, truncMultPanel, restoreDefaultsPanel, saveLoadPanel;
 	
 	/** labels **/
-	private JLabel eigenvectorLabel, anisotropyLabel, minAnisotropyMaxLabel, maxAnisotropyMaxLabel, minAnisotropyMinLabel, maxAnisotropyMinLabel, minGammaLabel, maxGammaLabel, minStevensBetaLabel, maxStevensBetaLabel, minSatBlueLabel, maxSatBlueLabel, minDimGreenLabel, maxDimGreenLabel, minColorRangeLabel, maxColorRangeLabel, minSatVsThetaLabel, maxSatVsThetaLabel, minResultImageSlicesLabel, maxResultImageSlicesLabel, magLabel, refLabel, minAdjustExpLabel, maxAdjustExpLabel;
+	private JLabel eigenvectorLabel, anisotropyLabel, minAnisotropyMaxLabel, maxAnisotropyMaxLabel, minAnisotropyMinLabel, maxAnisotropyMinLabel, minGammaLabel, maxGammaLabel, minStevensBetaLabel, maxStevensBetaLabel, minSatBlueLabel, maxSatBlueLabel, minDimGreenLabel, maxDimGreenLabel, minColorRangeLabel, maxColorRangeLabel, minSatVsThetaLabel, maxSatVsThetaLabel, minResultImageSlicesLabel, maxResultImageSlicesLabel, currentResultImageSlicesLabel, magLabel, refLabel, minAdjustExpLabel, maxAdjustExpLabel;
 	
 	/** mins and maxes for heuristic parameters**/
 	private float minAnisotropyMax, maxAnisotropyMax, minAnisotropyMin, maxAnisotropyMin, minGamma, maxGamma, minStevensBeta, maxStevensBeta, minSatBlue, maxSatBlue, minDimGreen, maxDimGreen, minColorRange, maxColorRange, minSatVsTheta, maxSatVsTheta, minAdjustExp, maxAdjustExp;
@@ -115,10 +120,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	private JTextField eigenvectorPath,anisotropyPath, anisotropyMaxTextField, anisotropyMinTextField, gammaTextField, stevensBetaTextField, satBlueTextField, dimGreenTextField, colorRangeTextField, satVsThetaTextField, adjustExpTextField;
 	
 	/** buttons **/
-	private JButton eigenvectorBrowseButton,anisotropyBrowseButton, okButton, magButton, unMagButton, zoomOneButton, captureImageButton;
-	
-	/** current directory  **/
-    //private String currDir = null;
+	private JButton eigenvectorBrowseButton,anisotropyBrowseButton, okButton, magButton, unMagButton, zoomOneButton, captureImageButton, restoreDefaultsButton, saveButton, loadButton;
     
     /** eigenvector src image **/
     private ModelImage eigvecSrcImage;
@@ -240,6 +242,15 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     /** boolean for truncate/multiply **/
     private boolean isMultiply = true;
     
+    /** flag needed when performing restore defaults **/
+    private boolean flag = false;
+    
+    /** Buffered Reader for loading params **/
+    private BufferedReader in;
+    
+    /** Buffered Writer for saving params **/
+    private BufferedWriter out;
+    
     
     
     
@@ -316,9 +327,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		colorWheelPanel = new JPanel(gbl);
 		titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		colorWheelPanel.setBorder(titledBorder);
-		colorWheelPanel.setPreferredSize(new Dimension(400, 400));
-		colorWheelPanel.setMinimumSize(new Dimension(400,400));
-		absValColorWheel = new ColorWheel("ABSVAL",150);
+		colorWheelPanel.setPreferredSize(new Dimension(500, 500));
+		colorWheelPanel.setMinimumSize(new Dimension(500,500));
+		absValColorWheel = new ColorWheel("ABSVAL",200);
 		currentColorWheel = absValColorWheel;
 		gbc.gridx = 0;
         gbc.gridy = 0;
@@ -352,7 +363,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		//options panel
         gbc.anchor = GridBagConstraints.NORTHWEST;
 		optionsPanel = new JPanel(gbl);
-		
 		//heuristic parameters panel
 		heuristicParametersPanel = new JPanel(gbl);
 		heuristicParametersPanel.setForeground(Color.black);
@@ -367,7 +377,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		anisotropyMaxSlider.setPaintTicks(true);
 		anisotropyMaxSlider.addChangeListener(this);
 		anisotropyMaxSlider.addMouseListener(this);
-		anisotropyMaxSlider.addMouseWheelListener(this);
 		maxAnisotropyMaxLabel = new JLabel("1.0");
 		maxAnisotropyMaxLabel.setForeground(Color.black);
 		maxAnisotropyMaxLabel.setFont(MipavUtil.font12);
@@ -396,7 +405,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		anisotropyMaxTextField = new JTextField(8);
 		anisotropyMaxTextField.addKeyListener(this);
 		anisotropyMaxTextField.addFocusListener(this);
-		//anisotropyMaxTextField.setEditable(false);
 		anisotropyMaxTextField.setBackground(Color.white);
 		anisotropyMaxTextField.setText(String.valueOf((float) (anisotropyMaxSlider.getValue() / 1000.000000f)));
 		gbc.gridx = 3;
@@ -427,7 +435,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		anisotropyMinSlider.setPaintTicks(true);
 		anisotropyMinSlider.addChangeListener(this);
 		anisotropyMinSlider.addMouseListener(this);
-		anisotropyMinSlider.addMouseWheelListener(this);
 		maxAnisotropyMinLabel = new JLabel("1.0");
 		maxAnisotropyMinLabel.setForeground(Color.black);
 		maxAnisotropyMinLabel.setFont(MipavUtil.font12);
@@ -456,7 +463,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		anisotropyMinTextField = new JTextField(8);
 		anisotropyMinTextField.addKeyListener(this);
 		anisotropyMinTextField.addFocusListener(this);
-		//anisotropyMinTextField.setEditable(false);
 		anisotropyMinTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -487,7 +493,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gammaSlider.setPaintTicks(true);
 		gammaSlider.addChangeListener(this);
 		gammaSlider.addMouseListener(this);
-		gammaSlider.addMouseWheelListener(this);
 		maxGammaLabel = new JLabel("4");
 		maxGammaLabel.setForeground(Color.black);
 		maxGammaLabel.setFont(MipavUtil.font12);
@@ -516,7 +521,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gammaTextField = new JTextField(8);
 		gammaTextField.addKeyListener(this);
 		gammaTextField.addFocusListener(this);
-		//gammaTextField.setEditable(false);
 		gammaTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -547,7 +551,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		satBlueSlider.setPaintTicks(true);
 		satBlueSlider.addChangeListener(this);
 		satBlueSlider.addMouseListener(this);
-		satBlueSlider.addMouseWheelListener(this);
 		maxSatBlueLabel = new JLabel("0.5");
 		maxSatBlueLabel.setForeground(Color.black);
 		maxSatBlueLabel.setFont(MipavUtil.font12);
@@ -576,7 +579,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		satBlueTextField = new JTextField(8);
 		satBlueTextField.addKeyListener(this);
 		satBlueTextField.addFocusListener(this);
-		//satBlueTextField.setEditable(false);
 		satBlueTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -607,7 +609,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		dimGreenSlider.setPaintTicks(true);
 		dimGreenSlider.addChangeListener(this);
 		dimGreenSlider.addMouseListener(this);
-		dimGreenSlider.addMouseWheelListener(this);
 		maxDimGreenLabel = new JLabel("3.0");
 		maxDimGreenLabel.setForeground(Color.black);
 		maxDimGreenLabel.setFont(MipavUtil.font12);
@@ -636,7 +637,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		dimGreenTextField = new JTextField(8);
 		dimGreenTextField.addKeyListener(this);
 		dimGreenTextField.addFocusListener(this);
-		//dimGreenTextField.setEditable(false);
 		dimGreenTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -667,7 +667,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		colorRangeSlider.setPaintTicks(true);
 		colorRangeSlider.addChangeListener(this);
 		colorRangeSlider.addMouseListener(this);
-		colorRangeSlider.addMouseWheelListener(this);
 		maxColorRangeLabel = new JLabel("1.0");
 		maxColorRangeLabel.setForeground(Color.black);
 		maxColorRangeLabel.setFont(MipavUtil.font12);
@@ -696,7 +695,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		colorRangeTextField = new JTextField(8);
 		colorRangeTextField.addKeyListener(this);
 		colorRangeTextField.addFocusListener(this);
-		//colorRangeTextField.setEditable(false);
 		colorRangeTextField.setBackground(Color.white);
 		colorRangeTextField.setText(String.valueOf((float) (colorRangeSlider.getValue() / 1000.000000f)));
 		gbc.gridx = 3;
@@ -728,7 +726,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		satVsThetaSlider.addChangeListener(this);
 		satVsThetaSlider.addMouseListener(this);
 		satVsThetaSlider.setEnabled(false);
-		satVsThetaSlider.addMouseWheelListener(this);
 		maxSatVsThetaLabel = new JLabel("1.0");
 		maxSatVsThetaLabel.setForeground(Color.black);
 		maxSatVsThetaLabel.setFont(MipavUtil.font12);
@@ -790,7 +787,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		adjustExpSlider.setPaintTicks(true);
 		adjustExpSlider.addChangeListener(this);
 		adjustExpSlider.addMouseListener(this);
-		adjustExpSlider.addMouseWheelListener(this);
 		maxAdjustExpLabel = new JLabel("1.0");
 		maxAdjustExpLabel.setForeground(Color.black);
 		maxAdjustExpLabel.setFont(MipavUtil.font12);
@@ -819,7 +815,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		adjustExpTextField = new JTextField(8);
 		adjustExpTextField.addKeyListener(this);
 		adjustExpTextField.addFocusListener(this);
-		//adjustExpTextField.setEditable(false);
 		adjustExpTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -850,7 +845,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		stevensBetaSlider.setPaintTicks(true);
 		stevensBetaSlider.addChangeListener(this);
 		stevensBetaSlider.addMouseListener(this);
-		stevensBetaSlider.addMouseWheelListener(this);
 		maxStevensBetaLabel = new JLabel("0.6");
 		maxStevensBetaLabel.setForeground(Color.black);
 		maxStevensBetaLabel.setFont(MipavUtil.font12);
@@ -879,7 +873,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		stevensBetaTextField = new JTextField(8);
 		stevensBetaTextField.addKeyListener(this);
 		stevensBetaTextField.addFocusListener(this);
-		//stevensBetaTextField.setEditable(false);
 		stevensBetaTextField.setBackground(Color.white);
 		gbc.gridx = 3;
 		gbc.gridy = 0;
@@ -902,10 +895,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.gridwidth = 1;
 		heuristicParametersPanel.add(stevensBetaPanel, gbc);
 		//truncate-multiply
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.insets = new Insets(0,30,0,30);
 		truncMultPanel = new JPanel(gbl);
-		titledBorder = new TitledBorder(new EtchedBorder(), " Truncate/Multiply ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+		titledBorder = new TitledBorder(new EtchedBorder(), " Truncate / Multiply ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		truncMultPanel.setBorder(titledBorder);
 		truncMultRadioGroup = new ButtonGroup();
 		truncRadio = new JRadioButton("Truncate");
@@ -913,6 +904,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		truncRadio.addActionListener(this);
 		truncRadio.setActionCommand("truncRadio");
 		truncMultRadioGroup.add(truncRadio);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.insets = new Insets(0,30,0,30);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		truncMultPanel.add(truncRadio, gbc);
@@ -929,6 +922,49 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.gridy = 9;
 		gbc.gridwidth = 1;
 		heuristicParametersPanel.add(truncMultPanel, gbc);
+		//save load params
+		saveLoadPanel = new JPanel(gbl);
+		titledBorder = new TitledBorder(new EtchedBorder(), " Save Params / Load Params ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+		saveLoadPanel.setBorder(titledBorder);
+		saveButton = new JButton("Save");
+		saveButton.addActionListener(this);
+		saveButton.setActionCommand("save");
+		saveButton.setToolTipText("Save heuristic parameter values to file");
+		loadButton = new JButton("Load");
+		loadButton.addActionListener(this);
+		loadButton.setActionCommand("load");
+		loadButton.setToolTipText("Load heuristic parameter values from file");
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.insets = new Insets(0,30,5,30);
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		saveLoadPanel.add(saveButton, gbc);
+		gbc.gridx = 1;
+		gbc.gridy = 0;
+		saveLoadPanel.add(loadButton, gbc);
+		gbc.insets = new Insets(0,0,0,0);
+		gbc.gridx = 0;
+		gbc.gridy = 10;
+		gbc.gridwidth = 1;
+		heuristicParametersPanel.add(saveLoadPanel, gbc);
+		//restore defaults
+		restoreDefaultsPanel = new JPanel(gbl);
+		titledBorder = new TitledBorder(new EtchedBorder(), " Restore Defaults ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+		restoreDefaultsPanel.setBorder(titledBorder);
+		restoreDefaultsButton = new JButton("Restore");
+		restoreDefaultsButton.addActionListener(this);
+		restoreDefaultsButton.setActionCommand("restoreDefaults");
+		restoreDefaultsButton.setToolTipText("Restore default heuristic parameter values");
+		gbc.insets = new Insets(0,0,5,0);
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		restoreDefaultsPanel.add(restoreDefaultsButton,gbc);
+		gbc.insets = new Insets(0,0,0,0);
+		gbc.gridx = 0;
+		gbc.gridy = 11;
+		gbc.gridwidth = 1;
+		heuristicParametersPanel.add(restoreDefaultsPanel, gbc);
+		//add heuristic panel to options panel
 		gbc.insets = new Insets(0,0,0,0);
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.gridx = 0;
@@ -937,8 +973,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 		//temp panel
 		tempPanel = new JPanel(gbl);
-		tempPanel.setPreferredSize(new Dimension(400, 400));
-		tempPanel.setMinimumSize(new Dimension(400,400));
+		tempPanel.setPreferredSize(new Dimension(500,500));
+		tempPanel.setMinimumSize(new Dimension(500,500));
 		tempPanel.setForeground(Color.black);
 		titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		tempPanel.setBorder(titledBorder);
@@ -971,7 +1007,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.insets = new Insets(15,5,10,0);
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.CENTER;
         mainPanel.add(refLabel,gbc);
         getContentPane().add(mainPanel);
         
@@ -982,17 +1018,91 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	}
 	
 	/**
-	 * call algorithm
-	 *
+	 *  action performed
 	 */
-	protected void callAlgorithm() {
-		setCursor(new Cursor(Cursor.WAIT_CURSOR));
-		alg = new PlugInAlgorithmDTIColorDisplay(eigvecSrcImage);
-		alg.addListener(this);
-		alg.run();
+	public void actionPerformed(ActionEvent e) {
+		String command = e.getActionCommand();
+		if(command.equalsIgnoreCase("eigenvectorBrowse")) {
+			loadEigenVectorFile();
+		}
+		else if(command.equalsIgnoreCase("anisotropyBrowse")) {
+			loadAnisotropyFile();
+		}
+		else if(command.equalsIgnoreCase("ok")) {
+			if(eigvecSrcImage == null || anisotropyImage == null) {
+				MipavUtil.displayError("Both eigenvector and anisotropy files are needed");
+				return;
+			}
+			//this is if user hits ok for a new set of eigenvector and anisotropy files
+			if(bottomPanel.getComponent(2) == resultPanel) {
+				tempPanel = new JPanel(gbl);
+				tempPanel.setPreferredSize(new Dimension(500, 500));
+				tempPanel.setMinimumSize(new Dimension(500,500));
+				tempPanel.setForeground(Color.black);
+				titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+				tempPanel.setBorder(titledBorder);
+				bottomPanel.add(tempPanel, 2);
+				bottomPanel.remove(resultPanel);	
+			}
+			if(resultImage != null) {
+				resultImage.disposeLocal();
+				resultImage = null;
+			}
+			callAlgorithm();
+		}
+		else if (command.equals("MagImage")) {
+			magImage();
+		}
+		else if (command.equals("UnMagImage")) {
+			unMagImage();
+        }
+		else if (command.equals("ZoomOne")) {
+			zoomOne();
+
+		}
+		else if(command.equals("CaptureImage")) {
+			writeImage();
+		}
+		else if(command.equals("truncRadio")) {
+			isMultiply = false;
+			if(componentImage != null) {
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+			}
+		}
+		else if(command.equals("multRadio")) {
+			isMultiply = true;
+			if(componentImage != null) {
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+			}
+		}
+		else if(command.equals("restoreDefaults")) {
+			restoreDefaults();
+		}
+		else if(command.equals("save")) {
+			saveParams();
+			if(out != null) {
+				try {
+					out.close();
+				}
+				catch (IOException ioe) {
+					ioe.printStackTrace();
+				}
+			}
+		}
+		else if(command.equals("load")) {
+			loadParams();
+			if(in != null) {
+				try {
+					in.close();
+				}
+				catch(IOException ioe) {
+					ioe.printStackTrace();
+				}
+			}
+		}
 	}
-
-
+	
+	
 	/**
 	 * algorithm performed
 	 */
@@ -1071,10 +1181,10 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			resultImagePanel = new JPanel(gbl);
 			resultScrollPanel = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);		
 			titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
-			resultImagePanel.setMinimumSize(new Dimension(400,400));
+			resultImagePanel.setMinimumSize(new Dimension(500,500));
 			resultScrollPanel.setBorder(titledBorder);
-			resultScrollPanel.setPreferredSize(new Dimension(400, 400));
-			resultScrollPanel.setMinimumSize(new Dimension(400,400));
+			resultScrollPanel.setPreferredSize(new Dimension(500, 500));
+			resultScrollPanel.setMinimumSize(new Dimension(500,500));
 			resultScrollPanel.addMouseWheelListener(this);
 			gbc.gridx = 0;
 	        gbc.gridy = 0;
@@ -1097,6 +1207,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			minResultImageSlicesLabel = new JLabel("1");
 			minResultImageSlicesLabel.setForeground(Color.black);
 			minResultImageSlicesLabel.setFont(MipavUtil.font12);
+			currentResultImageSlicesLabel = new JLabel((zSlice+1) + "/" + numSlices);
 			gbc.gridx = 0;
 			gbc.gridy = 0;
 			gbc.gridwidth = 2;
@@ -1115,6 +1226,13 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			gbc.anchor = GridBagConstraints.EAST;
 			gbc.weightx = 0;
 			resultImageSliderPanel.add(maxResultImageSlicesLabel, gbc);
+			gbc.gridx = 1;
+			gbc.gridy = 1;
+			gbc.anchor = GridBagConstraints.CENTER;
+			gbc.weightx = 0;
+			gbc.insets = new Insets(10,0,10,0);
+			resultImageSliderPanel.add(currentResultImageSlicesLabel, gbc);
+			
 			//toolbar panel
 			toolbarPanel = new JPanel(new GridBagLayout());
 			titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
@@ -1148,7 +1266,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			gbc.gridx = 0;
 	        gbc.gridy = 1;
 	        gbc.gridwidth = 4;
-	        gbc.insets = new Insets(10,0,0,0);
+	        gbc.insets = new Insets(10,0,10,0);
 			toolbarPanel.add(magLabel,gbc);
 
 			gbc.gridwidth = 1;
@@ -1185,202 +1303,18 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		finalize();
 
 	}
-
+	
 	
 	/**
-	 *  action performed
+	 * call algorithm
+	 *
 	 */
-	public void actionPerformed(ActionEvent e) {
-		String command = e.getActionCommand();
-		if(command.equalsIgnoreCase("eigenvectorBrowse")) {
-			JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
-			chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-	        chooser.setDialogTitle("Choose eigenvector file");
-	        int returnValue = chooser.showOpenDialog(this);
-	        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
-	        	FileIO fileIO = new FileIO();
-	        	if(eigvecSrcImage != null) {
-	        		eigvecSrcImage.disposeLocal();
-	        		eigvecSrcImage = null;
-	        	}
-	        	eigvecSrcImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
-	        	if(eigvecSrcImage.getNDims() != 4) {
-	        		MipavUtil.displayError("Eigenvector file does not have correct dimensions");
-	        		if(eigvecSrcImage != null) {
-	        			eigvecSrcImage.disposeLocal();
-	        		}
-	        		eigenvectorPath.setText("");
-	        		eigvecSrcImage = null;
-					return;
-	        	}
-	        	if(eigvecSrcImage.getExtents()[3] != 9) {
-					MipavUtil.displayError("Eigenvector file does not have correct dimensions");
-					if(eigvecSrcImage != null) {
-						eigvecSrcImage.disposeLocal();
-					}
-					eigenvectorPath.setText("");
-					eigvecSrcImage = null;
-					return;
-	        	}
-	        	eigenvectorPath.setText(chooser.getSelectedFile().getAbsolutePath());
-	        	Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
-	        	int[] dimExtentsLUT;
-	            dimExtentsLUT = new int[2];
-	            dimExtentsLUT[0] = 4;
-	            dimExtentsLUT[1] = 256;
-	            LUTa = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-	            LUTa.resetTransferLine(0.0f, (int) Math.round(eigvecSrcImage.getMin()), 255.0f, (int) Math.round(eigvecSrcImage.getMax()));
-	            int[] extents;
-	            extents = new int[4];
-	            extents[0] = Math.round(eigvecSrcImage.getExtents()[0]);
-	            extents[1] = Math.round(eigvecSrcImage.getExtents()[1]);
-	            extents[2] = Math.round(eigvecSrcImage.getExtents()[2]);
-	            extents[3] = Math.round(eigvecSrcImage.getExtents()[3]);   
-	        }
-		}
-		else if(command.equalsIgnoreCase("anisotropyBrowse")) {
-			JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
-			chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-	        chooser.setDialogTitle("Choose anisotropy file");
-	        int returnValue = chooser.showOpenDialog(this);
-	        if (returnValue == JFileChooser.APPROVE_OPTION) {
-	        	FileIO fileIO = new FileIO();
-	        	if(anisotropyImage != null) {
-	        		anisotropyImage.disposeLocal();
-	        		anisotropyImage = null;
-	        	}
-	        	anisotropyImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
-	        	if(anisotropyImage.getNDims() > 3) {
-					MipavUtil.displayError("anisotropy file does not have correct dimensions");
-					if(anisotropyImage != null) {
-						anisotropyImage.disposeLocal();
-					}
-					anisotropyPath.setText("");
-					anisotropyImage = null;
-					return;
-	        	}
-	        	anisotropyPath.setText(chooser.getSelectedFile().getAbsolutePath());
-	        	Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
-	        }
-		}
-		else if(command.equalsIgnoreCase("ok")) {
-			if(eigvecSrcImage == null || anisotropyImage == null) {
-				MipavUtil.displayError("Both eigenvector and anisotropy files are needed");
-				return;
-			}
-			//this is if user hits ok for a new set of eigenvector and anisotropy files
-			if(bottomPanel.getComponent(2) == resultPanel) {
-				tempPanel = new JPanel(gbl);
-				tempPanel.setPreferredSize(new Dimension(400, 400));
-				tempPanel.setMinimumSize(new Dimension(400,400));
-				tempPanel.setForeground(Color.black);
-				titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
-				tempPanel.setBorder(titledBorder);
-				bottomPanel.add(tempPanel, 2);
-				bottomPanel.remove(resultPanel);	
-			}
-			if(resultImage != null) {
-				resultImage.disposeLocal();
-				resultImage = null;
-			}
-			callAlgorithm();
-		}
-		else if (command.equals("MagImage")) {
-			if(!unMagButton.isEnabled()) {
-				unMagButton.setEnabled(true);
-			}
-            float newZoom;
-            if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR))) {
-            	if(componentImage.getZoomX() < 1.0f) {
-            		newZoom = 2.0f * componentImage.getZoomX();
-            	}else {
-            		newZoom = componentImage.getZoomX() + 1.0f;
-            	}
-            }
-            else {
-            	newZoom = 2.0f * componentImage.getZoomX();
-            }
-            zoom = newZoom;
-            if(zoom != 1) {
-            	captureImageButton.setEnabled(false);
-            }
-            else {
-            	captureImageButton.setEnabled(true);
-            }
-            componentImage.setZoom(newZoom, newZoom);
-            validate();
-            componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
-            
-            magLabel.setText("M:"+zoom);
-			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
-            if(componentImage.getZoomX() >= 32) {
-				magButton.setEnabled(false);
-			}
-		}
-		else if (command.equals("UnMagImage")) {
-			if(!magButton.isEnabled()) {
-				magButton.setEnabled(true);
-			}
-            float newZoom;
-            if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (componentImage.getZoomX() > 1.0f)) {
-                // linear zoom is prevented if getZoomX() <= 1.0
-                newZoom = componentImage.getZoomX() - 1.0f;
-            } else {
-                newZoom = 0.5f * componentImage.getZoomX();
-            }
-            zoom = newZoom;
-            if(zoom != 1) {
-            	captureImageButton.setEnabled(false);
-            }
-            else {
-            	captureImageButton.setEnabled(true);
-            }
-            componentImage.setZoom(newZoom, newZoom);
-            validate();
-            componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
-            magLabel.setText("M:"+zoom);
-			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
-            if(componentImage.getZoomX() <= 0.125) {
-				unMagButton.setEnabled(false);
-			}
-        }
-		else if (command.equals("ZoomOne")) {
-			if(!unMagButton.isEnabled()) {
-				unMagButton.setEnabled(true);
-			}
-			if(!magButton.isEnabled()) {
-				magButton.setEnabled(true);
-			}
-			float newZoom = 1;
-			zoom = newZoom;
-			captureImageButton.setEnabled(true);
-            componentImage.setZoom(newZoom, newZoom);
-			validate();
-            componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
-            magLabel.setText("M:"+zoom);
-			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
-
-		}
-		else if(command.equals("CaptureImage")) {
-			writeImage();
-		}
-		else if(command.equals("truncRadio")) {
-			isMultiply = false;
-			if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
-			}
-		}
-		else if(command.equals("multRadio")) {
-			isMultiply = true;
-			if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
-			}
-		}
-		
+	protected void callAlgorithm() {
+		setCursor(new Cursor(Cursor.WAIT_CURSOR));
+		alg = new PlugInAlgorithmDTIColorDisplay(eigvecSrcImage);
+		alg.addListener(this);
+		alg.run();
 	}
-
-
-
 
 
 	/**
@@ -1392,7 +1326,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         if (source == anisotropyMaxSlider) {
         	anisotropyMaxTextField.setText(String.valueOf(anisotropyMaxSlider.getValue() / 1000.000000f));
         	anisotropyMax = Float.valueOf(anisotropyMaxTextField.getText());
-        	if(componentImage != null) {
+        	if(componentImage != null && !flag) {
         		if(anisotropyMax > anisotropyMin) {
         			componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
         		}
@@ -1401,58 +1335,58 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         else if (source == anisotropyMinSlider) {
         	anisotropyMinTextField.setText(String.valueOf(anisotropyMinSlider.getValue() / 1000.000000f));
         	anisotropyMin = Float.valueOf(anisotropyMinTextField.getText());
-        	if(componentImage != null) {
+        	if(componentImage != null && !flag) {
         		if(anisotropyMin < anisotropyMax) {
         			componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
         		}
 			}
         }
-        else if (source == adjustExpSlider) {
-        	adjustExpTextField.setText(String.valueOf(adjustExpSlider.getValue() / 100.000000f));
-        	adjustExp = Float.valueOf(adjustExpTextField.getText());
-        	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
-			}
-        }
         else if (source == gammaSlider) {
         	gammaTextField.setText(String.valueOf(gammaSlider.getValue() / 100.000000f));
         	gamma = Float.valueOf(gammaTextField.getText());
-        	if(componentImage != null) {
-				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
-			}
-        }
-        else if (source == stevensBetaSlider) {
-        	stevensBetaTextField.setText(String.valueOf(stevensBetaSlider.getValue() / 100.000000f));
-        	stevensBeta = Float.valueOf(stevensBetaTextField.getText());
-        	if(componentImage != null) {
+        	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == satBlueSlider) {
         	satBlueTextField.setText(String.valueOf(satBlueSlider.getValue() / 1000.000000f));
         	pB = Float.valueOf(satBlueTextField.getText());
-        	if(componentImage != null) {
+        	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == dimGreenSlider) {
         	dimGreenTextField.setText(String.valueOf(dimGreenSlider.getValue() / 100.000000f));
         	pG = Float.valueOf(dimGreenTextField.getText());
-        	if(componentImage != null) {
+        	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == colorRangeSlider) {
         	colorRangeTextField.setText(String.valueOf(colorRangeSlider.getValue() / 1000.000000f));
         	pC = Float.valueOf(colorRangeTextField.getText());
-        	if(componentImage != null) {
+        	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
         else if (source == satVsThetaSlider) {
         	satVsThetaTextField.setText(String.valueOf(satVsThetaSlider.getValue() / 1000.000000f));
         	pS = Float.valueOf(satVsThetaTextField.getText());
-        	if(componentImage != null) {
+        	if(componentImage != null && !flag) {
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+			}
+        }
+        else if (source == adjustExpSlider) {
+        	adjustExpTextField.setText(String.valueOf(adjustExpSlider.getValue() / 100.000000f));
+        	adjustExp = Float.valueOf(adjustExpTextField.getText());
+        	if(componentImage != null && !flag) {
+				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+			}
+        }
+        else if (source == stevensBetaSlider) {
+        	stevensBetaTextField.setText(String.valueOf(stevensBetaSlider.getValue() / 100.000000f));
+        	stevensBeta = Float.valueOf(stevensBetaTextField.getText());
+        	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
         }
@@ -1460,11 +1394,10 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	zSlice = resultImageSlider.getValue() - 1;
         	componentImage.setSlice(zSlice);
 			componentImage.show(tSlice, zSlice, true);
+			currentResultImageSlicesLabel.setText((zSlice+1) + "/" + numSlices);
 			setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
         }
 	}
-
-
 
 	/**
 	 * item state changed
@@ -1480,7 +1413,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			int index = colorWheelComboBox.getSelectedIndex();
 			if(index == 0) {
 				if(currentColorWheel != absValColorWheel) {
-					absValColorWheel = new ColorWheel("ABSVAL",150,pB,pC,pS,pG,stevensBeta,gamma);
+					absValColorWheel = new ColorWheel("ABSVAL",200,pB,pC,pS,pG,stevensBeta,gamma);
 					colorWheelPanel.add(absValColorWheel,gbc);
 					colorWheelPanel.validate();
 					colorWheelPanel.repaint();
@@ -1498,7 +1431,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			}
 			else if(index == 1) {
 				if(currentColorWheel != noSymmColorWheel) {
-					noSymmColorWheel = new ColorWheel("NOSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
+					noSymmColorWheel = new ColorWheel("NOSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
 					colorWheelPanel.add(noSymmColorWheel,gbc);
 					colorWheelPanel.validate();
 					colorWheelPanel.repaint();
@@ -1516,7 +1449,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			}
 			else if(index == 2) {
 				if(currentColorWheel != rotationalSymmColorWheel) {
-					rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
+					rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
 					colorWheelPanel.add(rotationalSymmColorWheel,gbc);
 					colorWheelPanel.validate();
 					colorWheelPanel.repaint();
@@ -1534,7 +1467,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			}
 			else if(index == 3) {
 				if(currentColorWheel != mirrorSymmColorWheel) {
-					mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
+					mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
 					colorWheelPanel.add(mirrorSymmColorWheel,gbc);
 					colorWheelPanel.validate();
 					colorWheelPanel.repaint();
@@ -1554,9 +1487,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
-
-
-	
 	/**
 	 * update current color wheel
 	 *
@@ -1568,7 +1498,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         gbc.insets = new Insets(0,0,0,0);
 		gbc.anchor = GridBagConstraints.CENTER;
 		if(currentColorWheel == absValColorWheel) {
-			absValColorWheel = new ColorWheel("ABSVAL",150,pB,pC,pS,pG,stevensBeta,gamma);
+			absValColorWheel = new ColorWheel("ABSVAL",200,pB,pC,pS,pG,stevensBeta,gamma);
 			colorWheelPanel.add(absValColorWheel,gbc);
 			colorWheelPanel.validate();
 			colorWheelPanel.repaint();
@@ -1576,7 +1506,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			currentColorWheel = absValColorWheel;
 		}
 		else if(currentColorWheel == noSymmColorWheel) {
-			noSymmColorWheel = new ColorWheel("NOSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
+			noSymmColorWheel = new ColorWheel("NOSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
 			colorWheelPanel.add(noSymmColorWheel,gbc);
 			colorWheelPanel.validate();
 			colorWheelPanel.repaint();
@@ -1584,7 +1514,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			currentColorWheel = noSymmColorWheel;
 		}
 		else if(currentColorWheel == rotationalSymmColorWheel) {
-			rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
+			rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
 			colorWheelPanel.add(rotationalSymmColorWheel,gbc);
 			colorWheelPanel.validate();
 			colorWheelPanel.repaint();
@@ -1592,7 +1522,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			currentColorWheel = rotationalSymmColorWheel;
 		}
 		else if(currentColorWheel == mirrorSymmColorWheel) {
-			mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",150,pB,pC,pS,pG,stevensBeta,gamma);
+			mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
 			colorWheelPanel.add(mirrorSymmColorWheel,gbc);
 			colorWheelPanel.validate();
 			colorWheelPanel.repaint();
@@ -1601,243 +1531,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		}
 
 	}
-	
-	
-	
-	
-	/**
-     * Create the intensity buffer for an image.
-     *
-     * @param   extents  the extents of the image
-     * @param   isColor  whether the image is in color
-     *
-     * @return  a buffer which is big enough to contain the image intensity data
-     */
-    protected static float[] initImageBuffer(int[] extents, boolean isColor) {
-        int bufferFactor = 1;
-
-        if (isColor) {
-            bufferFactor = 4;
-        }
-
-        return new float[bufferFactor * extents[0] * extents[1]];
-    }
-    
-    
-    
-    
-    /**
-     * Create the pixel buffer for an image.
-     *
-     * @param   extents  the extents of the image
-     *
-     * @return  a buffer which is big enough to contain the image pixel data
-     */
-    protected static int[] initPixelBuffer(int[] extents) {
-        return new int[extents[0] * extents[1]];
-    }
-    
-    
-    
-    
-    /**
-     * init resolutions
-     * @param img
-     * @return
-     */
-    protected static float[] initResolutions(ModelImage img) {
-        float[] res = img.getFileInfo(0).getResolutions();
-
-        for (int r = 0; r < img.getNDims(); r++) {
-
-            if (res[r] < 0) {
-                res[r] = Math.abs(res[r]);
-            } else if (res[r] == 0) {
-                res[r] = 1.0f;
-            }
-        }
-
-        return res;
-    }
-    
-    
-    /**
-     * init units
-     * @param img
-     * @return
-     */
-    protected static int[] initUnits(ModelImage img) {
-        return img.getFileInfo(0).getUnitsOfMeasure();
-    }
-    
-    
-    
-    /**
-     * Get the resolution correction needed for non-isotropic images.
-     *
-     * @param   imgResols  the image resolution
-     * @param   imgUnits   the image units of measure
-     *
-     * @return  the resolution correction factor in the x (the first element) and y (the second element) dimensions
-     */
-    protected static float[] initResFactor(float[] imgResols, int[] imgUnits) {
-        float[] resFactor = new float[2];
-
-        resFactor[0] = 1.0f;
-        resFactor[1] = 1.0f;
-
-        if ((imgResols[1] >= imgResols[0]) && (imgResols[1] < (20.0f * imgResols[0])) && (imgUnits[0] == imgUnits[1])) {
-            resFactor[1] = imgResols[1] / imgResols[0];
-        } else if ((imgResols[0] > imgResols[1]) && (imgResols[0] < (20.0f * imgResols[1])) &&
-                       (imgUnits[0] == imgUnits[1])) {
-            resFactor[0] = imgResols[0] / imgResols[1];
-        }
-
-        return resFactor;
-    }
-    
-    
-    
-    
-    /**
-     * Creates and initializes the ModelRGB for an image.
-     *
-     * @param   img  the image to create a ModelRGB for
-     *
-     * @return  a ModelRGB for the image <code>img</code> (null if NOT a color image)
-     *
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
-     */
-    public static ModelRGB initRGB(ModelImage img) throws OutOfMemoryError {
-        ModelRGB newRGB = null;
-
-        if (img.isColorImage()) {
-            float[] x = new float[4];
-            float[] y = new float[4];
-            Dimension dim = new Dimension(256, 256);
-
-            // Set ModelRGB min max values;
-            x[0] = 0;
-            y[0] = dim.height - 1;
-
-            x[1] = 255 * 0.333f;
-            y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-
-            x[2] = 255 * 0.667f;
-            y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-
-            x[3] = 255;
-            y[3] = 0;
-
-            int[] RGBExtents = new int[2];
-            RGBExtents[0] = 4;
-            RGBExtents[1] = 256;
-            newRGB = new ModelRGB(RGBExtents);
-            newRGB.getRedFunction().importArrays(x, y, 4);
-            newRGB.getGreenFunction().importArrays(x, y, 4);
-            newRGB.getBlueFunction().importArrays(x, y, 4);
-            newRGB.makeRGB(-1);
-        }
-
-        return newRGB;
-    }
-    
-    
-   
-    
-    
-    
-    /**
-     * Initializes the variables based on the image extents. (i.e. number of slices, number of time slices, the initial
-     * z-slice, etc.
-     *
-     * @param  img  the image to set the extent variables for
-     */
-    public void initExtentsVariables(ModelImage img) {
-        int[] slices = null;
-        int[] numImages = null;
-
-        slices = initSlicePositions(img);
-        numImages = initNumSlices(img);
-
-        zSlice = slices[0];
-        tSlice = slices[1];
-
-        nImage = numImages[0];
-        nTImage = numImages[1];
-    }
-    
-    /**
-     * Get the initial time and volume slice positions.
-     *
-     * @param   img  the image to get the slice positions of
-     *
-     * @return  an array containing the slice in the volume (in the first element) and the time slice (in the second
-     *          element)
-     */
-    protected static int[] initSlicePositions(ModelImage img) {
-        int[] slices = new int[2];
-
-        if (img.getNDims() == 4) {
-            slices[0] = (img.getExtents()[2] - 1) / 2;
-            slices[1] = 0;
-        } else if (img.getNDims() == 3) {
-            slices[0] = (img.getExtents()[2] - 1) / 2;
-            slices[1] = 0;
-        } else {
-            slices[0] = 0;
-            slices[1] = 0;
-        }
-
-        return slices;
-    }
-    
-    /**
-     * Get the total number of time slices and volume slices.
-     *
-     * @param   img  the image to get the slices of
-     *
-     * @return  an array containing the number of volume slices (in the first element) and the number of time slices in
-     *          the image (in the second element)
-     */
-    protected static int[] initNumSlices(ModelImage img) {
-        int[] numImages = new int[2];
-
-        if (img.getNDims() == 4) {
-            numImages[0] = img.getExtents()[2];
-            numImages[1] = img.getExtents()[3];
-        } else if (img.getNDims() == 3) {
-            numImages[0] = img.getExtents()[2];
-            numImages[1] = 0;
-        } else {
-            numImages[0] = 1;
-            numImages[1] = 0;
-        }
-
-        return numImages;
-    }
-    
-
-    
-    
-    /**
-	 * 
-	 */
-	public void finalize() {
-		if(eigvecSrcImage != null) {
-			eigvecSrcImage.disposeLocal();
-		}
-		if(anisotropyImage != null) {
-			anisotropyImage.disposeLocal();
-		}
-		
-		eigvecSrcImage = null;
-		anisotropyImage = null;
-	}
-	
-	
-	
-	
 
 	/**
 	 * mouse clicked
@@ -1846,45 +1539,13 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		if (event.getButton() == MouseEvent.BUTTON3) {
             if (event.getSource() instanceof JButton) {
                 JButton btnSource = (JButton) event.getSource();
-
                 if (btnSource.getActionCommand().equals("MagImage") ||
                         btnSource.getActionCommand().equals("UnMagImage")) {
                     handleZoomPopupMenu(btnSource, event);
                 }
             }
-            
 		}
-		
 	}
-
-
-
-	/**
-	 * mouse entered
-	 */
-	public void mouseEntered(MouseEvent arg0) {
-		
-	}
-
-
-
-	/**
-	 * mouse exited
-	 */
-	public void mouseExited(MouseEvent arg0) {
-
-	}
-
-
-
-	/**
-	 * mouse pressed
-	 */
-	public void mousePressed(MouseEvent arg0) {
-		
-	}
-
-
 
 	/**
 	 * mouse released
@@ -1926,220 +1587,516 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	}
 	
 	
-	
-	
-	
-	 /**
-     * Gets the RGB LUT table for ARGB image A.
-     *
-     * @return  RGBT the new RGB LUT to be applied to the image
-     */
-    public ModelRGB getRGBTA() {
-        return (componentImage.getRGBTA());
-    }
-    
-    
-    /**
-     * Sets the RGB LUT table for ARGB image A.
-     *
-     * @param  RGBT  the new RGB LUT to be applied to the image
-     */
-    public void setRGBTA(ModelRGB RGBT) {
-
-        if (componentImage != null) {
-            componentImage.setRGBTA(RGBT);
+	/**
+	 * browses and loads eigen vector file
+	 *
+	 */
+	public void loadEigenVectorFile() {
+		JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+		chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+        chooser.setDialogTitle("Choose eigenvector file");
+        int returnValue = chooser.showOpenDialog(this);
+        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
+        	FileIO fileIO = new FileIO();
+        	if(eigvecSrcImage != null) {
+        		eigvecSrcImage.disposeLocal();
+        		eigvecSrcImage = null;
+        	}
+        	eigvecSrcImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
+        	if(eigvecSrcImage.getNDims() != 4) {
+        		MipavUtil.displayError("Eigenvector file does not have correct dimensions");
+        		if(eigvecSrcImage != null) {
+        			eigvecSrcImage.disposeLocal();
+        		}
+        		eigenvectorPath.setText("");
+        		eigvecSrcImage = null;
+				return;
+        	}
+        	if(eigvecSrcImage.getExtents()[3] != 9) {
+				MipavUtil.displayError("Eigenvector file does not have correct dimensions");
+				if(eigvecSrcImage != null) {
+					eigvecSrcImage.disposeLocal();
+				}
+				eigenvectorPath.setText("");
+				eigvecSrcImage = null;
+				return;
+        	}
+        	eigenvectorPath.setText(chooser.getSelectedFile().getAbsolutePath());
+        	Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+        	int[] dimExtentsLUT;
+            dimExtentsLUT = new int[2];
+            dimExtentsLUT[0] = 4;
+            dimExtentsLUT[1] = 256;
+            LUTa = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+            LUTa.resetTransferLine(0.0f, (int) Math.round(eigvecSrcImage.getMin()), 255.0f, (int) Math.round(eigvecSrcImage.getMax()));
+            int[] extents;
+            extents = new int[4];
+            extents[0] = Math.round(eigvecSrcImage.getExtents()[0]);
+            extents[1] = Math.round(eigvecSrcImage.getExtents()[1]);
+            extents[2] = Math.round(eigvecSrcImage.getExtents()[2]);
+            extents[3] = Math.round(eigvecSrcImage.getExtents()[3]);   
         }
-    }
-    
-	/**
-	 * get controls
-	 */
-	public ViewControlsImage getControls() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-
-
-	/**
-	 * get image a
-	 */
-	public ModelImage getImageA() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-
-
-	/**
-	 * get image b
-	 */
-	public ModelImage getImageB() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-
-
-	/**
-	 * remove controls
-	 */
-	public void removeControls() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-	/**
-	 * set active image
-	 */
-	public void setActiveImage(int active) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-	/**
-	 * set alpha blend
-	 */
-	public void setAlphaBlend(int value) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-	/**
-	 * set controls
-	 */
-	public void setControls() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-	/**
-	 * set enabled
-	 */
-	public void setEnabled(boolean flag) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-	/**
-	 * set image b
-	 */
-	public void setImageB(ModelImage imageB) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-	/**
-	 * set paint bitmap switch
-	 */
-	public void setPaintBitmapSwitch(boolean flag) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	/**
-	 * set rgbtb
-	 */
-	public void setRGBTB(ModelRGB RGBT) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-	/**
-	 * set title
-	 */
-	public void setTitle() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-	/**
-	 * update image extents
-	 */
-	public boolean updateImageExtents() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-
-
-	/**
-	 * set slice
-	 */
-	public void setSlice(int slice) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-	/**
-	 * set time slice
-	 */
-	public void setTimeSlice(int tSlice) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-	/**
-	 * update images
-	 */
-	public boolean updateImages() {
-		return false;
-	}
-
-
-
-	/**
-	 * update images
-	 */
-	public boolean updateImages(boolean flag) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-
-	
-	/**
-	 * update images
-	 */
-	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
-		// TODO Auto-generated method stub
-		return false;
 	}
 	
 	
+	/**
+	 * browses and loads anisotropy file
+	 *
+	 */
+	public void loadAnisotropyFile() {
+		JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+		chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+        chooser.setDialogTitle("Choose anisotropy file");
+        int returnValue = chooser.showOpenDialog(this);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+        	FileIO fileIO = new FileIO();
+        	if(anisotropyImage != null) {
+        		anisotropyImage.disposeLocal();
+        		anisotropyImage = null;
+        	}
+        	anisotropyImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator);
+        	if(anisotropyImage.getNDims() > 3) {
+				MipavUtil.displayError("anisotropy file does not have correct dimensions");
+				if(anisotropyImage != null) {
+					anisotropyImage.disposeLocal();
+				}
+				anisotropyPath.setText("");
+				anisotropyImage = null;
+				return;
+        	}
+        	anisotropyPath.setText(chooser.getSelectedFile().getAbsolutePath());
+        	Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+        }
+	}
 	
+	
+	/**
+	 * magnifies image
+	 *
+	 */
+	public void magImage() {
+		if(!unMagButton.isEnabled()) {
+			unMagButton.setEnabled(true);
+		}
+        float newZoom;
+        if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR))) {
+        	if(componentImage.getZoomX() < 1.0f) {
+        		newZoom = 2.0f * componentImage.getZoomX();
+        	}else {
+        		newZoom = componentImage.getZoomX() + 1.0f;
+        	}
+        }
+        else {
+        	newZoom = 2.0f * componentImage.getZoomX();
+        }
+        zoom = newZoom;
+        if(zoom != 1) {
+        	captureImageButton.setEnabled(false);
+        }
+        else {
+        	captureImageButton.setEnabled(true);
+        }
+        componentImage.setZoom(newZoom, newZoom);
+        validate();
+        componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+        
+        magLabel.setText("M:"+zoom);
+		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+        if(componentImage.getZoomX() >= 32) {
+			magButton.setEnabled(false);
+		}
+	}
+	
+	/**
+	 * un-magnifies image
+	 *
+	 */
+	public void unMagImage() {
+		if(!magButton.isEnabled()) {
+			magButton.setEnabled(true);
+		}
+        float newZoom;
+        if ((Preferences.is(Preferences.PREF_ZOOM_LINEAR)) && (componentImage.getZoomX() > 1.0f)) {
+            // linear zoom is prevented if getZoomX() <= 1.0
+            newZoom = componentImage.getZoomX() - 1.0f;
+        } else {
+            newZoom = 0.5f * componentImage.getZoomX();
+        }
+        zoom = newZoom;
+        if(zoom != 1) {
+        	captureImageButton.setEnabled(false);
+        }
+        else {
+        	captureImageButton.setEnabled(true);
+        }
+        componentImage.setZoom(newZoom, newZoom);
+        validate();
+        componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+        magLabel.setText("M:"+zoom);
+		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+        if(componentImage.getZoomX() <= 0.125) {
+			unMagButton.setEnabled(false);
+		}
+	}
+	
+	/**
+	 * sets image zoom to 1
+	 *
+	 */
+	public void zoomOne() {
+		if(!unMagButton.isEnabled()) {
+			unMagButton.setEnabled(true);
+		}
+		if(!magButton.isEnabled()) {
+			magButton.setEnabled(true);
+		}
+		float newZoom = 1;
+		zoom = newZoom;
+		captureImageButton.setEnabled(true);
+        componentImage.setZoom(newZoom, newZoom);
+		validate();
+        componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+        magLabel.setText("M:"+zoom);
+		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
+	}
+	
+	/**
+	 * restore default parameters
+	 *
+	 */
+	public void restoreDefaults() {
+		flag = true;
+		anisotropyMaxSlider.setValue(700);
+		anisotropyMax = 0.7f;
+		anisotropyMinSlider.setValue(0);
+		anisotropyMin = 0.0f;
+		gammaSlider.setValue(180);
+		gamma = 1.8f;
+		satBlueSlider.setValue(350);
+		pB = 0.35f;
+		dimGreenSlider.setValue(80);
+		pG = 0.8f;
+		colorRangeSlider.setValue(700);
+		pC = 0.7f;
+		satVsThetaSlider.setValue(500);
+		pS = 0.5f;
+		adjustExpSlider.setValue(50);
+		adjustExp = 0.5f;
+		stevensBetaSlider.setValue(40);
+		stevensBeta = 0.4f;
+		multRadio.setSelected(true);
+		isMultiply = true;
+    	if(componentImage != null) {
+			componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+		}
+		updateCurrentColorWheel();
+		flag = false;
+	}
+	
+	
+	/**
+	 * save heuristic parameters
+	 *
+	 */
+	public void saveParams() {
+		String fileName = "", directory = "";
+		JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+		chooser.setDialogTitle("Save");
+		int returnValue = chooser.showSaveDialog(this);
+		if (returnValue == JFileChooser.APPROVE_OPTION) {
+            fileName = chooser.getSelectedFile().getName();
+            directory = chooser.getCurrentDirectory().toString() + File.separatorChar;
+            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            try {
+                out = new BufferedWriter(new FileWriter(directory + fileName));
+                out.write("anisotropyMax:"+anisotropyMax);
+                out.newLine();
+                out.write("anisotropyMin:"+anisotropyMin);
+                out.newLine();
+                out.write("gamma:"+gamma);
+                out.newLine();
+                out.write("satBlue:"+pB);
+                out.newLine();
+                out.write("dimGreen:"+pG);
+                out.newLine();
+                out.write("colorRange:"+pC);
+                out.newLine();
+                out.write("satVsTheta:"+pS);
+                out.newLine();
+                out.write("adjustExp:"+adjustExp);
+                out.newLine();
+                out.write("stevensBeta:"+stevensBeta);
+                
+            }
+            catch(Exception e) {
+            	e.printStackTrace();
+            	MipavUtil.displayError("Error writing params to file");
+            	return;
+            }   
+        } else {
+            return;
+        }
+	}
+	
+	
+	
+	/**
+	 * loads heuristic parameter values
+	 *
+	 */
+	public void loadParams() {
+		String fileName = "", directory = "";
+		String line;
+		String[] splits;
+		float num;
+		float[] vals = new float[9];
+		JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+        chooser.setDialogTitle("Choose eigenvector file");
+        int returnValue = chooser.showOpenDialog(this);
+        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
+        	fileName = chooser.getSelectedFile().getName();
+            directory = chooser.getCurrentDirectory().toString() + File.separatorChar;
+            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            try{
+            	in = new BufferedReader(new FileReader(directory + fileName));
+            	line = in.readLine();
+            	if(line != null) {
+	            	splits = line.split(":");
+	            	if(splits[0].equals("anisotropyMax")) {
+		            	try {
+		            		num = Float.parseFloat(splits[1]);
+		            	}catch(NumberFormatException e){
+		            		e.printStackTrace();
+		                	MipavUtil.displayError("Error reading params from file");
+		            		return;
+		            	}
+		            	vals[0] = num;	
+	            	}
+	            	else {
+	            		MipavUtil.displayError("Error reading params from file");
+	                	return;
+	            	}
+            	}
+            	else {
+            		MipavUtil.displayError("Error reading params from file");
+                	return;
+            	}
+            	line = in.readLine();
+            	if(line != null) {
+	            	splits = line.split(":");
+	            	if(splits[0].equals("anisotropyMin")) {
+	            		try {
+	                		num = Float.parseFloat(splits[1]);
+	                	}catch(NumberFormatException e){
+	                		e.printStackTrace();
+	                    	MipavUtil.displayError("Error reading params from file");
+	                		return;
+	                	}
+	                	vals[1] = num;	
+	            	}
+	            	else {
+	            		MipavUtil.displayError("Error reading params from file");
+	                	return;
+	            	}
+            	}
+            	else {
+            		MipavUtil.displayError("Error reading params from file");
+                	return;
+            	}
+            	line = in.readLine();
+            	if(line != null) {
+	            	splits = line.split(":");
+	            	if(splits[0].equals("gamma")) {
+	            		try {
+	                		num = Float.parseFloat(splits[1]);
+	                	}catch(NumberFormatException e){
+	                		e.printStackTrace();
+	                    	MipavUtil.displayError("Error reading params from file");
+	                		return;
+	                	}
+	                	vals[2] = num;	
+	            	}
+	            	else {
+	            		MipavUtil.displayError("Error reading params from file");
+	                	return;
+	            	}
+            	}
+            	else {
+            		MipavUtil.displayError("Error reading params from file");
+                	return;
+            	}
+            	line = in.readLine();
+            	if(line != null) {
+	            	splits = line.split(":");
+	            	if(splits[0].equals("satBlue")) {
+	            		try {
+	                		num = Float.parseFloat(splits[1]);
+	                	}catch(NumberFormatException e){
+	                		e.printStackTrace();
+	                    	MipavUtil.displayError("Error reading params from file");
+	                		return;
+	                	}
+	                	vals[3] = num;	
+	            	}
+	            	else {
+	            		MipavUtil.displayError("Error reading params from file");
+	                	return;
+	            	}
+            	}
+            	else {
+            		MipavUtil.displayError("Error reading params from file");
+                	return;
+            	}
+            	line = in.readLine();
+            	if(line != null) {
+	            	splits = line.split(":");
+	            	if(splits[0].equals("dimGreen")) {
+	            		try {
+	                		num = Float.parseFloat(splits[1]);
+	                	}catch(NumberFormatException e){
+	                		e.printStackTrace();
+	                    	MipavUtil.displayError("Error reading params from file");
+	                		return;
+	                	}
+	                	vals[4] = num;
+	            	}
+	            	else {
+	            		MipavUtil.displayError("Error reading params from file");
+	                	return;
+	            	}
+            	}
+            	else {
+            		MipavUtil.displayError("Error reading params from file");
+                	return;
+            	}
+            	line = in.readLine();
+            	if(line != null) {
+	            	splits = line.split(":");
+	            	if(splits[0].equals("colorRange")) {
+	            		try {
+	                		num = Float.parseFloat(splits[1]);
+	                	}catch(NumberFormatException e){
+	                		e.printStackTrace();
+	                    	MipavUtil.displayError("Error reading params from file");
+	                		return;
+	                	}
+	                	vals[5] = num;	
+	            	}
+	            	else {
+	            		MipavUtil.displayError("Error reading params from file");
+	                	return;
+	            	}
+            	}
+            	else {
+            		MipavUtil.displayError("Error reading params from file");
+                	return;
+            	}
+            	line = in.readLine();
+            	if(line != null) {
+	            	splits = line.split(":");
+	            	if(splits[0].equals("satVsTheta")) {
+	            		try {
+	                		num = Float.parseFloat(splits[1]);
+	                	}catch(NumberFormatException e){
+	                		e.printStackTrace();
+	                    	MipavUtil.displayError("Error reading params from file");
+	                		return;
+	                	}
+	                	vals[6] = num;	
+	            	}
+	            	else {
+	            		MipavUtil.displayError("Error reading params from file");
+	                	return;
+	            	}
+            	}
+            	else {
+            		MipavUtil.displayError("Error reading params from file");
+                	return;
+            	}
+            	line = in.readLine();
+            	if(line != null) {
+	            	splits = line.split(":");
+	            	if(splits[0].equals("adjustExp")) {
+	            		try {
+	                		num = Float.parseFloat(splits[1]);
+	                	}catch(NumberFormatException e){
+	                		e.printStackTrace();
+	                    	MipavUtil.displayError("Error reading params from file");
+	                		return;
+	                	}
+	                	vals[7] = num;	
+	            	}
+	            	else {
+	            		MipavUtil.displayError("Error reading params from file");
+	                	return;
+	            	}
+            	}
+            	else {
+            		MipavUtil.displayError("Error reading params from file");
+                	return;
+            	}
+            	line = in.readLine();
+            	if(line != null) {
+	            	splits = line.split(":");
+	            	if(splits[0].equals("stevensBeta")) {
+	            		try {
+	                		num = Float.parseFloat(splits[1]);
+	                	}catch(NumberFormatException e){
+	                		e.printStackTrace();
+	                    	MipavUtil.displayError("Error reading params from file");
+	                		return;
+	                	}
+	                	vals[8] = num;	
+	            	}
+	            	else {
+	            		MipavUtil.displayError("Error reading params from file");
+	                	return;
+	            	}
+            	}
+            	else {
+            		MipavUtil.displayError("Error reading params from file");
+                	return;
+            	}
+            	//this means we read the file successfully...so now lets set the vars, set the sliders, update color wheel and image
+            	flag = true;
+        		anisotropyMaxSlider.setValue((int)(vals[0] * 1000));
+        		anisotropyMax = vals[0];
+        		anisotropyMinSlider.setValue((int)(vals[1] * 1000));
+        		anisotropyMin = vals[1];
+        		gammaSlider.setValue((int)(vals[2] * 100));
+        		gamma = vals[2];
+        		satBlueSlider.setValue((int)(vals[3] * 1000));
+        		pB = vals[3];
+        		dimGreenSlider.setValue((int)(vals[4] * 100));
+        		pG = vals[4];
+        		colorRangeSlider.setValue((int)(vals[5] * 1000));
+        		pC = vals[5];
+        		satVsThetaSlider.setValue((int)(vals[6] * 1000));
+        		pS = vals[6];
+        		adjustExpSlider.setValue((int)(vals[7] * 100));
+        		adjustExp = vals[7];
+        		stevensBetaSlider.setValue((int)(vals[8] * 100));
+        		stevensBeta = vals[8];
+            	if(componentImage != null) {
+        			componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
+        		}
+        		updateCurrentColorWheel();
+        		flag = false;
+           
+            	
+            }
+            catch(Exception e) {
+            	e.printStackTrace();
+            	MipavUtil.displayError("Error reading params from file");
+            	return;
+            }
+        }
+        else {
+        	return;
+        }
+		
+	}
+
 	/**
      * Scrolls through all z slices of a 3d/4d image and captures them into a new ARGB ModelImage, then puts the
      * ModelImage in a ViewJFrameImage.
@@ -2367,7 +2324,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 
 	/**
 	 * mouse wheel moved
-	 * @param arg0
+	 * @param event
 	 */
 	public void mouseWheelMoved(MouseWheelEvent event) {
 		int wheelRotation = event.getWheelRotation();
@@ -2377,161 +2334,23 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				if(zSlice != numSlices-1) {
 					zSlice = zSlice + 1;
 					resultImageSlider.setValue(zSlice + 1);
+					currentResultImageSlicesLabel.setText((zSlice+1) + "/" + numSlices);
 					setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
 				}
 			}else {
 				if(zSlice != 0) {
 					zSlice = zSlice -1;
 					resultImageSlider.setValue(zSlice + 1);
+					currentResultImageSlicesLabel.setText((zSlice+1) + "/" + numSlices);
 					setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
 				}
 			}
 		}
-		else if(source == anisotropyMaxSlider) {
-			if (wheelRotation < 0) {
-				if(anisotropyMaxSlider.getValue() < anisotropyMaxSlider.getMaximum()) {
-					anisotropyMaxSlider.setValue(anisotropyMaxSlider.getValue() + 1);
-					//updateCurrentColorWheel();
-				}
-			}
-			else {
-				if(anisotropyMaxSlider.getValue() > anisotropyMaxSlider.getMinimum()) {
-					if(anisotropyMaxSlider.getValue() - 1 > anisotropyMinSlider.getValue()) {
-						anisotropyMaxSlider.setValue(anisotropyMaxSlider.getValue() - 1);
-						//updateCurrentColorWheel();
-					}
-				}
-			}
-		}
-		else if(source == anisotropyMinSlider) {
-			if (wheelRotation < 0) {
-				if(anisotropyMinSlider.getValue() < anisotropyMinSlider.getMaximum()) {
-					if(anisotropyMinSlider.getValue() + 1 < anisotropyMaxSlider.getValue()) {
-						anisotropyMinSlider.setValue(anisotropyMinSlider.getValue() + 1);
-						//updateCurrentColorWheel();
-					}
-				}
-			}
-			else {
-				if(anisotropyMinSlider.getValue() > anisotropyMinSlider.getMinimum()) {
-					anisotropyMinSlider.setValue(anisotropyMinSlider.getValue() - 1);
-					//updateCurrentColorWheel();
-				}
-			}
-		}
-		else if(source == gammaSlider) {
-			if (wheelRotation < 0) {
-				if(gammaSlider.getValue() < gammaSlider.getMaximum()) {
-					gammaSlider.setValue(gammaSlider.getValue() + 1);
-					updateCurrentColorWheel();
-				}
-			}
-			else {
-				if(gammaSlider.getValue() > gammaSlider.getMinimum()) {
-					gammaSlider.setValue(gammaSlider.getValue() - 1);
-					updateCurrentColorWheel();
-				}
-			}
-		}
-		else if(source == satBlueSlider) {
-			if (wheelRotation < 0) {
-				if(satBlueSlider.getValue() < satBlueSlider.getMaximum()) {
-					satBlueSlider.setValue(satBlueSlider.getValue() + 1);
-					updateCurrentColorWheel();
-				}
-			}
-			else {
-				if(satBlueSlider.getValue() > satBlueSlider.getMinimum()) {
-					satBlueSlider.setValue(satBlueSlider.getValue() - 1);
-					updateCurrentColorWheel();
-				}
-			}
-		}
-		else if(source == dimGreenSlider) {
-			if (wheelRotation < 0) {
-				if(dimGreenSlider.getValue() < dimGreenSlider.getMaximum()) {
-					dimGreenSlider.setValue(dimGreenSlider.getValue() + 1);
-					updateCurrentColorWheel();
-				}
-			}
-			else {
-				if(dimGreenSlider.getValue() > dimGreenSlider.getMinimum()) {
-					dimGreenSlider.setValue(dimGreenSlider.getValue() - 1);
-					updateCurrentColorWheel();
-				}
-			}
-		}
-		else if(source == colorRangeSlider) {
-			if (wheelRotation < 0) {
-				if(colorRangeSlider.getValue() < colorRangeSlider.getMaximum()) {
-					colorRangeSlider.setValue(colorRangeSlider.getValue() + 1);
-					updateCurrentColorWheel();
-				}
-			}
-			else {
-				if(colorRangeSlider.getValue() > colorRangeSlider.getMinimum()) {
-					colorRangeSlider.setValue(colorRangeSlider.getValue() - 1);
-					updateCurrentColorWheel();
-				}
-			}
-		}
-		else if(source == satVsThetaSlider) {
-			if(satVsThetaSlider.isEnabled()) {
-				if (wheelRotation < 0) {
-					if(satVsThetaSlider.getValue() < satVsThetaSlider.getMaximum()) {
-						satVsThetaSlider.setValue(satVsThetaSlider.getValue() + 1);
-						updateCurrentColorWheel();
-					}
-				}
-				else {
-					if(satVsThetaSlider.getValue() > satVsThetaSlider.getMinimum()) {
-						satVsThetaSlider.setValue(satVsThetaSlider.getValue() - 1);
-						updateCurrentColorWheel();
-					}
-				}
-			}
-		}
-		else if(source == adjustExpSlider) {
-			if (wheelRotation < 0) {
-				if(adjustExpSlider.getValue() < adjustExpSlider.getMaximum()) {
-					adjustExpSlider.setValue(adjustExpSlider.getValue() + 1);
-					updateCurrentColorWheel();
-				}
-			}
-			else {
-				if(adjustExpSlider.getValue() > adjustExpSlider.getMinimum()) {
-					adjustExpSlider.setValue(adjustExpSlider.getValue() - 1);
-					updateCurrentColorWheel();
-				}
-			}
-		}
-		else if(source == stevensBetaSlider) {
-			if (wheelRotation < 0) {
-				if(stevensBetaSlider.getValue() < stevensBetaSlider.getMaximum()) {
-					stevensBetaSlider.setValue(stevensBetaSlider.getValue() + 1);
-					updateCurrentColorWheel();
-				}
-			}
-			else {
-				if(stevensBetaSlider.getValue() > stevensBetaSlider.getMinimum()) {
-					stevensBetaSlider.setValue(stevensBetaSlider.getValue() - 1);
-					updateCurrentColorWheel();
-				}
-			}
-		}
-
 	}
 
-	public void keyPressed(KeyEvent event) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void keyReleased(KeyEvent event) {
-		// TODO Auto-generated method stub
-		
-	}
-
+	/**
+	 * key typed
+	 */
 	public void keyTyped(KeyEvent event) {
 		Object source = event.getSource();
 
@@ -2680,11 +2499,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	
 	
 	
-	public void focusGained(FocusEvent event) {
-		
-		
-	}
 
+	
+	/**
+	 * focus lost
+	 */
 	public void focusLost(FocusEvent event) {
 		Object source = event.getSource();
 
@@ -2843,6 +2662,435 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			return -1;
 		}
 	}
+
+	/**
+     * Create the intensity buffer for an image.
+     *
+     * @param   extents  the extents of the image
+     * @param   isColor  whether the image is in color
+     *
+     * @return  a buffer which is big enough to contain the image intensity data
+     */
+    protected static float[] initImageBuffer(int[] extents, boolean isColor) {
+        int bufferFactor = 1;
+
+        if (isColor) {
+            bufferFactor = 4;
+        }
+
+        return new float[bufferFactor * extents[0] * extents[1]];
+    }
+    
+    
+    
+    
+    /**
+     * Create the pixel buffer for an image.
+     *
+     * @param   extents  the extents of the image
+     *
+     * @return  a buffer which is big enough to contain the image pixel data
+     */
+    protected static int[] initPixelBuffer(int[] extents) {
+        return new int[extents[0] * extents[1]];
+    }
+
+    /**
+     * init resolutions
+     * @param img
+     * @return
+     */
+    protected static float[] initResolutions(ModelImage img) {
+        float[] res = img.getFileInfo(0).getResolutions();
+
+        for (int r = 0; r < img.getNDims(); r++) {
+
+            if (res[r] < 0) {
+                res[r] = Math.abs(res[r]);
+            } else if (res[r] == 0) {
+                res[r] = 1.0f;
+            }
+        }
+
+        return res;
+    }
+       
+    /**
+     * init units
+     * @param img
+     * @return
+     */
+    protected static int[] initUnits(ModelImage img) {
+        return img.getFileInfo(0).getUnitsOfMeasure();
+    }
+
+    /**
+     * Get the resolution correction needed for non-isotropic images.
+     *
+     * @param   imgResols  the image resolution
+     * @param   imgUnits   the image units of measure
+     *
+     * @return  the resolution correction factor in the x (the first element) and y (the second element) dimensions
+     */
+    protected static float[] initResFactor(float[] imgResols, int[] imgUnits) {
+        float[] resFactor = new float[2];
+
+        resFactor[0] = 1.0f;
+        resFactor[1] = 1.0f;
+
+        if ((imgResols[1] >= imgResols[0]) && (imgResols[1] < (20.0f * imgResols[0])) && (imgUnits[0] == imgUnits[1])) {
+            resFactor[1] = imgResols[1] / imgResols[0];
+        } else if ((imgResols[0] > imgResols[1]) && (imgResols[0] < (20.0f * imgResols[1])) &&
+                       (imgUnits[0] == imgUnits[1])) {
+            resFactor[0] = imgResols[0] / imgResols[1];
+        }
+
+        return resFactor;
+    }
+    
+    /**
+     * Creates and initializes the ModelRGB for an image.
+     *
+     * @param   img  the image to create a ModelRGB for
+     *
+     * @return  a ModelRGB for the image <code>img</code> (null if NOT a color image)
+     *
+     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
+     */
+    public static ModelRGB initRGB(ModelImage img) throws OutOfMemoryError {
+        ModelRGB newRGB = null;
+
+        if (img.isColorImage()) {
+            float[] x = new float[4];
+            float[] y = new float[4];
+            Dimension dim = new Dimension(256, 256);
+
+            // Set ModelRGB min max values;
+            x[0] = 0;
+            y[0] = dim.height - 1;
+
+            x[1] = 255 * 0.333f;
+            y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
+
+            x[2] = 255 * 0.667f;
+            y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
+
+            x[3] = 255;
+            y[3] = 0;
+
+            int[] RGBExtents = new int[2];
+            RGBExtents[0] = 4;
+            RGBExtents[1] = 256;
+            newRGB = new ModelRGB(RGBExtents);
+            newRGB.getRedFunction().importArrays(x, y, 4);
+            newRGB.getGreenFunction().importArrays(x, y, 4);
+            newRGB.getBlueFunction().importArrays(x, y, 4);
+            newRGB.makeRGB(-1);
+        }
+
+        return newRGB;
+    }
+     
+    /**
+     * Initializes the variables based on the image extents. (i.e. number of slices, number of time slices, the initial
+     * z-slice, etc.
+     *
+     * @param  img  the image to set the extent variables for
+     */
+    public void initExtentsVariables(ModelImage img) {
+        int[] slices = null;
+        int[] numImages = null;
+
+        slices = initSlicePositions(img);
+        numImages = initNumSlices(img);
+
+        zSlice = slices[0];
+        tSlice = slices[1];
+
+        nImage = numImages[0];
+        nTImage = numImages[1];
+    }
+    
+    /**
+     * Get the initial time and volume slice positions.
+     *
+     * @param   img  the image to get the slice positions of
+     *
+     * @return  an array containing the slice in the volume (in the first element) and the time slice (in the second
+     *          element)
+     */
+    protected static int[] initSlicePositions(ModelImage img) {
+        int[] slices = new int[2];
+
+        if (img.getNDims() == 4) {
+            slices[0] = (img.getExtents()[2] - 1) / 2;
+            slices[1] = 0;
+        } else if (img.getNDims() == 3) {
+            slices[0] = (img.getExtents()[2] - 1) / 2;
+            slices[1] = 0;
+        } else {
+            slices[0] = 0;
+            slices[1] = 0;
+        }
+
+        return slices;
+    }
+    
+    /**
+     * Get the total number of time slices and volume slices.
+     *
+     * @param   img  the image to get the slices of
+     *
+     * @return  an array containing the number of volume slices (in the first element) and the number of time slices in
+     *          the image (in the second element)
+     */
+    protected static int[] initNumSlices(ModelImage img) {
+        int[] numImages = new int[2];
+
+        if (img.getNDims() == 4) {
+            numImages[0] = img.getExtents()[2];
+            numImages[1] = img.getExtents()[3];
+        } else if (img.getNDims() == 3) {
+            numImages[0] = img.getExtents()[2];
+            numImages[1] = 0;
+        } else {
+            numImages[0] = 1;
+            numImages[1] = 0;
+        }
+
+        return numImages;
+    }
+    
+
+    
+    
+    /**
+	 * 
+	 */
+	public void finalize() {
+		if(eigvecSrcImage != null) {
+			eigvecSrcImage.disposeLocal();
+		}
+		if(anisotropyImage != null) {
+			anisotropyImage.disposeLocal();
+		}
+		
+		eigvecSrcImage = null;
+		anisotropyImage = null;
+	}
+
+	 /**
+    * Gets the RGB LUT table for ARGB image A.
+    *
+    * @return  RGBT the new RGB LUT to be applied to the image
+    */
+   public ModelRGB getRGBTA() {
+       return (componentImage.getRGBTA());
+   }
+   
+   /**
+    * Sets the RGB LUT table for ARGB image A.
+    *
+    * @param  RGBT  the new RGB LUT to be applied to the image
+    */
+   public void setRGBTA(ModelRGB RGBT) {
+
+       if (componentImage != null) {
+           componentImage.setRGBTA(RGBT);
+       }
+   }
+   
+	/**
+	 * get controls
+	 */
+	public ViewControlsImage getControls() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * get image a
+	 */
+	public ModelImage getImageA() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * get image b
+	 */
+	public ModelImage getImageB() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * remove controls
+	 */
+	public void removeControls() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * set active image
+	 */
+	public void setActiveImage(int active) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * set alpha blend
+	 */
+	public void setAlphaBlend(int value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * set controls
+	 */
+	public void setControls() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * set enabled
+	 */
+	public void setEnabled(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * set image b
+	 */
+	public void setImageB(ModelImage imageB) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * set paint bitmap switch
+	 */
+	public void setPaintBitmapSwitch(boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * set rgbtb
+	 */
+	public void setRGBTB(ModelRGB RGBT) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * set title
+	 */
+	public void setTitle() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * update image extents
+	 */
+	public boolean updateImageExtents() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/**
+	 * set slice
+	 */
+	public void setSlice(int slice) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * set time slice
+	 */
+	public void setTimeSlice(int tSlice) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * update images
+	 */
+	public boolean updateImages() {
+		return false;
+	}
+
+	/**
+	 * update images
+	 */
+	public boolean updateImages(boolean flag) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/**
+	 * update images
+	 */
+	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	/**
+	 * mouse entered
+	 */
+	public void mouseEntered(MouseEvent arg0) {
+		
+	}
+
+	/**
+	 * mouse exited
+	 */
+	public void mouseExited(MouseEvent arg0) {
+
+	}
+
+	/**
+	 * mouse pressed
+	 */
+	public void mousePressed(MouseEvent arg0) {
+		
+	}
+	
+	/**
+	 * focus gained
+	 */
+	public void focusGained(FocusEvent event) {
+		
+		
+	}
+
+	/**
+	 * key pressed
+	 */
+	public void keyPressed(KeyEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * key released
+	 */
+	public void keyReleased(KeyEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	
+	
 	
 	
 	

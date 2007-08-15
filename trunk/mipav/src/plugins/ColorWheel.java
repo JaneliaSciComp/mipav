@@ -515,7 +515,7 @@ public class ColorWheel extends Canvas {
 		
 		float b = b1/(r1+g1+b1);
 		
-		float cB = Math.max((3/2) * pB * (b-(1/3)) * pC, 0);
+		float cB = Math.max((3/2f) * pB * (b-(1/3f)) * pC, 0f);
 		
 		float rS = (cB*b1) + ((1-cB)*r1);
 		float gS = (cB*b1) + ((1-cB)*g1);
@@ -543,11 +543,11 @@ public class ColorWheel extends Canvas {
 	 */
 	public float[] shiftRed(float r1, float g1, float b1) {
 		float colors[] = new float[3];
-		float pR = pB/4;
+		float pR = pB/4f;
 		
 		float b = b1/(r1+g1+b1);
 		
-		float cB = Math.max((3/2) * pR * (b-(1/3)) * pC, 0);
+		float cB = Math.max((3/2f) * pR * (b-(1/3f)) * pC, 0f);
 		
 		float rS = (cB*b1) + ((1-cB)*r1);
 		float gS = (cB*b1) + ((1-cB)*g1);
@@ -583,9 +583,9 @@ public class ColorWheel extends Canvas {
 		r1 = r1/maxVal;
 		g1 = g1/maxVal;
 		b1 = b1/maxVal;
-		float thrd = 1/3;
-		float c1 = thrd - (pG/25);
-		float c2 = thrd + (pG/4);
+		float thrd = 1/3f;
+		float c1 = thrd - (pG/25f);
+		float c2 = thrd + (pG/4f);
 		float leql = 0.7f;
 		float totalVal = (float)(((c1*r1) + (c2*g1) + ((1 - c2 - stevensBeta) * b1))/Math.pow(leql, (1/stevensBeta)));
 		if(totalVal < 1) {
