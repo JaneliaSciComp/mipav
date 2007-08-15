@@ -981,7 +981,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 		//reference label
 		refLabel = new JLabel();
-		refLabel.setText("<html>Developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group and Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker MS from the NIH/NICHD/LIMB/STBB group </html>");
+		refLabel.setText("<html>Developed in concert with Dr. Sinisa Pajevic Ph.D. from the NIH/CIT/DCB/MSCL group and Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker M.S. from the NIH/NICHD/LIMB/STBB group </html>");
 
 		//bottom panel
         gbc.anchor = GridBagConstraints.NORTH;
