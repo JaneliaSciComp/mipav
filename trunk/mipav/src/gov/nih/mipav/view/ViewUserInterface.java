@@ -299,8 +299,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void aboutDataProvenance() {
 
-        JDialogDataProvenance dp = new JDialogDataProvenance(mainFrame, "Mipav system data provenance", true,
-                                                             this.getProvenanceHolder());
+        JDialogDataProvenance dp = new JDialogDataProvenance(mainFrame, null, null,
+                                                             this.getProvenanceHolder(), true);
 
     }
 
