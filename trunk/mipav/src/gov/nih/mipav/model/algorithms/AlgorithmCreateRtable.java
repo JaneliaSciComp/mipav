@@ -11,17 +11,17 @@ import java.util.*;
 /**
  *  
  *  The algorithm works as follows:
- *  I have implemented the Generalized Hough transform scheme originally sketched out by Dana H. Ballard.  A VOI curve is made
- *  counterclockwise. At every point on a curve the angle omega, tangent to the point on the curve, is found.  Then, the distance
- *  r and angle beta of the line segment from the center of mass of the object to the point on the curve is found.  An R-table
- *  of tangent angle bins, linked to lists of all possible r, beta values is created.  In matching the object searching must occur over
- *  different scale factors and rotations of the object.
+ *  I have implemented the Generalized Hough transform scheme originally sketched out by Dana H. Ballard.
+ *  At every point on a curve the gradient angle omega, perpindicular to the tangent and going into the object, is found.
+ *  Then, the distance r and angle beta of the line segment from the center of mass of the object to the point on the curve is found.
+ *  An R-table of gradient angle bins, linked to lists of all possible r, beta values is created.  In matching the object searching must
+ *  occur over different scale factors and rotations of the object.
 
   for (i = 0; i < numPoints; i++) {
     Get gradient angle omega for point
     for (j = 0; j <  thetaBins; j++) {
          rotation angle = theta[j]
-         Get list of all r, beta values at tangent angle bin for omega – rotation angle
+         Get list of all r, beta values at gradient angle bin for omega – rotation angle
          for (k = 0; k < size of r, beta list; k++) {
              Get r, beta values
              for (m = 0; m < scaleBins; m++) {
@@ -42,8 +42,8 @@ import java.util.*;
 public class AlgorithmCreateRtable extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    // Number of bins covering tangent direction where VOI contour ordering is made counterclockwise
-    // The angle goes from 0 to 2*PI.
+    // Number of bins covering gradient direction, normal to the tangent angle, going from 0 radians to 2*PI radians.
+    // The gradient direction is defined as going into the object.
     private int binNumber = 90;
     
     // Name of file in which R-table is stored
@@ -65,8 +65,9 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
      * AlgorithmCreateRtable.
      *
      * @param  srcImg   Binary source image that has contour VOI for R-table generation
-     * @param  binNumber Number of bins for tangent direction going from 0 degrees to +360 degrees.  
-     *                   The VOI point ordering is made counterclockwise.
+     * @param  binNumber Number of bins for gradient direction, normal to the tangent angle, 
+     *                   going from 0 to 2*PI radians.  The gradient direction is defined as going
+     *                   into the object.
      * @param  sidePointsForTangent  Number of points to take from each side of a point on a curve
      *                               in determining the tangent
      * @param  fileName Name of file to store R-table in
@@ -120,7 +121,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         
         byte[] srcBuffer;
         byte[] maskBuffer;
-        boolean test = true;
+        boolean test = false;
         int indexArray[];
         int neighbors;
         boolean foundArray[];
@@ -245,8 +246,6 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             }   
         }
         
-        ((VOIContour)(selectedVOI.getCurves()[0].elementAt(0))).makeCounterClockwise();
-        
         center = selectedVOI.getCenterOfMass();
         centerX = center.x;
         centerY = center.y;
@@ -341,7 +340,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             MipavUtil.displayError("IOException on maskImage.importData");
         }
         
-        // Binary image is already skeltonized, but dangling branches may be present
+        // Binary image is already skeletonized, but dangling branches may be present
         // Prune off branches with 5 or less pixels
         pruningPix = 5;
         entireImage = true;
@@ -470,7 +469,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         } // for (y = 0; y < yDim; y++)
         ViewUserInterface.getReference().setDataText("Number of points on curve = " + numPoints + "\n");
         
-        // Find a starting postion
+        // Find a starting position
         loop1:
         for (y = 0; y < yDim; y++) {
             offset = y * xDim;
@@ -655,7 +654,23 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
                 } 
             }
             
-            omega = Math.atan2(tangentY, tangentX);
+            omega = Math.atan2(normalY, normalX);
+            // Change omega range from -PI to PI to 0 to 2*PI
+            if (omega < 0.0) {
+                omega = omega + 2.0 * Math.PI;
+            }
+            x = (int)Math.round(xpc + 2.0*Math.cos(omega));
+            y = (int)Math.round(ypc + 2.0*Math.sin(omega));
+            index = x + xDim * y;
+            if (maskBuffer[index] == 0) {
+                //  Not in VOI - take normal going the opposite way
+                if (omega < Math.PI) {
+                    omega = omega + Math.PI;
+                }
+                else {
+                    omega = omega - Math.PI;
+                }
+            }
             if (n >= 1) {
                 curveXDist = xpc - lastxpc;
                 curveYDist = ypc - lastypc;
@@ -763,7 +778,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         
         byte[] srcBuffer;
         byte[] maskBuffer;
-        boolean test = true;
+        boolean test = false;
         int indexArray[];
         int neighbors;
         boolean foundArray[];
@@ -876,8 +891,6 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             }   
         }
         
-        ((VOIContour)(selectedVOI.getCurves()[0].elementAt(0))).makeCounterClockwise();
-        
         center = selectedVOI.getCenterOfMass();
         centerX = center.x;
         centerY = center.y;
@@ -972,7 +985,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
             MipavUtil.displayError("IOException on maskImage.importData");
         }
         
-        // Binary image is already skeltonized, but dangling branches may be present
+        // Binary image is already skeletonized, but dangling branches may be present
         // Prune off branches with 5 or less pixels
         pruningPix = 5;
         entireImage = true;
@@ -1101,7 +1114,7 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
         } // for (y = 0; y < yDim; y++)
         ViewUserInterface.getReference().setDataText("Number of points on curve = " + numPoints + "\n");
         
-        // Find a starting postion
+        // Find a starting position
         loop1:
         for (y = 0; y < yDim; y++) {
             offset = y * xDim;
@@ -1263,10 +1276,22 @@ public class AlgorithmCreateRtable extends AlgorithmBase {
                     normalY = (float)y1t;
                 } 
             }
-            omega = Math.atan2(tangentY, tangentX);
+            omega = Math.atan2(normalY, normalX);
             // Change omega range from -PI to PI to 0 to 2*PI
             if (omega < 0.0) {
                 omega = omega + 2.0 * Math.PI;
+            }
+            x = (int)Math.round(xpc + 2.0*Math.cos(omega));
+            y = (int)Math.round(ypc + 2.0*Math.sin(omega));
+            index = x + xDim * y;
+            if (maskBuffer[index] == 0) {
+                //  Not in VOI - take normal going the opposite way
+                if (omega < Math.PI) {
+                    omega = omega + Math.PI;
+                }
+                else {
+                    omega = omega - Math.PI;
+                }
             }
             omegaIndex = (int)(omega/binWidth);
             distX = centerX - xpc;
