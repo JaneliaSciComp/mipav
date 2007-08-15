@@ -949,7 +949,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		heuristicParametersPanel.add(saveLoadPanel, gbc);
 		//restore defaults
 		restoreDefaultsPanel = new JPanel(gbl);
-		titledBorder = new TitledBorder(new EtchedBorder(), " Restore Defaults ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+		titledBorder = new TitledBorder(new EtchedBorder(), " Restore Default Params ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		restoreDefaultsPanel.setBorder(titledBorder);
 		restoreDefaultsButton = new JButton("Restore");
 		restoreDefaultsButton.addActionListener(this);
