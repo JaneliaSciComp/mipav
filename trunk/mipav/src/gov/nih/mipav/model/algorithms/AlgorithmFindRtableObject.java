@@ -7,7 +7,6 @@ import gov.nih.mipav.view.*;
 import java.awt.Color;
 import java.io.*;
 import java.util.*;
-import java.awt.*;
 
 /**
  
@@ -17,18 +16,17 @@ import java.awt.*;
  *  5 6 7
  *  
  *  The algorithm works as follows:
- *  The algorithm works as follows:
- *  I have implemented the Generalized Hough transform scheme originally sketched out by Dana H. Ballard.  A VOI curve is made
- *  counterclockwise. At every point on a curve the angle omega, tangent to the point on the curve, is found.  Then, the distance
- *  r and angle beta of the line segment from the center of mass of the object to the point on the curve is found.  An R-table
- *  of tangent angle bins, linked to lists of all possible r, beta values is created.  In matching the object searching must occur over
- *  different scale factors and rotations of the object.
+ *  I have implemented the Generalized Hough transform scheme originally sketched out by Dana H. Ballard.
+ *  At every point on a curve the gradient angle omega, perpindicular to the tangent and going into the object, is found.
+ *  Then, the distance r and angle beta of the line segment from the center of mass of the object to the point on the curve is found.
+ *  An R-table of gradient angle bins, linked to lists of all possible r, beta values is created.  In matching the object searching must
+ *  occur over different scale factors and rotations of the object.
 
   for (i = 0; i < numPoints; i++) {
     Get gradient angle omega for point
     for (j = 0; j <  thetaBins; j++) {
          rotation angle = theta[j]
-         Get list of all r, beta values at tangent angle bin for omega – rotation angle
+         Get list of all r, beta values at gradient angle bin for omega – rotation angle
          for (k = 0; k < size of r, beta list; k++) {
              Get r, beta values
              for (m = 0; m < scaleBins; m++) {
@@ -49,8 +47,8 @@ import java.awt.*;
 public class AlgorithmFindRtableObject extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    /** Number of bins covering tangent angle going from 0 to 2*PI
-     *  Point ordering is made counterclockwise on closed countours. */
+    /** Number of bins covering gradient angle going from 0 to 2*PI
+     *  Gradient is taken as going into the object */
     private int omegaBins = 90;
     
     /** Number of points to take from each side of a point on a curve in determining a tangent
@@ -59,8 +57,8 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
     private int sidePointsForTangent;
     
     /** For each omega angle index, a linked list of R and B values is present
-     *  omega is the tangent angle to the curve, where closed contour curves
-     *  are followed counterclockwise, and R and B give the distance
+     *  omega is the gradient angle to the curve, where the gradient is taken as
+     *  going into the object, and R and B give the distance
      *  and angle from the center of the VOI to the tangent point */
     private LinkedList omegaRBetaList[];
     
@@ -123,12 +121,12 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
      * AlgorithmFindRtableObject.
      *
      * @param  srcImg   Binary image that has 1 or more instances of the R-table object
-     * @param  omegaBins Number of bins for tangent angle at point on curve going from 0 to +360 degrees
-     *                   Points on closed curve contours are made counterclockwise.
+     * @param  omegaBins Number of bins for gradient angle at point on curve going from 0 to 2*PI radians
      * @param  sidePointsForTangent  Maximum number of points to take from each side of a point on a curve
      *                               in determining the tangent
      * @param  omegaRBetaList For each omega angle index, a linked list of R and B values is present
-     *                        omega is the tangent angle to the curve, and R and B give the distance
+     *                        omega is the gradient angle to the curve, with the gradient defined as going
+     *                        into the object, and R and B give the distance
      *                        and angle from the center of the VOI to the tangent point
      * @param maxPixelBinWidth Desired maximum pixel bin width for x, y center value.
      *                         If maxBufferSize is not large enough, this number is increased.
@@ -351,7 +349,6 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         int xVal[];
         int yVal[];
         int zVal[];
-        Polygon gon = null;
         double deltaOmega;
         double curveXDist;
         double curveYDist;
@@ -380,6 +377,10 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         int yIndex;
         int maxXYCount;
         int maxRSCount = 0;
+        short VOIMask[];
+        int xt;
+        int yt;
+        int indext;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -900,7 +901,11 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                         normalY = (float)y1t;
                     }    
                 }
-                omega = Math.atan2(tangentY, tangentX);
+                omega = Math.atan2(normalY, normalX);
+                // Change omega range from -PI to PI to 0 to 2*PI
+                if (omega < 0.0) {
+                    omega = omega + 2.0 * Math.PI;
+                }
                 if (n >= 2) {
                     curveXDist = xpc - lastxpc;
                     curveYDist = ypc - lastypc;
@@ -933,6 +938,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         yPoints = new float[2*sidePointsForTangent + 1];
         closedX = new int[2*(xDim + yDim)];
         closedY = new int[2*(xDim + yDim)];
+        VOIMask = new short[sourceSlice];
         for (y = 0; y < yDim; y++) {
             offset = y * xDim;
             for (x = 0; x < xDim; x++) {
@@ -967,23 +973,14 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                         yVal[i] = closedY[i];
                     }
                     closedVOI.importCurve(xVal, yVal, zVal, 0);
-                    if (!((VOIContour)closedVOI.getCurves()[0].elementAt(0)).isCounterClockwise()) {
-                        ((VOIContour)closedVOI.getCurves()[0].elementAt(0)).makeCounterClockwise();
-                        gon = ((VOIContour)closedVOI.getCurves()[0].elementAt(0)).exportPolygon();
-                        try {
-                            closedVOI.finalize();
-                        }
-                        catch (Throwable e){
-                            ViewUserInterface.getReference().setDataText("Exception on closedVOI.finalize()\n");    
-                        }
-                        closedVOI = null;
-                        indexPtr = startPtr;
-                        for (i = 0; i < closedLength; i++) {
-                            index = gon.xpoints[i] + xDim * gon.ypoints[i];
-                            indexArray[indexPtr++] = index;
-                        }
-                        gon = null;
-                    } // if (!((VOIContour)closedVOI.getCurves()[0].elementAt(0)).isCounterClockwise())
+                    VOIMask = closedVOI.createShortMask(xDim, yDim, VOIMask, false);
+                    try {
+                        closedVOI.finalize();
+                    }
+                    catch(Throwable e) {
+                        ViewUserInterface.getReference().setDataText("Exception on closedVOI.finalize()");
+                    }
+                    closedVOI = null;
                     endPtr = indexPtr - 1;
                     indexPtr = startPtr;
                     for (n = 0; n <= closedLength - 1; n++) {
@@ -1107,7 +1104,23 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                                 normalY = (float)y1t;
                             }  
                         }
-                        omega = Math.atan2(tangentY, tangentX);
+                        omega = Math.atan2(normalY, normalX);
+                        // Change omega range from -PI to PI to 0 to 2*PI
+                        if (omega < 0.0) {
+                            omega = omega + 2.0 * Math.PI;
+                        }
+                        xt = (int)Math.round(xpc + 2.0*Math.cos(omega));
+                        yt = (int)Math.round(ypc + 2.0*Math.sin(omega));
+                        indext = xt + xDim * yt;
+                        if (VOIMask[indext] != numClosedCurves) {
+                            //  Not in VOI - take normal going the opposite way
+                            if (omega < Math.PI) {
+                                omega = omega + Math.PI;
+                            }
+                            else {
+                                omega = omega - Math.PI;
+                            }
+                        }
                         if (n >= 1) {
                             curveXDist = xpc - lastxpc;
                             curveYDist = ypc - lastypc;
@@ -1850,7 +1863,10 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         int xVal[];
         int yVal[];
         int zVal[];
-        Polygon gon = null;
+        short VOIMask[];
+        int xt;
+        int yt;
+        int indext;
         
 
         if (srcImage == null) {
@@ -2369,7 +2385,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                         normalY = (float)y1t;
                     }    
                 }
-                omega = Math.atan2(tangentY, tangentX);
+                omega = Math.atan2(normalY, normalX);
                 // Change omega range from -PI to PI to 0 to 2*PI
                 if (omega < 0.0) {
                     omega = omega + 2.0 * Math.PI;
@@ -2389,6 +2405,7 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
         yPoints = new float[2*sidePointsForTangent + 1];
         closedX = new int[2*(xDim + yDim)];
         closedY = new int[2*(xDim + yDim)];
+        VOIMask = new short[sourceSlice];
         for (y = 0; y < yDim; y++) {
             offset = y * xDim;
             for (x = 0; x < xDim; x++) {
@@ -2423,23 +2440,14 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                         yVal[i] = closedY[i];
                     }
                     closedVOI.importCurve(xVal, yVal, zVal, 0);
-                    if (!((VOIContour)closedVOI.getCurves()[0].elementAt(0)).isCounterClockwise()) {
-                        ((VOIContour)closedVOI.getCurves()[0].elementAt(0)).makeCounterClockwise();
-                        gon = ((VOIContour)closedVOI.getCurves()[0].elementAt(0)).exportPolygon();
-                        try {
-                            closedVOI.finalize();
-                        }
-                        catch (Throwable e){
-                            ViewUserInterface.getReference().setDataText("Exception on closedVOI.finalize()\n");    
-                        }
-                        closedVOI = null;
-                        indexPtr = startPtr;
-                        for (i = 0; i < closedLength; i++) {
-                            index = gon.xpoints[i] + xDim * gon.ypoints[i];
-                            indexArray[indexPtr++] = index;
-                        }
-                        gon = null;
-                    } // if (!((VOIContour)closedVOI.getCurves()[0].elementAt(0)).isCounterClockwise())
+                    VOIMask = closedVOI.createShortMask(xDim, yDim, VOIMask, false);
+                    try {
+                        closedVOI.finalize();
+                    }
+                    catch(Throwable e) {
+                        ViewUserInterface.getReference().setDataText("Exception on closedVOI.finalize()");
+                    }
+                    closedVOI = null;
                     endPtr = indexPtr - 1;
                     indexPtr = startPtr;
                     for (n = 0; n <= closedLength - 1; n++) {
@@ -2563,10 +2571,22 @@ public class AlgorithmFindRtableObject extends AlgorithmBase {
                                 normalY = (float)y1t;
                             }  
                         }
-                        omega = Math.atan2(tangentY, tangentX);
+                        omega = Math.atan2(normalY, normalX);
                         // Change omega range from -PI to PI to 0 to 2*PI
                         if (omega < 0.0) {
                             omega = omega + 2.0 * Math.PI;
+                        }
+                        xt = (int)Math.round(xpc + 2.0*Math.cos(omega));
+                        yt = (int)Math.round(ypc + 2.0*Math.sin(omega));
+                        indext = xt + xDim * yt;
+                        if (VOIMask[indext] != numClosedCurves) {
+                            //  Not in VOI - take normal going the opposite way
+                            if (omega < Math.PI) {
+                                omega = omega + Math.PI;
+                            }
+                            else {
+                                omega = omega - Math.PI;
+                            }
                         }
                         omegaIndex = (int)(omega/omegaBinWidth);
                         omegaArray[indexPtr++] = (short)omegaIndex;
