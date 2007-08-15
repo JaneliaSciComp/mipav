@@ -2593,7 +2593,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("DataProvenance")) {
             userInterface.aboutDataProvenance();
         } else if (command.equals("ImageDataProvenance")) {
-        	new JDialogDataProvenance(this, getActiveImage().getImageName() + " data provenance", true, getActiveImage().getProvenanceHolder());
+        	new JDialogDataProvenance(this, getActiveImage().getImageName(), getActiveImage().getImageDirectory(),
+        			getActiveImage().getProvenanceHolder(), false);
         } else if (command.equals("Help")) {
             MipavUtil.showHelp(null);
         } else if (command.equals("MemoryAdjust")) {

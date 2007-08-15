@@ -84,6 +84,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** R-table (*.rtb) */
     public static final int RTABLE = 22;
     
+    /** mipav data provenance (*.xmp) files */
+    public static final int DATA_PROVENANCE = 23;
+    
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
     private static String[] descriptions = {
@@ -109,7 +112,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Plugin Files",
         "XML-based Clinical and Experimental Data Exchange Schema(*.bxh)", // XCEDE schema
         "User Defined",
-        "R-table (*.rtb)"
+        "R-table (*.rtb)",
+        "Data provenance (*.xpm)"
     }; // NLT
 
     /** short description strings for each filterType. */
@@ -137,7 +141,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Plugin", 
         "XCEDE Schema",
         "User Defined",
-        "R-table"
+        "R-table",
+        "Data provenance"
     };
     
     
@@ -409,7 +414,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         else if (filterType == RTABLE && extension.equalsIgnoreCase("rtb")){
             return true;
         }
-
+        else if (filterType == DATA_PROVENANCE && extension.equalsIgnoreCase("xmp")){
+            return true;
+        }
         
         return false;
 
