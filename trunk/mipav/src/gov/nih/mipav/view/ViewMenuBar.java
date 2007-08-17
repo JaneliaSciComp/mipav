@@ -759,7 +759,7 @@ public class ViewMenuBar {
     }
 
     /**
-     * Create the srb File submenu.
+     * Create the Storage Resource Broker (SRB) File submenu.
      *
      * @param   imageOpened  Whether an image is currently open in mipav; this determines whether the 'save' menu items
      *                       are enabled.
@@ -770,8 +770,8 @@ public class ViewMenuBar {
      */
     protected JMenu makeSRBMenu(boolean imageOpened) {
         boolean isAutoUploadEnabled = ((userInterface != null) && (userInterface.getNDARPipeline() != null));
-        JMenuItem saveXCEDESchemaItem = menuBuilder.buildMenuItem("Save XCEDE schema", "SaveXCEDESchema", 0, "save.gif",
-                                                                  true);
+        //JMenuItem saveXCEDESchemaItem = menuBuilder.buildMenuItem("Save XCEDE schema", "SaveXCEDESchema", 0, "save.gif",
+        //                                                          true);
         JMenuItem saveImageToSRBItem = menuBuilder.buildMenuItem("Save image to SRB", "SaveSRBFile", 0, "save.gif",
                                                                  true);
 
@@ -780,8 +780,8 @@ public class ViewMenuBar {
 
         return menuBuilder.makeMenu("SRB-BIRN", true,
                                     new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Open XCEDE schema", "OpenXCEDESchema", 0, "open.gif",
-                                                                  true), saveXCEDESchemaItem,
+                                        //menuBuilder.buildMenuItem("Open XCEDE schema", "OpenXCEDESchema", 0, "open.gif",
+                                        //                          true), saveXCEDESchemaItem,
                                         menuBuilder.buildMenuItem("Open image from SRB", "OpenSRBFile", 0, "open.gif",
                                                                   true), saveImageToSRBItem,
                                         menuBuilder.buildMenuItem("SRB transfer", "TransferSRBFiles", 0, null, true),
