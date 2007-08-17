@@ -34,6 +34,20 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
      */
     public static final int MAX_SRB_LOGIN_FAILURES = 10;
 
+    /** Text of the NDAR privacy notice displayed to the user after a successful login to the srb. */
+    public static final String NDAR_PRIVACY_NOTICE = "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n" +
+                                                     "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research\n" +
+                                                     "around autism and autism treatment. This information may be disclosed to researchers for\n" +
+                                                     "research purposes, and to system administrators for evaluation and data normalization.\n" +
+                                                     "\n" +
+                                                     "Rules governing submission of this information are based on the data sharing rules defined\n" +
+                                                     "in the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing\n" +
+                                                     "requirements, data submission is voluntary.  Data entered into NDAR will be used solely for\n" +
+                                                     "scientific and research purposes and is designed to further the understanding of autism and\n" +
+                                                     "autism treatments.  Modification of NDAR information may be addressed by contacting your NDAR\n" +
+                                                     "system administrator at ndarhelp@nih.gov. Significant system update information may be posted\n" +
+                                                     "on the NDAR site as required.";
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -141,7 +155,8 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
         if (command.equals("Connect")) {
 
             if (srbLoginFailureCount >= MAX_SRB_LOGIN_FAILURES) {
-                MipavUtil.displayError("The maximum number of SRB login failures has been reached.");
+                MipavUtil.displayError("Your account has been locked out of MIPAV because of too many login attempts.\n" +
+                                       "Please contact the system administrator to regain access.");
 
                 return;
             }
@@ -241,6 +256,9 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
 
                 return;
             }
+
+            // sucessful login, display ndar privacy notice
+            MipavUtil.displayInfo(NDAR_PRIVACY_NOTICE);
 
             /**
              * Save the SRBAccount information into the MIPAV's preferences.
