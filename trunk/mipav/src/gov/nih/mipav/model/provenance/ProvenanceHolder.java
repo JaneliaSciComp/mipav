@@ -48,11 +48,18 @@ public class ProvenanceHolder extends Vector<ProvenanceEntry> {
         return (base);
     }
     
+    /**
+     * Catches the Vector's addElement for listener notifaction
+     */
     public void addElement(ProvenanceEntry entry) {
     	fireProvenanceStateChanged(entry);
     	super.addElement(entry);
     }
     
+    /**
+     * Notify the listeners (dialogs) that a provenance entry has been stored
+     * @param entry the provenance entry
+     */
     private void fireProvenanceStateChanged(ProvenanceEntry entry) {
     	Object[] listeners = listenerList.getListenerList();
 
@@ -68,6 +75,10 @@ public class ProvenanceHolder extends Vector<ProvenanceEntry> {
         }
     }
     
+    /**
+     * Adds a listener (JDialogDataProvenance) to receive notifications
+     * @param l
+     */
     public void addProvenanceChangeListener(ProvenanceChangeListener l) {
         listenerList.add(ProvenanceChangeListener.class, l);
     }

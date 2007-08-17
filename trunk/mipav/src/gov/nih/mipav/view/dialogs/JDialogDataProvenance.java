@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.provenance.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 
@@ -62,14 +63,14 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
     /**
      * Default constructor for displaying data provenance (image or system)
      */
-    public JDialogDataProvenance(Frame parent, String name, String path, ProvenanceHolder ph, boolean is_system) {
+    public JDialogDataProvenance(Frame parent, String name, String pth, ProvenanceHolder ph, boolean is_system) {
         super(parent, false);
         this.pHolder = ph;
         pHolder.addProvenanceChangeListener(this);
         setResizable(true);
         
         this.name = name;
-        this.path = path;
+        this.path = pth;
         
         this.isSystem = is_system;
         if (isSystem) {
@@ -82,6 +83,7 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
                                      "dataprovenance.xmp";
                 Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, path);
             }
+           // System.err.println("path is: " + path);
         }
         init(name);
         scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
@@ -99,15 +101,17 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
 
         if (source == cancelButton) {
             dispose();
-        } else if (event.getActionCommand().equals("save")) {
+        } else if (event.getActionCommand().equals("Save")) {
         	save();
-        } else if (event.getActionCommand().equals("open")) {
-        	
+        } else if (event.getActionCommand().equals("Open")) {
+        	open();
         }
     }
     
+    /**
+     * Update the dialog with the new provenance entry
+     */
     public void provenanceStateChanged(ProvenanceChangeEvent e) {
-    	System.err.println("pstatechange");
     	addProvenanceData(e.getEntry());
     }
    
@@ -132,8 +136,7 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
         dpTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         dpTable.getColumn("Time").setMinWidth(60);
-        dpTable.getColumn("Time").setMaxWidth(200);
-    //    dpTable.getColumn("Action").setMinWidth(100);
+        dpTable.getColumn("Time").setMaxWidth(250);
         dpTable.getColumn("JVM").setMinWidth(60);
         dpTable.getColumn("JVM").setMaxWidth(60);
         dpTable.getColumn("Mipav").setMinWidth(40);
@@ -145,7 +148,6 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
         
                
         int size = pHolder.size();
-        String rose [] = null;
         for (int i = 0; i < size; i++) {
         	addProvenanceData(pHolder.elementAt(i));
         }
@@ -154,10 +156,14 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
         textArea.setBackground(Color.white);
         textArea.setEditable(false);
         textArea.setBorder(this.buildTitledBorder("Currently selected value"));
+        textArea.setPreferredSize(new Dimension(400, 70));
+        
+        
+        JPanel mainPanel = new JPanel(new BorderLayout());
         
         scrollingBox.add(dpTable.getTableHeader());
         scrollingBox.add(dpTable);
-        scrollingBox.add(textArea);
+        
         
         SelectionListener listener = new SelectionListener(dpTable, textArea);
         dpTable.getSelectionModel().addListSelectionListener(listener);
@@ -165,11 +171,14 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
         
         scrollPane = new JScrollPane(scrollingBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPanel = new JPanel();
-        scrollPanel.setLayout(new BorderLayout());
-        scrollPanel.add(scrollPane);
-        scrollPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+      //  scrollPanel = new JPanel();
+      //  scrollPanel.setLayout(new BorderLayout());
+      //  scrollPanel.add(scrollPane);
+      //  scrollPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(textArea, BorderLayout.SOUTH);
+        
         JToolBar tBar = WidgetFactory.initToolbar();
         ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
         tBar.add(toolbarBuilder.buildButton("Open", "Open mipav data-provenance file", "open"));
@@ -210,7 +219,7 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
         setJMenuBar(menuBar);
         
         getContentPane().add(tBar, BorderLayout.NORTH);
-        getContentPane().add(scrollPanel, BorderLayout.CENTER);
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setSize(DEFAULT_SIZE);
@@ -225,8 +234,7 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
 
         chooser.setFileFilter(filter);
 
-        // if (userInterface.getDefaultDirectory()!=null)
-        chooser.setCurrentDirectory(new File(Preferences.getScriptsDirectory()));
+        chooser.setCurrentDirectory(new File(path));
 
         // else
         // chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
@@ -238,8 +246,17 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
             if (fileName.lastIndexOf('.') == -1) {
                 fileName = fileName + ".xmp";
             }
-
+            if (isSystem) {
+            	Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, chooser.getSelectedFile().getParent() +
+            			File.separator + fileName);
+            }
             
+            FileDataProvenance fdp = new FileDataProvenance(fileName, chooser.getSelectedFile().getParent(), pHolder );
+            try {
+            fdp.writeXML();
+            } catch (Exception e) {
+            	e.printStackTrace();
+            }
             
         } else {
             return;
@@ -250,9 +267,7 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
 
         JFileChooser chooser = new JFileChooser();
 
-        // if (userInterface.getDefaultDirectory()!=null)
-        chooser.setCurrentDirectory(new File(Preferences.getScriptsDirectory()));
-        // else chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+        chooser.setCurrentDirectory(new File(path));
 
         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.DATA_PROVENANCE));
 
@@ -260,11 +275,29 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
            
+        	FileDataProvenance fdp = new FileDataProvenance(chooser.getSelectedFile().getName(), chooser.getSelectedFile().getParent(), pHolder);
+        	pHolder.clear();
+        	int rows = dpModel.getRowCount();
+        	for (int i = rows - 1; i >=0; i--) {
+        		dpModel.removeRow(i);
+        	}
+        	fdp.readHeader(chooser.getSelectedFile().getName(), chooser.getSelectedFile().getParent(), 
+        			Preferences.DATA_PROVENANCE_SCHEMA);
+        	
+        	int size = pHolder.size();
+            for (int i = 0; i < size; i++) {
+            	addProvenanceData(pHolder.elementAt(i));
+            }
+        	
         } else {
             return;
         }
     }
     
+    /**
+     * Adds an entry to the Model (shows on table)
+     * @param entry a provenance entry
+     */
     private void addProvenanceData(ProvenanceEntry entry) {
     	
     	String[] rose = new String[dpColumnNames.length];
@@ -278,7 +311,13 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
     	dpModel.addRow(rose);
     }
     
-    public static class SelectionListener implements ListSelectionListener {
+   
+    /**
+     * Listens to selection changes in the data provenance JTable
+     *  and updates the textarea with the current selection
+     *
+     */
+    private class SelectionListener implements ListSelectionListener {
         JTable table;
         JTextArea textArea;
         

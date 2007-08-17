@@ -113,7 +113,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "XML-based Clinical and Experimental Data Exchange Schema(*.bxh)", // XCEDE schema
         "User Defined",
         "R-table (*.rtb)",
-        "Data provenance (*.xpm)"
+        "Data provenance (*.xmp)"
     }; // NLT
 
     /** short description strings for each filterType. */
