@@ -166,6 +166,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** Reference to the magnification tool. */
     private JDialogZoom zoomDialog = null;
 
+    /** Data provenance dialog */
+    private JDialogDataProvenance dpDialog = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -2593,8 +2596,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("DataProvenance")) {
             userInterface.aboutDataProvenance();
         } else if (command.equals("ImageDataProvenance")) {
-        	new JDialogDataProvenance(this, getActiveImage().getImageName(), getActiveImage().getImageDirectory(),
-        			getActiveImage().getProvenanceHolder(), false);
+        	if (dpDialog == null) {
+        		dpDialog = new JDialogDataProvenance(this, getActiveImage().getImageName(), getActiveImage().getImageDirectory(),
+            			getActiveImage().getProvenanceHolder(), false);
+        	} else {
+        		dpDialog.setVisible();
+        		dpDialog.requestFocus();
+        	}
+        	
+        	
         } else if (command.equals("Help")) {
             MipavUtil.showHelp(null);
         } else if (command.equals("MemoryAdjust")) {

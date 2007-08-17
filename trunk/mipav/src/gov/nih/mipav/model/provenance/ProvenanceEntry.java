@@ -74,7 +74,7 @@ public class ProvenanceEntry extends ModelSerialCloneable {
     		+ cal.get(Calendar.DAY_OF_MONTH) + "-" + cal.get(Calendar.HOUR_OF_DAY) + "-" 
     		+ cal.get(Calendar.MINUTE) + "-" + cal.get(Calendar.SECOND) + "-"
     		+ cal.get(Calendar.MILLISECOND) + "-" + cal.getTimeZone().getDisplayName();
-    	System.err.println("timestamp: " + timeStamp);
+    	//System.err.println("timestamp: " + timeStamp);
     	platform = System.getProperties().getProperty("os.name");
     	platformVersion = System.getProperties().getProperty("os.version");
     	architecture = System.getProperties().getProperty("os.arch");

@@ -143,6 +143,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Dialog that displays the used and available memory. */
     private ViewJFrameMemory memoryFrame = null;
 
+    /** Dialog to display the mipav system data provenance*/
+    private JDialogDataProvenance dpDialog = null;
+    
     /** The label showing the current memory usage of MIPAV. */
     private JLabel memoryUsageLabel;
 
@@ -299,9 +302,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void aboutDataProvenance() {
 
-        JDialogDataProvenance dp = new JDialogDataProvenance(mainFrame, null, null,
-                                                             this.getProvenanceHolder(), true);
-
+    	if (dpDialog == null) {
+    		dpDialog = new JDialogDataProvenance(mainFrame, null, null, this.getProvenanceHolder(), true);
+    	} else {
+    		dpDialog.setVisible(true);
+    		dpDialog.requestFocus();
+    	}
     }
 
     /**
