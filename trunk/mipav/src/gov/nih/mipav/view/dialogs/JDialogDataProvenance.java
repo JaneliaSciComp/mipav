@@ -49,13 +49,19 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
     /** DOCUMENT ME! */
     private JTextArea textArea;
 
+    /** The provenance holder to display (or inject provenance data for "open provenance") */
     private ProvenanceHolder pHolder;
     
+    /** The table model */
     private ViewTableModel dpModel;
     
+    /** boolean determining if this is the system's data provenance, or an open image's */
     private boolean isSystem;
     
+    /** The name of the provenance (system or image name) */
     private String name;
+    
+    /** The path to the provenance file*/
     private String path;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -83,7 +89,6 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
                                      "dataprovenance.xmp";
                 Preferences.setProperty(Preferences.PREF_DATA_PROVENANCE_FILENAME, path);
             }
-           // System.err.println("path is: " + path);
         }
         init(name);
         scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());

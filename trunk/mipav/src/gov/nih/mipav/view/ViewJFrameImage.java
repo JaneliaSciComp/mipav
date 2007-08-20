@@ -2810,7 +2810,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         ScriptRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
-
+        ProvenanceRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
+        
         if ((imageA != null) && (imageA.getHistoLUTFrame() != null)) {
             imageA.getHistoLUTFrame().dispose();
         } else if ((imageA != null) && (imageA.getHistoRGBFrame() != null)) {
