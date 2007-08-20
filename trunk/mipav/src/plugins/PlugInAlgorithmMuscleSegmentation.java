@@ -131,10 +131,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         mirrorArr[1][1] = "Marrow";
         
         mirrorArr[2] = new String[5];
-        mirrorArr[2][0] = "Quads";
-        mirrorArr[2][1] = "Hamstrings";
-        mirrorArr[2][2] = "Sartorius";
-        mirrorArr[2][3] = "Fascia";
+        mirrorArr[2][0] = "Fascia";
+        mirrorArr[2][1] = "Quads";
+        mirrorArr[2][2] = "Hamstrings";
+        mirrorArr[2][3] = "Sartorius";
         mirrorArr[2][4] = "Adductors";
         
         boolean[][] mirrorZ = new boolean[3][];
@@ -146,7 +146,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         mirrorZ[1][1] = false;
         
         mirrorZ[2] = new boolean[5];
-        mirrorZ[2][0] = true;
+        mirrorZ[2][0] = false;
         mirrorZ[2][1] = true;
         mirrorZ[2][2] = true;
         mirrorZ[2][3] = true;
@@ -516,9 +516,20 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         @Override
         public void componentHidden(ComponentEvent event) {
-            if(componentRock) {
-                getImageA().unregisterAllVOIs();
-                
+            System.out.println("Selected pane: "+imagePane.getSelectedIndex()+"\tVOI pane: "+voiIndex);
+            System.out.println("Active pane: "+activeTab);
+            Component c = event.getComponent();
+            Object obj = event.getSource();
+            if(imagePane != null) {
+                if(event.getComponent().equals(tabs[activeTab])) {
+                    getImageA().unregisterAllVOIs();
+                    updateImages(true);
+                }
+                if(imagePane.getSelectedIndex() == voiIndex) {
+                    getImageA().unregisterAllVOIs();
+                    initVoiImage(voiPrompt, activeTab);
+                    updateImages(true);
+                }
             }
             super.componentHidden(event);
         }
@@ -527,12 +538,17 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         public void componentShown(ComponentEvent event) {
             System.out.println("Active pane: "+activeTab);
             Component c = event.getComponent();
-            
-            if(componentRock) {
-                if(activeTab != imagePane.getTabCount()) {    
-                    initMuscleImage(activeTab);
-                } else {
-                    System.out.println("VOI");
+            Object obj = event.getSource();
+            if(imagePane != null) {
+                boolean found = false;
+                for(int i=0; i<tabs.length; i++) {
+                    if(!found) {
+                        if(event.getComponent().equals(tabs[i])) {
+                            initMuscleImage(i);
+                            activeTab =  i;
+                            found = true; 
+                        }
+                    }
                 }
             }
             super.componentShown(event);
@@ -545,6 +561,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         public static final String CHECK_VOI = "CHECK_VOI";
         
         public static final String VOI_DIR = "NIA_Seg\\";
+        
+        private VoiDialogPrompt voiPrompt;
+        
+        private int voiIndex;
         
         private int componentShown = 0;
 
@@ -621,6 +641,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             for(int i=0; i<fillIn.length; i++) {
                 imageDiff[i] = (ModelImage)image.clone();
             }
+            
+            voiIndex = fillIn.length;
             
             fillStatus = new TreeMap();
             locationStatus = new TreeMap();
@@ -712,14 +734,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             if(command.equals(MuscleImageDisplayTest.CHECK_VOI)) {
                 //initVoiImage();
                 String voiString = ((JButton)(e.getSource())).getText();
-                VoiDialogPrompt voiPrompt = new VoiDialogPrompt(this, voiString, true, 1, zeroStatus);
+                voiPrompt = new VoiDialogPrompt(this, voiString, true, 1, zeroStatus);
                 // This is very important. Adding this object as a listener allows the subdialog to
                 // notify this object when it has completed or failed. 
                 // This is could be generalized by making a subDialog interface.
                 voiPrompt.addListener(this);
-                getImageA().unregisterAllVOIs();
-                updateImages(true);
-                initVoiImage(voiPrompt, activeTab);
+                voiPrompt.addComponentListener(this);
                 lockToVOI(voiPrompt);
                 //setVisible(false); // Hide dialog
             } else if(command.equals(VoiDialogPrompt.SUB_DIALOG_COMPLETED)) {
