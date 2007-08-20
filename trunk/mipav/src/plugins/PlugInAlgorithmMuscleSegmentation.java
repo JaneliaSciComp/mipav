@@ -34,13 +34,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     /** the parent frame. */
     private Frame parentFrame;
     
-    /** X dimension of the CT image */
-    private int xDim;
-
-    /** Y dimension of the CT image */
-    private int yDim;
-    
-    
     /**
      * Constructor.
      *
@@ -96,8 +89,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     
     private void performAbdomenDialog() {
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
         
         String[] mirrorArr = new String[3];
         mirrorArr[0] = "Psoas";
@@ -119,8 +110,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     }
     
     private void performThighDialog() {
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
         
         String[][] mirrorArr = new String[3][];
         mirrorArr[0] = new String[1];
