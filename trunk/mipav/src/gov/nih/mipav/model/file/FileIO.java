@@ -6,6 +6,7 @@ import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.xcede.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.provenance.*;
+import gov.nih.mipav.model.provenance.actions.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -83,6 +84,9 @@ public class FileIO {
      */
     private JDialogUnknownIO unknownIODialog;
 
+    /** flag telling IO this is a paint brush bitmap */
+    private boolean isPaintBrush = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -1576,6 +1580,11 @@ public class FileIO {
             		}
             	}
             	
+            	//tell mipav system data provenance to record this opening of an image
+            	if (!isPaintBrush) {
+            		ProvenanceRecorder.getReference().addLine(new ActionOpenImage(image));
+            	}
+            	
                 if (progressBar != null) {
                     progressBar.dispose();
                 }
@@ -1991,6 +2000,14 @@ public class FileIO {
         quiet = q;
     }
 
+    /**
+     * Tells IO that this is a paint brush image to be loaded
+     * @param isPB if this is a paint brush
+     */
+    public void setIsPaintBrush(boolean isPB) {
+    	this.isPaintBrush = isPB;
+    }
+    
     /**
      * DOCUMENT ME!
      *

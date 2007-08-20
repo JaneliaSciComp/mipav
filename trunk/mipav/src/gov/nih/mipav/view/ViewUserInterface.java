@@ -4,6 +4,7 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.provenance.*;
+import gov.nih.mipav.model.provenance.actions.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.srb.*;
@@ -215,6 +216,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if (userInterfaceReference == null) {
             userInterfaceReference = new ViewUserInterface();
+            ProvenanceRecorder.getReference().addLine(new ActionStartMipav());
         }
 
         return userInterfaceReference;
@@ -2846,6 +2848,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (reply == JOptionPane.YES_OPTION) {
 
             if (Preferences.is(Preferences.PREF_DATA_PROVENANCE)) {
+            	ProvenanceRecorder.getReference().addLine(new ActionStopMipav());
                 writeDataProvenance();
             }
 

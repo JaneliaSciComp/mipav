@@ -1892,6 +1892,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         File paintFile = new File(fullPath);
         FileIO fileIO = new FileIO();
+        fileIO.setIsPaintBrush(true);
 
         // read in the .gif or .png as a model image to create the BitSet
         ModelImage brushImage = fileIO.readImage(paintFile.getPath());
@@ -1984,6 +1985,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         File paintFile = new File(fullPath);
         FileIO fileIO = new FileIO();
+        fileIO.setIsPaintBrush(true);
 
         // read in the .gif or .png as a model image to create the BitSet
         ModelImage brushImage = fileIO.readImage(paintFile.getPath());
