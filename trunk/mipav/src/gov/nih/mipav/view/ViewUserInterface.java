@@ -366,7 +366,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if (command.equals("gc")) {
             System.gc();
-
+            ProvenanceRecorder.getReference().addLine(new ActionCollectGarbage());
+            ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
             return;
         } else if (command.equals("Dicom")) {
 
@@ -1093,6 +1094,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             MipavUtil.displayError("Out of memory");
         }
 
+        ProvenanceRecorder.getReference().addLine(new ActionCreateBlankImage(image));
         ScriptRecorder.getReference().addLine(new ActionCreateBlankImage(image));
     }
 
