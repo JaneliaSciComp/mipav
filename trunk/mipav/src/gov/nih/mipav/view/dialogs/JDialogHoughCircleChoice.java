@@ -199,7 +199,7 @@ public class JDialogHoughCircleChoice extends JDialogBase {
             selectedArray[i].setFont(serif12);
             createPanel.add(selectedArray[i], gbc);
             
-        } // for (i = 0; i < numLinesFound; i++)
+        } // for (i = 0; i < numCirclesFound; i++)
 
         
         JPanel buttonPanel = new JPanel();
