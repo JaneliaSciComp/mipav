@@ -68,16 +68,14 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 		this.eigvecSrcImage = eigvecSrcImage;
 	}
 
+	
 	/** run algorithm **/
 	public void runAlgorithm() {
 		createModelImage();
 		setCompleted(true);
 	}
 	
-	
-	
-	
-	
+
 	/**
 	 * create result model image
 	 *
@@ -167,7 +165,6 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 	}
 
 
-
 	/**
 	 * get Result Image
 	 * @return resultImage
@@ -177,7 +174,6 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 	}
 	
 
-	
 	/**
 	 * get component image
 	 * @return
@@ -186,6 +182,7 @@ public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {
 		return componentImage;
 	}
 
+	
 	/**
 	 * finalize
 	 */
