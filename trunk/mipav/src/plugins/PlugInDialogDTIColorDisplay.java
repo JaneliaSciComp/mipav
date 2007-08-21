@@ -1035,6 +1035,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 			}
 			//this is if user hits ok for a new set of eigenvector and anisotropy files
 			if(bottomPanel.getComponent(2) == resultPanel) {
+				zoom = 1.0f;
 				tempPanel = new JPanel(gbl);
 				tempPanel.setPreferredSize(new Dimension(500, 500));
 				tempPanel.setMinimumSize(new Dimension(500,500));
