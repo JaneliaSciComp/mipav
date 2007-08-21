@@ -117,17 +117,14 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
         
         int houghSlice;
         byte[] srcBuffer;
-        float x0Buffer[];
-        float y0Buffer[];
         float radBuffer[];
-        int countBuffer[];
         int[] houghBuffer;
         double theta;
         double d1Array[];
         double d2Array[];
         double d3;
         double d3Scale;
-        boolean test = true;
+        boolean test = false;
         double xCenter;
         double yCenter;
         double radius;
