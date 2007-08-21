@@ -363,7 +363,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             final String[] verticalIndexArray = new String[] { "d", "c", "b", "a", "a", "b", "c", "d" };
             final String[] horizontalIndexArray = new String[] { "A", "B", "C", "D", "E", "F", "G", "H", "I" };
 
-            for (int i = 0; i <= verticalTalGridPts.length; i++) {
+            for (int i = 0; i < verticalTalGridPts.length - 1; i++) {
 
                 if ((x >= verticalTalGridPts[i]) && (x <= verticalTalGridPts[i + 1])) {
                     talVoxelLabelText.replace(1, 2, verticalIndexArray[i]);
@@ -372,7 +372,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 }
             }
 
-            for (int i = 0; i <= horizontalTalGridPts.length; i++) {
+            for (int i = 0; i < horizontalTalGridPts.length - 1; i++) {
 
                 if ((y >= horizontalTalGridPts[i]) && (y <= horizontalTalGridPts[i + 1])) {
                     talVoxelLabelText.replace(0, 1, horizontalIndexArray[i]);
@@ -393,7 +393,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                       "13"
                                                   };
 
-            for (int i = 0; i <= verticalTalGridPts.length; i++) {
+            for (int i = 0; i < verticalTalGridPts.length - 1; i++) {
 
                 if ((x >= verticalTalGridPts[i]) && (x <= verticalTalGridPts[i + 1])) {
                     talVoxelLabelText.replace(0, 1, verticalIndexArray[i]);
@@ -402,7 +402,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 }
             }
 
-            for (int i = 0; i <= horizontalTalGridPts.length; i++) {
+            for (int i = 0; i < horizontalTalGridPts.length - 1; i++) {
 
                 if ((y >= horizontalTalGridPts[i]) && (y <= horizontalTalGridPts[i + 1])) {
                     talVoxelLabelText.replace(3, 5, horizontalIndexArray[i]);
@@ -418,7 +418,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                       "13"
                                                   };
 
-            for (int i = 0; i <= verticalTalGridPts.length; i++) {
+            for (int i = 0; i < verticalTalGridPts.length - 1; i++) {
 
                 if ((x >= verticalTalGridPts[i]) && (x <= verticalTalGridPts[i + 1])) {
                     talVoxelLabelText.replace(1, 2, verticalIndexArray[i]);
@@ -427,7 +427,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 }
             }
 
-            for (int i = 0; i <= horizontalTalGridPts.length; i++) {
+            for (int i = 0; i < horizontalTalGridPts.length - 1; i++) {
 
                 if ((y >= horizontalTalGridPts[i]) && (y <= horizontalTalGridPts[i + 1])) {
                     talVoxelLabelText.replace(3, 5, horizontalIndexArray[i]);
