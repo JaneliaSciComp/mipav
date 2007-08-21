@@ -252,9 +252,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     private BufferedWriter out;
     
     
-    
-    
-    
+
 	/**
 	 * Constructor
 	 */
@@ -262,6 +260,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		super(null,null);
 		init();
 	}
+	
 	
 	/**
 	 * init
@@ -1017,6 +1016,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         
 	}
 	
+	
 	/**
 	 *  action performed
 	 */
@@ -1308,7 +1308,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	
 	/**
 	 * call algorithm
-	 *
 	 */
 	protected void callAlgorithm() {
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -1400,6 +1399,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         }
 	}
 
+	
 	/**
 	 * item state changed
 	 */
@@ -1488,9 +1488,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
 	/**
 	 * update current color wheel
-	 *
 	 */
 	public void updateCurrentColorWheel() {
 		gbc = new GridBagConstraints();
@@ -1533,6 +1533,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 
 	}
 
+	
 	/**
 	 * mouse clicked
 	 */
@@ -1548,6 +1549,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		}
 	}
 
+	
 	/**
 	 * mouse released
 	 */
@@ -1590,7 +1592,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	
 	/**
 	 * browses and loads eigen vector file
-	 *
 	 */
 	public void loadEigenVectorFile() {
 		JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
@@ -1642,7 +1643,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	
 	/**
 	 * browses and loads anisotropy file
-	 *
 	 */
 	public void loadAnisotropyFile() {
 		JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
@@ -1673,7 +1673,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	
 	/**
 	 * magnifies image
-	 *
 	 */
 	public void magImage() {
 		if(!unMagButton.isEnabled()) {
@@ -1708,9 +1707,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		}
 	}
 	
+	
 	/**
 	 * un-magnifies image
-	 *
 	 */
 	public void unMagImage() {
 		if(!magButton.isEnabled()) {
@@ -1740,9 +1739,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		}
 	}
 	
+	
 	/**
 	 * sets image zoom to 1
-	 *
 	 */
 	public void zoomOne() {
 		if(!unMagButton.isEnabled()) {
@@ -1761,9 +1760,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		setTitle(title + eigvecFilename + " , " + anisotropyFilename + "    " + (zSlice+1) + "/" + numSlices + "    M:"+zoom);
 	}
 	
+	
 	/**
 	 * restore default parameters
-	 *
 	 */
 	public void restoreDefaults() {
 		flag = true;
@@ -1797,7 +1796,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	
 	/**
 	 * save heuristic parameters
-	 *
 	 */
 	public void saveParams() {
 		String fileName = "", directory = "";
@@ -1843,7 +1841,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	
 	/**
 	 * loads heuristic parameter values
-	 *
 	 */
 	public void loadParams() {
 		String fileName = "", directory = "";
@@ -2095,13 +2092,12 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         else {
         	return;
         }
-		
 	}
 
+	
 	/**
      * Scrolls through all z slices of a 3d/4d image and captures them into a new ARGB ModelImage, then puts the
      * ModelImage in a ViewJFrameImage.
-     *
      * @return  
      */
     private boolean writeImage() {
@@ -2323,6 +2319,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		dispose();
 	}
 
+	
 	/**
 	 * mouse wheel moved
 	 * @param event
@@ -2349,6 +2346,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		}
 	}
 
+	
 	/**
 	 * key typed
 	 */
@@ -2498,10 +2496,6 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	}
 	
 	
-	
-	
-
-	
 	/**
 	 * focus lost
 	 */
@@ -2649,6 +2643,15 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
+	/**
+	 * validate current number
+	 * @param numString
+	 * @param min
+	 * @param max
+	 * @return
+	 */
 	public float validateCurrentNum(String numString, float min, float max) {
 		float num;
 
@@ -2664,12 +2667,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		}
 	}
 
+	
 	/**
      * Create the intensity buffer for an image.
-     *
      * @param   extents  the extents of the image
      * @param   isColor  whether the image is in color
-     *
      * @return  a buffer which is big enough to contain the image intensity data
      */
     protected static float[] initImageBuffer(int[] extents, boolean isColor) {
@@ -2684,18 +2686,16 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     
     
     
-    
     /**
      * Create the pixel buffer for an image.
-     *
      * @param   extents  the extents of the image
-     *
      * @return  a buffer which is big enough to contain the image pixel data
      */
     protected static int[] initPixelBuffer(int[] extents) {
         return new int[extents[0] * extents[1]];
     }
 
+    
     /**
      * init resolutions
      * @param img
@@ -2716,6 +2716,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         return res;
     }
        
+    
+    
     /**
      * init units
      * @param img
@@ -2725,12 +2727,12 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         return img.getFileInfo(0).getUnitsOfMeasure();
     }
 
+   
+    
     /**
      * Get the resolution correction needed for non-isotropic images.
-     *
      * @param   imgResols  the image resolution
      * @param   imgUnits   the image units of measure
-     *
      * @return  the resolution correction factor in the x (the first element) and y (the second element) dimensions
      */
     protected static float[] initResFactor(float[] imgResols, int[] imgUnits) {
@@ -2749,13 +2751,12 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         return resFactor;
     }
     
+    
+    
     /**
      * Creates and initializes the ModelRGB for an image.
-     *
      * @param   img  the image to create a ModelRGB for
-     *
      * @return  a ModelRGB for the image <code>img</code> (null if NOT a color image)
-     *
      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
      */
     public static ModelRGB initRGB(ModelImage img) throws OutOfMemoryError {
@@ -2792,10 +2793,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         return newRGB;
     }
      
+    
+    
     /**
      * Initializes the variables based on the image extents. (i.e. number of slices, number of time slices, the initial
      * z-slice, etc.
-     *
      * @param  img  the image to set the extent variables for
      */
     public void initExtentsVariables(ModelImage img) {
@@ -2812,11 +2814,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         nTImage = numImages[1];
     }
     
+    
+    
     /**
      * Get the initial time and volume slice positions.
-     *
      * @param   img  the image to get the slice positions of
-     *
      * @return  an array containing the slice in the volume (in the first element) and the time slice (in the second
      *          element)
      */
@@ -2837,11 +2839,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         return slices;
     }
     
+    
+    
     /**
      * Get the total number of time slices and volume slices.
-     *
      * @param   img  the image to get the slices of
-     *
      * @return  an array containing the number of volume slices (in the first element) and the number of time slices in
      *          the image (in the second element)
      */
@@ -2864,9 +2866,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     
 
     
-    
     /**
-	 * 
+	 * finalize
 	 */
 	public void finalize() {
 		if(eigvecSrcImage != null) {
@@ -2880,18 +2881,20 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		anisotropyImage = null;
 	}
 
-	 /**
+	
+	
+	/**
     * Gets the RGB LUT table for ARGB image A.
-    *
     * @return  RGBT the new RGB LUT to be applied to the image
     */
    public ModelRGB getRGBTA() {
        return (componentImage.getRGBTA());
    }
    
+   
+   
    /**
     * Sets the RGB LUT table for ARGB image A.
-    *
     * @param  RGBT  the new RGB LUT to be applied to the image
     */
    public void setRGBTA(ModelRGB RGBT) {
@@ -2901,7 +2904,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
        }
    }
    
-	/**
+	
+   
+   /**
 	 * get controls
 	 */
 	public ViewControlsImage getControls() {
@@ -2909,6 +2914,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		return null;
 	}
 
+	
+	
 	/**
 	 * get image a
 	 */
@@ -2917,6 +2924,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		return null;
 	}
 
+	
+	
 	/**
 	 * get image b
 	 */
@@ -2925,6 +2934,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		return null;
 	}
 
+	
+	
 	/**
 	 * remove controls
 	 */
@@ -2933,6 +2944,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * set active image
 	 */
@@ -2941,6 +2954,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * set alpha blend
 	 */
@@ -2949,6 +2964,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * set controls
 	 */
@@ -2957,6 +2974,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * set enabled
 	 */
@@ -2965,6 +2984,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * set image b
 	 */
@@ -2973,6 +2994,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * set paint bitmap switch
 	 */
@@ -2981,6 +3004,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * set rgbtb
 	 */
@@ -2989,6 +3014,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * set title
 	 */
@@ -2997,6 +3024,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * update image extents
 	 */
@@ -3005,6 +3034,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		return false;
 	}
 
+	
+	
 	/**
 	 * set slice
 	 */
@@ -3013,6 +3044,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * set time slice
 	 */
@@ -3021,6 +3054,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * update images
 	 */
@@ -3028,6 +3063,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		return false;
 	}
 
+	
+	
 	/**
 	 * update images
 	 */
@@ -3036,6 +3073,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		return false;
 	}
 
+	
+	
 	/**
 	 * update images
 	 */
@@ -3044,6 +3083,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		return false;
 	}
 	
+	
+	
 	/**
 	 * mouse entered
 	 */
@@ -3051,6 +3092,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
 	/**
 	 * mouse exited
 	 */
@@ -3058,12 +3100,16 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 
 	}
 
+	
+	
 	/**
 	 * mouse pressed
 	 */
 	public void mousePressed(MouseEvent arg0) {
 		
 	}
+	
+	
 	
 	/**
 	 * focus gained
@@ -3073,6 +3119,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * key pressed
 	 */
@@ -3081,6 +3129,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		
 	}
 
+	
+	
 	/**
 	 * key released
 	 */

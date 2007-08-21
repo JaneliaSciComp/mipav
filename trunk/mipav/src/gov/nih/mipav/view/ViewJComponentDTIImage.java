@@ -10,6 +10,15 @@ import java.io.IOException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 
+
+/**
+ * ViewJComponent DTI Image
+ * @author pandyan
+ * 
+ * This represents the DTI Component Image used in the DTI Color Display plugin.
+ * Its show method is called as variuos parameters such are modified.
+ *
+ */
 public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 	
 	/** type of color wheel 	ABSVAL, NOSYMM, ROTATIONALSYMM, MIRRORSYMM  **/
@@ -73,9 +82,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 	private float truncMultColors[] = new float[3];
 	 
 
-	
-
-	
 	/**
 	 * constructor
 	 * @param _frame
@@ -99,8 +105,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
         clippedBuffer = new float[anisotropyBuffer.length];
 		
 	}
-	
-	
 	
 	
 	 /**
@@ -127,8 +131,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
         return show(tSlice, zSlice, null, null, forceShow, interpMode);
     }
     
-    
-    
+      
     /**
      * Shows the image and the VOI(s).
      *
@@ -375,7 +378,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 	}
 	
 	
-	
 	/**
 	 * rotationsl symmetry
 	 * @param zSlice
@@ -473,7 +475,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
     		cleanImageBufferA[index] = val;
     	}
 	}
-	
 	
 	
 	/**
@@ -606,9 +607,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 			clippedBuffer[i] = temp;	
 		}
 	}
-	
-	
-	
+
 	
 	/**
 	 * truncat RGB based on heuristic parameters
@@ -666,7 +665,6 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 	}
 	
 	
-	
 	/**
 	 * red shift
 	 * @param r1
@@ -690,10 +688,8 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 		colors[1] = gS;
 		colors[2] = bS;
 		
-		
 		return colors;
 	}
-	
 	
 	
 	/**
@@ -738,6 +734,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 
 	}
 
+	
 	/**
 	 * mouse dragged
 	 */
@@ -745,6 +742,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 
 	}
 
+	
 	/**
 	 * mouse entered
 	 */
@@ -752,6 +750,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 
 	}
 
+	
 	/**
 	 * mouse exited
 	 */
@@ -759,6 +758,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 
 	}
 
+	
 	/**
 	 * mouse moved
 	 */
@@ -773,6 +773,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 
 	}
 
+	
 	/**
 	 * mouse pressed paint
 	 */
@@ -787,6 +788,7 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 
 	}
 
+	
 	/**
 	 * mouse wheel moved
 	 */

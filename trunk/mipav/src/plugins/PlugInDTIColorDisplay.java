@@ -29,6 +29,7 @@ public class PlugInDTIColorDisplay implements PlugInGeneric {
 		
 	}
 
+	
 	/**
 	 * run
 	 */

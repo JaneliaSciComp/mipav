@@ -78,9 +78,7 @@ public class ColorWheel extends Canvas {
 		
 		//calculates radii of interior circles using Lambertian equal areas
 		calculateRadii();
-		
 	}
-	
 	
 	
 	/**
@@ -102,17 +100,16 @@ public class ColorWheel extends Canvas {
 		this.gamma = gamma;
 		
 		//calculates radii of interior circles using Lambertian equal areas
-		calculateRadii();
-		
+		calculateRadii();	
 	}
 
+	
 	/**
 	 * paint method
 	 */
 	public void paint(Graphics g) {
 		offImage = createImage(r6*2,r6*2);
 		offGraphics = offImage.getGraphics();
-		
 		
 		int r6_x = 0;
 		int r6_y = 0;
@@ -229,9 +226,8 @@ public class ColorWheel extends Canvas {
 		offGraphics.drawLine(px1, py1, px2, py2);
 		
 		g.drawImage(offImage,0,0,this);
-
-		
 	}
+	
 	
 	/**
 	 * calculates radii of the interior circles 
@@ -252,8 +248,6 @@ public class ColorWheel extends Canvas {
 	}
 	
 	
-	
-	
 	//since Java's circle coordinate system has 0 at 3pm and goes counterclockwise
 	//and the color circles need to be such that 0 is at 12pm and go clockwise,
 	//the calculation of color wheels' hues are slightly different than those that
@@ -261,7 +255,7 @@ public class ColorWheel extends Canvas {
 	//in addition, some of the hues have a + 90 in the equations....this is so that the red
 	//appears at the 12pm position like they appear in the colour paper
 	
-
+	
 	/**
 	 * Paints the Absolute Value Color Wheel
 	 */
@@ -307,8 +301,8 @@ public class ColorWheel extends Canvas {
 				offGraphics.fillArc(x, y, arcw, arch, angle, 1);
 			}
 		}
-		
 	}
+	
 	
 	/**
 	 * Paints the No Symmetry Color Wheel
@@ -369,10 +363,6 @@ public class ColorWheel extends Canvas {
 	}
 	
 	
-	
-	
-	
-	
 	/**
 	 * Paints the Rotational Symmetry Color Wheel
 	 */
@@ -429,9 +419,6 @@ public class ColorWheel extends Canvas {
 			}
 		}
 	}
-	
-	
-	
 	
 	
 	/**
@@ -512,7 +499,6 @@ public class ColorWheel extends Canvas {
 	public float[] shiftBlue(float r1, float g1, float b1) {
 		float colors[] = new float[3];
 		
-		
 		float b = b1/(r1+g1+b1);
 		
 		float cB = Math.max((3/2f) * pB * (b-(1/3f)) * pC, 0f);
@@ -525,13 +511,8 @@ public class ColorWheel extends Canvas {
 		colors[1] = gS;
 		colors[2] = bS;
 		
-		
 		return colors;
 	}
-	
-	
-	
-	
 	
 	
 	/**
@@ -560,12 +541,6 @@ public class ColorWheel extends Canvas {
 		
 		return colors;
 	}
-	
-	
-	
-	
-	
-	
 	
 	
 	/**
@@ -599,10 +574,5 @@ public class ColorWheel extends Canvas {
 		colors[1] = g1;
 		colors[2] = b1;
 		return colors;
-	}
-	
-	
-	
-	
-	
+	}	
 }
