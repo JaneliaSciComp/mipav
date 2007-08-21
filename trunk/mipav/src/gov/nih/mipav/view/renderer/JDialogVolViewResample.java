@@ -444,7 +444,9 @@ public class JDialogVolViewResample extends JDialogBase {
 
             if (forcePadding) {
                 sr.doPadding(extents, volExtents);
-            } else if (forceResample) {
+            } 
+            
+            if (forceResample) {
                 sr.doResample(volExtents, newRes, forceResample, nDim, m_iFilter);
             }
 
