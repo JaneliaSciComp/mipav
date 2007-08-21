@@ -117,13 +117,17 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
         
         int houghSlice;
         byte[] srcBuffer;
+        float x0Buffer[];
+        float y0Buffer[];
+        float radBuffer[];
+        int countBuffer[];
         int[] houghBuffer;
         double theta;
         double d1Array[];
         double d2Array[];
         double d3;
         double d3Scale;
-        boolean test = false;
+        boolean test = true;
         double xCenter;
         double yCenter;
         double radius;
@@ -265,6 +269,7 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
             System.out.println(" x3 = " + xSum3 + " y3 = " + ySum3 + " radius3 = " + radSum);
         }
 
+        radBuffer = new float[houghSlice];
         houghBuffer = new int[houghSlice];
         
         // Calculate d1Array and d2Array values
@@ -300,6 +305,7 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
                                     m = (int)Math.round(d3*d3Scale);
                                     indexDest = j + k * x0 + m * x0y0;
                                     houghBuffer[indexDest]++;
+                                    radBuffer[indexDest] += d3;
                                 }
                             } // for (k = 0; k < y0; k++)
                         } // for (j = 0; j < x0; j++)
@@ -330,14 +336,14 @@ public class AlgorithmHoughCircle extends AlgorithmBase {
             x0Array[c] = x0Array[c] * ((double)(xDimSource - 1))/((double)(x0 - 1));
             y0Array[c] = (largestIndex % x0y0)/x0;
             y0Array[c] = y0Array[c] * ((double)(yDimSource - 1))/((double)(y0 - 1));
-            radArray[c] = largestIndex/ x0y0;
-            radArray[c] = radArray[c]/d3Scale;
+            radArray[c] = radBuffer[largestIndex]/largestValue;
             countArray[c] = largestValue;
             
             if (c < numCircles - 1) {
                 // Zero hough buffer for next run
                 for (i = 0; i < houghSlice; i++) {
                     houghBuffer[i] = 0;
+                    radBuffer[i] = 0.0f;
                 }
                 // zero all points in the source slice that contributed to this circle
                 fireProgressStateChanged("Zeroing source circle " + String.valueOf(c+1));
