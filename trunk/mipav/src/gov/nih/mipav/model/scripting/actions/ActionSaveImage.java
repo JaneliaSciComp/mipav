@@ -2,6 +2,7 @@ package gov.nih.mipav.model.scripting.actions;
 
 
 import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.parameters.*;
@@ -44,7 +45,11 @@ public class ActionSaveImage extends ActionSaveBase {
             return;
         }
         
-        ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        if (isScript) {
+        	ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

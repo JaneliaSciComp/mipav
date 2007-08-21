@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
+import gov.nih.mipav.model.provenance.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -317,7 +318,6 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
         } else if (source == sampleRate) { }
         else if (source == callGCbutton) { // call the garbage collector
             Runtime.getRuntime().gc();
-
             // Runtime.getRuntime().runFinalization();
             if (paused) {
                 surf.stop(); // should update the display & memory values
@@ -325,6 +325,7 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
                 repaint();
             }
 
+            ProvenanceRecorder.getReference().addLine(new ActionCollectGarbage());
             ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
         }
     }

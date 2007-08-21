@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.scripting.actions;
 
 
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -38,7 +39,11 @@ public class ActionOpenAllVOIs extends ActionImageProcessorBase {
             return;
         }
         
-        ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        if (isScript) {
+        	ScriptRecorder.getReference().addLine(getActionName(), parameters);
+        } else {
+        	ProvenanceRecorder.getReference().addLine(getActionName(), parameters);
+        }
     }
 
     /**

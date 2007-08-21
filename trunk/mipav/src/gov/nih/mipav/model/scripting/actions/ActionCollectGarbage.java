@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.scripting.actions;
 
 
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 
@@ -16,7 +17,11 @@ public class ActionCollectGarbage extends ActionBase {
      * {@inheritDoc}
      */
     public void insertScriptLine() {
-        ScriptRecorder.getReference().addLine(getActionName(), new ParameterTable());
+    	if (isScript) {
+    		ScriptRecorder.getReference().addLine(getActionName(), new ParameterTable());
+    	} else {
+    		ProvenanceRecorder.getReference().addLine(getActionName(), new ParameterTable());
+    	}
     }
 
     /**

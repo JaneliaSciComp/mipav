@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
@@ -254,6 +255,7 @@ public class ViewJFrameRegisteredImages extends JFrame
             }
 
             ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
+            ProvenanceRecorder.getReference().addLine(new ActionCollectGarbage());
         } else if (source == callDeletebutton) {
 
             // selectedName = get selected item from the list
