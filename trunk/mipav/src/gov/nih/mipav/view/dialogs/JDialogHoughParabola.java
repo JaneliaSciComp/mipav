@@ -477,7 +477,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
 
             return false;
         } else {
-            phiConstant = Double.valueOf(phiText.getText()).doubleValue() * Math.PI/180.0;
+            phiConstant = Double.valueOf(phiConstantText.getText()).doubleValue() * Math.PI/180.0;
         }
         
         if (!testParameter(pText.getText(), 5, 1000000)) {
