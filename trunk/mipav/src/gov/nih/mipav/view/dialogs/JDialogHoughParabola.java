@@ -504,7 +504,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
 
             return false;
         } else {
-            pMax = Float.valueOf(pMinText.getText()).floatValue();
+            pMax = Float.valueOf(pMaxText.getText()).floatValue();
         }
         
         if (!testParameter(maxBufferText.getText(), 1, 10000)) {
