@@ -4,7 +4,6 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.icons.*;
-import gov.nih.mipav.view.srb.JargonFileChooser;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -12,9 +11,7 @@ import java.awt.event.*;
 import java.io.*;
 
 import java.net.*;
-import java.net.*;
 
-import java.util.*;
 import java.util.*;
 import java.util.jar.*;
 import java.util.zip.*;
@@ -133,7 +130,6 @@ public class MipavUtil extends JComponent {
     public static Cursor winLevelCursor;
 
 
-
     /** The current version number, coded as a String, read and then cached by getVersion(). */
     protected static String version = null;
 
@@ -159,34 +155,48 @@ public class MipavUtil extends JComponent {
                                                  KeyEvent.VK_F9, KeyEvent.VK_F10, KeyEvent.VK_F11, KeyEvent.VK_F12
                                              };
 
+    /**
+     * Displays the Java Help dialog indexed directly to the section identified by the ID passed in.
+     *
+     * @param  ID  the index ID indicating what section the Java Help dialop should display.
+     */
+    static HelpSet hs;
+
+    /** DOCUMENT ME! */
+    static HelpBroker helpBroker;
+
     //~ Methods --------------------------------------------------------------------------------------------------------
 
 
+    /**
+     * DOCUMENT ME!
+     */
     public static void buildCursors() {
-            // build custom mouse pointer cursors
-            Image cursorImage = null;
 
-            // magnify region cursor : TRY to get the image cursor.
-            // if you can't (and coders may have EXTRA probs with this!)
-            // then notify the user of the prob and get a default.
-            // This try must be seperate for all diff cursors
-            try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
+        // build custom mouse pointer cursors
+        Image cursorImage = null;
 
-                // img = Toolkit.getDefaultToolkit().getImage(PlaceHolder.class.getResource("emptycursor.gif"));
-                cursorImage = getIconImage("emptycursor.gif");
-                magRegionCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
-                                                                                 "Magnification");
-                blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
-                        "Blank Cursor");
-                //System.err.println("created blank cursor");
-            } catch (FileNotFoundException error) {
-                Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                                  ">.  Check that this file is available.\n");
-                magRegionCursor = crosshairCursor;
-                blankCursor = crosshairCursor;
-            }
+        // magnify region cursor : TRY to get the image cursor.
+        // if you can't (and coders may have EXTRA probs with this!)
+        // then notify the user of the prob and get a default.
+        // This try must be seperate for all diff cursors
+        try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
 
-            // small pointer cursor : TRY to get the image cursor.  if you can't (and coders may have EXTRA probs with
+            // img = Toolkit.getDefaultToolkit().getImage(PlaceHolder.class.getResource("emptycursor.gif"));
+            cursorImage = getIconImage("emptycursor.gif");
+            magRegionCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
+                                                                             "Magnification");
+            blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
+                                                                         "Blank Cursor");
+            // System.err.println("created blank cursor");
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+            magRegionCursor = crosshairCursor;
+            blankCursor = crosshairCursor;
+        }
+
+        // small pointer cursor : TRY to get the image cursor.  if you can't (and coders may have EXTRA probs with
         // this!) then notify the user of the prob and get a default.  This try must be seperate for all diff cursors
         try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
             cursorImage = getIconImage("smpointercursor.gif");
@@ -217,13 +227,13 @@ public class MipavUtil extends JComponent {
                               ">.  Check that this file is available.\n");
             probeCursor = crosshairCursor;
         }
+
         try {
             Toolkit toolkit = Toolkit.getDefaultToolkit();
-            magnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon(
-                    "zoomin.gif").getImage(),
-                    new Point(10, 10), "zoomin");
-            unmagnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomout.gif").getImage(),
-                                                                    new Point(10, 10), "zoomout");
+            magnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomin.gif").getImage(), new Point(10, 10),
+                                                       "zoomin");
+            unmagnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomout.gif").getImage(), new Point(10, 10),
+                                                         "zoomout");
         } catch (Exception error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
                               ">.  Check that this file is available.\n");
@@ -285,6 +295,24 @@ public class MipavUtil extends JComponent {
     }
 
     /**
+     * Sets the location of the dialog to the center of the parent component.
+     *
+     * @param  parentComponent  the parent component.
+     * @param  dialog           the dialog which is to be displayed.
+     */
+    public static void centerInComponent(Component parentComponent, JDialog dialog) {
+        Point loc = parentComponent.getLocationOnScreen();
+        Dimension dim = parentComponent.getSize();
+
+        Dimension dim2 = dialog.getSize();
+
+        int x = loc.x + ((int) (dim.getWidth() - dim2.getWidth()) / 2);
+        int y = loc.y + ((int) (dim.getHeight() - dim2.getHeight()) / 2);
+        dialog.setLocation(x, y);
+
+    }
+
+    /**
      * Sets the location of the window to the center of the parent window.
      *
      * @param  parentWindow  the window where the child will be centered on.
@@ -298,22 +326,6 @@ public class MipavUtil extends JComponent {
                                 (parentTopLeftPoint.y + (parentSize.height / 2)) - (childWindow.getSize().height / 2));
     }
 
-    /**
-     * Sets the location of the dialog to the center of the parent component.
-     * @param parentComponent the parent component.
-     * @param dialog          the dialog which is to be displayed.
-     */
-    public static void centerInComponent(Component parentComponent, JDialog dialog){
-        Point loc = parentComponent.getLocationOnScreen();
-        Dimension dim = parentComponent.getSize();
-        
-        Dimension dim2 = dialog.getSize();
-        
-        int x = loc.x + (int)(dim.getWidth() - dim2.getWidth())/2;
-        int y = loc.y + (int)(dim.getHeight() - dim2.getHeight())/2;
-        dialog.setLocation(x, y);
-        
-    }
     /**
      * Sets the location of the window to the center of the screen.
      *
@@ -1063,14 +1075,12 @@ public class MipavUtil extends JComponent {
     }
 
     /**
-     * Displays the Java Help dialog indexed directly to the section identified by the ID passed in.
+     * DOCUMENT ME!
      *
-     * @param  ID  the index ID indicating what section the Java Help dialop should display.
+     * @param  ID  DOCUMENT ME!
      */
-    static HelpSet hs;
-    static HelpBroker helpBroker;
     public static void showHelp(String ID) {
-       
+
 
         try {
             ClassLoader cloader = help.PlaceHolderHelp.class.getClassLoader();
@@ -1080,10 +1090,11 @@ public class MipavUtil extends JComponent {
 
             // System.out.println(" URL = " + hsURL.toString());
             if (hsURL != null) {
-            	if(hs == null || helpBroker == null) {
-            		hs = new HelpSet(cloader, hsURL);
-            		helpBroker = hs.createHelpBroker();
-            	}
+
+                if ((hs == null) || (helpBroker == null)) {
+                    hs = new HelpSet(cloader, hsURL);
+                    helpBroker = hs.createHelpBroker();
+                }
 
                 if (ID != null) {
                     helpBroker.setCurrentID(ID);
@@ -1094,8 +1105,8 @@ public class MipavUtil extends JComponent {
 
                 // helpBroker.getFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                 helpBroker.setDisplayed(true);
-                //hs = null;
-                //helpBroker = null;
+                // hs = null;
+                // helpBroker = null;
             } else {
                 Preferences.debug("Help file URL is " + hsURL + "\n");
                 MipavUtil.displayError("Unable to find helpset.");
@@ -1121,7 +1132,7 @@ public class MipavUtil extends JComponent {
     public static void showHelp(int ID) {
         HelpSet hs;
         HelpBroker helpBroker;
-        
+
         try {
             ClassLoader cloader = help.PlaceHolderHelp.class.getClassLoader();
 
@@ -1137,7 +1148,7 @@ public class MipavUtil extends JComponent {
                 // helpBroker.setCurrentID(Map.ID.create();
                 helpBroker.setSize(new java.awt.Dimension(1000, 600));
                 helpBroker.setLocation(new java.awt.Point(200, 300));
-                
+
                 // helpBroker.getFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                 helpBroker.setDisplayed(true);
             } else {
@@ -1230,15 +1241,28 @@ public class MipavUtil extends JComponent {
         // System.out.println("Help set file name in jar = " + hsName);
         return hsName;
     }
-    
-    /**
-     * Static abstract class similar to mouseAdapter to allow the catching of actionevents from components without having
-     * to implement ActionListener
-     * @author linkb
-     *
-     */
-    public static abstract class ActionAdapter extends Object implements ActionListener { public ActionAdapter() { }
 
-    public abstract void actionPerformed(ActionEvent ae); }
-    
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
+
+    /**
+     * Static abstract class similar to mouseAdapter to allow the catching of actionevents from components without
+     * having to implement ActionListener.
+     *
+     * @author  linkb
+     */
+    public abstract static class ActionAdapter extends Object implements ActionListener {
+
+        /**
+         * Creates a new ActionAdapter object.
+         */
+        public ActionAdapter() { }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  ae  DOCUMENT ME!
+         */
+        public abstract void actionPerformed(ActionEvent ae);
+    }
+
 }

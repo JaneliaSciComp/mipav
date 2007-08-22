@@ -112,7 +112,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
      * @param  dialogTitle  DOCUMENT ME!
      */
     public JDialogLoginSRB(String dialogTitle) {
-        super(ViewUserInterface.getReference().getMainFrame(), dialogTitle, false);
+        super(ViewUserInterface.getReference().getMainFrame(), dialogTitle, true);
         init();
     }
 
@@ -317,73 +317,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
 
     /**
      * Cleans memory.
-     *
-     * @throws  Throwable  the <code>Exception</code> raised by this method
      */
-    protected void finalize() throws Throwable {
-
-        if (authenticationComboBox != null) {
-            authenticationComboBox = null;
-        }
-
-        if (authenticationLabel != null) {
-            authenticationLabel = null;
-        }
-
-        if (cancelButton != null) {
-            cancelButton = null;
-        }
-
-        if (domainField != null) {
-            domainField = null;
-        }
-
-        if (domainLabel != null) {
-            domainLabel = null;
-        }
-
-        if (hostField != null) {
-            hostField = null;
-        }
-
-        if (hostLabel != null) {
-            hostLabel = null;
-        }
-
-        if (nameField != null) {
-            nameField = null;
-        }
-
-        if (nameLabel != null) {
-            nameLabel = null;
-        }
-
-        if (passwordField != null) {
-            passwordField = null;
-        }
-
-        if (passwordLabel != null) {
-            passwordLabel = null;
-        }
-
-        if (portField != null) {
-            portField = null;
-        }
-
-        if (portLabel != null) {
-            portLabel = null;
-        }
-
-        if (storageResourceField != null) {
-            storageResourceField = null;
-        }
-
-        if (storageResourceLabel != null) {
-            storageResourceLabel = null;
-        }
-
-        super.finalize();
-    }
 
     /**
      * DOCUMENT ME!

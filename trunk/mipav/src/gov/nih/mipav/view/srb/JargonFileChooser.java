@@ -1,10 +1,11 @@
 package gov.nih.mipav.view.srb;
 
 
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.*;
 
-import edu.sdsc.grid.gui.*;
 import edu.sdsc.grid.io.srb.*;
 
 import java.awt.*;
@@ -17,7 +18,7 @@ import java.net.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
-import javax.swing.plaf.metal.MetalIconFactory;
+
 
 /**
  * This JComponent is used to select file or fold of the SRB server.
@@ -25,7 +26,6 @@ import javax.swing.plaf.metal.MetalIconFactory;
  * @author   Hailong Wang 04/14/2006
  * @version  1.0
  */
-
 public class JargonFileChooser extends JComponent implements TreeSelectionListener, ActionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -51,6 +51,9 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
     /** Return value if an error occured. */
     public static final int ERROR_OPTION = -1;
 
+    /** Set the srb usage timeout to 30 minutes. */
+    private static final long SRB_TIMEOUT_MS = 1800000;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -65,10 +68,6 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
     /** DOCUMENT ME! */
     private String approveButtonToolTipText = null;
 
-    private JButton newFoldButton;
-    
-    private int newFoldButtonMnemonic = 1;
-    
     /** DOCUMENT ME! */
     private String defaultApproveButtonText = "Open";
 
@@ -84,11 +83,17 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
     /** DOCUMENT ME! */
     private SRBFileSystem fileSystem = null;
 
-    /** **** Instance Variables.********************************** */
+    /** DOCUMENT ME! */
     private JSRBTree jsrbTree = null;
 
     /** DOCUMENT ME! */
     private boolean multiSelectionEnabled = false;
+
+    /** DOCUMENT ME! */
+    private JButton newFoldButton;
+
+    /** DOCUMENT ME! */
+    private int newFoldButtonMnemonic = 1;
 
     /** DOCUMENT ME! */
     private int returnValue;
@@ -101,6 +106,12 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
 
     /** The selected files(multi file selection is enabled). */
     private SRBFile[] selectedFiles;
+
+    /**
+     * A thread which closes the srb connection if the user does not do anything for over 30 minutes (srb seems to have
+     * a shorter timeout anyway...).
+     */
+    private TimeoutThread srbConnectionTimeoutMonitor = createNewSrbTimeoutMonitor();
 
     /** DOCUMENT ME! */
     private String title = "SRB File Chooser";
@@ -188,7 +199,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
             if (f != null) {
                 init(f);
             }
-       
+
         }
     }
 
@@ -217,6 +228,11 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
      */
     public void actionPerformed(ActionEvent e) {
         String actionCommand = e.getActionCommand();
+
+        // reset the srb timeout on an action
+        srbConnectionTimeoutMonitor.shutdown();
+        srbConnectionTimeoutMonitor = null;
+        srbConnectionTimeoutMonitor = createNewSrbTimeoutMonitor();
 
         if (actionCommand.equals(approveButtonText)) {
             returnValue = APPROVE_OPTION;
@@ -263,21 +279,26 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
             if (dialog != null) {
                 dialog.setVisible(false);
             }
-        } else if(actionCommand.equals("newSRBFold")){
+        } else if (actionCommand.equals("newSRBFold")) {
             Object selectedObj = jsrbTree.getLastSelectedPathComponent();
-            if(selectedObj == null){
+
+            if (selectedObj == null) {
                 MipavUtil.displayError("You have to select a collection before you can create a new fold.");
+
                 return;
             }
-            
-            if(selectedObj instanceof SRBFile){
-                SRBFile srbParentFile = (SRBFile)selectedObj; 
+
+            if (selectedObj instanceof SRBFile) {
+                SRBFile srbParentFile = (SRBFile) selectedObj;
+
                 if (srbParentFile.isFile()) {
                     srbParentFile = (SRBFile) srbParentFile.getParentFile();
                 }
+
                 new JDialogNewSRBFold("Enter new fold name", srbParentFile);
-            }else{
+            } else {
                 MipavUtil.displayError("Please select a collection.");
+
                 return;
             }
         }
@@ -418,9 +439,10 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         if (multiSelectionEnabled != b) {
             multiSelectionEnabled = b;
         }
-        if(multiSelectionEnabled){
+
+        if (multiSelectionEnabled) {
             jsrbTree.getSelectionModel().setSelectionMode(DefaultTreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-        }else{
+        } else {
             jsrbTree.getSelectionModel().setSelectionMode(DefaultTreeSelectionModel.SINGLE_TREE_SELECTION);
         }
     }
@@ -456,12 +478,34 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
     }
 
     /**
+     * Callback method called by the SRB timeout monitor thread when the connection should be timed-out.
+     */
+    public void srbTimeoutMonitorCallback() {
+        MipavUtil.displayError("Your SRB session has timed out.  Please log back into the SRB server.");
+        srbConnectionTimeoutMonitor.shutdown();
+        srbConnectionTimeoutMonitor = null;
+
+        if (dialog != null) {
+            dialog.setVisible(false);
+        }
+
+        // show error and reset the srb filesystem connection
+        returnValue = ERROR_OPTION;
+        JDialogLoginSRB.srbFileSystem = null;
+    }
+
+    /**
      * DOCUMENT ME!
      *
      * @param  e  DOCUMENT ME!
      */
     public void valueChanged(TreeSelectionEvent e) {
         Object o = e.getSource();
+
+        // reset the srb timeout on an action
+        srbConnectionTimeoutMonitor.shutdown();
+        srbConnectionTimeoutMonitor = null;
+        srbConnectionTimeoutMonitor = createNewSrbTimeoutMonitor();
 
         if (o instanceof JSRBTree) {
             JSRBTree tree = (JSRBTree) o;
@@ -475,6 +519,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
 
             if (isMultiSelectionEnabled()) {
                 selectedFileField.setText("");
+
                 for (int i = 0; i < selectedPaths.length; i++) {
                     convertSelectedPathToString(selectedPaths[i], getFileSelectionMode(), sb);
                 }
@@ -548,37 +593,50 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         if (selectedObj instanceof SRBFile) {
             SRBFile srbFile = (SRBFile) selectedObj;
 
-/*            if (selectionMode == FILES_ONLY) {
+            /*            if (selectionMode == FILES_ONLY) {
+             *
+             * if (srbFile.isFile()) {
+             *
+             * if (sb.length() == 0) {                     sb.append(srbFile.getPath());                 } else {
+             * sb.append("," + srbFile.getPath());                 }             }         } else if (selectionMode ==
+             * DIRECTORIES_ONLY) {
+             *
+             * if (srbFile.isDirectory()) {
+             *
+             * if (sb.length() == 0) {                     sb.append(srbFile.getPath());                 } else {
+             * sb.append("," + srbFile.getPath());                 }             }         }
+             * else { */
 
-                if (srbFile.isFile()) {
-
-                    if (sb.length() == 0) {
-                        sb.append(srbFile.getPath());
-                    } else {
-                        sb.append("," + srbFile.getPath());
-                    }
-                }
-            } else if (selectionMode == DIRECTORIES_ONLY) {
-
-                if (srbFile.isDirectory()) {
-
-                    if (sb.length() == 0) {
-                        sb.append(srbFile.getPath());
-                    } else {
-                        sb.append("," + srbFile.getPath());
-                    }
-                }
-            } else { */
-
-                if (sb.length() == 0) {
-                    sb.append(srbFile.getPath());
-                } else {
-                    sb.append("," + srbFile.getPath());
-                }
-//            }
+            if (sb.length() == 0) {
+                sb.append(srbFile.getPath());
+            } else {
+                sb.append("," + srbFile.getPath());
+            }
+            // }
         }
 
         return sb;
+    }
+
+    /**
+     * Creates a new SRB timeout monitor thread and attaches the file chooser as a subscriber.
+     *
+     * @return  A new timeout monitor thread.
+     */
+    private TimeoutThread createNewSrbTimeoutMonitor() {
+        TimeoutThread monitor = new TimeoutThread(SRB_TIMEOUT_MS);
+
+        try {
+            monitor.addSubscriber(this, this.getClass().getMethod("srbTimeoutMonitorCallback", new Class[] {}));
+
+            monitor.start();
+        } catch (NoSuchMethodException nsme) {
+            MipavUtil.displayError("Unable to start SRB timeout monitor.  Could not find callback method.");
+
+            return null;
+        }
+
+        return monitor;
     }
 
     /**
@@ -642,11 +700,10 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         selectedFileField.setColumns(40);
         manager.add(selectedFileField);
         newFoldButton = WidgetFactory.buildIconButton(UIManager.getIcon("FileChooser.newFolderIcon"),
-                "Create a new fold.", "newSRBFold", this);
+                                                      "Create a new fold.", "newSRBFold", this);
         newFoldButton.setPreferredSize(new Dimension(32, 25));
         manager.add(newFoldButton);
-        approveButton = WidgetFactory.buildTextButton(approveButtonText,
-                "Open srb file.", approveButtonText, this);
+        approveButton = WidgetFactory.buildTextButton(approveButtonText, "Open srb file.", approveButtonText, this);
         approveButton.setPreferredSize(new Dimension(80, 25));
         manager.add(approveButton);
 
@@ -656,26 +713,63 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         this.add(manager.getPanel(), BorderLayout.NORTH);
         jsrbTree.addTreeSelectionListener(this);
         jsrbTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0, false), "Delete");
-        jsrbTree.getActionMap().put("Delete", new AbstractAction("Delete"){
-            public void actionPerformed(ActionEvent e){
-                jsrbTree.delete();
-            }
-        });
+        jsrbTree.getActionMap().put("Delete", new AbstractAction("Delete") {
+                                        public void actionPerformed(ActionEvent e) {
+                                            jsrbTree.delete();
+                                        }
+                                    });
     }
 
-    private class JDialogNewSRBFold extends JDialog implements ActionListener{
-        private JTextField newFoldNameField;
-        private JButton createButton;
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     */
+    private class JDialogNewSRBFold extends JDialog implements ActionListener {
+
+        /** DOCUMENT ME! */
         private JButton cancelButton;
-        
+
+        /** DOCUMENT ME! */
+        private JButton createButton;
+
+        /** DOCUMENT ME! */
+        private JTextField newFoldNameField;
+
+        /** DOCUMENT ME! */
         private SRBFile parentDir;
-        public JDialogNewSRBFold(String title, SRBFile parent){
+
+        /**
+         * Creates a new JDialogNewSRBFold object.
+         *
+         * @param  title   DOCUMENT ME!
+         * @param  parent  DOCUMENT ME!
+         */
+        public JDialogNewSRBFold(String title, SRBFile parent) {
             super(dialog, title, true);
             this.parentDir = parent;
             init();
         }
-        
-        public void init(){
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  e  DOCUMENT ME!
+         */
+        public void actionPerformed(ActionEvent e) {
+            String command = e.getActionCommand();
+
+            if (command.equals("Create")) {
+                create();
+            } else if (command.equals("Cancel")) {
+                cancel();
+            }
+        }
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void init() {
             Container contentPane = this.getContentPane();
             contentPane.setLayout(new BorderLayout());
 
@@ -688,75 +782,79 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
             newFoldNameField.setColumns(40);
             manager.add(newFoldNameField);
             contentPane.add(manager.getPanel(), BorderLayout.CENTER);
-            
+
             manager = new PanelManager();
             manager.getConstraints().insets = new Insets(5, 5, 10, 5);
 
-            createButton = WidgetFactory.buildTextButton("Create",
-                    "Create new SRB fold.", "Create", this);
+            createButton = WidgetFactory.buildTextButton("Create", "Create new SRB fold.", "Create", this);
             createButton.setPreferredSize(new Dimension(80, 25));
             manager.addOnNextLine(createButton);
-            cancelButton = WidgetFactory.buildTextButton("Cancel",
-                    "Cancel the creation of new SRB fold.", "Cancel", this);
+            cancelButton = WidgetFactory.buildTextButton("Cancel", "Cancel the creation of new SRB fold.", "Cancel",
+                                                         this);
             cancelButton.setPreferredSize(new Dimension(80, 25));
             manager.add(cancelButton);
             contentPane.add(manager.getPanel(), BorderLayout.SOUTH);
             dialog.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
-                    dialog.dispose();
-                }
-            });
-            
+                    public void windowClosing(WindowEvent e) {
+                        dialog.dispose();
+                    }
+                });
+
             // Adds the enter key response.
-            newFoldNameField.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "Create");
-            newFoldNameField.getActionMap().put("Create", new AbstractAction("Create"){
-                public void actionPerformed(ActionEvent e){
-                    create();
-                }
-            });
-            cancelButton.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "Cancel");
-            cancelButton.getActionMap().put("Cancel", new AbstractAction("Cancel"){
-                public void actionPerformed(ActionEvent e){
-                    cancel();
-                }
-            });
-            newFoldNameField.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), "Cancel");
-            newFoldNameField.getActionMap().put("Cancel", new AbstractAction("Cancel"){
-                public void actionPerformed(ActionEvent e){
-                    cancel();
-                }
-            });
+            newFoldNameField.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,
+                                                                                                       0, false),
+                                                                                "Create");
+            newFoldNameField.getActionMap().put("Create", new AbstractAction("Create") {
+                                                    public void actionPerformed(ActionEvent e) {
+                                                        create();
+                                                    }
+                                                });
+            cancelButton.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false),
+                                                                  "Cancel");
+            cancelButton.getActionMap().put("Cancel", new AbstractAction("Cancel") {
+                                                public void actionPerformed(ActionEvent e) {
+                                                    cancel();
+                                                }
+                                            });
+            newFoldNameField.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,
+                                                                                                       0, false),
+                                                                                "Cancel");
+            newFoldNameField.getActionMap().put("Cancel", new AbstractAction("Cancel") {
+                                                    public void actionPerformed(ActionEvent e) {
+                                                        cancel();
+                                                    }
+                                                });
             pack();
 
             MipavUtil.centerInComponent(JargonFileChooser.this, this);
             setVisible(true);
         }
-        
-        private void create(){
+
+        /**
+         * DOCUMENT ME!
+         */
+        private void cancel() {
+            this.dispose();
+        }
+
+        /**
+         * DOCUMENT ME!
+         */
+        private void create() {
             String foldName = newFoldNameField.getText();
-            if(foldName.length() > 0){
+
+            if (foldName.length() > 0) {
                 SRBFile newFold = new SRBFile(parentDir, foldName);
                 newFold.mkdir();
-                try{
+
+                try {
                     jsrbTree.refresh(jsrbTree.getSelectionPath());
-                }catch(IOException ex){
+                } catch (IOException ex) {
                     MipavUtil.displayError("IOException happened: " + ex.getMessage());
                 }
             }
+
             this.dispose();
-        }
-        
-        private void cancel(){
-            this.dispose();
-        }
-        
-        public void actionPerformed(ActionEvent e){
-            String command = e.getActionCommand();
-            if(command.equals("Create")){
-                create();
-            }else if(command.equals("Cancel")){
-                cancel();
-            }
         }
     }
 }

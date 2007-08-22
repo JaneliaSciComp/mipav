@@ -77,7 +77,6 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     private File tempDir;
 
     /** Used to control the transferring mode. */
-
     private boolean threadSeperated;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -907,7 +906,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     public class JDialogPickFiles extends JDialog implements ActionListener, KeyListener {
 
         /** DOCUMENT ME! */
-        private JButton cancelButton,helpButton;
+        private JButton cancelButton, helpButton;
 
         /** The default dialog title. */
         private String defaultDialogTitle = "Transfer Files";
@@ -1232,7 +1231,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                 sourceFilesField.setText("");
             } else if (command.equals("targetSchemaSelection")) {
                 targetFilesField.setText("");
-            }else if (command.equals("Help")) {
+            } else if (command.equals("Help")) {
                 MipavUtil.showHelp("20010");
             }
         }
