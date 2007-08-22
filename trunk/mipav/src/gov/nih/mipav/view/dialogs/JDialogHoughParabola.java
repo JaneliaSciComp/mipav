@@ -378,7 +378,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         paramPanel.add(pMinLabel, gbc);
 
         pMinText = new JTextField(10);
-        pMinText.setText("1.0");
+        pMinText.setText("0.1");
         pMinText.setFont(serif12);
         pMinText.setEnabled(true);
         gbc.gridx = 1;
