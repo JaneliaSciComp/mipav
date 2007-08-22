@@ -181,7 +181,7 @@ public class JDialogHoughParabolaChoice extends JDialogBase {
         createPanel.add(phiLabel, gbc);
         
         gbc.gridx = 3;
-        JLabel pLabel = new JLabel("vertex to focus("+ String.valueOf(pMin) + "-" + String.valueOf(pMax));
+        JLabel pLabel = new JLabel("vertex to focus("+ String.valueOf(pMin) + "-" + String.valueOf(pMax) + ")");
         pLabel.setFont(serif12);
         createPanel.add(pLabel, gbc);
         
