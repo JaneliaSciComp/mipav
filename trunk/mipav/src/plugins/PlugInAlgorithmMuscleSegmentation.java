@@ -1,13 +1,19 @@
+import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
+import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileVOI;
 
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
 import javax.swing.*;
 
 
@@ -29,7 +35,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------    
     
     /** denotes the type of srcImg (see enum ImageType) */
-    private ImageType imageType;
+    private ImageType imageType; 
     
     /** the parent frame. */
     private Frame parentFrame;
@@ -109,6 +115,9 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
     }
     
+    /**
+     *   Builds thigh dialogue.
+     */
     private void performThighDialog() {
         
         String[][] mirrorArr = new String[3][];
@@ -606,6 +615,10 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private boolean componentRock = false;
         
+        private BuildThighAxes thighAxes;
+        
+        private boolean stateChanged;
+        
         public MuscleImageDisplayTest(ModelImage image, String[] titles, boolean[] fillIn,
                 String[][] mirrorArr, boolean[][] mirrorZ, 
                 String[][] noMirrorArr, boolean[][] noMirrorZ,  
@@ -636,10 +649,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             fillStatus = new TreeMap();
             locationStatus = new TreeMap();
             
+            stateChanged = false;
+            
             if (imageA == null) {
                 return;
             }
-            
             
             initNext();
 
@@ -877,10 +891,18 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private void initMuscleImage(int pane) {
             
+            
+            
             loadVOI(pane);
             initVOIColor();
             
             ctMode(getImageA(), -175, 275);
+            
+            if(thighAxes == null || stateChanged){
+                thighAxes = new BuildThighAxes(getImageA(), 0);
+                thighAxes.createAxes();
+            } //else they're loaded in loadVOI
+            //added before button check so that they can be accessed in this way, optional to change.
             
             VOIVector vec = getImageA().getVOIs();
             for(int i=0; i<vec.size(); i++) {            
@@ -891,9 +913,13 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 }
             }
             
+            
+            
             updateImages(true);
             //componentRock = true;
         }
+        
+        
         
         
         
@@ -1024,9 +1050,169 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             return c;
         }
 
-        
+        private class BuildThighAxes implements AlgorithmInterface {
+            
+            
+            
+            private int zSlice;
+            
+            private ModelImage image;
+            
+            private boolean axesCompleted;
+            
+            private int[] defaultPts;
+            
+            private VOIVector VOIs;
+            
+            private int groupNum;
+            
+            private int i;
+            
+            private AlgorithmBSmooth[] smoothAlgo;
+            
+            private VOI[] thighVOIs;
+            
+            private boolean[] thighCompleted;
+            
+            public BuildThighAxes(ModelImage image, int _zSlice) {
+                this.zSlice = _zSlice;
+                this.image = image;
+                
+                smoothAlgo = new AlgorithmBSmooth[2];
+                
+                thighCompleted = new boolean[2];
+                thighCompleted[0] = false;
+                thighCompleted[1] = false;
+                
+                initThighAxes();
+            }
 
-        private class MuscleDialogPrompt extends JPanel{
+            @Override
+            public void algorithmPerformed(AlgorithmBase algorithm) {
+                VOI resultVOI;
+                if(algorithm instanceof AlgorithmBSmooth) {
+                    System.out.println("B Smooth completed");
+                    if (smoothAlgo[i].isCompleted() == true && thighCompleted[i]) {
+
+                        // The algorithm has completed and produced a
+                        resultVOI = smoothAlgo[i].getResultVOI();
+                        image.registerVOI(resultVOI);
+                        updateImages(true);
+                        //build axes here
+                        axesCompleted = true;
+                    }
+                }
+                
+            }
+
+            public boolean getAxesCompleted() {
+                return axesCompleted;
+            }
+
+            private void initThighAxes() {
+                Vector[][] contours = new Vector[2][];
+                defaultPts = new int[2];
+                int nVOI, nContours;
+                float[] xPoints = null;
+                float[] yPoints = null;
+            
+                VOIs = image.getVOIs(); //note that VOIs must already be loaded
+            
+                nVOI = VOIs.size();
+            
+                if (nVOI == 0) {
+                    return;
+                }
+                
+                thighVOIs = new VOI[2];
+                
+                for (groupNum = 0; groupNum < nVOI; groupNum++) {
+            
+                    if (((VOI)VOIs.get(groupNum)).getName().equals("Left Thigh")) {
+                        thighVOIs[0] = ((VOI)VOIs.get(groupNum));
+                    }
+                    else if (((VOI)VOIs.get(groupNum)).getName().equals("Right Thigh")) {
+                        thighVOIs[1] = ((VOI)VOIs.get(groupNum));
+                    }
+                }
+                
+                //No thighs found
+                if (groupNum == nVOI) {
+                    MipavUtil.displayError("No whole thighs were found.  Cannot compute axes.  "+
+                                            "Please ensure that whole thighs are defined as seperate VOIs for this image.");
+                    return;
+                }
+                
+                for(int i=0; i<thighVOIs.length; i++) {
+                    
+                
+                    Color voiColor = thighVOIs[i].getColor();
+                    contours[i] = thighVOIs[i].getCurves();
+                    nContours = contours[i][zSlice].size();
+            
+                    int elementNum = 0;
+               
+            
+                        Polygon[] gons = thighVOIs[i].exportPolygons(zSlice);
+            
+                        xPoints = new float[gons[elementNum].npoints + 5];
+                        yPoints = new float[gons[elementNum].npoints + 5];
+            
+                        xPoints[0] = gons[elementNum].xpoints[gons[elementNum].npoints - 2];
+                        yPoints[0] = gons[elementNum].ypoints[gons[elementNum].npoints - 2];
+            
+                        xPoints[1] = gons[elementNum].xpoints[gons[elementNum].npoints - 1];
+                        yPoints[1] = gons[elementNum].ypoints[gons[elementNum].npoints - 1];
+            
+                        for (i = 0; i < gons[elementNum].npoints; i++) {
+                            xPoints[i + 2] = gons[elementNum].xpoints[i];
+                            yPoints[i + 2] = gons[elementNum].ypoints[i];
+                        }
+            
+                        xPoints[gons[elementNum].npoints + 2] = gons[elementNum].xpoints[0];
+                        yPoints[gons[elementNum].npoints + 2] = gons[elementNum].ypoints[0];
+            
+                        xPoints[gons[elementNum].npoints + 3] = gons[elementNum].xpoints[1];
+                        yPoints[gons[elementNum].npoints + 3] = gons[elementNum].ypoints[1];
+            
+                        xPoints[gons[elementNum].npoints + 4] = gons[elementNum].xpoints[2];
+                        yPoints[gons[elementNum].npoints + 4] = gons[elementNum].ypoints[2];
+            
+                        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints);
+                        defaultPts[i] = Math.round(arcLength.getTotalArcLength() / 6); //larger denom.
+                }
+            }
+            
+            public void createAxes() {
+                
+                for(int i=0; i<thighVOIs.length; i++) {
+            
+                    try {
+            
+                        // No need to make new image space because the user has chosen to replace the source image
+                        // Make the algorithm class
+                        smoothAlgo[i] = new AlgorithmBSmooth(image, thighVOIs[i], defaultPts[i], false);
+            
+                        // This is very important. Adding this object as a listener allows the algorithm to
+                        // notify this object when it has completed of failed. See algorithm performed event.
+                        // This is made possible by implementing AlgorithmedPerformed interface
+                        smoothAlgo[i].addListener(this);
+             
+                        // Start the thread as a low priority because we wish to still have user interface.
+                        if (smoothAlgo[i].startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } catch (OutOfMemoryError x) {
+                        MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
+                
+                        return;
+                    }
+                }
+            }
+            
+        }
+
+        private class MuscleDialogPrompt extends JPanel {
             
             //~ Static fields/initializers -------------------------------------------------------------------------------------
         
@@ -1145,6 +1331,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 
             }
             
+            
+
             public TreeMap getZeroStatus() {
                 return zeroStatus;
             }
