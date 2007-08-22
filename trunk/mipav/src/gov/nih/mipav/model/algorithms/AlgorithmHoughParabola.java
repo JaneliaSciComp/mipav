@@ -9,7 +9,7 @@ import gov.nih.mipav.view.dialogs.*;
 import java.io.*;
 
 /**
- * [(y - yv)*cos(phi) - (x - xv)*sin(phi)]**2 =
+ * [(y - vy)*cos(phi) - (x - vx)*sin(phi)]**2 =
  * 4*p*[(y - vy)*sin(phi) + (x - vx)*cos(phi)]
  * where vx, vy are the coordinates of the parabola vertex
  * p is the distance between the vertex and focus of the parabola
@@ -23,10 +23,10 @@ import java.io.*;
  *  p bins, pMin value, pMax value, maxBufferSize, and number of parabolas.  The desired size for xvBins is 
  *  min(512, image.getExtents()[0]).  The desired size for yvBins is min(512, image.getExtents()[1]).
  *  The desired size for phi is 360.  The default value for phiConstant is 90 degrees.  The default value for pBins
- *  is Math.min(512, Math.max(image.getExtents()[0], image.getExtents()[1])).  The default value for pMin is 1.0.
+ *  is Math.min(512, Math.max(image.getExtents()[0], image.getExtents()[1])).  The default value for pMin is 0.1.
  *  The default value for pMax is Math.max(image.getExtents()[0], image.getExtents()[1]).  The default value for
  *  maxBufferSize is 256 megabytes.  The default number of parabolas is 1. The program generates a Hough transform
- *  of the source image using the basic equation [(y - yv)*cos(phi) - (x - xv)*sin(phi)]**2 =
+ *  of the source image using the basic equation [(y - vy)*cos(phi) - (x - vx)*sin(phi)]**2 =
  *  4*p*[(y - vy)*sin(phi) + (x - vx)*cos(phi)]
  *  The program finds the parabolas containing the largest number of points.
  *  The program produces a dialog which allows the user to select which parabolas should be drawn.
@@ -35,16 +35,20 @@ import java.io.*;
  *  For each (xi, yi) point in the original image not having a value of zero, calculate the first dimension value xvArray[j] = 
  *  j * (xDim - 1)/(xvBins - 1), with j = 0 to xvBins - 1.  Calculate the second dimension value yvArray[k] = k * (yDim - 1)/(yvBins - 1),
  *  with k = 0 to yvBins - 1.  calculate the third dimension phiArray[m] = m * 2.0 * PI/phiBins, with m going from 0 to phiBins - 1
- *  Calculate p = [(y - yv)*cos(phi) - (x - xv)*sin(phi)]**2/[4*[(y - vy)*sin(phi) + (x - vx)*cos(phi)]]
+ *  Calculate p = [(y - vy)*cos(phi) - (x - vx)*sin(phi)]**2/[4*[(y - vy)*sin(phi) + (x - vx)*cos(phi)]]
  *  p goes from pMin to pMax
  *  pMin + s4 * (pBins - 1) = pMax.
  *  s4 = (pMax - pMin)/(pBins - 1)
  *  n = (p - pMin)*(pBins - 1)/(pMax - pMin).
  *  Only calculate the Hough transform for pMax >= p >= pMin.
  *  
- *  Find the peak point in the xv, yv, phi, p Hough transform space.
+ *  Find the peak point in the vx, vy, phi, p Hough transform space.
  *  Put the values for this peak point in xvArray[c], yvArray[c], phiArray[c], pArray[c], and
  *  countArray[c].
+ *  
+ *  yf = y - vy
+ *  xf = x - vx
+ *  [yf*cos(phi)]^2 - 2*yf*sin[phi]*[xf*cos(phi)+ 2*p] + [xf*sin(phi)]^2 -4*p*xf*cos(phi) = 0
  *  
  *  If more parabolas are to be found, then zero the houghBuffer and run through the
  *  same Hough transform a second time, but on this second run instead of incrementing
@@ -153,7 +157,6 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         int i, j, k, m, n, c;
         int index, indexDest;
         
-        int houghSlice;
         byte[] srcBuffer;
         short[] countBuffer;
         float pBuffer[];
@@ -204,6 +207,24 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         int typeEndPoint[][];
         double distanceEndPoint[][];
         double distance;
+        int xStart;
+        int xFinish;
+        double xVal;
+        double a;
+        double b;
+        double cv;
+        double xf;
+        double cosphi;
+        double sinphi;
+        double root;
+        int y1;
+        int y2;
+        int yStart;
+        int yFinish;
+        double yVal;
+        double yf;
+        int x1;
+        int x2;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -248,7 +269,6 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         ViewUserInterface.getReference().setDataText("pBins = " + pBins + "\n");
         ViewUserInterface.getReference().setDataText("numBins = " + numBins + "\n");
 
-        houghSlice =  numBins;
         srcBuffer = new byte[sourceSlice];
 
         try {
@@ -371,7 +391,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             
             largestValue = 0;
             largestIndex = -1;
-            for (j = 0; j < houghSlice; j++) {
+            for (j = 0; j < numBins; j++) {
                 if (countBuffer[j] > largestValue) {
                     largestValue = countBuffer[j];
                     largestIndex = j;
@@ -397,7 +417,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             countTable[c] = largestValue;
             
             // Zero hough buffer for next run
-            for (i = 0; i < houghSlice; i++) {
+            for (i = 0; i < numBins; i++) {
                 countBuffer[i] = 0;
                 pBuffer[i] = 0.0f;
             }
@@ -518,10 +538,47 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         // Draw selected parabolas
         for (i = 0; i < numParabolasFound; i++) {
             if (selectedParabola[i]) {
-                for (j = 0; j < maxParabolaPoints; j++) {
-                    
-                    //indexDest = x + y * xDim;
-                    //srcBuffer[indexDest] = value;
+                if (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) >= Math.abs(yEndPoint[i][1] - yEndPoint[i][0])) {
+                    xStart = Math.min(xEndPoint[i][0], xEndPoint[i][1]);
+                    xFinish = Math.max(xEndPoint[i][0], xEndPoint[i][1]);
+                    xdel = (double)(xFinish - xStart)/(double)maxParabolaPoints;
+                    cosphi = Math.cos(phiTable[i]);
+                    sinphi = Math.sin(phiTable[i]);
+                    a = cosphi * cosphi;
+                    for (j = 0; j <= maxParabolaPoints; j++) {
+                        xVal = xStart + j * xdel;
+                        xf = xVal - xvTable[i];
+                        b = -2.0 * sinphi*(xf*cosphi + 2.0*pTable[i]);
+                        cv = xf*xf*sinphi*sinphi - 4.0*pTable[i]*xf*cosphi;
+                        root = Math.sqrt(b*b - 4.0*a*cv);
+                        y1 = (int)Math.round(yvTable[i] + (-b - root)/(2.0 * a));
+                        y2 = (int)Math.round(yvTable[i] + (-b + root)/(2.0 * a));
+                        index = (int)Math.round(xVal) + y1 * xDim;
+                        srcBuffer[index] = value;
+                        index = (int)Math.round(xVal) + y2 * xDim;
+                        srcBuffer[index] = value;
+                    }
+                } // if (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) >= Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
+                else {
+                    yStart = Math.min(yEndPoint[i][0], yEndPoint[i][1]);
+                    yFinish = Math.max(yEndPoint[i][0], yEndPoint[i][1]);
+                    ydel = (double)(yFinish - yStart)/(double)maxParabolaPoints;
+                    cosphi = Math.cos(phiTable[i]);
+                    sinphi = Math.sin(phiTable[i]); 
+                    a = sinphi * sinphi;
+                    for (j = 0; j <= maxParabolaPoints; j++) {
+                        yVal = yStart + j * ydel;
+                        yf = yVal - yvTable[i];
+                        b = -2.0 * cosphi * (yf*sinphi + 2.0*pTable[i]);
+                        cv = yf*yf*cosphi*cosphi - 4.0*pTable[i]*yf*sinphi;
+                        root = Math.sqrt(b*b - 4.0*a*cv);
+                        x1 = (int)Math.round(xvTable[i] + (-b - root)/(2.0 * a));
+                        x2 = (int)Math.round(xvTable[i] + (-b + root)/(2.0 * a));
+                        index = x1 + (int)Math.round(yVal) * xDim;
+                        srcBuffer[index] = value;
+                        index = x2 + (int)Math.round(yVal) * xDim;
+                        srcBuffer[index] = value;
+                    }
                 }
             } // if (selectedParabola[i])
         } // for (i = 0; i < numParabolaFound; i++)
