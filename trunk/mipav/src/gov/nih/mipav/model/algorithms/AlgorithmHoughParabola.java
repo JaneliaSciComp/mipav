@@ -50,6 +50,20 @@ import java.io.*;
  *  xf = x - vx
  *  [yf*cos(phi)]^2 - 2*yf*sin[phi]*[xf*cos(phi)+ 2*p] + [xf*sin(phi)]^2 -4*p*xf*cos(phi) = 0
  *  
+ *  ys = (y - vy)*cos(phi) - (x - vx)*sin(phi)
+ *  xs = (y - vy)*sin(phi) + (x - vx)*cos(phi)
+ *  ys^2 = 4*p*xs
+ *  2*ys*(dys/dxs) = 4p
+ *  (dys/dxs) = (2p)/ys = (2p)/sqrt(4pxs) = sqrt(p/xs)
+ *  2*ys*[(dy/dx)*cos(phi) - sin(phi)] = 4*p*[(dy/dx)*sin(phi) + cos(phi)]
+ *  (dy/dx) = (ys*sin(phi) + 2*p*cos(phi))/(ys*cos(phi) - 2*p*sin(phi))
+ *  Using p = (ys^2)/(4*xs)
+ *  (dy/dx) = (2*xs*sin(phi) + ys*cos(phi))/(2*xs*cos(phi) - ys*sin(phi))
+ *  (dy/dx) = ((x-vx)*cos(phi)*sin(phi) + (y - vy) + (y - vy)*((sin(phi))^2)/((y - vy)*cos(phi)*sin(phi) + (x - vx) + (x - vx)*((cos(phi))^2)
+ *  Using sin(2*phi) = 2*sin(phi)*cos(phi), ((cos(phi))^2) = (1/2)*(1 + cos(2*phi)), ((sin(phi)^2) = (1/2)*(1 - cos(2*phi))
+ *  (dy/dx) = ((x - vx)*sin(2*phi) + 3*(y - vy)- (y - vy)*cos(2*phi))/((y - vy)*sin(2*phi) + 3*(x - vx)+ (x - vx)*cos(2*phi))
+ *  Without slope you can only calculate p.  With slope you can calculate both phi and p.
+ *  
  *  If more parabolas are to be found, then zero the houghBuffer and run through the
  *  same Hough transform a second time, but on this second run instead of incrementing
  *  the Hough buffer, zero the values in the source buffer that contributed to the peak
