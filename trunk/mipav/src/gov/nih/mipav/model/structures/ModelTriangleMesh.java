@@ -1351,7 +1351,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 kOut.writeInt(akComponent.length);
 
                 for (i = 0; i < akComponent.length; i++) {
-                    akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, perVertexColorArray[i]);
+                	if (perVertexColorArray != null)
+                		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, perVertexColorArray[i]);
+                	else
+                		akComponent[i].save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
                 }
             }
         }
