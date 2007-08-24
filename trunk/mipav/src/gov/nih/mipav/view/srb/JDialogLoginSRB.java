@@ -415,11 +415,12 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
         cancelButton = WidgetFactory.buildTextButton("Cancel", "Cancel connecting to the SRB server", "Cancel", this);
         cancelButton.setPreferredSize(new Dimension(90, 30));
 
-        helpButton = new JButton("Help");
-        helpButton.addActionListener(this);
-        helpButton.setPreferredSize(new Dimension(90, 30));
+        //helpButton = new JButton("Help");
+        //helpButton.addActionListener(this);
+        //helpButton.setPreferredSize(new Dimension(90, 30));
         bottomPanel.add(cancelButton);
-        bottomPanel.add(helpButton);
+        //bottomPanel.add(helpButton);
+        
         this.getContentPane().add(bottomPanel, BorderLayout.SOUTH);
         this.pack();
 
