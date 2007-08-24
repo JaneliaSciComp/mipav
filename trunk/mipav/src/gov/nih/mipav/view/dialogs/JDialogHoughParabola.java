@@ -79,6 +79,11 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
     private int numParabolas;
     
     private JTextField numParabolasText;
+    
+    /** Maximum number of points to take from each side of a point on a curve in determining a tangent */
+    private int sidePointsForTangent;
+    
+    private JTextField sideText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -214,7 +219,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
             // Make algorithm
             hAlgo = new AlgorithmHoughParabola(resultImage, image, xvBins, yvBins,
                                                phiBins, phiConstant, pBins, pMin, pMax,
-                                               maxBufferSize, numParabolas);
+                                               sidePointsForTangent, maxBufferSize, numParabolas);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -259,6 +264,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         JLabel pLabel;
         JLabel pMinLabel;
         JLabel pMaxLabel;
+        JLabel sideLabel;
         JLabel maxBufferLabel;
         JLabel numParabolasLabel;
         int xDim = Math.min(512, image.getExtents()[0]);
@@ -399,12 +405,27 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         gbc.gridx = 1;
         paramPanel.add(pMaxText, gbc);
         
+        sideLabel = new JLabel("Maximum curve points on each side for tangent ");
+        sideLabel.setForeground(Color.black);
+        sideLabel.setFont(serif12);
+        sideLabel.setEnabled(true);
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        paramPanel.add(sideLabel, gbc);
+
+        sideText = new JTextField(10);
+        sideText.setText("3");
+        sideText.setFont(serif12);
+        sideText.setEnabled(true);
+        gbc.gridx = 1;
+        paramPanel.add(sideText, gbc);
+        
         maxBufferLabel = new JLabel("Maximum Hough transform in megabytes ");
         maxBufferLabel.setForeground(Color.black);
         maxBufferLabel.setFont(serif12);
         maxBufferLabel.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         paramPanel.add(maxBufferLabel, gbc);
         
         maxBufferText = new JTextField(10);
@@ -420,7 +441,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         numParabolasLabel.setFont(serif12);
         numParabolasLabel.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         paramPanel.add(numParabolasLabel, gbc);
         
         numParabolasText = new JTextField(3);
@@ -505,6 +526,15 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
             return false;
         } else {
             pMax = Float.valueOf(pMaxText.getText()).floatValue();
+        }
+        
+        if (!testParameter(sideText.getText(), 1, 10)) {
+            sideText.requestFocus();
+            sideText.selectAll();
+
+            return false;
+        } else {
+            sidePointsForTangent = Integer.valueOf(sideText.getText()).intValue();
         }
         
         if (!testParameter(maxBufferText.getText(), 1, 10000)) {
