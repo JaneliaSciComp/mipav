@@ -62,7 +62,20 @@ import java.io.*;
  *  (dy/dx) = ((x-vx)*cos(phi)*sin(phi) + (y - vy) + (y - vy)*((sin(phi))^2)/((y - vy)*cos(phi)*sin(phi) + (x - vx) + (x - vx)*((cos(phi))^2)
  *  Using sin(2*phi) = 2*sin(phi)*cos(phi), ((cos(phi))^2) = (1/2)*(1 + cos(2*phi)), ((sin(phi)^2) = (1/2)*(1 - cos(2*phi))
  *  (dy/dx) = ((x - vx)*sin(2*phi) + 3*(y - vy)- (y - vy)*cos(2*phi))/((y - vy)*sin(2*phi) + 3*(x - vx)+ (x - vx)*cos(2*phi))
+ *  Note that 4 possible values of phi, 2 sets of values 180 degrees can be found.
  *  Without slope you can only calculate p.  With slope you can calculate both phi and p.
+ *  
+ *  d*cos(2*phi) + e*sin(2*phi) + f = 0
+ *  -d*cos(2*phi) = e*sin(2*phi) + f
+ *  d^2*cos(2*phi)^2 = e^2 + 2*e*f*sin(2*phi) + f^2 = 0
+ *  d^2 - d^2*sin(2*phi)^2 = e^2*sin(2*phi)^2 + 2*e*f*sin(2*phi) + f^2 = 0
+ *  (d^2 + e^2)*sin(2*phi)^2 + 2*e*f*sin(2*phi) + (f^2 - d^2) = 0
+ *  sin(2*phi) = (-2*e*f +- sqrt(4*e^2*f^2 - 4*(d^2 + e^2)*(f^2 - d^2)))/(2*(d^2 + e^2))
+ *  sin(2*phi) = (-e*f +- d*sqrt(d^2 + e^2 - f^2))/(d^2 + e^2)
+ *  cos(2*phi) = -(e*sin(2*phi) + f)/d = (-d*f -+ e*sqrt(d^2 + e^2 - f^2))/(d^2 + e^2)
+ *  Note that + for the sin(2*phi) root corresponds to - for the cos(2*phi) root
+ *  Real solutions require d^2 + e^2 - f^2 >= 0.
+ *  Since there can be 2 solutions for 2*phi, phi can have 4 solutions, 2 sets of values 180 degrees apart.
  *  
  *  If more parabolas are to be found, then zero the houghBuffer and run through the
  *  same Hough transform a second time, but on this second run instead of incrementing
@@ -103,6 +116,11 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
     // Maximum p value
     private float pMax;
     
+    // Maximum number of points to take from each side of a point on a curve in determining a tangent
+    // If only 1 point is available on each side, simply use avarage of slopes to each of the
+    // neigboring points.  
+    private int sidePointsForTangent = 3;
+    
     /** The maximum Hough transform size in megabytes - default is currently 256 */
     private int maxBufferSize;
     
@@ -128,12 +146,14 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
      * @param  pBins    number of dimension p bins in Hough transform space
      * @param  pMin     minimum p value
      * @param  pMax     maximum p value
+     * @param  sidePointsForTangent Maximum number of points to take from each side
+     *                              of a point on a curve in determining a tangent
      * @param  maxBufferSize maximum Hough transform size in megabytes
      * @param  numParabolas number of parabolas to be found
      */
     public AlgorithmHoughParabola(ModelImage destImg, ModelImage srcImg, int xvBins, int yvBins, int phiBins, 
-                                double phiConstant, int pBins, float pMin, float pMax, int maxBufferSize,
-                                int numParabolas) {
+                                double phiConstant, int pBins, float pMin, float pMax, int sidePointsForTangent,
+                                int maxBufferSize, int numParabolas) {
         super(destImg, srcImg);
         this.xvBins = xvBins;
         this.yvBins = yvBins;
@@ -142,6 +162,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         this.pBins = pBins;
         this.pMin = pMin;
         this.pMax = pMax;
+        this.sidePointsForTangent = sidePointsForTangent;
         this.maxBufferSize = maxBufferSize;
         this.numParabolas = numParabolas;
     }
@@ -174,7 +195,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         byte[] srcBuffer;
         short[] countBuffer;
         float pBuffer[];
-        boolean test = false;
+        boolean test = true;
         int largestValue;
         int largestIndex;
         int numParabolasFound;
@@ -239,6 +260,73 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         double yf;
         int x1;
         int x2;
+        int pruningPix;
+        boolean entireImage;
+        AlgorithmMorphology2D algoMorph2D;
+        int neighbors;
+        int neigh0;
+        int neigh1;
+        int neigh2;
+        int neigh3;
+        int neigh4;
+        int neigh5;
+        int neigh6;
+        int neigh7;
+        int numPoints;
+        int endPoints;
+        int neighbor1[];
+        int neighbor2[];
+        int numOpenCurves;
+        boolean foundArray[];
+        int openStart[];
+        int openLength[];
+        int indexArray[];
+        float slopeArray[];
+        int indexPtr = 0;
+        int startPtr;
+        int nextPoint;
+        float xArray[];
+        float yArray[];
+        int presentSidePoints;
+        float tangentX;
+        float tangentY;
+        float xPoints[];
+        float yPoints[];
+        float xpc;
+        float ypc;
+        double xSqSum;
+        double ySqSum;
+        double xySum;
+        double x1t;
+        double x2t;
+        double y1t;
+        double y2t;
+        double var;
+        double d1;
+        double d2;
+        double slope;
+        boolean foundPoint[];
+        int numPointsFound;
+        int newNumPoints;
+        int newIndexArray[];
+        float newSlopeArray[];
+        double cd;
+        double ce;
+        double cf;
+        double sin2phi1;
+        double sin2phi2;
+        double cos2phi1;
+        double cos2phi2;
+        double deSquares;
+        double defSquares;
+        double ef;
+        double df;
+        double vars;
+        double varc;
+        double twophi1;
+        double twophi2;
+        int numPhi = 0;
+        double phi[] = new double[4];
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -282,6 +370,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         ViewUserInterface.getReference().setDataText("phiBins = " + phiBins + "\n");
         ViewUserInterface.getReference().setDataText("pBins = " + pBins + "\n");
         ViewUserInterface.getReference().setDataText("numBins = " + numBins + "\n");
+        
+        maxParabolaPoints = 2*Math.max(xDim, yDim) + Math.min(xDim, yDim);
 
         srcBuffer = new byte[sourceSlice];
 
@@ -313,13 +403,536 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             
             xVertex = (xDim-1)/2.0;
             yVertex = (yDim-1)/2.0;
-            for (i = -20; i <= 20 ; i++) {
-                x = (int)(xVertex + i);
-                y = (int)Math.round(yVertex + 0.25*(x - xVertex)*(x - xVertex));
-                index = x + y * xDim;
-                srcBuffer[index] = 1;
+           
+            // y = (int)Math.round(yVertex + 0.25*(x - xVertex)*(x - xVertex));
+            // p = 1.0;    
+            xStart = (int)(xVertex - 20);
+            xFinish = (int)(xVertex + 20);
+            xdel = (double)(xFinish - xStart)/(double)maxParabolaPoints;
+            cosphi = Math.cos(Math.PI/2.0);
+            sinphi = Math.sin(Math.PI/2.0);
+            a = cosphi * cosphi;
+            for (j = 0; j <= maxParabolaPoints; j++) {
+                xVal = xStart + j * xdel;
+                xf = xVal - xVertex;
+                b = -2.0 * sinphi*(xf*cosphi + 2.0);
+                cv = xf*xf*sinphi*sinphi - 4.0*xf*cosphi;
+                root = Math.sqrt(b*b - 4.0*a*cv);
+                y1 = (int)Math.round(yVertex + (-b - root)/(2.0 * a));
+                y2 = (int)Math.round(yVertex + (-b + root)/(2.0 * a));
+                index = (int)Math.round(xVal) + y1 * xDim;
+                srcBuffer[index] = value;
+                index = (int)Math.round(xVal) + y2 * xDim;
+                srcBuffer[index] = value;
             }
         } // if (test)
+        
+        try {
+            destImage.importData(0, srcBuffer, true);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on destImage.importData");
+
+            setCompleted(true);
+
+            return;
+        }
+        
+        // Skeletonize the binary image
+        // Prune off branches with 2 or less pixels
+        pruningPix = 2;
+        entireImage = true;
+        algoMorph2D = new AlgorithmMorphology2D(destImage, 0, 0.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, pruningPix, 0, entireImage);
+        algoMorph2D.run();
+        algoMorph2D.finalize();
+        
+        try {
+            destImage.exportData(0, sourceSlice, srcBuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on destImage.exportData");
+
+            setCompleted(false);
+
+            return;
+        }
+        
+        // When a diagonal neighbor is adjacent to a horizontal or vertical neighbor,
+        // remove the horizontal or vertical neighbor
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if (srcBuffer[index] != 0) {
+                    neighbors = 0;
+                    neigh0 = -1;
+                    neigh1 = -1;
+                    neigh2 = -1;
+                    neigh3 = -1;
+                    neigh4 = -1;
+                    neigh5 = -1;
+                    neigh6 = -1;
+                    neigh7 = -1;
+                    if (y > 0) {
+                        if (x > 0) {
+                            if (srcBuffer[index - xDim - 1] != 0) {
+                                neighbors++;
+                                neigh0 = index - xDim - 1;
+                            }
+                        }
+                        if (srcBuffer[index - xDim] != 0) {
+                            neighbors++;
+                            neigh1 = index - xDim;
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index - xDim + 1] != 0) {
+                                neighbors++;
+                                neigh2 = index - xDim + 1;
+                            }
+                        }
+                    } // if (y > 0)
+                    if (x > 0) {
+                        if (srcBuffer[index - 1] != 0) {
+                            neighbors++;
+                            neigh3 = index - 1;
+                        }
+                    } // if (x > 0)
+                    if (x < xDim - 1) {
+                        if (srcBuffer[index + 1] != 0) {
+                            neighbors++;
+                            neigh4 = index + 1;
+                        }
+                    } // if (x < xDim - 1)
+                    if (y < yDim - 1) {
+                        if (x > 0) {
+                            if (srcBuffer[index + xDim - 1] != 0) {
+                                neighbors++;
+                                neigh5 = index + xDim - 1;
+                            }
+                        }
+                        if (srcBuffer[index + xDim] != 0) {
+                            neighbors++;
+                            neigh6 = index + xDim;
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index + xDim + 1] != 0) {
+                                neighbors++;
+                                neigh7 = index + xDim + 1;
+                            }
+                        }    
+                    } // if (y < yDim - 1)
+                    if (neighbors > 2) {
+                        // Could be 3 or 4
+                        if ((neigh0 >= 0) && (neigh1 >= 0)) {
+                            srcBuffer[neigh1] = 0;
+                            neigh1 = -1;
+                        }
+                        if ((neigh1 >= 0) && (neigh2 >= 0)) {
+                            srcBuffer[neigh1] = 0;
+                            neigh1 = -1;
+                        }
+                        if ((neigh0 >= 0) && (neigh3 >= 0)) {
+                            srcBuffer[neigh3] = 0;
+                            neigh3 = -1;
+                        }
+                        if ((neigh3 >= 0) && (neigh5 >= 0)) {
+                            srcBuffer[neigh3] = 0;
+                            neigh3 = -1;
+                        }
+                        if ((neigh2 >= 0) && (neigh4 >= 0)) {
+                            srcBuffer[neigh4] = 0;
+                            neigh4 = -1;
+                        }
+                        if ((neigh4 >= 0) && (neigh7 >= 0)) {
+                            srcBuffer[neigh4] = 0;
+                            neigh4 = -1;
+                        }
+                        if ((neigh5 >= 0) && (neigh6 >= 0)) {
+                            srcBuffer[neigh6] = 0;
+                            neigh6 = -1;
+                        }
+                        if ((neigh6 >= 0) && (neigh7 >= 0)) {
+                            srcBuffer[neigh6] = 0;
+                            neigh6 = -1;
+                        }
+                    }
+                } // if (srcBuffer[index] != 0)
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
+        
+        // Remove points with more than 2 neighbors
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if (srcBuffer[index] != 0) {
+                    neighbors = 0;
+                    if (y > 0) {
+                        if (x > 0) {
+                            if (srcBuffer[index - xDim - 1] != 0) {
+                                neighbors++;
+                            }
+                        }
+                        if (srcBuffer[index - xDim] != 0) {
+                            neighbors++;
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index - xDim + 1] != 0) {
+                                neighbors++;
+                            }
+                        }
+                    } // if (y > 0)
+                    if (x > 0) {
+                        if (srcBuffer[index - 1] != 0) {
+                            neighbors++;
+                        }
+                    } // if (x > 0)
+                    if (x < xDim - 1) {
+                        if (srcBuffer[index + 1] != 0) {
+                            neighbors++;
+                        }
+                    } // if (x < xDim - 1)
+                    if (y < yDim - 1) {
+                        if (x > 0) {
+                            if (srcBuffer[index + xDim - 1] != 0) {
+                                neighbors++;
+                            }
+                        }
+                        if (srcBuffer[index + xDim] != 0) {
+                            neighbors++;
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index + xDim + 1] != 0) {
+                                neighbors++;
+                            }
+                        }    
+                    } // if (y < yDim - 1)
+                    if (neighbors > 2) {
+                        srcBuffer[index] = 0;
+                    }
+                } // if (srcBuffer[index] != 0)
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
+        
+        
+        // Find the 1 or 2 neighbors of every point
+        // Find the number of end points, that is, points with only 1 neighbor
+        // Delete isolated points with no neighbors
+        endPoints = 0;
+        neighbor1 = new int[sourceSlice];
+        neighbor2 = new int[sourceSlice];
+        for (i = 0; i < sourceSlice; i++) {
+            neighbor1[i] = -1;
+            neighbor2[i] = -1;
+        }
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if (srcBuffer[index] != 0) {
+                    neighbors = 0;
+                    if (y > 0) {
+                        if (x > 0) {
+                            if (srcBuffer[index - xDim - 1] != 0) {
+                                neighbors++;
+                                neighbor1[index] = index - xDim - 1;
+                            }
+                        }
+                        if (srcBuffer[index - xDim] != 0) {
+                            neighbors++;
+                            if (neighbor1[index] == -1) {
+                                neighbor1[index] = index - xDim;
+                            }
+                            else {
+                                neighbor2[index] = index - xDim;
+                            }
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index - xDim + 1] != 0) {
+                                neighbors++;
+                                if (neighbor1[index] == -1) {
+                                    neighbor1[index] = index - xDim + 1;
+                                }
+                                else {
+                                    neighbor2[index] = index - xDim + 1;
+                                }
+                            }
+                        }
+                    } // if (y > 0)
+                    if (x > 0) {
+                        if (srcBuffer[index - 1] != 0) {
+                            neighbors++;
+                            if (neighbor1[index] == -1) {
+                                neighbor1[index] = index - 1;
+                            }
+                            else {
+                                neighbor2[index] = index - 1;
+                            }
+                        }
+                    } // if (x > 0)
+                    if (x < xDim - 1) {
+                        if (srcBuffer[index + 1] != 0) {
+                            neighbors++;
+                            if (neighbor1[index] == -1) {
+                                neighbor1[index] = index + 1;
+                            }
+                            else {
+                                neighbor2[index] = index + 1;
+                            }
+                        }
+                    } // if (x < xDim - 1)
+                    if (y < yDim - 1) {
+                        if (x > 0) {
+                            if (srcBuffer[index + xDim - 1] != 0) {
+                                neighbors++;
+                                if (neighbor1[index] == -1) {
+                                    neighbor1[index] = index + xDim - 1;
+                                }
+                                else {
+                                    neighbor2[index] = index + xDim - 1;
+                                }
+                            }
+                        }
+                        if (srcBuffer[index + xDim] != 0) {
+                            neighbors++;
+                            if (neighbor1[index] == -1) {
+                                neighbor1[index] = index + xDim;
+                            }
+                            else {
+                                neighbor2[index] = index + xDim;
+                            }
+                        }
+                        if (x < xDim - 1) {
+                            if (srcBuffer[index + xDim + 1] != 0) {
+                                neighbors++;
+                                if (neighbor1[index] == -1) {
+                                    neighbor1[index] = index + xDim + 1;
+                                }
+                                else {
+                                    neighbor2[index] = index + xDim + 1;
+                                }
+                            }
+                        }    
+                    } // if (y < yDim - 1)
+                    if (neighbors == 0) {
+                        srcBuffer[index] = 0;
+                        neighbor1[index] = -1;
+                        neighbor2[index] = -1;
+                    }
+                    else {
+                        if (neighbors == 1) {
+                            endPoints++;
+                        }
+                    }
+                } // if (srcBuffer[index] != 0)
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
+        
+        numOpenCurves = endPoints/2;
+        openStart = new int[numOpenCurves];
+        openLength = new int[numOpenCurves];
+        foundArray = new boolean[sourceSlice];
+        // Set foundArray to true at every zero location
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if (srcBuffer[index] == 0) {
+                    foundArray[index] = true;
+                }
+            }
+        }
+        
+        // Find the starting positions and lengths of the open curves
+        numPoints = 0;
+        i = 0;
+        for (y = 0; y < yDim; y++) {
+            offset = y * xDim;
+            for (x = 0; x < xDim; x++) {
+                index = offset + x;
+                if ((neighbor2[index] == -1) && (!foundArray[index])) {
+                    foundArray[index] = true;
+                    openStart[i] = index;
+                    openLength[i]++;
+                    numPoints++;
+                    index = neighbor1[index];
+                    foundArray[index] = true;
+                    openLength[i]++;
+                    numPoints++;
+                    while(neighbor2[index] != -1) {
+                        if (!foundArray[neighbor1[index]]) {
+                            index = neighbor1[index];
+                        }
+                        else {
+                            index = neighbor2[index];
+                        }
+                        foundArray[index] = true;
+                        openLength[i]++;
+                        numPoints++;
+                    } // (while(neighbor2[index] != -1)
+                    // Delete all open curves with only 2 points
+                    // Also don't determine tangents of end points on longer curves,
+                    // but use these 2 end points in determining tangents of more inner points
+                    numPoints = numPoints - 2;
+                    if (openLength[i] == 2) {
+                        srcBuffer[openStart[i]] = 0;
+                        srcBuffer[neighbor1[openStart[i]]] = 0;
+                        numOpenCurves--;
+                        openLength[i] = 0;
+                    }
+                    else {
+                        i++;
+                    }
+                }
+            }
+        }
+        
+        ViewUserInterface.getReference().setDataText("Number of open curves = " + numOpenCurves + "\n");
+        
+        // For the open curves find the slope of the tangent line to the curve at a point
+        // With a user specified sidePointsForTangent on each side of a point find the tangent line that
+        // minimizes the sum of the squared distances from these side points to the tangent line 
+        // Don't bother with the closed curves.  Closed curves cannot be part of a parabola.
+        indexArray = new int[numPoints];
+        slopeArray = new float[numPoints];
+        for (i = 0; i < sourceSlice; i++) {
+            if (srcBuffer[i] != 0) {
+                foundArray[i] = false;
+            }
+        }
+        indexPtr = 0;
+        for (i = 0; i < numOpenCurves; i++) {
+            startPtr = indexPtr;
+            xArray = new float[openLength[i]];
+            yArray = new float[openLength[i]];
+            nextPoint = openStart[i];
+            xArray[0] = nextPoint % xDim;
+            yArray[0] = nextPoint / xDim;
+            foundArray[nextPoint] = true;
+            for (n = 1; n <= openLength[i] - 1; n++) {
+              if (!foundArray[neighbor1[nextPoint]]) {
+                  nextPoint = neighbor1[nextPoint];
+              }
+              else {
+                  nextPoint = neighbor2[nextPoint];
+              }
+              if (n <= openLength[i] - 2) {
+                  indexArray[indexPtr++] = nextPoint;
+              }
+              xArray[n] = nextPoint % xDim;
+              yArray[n] = nextPoint / xDim;
+              foundArray[nextPoint] = true;
+            } // for (n = 0; n <= openLength[i] - 1; n++)
+            indexPtr = startPtr;
+            for (n = 1; n <= openLength[i] - 2; n++) {
+                presentSidePoints = Math.min(sidePointsForTangent, n);
+                presentSidePoints = Math.min(presentSidePoints, openLength[i] - 1 - n);
+                if (presentSidePoints == 1) {
+                    tangentX = (xArray[n+1] - xArray[n-1])/2.0f;
+                    tangentY = (yArray[n+1] - yArray[n-1])/2.0f;
+                    if (tangentX == 0.0f) {
+                        slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+                    }
+                    else {
+                        slopeArray[indexPtr] = tangentY/tangentX;
+                        indexPtr++;
+                    }
+                } // if (presentSidePoints == 1)
+                else {
+                    xPoints = new float[2*presentSidePoints+1];
+                    yPoints = new float[2*presentSidePoints+1];
+                    for (k = 0, j = n - presentSidePoints; j <= n + presentSidePoints; j++, k++) {
+                        xPoints[k] = xArray[j];
+                        yPoints[k] = yArray[j];
+                    }
+                    // Center all points for tangent point touching curve at (0, 0)
+                    // That is, use an x axis and a y axis going thru the tangent point
+                    xpc = xPoints[sidePointsForTangent];
+                    ypc = yPoints[sidePointsForTangent];
+                    for (k = 0; k < xPoints.length; k++) {
+                        xPoints[k] = xPoints[k] - xpc;
+                        yPoints[k] = yPoints[k] - ypc;
+                    }
+                    xSqSum = 0.0;
+                    ySqSum = 0.0;
+                    xySum = 0.0;
+                    for (k = 0; k < xPoints.length; k++) {
+                        xSqSum += xPoints[k]*xPoints[k];
+                        ySqSum += yPoints[k]*yPoints[k];
+                        xySum += xPoints[k]*yPoints[k];
+                    }
+                    if (xySum != 0.0) {
+                        var = Math.sqrt(ySqSum*ySqSum - 2.0 * xSqSum * ySqSum + xSqSum * xSqSum + 4.0 * xySum * xySum);
+                        x1t = 0.5 * ((-ySqSum + xSqSum + var)/xySum);
+                        x2t = 0.5 * ((-ySqSum + xSqSum - var)/xySum);
+                        y1t = 1.0;
+                        y2t = 1.0;
+                    }
+                    else {
+                        // If all points are symmetric to either this new x axis or this new y axis, then
+                        // their product sum is 0 and the tangentX, tangentY must be 1,0 or 0,1
+                        x1t = 1.0;
+                        x2t = 0.0;
+                        y1t = 0.0;
+                        y2t = 1.0;
+                    }
+                    // x1t, y1t and x2t, y2t are perpindicular.  To find the solution, calculate the sum of
+                    // distances from the curve points to the line for the 2 cases
+                    // The shortest distance is the correct solution
+                    // Distance from AX + BY + C = 0 to P1 is 
+                    // abs((A*x1 + B*y1 + C))/sqrt(A**2 + B**2)
+                    // Here A = slope, B = -1, and C = 0.
+                    d1 = 0.0;
+                    for (k = 0; k < xPoints.length; k++) {
+                        if (x1t == 0.0) {
+                            // Infinite slope thru (0,0)
+                            d1 += Math.abs(xPoints[k]);
+                        }
+                        else if (y1t == 0.0) {
+                            // Zero slope thru (0, 0)
+                            d1 += Math.abs(yPoints[k]);
+                        }
+                        else {
+                            slope = y1t/x1t;
+                            d1 += Math.abs((slope * xPoints[k] - yPoints[k])/Math.sqrt(slope*slope + 1));
+                        }
+                    }
+                    d2 = 0.0;
+                    for (k = 0; k < xPoints.length; k++) {
+                        if (x2t == 0.0) {
+                            // Infinite slope thru (0,0)
+                            d2 += Math.abs(xPoints[k]);
+                        }
+                        else if (y2t == 0.0) {
+                            // Zero slope thru (0, 0)
+                            d2 += Math.abs(yPoints[k]);
+                        }
+                        else {
+                            slope = y2t/x2t;
+                            d2 += Math.abs((slope * xPoints[k] - yPoints[k])/Math.sqrt(slope*slope + 1));
+                        }
+                    }
+                    if (d1 < d2) {
+                        tangentX = (float)x1t;
+                        tangentY = (float)y1t;
+                    }
+                    else {
+                        tangentX = (float)x2t;
+                        tangentY = (float)y2t;
+                    }
+                    if (tangentX == 0.0f) {
+                        slopeArray[indexPtr++] = Float.POSITIVE_INFINITY;
+                        
+                    }
+                    else {
+                        slopeArray[indexPtr] = tangentY/tangentX;
+                        indexPtr++;
+                    }    
+                }
+            } // for (n = 2; n <= openLength[i] - 2; n++)
+        } // for (i = 0; i < numOpenCurves; i++)
+        openStart = null;
+        openLength = null;
+        xArray = null;
+        yArray = null;
 
         pBuffer = new float[numBins];
         countBuffer = new short[numBins];
@@ -365,37 +978,111 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         yEndPoint = new int[numParabolas][2];
         typeEndPoint = new int[numParabolas][2];
         distanceEndPoint = new double[numParabolas][2];
+        foundPoint = new boolean[numPoints];
         for (c = 0; c < numParabolas; c++) {
             // Calculate the Hough transform
             fireProgressStateChanged("Calculating Hough parabola " + String.valueOf(c+1));
-            for (y = 0; y < yDim; y++) {
-                offset = y * xDim;
-                for (x = 0; x < xDim; x++) {
-                    index = offset + x;
-                    if (srcBuffer[index] != 0) {
-                        for (j = 0; j < xvBins; j++) {
-                            xdel = x - xvArray[j];
-                            for (k = 0; k < yvBins; k++) {
-                                ydel = y - yvArray[k];
-                                for (m = 0; m < phiBins; m++) {
-                                    numerator = ydel*cosArray[m] - xdel*sinArray[m];
-                                    numerator = numerator * numerator;
-                                    denominator = 4*(ydel*sinArray[m] + xdel*cosArray[m]);
-                                    if (denominator != 0.0) {
-                                        p = numerator/denominator;
-                                        if ((p >= pMin) && (p <= pMax)) {
-                                            n = (int)((p - pMin)*pScale);
-                                            indexDest = j + k * xvBins + m * xy + n * xyp;
-                                            countBuffer[indexDest]++;
-                                            pBuffer[indexDest] += p;
-                                        } // if ((p >= pMin) && (p <= pMax)
-                                    } // if (denominator != 0.0)
-                                } // for (m = 0; m < phiBins; m++)
-                            } // for (k = 0; k < yvBins; k++)
-                        } // for (j = 0; j < xvBins; j++)
-                    } // if (srcBuffer[index] != 0)
-                } // for (x = 0; x < xDim; x++)
-            } // for (y = 0; y < yDim; y++)
+            for (i = 0; i < numPoints; i++) {
+                index = indexArray[i];
+                x = index % xDim;
+                y = index / xDim;
+                for (j = 0; j < xvBins; j++) {
+                    xdel = x - xvArray[j];
+                    for (k = 0; k < yvBins; k++) {
+                        ydel = y - yvArray[k];
+                        //for (m = 0; m < phiBins; m++) {
+                        // cd is cosine coefficient, ce is sine coefficient, cf is constant coefficient
+                        if ((xdel == 0.0f) && (ydel == 0.0f)) {
+                            continue;
+                        }
+                        else if (Float.isInfinite(slopeArray[i])) {
+                            // (y - vy)*sin(2*phi) + 3*(x - vx) + (x - vx)*cos(2*phi) = 0
+                            cd = xdel;
+                            ce = ydel;
+                            cf = 3*xdel;
+                        }
+                        else if (slopeArray[i] == 0.0f) {
+                           // (x - vx)*sin(2*phi) + 3*(y - vy) - (y - vy)*cos(2*phi)= 0;
+                            cd = -ydel;
+                            ce = xdel;
+                            cf = 3*ydel;
+                        }
+                        else {
+                            // (dy/dx) = ((x - vx)*sin(2*phi) + 3*(y - vy)- (y - vy)*cos(2*phi))/((y - vy)*sin(2*phi) + 3*(x - vx)+ (x - vx)*cos(2*phi))
+                            cd = xdel*slopeArray[i] + ydel;
+                            ce = ydel*slopeArray[i] - xdel;
+                            cf = 3*xdel*slopeArray[i] - 3*ydel;
+                        }
+                        deSquares = cd*cd + ce*ce;
+                        defSquares = deSquares - cf*cf;
+                        if (defSquares < 0.0) {
+                            continue;
+                        }
+                        ef = ce * cf;
+                        df = cd * cf;
+                        numPhi = 0;
+                        if (defSquares > 0.0) {
+                            root = Math.sqrt(defSquares);
+                            vars = cd * root;
+                            varc = ce * root;
+                            sin2phi1 = (-ef + vars)/deSquares;
+                            if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0)) {
+                                cos2phi1 = (-df - varc)/deSquares;
+                                if ((sin2phi1 >= 0.0) && (cos2phi1 >= 0.0)) {
+                                    twophi1 = Math.asin(sin2phi1);   
+                                }
+                                else if ((sin2phi1 >= 0.0) && (cos2phi1 < 0.0)) {
+                                    twophi1 = Math.PI - Math.asin(sin2phi1);
+                                }
+                                else if ((sin2phi1 < 0.0) && (cos2phi1 < 0.0)) {
+                                    twophi1 = Math.PI - Math.asin(sin2phi1);
+                                }
+                                else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
+                                    twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
+                                }
+                                phi[0] = twophi1/2.0;
+                                phi[1] = twophi1/2.0 + Math.PI;
+                                numPhi = 2;
+                            } // if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0))
+                            sin2phi2 = (-ef - vars)/deSquares;
+                            if ((sin2phi2 >= -1.0) && (sin2phi2 <= 1.0)) {
+                                cos2phi2 = (-df + varc)/deSquares;
+                                if ((sin2phi2 >= 0.0) && (cos2phi2 >= 0.0)) {
+                                    twophi2 = Math.asin(sin2phi2);   
+                                }
+                                else if ((sin2phi2 >= 0.0) && (cos2phi2 < 0.0)) {
+                                    twophi2 = Math.PI - Math.asin(sin2phi2);
+                                }
+                                else if ((sin2phi2 < 0.0) && (cos2phi2 < 0.0)) {
+                                    twophi2 = Math.PI - Math.asin(sin2phi2);
+                                }
+                                else { // (sin2phi2 < 0.0) && (cos2phi2 >= 0.0)
+                                    twophi2 = 2.0*Math.PI + Math.asin(sin2phi2);
+                                }
+                                phi[numPhi] = twophi2/2.0;
+                                phi[numPhi+1] = twophi2/2.0 + Math.PI;
+                                numPhi += 2;
+                            } // if ((sin2phi2 >= -2.0) && (sin2phi2 <= 1.0))
+                        } // if (defSquares > 0.0)
+                        else { // defSquares == 0.0
+                            
+                        } // else defSquares == 0.0
+                            /*numerator = ydel*cosArray[m] - xdel*sinArray[m];
+                            numerator = numerator * numerator;
+                            denominator = 4*(ydel*sinArray[m] + xdel*cosArray[m]);
+                            if (denominator != 0.0) {
+                                p = numerator/denominator;
+                                if ((p >= pMin) && (p <= pMax)) {
+                                    n = (int)((p - pMin)*pScale);
+                                    indexDest = j + k * xvBins + m * xy + n * xyp;
+                                    countBuffer[indexDest]++;
+                                    pBuffer[indexDest] += p;
+                                } // if ((p >= pMin) && (p <= pMax)
+                            } // if (denominator != 0.0)*/
+                       // } // for (m = 0; m < phiBins; m++)
+                    } // for (k = 0; k < yvBins; k++)
+                } // for (j = 0; j < xvBins; j++)
+            } // for (i = 0; i < numPoints; i++)
             
             
            
@@ -443,64 +1130,63 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                 xMax[i] = -1;
                 yMax[i] = -1;
             }
-            for (y = 0; y < yDim; y++) {
-                offset = y * xDim;
-                for (x = 0; x < xDim; x++) {
-                    index = offset + x;
-                    if (srcBuffer[index] != 0) {
-                        for (j = 0; j < xvBins; j++) {
-                            xdel = x - xvArray[j];
-                            for (k = 0; k < yvBins; k++) {
-                                ydel = y - yvArray[k];
-                                for (m = 0; m < phiBins; m++) {
-                                    numerator = ydel*cosArray[m] - xdel*sinArray[m];
-                                    numerator = numerator * numerator;
-                                    denominator = 4*(ydel*sinArray[m] + xdel*cosArray[m]);
-                                    if (denominator != 0.0) {
-                                        p = numerator/denominator;
-                                        if ((p >= pMin) && (p <= pMax)) {
-                                            n = (int)((p - pMin)*pScale);
-                                            indexDest = j + k * xvBins + m * xy + n * xyp;
-                                            if (indexDest == largestIndex) {
-                                                srcBuffer[index] = 0;
-                                                distance = Math.sqrt(xdel*xdel + ydel*ydel);
-                                                if ((xdel < 0.0) && (ydel < 0.0)) {
-                                                    if (distance > maxDistance[0]) {
-                                                        maxDistance[0] = distance;
-                                                        xMax[0] = x;
-                                                        yMax[0] = y;
-                                                    }
-                                                } // if ((xdel < 0.0) && (ydel < 0.0))
-                                                else if ((xdel < 0.0) && (ydel >= 0.0)) {
-                                                    if (distance > maxDistance[1]) {
-                                                        maxDistance[1] = distance;
-                                                        xMax[1] = x;
-                                                        yMax[1] = y;
-                                                    }
-                                                } // else if ((xdel < 0.0) && (ydel >= 0.0))
-                                                else if ((xdel >= 0.0) && (ydel < 0.0)) {
-                                                    if (distance > maxDistance[2]) {
-                                                        maxDistance[2] = distance;
-                                                        xMax[2] = x;
-                                                        yMax[2] = y;
-                                                    }
-                                                } // else if ((xdel >= 0.0) && (ydel < 0.0))
-                                                else {
-                                                    if (distance > maxDistance[3]) {
-                                                        maxDistance[3] = distance;
-                                                        xMax[3] = x;
-                                                        yMax[3] = y;
-                                                    }
-                                                }
-                                            } // if (indexDest == largestIndex)
-                                        } // if ((p >= pMin) && (p <= pMax)
-                                    } // if (denominator != 0.0)
-                                } // for (m = 0; m < phiBins; m++)
-                            } // for (k = 0; k < yvBins; k++)
-                        } // for (j = 0; j < xvBins; j++)
-                    } // if (srcBuffer[index] != 0)
-                } // for (x = 0; x < xDim; x++)
-            } // for (y = 0; y < yDim; y++)
+            numPointsFound = 0;
+            for (i = 0; i < numPoints; i++) {
+                index = indexArray[i];
+                x = index % xDim;
+                y = index / xDim;
+                for (j = 0; j < xvBins; j++) {
+                    xdel = x - xvArray[j];
+                    for (k = 0; k < yvBins; k++) {
+                        ydel = y - yvArray[k];
+                        //for (m = 0; m < phiBins; m++) {
+                           /* numerator = ydel*cosArray[m] - xdel*sinArray[m];
+                            numerator = numerator * numerator;
+                            denominator = 4*(ydel*sinArray[m] + xdel*cosArray[m]);
+                            if (denominator != 0.0) {
+                                p = numerator/denominator;
+                                if ((p >= pMin) && (p <= pMax)) {
+                                    n = (int)((p - pMin)*pScale);
+                                    indexDest = j + k * xvBins + m * xy + n * xyp;
+                                    if (indexDest == largestIndex) {
+                                        foundPoint[i] = true;
+                                        numPointsFound++;
+                                        distance = Math.sqrt(xdel*xdel + ydel*ydel);
+                                        if ((xdel < 0.0) && (ydel < 0.0)) {
+                                            if (distance > maxDistance[0]) {
+                                                maxDistance[0] = distance;
+                                                xMax[0] = x;
+                                                yMax[0] = y;
+                                            }
+                                        } // if ((xdel < 0.0) && (ydel < 0.0))
+                                        else if ((xdel < 0.0) && (ydel >= 0.0)) {
+                                            if (distance > maxDistance[1]) {
+                                                maxDistance[1] = distance;
+                                                xMax[1] = x;
+                                                yMax[1] = y;
+                                            }
+                                        } // else if ((xdel < 0.0) && (ydel >= 0.0))
+                                        else if ((xdel >= 0.0) && (ydel < 0.0)) {
+                                            if (distance > maxDistance[2]) {
+                                                maxDistance[2] = distance;
+                                                xMax[2] = x;
+                                                yMax[2] = y;
+                                            }
+                                        } // else if ((xdel >= 0.0) && (ydel < 0.0))
+                                        else {
+                                            if (distance > maxDistance[3]) {
+                                                maxDistance[3] = distance;
+                                                xMax[3] = x;
+                                                yMax[3] = y;
+                                            }
+                                        }
+                                    } // if (indexDest == largestIndex)
+                                } // if ((p >= pMin) && (p <= pMax)
+                            } // if (denominator != 0.0)*/
+                        //} // for (m = 0; m < phiBins; m++)
+                    } // for (k = 0; k < yvBins; k++)
+                } // for (j = 0; j < xvBins; j++)
+            } // for (i = 0; i < numPoints; i++)
             // Find one end point
             distanceEndPoint[c][0] = -1.0;
             for (i = 0; i < 4; i++) {
@@ -522,6 +1208,38 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     }
                 }
             }
+            // If a parabola was found, then delete the points found along its perimiter
+            // from indexArray and slopeArray before running the
+            // Hough transform again
+            
+            if (numPointsFound > 0) {
+                newNumPoints = numPoints - numPointsFound;
+                if (newNumPoints == 0) {
+                    break;
+                }
+                newIndexArray = new int[newNumPoints];
+                newSlopeArray = new float[newNumPoints];
+                for (i = 0, j = 0; i < numPoints; i++) {
+                    if (!foundPoint[i]) {
+                        newIndexArray[j] = indexArray[i];
+                        newSlopeArray[j] = slopeArray[i];
+                        j++;
+                    }
+                } // for (i = 0, j = 0; i < numPoints; i++)
+                numPoints = newNumPoints;
+                foundPoint = null;
+                foundPoint = new boolean[numPoints];
+                indexArray = null;
+                indexArray = new int[numPoints];
+                slopeArray = null;
+                slopeArray = new float[numPoints];
+                for (i = 0; i < numPoints; i++) {
+                    indexArray[i] = newIndexArray[i];
+                    slopeArray[i] = newSlopeArray[i];
+                }
+                newIndexArray = null;
+                newSlopeArray = null;
+            } // if (numPointsFound > 0)
         } // for (c = 0; c < numParabolas; c++)
         
         // Restore original source values
