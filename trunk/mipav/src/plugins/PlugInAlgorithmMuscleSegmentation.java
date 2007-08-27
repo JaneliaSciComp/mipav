@@ -1087,7 +1087,6 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 initThighAxes();
             }
 
-            @Override
             public void algorithmPerformed(AlgorithmBase algorithm) {
                 VOI resultVOI;
                 if(algorithm instanceof AlgorithmBSmooth) {
