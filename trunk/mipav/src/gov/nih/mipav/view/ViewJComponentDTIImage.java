@@ -17,6 +17,11 @@ import gov.nih.mipav.model.structures.ModelLUT;
  * 
  * This represents the DTI Component Image used in the DTI Color Display plugin.
  * Its show method is called as variuos parameters such are modified.
+ * 
+ * 
+ *  * Publication Reference:
+ * 
+ * S. Pajevic and C. Pierpaoli, “Color Schemes to Represent the Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber Tract Mapping in the Human Brain,” Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999
  *
  */
 public class ViewJComponentDTIImage extends ViewJComponentEditImage {
@@ -512,19 +517,12 @@ public class ViewJComponentDTIImage extends ViewJComponentEditImage {
 	    		
 	    		phi = (float)Math.atan2(vy,vx);
 	    		phi_deg =(float)Math.toDegrees(phi);
-	    	
-	    		float mirrorAngle;
-				if(phi_deg > 90 && phi_deg <= 180) {
-					mirrorAngle = 180 - phi_deg;
-					hue = ((mirrorAngle - 45 + 180)%180)/180f; 
-				}
-				else if (phi_deg > 180 && phi_deg <= 270) {
-					mirrorAngle = 540 - phi_deg;
-					hue = ((mirrorAngle - 45 + 180)%180)/180f;
-				}
-				else {
-					hue = ((phi_deg - 45 + 180)%180)/180f; 
-				}
+
+	    		hue = 720 - 2*((phi_deg + 45f + 180f)%180);
+	    		if (hue >= 360) {
+	    			hue = hue - 360;
+	    		}
+	    		hue = hue/360f;
 	    		if(pS < .001) {
 					pS = .001f;
 				}
