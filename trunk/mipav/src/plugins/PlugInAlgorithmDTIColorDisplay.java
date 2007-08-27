@@ -29,6 +29,11 @@ import gov.nih.mipav.view.ViewJFrameImage;
  * Laboratory of Integrative and Medical Biophysics (LIMB)
  * National Institute of Child Health & Humann Development
  * National Institutes of Health
+ * 
+ * 
+ *  * Publication Reference:
+ * 
+ * S. Pajevic and C. Pierpaoli, “Color Schemes to Represent the Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber Tract Mapping in the Human Brain,” Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999
  *
  */
 public class PlugInAlgorithmDTIColorDisplay extends AlgorithmBase {

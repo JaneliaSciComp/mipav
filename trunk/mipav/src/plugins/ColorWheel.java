@@ -20,6 +20,11 @@ import java.awt.Image;
  * Laboratory of Integrative and Medical Biophysics (LIMB)
  * National Institute of Child Health & Humann Development
  * National Institutes of Health
+ * 
+ * 
+ * Publication Reference:
+ * 
+ * S. Pajevic and C. Pierpaoli, “Color Schemes to Represent the Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber Tract Mapping in the Human Brain,” Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999
  *
  */ 
 public class ColorWheel extends Canvas {
@@ -70,37 +75,13 @@ public class ColorWheel extends Canvas {
 	 * @param type
 	 * @param radius
 	 */
-	public ColorWheel(String type, int radius) {
+	public ColorWheel(String initialType, int radius) {
 		setSize(radius*2,radius*2);
 		setBackground(Color.BLACK);
 		this.r6 = radius;
-		this.type = type;
-		
+		this.type = initialType;
 		//calculates radii of interior circles using Lambertian equal areas
 		calculateRadii();
-	}
-	
-	
-	/**
-	 * constructor
-	 * 
-	 * @param type
-	 * @param radius
-	 */
-	public ColorWheel(String type, int radius, float pB, float pC, float pS, float pG, float stevensBeta, float gamma ) {
-		setSize(radius*2,radius*2);
-		setBackground(Color.BLACK);
-		this.r6 = radius;
-		this.type = type;
-		this.pB = pB;
-		this.pC = pC;
-		this.pS = pS;
-		this.pG = pG;
-		this.stevensBeta = stevensBeta;
-		this.gamma = gamma;
-		
-		//calculates radii of interior circles using Lambertian equal areas
-		calculateRadii();	
 	}
 
 	
@@ -139,7 +120,7 @@ public class ColorWheel extends Canvas {
 		if(type.equals("MIRRORSYMM")) {
 			paintMirrorSymmColorWheel();
 		}
-
+		
 		//x and y starting coordinates for remaining circles
 		int r5_x = r6_x + (r6 - r5);
 		int r5_y = r6_y + (r6 - r5);
@@ -232,19 +213,35 @@ public class ColorWheel extends Canvas {
 	/**
 	 * calculates radii of the interior circles 
 	 * using Lambertian equal areas
+	 * 
+	 * equation used: r = 2 |sin(theta/2)|
 	 *
 	 */
 	public void calculateRadii() {
-		float r1_f = (float)Math.sqrt((r6 * r6)/6);
-		r1 = Math.round(r1_f);
-		float r5_f = (float)Math.sqrt((r1 * r1) * 5);
-		r5 = Math.round(r5_f);
-		float r4_f = (float)Math.sqrt((r1 * r1) * 4);
-		r4 = Math.round(r4_f);
-		float r3_f = (float)Math.sqrt((r1 * r1) * 3);
-		r3 = Math.round(r3_f);
-		float r2_f = (float)Math.sqrt((r1 * r1) * 2);
-		r2 = Math.round(r2_f);	
+
+		//first determine constant...we can calculate C becasue we know r6 since that is a parameter in the constructor
+		//then get unscaled radius based on above equation and scale using constant
+
+		double radians = Math.toRadians(90f/2f);
+		float r_unscaled = (float)(2 * Math.sin(radians));
+		float constant = r6/r_unscaled;
+		radians = Math.toRadians(15f/2f);
+		r_unscaled = (float)(2 * Math.sin(radians));
+		r1 = Math.round(r_unscaled * constant);
+		radians = Math.toRadians(30f/2f);
+		r_unscaled = (float)(2 * Math.sin(radians));
+		r2 = Math.round(r_unscaled * constant);
+		radians = Math.toRadians(45f/2f);
+		r_unscaled = (float)(2 * Math.sin(radians));
+		r3 = Math.round(r_unscaled * constant);
+		radians = Math.toRadians(60f/2f);
+		r_unscaled = (float)(2 * Math.sin(radians));
+		r4 = Math.round(r_unscaled * constant);
+		radians = Math.toRadians(75f/2f);
+		r_unscaled = (float)(2 * Math.sin(radians));
+		r5 = Math.round(r_unscaled * constant);
+
+		
 	}
 	
 	
@@ -260,6 +257,8 @@ public class ColorWheel extends Canvas {
 	 * Paints the Absolute Value Color Wheel
 	 */
 	public void paintAbsValColorWheel() {
+		Color c;
+		float gammaInv= 1/gamma;
 		for(int r=r6;r>=0;r-=1) {
 			int arcw = 2*r;
 			int arch = 2*r;
@@ -292,11 +291,11 @@ public class ColorWheel extends Canvas {
 				blue = greenAdjColors[2];
 				
 				//gamma correction
-				red = (float)Math.pow(red,(1/gamma));
-				green = (float)Math.pow(green,(1/gamma));
-				blue = (float)Math.pow(blue,(1/gamma));
+				red = (float)Math.pow(red,gammaInv);
+				green = (float)Math.pow(green,gammaInv);
+				blue = (float)Math.pow(blue,gammaInv);
 				
-				Color c = new Color(red,green,blue);
+				c = new Color(red,green,blue);
 				offGraphics.setColor(c);
 				offGraphics.fillArc(x, y, arcw, arch, angle, 1);
 			}
@@ -308,7 +307,12 @@ public class ColorWheel extends Canvas {
 	 * Paints the No Symmetry Color Wheel
 	 */
 	public void paintNoSymmColorWheel() {
-		
+		Color c;
+		float gammaInv= 1/gamma;
+		float rotConst = 1/360f;
+		float normConst = 1/255f;
+		double piDiv2 = Math.PI/2.0d;
+		double sinConst = 1/Math.sin(pS * piDiv2);
 		for(int r=r6;r>=0;r-=1) {
 			int arcw = 2*r;
 			int arch = 2*r;
@@ -319,16 +323,16 @@ public class ColorWheel extends Canvas {
 			if(pS < .001) {
 				pS = .001f;
 			}
-			float sat = (float)(Math.sin(pS*theta)/Math.sin(pS * (Math.PI/2))); 
+			float sat = (float)(Math.sin(pS*theta) * sinConst); 
 			
 			int hueAngle = 360;
 			for(int angle=0;angle<=360;angle++) {
-				float hue = ((hueAngle + 90 + 360)%360)/360f; 
-				Color c = Color.getHSBColor(hue, sat, 1f);
+				float hue = ((hueAngle + 90 + 360)%360) * rotConst;
+				c = Color.getHSBColor(hue, sat, 1f);
 				
-				float red = c.getRed()/255f;
-				float green = c.getGreen()/255f;
-				float blue = c.getBlue()/255f;
+				float red = c.getRed() * normConst;
+				float green = c.getGreen() * normConst;
+				float blue = c.getBlue() * normConst;
 
 				//blue shift
 				blueShiftColors = shiftBlue(red,green,blue);
@@ -349,9 +353,9 @@ public class ColorWheel extends Canvas {
 				blue = greenAdjColors[2];
 				
 				//gamma correction
-				red = (float)Math.pow(red,(1/gamma));
-				green = (float)Math.pow(green,(1/gamma));
-				blue = (float)Math.pow(blue,(1/gamma));
+				red = (float)Math.pow(red,gammaInv);
+				green = (float)Math.pow(green,gammaInv);
+				blue = (float)Math.pow(blue,gammaInv);
 				
 				c = new Color(red,green,blue);
 				offGraphics.setColor(c);
@@ -367,6 +371,12 @@ public class ColorWheel extends Canvas {
 	 * Paints the Rotational Symmetry Color Wheel
 	 */
 	public void paintRotationalSymmColorWheel() {
+		Color c;
+		float gammaInv= 1/gamma;
+		float rotConst = 1/360f;
+		float normConst = 1/255f;
+		double piDiv2 = Math.PI/2.0d;
+		double sinConst = 1/Math.sin(pS * piDiv2);
 		for(int r=r6;r>=0;r-=1) {
 			int arcw = 2*r;
 			int arch = 2*r;
@@ -377,17 +387,17 @@ public class ColorWheel extends Canvas {
 			if(pS < .001) {
 				pS = .001f;
 			}
-			float sat = (float)(Math.sin(pS*theta)/Math.sin(pS * (Math.PI/2))); 
+			float sat = (float)(Math.sin(pS*theta) * sinConst); 
 			int hueAngle = 360;
-			for(int angle=0;angle<=360;angle++) {
+			for(int angle=0;angle<360;angle++) {
 				//float hue = ((2 * (angle - 90 + 360))%360)/360f;
-				float hue = ((2 * (hueAngle + 90 + 360))%360)/360f;
-				Color c = Color.getHSBColor(hue, sat, 1f);
+				float hue = ((2 * (hueAngle + 90 + 360))%360) * rotConst;
+				c = Color.getHSBColor(hue, sat, 1f);
 				
-				float red = c.getRed()/255f;
-				float green = c.getGreen()/255f;
-				float blue = c.getBlue()/255f;
-
+				float red = c.getRed() * normConst;
+				float green = c.getGreen() * normConst;
+				float blue = c.getBlue() * normConst;
+				
 				//blue shift
 				blueShiftColors = shiftBlue(red,green,blue);
 				red = blueShiftColors[0];
@@ -407,14 +417,15 @@ public class ColorWheel extends Canvas {
 				blue = greenAdjColors[2];
 				
 				//gamma correction
-				red = (float)Math.pow(red,(1/gamma));
-				green = (float)Math.pow(green,(1/gamma));
-				blue = (float)Math.pow(blue,(1/gamma));
+				red = (float)Math.pow(red,gammaInv);
+				green = (float)Math.pow(green,gammaInv);
+				blue = (float)Math.pow(blue,gammaInv);
 				
 				c = new Color(red,green,blue);
 				
 				offGraphics.setColor(c);
 				offGraphics.fillArc(x, y, arcw, arch, angle, 1);
+				
 				hueAngle--;
 			}
 		}
@@ -425,6 +436,12 @@ public class ColorWheel extends Canvas {
 	 * Paints the Mirror Symmetry Color Wheel
 	 */
 	public void paintMirrorSymmColorWheel() {
+		Color c;
+		float gammaInv= 1/gamma;
+		float rotConst = 1/180f;
+		float normConst = 1/255f;
+		double piDiv2 = Math.PI/2.0d;
+		double sinConst = 1/Math.sin(pS * piDiv2);
 		for(int r=r6;r>=0;r-=1) {
 			int arcw = 2*r;
 			int arch = 2*r;
@@ -435,27 +452,27 @@ public class ColorWheel extends Canvas {
 			if(pS < .001) {
 				pS = .001f;
 			}
-			float sat = (float)(Math.sin(pS*theta)/Math.sin(pS * (Math.PI/2))); 
+			float sat = (float)(Math.sin(pS*theta) * sinConst); 
 			for(int angle=0;angle<=360;angle++) {
 				float hue;
 				float mirrorAngle;
 				if(angle > 90 && angle <= 180) {
 					mirrorAngle = 180 - angle;
-					hue = ((mirrorAngle - 45 + 180)%180)/180f; 
+					hue = ((mirrorAngle - 45 + 180)%180) * rotConst;
 				}
 				else if (angle > 180 && angle <= 270) {
 					mirrorAngle = 540 - angle;
-					hue = ((mirrorAngle - 45 + 180)%180)/180f;
+					hue = ((mirrorAngle - 45 + 180)%180) * rotConst;
 				}
 				else {
-					hue = ((angle - 45 + 180)%180)/180f; 
+					hue = ((angle - 45 + 180)%180) * rotConst;
 				}
-
-				Color c = Color.getHSBColor(hue, sat, 1f);
 				
-				float red = c.getRed()/255f;
-				float green = c.getGreen()/255f;
-				float blue = c.getBlue()/255f;
+				c = Color.getHSBColor(hue, sat, 1f);
+				
+				float red = c.getRed() * normConst;
+				float green = c.getGreen() * normConst;
+				float blue = c.getBlue() * normConst;
 
 				//blue shift
 				blueShiftColors = shiftBlue(red,green,blue);
@@ -476,9 +493,9 @@ public class ColorWheel extends Canvas {
 				blue = greenAdjColors[2];
 				
 				//gamma correction
-				red = (float)Math.pow(red,(1/gamma));
-				green = (float)Math.pow(green,(1/gamma));
-				blue = (float)Math.pow(blue,(1/gamma));
+				red = (float)Math.pow(red,gammaInv);
+				green = (float)Math.pow(green,gammaInv);
+				blue = (float)Math.pow(blue,gammaInv);
 				
 				c = new Color(red,green,blue);
 				
@@ -575,4 +592,62 @@ public class ColorWheel extends Canvas {
 		colors[2] = b1;
 		return colors;
 	}	
+	
+	
+	
+	
+	/**
+     * Calls paint without erasing background - this reduces flicker!
+     *
+     * @param  g  Graphics handle
+     */
+    public void update(Graphics g) {
+        paint(g);
+    }
+
+
+	public void setGamma(float gamma) {
+		this.gamma = gamma;
+	}
+
+
+	public void setPB(float pb) {
+		pB = pb;
+	}
+
+
+	public void setPC(float pc) {
+		pC = pc;
+	}
+
+
+	public void setPG(float pg) {
+		pG = pg;
+	}
+
+
+	public void setPS(float ps) {
+		pS = ps;
+	}
+
+
+	public void setStevensBeta(float stevensBeta) {
+		this.stevensBeta = stevensBeta;
+	}
+
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+
+	public String getType() {
+		return type;
+	}
+    
+	
+    
+    
+    
+    
 }
