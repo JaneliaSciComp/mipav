@@ -96,19 +96,23 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
  * Laboratory of Integrative and Medical Biophysics (LIMB)
  * National Institute of Child Health & Humann Development
  * National Institutes of Health
+ * 
+ * Publication Reference:
+ * 
+ * S. Pajevic and C. Pierpaoli, “Color Schemes to Represent the Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber Tract Mapping in the Human Brain,” Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999
  *
  */
 public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		implements AlgorithmInterface, ChangeListener, ItemListener, MouseListener, MouseWheelListener, KeyListener, FocusListener {
 	
 	/** dialog title and version **/
-	private String title = " DTI Color Display  v1.3      ";
+	private String title = " DTI Color Display  v1.4      ";
 	
 	/** panels **/
-	private JPanel mainPanel,topPanel, filesPanel, okPanel, bottomPanel, colorPanel, colorWheelPanel, resultImagePanel, optionsPanel, colorWheelChoicesPanel, heuristicParametersPanel, anisotropyMaxPanel, anisotropyMinPanel, gammaPanel, stevensBetaPanel, satBluePanel, dimGreenPanel, colorRangePanel, satVsThetaPanel, resultPanel, resultImageSliderPanel, tempPanel, toolbarPanel, adjustExpPanel, truncMultPanel, restoreDefaultsPanel, saveLoadPanel;
+	private JPanel mainPanel,topPanel, filesPanel, okPanel, bottomPanel, refPanel, colorPanel, colorWheelPanel, resultImagePanel, optionsPanel, colorWheelChoicesPanel, heuristicParametersPanel, anisotropyMaxPanel, anisotropyMinPanel, gammaPanel, stevensBetaPanel, satBluePanel, dimGreenPanel, colorRangePanel, satVsThetaPanel, resultPanel, resultImageSliderPanel, tempPanel, toolbarPanel, adjustExpPanel, truncMultPanel, restoreDefaultsPanel, saveLoadPanel;
 	
 	/** labels **/
-	private JLabel eigenvectorLabel, anisotropyLabel, minAnisotropyMaxLabel, maxAnisotropyMaxLabel, minAnisotropyMinLabel, maxAnisotropyMinLabel, minGammaLabel, maxGammaLabel, minStevensBetaLabel, maxStevensBetaLabel, minSatBlueLabel, maxSatBlueLabel, minDimGreenLabel, maxDimGreenLabel, minColorRangeLabel, maxColorRangeLabel, minSatVsThetaLabel, maxSatVsThetaLabel, minResultImageSlicesLabel, maxResultImageSlicesLabel, currentResultImageSlicesLabel, magLabel, refLabel, minAdjustExpLabel, maxAdjustExpLabel;
+	private JLabel eigenvectorLabel, anisotropyLabel, minAnisotropyMaxLabel, maxAnisotropyMaxLabel, minAnisotropyMinLabel, maxAnisotropyMinLabel, minGammaLabel, maxGammaLabel, minStevensBetaLabel, maxStevensBetaLabel, minSatBlueLabel, maxSatBlueLabel, minDimGreenLabel, maxDimGreenLabel, minColorRangeLabel, maxColorRangeLabel, minSatVsThetaLabel, maxSatVsThetaLabel, minResultImageSlicesLabel, maxResultImageSlicesLabel, currentResultImageSlicesLabel, magLabel, refLabel1, refLabel2, minAdjustExpLabel, maxAdjustExpLabel;
 	
 	/** mins and maxes for heuristic parameters**/
 	private float minAnisotropyMax, maxAnisotropyMax, minAnisotropyMin, maxAnisotropyMin, minGamma, maxGamma, minStevensBeta, maxStevensBeta, minSatBlue, maxSatBlue, minDimGreen, maxDimGreen, minColorRange, maxColorRange, minSatVsTheta, maxSatVsTheta, minAdjustExp, maxAdjustExp;
@@ -138,7 +142,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     private ModelLUT LUTa;
     
     /** Color Wheels **/
-    private ColorWheel currentColorWheel,absValColorWheel,noSymmColorWheel, rotationalSymmColorWheel, mirrorSymmColorWheel; 
+    private ColorWheel colorWheel;
     
     /** handle to the algorithm **/
     private PlugInAlgorithmDTIColorDisplay alg;
@@ -251,6 +255,8 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     /** Buffered Writer for saving params **/
     private BufferedWriter out;
     
+    private String currentColorWheelType;
+    
     
 
 	/**
@@ -328,13 +334,13 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		colorWheelPanel.setBorder(titledBorder);
 		colorWheelPanel.setPreferredSize(new Dimension(500, 500));
 		colorWheelPanel.setMinimumSize(new Dimension(500,500));
-		absValColorWheel = new ColorWheel("ABSVAL",200);
-		currentColorWheel = absValColorWheel;
+		colorWheel = new ColorWheel("ABSVAL",200);
+		currentColorWheelType = "ABSVAL";
 		gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(0,0,0,0);
         gbc.anchor = GridBagConstraints.CENTER;
-		colorWheelPanel.add(currentColorWheel,gbc);
+		colorWheelPanel.add(colorWheel,gbc);
 		colorWheelChoicesPanel = new JPanel(gbl);
 		colorWheelChoicesPanel.setForeground(Color.black);
 		titledBorder = new TitledBorder(new EtchedBorder(), " Color Wheel ", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
@@ -978,10 +984,22 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		tempPanel.setBorder(titledBorder);
 		
-		//reference label
-		refLabel = new JLabel();
-		refLabel.setText("<html>Developed in concert with Dr. Sinisa Pajevic Ph.D. from the NIH/CIT/DCB/MSCL group and Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker M.S. from the NIH/NICHD/LIMB/STBB group </html>");
+		//reference panel
+		refPanel = new JPanel(gbl);
+		refLabel1 = new JLabel();
+		refLabel1.setText("<html>Developed in concert with Dr. Sinisa Pajevic Ph.D. from the NIH/CIT/DCB/MSCL group and Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker M.S. from the NIH/NICHD/LIMB/STBB group</html>");
+		refLabel2 = new JLabel();
+		refLabel2.setText("<html>S. Pajevic and C. Pierpaoli, “Color Schemes to Represent the Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber Tract Mapping in the Human Brain”, Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999</html>");
+		gbc.anchor = GridBagConstraints.CENTER;
+		gbc.gridx = 0;
+	    gbc.gridy = 0;
+		refPanel.add(refLabel1, gbc);
+		gbc.gridx = 0;
+	    gbc.gridy = 1;
+		refPanel.add(refLabel2, gbc);
 
+		
+		
 		//bottom panel
         gbc.anchor = GridBagConstraints.NORTH;
         bottomPanel = new JPanel(gbl);
@@ -1007,7 +1025,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         gbc.gridy = 2;
         gbc.insets = new Insets(15,5,10,0);
         gbc.anchor = GridBagConstraints.CENTER;
-        mainPanel.add(refLabel,gbc);
+        mainPanel.add(refPanel,gbc);
         getContentPane().add(mainPanel);
         
         pack();
@@ -1348,6 +1366,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
+        	updateCurrentColorWheel();
         }
         else if (source == satBlueSlider) {
         	satBlueTextField.setText(String.valueOf(satBlueSlider.getValue() / 1000.000000f));
@@ -1355,6 +1374,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
+        	updateCurrentColorWheel();
         }
         else if (source == dimGreenSlider) {
         	dimGreenTextField.setText(String.valueOf(dimGreenSlider.getValue() / 100.000000f));
@@ -1362,6 +1382,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
+        	updateCurrentColorWheel();
         }
         else if (source == colorRangeSlider) {
         	colorRangeTextField.setText(String.valueOf(colorRangeSlider.getValue() / 1000.000000f));
@@ -1369,6 +1390,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
+        	updateCurrentColorWheel();
         }
         else if (source == satVsThetaSlider) {
         	satVsThetaTextField.setText(String.valueOf(satVsThetaSlider.getValue() / 1000.000000f));
@@ -1376,6 +1398,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
+        	updateCurrentColorWheel();
         }
         else if (source == adjustExpSlider) {
         	adjustExpTextField.setText(String.valueOf(adjustExpSlider.getValue() / 100.000000f));
@@ -1390,6 +1413,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	if(componentImage != null && !flag) {
 				componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
 			}
+        	updateCurrentColorWheel();
         }
         else if(source == resultImageSlider) {
         	zSlice = resultImageSlider.getValue() - 1;
@@ -1414,13 +1438,16 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		if (source == colorWheelComboBox) {
 			int index = colorWheelComboBox.getSelectedIndex();
 			if(index == 0) {
-				if(currentColorWheel != absValColorWheel) {
-					absValColorWheel = new ColorWheel("ABSVAL",200,pB,pC,pS,pG,stevensBeta,gamma);
-					colorWheelPanel.add(absValColorWheel,gbc);
-					colorWheelPanel.validate();
-					colorWheelPanel.repaint();
-					colorWheelPanel.remove(currentColorWheel);
-					currentColorWheel = absValColorWheel;
+				if(currentColorWheelType != "ABSVAL") {
+					colorWheel.setType("ABSVAL");
+					colorWheel.setPB(pB);
+					colorWheel.setPC(pC);
+					colorWheel.setPS(pS);
+					colorWheel.setPG(pG);
+					colorWheel.setStevensBeta(stevensBeta);
+					colorWheel.setGamma(gamma);
+					colorWheel.repaint();
+					currentColorWheelType = "ABSVAL";
 					if(componentImage != null) {
 						type = "ABSVAL";
 						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
@@ -1432,13 +1459,16 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				satVsThetaTextField.setBackground(Color.lightGray);
 			}
 			else if(index == 1) {
-				if(currentColorWheel != noSymmColorWheel) {
-					noSymmColorWheel = new ColorWheel("NOSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
-					colorWheelPanel.add(noSymmColorWheel,gbc);
-					colorWheelPanel.validate();
-					colorWheelPanel.repaint();
-					colorWheelPanel.remove(currentColorWheel);
-					currentColorWheel = noSymmColorWheel;
+				if(currentColorWheelType != "NOSYMM") {
+					colorWheel.setType("NOSYMM");
+					colorWheel.setPB(pB);
+					colorWheel.setPC(pC);
+					colorWheel.setPS(pS);
+					colorWheel.setPG(pG);
+					colorWheel.setStevensBeta(stevensBeta);
+					colorWheel.setGamma(gamma);
+					colorWheel.repaint();
+					currentColorWheelType = "NOSYMM";
 					if(componentImage != null) {
 						type = "NOSYMM";
 						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
@@ -1450,13 +1480,16 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				satVsThetaTextField.setBackground(Color.white);
 			}
 			else if(index == 2) {
-				if(currentColorWheel != rotationalSymmColorWheel) {
-					rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
-					colorWheelPanel.add(rotationalSymmColorWheel,gbc);
-					colorWheelPanel.validate();
-					colorWheelPanel.repaint();
-					colorWheelPanel.remove(currentColorWheel);
-					currentColorWheel = rotationalSymmColorWheel;
+				if(currentColorWheelType != "ROTATIONALSYMM") {
+					colorWheel.setType("ROTATIONALSYMM");
+					colorWheel.setPB(pB);
+					colorWheel.setPC(pC);
+					colorWheel.setPS(pS);
+					colorWheel.setPG(pG);
+					colorWheel.setStevensBeta(stevensBeta);
+					colorWheel.setGamma(gamma);
+					colorWheel.repaint();
+					currentColorWheelType = "ROTATIONALSYMM";
 					if(componentImage != null) {
 						type = "ROTATIONALSYMM";
 						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
@@ -1468,13 +1501,16 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 				satVsThetaTextField.setBackground(Color.white);
 			}
 			else if(index == 3) {
-				if(currentColorWheel != mirrorSymmColorWheel) {
-					mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
-					colorWheelPanel.add(mirrorSymmColorWheel,gbc);
-					colorWheelPanel.validate();
-					colorWheelPanel.repaint();
-					colorWheelPanel.remove(currentColorWheel);
-					currentColorWheel = mirrorSymmColorWheel;
+				if(currentColorWheelType != "MIRRORSYMM") {
+					colorWheel.setType("MIRRORSYMM");
+					colorWheel.setPB(pB);
+					colorWheel.setPC(pC);
+					colorWheel.setPS(pS);
+					colorWheel.setPG(pG);
+					colorWheel.setStevensBeta(stevensBeta);
+					colorWheel.setGamma(gamma);
+					colorWheel.repaint();
+					currentColorWheelType = "MIRRORSYMM";
 					if(componentImage != null) {
 						type = "MIRRORSYMM";
 						componentImage.show(tSlice, zSlice, true, type, pS, pB, pC, pG, gamma, anisotropyMin, anisotropyMax, stevensBeta, adjustExp, isMultiply);
@@ -1499,37 +1535,49 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         gbc.gridy = 0;
         gbc.insets = new Insets(0,0,0,0);
 		gbc.anchor = GridBagConstraints.CENTER;
-		if(currentColorWheel == absValColorWheel) {
-			absValColorWheel = new ColorWheel("ABSVAL",200,pB,pC,pS,pG,stevensBeta,gamma);
-			colorWheelPanel.add(absValColorWheel,gbc);
-			colorWheelPanel.validate();
-			colorWheelPanel.repaint();
-			colorWheelPanel.remove(currentColorWheel);
-			currentColorWheel = absValColorWheel;
+		if(currentColorWheelType == "ABSVAL") {
+			colorWheel.setType("ABSVAL");
+			colorWheel.setPB(pB);
+			colorWheel.setPC(pC);
+			colorWheel.setPS(pS);
+			colorWheel.setPG(pG);
+			colorWheel.setStevensBeta(stevensBeta);
+			colorWheel.setGamma(gamma);
+			colorWheel.repaint();
+			currentColorWheelType = "ABSVAL";
 		}
-		else if(currentColorWheel == noSymmColorWheel) {
-			noSymmColorWheel = new ColorWheel("NOSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
-			colorWheelPanel.add(noSymmColorWheel,gbc);
-			colorWheelPanel.validate();
-			colorWheelPanel.repaint();
-			colorWheelPanel.remove(currentColorWheel);
-			currentColorWheel = noSymmColorWheel;
+		else if(currentColorWheelType == "NOSYMM") {
+			colorWheel.setType("NOSYMM");
+			colorWheel.setPB(pB);
+			colorWheel.setPC(pC);
+			colorWheel.setPS(pS);
+			colorWheel.setPG(pG);
+			colorWheel.setStevensBeta(stevensBeta);
+			colorWheel.setGamma(gamma);
+			colorWheel.repaint();
+			currentColorWheelType = "NOSYMM";
 		}
-		else if(currentColorWheel == rotationalSymmColorWheel) {
-			rotationalSymmColorWheel = new ColorWheel("ROTATIONALSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
-			colorWheelPanel.add(rotationalSymmColorWheel,gbc);
-			colorWheelPanel.validate();
-			colorWheelPanel.repaint();
-			colorWheelPanel.remove(currentColorWheel);
-			currentColorWheel = rotationalSymmColorWheel;
+		else if(currentColorWheelType == "ROTATIONALSYMM") {
+			colorWheel.setType("ROTATIONALSYMM");
+			colorWheel.setPB(pB);
+			colorWheel.setPC(pC);
+			colorWheel.setPS(pS);
+			colorWheel.setPG(pG);
+			colorWheel.setStevensBeta(stevensBeta);
+			colorWheel.setGamma(gamma);
+			colorWheel.repaint();
+			currentColorWheelType = "ROTATIONALSYMM";
 		}
-		else if(currentColorWheel == mirrorSymmColorWheel) {
-			mirrorSymmColorWheel = new ColorWheel("MIRRORSYMM",200,pB,pC,pS,pG,stevensBeta,gamma);
-			colorWheelPanel.add(mirrorSymmColorWheel,gbc);
-			colorWheelPanel.validate();
-			colorWheelPanel.repaint();
-			colorWheelPanel.remove(currentColorWheel);
-			currentColorWheel = mirrorSymmColorWheel;
+		else if(currentColorWheelType == "MIRRORSYMM") {
+			colorWheel.setType("MIRRORSYMM");
+			colorWheel.setPB(pB);
+			colorWheel.setPC(pC);
+			colorWheel.setPS(pS);
+			colorWheel.setPG(pG);
+			colorWheel.setStevensBeta(stevensBeta);
+			colorWheel.setGamma(gamma);
+			colorWheel.repaint();
+			currentColorWheelType = "MIRRORSYMM";
 		}
 
 	}
@@ -1570,22 +1618,22 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	//updateCurrentColorWheel();
         }
         else if (source == gammaSlider) {
-        	updateCurrentColorWheel();
+        	//updateCurrentColorWheel();
         }
         else if (source == stevensBetaSlider) {
-        	updateCurrentColorWheel();
+        	//updateCurrentColorWheel();
         }
         else if (source == satBlueSlider) {
-        	updateCurrentColorWheel();
+        	//updateCurrentColorWheel();
         }
         else if (source == dimGreenSlider) {
-        	updateCurrentColorWheel();
+        	//updateCurrentColorWheel();
         }
         else if (source == colorRangeSlider) {
-        	updateCurrentColorWheel();
+        	//updateCurrentColorWheel();
         }
         else if (source == satVsThetaSlider) {
-        	updateCurrentColorWheel();
+        	//updateCurrentColorWheel();
         }
 		
 	}
