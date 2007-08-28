@@ -75,7 +75,9 @@ import java.io.*;
  *  cos(2*phi) = -(e*sin(2*phi) + f)/d = (-d*f -+ e*sqrt(d^2 + e^2 - f^2))/(d^2 + e^2)
  *  Note that + for the sin(2*phi) root corresponds to - for the cos(2*phi) root
  *  Real solutions require d^2 + e^2 - f^2 >= 0.
- *  Since there can be 2 solutions for 2*phi, phi can have 4 solutions, 2 sets of values 180 degrees apart.
+ *  Each solution of 2*phi generates 2 solutions of phi, 180 degrees apart.
+ *  Only use the phi within 90 degrees of arctan(y - vy, x - vx).
+ *  So only 2 phi are generated.
  *  
  *  If more parabolas are to be found, then zero the houghBuffer and run through the
  *  same Hough transform a second time, but on this second run instead of incrementing
@@ -195,6 +197,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         byte[] srcBuffer;
         short[] countBuffer;
         float pBuffer[];
+        float phiBuffer[] = null;
         boolean test = true;
         int largestValue;
         int largestIndex;
@@ -213,6 +216,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         double xvArray[];
         double yvArray[];
         double phiArray[];
+        double phiScale;
         float pScale;
         int maxParabolaPoints;
         float xvTable[];
@@ -249,8 +253,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         double b;
         double cv;
         double xf;
-        double cosphi;
-        double sinphi;
+        double cosphi = 0.0;
+        double sinphi = 0.0;
         double root;
         int y1;
         int y2;
@@ -326,7 +330,9 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         double twophi1;
         double twophi2;
         int numPhi = 0;
-        double phi[] = new double[4];
+        double phi[] = new double[2];
+        double theta;
+        int m1;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -935,21 +941,24 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         yArray = null;
 
         pBuffer = new float[numBins];
+        if (phiBins > 1) {
+            phiBuffer = new float[numBins];
+        }
         countBuffer = new short[numBins];
         
         // Calculate xvArray, yvArray, phiArray, cosArray, sinArray values
         xvArray = new double[xvBins];
         yvArray = new double[yvBins];
-        phiArray = new double[phiBins];
-        cosArray = new double[phiBins];
-        sinArray = new double[phiBins];
+        //phiArray = new double[phiBins];
+        //cosArray = new double[phiBins];
+        //sinArray = new double[phiBins];
         for (i = 0; i < xvBins; i++) {
             xvArray[i] = ((double)(i * (xDim - 1)))/((double)(xvBins - 1));
         }
         for (i = 0; i < yvBins; i++) {
             yvArray[i] = ((double)(i * (yDim - 1)))/((double)(yvBins - 1));
         }
-        if (phiBins > 1) {
+        /*if (phiBins > 1) {
             for (i = 0; i < phiBins; i++) {
                 phiArray[i] = i * 2.0 * Math.PI/phiBins;
                 cosArray[i] = Math.cos(phiArray[i]);
@@ -960,8 +969,15 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             phiArray[0] = phiConstant;
             cosArray[0] = Math.cos(phiConstant);
             sinArray[0] = Math.sin(phiConstant);
+        }*/
+        if (phiBins == 1) {
+            numPhi = 1;
+            phi[0] = phiConstant;
+            cosphi = Math.cos(phiConstant);
+            sinphi = Math.sin(phiConstant);
         }
         pScale = (pBins - 1)/(pMax - pMin);
+        phiScale = phiBins/(2.0 * Math.PI);
         maxParabolaPoints = 2*Math.max(xDim, yDim) + Math.min(xDim, yDim);
         
         xvTable = new float[numParabolas];
@@ -990,96 +1006,149 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     xdel = x - xvArray[j];
                     for (k = 0; k < yvBins; k++) {
                         ydel = y - yvArray[k];
-                        //for (m = 0; m < phiBins; m++) {
-                        // cd is cosine coefficient, ce is sine coefficient, cf is constant coefficient
-                        if ((xdel == 0.0f) && (ydel == 0.0f)) {
-                            continue;
-                        }
-                        else if (Float.isInfinite(slopeArray[i])) {
-                            // (y - vy)*sin(2*phi) + 3*(x - vx) + (x - vx)*cos(2*phi) = 0
-                            cd = xdel;
-                            ce = ydel;
-                            cf = 3*xdel;
-                        }
-                        else if (slopeArray[i] == 0.0f) {
-                           // (x - vx)*sin(2*phi) + 3*(y - vy) - (y - vy)*cos(2*phi)= 0;
-                            cd = -ydel;
-                            ce = xdel;
-                            cf = 3*ydel;
-                        }
-                        else {
-                            // (dy/dx) = ((x - vx)*sin(2*phi) + 3*(y - vy)- (y - vy)*cos(2*phi))/((y - vy)*sin(2*phi) + 3*(x - vx)+ (x - vx)*cos(2*phi))
-                            cd = xdel*slopeArray[i] + ydel;
-                            ce = ydel*slopeArray[i] - xdel;
-                            cf = 3*xdel*slopeArray[i] - 3*ydel;
-                        }
-                        deSquares = cd*cd + ce*ce;
-                        defSquares = deSquares - cf*cf;
-                        if (defSquares < 0.0) {
-                            continue;
-                        }
-                        ef = ce * cf;
-                        df = cd * cf;
-                        numPhi = 0;
-                        if (defSquares > 0.0) {
-                            root = Math.sqrt(defSquares);
-                            vars = cd * root;
-                            varc = ce * root;
-                            sin2phi1 = (-ef + vars)/deSquares;
-                            if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0)) {
-                                cos2phi1 = (-df - varc)/deSquares;
-                                if ((sin2phi1 >= 0.0) && (cos2phi1 >= 0.0)) {
-                                    twophi1 = Math.asin(sin2phi1);   
-                                }
-                                else if ((sin2phi1 >= 0.0) && (cos2phi1 < 0.0)) {
-                                    twophi1 = Math.PI - Math.asin(sin2phi1);
-                                }
-                                else if ((sin2phi1 < 0.0) && (cos2phi1 < 0.0)) {
-                                    twophi1 = Math.PI - Math.asin(sin2phi1);
-                                }
-                                else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
-                                    twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
-                                }
-                                phi[0] = twophi1/2.0;
-                                phi[1] = twophi1/2.0 + Math.PI;
-                                numPhi = 2;
-                            } // if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0))
-                            sin2phi2 = (-ef - vars)/deSquares;
-                            if ((sin2phi2 >= -1.0) && (sin2phi2 <= 1.0)) {
-                                cos2phi2 = (-df + varc)/deSquares;
-                                if ((sin2phi2 >= 0.0) && (cos2phi2 >= 0.0)) {
-                                    twophi2 = Math.asin(sin2phi2);   
-                                }
-                                else if ((sin2phi2 >= 0.0) && (cos2phi2 < 0.0)) {
-                                    twophi2 = Math.PI - Math.asin(sin2phi2);
-                                }
-                                else if ((sin2phi2 < 0.0) && (cos2phi2 < 0.0)) {
-                                    twophi2 = Math.PI - Math.asin(sin2phi2);
-                                }
-                                else { // (sin2phi2 < 0.0) && (cos2phi2 >= 0.0)
-                                    twophi2 = 2.0*Math.PI + Math.asin(sin2phi2);
-                                }
-                                phi[numPhi] = twophi2/2.0;
-                                phi[numPhi+1] = twophi2/2.0 + Math.PI;
-                                numPhi += 2;
-                            } // if ((sin2phi2 >= -2.0) && (sin2phi2 <= 1.0))
-                        } // if (defSquares > 0.0)
-                        else { // defSquares == 0.0
-                            
-                        } // else defSquares == 0.0
-                            /*numerator = ydel*cosArray[m] - xdel*sinArray[m];
+                        if (phiBins > 1) {
+                            theta = Math.atan2(ydel, xdel);
+                            if (theta <= 0.0) {
+                                theta = theta + 2.0 * Math.PI;
+                            }
+                            // theta and the desired angle phi cannot differ by more than PI/2.
+                            //for (m = 0; m < phiBins; m++) {
+                            // cd is cosine coefficient, ce is sine coefficient, cf is constant coefficient
+                            if ((xdel == 0.0f) && (ydel == 0.0f)) {
+                                continue;
+                            }
+                            else if (Float.isInfinite(slopeArray[i])) {
+                                // (y - vy)*sin(2*phi) + 3*(x - vx) + (x - vx)*cos(2*phi) = 0
+                                cd = xdel;
+                                ce = ydel;
+                                cf = 3*xdel;
+                            }
+                            else if (slopeArray[i] == 0.0f) {
+                               // (x - vx)*sin(2*phi) + 3*(y - vy) - (y - vy)*cos(2*phi)= 0;
+                                cd = -ydel;
+                                ce = xdel;
+                                cf = 3*ydel;
+                            }
+                            else {
+                                // (dy/dx) = ((x - vx)*sin(2*phi) + 3*(y - vy)- (y - vy)*cos(2*phi))/((y - vy)*sin(2*phi) + 3*(x - vx)+ (x - vx)*cos(2*phi))
+                                cd = xdel*slopeArray[i] + ydel;
+                                ce = ydel*slopeArray[i] - xdel;
+                                cf = 3*xdel*slopeArray[i] - 3*ydel;
+                            }
+                            deSquares = cd*cd + ce*ce;
+                            defSquares = deSquares - cf*cf;
+                            if (defSquares < 0.0) {
+                                continue;
+                            }
+                            ef = ce * cf;
+                            df = cd * cf;
+                            numPhi = 0;
+                            if (defSquares > 0.0) {
+                                root = Math.sqrt(defSquares);
+                                vars = cd * root;
+                                varc = ce * root;
+                                sin2phi1 = (-ef + vars)/deSquares;
+                                if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0)) {
+                                    cos2phi1 = (-df - varc)/deSquares;
+                                    if ((sin2phi1 >= 0.0) && (cos2phi1 >= 0.0)) {
+                                        twophi1 = Math.asin(sin2phi1);   
+                                    }
+                                    else if ((sin2phi1 >= 0.0) && (cos2phi1 < 0.0)) {
+                                        twophi1 = Math.PI - Math.asin(sin2phi1);
+                                    }
+                                    else if ((sin2phi1 < 0.0) && (cos2phi1 < 0.0)) {
+                                        twophi1 = Math.PI - Math.asin(sin2phi1);
+                                    }
+                                    else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
+                                        twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
+                                    }
+                                    if (Math.abs(theta - twophi1/2.0) < Math.PI/2.0) {
+                                        phi[0] = twophi1/2.0;
+                                    }
+                                    else {
+                                        phi[0] = twophi1/2.0 + Math.PI;
+                                    }
+                                    numPhi = 1;
+                                } // if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0))
+                                sin2phi2 = (-ef - vars)/deSquares;
+                                if ((sin2phi2 >= -1.0) && (sin2phi2 <= 1.0)) {
+                                    cos2phi2 = (-df + varc)/deSquares;
+                                    if ((sin2phi2 >= 0.0) && (cos2phi2 >= 0.0)) {
+                                        twophi2 = Math.asin(sin2phi2);   
+                                    }
+                                    else if ((sin2phi2 >= 0.0) && (cos2phi2 < 0.0)) {
+                                        twophi2 = Math.PI - Math.asin(sin2phi2);
+                                    }
+                                    else if ((sin2phi2 < 0.0) && (cos2phi2 < 0.0)) {
+                                        twophi2 = Math.PI - Math.asin(sin2phi2);
+                                    }
+                                    else { // (sin2phi2 < 0.0) && (cos2phi2 >= 0.0)
+                                        twophi2 = 2.0*Math.PI + Math.asin(sin2phi2);
+                                    }
+                                    if (Math.abs(theta - twophi2/2.0) < Math.PI/2.0) {
+                                        phi[numPhi] = twophi2/2.0;
+                                    }
+                                    else {
+                                        phi[numPhi] = twophi2/2.0 + Math.PI;
+                                    }
+                                    numPhi++;
+                                } // if ((sin2phi2 >= -2.0) && (sin2phi2 <= 1.0))
+                            } // if (defSquares > 0.0)
+                            else { // defSquares == 0.0
+                                sin2phi1 = -ef/deSquares;   
+                                if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0)) {
+                                    cos2phi1 = -df/deSquares;
+                                    if ((sin2phi1 >= 0.0) && (cos2phi1 >= 0.0)) {
+                                        twophi1 = Math.asin(sin2phi1);   
+                                    }
+                                    else if ((sin2phi1 >= 0.0) && (cos2phi1 < 0.0)) {
+                                        twophi1 = Math.PI - Math.asin(sin2phi1);
+                                    }
+                                    else if ((sin2phi1 < 0.0) && (cos2phi1 < 0.0)) {
+                                        twophi1 = Math.PI - Math.asin(sin2phi1);
+                                    }
+                                    else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
+                                        twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
+                                    }
+                                    if (Math.abs(theta - twophi1/2.0) < Math.PI/2.0) {
+                                        phi[0] = twophi1/2.0;
+                                    }
+                                    else {
+                                        phi[0] = twophi1/2.0 + Math.PI;
+                                    }
+                                    numPhi = 1;
+                                } // if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0))
+                            } // else defSquares == 0.0
+                        } // if (phiBins > 1)
+                        /*numerator = ydel*cosArray[m] - xdel*sinArray[m];
+                        numerator = numerator * numerator;
+                        denominator = 4*(ydel*sinArray[m] + xdel*cosArray[m]); */
+                        for (m = 0; m < numPhi; m++) {
+                            if (phiBins > 1) {
+                                cosphi = Math.cos(phi[m]);
+                                sinphi = Math.sin(phi[m]);
+                            }
+                            numerator = ydel*cosphi - xdel*sinphi;
                             numerator = numerator * numerator;
-                            denominator = 4*(ydel*sinArray[m] + xdel*cosArray[m]);
+                            denominator = 4*(ydel*sinphi + xdel*cosphi);
                             if (denominator != 0.0) {
                                 p = numerator/denominator;
                                 if ((p >= pMin) && (p <= pMax)) {
                                     n = (int)((p - pMin)*pScale);
-                                    indexDest = j + k * xvBins + m * xy + n * xyp;
+                                    if (phiBins > 1) {
+                                        m1 = (int)(phi[m]*phiScale);
+                                        indexDest = j + k * xvBins + m1 * xy + n * xyp;
+                                        phiBuffer[indexDest] += phi[m];
+                                    }
+                                    else {
+                                        indexDest = j + k * xvBins + n * xyp;
+                                    }
                                     countBuffer[indexDest]++;
                                     pBuffer[indexDest] += p;
                                 } // if ((p >= pMin) && (p <= pMax)
-                            } // if (denominator != 0.0)*/
+                            } // if (denominator != 0.0)
                        // } // for (m = 0; m < phiBins; m++)
+                        }  // for (m = 0; m < numPhi; m++)
                     } // for (k = 0; k < yvBins; k++)
                 } // for (j = 0; j < xvBins; j++)
             } // for (i = 0; i < numPoints; i++)
@@ -1108,8 +1177,9 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             yvTable[c] = (largestIndex % xy)/xvBins;
             yvTable[c] = yvTable[c] * ((float)(yDim - 1))/((float)(yvBins - 1));
             if (phiBins > 1) {
-                phiTable[c] = (largestIndex % xyp)/xy;
-                phiTable[c] = (float)(phiTable[c] * 2.0 * Math.PI/phiBins);
+                //phiTable[c] = (largestIndex % xyp)/xy;
+                //phiTable[c] = (float)(phiTable[c] * 2.0 * Math.PI/phiBins);
+                phiTable[c] = phiBuffer[largestIndex]/largestValue;
             }
             else {
                 phiTable[c] = (float)phiConstant;
@@ -1139,15 +1209,142 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     xdel = x - xvArray[j];
                     for (k = 0; k < yvBins; k++) {
                         ydel = y - yvArray[k];
-                        //for (m = 0; m < phiBins; m++) {
-                           /* numerator = ydel*cosArray[m] - xdel*sinArray[m];
+                        if (phiBins > 1) {
+                            theta = Math.atan2(ydel, xdel);
+                            if (theta <= 0.0) {
+                                theta = theta + 2.0 * Math.PI;
+                            }
+                            // theta and the desired angle phi cannot differ by more than PI/2.
+                            //for (m = 0; m < phiBins; m++) {
+                            // cd is cosine coefficient, ce is sine coefficient, cf is constant coefficient
+                            if ((xdel == 0.0f) && (ydel == 0.0f)) {
+                                continue;
+                            }
+                            else if (Float.isInfinite(slopeArray[i])) {
+                                // (y - vy)*sin(2*phi) + 3*(x - vx) + (x - vx)*cos(2*phi) = 0
+                                cd = xdel;
+                                ce = ydel;
+                                cf = 3*xdel;
+                            }
+                            else if (slopeArray[i] == 0.0f) {
+                               // (x - vx)*sin(2*phi) + 3*(y - vy) - (y - vy)*cos(2*phi)= 0;
+                                cd = -ydel;
+                                ce = xdel;
+                                cf = 3*ydel;
+                            }
+                            else {
+                                // (dy/dx) = ((x - vx)*sin(2*phi) + 3*(y - vy)- (y - vy)*cos(2*phi))/((y - vy)*sin(2*phi) + 3*(x - vx)+ (x - vx)*cos(2*phi))
+                                cd = xdel*slopeArray[i] + ydel;
+                                ce = ydel*slopeArray[i] - xdel;
+                                cf = 3*xdel*slopeArray[i] - 3*ydel;
+                            }
+                            deSquares = cd*cd + ce*ce;
+                            defSquares = deSquares - cf*cf;
+                            if (defSquares < 0.0) {
+                                continue;
+                            }
+                            ef = ce * cf;
+                            df = cd * cf;
+                            numPhi = 0;
+                            if (defSquares > 0.0) {
+                                root = Math.sqrt(defSquares);
+                                vars = cd * root;
+                                varc = ce * root;
+                                sin2phi1 = (-ef + vars)/deSquares;
+                                if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0)) {
+                                    cos2phi1 = (-df - varc)/deSquares;
+                                    if ((sin2phi1 >= 0.0) && (cos2phi1 >= 0.0)) {
+                                        twophi1 = Math.asin(sin2phi1);   
+                                    }
+                                    else if ((sin2phi1 >= 0.0) && (cos2phi1 < 0.0)) {
+                                        twophi1 = Math.PI - Math.asin(sin2phi1);
+                                    }
+                                    else if ((sin2phi1 < 0.0) && (cos2phi1 < 0.0)) {
+                                        twophi1 = Math.PI - Math.asin(sin2phi1);
+                                    }
+                                    else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
+                                        twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
+                                    }
+                                    if (Math.abs(theta - twophi1/2.0) < Math.PI/2.0) {
+                                        phi[0] = twophi1/2.0;
+                                    }
+                                    else {
+                                        phi[0] = twophi1/2.0 + Math.PI;
+                                    }
+                                    numPhi = 1;
+                                } // if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0))
+                                sin2phi2 = (-ef - vars)/deSquares;
+                                if ((sin2phi2 >= -1.0) && (sin2phi2 <= 1.0)) {
+                                    cos2phi2 = (-df + varc)/deSquares;
+                                    if ((sin2phi2 >= 0.0) && (cos2phi2 >= 0.0)) {
+                                        twophi2 = Math.asin(sin2phi2);   
+                                    }
+                                    else if ((sin2phi2 >= 0.0) && (cos2phi2 < 0.0)) {
+                                        twophi2 = Math.PI - Math.asin(sin2phi2);
+                                    }
+                                    else if ((sin2phi2 < 0.0) && (cos2phi2 < 0.0)) {
+                                        twophi2 = Math.PI - Math.asin(sin2phi2);
+                                    }
+                                    else { // (sin2phi2 < 0.0) && (cos2phi2 >= 0.0)
+                                        twophi2 = 2.0*Math.PI + Math.asin(sin2phi2);
+                                    }
+                                    if (Math.abs(theta - twophi2/2.0) < Math.PI/2.0) {
+                                        phi[numPhi] = twophi2/2.0;
+                                    }
+                                    else {
+                                        phi[numPhi] = twophi2/2.0 + Math.PI;
+                                    }
+                                    numPhi++;
+                                } // if ((sin2phi2 >= -2.0) && (sin2phi2 <= 1.0))
+                            } // if (defSquares > 0.0)
+                            else { // defSquares == 0.0
+                                sin2phi1 = -ef/deSquares;   
+                                if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0)) {
+                                    cos2phi1 = -df/deSquares;
+                                    if ((sin2phi1 >= 0.0) && (cos2phi1 >= 0.0)) {
+                                        twophi1 = Math.asin(sin2phi1);   
+                                    }
+                                    else if ((sin2phi1 >= 0.0) && (cos2phi1 < 0.0)) {
+                                        twophi1 = Math.PI - Math.asin(sin2phi1);
+                                    }
+                                    else if ((sin2phi1 < 0.0) && (cos2phi1 < 0.0)) {
+                                        twophi1 = Math.PI - Math.asin(sin2phi1);
+                                    }
+                                    else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
+                                        twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
+                                    }
+                                    if (Math.abs(theta - twophi1/2.0) < Math.PI/2.0) {
+                                        phi[0] = twophi1/2.0;
+                                    }
+                                    else {
+                                        phi[0] = twophi1/2.0 + Math.PI;
+                                    }
+                                    numPhi = 1;
+                                } // if ((sin2phi1 >= -1.0) && (sin2phi1 <= 1.0))
+                            } // else defSquares == 0.0
+                        } // if (phiBins > 1)
+                        /* numerator = ydel*cosArray[m] - xdel*sinArray[m];
+                        numerator = numerator * numerator;
+                        denominator = 4*(ydel*sinArray[m] + xdel*cosArray[m]); */
+                        for (m = 0; m < numPhi; m++) {
+                            if (phiBins > 1) {
+                                cosphi = Math.cos(phi[m]);
+                                sinphi = Math.sin(phi[m]);
+                            }
+                            numerator = ydel*cosphi - xdel*sinphi;
                             numerator = numerator * numerator;
-                            denominator = 4*(ydel*sinArray[m] + xdel*cosArray[m]);
+                            denominator = 4*(ydel*sinphi + xdel*cosphi);
                             if (denominator != 0.0) {
                                 p = numerator/denominator;
                                 if ((p >= pMin) && (p <= pMax)) {
                                     n = (int)((p - pMin)*pScale);
-                                    indexDest = j + k * xvBins + m * xy + n * xyp;
+                                    if (phiBins > 1) {
+                                        m1 = (int)(phi[m]*phiScale);
+                                        indexDest = j + k * xvBins + m1 * xy + n * xyp;
+                                    }
+                                    else {
+                                        indexDest = j + k * xvBins + n * xyp;
+                                    }
                                     if (indexDest == largestIndex) {
                                         foundPoint[i] = true;
                                         numPointsFound++;
@@ -1184,6 +1381,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                 } // if ((p >= pMin) && (p <= pMax)
                             } // if (denominator != 0.0)*/
                         //} // for (m = 0; m < phiBins; m++)
+                        }  // for (m = 0; m < numPhi; m++)
                     } // for (k = 0; k < yvBins; k++)
                 } // for (j = 0; j < xvBins; j++)
             } // for (i = 0; i < numPoints; i++)
