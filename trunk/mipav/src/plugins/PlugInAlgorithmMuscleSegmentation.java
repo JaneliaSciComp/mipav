@@ -96,16 +96,20 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
     
     private void performAbdomenDialog() {
         
-        String[] mirrorArr = new String[3];
-        mirrorArr[0] = "Psoas";
-        mirrorArr[1] = "Lateral Abdominal";
-        mirrorArr[2] = "Paraspinous";
+        String[][] mirrorArr = new String[3][];
+        
+        mirrorArr[1] = new String[3];
+        mirrorArr[1][0] = "Psoas";
+        mirrorArr[1][1] = "Lateral Abdominal";
+        mirrorArr[1][2] = "Paraspinous";
         
         boolean[] mirrorZ = {true, true, true};
         
-        String[] noMirrorArr = new String[2];
-        noMirrorArr[0] = "Aortic calcium";
-        noMirrorArr[1] = "Rectus abdominus";
+        String[][] noMirrorArr = new String[3][];
+        
+        noMirrorArr[2] = new String[2];
+        noMirrorArr[2][0] = "Aortic calcium";
+        noMirrorArr[2][1] = "Rectus abdominus";
         
         boolean[] noMirrorZ = {true, true};
         
@@ -898,10 +902,11 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
             ctMode(getImageA(), -175, 275);
             
-            if(thighAxes == null || stateChanged){
-                thighAxes = new BuildThighAxes(getImageA(), 0);
-                thighAxes.createAxes();
-            } //else they're loaded in loadVOI
+            //TODO:Re implement axes
+            //if(thighAxes == null || stateChanged){
+            //    thighAxes = new BuildThighAxes(getImageA(), 0);
+            //    thighAxes.createAxes();
+            //} //else they're loaded in loadVOI
             //added before button check so that they can be accessed in this way, optional to change.
             
             VOIVector vec = getImageA().getVOIs();
