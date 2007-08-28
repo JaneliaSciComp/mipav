@@ -9,6 +9,8 @@ import java.awt.*;
 import java.io.*;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.media.j3d.*;
 
@@ -95,6 +97,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     
     /** Per vertex color array, which store the color data saved in .sur file. */
     private Color4f[] perVertexColor = null;
+    
+    /** support for vtk **/
+    protected double[][] vertexData;
+    
+    /** support for vtk **/
+	protected double[][] cellData;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -390,6 +398,40 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     public Color4f[] getPerVertexColor() {
     	return perVertexColor;
     }
+    
+    
+    public double[][] getVertexData(){
+		return vertexData;
+	}
+	public double[] getVertexData(int i){
+		if(vertexData==null){
+			return null;
+		} else {
+			return vertexData[i];
+		}
+	}
+	
+	public void setVertexData(double[][] data){
+		this.vertexData=data;
+	}
+	
+	public void setVertexData(int i,double val){
+		vertexData[i]=new double[]{val};
+	}
+	public void setVertexData(int i,int j,double val){
+		vertexData[i][j]=val;
+	}
+	public void setVertexData(int i,double[] array){
+		vertexData[i]=array;
+	}
+	
+	public void setCellData(double[][] cellData) {
+		this.cellData = cellData;
+	}
+	
+	public double[][] getCellData() {
+		return cellData;
+	}
     
     /**
      * DOCUMENT ME!
@@ -1260,7 +1302,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             }
 
             progress.updateValueImmed(added + (100 / total));
-
+            
             ModelTriangleMesh kMesh = new ModelTriangleMesh(akVertex, aiConnect);
             kMesh.setMaterial( kMaterial );
             kMesh.setTransparency( transparency );
@@ -1268,6 +1310,161 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         } catch (IOException e) {
             return null;
         }
+    }
+    
+    
+    /**
+     * 
+     * @param kIn
+     * @param progress
+     * @param added
+     * @param total
+     * @param flag
+     * @return
+     * @throws IOException
+     */
+    public static ModelTriangleMesh loadVTKLegacyMesh(RandomAccessFile kIn, ViewJProgressBar progress, int added, int total,
+            boolean flag) throws IOException {
+    	ModelTriangleMesh kMesh;
+    	StringBuffer buff = new StringBuffer();
+    	try {
+    		//progress.setLocation(200, 200);
+            //progress.setVisible(true);
+			String str;
+			// Read file as string
+			while ((str = kIn.readLine()) != null) {
+				buff.append(str+"\n");
+			}
+		} catch (Exception e) {
+			System.err.println("Error occured while reading parameter file:\n"+e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+    	Pattern header=Pattern.compile("POINTS\\s\\d+\\sfloat");
+    	Matcher m=header.matcher(buff);
+		int vertexCount=0;
+		int indexCount=0;
+		Point3f[] points;
+		int[] indices;
+		if(m.find()){
+			String head=buff.substring(m.start(),m.end());
+			String[] vals=head.split("\\D+");
+			if(vals.length>0){
+				try {
+					vertexCount=Integer.parseInt(vals[vals.length-1]);
+				} catch(NumberFormatException e){
+					System.err.println("CANNOT DETERMINE VERTEX COUNT");
+					return null;
+				}
+			}
+			points=new Point3f[vertexCount];
+			
+			//progress.updateValueImmed(added + (25 / total));
+			
+			String[] strs=buff.substring(m.end(),buff.length()).split("\\s+",vertexCount*3+2);
+
+			for(int i=1;i<strs.length-1;i+=3){
+				try {
+					Point3f p=new Point3f();
+					p.x=Float.parseFloat(strs[i]);
+					p.y=Float.parseFloat(strs[i+1]);
+					p.z=Float.parseFloat(strs[i+2]);
+					points[(i-1)/3]=p;
+					//System.out.println(i/3+")"+p);
+				} catch(NumberFormatException e){
+					System.err.println("CANNOT FORMAT VERTS");
+					return null;
+				}
+			}
+		} else {
+			return null;
+		}
+		
+		//progress.updateValueImmed(added + (50 / total));
+		
+		header=Pattern.compile("POLYGONS\\s+\\d+\\s+\\d+");
+		m=header.matcher(buff);
+		if(m.find()){
+			String head=buff.substring(m.start(),m.end());
+			String[] vals=head.split("\\D+");
+			if(vals.length>1){
+				try {
+					indexCount=Integer.parseInt(vals[1]);
+				} catch(NumberFormatException e){
+					System.err.println("CANNOT DETERMINE INDEX COUNT");
+					return null;
+				}
+			}
+			indices=new int[indexCount*3];
+			System.out.println("INDICES "+indexCount);
+			String[] strs=buff.substring(m.end(),buff.length()).split("\\s+",indexCount*4+2);	
+			int count=0;
+			for(int i=1;i<strs.length-1;i+=4){			
+				try {
+					indices[count++]=Integer.parseInt(strs[i+1]);
+					indices[count++]=Integer.parseInt(strs[i+2]);
+					indices[count++]=Integer.parseInt(strs[i+3]);
+				} catch(NumberFormatException e){
+					System.err.println("CANNOT FORMAT INDICES");
+					return null;
+				}
+			}
+		} else {
+			return null;
+		}
+		
+		header=Pattern.compile("POINT_DATA\\s+\\d+\\D+float\\s+\\d+\\nLOOKUP_TABLE\\s");
+		m=header.matcher(buff);
+		double[][] dat;
+		int count=0;
+		int dim=0;
+		if(m.find()){
+			System.out.println("BBBBBBBBBBBBBB");
+			String head=buff.substring(m.start(),m.end());
+			String[] vals=head.split("\\D+");
+			if(vals.length>0){
+				try {
+					count=Integer.parseInt(vals[1]);
+					dim=Integer.parseInt(vals[2]);
+				} catch(NumberFormatException e){
+					System.err.println("CANNOT DETERMINE DATA POINTS");
+					return null;
+				}
+			}
+			dat=new double[count][dim];
+			System.out.println("DATA POINTS "+count+" by "+dim);
+			String[] strs=buff.substring(m.end(),buff.length()).split("\\s+",count*dim+2);
+			int index=0;
+			for(int i=1;i<strs.length&&index<count*dim;i++){
+				try {		
+					dat[index/dim][index%dim]=Double.parseDouble(strs[i]);
+					index++;
+				} catch(NumberFormatException e){
+					System.err.println("CANNOT FORMAT DATA ["+strs[i]+"]");
+					//return null;
+				}
+			}
+			//System.out.println(index+" "+count);
+			
+			//progress.updateValueImmed(added + (100 / total));
+			
+			kMesh=new ModelTriangleMesh(points,indices);
+			kMesh.setVertexData(dat);
+			//kMesh.setName(kIn.getName());
+
+		} else { 
+			kMesh=new ModelTriangleMesh(points,indices);
+			//kMesh.setName(FileReaderWriter.getFileName(f));
+
+		}
+    	
+    	
+    	
+    	
+    	return kMesh;
+    	
+    	
+    	
     }
 
     /**
@@ -2050,6 +2247,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 
             if (extension.equals("txt")) {
                 saveAsTextFile(kName);
+            } else if(extension.equals("vtk")) {
+            	saveAsVTKLegacy(kName);
             } else if (extension.equals("wrl")) {
                 PrintWriter kOut = new PrintWriter(new FileWriter(kName));
                 saveAsPortableVRML(kOut, flip, direction, startLocation, box, color);
@@ -2109,6 +2308,65 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         saveAsPortableVRML(kOut, flip, direction, startLocation, box, color);
         // kOut.close();
     }
+    
+    
+    
+    /**
+     * Saves the triangle mesh to VTK Legacy format
+     * @param kName
+     * @throws IOException
+     */
+    public void saveAsVTKLegacy(String kName) throws IOException {
+    	PrintWriter kOut = new PrintWriter(new FileWriter(kName));
+    	int pointCount = getVertexCount();
+		int indexCount = getIndexCount();
+		kOut.println("# vtk DataFile Version 2.0");
+		kOut.println(getName());
+		kOut.println("ASCII");
+		kOut.println("DATASET POLYDATA");
+		kOut.println("POINTS "+pointCount+" float");
+		Point3f p=new Point3f();
+		String tmp;
+		for(int i=0;i<pointCount;i++){
+			getCoordinate(i,p);
+			tmp=String.format("%.5f %.5f %.5f\n", p.x,p.y,p.z);
+			kOut.print(tmp);
+		}
+		kOut.println("POLYGONS "+indexCount/3+" "+(4*indexCount/3));
+		for(int i=0;i<indexCount;i+=3){
+			kOut.println(3+" "+getCoordinateIndex(i)+" "+getCoordinateIndex(i+1)+" "+getCoordinateIndex(i+2));
+		}
+		
+		double[][] scalars=getVertexData();
+		if(scalars!=null&&scalars.length>0&&scalars[0].length>0){
+			kOut.print("POINT_DATA "+scalars.length+"\n"
+					+"SCALARS EmbedVertex float "+scalars[0].length+"\n"
+					+"LOOKUP_TABLE default\n");
+			for(int i=0;i<scalars.length;i++){
+				for(int j=0;j<scalars[i].length;j++){
+					kOut.print(scalars[i][j]+" ");
+				} 
+				kOut.println();
+			}
+		}
+		
+		double[][] cells=getCellData();
+		if(cells!=null&&cells.length>0&&cells[0].length>0){
+			kOut.print("CELL_DATA "+cells.length+"\n"
+					+"SCALARS EmbedCell float "+cells[0].length+"\n"
+					+"LOOKUP_TABLE default\n");
+			for(int i=0;i<cells.length;i++){
+				for(int j=0;j<cells[i].length;j++){
+					kOut.print(cells[i][j]+" ");
+				} 
+				kOut.println();
+			}
+		}
+		
+		kOut.close();
+	
+    }
+    
 
     /**
      * Save the triangle mesh to a text file. The format for the file is
