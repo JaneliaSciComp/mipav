@@ -1326,6 +1326,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     public static ModelTriangleMesh loadVTKLegacyMesh(RandomAccessFile kIn, ViewJProgressBar progress, int added, int total,
             boolean flag) throws IOException {
     	ModelTriangleMesh kMesh;
+    	
+    	// When reading VTK surface file format, set the default direction to (1, 1, 1).  
+    	direction[0] = 1;
+        direction[1] = 1;
+        direction[2] = 1;
+        
     	StringBuffer buff = new StringBuffer();
     	try {
     		//progress.setLocation(200, 200);
