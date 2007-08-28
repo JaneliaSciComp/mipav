@@ -65,7 +65,7 @@ public class FileSurface {
             
             Color4f kColor = JPanelSurface.getNewSurfaceColor(iListSize + i);
 
-            if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1)) {
+            if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || (kName.indexOf(".vtk") != -1)) {
                 kSurface[i] = readSurface(kImage, akFiles[i], kColor);
             } else if (kName.indexOf(".xml") != -1) {
             	/*
@@ -190,7 +190,7 @@ public class FileSurface {
            	 } catch (IOException e) {
                 	return null;
              }
-        } else {
+        } else if ( file.getName().endsWith("vrml") ) {
 
             try {
                 in = new RandomAccessFile(file, "r");
@@ -205,6 +205,19 @@ public class FileSurface {
             } catch (IOException e) {
                 return null;
             }
+        } else {
+        	//has to be vtk legacy
+        	try {
+        		in = new RandomAccessFile(file, "r");
+        		iType = 0;
+        		iQuantity = 1;
+                in.seek(0);
+                //not sure what this flag means
+                isSur = false;
+        	}
+        	catch (IOException e) {
+        		return null;
+        	}
         }
 
         ModelClodMesh kClod = null;
@@ -224,8 +237,15 @@ public class FileSurface {
                         akComponent[i] = ModelTriangleMesh.loadTMesh(in, progress, i * 100 / iQuantity, iQuantity,
                                                                      true);
                     } else {
-                        akComponent[i] = ModelTriangleMesh.loadVRMLMesh(in, progress, i * 100 / iQuantity, iQuantity,
+                    	if ( file.getName().endsWith("vrml") ) {
+                    		akComponent[i] = ModelTriangleMesh.loadVRMLMesh(in, progress, i * 100 / iQuantity, iQuantity,
                                                                         (i == 0));
+                    	}
+                    	else {
+                    		//must be vtk legacy
+                    		akComponent[i] = ModelTriangleMesh.loadVTKLegacyMesh(in, progress, i * 100 / iQuantity, iQuantity,
+                                    (i == 0));
+                    	}
                     }
 
                     direction = ModelTriangleMesh.getDirection();
