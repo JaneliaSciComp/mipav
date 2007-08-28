@@ -1723,7 +1723,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
                 URL res = null;
 
                 try {
-                    res = new File(USER_BRUSHES + File.separator + paintBrushNames[selectedIndex]).toURL();
+                    res = new File(USER_BRUSHES + File.separator + paintBrushNames[selectedIndex]).toURI().toURL();
                     icon = new ImageIcon(res);
 
                     if ((icon.getIconHeight() >= 20) || (icon.getIconWidth() >= 20)) {

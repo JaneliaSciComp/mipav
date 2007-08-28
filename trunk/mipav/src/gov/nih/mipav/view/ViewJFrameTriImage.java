@@ -4947,7 +4947,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 URL res = null;
 
                 try {
-                    res = new File(ViewToolBarBuilder.USER_BRUSHES + File.separator + paintBrushNames[selectedIndex]).toURL();
+                    res = new File(ViewToolBarBuilder.USER_BRUSHES + File.separator + paintBrushNames[selectedIndex]).toURI().toURL();
                     icon = new ImageIcon(res);
 
                     if ((icon.getIconHeight() >= 20) || (icon.getIconWidth() >= 20)) {
