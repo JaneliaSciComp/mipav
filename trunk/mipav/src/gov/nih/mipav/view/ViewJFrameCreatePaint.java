@@ -181,7 +181,7 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
 					brushItem.setActionCommand(brushes[i].getPath());
 					
 					try {
-					brushItem.setIcon(new ImageIcon(brushes[i].toURL()));
+					brushItem.setIcon(new ImageIcon(brushes[i].toURI().toURL()));
 					} catch (Exception e){ }
 					openItem.add(brushItem);
 				}
