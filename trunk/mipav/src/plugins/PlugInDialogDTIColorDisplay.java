@@ -1080,7 +1080,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 
 		}
 		else if(command.equals("CaptureImage")) {
-			writeImage();
+			captureImage();
 		}
 		else if(command.equals("truncRadio")) {
 			isMultiply = false;
@@ -2149,7 +2149,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
      * ModelImage in a ViewJFrameImage.
      * @return  
      */
-    private boolean writeImage() {
+    private boolean captureImage() {
         int[] pixels;
         int bufferSize, xDim, yDim;
         short[] buffer = null;
