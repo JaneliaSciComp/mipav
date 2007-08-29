@@ -198,7 +198,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         short[] countBuffer;
         float pBuffer[];
         float phiBuffer[] = null;
-        boolean test = true;
+        boolean test = false;
         int largestValue;
         int largestIndex;
         int numParabolasFound;
@@ -415,21 +415,14 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             xStart = (int)(xVertex - 20);
             xFinish = (int)(xVertex + 20);
             xdel = (double)(xFinish - xStart)/(double)maxParabolaPoints;
-            cosphi = Math.cos(Math.PI/2.0);
-            sinphi = Math.sin(Math.PI/2.0);
-            a = cosphi * cosphi;
             for (j = 0; j <= maxParabolaPoints; j++) {
                 xVal = xStart + j * xdel;
                 xf = xVal - xVertex;
-                b = -2.0 * sinphi*(xf*cosphi + 2.0);
-                cv = xf*xf*sinphi*sinphi - 4.0*xf*cosphi;
-                root = Math.sqrt(b*b - 4.0*a*cv);
-                y1 = (int)Math.round(yVertex + (-b - root)/(2.0 * a));
-                y2 = (int)Math.round(yVertex + (-b + root)/(2.0 * a));
-                index = (int)Math.round(xVal) + y1 * xDim;
-                srcBuffer[index] = value;
-                index = (int)Math.round(xVal) + y2 * xDim;
-                srcBuffer[index] = value;
+                y = (int)Math.round(yVertex + 0.25*xf*xf);
+                if ((y >= 0) && (y < yDim)) {
+                    index = (int)Math.round(xVal) + y * xDim;
+                    srcBuffer[index] = value;
+                }
             }
         } // if (test)
         
@@ -1483,10 +1476,14 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                         root = Math.sqrt(b*b - 4.0*a*cv);
                         y1 = (int)Math.round(yvTable[i] + (-b - root)/(2.0 * a));
                         y2 = (int)Math.round(yvTable[i] + (-b + root)/(2.0 * a));
-                        index = (int)Math.round(xVal) + y1 * xDim;
-                        srcBuffer[index] = value;
-                        index = (int)Math.round(xVal) + y2 * xDim;
-                        srcBuffer[index] = value;
+                        if ((y1 >= 0) && (y1 < yDim)) {
+                            index = (int)Math.round(xVal) + y1 * xDim;
+                            srcBuffer[index] = value;
+                        }
+                        if ((y2 >= 0) && (y2 < yDim)) {
+                            index = (int)Math.round(xVal) + y2 * xDim;
+                            srcBuffer[index] = value;
+                        }
                     }
                 } // if (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) >= Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
                 else {
@@ -1504,10 +1501,14 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                         root = Math.sqrt(b*b - 4.0*a*cv);
                         x1 = (int)Math.round(xvTable[i] + (-b - root)/(2.0 * a));
                         x2 = (int)Math.round(xvTable[i] + (-b + root)/(2.0 * a));
-                        index = x1 + (int)Math.round(yVal) * xDim;
-                        srcBuffer[index] = value;
-                        index = x2 + (int)Math.round(yVal) * xDim;
-                        srcBuffer[index] = value;
+                        if ((x1 >= 0) && (x1 < xDim)) {
+                            index = x1 + (int)Math.round(yVal) * xDim;
+                            srcBuffer[index] = value;
+                        }
+                        if ((x2 >= 0) && (x2 < xDim)) {
+                            index = x2 + (int)Math.round(yVal) * xDim;
+                            srcBuffer[index] = value;
+                        }
                     }
                 }
             } // if (selectedParabola[i])
