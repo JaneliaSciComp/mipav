@@ -1073,7 +1073,6 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         String str3 = null;
         boolean flip = true;
         StringTokenizer stoken = null;
-
         try {
             //progress.setLocation(200, 200);
             //progress.setVisible(true);
@@ -1587,9 +1586,9 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             return;
         }
 
-        // kOut.println("#VRML V2.0 utf8"); // object is ModelTriangleMesh
-        // kOut.println("#MIPAV");
-        // kOut.println("#Number of shapes = " + akComponent.length);
+        kOut.println("#VRML V2.0 utf8"); // object is ModelTriangleMesh
+        kOut.println("#MIPAV");
+        kOut.println("#Number of shapes = " + akComponent.length);
         for (int i = 0; i < akComponent.length; i++) {
             akComponent[i].saveAsPortableVRML(kOut, flip, direction, startLocation, box, color);
         }
@@ -2257,7 +2256,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             	saveAsVTKLegacy(kName);
             } else if (extension.equals("wrl")) {
                 PrintWriter kOut = new PrintWriter(new FileWriter(kName));
-                saveAsPortableVRML(kOut, flip, direction, startLocation, box, color);
+                saveAsPortableVRML(kOut, flip, 1, direction, startLocation, box, color);
                 kOut.close();
             } else if (extension.equals("sur")) {
                 RandomAccessFile kOut = new RandomAccessFile(new File(kName), "rw");
@@ -2308,9 +2307,9 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     public void saveAsPortableVRML(PrintWriter kOut, boolean flip, int numberOfShapes, int[] direction,
                                    float[] startLocation, float[] box, Color3f color) throws IOException {
 
-        // kOut.println("#VRML V2.0 utf8"); // object is ModelTriangleMesh
-        // kOut.println("#MIPAV");
-        // kOut.println("#Number of shapes = " + numberOfShapes);
+        kOut.println("#VRML V2.0 utf8"); // object is ModelTriangleMesh
+        kOut.println("#MIPAV");
+        kOut.println("#Number of shapes = " + numberOfShapes);
         saveAsPortableVRML(kOut, flip, direction, startLocation, box, color);
         // kOut.close();
     }
@@ -3251,6 +3250,40 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                                       float[] box, Color3f color) throws IOException {
         Point3f kVertex = new Point3f();
 
+        kOut.print("#flip { ");
+
+        if (flip) {
+            kOut.print(1);
+        } else {
+            kOut.print(0);
+        }
+
+        kOut.print(" }\n");
+
+        kOut.print("#direction { ");
+        kOut.print(direction[0]);
+        kOut.print(' ');
+        kOut.print(direction[1]);
+        kOut.print(' ');
+        kOut.print(direction[2]);
+        kOut.print(" }\n");
+
+        kOut.print("#startLocation { ");
+        kOut.print(startLocation[0]);
+        kOut.print(' ');
+        kOut.print(startLocation[1]);
+        kOut.print(' ');
+        kOut.print(startLocation[2]);
+        kOut.print(" }\n");
+
+        kOut.print("#box { ");
+        kOut.print(box[0]);
+        kOut.print(' ');
+        kOut.print(box[1]);
+        kOut.print(' ');
+        kOut.print(box[2]);
+        kOut.print(" }\n");
+        
         kOut.print("Shape\n{\n");
         kOut.print("\t appearance Appearance {\n");
         kOut.print("\t\tmaterial Material {\n");
