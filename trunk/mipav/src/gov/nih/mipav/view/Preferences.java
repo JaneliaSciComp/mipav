@@ -22,6 +22,61 @@ public class Preferences {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    /**
+     * Indicates an unknown system architecture.
+     */
+    public static final int ARCH_UNKNOWN = 0;
+    
+    /**
+     * Indicates an x86 system architecture.
+     */
+    public static final int ARCH_X86 = 1;
+    
+    /**
+     * Indicates an amd64 system architecture.
+     */
+    public static final int ARCH_AMD64 = 2;
+    
+    /**
+     * Indicates a 32-bit power pc system architecture.
+     */
+    public static final int ARCH_PPC = 3;
+    
+    /**
+     * Indicates a 64-bit power pc system architecture.
+     */
+    public static final int ARCH_PPC64 = 4;
+    
+    /**
+     * Indicates a mips system architecture.
+     */
+    public static final int ARCH_MIPS = 5;
+    
+    /**
+     * Indicates an alpha system architecture.
+     */
+    public static final int ARCH_ALPHA = 6;
+    
+    /**
+     * Indicates an ia64 (itanium) system architecture.
+     */
+    public static final int ARCH_IA64 = 7;
+    
+    /**
+     * Indicates an arm system architecture.
+     */
+    public static final int ARCH_ARM = 8;
+    
+    /**
+     * Indicates a sparc system architecture.
+     */
+    public static final int ARCH_SPARC = 9;
+    
+    /**
+     * Indicates a PA RISC system architecture.
+     */
+    public static final int ARCH_PA_RISC = 10;
+    
     /** Constant that indicates use of saving XML and Analyze headers. */
     public static final String PREF_SAVE_XML_ON_HDR_SAVE = "SaveXMLOnHDRSave";
 
@@ -1513,6 +1568,42 @@ public class Preferences {
             return OS_MAC;
         } else {
             return OS_UNIX;
+        }
+    }
+    
+    /**
+     * Gets an int representing the system architecture.
+     * 
+     * @return  the architecture
+     */
+    public static final int getArch() {
+        String arch = System.getProperty("os.arch");
+        
+        // TODO: deleteme
+        System.out.println("ARCH: " + arch);
+        
+        if (arch.equalsIgnoreCase("i386") || arch.equalsIgnoreCase("i486") || arch.equalsIgnoreCase("i586") || arch.equalsIgnoreCase("i686") || arch.equalsIgnoreCase("x86")) {
+            return ARCH_X86;
+        } else if (arch.equalsIgnoreCase("amd64") || arch.equalsIgnoreCase("x86_64")) {
+            return ARCH_AMD64;
+        } else if (arch.equalsIgnoreCase("ppc") || arch.equalsIgnoreCase("PowerPC")) {
+            return ARCH_PPC;
+        } else if (arch.equalsIgnoreCase("pcc64")) {
+            return ARCH_PPC64;
+        } else if (arch.equalsIgnoreCase("mips") || arch.equalsIgnoreCase("MIPS4000")) {
+            return ARCH_MIPS;
+        } else if (arch.equalsIgnoreCase("alpha")) {
+            return ARCH_ALPHA;
+        } else if (arch.equalsIgnoreCase("ia64") || arch.equalsIgnoreCase("IA64N")) {
+            return ARCH_IA64;
+        } else if (arch.equalsIgnoreCase("arm") || arch.equalsIgnoreCase("armv41")) {
+            return ARCH_ARM;
+        } else if (arch.equalsIgnoreCase("sparc")) {
+            return ARCH_SPARC;
+        } else if (arch.equalsIgnoreCase("PA-RISC") || arch.equalsIgnoreCase("PA_RISC") || arch.equalsIgnoreCase("PA_RISC2.0")) {
+            return ARCH_PA_RISC;
+        } else {
+            return ARCH_UNKNOWN;
         }
     }
 
