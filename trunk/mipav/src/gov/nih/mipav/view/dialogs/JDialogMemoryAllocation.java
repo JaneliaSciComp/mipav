@@ -75,8 +75,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
     /** DOCUMENT ME! */
     private JTextField initHeapText;
 
-    /** DOCUMENT ME! */
-    private int initOffset = -1; // offset value of line with inital valu
+    /** Offset value of line with inital heap value. */
+    private int initOffset = -1;
 
     /** DOCUMENT ME! */
     private Vector laxContents = null;
@@ -84,11 +84,11 @@ public class JDialogMemoryAllocation extends JDialogBase {
     /** DOCUMENT ME! */
     private JTextField maxHeapText;
 
-    /** DOCUMENT ME! */
-    private int maxOffset = -1; // offset value of line with max value
+    /** Offset value of line with max heap value */
+    private int maxOffset = -1;
 
-    /** DOCUMENT ME! */
-    private File startupFile; // contains all java properties of the MIPAV app (used at least when loading!)
+    /** Contains all java properties of the MIPAV app (used at least when loading!) */
+    private File startupFile;
 
     /** DOCUMENT ME! */
     private JButton usePreferencesButton;
@@ -421,8 +421,10 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 Preferences.setProperty("MaximumHeapSize", maxHeapText.getText());
 
                 int os = Preferences.getOS();
+                int arch = Preferences.getArch();
 
-                if (os != Preferences.OS_MAC) {
+                // cannot automatically restart on Macs or 64-bit windows (due to mipav.bat startup work-around)
+                if (os != Preferences.OS_MAC && arch != Preferences.ARCH_AMD64) {
                     int response = JOptionPane.showConfirmDialog(this,
                                                                  "Restart " + progName.toUpperCase() +
                                                                  " to apply memory changes?", "Restart needed",
