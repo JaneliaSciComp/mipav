@@ -4443,42 +4443,80 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void showRegionInfo(int count, float total[], float mean[], float stdDev[], String leadString) {
         float volume;
         float area;
+        int pad;
+        int i;
+        String areaString;
+        String volumeString;
+        
+        if (leadString.length() < 25) {
+            pad = 25 - leadString.length();
+            for (i = 0; i < pad; i++) {
+                leadString = leadString.concat(" ");
+            }
+        }
 
         try {
             String str = new String();
             if (imageActive.getNDims() == 2) {
                 area = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1];
                 str = imageActive.getFileInfo(0).getAreaUnitsOfMeasureStr();
+                areaString = String.valueOf(area) + str;
+                if (areaString.length() < 20) {
+                    pad = 20 - areaString.length();
+                    for (i = 0; i < pad; i++) {
+                        areaString = areaString.concat(" ");
+                    }   
+                }
 
                 if (leadString != null) {
-                    frame.getUserInterface().setDataText(leadString + "\tpixels" + "\t\tarea" + "\n");
+                    frame.getUserInterface().setDataText("\n" + leadString + "\tpixels" + "\t\tarea");
                 } else {
-                    frame.getUserInterface().setDataText("statistics" + "\tpixels" + "\t\tarea" + "\n");
+                    frame.getUserInterface().setDataText("\nstatistics              " + "\tpixels" + "\t\tarea");
                 }
-                frame.getUserInterface().setDataText("\t" + count + "\t\t" + area + str + "\n");
+                if (total.length == 1) {
+                    frame.getUserInterface().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n"); 
+                    frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + areaString);
+                }
+                else {
+                    frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + areaString + "\n");
+                }
 
             } else {
                 volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1] *
                              imageActive.getResolutions(0)[2];
 
                 str = imageActive.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+                volumeString = String.valueOf(volume) + str;
+                if (volumeString.length() < 20) {
+                    pad = 20 - volumeString.length();
+                    for (i = 0; i < pad; i++) {
+                        volumeString = volumeString.concat(" ");
+                    }   
+                }
 
                 if (leadString != null) {
-                    frame.getUserInterface().setDataText(leadString + "\tpixels" + "\t\tvolume" + "\n");
+                    frame.getUserInterface().setDataText("\n" + leadString + "\tpixels" + "\t\tvolume");
                 } else {
-                    frame.getUserInterface().setDataText("statistics" + "\tpixels" + "\t\tvolume" + "\n");
+                    frame.getUserInterface().setDataText("\nstatistics              " + "\tpixels" + "\t\tvolume");
                 }
-                frame.getUserInterface().setDataText("\t" + count + "\t\t" + volume + str + "\n");
+                if (total.length == 1) {
+                    frame.getUserInterface().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n"); 
+                    frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + volumeString);
+                }
+                else {
+                    frame.getUserInterface().setDataText("\n\t\t" + count + "\t\t" + volumeString + "\n");
+                }
             }
            
-            frame.getUserInterface().setDataText("\ttotal intensity \t\tmean intensity\t\tstandard deviation\n");
+            
             if (total.length == 1) {
                 frame.getUserInterface().setDataText("\t" + total[0] + "\t\t" + mean[0] + "\t\t" + stdDev[0] + "\n");
             }
             else {
-                frame.getUserInterface().setDataText("red\t" + total[0] + "\t\t" + mean[0] + "\t\t" + stdDev[0] + "\n"); 
-                frame.getUserInterface().setDataText("green\t" + total[1] + "\t\t" + mean[1] + "\t\t" + stdDev[1] + "\n");
-                frame.getUserInterface().setDataText("blue\t" + total[2] + "\t\t" + mean[2] + "\t\t" + stdDev[2] + "\n");  
+                frame.getUserInterface().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
+                frame.getUserInterface().setDataText("red\t\t" + total[0] + "\t\t" + mean[0] + "\t\t" + stdDev[0] + "\n"); 
+                frame.getUserInterface().setDataText("green\t\t" + total[1] + "\t\t" + mean[1] + "\t\t" + stdDev[1] + "\n");
+                frame.getUserInterface().setDataText("blue\t\t" + total[2] + "\t\t" + mean[2] + "\t\t" + stdDev[2] + "\n");  
             }
         } catch (OutOfMemoryError error) {
             System.gc();
