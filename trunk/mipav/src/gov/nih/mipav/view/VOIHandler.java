@@ -1546,6 +1546,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
         float[][] rgbPos = null;
         float[][] rgbInten = null;
+        float[] rgbMeanInten = null;
+        float[] rgbStdDevInten = null;
+        float diff;
+        float meanInten;
+        float stdDevInten;
 
         if (compImage.getActiveImage().isColorImage() == true) {
 
@@ -1592,12 +1597,21 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                         if (c == 0) {
                                             rgbPos = new float[3][pt];
                                             rgbInten = new float[3][pt];
+                                            rgbMeanInten = new float[3];
+                                            rgbStdDevInten = new float[3];
                                         }
 
                                         for (int m = 0; m < pt; m++) {
                                             rgbPos[c][m] = rgbPositions[c][m];
                                             rgbInten[c][m] = rgbIntensities[c][m];
+                                            rgbMeanInten[c] += rgbIntensities[c][m];
                                         }
+                                        rgbMeanInten[c] = rgbMeanInten[c]/pt;
+                                        for (int m = 0; m < pt; m++) {
+                                            diff = rgbInten[c][m] - rgbMeanInten[c];
+                                            rgbStdDevInten[c] += diff * diff;
+                                        }
+                                        rgbStdDevInten[c] = (float)Math.sqrt(rgbStdDevInten[c]/pt);
                                     }
                                 }
                             }
@@ -1607,6 +1621,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             contourGraph.setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
                             contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                             contourGraph.setVisible(true);
+                           
+                            ViewUserInterface.getReference().setDataText("VOI perimiter\t\tmean \tstandard deviation " + "\n");
+                            ViewUserInterface.getReference().setDataText("Red\t\t" + rgbMeanInten[0] + "\t" + rgbStdDevInten[0] + "\n");
+                            ViewUserInterface.getReference().setDataText("Green\t\t" + rgbMeanInten[1] + "\t" + rgbStdDevInten[1] + "\n");
+                            ViewUserInterface.getReference().setDataText("Blue\t\t" + rgbMeanInten[2] + "\t" + rgbStdDevInten[2] + "\n");
 
                             return;
                         } else if ((VOIs.VOIAt(i).getCurveType() == VOI.LINE)) {
@@ -1664,16 +1683,28 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                     float[] pos = new float[pt];
                                     float[] inten = new float[pt];
 
+                                    meanInten = 0.0f;
                                     for (i = 0; i < pt; i++) {
                                         pos[i] = position[i];
                                         inten[i] = intensity[i];
+                                        meanInten += intensity[i];
                                     }
+                                    meanInten = meanInten/pt;
+                                    stdDevInten = 0.0f;
+                                    for (i = 0; i < pt; i++) {
+                                        diff = inten[i] - meanInten;
+                                        stdDevInten += diff * diff;
+                                    }
+                                    stdDevInten = (float)Math.sqrt(stdDevInten/pt);
 
                                     ViewJFrameGraph contourGraph = new ViewJFrameGraph(pos, inten, "Contour VOI Graph");
 
                                     contourGraph.setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
                                     contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                                     contourGraph.setVisible(true);
+                                    
+                                    ViewUserInterface.getReference().setDataText("VOI perimiter\t\tmean \tstandard deviation " + "\n");
+                                    ViewUserInterface.getReference().setDataText("\t\t" + meanInten + "\t" + stdDevInten + "\n");
 
                                     return;
                                 }
@@ -5872,6 +5903,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         float[][] rgbPos = null;
         float[][] rgbInten = null;
         int m;
+        float[] rgbMeanInten = null;
+        float[] rgbStdDevInten = null;
+        float diff;
+        float meanInten;
+        float stdDevInten;
 
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
 
@@ -5896,12 +5932,21 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 if (c == 0) {
                     rgbPos = new float[3][pt];
                     rgbInten = new float[3][pt];
+                    rgbMeanInten = new float[3];
+                    rgbStdDevInten = new float[3];
                 }
 
                 for (m = 0; m < pt; m++) {
                     rgbPos[c][m] = rgbPositions[c][m];
                     rgbInten[c][m] = rgbIntensities[c][m];
+                    rgbMeanInten[c] += rgbIntensities[c][m];
                 }
+                rgbMeanInten[c] = rgbMeanInten[c]/pt;
+                for (m = 0; m < pt; m++) {
+                    diff = rgbInten[c][m] - rgbMeanInten[c];
+                    rgbStdDevInten[c] += diff * diff;
+                }
+                rgbStdDevInten[c] = (float)Math.sqrt(rgbStdDevInten[c]/pt);
             }
 
             if (VOIs.VOIAt(voiIndex).getContourGraph() == null) {
@@ -5917,6 +5962,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 VOIs.VOIAt(voiIndex).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
                 VOIs.VOIAt(voiIndex).getContourGraph().saveNewFunction(rgbPos, rgbInten, contourIndex);
             }
+            
+            ViewUserInterface.getReference().setDataText("Line\tmean \tstandard deviation " + "\n");
+            ViewUserInterface.getReference().setDataText("Red\t" + rgbMeanInten[0] + "\t" + rgbStdDevInten[0] + "\n");
+            ViewUserInterface.getReference().setDataText("Green\t" + rgbMeanInten[1] + "\t" + rgbStdDevInten[1] + "\n");
+            ViewUserInterface.getReference().setDataText("Blue\t" + rgbMeanInten[2] + "\t" + rgbStdDevInten[2] + "\n");
 
             return;
         } else {
@@ -5935,10 +5985,20 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             float[] pos = new float[pt];
             float[] inten = new float[pt];
 
+            
+            meanInten = 0.0f;
             for (m = 0; m < pt; m++) {
                 pos[m] = position[m];
                 inten[m] = intensity[m];
+                meanInten += intensity[m];
             }
+            meanInten = meanInten/pt;
+            stdDevInten = 0.0f;
+            for (m = 0; m < pt; m++) {
+                diff = inten[m] - meanInten;
+                stdDevInten += diff * diff;
+            }
+            stdDevInten = (float)Math.sqrt(stdDevInten/pt);
 
             if (VOIs.VOIAt(voiIndex).getContourGraph() == null) {
                 lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", VOIs.VOIAt(voiIndex),
@@ -5951,6 +6011,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 VOIs.VOIAt(voiIndex).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
                 VOIs.VOIAt(voiIndex).getContourGraph().replaceFunction(pos, inten, VOIs.VOIAt(voiIndex), contourIndex);
             }
+            
+            ViewUserInterface.getReference().setDataText("Line\tmean \tstandard deviation " + "\n");
+            ViewUserInterface.getReference().setDataText("\t" + meanInten + "\t" + stdDevInten + "\n");
 
             // update...*/
             return;
