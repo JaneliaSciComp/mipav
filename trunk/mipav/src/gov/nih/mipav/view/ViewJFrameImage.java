@@ -1402,7 +1402,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.undoLastPaint();
             getActiveImage().notifyImageDisplayListeners(null, true);
         } else if (command.equals("CalcPaint")) {
-            componentImage.calcPaintedVolume(null);
+            componentImage.calcPaintedVolume(getActiveImage().getImageName());
         } else if (command.equals("PaintCan")) {
             componentImage.setCursorMode(ViewJComponentEditImage.PAINT_CAN);
 
