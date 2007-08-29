@@ -190,7 +190,7 @@ public class FileSurface {
            	 } catch (IOException e) {
                 	return null;
              }
-        } else if ( file.getName().endsWith("vrml") ) {
+        } else if ( file.getName().endsWith("wrl") ) {
 
             try {
                 in = new RandomAccessFile(file, "r");
@@ -237,7 +237,7 @@ public class FileSurface {
                         akComponent[i] = ModelTriangleMesh.loadTMesh(in, progress, i * 100 / iQuantity, iQuantity,
                                                                      true);
                     } else {
-                    	if ( file.getName().endsWith("vrml") ) {
+                    	if ( file.getName().endsWith("wrl") ) {
                     		akComponent[i] = ModelTriangleMesh.loadVRMLMesh(in, progress, i * 100 / iQuantity, iQuantity,
                                                                         (i == 0));
                     	}
