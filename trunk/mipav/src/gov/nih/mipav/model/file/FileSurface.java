@@ -244,7 +244,7 @@ public class FileSurface {
                     	else {
                     		//must be vtk legacy
                     		akComponent[i] = ModelTriangleMesh.loadVTKLegacyMesh(in, progress, i * 100 / iQuantity, iQuantity,
-                                    (i == 0));
+                                    (i == 0), file.getName());
                     	}
                     }
 
