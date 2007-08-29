@@ -1075,8 +1075,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         StringTokenizer stoken = null;
 
         try {
-            progress.setLocation(200, 200);
-            progress.setVisible(true);
+            //progress.setLocation(200, 200);
+            //progress.setVisible(true);
 
             // read vertices
             if (flag) {
@@ -1324,7 +1324,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @throws IOException
      */
     public static ModelTriangleMesh loadVTKLegacyMesh(RandomAccessFile kIn, ViewJProgressBar progress, int added, int total,
-            boolean flag) throws IOException {
+            boolean flag, String fileName) throws IOException {
     	ModelTriangleMesh kMesh;
     	
     	// When reading VTK surface file format, set the default direction to (1, 1, 1).  
@@ -1335,7 +1335,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     	StringBuffer buff = new StringBuffer();
     	try {
     		//progress.setLocation(200, 200);
-            //progress.setVisible(true);
+            progress.setVisible(true);
 			String str;
 			// Read file as string
 			while ((str = kIn.readLine()) != null) {
@@ -1365,7 +1365,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 			}
 			points=new Point3f[vertexCount];
 			
-			//progress.updateValueImmed(added + (25 / total));
+			progress.updateValueImmed(added + (25 / total));
 			
 			String[] strs=buff.substring(m.end(),buff.length()).split("\\s+",vertexCount*3+2);
 
@@ -1386,7 +1386,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 			return null;
 		}
 		
-		//progress.updateValueImmed(added + (50 / total));
+		progress.updateValueImmed(added + (50 / total));
 		
 		header=Pattern.compile("POLYGONS\\s+\\d+\\s+\\d+");
 		m=header.matcher(buff);
@@ -1452,15 +1452,15 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 			}
 			//System.out.println(index+" "+count);
 			
-			//progress.updateValueImmed(added + (100 / total));
+			progress.updateValueImmed(added + (100 / total));
 			
 			kMesh=new ModelTriangleMesh(points,indices);
 			kMesh.setVertexData(dat);
-			//kMesh.setName(kIn.getName());
+			kMesh.setName(fileName);
 
 		} else { 
 			kMesh=new ModelTriangleMesh(points,indices);
-			//kMesh.setName(FileReaderWriter.getFileName(f));
+			kMesh.setName(fileName);
 
 		}
     	
