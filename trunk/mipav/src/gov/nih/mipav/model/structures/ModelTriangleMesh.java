@@ -1424,7 +1424,6 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 		int count=0;
 		int dim=0;
 		if(m.find()){
-			System.out.println("BBBBBBBBBBBBBB");
 			String head=buff.substring(m.start(),m.end());
 			String[] vals=head.split("\\D+");
 			if(vals.length>0){
