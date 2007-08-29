@@ -607,16 +607,139 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void calcPaintedVolume(String str) {
         int count = 0;
-        int end = paintBitmap.size();
-
-        for (int i = 0; i < end; i++) {
-
-            if (paintBitmap.get(i) == true) {
-                count++;
-            }
+        int zEnd;
+        int tEnd;
+        int z;
+        int t;
+        int sliceSize;
+        int imgLength;
+        int volSize = 1;
+        int cf;
+        float buffer[];
+        int offset;
+        int i;
+        float total[] = null;
+        float mean[] = null;
+        float stdDev[] = null;
+        float diff;
+        int paintSize = paintBitmap.size();
+        
+        zEnd = 1;
+        tEnd = 1;
+        if (imageA.getNDims() >= 4) {
+            tEnd = imageA.getExtents()[3];
         }
+        if (imageA.getNDims() >= 3) {
+            zEnd = imageA.getExtents()[2];
+        }
+        if (imageA.isColorImage()) {
+            cf = 4;
+        }
+        else if ((imageA.getType() == ModelStorageBase.COMPLEX) || (imageA.getType() == ModelStorageBase.DCOMPLEX)) {
+            cf = 2;
+        }
+        else {
+            cf = 1;
+        }
+        
+        if (cf == 2) {
+            for (i = 0; i < paintSize; i++) {
+                if (paintBitmap.get(i)) {
+                    count++;
+                }
+            }
+            showRegionInfo(count, str);
+            return;
+        }
+        
+        total = new float[cf];
+        mean = new float[cf];
+        stdDev = new float[cf];
+        sliceSize = imageA.getExtents()[0] * imageA.getExtents()[1];
+        imgLength = cf * sliceSize;
+        if (imageA.getNDims() >= 3) {
+            volSize = sliceSize * imageA.getExtents()[2];
+        }
+        buffer = new float[imgLength];
+        for (t = 0; t < tEnd; t++) {
+            for (z = 0; z < zEnd; z++) {
+                offset = t * volSize + z * sliceSize;
+                try {
+                  imageA.exportData(cf * offset, imgLength, buffer); // locks and releases
+                                                                                                  // lock
+              } catch (IOException error) {
+                  MipavUtil.displayError("ViewJComponentImage: Image(s) locked");
 
-        showRegionInfo(count, str);
+                  return;
+              } 
+              if (cf == 4) {
+                  for (i = 0; i < sliceSize; i++) {
+                      if (paintBitmap.get(offset + i)) {
+                          count++;
+                          total[0] += buffer[4*i + 1];
+                          total[1] += buffer[4*i + 2];
+                          total[2] += buffer[4*i + 3];
+                      } // if (paintBitmap.get(offset + i))
+                  } // for (i = 0; i < sliceSize; i++)
+              } // if (cf == 4)
+              else {
+                  for (i = 0; i < sliceSize; i++) {
+                      if (paintBitmap.get(offset + i)) {
+                          count++;
+                          total[0] += buffer[i];
+                      } // if (paintBitmap.get(offset + i))
+                  } // for (i = 0; i < sliceSize; i++)        
+              }
+          } // for (z = 0; z < zEnd; z++)
+      } // for (t = 0; t < tEnd; t++)
+        
+      mean[0] = total[0]/count;
+      if (cf == 4) {
+          mean[1] = total[1]/count;
+          mean[2] = total[2]/count;
+      }
+     
+      for (t = 0; t < tEnd; t++) {
+          for (z = 0; z < zEnd; z++) {
+              offset = t * volSize + z * sliceSize;
+              try {
+                imageA.exportData(cf * offset, imgLength, buffer); // locks and releases
+                                                                                                // lock
+              } catch (IOException error) {
+                  MipavUtil.displayError("ViewJComponentImage: Image(s) locked");
+
+                  return;
+              } 
+              if (cf == 4) {
+                  for (i = 0; i < sliceSize; i++) {
+                      if (paintBitmap.get(offset + i)) {
+                          diff = buffer[4*i + 1] - mean[0];
+                          stdDev[0] += diff * diff;
+                          diff = buffer[4*i + 2] - mean[1];
+                          stdDev[1] += diff * diff;
+                          diff = buffer[4*i + 3] - mean[2];
+                          stdDev[2] += diff * diff;
+                      } // if (paintBitmap.get(offset + i))
+                  } // for (i = 0; i < sliceSize; i++)
+              } // if (cf == 4)
+              else {
+                  for (i = 0; i < sliceSize; i++) {
+                      if (paintBitmap.get(offset + i)) {
+                          diff = buffer[i] - mean[0];
+                          stdDev[0] += diff * diff;
+                      } // if (paintBitmap.get(offset + i))
+                  } // for (i = 0; i < sliceSize; i++)        
+              }
+          } // for (z = 0; z < zEnd; z++)
+      } // for (t = 0; t < tEnd; t++)
+      stdDev[0] = (float)Math.sqrt(stdDev[0]/count);
+      if (cf == 4) {
+          stdDev[1] = (float)Math.sqrt(stdDev[1]/count);
+          stdDev[2] = (float)Math.sqrt(stdDev[2]/count);
+      }
+    
+
+      showRegionInfo(count, total, mean, stdDev, str);
     }
 
     /**
@@ -4272,12 +4395,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void showRegionInfo(int count, String leadString) {
         float volume;
         float area;
-        int measure;
 
         try {
             String str = new String();
-
-            FileInfoBase[] fileInfo = imageActive.getFileInfo();
 
             if (imageActive.getNDims() == 2) {
                 area = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1];
@@ -4287,7 +4407,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     frame.getUserInterface().setDataText(leadString + " region grow: pixels = " + count +
                                                          "\t  area = " + area + str + "\n");
                 } else {
-                    frame.getUserInterface().setDataText("Region grow: pixels = " + count + "\t  area = " + area + str +
+                    frame.getUserInterface().setDataText("statistics pixels = " + count + "\t  area = " + area + str +
                                                          "\n");
                 }
 
@@ -4301,9 +4421,64 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     frame.getUserInterface().setDataText(leadString + " region grow: pixels = " + count +
                                                          "\t  volume = " + volume + str + "\n");
                 } else {
-                    frame.getUserInterface().setDataText("Region grow: pixels = " + count + "\t  volume = " + volume +
+                    frame.getUserInterface().setDataText("statistics pixels = " + count + "\t  volume = " + volume +
                                                          str + "\n");
                 }
+            }
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.showRegionInfo");
+        }
+    }
+    
+    /**
+     * Display statistics about the grown region.
+     *
+     * @param  count       Number of pixels (voxels)
+     * @param  total       Sum of pixel intensities
+     * @param  mean        Average pixel intensity
+     * @param  stdDev      Standatd deviation of pixel intensities
+     * @param  leadString  the string to prepend to message containing region growth statistics
+     */
+    public void showRegionInfo(int count, float total[], float mean[], float stdDev[], String leadString) {
+        float volume;
+        float area;
+
+        try {
+            String str = new String();
+            if (imageActive.getNDims() == 2) {
+                area = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1];
+                str = imageActive.getFileInfo(0).getAreaUnitsOfMeasureStr();
+
+                if (leadString != null) {
+                    frame.getUserInterface().setDataText(leadString + "\tpixels" + "\t\tarea" + "\n");
+                } else {
+                    frame.getUserInterface().setDataText("statistics" + "\tpixels" + "\t\tarea" + "\n");
+                }
+                frame.getUserInterface().setDataText("\t" + count + "\t\t" + area + str + "\n");
+
+            } else {
+                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1] *
+                             imageActive.getResolutions(0)[2];
+
+                str = imageActive.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+
+                if (leadString != null) {
+                    frame.getUserInterface().setDataText(leadString + "\tpixels" + "\t\tvolume" + "\n");
+                } else {
+                    frame.getUserInterface().setDataText("statistics" + "\tpixels" + "\t\tvolume" + "\n");
+                }
+                frame.getUserInterface().setDataText("\t" + count + "\t\t" + volume + str + "\n");
+            }
+           
+            frame.getUserInterface().setDataText("\ttotal intensity \t\tmean intensity\t\tstandard deviation\n");
+            if (total.length == 1) {
+                frame.getUserInterface().setDataText("\t" + total[0] + "\t\t" + mean[0] + "\t\t" + stdDev[0] + "\n");
+            }
+            else {
+                frame.getUserInterface().setDataText("red\t" + total[0] + "\t\t" + mean[0] + "\t\t" + stdDev[0] + "\n"); 
+                frame.getUserInterface().setDataText("green\t" + total[1] + "\t\t" + mean[1] + "\t\t" + stdDev[1] + "\n");
+                frame.getUserInterface().setDataText("blue\t" + total[2] + "\t\t" + mean[2] + "\t\t" + stdDev[2] + "\n");  
             }
         } catch (OutOfMemoryError error) {
             System.gc();
