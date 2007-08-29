@@ -199,9 +199,8 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
 
             if (pos == 0) {
                 fileName = makeImageName(fileTF.getText(), ".txt");
-                if(!decimateSurfaceCB.isEnabled()) {
-                	decimateSurfaceCB.setEnabled(true);
-                }
+                decimateSurfaceCB.setSelected(false);
+                decimateSurfaceCB.setEnabled(false);
             } else if (pos == 1) {
                 fileName = makeImageName(fileTF.getText(), ".sur");
                 if(!decimateSurfaceCB.isEnabled()) {
@@ -209,20 +208,16 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                 }
             } else if (pos == 2) {
                 fileName = makeImageName(fileTF.getText(), ".wrl");
-                if(!decimateSurfaceCB.isEnabled()) {
-                	decimateSurfaceCB.setEnabled(true);
-                }
+                decimateSurfaceCB.setSelected(false);
+                decimateSurfaceCB.setEnabled(false);
             } else if (pos == 3) {
                 fileName = makeImageName(fileTF.getText(), ".xml");
-                if(!decimateSurfaceCB.isEnabled()) {
-                	decimateSurfaceCB.setEnabled(true);
-                }
+                decimateSurfaceCB.setSelected(false);
+                decimateSurfaceCB.setEnabled(false);
             } else if (pos == 4) {
                 fileName = makeImageName(fileTF.getText(), ".vtk");
                 decimateSurfaceCB.setSelected(false);
-                decimateSurfaceCB.setEnabled(false);
-
-                
+                decimateSurfaceCB.setEnabled(false);  
             }
 
             fileTF.setText(fileName);
