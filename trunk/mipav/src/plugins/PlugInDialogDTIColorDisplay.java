@@ -4,6 +4,7 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
@@ -30,23 +31,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Calendar;
+import java.lang.reflect.Method;
+
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JToggleButton;
-import javax.swing.JViewport;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
@@ -55,47 +52,48 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 
-import gov.nih.mipav.MipavMath;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.ColorWheel;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewJComponentDTIImage;
-import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewToolBarBuilder;
-import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
+
 
 /**
  * @author pandyan
  * 
  * This is the main dialog for the DTI Color Display
  * 
- * References: This algorithm was developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group and
- * Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS of
- * the NIH/NICHD/LIMB/STBB group :
+ * References: Developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group,
+ * Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS from the
+ * the NIH/NICHD/LIMB/STBB group and Olga Vogt from the NIH/CIT/DCB/ISL/BIRSS group:
  * 
  * 
  * Mathematical and Statistical Computing Laboratory (MSCL)
+ * Biomedical Imaging Research Services Section (BIRSS)
+ * Imaging Sciences Laboratory (ISL)
  * Division of Cumputational Bioscience (DCB)
  * Center for Informational Technology (CIT)
  * Section on Tissue Biophysics and Biomimetics (STBB)
  * Laboratory of Integrative and Medical Biophysics (LIMB)
  * National Institute of Child Health & Humann Development
  * National Institutes of Health
+ * 
  * 
  * Publication Reference:
  * 
@@ -106,13 +104,13 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		implements AlgorithmInterface, ChangeListener, ItemListener, MouseListener, MouseWheelListener, KeyListener, FocusListener {
 	
 	/** dialog title and version **/
-	private String title = " DTI Color Display  v1.4      ";
+	private String title = " DTI Color Display  v1.5      ";
 	
 	/** panels **/
 	private JPanel mainPanel,topPanel, filesPanel, okPanel, bottomPanel, refPanel, colorPanel, colorWheelPanel, resultImagePanel, optionsPanel, colorWheelChoicesPanel, heuristicParametersPanel, anisotropyMaxPanel, anisotropyMinPanel, gammaPanel, stevensBetaPanel, satBluePanel, dimGreenPanel, colorRangePanel, satVsThetaPanel, resultPanel, resultImageSliderPanel, tempPanel, toolbarPanel, adjustExpPanel, truncMultPanel, restoreDefaultsPanel, saveLoadPanel;
 	
 	/** labels **/
-	private JLabel eigenvectorLabel, anisotropyLabel, minAnisotropyMaxLabel, maxAnisotropyMaxLabel, minAnisotropyMinLabel, maxAnisotropyMinLabel, minGammaLabel, maxGammaLabel, minStevensBetaLabel, maxStevensBetaLabel, minSatBlueLabel, maxSatBlueLabel, minDimGreenLabel, maxDimGreenLabel, minColorRangeLabel, maxColorRangeLabel, minSatVsThetaLabel, maxSatVsThetaLabel, minResultImageSlicesLabel, maxResultImageSlicesLabel, currentResultImageSlicesLabel, magLabel, refLabel1, refLabel2, minAdjustExpLabel, maxAdjustExpLabel;
+	private JLabel eigenvectorLabel, anisotropyLabel, minAnisotropyMaxLabel, maxAnisotropyMaxLabel, minAnisotropyMinLabel, maxAnisotropyMinLabel, minGammaLabel, maxGammaLabel, minStevensBetaLabel, maxStevensBetaLabel, minSatBlueLabel, maxSatBlueLabel, minDimGreenLabel, maxDimGreenLabel, minColorRangeLabel, maxColorRangeLabel, minSatVsThetaLabel, maxSatVsThetaLabel, minResultImageSlicesLabel, maxResultImageSlicesLabel, currentResultImageSlicesLabel, magLabel, refLabel1, refLabel2, refLabel3, minAdjustExpLabel, maxAdjustExpLabel;
 	
 	/** mins and maxes for heuristic parameters**/
 	private float minAnisotropyMax, maxAnisotropyMax, minAnisotropyMin, maxAnisotropyMin, minGamma, maxGamma, minStevensBeta, maxStevensBeta, minSatBlue, maxSatBlue, minDimGreen, maxDimGreen, minColorRange, maxColorRange, minSatVsTheta, maxSatVsTheta, minAdjustExp, maxAdjustExp;
@@ -255,9 +253,9 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
     /** Buffered Writer for saving params **/
     private BufferedWriter out;
     
+    /** String indicating current color wheel type **/
     private String currentColorWheelType;
-    
-    
+
 
 	/**
 	 * Constructor
@@ -356,6 +354,29 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.anchor = GridBagConstraints.WEST;
 		gbc.insets = new Insets(0,0,10,0);
 		colorWheelChoicesPanel.add(colorWheelComboBox,gbc);
+		//reference panel
+		refPanel = new JPanel(gbl);
+		refLabel1 = new JLabel();
+		Font f = new Font("Helvetica",Font.PLAIN,11);
+		refLabel1.setFont(f);
+		refLabel1.setText("<html>Software developed in concert with Dr. Sinisa Pajevic Ph.D. from the NIH/CIT/DCB/MSCL group and <br>Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker M.S. <br>from the NIH/NICHD/LIMB/STBB group</html>");
+		refLabel2 = new JLabel();
+		refLabel2.setFont(f);
+		refLabel2.setText("<html><br>Color Schemes produced according to: S. Pajevic and C. Pierpaoli, Color Schemes to Represent the <br>Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber <br>Tract Mapping in the Human Brain, Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999</html>");
+		refLabel3 = new JLabel();
+		refLabel3.setFont(f);
+		refLabel3.setText("<html><a href=' '>Download Paper</a></html>");
+		refLabel3.addMouseListener(this);
+		
+		gbc.gridx = 0;
+	    gbc.gridy = 0;
+		refPanel.add(refLabel1, gbc);
+		gbc.gridx = 0;
+	    gbc.gridy = 1;
+		refPanel.add(refLabel2, gbc);
+		gbc.gridx = 0;
+	    gbc.gridy = 2;
+		refPanel.add(refLabel3, gbc);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.insets = new Insets(0,0,0,0);
@@ -364,7 +385,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.gridy = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		colorPanel.add(colorWheelChoicesPanel,gbc);
-
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		gbc.fill = GridBagConstraints.NONE;
+		colorPanel.add(refPanel,gbc);
+		
 		//options panel
         gbc.anchor = GridBagConstraints.NORTHWEST;
 		optionsPanel = new JPanel(gbl);
@@ -984,19 +1009,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		titledBorder = new TitledBorder(new EtchedBorder(), "", TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
 		tempPanel.setBorder(titledBorder);
 		
-		//reference panel
-		refPanel = new JPanel(gbl);
-		refLabel1 = new JLabel();
-		refLabel1.setText("<html>Developed in concert with Dr. Sinisa Pajevic Ph.D. from the NIH/CIT/DCB/MSCL group and Dr. Lin-Ching Chang D.Sc.,  Dr. Carlo Pierpaoli MD Ph.D.,  and Lindsay Walker M.S. from the NIH/NICHD/LIMB/STBB group</html>");
-		refLabel2 = new JLabel();
-		refLabel2.setText("<html>S. Pajevic and C. Pierpaoli, “Color Schemes to Represent the Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber Tract Mapping in the Human Brain”, Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999</html>");
-		gbc.anchor = GridBagConstraints.CENTER;
-		gbc.gridx = 0;
-	    gbc.gridy = 0;
-		refPanel.add(refLabel1, gbc);
-		gbc.gridx = 0;
-	    gbc.gridy = 1;
-		refPanel.add(refLabel2, gbc);
+		
 
 		
 		
@@ -1021,11 +1034,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 		gbc.gridx = 0;
         gbc.gridy = 1;
         mainPanel.add(bottomPanel,gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.insets = new Insets(15,5,10,0);
-        gbc.anchor = GridBagConstraints.CENTER;
-        mainPanel.add(refPanel,gbc);
+        //gbc.gridx = 0;
+        //gbc.gridy = 2;
+        //gbc.insets = new Insets(15,5,10,0);
+        //gbc.anchor = GridBagConstraints.CENTER;
+        //mainPanel.add(refPanel,gbc);
         getContentPane().add(mainPanel);
         
         pack();
@@ -1587,17 +1600,65 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	 * mouse clicked
 	 */
 	public void mouseClicked(MouseEvent event) {
-		if (event.getButton() == MouseEvent.BUTTON3) {
-            if (event.getSource() instanceof JButton) {
-                JButton btnSource = (JButton) event.getSource();
-                if (btnSource.getActionCommand().equals("MagImage") ||
-                        btnSource.getActionCommand().equals("UnMagImage")) {
-                    handleZoomPopupMenu(btnSource, event);
-                }
-            }
+		Object source = event.getSource();
+		
+		if(source == magButton || source == unMagButton) {
+			if (event.getButton() == MouseEvent.BUTTON3) {
+	            if (event.getSource() instanceof JButton) {
+	                JButton btnSource = (JButton) event.getSource();
+	                if (btnSource.getActionCommand().equals("MagImage") ||
+	                        btnSource.getActionCommand().equals("UnMagImage")) {
+	                    handleZoomPopupMenu(btnSource, event);
+	                }
+	            }
+			}
 		}
+		
+		if(source == refLabel3) {
+			if (event.getButton() == MouseEvent.BUTTON1) {
+				openURL("http://eclipse.nichd.nih.gov/nichd/stbb/MRM42.pdf");
+			}
+		}
+		
+		
+	}
+	
+	
+	/**
+	 * mouse entered
+	 */
+	public void mouseEntered(MouseEvent event) {
+		Object source = event.getSource();
+		
+		if(source == refLabel3) {
+			setCursor(new Cursor(Cursor.HAND_CURSOR));
+		}
+
 	}
 
+	
+	/**
+	 * mouse exited
+	 */
+	public void mouseExited(MouseEvent event) {
+		Object source = event.getSource();
+		
+		if(source == refLabel3) {
+			setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		}
+
+	}
+
+	
+	
+	/**
+	 * mouse pressed
+	 */
+	public void mousePressed(MouseEvent event) {
+
+	}
+	
+	
 	
 	/**
 	 * mouse released
@@ -1609,13 +1670,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
         	if(anisotropyMaxSlider.getValue() <= anisotropyMinSlider.getValue()) {
         		anisotropyMaxSlider.setValue(anisotropyMinSlider.getValue() + 1);
         	}
-        	//updateCurrentColorWheel();
         }
         else if (source == anisotropyMinSlider) {
         	if(anisotropyMinSlider.getValue() >= anisotropyMaxSlider.getValue()) {
         		anisotropyMinSlider.setValue(anisotropyMaxSlider.getValue() - 1);
         	}
-        	//updateCurrentColorWheel();
         }
         else if (source == gammaSlider) {
         	//updateCurrentColorWheel();
@@ -3134,29 +3193,11 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	
 	
 	
-	/**
-	 * mouse entered
-	 */
-	public void mouseEntered(MouseEvent arg0) {
-		
-	}
-
 	
-	/**
-	 * mouse exited
-	 */
-	public void mouseExited(MouseEvent arg0) {
-
-	}
 
 	
 	
-	/**
-	 * mouse pressed
-	 */
-	public void mousePressed(MouseEvent arg0) {
-		
-	}
+	
 	
 	
 	
@@ -3189,12 +3230,49 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase
 	}
 
 
+	/**
+	 * Launches browser...code obtained from:
+	 * Bare Bones Browser Launch by Dem Pilafian
+	 * Web Page Copyright © 2007 Center Key Software
+	 * Source Code and Javadoc are Public Domain
+	 * http://www.centerkey.com/java/browser
+	 * @param url
+	 */
+	public void openURL(String url) { 
+		
+		String osName = System.getProperty("os.name"); 
+		try { 
+			if (osName.startsWith("Mac OS")) { 
+				Class fileMgr = Class.forName("com.apple.eio.FileManager"); 
+				Method openURL = fileMgr.getDeclaredMethod("openURL", new Class[] {String.class}); 
+				openURL.invoke(null, new Object[] {url}); 
+			} 
+			else if (osName.startsWith("Windows"))  {
+				Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url); 
+			}
+			else { //assume Unix or Linux 
+				String[] browsers = { "firefox", "opera", "konqueror", "epiphany", "mozilla", "netscape" }; 
+				String browser = null; 
+				for (int count = 0; count < browsers.length && browser == null; count++)  {
+					if (Runtime.getRuntime().exec( new String[] {"which", browsers[count]}).waitFor() == 0) {
+						browser = browsers[count];
+					}
+				}
+				if (browser == null) {
+					System.out.println("Can not find web browser");
+				}
+				else {
+					Runtime.getRuntime().exec(new String[] {browser, url}); 
+				} 
+			} 
+		}
+		catch (Exception e) {
+			System.out.println("Can not find web browser");	
+		}
+	}
 	
 	
 	
-	
-	
-	
-	
+
 
 }
