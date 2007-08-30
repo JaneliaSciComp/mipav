@@ -1,3 +1,6 @@
+package gov.nih.mipav.view;
+
+
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -8,12 +11,14 @@ import java.awt.Image;
  * 
  * This is the Color Wheel class for the DTI Color Display Plugin
  * 
- * References: This algorithm was developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group and
- * Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS of
- * the NIH/NICHD/LIMB/STBB group :
+ * References: Developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group,
+ * Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS from the
+ * the NIH/NICHD/LIMB/STBB group and Olga Vogt from the NIH/CIT/DCB/ISL/BIRSS group:
  * 
  * 
  * Mathematical and Statistical Computing Laboratory (MSCL)
+ * Biomedical Imaging Research Services Section (BIRSS)
+ * Imaging Sciences Laboratory (ISL)
  * Division of Cumputational Bioscience (DCB)
  * Center for Informational Technology (CIT)
  * Section on Tissue Biophysics and Biomimetics (STBB)
@@ -151,59 +156,117 @@ public class ColorWheel extends Canvas {
 		int px2 = 0;
 		int py2 = 0;
 		double tanPiDiv4 = Math.tan(Math.PI/4);
-		px1 = (int)Math.round(r6 + (r6 * tanPiDiv4));
-		py1 = 0;
-		px2 = (int)Math.round(r6 - (r6 * tanPiDiv4));
-		py2 = r6*2;
-		offGraphics.drawLine(px1, py1, px2, py2);
-		px1 = 0;
-		py1 = 0;
-		px2 = r6*2;
-		py2 = (int)Math.round(r6 + (r6 * tanPiDiv4));
-		offGraphics.drawLine(px1, py1, px2, py2);
-		
 		double tanPiDiv12 = Math.sin(Math.PI/12);
+		double tanPiDiv6 = (float)Math.tan(Math.PI/6);
+		
+		
 		px1 = (int)Math.round(r6 + (r6 * tanPiDiv12));
 		py1 = 0;
-		px2 = (int)Math.round(r6 - (r6 * tanPiDiv12));
-		py2 = r6*2;
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(15))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(15))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = (int)Math.round(r6 - (r6 * tanPiDiv12));
+		py1 = r6*2;
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(15))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(15))));
 		offGraphics.drawLine(px1, py1, px2, py2);
 		px1 = (int)Math.round(r6 - (r6 * tanPiDiv12));
 		py1 = 0;
-		px2 = (int)Math.round(r6 + (r6 * tanPiDiv12));
-		py2 = r6*2;
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(15))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(15))));
 		offGraphics.drawLine(px1, py1, px2, py2);
-		px1 = r6*2;
-		py1 = (int)Math.round(r6 - (r6 * tanPiDiv12));
-		px2 = 0;
-		py2 = (int)Math.round(r6 + (r6 * tanPiDiv12));
-		offGraphics.drawLine(px1, py1, px2, py2);
-		px1 = r6*2;
-		py1 = (int)Math.round(r6 + (r6 * tanPiDiv12));
-		px2 = 0;
-		py2 = (int)Math.round(r6 - (r6 * tanPiDiv12));
+		px1 = (int)Math.round(r6 + (r6 * tanPiDiv12));
+		py1 = r6*2;
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(15))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(15))));
 		offGraphics.drawLine(px1, py1, px2, py2);
 		
-		double tanPiDiv6 = (float)Math.tan(Math.PI/6);
+		
 		px1 = (int)Math.round(r6 + (r6 * tanPiDiv6));
 		py1 = 0;
-		px2 = (int)Math.round(r6 - (r6 * tanPiDiv6));
-		py2 = r6*2;
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(30))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(30))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = (int)Math.round(r6 - (r6 * tanPiDiv6));
+		py1 = r6*2;
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(30))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(30))));
 		offGraphics.drawLine(px1, py1, px2, py2);
 		px1 = (int)Math.round(r6 - (r6 * tanPiDiv6));
 		py1 = 0;
-		px2 = (int)Math.round(r6 + (r6 * tanPiDiv6));
-		py2 = r6*2;
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(30))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(30))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = (int)Math.round(r6 + (r6 * tanPiDiv6));
+		py1 = r6*2;
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(30))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(30))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		
+		
+		px1 = (int)Math.round(r6 + (r6 * tanPiDiv4));
+		py1 = 0;
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(45))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(45))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = (int)Math.round(r6 - (r6 * tanPiDiv4));
+		py1 = r6*2;
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(45))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(45))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = 0;
+		py1 = 0;
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(45))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(45))));
 		offGraphics.drawLine(px1, py1, px2, py2);
 		px1 = r6*2;
+		py1 = (int)Math.round(r6 + (r6 * tanPiDiv4));
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(45))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(45))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		
+		
+		px1 = r6*2;
 		py1 = (int)Math.round(r6 - (r6 * tanPiDiv6));
-		px2 = 0;
-		py2 = (int)Math.round(r6 + (r6 * tanPiDiv6));
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(60))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(60))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = 0;
+		py1 = (int)Math.round(r6 + (r6 * tanPiDiv6));
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(60))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(60))));
 		offGraphics.drawLine(px1, py1, px2, py2);
 		px1 = r6*2;
 		py1 = (int)Math.round(r6 + (r6 * tanPiDiv6));
-		px2 = 0;
-		py2 = (int)Math.round(r6 - (r6 * tanPiDiv6));
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(60))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(60))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = 0;
+		py1 = (int)Math.round(r6 - (r6 * tanPiDiv6));
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(60))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(60))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		
+		
+		px1 = r6*2;
+		py1 = (int)Math.round(r6 - (r6 * tanPiDiv12));
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(75))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(75))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = 0;
+		py1 = (int)Math.round(r6 + (r6 * tanPiDiv12));
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(75))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(75))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = r6*2;
+		py1 = (int)Math.round(r6 + (r6 * tanPiDiv12));
+		px2 = (int)(r6 + (r1 * Math.sin(Math.toRadians(75))));
+		py2 = (int)(r6 + (r1 * Math.cos(Math.toRadians(75))));
+		offGraphics.drawLine(px1, py1, px2, py2);
+		px1 = 0;
+		py1 = (int)Math.round(r6 - (r6 * tanPiDiv12));
+		px2 = (int)(r6 - (r1 * Math.sin(Math.toRadians(75))));
+		py2 = (int)(r6 - (r1 * Math.cos(Math.toRadians(75))));
 		offGraphics.drawLine(px1, py1, px2, py2);
 		
 		g.drawImage(offImage,0,0,this);

@@ -5,12 +5,14 @@ import gov.nih.mipav.plugins.PlugInGeneric;
  * 
  * This is the main entry point for the DTI Color Display plugin
  * 
- * References: This algorithm was developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group and
- * Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS of
- * the NIH/NICHD/LIMB/STBB group :
+ * References: Developed in concert with Sinisa Pajevic from the NIH/CIT/DCB/MSCL group,
+ * Lin-Ching Chang D.Sc., Carlo Pierpaoli MD Ph.D., and Lindsay Walker MS from the
+ * the NIH/NICHD/LIMB/STBB group and Olga Vogt from the NIH/CIT/DCB/ISL/BIRSS group:
  * 
  * 
  * Mathematical and Statistical Computing Laboratory (MSCL)
+ * Biomedical Imaging Research Services Section (BIRSS)
+ * Imaging Sciences Laboratory (ISL)
  * Division of Cumputational Bioscience (DCB)
  * Center for Informational Technology (CIT)
  * Section on Tissue Biophysics and Biomimetics (STBB)
@@ -19,7 +21,7 @@ import gov.nih.mipav.plugins.PlugInGeneric;
  * National Institutes of Health
  * 
  * 
- *  * Publication Reference:
+ * Publication Reference:
  * 
  * S. Pajevic and C. Pierpaoli, “Color Schemes to Represent the Orientation of Anisotropic Tissues from Diffusion Tensor Data: Application to White Matter Fiber Tract Mapping in the Human Brain,” Magnetic Resonance in Medicine, vol. 42, no. 3, pp. 526-540, 1999
  *
