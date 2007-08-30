@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
+import java.util.Enumeration;
 
 import javax.swing.*;
 
@@ -53,6 +54,12 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private JButton buttonFile;
+    
+    private JComboBox comboBoxImage;
+    
+    private JCheckBox loadCheckBox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -83,6 +90,7 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -109,6 +117,17 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
                 return;
             }
+        } else if (source.equals(loadCheckBox)) {
+            if (loadCheckBox.isSelected()) {
+                buttonFile.setEnabled(false);
+                textFile.setEnabled(false);
+                comboBoxImage.setEnabled(true);
+            }
+            else {
+                buttonFile.setEnabled(true);
+                textFile.setEnabled(true);
+                comboBoxImage.setEnabled(false);    
+            }
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -130,7 +149,7 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
         // ViewJFrameImage imageFrame = null;
 
-        if (maskImage != null) {
+        if ((!loadCheckBox.isSelected()) && (maskImage != null)) {
             maskImage.disposeLocal();
             maskImage = null;
         }
@@ -237,6 +256,45 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
         return true;
     }
+    
+    /**
+     * Builds a list of images to operate on from the template image.
+     */
+    private void buildComboBoxImage() {
+        ViewUserInterface UI;
+        boolean sameDims = true;
+
+        comboBoxImage = new JComboBox();
+        comboBoxImage.setFont(serif12);
+        comboBoxImage.setBackground(Color.white);
+
+        UI = ViewUserInterface.getReference();
+
+        Enumeration names = UI.getRegisteredImageNames();
+        // Add images from user interface that have the same exact dimensionality
+        while (names.hasMoreElements()) {
+            String name = (String) names.nextElement();
+            sameDims = true;
+
+            if (!image.getImageName().equals(name)) {
+                ModelImage img = UI.getRegisteredImageByName(name);
+
+                if (UI.getFrameContainingImage(img) != null) {
+
+                    if (image.getNDims() == img.getNDims()) {
+                        sameDims = compareDimensions(image, img);
+
+                        if (sameDims) {
+                            if ((img.getType() == ModelStorageBase.BOOLEAN) || (img.getType() == ModelStorageBase.BYTE) ||
+                                (img.getType() == ModelStorageBase.UBYTE) || (img.getType() == ModelStorageBase.SHORT)) {
+                                comboBoxImage.addItem(name);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
@@ -245,22 +303,48 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
         setForeground(Color.black);
         setTitle("Quantify");
 
-        JPanel filePanel = new JPanel();
+        JPanel filePanel = new JPanel(new GridBagLayout());
         filePanel.setForeground(Color.black);
         filePanel.setBorder(buildTitledBorder("Identify mask image file"));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        JButton buttonFile = new JButton("Choose...");
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = gbc.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        buttonFile = new JButton("Choose...");
         buttonFile.setPreferredSize(MipavUtil.defaultButtonSize);
         buttonFile.setMinimumSize(MipavUtil.defaultButtonSize);
         buttonFile.setFont(serif12B);
         buttonFile.addActionListener(this);
         buttonFile.setActionCommand("Choose");
-        filePanel.add(buttonFile);
+        filePanel.add(buttonFile, gbc);
 
+        gbc.gridx = 1;
         textFile = new JTextField(15);
         textFile.setEnabled(false);
         textFile.setFont(serif12);
-        filePanel.add(textFile);
+        filePanel.add(textFile, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        loadCheckBox = new JCheckBox("Load image from frame");
+        loadCheckBox.setFont(serif12);
+        loadCheckBox.setForeground(Color.black);
+        loadCheckBox.setSelected(false);
+        loadCheckBox.addActionListener(this);
+        filePanel.add(loadCheckBox, gbc);
+
+        gbc.gridx = 1;
+        buildComboBoxImage();
+        comboBoxImage.setEnabled(false);
+        filePanel.add(comboBoxImage, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -286,27 +370,33 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
     private boolean setVariables() {
 
         try {
-            FileIO fileIO = new FileIO();
-
-            if ((fileName != null) && (directory != null)) {
-                maskImage = fileIO.readImage(fileName, directory, false, null);
-
-                if (maskImage != null) {
-
-                    if (compareDimensions(maskImage, image) == false) {
-                        MipavUtil.displayError("Images of different dimensions");
-
+            if (loadCheckBox.isSelected()) {
+                String selectedName = (String) comboBoxImage.getSelectedItem();
+                maskImage = ViewUserInterface.getReference().getRegisteredImageByName(selectedName);
+            }
+            else {
+                FileIO fileIO = new FileIO();
+    
+                if ((fileName != null) && (directory != null)) {
+                    maskImage = fileIO.readImage(fileName, directory, false, null);
+    
+                    if (maskImage != null) {
+    
+                        if (compareDimensions(maskImage, image) == false) {
+                            MipavUtil.displayError("Images of different dimensions");
+    
+                            return false;
+                        }
+                    } else {
+                        MipavUtil.displayError("Unable to open image.");
+    
                         return false;
                     }
                 } else {
                     MipavUtil.displayError("Unable to open image.");
-
+    
                     return false;
                 }
-            } else {
-                MipavUtil.displayError("Unable to open image.");
-
-                return false;
             }
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory!");
