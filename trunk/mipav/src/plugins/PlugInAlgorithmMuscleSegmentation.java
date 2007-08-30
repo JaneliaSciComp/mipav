@@ -422,7 +422,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
             cancelButton.setFont(MipavUtil.font12B);
             
-            // size and place the clear buttton
+            // size and place the clear button
             clearButton = new JButton("Clear");
             clearButton.addActionListener(this);
             clearButton.setActionCommand(CLEAR);
@@ -527,10 +527,12 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                     getImageA().unregisterAllVOIs();
                     updateImages(true);
                 }
-                if(imagePane.getSelectedIndex() == voiIndex) {
-                    getImageA().unregisterAllVOIs();
-                    initVoiImage(voiPrompt, activeTab);
-                    updateImages(true);
+                if(c instanceof MuscleDialogPrompt) {
+                    if(imagePane.getSelectedIndex() == voiIndex) {
+                        getImageA().unregisterAllVOIs();
+                        initVoiImage(voiPrompt, activeTab);
+                        updateImages(true);
+                    }
                 }
             }
             super.componentHidden(event);
@@ -751,7 +753,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
                 //setVisible(false); // Hide dialog
             } else if(command.equals(VoiDialogPrompt.SUB_DIALOG_COMPLETED)) {
                 unlockToVOI();
-                initMuscleImage(activeTab);
+                //initMuscleImage(activeTab);
             }
         }
         
@@ -805,12 +807,14 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         
         private void initNext() {
             JPanel panelA = initDialog();
+            
             getContentPane().add(panelA);
             getContentPane().remove(0);
             Container c = getContentPane();
             
             pack();
             initMuscleImage(0);
+            this.setResizable(false);
         }
         
         /**
@@ -844,6 +848,8 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
             
         }
         
+        
+        //TODO: Local copies of VOIs
         
         private void loadVOI(int pane) {
             getImageA().unregisterAllVOIs();
@@ -925,7 +931,7 @@ public class PlugInAlgorithmMuscleSegmentation extends AlgorithmBase {
         }
         
         
-        
+        //TODO: local copies of VOIs, combine with loadVOI(int pane)
         
         
         private void initVoiImage(VoiDialogPrompt voiDialog, int pane) {
