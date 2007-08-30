@@ -4437,7 +4437,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  count       Number of pixels (voxels)
      * @param  total       Sum of pixel intensities
      * @param  mean        Average pixel intensity
-     * @param  stdDev      Standatd deviation of pixel intensities
+     * @param  stdDev      Standard deviation of pixel intensities
      * @param  leadString  the string to prepend to message containing region growth statistics
      */
     public void showRegionInfo(int count, float total[], float mean[], float stdDev[], String leadString) {
