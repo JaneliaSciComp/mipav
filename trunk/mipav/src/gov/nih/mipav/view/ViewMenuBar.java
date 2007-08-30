@@ -1358,7 +1358,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Nonlinear noise reduction", false);
             menuBuilder.setMenuItemEnabled("Nonmaximum suppression", false);
             menuBuilder.setMenuItemEnabled("Zero X non-maximum suppression", false);
-            menuBuilder.setMenuItemEnabled("Quantify using mask", false);
             menuBuilder.setMenuItemEnabled("Single channel", false);
             menuBuilder.setMenuItemEnabled("Unsharp mask", false);
             menuBuilder.setMenuItemEnabled("Watershed", false);
