@@ -6,7 +6,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 
-
+// This is a silly change to see if I can Commit with SVN 
 /**
  * This is simple plugin computes and displays various statistics of an image
  *
