@@ -8,28 +8,28 @@ import java.awt.*;
 
 
 /**
- * PlugIn to segment MR images of the thighs into 
- * 	1) interstitial fat
- * 	2) subcutaneous fat 
- * 	3) muscle
- * 	4) bone
- * 	5) bone marrow
+ * PlugIn to segment MR images of the thighs into:
+ * <ol>
+ * <li>interstitial fat</li>
+ * <li>subcutaneous fat</li>
+ * <li>muscle</li>
+ * <li>bone</li>
+ * <li>bone marrow</li>
+ * </ol>
+ * 
+ * Main PlugIn driver for the OAI segmentation algorithm.  Overloads the run method to begin the processing
  *
  * @version  1.0, June 22, 2006
  * @author   Agatha Monzon, Paul Hemler, and Matthew J. McAuliffe, Ph.D.
  */
-
-// Main PlugIn driver for the OAI segmentation algorithm.  Overloads the run method
-// to begin the processing
 public class PlugInOAISeg implements PlugInAlgorithm {
 
 	
 	/**
-	 * @param UI			user interface
 	 * @param parentFrame	parent frame
 	 * @param image			image that invoked the plugin	
 	 */
-    public void run(ViewUserInterface UI, Frame parentFrame, ModelImage image) {
+    public void run(Frame parentFrame, ModelImage image) {
 
         System.out.println("running OAI thigh segmentation");
 

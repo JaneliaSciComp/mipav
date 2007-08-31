@@ -2636,7 +2636,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 thePlugIn = Class.forName(plugInName).newInstance();
 
                 if (thePlugIn instanceof PlugInAlgorithm) {
-                    ((PlugInAlgorithm) thePlugIn).run(userInterface, this, getActiveImage());
+                    ((PlugInAlgorithm) thePlugIn).run(this, getActiveImage());
                 } else {
                     MipavUtil.displayError("PlugIn " + plugInName +
                                            " claims to be an Algorithm PlugIn, but does not implement PlugInAlgorithm.");
@@ -2758,7 +2758,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 thePlugIn = Class.forName(plugInName).newInstance();
 
                 if (thePlugIn instanceof PlugInView) {
-                    ((PlugInView) thePlugIn).run(userInterface, this, getActiveImage());
+                    ((PlugInView) thePlugIn).run(this, getActiveImage());
                 } else {
                     MipavUtil.displayError("PlugIn " + plugInName +
                                            " claims to be an View PlugIn, but does not implement PlugInView.");

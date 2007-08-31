@@ -51,9 +51,6 @@ public class PlugInCheshireVOI implements PlugInGeneric {
     /** JFrameImage for the collected VOIs. */
     private ViewJFrameImage imageFrame;
 
-    /** The user interface. */
-    private ViewUserInterface UI;
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -65,8 +62,6 @@ public class PlugInCheshireVOI implements PlugInGeneric {
      * @see  ViewJFrameImage
      */
     public void run() {
-
-        UI = ViewUserInterface.getReference();
         cheshireDialog = new PlugInDialogCheshireVOI(false, this);
         cheshireFiles = cheshireDialog.getCheshireFiles();
         filesLoaded = 0;

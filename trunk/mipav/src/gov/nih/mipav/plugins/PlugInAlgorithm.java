@@ -21,15 +21,12 @@ public interface PlugInAlgorithm extends PlugIn {
     /**
      * Run the plugin algorithm.
      *
-     * @param       UI           MIPAV main user interface.
      * @param       parentFrame  frame that displays the MIPAV image. Can be used as a parent frame when building
      *                           dialogs.
      * @param       image        model of the MIPAV image.
      *
      * @see         ModelImage
      * @see         ViewJFrameImage
-     * @deprecated  Parameter UI will be removed since ViewUserInterface is now a static singelton.
      */
-    void run(ViewUserInterface UI, Frame parentFrame, ModelImage image);
-
+    void run(Frame parentFrame, ModelImage image);
 }
