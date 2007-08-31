@@ -1072,8 +1072,7 @@ public class JPanelClip extends JPanelRendererBase
         shape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
 
         try {
-            ((SurfaceRender) renderBase).getSurfaceDialog().getPickCanvas().setCapabilities(shape,
-                                                                                            PickTool.INTERSECT_FULL);
+            ((SurfaceRender) renderBase).getSurfaceDialog().getPickCanvas().setCapabilities(shape, PickTool.INTERSECT_FULL);
         } catch (RestrictedAccessException error) { }
 
         clipSliceA_BG.addChild(shape);

@@ -78,8 +78,11 @@ public class JDialogVolViewResample extends JDialogBase {
     /** Radio button of the brainsurface flattener render mode in the right panel. */
     private JRadioButton radioBrainSurfaceFlattenerR;
 
-    /** Radio button of the none mode in the left panel. */
+    /** Radio button of the fly througth mode in the left panel. */
     private JRadioButton radioFlythruL;
+    
+    /** Radio button of the surface view mode in the left panel. */
+    private JRadioButton radioSurfaceView;
 
     /** Radio button of the none mode in the right panel. */
     private JRadioButton radioNoneR;
@@ -250,6 +253,7 @@ public class JDialogVolViewResample extends JDialogBase {
         String command = event.getActionCommand();
 
         if (command.equals("Resample")) {
+        	
             volExtents[0] = Integer.parseInt(extXOutput.getText());
 
             if (!isPowerOfTwo(volExtents[0])) {
@@ -257,6 +261,10 @@ public class JDialogVolViewResample extends JDialogBase {
                 volExtents[0] = dimPowerOfTwo(volExtents[0]);
             }
 
+            if ( radioSurfaceView.isSelected() ) {
+            	volExtents[0] = 16;
+            }
+            
             newRes[0] = (float) (extents[0] * res[0]) / (float) volExtents[0];
 
             volExtents[1] = Integer.parseInt(extYOutput.getText());
@@ -266,6 +274,10 @@ public class JDialogVolViewResample extends JDialogBase {
                 volExtents[1] = dimPowerOfTwo(volExtents[1]);
             }
 
+            if ( radioSurfaceView.isSelected() ) {
+            	volExtents[1] = 16;
+            }
+            
             newRes[1] = (float) (extents[1] * res[1]) / (float) volExtents[1];
 
             if (nDim >= 3) {
@@ -275,7 +287,9 @@ public class JDialogVolViewResample extends JDialogBase {
                     MipavUtil.displayInfo("Reample to Power of 2.");
                     volExtents[2] = dimPowerOfTwo(volExtents[2]);
                 }
-
+                if ( radioSurfaceView.isSelected() ) {
+                	volExtents[2] = 16;
+                }
                 newRes[2] = (float) (extents[2] * res[2]) / (float) volExtents[2];
             }
 
@@ -441,7 +455,7 @@ public class JDialogVolViewResample extends JDialogBase {
                                                 rightPanelRenderMode, this);
             }
             sr.setImageOriginal(imageAOriginal);
-
+            
             if (forcePadding) {
                 sr.doPadding(extents, volExtents);
             }  else if (forceResample) {
@@ -718,6 +732,11 @@ public class JDialogVolViewResample extends JDialogBase {
         radioFlythruL.setFont(serif12);
         radioFlythruL.addItemListener(this);
         group1.add(radioFlythruL);
+        
+        radioSurfaceView = new JRadioButton("Surface View", false);
+        radioSurfaceView.setFont(serif12);
+        radioSurfaceView.addItemListener(this);
+        group1.add(radioSurfaceView);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -727,9 +746,11 @@ public class JDialogVolViewResample extends JDialogBase {
         gbc.gridy++;
         radioButtonPanelLeft.add(emptyLabelUp, gbc);
         gbc.gridy++;
+        radioButtonPanelLeft.add(radioFlythruL, gbc);
+        gbc.gridy++;
         radioButtonPanelLeft.add(emptyLabelDown, gbc);
         gbc.gridy++;
-        radioButtonPanelLeft.add(radioFlythruL, gbc);
+        radioButtonPanelLeft.add(radioSurfaceView, gbc);
 
         gbl = new GridBagLayout();
         gbc = new GridBagConstraints();
@@ -1025,6 +1046,11 @@ public class JDialogVolViewResample extends JDialogBase {
         radioFlythruL.addItemListener(this);
         group1.add(radioFlythruL);
 
+        radioSurfaceView = new JRadioButton("Surface View", false);
+        radioSurfaceView.setFont(serif12);
+        radioSurfaceView.setEnabled(false);
+        radioSurfaceView.addItemListener(this);
+        group1.add(radioSurfaceView);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1037,6 +1063,8 @@ public class JDialogVolViewResample extends JDialogBase {
         radioBox.add(emptyLabelDown, gbc);
         gbc.gridy++;
         radioBox.add(radioFlythruL, gbc);
+        gbc.gridy++;
+        radioBox.add(radioSurfaceView, gbc);
         gbc.gridy++;
 
         gbl = new GridBagLayout();
@@ -1090,6 +1118,21 @@ public class JDialogVolViewResample extends JDialogBase {
             }
         } else if (radioFlythruL.isSelected()) {
             leftPanelRenderMode = ViewJFrameVolumeView.ENDOSCOPY;
+            if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
+            {
+                radioShearwarpR.setSelected(false);
+                radioShearwarpR.setEnabled(false);
+                radioBrainSurfaceFlattenerR.setSelected(false);
+                radioBrainSurfaceFlattenerR.setEnabled(false);
+                radioSurfaceR.setSelected(false);
+                radioSurfaceR.setEnabled(false);
+                radioRaycastR.setSelected(false);
+                radioRaycastR.setEnabled(false);
+                radioNoneR.setSelected(true);
+                radioNoneR.setEnabled(false);
+            }
+        } else if (radioSurfaceView.isSelected()) {
+            leftPanelRenderMode = ViewJFrameVolumeView.SURFACEVIEW;
             if ( !m_kVolViewType.equals( "WMVolTriplanar" ) )
             {
                 radioShearwarpR.setSelected(false);
@@ -1243,7 +1286,7 @@ public class JDialogVolViewResample extends JDialogBase {
 
         // 128^3 x 4 is 8MB
         // 256^3 x 4 is 64MB
-        if (dim <= 16) {
+        if (dim <=  16) {
             return 16;
         } else if (dim <= 32) {
             return 32;
@@ -1253,7 +1296,7 @@ public class JDialogVolViewResample extends JDialogBase {
                 return 64;
             } else {
                 return 32;
-            }
+            } 
         } else if (dim <= 128) {
 
             if (dim > 80) {
@@ -1289,7 +1332,7 @@ public class JDialogVolViewResample extends JDialogBase {
      */
     private boolean isPowerOfTwo(int value) {
 
-        if ((value == 16) || (value == 32) || (value == 64) || (value == 128) || (value == 256) || (value == 512)) {
+        if ( (value == 16) ||(value == 16) || (value == 32) || (value == 64) || (value == 128) || (value == 256) || (value == 512)) {
             return true;
         }
 
