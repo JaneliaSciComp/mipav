@@ -67,6 +67,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
     /** DOCUMENT ME! */
     public static final int BRAINSURFACE_FLATTENER = 6;
+    
+    /** DOCUMENT ME! */
+    public static final int SURFACEVIEW = 7;
 
     /** The small bar on the top right corner the volume view frame. */
     protected static JProgressBar rendererProgressBar;
@@ -217,6 +220,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     /** Indicate if the surface render is enabled from the resample dialog or not. */
     private boolean isSurfaceRenderEnable = false;
 
+    /** Indicate if the surface view is enabled from the resample dialog or not. */
+    private boolean isSurfaceViewEnable = false;
+    
     /** The left panel renderer mode. */
     private int leftPanelRenderMode = -1;
 
@@ -373,6 +379,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     /** Three types of renderer. */
     private SurfaceRender surRender;
 
+    /** Surface View reference */
+    private SurfaceView surView;    
+    
     /** For each render, use the vector to store the currently active tabs. */
     private Vector surTabVector = new Vector();
 
@@ -544,16 +553,28 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             volumeRepaint();
         } else if (command.equals("Clipping")) {
 
-            if (surRender.getDisplayMode3D()) {
+        	if (( surRender != null && surRender.getDisplayMode3D() ) ||
+        		( surView != null )) {
                 clipBox.setVisible(true);
             } else {
                 clipBox.setVisible(false);
             }
-
+            
             insertTab("Clip", clipPanel);
             insertSurfaceTab("Clip", clipPanel);
             insertRaycastTab("Clip", clipPanel);
             insertShearwarpTab("Clip", clipPanel);
+            
+            setSize(getSize().width, getSize().height - 1);
+
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+
+            if ( surRender != null ) {
+               surRender.getClipDialog().resizePanel(maxPanelWidth, height);
+            } else if ( surView != null ){
+               surView.getClipDialog().resizePanel(maxPanelWidth, height);
+            }
         } else if (command.equals("OpacityHistogram")) {
             insertTab("Opacity", opacityPanel);
             insertSurfaceTab("Opacity", opacityPanel);
@@ -584,38 +605,102 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             insertSurfaceTab("Light", lightPanel);
             insertRaycastTab("Light", lightPanel);
             insertShearwarpTab("Light", lightPanel);
+            setSize(getSize().width, getSize().height - 1);
+
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+
+            if ( surRender != null ) {
+               surRender.getSurfaceDialog().getLightDialog().resizePanel(maxPanelWidth, height);
+            } else if ( surView != null ){
+               surView.getSurfaceDialog().getLightDialog().resizePanel(maxPanelWidth, height);
+            }
         } else if (command.equals("Box")) {
             insertTab("Display", displayPanel);
             insertSurfaceTab("Display", displayPanel);
+            setSize(getSize().width, getSize().height - 1);
+
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+
+            if ( surRender != null ) {
+               surRender.getDisplayDialog().resizePanel(maxPanelWidth, height);
+            } else if ( surView != null ){
+               surView.getDisplayDialog().resizePanel(maxPanelWidth, height);
+            }
         } else if (command.equals("ViewControls")) {
             insertTab("View", viewPanel);
             insertSurfaceTab("View", viewPanel);
-        } else if (command.equals("InvokeClipping")) {
+            setSize(getSize().width, getSize().height - 1);
 
-            if (surRender.getDisplayMode3D()) {
-                clipBox.setVisible(true);
-                surRender.invokeClipping();
-            } else {
-                clipBox.setVisible(false);
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+
+            if ( surRender != null ) {
+               surRender.getViewDialog().resizePanel(maxPanelWidth, height);
+            } else if ( surView != null ){
+               surView.getViewDialog().resizePanel(maxPanelWidth, height);
             }
-
+        } else if (command.equals("InvokeClipping")) {
+        	 if (surRender != null && surRender.getDisplayMode3D()  || 
+        	     (surView != null ) ) {
+                 clipBox.setVisible(true);
+                 if ( surRender != null ) {
+                   surRender.invokeClipping();
+                 }
+                 if ( surView != null ) {
+                   surView.invokeClipping();
+                 }
+             } else {
+                 clipBox.setVisible(false);
+             }
+             
             insertTab("Clip", clipPanel);
             insertSurfaceTab("Clip", clipPanel);
             insertRaycastTab("Clip", clipPanel);
             insertShearwarpTab("Clip", clipPanel);
+            
+            setSize(getSize().width, getSize().height - 1);
+
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+
+            if ( surRender != null ) {
+               surRender.getClipDialog().resizePanel(maxPanelWidth, height);
+            } else if ( surView != null ){
+               surView.getClipDialog().resizePanel(maxPanelWidth, height);
+            }
+            
         } else if (command.equals("DisableClipping")) {
 
-            if (surRender.getDisplayMode3D()) {
+        	if ( surRender != null && surRender.getDisplayMode3D() ||
+        			( surView != null ) ) {
                 clipBox.setVisible(true);
-                surRender.disableClipping();
+                if ( surRender != null ) {
+                  surRender.disableClipping();
+                }
+                if ( surView != null ) {
+                	surView.disableClipping();
+                }
             } else {
                 clipBox.setVisible(false);
             }
 
+            
             insertTab("Clip", clipPanel);
             insertSurfaceTab("Clip", clipPanel);
             insertRaycastTab("Clip", clipPanel);
             insertShearwarpTab("Clip", clipPanel);
+            setSize(getSize().width, getSize().height - 1);
+
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+
+            if ( surRender != null ) {
+               surRender.getClipDialog().resizePanel(maxPanelWidth, height);
+            } else if ( surView != null ){
+               surView.getClipDialog().resizePanel(maxPanelWidth, height);
+            }
         } else if (command.equals("CropClipVolume")) {
             surRender.cropClipVolume();
         } else if (command.equals("UndoCropVolume")) {
@@ -640,16 +725,30 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
                          panelToolbar.getHeight();
 
-            surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+            if ( surRender != null ) {
+               surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+            } else if ( surView != null ){
+               surView.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+            }
         } else if (command.equals("SurfaceTexture")) {
-            insertTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
-            insertSurfaceTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
+        	if ( surRender != null ) {
+                insertTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
+                insertSurfaceTab("SurfaceTexture", surRender.getSurfaceTexturePanel());
+          	} else if ( surView != null ) {
+          	  insertTab("SurfaceTexture", surView.getSurfaceTexturePanel());
+                insertSurfaceTab("SurfaceTexture", surView.getSurfaceTexturePanel());
+          	}
+        	
             setSize(getSize().width, getSize().height - 1);
 
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
                          panelToolbar.getHeight();
 
-            surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+			if ( surRender != null ) {
+			    surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+			  } else if ( surView != null ) {
+			    surView.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+			  }
         } else if (command.equals("RFA")) {
             insertTab("RFA", probePanel);
             insertSurfaceTab("RFA", probePanel);
@@ -661,14 +760,32 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
                          panelToolbar.getHeight();
 
-            surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
+            if ( surRender != null ) {
+                surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
+              } else if ( surView != null ) {
+                surView.getProbeDialog().resizePanel(maxPanelWidth, height);
+              }
         } else if (command.equals("Capture")) {
             insertTab("Camera", cameraPanel);
             insertSurfaceTab("Camera", cameraPanel);
+            setSize(getSize().width, getSize().height - 1);
+
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+
+            if ( surRender != null ) {
+                surRender.getCameraControl().resizePanel(maxPanelWidth, height);
+              } else if ( surView != null ) {
+                surView.getCameraControl().resizePanel(maxPanelWidth, height);
+              }
         } else if (command.equals("Mouse")) {
             insertTab("Recorder", mousePanel);
             insertSurfaceTab("Recorder", mousePanel);
-            surRender.cleanMouseRecorder();
+
+	        if( surRender != null ) {
+	            surRender.cleanMouseRecorder();
+	        }
+	         
         } else if (command.equals("ResetX")) {
             resetAxisY();
         } else if (command.equals("ResetY")) {
@@ -728,8 +845,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void addAttachedSurfaces() {
 
-        if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
+    	if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
             surRender.getSurfaceDialog().addAttachedSurfaces();
+        }
+        else if ((surView != null) && (surView.getSurfaceDialog() != null)) {
+            surView.getSurfaceDialog().addAttachedSurfaces();
         }
     }
 
@@ -744,6 +864,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
             surRender.getSurfaceDialog().addBranch(kBranch, kMesh, kCenter);
+        }
+        else if ((surView != null) && (surView.getSurfaceDialog() != null)) {
+        	surView.getSurfaceDialog().addBranch(kBranch, kMesh, kCenter);
         }
     }
 
@@ -768,6 +891,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
             surRender.getSurfaceDialog().addSurfaces(dir, file);
         }
+        else if ((surView != null) && (surView.getSurfaceDialog() != null)) {
+        	surView.getSurfaceDialog().addSurfaces(dir, file);
+        }
     }
 
     /**
@@ -784,7 +910,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildCameraPanel() {
         cameraPanel = new JPanel();
-        cameraPanel.add(surRender.getCameraControl().getMainPanel());
+        if ( surRender != null ) {
+            cameraPanel.add(surRender.getCameraControl().getMainPanel());
+          } else if ( surView != null ){
+            cameraPanel.add(surView.getCameraControl().getMainPanel());
+          }
         maxPanelWidth = Math.max(cameraPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -793,7 +923,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildClipPanel() {
         clipPanel = new JPanel();
-        clipBox = surRender.getClipDialog().getMainPanel();
+        if ( surRender != null ) {
+            clipBox = surRender.getClipDialog().getMainPanel();
+           } else if ( surView != null ) {
+            clipBox = surView.getClipDialog().getMainPanel();
+        }
         clipPanel.add(clipBox);
         maxPanelWidth = Math.max(clipPanel.getPreferredSize().width, maxPanelWidth);
     }
@@ -803,7 +937,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildDisplayPanel() {
         displayPanel = new JPanel();
-        displayPanel.add(((SurfaceRender) surRender).getDisplayDialog().getMainPanel());
+        if ( surRender != null ) {
+            displayPanel.add(((SurfaceRender) surRender).getDisplayDialog().getMainPanel());
+          } else if ( surView != null ) {
+            displayPanel.add(((SurfaceRender) surView).getDisplayDialog().getMainPanel());	
+          }
         maxPanelWidth = Math.max(displayPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -832,7 +970,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildGeodesic() {
         m_kGeodesicPanel = new JPanel();
-        m_kGeodesicPanel.add(surRender.getGeodesicPanel().getMainPanel());
+        if ( surRender != null ) {
+            m_kGeodesicPanel.add(surRender.getGeodesicPanel().getMainPanel());
+          } else if ( surView != null ) {
+            m_kGeodesicPanel.add(surView.getGeodesicPanel().getMainPanel());
+          }
         maxPanelWidth = Math.max(m_kGeodesicPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -954,7 +1096,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildLightPanel() {
         lightPanel = new JPanel();
-        lightPanel.add(surRender.getSurfaceDialog().getLightDialog().getMainPanel());
+        if ( surRender != null ) {
+            lightPanel.add(surRender.getSurfaceDialog().getLightDialog().getMainPanel());
+          } else if ( surView != null ) {
+            lightPanel.add(surView.getSurfaceDialog().getLightDialog().getMainPanel());
+          }
         maxPanelWidth = Math.max(lightPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -963,7 +1109,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildMousePanel() {
         mousePanel = new JPanel();
-        mousePanel.add(surRender.getMouseDialog().getMainPanel());
+        if ( surRender != null ) {
+            mousePanel.add(surRender.getMouseDialog().getMainPanel());
+          } else if ( surView != null ) {
+          	mousePanel.add(surView.getMouseDialog().getMainPanel());
+          }
         maxPanelWidth = Math.max(mousePanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -991,7 +1141,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildProbePanel() {
         probePanel = new JPanel();
-        probePanel.add(surRender.getProbeDialog().getMainPanel());
+        if ( surRender != null ) {
+            probePanel.add(surRender.getProbeDialog().getMainPanel());
+          } else if ( surView != null ) {
+          	probePanel.add(surView.getProbeDialog().getMainPanel());
+          }
         maxPanelWidth = Math.max(probePanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -1054,7 +1208,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildSurfacePanel() {
         surfacePanel = new JPanel();
-        surfacePanel.add(surRender.getSurfaceDialog().getMainPanel());
+        if ( surRender != null ) {
+            surfacePanel.add(surRender.getSurfaceDialog().getMainPanel());
+           } else if ( surView != null ) { 
+           	surfacePanel.add(surView.getSurfaceDialog().getMainPanel());
+           }
         maxPanelWidth = Math.max(surfacePanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -1063,7 +1221,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildViewPanel() {
         viewPanel = new JPanel();
-        viewPanel.add(surRender.getViewDialog().getMainPanel());
+        if ( surRender != null ) {
+            viewPanel.add(surRender.getViewDialog().getMainPanel());
+          } else if ( surView != null ) {
+          	viewPanel.add(surView.getViewDialog().getMainPanel());
+          }
         maxPanelWidth = Math.max(viewPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -1147,6 +1309,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 isSurfaceRenderEnable = true;
             }
 
+            if ((leftPanelRenderMode == SURFACEVIEW) ) {
+                isSurfaceViewEnable = true;
+            }
+
+            
             if ((leftPanelRenderMode == RAYCAST) || (rightPanelRenderMode == RAYCAST)) {
                 isRayCastEnable = true;
             }
@@ -1166,12 +1333,34 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 isEndoscopyEnable = true;
             }
 
+            
             serif12 = MipavUtil.font12;
             serif12B = MipavUtil.font12B;
             config = SimpleUniverse.getPreferredConfiguration();
             progressBar.updateValueImmed(5);
+            
+            if ( isSurfaceViewEnable ) {
+           	    progressBar.setMessage("Constructing surface view...");
 
-            if (isSurfaceRenderEnable) {
+                // TODO: Check 3D support from the card, and report to the user if the card support 3D or not.
+                surView = new SurfaceView(imageA, LUTa, imageB, LUTb, this, config, progressBar);
+               
+
+                if (surView != null) {
+               	 surView.configureVolumeFrame();
+                }
+
+                m_akPlaneRender = new PlaneRender[3];
+                m_akPlaneRender[0] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.AXIAL,
+                                                     false);
+                m_akPlaneRender[1] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.SAGITTAL,
+                                                     false);
+                m_akPlaneRender[2] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.CORONAL,
+                                                     false);
+           	
+            }
+           
+            if (isSurfaceRenderEnable ) {
                 progressBar.setMessage("Constructing surface renderer...");
 
                 // TODO: Check 3D support from the card, and report to the user if the card support 3D or not.
@@ -1332,6 +1521,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             surRender = null;
         }
 
+        if (surView != null) {
+        	surView.close();
+        	surView = null;
+        }
+        
         if (raycastRender != null) {
             raycastRender.close();
             raycastRender = null;
@@ -1711,7 +1905,13 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @return  the rfa probe panel
      */
     public JPanelProbe getProbeDialog() {
-        return surRender.getProbeDialog();
+    	if ( surRender != null ) {
+            return surRender.getProbeDialog();
+      	} else if ( surView != null ){
+      		return surView.getProbeDialog();
+      	} else {
+      		return null;
+      	}
     }
 
     /**
@@ -1868,7 +2068,13 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @return  boolean <code>true</code> Geodesic drawing enabled, <code>false</code> Geodesic disable.
      */
     public boolean isGeodesicEnable() {
-        return surRender.getGeodesicPanel().isGeodesicEnable();
+    	if ( surRender != null ) {
+            return surRender.getGeodesicPanel().isGeodesicEnable();
+      	} else if ( surView != null ) {
+      		return surView.getGeodesicPanel().isGeodesicEnable();
+      	} else {
+      		return false;
+      	}
     }
 
     /**
@@ -2160,8 +2366,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void removeProbeLine() {
 
-        if (surRender != null) {
+    	if (surRender != null) {
             surRender.getProbeDialog().removeProbingPath();
+        } else if ( surView != null ) {
+        	surView.getProbeDialog().removeProbingPath();
         }
     }
 
@@ -2330,6 +2538,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         if (surRender != null) {
             surRender.setMaterialShininess(value);
         }
+        
+        if (surView != null) {
+        	surView.setMaterialShininess(value);
+        }
     }
 
     /**
@@ -2473,8 +2685,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].setCenter(center);
         }
-
-        surRender.setCenter(center);
+        
+        if ( surRender != null ) {
+           surRender.setCenter(center);
+        }
     }
 
     /**
@@ -2744,9 +2958,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void updateProbePos() {
 
-        if (surRender != null) {
-            surRender.updateProbePos();
-        }
+    	 if (surRender != null) {
+             surRender.updateProbePos();
+         }
+         else if (surView != null) {
+             surView.updateProbePos();
+         }
     }
 
     /**
@@ -2886,9 +3103,21 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
         redBorder = BorderFactory.createCompoundBorder(redline, compound);
 
-        buildLabelPanel();
-        buildHistoLUTPanel();
-        buildOpacityPanel();
+        if ( isSurfaceViewEnable ) {
+            buildDisplayPanel();
+            buildViewPanel();
+            buildLightPanel();
+            buildClipPanel();
+            buildSurfacePanel();
+            buildProbePanel();
+            buildCameraPanel();
+            buildMousePanel();
+            buildGeodesic();
+        } else {
+            buildLabelPanel();
+            buildHistoLUTPanel();
+            buildOpacityPanel();
+        }
 
         if (isEndoscopyEnable) {
             buildFlythruPanel();
@@ -3009,20 +3238,25 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             imagePanel.add(raycastRender.getCanvas(), BorderLayout.CENTER);
         } else if (leftPanelRenderMode == SHEARWARP) {
             imagePanel.add(shearwarpRender.getCanvas(), BorderLayout.CENTER);
+        } else if ( leftPanelRenderMode == SURFACEVIEW ) {
+        	imagePanel.add(surView.getCanvas(), BorderLayout.CENTER);
         }
+
 
         int imagePanelWidth = (int) (screenWidth * 0.51f);
         int imagePanelHeight = (int) (screenHeight * 0.43f);
 
+        if ( isSurfaceViewEnable ) imagePanelHeight = (int) (screenHeight * 0.7f);
+        
         imagePanel.setPreferredSize(new Dimension(imagePanelWidth, imagePanelHeight));
         imagePanel.setMinimumSize(new Dimension(500, 500));
         imagePanel.setBorder(compound);
 
         rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, imagePanel, triImagePanel);
 
-        rightPane.setOneTouchExpandable(true);
+        rightPane.setOneTouchExpandable(false);
         rightPane.setDividerSize(6);
-        rightPane.setContinuousLayout(true);
+        rightPane.setContinuousLayout(false);
         rightPane.setResizeWeight(1);
 
         tabbedPane.setPreferredSize(new Dimension(maxPanelWidth, tabbedPane.getPreferredSize().height));
@@ -3032,7 +3266,14 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         tabPanel.add(tabbedPane);
         tabPanel.setMinimumSize(new Dimension(maxPanelWidth, 789));
 
-        JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabPanel, rightPane);
+        // TODO: Now, Just for the hack..., this will be improved later.
+        // In surface view mode, only include the imagePanel.   End goal is to get rid of tri-planar view. 
+        JSplitPane mainPane;
+        if ( isSurfaceViewEnable ) {
+           mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabPanel, imagePanel);
+        } else {
+           mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabPanel, rightPane);
+        }
 
         mainPane.setOneTouchExpandable(true);
         mainPane.setDividerSize(6);
@@ -3055,7 +3296,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         sculptWidth = imagePanelWidth - (2 * getInsets().left);
         sculptHeight = imagePanelHeight - getInsets().top - getInsets().bottom;
 
-        surRender.getSculptorPanel().setFrameSize(sculptWidth, sculptHeight);
+        if ( surRender != null ) {
+            surRender.getSculptorPanel().setFrameSize(sculptWidth, sculptHeight);
+        }
     }
 
     /**
@@ -3117,8 +3360,13 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     private void addToolbar() {
         etchedBorder = BorderFactory.createEtchedBorder();
         toolbarBuilder = new ViewToolBarBuilder(this);
-        buildViewToolbar();
 
+        if ( isSurfaceViewEnable ) {
+            buildSurfaceViewToolbar();	
+         } else {
+            buildViewToolbar();
+         }
+        
         if (isEndoscopyEnable) {
             buildFlyThruToolbar();
         }
@@ -3327,6 +3575,68 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         volToolBar.add(ViewToolBarBuilder.makeSeparator());
     }
 
+    /**
+     * The the top one volume view toolbar.
+     */
+    private void buildSurfaceViewToolbar() {
+        viewToolBar = new JToolBar();
+        viewToolBar.setBorder(etchedBorder);
+        viewToolBar.setBorderPainted(true);
+        viewToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
+     
+        viewToolBar.setLayout(new GridBagLayout());
+        viewToolBar.setFloatable(false);
+        
+        viewToolBar.add(toolbarBuilder.buildButton("SurfaceDialog", "Add surface to viewer", "isosurface"));
+        viewToolBar.add(toolbarBuilder.buildButton("Geodesic", "Draw geodesic curves on the surface", "geodesic"));
+        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+       //  viewToolBar.add(toolbarBuilder.buildButton("Mouse", "Record mouse changes", "camcorder"));
+        viewToolBar.add(toolbarBuilder.buildButton("Capture", "Capture screen shot", "camera"));
+        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+        viewToolBar.add(toolbarBuilder.buildButton("Box", "Display options", "perspective"));
+        viewToolBar.add(toolbarBuilder.buildButton("ViewControls", "View mode", "mousecontrol"));
+        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+        
+       
+        clipPlaneButton = toolbarBuilder.buildButton("Clipping", "Clipping Plane", "clip");
+        clipPlaneButton.setEnabled(true);
+        viewToolBar.add(clipPlaneButton);
+        clipButton = toolbarBuilder.buildButton("InvokeClipping", "Enable all clipping planes", "clipall");
+        clipButton.setEnabled(true);
+        viewToolBar.add(clipButton);
+        clipDisableButton = toolbarBuilder.buildButton("DisableClipping", "Disable all clipping planes", "disableclip");
+        clipDisableButton.setEnabled(true);
+        viewToolBar.add(clipDisableButton);
+        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+        
+        viewToolBar.add(toolbarBuilder.buildButton("ChangeLight", "Add light bulb to viewer", "lightsmall"));
+        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+
+        rfaButton = toolbarBuilder.buildButton("RFA", "Add probe to viewer", "rfa");
+        viewToolBar.add(rfaButton);
+
+                
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.gridx = 35;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.weightx = 1;
+        viewToolBar.add(getRendererProgressBar(), gbc);
+
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        panelToolbar.add(viewToolBar, gbc);
+
+    }
+    
     /**
      * The the top one volume view toolbar.
      */
