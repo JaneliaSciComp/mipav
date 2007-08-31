@@ -109,10 +109,9 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     			(area[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1]) + "\t(" + xCenter[i] + "," + yCenter[i] + ")\n";
     			                                                                      
     			
-    			System.err.println(outputString);
     		}
     	}
-    	
+        System.err.println(outputString);
     	ViewUserInterface.getReference().getMessageFrame().append(outputString, ViewJFrameMessage.DATA);
     }
     
@@ -176,10 +175,11 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     			(volume[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2]) + 
     			"\t(" + xCenter[i] + "," + yCenter[i] + "," + zCenter[i] + ")\n";
     			
-    			System.err.println(outputString);
+    			
     		}
     	}
-    	
+        
+        System.err.println(outputString);
     	ViewUserInterface.getReference().getMessageFrame().append(outputString, ViewJFrameMessage.DATA);
     }
 }
