@@ -149,17 +149,17 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
         // ViewJFrameImage imageFrame = null;
 
-        if ((!loadCheckBox.isSelected()) && (maskImage != null)) {
-            maskImage.disposeLocal();
-            maskImage = null;
-        }
-
         if (algorithm instanceof AlgorithmQuantify) {
             image.clearMask();
 
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
+        }
+        
+        if ((!loadCheckBox.isSelected()) && (maskImage != null)) {
+            maskImage.disposeLocal();
+            maskImage = null;
         }
 
         System.gc();
