@@ -285,8 +285,8 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
                         sameDims = compareDimensions(image, img);
 
                         if (sameDims) {
-                            if ((img.getType() == ModelStorageBase.BOOLEAN) || (img.getType() == ModelStorageBase.BYTE) ||
-                                (img.getType() == ModelStorageBase.UBYTE) || (img.getType() == ModelStorageBase.SHORT)) {
+                            if ((img.getType() == ModelStorageBase.BOOLEAN) || (img.getType() == ModelStorageBase.UBYTE) ||
+                                (img.getType() == ModelStorageBase.SHORT)) {
                                 comboBoxImage.addItem(name);
                             }
                         }
