@@ -75,7 +75,7 @@ public class ReminderThread extends Thread {
                     Method method = (Method) value;
 
                     try {
-                        method.invoke(object, null);
+                        method.invoke(object, (Object[]) null);
                     } catch (Exception exception) {
                         subscribersHashtable.remove(object);
                     }
