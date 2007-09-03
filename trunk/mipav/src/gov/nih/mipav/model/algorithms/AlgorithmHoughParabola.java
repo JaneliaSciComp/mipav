@@ -7,6 +7,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
+import java.text.DecimalFormat;
 
 /**
  * [(y - vy)*cos(phi) - (x - vx)*sin(phi)]**2 =
@@ -62,12 +63,12 @@ import java.io.*;
  *  (dy/dx) = ((x-vx)*cos(phi)*sin(phi) + (y - vy) + (y - vy)*((sin(phi))^2)/((y - vy)*cos(phi)*sin(phi) + (x - vx) + (x - vx)*((cos(phi))^2)
  *  Using sin(2*phi) = 2*sin(phi)*cos(phi), ((cos(phi))^2) = (1/2)*(1 + cos(2*phi)), ((sin(phi)^2) = (1/2)*(1 - cos(2*phi))
  *  (dy/dx) = ((x - vx)*sin(2*phi) + 3*(y - vy)- (y - vy)*cos(2*phi))/((y - vy)*sin(2*phi) + 3*(x - vx)+ (x - vx)*cos(2*phi))
- *  Note that 4 possible values of phi, 2 sets of values 180 degrees can be found.
+ *  Note that 4 possible values of phi, 2 sets of values 180 degrees apart can be found.
  *  Without slope you can only calculate p.  With slope you can calculate both phi and p.
  *  
  *  d*cos(2*phi) + e*sin(2*phi) + f = 0
  *  -d*cos(2*phi) = e*sin(2*phi) + f
- *  d^2*cos(2*phi)^2 = e^2 + 2*e*f*sin(2*phi) + f^2 = 0
+ *  d^2*cos(2*phi)^2 = e^2*sin(2*phi)^2 + 2*e*f*sin(2*phi) + f^2 = 0
  *  d^2 - d^2*sin(2*phi)^2 = e^2*sin(2*phi)^2 + 2*e*f*sin(2*phi) + f^2 = 0
  *  (d^2 + e^2)*sin(2*phi)^2 + 2*e*f*sin(2*phi) + (f^2 - d^2) = 0
  *  sin(2*phi) = (-2*e*f +- sqrt(4*e^2*f^2 - 4*(d^2 + e^2)*(f^2 - d^2)))/(2*(d^2 + e^2))
@@ -198,7 +199,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         short[] countBuffer;
         float pBuffer[];
         float phiBuffer[] = null;
-        boolean test = false;
+        boolean test = true;
         int largestValue;
         int largestIndex;
         int numParabolasFound;
@@ -215,7 +216,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         double yVertex;
         double xvArray[];
         double yvArray[];
-        double phiArray[];
+        //double phiArray[];
         double phiScale;
         float pScale;
         int maxParabolaPoints;
@@ -229,8 +230,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         double denominator;
         double xdel;
         double ydel;
-        double sinArray[];
-        double cosArray[];
+        //double sinArray[];
+        //double cosArray[];
         int xy;
         int xyp;
         // 0 for x - xVertex negative, y - yVertex negative
@@ -333,6 +334,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         double phi[] = new double[2];
         double theta;
         int m1;
+        DecimalFormat dfmt = new DecimalFormat("0.##");
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -421,6 +423,21 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                 y = (int)Math.round(yVertex + 0.25*xf*xf);
                 if ((y >= 0) && (y < yDim)) {
                     index = (int)Math.round(xVal) + y * xDim;
+                    srcBuffer[index] = value;
+                }
+            }
+            
+            xVertex = (xDim-1)/4.0;
+            yVertex = (yDim-1)/4.0;
+            yStart = (int)(yVertex - 20);
+            yFinish = (int)(yVertex + 20);
+            ydel = (double)(yFinish - yStart)/(double)maxParabolaPoints;
+            for (j = 0; j <= maxParabolaPoints; j++) {
+                yVal = yStart + j * ydel;
+                yf = yVal - yVertex;
+                x = (int)Math.round(xVertex + 0.25*yf*yf);
+                if ((x >= 0) && (x < xDim)) {
+                    index = x + + (int)Math.round(yVal) * xDim;
                     srcBuffer[index] = value;
                 }
             }
@@ -844,8 +861,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     }
                     // Center all points for tangent point touching curve at (0, 0)
                     // That is, use an x axis and a y axis going thru the tangent point
-                    xpc = xPoints[sidePointsForTangent];
-                    ypc = yPoints[sidePointsForTangent];
+                    xpc = xPoints[presentSidePoints];
+                    ypc = yPoints[presentSidePoints];
                     for (k = 0; k < xPoints.length; k++) {
                         xPoints[k] = xPoints[k] - xpc;
                         yPoints[k] = yPoints[k] - ypc;
@@ -883,11 +900,11 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     for (k = 0; k < xPoints.length; k++) {
                         if (x1t == 0.0) {
                             // Infinite slope thru (0,0)
-                            d1 += Math.abs(xPoints[k]);
+                            d1 += Math.abs(yPoints[k]);
                         }
                         else if (y1t == 0.0) {
                             // Zero slope thru (0, 0)
-                            d1 += Math.abs(yPoints[k]);
+                            d1 += Math.abs(xPoints[k]);
                         }
                         else {
                             slope = y1t/x1t;
@@ -898,11 +915,11 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     for (k = 0; k < xPoints.length; k++) {
                         if (x2t == 0.0) {
                             // Infinite slope thru (0,0)
-                            d2 += Math.abs(xPoints[k]);
+                            d2 += Math.abs(yPoints[k]);
                         }
                         else if (y2t == 0.0) {
                             // Zero slope thru (0, 0)
-                            d2 += Math.abs(yPoints[k]);
+                            d2 += Math.abs(xPoints[k]);
                         }
                         else {
                             slope = y2t/x2t;
@@ -1179,11 +1196,18 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             }
             pTable[c] = pBuffer[largestIndex]/largestValue;
             countTable[c] = largestValue;
-            
+            ViewUserInterface.getReference().setDataText("Parabola # " + numParabolasFound + " found\n");
+            ViewUserInterface.getReference().setDataText(" x vertex = " + dfmt.format(xvTable[c]) + "\n");
+            ViewUserInterface.getReference().setDataText(" y vertex = " + dfmt.format(yvTable[c]) + "\n");
+            ViewUserInterface.getReference().setDataText(" phi = " + dfmt.format(phiTable[c] * 180/Math.PI) + " degrees\n");
+            ViewUserInterface.getReference().setDataText(" Vertex to focus distance = " + dfmt.format(pTable[c]) + "\n");
             // Zero hough buffer for next run
             for (i = 0; i < numBins; i++) {
                 countBuffer[i] = 0;
                 pBuffer[i] = 0.0f;
+                if (phiBins > 1) {
+                    phiBuffer[i] = 0.0f;
+                }
             }
             // zero all points in the source slice that contributed to this parabola
             // and find the endpoints of the parabola
@@ -1473,44 +1497,63 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                         xf = xVal - xvTable[i];
                         b = -2.0 * sinphi*(xf*cosphi + 2.0*pTable[i]);
                         cv = xf*xf*sinphi*sinphi - 4.0*pTable[i]*xf*cosphi;
-                        root = Math.sqrt(b*b - 4.0*a*cv);
-                        y1 = (int)Math.round(yvTable[i] + (-b - root)/(2.0 * a));
-                        y2 = (int)Math.round(yvTable[i] + (-b + root)/(2.0 * a));
-                        if ((y1 >= 0) && (y1 < yDim)) {
-                            index = (int)Math.round(xVal) + y1 * xDim;
-                            srcBuffer[index] = value;
-                        }
-                        if ((y2 >= 0) && (y2 < yDim)) {
-                            index = (int)Math.round(xVal) + y2 * xDim;
-                            srcBuffer[index] = value;
-                        }
+                        var = b*b - 4.0*a*cv;
+                        if (var >= 0.0) {
+                            root = Math.sqrt(var);
+                            y1 = (int)Math.round(yvTable[i] + (-b - root)/(2.0 * a));
+                            y2 = (int)Math.round(yvTable[i] + (-b + root)/(2.0 * a));
+                            if ((y1 >= 0) && (y1 < yDim)) {
+                                index = (int)Math.round(xVal) + y1 * xDim;
+                                srcBuffer[index] = value;
+                            }
+                            if ((y2 >= 0) && (y2 < yDim)) {
+                                index = (int)Math.round(xVal) + y2 * xDim;
+                                srcBuffer[index] = value;
+                            }
+                        } // if (var >= 0.0)
                     }
                 } // if (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) >= Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
                 else {
                     yStart = Math.min(yEndPoint[i][0], yEndPoint[i][1]);
                     yFinish = Math.max(yEndPoint[i][0], yEndPoint[i][1]);
                     ydel = (double)(yFinish - yStart)/(double)maxParabolaPoints;
-                    cosphi = Math.cos(phiTable[i]);
-                    sinphi = Math.sin(phiTable[i]); 
-                    a = sinphi * sinphi;
-                    for (j = 0; j <= maxParabolaPoints; j++) {
-                        yVal = yStart + j * ydel;
-                        yf = yVal - yvTable[i];
-                        b = -2.0 * cosphi * (yf*sinphi + 2.0*pTable[i]);
-                        cv = yf*yf*cosphi*cosphi - 4.0*pTable[i]*yf*sinphi;
-                        root = Math.sqrt(b*b - 4.0*a*cv);
-                        x1 = (int)Math.round(xvTable[i] + (-b - root)/(2.0 * a));
-                        x2 = (int)Math.round(xvTable[i] + (-b + root)/(2.0 * a));
-                        if ((x1 >= 0) && (x1 < xDim)) {
-                            index = x1 + (int)Math.round(yVal) * xDim;
-                            srcBuffer[index] = value;
+                    if (phiTable[i] != 0.0) {
+                        cosphi = Math.cos(phiTable[i]);
+                        sinphi = Math.sin(phiTable[i]); 
+                        a = sinphi * sinphi;
+                        for (j = 0; j <= maxParabolaPoints; j++) {
+                            yVal = yStart + j * ydel;
+                            yf = yVal - yvTable[i];
+                            b = -2.0 * cosphi * (yf*sinphi + 2.0*pTable[i]);
+                            cv = yf*yf*cosphi*cosphi - 4.0*pTable[i]*yf*sinphi;
+                            var = b*b - 4.0*a*cv;
+                            if (var >= 0.0) {
+                                root = Math.sqrt(var);
+                                x1 = (int)Math.round(xvTable[i] + (-b - root)/(2.0 * a));
+                                x2 = (int)Math.round(xvTable[i] + (-b + root)/(2.0 * a));
+                                if ((x1 >= 0) && (x1 < xDim)) {
+                                    index = x1 + (int)Math.round(yVal) * xDim;
+                                    srcBuffer[index] = value;
+                                }
+                                if ((x2 >= 0) && (x2 < xDim)) {
+                                    index = x2 + (int)Math.round(yVal) * xDim;
+                                    srcBuffer[index] = value;
+                                }
+                            } // if (var = 0.0)
                         }
-                        if ((x2 >= 0) && (x2 < xDim)) {
-                            index = x2 + (int)Math.round(yVal) * xDim;
-                            srcBuffer[index] = value;
+                    } // if (phiTable[i] != 0.0)
+                    else { // phiTable = 0.0
+                        for (j = 0; j < maxParabolaPoints; j++) {
+                            yVal = yStart + j * ydel;
+                            yf = yVal - yvTable[i];
+                            x1 = (int)Math.round(xvTable[i] + yf*yf/(4.0 * pTable[i]));
+                            if ((x1 >= 0) && (x1 < xDim)) {
+                                index = x1 + (int)Math.round(yVal) * xDim;
+                                srcBuffer[index] = value;
+                            }
                         }
-                    }
-                }
+                    } // else phiTable == 0.0
+                } // else (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) < Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
             } // if (selectedParabola[i])
         } // for (i = 0; i < numParabolaFound; i++)
         
