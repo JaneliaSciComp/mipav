@@ -240,7 +240,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         double theta1;
         double theta2;
         byte[] srcBuffer;
-        boolean test = true;
+        boolean test = false;
         double xCenter;
         double yCenter;
         float xCenterArray[];
