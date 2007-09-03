@@ -240,7 +240,7 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
         double theta1;
         double theta2;
         byte[] srcBuffer;
-        boolean test = false;
+        boolean test = true;
         double xCenter;
         double yCenter;
         float xCenterArray[];
@@ -1063,11 +1063,11 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     for (k = 0; k < xPoints.length; k++) {
                         if (x1t == 0.0) {
                             // Infinite slope thru (0,0)
-                            d1 += Math.abs(xPoints[k]);
+                            d1 += Math.abs(yPoints[k]);
                         }
                         else if (y1t == 0.0) {
                             // Zero slope thru (0, 0)
-                            d1 += Math.abs(yPoints[k]);
+                            d1 += Math.abs(xPoints[k]);
                         }
                         else {
                             slope = y1t/x1t;
@@ -1078,11 +1078,11 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     for (k = 0; k < xPoints.length; k++) {
                         if (x2t == 0.0) {
                             // Infinite slope thru (0,0)
-                            d2 += Math.abs(xPoints[k]);
+                            d2 += Math.abs(yPoints[k]);
                         }
                         else if (y2t == 0.0) {
                             // Zero slope thru (0, 0)
-                            d2 += Math.abs(yPoints[k]);
+                            d2 += Math.abs(xPoints[k]);
                         }
                         else {
                             slope = y2t/x2t;
@@ -1217,11 +1217,11 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                             for (k = 0; k < xPoints.length; k++) {
                                 if (x1t == 0.0) {
                                     // Infinite slope thru (0,0)
-                                    d1 += Math.abs(xPoints[k]);
+                                    d1 += Math.abs(yPoints[k]);
                                 }
                                 else if (y1t == 0.0) {
                                     // Zero slope thru (0, 0)
-                                    d1 += Math.abs(yPoints[k]);
+                                    d1 += Math.abs(xPoints[k]);
                                 }
                                 else {
                                     slope = y1t/x1t;
@@ -1232,11 +1232,11 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                             for (k = 0; k < xPoints.length; k++) {
                                 if (x2t == 0.0) {
                                     // Infinite slope thru (0,0)
-                                    d2 += Math.abs(xPoints[k]);
+                                    d2 += Math.abs(yPoints[k]);
                                 }
                                 else if (y2t == 0.0) {
                                     // Zero slope thru (0, 0)
-                                    d2 += Math.abs(yPoints[k]);
+                                    d2 += Math.abs(xPoints[k]);
                                 }
                                 else {
                                     slope = y2t/x2t;
