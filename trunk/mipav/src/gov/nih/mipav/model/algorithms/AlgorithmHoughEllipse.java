@@ -1024,8 +1024,8 @@ public class AlgorithmHoughEllipse extends AlgorithmBase {
                     }
                     // Center all points for tangent point touching curve at (0, 0)
                     // That is, use an x axis and a y axis going thru the tangent point
-                    xpc = xPoints[sidePointsForTangent];
-                    ypc = yPoints[sidePointsForTangent];
+                    xpc = xPoints[presentSidePoints];
+                    ypc = yPoints[presentSidePoints];
                     for (k = 0; k < xPoints.length; k++) {
                         xPoints[k] = xPoints[k] - xpc;
                         yPoints[k] = yPoints[k] - ypc;
