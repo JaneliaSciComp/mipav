@@ -309,7 +309,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         paramPanel.add(xvLabel, gbc);
 
         xvText = new JTextField(10);
-        xvText.setText(String.valueOf(xDim));
+        xvText.setText(String.valueOf(2*xDim));
         xvText.setFont(serif12);
         xvText.setEnabled(true);
         gbc.gridx = 1;
@@ -324,7 +324,7 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
         paramPanel.add(yvLabel, gbc);
 
         yvText = new JTextField(10);
-        yvText.setText(String.valueOf(yDim));
+        yvText.setText(String.valueOf(2*yDim));
         yvText.setFont(serif12);
         yvText.setEnabled(true);
         gbc.gridx = 1;
