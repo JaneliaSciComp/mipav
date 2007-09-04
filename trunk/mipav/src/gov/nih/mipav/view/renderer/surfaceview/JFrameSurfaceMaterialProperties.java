@@ -280,8 +280,10 @@ public class JFrameSurfaceMaterialProperties extends JFrame
      * Deletes all local data members.
      */
     public void dispose() {
-        m_kMaterialPanel.removeAll();
-        m_kMaterialPanel = null;
+    	if ( m_kMaterialPanel != null ) {
+           m_kMaterialPanel.removeAll();
+           m_kMaterialPanel = null;
+    	}
         m_kImagePanel[BEFORE].removeAll();
         m_kImagePanel[BEFORE] = null;
         m_kImagePanel[AFTER].removeAll();
