@@ -611,7 +611,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             }
 
             int min = Math.round(stepPerImage * s);
-            int max = Math.round(((float) (Math.round(stepPerImage * (s + 1)) - min)) / 2.0f);
+            int max = min + Math.round(((float) (Math.round(stepPerImage * (s + 1)) - min)) / 2.0f);
             AlgorithmSeparableConvolver xConvolver = null;
 
             if ((max - min) > 1) {
