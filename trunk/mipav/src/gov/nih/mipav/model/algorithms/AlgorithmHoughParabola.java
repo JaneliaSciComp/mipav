@@ -199,7 +199,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         short[] countBuffer;
         float pBuffer[];
         float phiBuffer[] = null;
-        boolean test = true;
+        boolean test = false;
         int largestValue;
         int largestIndex;
         int numParabolasFound;
@@ -222,7 +222,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         int maxParabolaPoints;
         float xvTable[];
         float yvTable[];
-        float phiTable[];
+        double phiTable[];
         float pTable[];
         int countTable[];
         double p;
@@ -992,7 +992,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         
         xvTable = new float[numParabolas];
         yvTable = new float[numParabolas];
-        phiTable = new float[numParabolas];
+        phiTable = new double[numParabolas];
         pTable = new float[numParabolas];
         countTable = new int[numParabolas];
         numParabolasFound = 0;
@@ -1489,35 +1489,59 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     xStart = Math.min(xEndPoint[i][0], xEndPoint[i][1]);
                     xFinish = Math.max(xEndPoint[i][0], xEndPoint[i][1]);
                     xdel = (double)(xFinish - xStart)/(double)maxParabolaPoints;
-                    cosphi = Math.cos(phiTable[i]);
-                    sinphi = Math.sin(phiTable[i]);
-                    a = cosphi * cosphi;
-                    for (j = 0; j <= maxParabolaPoints; j++) {
-                        xVal = xStart + j * xdel;
-                        xf = xVal - xvTable[i];
-                        b = -2.0 * sinphi*(xf*cosphi + 2.0*pTable[i]);
-                        cv = xf*xf*sinphi*sinphi - 4.0*pTable[i]*xf*cosphi;
-                        var = b*b - 4.0*a*cv;
-                        if (var >= 0.0) {
-                            root = Math.sqrt(var);
-                            y1 = (int)Math.round(yvTable[i] + (-b - root)/(2.0 * a));
-                            y2 = (int)Math.round(yvTable[i] + (-b + root)/(2.0 * a));
+                    if ((phiTable[i] != Math.PI/2.0) && (phiTable[i] != 3.0*Math.PI/2.0)) {
+                        cosphi = Math.cos(phiTable[i]);
+                        sinphi = Math.sin(phiTable[i]);
+                        a = cosphi * cosphi;
+                        for (j = 0; j <= maxParabolaPoints; j++) {
+                            xVal = xStart + j * xdel;
+                            xf = xVal - xvTable[i];
+                            b = -2.0 * sinphi*(xf*cosphi + 2.0*pTable[i]);
+                            cv = xf*xf*sinphi*sinphi - 4.0*pTable[i]*xf*cosphi;
+                            var = b*b - 4.0*a*cv;
+                            if (var >= 0.0) {
+                                root = Math.sqrt(var);
+                                y1 = (int)Math.round(yvTable[i] + (-b - root)/(2.0 * a));
+                                y2 = (int)Math.round(yvTable[i] + (-b + root)/(2.0 * a));
+                                if ((y1 >= 0) && (y1 < yDim)) {
+                                    index = (int)Math.round(xVal) + y1 * xDim;
+                                    srcBuffer[index] = value;
+                                }
+                                if ((y2 >= 0) && (y2 < yDim)) {
+                                    index = (int)Math.round(xVal) + y2 * xDim;
+                                    srcBuffer[index] = value;
+                                }
+                            } // if (var >= 0.0)
+                        }
+                    } // if ((phiTable[i] != Math.PI/2.0) && (phiTable[i] != 3.0*Math.PI/2.0))
+                    else if (phiTable[i] == Math.PI/2.0) {
+                        for (j = 0; j <= maxParabolaPoints; j++) {
+                            xVal = xStart + j * xdel;
+                            xf = xVal - xvTable[i];
+                            y1 = (int)Math.round(yvTable[i] + xf*xf/(4.0 * pTable[i]));
                             if ((y1 >= 0) && (y1 < yDim)) {
                                 index = (int)Math.round(xVal) + y1 * xDim;
                                 srcBuffer[index] = value;
                             }
-                            if ((y2 >= 0) && (y2 < yDim)) {
-                                index = (int)Math.round(xVal) + y2 * xDim;
+                        }
+                    } // else if (phiTable[i] == Math.PI/2.0)
+                    else { // phiTable[i] == 3.0 * Math.PI/2.0
+                        for (j = 0; j <= maxParabolaPoints; j++) {
+                            xVal = xStart + j * xdel;
+                            xf = xVal - xvTable[i];
+                            y1 = (int)Math.round(yvTable[i] - xf*xf/(4.0 * pTable[i]));
+                            if ((y1 >= 0) && (y1 < yDim)) {
+                                index = (int)Math.round(xVal) + y1 * xDim;
                                 srcBuffer[index] = value;
                             }
-                        } // if (var >= 0.0)
-                    }
+                        }    
+                    } // else phiTable[i] == 3.0 * Math.PI/2.0
                 } // if (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) >= Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
                 else {
                     yStart = Math.min(yEndPoint[i][0], yEndPoint[i][1]);
                     yFinish = Math.max(yEndPoint[i][0], yEndPoint[i][1]);
                     ydel = (double)(yFinish - yStart)/(double)maxParabolaPoints;
-                    if (phiTable[i] != 0.0) {
+                    if ((phiTable[i] != 0.0) && (phiTable[i] != Math.PI)) {
                         cosphi = Math.cos(phiTable[i]);
                         sinphi = Math.sin(phiTable[i]); 
                         a = sinphi * sinphi;
@@ -1542,7 +1566,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                             } // if (var = 0.0)
                         }
                     } // if (phiTable[i] != 0.0)
-                    else { // phiTable = 0.0
+                    else if (phiTable[i] == 0.0){ // phiTable = 0.0
                         for (j = 0; j < maxParabolaPoints; j++) {
                             yVal = yStart + j * ydel;
                             yf = yVal - yvTable[i];
@@ -1552,7 +1576,18 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                 srcBuffer[index] = value;
                             }
                         }
-                    } // else phiTable == 0.0
+                    } // else if (phiTable[i] == 0.0)
+                    else { // phiTable[i] == Math.PI
+                        for (j = 0; j < maxParabolaPoints; j++) {
+                            yVal = yStart + j * ydel;
+                            yf = yVal - yvTable[i];
+                            x1 = (int)Math.round(xvTable[i] - yf*yf/(4.0 * pTable[i]));
+                            if ((x1 >= 0) && (x1 < xDim)) {
+                                index = x1 + (int)Math.round(yVal) * xDim;
+                                srcBuffer[index] = value;
+                            }
+                        }  
+                    } // else phiTable[i] == Math.PI
                 } // else (Math.abs(xEndPoint[i][1] - xEndPoint[i][0]) < Math.abs(yEndPoint[i][1] - yEndPoint[i][0]))
             } // if (selectedParabola[i])
         } // for (i = 0; i < numParabolaFound; i++)
