@@ -33,7 +33,7 @@ public class JDialogHoughParabolaChoice extends JDialogBase {
     
     private int yDim;
     
-    private float phiTable[];
+    private double phiTable[];
     
     private int phiBins;
     
@@ -73,7 +73,7 @@ public class JDialogHoughParabolaChoice extends JDialogBase {
      * @param  selectedParabola
      */
     public JDialogHoughParabolaChoice(Frame theParentFrame, float xvTable[], int xDim, float yvTable[], int yDim,
-                                  float phiTable[], int phiBins, float pTable[], float pMin, float pMax,
+                                  double phiTable[], int phiBins, float pTable[], float pMin, float pMax,
                                   int countTable[], boolean selectedParabola[]) {
         super(theParentFrame, true);
         this.xvTable = xvTable;
