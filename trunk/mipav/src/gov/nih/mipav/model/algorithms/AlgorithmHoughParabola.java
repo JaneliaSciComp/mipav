@@ -332,9 +332,12 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
         double twophi2;
         int numPhi = 0;
         double phi[] = new double[2];
-        double theta;
+        double theta = 0.0;
         int m1;
         DecimalFormat dfmt = new DecimalFormat("0.##");
+        double cosphit;
+        double sinphit;
+        double diff;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -413,8 +416,9 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             yVertex = (yDim-1)/2.0;
            
             // y = (int)Math.round(yVertex + 0.25*(x - xVertex)*(x - xVertex));
-            // p = 1.0;    
-            xStart = (int)(xVertex - 20);
+            // p = 1.0; 
+            // 90 degrees
+            /*xStart = (int)(xVertex - 20);
             xFinish = (int)(xVertex + 20);
             xdel = (double)(xFinish - xStart)/(double)maxParabolaPoints;
             for (j = 0; j <= maxParabolaPoints; j++) {
@@ -425,9 +429,24 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     index = (int)Math.round(xVal) + y * xDim;
                     srcBuffer[index] = value;
                 }
-            }
+            }*/
             
-            xVertex = (xDim-1)/4.0;
+            // 270 degrees
+            /*xStart = (int)(xVertex - 20);
+            xFinish = (int)(xVertex + 20);
+            xdel = (double)(xFinish - xStart)/(double)maxParabolaPoints;
+            for (j = 0; j <= maxParabolaPoints; j++) {
+                xVal = xStart + j * xdel;
+                xf = xVal - xVertex;
+                y = (int)Math.round(yVertex - 0.25*xf*xf);
+                if ((y >= 0) && (y < yDim)) {
+                    index = (int)Math.round(xVal) + y * xDim;
+                    srcBuffer[index] = value;
+                }
+            }*/
+            
+            // 0 degrees
+            /*xVertex = (xDim-1)/4.0;
             yVertex = (yDim-1)/4.0;
             yStart = (int)(yVertex - 20);
             yFinish = (int)(yVertex + 20);
@@ -440,6 +459,54 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                     index = x + + (int)Math.round(yVal) * xDim;
                     srcBuffer[index] = value;
                 }
+            }*/
+            
+            // 180 degrees
+            /*xVertex = (xDim-1)/2.0;
+            yVertex = (yDim-1)/2.0;
+            yStart = (int)(yVertex - 20);
+            yFinish = (int)(yVertex + 20);
+            ydel = (double)(yFinish - yStart)/(double)maxParabolaPoints;
+            for (j = 0; j <= maxParabolaPoints; j++) {
+                yVal = yStart + j * ydel;
+                yf = yVal - yVertex;
+                x = (int)Math.round(xVertex - 0.25*yf*yf);
+                if ((x >= 0) && (x < xDim)) {
+                    index = x + + (int)Math.round(yVal) * xDim;
+                    srcBuffer[index] = value;
+                }
+            }*/
+            
+            // 45 degrees
+            //p = 1
+            // If phi is set at 45 degrees, wrong answer may result only pMin is made large enough.
+            xVertex = (xDim-1)/2.0;
+            yVertex = (yDim-1)/2.0;
+            xStart = (int)(xVertex - 20);
+            xFinish = (int)(xVertex + 20);
+            xdel = (double)(xFinish - xStart)/(double)maxParabolaPoints;
+            cosphit = Math.cos(Math.PI/4.0);
+            sinphit = Math.sin(Math.PI/4.0);
+            a = cosphit * cosphit;
+            for (j = 0; j <= maxParabolaPoints; j++) {
+                xVal = xStart + j * xdel;
+                xf = xVal - xVertex;
+                b = -2.0 * sinphit*(xf*cosphit + 2.0);
+                cv = xf*xf*sinphit*sinphit - 4.0*xf*cosphit;
+                var = b*b - 4.0*a*cv;
+                if (var >= 0.0) {
+                    root = Math.sqrt(var);
+                    y1 = (int)Math.round(yVertex + (-b - root)/(2.0 * a));
+                    y2 = (int)Math.round(yVertex + (-b + root)/(2.0 * a));
+                    if ((y1 >= 0) && (y1 < yDim)) {
+                        index = (int)Math.round(xVal) + y1 * xDim;
+                        srcBuffer[index] = value;
+                    }
+                    if ((y2 >= 0) && (y2 < yDim)) {
+                        index = (int)Math.round(xVal) + y2 * xDim;
+                        srcBuffer[index] = value;
+                    }
+                } // if (var >= 0.0)
             }
         } // if (test)
         
@@ -1072,7 +1139,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                     else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
                                         twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
                                     }
-                                    if (Math.abs(theta - twophi1/2.0) < Math.PI/2.0) {
+                                    diff = Math.abs(theta - twophi1/2.0);
+                                    if ((diff < Math.PI/2.0) || (diff > 3.0*Math.PI/2.0)) {
                                         phi[0] = twophi1/2.0;
                                     }
                                     else {
@@ -1095,7 +1163,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                     else { // (sin2phi2 < 0.0) && (cos2phi2 >= 0.0)
                                         twophi2 = 2.0*Math.PI + Math.asin(sin2phi2);
                                     }
-                                    if (Math.abs(theta - twophi2/2.0) < Math.PI/2.0) {
+                                    diff = Math.abs(theta - twophi2/2.0);
+                                    if ((diff < Math.PI/2.0) || (diff > 3.0*Math.PI/2.0)) {
                                         phi[numPhi] = twophi2/2.0;
                                     }
                                     else {
@@ -1120,7 +1189,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                     else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
                                         twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
                                     }
-                                    if (Math.abs(theta - twophi1/2.0) < Math.PI/2.0) {
+                                    diff = Math.abs(theta - twophi1/2.0);
+                                    if ((diff < Math.PI/2.0) || (diff > 3.0 * Math.PI/2.0)) {
                                         phi[0] = twophi1/2.0;
                                     }
                                     else {
@@ -1201,6 +1271,7 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
             ViewUserInterface.getReference().setDataText(" y vertex = " + dfmt.format(yvTable[c]) + "\n");
             ViewUserInterface.getReference().setDataText(" phi = " + dfmt.format(phiTable[c] * 180/Math.PI) + " degrees\n");
             ViewUserInterface.getReference().setDataText(" Vertex to focus distance = " + dfmt.format(pTable[c]) + "\n");
+            ViewUserInterface.getReference().setDataText(" Points counted = " + countTable[c] + "\n");
             // Zero hough buffer for next run
             for (i = 0; i < numBins; i++) {
                 countBuffer[i] = 0;
@@ -1282,7 +1353,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                     else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
                                         twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
                                     }
-                                    if (Math.abs(theta - twophi1/2.0) < Math.PI/2.0) {
+                                    diff = Math.abs(theta - twophi1/2.0);
+                                    if ((diff < Math.PI/2.0) || (diff > 3.0 * Math.PI/2.0)){
                                         phi[0] = twophi1/2.0;
                                     }
                                     else {
@@ -1305,7 +1377,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                     else { // (sin2phi2 < 0.0) && (cos2phi2 >= 0.0)
                                         twophi2 = 2.0*Math.PI + Math.asin(sin2phi2);
                                     }
-                                    if (Math.abs(theta - twophi2/2.0) < Math.PI/2.0) {
+                                    diff = Math.abs(theta - twophi2/2.0);
+                                    if ((diff < Math.PI/2.0) || (diff > 3.0*Math.PI/2.0)) {
                                         phi[numPhi] = twophi2/2.0;
                                     }
                                     else {
@@ -1330,7 +1403,8 @@ public class AlgorithmHoughParabola extends AlgorithmBase {
                                     else { // (sin2phi1 < 0.0) && (cos2phi1 >= 0.0)
                                         twophi1 = 2.0*Math.PI + Math.asin(sin2phi1);
                                     }
-                                    if (Math.abs(theta - twophi1/2.0) < Math.PI/2.0) {
+                                    diff = Math.abs(theta - twophi1/2.0);
+                                    if ((diff < Math.PI/2.0) || (diff > 3.0*Math.PI/2.0)) {
                                         phi[0] = twophi1/2.0;
                                     }
                                     else {
