@@ -3438,6 +3438,7 @@ public class SurfaceRender extends RenderViewBase {
             SoftwareVertexProperty kVertexProp = new SoftwareVertexProperty();
 
             kVertexProp.enableDiffuse(true);
+            kVertexProp.enableSpecular(true);
 
             // Obtain the extents for image A.
             int[] aiExtents = imageA.getExtents();
