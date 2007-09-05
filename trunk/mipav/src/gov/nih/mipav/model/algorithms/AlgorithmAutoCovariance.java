@@ -443,6 +443,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
             return;
         }
+        
+        fireProgressStateChanged(srcImage.getImageName(), "Calculating autocovariance ...");
 
         if (destImageR != null) {
 
@@ -1022,7 +1024,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             return;
         }
 
-
+        fireProgressStateChanged(srcImage.getImageName(), "Calculating autocovariance ...");
+        
         for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
             newValue = deltaZ * 100 / zDim;
 
@@ -1280,6 +1283,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
             return;
         }
+        
+        fireProgressStateChanged(srcImage.getImageName(), "Calculating autocovariance ...");
 
         if (destImageR != null) {
 
@@ -1972,6 +1977,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
             return;
         }
+        
+        fireProgressStateChanged(srcImage.getImageName(), "Calculating autocovariance ...");
 
         for (i = 0; i < resultBuffer.length; i++) {
             resultBuffer[i] = 0.0f;
@@ -2134,6 +2141,8 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
             return;
         }
+        
+        fireProgressStateChanged(srcImage.getImageName(), "Calculating autocovariance ...");
 
         if (destImageR != null) {
 
