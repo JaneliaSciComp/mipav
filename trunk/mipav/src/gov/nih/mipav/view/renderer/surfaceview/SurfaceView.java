@@ -1383,7 +1383,9 @@ public class SurfaceView extends SurfaceRender {
         /* Set the transforms for displaying the slices and boxes: */
         for ( int i = 0; i < 3; i++ )
         {
-            m_kObjBoxSliceProbe_TG[i].setTransform(m_kProbeTransform);
+        	if ( m_kObjBoxSliceProbe_TG[i] != null ) {
+               m_kObjBoxSliceProbe_TG[i].setTransform(m_kProbeTransform);
+        	}
             m_kObjPlaneProbe_TG[i].setTransform(m_kProbeTransform);
         }
     }

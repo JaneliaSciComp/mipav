@@ -796,17 +796,19 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             windowClosing(null);
         } else if (command.equals("ShowAxes")) {
             boolean showAxes = menuObj.isMenuItemSelected("Show axes");
-
-            for (int iPlane = 0; iPlane < 3; iPlane++) {
-                m_akPlaneRender[iPlane].showAxes(showAxes);
-                m_akPlaneRender[iPlane].update();
+            if ( m_akPlaneRender != null ) {
+	            for (int iPlane = 0; iPlane < 3; iPlane++) {
+	                m_akPlaneRender[iPlane].showAxes(showAxes);
+	                m_akPlaneRender[iPlane].update();
+	            }
             }
         } else if (command.equals("ShowXHairs")) {
             boolean showXHairs = menuObj.isMenuItemSelected("Show crosshairs");
-
-            for (int iPlane = 0; iPlane < 3; iPlane++) {
-                m_akPlaneRender[iPlane].showXHairs(showXHairs);
-                m_akPlaneRender[iPlane].update();
+            if ( m_akPlaneRender != null ) {
+		        for (int iPlane = 0; iPlane < 3; iPlane++) {
+		            m_akPlaneRender[iPlane].showXHairs(showXHairs);
+		            m_akPlaneRender[iPlane].update();
+		        }
             }
         } else if (command.equals("RFAToolbar")) {
             boolean showRFA = menuObj.isMenuItemSelected("RFA toolbar");
@@ -1349,15 +1351,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 if (surView != null) {
                	 surView.configureVolumeFrame();
                 }
-
-                m_akPlaneRender = new PlaneRender[3];
-                m_akPlaneRender[0] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.AXIAL,
-                                                     false);
-                m_akPlaneRender[1] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.SAGITTAL,
-                                                     false);
-                m_akPlaneRender[2] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, FileInfoBase.CORONAL,
-                                                     false);
-           	
             }
            
             if (isSurfaceRenderEnable ) {
@@ -1458,9 +1451,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Disable target point for the RFA probe from within the plane renderer.
      */
     public void disableTargetPointPicking() {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].enableTargetPointPicking(false);
+        if ( m_akPlaneRender != null ) {
+	        for (int iPlane = 0; iPlane < 3; iPlane++) {
+	            m_akPlaneRender[iPlane].enableTargetPointPicking(false);
+	        }
         }
     }
 
@@ -1574,12 +1568,14 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             resampleDialog = null;
         }
 
-        for (int i = 0; i < 3; i++) {
-
-            if (m_akPlaneRender[i] != null) {
-                m_akPlaneRender[i].disposeLocal();
-                m_akPlaneRender[i] = null;
-            }
+        if ( m_akPlaneRender != null ) {
+	        for (int i = 0; i < 3; i++) {
+	
+	            if (m_akPlaneRender[i] != null) {
+	                m_akPlaneRender[i].disposeLocal();
+	                m_akPlaneRender[i] = null;
+	            }
+	        }
         }
 
         if (imageA != null) {
@@ -1782,10 +1778,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  kPoint  target point position
      */
     public void drawRFAPoint(Point3f kPoint) {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].drawRFAPoint(kPoint);
-            m_akPlaneRender[iPlane].update();
+        if ( m_akPlaneRender != null ) {
+		    for (int iPlane = 0; iPlane < 3; iPlane++) {
+		        m_akPlaneRender[iPlane].drawRFAPoint(kPoint);
+		        m_akPlaneRender[iPlane].update();
+		    }
         }
 
         surRender.drawRFAPoint(kPoint);
@@ -1795,9 +1792,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Enable target point for the RFA probe from within the plane renderer.
      */
     public void enableTargetPointPicking() {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].enableTargetPointPicking(true);
+        if ( m_akPlaneRender != null ) {
+		    for (int iPlane = 0; iPlane < 3; iPlane++) {
+		        m_akPlaneRender[iPlane].enableTargetPointPicking(true);
+		    }
         }
     }
 
@@ -2561,9 +2559,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     public void setPathPosition(Point3f kPosition, Point3f kScaledPosition) {
         Point3Df kCenter = new Point3Df(kPosition.x * imageA.getExtents()[0], kPosition.y * imageA.getExtents()[1],
                                         kPosition.z * imageA.getExtents()[2]);
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setCenter(kCenter);
+        if ( m_akPlaneRender != null ) {
+	        for (int iPlane = 0; iPlane < 3; iPlane++) {
+	            m_akPlaneRender[iPlane].setCenter(kCenter);
+	        }
         }
 
         surRender.setCenter(kCenter);
@@ -2595,9 +2594,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  RGBT  RGB table
      */
     public void setRGBTA(ModelRGB RGBT) {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].updateRGBTA(RGBT);
+        if ( m_akPlaneRender != null ) {
+		    for (int iPlane = 0; iPlane < 3; iPlane++) {
+		        m_akPlaneRender[iPlane].updateRGBTA(RGBT);
+		    }
         }
 
         if (surRender != null) {
@@ -2620,9 +2620,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  RGBT  RGB table
      */
     public void setRGBTB(ModelRGB RGBT) {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].updateRGBTB(RGBT);
+        if ( m_akPlaneRender != null ) {
+		    for (int iPlane = 0; iPlane < 3; iPlane++) {
+		        m_akPlaneRender[iPlane].updateRGBTB(RGBT);
+		    }
         }
 
         if (surRender != null) {
@@ -2681,9 +2682,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void setSliceFromPlane(Point3Df center) {
         setPositionLabels(center);
-
-        for (int i = 0; i < 3; i++) {
-            m_akPlaneRender[i].setCenter(center);
+        if ( m_akPlaneRender != null ) {
+	        for (int i = 0; i < 3; i++) {
+	            m_akPlaneRender[i].setCenter(center);
+	        }
         }
         
         if ( surRender != null ) {
@@ -2702,9 +2704,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         if (m_akPlaneRender == null) {
             return;
         }
-
         for (int i = 0; i < 3; i++) {
-
             if (m_akPlaneRender[i] != null) {
                 m_akPlaneRender[i].setCenter(center);
             }
@@ -2718,7 +2718,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  color  the new axis color attribute.
      */
     public void setSliceHairColor(int iView, Color color) {
-
+    	if (m_akPlaneRender == null) {
+            return;
+        }
+    	
         for (int iPlane = 0; iPlane < 3; iPlane++) {
             m_akPlaneRender[iPlane].setSliceHairColor(iView, new Color3f(color));
             m_akPlaneRender[iPlane].update();
@@ -2868,11 +2871,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public boolean updateImages() {
 
-        for (int i = 0; i < 3; i++) {
-
-            if (m_akPlaneRender[i] != null) {
-                m_akPlaneRender[i].updateData();
-            }
+        if ( m_akPlaneRender != null) {
+	        for (int i = 0; i < 3; i++) {
+	            if (m_akPlaneRender[i] != null) {
+	                m_akPlaneRender[i].updateData();
+	            }
+	        }
         }
 
         if (surRender != null) {
@@ -2898,12 +2902,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @return  boolean confirming successful update
      */
     public boolean updateImages(boolean forceShow) {
-
-        for (int i = 0; i < 3; i++) {
-
-            if (m_akPlaneRender[i] != null) {
-                m_akPlaneRender[i].updateData();
-            }
+        if ( m_akPlaneRender != null ) {
+	        for (int i = 0; i < 3; i++) {
+	            if (m_akPlaneRender[i] != null) {
+	                m_akPlaneRender[i].updateData();
+	            }
+	        }
         }
 
         if (surRender != null) {
@@ -2933,9 +2937,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @return  boolean confirming successful update
      */
     public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].updateLut(LUTa, LUTb);
+        if ( m_akPlaneRender != null ) {
+		    for (int iPlane = 0; iPlane < 3; iPlane++) {
+		        m_akPlaneRender[iPlane].updateLut(LUTa, LUTb);
+		    }
         }
 
         if (surRender != null) {
@@ -2970,9 +2975,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Causes the PlaneRender objects to update the texture maps when the underlying ModelImage changes.
      */
     public void updateSliceData() {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].updateData();
+        if ( m_akPlaneRender != null ) {
+		    for (int iPlane = 0; iPlane < 3; iPlane++) {
+		        m_akPlaneRender[iPlane].updateData();
+		    }
         }
     }
 
@@ -3151,69 +3157,69 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         if (isBrainsurfaceFlattenerEnable) {
             buildBrainsurfaceFlattener();
         }
-
-        JPanel panelAxial = new JPanel(new BorderLayout());
-
-        panelAxial.add(m_akPlaneRender[0].getCanvas(), BorderLayout.CENTER);
-
-        JPanel panelSagittal = new JPanel(new BorderLayout());
-
-        panelSagittal.add(m_akPlaneRender[1].getCanvas(), BorderLayout.CENTER);
-
-        JPanel panelCoronal = new JPanel(new BorderLayout());
-
-        panelCoronal.add(m_akPlaneRender[2].getCanvas(), BorderLayout.CENTER);
-
-        setTitle();
-
-        triImagePanel = new JPanel();
-        triImagePanel.setLayout(new GridLayout(1, 3, 10, 10));
-        triImagePanel.add(panelAxial);
-        triImagePanel.add(panelSagittal);
-        triImagePanel.add(panelCoronal);
-        triImagePanel.setBorder(raisedbevel);
-
-        int triImagePanelWidth = (int) (screenWidth * 0.51f);
-        int triImagePanelHeight = (int) (screenHeight * 0.25f);
-
-        triImagePanel.setPreferredSize(new Dimension(triImagePanelWidth, triImagePanelHeight));
-        triImagePanel.setMinimumSize(new Dimension(150, 50));
-
-        float widthAxial = m_akPlaneRender[0].getWidth();
-        float heightAxial = m_akPlaneRender[0].getHeight();
-        float widthCoronal = m_akPlaneRender[2].getWidth();
-        float heightCoronal = m_akPlaneRender[2].getHeight();
-        float widthSagittal = m_akPlaneRender[1].getWidth();
-        float heightSagittal = m_akPlaneRender[1].getHeight();
-
-        float leftWidth = Math.max(widthAxial, widthCoronal);
-
-        float upperHeight = Math.max(heightAxial, heightSagittal);
-        float rightWidth = widthSagittal;
-        float lowerHeight = heightCoronal;
-        float availableWidth = Toolkit.getDefaultToolkit().getScreenSize().width - 200 - (2 * getInsets().left) - 6;
-        float availableHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 200 - getInsets().top -
-                                getInsets().bottom - panelToolbar.getSize().height - menuBar.getSize().height - 6;
-
-        float zoom = (availableWidth - 1) / (leftWidth + rightWidth - 1);
-
-        zoom = Math.min(zoom, (availableHeight - 1) / (upperHeight + lowerHeight - 1));
-
-        for (int i = -10; i <= 10; i++) {
-
-            if ((zoom >= Math.pow(2.0, (double) i)) && (zoom < Math.pow(2.0, (double) (i + 1)))) {
-                zoom = (float) Math.pow(2.0, (double) i);
-            }
+        if ( m_akPlaneRender != null ) {
+	        JPanel panelAxial = new JPanel(new BorderLayout());
+	
+	        panelAxial.add(m_akPlaneRender[0].getCanvas(), BorderLayout.CENTER);
+	
+	        JPanel panelSagittal = new JPanel(new BorderLayout());
+	
+	        panelSagittal.add(m_akPlaneRender[1].getCanvas(), BorderLayout.CENTER);
+	
+	        JPanel panelCoronal = new JPanel(new BorderLayout());
+	
+	        panelCoronal.add(m_akPlaneRender[2].getCanvas(), BorderLayout.CENTER);
+	
+	        setTitle();
+	
+	        triImagePanel = new JPanel();
+	        triImagePanel.setLayout(new GridLayout(1, 3, 10, 10));
+	        triImagePanel.add(panelAxial);
+	        triImagePanel.add(panelSagittal);
+	        triImagePanel.add(panelCoronal);
+	        triImagePanel.setBorder(raisedbevel);
+	
+	        int triImagePanelWidth = (int) (screenWidth * 0.51f);
+	        int triImagePanelHeight = (int) (screenHeight * 0.25f);
+	
+	        triImagePanel.setPreferredSize(new Dimension(triImagePanelWidth, triImagePanelHeight));
+	        triImagePanel.setMinimumSize(new Dimension(150, 50));
+	
+	        float widthAxial = m_akPlaneRender[0].getWidth();
+	        float heightAxial = m_akPlaneRender[0].getHeight();
+	        float widthCoronal = m_akPlaneRender[2].getWidth();
+	        float heightCoronal = m_akPlaneRender[2].getHeight();
+	        float widthSagittal = m_akPlaneRender[1].getWidth();
+	        float heightSagittal = m_akPlaneRender[1].getHeight();
+	
+	        float leftWidth = Math.max(widthAxial, widthCoronal);
+	
+	        float upperHeight = Math.max(heightAxial, heightSagittal);
+	        float rightWidth = widthSagittal;
+	        float lowerHeight = heightCoronal;
+	        float availableWidth = Toolkit.getDefaultToolkit().getScreenSize().width - 200 - (2 * getInsets().left) - 6;
+	        float availableHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 200 - getInsets().top -
+	                                getInsets().bottom - panelToolbar.getSize().height - menuBar.getSize().height - 6;
+	
+	        float zoom = (availableWidth - 1) / (leftWidth + rightWidth - 1);
+	
+	        zoom = Math.min(zoom, (availableHeight - 1) / (upperHeight + lowerHeight - 1));
+	
+	        for (int i = -10; i <= 10; i++) {
+	
+	            if ((zoom >= Math.pow(2.0, (double) i)) && (zoom < Math.pow(2.0, (double) (i + 1)))) {
+	                zoom = (float) Math.pow(2.0, (double) i);
+	            }
+	        }
+	
+	        if (!axialOrientation) {
+	            zoom = 1.0f;
+	        }
+	
+	        if (((zoom * leftWidth) > (triImagePanelWidth / 3.0f)) || ((zoom * upperHeight) > triImagePanelHeight)) {
+	            zoom *= 0.5f;
+	        }
         }
-
-        if (!axialOrientation) {
-            zoom = 1.0f;
-        }
-
-        if (((zoom * leftWidth) > (triImagePanelWidth / 3.0f)) || ((zoom * upperHeight) > triImagePanelHeight)) {
-            zoom *= 0.5f;
-        }
-
         GridBagConstraints gbc2 = new GridBagConstraints();
 
         gbc2.gridx = 0;
@@ -3266,8 +3272,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         tabPanel.add(tabbedPane);
         tabPanel.setMinimumSize(new Dimension(maxPanelWidth, 789));
 
-        // TODO: Now, Just for the hack..., this will be improved later.
-        // In surface view mode, only include the imagePanel.   End goal is to get rid of tri-planar view. 
         JSplitPane mainPane;
         if ( isSurfaceViewEnable ) {
            mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabPanel, imagePanel);

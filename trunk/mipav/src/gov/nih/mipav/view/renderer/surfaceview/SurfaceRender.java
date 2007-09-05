@@ -3424,7 +3424,9 @@ public class SurfaceRender extends RenderViewBase {
         if (m_bRenderModeLighting && !mouseRotateBehavior.isButtonPressed()) {
 
             // Remove volume render node so that we can update its texture.
-            volRenderOG.removeChild(volRenderOG.indexOfChild(volRenderBG));
+        	if ( !volRenderBG.isLive() ) {
+               volRenderOG.removeChild(volRenderOG.indexOfChild(volRenderBG));
+        	}
 
             // Retrieve the composite image values from the 3D texture.
             int[] aiCompositeImageA = componentVolImage.getCompositeImageA();
