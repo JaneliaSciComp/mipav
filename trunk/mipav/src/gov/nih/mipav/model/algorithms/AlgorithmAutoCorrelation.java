@@ -343,6 +343,15 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         int newValue = 0;
         int lastValue = 0;
         int colorsPresent = 0;
+        int nPoints = 0;
+        double[] params;
+        FitCorrelationModel fcm = null;
+        float[] xValues = null;
+        float[] yValues = null;
+        double[] initial = null;
+        boolean found;
+        int xLast = 0;
+        int yLast = yDim - 1;
 
         if (destImageR != null) {
             colorsPresent++;
@@ -436,6 +445,84 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
 
                 return;
             }
+            
+            //  The autocorrelation fits to a function of the form
+            // (1 - a0) + a0*exp(-(x**2 + y**2)/w**2) = (1 - a0) + a0*exp(a1*distSqr),
+            // where 1 >= a0 > 0, a1 < 0.
+            // The autocorrelation coefficients are normalized by dividing by the
+            // value at zero displacement, so the autocorrelation for zero displacement
+            // is always 1 by definition.
+
+            initial = new double[2];
+            initial[0] = 1.0 - destImageR.getMin();
+            initial[1] = -1.0;
+
+            found = false;
+
+            for (x = 1; (x < xDim) && !found; x++) {
+
+                if (buffer[x + ((yDim - 1) * xDim)] >= buffer[(x - 1) + ((yDim - 1) * xDim)]) {
+                    xLast = x - 1;
+                    found = true;
+                } else if (buffer[x + ((yDim - 1) * xDim)] < 0.1f) {
+                    xLast = x - 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                xLast = xDim - 1;
+            }
+
+            found = false;
+
+            for (y = yDim - 2; (y >= 0) && !found; y--) {
+
+                if (buffer[y * xDim] > buffer[(y + 1) * xDim]) {
+                    yLast = y + 1;
+                    found = true;
+                } else if (buffer[y * xDim] < 0.1f) {
+                    yLast = y + 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                yLast = 0;
+            }
+
+            nPoints = (xLast + 1) * (yDim - yLast);
+            xValues = new float[nPoints];
+            yValues = new float[nPoints];
+
+            for (i = 0, y = yDim - 1; y >= yLast; y--) {
+
+                for (x = 0; x <= xLast; x++) {
+                    xValues[i] = (x * x) + ((yDim - 1 - y) * (yDim - 1 - y));
+                    yValues[i++] = buffer[x + (y * xDim)];
+                }
+            }
+
+            fcm = new FitCorrelationModel(nPoints, xValues, yValues, initial);
+            fcm.driver();
+            fcm.dumpResults();
+            params = fcm.getParameters();
+
+            if (params[0] > 0.5) {
+                double c1 = Math.log((params[0] - 0.5) / params[0]);
+                double c2 = c1 / params[1];
+                double c3 = Math.sqrt(c2);
+                fwhm = (int) ((2.0 * c3) + 0.5);
+
+                /*System.out.println("c3 = "+ c3);
+                 *System.out.println("fwhm = " + fwhm);*/
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width red at half maximum = " + fwhm);
+            } else {
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width red at half maximum too large to calculate");
+                fwhm = Integer.MAX_VALUE;
+            }
         } // if (destImageR != null)
 
         if (destImageG != null) {
@@ -506,6 +593,84 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
 
                 return;
             }
+            
+            // The autocorrelation fits to a function of the form
+            // (1 - a0) + a0*exp(-(x**2 + y**2)/w**2) = (1 - a0) + a0*exp(a1*distSqr),
+            // where 1 >= a0 > 0, a1 < 0.
+            // The autocorrelation coefficients are normalized by dividing by the
+            // value at zero displacement, so the autocorrelation for zero displacement
+            // is always 1 by definition.
+
+            initial = new double[2];
+            initial[0] = 1.0 - destImageG.getMin();
+            initial[1] = -1.0;
+
+            found = false;
+
+            for (x = 1; (x < xDim) && !found; x++) {
+
+                if (buffer[x + ((yDim - 1) * xDim)] >= buffer[(x - 1) + ((yDim - 1) * xDim)]) {
+                    xLast = x - 1;
+                    found = true;
+                } else if (buffer[x + ((yDim - 1) * xDim)] < 0.1f) {
+                    xLast = x - 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                xLast = xDim - 1;
+            }
+
+            found = false;
+
+            for (y = yDim - 2; (y >= 0) && !found; y--) {
+
+                if (buffer[y * xDim] > buffer[(y + 1) * xDim]) {
+                    yLast = y + 1;
+                    found = true;
+                } else if (buffer[y * xDim] < 0.1f) {
+                    yLast = y + 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                yLast = 0;
+            }
+
+            nPoints = (xLast + 1) * (yDim - yLast);
+            xValues = new float[nPoints];
+            yValues = new float[nPoints];
+
+            for (i = 0, y = yDim - 1; y >= yLast; y--) {
+
+                for (x = 0; x <= xLast; x++) {
+                    xValues[i] = (x * x) + ((yDim - 1 - y) * (yDim - 1 - y));
+                    yValues[i++] = buffer[x + (y * xDim)];
+                }
+            }
+
+            fcm = new FitCorrelationModel(nPoints, xValues, yValues, initial);
+            fcm.driver();
+            fcm.dumpResults();
+            params = fcm.getParameters();
+
+            if (params[0] > 0.5) {
+                double c1 = Math.log((params[0] - 0.5) / params[0]);
+                double c2 = c1 / params[1];
+                double c3 = Math.sqrt(c2);
+                fwhm = (int) ((2.0 * c3) + 0.5);
+
+                /*System.out.println("c3 = "+ c3);
+                 *System.out.println("fwhm = " + fwhm);*/
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width green at half maximum = " + fwhm);
+            } else {
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width green at half maximum too large to calculate");
+                fwhm = Integer.MAX_VALUE;
+            }
         } // if (destImageG != null)
 
         if (destImageB != null) {
@@ -574,6 +739,84 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
 
                 return;
             }
+            
+            // The autocorrelation fits to a function of the form
+            // (1 - a0) + a0*exp(-(x**2 + y**2)/w**2) = (1 - a0) + a0*exp(a1*distSqr),
+            // where 1 >= a0 > 0, a1 < 0.
+            // The autocorrelation coefficients are normalized by dividing by the
+            // value at zero displacement, so the autocorrelation for zero displacement
+            // is always 1 by definition.
+
+            initial = new double[2];
+            initial[0] = 1.0 - destImageB.getMin();
+            initial[1] = -1.0;
+
+            found = false;
+
+            for (x = 1; (x < xDim) && !found; x++) {
+
+                if (buffer[x + ((yDim - 1) * xDim)] >= buffer[(x - 1) + ((yDim - 1) * xDim)]) {
+                    xLast = x - 1;
+                    found = true;
+                } else if (buffer[x + ((yDim - 1) * xDim)] < 0.1f) {
+                    xLast = x - 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                xLast = xDim - 1;
+            }
+
+            found = false;
+
+            for (y = yDim - 2; (y >= 0) && !found; y--) {
+
+                if (buffer[y * xDim] > buffer[(y + 1) * xDim]) {
+                    yLast = y + 1;
+                    found = true;
+                } else if (buffer[y * xDim] < 0.1f) {
+                    yLast = y + 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                yLast = 0;
+            }
+
+            nPoints = (xLast + 1) * (yDim - yLast);
+            xValues = new float[nPoints];
+            yValues = new float[nPoints];
+
+            for (i = 0, y = yDim - 1; y >= yLast; y--) {
+
+                for (x = 0; x <= xLast; x++) {
+                    xValues[i] = (x * x) + ((yDim - 1 - y) * (yDim - 1 - y));
+                    yValues[i++] = buffer[x + (y * xDim)];
+                }
+            }
+
+            fcm = new FitCorrelationModel(nPoints, xValues, yValues, initial);
+            fcm.driver();
+            fcm.dumpResults();
+            params = fcm.getParameters();
+
+            if (params[0] > 0.5) {
+                double c1 = Math.log((params[0] - 0.5) / params[0]);
+                double c2 = c1 / params[1];
+                double c3 = Math.sqrt(c2);
+                fwhm = (int) ((2.0 * c3) + 0.5);
+
+                /*System.out.println("c3 = "+ c3);
+                 *System.out.println("fwhm = " + fwhm);*/
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width blue at half maximum = " + fwhm);
+            } else {
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width blue at half maximum too large to calculate");
+                fwhm = Integer.MAX_VALUE;
+            }
         } // if (destImageB != null)
 
         setCompleted(true);
@@ -603,7 +846,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         FitCorrelationModel fcm = null;
         float[] xValues = null;
         float[] yValues = null;
-        float[] zValues = null;
         double[] initial = null;
         boolean found;
         int xLast = 0;
@@ -775,7 +1017,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         nPoints = (xLast + 1) * (yDim - yLast) * (zLast + 1);
         xValues = new float[nPoints];
         yValues = new float[nPoints];
-        zValues = new float[nPoints];
 
         for (i = 0, z = 0; z <= zLast; z++) {
 
@@ -833,6 +1074,16 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         int newValue = 0;
         int lastValue = 0;
         int colorsPresent = 0;
+        int nPoints = 0;
+        double[] params;
+        FitCorrelationModel fcm = null;
+        float[] xValues = null;
+        float[] yValues = null;
+        double[] initial = null;
+        boolean found;
+        int xLast = 0;
+        int yLast = yDim - 1;
+        int zLast = 0;
 
         if (destImageR != null) {
             colorsPresent++;
@@ -949,6 +1200,105 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
 
                 return;
             }
+            
+            // The autocorrelation fits to a function of the form
+            // (1 - a0) + a0*exp(-(x**2 + y**2 + z**2)/w**2) =
+            // (1 - a0) + a0*exp(a1*distSqr),
+            // where 1 >= a0 > 0, a1 < 0.
+            // The autocorrelation coefficients are normalized by dividing by the
+            // value at zero displacement, so the autocorrelation for zero displacement
+            // is always 1 by definition.
+
+            initial = new double[2];
+            initial[0] = 1.0 - destImageR.getMin();
+            initial[1] = -1.0;
+
+            found = false;
+
+            for (x = 1; (x < xDim) && !found; x++) {
+
+                if (buffer[x + ((yDim - 1) * xDim)] >= buffer[(x - 1) + ((yDim - 1) * xDim)]) {
+                    xLast = x - 1;
+                    found = true;
+                } else if (buffer[x + ((yDim - 1) * xDim)] < 0.1f) {
+                    xLast = x - 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                xLast = xDim - 1;
+            }
+
+            found = false;
+
+            for (y = yDim - 2; (y >= 0) && !found; y--) {
+
+                if (buffer[y * xDim] > buffer[(y + 1) * xDim]) {
+                    yLast = y + 1;
+                    found = true;
+                } else if (buffer[y * xDim] < 0.1f) {
+                    yLast = y + 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                yLast = 0;
+            }
+
+            found = false;
+
+            for (z = 1; (z < zDim) && !found; z++) {
+
+                if (buffer[((yDim - 1) * xDim) + (z * sliceSize)] >= buffer[((yDim - 1) * xDim) + ((z - 1) * sliceSize)]) {
+                    zLast = z - 1;
+                    found = true;
+                } else if (buffer[((yDim - 1) * xDim) + (z * sliceSize)] < 0.1f) {
+                    zLast = z - 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                zLast = zDim - 1;
+            }
+
+            nPoints = (xLast + 1) * (yDim - yLast) * (zLast + 1);
+            xValues = new float[nPoints];
+            yValues = new float[nPoints];
+
+            for (i = 0, z = 0; z <= zLast; z++) {
+
+                for (y = yDim - 1; y >= yLast; y--) {
+
+                    for (x = 0; x <= xLast; x++) {
+                        xValues[i] = (x * x) + ((yDim - 1 - y) * (yDim - 1 - y)) + (z * z);
+                        yValues[i++] = buffer[x + (y * xDim) + (z * sliceSize)];
+                    }
+                }
+            }
+
+            fcm = new FitCorrelationModel(nPoints, xValues, yValues, initial);
+            fcm.driver();
+            fcm.dumpResults();
+            params = fcm.getParameters();
+
+            if (params[0] > 0.5) {
+                double c1 = Math.log((params[0] - 0.5) / params[0]);
+                double c2 = c1 / params[1];
+                double c3 = Math.sqrt(c2);
+                fwhm = (int) ((2.0 * c3) + 0.5);
+
+                /*System.out.println("c3 = "+ c3);
+                 *System.out.println("fwhm = " + fwhm);*/
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width red at half maximum = " + fwhm);
+            } else {
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width red at half maximum too large to calculate");
+                fwhm = Integer.MAX_VALUE;
+            }
         } // if (destImageR != null)
 
         if (destImageG != null) {
@@ -1042,6 +1392,105 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
 
                 return;
             }
+            
+            // The autocorrelation fits to a function of the form
+            // (1 - a0) + a0*exp(-(x**2 + y**2 + z**2)/w**2) =
+            // (1 - a0) + a0*exp(a1*distSqr),
+            // where 1 >= a0 > 0, a1 < 0.
+            // The autocorrelation coefficients are normalized by dividing by the
+            // value at zero displacement, so the autocorrelation for zero displacement
+            // is always 1 by definition.
+
+            initial = new double[2];
+            initial[0] = 1.0 - destImageG.getMin();
+            initial[1] = -1.0;
+
+            found = false;
+
+            for (x = 1; (x < xDim) && !found; x++) {
+
+                if (buffer[x + ((yDim - 1) * xDim)] >= buffer[(x - 1) + ((yDim - 1) * xDim)]) {
+                    xLast = x - 1;
+                    found = true;
+                } else if (buffer[x + ((yDim - 1) * xDim)] < 0.1f) {
+                    xLast = x - 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                xLast = xDim - 1;
+            }
+
+            found = false;
+
+            for (y = yDim - 2; (y >= 0) && !found; y--) {
+
+                if (buffer[y * xDim] > buffer[(y + 1) * xDim]) {
+                    yLast = y + 1;
+                    found = true;
+                } else if (buffer[y * xDim] < 0.1f) {
+                    yLast = y + 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                yLast = 0;
+            }
+
+            found = false;
+
+            for (z = 1; (z < zDim) && !found; z++) {
+
+                if (buffer[((yDim - 1) * xDim) + (z * sliceSize)] >= buffer[((yDim - 1) * xDim) + ((z - 1) * sliceSize)]) {
+                    zLast = z - 1;
+                    found = true;
+                } else if (buffer[((yDim - 1) * xDim) + (z * sliceSize)] < 0.1f) {
+                    zLast = z - 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                zLast = zDim - 1;
+            }
+
+            nPoints = (xLast + 1) * (yDim - yLast) * (zLast + 1);
+            xValues = new float[nPoints];
+            yValues = new float[nPoints];
+
+            for (i = 0, z = 0; z <= zLast; z++) {
+
+                for (y = yDim - 1; y >= yLast; y--) {
+
+                    for (x = 0; x <= xLast; x++) {
+                        xValues[i] = (x * x) + ((yDim - 1 - y) * (yDim - 1 - y)) + (z * z);
+                        yValues[i++] = buffer[x + (y * xDim) + (z * sliceSize)];
+                    }
+                }
+            }
+
+            fcm = new FitCorrelationModel(nPoints, xValues, yValues, initial);
+            fcm.driver();
+            fcm.dumpResults();
+            params = fcm.getParameters();
+
+            if (params[0] > 0.5) {
+                double c1 = Math.log((params[0] - 0.5) / params[0]);
+                double c2 = c1 / params[1];
+                double c3 = Math.sqrt(c2);
+                fwhm = (int) ((2.0 * c3) + 0.5);
+
+                /*System.out.println("c3 = "+ c3);
+                 *System.out.println("fwhm = " + fwhm);*/
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width green at half maximum = " + fwhm);
+            } else {
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width green at half maximum too large to calculate");
+                fwhm = Integer.MAX_VALUE;
+            }
         } // if (destImageG != null)
 
         if (destImageB != null) {
@@ -1132,6 +1581,105 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 errorCleanUp("Algorithm Autocorrelation reports: destination image still locked", true);
 
                 return;
+            }
+            
+            // The autocorrelation fits to a function of the form
+            // (1 - a0) + a0*exp(-(x**2 + y**2 + z**2)/w**2) =
+            // (1 - a0) + a0*exp(a1*distSqr),
+            // where 1 >= a0 > 0, a1 < 0.
+            // The autocorrelation coefficients are normalized by dividing by the
+            // value at zero displacement, so the autocorrelation for zero displacement
+            // is always 1 by definition.
+
+            initial = new double[2];
+            initial[0] = 1.0 - destImageB.getMin();
+            initial[1] = -1.0;
+
+            found = false;
+
+            for (x = 1; (x < xDim) && !found; x++) {
+
+                if (buffer[x + ((yDim - 1) * xDim)] >= buffer[(x - 1) + ((yDim - 1) * xDim)]) {
+                    xLast = x - 1;
+                    found = true;
+                } else if (buffer[x + ((yDim - 1) * xDim)] < 0.1f) {
+                    xLast = x - 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                xLast = xDim - 1;
+            }
+
+            found = false;
+
+            for (y = yDim - 2; (y >= 0) && !found; y--) {
+
+                if (buffer[y * xDim] > buffer[(y + 1) * xDim]) {
+                    yLast = y + 1;
+                    found = true;
+                } else if (buffer[y * xDim] < 0.1f) {
+                    yLast = y + 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                yLast = 0;
+            }
+
+            found = false;
+
+            for (z = 1; (z < zDim) && !found; z++) {
+
+                if (buffer[((yDim - 1) * xDim) + (z * sliceSize)] >= buffer[((yDim - 1) * xDim) + ((z - 1) * sliceSize)]) {
+                    zLast = z - 1;
+                    found = true;
+                } else if (buffer[((yDim - 1) * xDim) + (z * sliceSize)] < 0.1f) {
+                    zLast = z - 1;
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                zLast = zDim - 1;
+            }
+
+            nPoints = (xLast + 1) * (yDim - yLast) * (zLast + 1);
+            xValues = new float[nPoints];
+            yValues = new float[nPoints];
+
+            for (i = 0, z = 0; z <= zLast; z++) {
+
+                for (y = yDim - 1; y >= yLast; y--) {
+
+                    for (x = 0; x <= xLast; x++) {
+                        xValues[i] = (x * x) + ((yDim - 1 - y) * (yDim - 1 - y)) + (z * z);
+                        yValues[i++] = buffer[x + (y * xDim) + (z * sliceSize)];
+                    }
+                }
+            }
+
+            fcm = new FitCorrelationModel(nPoints, xValues, yValues, initial);
+            fcm.driver();
+            fcm.dumpResults();
+            params = fcm.getParameters();
+
+            if (params[0] > 0.5) {
+                double c1 = Math.log((params[0] - 0.5) / params[0]);
+                double c2 = c1 / params[1];
+                double c3 = Math.sqrt(c2);
+                fwhm = (int) ((2.0 * c3) + 0.5);
+
+                /*System.out.println("c3 = "+ c3);
+                 *System.out.println("fwhm = " + fwhm);*/
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width blue at half maximum = " + fwhm);
+            } else {
+                ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                ViewUserInterface.getReference().setDataText("Auto correlation full width blue at half maximum too large to calculate");
+                fwhm = Integer.MAX_VALUE;
             }
         } // if (destImageB != null)
 
