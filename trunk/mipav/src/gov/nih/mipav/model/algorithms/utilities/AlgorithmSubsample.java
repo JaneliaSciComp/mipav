@@ -105,7 +105,9 @@ public class AlgorithmSubsample extends AlgorithmBase {
      */
     public void finalize() {
         super.finalize();
-        paddedImage.disposeLocal();
+        if (paddedImage != null) {
+            paddedImage.disposeLocal();
+        }
     }
 
     /**
