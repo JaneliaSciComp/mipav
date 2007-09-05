@@ -232,6 +232,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             labelF1.setText("Frequency F1 0.0 to 1.0 ");
             textOrder.setEnabled(false);
             labelOrder.setEnabled(false);
+            bandPass.setEnabled(true);
+            bandStop.setEnabled(true);
         } else if (source == gaussianFilter) {
             imageCropCheckbox.setEnabled(false);
             imageCropCheckbox.setSelected(false);
@@ -240,6 +242,18 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             labelF1.setText("Frequency F1 exceeds 0.0 ");
             textOrder.setEnabled(false);
             labelOrder.setEnabled(false);
+            textF2.setEnabled(false);
+            labelF2.setEnabled(false);
+            bandPass.setEnabled(false);
+            if (bandPass.isSelected()) {
+                bandPass.setSelected(false);
+                highPass.setSelected(true);
+            }
+            bandStop.setEnabled(false);
+            if (bandStop.isSelected()) {
+                bandStop.setSelected(false);
+                highPass.setSelected(true);
+            }
         } else if (source == butterworthFilter) {
             imageCropCheckbox.setEnabled(false);
             imageCropCheckbox.setSelected(false);
@@ -248,6 +262,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
             labelF1.setText("Frequency F1 >0.0 to 1.0 ");
             textOrder.setEnabled(true);
             labelOrder.setEnabled(true);
+            bandPass.setEnabled(true);
+            bandStop.setEnabled(true);
         } else if ((source == lowPass) || (source == highPass)) {
             textF2.setEnabled(false);
             labelF2.setEnabled(false);
