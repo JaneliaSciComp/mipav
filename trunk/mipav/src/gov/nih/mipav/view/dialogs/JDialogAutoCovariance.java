@@ -405,6 +405,8 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
             // the algorithm to notify this object when it has completed of failed.
             // See algorithm performed event. This is made possible by implementing
             algoAutoCovariance.addListener(this);
+            
+            createProgressBar(image.getImageName(), algoAutoCovariance);
             // Start the thread as a low priority because we wish to still have
             // user interface work fast
 
