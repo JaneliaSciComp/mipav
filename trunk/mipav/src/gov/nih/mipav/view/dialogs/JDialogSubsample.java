@@ -188,7 +188,12 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         	
         	textExpectedExtentX.setText(Integer.toString(padExtents[0]));
         	textExpectedExtentY.setText(Integer.toString(padExtents[1]));
-        	textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+            if (dim < 3) {
+                textExpectedExtentZ.setText("1");
+            }
+            else {
+        	    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+            }
         	
         	if (Arrays.equals(padExtents, extents)) {
     			doPad = false;
@@ -219,7 +224,12 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         	
         	textExpectedExtentX.setText(Integer.toString(padExtents[0]));
         	textExpectedExtentY.setText(Integer.toString(padExtents[1]));
-        	textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+            if (dim < 3) {
+                textExpectedExtentZ.setText("1");
+            }
+            else {
+                textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+            }
         	
         	if (Arrays.equals(padExtents, extents)) {
     			doPad = false;
@@ -249,7 +259,12 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         	
         	textExpectedExtentX.setText(Integer.toString(padExtents[0]));
         	textExpectedExtentY.setText(Integer.toString(padExtents[1]));
-        	textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+            if (dim < 3) {
+                textExpectedExtentZ.setText("1");
+            }
+            else {
+                textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+            }
         	
         	if (Arrays.equals(padExtents, extents)) {
     			doPad = false;
@@ -567,9 +582,12 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 		textOriginalExtentZ.setMaximumSize(labelOriginalExtentZ.getPreferredSize());
 		textOriginalExtentZ.setHorizontalAlignment(JTextField.RIGHT);
 		if (dim >= 3) {
-			textOriginalExtentZ.setText(Integer.toString(extents[2]));
-			textOriginalExtentZ.setFont(serif12);
+			textOriginalExtentZ.setText(Integer.toString(extents[2]));	
 		}
+        else {
+            textOriginalExtentZ.setText("1");
+        }
+        textOriginalExtentZ.setFont(serif12);
 		textOriginalExtentZ.setEnabled(false);
 
 		// Panel for Expected Extents
@@ -614,7 +632,12 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 		textExpectedExtentZ.setColumns(5);
 		textExpectedExtentZ.setMaximumSize(labelExpectedExtentZ.getPreferredSize());
 		textExpectedExtentZ.setHorizontalAlignment(JTextField.RIGHT);
-		textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+        if (dim < 3) {
+            textExpectedExtentZ.setText("1");
+        }
+        else {
+		    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+        }
 		textExpectedExtentZ.setFont(serif12);
 		if (!doPad || dim < 3)  {
 			textExpectedExtentZ.setEnabled(false);
