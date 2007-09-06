@@ -784,7 +784,9 @@ public class MipavUtil extends JComponent {
         if (((index + decPts) < length) && (indexE == -1)) {
             str = str.substring(0, index + decPts + 1);
         } else if (indexE != -1) {
-            str = str.substring(0, index + decPts + 1) + str.substring(indexE);
+            if ((indexE - index) > decPts) {
+                str = str.substring(0, index + decPts + 1) + str.substring(indexE);
+            }
         }
 
         return str;
