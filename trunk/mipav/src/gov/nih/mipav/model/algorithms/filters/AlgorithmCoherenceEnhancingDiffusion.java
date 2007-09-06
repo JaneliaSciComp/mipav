@@ -200,6 +200,19 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
     public void finalize() {
         srcImage = null;
         eigenSystemAlgo = null;
+        intermediateBuffer = null;
+        dxKernelX = null;
+        dxKernelY = null;
+        dxKernelZ = null;
+        dyKernelX = null;
+        dyKernelY = null;
+        dyKernelZ = null;
+        dzKernelX = null;
+        dzKernelY = null;
+        dzKernelZ = null;
+        skernelX = null;
+        skernelY = null;
+        skernelZ = null;
         super.finalize();
     } // end finalize()
 
