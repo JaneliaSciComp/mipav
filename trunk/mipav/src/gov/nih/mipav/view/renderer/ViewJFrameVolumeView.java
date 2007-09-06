@@ -2760,12 +2760,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         if ((surRender != null) && (event.getSource() == tabbedPane)) {
 
             if (tabbedPane.getSelectedComponent() == slicePanel) {
+                surRender.switchToSliceView(true);
                 clipBox.setVisible(false);
-                surRender.switchToSliceView(false);
             } else if (tabbedPane.getSelectedComponent() == opacityPanel) {
+                surRender.switchToVolView(true);
                 clipBox.setVisible(true);
-                surRender.switchToVolView(firstTimeVolView);
-                firstTimeVolView = false;
+                // firstTimeVolView = false;
             }
         }
     }
