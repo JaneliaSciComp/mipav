@@ -2017,9 +2017,16 @@ public class SurfaceRender extends RenderViewBase {
      * @param  firstTime  perform special actions required when switching for the first time
      */
     public void switchToSliceView(boolean firstTime) {
+    	volumeDisplayMode3D = false;
+    	
+    	// switchGroup.addChild(triPlanarViewBG);
+        // switchGroup.addChild(volBG);
+        volBG.detach();
+        switchGroup.addChild(triPlanarViewBG);
         switchGroup.setWhichChild(0);
-        volumeDisplayMode3D = false;
-
+        
+        
+        /*
         if (surfacePanel != null) {
 
             if (surfacePanel.getSurfaceClipCB().isSelected() && (clipPanel != null)) {
@@ -2050,7 +2057,7 @@ public class SurfaceRender extends RenderViewBase {
         if (boxPanel != null) {
             boxPanel.setEnable(false);
         }
-
+        */
     }
 
     /**
@@ -2059,14 +2066,19 @@ public class SurfaceRender extends RenderViewBase {
      * @param  firstTime  perform special actions required when switching for the first time
      */
     public void switchToVolView(boolean firstTime) {
+    	
+        volumeDisplayMode3D = true;
+        
+        triPlanarViewBG.detach();
+        switchGroup.addChild(volBG);
+        switchGroup.setWhichChild(0);
 
+        /*
         if (surfacePanel != null) {
             surfacePanel.getSurfaceClipCB().setEnabled(true);
         }
 
-        switchGroup.setWhichChild(1);
-        volumeDisplayMode3D = true;
-
+        
         if (firstTime && (mousePanel != null) && !mousePanel.listModel.isEmpty()) {
 
             if (mousePanel.isRecording()) {
@@ -2088,7 +2100,7 @@ public class SurfaceRender extends RenderViewBase {
         if (boxPanel != null) {
             boxPanel.setEnable(true);
         }
-
+        */
     }
 
     /**
@@ -3227,6 +3239,8 @@ public class SurfaceRender extends RenderViewBase {
         switchGroup.setCapability(Switch.ALLOW_SWITCH_WRITE);
         switchGroup.setCapability(Switch.ALLOW_CHILDREN_WRITE);
         switchGroup.setCapability(Switch.ALLOW_CHILDREN_READ);
+        switchGroup.setCapability(Switch.ALLOW_CHILDREN_EXTEND);
+        
 
         triPlanarViewBG = new BranchGroup();
         triPlanarViewBG.setCapability(Group.ALLOW_CHILDREN_EXTEND);
@@ -3235,7 +3249,7 @@ public class SurfaceRender extends RenderViewBase {
         triPlanarViewBG.setCapability(BranchGroup.ALLOW_DETACH);
 
         switchGroup.addChild(triPlanarViewBG);
-        switchGroup.addChild(volBG);
+        // switchGroup.addChild(volBG);
         switchGroup.setWhichChild(0);
 
         sceneRootTG.addChild(switchGroup);

@@ -1049,7 +1049,9 @@ public class JPanelSlices extends JPanelRendererBase
         } else if (((SceneState) scene).xVisible) {
 
             if (!((SurfaceRender) renderBase).getObjPlane_BG(0).isLive()) {
-                (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjPlane_BG(0));
+            	if ( renderBase.getTriPlanarViewBG().isLive()) {
+                  (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjPlane_BG(0));
+                }
             }
 
             setXSliderEnabled(true);
@@ -1065,7 +1067,9 @@ public class JPanelSlices extends JPanelRendererBase
         } else if (((SceneState) scene).yVisible) {
 
             if (!((SurfaceRender) renderBase).getObjPlane_BG(1).isLive()) {
-                (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjPlane_BG(1));
+            	if ( renderBase.getTriPlanarViewBG().isLive()) {
+                    (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjPlane_BG(1));
+                }
             }
 
             setYSliderEnabled(true);
@@ -1081,8 +1085,10 @@ public class JPanelSlices extends JPanelRendererBase
         } else if (((SceneState) scene).zVisible) {
 
             if (!((SurfaceRender) renderBase).getObjPlane_BG(2).isLive()) {
-                (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjPlane_BG(2));
-            }
+            	if ( renderBase.getTriPlanarViewBG().isLive()) {
+                  (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjPlane_BG(2));
+                }
+           }
 
             setZSliderEnabled(true);
             sliceVisible[2] = true;
