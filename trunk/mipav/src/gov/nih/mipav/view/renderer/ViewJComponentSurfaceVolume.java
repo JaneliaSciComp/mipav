@@ -884,7 +884,14 @@ public class ViewJComponentSurfaceVolume {
             LUTb = _LUTb;
         }
 
-        lutHeightA = LUTa.getExtents()[1];
+        // Switches between Composite mode and Surface Composite mode alwasy 
+        // generate an NULL exception, since the LUTa.getExtents()[1] is null.
+        // Fix this bug, just set the default lutHeightA to 256.
+        if ( LUTa.getExtents() != null ) {
+          lutHeightA = LUTa.getExtents()[1];
+        } else {
+          lutHeightA = 256;	
+        }
 
         xDim = imageExtents[0];
         yDim = imageExtents[1];
