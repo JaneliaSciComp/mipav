@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.*;
 
 import java.io.*;
 
@@ -188,6 +189,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+        boolean kernelSuccess;
         fireProgressStateChanged(0, null, "Calculating gradient magnitude ...");
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -196,16 +198,16 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
         }
 
         if (srcImage.getNDims() == 4) {
-            makeKernels1D(true);
+            kernelSuccess = makeKernels1D(true);
         } else if ((srcImage.getNDims() == 3) && (image25D == false)) {
-            makeKernels1D(true);
+            kernelSuccess = makeKernels1D(true);
         } else {
-            makeKernels1D(false);
+            kernelSuccess = makeKernels1D(false);
         }
 
-        if (threadStopped) {
+        if (threadStopped || (!kernelSuccess)) {
             finalize();
-
+            setCompleted(false);
             return;
         }
 
@@ -2359,10 +2361,12 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
      *
      * @param  do3D  DOCUMENT ME!
      */
-    private void makeKernels1D(boolean do3D) {
+    private boolean makeKernels1D(boolean do3D) {
         int xkDim, ykDim, zkDim;
         int[] derivOrder = new int[1];
         kExtents = new int[1];
+        boolean zeroDerivative;
+        int i;
 
         xkDim = Math.round(5 * sigmas[0]);
 
@@ -2395,6 +2399,18 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
         Gx.calc(false);
         Gx.finalize();
         Gx = null;
+        
+        zeroDerivative = true;
+        for (i = 0; i < GxDataDerivative.length; i++) {
+          if (GxDataDerivative[i] != 0.0) {
+              zeroDerivative = false;
+          }
+        }
+        
+        if (zeroDerivative) {
+            MipavUtil.displayError("Cannnot run Gradient MagnitudeSep sigmaX yields an all zero GxDataDerivative");
+            return false;
+        }
 
         derivOrder[0] = 0;
         GxDataRound = new float[xkDim];
@@ -2414,6 +2430,18 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
         Gy.calc(false);
         Gy.finalize();
         Gy = null;
+        
+        zeroDerivative = true;
+        for (i = 0; i < GyDataDerivative.length; i++) {
+          if (GyDataDerivative[i] != 0.0) {
+              zeroDerivative = false;
+          }
+        }
+        
+        if (zeroDerivative) {
+            MipavUtil.displayError("Cannnot run Gradient MagnitudeSep sigmaY yields an all zero GyDataDerivative");
+            return false;
+        }
 
         derivOrder[0] = 0;
         GyDataRound = new float[ykDim];
@@ -2444,6 +2472,18 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
             Gz.calc(false);
             Gz.finalize();
             Gz = null;
+            
+            zeroDerivative = true;
+            for (i = 0; i < GzDataDerivative.length; i++) {
+              if (GzDataDerivative[i] != 0.0) {
+                  zeroDerivative = false;
+              }
+            }
+            
+            if (zeroDerivative) {
+                MipavUtil.displayError("Cannnot run Gradient MagnitudeSep sigmaZ yields an all zero GzDataDerivative");
+                return false;
+            }
 
             derivOrder[0] = 0;
             GzDataRound = new float[zkDim];
@@ -2451,7 +2491,10 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
             Gz.calc(false);
             Gz.finalize();
             Gz = null;
+            
+            
         }
+        return true;
 
     }
 
