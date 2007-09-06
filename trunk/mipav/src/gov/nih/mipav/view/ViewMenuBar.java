@@ -1283,6 +1283,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("3D rectangle", false);
             menuBuilder.setMenuItemEnabled("Animate", false);
             menuBuilder.setMenuItemEnabled("Anonymize face (BET)", false);
+            menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
             menuBuilder.setMenuItemEnabled("Cine (movie)", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
