@@ -3107,12 +3107,15 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         dataBW = Y;
 
     
-        fireProgressStateChanged(20, srcImage.getImageName(), "Creating edge graph ...");
+        if (doProgress) {
+            fireProgressStateChanged(20, srcImage.getImageName(), "Creating edge graph ...");
+        }
         
         createEdgeGraph(fY);
 
-        
-        fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
+        if (doProgress) {
+            fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
+        }
       
         filterProcessBW();
 
@@ -3170,14 +3173,16 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         height = yDim;
 
       
-        
-        fireProgressStateChanged(20, srcImage.getImageName(), "Creating edge graph ...");
+        if (doProgress) {
+            fireProgressStateChanged(20, srcImage.getImageName(), "Creating edge graph ...");
+        }
        
 
         createEdgeGraph(fY, fR, fB);
 
-        
-        fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
+        if (doProgress) {
+            fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
+        }
         
         filterProcess();
 
@@ -3192,7 +3197,9 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = Cb;
             radius = radiusCb;
 
-            fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
+            if (doProgress) {
+                fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
+            }
             
 
             filterProcess();
@@ -3207,7 +3214,9 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = Cr;
             radius = radiusCr;
 
-            fireProgressStateChanged(90, srcImage.getImageName(), "Filtering in Cr space ...");
+            if (doProgress) {
+                fireProgressStateChanged(90, srcImage.getImageName(), "Filtering in Cr space ...");
+            }
             
             filterProcess();
 
