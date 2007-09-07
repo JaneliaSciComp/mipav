@@ -902,6 +902,12 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                             resultBuffer[i + 3] = buffer[i + 3];
                         }
                     }
+                    else {
+                        resultBuffer[i] = buffer[i];
+                        resultBuffer[i+1] = buffer[i+1];
+                        resultBuffer[i+2] = buffer[i+2];
+                        resultBuffer[i+3] = buffer[i+3];
+                    }
                 } else {
 
                     if (entireImage || mask.get(i / 4)) {
@@ -1703,6 +1709,12 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                         } else {
                             destImage.set(i + 3, buffer[i + 3]);
                         }
+                    }
+                    else {
+                        destImage.set(i, buffer[i]);
+                        destImage.set(i+1, buffer[i+1]);
+                        destImage.set(i+2, buffer[i+2]);
+                        destImage.set(i+3, buffer[i+3]);
                     }
                 } else {
 
