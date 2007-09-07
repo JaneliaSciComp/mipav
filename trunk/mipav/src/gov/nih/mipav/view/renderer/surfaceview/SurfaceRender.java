@@ -2022,11 +2022,11 @@ public class SurfaceRender extends RenderViewBase {
     	// switchGroup.addChild(triPlanarViewBG);
         // switchGroup.addChild(volBG);
         volBG.detach();
+        triPlanarViewBG.detach();
         switchGroup.addChild(triPlanarViewBG);
         switchGroup.setWhichChild(0);
         
         
-        /*
         if (surfacePanel != null) {
 
             if (surfacePanel.getSurfaceClipCB().isSelected() && (clipPanel != null)) {
@@ -2057,7 +2057,7 @@ public class SurfaceRender extends RenderViewBase {
         if (boxPanel != null) {
             boxPanel.setEnable(false);
         }
-        */
+        
     }
 
     /**
@@ -2070,10 +2070,11 @@ public class SurfaceRender extends RenderViewBase {
         volumeDisplayMode3D = true;
         
         triPlanarViewBG.detach();
+        volBG.detach();
         switchGroup.addChild(volBG);
         switchGroup.setWhichChild(0);
 
-        /*
+        
         if (surfacePanel != null) {
             surfacePanel.getSurfaceClipCB().setEnabled(true);
         }
@@ -2100,7 +2101,7 @@ public class SurfaceRender extends RenderViewBase {
         if (boxPanel != null) {
             boxPanel.setEnable(true);
         }
-        */
+        
     }
 
     /**
