@@ -560,7 +560,7 @@ public class GraphicsImage extends GraphicsObject
     {
         assert(acImageName != null);
 
-        String kFilename = new String( rkDirectory + "\\Shaders\\Images\\" + acImageName + ".wmif");
+        String kFilename = new String( rkDirectory + File.separator + "Shaders" + File.separator + "Images" + File.separator + acImageName + ".wmif");
 
         ByteArrayInputStream acBuffer = GraphicsImage.LoadFile(kFilename);
         if (acBuffer == null)
