@@ -2609,8 +2609,7 @@ kernelLoop:
                     }
                 } else {
 
-                    // processBuffer[pix] = imgBuffer[pix];
-                    processBuffer[pix] = 0;
+                    processBuffer[pix] = imgBuffer[pix];
                 }
             }
 
