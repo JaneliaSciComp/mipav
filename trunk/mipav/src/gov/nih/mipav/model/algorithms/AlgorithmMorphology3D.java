@@ -1171,9 +1171,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             return;
         }
 
-        // Invert image
+        // Save original in processBuffer and invert image in imgBuffer
         for (pix = 0; pix < volSize; pix++) {
-
+            processBuffer[pix] = imgBuffer[pix];
             if (imgBuffer[pix] > 0) {
                 imgBuffer[pix] = 0;
             } else {
@@ -1259,6 +1259,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                             minDistanceBuffer[pix] = (float) Math.sqrt(distance);
                         }
+                    } // if (entireImage || mask.get(pix))
+                    else {
+                        minDistanceBuffer[pix] = processBuffer[pix];
                     }
 
                     pix++;
@@ -1767,10 +1770,13 @@ kernelLoop:
                                 if (dist < distance) {
                                     distance = dist;
                                 }
-                            }
+                            } // for (i = 0; i < edgeLength; i++)
 
                             minDistanceBuffer[pix] = (float) Math.sqrt(distance);
-                        }
+                        } // if (imgBuffer[pix] > 0)
+                    } // if (entireImage || mask.get(pix))
+                    else {
+                        minDistanceBuffer[pix] = imgBuffer[pix];
                     }
 
                     pix++;
