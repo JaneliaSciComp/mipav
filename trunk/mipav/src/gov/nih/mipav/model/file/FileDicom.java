@@ -1714,7 +1714,7 @@ public class FileDicom extends FileDicomBase {
      */
     private int[] encapsulatedImageData() throws IOException {
 
-        System.out.println("FileDicom.encapsulatedImageData");
+        //System.out.println("FileDicom.encapsulatedImageData");
 
         try {
 
@@ -1783,12 +1783,14 @@ public class FileDicom extends FileDicomBase {
             name = convertGroupElement(groupWord, elementWord);
         }
 
-        if (!name.equals(SEQ_ITEM_END)) {
+        if (!name.equals(SEQ_ITEM_END) && !name.equals(SEQ_ITEM_UNDEF_END)) {
 
             if (!isQuiet()) {
                 MipavUtil.displayWarning("End tag not present.  Image may have been corrupted.");
             }
         }
+
+
 
         raFile.close();
 
