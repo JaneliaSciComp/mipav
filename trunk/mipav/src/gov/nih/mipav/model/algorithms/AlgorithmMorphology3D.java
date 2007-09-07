@@ -1976,7 +1976,7 @@ kernelLoop:
                         processBuffer[pix] = value;
                     }
                 } else {
-                    processBuffer[pix] = 0;
+                    processBuffer[pix] = imgBuffer[pix];
                 }
             }
 
