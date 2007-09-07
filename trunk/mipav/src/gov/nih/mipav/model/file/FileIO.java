@@ -1565,18 +1565,24 @@ public class FileIO {
 
             if (image != null) {
             	if (ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING) {
-            		if (new File(fileDir + File.separator + fileName.substring(0, fileName.lastIndexOf(".")) + ".xmp").exists()) {
-            		try {
-            			FileDataProvenance fdp = 
-            				new FileDataProvenance(fileName.substring(0, fileName.lastIndexOf(".")) + ".xmp", 
-            						fileDir, image.getProvenanceHolder());
-            			
-            			fdp.readHeader(fileName.substring(0, fileName.lastIndexOf(".")) + ".xmp", fileDir, 
-            					Preferences.DATA_PROVENANCE_SCHEMA);
-            			
-            		} catch (Exception e) {
-            			e.printStackTrace();
+            		int idx = fileName.lastIndexOf(".");
+            		String fName;
+            		if (idx == -1 ){
+            			fName = new String (fileName);
             		}
+            		else {
+            			fName = fileName.substring(0, idx);
+            		}
+            		if (new File(fileDir + File.separator + fName + ".xmp").exists()) {
+	            		try {
+	            			FileDataProvenance fdp = 
+	            				new FileDataProvenance(fName + ".xmp", fileDir, image.getProvenanceHolder());
+	            			
+	            			fdp.readHeader(fName + ".xmp", fileDir, Preferences.DATA_PROVENANCE_SCHEMA);
+	            			
+	            		} catch (Exception e) {
+	            			e.printStackTrace();
+	            		}
             		}
             	}
             	
