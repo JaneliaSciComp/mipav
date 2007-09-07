@@ -1844,7 +1844,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
      * @param  returnFlag  if true then this operation is a step in the morph process
      */
     private void backgroundDistanceMap(boolean returnFlag) {
-
+        
         // if thread has already been stopped, dump out
         if (threadStopped) {
             finalize();
@@ -1880,9 +1880,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             return;
         }
 
-        // Invert image
+        // Save original in processBuffer and invert image in imgBuffer
         for (pix = 0; pix < sliceSize; pix++) {
-
+            processBuffer[pix] = imgBuffer[pix];
             if (imgBuffer[pix] > 0) {
                 imgBuffer[pix] = 0;
             } else {
@@ -1956,6 +1956,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                     distBuffer[pix] = (float) Math.sqrt(distance);
                 }
+            }
+            else {
+                distBuffer[pix] = processBuffer[pix];
             }
         }
 
@@ -2455,6 +2458,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                     distBuffer[pix] = (float) Math.sqrt(distance);
                 }
+            }
+            else {
+                distBuffer[pix] = imgBuffer[pix];
             }
         }
 
