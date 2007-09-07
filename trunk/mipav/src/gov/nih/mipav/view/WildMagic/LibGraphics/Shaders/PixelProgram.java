@@ -19,6 +19,8 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.Shaders;
 
 import com.sun.opengl.cg.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
+
+import java.io.File;
 public class PixelProgram extends Program
     implements StreamInterface
 {
@@ -34,7 +36,7 @@ public class PixelProgram extends Program
         pkProgram.SetName(rkProgramName);
 
         boolean bLoaded = false;
-        String kFilename = new String( rkDirectory + "\\Shaders\\Cg\\" + rkProgramName + ".cg" );
+        String kFilename = new String( rkDirectory + File.separator + "Shaders" + File.separator + "Cg" + File.separator + rkProgramName + ".cg" );
         String kProgramName = new String( "p_" + rkProgramName );
         //System.err.println(kProgramName);
         CGprogram kCGProgram = CgGL.cgCreateProgramFromFile( pkProgram.m_kContext,

@@ -19,6 +19,8 @@ package gov.nih.mipav.view.WildMagic.LibGraphics.Shaders;
 
 import com.sun.opengl.cg.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
+import java.io.File;
+
 public class VertexProgram extends Program
     implements StreamInterface
 {
@@ -35,7 +37,7 @@ public class VertexProgram extends Program
 
         boolean bLoaded = false;
 
-        String kFilename = new String( rkDirectory + "\\Shaders\\Cg\\" + rkProgramName + ".cg" );
+        String kFilename = new String( rkDirectory + File.separator + "Shaders" + File.separator + "Cg" + File.separator + rkProgramName + ".cg" );
         String kProgramName = new String( "v_" + rkProgramName );
         //System.err.println(kProgramName);
 
