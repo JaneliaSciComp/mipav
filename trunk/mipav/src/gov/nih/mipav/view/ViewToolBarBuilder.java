@@ -309,7 +309,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         tBar.add(makeSeparator());
         
         JCheckBox scrollButton = new JCheckBox(MipavUtil.getIcon("link_broken.gif"));
-        scrollButton.setPreferredSize(leftArrowButton.getSize());
+        scrollButton.setPreferredSize(new Dimension(35,24));
         scrollButton.setMinimumSize(new Dimension(24,24));
         scrollButton.setSelectedIcon(MipavUtil.getIcon("link.gif"));
         scrollButton.addActionListener((ActionListener) UI);
