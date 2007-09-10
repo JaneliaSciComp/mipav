@@ -1579,9 +1579,6 @@ public class Preferences {
     public static final int getArch() {
         String arch = System.getProperty("os.arch");
         
-        // TODO: deleteme
-        System.out.println("ARCH: " + arch);
-        
         if (arch.equalsIgnoreCase("i386") || arch.equalsIgnoreCase("i486") || arch.equalsIgnoreCase("i586") || arch.equalsIgnoreCase("i686") || arch.equalsIgnoreCase("x86")) {
             return ARCH_X86;
         } else if (arch.equalsIgnoreCase("amd64") || arch.equalsIgnoreCase("x86_64")) {
