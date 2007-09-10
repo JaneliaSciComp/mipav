@@ -2944,7 +2944,7 @@ kernelLoop:
 
                 processBuffer[pix] = (byte) v;
             } else {
-                processBuffer[pix] = 0;
+                processBuffer[pix] = imgBuffer[pix];
             }
         }
 
