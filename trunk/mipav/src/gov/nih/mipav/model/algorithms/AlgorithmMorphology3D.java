@@ -2993,6 +2993,7 @@ kernelLoop:
         Vector uPointsSliceOrdered = null;
 
         float[] minDistanceBuffer;
+        short imgBuffer2[];
 
         try {
             minDistanceBuffer = new float[sliceSize];
@@ -3312,6 +3313,26 @@ kernelLoop:
                     j++;
                 }
             }
+            
+            if (!entireImage) {
+                imgBuffer2 = new short[volSize];
+                try {
+                    srcImage.exportData(0, volSize, imgBuffer2);
+                }
+                catch(IOException e) {
+                    displayError("Algorithm Morphology3D: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;    
+                }
+                for (i = 0; i < volSize; i++) {
+                    if (!mask.get(i)) {
+                        imgBuffer[i] = imgBuffer2[i];    
+                    }
+                }
+                imgBuffer2 = null;
+            } // if (!entireImage)
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
