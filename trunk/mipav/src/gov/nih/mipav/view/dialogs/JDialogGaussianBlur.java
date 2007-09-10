@@ -362,7 +362,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
      */
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_gblur");
-
+        
         if ((image.getNDims() == 2) && separable) { // source image is 2D and kernel is separable
 
             float[] sigmas = sigmaPanel.getNormalizedSigmas();
@@ -423,11 +423,11 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                         gaussianBlurSepAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
+                	
+                	if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
 
                     System.gc();
                     MipavUtil.displayError("Dialog Gaussian blur: unable to allocate enough memory");
@@ -557,10 +557,10 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                         gaussianBlurSepAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
+                	
+                	if (resultImage != null) {
+                		resultImage.disposeLocal(); // Clean up image memory
+                		resultImage = null;
                     }
 
                     System.gc();
@@ -811,9 +811,10 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                         }
                     } else {
                         gaussianBlurAlgo.run();
+                        
                     }
                 } catch (OutOfMemoryError x) {
-
+                	
                     if (resultImage != null) {
                         resultImage.disposeLocal(); // Clean up image memory
                         resultImage = null;
