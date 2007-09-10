@@ -43,7 +43,7 @@
         =========
     -->
     <!-- directory aliases -->
-    <property name="dir.jmf" value="${user.home}/java/JMF_2.1.1/lib"/>
+    <!--<property name="dir.jmf" value="${user.home}/java/JMF_2.1.1/lib"/>-->
 
     <!--
         =========
@@ -99,9 +99,9 @@
         <tstamp />
         <path id="build.classpath">
             <pathelement path="${dir.dest}"/>
-            <fileset dir="${dir.jmf}">
+            <!--<fileset dir="${dir.jmf}">
                 <filename description="The JMF JAR files." name="*.jar"/>
-            </fileset>
+            </fileset>-->
             <pathelement location="${dir.source}/InsightToolkit/lib/InsightToolkit/InsightToolkit.jar"/>
             <!-- include all jar files under the lib directory -->
             <fileset dir="${dir.lib}">
@@ -239,6 +239,11 @@
             <fileset dir="${dir.source}/../xml" includes="*.xsd"/>
         </copy>
 
+        <!-- wildmagic shader files -->
+        <copy todir="${dir.dest}/Shaders">
+            <fileset dir="${dir.source}/gov/nih/mipav/view/WildMagic/Shaders"/>
+        </copy>
+
         <!-- /// TODO: placeholder installshield config file would be nice.. -->
 
         <!-- misc resource files -->
@@ -248,6 +253,7 @@
             <fileset file="${dir.source}/dicom_dictionary.txt"/>
             <fileset file="${dir.source}/DICOMhelp.txt"/>
             <fileset file="${dir.source}/license.html"/>
+            <fileset file="${dir.source}/VR Muscles-Bones.txt"/>
         </copy>
     </target>
 
