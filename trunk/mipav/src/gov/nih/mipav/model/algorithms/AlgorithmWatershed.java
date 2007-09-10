@@ -49,6 +49,9 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float[] sigmas;
+    
+    /** If true, ignore VOIs and process entire image */
+    private boolean entireImage = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -68,6 +71,27 @@ public class AlgorithmWatershed extends AlgorithmBase {
         this.sigmas = sigmas;
         seedVector = seeds;
         mask = srcImage.generateVOIMask();
+    }
+    
+    /**
+     * Constructs new watershed algorithm.
+     *
+     * @param  destImg  Image model where result image is to stored
+     * @param  srcImg   Source image model
+     * @param  gmImg    Gradient magnitude image (can be null)
+     * @param  sigmas   Gaussian's standard deviations in the each dimension
+     * @param  seeds    Seed points for starting watershed
+     * @param  entireImage If true, ignore VOIs and process entire image
+     */
+    public AlgorithmWatershed(ModelImage destImg, ModelImage srcImg, ModelImage gmImg, float[] sigmas, Vector seeds,
+                              boolean entireImage) {
+
+        super(destImg, srcImg);
+        energyImage = gmImg;
+        this.sigmas = sigmas;
+        seedVector = seeds;
+        mask = srcImage.generateVOIMask();
+        this.entireImage = entireImage;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -274,52 +298,53 @@ public class AlgorithmWatershed extends AlgorithmBase {
             y = 0;
 
             // Set up seed vector - every VOI region should have one seed
-            VOIs = (ViewVOIVector) srcImage.getVOIs();
-            nVOI = VOIs.size();
-
-            for (i = 0; i < nVOI; i++) {
-
-                if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                    contours = VOIs.VOIAt(i).getCurves();
-
-                    for (c = 0; c < contours[0].size(); c++) {
-
-                        ((VOIContour) (contours[0].elementAt(c))).getBounds(xB, yB, zB);
-                        ((VOIContour) (contours[0].elementAt(c))).contains(0, 0, true);
-
+            if (!entireImage) {
+                VOIs = (ViewVOIVector) srcImage.getVOIs();
+                nVOI = VOIs.size();
+                for (i = 0; i < nVOI; i++) {
+    
+                    if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                        contours = VOIs.VOIAt(i).getCurves();
+    
+                        for (c = 0; c < contours[0].size(); c++) {
+    
+                            ((VOIContour) (contours[0].elementAt(c))).getBounds(xB, yB, zB);
+                            ((VOIContour) (contours[0].elementAt(c))).contains(0, 0, true);
+    
 // find seed inside VOI
 Found:
-                        for (y = (int) yB[0]; y < yB[1]; y++) {
-
-                            for (x = (int) xB[0]; x < xB[1]; x++) {
-
-                                if (((VOIContour) (contours[0].elementAt(c))).contains(x, y, false)) {
-                                    break Found;
+                            for (y = (int) yB[0]; y < yB[1]; y++) {
+    
+                                for (x = (int) xB[0]; x < xB[1]; x++) {
+    
+                                    if (((VOIContour) (contours[0].elementAt(c))).contains(x, y, false)) {
+                                        break Found;
+                                    }
                                 }
                             }
-                        }
-
-                        // Add point that has been found inside the VOI to the seed vector
-                        try {
-                            seedVector.addElement(new Seed(new Point3Df(x, y, 0), VOIs.VOIAt(i).getWatershedID()));
-                        } catch (OutOfMemoryError error) {
-
-                            if (energyImage != null) {
-                                energyImage.disposeLocal();
+    
+                            // Add point that has been found inside the VOI to the seed vector
+                            try {
+                                seedVector.addElement(new Seed(new Point3Df(x, y, 0), VOIs.VOIAt(i).getWatershedID()));
+                            } catch (OutOfMemoryError error) {
+    
+                                if (energyImage != null) {
+                                    energyImage.disposeLocal();
+                                }
+    
+                                energyImage = null;
+                                contours = null;
+                                System.gc();
+                                displayError("Watershed: unable to allocate enough memory");
+                                setCompleted(false);
+    
+                                return;
                             }
-
-                            energyImage = null;
-                            contours = null;
-                            System.gc();
-                            displayError("Watershed: unable to allocate enough memory");
-                            setCompleted(false);
-
-                            return;
                         }
                     }
                 }
             }
-        }
+        } // if (!entireImage)
 
         // Prepare destination image
         int mod = length / 100; // mod is 1 percent of length
@@ -372,7 +397,7 @@ Found:
         }
 
         // Set all initial regions to watershed value defined in VOI object
-        if (srcImage.getVOIs().size() > 0) {
+        if ((srcImage.getVOIs().size() > 0) && (!entireImage)) {
             VOIs = (ViewVOIVector) srcImage.getVOIs();
             nVOI = VOIs.size();
 
@@ -661,30 +686,32 @@ Found:
             }
         }
 
-        VOIs = (ViewVOIVector) srcImage.getVOIs();
-        nVOI = VOIs.size();
-
-        for (i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                contours = VOIs.VOIAt(i).getCurves();
-
-                for (int cons = 0; cons < contours[0].size(); cons++) {
-                    ((VOIContour) (contours[0].elementAt(cons))).getBounds(xB, yB, zB);
-                    ((VOIContour) (contours[0].elementAt(cons))).contains(0, 0, true);
-
-                    for (y = (int) yB[0]; y < yB[1]; y++) {
-
-                        for (x = (int) xB[0]; x < xB[1]; x++) {
-
-                            if (((VOIContour) (contours[0].elementAt(cons))).contains(x, y, false)) {
-                                destImage.set(x, y, (short) VOIs.VOIAt(i).getWatershedID());
+        if (!entireImage) {
+            VOIs = (ViewVOIVector) srcImage.getVOIs();
+            nVOI = VOIs.size();
+    
+            for (i = 0; i < nVOI; i++) {
+    
+                if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                    contours = VOIs.VOIAt(i).getCurves();
+    
+                    for (int cons = 0; cons < contours[0].size(); cons++) {
+                        ((VOIContour) (contours[0].elementAt(cons))).getBounds(xB, yB, zB);
+                        ((VOIContour) (contours[0].elementAt(cons))).contains(0, 0, true);
+    
+                        for (y = (int) yB[0]; y < yB[1]; y++) {
+    
+                            for (x = (int) xB[0]; x < xB[1]; x++) {
+    
+                                if (((VOIContour) (contours[0].elementAt(cons))).contains(x, y, false)) {
+                                    destImage.set(x, y, (short) VOIs.VOIAt(i).getWatershedID());
+                                }
                             }
                         }
                     }
                 }
             }
-        }
+        } // if (!entireImage)
 
         destImage.calcMinMax();
 
@@ -839,45 +866,47 @@ Found:
 
 
             // Find seed points
-            for (i = 0; i < nVOI; i++) {
-
-                if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                    contours = VOIs.VOIAt(i).getCurves();
-
-                    for (slice = 1; slice < (contours.length - 1); slice++) {
-
-                        for (int cons = 0; cons < contours[slice].size(); cons++) {
-                            ((VOIContour) (contours[slice].elementAt(cons))).getBounds(xB, yB, zB);
-                            ((VOIContour) (contours[slice].elementAt(cons))).contains(0, 0, true);
-
+            if (!entireImage) {
+                for (i = 0; i < nVOI; i++) {
+    
+                    if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                        contours = VOIs.VOIAt(i).getCurves();
+    
+                        for (slice = 1; slice < (contours.length - 1); slice++) {
+    
+                            for (int cons = 0; cons < contours[slice].size(); cons++) {
+                                ((VOIContour) (contours[slice].elementAt(cons))).getBounds(xB, yB, zB);
+                                ((VOIContour) (contours[slice].elementAt(cons))).contains(0, 0, true);
+    
 Found:
-                            for (y = (int) yB[0]; y < yB[1]; y++) {
-
-                                for (x = (int) xB[0]; x < xB[1]; x++) {
-
-                                    if (((VOIContour) (contours[slice].elementAt(cons))).contains(x, y, false)) {
-                                        break Found;
+                                for (y = (int) yB[0]; y < yB[1]; y++) {
+    
+                                    for (x = (int) xB[0]; x < xB[1]; x++) {
+    
+                                        if (((VOIContour) (contours[slice].elementAt(cons))).contains(x, y, false)) {
+                                            break Found;
+                                        }
                                     }
                                 }
-                            }
-
-                            try {
-                                seedVector.addElement(new Seed(new Point3Df(x, y, slice),
-                                                               VOIs.VOIAt(i).getWatershedID()));
-                            } catch (OutOfMemoryError error) {
-                                energyImage = null;
-                                System.gc();
-                                displayError("Watershed: unable to allocate enough memory");
-                                setCompleted(false);
-
-                                return;
+    
+                                try {
+                                    seedVector.addElement(new Seed(new Point3Df(x, y, slice),
+                                                                   VOIs.VOIAt(i).getWatershedID()));
+                                } catch (OutOfMemoryError error) {
+                                    energyImage = null;
+                                    System.gc();
+                                    displayError("Watershed: unable to allocate enough memory");
+                                    setCompleted(false);
+    
+                                    return;
+                                }
                             }
                         }
                     }
+    
                 }
-
             }
-        }
+        } // if (!entireImage)
 
         int imageLength = xDim * yDim;
         int lastImageIndex = (zDim - 1) * imageLength;
@@ -929,7 +958,7 @@ Found:
         }
 
         // Fill all watershed initial VOIs with watershedID
-        if (srcImage.getVOIs().size() > 0) {
+        if ((srcImage.getVOIs().size() > 0) && (!entireImage)) {
 
             for (i = 0; (i < nVOI) && !threadStopped; i++) {
 
@@ -1284,30 +1313,32 @@ Found:
         }
 
         // Make sure all watershed VOIs have there watershed ID -- fixes border voxels
-        for (i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                contours = VOIs.VOIAt(i).getCurves();
-
-                for (slice = 1; slice < (contours.length - 1); slice++) {
-
-                    for (int cons = 0; cons < contours[slice].size(); cons++) {
-                        ((VOIContour) (contours[slice].elementAt(cons))).getBounds(xB, yB, zB);
-                        ((VOIContour) (contours[slice].elementAt(cons))).contains(0, 0, true);
-
-                        for (y = (int) yB[0]; y < yB[1]; y++) {
-
-                            for (x = (int) xB[0]; x < xB[1]; x++) {
-
-                                if (((VOIContour) (contours[slice].elementAt(cons))).contains(x, y, false)) {
-                                    destImage.set(x, y, slice, (short) VOIs.VOIAt(i).getWatershedID());
+        if (!entireImage) {
+            for (i = 0; i < nVOI; i++) {
+    
+                if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                    contours = VOIs.VOIAt(i).getCurves();
+    
+                    for (slice = 1; slice < (contours.length - 1); slice++) {
+    
+                        for (int cons = 0; cons < contours[slice].size(); cons++) {
+                            ((VOIContour) (contours[slice].elementAt(cons))).getBounds(xB, yB, zB);
+                            ((VOIContour) (contours[slice].elementAt(cons))).contains(0, 0, true);
+    
+                            for (y = (int) yB[0]; y < yB[1]; y++) {
+    
+                                for (x = (int) xB[0]; x < xB[1]; x++) {
+    
+                                    if (((VOIContour) (contours[slice].elementAt(cons))).contains(x, y, false)) {
+                                        destImage.set(x, y, slice, (short) VOIs.VOIAt(i).getWatershedID());
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
+        } // if (!entireImage)
 
         destImage.calcMinMax();
 
