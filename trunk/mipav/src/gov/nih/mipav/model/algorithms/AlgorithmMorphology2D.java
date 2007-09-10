@@ -3660,6 +3660,9 @@ kernelLoop:
         AlgorithmWatershed ws = null;
 
         int[] progressValues = getProgressValues();
+        short imgBufferOrg[] = null;
+        short imgBuffer2[];
+        ModelImage srcImage2 = null;
 
         fireProgressStateChanged("Particle analysis (PA) ...");
         fireProgressStateChanged(0);
@@ -3693,13 +3696,14 @@ kernelLoop:
         float maxDist = -Float.MAX_VALUE;
 
         for (pix = 0; pix < sliceSize; pix++) {
-
-            if (distanceMap[pix] < minDist) {
-                minDist = distanceMap[pix];
-            }
-
-            if (distanceMap[pix] > maxDist) {
-                maxDist = distanceMap[pix];
+            if ((entireImage) || (mask.get(pix))) {
+                if (distanceMap[pix] < minDist) {
+                    minDist = distanceMap[pix];
+                }
+    
+                if (distanceMap[pix] > maxDist) {
+                    maxDist = distanceMap[pix];
+                }
             }
         }
 
@@ -3714,17 +3718,18 @@ kernelLoop:
         int bgIndex = -1;
 
         for (pix = 0; pix < sliceSize; pix++) {
-
-            if (imgBuffer[pix] > 0) {
-                distanceMap[pix] = maxDist + minDist - distanceMap[pix];
-            } else {
-
-                if ((bgIndex == -1) && (pix > xDim) && ((pix % xDim) != 0) && ((pix % xDim) != xDim) &&
-                        (pix < (sliceSize - xDim))) {
-                    bgIndex = pix;
+            if ((entireImage) || (mask.get(pix))) {
+                if (imgBuffer[pix] > 0) {
+                    distanceMap[pix] = maxDist + minDist - distanceMap[pix];
+                } else {
+    
+                    if ((bgIndex == -1) && (pix > xDim) && ((pix % xDim) != 0) && ((pix % xDim) != xDim) &&
+                            (pix < (sliceSize - xDim))) {
+                        bgIndex = pix;
+                    }
+    
+                    distanceMap[pix] = 0;
                 }
-
-                distanceMap[pix] = 0;
             }
         }
 
@@ -3777,10 +3782,37 @@ kernelLoop:
             wsImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed");
             distanceImage = new ModelImage(ModelImage.FLOAT, destExtents, "Distance");
             distanceImage.importData(0, distanceMap, true);
-            if (entireImage) {
-                
+            if (!entireImage) {
+                imgBufferOrg = new short[sliceSize];
+                imgBuffer2 = new short[sliceSize];
+                try {
+                    srcImage.exportData(0, sliceSize, imgBufferOrg);
+                }
+                catch(IOException e) {
+                    displayError("Algorithm Morphology2D: Image(s) locked");
+                    setCompleted(false);
+                    return;    
+                }
+                for (i = 0; i < sliceSize; i++) {
+                    if (mask.get(i)) {
+                        imgBuffer2[i] = imgBufferOrg[i];
+                    }
+                }
+                srcImage2 = (ModelImage)srcImage.clone();
+                try {
+                    srcImage2.importData(0, imgBuffer2, true);
+                }
+                catch(IOException e) {
+                    displayError("Algorithm Morphology2D: Image(s) locked");
+                    setCompleted(false);
+                    return;    
+                }
+                ws = new AlgorithmWatershed(wsImage, srcImage2, null, null, null, true); 
+                imgBuffer2 = null;
+            } // if (!entireImage)
+            else {
+                ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null, true);
             }
-            ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null, entireImage);
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
@@ -3790,8 +3822,6 @@ kernelLoop:
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-
-
             return;
         }
 
@@ -3810,6 +3840,11 @@ kernelLoop:
 
             return;
         }
+        
+        if (!entireImage) {
+            srcImage2.disposeLocal();
+            srcImage2 = null;
+        }
 
         // new ViewJFrameImage( wsImage, null, new Dimension( 300, 300 ), srcImage.getUserInterface(), false );
 
@@ -3819,6 +3854,13 @@ kernelLoop:
         try {
             fireProgressStateChanged(95);
             wsImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
+            if (!entireImage) {
+                for (i = 0; i < sliceSize; i++) {
+                    if (!mask.get(i)) {
+                        imgBuffer[i] = imgBufferOrg[i];    
+                    }
+                }
+            }
             srcImage.importData(0, imgBuffer, true);
 
             // once the data from the watershed has been exported to imgBuffer, the
