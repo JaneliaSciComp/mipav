@@ -1531,7 +1531,6 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 break;
 
             case PARTICLE_ANALYSIS_NEW:
-
                 // open
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 15));
                 fillHoles(true);
@@ -2955,7 +2954,7 @@ kernelLoop:
                         }
                     }
                 } else {
-                    processBuffer[pix] = imgBuffer[pix];
+                    tempBuffer[pix] = imgBuffer[pix];
                 }
             }
 
@@ -3043,8 +3042,7 @@ kernelLoop:
                     }
                 } else {
 
-                    // processBuffer[pix] = imgBuffer[pix];
-                    processBuffer[pix] = 0;
+                    tempBuffer[pix] = imgBuffer[pix];
                 }
             }
 
@@ -3774,6 +3772,9 @@ kernelLoop:
             wsImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed");
             distanceImage = new ModelImage(ModelImage.FLOAT, destExtents, "Distance");
             distanceImage.importData(0, distanceMap, true);
+            if (entireImage) {
+                
+            }
             ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null);
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
@@ -3817,9 +3818,14 @@ kernelLoop:
 
             // once the data from the watershed has been exported to imgBuffer, the
             // 2 temp images (wsImage, distanceImage) can be cleaned up
-            wsImage.disposeLocal();
+            if (showFrame) {
+                new ViewJFrameImage(wsImage, null, null, false);    
+            }
+            else {
+                wsImage.disposeLocal();
+                wsImage = null;
+            }
             distanceImage.disposeLocal();
-            wsImage = null;
             distanceImage = null;
             fireProgressStateChanged(100);
         } catch (IOException error) {
