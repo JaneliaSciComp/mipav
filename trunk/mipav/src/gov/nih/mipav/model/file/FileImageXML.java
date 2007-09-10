@@ -795,6 +795,28 @@ public class FileImageXML extends FileXML {
         if (linkedFilename != null) {
             closedTag( datasetAttributesStr[2], linkedFilename);
         }
+        
+        if (myFileInfo.getFileFormat() == FileUtility.XML || 
+        		myFileInfo.getFileFormat() == FileUtility.XML_MULTIFILE) {
+        	closedTag( datasetAttributesStr[3], new Integer(myFileInfo.getOffset()).toString());
+        } else {
+        	closedTag( datasetAttributesStr[3], "0");
+        }
+        
+
+        // retain any image offset if saving from XML to XML, but disregard if from non-XML to XML, since the offset was to a different image file type
+        if (myFileInfo.getFileFormat() == FileUtility.XML || myFileInfo.getFileFormat() == FileUtility.XML_MULTIFILE) {
+            closedTag( datasetAttributesStr[3], new Integer(myFileInfo.getOffset()).toString());
+        } else {
+            closedTag( datasetAttributesStr[3], "0");
+        }
+
+        // retain any image offset if saving from XML to XML, but disregard if from non-XML to XML, since the offset was to a different image file type
+        if (myFileInfo.getFileFormat() == FileUtility.XML || myFileInfo.getFileFormat() == FileUtility.XML_MULTIFILE) {
+            closedTag( datasetAttributesStr[3], new Integer(myFileInfo.getOffset()).toString());
+        } else {
+            closedTag( datasetAttributesStr[3], "0");
+        }
 
         // retain any image offset if saving from XML to XML, but disregard if from non-XML to XML, since the offset was to a different image file type
         if (myFileInfo.getFileFormat() == FileUtility.XML || myFileInfo.getFileFormat() == FileUtility.XML_MULTIFILE) {
