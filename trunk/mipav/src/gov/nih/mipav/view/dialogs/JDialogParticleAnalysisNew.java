@@ -1067,13 +1067,13 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
         gbc.fill = GridBagConstraints.HORIZONTAL;
         erodePanel.add(textErode, gbc); */
 
-        image25D = new JCheckBox("Process image in 2.5D", false);
+        /*image25D = new JCheckBox("Process image in 2.5D", false);
         image25D.setFont(serif12);
         if (image.getNDims() == 3) {
             image25D.setEnabled(true);
         } else {
             image25D.setEnabled(false);
-        }
+        }*/
         
         showResultCB = new JCheckBox("Show intermediate result frames");
         showResultCB.addItemListener(this);
@@ -1081,7 +1081,7 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
         showResultCB.setFont(serif12);
 
         PanelManager optionsManager = new PanelManager("Options");
-        optionsManager.add(image25D);
+        //optionsManager.add(image25D);
         optionsManager.addOnNextLine(showResultCB);
         
         outputPanel = new JPanelAlgorithmOutputOptions(image);
@@ -1157,7 +1157,7 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
 
         String tmpStr;
 
-        do25D = image25D.isSelected();
+        //do25D = image25D.isSelected();
 
         tmpStr = textNIterOpen.getText();
 
