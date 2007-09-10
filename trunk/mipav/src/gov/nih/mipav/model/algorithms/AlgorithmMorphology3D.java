@@ -2748,7 +2748,7 @@ kernelLoop:
             distanceImage.importData(0, distanceMap, true);
             // srcImage.importData(0, distanceMap, true);
 
-            ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null);
+            ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null, entireImage);
         } catch (IOException error) {
             displayError("Algorithm Morphology3Db: Image(s) locked");
             setCompleted(false);
