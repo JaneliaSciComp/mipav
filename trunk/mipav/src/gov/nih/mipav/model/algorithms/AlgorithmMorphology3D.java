@@ -334,7 +334,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                             }
                         }
                     } else {
-                        processBuffer[pix] = imgBuffer[pix];
+                        tempBuffer[pix] = imgBuffer[pix];
                     }
                 }
             }
@@ -394,7 +394,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                             }
                         }
                     } else {
-                        processBuffer[pix] = imgBuffer[pix];
+                        tempBuffer[pix] = imgBuffer[pix];
                     }
                 }
             }
