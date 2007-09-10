@@ -2592,6 +2592,10 @@ kernelLoop:
         ModelImage wsImage = null;
         ModelImage distanceImage = null;
         AlgorithmWatershed ws = null;
+        short imgBufferOrg[] = null;
+        short imgBuffer2[];
+        ModelImage srcImage2 = null;
+        int i;
 
         int[] progressValues = getProgressValues();
         setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45));
@@ -2653,22 +2657,24 @@ kernelLoop:
         float maxDist = -Float.MAX_VALUE;
 
         for (pix = 0; pix < volSize; pix++) {
-
-            if (distanceMap[pix] < minDist) {
-                minDist = distanceMap[pix];
-            }
-
-            if (distanceMap[pix] > maxDist) {
-                maxDist = distanceMap[pix];
+            if ((entireImage) || (mask.get(pix))) {
+                if (distanceMap[pix] < minDist) {
+                    minDist = distanceMap[pix];
+                }
+    
+                if (distanceMap[pix] > maxDist) {
+                    maxDist = distanceMap[pix];
+                }
             }
         }
 
         for (pix = 0; pix < volSize; pix++) {
-
-            if (imgBuffer[pix] > 0) {
-                distanceMap[pix] = maxDist + minDist - distanceMap[pix];
-            } else {
-                distanceMap[pix] = 0;
+            if ((entireImage) || (mask.get(pix))) {
+                if (imgBuffer[pix] > 0) {
+                    distanceMap[pix] = maxDist + minDist - distanceMap[pix];
+                } else {
+                    distanceMap[pix] = 0;
+                }
             }
         }
 
@@ -2681,23 +2687,25 @@ kernelLoop:
         }
 
         for (pix = sliceSize; pix < (volSize - sliceSize); pix++) {
-
-            if ((distanceMap[pix] == 0) &&
-                    (((distanceMap[pix - 1] <= maxDist) && (distanceMap[pix - 1] > 0)) ||
-                         ((distanceMap[pix + 1] <= maxDist) && (distanceMap[pix + 1] > 0)) ||
-                         ((distanceMap[pix - xDim] <= maxDist) && (distanceMap[pix - xDim] > 0)) ||
-                         ((distanceMap[pix + xDim] <= maxDist) && (distanceMap[pix + xDim] > 0)) ||
-                         ((distanceMap[pix - sliceSize] <= maxDist) && (distanceMap[pix - sliceSize] > 0)) ||
-                         ((distanceMap[pix + sliceSize] <= maxDist) && (distanceMap[pix + sliceSize] > 0)))) {
-
-                distanceMap[pix] = maxDist + 10;
+            if ((entireImage) || (mask.get(pix))) {
+                if ((distanceMap[pix] == 0) &&
+                        (((distanceMap[pix - 1] <= maxDist) && (distanceMap[pix - 1] > 0)) ||
+                             ((distanceMap[pix + 1] <= maxDist) && (distanceMap[pix + 1] > 0)) ||
+                             ((distanceMap[pix - xDim] <= maxDist) && (distanceMap[pix - xDim] > 0)) ||
+                             ((distanceMap[pix + xDim] <= maxDist) && (distanceMap[pix + xDim] > 0)) ||
+                             ((distanceMap[pix - sliceSize] <= maxDist) && (distanceMap[pix - sliceSize] > 0)) ||
+                             ((distanceMap[pix + sliceSize] <= maxDist) && (distanceMap[pix + sliceSize] > 0)))) {
+    
+                    distanceMap[pix] = maxDist + 10;
+                }
             }
         }
 
         for (pix = 0; pix < volSize; pix++) {
-
-            if (distanceMap[pix] == 0) {
-                distanceMap[pix] = maxDist + 5;
+            if ((entireImage) || (mask.get(pix))) {
+                if (distanceMap[pix] == 0) {
+                    distanceMap[pix] = maxDist + 5;
+                }
             }
         }
 
@@ -2714,11 +2722,11 @@ kernelLoop:
             seeds = new Point3Df[ultErodeObjects.length + 1];
             seeds[0] = new Point3Df(1, 1, 1);
 
-            for (int i = 0; i < ultErodeObjects.length; i++) {
+            for (i = 0; i < ultErodeObjects.length; i++) {
                 seeds[i + 1] = new Point3Df(ultErodeObjects[i].x, ultErodeObjects[i].y, ultErodeObjects[i].z);
             }
 
-            for (int i = 0; i < seeds.length; i++) {
+            for (i = 0; i < seeds.length; i++) {
 
                 if (seeds[i].x == 0) {
                     seeds[i].x++;
@@ -2747,8 +2755,37 @@ kernelLoop:
 
             distanceImage.importData(0, distanceMap, true);
             // srcImage.importData(0, distanceMap, true);
-
-            ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null, entireImage);
+            if (!entireImage) {
+                imgBufferOrg = new short[volSize];
+                imgBuffer2 = new short[volSize];
+                try {
+                    srcImage.exportData(0, volSize, imgBufferOrg);
+                }
+                catch(IOException e) {
+                    displayError("Algorithm Morphology2D: Image(s) locked");
+                    setCompleted(false);
+                    return;    
+                }
+                for (i = 0; i < volSize; i++) {
+                    if (mask.get(i)) {
+                        imgBuffer2[i] = imgBufferOrg[i];
+                    }
+                }
+                srcImage2 = (ModelImage)srcImage.clone();
+                try {
+                    srcImage2.importData(0, imgBuffer2, true);
+                }
+                catch(IOException e) {
+                    displayError("Algorithm Morphology2D: Image(s) locked");
+                    setCompleted(false);
+                    return;    
+                }
+                ws = new AlgorithmWatershed(wsImage, srcImage2, null, null, null, true); 
+                imgBuffer2 = null;
+            } // if (!entireImage)
+            else {
+                ws = new AlgorithmWatershed(wsImage, srcImage, null, null, null, true);
+            }
         } catch (IOException error) {
             displayError("Algorithm Morphology3Db: Image(s) locked");
             setCompleted(false);
@@ -2777,6 +2814,11 @@ kernelLoop:
 
             return;
         }
+        
+        if (!entireImage) {
+            srcImage2.disposeLocal();
+            srcImage2 = null;
+        }
 
         try {
             wsImage.exportData(0, xDim * yDim * zDim, imgBuffer);
@@ -2800,6 +2842,30 @@ kernelLoop:
         setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95),
                           ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
         deleteObjects(min, max, false);
+        
+        if (!entireImage) {
+            try {
+                srcImage.exportData(0, volSize, imgBuffer);
+            }
+            catch (IOException e) {
+                displayError("Algorithm Morphology2D: Image(s) locked");
+                setCompleted(false);
+                return;        
+            }
+            for (i = 0; i < volSize; i++) {
+                if (!mask.get(i)) {
+                    imgBuffer[i] = imgBufferOrg[i];    
+                }
+            }
+            try {
+                srcImage.importData(0, imgBuffer, true);
+            }
+            catch (IOException e) {
+                displayError("Algorithm Morphology2D: Image(s) locked");
+                setCompleted(false);
+                return;    
+            }
+        }
 
         if (threadStopped) {
             setCompleted(false);
