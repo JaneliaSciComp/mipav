@@ -1393,7 +1393,12 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         for (pix = 0; pix < sliceSize; pix++) {
-            tempBuffer[pix] = 0;
+            if ((entireImage) || (mask.get(pix))) {
+                tempBuffer[pix] = 0;
+            }
+            else {
+                tempBuffer[pix] = imgBuffer[pix];
+            }
         }
 
         for (i = 0; i < pixArray.length; i++) {
