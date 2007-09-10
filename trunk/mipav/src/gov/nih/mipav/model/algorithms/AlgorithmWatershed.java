@@ -343,8 +343,8 @@ Found:
                         }
                     }
                 }
-            }
-        } // if (!entireImage)
+            } // if (!entireImage)
+        } // if (seedVector == null)
 
         // Prepare destination image
         int mod = length / 100; // mod is 1 percent of length
@@ -905,8 +905,8 @@ Found:
                     }
     
                 }
-            }
-        } // if (!entireImage)
+            } // if (!entireImage)
+        } // if (seedVector == null)
 
         int imageLength = xDim * yDim;
         int lastImageIndex = (zDim - 1) * imageLength;
