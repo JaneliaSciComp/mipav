@@ -162,7 +162,7 @@ public class ModelImage extends ModelStorageBase {
             fileInfo = new FileInfoBase[1];
 
             // save the entire filename with the suffix -- helps later when saving file
-            fileInfo[0] = new FileInfoImageXML(name, null, FileUtility.XML);
+            fileInfo[0] = new FileInfoImageXML(makeImageName(name, ".xml"), null, FileUtility.XML);
             fileInfo[0].setExtents(dimExtents);
             fileInfo[0].setResolutions(resolutions);
             fileInfo[0].setUnitsOfMeasure(units);
@@ -173,7 +173,7 @@ public class ModelImage extends ModelStorageBase {
             for (i = 0; i < dimExtents[2]; i++) {
 
                 // save the entire filename with the suffix -- helps later when saving file
-                fileInfo[i] = new FileInfoImageXML(name, null, FileUtility.XML);
+                fileInfo[i] = new FileInfoImageXML(makeImageName(name, ".xml"), null, FileUtility.XML);
                 fileInfo[i].setExtents(dimExtents);
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
@@ -185,7 +185,7 @@ public class ModelImage extends ModelStorageBase {
             for (i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
 
                 // save the entire filename with the suffix -- helps later when saving file
-                fileInfo[i] = new FileInfoImageXML(name, null, FileUtility.XML);
+                fileInfo[i] = new FileInfoImageXML(makeImageName(name, ".xml"), null, FileUtility.XML);
                 fileInfo[i].setExtents(dimExtents);
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
