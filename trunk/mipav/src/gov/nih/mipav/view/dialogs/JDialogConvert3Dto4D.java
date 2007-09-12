@@ -307,7 +307,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
         inputPanel.setForeground(Color.black);
         inputPanel.setBorder(buildTitledBorder("Parameters "));
 
-        labelVolumeLength = new JLabel("Number of slices in the 3rd dimension ");
+        labelVolumeLength = new JLabel("Number of slices in the 3rd dimension of resulting 4D volume ");
         labelVolumeLength.setForeground(Color.black);
         labelVolumeLength.setFont(serif12);
         inputPanel.add(labelVolumeLength);
