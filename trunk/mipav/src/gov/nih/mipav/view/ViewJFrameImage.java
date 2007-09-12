@@ -625,7 +625,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 for (int i = 0; i < imageB.getFileInfo().length; i++) {
                     imageB.getFileInfo(i).setDataType(imageB.getType());
-                    imageB.getFileInfo(i).setFileName("Mask");
+                    imageB.getFileInfo(i).setFileDirectory(imageA.getFileInfo(i).getFileDirectory());
+                    imageB.getFileInfo(i).setFileName(imageA.getImageName() + "_mask" + imageB.getFileInfo(i).getFileSuffix());
                 }
 
                 imageB.calcMinMax();
@@ -637,7 +638,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 for (int i = 0; i < imageB.getFileInfo().length; i++) {
                     imageB.getFileInfo(i).setDataType(imageB.getType());
-                    imageB.getFileInfo(i).setFileName("Mask");
+                    imageB.getFileInfo(i).setFileDirectory(imageA.getFileInfo(i).getFileDirectory());
+                    imageB.getFileInfo(i).setFileName(imageA.getImageName() + "_ubMask" + imageB.getFileInfo(i).getFileSuffix());
                 }
 
                 imageB.calcMinMax();
