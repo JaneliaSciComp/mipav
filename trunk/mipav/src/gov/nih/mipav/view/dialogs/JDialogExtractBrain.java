@@ -946,7 +946,11 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
         orientCheckbox = new JCheckBox("Axial image orientation.");
         orientCheckbox.setFont(serif12);
-        orientCheckbox.setSelected(false);
+        if (image.getImageOrientation() == FileInfoBase.AXIAL) {
+            orientCheckbox.setSelected(true);
+        } else {
+            orientCheckbox.setSelected(false);
+        }
         orientCheckbox.addItemListener(this);
         optionsPanel.add(orientCheckbox);
 
