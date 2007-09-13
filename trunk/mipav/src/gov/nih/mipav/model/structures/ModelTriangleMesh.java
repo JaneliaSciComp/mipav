@@ -18,6 +18,11 @@ import javax.swing.*;
 
 import javax.vecmath.*;
 
+import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
 
 /**
  * A simple triangle mesh that represents a level surface. The mesh only stores vertex positions and vertex normals. The
@@ -1326,6 +1331,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             boolean flag, String fileName) throws IOException {
     	ModelTriangleMesh kMesh;
     	
+    	System.out.println(fileName);
+    	
     	// When reading VTK surface file format, set the default direction to (1, 1, 1).  
     	direction[0] = 1;
         direction[1] = 1;
@@ -1363,11 +1370,13 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 				}
 			}
 			points=new Point3f[vertexCount];
-			
+			System.out.println("vertex count is " + vertexCount);
 			progress.updateValueImmed(added + (25 / total));
-			
+			System.out.println(m.end());
+			System.out.println(buff.length());
 			String[] strs=buff.substring(m.end(),buff.length()).split("\\s+",vertexCount*3+2);
-
+			System.out.println(strs[0]);
+			System.out.println(strs[1]);
 			for(int i=1;i<strs.length-1;i+=3){
 				try {
 					Point3f p=new Point3f();
@@ -1404,8 +1413,14 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 			System.out.println("INDICES "+indexCount);
 			String[] strs=buff.substring(m.end(),buff.length()).split("\\s+",indexCount*4+2);	
 			int count=0;
+			System.out.println(strs[0]);
+			System.out.println(strs[1]);
 			for(int i=1;i<strs.length-1;i+=4){			
 				try {
+					if(Integer.parseInt(strs[i]) != 3) {
+						System.err.println("CANNOT FORMAT INDICES");
+						return null;
+					}
 					indices[count++]=Integer.parseInt(strs[i+1]);
 					indices[count++]=Integer.parseInt(strs[i+2]);
 					indices[count++]=Integer.parseInt(strs[i+3]);
@@ -1461,15 +1476,40 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 			kMesh.setName(fileName);
 
 		}
-    	
-    	
-    	
-    	
     	return kMesh;
-    	
-    	
-    	
     }
+    
+    
+    
+    
+    /**
+     * 
+     * @param kIn
+     * @param progress
+     * @param added
+     * @param total
+     * @param flag
+     * @param fileName
+     * @return
+     * @throws IOException
+     */
+    public static ModelTriangleMesh loadVTKXMLMesh(String absPath, ViewJProgressBar progress, int added, int total, boolean flag, String fileName, String dir) throws IOException {
+    	ModelTriangleMesh kMesh;
+
+    	// When reading VTK surface file format, set the default direction to (1, 1, 1).  
+    	direction[0] = 1;
+        direction[1] = 1;
+        direction[2] = 1;
+        
+        FileSurfaceVTKXML surfaceVTKXML = new FileSurfaceVTKXML(fileName, dir);
+    	kMesh = surfaceVTKXML.readXMLSurface(absPath);
+
+        return kMesh;
+    }
+    
+    
+    
+    
 
     /**
      * Parses the VRML to see how many surfaces there are.
@@ -2263,7 +2303,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 kOut.writeInt(1); // one component
                 save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
                 kOut.close();
-            } else if ( extension.equals("xml") ) {
+            } else if (extension.equals("xml")) {
             	// saveAsXML( kName, direction, startLocation, box);
             	saveXMLHeader(kName);
             	surfaceFileName = surfaceFileName + ".sur";
@@ -2272,6 +2312,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
                 kOut.writeInt(1); // one component
                 save(kOut, flip, direction, startLocation, box, inverseDicomArray, null);
                 kOut.close();
+            } else if (extension.equals("vtp")) {
+            	saveAsVTKXML(kName);
             }
         }
         /*
@@ -2369,6 +2411,20 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 		
 		kOut.close();
 	
+    }
+    
+    
+    
+    /**
+     * saves thr triangle mesh to VTK XML format
+     * @param kName
+     * @throws IOException
+     */
+    public void saveAsVTKXML(String fileName) throws IOException{
+    	try {
+        	FileSurfaceVTKXML surfaceVTKXML = new FileSurfaceVTKXML(null, null);
+        	surfaceVTKXML.writeXMLsurface(fileName, this);
+        } catch (IOException kError) { }
     }
     
 
