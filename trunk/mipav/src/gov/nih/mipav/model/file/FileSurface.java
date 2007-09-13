@@ -65,7 +65,7 @@ public class FileSurface {
             
             Color4f kColor = JPanelSurface.getNewSurfaceColor(iListSize + i);
 
-            if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || (kName.indexOf(".vtk") != -1)) {
+            if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || (kName.indexOf(".vtk") != -1) || (kName.indexOf(".vtp") != -1)) {
                 kSurface[i] = readSurface(kImage, akFiles[i], kColor);
             } else if (kName.indexOf(".xml") != -1) {
             	/*
@@ -206,7 +206,7 @@ public class FileSurface {
                 return null;
             }
         } else {
-        	//has to be vtk legacy
+        	//has to be vtk legacy or vtk xml
         	try {
         		in = new RandomAccessFile(file, "r");
         		iType = 0;
@@ -241,10 +241,21 @@ public class FileSurface {
                     		akComponent[i] = ModelTriangleMesh.loadVRMLMesh(in, progress, i * 100 / iQuantity, iQuantity,
                                                                         (i == 0));
                     	}
-                    	else {
-                    		//must be vtk legacy
-                    		akComponent[i] = ModelTriangleMesh.loadVTKLegacyMesh(in, progress, i * 100 / iQuantity, iQuantity,
-                                    (i == 0), file.getName());
+                    	else if (file.getName().endsWith("vtk")){
+                    		//vtk legacy
+                    		akComponent[i] = ModelTriangleMesh.loadVTKLegacyMesh(in, progress, i * 100 / iQuantity, iQuantity, (i == 0), file.getName());
+                    		if(akComponent[i] == null) {
+                    			progress.dispose();
+                    			return null;
+                    		}
+                    	}
+                    	else if(file.getName().endsWith("vtp")) {
+                    		//vtk xml
+                    		akComponent[i] = ModelTriangleMesh.loadVTKXMLMesh(file.getAbsolutePath(), progress, i * 100 / iQuantity, iQuantity, (i == 0), file.getName(), file.getParent());
+                    		if(akComponent[i] == null) {
+                    			progress.dispose();
+                    			return null;
+                    		}
                     	}
                     }
 
