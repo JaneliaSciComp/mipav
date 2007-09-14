@@ -41,6 +41,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
     /** DOCUMENT ME! */
     private int alphaBlend = 50;
+    
+    /** DOCUMENT ME! */
+    private int triPlanarAlphaBlend = 50;
 
     /** DOCUMENT ME! */
     private JPanel bottomPanel;
@@ -62,6 +65,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
     /** private String title; private boolean useTriplanar=false;. */
     private BitSet currentMask;
+    
+    /** masks in tr-planar **/
+    private BitSet[] triPlanarCurrentMasks;
 
     /** display masks toggle button. */
     private JToggleButton displayMasksButton;
@@ -371,8 +377,17 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         } else if (command.equals("HidePaint")) {
 
             if (displayPaintButton.isSelected()) {
+            	
                 currentMask = (BitSet) image.getParentFrame().getComponentImage().getPaintMask().clone();
                 refreshImagePaint(image, new BitSet());
+                if(image.getTriImageFrame() != null) {
+                	triPlanarCurrentMasks = new BitSet[image.getTriImageFrame().MAX_TRI_IMAGES];
+                	for (int i = 0; i < image.getTriImageFrame().MAX_TRI_IMAGES; i++) {
+                        if (image.getTriImageFrame().triImage[i] != null) {
+                        	triPlanarCurrentMasks[i] = (BitSet) image.getTriImageFrame().getTriImage(i).getPaintMask().clone();
+                        }
+                    }
+                } 
             } else {
                 refreshImagePaint(image, currentMask);
             }
@@ -380,11 +395,16 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
             if (displayMasksButton.isSelected()) {
                 alphaBlend = (int) (image.getParentFrame().getComponentImage().getAlphaBlend() * 100.0f);
-
-                // System.out.print(" alpha: "+alphaBlend);
                 image.getParentFrame().getComponentImage().setAlphaBlend(100);
+                if(image.getTriImageFrame() != null) {
+                	triPlanarAlphaBlend = (int)(image.getTriImageFrame().getAlphaBlend() * 100.0f);
+                	image.getTriImageFrame().setAlphaBlend(100);
+                }   
             } else {
                 image.getParentFrame().getComponentImage().setAlphaBlend(alphaBlend);
+                if(image.getTriImageFrame() != null) {
+                	image.getTriImageFrame().setAlphaBlend(triPlanarAlphaBlend);
+                }
             }
 
             refreshImagePaint(image, image.getParentFrame().getComponentImage().getPaintMask());
@@ -927,7 +947,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 if (sourceId == selected) {
                     changeMaskNumberDialog = new JDialogChangeMaskNumber(sourceButton, correspondingButton,
                                                                          buttonTextArrayList, color, lutB, image,
-                                                                         newSelection);
+                                                                         newSelection, intensityLockVector);
                     changeMaskNumberDialog.pack();
                     MipavUtil.centerInComponent(this, changeMaskNumberDialog);
                     changeMaskNumberDialog.setVisible();
@@ -1295,7 +1315,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                     if(match) {
                     	
                     	int val = k / 4;
-                    	System.out.println("val is " + val);
                     	vals.add(new Integer(val));
                     }
                     match = false;
@@ -1861,12 +1880,16 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         img.getParentFrame().updateImages(true);
 
         if (img.getTriImageFrame() != null) {
-            img.getTriImageFrame().getTriImage(0).setPaintMask(obj);
-            img.getTriImageFrame().getTriImage(1).setPaintMask(obj);
-            img.getTriImageFrame().getTriImage(2).setPaintMask(obj);
+            for (int i = 0; i < img.getTriImageFrame().MAX_TRI_IMAGES; i++) {
+                if (img.getTriImageFrame().triImage[i] != null) {
+                	img.getTriImageFrame().triImage[i].setPaintMask(obj);
+                }
+            }
             img.getTriImageFrame().updateImages(true);
         }
     }
+
+    
 
     /**
      * Reinstantiates the labels for redisplay. Purpose: unknown
