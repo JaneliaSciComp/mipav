@@ -196,7 +196,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
-    private JPanel voiPanel;
+    private JPanel voiPanel, leftPanel, rightPanel, leftRightPanel;
 
 
     /** The mask size in the x dimension. */
@@ -207,6 +207,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
     /** The mask size in the z dimension. */
     private int zDim;
+    
+    /** lock all masks checkbox **/
+    private JButton lockAllButton;
+    
+    /** unlock all masks checkbox **/
+    private JButton unlockAllButton;
+    
+    /** lock panel */
+    private JPanel lockPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -325,6 +334,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             if (displayModeButton.isSelected()) {
                 multiPanel.setVisible(false);
                 scrollPane.setVisible(true);
+                lockPanel.setVisible(true);
             } else {
 
                 // refresh the text tooltips
@@ -334,6 +344,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 }
 
                 scrollPane.setVisible(false);
+                lockPanel.setVisible(false);
                 multiPanel.setVisible(true);
             }
 
@@ -508,6 +519,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 image.getParentFrame().getComponentImage().removeKeyListener(this);
                 image.getParentFrame().getComponentImage().setFocusable(false);
             }
+        } else if(command.equals("lockAll")) {
+        	lockAll();
+        } else if(command.equals("unlockAll")) {
+        	unlockAll();
         }
 
     }
@@ -519,7 +534,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      * @param  intensity  the intensity value to lock
      */
     public void addIntensityLock(int intensity) {
-
         if (intensityLockVector == null) {
             intensityLockVector = new Vector();
         }
@@ -1535,9 +1549,27 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 listPanel.add(preserveBox[i + (nbx * j) + 1], gbc);
             }
         }
+        
+        lockPanel = new JPanel();
+        lockAllButton = new JButton("lock all masks");
+        lockAllButton.addActionListener(this);
+        lockAllButton.setActionCommand("lockAll");
+        gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(5, 2, 5, 2);
+        lockPanel.add(lockAllButton,gbc);
+        
+        unlockAllButton = new JButton("unlock all masks");
+        unlockAllButton.addActionListener(this);
+        unlockAllButton.setActionCommand("unlockAll");
+        gbc.gridy = 0;
+        gbc.gridx = 1;
+        lockPanel.add(unlockAllButton,gbc);
+        lockPanel.setVisible(false);
 
-        // listPanel.setPreferredSize(new Dimension(400,580));
-        // listPanel.setVisible(false);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 0, 0, 0);
 
         scrollPane = new JScrollPane(listPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -1564,64 +1596,51 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         gbc.gridx = 3;
         numberPanel.add(resizeButton, gbc);
 
-        filePanel = new JPanel(new GridBagLayout());
+        leftPanel = new JPanel(new GridBagLayout());
+        gbc.gridy = 0;
         gbc.gridx = 0;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        filePanel.add(loadLabelsButton, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        filePanel.add(saveLabelsButton, gbc);
-        gbc.gridx = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        // filePanel.add(editBox, gbc);
-
-        maskPanel = new JPanel(new GridBagLayout());
+        leftPanel.add(loadLabelsButton,gbc);
+        gbc.gridy = 1;
+        leftPanel.add(loadMaskButton,gbc);
+        gbc.gridy = 2;
+        leftPanel.add(importVoiButton,gbc);
+        gbc.gridy = 3;
+        leftPanel.add(displayPaintButton,gbc);
+        gbc.gridy = 4;
+        leftPanel.add(displayModeButton,gbc);
+        
+        rightPanel = new JPanel(new GridBagLayout());
+        gbc.gridy = 0;
         gbc.gridx = 0;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        maskPanel.add(loadMaskButton, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        maskPanel.add(saveMaskButton, gbc);
-
-        voiPanel = new JPanel(new GridBagLayout());
+        rightPanel.add(saveLabelsButton,gbc);
+        gbc.gridy = 1;
+        rightPanel.add(saveMaskButton,gbc);
+        gbc.gridy = 2;
+        rightPanel.add(exportVoiButton,gbc);
+        gbc.gridy = 3;
+        rightPanel.add(displayMasksButton,gbc);
+        gbc.gridy = 4;
+        rightPanel.add(collapseButton,gbc);
+        
+        leftRightPanel = new JPanel(new GridBagLayout());
+        gbc.gridy = 0;
         gbc.gridx = 0;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        voiPanel.add(importVoiButton, gbc);
+        leftRightPanel.add(leftPanel,gbc);
         gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        voiPanel.add(exportVoiButton, gbc);
-
-        displayPanel = new JPanel(new GridBagLayout());
-        gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        displayPanel.add(displayPaintButton, gbc);
-        gbc.gridx = 1;
-        displayPanel.add(displayMasksButton, gbc);
-
-        miscPanel = new JPanel(new GridBagLayout());
-        gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        miscPanel.add(displayModeButton, gbc);
-        gbc.gridx = 1;
-        miscPanel.add(collapseButton, gbc);
-
+        leftRightPanel.add(rightPanel,gbc);
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         optionPanel.add(numberPanel, gbc);
         gbc.gridy = 1;
-        optionPanel.add(filePanel, gbc);
+        optionPanel.add(leftRightPanel, gbc);
         gbc.gridy = 2;
-        optionPanel.add(maskPanel, gbc);
-        gbc.gridy = 3;
-        optionPanel.add(voiPanel, gbc);
-        gbc.gridy = 4;
-        optionPanel.add(displayPanel, gbc);
-        gbc.gridy = 5;
-        optionPanel.add(miscPanel, gbc);
-        gbc.gridy = 6;
         optionPanel.add(buttonShortkeys, gbc);
 
         mainPanel = new JPanel(new GridBagLayout());
@@ -1639,6 +1658,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         mainPanel.add(optionPanel, gbc);
         gbc.gridy = 2;
         mainPanel.add(scrollPane, gbc);
+        gbc.gridy = 3;
+        mainPanel.add(lockPanel, gbc);
 
         bottomPanel = new JPanel(new GridBagLayout());
         gbc.weightx = 0;
@@ -1667,6 +1688,35 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         System.gc();
 
     } // end init()
+    
+    
+    /**
+     * locks all masks
+     *
+     */
+    private void lockAll() {
+    	for(int i=1;i<preserveBox.length;i++) {
+    		if(!preserveBox[i].isSelected()) {
+    			preserveBox[i].setSelected(true);
+    			int num = Integer.parseInt(listButton[i].getText());
+    			addIntensityLock(num);
+    		}
+    	}
+    }
+    
+    /**
+     * unlocks all masks
+     *
+     */
+    private void unlockAll() {
+    	for(int i=1;i<preserveBox.length;i++) {
+    		if(preserveBox[i].isSelected()) {
+    			preserveBox[i].setSelected(false);
+    			int num = Integer.parseInt(listButton[i].getText());
+    			removeIntensityLock(num);
+    		}
+    	}
+    }
 
     /**
      * Initializes a new blank paint mask to the color indexed by the parameter 'num'
@@ -1920,13 +1970,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             multiButton[n].addMouseListener(this);
             multiButton[n].setActionCommand("PaintMask " + n);
             multiButton[n].setFont(MipavUtil.font10);
-
-            // multiButton[n].setSelected(false);
             multiButton[n].setMaximumSize(new Dimension(48, 20));
             multiButton[n].setPreferredSize(new Dimension(48, 20));
-            // multiButton[n].setToolTipText(label[n]);
-            // multiButton[n].setBackground(color[n]);
-
 
             if (n < buttonTextArrayList.size()) {
                 listButton[n] = new BorderedButton(((Integer) buttonTextArrayList.get(n - 1)).toString());
@@ -1939,12 +1984,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             listButton[n].addMouseListener(this);
             listButton[n].setActionCommand("PaintMask " + n);
             listButton[n].setFont(MipavUtil.font10);
-
-            // listButton[n].setSelected(false);
             listButton[n].setMaximumSize(new Dimension(50, 18));
             listButton[n].setPreferredSize(new Dimension(50, 18));
-            // listButton[n].setBackground(color[n]);
-
 
             preserveBox[n] = new JCheckBox("");
             preserveBox[n].addActionListener(this);
@@ -1982,6 +2023,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         }
 
         mainPanel.remove(scrollPane);
+        mainPanel.remove(lockPanel);
 
         listPanel = new JPanel(new GridBagLayout());
         listPanel.setName("listPanel");
@@ -2007,8 +2049,28 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 listPanel.add(preserveBox[i + (nbx * j) + 1], gbc);
             }
         }
+        
+        lockPanel = new JPanel();
+        lockAllButton = new JButton("lock all masks");
+        lockAllButton.addActionListener(this);
+        lockAllButton.setActionCommand("lockAll");
+        gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(5, 2, 5, 2);
+        lockPanel.add(lockAllButton,gbc);
+        
+        unlockAllButton = new JButton("unlock all masks");
+        unlockAllButton.addActionListener(this);
+        unlockAllButton.setActionCommand("unlockAll");
+        gbc.gridy = 0;
+        gbc.gridx = 1;
+        lockPanel.add(unlockAllButton,gbc);
+        lockPanel.setVisible(false);
 
-        // listPanel.setPreferredSize(new Dimension(400,580));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 0, 0, 0);
+
         scrollPane = new JScrollPane(listPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setPreferredSize(new Dimension(400, 560));
@@ -2024,22 +2086,18 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         mainPanel.add(multiPanel, gbc);
         gbc.gridy = 2;
         mainPanel.add(scrollPane, gbc);
+        gbc.gridy = 3;
+        mainPanel.add(lockPanel, gbc);
 
         if (displayModeButton.isSelected()) {
             multiPanel.setVisible(false);
             scrollPane.setVisible(true);
+            lockPanel.setVisible(true);
         } else {
             scrollPane.setVisible(false);
+            lockPanel.setVisible(false);
             multiPanel.setVisible(true);
         }
-
-        // reselect the same object
-        // if (selected < ((nbx * nby) + 1)) {
-        // multiButton[selected].setSelected(true);
-        // listButton[selected].setSelected(true);
-        // } else {
-        // selectedMaskToPaint(1);
-        // }
 
         imageBInit();
 
@@ -2096,8 +2154,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 newlistButton[n].setSelected(false);
                 newlistButton[n].setMaximumSize(new Dimension(50, 18));
                 newlistButton[n].setPreferredSize(new Dimension(50, 18));
-
-                // newcolor[n] = nullColor;
+                
                 newcolor[n] = null;
 
                 newpreserved[n] = false;
@@ -2140,6 +2197,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         }
 
         mainPanel.remove(scrollPane);
+        mainPanel.remove(lockPanel);
 
         listPanel = new JPanel(new GridBagLayout());
         listPanel.setBorder(buildTitledBorder("Label list"));
@@ -2163,8 +2221,28 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 listPanel.add(preserveBox[i + (nbx * j) + 1], gbc);
             }
         }
+        
+        JPanel lockPanel = new JPanel();
+        lockAllButton = new JButton("lock all masks");
+        lockAllButton.addActionListener(this);
+        lockAllButton.setActionCommand("lockAll");
+        gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(5, 2, 5, 2);
+        lockPanel.add(lockAllButton,gbc);
+        
+        unlockAllButton = new JButton("unlock all masks");
+        unlockAllButton.addActionListener(this);
+        unlockAllButton.setActionCommand("unlockAll");
+        gbc.gridy = 0;
+        gbc.gridx = 1;
+        lockPanel.add(unlockAllButton,gbc);
+        lockPanel.setVisible(false);
 
-        // listPanel.setPreferredSize(new Dimension(400,580));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 0, 0, 0);
+
         scrollPane = new JScrollPane(listPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setPreferredSize(new Dimension(400, 560));
@@ -2180,12 +2258,16 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         mainPanel.add(multiPanel, gbc);
         gbc.gridy = 2;
         mainPanel.add(scrollPane, gbc);
+        gbc.gridy = 3;
+        mainPanel.add(lockPanel, gbc);
 
         if (displayModeButton.isSelected()) {
             multiPanel.setVisible(false);
             scrollPane.setVisible(true);
+            lockPanel.setVisible(true);
         } else {
             scrollPane.setVisible(false);
+            lockPanel.setVisible(false);
             multiPanel.setVisible(true);
         }
 
