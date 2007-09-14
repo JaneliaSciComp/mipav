@@ -2166,17 +2166,25 @@ public class FileImageXML extends FileXML {
      * @param  setEnum  An enumerated list of set data.
      */
     private void writeSet(BufferedWriter bw, Enumeration setEnum) {
+    	
+    	boolean openTagFalseFlag = false; // Flag to specify whether end tag is needed. 
 
         while (setEnum.hasMoreElements()) {
             FileInfoImageXML.PSet currentSet = (FileInfoImageXML.PSet) setEnum.nextElement();
             Enumeration paramEnum = currentSet.getTable().elements();
+            openTagFalseFlag = false;
+            
+            // Write set description only if paraEnum has atleast one parameter. 
+            if (paramEnum.hasMoreElements()) {
+            	
+            	openTagFalseFlag = true; // End tag required.
+            	openTag(imageStr[4], true);
 
-            openTag(imageStr[4], true);
+                String temp = currentSet.getDescription();
 
-            String temp = currentSet.getDescription();
-
-            closedTag( setStr[0], temp);
-
+                closedTag( setStr[0], temp);
+            }
+            
             while (paramEnum.hasMoreElements()) {
                 FileInfoImageXML.Parameter currentParam = (FileInfoImageXML.Parameter) paramEnum.nextElement();
 
@@ -2184,6 +2192,7 @@ public class FileImageXML extends FileXML {
                 // !(currentParam.getValue().equals("")))
                 // {
                 openTag(setStr[1], true); // begin parameter
+                
 
                 // write in Parameter NAME
                 closedTag( parameterStr[0], currentParam.getName());
@@ -2210,8 +2219,11 @@ public class FileImageXML extends FileXML {
 
                 // }
             }
-
-            openTag(imageStr[4], false);
+            // If true end tag required. 
+            if (openTagFalseFlag) {
+            	openTag(imageStr[4], false);
+            }
+            
         }
     }
 
