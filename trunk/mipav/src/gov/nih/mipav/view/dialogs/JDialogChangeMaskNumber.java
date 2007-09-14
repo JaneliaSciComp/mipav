@@ -55,7 +55,11 @@ public class JDialogChangeMaskNumber extends JDialogBase {
     /** ref to image **/
     private ModelImage image;
     
-
+    /** ref to IntensityLockVector **/
+    private Vector intensityLockVector;
+    
+    /** src button text number **/
+    private int srcValue;
     
   
 
@@ -94,6 +98,28 @@ public class JDialogChangeMaskNumber extends JDialogBase {
             //retrieve the mask
             BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
             refreshImagePaint(image, obj);
+            
+            //now that the number has been changed....we need to update the intensityLockVector in case the old num was in it...if it was remove it and add the new num
+
+            
+            if(intensityLockVector != null) {
+	            for (int i = 0; i < intensityLockVector.size(); i++) {
+	
+	                try {
+	                    Integer lockedIntensity = (Integer) intensityLockVector.elementAt(i);
+	
+	                    if ((lockedIntensity != null) && (lockedIntensity.intValue() == srcValue)) {
+	                    	intensityLockVector.removeElementAt(i);
+	                    	Integer intensityLockInteger = new Integer(newValue);
+	                    	 intensityLockVector.add(intensityLockInteger);
+	                    }
+	                } catch (Exception ex) {
+	                    continue;
+	                }
+	            }
+            }
+
+
 			dispose();
 		}
 
@@ -101,18 +127,20 @@ public class JDialogChangeMaskNumber extends JDialogBase {
 	
 
 	
-	public JDialogChangeMaskNumber(JButton theSrcButton, JButton theCorrespButton, ArrayList buttonTextArrayList, Color[] color, ModelLUT lutB, ModelImage image, int selected) {
-		init(theSrcButton,theCorrespButton,buttonTextArrayList,color,lutB,image,selected);
+	public JDialogChangeMaskNumber(JButton theSrcButton, JButton theCorrespButton, ArrayList buttonTextArrayList, Color[] color, ModelLUT lutB, ModelImage image, int selected, Vector theIntensityLockVector) {
+		init(theSrcButton,theCorrespButton,buttonTextArrayList,color,lutB,image,selected, theIntensityLockVector);
 	}
 	
-	public void init(JButton theSrcButton, JButton theCorrespButton, ArrayList buttonTextArrayList, Color[] color, ModelLUT lutB, ModelImage image, int selected) {
+	public void init(JButton theSrcButton, JButton theCorrespButton, ArrayList buttonTextArrayList, Color[] color, ModelLUT lutB, ModelImage image, int selected, Vector theIntensityLockVector) {
 		
 		srcButton = theSrcButton;
+		srcValue = Integer.parseInt(srcButton.getText());
 		correspButton = theCorrespButton;
 		this.color = color;
 		this.lutB = lutB;
 		this.image = image;
 		currentMaskNumberIndex = selected;
+		intensityLockVector = theIntensityLockVector;
 		
 		setTitle("Change Mask Number");
 		

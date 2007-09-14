@@ -424,13 +424,16 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  fillColor  color to be placed in the image where the mask is true
      * @param  tSlice     indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25DC(BitSet mask, Color fillColor, int tSlice, String rgbString) {
+    public void calcInPlace25DC(BitSet mask, Color fillColor, int tSlice, String rgbString, Vector intensityLockVector) {
 
         int i, j, z, end = 1;
         int imgLength, volLength = 0, offset;
         int paintLength;
         byte[] buffer;
         polarity = true;
+        int[] lockedIntensities = null;
+        //since image B is color....we must CREATE a LUTB rather than getting it from srcIMage.getParentFrame.getLUTB...in order to do the intensityLockVector stuff
+        ModelLUT lutB = new ModelLUT(ModelLUT.STRIPED, 256, new int[] { 4, 256 });
 
         byte red, green, blue;
 
@@ -455,6 +458,23 @@ public class AlgorithmMask extends AlgorithmBase {
 
         fireProgressStateChanged(0, 
                 srcImage.getImageName(), "Masking ...");
+        
+        if (intensityLockVector != null) {
+            lockedIntensities = new int[intensityLockVector.size()];
+
+            for (i = 0; i < intensityLockVector.size(); i++) {
+
+                try {
+                    Integer integerObj = (Integer) intensityLockVector.elementAt(i);
+
+                    if (integerObj != null) {
+                        lockedIntensities[i] = integerObj.intValue();
+                    }
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+        }
         
         if (srcImage.getNDims() == 4) {
             end = srcImage.getExtents()[2];
@@ -500,16 +520,30 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 if (((mask.get(offset + j) == true) && (polarity == true)) ||
                         ((mask.get(offset + j) == false) && (polarity == false))) {
-                    buffer[i] = (byte) 255;
-                    if (useR) {
-                    	buffer[i + 1] = red;
+                	
+                	
+                	boolean locked = false;
+
+                    if (lockedIntensities != null) {
+                        for (int k = 0; k < lockedIntensities.length; k++) {
+                        	if(buffer[i+1] == (byte) Math.round(lutB.getColor(lockedIntensities[k]).getRed()) && buffer[i+2] == (byte) Math.round(lutB.getColor(lockedIntensities[k]).getGreen()) && buffer[i+3] == (byte) Math.round(lutB.getColor(lockedIntensities[k]).getBlue())) {
+                        		locked = true;
+                        	}
+                        }
                     }
-                    if (useG) {
-                    	buffer[i + 2] = green;
-                    }
-                    if (useB) {                    
-                    	buffer[i + 3] = blue;
-                
+
+                    if (locked == false) {
+
+	                    buffer[i] = (byte) 255;
+	                    if (useR) {
+	                    	buffer[i + 1] = red;
+	                    }
+	                    if (useG) {
+	                    	buffer[i + 2] = green;
+	                    }
+	                    if (useB) {                    
+	                    	buffer[i + 3] = blue;
+	                    }
                     }
                 }
             }

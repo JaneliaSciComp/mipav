@@ -864,7 +864,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (imageA.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false);
                 maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString);
+                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector);
             } else {
 
                 if (imageA.getNDims() == 4) {
@@ -914,7 +914,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (imageB.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
                 maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString);
+                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector);
             } else {
 
                 if (imageA.getNDims() == 4) {
