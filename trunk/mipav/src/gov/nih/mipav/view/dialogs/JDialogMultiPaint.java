@@ -661,7 +661,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
         // this boolean is needed to test if image b has a color of 1 in it
         boolean hasOne = false;
-
         if (vals.size() == 0) {
             color[1] = lutB.getColor(1);
             multiButton[1].setBackground(color[1]);
@@ -781,7 +780,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 for (n = 1; n <= (nbx * nby); n++) {
 
                     if (!hasOne) {
-
                         if (color[1].getRGB() == lutB.getColor(1).getRGB()) {
                             selected = 1;
                             multiButton[1].setBackground(color[1]);
@@ -1716,7 +1714,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     		if(!preserveBox[i].isSelected()) {
     			preserveBox[i].setSelected(true);
     			int num = Integer.parseInt(listButton[i].getText());
-    			addIntensityLock(Integer.parseInt(listButton[num].getText()));
+    			addIntensityLock(Integer.parseInt(listButton[i].getText()));
     		}
     	}
     }
@@ -1730,7 +1728,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     		if(preserveBox[i].isSelected()) {
     			preserveBox[i].setSelected(false);
     			int num = Integer.parseInt(listButton[i].getText());
-    			removeIntensityLock(Integer.parseInt(listButton[num].getText()));
+    			removeIntensityLock(Integer.parseInt(listButton[i].getText()));
     		}
     	}
     }
@@ -1980,8 +1978,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         boolean flag = false;
         if((nbx * nby) <= highestNum) {
         	flag = true;
+        	color[1] = lutB.getColor(1);
+        	for (int k=2;k<color.length;k++) {
+        		color[k] = null;
+        	}
+        	
         }
 
+        
+        
         for (int n = 1; n < ((nbx * nby) + 1); n++) {
             labelField[n] = new JTextField(5);
             labelField[n].setText(label[n]);
