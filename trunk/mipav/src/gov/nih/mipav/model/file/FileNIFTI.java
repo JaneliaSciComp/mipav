@@ -76,7 +76,7 @@ public class FileNIFTI extends FileBase {
      *  is placed in axisOrientation2 */
     private int[] axisOrientation2;
 
-    /** A byte array of the size of the NIFTI header. */
+    /** A byte array of the size of the NIFTI header + 4 extension bytes. */
     private byte[] bufferByte = null;
 
     /** If qform_code > 0, coord_code = qform_code.  If qform_code <= 0 and sform_code > 0, coord_code = sform_code.
@@ -2367,7 +2367,7 @@ public class FileNIFTI extends FileBase {
             flipTopBottom(image);
 
             if (oneFile) {
-                rawFile.setStartPosition(348L);
+                rawFile.setStartPosition(352L);
 
                 if (image.getNDims() == 3) {
                     rawFile.writeImage3DTo2D(image, options, ".nii");
@@ -2399,7 +2399,7 @@ public class FileNIFTI extends FileBase {
                 flipTopBottom(image);
 
                 if (oneFile) {
-                    rawFile.setStartPosition(348L);
+                    rawFile.setStartPosition(352L);
                 } else {
                     rawFile.setStartPosition(0L);
                 }
@@ -3105,7 +3105,8 @@ public class FileNIFTI extends FileBase {
 
         // Don't do raFile.setLength(0) because the data is written to this file
         // before the header
-        bufferByte = new byte[headerSize];
+        // 4 extension bytes after 348 header bytes
+        bufferByte = new byte[headerSize + 4];
 
         // Set certain neccessary information
         fileInfo.setSizeOfHeader(headerSize);
@@ -4011,10 +4012,10 @@ public class FileNIFTI extends FileBase {
                 setBufferFloat(bufferByte, 0.0f, 80 + (i * 4), endianess);
             }
 
-            // If data is in the same .nii file as the header, use an offset = 348
+            // If data is in the same .nii file as the header, use an offset = 352
             // If the data is in a separate .img file, use a 0 offset
             if (oneFile) {
-                setBufferFloat(bufferByte, 348.0f, 108, endianess);
+                setBufferFloat(bufferByte, 352.0f, 108, endianess);
             } else {
                 setBufferFloat(bufferByte, 0.0f, 108, endianess);
             }
@@ -4253,10 +4254,10 @@ public class FileNIFTI extends FileBase {
                 setBufferFloat(bufferByte, 0.0f, 80 + (i * 4), endianess);
             }
 
-            // vox_offset = 348 for data in same .nii file as header
+            // vox_offset = 352 for data in same .nii file as header
             // vox_offset = 0 for data in separate .img file
             if (oneFile) {
-                setBufferFloat(bufferByte, 348.0f, 108, endianess);
+                setBufferFloat(bufferByte, 352.0f, 108, endianess);
             } else {
                 setBufferFloat(bufferByte, 0.0f, 108, endianess);
             }
@@ -4349,6 +4350,10 @@ public class FileNIFTI extends FileBase {
         } else {
             setBufferString(bufferByte, "ni1\0", 344);
         }
+        bufferByte[348] = 0;
+        bufferByte[349] = 0;
+        bufferByte[350] = 0;
+        bufferByte[351] = 0;
 
         raFile.write(bufferByte);
         raFile.close();
