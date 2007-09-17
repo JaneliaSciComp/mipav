@@ -296,6 +296,12 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         float[] buffer;
         float[] resultBuffer;
         float lap;
+        float resultMin;
+        float resultMax;
+        double typeMin;
+        double typeMax;
+        double a;
+        double b;
 
         try {
             length = srcImage.getSliceSize();
@@ -350,6 +356,73 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
             return;
         }
+        
+        resultMin = Float.MAX_VALUE;
+        resultMax = -Float.MAX_VALUE;
+        for (i = 0; i < totalLength; i++) {
+             if (resultBuffer[i] < resultMin) {
+                 resultMin = resultBuffer[i];
+             }
+             if (resultBuffer[i] > resultMax) {
+                 resultMax = resultBuffer[i];
+             }
+        }
+        
+        switch(srcImage.getType()) {
+            case ModelStorageBase.BOOLEAN:
+                typeMin = 0;
+                typeMax = 1;
+                break;
+            case ModelStorageBase.BYTE:
+                typeMin = -128;
+                typeMax = 127;
+                break;
+            case ModelStorageBase.UBYTE:
+                typeMin = 0;
+                typeMax = 255;
+                break;
+            case ModelStorageBase.SHORT:
+                typeMin = -32768;
+                typeMax = 32767;
+                break;
+            case ModelStorageBase.USHORT:
+                typeMin = 0;
+                typeMax = 65535;
+                break;
+            case ModelStorageBase.INTEGER:
+                typeMin = Integer.MIN_VALUE;
+                typeMax = Integer.MAX_VALUE;
+                break;
+            case ModelStorageBase.UINTEGER:
+                typeMin = 0;
+                typeMax = 4294967295L;
+                break;
+            case ModelStorageBase.LONG:
+                typeMin = Long.MIN_VALUE;
+                typeMax = Long.MAX_VALUE;
+                break;
+            case ModelStorageBase.FLOAT:
+                typeMin = -Float.MAX_VALUE;
+                typeMax = Float.MAX_VALUE;
+                break;
+            case ModelStorageBase.DOUBLE:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+                break;
+            default:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+        }
+        
+        if ((resultMin < typeMin) || (resultMax > typeMax)) {
+            // typeMax = a * resultMax + b;
+            // typeMin = a * resultMin + b;
+            a = (typeMax - typeMin)/(resultMax - resultMin);
+            b = typeMax - a * resultMax;
+            for (i = 0; i < totalLength; i++) {
+                resultBuffer[i] = (float)(a * resultBuffer[i] + b);
+            }
+        }
 
         try {
             srcImage.importData(0, resultBuffer, true);
@@ -378,6 +451,12 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         float[] buffer;
         float[] resultBuffer;
         float lap;
+        float resultMin;
+        float resultMax;
+        double typeMin;
+        double typeMax;
+        double a;
+        double b;
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
@@ -421,6 +500,73 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             finalize();
 
             return;
+        }
+        
+        resultMin = Float.MAX_VALUE;
+        resultMax = -Float.MAX_VALUE;
+        for (i = 0; i < length; i++) {
+             if (resultBuffer[i] < resultMin) {
+                 resultMin = resultBuffer[i];
+             }
+             if (resultBuffer[i] > resultMax) {
+                 resultMax = resultBuffer[i];
+             }
+        }
+        
+        switch(srcImage.getType()) {
+            case ModelStorageBase.BOOLEAN:
+                typeMin = 0;
+                typeMax = 1;
+                break;
+            case ModelStorageBase.BYTE:
+                typeMin = -128;
+                typeMax = 127;
+                break;
+            case ModelStorageBase.UBYTE:
+                typeMin = 0;
+                typeMax = 255;
+                break;
+            case ModelStorageBase.SHORT:
+                typeMin = -32768;
+                typeMax = 32767;
+                break;
+            case ModelStorageBase.USHORT:
+                typeMin = 0;
+                typeMax = 65535;
+                break;
+            case ModelStorageBase.INTEGER:
+                typeMin = Integer.MIN_VALUE;
+                typeMax = Integer.MAX_VALUE;
+                break;
+            case ModelStorageBase.UINTEGER:
+                typeMin = 0;
+                typeMax = 4294967295L;
+                break;
+            case ModelStorageBase.LONG:
+                typeMin = Long.MIN_VALUE;
+                typeMax = Long.MAX_VALUE;
+                break;
+            case ModelStorageBase.FLOAT:
+                typeMin = -Float.MAX_VALUE;
+                typeMax = Float.MAX_VALUE;
+                break;
+            case ModelStorageBase.DOUBLE:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+                break;
+            default:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+        }
+        
+        if ((resultMin < typeMin) || (resultMax > typeMax)) {
+            // typeMax = a * resultMax + b;
+            // typeMin = a * resultMin + b;
+            a = (typeMax - typeMin)/(resultMax - resultMin);
+            b = typeMax - a * resultMax;
+            for (i = 0; i < length; i++) {
+                resultBuffer[i] = (float)(a * resultBuffer[i] + b);
+            }
         }
 
         try {
