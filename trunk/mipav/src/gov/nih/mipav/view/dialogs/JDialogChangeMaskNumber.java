@@ -95,6 +95,7 @@ public class JDialogChangeMaskNumber extends JDialogBase {
 			btArrayList.set(currentMaskNumberIndex - 1,new Integer(numberField.getText()));
 			image.getParentFrame().getComponentImage().setIntensityDropper((float) newValue);
             image.getParentFrame().getControls().getTools().setPaintColor(color[currentMaskNumberIndex]);
+            image.getParentFrame().getComponentImage().updatePaintBrushCursor();
             //retrieve the mask
             BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
             refreshImagePaint(image, obj);
