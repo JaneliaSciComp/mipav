@@ -404,9 +404,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                 try {
                     // Make result image of float type
 
-                    // resultImage = new ModelImage(ModelImage.FLOAT, image.getExtents(), name,
-                    // userInterface);
-                    resultImage = (ModelImage) image.clone();
+                    resultImage = new ModelImage(ModelImage.FLOAT, image.getExtents(), name);
+                    //resultImage = (ModelImage) image.clone();
                     resultImage.setImageName(name);
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
@@ -418,7 +417,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
                     // Make algorithm
                     laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas,
-                                                           outputPanel.isOutputNewImageSet(), image25D, ampFactor);
+                                                           outputPanel.isProcessWholeImageSet(), image25D, ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -455,7 +454,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                 try {
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isOutputNewImageSet(), image25D,
+                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isProcessWholeImageSet(), image25D,
                                                            ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
