@@ -304,10 +304,25 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
             int num = Integer.valueOf(command.substring(command.indexOf(" ") + 1)).intValue();
             newSelection = num;
-
+            int colorNum = 1;
+            //the text on the buttons represent the color
+            for(int i=0;i<multiButton.length;i++) {
+            	if(multiButton[i] != null) {
+            		if(event.getSource() == multiButton[i]) {
+            			colorNum = Integer.parseInt(multiButton[i].getText());
+            		}
+            	}
+            }
+            for(int i=0;i<listButton.length;i++) {
+            	if(listButton[i] != null) {
+            		if(event.getSource() == listButton[i]) {
+            			colorNum = Integer.parseInt(listButton[i].getText());
+            		}
+            	}
+            }
             // convert the paint to previous selection
             // and the newly selected mask to paint
-            switchPaintAndMask(selected, num);
+            switchPaintAndMask(selected, num, colorNum);
         } else if (command.startsWith("Preserve")) {
             int num = Integer.valueOf(command.substring(command.indexOf(" ") + 1)).intValue();
 
@@ -315,13 +330,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 preserved[num] = true;
 
                 if ((parentFrame != null) && (parentFrame instanceof ViewJFrameImage)) {
-                    addIntensityLock(num);
+                    addIntensityLock(Integer.parseInt(listButton[num].getText()));
                 }
             } else {
                 preserved[num] = false;
 
                 if ((parentFrame != null) && (parentFrame instanceof ViewJFrameImage)) {
-                    removeIntensityLock(num);
+                    removeIntensityLock(Integer.parseInt(listButton[num].getText()));
                 }
             }
         } else if (command.startsWith("Label")) {
@@ -366,23 +381,25 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         } else if (command.equals("Resize")) {
             int Nbx = Integer.valueOf(numberXField.getText()).intValue();
             int Nby = Integer.valueOf(numberYField.getText()).intValue();
-
-            // we need to commit paint to mask
-            BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-            ModelImage imgB = image.getParentFrame().getImageB();
-            image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
-            image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
-            image.getParentFrame().getComponentImage().setModifyFlag(true);
-            image.notifyImageDisplayListeners();
-            refreshImagePaint(image, obj);
-
-            if (getMaskTreeSet(imgB).size() > (Nbx * Nby)) {
-                MipavUtil.displayError("Number of masks exceed resize number");
-                selectedMaskToPaint(selected);
-            } else {
-                refreshImagePaint(image, obj);
-                newLabelList(Nbx, Nby);
-                refreshLabelDisplay();
+            if(Nbx * Nby != nbx * nby) {
+	            // we need to commit paint to mask
+	            BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+	            ModelImage imgB = image.getParentFrame().getImageB();
+	            image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
+	            image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+	            image.getParentFrame().getComponentImage().setModifyFlag(true);
+	            image.notifyImageDisplayListeners();
+	            intensityLockVector = null;
+	            refreshImagePaint(image, obj);
+	
+	            if (getMaskTreeSet(imgB).size() > (Nbx * Nby)) {
+	                MipavUtil.displayError("Number of masks exceed resize number");
+	                selectedMaskToPaint(selected);
+	            } else {
+	                refreshImagePaint(image, obj);
+	                newLabelList(Nbx, Nby);
+	                refreshLabelDisplay();
+	            }
             }
 
         } else if (command.equals("HidePaint")) {
@@ -1699,7 +1716,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     		if(!preserveBox[i].isSelected()) {
     			preserveBox[i].setSelected(true);
     			int num = Integer.parseInt(listButton[i].getText());
-    			addIntensityLock(num);
+    			addIntensityLock(Integer.parseInt(listButton[num].getText()));
     		}
     	}
     }
@@ -1713,7 +1730,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     		if(preserveBox[i].isSelected()) {
     			preserveBox[i].setSelected(false);
     			int num = Integer.parseInt(listButton[i].getText());
-    			removeIntensityLock(num);
+    			removeIntensityLock(Integer.parseInt(listButton[num].getText()));
     		}
     	}
     }
@@ -1951,6 +1968,19 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         listButton = new BorderedButton[(nbx * nby) + 1];
         preserveBox = new JCheckBox[(nbx * nby) + 1];
         labelField = new JTextField[(nbx * nby) + 1];
+        
+        //if when resizing and you resize to a number thats equal to or higher than the largets number in the buttonTextArrayList,
+        //then reset everything
+        int highestNum=0;
+        for(int i=0;i<buttonTextArrayList.size();i++) {
+        	if(Integer.parseInt(buttonTextArrayList.get(i).toString()) > highestNum) {
+        		highestNum = Integer.parseInt(buttonTextArrayList.get(i).toString());
+        	}
+        }
+        boolean flag = false;
+        if((nbx * nby) <= highestNum) {
+        	flag = true;
+        }
 
         for (int n = 1; n < ((nbx * nby) + 1); n++) {
             labelField[n] = new JTextField(5);
@@ -1959,7 +1989,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             labelField[n].addActionListener(this);
             labelField[n].setActionCommand("Label " + n);
 
-            if (n < buttonTextArrayList.size()) {
+            if (!flag) {
                 multiButton[n] = new BorderedButton(((Integer) buttonTextArrayList.get(n - 1)).toString());
             } else {
                 multiButton[n] = new BorderedButton(String.valueOf(n));
@@ -1973,7 +2003,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             multiButton[n].setMaximumSize(new Dimension(48, 20));
             multiButton[n].setPreferredSize(new Dimension(48, 20));
 
-            if (n < buttonTextArrayList.size()) {
+            if (!flag) {
                 listButton[n] = new BorderedButton(((Integer) buttonTextArrayList.get(n - 1)).toString());
             } else {
                 listButton[n] = new BorderedButton(String.valueOf(n));
@@ -2368,7 +2398,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      * @param  from  DOCUMENT ME!
      * @param  to    DOCUMENT ME!
      */
-    private void switchPaintAndMask(int from, int to) {
+    private void switchPaintAndMask(int from, int to, int colorNum) {
         multiButton[from].setSelected(false);
         listButton[from].setSelected(false);
 
@@ -2401,9 +2431,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
         // set the color of the button being switched to
 
-        if (color[to] == null) {
-            color[to] = lutB.getColor(to);
-        }
+        //if (color[to] == null) {
+            color[to] = lutB.getColor(colorNum);
+        //}
 
         multiButton[to].setBackground(color[to]);
         listButton[to].setBackground(color[to]);
