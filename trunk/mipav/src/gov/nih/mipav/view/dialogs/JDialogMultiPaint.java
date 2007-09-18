@@ -2023,7 +2023,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             listButton[n].setMaximumSize(new Dimension(50, 18));
             listButton[n].setPreferredSize(new Dimension(50, 18));
 
-            preserveBox[n] = new JCheckBox("");
+            preserveBox[n] = new JCheckBox(MipavUtil.getIcon("unlocked.gif"));
+            preserveBox[n].setSelectedIcon(MipavUtil.getIcon("locked.gif"));
             preserveBox[n].addActionListener(this);
             preserveBox[n].setActionCommand("Preserve " + n);
             preserveBox[n].setToolTipText("Lock the paint mask");
@@ -2194,7 +2195,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 newcolor[n] = null;
 
                 newpreserved[n] = false;
-                newpreserveBox[n] = new JCheckBox("");
+                newpreserveBox[n] = new JCheckBox(MipavUtil.getIcon("unlocked.gif"));
+                newpreserveBox[n].setSelectedIcon(MipavUtil.getIcon("locked.gif"));
                 newpreserveBox[n].addActionListener(this);
                 newpreserveBox[n].setActionCommand("Preserve " + n);
                 newpreserveBox[n].setToolTipText("Lock the paint mask");
