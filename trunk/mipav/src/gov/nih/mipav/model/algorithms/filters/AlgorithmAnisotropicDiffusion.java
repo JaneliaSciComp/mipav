@@ -214,6 +214,12 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         float gmMax, gmMin;
         float val;
         float ix, iy, mag;
+        float finalMin;
+        float finalMax;
+        double typeMin;
+        double typeMax;
+        double a;
+        double b;
 
         try {
             length = srcImage.getSliceSize();
@@ -267,7 +273,8 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
                         if (gmBuffer[i] > gmMax) {
                             gmMax = gmBuffer[i];
-                        } else if (gmBuffer[i] < gmMin) {
+                        } 
+                        if (gmBuffer[i] < gmMin) {
                             gmMin = gmBuffer[i];
                         }
                     }
@@ -308,6 +315,73 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
             return;
         }
+        
+        finalMin = Float.MAX_VALUE;
+        finalMax = -Float.MAX_VALUE;
+        for (i = 0; i < totalLength; i++) {
+            if (finalBuffer[i] < finalMin) {
+                finalMin = finalBuffer[i];
+            }
+            if (finalBuffer[i] > finalMax) {
+                finalMax = finalBuffer[i];
+            }
+        }
+        
+        switch(srcImage.getType()) {
+            case ModelStorageBase.BOOLEAN:
+                typeMin = 0;
+                typeMax = 1;
+                break;
+            case ModelStorageBase.BYTE:
+                typeMin = -128;
+                typeMax = 127;
+                break;
+            case ModelStorageBase.UBYTE:
+                typeMin = 0;
+                typeMax = 255;
+                break;
+            case ModelStorageBase.SHORT:
+                typeMin = -32768;
+                typeMax = 32767;
+                break;
+            case ModelStorageBase.USHORT:
+                typeMin = 0;
+                typeMax = 65535;
+                break;
+            case ModelStorageBase.INTEGER:
+                typeMin = Integer.MIN_VALUE;
+                typeMax = Integer.MAX_VALUE;
+                break;
+            case ModelStorageBase.UINTEGER:
+                typeMin = 0;
+                typeMax = 4294967295L;
+                break;
+            case ModelStorageBase.LONG:
+                typeMin = Long.MIN_VALUE;
+                typeMax = Long.MAX_VALUE;
+                break;
+            case ModelStorageBase.FLOAT:
+                typeMin = -Float.MAX_VALUE;
+                typeMax = Float.MAX_VALUE;
+                break;
+            case ModelStorageBase.DOUBLE:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+                break;
+            default:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+        }
+        
+        if ((finalMin < typeMin) || (finalMax > typeMax)) {
+            // typeMax = a * finalMax + b;
+            // typeMin = a * finalMin + b;
+            a = (typeMax - typeMin)/(finalMax - finalMin);
+            b = typeMax - a *finalMax;
+            for (i = 0; i < totalLength; i++) {
+                finalBuffer[i] = (float)(a * finalBuffer[i] + b);
+            }
+        }
 
         try {
             srcImage.importData(0, finalBuffer, true);
@@ -339,6 +413,12 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         float gmMax, gmMin;
         float val, edgeFunct;
         float ix, iy, iz, mag;
+        float imageMin;
+        float imageMax;
+        double typeMin;
+        double typeMax;
+        double a;
+        double b;
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
@@ -390,7 +470,8 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
                     if (gmBuffer[i] > gmMax) {
                         gmMax = gmBuffer[i];
-                    } else if (gmBuffer[i] < gmMin) {
+                    } 
+                    if (gmBuffer[i] < gmMin) {
                         gmMin = gmBuffer[i];
                     }
                 }
@@ -447,12 +528,79 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
             return;
         }
+        
+        imageMin = Float.MAX_VALUE;
+        imageMax = -Float.MAX_VALUE;
+        for (i = 0; i < length; i++) {
+            if (imgBuffer[i] < imageMin) {
+                imageMin = imgBuffer[i];
+            }
+            if (imgBuffer[i] > imageMax) {
+                imageMax = imgBuffer[i];
+            }
+        }
+        
+        switch(srcImage.getType()) {
+            case ModelStorageBase.BOOLEAN:
+                typeMin = 0;
+                typeMax = 1;
+                break;
+            case ModelStorageBase.BYTE:
+                typeMin = -128;
+                typeMax = 127;
+                break;
+            case ModelStorageBase.UBYTE:
+                typeMin = 0;
+                typeMax = 255;
+                break;
+            case ModelStorageBase.SHORT:
+                typeMin = -32768;
+                typeMax = 32767;
+                break;
+            case ModelStorageBase.USHORT:
+                typeMin = 0;
+                typeMax = 65535;
+                break;
+            case ModelStorageBase.INTEGER:
+                typeMin = Integer.MIN_VALUE;
+                typeMax = Integer.MAX_VALUE;
+                break;
+            case ModelStorageBase.UINTEGER:
+                typeMin = 0;
+                typeMax = 4294967295L;
+                break;
+            case ModelStorageBase.LONG:
+                typeMin = Long.MIN_VALUE;
+                typeMax = Long.MAX_VALUE;
+                break;
+            case ModelStorageBase.FLOAT:
+                typeMin = -Float.MAX_VALUE;
+                typeMax = Float.MAX_VALUE;
+                break;
+            case ModelStorageBase.DOUBLE:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+                break;
+            default:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+        }
+        
+        if ((imageMin < typeMin) || (imageMax > typeMax)) {
+            // typeMax = a * imageMax + b;
+            // typeMin = a * imageMin + b;
+            a = (typeMax - typeMin)/(imageMax - imageMin);
+            b = typeMax - a *imageMax;
+            for (i = 0; i < length; i++) {
+                imgBuffer[i] = (float)(a * imgBuffer[i] + b);
+            }
+        }
 
         try { // Add check to see if image is already float then don't reallocate
 
-            // if (srcImage.getType() != ModelImage.FLOAT) {
-            // srcImage.reallocate(ModelImage.FLOAT);
-            // }
+             //if (srcImage.getType() != ModelImage.FLOAT) {
+             //srcImage.reallocate(ModelImage.FLOAT);
+             //}
             srcImage.importData(0, imgBuffer, true);
         } catch (IOException error) {
             imgBuffer = null;
@@ -531,7 +679,8 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
                         if (gmBuffer[i] > gmMax) {
                             gmMax = gmBuffer[i];
-                        } else if (gmBuffer[i] < gmMin) {
+                        } 
+                        if (gmBuffer[i] < gmMin) {
                             gmMin = gmBuffer[i];
                         }
                     }
@@ -651,7 +800,8 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
                         if (gmBuffer[i] > gmMax) {
                             gmMax = gmBuffer[i];
-                        } else if (gmBuffer[i] < gmMin) {
+                        } 
+                        if (gmBuffer[i] < gmMin) {
                             gmMin = gmBuffer[i];
                         }
                     }
@@ -770,7 +920,8 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
                     if (gmBuffer[i] > gmMax) {
                         gmMax = gmBuffer[i];
-                    } else if (gmBuffer[i] < gmMin) {
+                    } 
+                    if (gmBuffer[i] < gmMin) {
                         gmMin = gmBuffer[i];
                     }
                 }
