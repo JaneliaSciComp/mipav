@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
@@ -657,6 +658,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         float[] realSubsetData;
         float[] imagSubsetData;
         int z;
+        FileInfoBase[] fileInfo;
 
         fireProgressStateChanged(0, null, "Running frequency filter ...");
 
@@ -834,6 +836,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        }
+        
+        fileInfo = srcImage.getFileInfo();
+        for (i = 0; i < fileInfo.length; i++) {
+            fileInfo[i].setDataType(ModelStorageBase.FLOAT);
         }
 
         fireProgressStateChanged(100, null, null);
