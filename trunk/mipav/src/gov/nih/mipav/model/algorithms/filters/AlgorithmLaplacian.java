@@ -333,6 +333,30 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
                 return;
             }
+            
+            float min, max;
+            min = Float.MAX_VALUE;
+            max = -Float.MAX_VALUE;
+
+            float minL, maxL;
+            minL = Float.MAX_VALUE;
+            maxL = -Float.MAX_VALUE;
+
+            if (entireImage == false) {
+
+                for (i = 0; i < length; i++) {
+
+                    if (mask.get(start + i)) {
+
+                        if (buffer[i] > max) {
+                            max = buffer[i];
+                        } 
+                        if (buffer[i] < min) {
+                            min = buffer[i];
+                        }
+                    }
+                }
+            }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -341,12 +365,30 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
                 }
 
-                if ((entireImage == true) || mask.get(i)) {
+                if ((entireImage == true) || mask.get(start + i)) {
                     lap = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
+                    if (entireImage == false) {
+                        if (lap > maxL) {
+                            maxL = lap;
+                        } 
+                        if (lap < minL) {
+                            minL = lap;
+                        }
+                    }
                     resultBuffer[start + i] = lap;
                 } else {
                     resultBuffer[start + i] = buffer[i];
                     // resultBuffer[i] = 0;
+                }
+            }
+            
+            if (entireImage == false) {
+
+                for (i = 0; i < length; i++) {
+
+                    if (mask.get(start + i)) {
+                        resultBuffer[start+i] = (((resultBuffer[start+i] - minL) / (maxL - minL)) * (max - min)) + min;
+                    }
                 }
             }
         }
@@ -477,6 +519,30 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
 
         int mod = length / 100; // mod is 1 percent of length
+        
+        float min, max;
+        min = Float.MAX_VALUE;
+        max = -Float.MAX_VALUE;
+
+        float minL, maxL;
+        minL = Float.MAX_VALUE;
+        maxL = -Float.MAX_VALUE;
+
+        if (entireImage == false) {
+
+            for (i = 0; i < length; i++) {
+
+                if (mask.get(i)) {
+
+                    if (buffer[i] > max) {
+                        max = buffer[i];
+                    } 
+                    if (buffer[i] < min) {
+                        min = buffer[i];
+                    }
+                }
+            }
+        }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -486,10 +552,29 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
             if ((entireImage == true) || mask.get(i)) {
                 lap = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
+                if (entireImage == false) {
+                    if (lap > maxL) {
+                        maxL = lap;
+                    } 
+                    if (lap < minL) {
+                        minL = lap;
+                    }
+                }
                 resultBuffer[i] = lap;
             } else {
                 resultBuffer[i] = buffer[i];
                 // resultBuffer[i] = 0;
+            }
+            
+        }
+        
+        if (entireImage == false) {
+
+            for (i = 0; i < length; i++) {
+
+                if (mask.get(i)) {
+                    resultBuffer[i] = (((resultBuffer[i] - minL) / (maxL - minL)) * (max - min)) + min;
+                }
             }
         }
 
@@ -665,14 +750,11 @@ public class AlgorithmLaplacian extends AlgorithmBase {
                     lap = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
 
                     if (entireImage == false) {
-
-                        if (mask.get(start + i)) {
-
-                            if (lap > maxL) {
-                                maxL = lap;
-                            } else if (lap < minL) {
-                                minL = lap;
-                            }
+                        if (lap > maxL) {
+                            maxL = lap;
+                        } 
+                        if (lap < minL) {
+                            minL = lap;
                         }
                     }
 
@@ -780,7 +862,8 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
                     if (buffer[i] > max) {
                         max = buffer[i];
-                    } else if (buffer[i] < min) {
+                    } 
+                    if (buffer[i] < min) {
                         min = buffer[i];
                     }
                 }
@@ -797,14 +880,11 @@ public class AlgorithmLaplacian extends AlgorithmBase {
                 lap = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
 
                 if (entireImage == false) {
-
-                    if (mask.get(i)) {
-
-                        if (lap > maxL) {
-                            maxL = lap;
-                        } else if (lap < minL) {
-                            minL = lap;
-                        }
+                    if (lap > maxL) {
+                        maxL = lap;
+                    } 
+                    if (lap < minL) {
+                        minL = lap;
                     }
                 }
 
