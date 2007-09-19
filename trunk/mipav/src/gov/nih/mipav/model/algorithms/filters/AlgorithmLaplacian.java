@@ -642,11 +642,12 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
                 for (i = 0; i < length; i++) {
 
-                    if (mask.get(i)) {
+                    if (mask.get(start + i)) {
 
                         if (buffer[i] > max) {
                             max = buffer[i];
-                        } else if (buffer[i] < min) {
+                        } 
+                        if (buffer[i] < min) {
                             min = buffer[i];
                         }
                     }
@@ -659,13 +660,13 @@ public class AlgorithmLaplacian extends AlgorithmBase {
                     fireProgressStateChanged(((float) (start + i) / (totalLength - 1)), null, null);
                 }
 
-                if ((entireImage == true) || mask.get(i)) {
+                if ((entireImage == true) || mask.get(start + i)) {
 
                     lap = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
 
                     if (entireImage == false) {
 
-                        if (mask.get(i)) {
+                        if (mask.get(start + i)) {
 
                             if (lap > maxL) {
                                 maxL = lap;
@@ -685,10 +686,10 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
                 for (i = 0; i < length; i++) {
 
-                    if (mask.get(i)) {
-                        lap = destImage.getFloat(i);
+                    if (mask.get(start + i)) {
+                        lap = destImage.getFloat(start + i);
                         lap = (((lap - minL) / (maxL - minL)) * (max - min)) + min;
-                        destImage.set(i, lap);
+                        destImage.set(start + i, lap);
                     }
                 }
             }
