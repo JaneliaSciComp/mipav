@@ -1008,19 +1008,19 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         componentButton.addActionListener(this);
 
         redChannel = new JCheckBox("Red Channel", true);
-        redChannel.setEnabled(false);
+        redChannel.setEnabled(true);
         redChannel.setFont(serif12);
         gbl.setConstraints(redChannel, gbc);
         colourPanel.add(redChannel);
 
         greenChannel = new JCheckBox("Green Channel", true);
-        greenChannel.setEnabled(false);
+        greenChannel.setEnabled(true);
         greenChannel.setFont(serif12);
         gbl.setConstraints(greenChannel, gbc);
         colourPanel.add(greenChannel);
 
         blueChannel = new JCheckBox("Blue Channel", true);
-        blueChannel.setEnabled(false);
+        blueChannel.setEnabled(true);
         blueChannel.setFont(serif12);
         gbl.setConstraints(blueChannel, gbc);
         colourPanel.add(blueChannel);
