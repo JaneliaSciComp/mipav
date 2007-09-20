@@ -992,35 +992,8 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                                                                              // Selection"
 
         vectorGroup = new ButtonGroup();
-        vectorMagnitudeButton = new JRadioButton("Vector filter on all colors together in magnitude domain", true);
-        vectorMagnitudeButton.setFont(serif12);
-        vectorGroup.add(vectorMagnitudeButton);
-        gbl.setConstraints(vectorMagnitudeButton, gbc);
-        colourPanel.add(vectorMagnitudeButton);
-
-        if (image.isColorImage()) {
-            vectorMagnitudeButton.setEnabled(true);
-        } else {
-            vectorMagnitudeButton.setEnabled(false);
-        }
-
-        vectorMagnitudeButton.addActionListener(this);
-
-        vectorDirectionButton = new JRadioButton("Vector filter on all colors together in direction domain", false);
-        vectorDirectionButton.setFont(serif12);
-        vectorGroup.add(vectorDirectionButton);
-        gbl.setConstraints(vectorDirectionButton, gbc);
-        colourPanel.add(vectorDirectionButton);
-
-        if (image.isColorImage()) {
-            vectorDirectionButton.setEnabled(true);
-        } else {
-            vectorDirectionButton.setEnabled(false);
-        }
-
-        vectorDirectionButton.addActionListener(this);
-
-        componentButton = new JRadioButton("Filter on each color separately", false);
+        
+        componentButton = new JRadioButton("Filter on each color separately", true);
         componentButton.setFont(serif12);
         vectorGroup.add(componentButton);
         gbl.setConstraints(componentButton, gbc);
@@ -1051,6 +1024,34 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         blueChannel.setFont(serif12);
         gbl.setConstraints(blueChannel, gbc);
         colourPanel.add(blueChannel);
+        
+        vectorDirectionButton = new JRadioButton("Vector filter on all colors together in direction domain", false);
+        vectorDirectionButton.setFont(serif12);
+        vectorGroup.add(vectorDirectionButton);
+        gbl.setConstraints(vectorDirectionButton, gbc);
+        colourPanel.add(vectorDirectionButton);
+
+        if (image.isColorImage()) {
+            vectorDirectionButton.setEnabled(true);
+        } else {
+            vectorDirectionButton.setEnabled(false);
+        }
+
+        vectorDirectionButton.addActionListener(this);
+        
+        vectorMagnitudeButton = new JRadioButton("Vector filter on all colors together in magnitude domain", false);
+        vectorMagnitudeButton.setFont(serif12);
+        vectorGroup.add(vectorMagnitudeButton);
+        gbl.setConstraints(vectorMagnitudeButton, gbc);
+        colourPanel.add(vectorMagnitudeButton);
+
+        if (image.isColorImage()) {
+            vectorMagnitudeButton.setEnabled(true);
+        } else {
+            vectorMagnitudeButton.setEnabled(false);
+        }
+
+        vectorMagnitudeButton.addActionListener(this);
 
         colourPanel.setToolTipText("Colour images can be filtered over any combination of colour channels");
         setupBox.add(colourPanel);
