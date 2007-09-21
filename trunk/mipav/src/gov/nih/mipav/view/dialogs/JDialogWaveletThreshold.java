@@ -220,6 +220,24 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                 }
 
                 image.notifyImageDisplayListeners(null, true);
+                
+                if (doWaveletImage) {
+                    waveletImage = waveletAlgo.getWaveletImage();
+
+                    if (waveletImage != null) {
+
+                        // waveletImage is always larger than original image
+                        updateFFTFileInfo(image, waveletImage, ModelStorageBase.FLOAT);
+
+                        try {
+                            new ViewJFrameImage(waveletImage, null, new Dimension(610, 220));
+                        } catch (OutOfMemoryError error) {
+                            MipavUtil.displayError("Out of memory: Unable to open wavelet image frame");
+                        }
+                    } else {
+                        MipavUtil.displayError("waveletImage is null");
+                    }
+                } // if (doWaveletImage)
             } else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage
