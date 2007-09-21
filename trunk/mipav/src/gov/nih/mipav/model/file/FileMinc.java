@@ -618,6 +618,10 @@ public class FileMinc extends FileBase {
             rescaleIntercept = new double[image.getExtents()[2]];
             rescaleSlope = new double[image.getExtents()[2]];
             fileInfo.calculateRescaleIntercept(rescaleIntercept, rescaleSlope);
+        } else if (image.getNDims() == 4) {
+            rescaleIntercept = new double[image.getExtents()[2]*image.getExtents()[3]];
+            rescaleSlope = new double[image.getExtents()[2]*image.getExtents()[3]];
+            fileInfo.calculateRescaleIntercept(rescaleIntercept, rescaleSlope);   
         }
 
 
@@ -637,6 +641,16 @@ public class FileMinc extends FileBase {
                 fileInfo.setStartLocations(fileInfo0.getConvertStartLocationsToDICOM(k));
                 image.setFileInfo((FileInfoMinc) fileInfo.clone(), k); // Set the array of fileInfos in ModelImage
             }
+        } else if (image.getNDims() == 4) {
+            FileInfoMinc fileInfo0 = (FileInfoMinc) fileInfo.clone();
+
+            for (int k = 0; k < image.getExtents()[2]*image.getExtents()[3]; k++) {
+                fireProgressStateChanged(Math.round(15 + ((float) k / (image.getExtents()[2]*image.getExtents()[3]) * 10)));
+                fileInfo.setRescaleIntercept(rescaleIntercept[k]);
+                fileInfo.setRescaleSlope(rescaleSlope[k]);
+                fileInfo.setStartLocations(fileInfo0.getConvertStartLocationsToDICOM(k));
+                image.setFileInfo((FileInfoMinc) fileInfo.clone(), k); // Set the array of fileInfos in ModelImage
+            }    
         }
 
         fireProgressStateChanged(25);
@@ -670,6 +684,9 @@ public class FileMinc extends FileBase {
             if (fileInfo.getExtents().length == 3) {
                 nImgs = fileInfo.getExtents()[2];
             }
+            else if (fileInfo.getExtents().length == 4) {
+                nImgs = fileInfo.getExtents()[2] * fileInfo.getExtents()[3];
+            }
 
             if (one) {
                 nImgs = 1;
@@ -686,7 +703,13 @@ public class FileMinc extends FileBase {
                                           fileInfo.getOffset() +
                                           (fileInfo.getExtents()[2] / 2 * buffer.length * imgTypeFac),
                                           fileInfo.getDataType());
-                    } else {
+                    } else if (fileInfo.getExtents().length == 4) {
+                        rawFile.readImage(buffer,
+                                fileInfo.getOffset() +
+                                (fileInfo.getExtents()[2]*fileInfo.getExtents()[3] / 2 * buffer.length * imgTypeFac),
+                                fileInfo.getDataType());    
+                    }
+                     else {
                         rawFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
                     }
                 } else {
@@ -721,7 +744,7 @@ public class FileMinc extends FileBase {
             throw (error);
         }
 
-        if (fileInfo.getExtents().length == 3) {
+        if (fileInfo.getExtents().length >= 3) {
             fireProgressStateChanged(100);
 
         }
