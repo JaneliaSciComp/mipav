@@ -805,8 +805,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             newExtents[2] = padExtents[2] / denom;
 
             if (lockZ) {
-                //newExtents[2] = image.getExtents()[2];
-                newExtents[2] = padExtents[2];
+                newExtents[2] = image.getExtents()[2];
             } else {
                 //newExtents[2] = image.getExtents()[2] / denom;
                 newExtents[2] = padExtents[2] / denom;
