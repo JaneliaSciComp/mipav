@@ -182,6 +182,10 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
     /** number of elements in a pixel. Monochrome = 1, Color = 4. (a, R, G, B) */
     protected int valuesPerPixel = 1;
+    
+    int numColors;
+    
+    int colorUsed;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -524,6 +528,22 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         float[] resultBuffer; // copy-to buffer (for pixel data) for image-data after filtering
 
         length = srcImage.getSliceSize();
+        
+        numColors = 0;
+
+        if (rChannel) {
+            numColors++;
+        }
+
+        if (gChannel) {
+            numColors++;
+        }
+
+        if (bChannel) {
+            numColors++;
+        }
+
+        colorUsed = 0;
 
         try {
             buffer = new float[length];
@@ -574,7 +594,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
                     if (((color == 1) && rChannel) || ((color == 2) && gChannel) // process only desired channels
                             || ((color == 3) && bChannel)) { // -- and not alpha channel at all --
-
+                        colorUsed++;
                         fireProgressStateChanged("Processing color " + Integer.toString(color));
 
 
@@ -633,7 +653,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         float[] buffer;
         float[] resultBuffer;
 
-        int numColors = 0;
+        numColors = 0;
 
         if (rChannel) {
             numColors++;
@@ -647,7 +667,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             numColors++;
         }
 
-        int colorUsed = 0;
+        colorUsed = 0;
 
 
         length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
@@ -775,6 +795,22 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         float[] resultBuffer; // copy-to buffer (for pixel data) for image-data after filtering
 
         length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
+        
+        numColors = 0;
+
+        if (rChannel) {
+            numColors++;
+        }
+
+        if (gChannel) {
+            numColors++;
+        }
+
+        if (bChannel) {
+            numColors++;
+        }
+
+        colorUsed = 0;
 
         try {
             buffer = new float[length];
@@ -824,14 +860,13 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
                 for (color = 0; (color < valuesPerPixel) && !threadStopped; color++) { // for each color
 
-
                     fireProgressStateChanged("Processing color " + Integer.toString(color));
 
                     srcImage.exportRGBData(color, 0, length, buffer); // grab the slice
 
                     if (((color == 1) && rChannel) || ((color == 2) && gChannel) // process only desired channels
                             || ((color == 3) && bChannel)) { // -- and not alpha channel at all --
-
+                        colorUsed++;
                         if (maxScaleRule == scaleOnImage) {
                             maxScale = getMax(color);
                         }
@@ -888,7 +923,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
         float[] buffer;
         float[] resultBuffer;
-        int numColors = 0;
+        numColors = 0;
 
         if (rChannel) {
             numColors++;
@@ -902,7 +937,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
             numColors++;
         }
 
-        int colorUsed = 0;
+        colorUsed = 0;
 
         length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
 
@@ -1434,7 +1469,13 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
             // if display is showing, update the progress bar
             if ((numberOfSlices == 1) && ((i % onePercent) == 0)) { // filtering but a single slice
-                fireProgressStateChanged(Math.round(((float) i / sliceLength) * 100));
+                if (!isColorImage) {
+                    fireProgressStateChanged(Math.round(((float) i / sliceLength) * 100));
+                }
+                else {
+                    fireProgressStateChanged((int) (((float) ((Math.max(0, colorUsed - 1) * sliceLength) +
+                            i) / (numColors * sliceLength)) * 100));
+                }
             }
 
             // if pixel, i, is to be adjusted (ie., adjusting entire
