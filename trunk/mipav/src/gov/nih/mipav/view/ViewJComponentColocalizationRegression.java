@@ -1258,9 +1258,6 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
             userInterface.setDataText(dataLine1);
             userInterface.setDataText(dataLine2);
             userInterface.setDataText("\n");
-            userInterface.setGlobalDataText(dataLine1);
-            userInterface.setGlobalDataText(dataLine2);
-            userInterface.setGlobalDataText("\n");
 
             ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
         } // if (freeRangeMode)
@@ -1421,9 +1418,6 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
             userInterface.setDataText(dataLine1);
             userInterface.setDataText(dataLine2);
             userInterface.setDataText("\n");
-            userInterface.setGlobalDataText(dataLine1);
-            userInterface.setGlobalDataText(dataLine2);
-            userInterface.setGlobalDataText("\n");
 
             ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xIntersect, yIntersect, 0, xDim, yDim,
                                                                                1);
@@ -1913,9 +1907,6 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
             userInterface.setDataText(dataLine1);
             userInterface.setDataText(dataLine2);
             userInterface.setDataText("\n");
-            userInterface.setGlobalDataText(dataLine1);
-            userInterface.setGlobalDataText(dataLine2);
-            userInterface.setGlobalDataText("\n");
 
             ((VOIPoint) (pointVOI.getCurves()[0].elementAt(0))).locateVOIPoint(xS, yS, 0, xDim, yDim, 1);
         } // if (freeRangeMode)
