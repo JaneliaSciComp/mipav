@@ -51,6 +51,7 @@
 								</xs:complexType>
 							</xs:element>
 							<xs:element name="Slice-spacing" type="xs:float" minOccurs="0"/>
+							<xs:element name="Slice-thickness" type="xs:float" minOccurs="0"/>
 							<xs:element name="Units" minOccurs="2" maxOccurs="5">
 								<xs:simpleType>
 									<xs:restriction base="xs:string">
