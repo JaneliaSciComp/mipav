@@ -874,8 +874,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 dataLine1 = "slice #" + (z + 1) + " has no VOI\n";
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText("\n");
-                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
-                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 continue;
             }
@@ -1443,8 +1441,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 dataLine1 = "slice #" + (z + 1) + " has no positive threshold\n";
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText("\n");
-                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
-                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 continue;
             }
@@ -1983,8 +1979,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     dataLine1 = "slice #" + (z + 1) + " has no positive threshold on second iteration\n";
                     ViewUserInterface.getReference().setDataText(dataLine1);
                     ViewUserInterface.getReference().setDataText("\n");
-                    ViewUserInterface.getReference().setGlobalDataText(dataLine1);
-                    ViewUserInterface.getReference().setGlobalDataText("\n");
 
                     continue;
                 }
@@ -2021,9 +2015,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText(dataLine2);
                 ViewUserInterface.getReference().setDataText("\n");
-                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
-                ViewUserInterface.getReference().setGlobalDataText(dataLine2);
-                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 nf = NumberFormat.getNumberInstance();
                 nf.setMaximumFractionDigits(6);
@@ -2142,8 +2133,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 dataLine1 = "slice #" + (z + 1) + " has no VOI\n";
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText("\n");
-                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
-                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 continue;
             }
@@ -2755,8 +2744,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 dataLine1 = "slice #" + (z + 1) + " has no positive threshold\n";
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText("\n");
-                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
-                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 continue;
             }
@@ -3342,8 +3329,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     dataLine1 = "slice #" + (z + 1) + " has no positive threshold on second iteration\n";
                     ViewUserInterface.getReference().setDataText(dataLine1);
                     ViewUserInterface.getReference().setDataText("\n");
-                    ViewUserInterface.getReference().setGlobalDataText(dataLine1);
-                    ViewUserInterface.getReference().setGlobalDataText("\n");
 
                     continue;
                 }
@@ -3388,9 +3373,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 ViewUserInterface.getReference().setDataText(dataLine1);
                 ViewUserInterface.getReference().setDataText(dataLine2);
                 ViewUserInterface.getReference().setDataText("\n");
-                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
-                ViewUserInterface.getReference().setGlobalDataText(dataLine2);
-                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 nf = NumberFormat.getNumberInstance();
                 nf.setMaximumFractionDigits(6);
