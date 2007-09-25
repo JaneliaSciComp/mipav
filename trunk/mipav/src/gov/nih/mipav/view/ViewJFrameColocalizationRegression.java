@@ -1657,10 +1657,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
         if (imageB == null) {
             userInterface.setDataText(imageA.getImageName() + "\n");
-            userInterface.setGlobalDataText(imageA.getImageName() + "\n");
         } else {
             userInterface.setDataText(imageA.getImageName() + " and " + imageB.getImageName() + "\n");
-            userInterface.setGlobalDataText(imageA.getImageName() + " and " + imageB.getImageName() + "\n");
         }
 
         if (imageA.getNDims() > 2) {
@@ -1815,17 +1813,12 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         if (PValue >= 0.0) {
             userInterface.setDataText("P-value\n");
             userInterface.setDataText(PValue + "\n");
-            userInterface.setGlobalDataText("P-value\n");
-            userInterface.setGlobalDataText(PValue + "\n");
         }
 
         if (!pointCalculation) {
             userInterface.setDataText(dataLine1);
             userInterface.setDataText(dataLine2);
             userInterface.setDataText("\n");
-            userInterface.setGlobalDataText(dataLine1);
-            userInterface.setGlobalDataText(dataLine2);
-            userInterface.setGlobalDataText("\n");
         } // if (!pointCalculation)
 
         nf = NumberFormat.getNumberInstance();
@@ -1928,10 +1921,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
 
         if (imageB == null) {
             userInterface.setDataText(imageA.getImageName() + "\n");
-            userInterface.setGlobalDataText(imageA.getImageName() + "\n");
         } else {
             userInterface.setDataText(imageA.getImageName() + " and " + imageB.getImageName() + "\n");
-            userInterface.setGlobalDataText(imageA.getImageName() + " and " + imageB.getImageName() + "\n");
         }
 
         if (imageA.getNDims() > 2) {
@@ -2036,9 +2027,6 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         userInterface.setDataText(dataLine1);
         userInterface.setDataText(dataLine2);
         userInterface.setDataText("\n");
-        userInterface.setGlobalDataText(dataLine1);
-        userInterface.setGlobalDataText(dataLine2);
-        userInterface.setGlobalDataText("\n");
 
         nf = NumberFormat.getNumberInstance();
         nf.setMaximumFractionDigits(6);
