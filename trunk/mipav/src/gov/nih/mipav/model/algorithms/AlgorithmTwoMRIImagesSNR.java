@@ -245,8 +245,8 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
                                                    srcImage.getFileInfo()[0].getResolutions()[0],
                                                    srcImage.getFileInfo()[0].getResolutions()[1],
                                                    srcImage.getExtents()[0], srcImage.getExtents()[1], 
-                                                   srcImage.getUnitsOfMeasure(0),
-                                                   srcImage.getUnitsOfMeasure(1),
+                                                   new int []{srcImage.getUnitsOfMeasure(0),
+                                                   srcImage.getUnitsOfMeasure(1)},
                                                    transformVOI,
                                                    false, false);
                 regAlgo.finalize();
