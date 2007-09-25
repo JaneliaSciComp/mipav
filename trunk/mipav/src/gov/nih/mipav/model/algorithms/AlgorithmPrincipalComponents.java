@@ -372,6 +372,15 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         double[][] pTrunc;
         float[] result;
         int iNumber;
+        float vMin;
+        float vMax;
+        double typeMin;
+        double typeMax;
+        double a;
+        double b;
+        float rMin;
+        float rMax;
+        float scaledValues[] = null;
 
         if (haveColor) {
 
@@ -964,11 +973,85 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         }
 
         iNumber = 0;
-
+        
         if (doFilter) {
+            
+            vMin = Float.MAX_VALUE;
+            vMax = -Float.MAX_VALUE;
+            for (i = 0; i < totalLength; i++) {
+                  if (values[i] < vMin) {
+                      vMin = values[i];
+                  }
+                  if (values[i] > vMax) {
+                      vMax = values[i];
+                  }
+            }
+            
+            switch(destImage[iNumber].getType()) {
+                case ModelStorageBase.BOOLEAN:
+                    typeMin = 0;
+                    typeMax = 1;
+                    break;
+                case ModelStorageBase.BYTE:
+                    typeMin = -128;
+                    typeMax = 127;
+                    break;
+                case ModelStorageBase.UBYTE:
+                    typeMin = 0;
+                    typeMax = 255;
+                    break;
+                case ModelStorageBase.SHORT:
+                    typeMin = -32768;
+                    typeMax = 32767;
+                    break;
+                case ModelStorageBase.USHORT:
+                    typeMin = 0;
+                    typeMax = 65535;
+                    break;
+                case ModelStorageBase.INTEGER:
+                    typeMin = Integer.MIN_VALUE;
+                    typeMax = Integer.MAX_VALUE;
+                    break;
+                case ModelStorageBase.UINTEGER:
+                    typeMin = 0;
+                    typeMax = 4294967295L;
+                    break;
+                case ModelStorageBase.LONG:
+                    typeMin = Long.MIN_VALUE;
+                    typeMax = Long.MAX_VALUE;
+                    break;
+                case ModelStorageBase.FLOAT:
+                    typeMin = -Float.MAX_VALUE;
+                    typeMax = Float.MAX_VALUE;
+                    break;
+                case ModelStorageBase.DOUBLE:
+                    typeMin = -Double.MAX_VALUE;
+                    typeMax = Double.MAX_VALUE;
+                    break;
+                default:
+                    typeMin = -Double.MAX_VALUE;
+                    typeMax = Double.MAX_VALUE;
+            }
+            
+            if ((vMin < typeMin) || (vMax > typeMax)) {
+                scaledValues = new float[totalLength];
+                // typeMax = a * vMax + b;
+                // typeMin = a * vMin + b;
+                a = (typeMax - typeMin)/(vMax - vMin);
+                b = typeMax - a * vMax;
+                for (i = 0; i < totalLength; i++) {
+                    scaledValues[i] = (float)(a * values[i] + b);
+                }
+            }
 
             try {
-                destImage[iNumber++].importData(0, values, true);
+                if ((vMin < typeMin) || (vMax > typeMax)) {
+                    destImage[iNumber++].importData(0, scaledValues, true);
+                    scaledValues = null;
+                }
+                else {
+                    destImage[iNumber++].importData(0, values, true);
+                }
             } catch (IOException error) {
                 displayError("AlgorithmPrincipalComponents: IOException on filter destination image import data");
 
@@ -1031,6 +1114,74 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         fireProgressStateChanged(90);
         fireProgressStateChanged("Importing averaged destination data");
+        
+        rMin = Float.MAX_VALUE;
+        rMax = -Float.MAX_VALUE;
+        for (i = 0; i < samples; i++) {
+              if (result[i] < rMin) {
+                  rMin = result[i];
+              }
+              if (result[i] > rMax) {
+                  rMax = result[i];
+              }
+        }
+        
+        switch(destImage[iNumber].getType()) {
+            case ModelStorageBase.BOOLEAN:
+                typeMin = 0;
+                typeMax = 1;
+                break;
+            case ModelStorageBase.BYTE:
+                typeMin = -128;
+                typeMax = 127;
+                break;
+            case ModelStorageBase.UBYTE:
+                typeMin = 0;
+                typeMax = 255;
+                break;
+            case ModelStorageBase.SHORT:
+                typeMin = -32768;
+                typeMax = 32767;
+                break;
+            case ModelStorageBase.USHORT:
+                typeMin = 0;
+                typeMax = 65535;
+                break;
+            case ModelStorageBase.INTEGER:
+                typeMin = Integer.MIN_VALUE;
+                typeMax = Integer.MAX_VALUE;
+                break;
+            case ModelStorageBase.UINTEGER:
+                typeMin = 0;
+                typeMax = 4294967295L;
+                break;
+            case ModelStorageBase.LONG:
+                typeMin = Long.MIN_VALUE;
+                typeMax = Long.MAX_VALUE;
+                break;
+            case ModelStorageBase.FLOAT:
+                typeMin = -Float.MAX_VALUE;
+                typeMax = Float.MAX_VALUE;
+                break;
+            case ModelStorageBase.DOUBLE:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+                break;
+            default:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+        }
+        
+        if ((rMin < typeMin) || (rMax > typeMax)) {
+            // typeMax = a * rMax + b;
+            // typeMin = a * rMin + b;
+            a = (typeMax - typeMin)/(rMax - rMin);
+            b = typeMax - a * rMax;
+            for (i = 0; i < samples; i++) {
+                result[i] = (float)(a * result[i] + b);
+            }
+        }
+
 
         try {
             destImage[iNumber].importData(0, result, true);
