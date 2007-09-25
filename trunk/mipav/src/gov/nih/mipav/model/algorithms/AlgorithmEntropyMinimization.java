@@ -152,6 +152,9 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
 
     /** pixelIncrement is increased above 1 if subsampling. */
     private int pixelIncrement = 1;
+    
+    /** Handle case where zDim is far less than xDim and yDim */
+    private int zPixelIncrement = 1;
 
     /** Tolerance passed to Powell's algorithm. */
     private double powellTolerance = 1.0e-6;
@@ -713,7 +716,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                 m8 = p[16];
                 m9 = p[17];
 
-                for (z = 0; z < zDim; z += pixelIncrement) {
+                for (z = 0; z < zDim; z += zPixelIncrement) {
                     k = z * sliceSize;
                     saz = (a3 * (z - ac3) / ad3) + (a9 * ((z * z) - ac9) / ad9);
                     smz = 1.0 + (m3 * (z - mc3) / md3) + (m9 * ((z * z) - mc9) / md9);
@@ -759,7 +762,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                             } // if (((!backgroundPresent) || (objectBuffer[i])) && (validBuffer[i]))
                         } // for (x = 0; x < xDim; x += pixelIncrement)
                     } // for (y = 0; y < yDim; y += pixelIncrement)
-                } // for (z = 0; z < zDim; z += pixelIncrement)
+                } // for (z = 0; z < zDim; z += zPixelIncrement)
             } // if (noiseType == NOISE_MA2)
             else if (noiseType == NOISE_M2) {
                 m1 = p[0];
@@ -772,7 +775,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                 m8 = p[7];
                 m9 = p[8];
 
-                for (z = 0; z < zDim; z += pixelIncrement) {
+                for (z = 0; z < zDim; z += zPixelIncrement) {
                     k = z * sliceSize;
                     smz = 1.0 + (m3 * (z - mc3) / md3) + (m9 * ((z * z) - mc9) / md9);
 
@@ -806,7 +809,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                             } // if (((!backgroundPresent) || (objectBuffer[i])) && (validBuffer[i]))
                         } // for (x = 0; x < xDim; x += pixelIncrement)
                     } // for (y = 0; y < yDim; y += pixelIncrement)
-                } // for (z = 0; z < zDim; z += pixelIncrement)
+                } // for (z = 0; z < zDim; z += zPixelIncrement)
             } // else if (noiseType == NOISE_M2)
             else if (noiseType == NOISE_M3) {
                 m1 = p[0];
@@ -829,7 +832,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                 m18 = p[17];
                 m19 = p[18];
 
-                for (z = 0; z < zDim; z += pixelIncrement) {
+                for (z = 0; z < zDim; z += zPixelIncrement) {
                     k = z * sliceSize;
                     smz = 1.0 + (m3 * (z - mc3) / md3) + (m9 * ((z * z) - mc9) / md9) +
                           (m19 * ((z * z * z) - mc19) / md19);
@@ -868,7 +871,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                             } // if (((!backgroundPresent) || (objectBuffer[i])) && (validBuffer[i]))
                         } // for (x = 0; x < xDim; x += pixelIncrement)
                     } // for (y = 0; y < yDim; y += pixelIncrement)
-                } // for (z = 0; z < zDim; z += pixelIncrement)
+                } // for (z = 0; z < zDim; z += zPixelIncrement)
             } // else if (noiseType == NOISE_M3)
 
             gbottom = (int) Math.floor(gmin);
@@ -878,7 +881,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             // Preferences.debug("gmin = " + gmin + " gmax = "+ gmax + "\n");
             originalHistogram = new double[histogramLength];
 
-            for (z = 0; z < zDim; z += pixelIncrement) {
+            for (z = 0; z < zDim; z += zPixelIncrement) {
                 k = z * sliceSize;
 
                 for (y = 0; y < yDim; y += pixelIncrement) {
@@ -898,7 +901,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         } // if (((!backgroundPresent) || (objectBuffer[i])) && (validBuffer[i]))
                     } // for (x = 0; x < xDim; x += pixelIncrement)
                 } // for (y = 0; y < yDim; y += pixelIncrement)
-            } // for (z = 0; z < zDim; z += pixelIncrement)
+            } // for (z = 0; z < zDim; z += zPixelIncrement)
         } // else srcImage.getNDims() == 3
 
         blurredHistogram = new double[histogramLength];
@@ -3069,6 +3072,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         } // for (i = 0; i < volSize; i++)
 
                         pixelIncrement = Math.max(1, (int) Math.pow((double) (histogramAvailable / 5000), 1.0 / 3.0));
+                        zPixelIncrement = Math.max(1, pixelIncrement * zDim/xDim);
                     } // if (subsample)
 
                     for (i = 0; i < nParams; i++) {
@@ -3650,6 +3654,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         } // for (i = 0; i < volSize; i++)
 
                         pixelIncrement = Math.max(1, (int) Math.pow((double) (histogramAvailable / 5000), 1.0 / 3.0));
+                        zPixelIncrement = Math.max(1, pixelIncrement * zDim/xDim);
                     } // if (subsample)
 
                     for (i = 0; i < nParams; i++) {
@@ -4245,6 +4250,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         } // for (i = 0; i < volSize; i++)
 
                         pixelIncrement = Math.max(1, (int) Math.pow((double) (histogramAvailable / 5000), 1.0 / 3.0));
+                        zPixelIncrement = Math.max(1, pixelIncrement * zDim/xDim);
                     } // if (subsample)
 
                     for (i = 0; i < nParams; i++) {
