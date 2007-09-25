@@ -3072,7 +3072,12 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         } // for (i = 0; i < volSize; i++)
 
                         pixelIncrement = Math.max(1, (int) Math.pow((double) (histogramAvailable / 5000), 1.0 / 3.0));
-                        zPixelIncrement = Math.max(1, pixelIncrement * zDim/xDim);
+                        if (zDim < xDim) {
+                            zPixelIncrement = Math.max(1, pixelIncrement * zDim/xDim);
+                        }
+                        else{
+                            zPixelIncrement = pixelIncrement;
+                        }
                     } // if (subsample)
 
                     for (i = 0; i < nParams; i++) {
@@ -3654,7 +3659,12 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         } // for (i = 0; i < volSize; i++)
 
                         pixelIncrement = Math.max(1, (int) Math.pow((double) (histogramAvailable / 5000), 1.0 / 3.0));
-                        zPixelIncrement = Math.max(1, pixelIncrement * zDim/xDim);
+                        if (zDim < xDim) {
+                            zPixelIncrement = Math.max(1, pixelIncrement * zDim/xDim);
+                        }
+                        else{
+                            zPixelIncrement = pixelIncrement;
+                        }
                     } // if (subsample)
 
                     for (i = 0; i < nParams; i++) {
@@ -4250,7 +4260,12 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         } // for (i = 0; i < volSize; i++)
 
                         pixelIncrement = Math.max(1, (int) Math.pow((double) (histogramAvailable / 5000), 1.0 / 3.0));
-                        zPixelIncrement = Math.max(1, pixelIncrement * zDim/xDim);
+                        if (zDim < xDim) {
+                            zPixelIncrement = Math.max(1, pixelIncrement * zDim/xDim);
+                        }
+                        else{
+                            zPixelIncrement = pixelIncrement;
+                        }
                     } // if (subsample)
 
                     for (i = 0; i < nParams; i++) {
