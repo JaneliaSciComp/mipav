@@ -36,7 +36,7 @@ public class FileImageXML extends FileXML {
     /** array of strings representing the tags under <Dataset-attributes> in the xml schema. */
     private static final String[] datasetAttributesStr = {
         "Description", "Linked-LUT", "Linked-image", "Image-offset", "Data-type", "Endianess", "Extents", "Resolutions",
-        "Slice-spacing", "Units", "Orientation", "Subject-axis-orientation", "Origin", "Matrix", "Modality"
+        "Slice-spacing", "Units", "Orientation", "Subject-axis-orientation", "Origin", "Matrix", "Modality", "Slice-thickness"
     };
 
     /** array of strings representing the tags under <Subject-information> in the xml schema. */
@@ -694,6 +694,7 @@ public class FileImageXML extends FileXML {
         int[] axis;
         float[] resolutions;
         float sliceSpacing;
+        float sliceThickness;
         float[] origin;
         FileInfoBase myFileInfo;
         FileWriter fw;
@@ -880,6 +881,12 @@ public class FileImageXML extends FileXML {
             closedTag( datasetAttributesStr[8], String.valueOf(sliceSpacing));
         }
 
+        if (nDims > 2) {
+            sliceThickness = myFileInfo.getSliceThickness();
+
+            closedTag( datasetAttributesStr[15], String.valueOf(sliceThickness));
+        }
+        
         units = myFileInfo.getUnitsOfMeasure();
 
         for (i = 0; i < nDims; i++) {
@@ -2570,7 +2577,7 @@ public class FileImageXML extends FileXML {
         /** DOCUMENT ME! */
         int unitsCount = -1;
 
-        
+        float sliceThickness = 0;
         
         /**
          * Creates a new MyXMLHandler object.
@@ -2678,6 +2685,9 @@ public class FileImageXML extends FileXML {
             } else if (currentKey.equals("Slice-spacing")) {
                 Preferences.debug("Slice spacing (res[2]): " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
                 fileInfo.setResolutions(Float.valueOf(elementBuffer).floatValue(), 2);
+            } else if (currentKey.equals("Slice-thickness")) {
+                Preferences.debug("Slice thickness: " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
+                fileInfo.setSliceThickness(Float.valueOf(elementBuffer).floatValue());
             } else if (currentKey.equals("Orientation")) {
                 Preferences.debug("Orientation: " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
                 fileInfo.setImageOrientation(FileInfoBase.getImageOrientationFromStr(elementBuffer));
