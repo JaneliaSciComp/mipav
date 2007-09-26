@@ -456,10 +456,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 		for (int k = tempVOI.getCurves()[j].size() - 1; k >= 0 ; k--) {
                 			if (!tempVOI.getCurves()[j].elementAt(k).isActive()) {
                 				tempVOI.getCurves()[j].remove(k);
+                				System.err.println("removed curve at: " + k + " on slice: " + j);
                 			}
                 		}
                 	}
                 	tempVOI.setAllActive(false);
+                	
+                	selectedVOIset.remove(i);
+                	selectedVOIset.insertElementAt(tempVOI, i);
                 	if (srcImage.getNDims() == 2) {
                         calc2D(tempVOI);
                     } else if (srcImage.getNDims() > 2) {
