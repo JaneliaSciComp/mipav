@@ -165,6 +165,9 @@ public abstract class ViewJComponentBase extends JComponent {
     /** DOCUMENT ME! */
     public static final int POLYLINE_SLICE_VOI = 37;
 
+    /** DOCUMENT ME! */
+    public static final int SPLIT_VOI = 38;
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */

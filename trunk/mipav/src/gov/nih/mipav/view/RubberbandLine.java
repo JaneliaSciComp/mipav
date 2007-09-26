@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -28,6 +29,9 @@ public class RubberbandLine extends Rubberband {
     /** DOCUMENT ME! */
     private int[] z = new int[2];
 
+    /** boolean for if this is a VOI Splitter (not line drawer)*/
+    private boolean doSplit = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -43,6 +47,14 @@ public class RubberbandLine extends Rubberband {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    public void setSplit(boolean split) {
+    	this.doSplit = split;
+    }
+    
+    public boolean isSplitter() {
+    	return this.doSplit;
+    }
+    
     /**
      * Draws a line based on the rubberband's last bounds.
      *
@@ -84,8 +96,10 @@ public class RubberbandLine extends Rubberband {
         resolutionX = ((ViewJComponentEditImage) (component)).getResolutionX();
         resolutionY = ((ViewJComponentEditImage) (component)).getResolutionY();
 
+                
         if (isActive()) {
-            ModelImage image = ((ViewJComponentEditImage) (component)).getActiveImage();
+        	
+        	ModelImage image = ((ViewJComponentEditImage) (component)).getActiveImage();
 
             // get the points for the line
             beginx = (int) (getAnchor().x / (zoomX * resolutionX));
@@ -110,6 +124,10 @@ public class RubberbandLine extends Rubberband {
                 y[1] = beginy;
                 z[1] = slice;
             }
+        	
+        	if (!doSplit) {
+        	
+            
 
             // check to see if this is a *new* VOI
             if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.LINE)) {
@@ -202,6 +220,9 @@ public class RubberbandLine extends Rubberband {
 
             } // end if not a *new* VOI
 
+        } else {
+        	new JDialogVOISplitter(image.getParentFrame(), image, new Point3Df(x[0],y[0],z[0]), new Point3Df(x[1],y[1],z[1])) ;
         }
+    }
     }
 }

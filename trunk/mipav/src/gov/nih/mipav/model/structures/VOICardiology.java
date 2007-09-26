@@ -2517,7 +2517,7 @@ public class VOICardiology extends VOIBase {
      */
     public void makeClockwise() {
         int i;
-        Object obj;
+        Point3Df obj;
         int size;
 
         if (isCounterClockwise() == false) {
@@ -2539,7 +2539,7 @@ public class VOICardiology extends VOIBase {
      */
     public void makeCounterClockwise() {
         int i;
-        Object obj;
+        Point3Df obj;
         int size;
 
         if (isCounterClockwise() == true) {

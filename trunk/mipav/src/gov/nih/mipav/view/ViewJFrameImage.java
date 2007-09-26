@@ -879,6 +879,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.LINE);
+        } else if (command.equals("SplitVOI")) {
+        	System.err.println("YO");
+        	
+            componentImage.setCursorMode(ViewJComponentEditImage.SPLIT_VOI);
         } else if (command.equals("Polyslice")) {
 
             if (!checkForVOICompatibility(VOI.POLYLINE_SLICE)) {
@@ -5358,8 +5362,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
             }
         }
-
-        // System.err.println("Last type is: " + lastType);
 
         if (lastType == -1) {
             return true;

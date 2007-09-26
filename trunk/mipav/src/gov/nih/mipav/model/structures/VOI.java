@@ -94,7 +94,7 @@ public class VOI extends ModelSerialCloneable {
     private transient ViewJFrameGraph contourGraph = null;
 
     /** A vector array of curves per slice. */
-    private Vector[] curves;
+    private Vector<VOIBase>[] curves;
 
     /** Indicates the type of VOI (i.e. CONTOUR, POLYLINE, LINE, POINT, PROTRACTOR, etc. ... ) */
     private int curveType;
@@ -2326,7 +2326,7 @@ public class VOI extends ModelSerialCloneable {
      *
      * @return  the curves
      */
-    public Vector[] getCurves() {
+    public Vector<VOIBase>[] getCurves() {
         return curves;
     }
 
@@ -2767,7 +2767,7 @@ public class VOI extends ModelSerialCloneable {
      */
     public void importCurve(VOIContour curve, int slice) {
         curve.setName(name);
-        curves[slice].addElement(curve.clone());
+        curves[slice].addElement((VOIContour)curve.clone());
 
         if (curveType == PROTRACTOR) {
 
@@ -4450,15 +4450,6 @@ System.err.println("curves size: " );
      */
     public void setContourGraph(ViewJFrameGraph newGraph) {
         this.contourGraph = newGraph;
-    }
-
-    /**
-     * Accessor that sets the contours to the parameter.
-     *
-     * @param  contours  the contours
-     */
-    public void setContours(VOIContour[] contours) {
-        this.curves = contours;
     }
 
     /**
