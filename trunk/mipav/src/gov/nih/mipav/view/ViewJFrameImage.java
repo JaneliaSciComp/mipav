@@ -2060,7 +2060,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Reslice - isotropic voxels")) {
             new JDialogReslice(this, getActiveImage());
         } else if (command.equals("Test algorithm")) { // new JDialogRegionGrow(this, getActiveImage());
-        } else if (command.equals("Threshold")) {
+        } else if (command.equals("threshMinMax")) {
 
             if (getActiveImage().getType() == ModelStorageBase.BOOLEAN) {
                 MipavUtil.displayError(" Boolean image cannot be thresholded.");
@@ -2072,7 +2072,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     new JDialogThreshold(this, getActiveImage());
                 }
             }
-        } else if (command.equals("Levelset")) {
+        } else if(command.equals("threshStdDev")) {
+        	new JDialogStandardDeviationThreshold(this,getActiveImage());
+        }else if (command.equals("Levelset")) {
             new JDialogLevelSet(this, getActiveImage());
         } else if (command.equals("LevelsetDiffusion")) {
             new JDialogLevelSetDiffusion(this, getActiveImage());
