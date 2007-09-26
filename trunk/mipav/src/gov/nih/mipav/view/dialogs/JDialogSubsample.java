@@ -868,13 +868,11 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]) /
                         (float) (newExtents[1]);
 
-            // Sx = ( (float) (newExtents[0]) * oXres) /
-            // ( (float) (image.getExtents()[0]) * image.getFileInfo(0).getResolutions()[0]);
-            Sx = 1.0f;
+            Sx = ( (float) (newExtents[0]) * oXres) /
+            ( (float) (image.getExtents()[0]) * image.getFileInfo(0).getResolutions()[0]);
 
-            // Sy = ( (float) (newExtents[1]) * oYres) /
-            // ( (float) (image.getExtents()[1]) * image.getFileInfo(0).getResolutions()[1]);
-            Sy = 1.0f;
+            Sy = ( (float) (newExtents[1]) * oYres) /
+            ( (float) (image.getExtents()[1]) * image.getFileInfo(0).getResolutions()[1]);
 
             if (processIndep || (image.getNDims() == 2)) {
                 xfrm = new TransMatrix(3);
@@ -885,9 +883,8 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]) /
                                 (float) (newExtents[2]);
 
-                //Sz = ( (float) (newExtents[2]) * oZres) /
-                //( (float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
-                Sz = 1.0f;
+                Sz = ( (float) (newExtents[2]) * oZres) /
+                ( (float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
                 xfrm = new TransMatrix(4);
                 xfrm.identity();
                 xfrm.setZoom(Sx, Sy, Sz);
