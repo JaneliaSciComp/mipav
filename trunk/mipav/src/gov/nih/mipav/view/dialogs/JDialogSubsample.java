@@ -70,12 +70,6 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private ModelImage image = null; // sourceImage
-
-    /** DOCUMENT ME! */
-    private boolean lockZ = false;
-
-    /** DOCUMENT ME! */
-    private JCheckBox lockZBox = null;
     
     /** Number of dimensions in an image e.g 2D, 3D */
 	private int dim;
@@ -96,7 +90,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
     private float oXres, oYres, oZres;
 
     /** DOCUMENT ME! */
-    private boolean processIndep = false; // use 2.5D?
+    private boolean processIndep = false; // use 2.5D
 
     /** DOCUMENT ME! */
     private JCheckBox processIndepBox = null; // for processing 3D as 2.5D (slices remain unchanged)
@@ -192,12 +186,20 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 textExpectedExtentZ.setText("1");
             }
             else {
-        	    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                if (processIndepBox.isSelected()) {
+                    textExpectedExtentZ.setText(Integer.toString(image.getExtents()[2]));  
+                }
+                else {
+        	        textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                }
             }
         	
         	if (Arrays.equals(padExtents, extents)) {
     			doPad = false;
-    		} else {
+    		} else if ((dim == 3) && (processIndepBox.isSelected()) &&
+                     (extents[0] == padExtents[0]) && (extents[1] == padExtents[1])) {
+                doPad = false;
+            } else {
     			doPad = true;
     		}
         	
@@ -205,6 +207,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         		textExpectedExtentX.setEnabled(true);
             	textExpectedExtentY.setEnabled(true);
             	textExpectedExtentZ.setEnabled(true);
+                
         	} else {
         		textExpectedExtentX.setEnabled(false);
             	textExpectedExtentY.setEnabled(false);
@@ -228,24 +231,33 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 textExpectedExtentZ.setText("1");
             }
             else {
-                textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                if (processIndepBox.isSelected()) {
+                    textExpectedExtentZ.setText(Integer.toString(image.getExtents()[2]));  
+                }
+                else {
+                    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                }
             }
-        	
-        	if (Arrays.equals(padExtents, extents)) {
-    			doPad = false;
-    		} else {
-    			doPad = true;
-    		}
-        	
-        	if (doPad) {
-        		textExpectedExtentX.setEnabled(true);
-            	textExpectedExtentY.setEnabled(true);
-            	textExpectedExtentZ.setEnabled(true);
-        	} else {
-        		textExpectedExtentX.setEnabled(false);
-            	textExpectedExtentY.setEnabled(false);
-            	textExpectedExtentZ.setEnabled(false);
-        	}
+            
+            if (Arrays.equals(padExtents, extents)) {
+                doPad = false;
+            } else if ((dim == 3) && (processIndepBox.isSelected()) &&
+                     (extents[0] == padExtents[0]) && (extents[1] == padExtents[1])) {
+                doPad = false;
+            } else {
+                doPad = true;
+            }
+            
+            if (doPad) {
+                textExpectedExtentX.setEnabled(true);
+                textExpectedExtentY.setEnabled(true);
+                textExpectedExtentZ.setEnabled(true);
+                
+            } else {
+                textExpectedExtentX.setEnabled(false);
+                textExpectedExtentY.setEnabled(false);
+                textExpectedExtentZ.setEnabled(false);
+            }
         	        	
         } else if (command.equals("Subsample by 8")) {
         	denom = 8;
@@ -263,24 +275,33 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 textExpectedExtentZ.setText("1");
             }
             else {
-                textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                if (processIndepBox.isSelected()) {
+                    textExpectedExtentZ.setText(Integer.toString(image.getExtents()[2]));  
+                }
+                else {
+                    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                }    
             }
-        	
-        	if (Arrays.equals(padExtents, extents)) {
-    			doPad = false;
-    		} else {
-    			doPad = true;
-    		}
-        	
-        	if (doPad) {
-        		textExpectedExtentX.setEnabled(true);
-            	textExpectedExtentY.setEnabled(true);
-            	textExpectedExtentZ.setEnabled(true);
-        	} else {
-        		textExpectedExtentX.setEnabled(false);
-            	textExpectedExtentY.setEnabled(false);
-            	textExpectedExtentZ.setEnabled(false);
-        	}
+            
+            if (Arrays.equals(padExtents, extents)) {
+                doPad = false;
+            } else if ((dim == 3) && (processIndepBox.isSelected()) &&
+                     (extents[0] == padExtents[0]) && (extents[1] == padExtents[1])) {
+                doPad = false;
+            } else {
+                doPad = true;
+            }
+            
+            if (doPad) {
+                textExpectedExtentX.setEnabled(true);
+                textExpectedExtentY.setEnabled(true);
+                textExpectedExtentZ.setEnabled(true);
+                
+            } else {
+                textExpectedExtentX.setEnabled(false);
+                textExpectedExtentY.setEnabled(false);
+                textExpectedExtentZ.setEnabled(false);
+            }
         	        	
         }
     }
@@ -327,17 +348,39 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
     public void itemStateChanged(ItemEvent event) {
 
         if (event.getSource() == processIndepBox) {
-            lockZBox.setSelected(processIndepBox.isSelected());
-            lockZBox.setEnabled(!processIndepBox.isSelected());
+            
+            if (Arrays.equals(padExtents, extents)) {
+                doPad = false;
+            } else if ((dim == 3) && (processIndepBox.isSelected()) &&
+                     (extents[0] == padExtents[0]) && (extents[1] == padExtents[1])) {
+                doPad = false;
+            } else {
+                doPad = true;
+            }
+            
+            if (doPad) {
+                textExpectedExtentX.setEnabled(true);
+                textExpectedExtentY.setEnabled(true);
+                textExpectedExtentZ.setEnabled(true);
+                
+            } else {
+                textExpectedExtentX.setEnabled(false);
+                textExpectedExtentY.setEnabled(false);
+                textExpectedExtentZ.setEnabled(false);
+            }
 
             if (processIndepBox.isSelected()) {
-
+                if (dim == 3) {
+                    textExpectedExtentZ.setText(Integer.toString(image.getExtents()[2]));
+                }
                 if (voiCheckBox != null) {
                     voiCheckBox.setEnabled(false);
                     voiCheckBox.setSelected(false);
                 }
             } else {
-
+                if (dim == 3) {
+                    textExpectedExtentZ.setText(Integer.toString(padExtents[2]));
+                }
                 if (voiCheckBox != null) {
                     voiCheckBox.setEnabled(true);
                 }
@@ -408,7 +451,6 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         setProcessIndep(scriptParameters.doProcess3DAs25D());
         denom = scriptParameters.getParams().getInt("subsample_factor");
         setDoVOI(scriptParameters.getParams().getBoolean("do_transform_vois"));
-        lockZ = scriptParameters.getParams().getBoolean("do_not_change_zdim");
 
         if (image.getNDims() == 2) {
             newExtents = new int[2];
@@ -423,7 +465,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             newExtents[0] = image.getExtents()[0] / denom;
             newExtents[1] = image.getExtents()[1] / denom;
 
-            if (lockZ) {
+            if (processIndep) {
                 newExtents[2] = image.getExtents()[2];
             } else {
                 newExtents[2] = image.getExtents()[2] / denom;
@@ -459,15 +501,9 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 xfrm.identity();
                 xfrm.setZoom(Sx, Sy);
             } else {
-
-                if (lockZ) {
-                    oZres = image.getFileInfo(0).getResolutions()[2];
-                    Sz = 1.0f;
-                } else {
-                    oZres = image.getFileInfo(0).getResolutions()[2] * denom;
-                    Sz = ((float) (newExtents[2]) * oZres) /
-                             ((float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
-                }
+                oZres = image.getFileInfo(0).getResolutions()[2] * denom;
+                Sz = ((float) (newExtents[2]) * oZres) /
+                         ((float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
 
                 xfrm = new TransMatrix(4);
                 xfrm.identity();
@@ -486,7 +522,6 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         scriptParameters.storeProcess3DAs25D(processIndep);
         scriptParameters.getParams().put(ParameterFactory.newParameter("subsample_factor", denom));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_transform_vois", doVOI));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_not_change_zdim", lockZ));
     }
 
     /**
@@ -536,11 +571,6 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             processIndepBox.setFont(serif12);
             processIndepBox.addItemListener(this);
             sampleSizePanel.add(processIndepBox);
-
-            lockZBox = new JCheckBox("Leave Z dimension unchanged", false);
-            lockZBox.setFont(serif12);
-            lockZBox.addItemListener(this);
-            sampleSizePanel.add(lockZBox);
         }
         
         //Panel for Orginal Extents
@@ -780,10 +810,6 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             processIndep = processIndepBox.isSelected();
         }
 
-        if (lockZBox != null) {
-            lockZ = lockZBox.isSelected();
-        }
-
         if (image.getNDims() == 2) {
             newExtents = new int[2];
             //newExtents[0] = image.getExtents()[0] / denom;
@@ -804,7 +830,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             newExtents[1] = padExtents[1] / denom;
             newExtents[2] = padExtents[2] / denom;
 
-            if (lockZ) {
+            if (processIndep) {
                 newExtents[2] = image.getExtents()[2];
             } else {
                 //newExtents[2] = image.getExtents()[2] / denom;
@@ -856,18 +882,12 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 xfrm.setZoom(Sx, Sy);
             } else {
 
-                if (lockZ) {
-                    oZres = image.getFileInfo(0).getResolutions()[2];
-                    Sz = 1.0f;
-                } else {
-                    oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]) /
+                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]) /
                                 (float) (newExtents[2]);
 
-                    // Sz = ( (float) (newExtents[2]) * oZres) /
-                    // ( (float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
-                    Sz = 1.0f;
-                }
-
+                //Sz = ( (float) (newExtents[2]) * oZres) /
+                //( (float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
+                Sz = 1.0f;
                 xfrm = new TransMatrix(4);
                 xfrm.identity();
                 xfrm.setZoom(Sx, Sy, Sz);
