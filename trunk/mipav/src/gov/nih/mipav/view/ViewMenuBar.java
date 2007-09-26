@@ -413,6 +413,8 @@ public class ViewMenuBar {
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Evaluate VOI segmentation",
                                                                                            "evalSeg", 0, null, false),
+                                                                                           
+                                                                
 
         // menuBuilder.buildMenuItem("Extract object surface",
         // "extractObjectSurface", 0, null, false),
@@ -437,8 +439,12 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Levelset diffusion",
                                                                                            "LevelsetDiffusion", 0, null,
                                                                                            false),
-                                                                 menuBuilder.buildMenuItem("Threshold", null, 0, null,
-                                                                                           false),
+                                                                 
+                                                                 menuBuilder.makeMenu("Threshold", false, 
+                                                                		 		new JMenuItem[] {
+                                                                		 			menuBuilder.buildMenuItem("Threshold using min/max", "threshMinMax", 0, null,false),
+                                                                		 			 menuBuilder.buildMenuItem("Theshold using standard deviation","threshStdDev", 0, null, false),
+                                                                 				}),
                                                                  menuBuilder.buildMenuItem("Watershed", null, 0, null,
                                                                                            false),
                                                                  menuBuilder.makeMenu("ITK", false,
