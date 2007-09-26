@@ -63,6 +63,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     /** Whether or not to show totals for each calculation. */
     private boolean showTotals = false;
 
+    /** Boolean for if the algorithm should ONLY check active contours */
+    private boolean doOnlyActiveContours = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -439,13 +442,31 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             // System.out.println("algoVOIprops n VOIs = " + selectedVOIset.size());
             for (int i = 0; i < selectedVOIset.size(); i++) {
                 activeVOI = (VOI) selectedVOIset.elementAt(i);
-                activeVOI.setAllActive(false);
-
-                if (srcImage.getNDims() == 2) {
-                    calc2D(activeVOI);
-                } else if (srcImage.getNDims() > 2) {
-                    calc34D(activeVOI);
+                if (!doOnlyActiveContours) {
+                	activeVOI.setAllActive(false);
+                	if (srcImage.getNDims() == 2) {
+                        calc2D(activeVOI);
+                    } else if (srcImage.getNDims() > 2) {
+                        calc34D(activeVOI);
+                    }
+                } else {
+                	//create active contour subset to pass in
+                	VOI tempVOI = (VOI)activeVOI.clone();
+                	for (int j = 0; j < tempVOI.getCurves().length; j++) {
+                		for (int k = tempVOI.getCurves()[j].size() - 1; k >= 0 ; k--) {
+                			if (!tempVOI.getCurves()[j].elementAt(k).isActive()) {
+                				tempVOI.getCurves()[j].remove(k);
+                			}
+                		}
+                	}
+                	tempVOI.setAllActive(false);
+                	if (srcImage.getNDims() == 2) {
+                        calc2D(tempVOI);
+                    } else if (srcImage.getNDims() > 2) {
+                        calc34D(tempVOI);
+                    }
                 }
+                
             }
         } catch (NullPointerException npe) {
 
@@ -486,6 +507,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         activeVOI = aVOI;
     }
 
+    /**
+     * Sets the flag for calculating totals ONLY for active contours
+     * @param doActive
+     */
+    public void setDoOnlyActiveContours(boolean doActive) {
+    	this.doOnlyActiveContours = doActive;
+    }
+    
     /**
      * tells the algorithm to total the property calculations.
      *
