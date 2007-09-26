@@ -58,7 +58,8 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
 
     /** DOCUMENT ME! */
     private String[] titles;
-
+    
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -81,22 +82,23 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
         fileFormat = fileInfoBuffer.getFileFormat();
         space = fileInfoBuffer.getResolution(2);
         thick = fileInfoBuffer.getSliceThickness();
-
+        
+        
         if (image.getNDims() == 3) {
             extents = new int[4];
         } else if (image.getNDims() == 4) {
             extents = new int[3];
         } else {
             MipavUtil.displayError("This utility only works with 3 and 4 D files.");
-
+            
             return;
         }
 
-        if (fileFormat != FileUtility.XML) {
-            MipavUtil.displayError("This utility only works with XML files.");
+        //if (fileFormat != FileUtility.XML) {
+        //    MipavUtil.displayError("This utility only works with XML files.");
 
-            return;
-        }
+       //     return;
+       //}
 
         if (space > thick) {
             extents = image.getExtents();
@@ -205,6 +207,10 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
             MipavUtil.displayError("Spacing information is not available for this data set.");
 
             return;
+        } else if (thick == 0.0) {
+        	MipavUtil.displayError("Slice thickness information is not available for this data set.");
+        	
+        	return;
         } else if (space == thick) {
             MipavUtil.displayError("Slice spacing equals slice thickness.  No need for correction.");
 
@@ -290,12 +296,13 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
 
             return;
         }
+        
+        //This utility should work for all file types, not just XML. 
+        //if (fileFormat != FileUtility.XML) {
+        //    MipavUtil.displayError("This utility only works with XML files.");
 
-        if (fileFormat != FileUtility.XML) {
-            MipavUtil.displayError("This utility only works with XML files.");
-
-            return;
-        }
+        //    return;
+        //}
 
         if (space > thick) {
             extents = image.getExtents();
