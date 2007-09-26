@@ -73,6 +73,8 @@ public class AlgorithmSubsample extends AlgorithmBase {
             return;
         }
         
+        processIndep = indep;
+        this.transformVOI = transformVOI;
         if (doPad) {
         	srcImage = padImage(src, padExtents);
         	//new ViewJFrameImage((ModelImage)(srcImage.clone()), null, new Dimension(610, 200));
@@ -83,8 +85,6 @@ public class AlgorithmSubsample extends AlgorithmBase {
         resultImage = result;
         resultExtents = newExtents;
         sigmas = _sigmas;
-        processIndep = indep;
-        this.transformVOI = transformVOI;
         this.transMatrix = transMatrix;
         
         if (processIndep && ((srcImage.getExtents().length > 2) && (srcImage.getExtents()[2] != resultExtents[2]))) {
@@ -1740,9 +1740,11 @@ public class AlgorithmSubsample extends AlgorithmBase {
         T22 = (float) xfrm[2][2];
         T23 = (float) xfrm[2][3];
 
+        
         maskImage = image.generateShortImage(1);
         tmpMask = new ModelImage(ModelImage.SHORT, resultExtents, "VOI Mask");
 
+        
         try {
             maskImage.exportData(0, iXdim * iYdim * iZdim, imgBuffer); // locks and releases lock
         } catch (IOException error) {
@@ -1835,6 +1837,19 @@ public class AlgorithmSubsample extends AlgorithmBase {
     	int[] x = new int[2];
     	int[] y = new int[2];
     	int[] z = new int[2];
+        VOIVector VOIs = null;
+        VOIVector voiVector = null;
+        
+        if (transformVOI) {
+            VOIs = kImage.getVOIs(); 
+            voiVector = new VOIVector();
+
+            int nVOI = VOIs.size();
+
+            for (int i = 0; i < nVOI; i++) {
+                voiVector.add(VOIs.VOIAt(i).clone());
+            }
+        }
     	    	
     	// Generate bounds for pad algorithm
     	
@@ -1857,7 +1872,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
     	}
     	
     	if (extents.length == 3) {
-    		if (extents[2] == padExtents[2]) {
+    		if ((extents[2] == padExtents[2]) || (processIndep)) {
         		z[0] = 0;
         		z[1] = extents[2];
         	} else {
@@ -1870,6 +1885,10 @@ public class AlgorithmSubsample extends AlgorithmBase {
     	
     	algoPad.run();
     	algoPad.finalize();
+        
+        if (transformVOI) {
+            paddedImage.setVOIs(voiVector);
+        }
     	
     	return paddedImage;
                         	
