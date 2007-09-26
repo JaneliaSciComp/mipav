@@ -1828,7 +1828,7 @@ public class ModelImage extends ModelStorageBase {
         int nVOIs;
         int nSlices;
         int nContours, nPoints;
-        Vector[] contours;
+        Vector<VOIBase>[] contours;
         Point3Df[] points;
         Point3Df[] point1 = new Point3Df[1];
 
@@ -2854,7 +2854,7 @@ public class ModelImage extends ModelStorageBase {
         VOI[] newLineVOI = null;
         VOI[] newProtractorVOI = null;
 
-        Vector[] contours;
+        Vector<VOIBase>[] contours;
         Point3Df[] point1 = new Point3Df[1];
         int nPoints;
         int nContours;

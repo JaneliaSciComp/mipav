@@ -2663,7 +2663,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 (mode == ViewJComponentEditImage.QUICK_LUT) || (mode == ViewJComponentEditImage.PROTRACTOR) ||
                 (mode == ViewJComponentEditImage.LIVEWIRE) || (mode == ViewJComponentEditImage.ANNOTATION) ||
                 (mode == ViewJComponentEditImage.POLYLINE_SLICE_VOI) || (mode == ViewJComponentEditImage.PAINT_CAN) ||
-                (mode == ViewJComponentBase.TRANSLATE) || (mode == ViewJComponentBase.ROTATE)) {
+                (mode == ViewJComponentBase.TRANSLATE) || (mode == ViewJComponentBase.ROTATE) ||
+                (mode == ViewJComponentBase.SPLIT_VOI)) {
+        	
             compImage.getGraphics().dispose();
 
             // System.err.println("returning from mouseMoved() with rectangle of VOIHandler");
@@ -5076,12 +5078,19 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("line");
                 }
-
+                ((RubberbandLine)rbLine).setSplit(false);
+                	
                 rubberband = rbLine;
                 rubberband.setActive(true);
                 compImage.setCursor(compImage.crosshairCursor);
                 break;
-
+            case ViewJComponentEditImage.SPLIT_VOI:
+            	System.err.println("mode is split voi");
+            	((RubberbandLine)rbLine).setSplit(true);
+            	rubberband = rbLine;
+                rubberband.setActive(true);
+                compImage.setCursor(compImage.crosshairCursor);
+                break;
             case ViewJComponentEditImage.PROTRACTOR:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("protractor");

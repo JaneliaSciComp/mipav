@@ -2329,7 +2329,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                        (cursorMode == ERASER_PAINT) || (cursorMode == QUICK_LUT) || (cursorMode == PROTRACTOR) ||
                        (cursorMode == LIVEWIRE) || (cursorMode == ANNOTATION) || (cursorMode == POLYLINE_SLICE_VOI) ||
                        (cursorMode == MOVE) || (cursorMode == MOVE_POINT) || (cursorMode == NEW_POINT) ||
-                       (cursorMode == RETRACE) || (cursorMode == DELETE_POINT) || (cursorMode == TRANSLATE)) {
+                       (cursorMode == RETRACE) || (cursorMode == DELETE_POINT) || (cursorMode == TRANSLATE) || 
+                       (cursorMode == SPLIT_VOI)) {
             g.dispose();
 
             return;

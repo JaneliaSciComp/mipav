@@ -22,7 +22,7 @@ import java.util.*;
  *           <p>$Logfile: /mipav/src/gov/nih/mipav/model/structures/VOIBase.java $ $Revision: 56 $ $Date: 2/24/06 3:34p
  *           $</p>
  */
-public abstract class VOIBase extends Vector {
+public abstract class VOIBase extends Vector<Point3Df> {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
