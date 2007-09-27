@@ -35,17 +35,22 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
     public static final int MAX_SRB_LOGIN_FAILURES = 10;
 
     /** Text of the NDAR privacy notice displayed to the user after a successful login to the srb. */
-    public static final String NDAR_PRIVACY_NOTICE = "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n" +
+    public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that pertain to the collection\n" + 
+                                                     "and display of imaging data. Before accessing and using MIPAV, please ensure that you\n" + 
+                                                     "familiarize yourself with our privacy rules, available through the NDAR Rules of Behavior\n" +
+                                                     "document and supporting documentation.\n" +
+                                                     "\n" +
+                                                     "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n" +
                                                      "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research\n" +
                                                      "around autism and autism treatment. This information may be disclosed to researchers for\n" +
-                                                     "research purposes, and to system administrators for evaluation and data normalization.\n" +
+                                                     "research purposes, and to system administrators for evaluation and data normalization.\n" + 
                                                      "\n" +
                                                      "Rules governing submission of this information are based on the data sharing rules defined\n" +
                                                      "in the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing\n" +
-                                                     "requirements, data submission is voluntary.  Data entered into NDAR will be used solely for\n" +
+                                                     "requirements, data submission is voluntary.  Data entered into NDAR will be used solely for\n" +
                                                      "scientific and research purposes and is designed to further the understanding of autism and\n" +
                                                      "autism treatments.  Modification of NDAR information may be addressed by contacting your NDAR\n" +
-                                                     "system administrator at ndarhelp@nih.gov. Significant system update information may be posted\n" +
+                                                     "system administrator at ndarhelp@nih.gov. Significant system update information may be posted\n" + 
                                                      "on the NDAR site as required.";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
