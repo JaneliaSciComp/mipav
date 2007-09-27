@@ -50,16 +50,9 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private int infarctionVOIIndex = -1;
-
-    /** DOCUMENT ME! */
-    private int innerVOIIndex = -1;
-
-    /** DOCUMENT ME! */
-    private int numSections = 0;
-
-    /** DOCUMENT ME! */
     private JCheckBox allSlicesBox;
+    
+    private JCheckBox onlyActiveBox;
     
     private Point3Df startPt;
     private Point3Df endPt;
@@ -137,9 +130,15 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     	}
     }
     
+    /**
+     * Splits the VOI
+     *
+     */
     private void splitVOI() {
     	boolean doAllSlices = allSlicesBox.isSelected();
     	    	
+    	boolean onlyActive = onlyActiveBox.isSelected();
+    	
     	int nVOI = image.getVOIs().size();
     	
     	VOI currentVOI = null;
@@ -189,14 +188,12 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
 			endSlice = startSlice + 1;
 		}
 		
-		System.err.println("Splitting");
-		
 		int currentSide = 0;
 		int currentSideB = 0;
 		
     	for (int voiIndex = nVOI - 1; voiIndex >= 0; voiIndex--) {
     		currentVOI = image.getVOIs().VOIAt(voiIndex);
-    		if (currentVOI.getCurveType() == VOI.CONTOUR) {
+    		if (currentVOI.getCurveType() == VOI.CONTOUR && (!onlyActive || currentVOI.isActive())) {
     			
     			curves = currentVOI.getCurves();
     			
@@ -205,7 +202,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     					size = curves[slice].size();
     					for (int voiBaseIndex = size - 1; voiBaseIndex >= 0; voiBaseIndex--) {
     						currentContour = (VOIContour)curves[slice].elementAt(voiBaseIndex);
-    						if (currentContour.isClosed()) {
+    						if (currentContour.isClosed() && (!onlyActive || currentContour.isActive()) ) {
     						//	System.err.println("found closed contour VOIAt(" + voiIndex + ").curves[" +
     						//			slice + "].elementAt(" + voiBaseIndex + ")");
     							numPoints = currentContour.size();
@@ -325,7 +322,6 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     								currentContour = null;
     								
     								if (image.getVOIs().VOIAt(voiIndex).isEmpty()) {
-    									System.err.println("VOIAt(" + voiIndex + ") now empty: removing");
     									image.getVOIs().remove(voiIndex);
     								}
     								
@@ -345,8 +341,9 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     									secondVOI.importCurve(currentContour, slice);
     								}
     								
+    								curves[slice].remove(voiBaseIndex);
+    								
     								if (image.getVOIs().VOIAt(voiIndex).isEmpty()) {
-    									//System.err.println("VOIAt(" + voiIndex + ") now empty: removing");
     									image.getVOIs().remove(voiIndex);
     								}
     								
@@ -358,6 +355,12 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     			//image.getVOIs().remove(voiIndex);
     		}
     			
+    	}
+    	
+    	for (int i = image.getVOIs().size() - 1; i >= 0; i--) {
+    		if (image.getVOIs().VOIAt(i).isEmpty()) {
+    			image.getVOIs().remove(i);
+    		}
     	}
     	
     	image.getVOIs().addVOI(firstVOI);
@@ -378,25 +381,35 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
         JPanel mainPanel = new JPanel();
 
         allSlicesBox = new JCheckBox("Split all slices: ", true);
-
+        
+        onlyActiveBox = new JCheckBox("Only split active VOI(s)/contour(s): ", false);
+        
         JButton splitButton = new JButton("Split");
         splitButton.addActionListener(this);
         splitButton.setActionCommand("Split");
 
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(splitButton);
+        
         mainPanel.setLayout(new GridBagLayout());
-
+        mainPanel.setBorder(this.buildTitledBorder("Options"));
+        
         GridBagConstraints gbc = new GridBagConstraints();
-
+        gbc.anchor = gbc.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        mainPanel.add(allSlicesBox, gbc);
+        if (image.getNDims() >2 ) {
+        	mainPanel.add(allSlicesBox, gbc);
+        	gbc.gridy++;
+        }
+        
+        mainPanel.add(onlyActiveBox, gbc);
 
-
-        gbc.gridx = 2;
-        mainPanel.add(splitButton, gbc);
+       
 
         getContentPane().add(mainPanel);
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
     }
 

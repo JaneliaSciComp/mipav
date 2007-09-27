@@ -880,8 +880,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             componentImage.setCursorMode(ViewJComponentEditImage.LINE);
         } else if (command.equals("SplitVOI")) {
-        	System.err.println("YO");
-        	
             componentImage.setCursorMode(ViewJComponentEditImage.SPLIT_VOI);
         } else if (command.equals("Polyslice")) {
 
