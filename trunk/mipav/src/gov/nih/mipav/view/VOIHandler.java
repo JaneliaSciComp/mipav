@@ -5085,7 +5085,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 compImage.setCursor(compImage.crosshairCursor);
                 break;
             case ViewJComponentEditImage.SPLIT_VOI:
-            	System.err.println("mode is split voi");
             	((RubberbandLine)rbLine).setSplit(true);
             	rubberband = rbLine;
                 rubberband.setActive(true);

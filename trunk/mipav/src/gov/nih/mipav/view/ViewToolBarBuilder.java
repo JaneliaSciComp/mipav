@@ -1022,7 +1022,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         VOIToolBar.add(buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
 
-        VOIToolBar.add(buildToggleButton("SplitVOI", "Split VOI Contour", "linear", null));
+        VOIToolBar.add(buildToggleButton("SplitVOI", "Split VOI Contour", "split", null));
         
         JButton temp = VOIToolBar.getVOIColorButton();
         temp.addActionListener((ActionListener) UI);
