@@ -209,7 +209,7 @@ public class JDialogPowerPaint extends JDialogBase
     private JLabel labelStructuring;
 
     /** handling of intensity threshold. */
-    private float lowerThreshold = 0.5f;
+    private float lowerThreshold = 0.0f;
 
     /** dialog elements. */
     private JPanel mainPanel;
@@ -287,10 +287,12 @@ public class JDialogPowerPaint extends JDialogBase
     private BitSet se2xy, se2yz, se2xz, se3; // structuring elements
 
     /** handling of intensity threshold. */
-    private JSlider slideLower;
+    //private JSlider slideLower;
+	private JSpinner spinLower;
 
     /** DOCUMENT ME! */
-    private JSlider slideUpper;
+    //private JSlider slideUpper;
+	private JSpinner spinUpper;
 
     /** DOCUMENT ME! */
     private float structureSize = 5.0f;
@@ -308,7 +310,7 @@ public class JDialogPowerPaint extends JDialogBase
     private JTextField textStructuring;
 
     /** handling of intensity threshold. */
-    private float upperThreshold = 1.0f;
+    private float upperThreshold = 255.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -453,11 +455,7 @@ public class JDialogPowerPaint extends JDialogBase
                 save = null;
                 saver = null;
             }
-        } /*else if (command.equals("show advanced")) {
-           *
-           * if (multiPaintDialog == null) {   multiPaintDialog = new JDialogMultiPaint(parentFrame, image); } else {
-           * MipavUtil.centerOnScreen(multiPaintDialog);   multiPaintDialog.setVisible(true); }} */
-        else if (command.equals("Shortkeys")) {
+        } else if (command.equals("Shortkeys")) {
 
             if (buttonShortkeys.isSelected()) {
                 setFocusable(true);
@@ -693,21 +691,24 @@ public class JDialogPowerPaint extends JDialogBase
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mouseEntered(MouseEvent mouseEvent) { }
+    public void mouseEntered(MouseEvent mouseEvent) { 
+	}
 
     /**
      * DOCUMENT ME!
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mouseExited(MouseEvent mouseEvent) { }
+    public void mouseExited(MouseEvent mouseEvent) { 
+	}
 
     /**
      * DOCUMENT ME!
      *
      * @param  mouseEvent  DOCUMENT ME!
      */
-    public void mousePressed(MouseEvent mouseEvent) { }
+    public void mousePressed(MouseEvent mouseEvent) { 
+	}
 
     /**
      * DOCUMENT ME!
@@ -715,7 +716,6 @@ public class JDialogPowerPaint extends JDialogBase
      * @param  mouseEvent  DOCUMENT ME!
      */
     public void mouseReleased(MouseEvent mouseEvent) {
-
         if (image.getParentFrame().getComponentImage().getCursorMode() == ViewJComponentEditImage.PAINT_VOI) {
 
             // if (image.getParentFrame().getComponentImage().getMode()==ViewJComponentEditImage.PAINT_VOI) {
@@ -738,25 +738,8 @@ public class JDialogPowerPaint extends JDialogBase
                         return;
                     }
                     // System.out.print("3-");
-
-                    double min = image.getMin() + (lowerThreshold * (image.getMax() - image.getMin()));
-                    double max = image.getMin() + (upperThreshold * (image.getMax() - image.getMin()));
-
-                    // System.out.print("4-");
-
-                    for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
-
-                        // check the previous paint first: no change there
-                        if (!previous.get(index)) {
-                            double val = image.getDouble(index);
-
-                            if ((val < min) || (val > max)) {
-                                obj.set(index, false);
-                            }
-                        }
-                    }
-                    // System.out.print("5-");
-
+					trimIntensityThreshold(image, obj, previous);
+                    
                     // save it to previous
                     previous = (BitSet) obj.clone();
 
@@ -813,7 +796,7 @@ public class JDialogPowerPaint extends JDialogBase
      * @param  e  DOCUMENT ME!
      */
     public void stateChanged(ChangeEvent e) {
-
+		/*
         if (e.getSource().equals(slideLower)) {
 
             if (!slideLower.getValueIsAdjusting()) {
@@ -822,9 +805,16 @@ public class JDialogPowerPaint extends JDialogBase
         } else if (e.getSource().equals(slideUpper)) {
 
             if (!slideUpper.getValueIsAdjusting()) {
-                lowerThreshold = (float) (slideUpper.getValue() / 1000.0f);
+                upperThreshold = (float) (slideUpper.getValue() / 1000.0f);
             }
         }
+		*/
+        if (e.getSource().equals(spinLower)) {
+			lowerThreshold = (float)((SpinnerNumberModel)spinLower.getModel()).getNumber().floatValue();
+        } else if (e.getSource().equals(spinUpper)) {
+			upperThreshold = (float)((SpinnerNumberModel)spinUpper.getModel()).getNumber().floatValue();
+        }
+		//System.out.print("kr-");
     }
 
     /**
@@ -1718,7 +1708,7 @@ public class JDialogPowerPaint extends JDialogBase
      * dilation.
      */
     private void dilateImage() {
-        System.out.println("dilate");
+        //System.out.println("dilate");
 
         if (image == null) {
             System.gc();
@@ -1875,6 +1865,8 @@ public class JDialogPowerPaint extends JDialogBase
             }
         }
 
+		trimIntensityThreshold(image, obj, previous);
+                    
         refreshImagePaint(image, obj);
     }
 
@@ -2619,7 +2611,7 @@ public class JDialogPowerPaint extends JDialogBase
             regionGrowDim = 2;
         }
 
-        float imgValue = image.get(xS, yS, zS).floatValue();
+        //float imgValue = image.get(xS, yS, zS).floatValue();
 
         // find main object
         if ((regionGrowDim == 2) && (sliceDir == XY)) {
@@ -2631,7 +2623,7 @@ public class JDialogPowerPaint extends JDialogBase
             for (int x = 0; x < nx; x++) {
 
                 for (int y = 0; y < ny; y++) {
-                    img[x][y] = (image.get(x, y, zS).floatValue() == imgValue);
+                    img[x][y] = isInsideIntensityThreshold(x,y,zS,image,xS,yS,zS);
                 }
             }
 
@@ -2647,9 +2639,12 @@ public class JDialogPowerPaint extends JDialogBase
 
                 for (int y = 0; y < ny; y++) {
 
-                    if (label[x][y] == label[xS][yS]) {
-                        obj.set(x + (nx * y) + (nx * ny * zS), true);
-                    }
+                    if (label[x][y]>0) {
+						// only if inside an object
+						if (label[x][y] == label[xS][yS]) {
+							obj.set(x + (nx * y) + (nx * ny * zS), true);
+						}
+					}
                 }
             }
         } else if ((backgroundDim == 2) && (sliceDir == XZ)) {
@@ -2661,7 +2656,7 @@ public class JDialogPowerPaint extends JDialogBase
             for (int x = 0; x < nx; x++) {
 
                 for (int z = 0; z < nz; z++) {
-                    img[x][z] = (image.get(x, yS, z).floatValue() == imgValue);
+                    img[x][z] = isInsideIntensityThreshold(x,yS,z,image,xS,yS,zS);
                 }
             }
 
@@ -2677,9 +2672,12 @@ public class JDialogPowerPaint extends JDialogBase
 
                 for (int z = 0; z < nz; z++) {
 
-                    if (label[x][z] == label[xS][zS]) {
-                        obj.set(x + (nx * yS) + (nx * ny * z), true);
-                    }
+                    if (label[x][z]>0) {
+						// only if inside an object
+						if (label[x][z] == label[xS][zS]) {
+							obj.set(x + (nx * yS) + (nx * ny * z), true);
+						}
+					}
                 }
             }
         } else if ((backgroundDim == 2) && (sliceDir == ZY)) {
@@ -2691,8 +2689,8 @@ public class JDialogPowerPaint extends JDialogBase
             for (int z = 0; z < nz; z++) {
 
                 for (int y = 0; y < ny; y++) {
-                    img[z][y] = (image.get(xS, y, z).floatValue() == imgValue);
-                }
+                    img[z][y] = isInsideIntensityThreshold(xS,y,z,image,xS,yS,zS);
+				}
             }
 
             // connected components
@@ -2707,9 +2705,12 @@ public class JDialogPowerPaint extends JDialogBase
 
                 for (int y = 0; y < ny; y++) {
 
-                    if (label[z][y] == label[zS][yS]) {
-                        obj.set(xS + (nx * y) + (nx * ny * z), true);
-                    }
+					if (label[z][y]>0) {
+						// only if inside an object
+					   if (label[z][y] == label[zS][yS]) {
+							obj.set(xS + (nx * y) + (nx * ny * z), true);
+						}
+					}
                 }
             }
         } else {
@@ -2723,8 +2724,8 @@ public class JDialogPowerPaint extends JDialogBase
                 for (int y = 0; y < ny; y++) {
 
                     for (int z = 0; z < nz; z++) {
-                        img[x][y][z] = (image.get(x, y, z).floatValue() == imgValue);
-                    }
+                        img[x][y][z] = isInsideIntensityThreshold(x,y,z,image,xS,yS,zS);
+					}
                 }
             }
 
@@ -2743,15 +2744,18 @@ public class JDialogPowerPaint extends JDialogBase
                 for (int y = 0; y < ny; y++) {
 
                     for (int z = 0; z < nz; z++) {
-
-                        if (label[x][y][z] == label[xS][yS][zS]) {
-                            obj.set(x + (nx * y) + (nx * ny * z), true);
+						if (label[x][y][z]>0) {
+							// only if inside an object
+							if (label[x][y][z] == label[xS][yS][zS]) {
+								obj.set(x + (nx * y) + (nx * ny * z), true);
+							}
                         }
                     }
                 }
             }
         }
-
+		//trimIntensityThreshold(image, obj, previous);
+                    
         refreshImagePaint(image, obj);
     }
 
@@ -3047,6 +3051,7 @@ public class JDialogPowerPaint extends JDialogBase
         checkThreshold.setActionCommand("Threshold");
         checkThreshold.setToolTipText("Enable the use of intensity thresholds when painting");
 
+		/* replaced by a spinner
         slideLower = new JSlider(0, 1000, 0);
         slideLower.setMajorTickSpacing(200);
         slideLower.setMinorTickSpacing(100);
@@ -3062,7 +3067,18 @@ public class JDialogPowerPaint extends JDialogBase
         slideUpper.setPaintLabels(false);
         slideUpper.addChangeListener(this);
         slideUpper.setToolTipText("Maximum relative intensity for painting");
+		*/
+		
+		lowerThreshold = (float)image.getMin();
+		upperThreshold = (float)image.getMax();
+		float step = (upperThreshold-lowerThreshold)/100.0f;
+		spinLower = new JSpinner(new SpinnerNumberModel(lowerThreshold,lowerThreshold,upperThreshold,step));
+		spinLower.addChangeListener(this);
+		spinLower.setToolTipText("Minimum intensity value for painting");
 
+		spinUpper = new JSpinner(new SpinnerNumberModel(upperThreshold,lowerThreshold,upperThreshold,step));
+		spinUpper.addChangeListener(this);
+		spinUpper.setToolTipText("Maximum intensity value for painting");
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
@@ -3080,12 +3096,12 @@ public class JDialogPowerPaint extends JDialogBase
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelThreshold.add(checkThreshold, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panelThreshold.add(slideLower, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panelThreshold.add(slideUpper, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        panelThreshold.add(spinLower, gbc);
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        panelThreshold.add(spinUpper, gbc);
 
         objectPanel = new JPanel(new GridBagLayout());
         objectPanel.setBorder(buildTitledBorder("Object Processing"));
@@ -3314,6 +3330,9 @@ public class JDialogPowerPaint extends JDialogBase
         setVisible(true);
         setResizable(false);
         System.gc();
+		
+		image.getParentFrame().getComponentImage().addMouseListener(this);
+
     } // end init()
 
     /**
@@ -3471,6 +3490,76 @@ public class JDialogPowerPaint extends JDialogBase
             img.getTriImageFrame().updateImages(true);
         }
     }
+
+    /**
+     * check if point (x,y,z) has same intensity as (xS,yS,zS)
+     *
+     */
+    private boolean isInsideIntensityThreshold(int x, int y, int z, ModelImage img, int xS, int yS, int zS) {
+		int index = x+nx*y+nx*ny*z;
+		double val;
+		if (img.isColorImage()) {
+			// color: use intensity ?
+			val = Math.sqrt( img.getDouble(4*index+1)*img.getDouble(4*index+1)
+							+img.getDouble(4*index+2)*img.getDouble(4*index+2)
+							+img.getDouble(4*index+3)*img.getDouble(4*index+3) );
+		} else {
+			val = img.getDouble(index);
+		}	
+		if (checkThreshold.isSelected()) {
+			return ( (val>=lowerThreshold) && (val<=upperThreshold));	
+		} else {
+			int indexS = xS+nx*yS+nx*ny*zS;
+			double valS;
+			
+			if (img.isColorImage()) {
+				// color: use intensity
+				valS = Math.sqrt( img.getDouble(4*indexS+1)*img.getDouble(4*indexS+1)
+								 +img.getDouble(4*indexS+2)*img.getDouble(4*indexS+2)
+								 +img.getDouble(4*indexS+3)*img.getDouble(4*indexS+3) );
+			} else {
+				valS = img.getDouble(indexS);
+			}	
+			
+			return (val==valS);
+		}
+	}
+
+    /**
+     * trim the mask using the intensity
+     *
+     * @param  img  DOCUMENT ME!
+     * @param  obj  DOCUMENT ME!
+     * @param  prev  DOCUMENT ME!
+     */
+    private void trimIntensityThreshold(ModelImage img, BitSet obj, BitSet prev) {
+		if (checkThreshold.isSelected()) {
+
+			double min = lowerThreshold;
+			double max = upperThreshold;
+					
+            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
+				// check the previous paint first: no change there
+                if (!prev.get(index)) {
+					double val = 0;
+					if (img.isColorImage()) {
+						// color: use intensity
+						val = Math.sqrt( img.getDouble(4*index+1)*img.getDouble(4*index+1)
+										+img.getDouble(4*index+2)*img.getDouble(4*index+2)
+										+img.getDouble(4*index+3)*img.getDouble(4*index+3) );
+					} else {
+						// grayscale images
+						val = img.getDouble(index);
+					}
+					
+                    if ((val < min) || (val > max)) {
+						obj.set(index, false);
+                    }
+                }
+			}
+		}
+		return;
+	}
 
     /**
      * object removal algorithm.
