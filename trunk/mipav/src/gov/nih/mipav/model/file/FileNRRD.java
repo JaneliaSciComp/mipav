@@ -363,7 +363,7 @@ public class FileNRRD extends FileBase {
     private double[] thicknesses = null;
 
     /** Version of the NRRD file format being used. */
-    private int versionNumber;
+    private float versionNumber;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -463,7 +463,7 @@ public class FileNRRD extends FileBase {
         }
 
         lineString = lineString.substring(4);
-        versionNumber = Integer.valueOf(lineString).intValue();
+        versionNumber = Float.valueOf(lineString).floatValue();
         fileInfo.setVersionNumber(versionNumber);
         Preferences.debug("versionNumber = " + versionNumber + "\n");
 
@@ -837,7 +837,7 @@ public class FileNRRD extends FileBase {
 
                                 if (i == 0) {
 
-                                    if (fieldDescriptorString.substring(0, startBlank[0]).equalsIgnoreCase("NAN")) {
+                                    if (fieldDescriptorString.substring(0, 3).equalsIgnoreCase("NAN")) {
                                         spacings[i] = Double.NaN;
                                     } else {
                                         spacings[i] = Double.valueOf(fieldDescriptorString.substring(0, startBlank[0])).doubleValue();
