@@ -91,7 +91,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     private boolean doTalairach = false;
 
     /** DOCUMENT ME! */
-    private boolean doVOI, doClip, doPad, addPix, doUpdateOrigin;
+    private boolean doVOI, doClip, doPad, setPix, doUpdateOrigin;
 
     /**
      * Stores the matrix read in from a file it then can be converted to the corrected axis orientation (i.e. world
@@ -193,7 +193,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     private TransMatrix xfrm;
 
     /** DOCUMENT ME! */
-    private JCheckBox xyAspectRatio, xyzAspectRatio, fieldOfView, addPixels;
+    private JCheckBox xyAspectRatio, xyzAspectRatio, fieldOfView, setPixels;
 
     /** checkbox telling the algorithm to use the scanner coordinate center rather than the image center */
     private JCheckBox useSACenterBox;
@@ -625,7 +625,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 current.setEnabled(false);
                 magSlider.setEnabled(false);
                 comboBoxImage.setEnabled(false);
-                addPixels.setEnabled(false);
+                setPixels.setEnabled(false);
 
                 cropRadio.setEnabled(false);
                 padRadio.setEnabled(false);
@@ -765,7 +765,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 fieldOfView.setEnabled(true);
                 enableDims(true);
                 enableResols(true);
-                addPixels.setEnabled(false);
+                setPixels.setEnabled(false);
                 magSlider.setEnabled(false);
                 maximum.setEnabled(false);
                 minimum.setEnabled(false);
@@ -805,16 +805,16 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 current.setEnabled(false);
                 magSlider.setEnabled(false);
                 comboBoxImage.setEnabled(true);
-                addPixels.setEnabled(true);
+                setPixels.setEnabled(true);
             } else {
                 comboBoxImage.setEnabled(false);
             }
-        } else if (source == addPixels) {
+        } else if (source == setPixels) {
 
-            if (addPixels.isSelected()) {
-                addPix = true;
+            if (setPixels.isSelected()) {
+                setPix = true;
             } else {
-                addPix = false;
+                setPix = false;
             }
         } else if (source == resampleSlider) {
 
@@ -823,7 +823,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 maximum.setEnabled(true);
                 minimum.setEnabled(true);
                 current.setEnabled(true);
-                addPixels.setEnabled(false);
+                setPixels.setEnabled(false);
             } else {
                 magSlider.setEnabled(false);
                 maximum.setEnabled(false);
@@ -927,12 +927,14 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * Accessor that sets value for the addPixels checkbox.
+     * Accessor that sets value for the setPixels checkbox.
      *
-     * @param  flag  <code>true</code> indicates that pixels should be added.
+     * @param  flag  <code>true</code> indicates that the number of pixels should be set
+     *               so as to preserve the field of view.  This could either increase or
+     *               decrease the number of pixels.
      */
-    public void setAddPix(boolean flag) {
-        addPix = flag;
+    public void setsetPix(boolean flag) {
+        setPix = flag;
     }
 
     /**
@@ -2071,11 +2073,11 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         fieldOfView.addItemListener(this);
         fieldOfView.setEnabled(false);
 
-        addPixels = new JCheckBox("Add pixels to preserve FOV.", false);
-        addPixels.setForeground(Color.black);
-        addPixels.setFont(serif12);
-        addPixels.addItemListener(this);
-        addPixels.setEnabled(true);
+        setPixels = new JCheckBox("Set pixels to preserve FOV.", false);
+        setPixels.setForeground(Color.black);
+        setPixels.setFont(serif12);
+        setPixels.addItemListener(this);
+        setPixels.setEnabled(true);
 
         labelResX = new JLabel("ResX");
         labelResX.setForeground(Color.black);
@@ -2225,7 +2227,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.CENTER;
-        resamplePanel.add(addPixels, gbc);
+        resamplePanel.add(setPixels, gbc);
 
         gbc.gridy++;
         resamplePanel.add(Box.createVerticalStrut(5), gbc);
@@ -3212,7 +3214,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             System.err.println("setting units: " + units[0]);
             
             
-            if (addPix) {
+            if (setPix) {
                 fovX = iXres * iXdim;
                 fovY = iYres * iYdim;
                 oXdim = (int) (fovX / oXres);
@@ -3225,7 +3227,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             if ((image.getNDims() >= 3) && (!do25D)) {
                 oZres = selectedImg.getFileInfo(0).getResolutions()[2];
                 units[2] = selectedImg.getUnitsOfMeasure(2);
-                if (addPix) {
+                if (setPix) {
                     fovZ = iZres * iZdim;
                     oZdim = (int) (fovZ / oZres);
                 } else {
