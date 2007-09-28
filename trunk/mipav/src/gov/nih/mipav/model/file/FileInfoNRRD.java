@@ -29,7 +29,7 @@ public class FileInfoNRRD extends FileInfoBase {
     private TransMatrix matrix = new TransMatrix(4);
     
     /** Version of the NRRD file format being used. */
-    private int versionNumber = -1;
+    private float versionNumber = -1.0f;
     
     /** Data compression - raw, gzip */
     private String encodingString = null;
@@ -295,7 +295,7 @@ public class FileInfoNRRD extends FileInfoBase {
      * Accessor setting versionNumber, version of NRRD file format being used.
      * @param versionNumber
      */
-    public void setVersionNumber(int versionNumber) {
+    public void setVersionNumber(float versionNumber) {
         this.versionNumber = versionNumber;
     }
     
