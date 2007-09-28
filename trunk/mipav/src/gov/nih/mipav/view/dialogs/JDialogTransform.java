@@ -713,10 +713,13 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 invertCheckbox.setEnabled(true);
                 matrixFile = matrixFileMenu();
 
-                if (matrixFile == null) {
+                if ((matrixFile == null) && (storedMatrixBox.getItemCount() > 0)){
                     storedMatrix.setSelected(true);
+                    storedMatrixBox.setEnabled(true);
                 }
-                storedMatrixBox.setEnabled(false);
+                else {
+                    noTransform.setSelected(true);
+                }
             }
         } else if (source == storedMatrix) {
             matrixFName.setText(" ");
@@ -1549,6 +1552,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     	if (storedMatrixBox.getItemCount() > 1) {
     		storedMatrixBox.insertItemAt("Composite", 0);
     	}
+        if (storedMatrixBox.getItemCount() == 0) {
+            storedMatrix.setEnabled(false);
+        }
     	
         imageMatrixPanel.add(storedMatrixBox);
         matrixPanel.add(imageMatrixPanel);
