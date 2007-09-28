@@ -717,7 +717,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                     storedMatrix.setSelected(true);
                     storedMatrixBox.setEnabled(true);
                 }
-                else {
+                else if (matrixFile == null){
                     noTransform.setSelected(true);
                 }
             }
