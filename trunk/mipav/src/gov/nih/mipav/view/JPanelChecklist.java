@@ -530,13 +530,13 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
         // make check & uncheck buttons for the panel--place inside the above border
         checkButton = new JButton("Select all");
         checkButton.setFont(MipavUtil.font12B);
-        checkButton.setPreferredSize(new Dimension(90, 30));
+        checkButton.setPreferredSize(new Dimension(85, 30));
         panel.add(checkButton, BorderLayout.WEST);
         checkButton.addActionListener(this);
 
         unCheckButton = new JButton("Clear");
         unCheckButton.setFont(MipavUtil.font12B);
-        unCheckButton.setPreferredSize(new Dimension(90, 30));
+        unCheckButton.setPreferredSize(new Dimension(85, 30));
         unCheckButton.addActionListener(this);
         panel.add(unCheckButton, BorderLayout.EAST);
 

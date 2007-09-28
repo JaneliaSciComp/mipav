@@ -969,7 +969,7 @@ public class JDialogVOIStats extends JDialogBase
             seedValueTF.setText(String.valueOf(voi.getWatershedID()));
 
             VOIName.setText(voi.getName());
-            setTitle("VOI Statistics - " + voi.getUID());
+            setTitle("VOI Properties/Statistics - " + voi.getUID());
 
             VOIThicknessField.setText(new Integer(voi.getThickness()).toString());
             
@@ -1196,7 +1196,7 @@ public class JDialogVOIStats extends JDialogBase
 
         voiTreePane = new JScrollPane(voiTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                                       JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-
+        voiTreePane.setPreferredSize(new Dimension(100,300));
     }
 
     /**
@@ -1407,9 +1407,17 @@ public class JDialogVOIStats extends JDialogBase
         checkboxSaveStats.setFont(serif12);
         //checkboxSaveStats.addActionListener(this);
 
-        JPanel checkPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        checkPanel.add(checkboxExclude);
-        checkPanel.add(checkboxSaveStats);
+        JPanel checkPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.fill = gbc2.BOTH;
+        gbc2.weightx = 1;
+        gbc2.weighty = 1;
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        checkPanel.add(checkboxExclude, gbc2);
+        gbc2.gridy++;
+        checkPanel.add(checkboxSaveStats, gbc2);
 
         JPanel rangePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
@@ -1471,7 +1479,7 @@ public class JDialogVOIStats extends JDialogBase
         mainTreePanel.add(voiTreePane, gb);
 
         JPanel treeOptionPanel = new JPanel(new BorderLayout());
-        treeOptionPanel.setBorder(buildTitledBorder("Tree Options"));
+        treeOptionPanel.setBorder(buildTitledBorder("Tree options"));
         followVOISelectionBox = new JCheckBox("Frame follows VOI selection", true);
         followVOISelectionBox.setFont(MipavUtil.font12);
         followVOISelectionBox.addActionListener(this);
