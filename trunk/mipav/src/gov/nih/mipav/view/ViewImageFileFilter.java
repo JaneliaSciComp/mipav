@@ -39,7 +39,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** Matrix Files (*.mtx; *.mat). */
     public static final int MATRIX = 7;
 
-    /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head; *.nii, *.rec, *.frec). */
+    /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head; *.nii, *.rec, *.frec, *.nrrd). */
     public static final int TECH = 8;
 
     /** Microscopy files (*.avi; *.ics; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml). */
@@ -98,7 +98,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Graphs (*.plt)", // PLOT
         "Look-Up-Table Files (*.lut)", // LUT
         "Matrix Files (*.mtx; *.mat)", // MATRIX
-        "Medical (*.dcm; *.xml, *ima; *.img; *.mnc; *.sig; *.head; *.nii; *.rec; *.frec)", // TECH
+        "Medical (*.dcm; *.xml, *ima; *.img; *.mnc; *.sig; *.head; *.nii; *.rec; *.frec; *.nrrd)", // TECH
         "Microscopy (*.avi; *.ics; *.lsm; *.pic; *.stk; *.tif; *.tiff; *.xml)", // MICROSCOPY
         "Misc.(*.avi; *.bmp; *.pcx; *.png; *.tga; *.xbm; *.xpm)", // MISC
         "Optical (*.avi; *.bmp; *.img; *.jpg; *.pict; *.psd; *.tif; *.tiff; *.xml)", // OPTICAL
@@ -348,7 +348,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
                        ((extension.equals("img")) || (extension.equals("ima")) || (extension.equals("dcm")) ||
                             (extension.equals("mnc")) || (extension.equals("sig")) || (extension.equals("xml")) ||
                             (extension.equals("head")) || (extension.equals("nii")) || 
-                            (extension.equals("rec")) || (extension.equals("frec")) )) {
+                            (extension.equals("rec")) || (extension.equals("frec")) || (extension.equals("nrrd")))) {
             return true;
         } else if ((filterType == VOI) && ((extension.equals("voi")) || (extension.equals("oly")))) {
             return true;
