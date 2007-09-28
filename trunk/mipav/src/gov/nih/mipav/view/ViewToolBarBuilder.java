@@ -1020,7 +1020,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
             cubeVOIButton.setEnabled(false);
         }
 
-        VOIToolBar.add(buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
+        
 
         VOIToolBar.add(buildToggleButton("SplitVOI", "Split VOI Contour", "split", null));
         
@@ -1035,6 +1035,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         temp.setInputMap(0, new InputMap());
         temp.setBorder(BorderFactory.createEtchedBorder(Color.white, Color.black));
         VOIToolBar.add(makeSeparator());
+        VOIToolBar.add(buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
         VOIToolBar.add(temp);
 
         VOIToolBar.add(makeSeparator());
