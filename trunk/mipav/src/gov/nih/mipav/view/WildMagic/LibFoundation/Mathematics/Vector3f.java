@@ -214,6 +214,18 @@ public class Vector3f
         m_afTuple[2] = rkV.m_afTuple[2];
     }
 
+    /** Return true if the input Vector3f is equal to this.
+     * @param rkV, input vector to compare to this
+     * @return true if the input Vector3f is equal to this, false otherwise.
+     */
+    public boolean isEqual (Vector3f rkV)
+    {
+        return ( (Math.abs(m_afTuple[0] - rkV.m_afTuple[0]) < Mathf.ZERO_TOLERANCE) &&
+                 (Math.abs(m_afTuple[1] - rkV.m_afTuple[1]) < Mathf.ZERO_TOLERANCE) &&
+                 (Math.abs(m_afTuple[2] - rkV.m_afTuple[2]) < Mathf.ZERO_TOLERANCE) );
+    }
+
+
     /** Add the input vector to this, this vector is changed.
      * @param rkV, input vector to add to this
      */

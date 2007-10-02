@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.view.WildMagic.ApplicationDemos.*;
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
@@ -2801,6 +2802,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ToggleImageIntensities")) {
             controls.toggleSlider();
         }
+        
     }
 
     /**

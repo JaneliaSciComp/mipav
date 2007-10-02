@@ -548,6 +548,23 @@ public class ViewMenuBar {
     }
 
     /**
+     * Create the Diffusion Tensor File submenu.
+     *
+     * @return  The new submenu
+     *
+     * @see     #makeFileMenu(boolean)
+     */
+    protected JMenu makeDiffusionTensorMenu() {
+        return menuBuilder.makeMenu("Diffusion Tensor Imaging", true,
+                                    new JComponent[] {
+                                        //menuBuilder.buildMenuItem("Open Diffusion Weighted Images", "loadDWI", 0, "open.gif", true),
+                                        menuBuilder.buildMenuItem("Open Diffusion Tensor Image", "loadDTI", 0, "open.gif", true),
+                                        menuBuilder.buildMenuItem("Open EigenVector and Functional Analysis Images", "loadEG_FA", 0, "open.gif", true)
+                                    });
+    }
+
+
+    /**
      * Construct the file menu.
      *
      * @param   isAnImageOpen  indicates whether an image has been opened in MIPAV yet (false if calling from
@@ -563,6 +580,8 @@ public class ViewMenuBar {
         JMenu srbMenu = makeSRBMenu(isAnImageOpen);
 
         JMenu dicomMenu = makeDicomMenu();
+
+        JMenu dtiMenu = makeDiffusionTensorMenu();
 
         JMenuItem closeImageBItem = menuBuilder.buildMenuItem("Close image(B)", "CloseImageB", 0, null, true);
         menuBuilder.setMenuItemEnabled("Close image(B)", false);
@@ -595,6 +614,7 @@ public class ViewMenuBar {
                                                              }), separator, loadMenu, extractImageBItem,
                                         closeImageBItem, separator, saveImageItem, saveImageAsItem, captureMenu,
                                         separator, dicomMenu, separator, srbMenu, separator,
+                                        dtiMenu, separator, 
                                         menuBuilder.buildQuickList(), separator,
                                         menuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, null,
                                                                   true),

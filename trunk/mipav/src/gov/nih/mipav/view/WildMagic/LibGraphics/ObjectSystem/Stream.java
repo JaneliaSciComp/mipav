@@ -347,7 +347,7 @@ public class Stream
     public boolean Load (final String acFilename)
     {
         // load the stream from disk to memory
-        ByteArrayInputStream acBuffer = LoadFile(acFilename);
+        ByteArrayInputStream acBuffer = Stream.LoadFile(acFilename);
         if ( acBuffer == null )
         {
             return false;
@@ -392,7 +392,7 @@ public class Stream
      * @param acFilename the name of the scene-graph file
      * @return a ByteArrayInputStream containing the data.
      */
-    private ByteArrayInputStream LoadFile (final String acFilename)
+    public static ByteArrayInputStream LoadFile (final String acFilename)
     {
         File kFile = new File(acFilename);
         if ( !kFile.exists() || !kFile.canRead() )

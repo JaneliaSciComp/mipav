@@ -187,6 +187,30 @@ public class Vector4f
             m_afTuple[3]*rkV.m_afTuple[3];
     }
 
+    /**
+     */
+    public Vector4f neg ()
+    {
+        return
+            new Vector4f( -m_afTuple[0],
+            -m_afTuple[1],
+            -m_afTuple[2],
+            -m_afTuple[3]);
+    }
+
+    /** Return true if the input Vector4f is equal to this.
+     * @param rkV, input vector to compare to this
+     * @return true if the input Vector4f is equal to this, false otherwise.
+     */
+    public boolean isEqual (Vector4f rkV)
+    {
+        return ( (Math.abs(m_afTuple[0] - rkV.m_afTuple[0]) < Mathf.ZERO_TOLERANCE) &&
+                 (Math.abs(m_afTuple[1] - rkV.m_afTuple[1]) < Mathf.ZERO_TOLERANCE) &&
+                 (Math.abs(m_afTuple[2] - rkV.m_afTuple[2]) < Mathf.ZERO_TOLERANCE) &&
+                 (Math.abs(m_afTuple[3] - rkV.m_afTuple[3]) < Mathf.ZERO_TOLERANCE) );
+    }
+
+    
     /** Normalize this vector, return original length:
      * @return original length:
      */

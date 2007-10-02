@@ -31,6 +31,21 @@ public final class Mathf
         return (float)(1.0/Math.sqrt((double)fValue));
     }
 
+    // Generate a random number in [0,1).  The random number generator may
+    // be seeded by a first call to UnitRandom with a positive seed.
+    public static float UnitRandom ( /*unsigned int uiSeed*/ )
+    {
+//         if (uiSeed > 0)
+//         {
+//             srand(uiSeed);
+//         }
+
+        Random kRand = new Random();
+        double dRatio = ((double)kRand.nextDouble());
+        return (float)dRatio;
+    }
+
+
     /** Generate a random number in [-1,1).  The random number generator may
      * be seeded by a first call to SymmetricRandom with a positive seed.
      * @return a random number in [-1,1)
