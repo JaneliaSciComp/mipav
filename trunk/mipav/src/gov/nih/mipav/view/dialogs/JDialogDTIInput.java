@@ -27,8 +27,6 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.view.WildMagic.ApplicationDemos.Polylines;
-import gov.nih.mipav.view.WildMagic.ApplicationDemos.PolylinesThread;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
@@ -104,8 +102,7 @@ public class JDialogDTIInput extends JDialogBase
     private ModelImage m_kDTIImage = null;
     private ModelImage m_kEigenImage = null;
     private int m_iType;
-        
-    private Polylines m_kPolylineDisplay = null;
+
     private GPUVolumeRender m_kVolumeDisplay = null;
 
     private boolean m_bFirstWrite = true;
