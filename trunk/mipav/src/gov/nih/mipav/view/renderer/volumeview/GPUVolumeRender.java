@@ -294,6 +294,28 @@ public class GPUVolumeRender extends JavaApplication3D
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 // Undo culling:
                 m_spkCull.CullFace = CullState.CullMode.CT_BACK;
+
+                if ( m_bDisplayTract && (m_kTractNode != null) )
+                {
+                    for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
+                    {
+                        Polyline kTract = (Polyline)m_kTractNode.GetChild(i);
+                        kTract.Local.SetRotate(m_spkScene.Local.GetRotate());
+                        kTract.DetachAllEffects();
+                        kTract.AttachEffect( m_spkVertexColor3Shader );
+                        kTract.UpdateGS();
+                        kTract.UpdateRS();
+                        //m_pkRenderer.LoadResources(kTract);
+                        m_pkRenderer.Draw(kTract);
+                    }
+                    m_spkAlpha.BlendEnabled = true;
+                }
+                else
+                {
+                    m_spkAlpha.BlendEnabled = false;
+                }
+
+
             }
             else
             {
@@ -312,8 +334,25 @@ public class GPUVolumeRender extends JavaApplication3D
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 // Undo culling:
                 m_spkCull.CullFace = CullState.CullMode.CT_BACK;
+
+                if ( m_bDisplayTract && (m_kTractNode != null) )
+                {
+                    for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
+                    {
+                        Polyline kTract = (Polyline)m_kTractNode.GetChild(i);
+                        kTract.Local.SetRotate(m_spkScene.Local.GetRotate());
+                        kTract.UpdateGS();
+                        kTract.DetachAllEffects();
+                        kTract.AttachEffect( m_spkVertexColor3Shader );
+                        kTract.UpdateRS();
+                        //m_pkRenderer.LoadResources(kTract);
+                        m_pkRenderer.Draw(kTract);
+                    }
+                }
+
                 // Disable the PBuffer
                 m_pkPBuffer.Disable();
+
 
                 // Second rendering pass:
                 // Draw the proxy grometry with the volume ray-tracing shader:
@@ -322,6 +361,27 @@ public class GPUVolumeRender extends JavaApplication3D
                 m_kCuller.ComputeVisibleSet(m_spkScene);
                 m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
                 m_pkRenderer.ClearBuffers();
+
+                if ( m_bDisplayTract && (m_kTractNode != null ) )
+                {
+                    for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
+                    {
+                        Polyline kTract = (Polyline)m_kTractNode.GetChild(i);
+                        kTract.Local.SetRotate(m_spkScene.Local.GetRotate());
+                        kTract.DetachAllEffects();
+                        kTract.AttachEffect( m_spkPolylineShader );
+                        kTract.UpdateRS();
+                        kTract.UpdateGS();
+                        //m_pkRenderer.LoadResources(kTract);
+                        m_pkRenderer.Draw(kTract);
+                    }
+                    m_spkAlpha.BlendEnabled = true;
+                }
+                else
+                {
+                    m_spkAlpha.BlendEnabled = false;
+                }
+
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
 
                 if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
@@ -495,6 +555,12 @@ public class GPUVolumeRender extends JavaApplication3D
         m_spkScene.AttachGlobalState(m_spkWireframe);
         m_spkCull = new CullState();
         m_spkScene.AttachGlobalState(m_spkCull);
+        m_spkAlpha = new AlphaState();
+        m_spkAlpha.BlendEnabled = false;
+        m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
+        m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+
+        m_spkScene.AttachGlobalState(m_spkAlpha);
 
         // Create a screen polygon to use as the RGBA render target.
         Attributes kAttr = new Attributes();
@@ -814,6 +880,33 @@ public class GPUVolumeRender extends JavaApplication3D
              return;
         case 'b':
             m_bDisplaySecond = !m_bDisplaySecond;
+            return;
+        case 'v':
+            m_bDisplayTract = !m_bDisplayTract;
+            return;
+        case 'c':
+            System.err.println(m_iActive);
+            if (m_iActive == 0)
+            {
+                m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
+                m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+                m_iActive = 1;
+            }
+            else if (m_iActive == 1)
+            {
+                // soft additive
+                m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
+                m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+                m_iActive = 2;
+            }
+            else
+            {
+                // multiplicative
+                m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_DST_COLOR;
+                m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ZERO;
+                m_iActive = 0;
+            }
+            return;
         }
         return;
     }
@@ -1880,10 +1973,47 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    public void addPolyline( Polyline kLine )
+    {
+        if ( m_kTractNode == null )
+        {
+            m_kTractNode = new Node();
+            m_spkPolylineShader = new VertexColor3Effect( "ConstantColor" );
+            m_bDisplayTract = true;
+        }
+        kLine.Local.SetScale( new Vector3f( m_fX, m_fY, m_fZ ) );
+        m_kTractNode.AttachChild(kLine);
+        m_kTractNode.UpdateGS();
+        m_kTractNode.UpdateRS();
+    }
+
+    public void removeAllPolylines(  )
+    {
+        if ( m_kTractNode == null )
+        {
+            return;
+        }
+        for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
+        {
+            Polyline kTract = (Polyline)m_kTractNode.DetachChildAt(i);
+            if ( kTract != null )
+            {
+                kTract.finalize();
+            }
+        }
+
+        m_kTractNode.finalize();
+        m_kTractNode = null;
+        m_bDisplayTract = false;
+    }
+
+
     /** Scene-graph root node: */
     private Node m_spkScene;
     /** Turns wireframe on/off: */
     private WireframeState m_spkWireframe;
+
+    private AlphaState m_spkAlpha;
     /** Culling: turns backface/frontface culling on/off: */
     private CullState m_spkCull;
     /** Culling out-of-view objects: */
@@ -1942,6 +2072,9 @@ public class GPUVolumeRender extends JavaApplication3D
     /** Vertex-color shader effect used for the polylines and the first-pass
      * rendering of the proxy-geometry:*/
     private ShaderEffect m_spkVertexColor3Shader;
+    
+    /** Vertex-color shader effect used for the tract polylines: */
+    private ShaderEffect m_spkPolylineShader;
 
     /** Animator object, displays scene in rendering loop (similar to GLUTMainLoop() */
     private Animator m_kAnimator;
@@ -1981,4 +2114,9 @@ public class GPUVolumeRender extends JavaApplication3D
     /** Enables/Disables rendering the second pass. When disabled, the
      * back-facing polygons of the proxy-geometry are shown instead of the volume: */
     private boolean m_bDisplaySecond = true;
+
+    /** Polyline tracts root node: */
+    private Node m_kTractNode = null;
+    private boolean m_bDisplayTract = false;
+    private int m_iActive = 0;
 }

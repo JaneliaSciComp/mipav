@@ -1541,7 +1541,7 @@ public class VolumeShaderEffect extends ShaderEffect
 
             if ( kImage_GM == null )
             {
-                kImage_GM = new ModelImage(ModelImage.USHORT, kImage.getExtents(),
+                kImage_GM = new ModelImage(kImage.getType(), kImage.getExtents(),
                                                   kImage.getImageName() + "_gm_rescale");
 
                 float[] sigma = new float[] { 0.5f, 0.5f, 0.5f };

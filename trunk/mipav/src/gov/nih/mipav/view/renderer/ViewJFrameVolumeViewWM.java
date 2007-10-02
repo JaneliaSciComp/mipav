@@ -5,6 +5,9 @@ import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.*;
+
+
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -569,6 +572,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
                          panelToolbar.getHeight();
 
             surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
+        } else if (command.equals("DTI")) {
+            new JDialogDTIInput( JDialogDTIInput.TRACTS, raycastRenderWM );
+
         } else if (command.equals("Capture")) {
             insertTab("Camera", cameraPanel);
             insertSurfaceTab("Camera", cameraPanel);
@@ -1339,6 +1345,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             }
 
             transformFunct = null;
+            
+            new ViewJFrameImage((ModelImage)(imageA.clone()), null, new Dimension(610, 200), false);
+            
         }
 
         // resample imageB
@@ -2533,7 +2542,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
         menuBar.add(menuObj.makeMenu("File", false,
                                      new JComponent[] {
-                                         separator, menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)
+                                         separator,
+                                         menuObj.buildMenuItem("Open DTI Tract file", "DTI", 0, null, false),
+                                         menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)
                                      }));
         menuBar.add(menuObj.makeMenu("Options", false,
                                      new JComponent[] {

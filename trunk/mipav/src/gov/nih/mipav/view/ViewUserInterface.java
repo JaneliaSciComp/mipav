@@ -15,6 +15,8 @@ import gov.nih.mipav.plugins.*;
 
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.xcede.*;
+import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.view.dialogs.JDialogDTIInput;
 
 import edu.sdsc.grid.io.*;
 
@@ -691,15 +693,20 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } else {
                 return;
             }
-
         } else if (command.equals("openImgSeq")) {
             new ViewOpenImageSequence();
         } else if (command.startsWith("LastImage")) {
 
             int number = Integer.valueOf(command.substring(10)).intValue();
             openLastImage(number);
-
+        } else if (command.equals("loadDWI")) {
+            new JDialogDTIInput( JDialogDTIInput.DWI );
+        } else if (command.equals("loadDTI")) {
+            new JDialogDTIInput( JDialogDTIInput.DTI );
+        } else if (command.equals("loadEG_FA")) {
+            new JDialogDTIInput( JDialogDTIInput.EG_FA );
         }
+
     }
 
     /**
