@@ -161,6 +161,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private TransMatrix transMatrix;
+    
+    private boolean haveCentered = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -228,8 +230,174 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         if (pad) {
 
-            if ((interp != BILINEAR) || (DIM != 2)) {
+            if (interp != BILINEAR) {
                 canPad = false;
+            }
+
+            margins = getImageMargins(srcImage, xfrm, oXres, oYres);
+            Preferences.debug("Padding is " + margins[0] + ", " + margins[1] + ".\n");
+            updateOriginMargins2D();
+
+            // System.out.println("Image origin with padding: " +imgOrigin[0] +" " +imgOrigin[1]);
+            oXdim = oXdim + margins[0] + margins[2];
+            oYdim = oYdim + margins[1] + margins[3];
+        } else {
+
+            for (int m = 0; m < 4; m++) {
+                margins[m] = 0;
+            }
+        }
+
+        if (srcImage.getNDims() == 2) {
+            DIM = 2;
+            do25D = false;
+            extents = new int[] { oXdim, oYdim };
+            destResolutions = new float[] { oXres, oYres };
+
+            if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                     (interp == HEPTIC_LAGRANGIAN)) && (!clip) &&
+                    ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE))) {
+                destImage = new ModelImage(ModelStorageBase.SHORT, extents, name);
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.USHORT)) {
+                destImage = new ModelImage(ModelStorageBase.INTEGER, extents, name);
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.UINTEGER)) {
+                destImage = new ModelImage(ModelStorageBase.LONG, extents, name);
+            } else {
+                destImage = new ModelImage(type, extents, name);
+            }
+
+        } // end of if (srcImage.getNDims == 2)
+        else if (srcImage.getNDims() == 3) {
+
+            DIM = 3;
+            do25D = true;
+            iZdim = srcImage.getExtents()[2];
+            oZdim = iZdim;
+            startPos = imgOrigin[2]; // temporarily set origin for all slices as origin of first slice
+            extents = new int[] { oXdim, oYdim, oZdim };
+
+            destResolutions = new float[] { oXres, oYres, srcImage.getFileInfo(0).getResolutions()[2] };
+
+            if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                     (interp == HEPTIC_LAGRANGIAN)) && (!clip) &&
+                    ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE))) {
+                destImage = new ModelImage(ModelStorageBase.SHORT, extents, name);
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.USHORT)) {
+                destImage = new ModelImage(ModelStorageBase.INTEGER, extents, name);
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.UINTEGER)) {
+                destImage = new ModelImage(ModelStorageBase.LONG, extents, name);
+            } else {
+                destImage = new ModelImage(type, extents, name);
+            }
+        } // end of else if (srcImage.getNDims() == 3)
+        else { // (srcImage.getNDims() == 4) {
+            DIM = 4;
+            do25D = true;
+            iZdim = srcImage.getExtents()[2];
+            oZdim = iZdim;
+            iTdim = srcImage.getExtents()[3];
+            oTdim = iTdim;
+            startPos = imgOrigin[2]; // temporarily set origin for all slices as origin of first slice
+            extents = new int[] { oXdim, oYdim, oZdim, oTdim };
+            destResolutions = new float[] {
+                                  oXres, oYres, srcImage.getFileInfo(0).getResolutions()[2],
+                                  srcImage.getFileInfo(0).getResolutions()[3]
+                              };
+
+            if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                     (interp == HEPTIC_LAGRANGIAN)) && (!clip) &&
+                    ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE))) {
+                destImage = new ModelImage(ModelStorageBase.SHORT, extents, name);
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.USHORT)) {
+                destImage = new ModelImage(ModelStorageBase.INTEGER, extents, name);
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.UINTEGER)) {
+                destImage = new ModelImage(ModelStorageBase.LONG, extents, name);
+            } else {
+                destImage = new ModelImage(type, extents, name);
+            }
+        } // end of else for srcImage.getNDims() == 4
+
+        transMatrix = xfrm;
+        iXres = srcImage.getFileInfo(0).getResolutions()[0];
+        iYres = srcImage.getFileInfo(0).getResolutions()[1];
+        iXdim = srcImage.getExtents()[0];
+        iYdim = srcImage.getExtents()[1];
+
+        this.oXres = oXres;
+        this.oYres = oYres;
+        this.oXdim = oXdim;
+        this.oYdim = oYdim;
+        this.oUnits = units;
+        this.interp = interp;
+    }
+    
+    /**
+     * Creates a new AlgorithmTransform object.
+     *
+     * @param  srcImage  DOCUMENT ME!
+     * @param  xfrm      DOCUMENT ME!
+     * @param  interp    DOCUMENT ME!
+     * @param  oXres     DOCUMENT ME!
+     * @param  oYres     DOCUMENT ME!
+     * @param  oXdim     DOCUMENT ME!
+     * @param  oYdim     DOCUMENT ME!
+     * @param  units     DOCUMENT ME!
+     * @param  tVOI      DOCUMENT ME!
+     * @param  clip      DOCUMENT ME!
+     * @param  pad       DOCUMENT ME!
+     * @param  doCenter
+     * @param  center
+     */
+    public AlgorithmTransform(ModelImage srcImage, TransMatrix xfrm, int interp, float oXres, float oYres, int oXdim,
+                              int oYdim, int[] units, boolean tVOI, boolean clip, boolean pad, boolean doCenter, Point3Df center) {
+        super(null, srcImage);
+        transformVOI = tVOI;
+        this.srcImage = srcImage;
+        this.clip = clip;
+        this.pad = pad;
+        this.doCenter = doCenter;
+        this.center = center;
+
+        int[] extents;
+        TransMatrix trans;
+        TransMatrix xfrmC;
+        String name = JDialogBase.makeImageName(srcImage.getImageName(), "_transform");
+
+        imgOrient = srcImage.getFileInfo(0).getImageOrientation();
+
+        axisOrient = new int[srcImage.getFileInfo(0).getAxisOrientation().length];
+
+        for (int i = 0; i < axisOrient.length; i++) {
+            axisOrient[i] = srcImage.getFileInfo(0).getAxisOrientation()[i];
+        }
+
+        imgOrigin = (float[]) srcImage.getFileInfo(0).getOrigin().clone();
+
+        int type = srcImage.getType();
+
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        direct = MipavCoordinateSystems.getModelDirections(srcImage);
+        DIM = srcImage.getNDims();
+
+        if (pad) {
+
+            if (interp != BILINEAR) {
+                canPad = false;
+            }
+            
+            if (doCenter) {
+                xfrmC = new TransMatrix(3);
+                xfrmC.identity();
+                xfrmC.setTranslate(center.x, center.y);
+                xfrm.setMatrix((xfrmC.times(xfrm)).getArray());
+                xfrm.setTranslate(-center.x, -center.y);
+                haveCentered = true;
             }
 
             margins = getImageMargins(srcImage, xfrm, oXres, oYres);
@@ -424,6 +592,171 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             if ((interp != TRILINEAR) || (DIM != 3)) {
                 canPad = false;
+            }
+
+            margins = getImageMargins(srcImage, xfrm, oXres, oYres, oZres);
+            Preferences.debug("Padding is " + margins[0] + ", " + margins[1] + " and " + margins[2] + ".\n");
+            updateOriginMargins();
+
+            // System.out.println("Image origin with padding: " +imgOrigin[0] +" " +imgOrigin[1] +" " +imgOrigin[2]);
+            oXdim = oXdim + margins[0] + margins[3];
+            oYdim = oYdim + margins[1] + margins[4];
+            oZdim = oZdim + margins[2] + margins[5];
+        } else {
+
+            for (int m = 0; m < 6; m++) {
+                margins[m] = 0;
+            }
+        }
+
+        startPos = imgOrigin[2];
+
+        int[] extents;
+
+        if (DIM == 3) {
+            destResolutions = new float[3];
+            extents = new int[3];
+
+            if (pad) {
+                do25D = false;
+            }
+
+            if (do25D) {
+                oZres = iZres;
+            }
+        } else { // DIM ==4
+            do25D = false;
+            destResolutions = new float[4];
+            extents = new int[4];
+        }
+
+        destResolutions[0] = oXres;
+        destResolutions[1] = oYres;
+        destResolutions[2] = oZres;
+
+        extents[0] = oXdim;
+        extents[1] = oYdim;
+        extents[2] = oZdim;
+
+
+        if (DIM == 4) {
+            iTdim = srcImage.getExtents()[3];
+            oTdim = iTdim;
+            extents[3] = oTdim;
+            destResolutions[3] = srcImage.getFileInfo(0).getResolutions()[3];
+        }
+
+        String name = JDialogBase.makeImageName(srcImage.getImageName(), "_transform");
+        int type = srcImage.getType();
+
+        if (DIM == 3) {
+
+            if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                     (interp == HEPTIC_LAGRANGIAN)) && (!clip) &&
+                    ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE))) {
+                type = ModelStorageBase.SHORT;
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.USHORT)) {
+                type = ModelStorageBase.INTEGER;
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.UINTEGER)) {
+                type = ModelStorageBase.LONG;
+            }
+        } // end of if DIM == 3
+        else { // DIM == 4
+
+            if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                     (interp == HEPTIC_LAGRANGIAN)) && (!clip) &&
+                    ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE))) {
+                type = ModelStorageBase.SHORT;
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.USHORT)) {
+                type = ModelStorageBase.INTEGER;
+            } else if (((interp == WSINC) || (interp == CUBIC_LAGRANGIAN) || (interp == QUINTIC_LAGRANGIAN) ||
+                            (interp == HEPTIC_LAGRANGIAN)) && (!clip) && (type == ModelStorageBase.UINTEGER)) {
+                type = ModelStorageBase.LONG;
+            }
+        } // end of DIM == 4
+
+        destImage = new ModelImage(type, extents, name);
+        // updateFileInfo(srcImage, destImage, destResolutions);
+    }
+    
+    /**
+     * Creates a new $class.name$ object.
+     *
+     * @param  _srcImage  DOCUMENT ME!
+     * @param  xfrm       DOCUMENT ME!
+     * @param  interp     DOCUMENT ME!
+     * @param  _oXres     DOCUMENT ME!
+     * @param  _oYres     DOCUMENT ME!
+     * @param  _oZres     DOCUMENT ME!
+     * @param  _oXdim     DOCUMENT ME!
+     * @param  _oYdim     DOCUMENT ME!
+     * @param  _oZdim     DOCUMENT ME!
+     * @param  units      DOCUMENT ME!
+     * @param  tVOI       DOCUMENT ME!
+     * @param  clip       DOCUMENT ME!
+     * @param  pad        DOCUMENT ME!
+     * @param  doCenter
+     * @param  center
+     */
+    public AlgorithmTransform(ModelImage _srcImage, TransMatrix xfrm, int interp, float _oXres, float _oYres,
+                              float _oZres, int _oXdim, int _oYdim, int _oZdim, int[] units, boolean tVOI, boolean clip,
+                              boolean pad, boolean doCenter, Point3Df center) {
+        super(null, _srcImage);
+        this.interp = interp;
+        this.srcImage = _srcImage;
+        this.transMatrix = xfrm;
+        transformVOI = tVOI;
+        this.clip = clip;
+        this.pad = pad;
+        this.doCenter = doCenter;
+        this.center = center;
+
+        this.oXres = _oXres;
+        this.oYres = _oYres;
+        this.oZres = _oZres;
+        this.oXdim = _oXdim;
+        this.oYdim = _oYdim;
+        this.oZdim = _oZdim;
+
+        this.oUnits = units;
+
+        TransMatrix xfrmC;
+        DIM = srcImage.getNDims();
+        imgOrigin = (float[]) srcImage.getFileInfo(0).getOrigin().clone();
+        axisOrient = new int[srcImage.getFileInfo(0).getAxisOrientation().length];
+
+        for (int i = 0; i < axisOrient.length; i++) {
+            axisOrient[i] = srcImage.getFileInfo(0).getAxisOrientation()[i];
+        }
+
+        imgOrient = srcImage.getFileInfo(0).getImageOrientation();
+        iXres = srcImage.getFileInfo(0).getResolutions()[0];
+        iYres = srcImage.getFileInfo(0).getResolutions()[1];
+        iZres = srcImage.getFileInfo(0).getResolutions()[2];
+        iXdim = srcImage.getExtents()[0];
+        iYdim = srcImage.getExtents()[1];
+        iZdim = srcImage.getExtents()[2];
+
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        direct = MipavCoordinateSystems.getModelDirections(srcImage);
+
+        // System.out.println("Directions are " +direct[0] +", " +direct[1] +" and " +direct[2]);
+        if (pad) {
+
+            if ((interp != TRILINEAR) || (DIM != 3)) {
+                canPad = false;
+            }
+            
+            if (doCenter) {
+                xfrmC = new TransMatrix(4);
+                xfrmC.identity();
+                xfrmC.setTranslate(center.x, center.y, center.z);
+                xfrm.setMatrix((xfrmC.times(xfrm)).getArray());
+                xfrm.setTranslate(-center.x, -center.y, -center.z);
+                haveCentered = true;
             }
 
             margins = getImageMargins(srcImage, xfrm, oXres, oYres, oZres);
@@ -3742,6 +4075,9 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     public void setCenter(Point3Df center) {
         this.center = center;
+        if (pad) {
+            
+        }
     }
 
     /**
@@ -3988,7 +4324,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             trans.setMatrix(transMatrix.getArray());
 
-            if (doCenter) {
+            if ((doCenter) && (!haveCentered)) {
 
                 if ((do25D) || (DIM == 2)) {
                     xfrmC = new TransMatrix(3);
@@ -4012,7 +4348,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } else { // (DIM == 2) || do25D
                     trans.setTranslate(-center.x, -center.y);
                 }
-            } // if (doCenter)
+            } // if ((doCenter) && (!haveCentered))
 
             xfrm = matrixtoInverseArray(trans);
 
@@ -4779,6 +5115,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBilinear3D(float[] imgBuf, float[][] xfrm) {
         int i, j, k;
+        int iAdj, jAdj;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
         float X, Y;
@@ -4801,15 +5138,28 @@ public class AlgorithmTransform extends AlgorithmBase {
             fireProgressStateChanged(Math.round((float) k / oZdim * 100));
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad){
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // transform i,j
-                    value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
-                    jmm = (float) j * oYres;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                        value = (float)padVal;
+                    } 
+                    else {
+                        jAdj = j;
+                        value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                    }
+                    jmm = (float) jAdj * oYres;
                     X = (temp1 + (jmm * T01)) / iXres;
                     roundX = (int) (X + 0.5f);
 
@@ -4875,6 +5225,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     private void transformBilinear3DC(float[] imgBuf, float[] imgBuf2, float[][] xfrm) {
         int i, j, k;
+        int iAdj, jAdj;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
         float X, Y;
@@ -4905,20 +5256,38 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
-                imm = (float) i * oXres;
+                if (pad) {
+                    iAdj = i - margins[0];
+                }
+                else {
+                    iAdj = i;
+                }
+                imm = (float) iAdj * oXres;
                 temp1 = (imm * T00) + T02;
                 temp2 = (imm * T10) + T12;
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // transform i,j
-                    temp3 = 4 * (i + (j * oXdim));
-                    imgBuf2[temp3] = 0; // remains zero if voxel is transformed out of bounds
-                    imgBuf2[temp3 + 1] = 0;
-                    imgBuf2[temp3 + 2] = 0;
-                    imgBuf2[temp3 + 3] = 0;
+                    if (pad) {
+                        jAdj = j - margins[1];
+                        temp3 = 4 * (i + (j * oXdim));
+                        imgBuf2[temp3] = padVal; // remains padVal if voxel is transformed out of bounds
+                        imgBuf2[temp3 + 1] = padVal;
+                        imgBuf2[temp3 + 2] = padVal;
+                        imgBuf2[temp3 + 3] = padVal;
+                    }
+                    else {
+                        jAdj = j;
+                        temp3 = 4 * (i + (j * oXdim));
+                        imgBuf2[temp3] = 0; // remains zero if voxel is transformed out of bounds
+                        imgBuf2[temp3 + 1] = 0;
+                        imgBuf2[temp3 + 2] = 0;
+                        imgBuf2[temp3 + 3] = 0;
+                    }
+                    
 
-                    jmm = (float) j * oYres;
+                    jmm = (float) jAdj * oYres;
                     X = (temp1 + (jmm * T01)) / iXres;
                     roundX = (int) (X + 0.5f);
 
