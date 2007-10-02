@@ -409,7 +409,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         if ((source == textResX) || (source == textDimX)) {
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update y values
-                dims[1] = dims[1] * factor;
+                if ((source == textDimX) || (fieldOfView.isSelected())) {
+                    dims[1] = dims[1] * factor;
+                }
 
                 if (fieldOfView.isSelected()) {
                     resols[1] = resols[1] / factor;
@@ -417,7 +419,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             }
 
             if (xyzAspectRatio.isSelected()) { // update z values
-                dims[2] = dims[2] * factor;
+                if ((source == textDimX) || (fieldOfView.isSelected())) {
+                    dims[2] = dims[2] * factor;
+                }
 
                 if (fieldOfView.isSelected()) {
                     resols[2] = resols[2] / factor;
@@ -426,7 +430,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         } else if ((source == textResY) || (source == textDimY)) {
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update x
-                dims[0] = dims[0] * factor;
+                if ((source == textDimY) || (fieldOfView.isSelected())) {
+                    dims[0] = dims[0] * factor;
+                }
 
                 if (fieldOfView.isSelected()) {
                     resols[0] = resols[0] / factor;
@@ -434,7 +440,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             }
 
             if (xyzAspectRatio.isSelected()) { // update z
-                dims[2] = dims[2] * factor;
+                if ((source == textDimY) || (fieldOfView.isSelected())) {
+                    dims[2] = dims[2] * factor;
+                }
 
                 if (fieldOfView.isSelected()) {
                     resols[2] = resols[2] / factor;
@@ -445,8 +453,10 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             if (xyAspectRatio.isSelected()) { } // do nothing, x and y not affected by z
 
             if (xyzAspectRatio.isSelected()) { // update x and y accordingly
-                dims[0] = dims[0] * factor;
-                dims[1] = dims[1] * factor;
+                if ((source == textDimZ) || (fieldOfView.isSelected())) {
+                    dims[0] = dims[0] * factor;
+                    dims[1] = dims[1] * factor;
+                }
 
                 if (fieldOfView.isSelected()) {
                     resols[0] = resols[0] / factor;
