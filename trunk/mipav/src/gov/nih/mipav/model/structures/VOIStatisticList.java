@@ -108,6 +108,13 @@ public interface VOIStatisticList {
      * @see  gov.nih.mipav.view.JPanelStatisticsList
      */
     String perimeterDescription = "Perimeter";
+    
+    /**
+     * string to test for when checking on statics to calculate.
+     *
+     * @see  gov.nih.mipav.view.JPanelStatisticsList
+     */
+    String sumIntensities = "Sum Intensities";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -117,7 +124,7 @@ public interface VOIStatisticList {
     String[] statisticDescription = {
         quantityDescription, volumeDescription, areaDescription, perimeterDescription, minIntensity, maxIntensity,
         avgIntensity, deviationDescription, centerDescription, axisDescription, eccentricityDescription,
-        majorAxisDescription, minorAxisDescription
+        majorAxisDescription, minorAxisDescription, sumIntensities
     };
 
     /** number of statistics in the list. */
