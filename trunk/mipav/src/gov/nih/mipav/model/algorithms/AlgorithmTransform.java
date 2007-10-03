@@ -3975,7 +3975,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             updateOrigin(this.transMatrix);
         }
 
-        // System.err.println("MATRIX: " + transMatrix);
+        //System.err.println("MATRIX: " + transMatrix);
 
         // BEN: fix this so the origin is updated correctly
         updateFileInfo(srcImage, destImage, destResolutions, oUnits, this.transMatrix, isSATransform);
@@ -10464,17 +10464,16 @@ public class AlgorithmTransform extends AlgorithmBase {
     private void transformTrilinearC(float[] imgBuffer, float[] imgBuffer2, float[][] xfrm) {
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        int X0pos, Y0pos, Z0pos;
-        int X1pos, Y1pos, Z1pos;
         float X, Y, Z;
-        float x0, y0, z0;
-        float x1, y1, z1;
+        int x0, y0, z0;
         int sliceSize, osliceSize;
         float imm, jmm, kmm;
-        int roundX, roundY, roundZ;
         float temp1, temp2, temp3;
-        int temp8, temp9, temp10, temp11, temp12, temp13, temp14, temp15, temp16, temp17;
-        float x1y1z1, x0y1z1, x1y0z1, x0y0z1, x1y1z0, x0y1z0, x1y0z0, x0y0z0;
+        int temp8;
+        int deltaX, deltaY, deltaZ;
+        int position1, position2;
+        float b1, b2;
+        float dx, dy, dz, dx1, dy1;
 
         sliceSize = iXdim * iYdim;
         osliceSize = oXdim * oYdim;
@@ -10526,7 +10525,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 temp3 = i1 + j1;
 
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
-
+                    
                     // transform i,j,k
                     temp8 = 4 * (i + (j * oXdim) + (k * osliceSize));
 
@@ -10546,88 +10545,112 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     kmm = kAdj * oZres;
                     X = (temp3 + (kmm * T02)) / iXres;
-                    roundX = (int) (X + 0.5f);
 
-                    if ((X >= 0) && (roundX < iXdim)) {
+                    if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
                         Y = (temp2 + (kmm * T12)) / iYres;
-                        roundY = (int) (Y + 0.5f);
 
-                        if ((Y >= 0) && (roundY < iYdim)) {
+                        if ((Y > -0.5f) && (Y < (iYdim-0.5f))) {
+                            temp1 = 0;
+                            T22 = 1.0f;
                             Z = (temp1 + (kmm * T22)) / iZres;
-                            roundZ = (int) (Z + 0.5f);
 
-                            if ((Z >= 0) && (roundZ < iZdim)) {
-
-                                if ((roundX == (iXdim - 1)) || (roundY == (iYdim - 1)) || (roundZ == (iZdim - 1))) { // cannot interpolate on last X, Y, or Z
-                                    X0pos = roundX;
-                                    Y0pos = roundY * iXdim;
-                                    Z0pos = roundZ * sliceSize;
-                                    temp9 = 4 * (Z0pos + Y0pos + X0pos);
-                                    imgBuffer2[temp8] = imgBuffer[temp9];
-                                    imgBuffer2[temp8 + 1] = imgBuffer[temp9 + 1];
-                                    imgBuffer2[temp8 + 2] = imgBuffer[temp9 + 2];
-                                    imgBuffer2[temp8 + 3] = imgBuffer[temp9 + 3];
+                            if ((Z > -0.5f) && (Z < (iZdim-0.5f))) {
+                                if (X <= 0) {
+                                    x0 = 0;
+                                    dx = 0;
+                                    deltaX = 0;
+                                } else if (X >= (iXdim - 1)) {
+                                    x0 = iXdim - 1;
+                                    dx = 0;
+                                    deltaX = 0;
                                 } else {
-
-                                    // set intensity of i,j,k to new transformed coordinate if
-                                    // x,y,z is w/in dimensions of image
-                                    x0 = X - (int) X;
-                                    y0 = Y - (int) Y;
-                                    z0 = Z - (int) Z;
-                                    x1 = 1 - x0;
-                                    y1 = 1 - y0;
-                                    z1 = 1 - z0;
-                                    X0pos = (int) X;
-                                    Y0pos = (int) Y * iXdim;
-                                    Z0pos = (int) Z * sliceSize;
-                                    X1pos = X0pos + 1;
-                                    Y1pos = Y0pos + iXdim;
-                                    Z1pos = Z0pos + sliceSize;
-                                    temp10 = 4 * (Z0pos + Y0pos + X0pos);
-                                    temp11 = 4 * (Z0pos + Y0pos + X1pos);
-                                    temp12 = 4 * (Z0pos + Y1pos + X0pos);
-                                    temp13 = 4 * (Z0pos + Y1pos + X1pos);
-                                    temp14 = 4 * (Z1pos + Y0pos + X0pos);
-                                    temp15 = 4 * (Z1pos + Y0pos + X1pos);
-                                    temp16 = 4 * (Z1pos + Y1pos + X0pos);
-                                    temp17 = 4 * (Z1pos + Y1pos + X1pos);
-                                    x1y1z1 = x1 * y1 * z1;
-                                    x0y1z1 = x0 * y1 * z1;
-                                    x1y0z1 = x1 * y0 * z1;
-                                    x0y0z1 = x0 * y0 * z1;
-                                    x1y1z0 = x1 * y1 * z0;
-                                    x0y1z0 = x0 * y1 * z0;
-                                    x1y0z0 = x1 * y0 * z0;
-                                    x0y0z0 = x0 * y0 * z0;
-                                    imgBuffer2[temp8] = (x1y1z1 * imgBuffer[temp10]) + (x0y1z1 * imgBuffer[temp11]) +
-                                                        (x1y0z1 * imgBuffer[temp12]) + (x0y0z1 * imgBuffer[temp13]) +
-                                                        (x1y1z0 * imgBuffer[temp14]) + (x0y1z0 * imgBuffer[temp15]) +
-                                                        (x1y0z0 * imgBuffer[temp16]) + (x0y0z0 * imgBuffer[temp17]);
-                                    imgBuffer2[temp8 + 1] = (x1y1z1 * imgBuffer[temp10 + 1]) +
-                                                            (x0y1z1 * imgBuffer[temp11 + 1]) +
-                                                            (x1y0z1 * imgBuffer[temp12 + 1]) +
-                                                            (x0y0z1 * imgBuffer[temp13 + 1]) +
-                                                            (x1y1z0 * imgBuffer[temp14 + 1]) +
-                                                            (x0y1z0 * imgBuffer[temp15 + 1]) +
-                                                            (x1y0z0 * imgBuffer[temp16 + 1]) +
-                                                            (x0y0z0 * imgBuffer[temp17 + 1]);
-                                    imgBuffer2[temp8 + 2] = (x1y1z1 * imgBuffer[temp10 + 2]) +
-                                                            (x0y1z1 * imgBuffer[temp11 + 2]) +
-                                                            (x1y0z1 * imgBuffer[temp12 + 2]) +
-                                                            (x0y0z1 * imgBuffer[temp13 + 2]) +
-                                                            (x1y1z0 * imgBuffer[temp14 + 2]) +
-                                                            (x0y1z0 * imgBuffer[temp15 + 2]) +
-                                                            (x1y0z0 * imgBuffer[temp16 + 2]) +
-                                                            (x0y0z0 * imgBuffer[temp17 + 2]);
-                                    imgBuffer2[temp8 + 3] = (x1y1z1 * imgBuffer[temp10 + 3]) +
-                                                            (x0y1z1 * imgBuffer[temp11 + 3]) +
-                                                            (x1y0z1 * imgBuffer[temp12 + 3]) +
-                                                            (x0y0z1 * imgBuffer[temp13 + 3]) +
-                                                            (x1y1z0 * imgBuffer[temp14 + 3]) +
-                                                            (x0y1z0 * imgBuffer[temp15 + 3]) +
-                                                            (x1y0z0 * imgBuffer[temp16 + 3]) +
-                                                            (x0y0z0 * imgBuffer[temp17 + 3]);
+                                    x0 = (int) X;
+                                    dx = X - x0;
+                                    deltaX = 1;
                                 }
+
+                                if (Y <= 0) {
+                                    y0 = 0;
+                                    dy = 0;
+                                    deltaY = 0;
+                                } else if (Y >= (iYdim - 1)) {
+                                    y0 = iYdim - 1;
+                                    dy = 0;
+                                    deltaY = 0;
+                                } else {
+                                    y0 = (int) Y;
+                                    dy = Y - y0;
+                                    deltaY = iXdim;
+                                }
+
+                                if (Z <= 0) {
+                                    z0 = 0;
+                                    dz = 0;
+                                    deltaZ = 0;
+                                } else if (Z >= (iZdim - 1)) {
+                                    z0 = iZdim - 1;
+                                    dz = 0;
+                                    deltaZ = 0;
+                                } else {
+                                    z0 = (int) Z;
+                                    dz = Z - z0;
+                                    deltaZ = sliceSize;
+                                }
+
+                                dx1 = 1 - dx;
+                                dy1 = 1 - dy;
+
+                                position1 = (z0 * sliceSize) + (y0 * iXdim) + x0;
+                                position2 = position1 + deltaZ;
+
+                                b1 = (dy1 * ((dx1 * imgBuffer[4*position1]) + (dx * imgBuffer[4*(position1 + deltaX)]))) +
+                                     (dy *
+                                          ((dx1 * imgBuffer[4*(position1 + deltaY)]) +
+                                               (dx * imgBuffer[4*(position1 + deltaY + deltaX)])));
+
+                                b2 = (dy1 * ((dx1 * imgBuffer[4*position2]) + (dx * imgBuffer[4*(position2 + deltaX)]))) +
+                                     (dy *
+                                          ((dx1 * imgBuffer[4*(position2 + deltaY)]) +
+                                               (dx * imgBuffer[4*(position2 + deltaY + deltaX)])));
+
+                                imgBuffer2[temp8] = ((1 - dz) * b1) + (dz * b2);
+                                
+                                b1 = (dy1 * ((dx1 * imgBuffer[4*position1+ 1]) + (dx * imgBuffer[4*(position1 + deltaX)+1]))) +
+                                (dy *
+                                     ((dx1 * imgBuffer[4*(position1 + deltaY)+1]) +
+                                          (dx * imgBuffer[4*(position1 + deltaY + deltaX)+1])));
+
+                                b2 = (dy1 * ((dx1 * imgBuffer[4*position2+1]) + (dx * imgBuffer[4*(position2 + deltaX)+1]))) +
+                                (dy *
+                                     ((dx1 * imgBuffer[4*(position2 + deltaY)+1]) +
+                                          (dx * imgBuffer[4*(position2 + deltaY + deltaX)+1])));
+
+                                imgBuffer2[temp8+1] = ((1 - dz) * b1) + (dz * b2);
+                                
+                                b1 = (dy1 * ((dx1 * imgBuffer[4*position1+2]) + (dx * imgBuffer[4*(position1 + deltaX)+2]))) +
+                                (dy *
+                                     ((dx1 * imgBuffer[4*(position1 + deltaY)+2]) +
+                                          (dx * imgBuffer[4*(position1 + deltaY + deltaX)+2])));
+
+                                b2 = (dy1 * ((dx1 * imgBuffer[4*position2+2]) + (dx * imgBuffer[4*(position2 + deltaX)+2]))) +
+                                (dy *
+                                     ((dx1 * imgBuffer[4*(position2 + deltaY)+2]) +
+                                          (dx * imgBuffer[4*(position2 + deltaY + deltaX)+2])));
+
+                                 imgBuffer2[temp8+2] = ((1 - dz) * b1) + (dz * b2);
+                                 
+                                 b1 = (dy1 * ((dx1 * imgBuffer[4*position1+3]) + (dx * imgBuffer[4*(position1 + deltaX)+3]))) +
+                                 (dy *
+                                      ((dx1 * imgBuffer[4*(position1 + deltaY)+3]) +
+                                           (dx * imgBuffer[4*(position1 + deltaY + deltaX)+3])));
+
+                                 b2 = (dy1 * ((dx1 * imgBuffer[4*position2+3]) + (dx * imgBuffer[4*(position2 + deltaX)+3]))) +
+                                 (dy *
+                                      ((dx1 * imgBuffer[4*(position2 + deltaY)+3]) +
+                                           (dx * imgBuffer[4*(position2 + deltaY + deltaX)+3])));
+
+                                 imgBuffer2[temp8+3] = ((1 - dz) * b1) + (dz * b2);
+
                             } // end if Z in bounds
                         } // end if Y in bounds
                     } // end if X in bounds
