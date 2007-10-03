@@ -189,9 +189,9 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         UI.setDataText("VOI  :     " + srcVOI.getName() + "\n");
         UI.setDataText("              Number of pixels:     " + algoVOI.getNVoxels() + "\n");
         if (srcImage.isColorImage()) {
-        	UI.setDataText("              Total pixel intensities:     "  + algoVOI.getSumIntensitiesR() + " R,  " + algoVOI.getSumIntensitiesG() + " G,  " + algoVOI.getSumIntensitiesB() + " B, " + "\n");
+        	UI.setDataText("              Sum pixel intensities:     "  + algoVOI.getSumIntensitiesR() + " R,  " + algoVOI.getSumIntensitiesG() + " G,  " + algoVOI.getSumIntensitiesB() + " B, " + "\n");
         }else {
-        	UI.setDataText("              Total pixel intensities:     "  + algoVOI.getSumIntensities() + "\n");
+        	UI.setDataText("              Sum pixel intensities:     "  + algoVOI.getSumIntensities() + "\n");
         }
         if (srcImage.isColorImage()) {
             UI.setDataText("              Average pixel intensity:     " + algoVOI.getAvgIntenR() + " R,  " + algoVOI.getAvgIntenG() + " G,  " + algoVOI.getAvgIntenB() + " B, " + "\n");
@@ -236,23 +236,44 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 		gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        JLabel numPixelsVOILabel = new JLabel("Number of pixels          ");
+        numPixelsVOILabel.setFont(serif12);
+        voiStatsLeftPanel.add(numPixelsVOILabel,gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel sumIntensitiesVOILabel = new JLabel("Sum pixel intensities         ");
+        sumIntensitiesVOILabel.setFont(serif12);
+        voiStatsLeftPanel.add(sumIntensitiesVOILabel,gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         JLabel avgVoxIntVOILabel = new JLabel("Average pixel intensity");
         avgVoxIntVOILabel.setFont(serif12);
         voiStatsLeftPanel.add(avgVoxIntVOILabel,gbc);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         JLabel stdDevVOILabel = new JLabel("Standard deviation of pixel intensity          ");
         stdDevVOILabel.setFont(serif12);
         voiStatsLeftPanel.add(stdDevVOILabel,gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        JLabel numPixelsVOILabel = new JLabel("Number of pixels          ");
-        numPixelsVOILabel.setFont(serif12);
-        voiStatsLeftPanel.add(numPixelsVOILabel,gbc);
         voiStatsRightPanel = new JPanel(gbl); 
         gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        JLabel numPixelsVOIValue;
+        numPixelsVOIValue = new JLabel(String.valueOf(algoVOI.getNVoxels()));
+        numPixelsVOIValue.setFont(serif12);
+        voiStatsRightPanel.add(numPixelsVOIValue,gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel sumIntensitiesVOIValue;
+        if (srcImage.isColorImage()) {
+        	sumIntensitiesVOIValue = new JLabel(algoVOI.getSumIntensitiesR() + " R,  " + algoVOI.getSumIntensitiesG() + " G,  " + algoVOI.getSumIntensitiesB() + " B");
+        } else {
+        	sumIntensitiesVOIValue = new JLabel(String.valueOf(algoVOI.getSumIntensities()));
+        }
+        sumIntensitiesVOIValue.setFont(serif12);
+        voiStatsRightPanel.add(sumIntensitiesVOIValue,gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         JLabel avgVoxIntVOIValue;
         if (srcImage.isColorImage()) {
         	avgVoxIntVOIValue = new JLabel(algoVOI.getAvgIntenR() + " R,  " + algoVOI.getAvgIntenG() + " G,  " + algoVOI.getAvgIntenB() + " B");
@@ -262,7 +283,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         avgVoxIntVOIValue.setFont(serif12);
         voiStatsRightPanel.add(avgVoxIntVOIValue,gbc);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         JLabel stdDevVOIValue;
         if (srcImage.isColorImage()) {
         	stdDevVOIValue = new JLabel(algoVOI.getStdDevR() + " R,  " + algoVOI.getStdDevG() + " G,  " + algoVOI.getStdDevB() + " B");
@@ -271,12 +292,6 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         }
         stdDevVOIValue.setFont(serif12);
         voiStatsRightPanel.add(stdDevVOIValue,gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        JLabel numPixelsVOIValue;
-        numPixelsVOIValue = new JLabel(String.valueOf(algoVOI.getNVoxels()));
-        numPixelsVOIValue.setFont(serif12);
-        voiStatsRightPanel.add(numPixelsVOIValue,gbc);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.CENTER;
@@ -776,7 +791,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 		        }
 	        
 		        UI.setDataText("            Number of pixels in thresholded volume:     " + alg.getNumPixels() + "\n");
-		        UI.setDataText("            Total pixel intensities in thresholded volume:     " + alg.getSumIntensities() + "\n");
+		        UI.setDataText("            Sum pixel intensities in thresholded volume:     " + alg.getSumIntensities() + "\n");
 		        float avg = alg.getSumIntensities()/alg.getNumPixels();
 		        UI.setDataText("            Average pixel intensity in thresholded volume:     " + avg + "\n");
 		        UI.setDataText("\n -----------------------------------------------------------------------------\n");
@@ -790,7 +805,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 		        	UI.setDataText("            Total thresholded volume R:     " + alg.getTotalVolumeR() + "  mm^3\n");
 		        }
 	        	UI.setDataText("            Number of pixels in thresholded volume R:     " + alg.getNumPixelsR() + "\n");
-		        UI.setDataText("            Total pixel intensities in thresholded volume R:     " + alg.getSumIntensitiesR() + "\n");
+		        UI.setDataText("            Sum pixel intensities in thresholded volume R:     " + alg.getSumIntensitiesR() + "\n");
 		        float avgR = alg.getSumIntensitiesR()/alg.getNumPixelsR();
 		        UI.setDataText("            Average pixel intensity in thresholded volume R:     " + avgR + "\n");
 	        	UI.setDataText("\n");
@@ -802,7 +817,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 		        	UI.setDataText("            Total thresholded volume G:     " + alg.getTotalVolumeG() + "  mm^3\n");
 		        }
 	        	UI.setDataText("            Number of pixels in thresholded volume G:     " + alg.getNumPixelsG() + "\n");
-		        UI.setDataText("            Total pixel intensities in thresholded volume G:     " + alg.getSumIntensitiesG() + "\n");
+		        UI.setDataText("            Sum pixel intensities in thresholded volume G:     " + alg.getSumIntensitiesG() + "\n");
 		        float avgG = alg.getSumIntensitiesG()/alg.getNumPixelsG();
 		        UI.setDataText("            Average pixel intensity in thresholded volume G:     " + avgG + "\n");
 	        	UI.setDataText("\n");
@@ -814,7 +829,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 		        	UI.setDataText("            Total thresholded volume B:     " + alg.getTotalVolumeB() + "  mm^3\n");
 		        }
 	        	UI.setDataText("            Number of pixels in thresholded volume B:     " + alg.getNumPixelsB() + "\n");
-		        UI.setDataText("            Total pixel intensities in thresholded volume B:     " + alg.getSumIntensitiesB() + "\n");
+		        UI.setDataText("            Sum pixel intensities in thresholded volume B:     " + alg.getSumIntensitiesB() + "\n");
 		        float avgB = alg.getSumIntensitiesB()/alg.getNumPixelsB();
 		        UI.setDataText("            Average pixel intensity in thresholded volume B:     " + avgB + "\n");
 	        	UI.setDataText("\n -----------------------------------------------------------------------------\n");
