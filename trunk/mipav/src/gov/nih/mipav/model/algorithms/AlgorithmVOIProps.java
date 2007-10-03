@@ -378,7 +378,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.deviationDescription +
                                                                                                   "Green")).floatValue();
     } // {return stdDevG;}
-
+    
+    
     /**
      * Gets the standard deviation of image intensities (red channel) return standard deviation of image intensities
      * defined by the VOI.
@@ -390,6 +391,41 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                                                                                   "Red")).floatValue();
     } // {return stdDevR;}
 
+    /**
+     * Gets the sum of image intensities defined by the VOI
+     * @return
+     */
+    public float getSumIntensities() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.sumIntensities)).floatValue();
+    }
+    
+    /**
+     * Gets the sum of red channel image intensities defined by the VOI
+     * @return
+     */
+    public float getSumIntensitiesR() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.sumIntensities + "Red")).floatValue();
+    }
+    
+    /**
+     * Gets the sum of green channel image intensities defined by the VOI
+     * @return
+     */
+    public float getSumIntensitiesG() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.sumIntensities + "Green")).floatValue();
+    }
+    
+    /**
+     * Gets the sum of blue channel mage intensities defined by the VOI
+     * @return
+     */
+    public float getSumIntensitiesB() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.sumIntensities + "Blue")).floatValue();
+    }
+    
+    
+
+    
     /**
      * DOCUMENT ME!
      *
@@ -794,6 +830,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue" + "0;" + r,
                                                  nf.format(avgIntenB));
                         statProperty.setProperty(VOIStatisticList.quantityDescription + "0;" + r, nf.format(nVox));
+                        statProperty.setProperty(VOIStatisticList.sumIntensities + "Red" + "0;" + r, nf.format(sumR));
+                        statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + "0;" + r, nf.format(sumG));
+                        statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "0;" + r, nf.format(sumB));
                     } else {
                         minIntensity = Float.MAX_VALUE;
                         maxIntensity = -Float.MAX_VALUE;
@@ -831,6 +870,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.maxIntensity + "0;" + r, nf.format(maxIntensity));
                         statProperty.setProperty(VOIStatisticList.avgIntensity + "0;" + r, nf.format(avgInten));
                         statProperty.setProperty(VOIStatisticList.quantityDescription + "0;" + r, nf.format(nVox));
+                        statProperty.setProperty(VOIStatisticList.sumIntensities + "0;" + r, nf.format(sum));
                     }
 
                     area = nVox * (fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1]);
@@ -934,12 +974,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                              nf.format(totalSumG / totalNVox));
                     statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue" + "Total",
                                              nf.format(totalSumB / totalNVox));
+                    statProperty.setProperty(VOIStatisticList.sumIntensities + "Red" + "Total", nf.format(totalSumR));
+                    statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + "Total", nf.format(totalSumG));
+                    statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "Total", nf.format(totalSumB));
                 } else {
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Total", nf.format(totalMinIntensity));
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Total", nf.format(totalMaxIntensity));
                     statProperty.setProperty(VOIStatisticList.avgIntensity + "Total", nf.format(totalSum / totalNVox));
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Total",
                                              nf.format((float) Math.sqrt(totalStdDev / totalNVox)));
+                    statProperty.setProperty(VOIStatisticList.sumIntensities + "Total", nf.format(totalSum));
                 }
             }
         } else {
@@ -1046,6 +1090,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.avgIntensity + "Green" + "0;", nf.format(avgIntenG));
                 statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue" + "0;", nf.format(avgIntenB));
                 statProperty.setProperty(VOIStatisticList.quantityDescription + "0;", nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Red" + "0;", nf.format(sumR));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + "0;", nf.format(sumG));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "0;", nf.format(sumB));
 
                 statProperty.setProperty(VOIStatisticList.minIntensity + "Red", nf.format(minIntenRed));
                 statProperty.setProperty(VOIStatisticList.maxIntensity + "Red", nf.format(maxIntenRed));
@@ -1057,6 +1104,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.avgIntensity + "Green", nf.format(avgIntenG));
                 statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue", nf.format(avgIntenB));
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Red", nf.format(sumR));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Green", nf.format(sumG));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue", nf.format(sumB));
             } else {
 
                 for (int i = 0; i < length; i++) {
@@ -1081,11 +1131,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.maxIntensity + "0;", nf.format(maxIntensity));
                 statProperty.setProperty(VOIStatisticList.avgIntensity + "0;", nf.format(avgInten));
                 statProperty.setProperty(VOIStatisticList.quantityDescription + "0;", nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "0;", nf.format(sum));
 
                 statProperty.setProperty(VOIStatisticList.minIntensity, nf.format(minIntensity));
                 statProperty.setProperty(VOIStatisticList.maxIntensity, nf.format(maxIntensity));
                 statProperty.setProperty(VOIStatisticList.avgIntensity, nf.format(avgInten));
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.sumIntensities, nf.format(sum));
             }
 
             area = nVox * (fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1]);
@@ -1438,6 +1490,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.avgIntensity + "Green" + end, nf.format(avgIntenG));
                         statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue" + end, nf.format(avgIntenB));
                         statProperty.setProperty(VOIStatisticList.quantityDescription + end, nf.format(nVox));
+                        statProperty.setProperty(VOIStatisticList.sumIntensities + "Red"  + end, nf.format(sumR));
+                        statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + end, nf.format(sumG));
+                        statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + end, nf.format(sumB));
                     } else {
                         minIntensity = Float.MAX_VALUE;
                         maxIntensity = -Float.MAX_VALUE;
@@ -1477,6 +1532,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.maxIntensity + end, nf.format(maxIntensity));
                         statProperty.setProperty(VOIStatisticList.avgIntensity + end, nf.format(avgInten));
                         statProperty.setProperty(VOIStatisticList.quantityDescription + end, nf.format(nVox));
+                        statProperty.setProperty(VOIStatisticList.sumIntensities + end, nf.format(sum));
                     }
 
                     area = nVox * (fileInfo[q].getResolutions()[0] * fileInfo[q].getResolutions()[1]);
@@ -1590,12 +1646,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                              nf.format(totalSumG / totalNVox));
                     statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue" + "Total",
                                              nf.format(totalSumB / totalNVox));
+                    statProperty.setProperty(VOIStatisticList.sumIntensities + "Red" + "Total",
+                            nf.format(totalSumR));
+                    statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + "Total",
+                            nf.format(totalSumG));
+                    statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "Total",
+                            nf.format(totalSumB));
                 } else {
                     statProperty.setProperty(VOIStatisticList.minIntensity + "Total", nf.format(totalMinIntensity));
                     statProperty.setProperty(VOIStatisticList.maxIntensity + "Total", nf.format(totalMaxIntensity));
                     statProperty.setProperty(VOIStatisticList.avgIntensity + "Total", nf.format(totalSum / totalNVox));
                     statProperty.setProperty(VOIStatisticList.deviationDescription + "Total",
                                              nf.format((float) Math.sqrt(totalStdDev / totalNVox)));
+                    statProperty.setProperty(VOIStatisticList.sumIntensities + "Total", nf.format(totalSum));
                 }
             }
         } else {
@@ -1694,8 +1757,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.maxIntensity + "Blue", nf.format(maxIntenBlue));
                 statProperty.setProperty(VOIStatisticList.avgIntensity + "Red", nf.format(avgIntenR));
                 statProperty.setProperty(VOIStatisticList.avgIntensity + "Green", nf.format(avgIntenG));
-                statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue", nf.format(avgIntenB));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue", nf.format(avgIntenB));  
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Red", nf.format(sumR));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Green", nf.format(sumG));
+                statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue", nf.format(sumB));
             } else {
 
                 for (int i = 0; i < imgBuffer.length; i++) {
@@ -1720,6 +1786,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.maxIntensity, nf.format(maxIntensity));
                 statProperty.setProperty(VOIStatisticList.avgIntensity, nf.format(avgInten));
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.sumIntensities, nf.format(sum));
             }
 
             // calc the perimeter
