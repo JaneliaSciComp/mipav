@@ -6,6 +6,7 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.provenance.*;
 
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.components.*;
 
 
@@ -48,6 +49,9 @@ public class AlgorithmParameters {
     /** Label used for the parameter indicating the unnormalized/uncorrected gaussian standard deviation to be used. */
     public static final String SIGMAS = "gauss_std_dev";
 
+    /** Label used for the parameter indicating the WaterShed ITK parameters to be used. */
+    public static final String WATERSHED = "watershed_itk";
+    
     /**
      * Label used for the parameter indicating whether to correct the gaussian's standard deviation Z dimension using
      * the ratio of the X and Z resolutions.
@@ -289,6 +293,21 @@ public class AlgorithmParameters {
     }
 
     /**
+     * Sets up the GUI containing the sigmas used in an algorithm WaterShedITK, based on the script
+     * action's parameters. This is a helper function used to handle parameters common to many algorithms.
+     *
+     * @param  waterShedPanel  The sigmas panel to set up based on the parameters.
+     */
+    public void setSigmasGUI(JPanelWaterShedITK waterShedPanel) {
+        float[] waterShedParams = params.getList(WATERSHED).getAsFloatArray();
+        waterShedPanel.setConductance(waterShedParams[0]);
+        waterShedPanel.setIterations(waterShedParams[1]);
+        waterShedPanel.setThreshold(waterShedParams[2]);
+        waterShedPanel.setLevel(waterShedParams[3]);
+        waterShedPanel.setTimeStep(waterShedParams[4]);
+    }
+    
+    /**
      * Stores the values from the color channel panel in the parameter table. This function is used when recording a
      * script. This is a helper function used to handle parameters common to many algorithms.
      *
@@ -448,6 +467,18 @@ public class AlgorithmParameters {
     public void storeSigmas(JPanelSigmas sigmaPanel) throws ParserException {
         storeSigmas(sigmaPanel.getUnnormalized3DSigmas(), sigmaPanel.isResolutionCorrectionEnabled());
     }
+    
+    /**
+     * Stores an algorithm's paramters in the parameter table. This function is used when recording a script. This is a
+     * helper function used to handle parameters common to many algorithms.
+     *
+     * @param   waterShedPanel  The WaterShed ITK panel to extract the parameters from.
+     *
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    public void storeWaterShed(JPanelWaterShedITK waterShedPanel) throws ParserException {
+        params.put(ParameterFactory.newParameter(WATERSHED, waterShedPanel.getParameters()));
+    }
 
     /**
      * Stores an algorithm's sigmas in the parameter table. This function is used when recording a script. This is a
@@ -464,6 +495,21 @@ public class AlgorithmParameters {
         params.put(ParameterFactory.newBoolean(SIGMA_DO_Z_RES_CORRECTION, isZCorrectionEnabled));
     }
 
+    /**
+     * Stores an algorithm's sigmas in the parameter table. This function is used when recording a script. This is a
+     * helper function used to handle parameters common to many algorithms.
+     *
+     * @param   sigmas                The unnormalized sigmas (must be a 3D array).
+     * @param   isZCorrectionEnabled  Whether adjustment of the Z sigma should be performed based on the ratio of x
+     *                                resolution to z resolution.
+     *
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    public void storeWaterShed(float[] sigmas, boolean isZCorrectionEnabled) throws ParserException {
+        params.put(ParameterFactory.newParameter(SIGMAS, sigmas));
+        params.put(ParameterFactory.newBoolean(SIGMA_DO_Z_RES_CORRECTION, isZCorrectionEnabled));
+    }
+    
     /**
      * DOCUMENT ME!
      *
