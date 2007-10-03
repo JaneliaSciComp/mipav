@@ -223,17 +223,18 @@ public class VOI extends ModelSerialCloneable {
         // this ensures that color gets set in
         // all protractor contours.
         this.zDim = zDim;
-        stats = new ViewList[10];
+        stats = new ViewList[11];
         stats[0] = new ViewList("No. of voxels", false);
         stats[1] = new ViewList("Volume", false);
         stats[2] = new ViewList("Area", true);
         stats[3] = new ViewList("Average voxel intensity", false);
         stats[4] = new ViewList("Std. dev. of voxel intensity", false);
-        stats[5] = new ViewList("Center of Mass", false);
-        stats[6] = new ViewList("Principal axis (only 2D)", false);
-        stats[7] = new ViewList("Eccentricity (only 2D)", false);
-        stats[8] = new ViewList("Major axis length (only 2D)", false);
-        stats[9] = new ViewList("Minor axis length (only 2D)", false);
+        stats[5] = new ViewList("Sum Intensities", false);
+        stats[6] = new ViewList("Center of Mass", false);
+        stats[7] = new ViewList("Principal axis (only 2D)", false);
+        stats[8] = new ViewList("Eccentricity (only 2D)", false);
+        stats[9] = new ViewList("Major axis length (only 2D)", false);
+        stats[10] = new ViewList("Minor axis length (only 2D)", false);
     }
 
     /**
@@ -287,17 +288,18 @@ public class VOI extends ModelSerialCloneable {
         // this ensures that color gets set in
         // all protractor contours.
         this.zDim = zDim;
-        stats = new ViewList[10];
+        stats = new ViewList[11];
         stats[0] = new ViewList("No. of voxels", false);
         stats[1] = new ViewList("Volume", false);
         stats[2] = new ViewList("Area", true);
         stats[3] = new ViewList("Average voxel intensity", false);
         stats[4] = new ViewList("Std. dev. of voxel intensity", false);
-        stats[5] = new ViewList("Center of Mass", false);
-        stats[6] = new ViewList("Principal axis (only 2D)", false);
-        stats[7] = new ViewList("Eccentricity (only 2D)", false);
-        stats[8] = new ViewList("Major axis length (only 2D)", false);
-        stats[9] = new ViewList("Minor axis length (only 2D)", false);
+        stats[5] = new ViewList("Sum Intensities", false);
+        stats[6] = new ViewList("Center of Mass", false);
+        stats[7] = new ViewList("Principal axis (only 2D)", false);
+        stats[8] = new ViewList("Eccentricity (only 2D)", false);
+        stats[9] = new ViewList("Major axis length (only 2D)", false);
+        stats[10] = new ViewList("Minor axis length (only 2D)", false);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
