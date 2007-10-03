@@ -169,10 +169,13 @@ public class FileMinc extends FileBase {
      */
     public FileInfoMinc readHeader() throws IOException {
         String attrString;
+        long fileLength;
+        long typeSize = 1;
         FileInfoMinc fileInfo = new FileInfoMinc(fileName, fileDir, FileUtility.MINC);
 
         location = 0;
         raFile.seek(0);
+        fileLength = raFile.length();
         endianess = FileBase.BIG_ENDIAN;
         fileInfo.setEndianess(endianess);
 
@@ -428,31 +431,38 @@ public class FileMinc extends FileBase {
 
                     case 1:
                         Preferences.debug("var[" + i + "] nc_type = 1 for NC_BYTE\n", Preferences.DEBUG_FILEIO);
+                        typeSize = 1;
                         break;
 
                     case 2:
                         Preferences.debug("var[" + i + "] nc_type = 2 for NC_CHAR\n", Preferences.DEBUG_FILEIO);
+                        typeSize = 1;
                         break;
 
                     case 3:
                         Preferences.debug("var[" + i + "] nc_type = 3 for NC_SHORT\n", Preferences.DEBUG_FILEIO);
+                        typeSize = 2;
                         break;
 
                     case 4:
                         Preferences.debug("var[" + i + "] nc_type = 4 for NC_INT\n", Preferences.DEBUG_FILEIO);
+                        typeSize = 4;
                         break;
 
                     case 5:
                         Preferences.debug("var[" + i + "] nc_type = 5 for NC_FLOAT\n", Preferences.DEBUG_FILEIO);
+                        typeSize = 4;
                         break;
 
                     case 6:
                         Preferences.debug("var[" + i + "] nc_type = 6 for NC_DOUBLE\n", Preferences.DEBUG_FILEIO);
+                        typeSize = 8;
                         break;
 
                     default:
                         Preferences.debug("var[" + i + "] nc_type illegally = " + type + "\n",
                                           Preferences.DEBUG_FILEIO);
+                        typeSize = 1;
                 }
 
                 int size = getInt(endianess);
@@ -482,6 +492,23 @@ public class FileMinc extends FileBase {
             Preferences.debug("Should have NC_VARIABLE = 11 or ABSENCE = 0, " + "but instead have = " + next + "\n",
                               Preferences.DEBUG_FILEIO);
             throw new IOException("MINC header corrupted");
+        }
+        
+        long neededLength = typeSize;
+        int extents[] = fileInfo.getExtents();
+        for (int i = 0; i < extents.length; i++) {
+            neededLength *= extents[i];    
+        }
+        Preferences.debug("Needed length for data = " + neededLength + "\n");
+        if (neededLength > fileLength) {
+            Preferences.debug("Needed length for data = " + neededLength + 
+                              " is greater than file length = " + fileLength);
+            Preferences.debug("Assume last MINC dimension or first MIPAV dimension is from mincaverage and does not really exist");
+            int newExtents[] = new int[extents.length-1];
+            for (int i = 0; i < extents.length-1; i++) {
+                newExtents[i] = extents[i+1];
+            }
+            fileInfo.setExtents(newExtents);
         }
 
         return fileInfo;
