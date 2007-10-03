@@ -372,6 +372,21 @@ public class InsightToolkitSupport {
         itkTransferImage2D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
     }
 
+    public static void itkTransferImageColor2D(itkImageF2 kImageITK0, itkImageUL2 kImageITK1, BitSet kMask,
+    		ModelImage kModelImage, int iChannel) {
+    	
+    	//If not a color image, then call method which handles the
+    	//single channel image.
+    	if (!kModelImage.isColorImage()) {
+    		itkTransferImageSingle2D(kImageITK0, kImageITK1, kMask, kModelImage);
+    		
+    		return;
+    	}
+    	
+    	itkTransferImage2D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
+    }
+
+    
     /**
      * Transfers the pixels values from either of two 3D ITK single channel images into the specified color channel in
      * the 3D model image. Pixels are tranferred selected from either ITK image depending on the specification of the
@@ -405,6 +420,21 @@ public class InsightToolkitSupport {
 
         itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
     }
+    
+    public static void itkTransferImageColor3D(itkImageF3 kImageITK0,
+			itkImageUL3 kImageITK1, BitSet kMask, ModelImage kModelImage,
+			int iChannel) {
+
+		// If not a color image, then call method which handles the
+		// single channel image.
+		if (!kModelImage.isColorImage()) {
+			itkTransferImageSingle3D(kImageITK0, kImageITK1, kMask, kModelImage);
+
+			return;
+		}
+
+itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
+}
 
     /**
      * Transfers the pixels values from either of two 2D ITK single channel images into the specified slice and color
@@ -443,6 +473,22 @@ public class InsightToolkitSupport {
                            (kModelImage.getSliceSize() * iSlice * 4) + iChannel, 4);
     }
 
+    public static void itkTransferImageColorSlice(itkImageF2 kImageITK0, itkImageUL2 kImageITK1, BitSet kMask, ModelImage kModelImage,
+			int iSlice, int iChannel) {
+
+		// If not a color image, then call method which handles the
+		// single channel image.
+		if (!kModelImage.isColorImage()) {
+			itkTransferImageSingleSlice(kImageITK0, kImageITK1, kMask,
+					kModelImage, iSlice);
+
+			return;
+		}
+
+		itkTransferImage2D(kImageITK0, kImageITK1, kMask, kModelImage,
+				(kModelImage.getSliceSize() * iSlice * 4) + iChannel, 4);
+	}
+    
     /**
      * Transfers the pixels values from either of two 2D ITK single channel images into the specified single channel 2D
      * model image. Pixels are tranferred selected from either ITK image depending on the specification of the mask
@@ -466,6 +512,13 @@ public class InsightToolkitSupport {
         itkTransferImage2D(kImageITK0, kImageITK1, kMask, kModelImage, 0, 1);
     }
 
+    public static void itkTransferImageSingle2D(itkImageF2 kImageITK0, itkImageUL2 kImageITK1, BitSet kMask,
+            ModelImage kModelImage) {
+
+         itkTransferImage2D(kImageITK0, kImageITK1, kMask, kModelImage, 0, 1);
+    }
+
+    
     /**
      * Transfers the pixels values from either of two 3D ITK single channel images into the specified single channel 3D
      * model image. Pixels are tranferred selected from either ITK image depending on the specification of the mask
@@ -488,6 +541,12 @@ public class InsightToolkitSupport {
 
         itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, 0, 1);
     }
+    
+    public static void itkTransferImageSingle3D(itkImageF3 kImageITK0, itkImageUL3 kImageITK1, BitSet kMask,
+            ModelImage kModelImage) {
+ 
+       itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, 0, 1);
+}
 
     /**
      * Transfers the pixels values from either of two 2D ITK single channel images into the specified slice in the
@@ -513,6 +572,12 @@ public class InsightToolkitSupport {
                                                    ModelImage kModelImage, int iSlice) {
 
         itkTransferImage2D(kImageITK0, kImageITK1, kMask, kModelImage, kModelImage.getSliceSize() * iSlice, 1);
+    }
+    
+    public static void itkTransferImageSingleSlice(itkImageF2 kImageITK0, itkImageUL2 kImageITK1, BitSet kMask,
+            ModelImage kModelImage, int iSlice) {
+
+     itkTransferImage2D(kImageITK0, kImageITK1, kMask, kModelImage, kModelImage.getSliceSize() * iSlice, 1);
     }
 
     /**
@@ -707,6 +772,36 @@ public class InsightToolkitSupport {
         }
     }
 
+    private static void itkTransferImage2D(itkImageF2 kImageITK0, itkImageUL2 kImageITK1, BitSet kMask,
+            ModelImage kModelImage, int iStart, int iStride) {
+
+		// Note the dimensions of each axis.
+		int iSizeX = kModelImage.getExtents()[0];
+		int iSizeY = kModelImage.getExtents()[1];
+		
+		// Copy pixel values from the ModelImage to the ITK image.
+		itkIndex2 iIndexITK = new itkIndex2();
+		int iIndex = iStart;
+		int iIndexMask = iStart / iStride;
+		
+		for (int iY = 0; iY < iSizeY; iY++) {
+			iIndexITK.SetElement(1, iY);
+			
+			for (int iX = 0; iX < iSizeX; iX++) {
+				iIndexITK.SetElement(0, iX);
+				
+				if ((null == kMask) || kMask.get(iIndexMask)) {
+				kModelImage.set(iIndex, kImageITK1.GetPixel(iIndexITK));
+				} else {
+				kModelImage.set(iIndex, kImageITK0.GetPixel(iIndexITK));
+				}
+				
+				iIndex += iStride;
+				iIndexMask++;
+			}
+		}
+}    
+    
     /**
      * Transfers the pixels values from either of two 3D ITK single channel images into the specified 3D model image.
      * Pixels are tranferred selected from either ITK image depending on the specification of the mask image. The
@@ -764,4 +859,65 @@ public class InsightToolkitSupport {
             }
         }
     }
+
+    
+    /**
+     * Transfers the pixels values from either of two 3D ITK single channel images into the specified 3D model image.
+     * Pixels are tranferred selected from either ITK image depending on the specification of the mask image. The
+     * dimensions of the two ITK images, the model image, and the mask image (if defined) must be compatible.
+     *
+     * @param  kImageITK0   itkImageF3 3D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask image if that mask value for the corresponding pixel is not set. This image is ignored
+     *                      if the input mask image is not defined.
+     * @param  kImageITK1   itkImageUL3 3D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask if that mask value for the corresponding pixel is set. Pixels are tranferred from this
+     *                      image only if the input mask image is not defined.
+     * @param  kMask        BitSet Boolean image which contains set values indicating pixels to be transferred from
+     *                      input kImageITK1; otherwise unset values indicate pixels to be transferred from input
+     *                      kImageITK0. This image does not have to be defined (i.e., set to null) which means all
+     *                      pixels are tranferred from input kImageITK1.
+     * @param  kModelImage  ModelImage Image into which values will be transferred.
+     * @param  iStart       int Starting index into the model image linear array of values for the corresponding pixel
+     *                      at the start of the ITK image.
+     * @param  iStride      int Increment to advance to the next pixel for the same channel in the model image. The
+     *                      integral-truncated result of the starting index (iStart) divided by this increment is the
+     *                      starting index into the mask image (if defined) for the corresponding pixel at the start of
+     *                      the ITK image.
+     */
+    private static void itkTransferImage3D(itkImageF3 kImageITK0, itkImageUL3 kImageITK1, BitSet kMask,
+                                           ModelImage kModelImage, int iStart, int iStride) {
+
+        // Note the dimensions of each axis.
+        int iSizeX = kModelImage.getExtents()[0];
+        int iSizeY = kModelImage.getExtents()[1];
+        int iSizeZ = kModelImage.getExtents()[2];
+
+        // Copy pixel values from the ModelImage to the ITK image.
+        itkIndex3 iIndexITK = new itkIndex3();
+        int iIndex = iStart;
+        int iIndexMask = iStart / iStride;
+
+        for (int iZ = 0; iZ < iSizeZ; iZ++) {
+            iIndexITK.SetElement(2, iZ);
+
+            for (int iY = 0; iY < iSizeY; iY++) {
+                iIndexITK.SetElement(1, iY);
+
+                for (int iX = 0; iX < iSizeX; iX++) {
+                    iIndexITK.SetElement(0, iX);
+
+                    if ((null == kMask) || kMask.get(iIndexMask)) {
+                        kModelImage.set(iIndex, kImageITK1.GetPixel(iIndexITK));
+                    } else {
+                        kModelImage.set(iIndex, kImageITK0.GetPixel(iIndexITK));
+                    }
+
+                    iIndex += iStride;
+                    iIndexMask++;
+                }
+            }
+        }
+    }
+    
+    
 }
