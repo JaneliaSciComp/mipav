@@ -502,8 +502,8 @@ public class FileMinc extends FileBase {
         Preferences.debug("Needed length for data = " + neededLength + "\n");
         if (neededLength > fileLength) {
             Preferences.debug("Needed length for data = " + neededLength + 
-                              " is greater than file length = " + fileLength);
-            Preferences.debug("Assume last MINC dimension or first MIPAV dimension is from mincaverage and does not really exist");
+                              " is greater than file length = " + fileLength + "\n");
+            Preferences.debug("Assume last MINC dimension or first MIPAV dimension is from mincaverage and does not really exist\n");
             int newExtents[] = new int[extents.length-1];
             for (int i = 0; i < extents.length-1; i++) {
                 newExtents[i] = extents[i+1];
