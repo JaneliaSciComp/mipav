@@ -123,8 +123,8 @@ public interface VOIStatisticList {
      */
     String[] statisticDescription = {
         quantityDescription, volumeDescription, areaDescription, perimeterDescription, minIntensity, maxIntensity,
-        avgIntensity, deviationDescription, centerDescription, axisDescription, eccentricityDescription,
-        majorAxisDescription, minorAxisDescription, sumIntensities
+        avgIntensity, deviationDescription, sumIntensities, centerDescription, axisDescription, eccentricityDescription,
+        majorAxisDescription, minorAxisDescription
     };
 
     /** number of statistics in the list. */
