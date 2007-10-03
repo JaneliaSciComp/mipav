@@ -19,6 +19,12 @@ import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.surfaceview.plotterview.*;
 
+import gov.nih.mipav.view.gpu.src.*;
+import gov.nih.mipav.view.multihisto.src.*;
+import gov.nih.mipav.view.vtk.Examples.Medical.Java.*;
+import gov.nih.mipav.view.vtk.Examples.VolumeRendering.Java.*;
+
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -1582,8 +1588,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogGaussianBlur(this, getActiveImage());
         } else if (command.equals("GaussianBlurITK")) {
             new JDialogGaussianBlurITK(this, getActiveImage());
-        } else if (command.equals("Unsharp mask")) {
-
+        } else if (command.equals("WaterShedITK")) {
+            new JDialogWaterShedITK(this, getActiveImage());
+        }  else if (command.equals("Unsharp mask")) {
             // JDialogUnsharpMask usm =
             new JDialogUnsharpMask(this, getActiveImage());
         } else if (command.equals("Local normalization")) {
@@ -2279,6 +2286,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } catch (OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: unable to open Tri-planar frame.");
             }
+        } else if (command.equals("GPU")) {
+            Render.main(null);
+        } else if (command.equals("MultiHisto")) {
+
+            // gluvvMain m = new gluvvMain();
+            String[] args = new String[2];
+            args[0] = "-t";
+            args[1] = "cardiac.trex";
+            gluvvMain.main(args);
+        } else if (command.equals("VTK")) {
+            Medical1.main(null);
+            Medical2.main(null);
+            Medical3.main(null);
+            PseudoVolumeRendering.main(null);
         } else if (command.equals("VolTriplanar") || 
                    command.equals("WMVolTriplanar") ) {
 

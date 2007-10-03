@@ -255,7 +255,10 @@ public class ViewMenuBar {
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Gaussian blur",
                                                                                            "GaussianBlurITK", 0, null,
-                                                                                           false)
+                                                                                           false),
+                                                                 menuBuilder.buildMenuItem("WaterShed",
+                                                                                           "WaterShedITK", 0, null,
+                                                                                            false), 
                                                              }),
                                         menuBuilder.makeMenu("Microscopy", false,
                                                              new JMenuItem[] {
