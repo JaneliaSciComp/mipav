@@ -421,6 +421,26 @@ public class InsightToolkitSupport {
         itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
     }
     
+    /**
+     * Transfers the pixels values from either of two 3D ITK single channel images into the specified color channel in
+     * the 3D model image. Pixels are tranferred selected from either ITK image depending on the specification of the
+     * mask image. The dimensions of the two ITK images, the model image, and the mask image (if defined) must be
+     * compatible.
+     *
+     * @param  kImageITK0   itkImageF3 3D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask image if that mask value for the corresponding pixel is not set. This image is ignored
+     *                      if the input mask image is not defined.
+     * @param  kImageITK1   itkImageUL3 3D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask if that mask value for the corresponding pixel is set. Pixels are tranferred from this
+     *                      image only if the input mask image is not defined.
+     * @param  kMask        BitSet Boolean image which contains set values indicating pixels to be transferred from
+     *                      input kImageITK1; otherwise unset values indicate pixels to be transferred from input
+     *                      kImageITK0. This image does not have to be defined (i.e., set to null) which means all
+     *                      pixels are tranferred from input kImageITK1.
+     * @param  kModelImage  ModelImage Image into which values will be transferred.
+     * @param  iChannel     int Index of the color channel (0=alpha, 1=red, 2=green, 3=blue) into which values will be
+     *                      transferred in the model image.
+     */
     public static void itkTransferImageColor3D(itkImageF3 kImageITK0,
 			itkImageUL3 kImageITK1, BitSet kMask, ModelImage kModelImage,
 			int iChannel) {
@@ -433,8 +453,8 @@ public class InsightToolkitSupport {
 			return;
 		}
 
-itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
-}
+		itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
+    }
 
     /**
      * Transfers the pixels values from either of two 2D ITK single channel images into the specified slice and color
@@ -473,6 +493,28 @@ itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
                            (kModelImage.getSliceSize() * iSlice * 4) + iChannel, 4);
     }
 
+    /**
+     * Transfers the pixels values from either of two 2D ITK single channel images into the specified slice and color
+     * channel of the 3D model image. Pixels are tranferred selected from either ITK image depending on the
+     * specification of the mask image. The dimensions of the two ITK images, the model image, and the mask image (if
+     * defined) must be compatible.
+     *
+     * @param  kImageITK0   itkImageF2 2D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask image if that mask value for the corresponding pixel is not set. This image is ignored
+     *                      if the input mask image is not defined.
+     * @param  kImageITK1   itkImageUL2 2D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask if that mask value for the corresponding pixel is set. Pixels are tranferred from this
+     *                      image only if the input mask image is not defined.
+     * @param  kMask        BitSet Boolean image which contains set values indicating pixels to be transferred from
+     *                      input kImageITK1; otherwise unset values indicate pixels to be transferred from input
+     *                      kImageITK0. This image does not have to be defined (i.e., set to null) which means all
+     *                      pixels are tranferred from input kImageITK1.
+     * @param  kModelImage  ModelImage Image into which values will be transferred.
+     * @param  iSlice       int Index of the slice in the 3D model image into values will be transferred in the model
+     *                      image.
+     * @param  iChannel     int Index of the color channel (0=alpha, 1=red, 2=green, 3=blue) into which values will be
+     *                      transferred in the model image.
+     */
     public static void itkTransferImageColorSlice(itkImageF2 kImageITK0, itkImageUL2 kImageITK1, BitSet kMask, ModelImage kModelImage,
 			int iSlice, int iChannel) {
 
@@ -574,6 +616,26 @@ itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
         itkTransferImage2D(kImageITK0, kImageITK1, kMask, kModelImage, kModelImage.getSliceSize() * iSlice, 1);
     }
     
+    /**
+     * Transfers the pixels values from either of two 2D ITK single channel images into the specified slice in the
+     * single channel 3D model image. Pixels are tranferred selected from either ITK image depending on the
+     * specification of the mask image. The dimensions of the two ITK images, the model image, and the mask image (if
+     * defined) must be compatible.
+     *
+     * @param  kImageITK0   itkImageF2 2D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask image if that mask value for the corresponding pixel is not set. This image is ignored
+     *                      if the input mask image is not defined.
+     * @param  kImageITK1   itkImageUL2 2D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask if that mask value for the corresponding pixel is set. Pixels are tranferred from this
+     *                      image only if the input mask image is not defined.
+     * @param  kMask        BitSet Boolean image which contains set values indicating pixels to be transferred from
+     *                      input kImageITK1; otherwise unset values indicate pixels to be transferred from input
+     *                      kImageITK0. This image does not have to be defined (i.e., set to null) which means all
+     *                      pixels are tranferred from input kImageITK1.
+     * @param  kModelImage  ModelImage Image into which values will be transferred.
+     * @param  iSlice       int Index of the slice in the 3D model image into values will be transferred in the model
+     *                      image.
+     */
     public static void itkTransferImageSingleSlice(itkImageF2 kImageITK0, itkImageUL2 kImageITK1, BitSet kMask,
             ModelImage kModelImage, int iSlice) {
 
@@ -772,6 +834,30 @@ itkTransferImage3D(kImageITK0, kImageITK1, kMask, kModelImage, iChannel, 4);
         }
     }
 
+    /**
+     * Transfers the pixels values from either of two 2D ITK single channel images into either a 2D model image or the
+     * specified slice of a 3D model image. Pixels are tranferred selected from either ITK image depending on the
+     * specification of the mask image. The dimensions of the two ITK images, the model image, and the mask image (if
+     * defined) must be compatible.
+     *
+     * @param  kImageITK0   itkImageF2 2D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask image if that mask value for the corresponding pixel is not set. This image is ignored
+     *                      if the input mask image is not defined.
+     * @param  kImageITK1   itkImageUL2 2D ITK single channel image with values to copy for pixels defined in the input
+     *                      mask if that mask value for the corresponding pixel is set. Pixels are tranferred from this
+     *                      image only if the input mask image is not defined.
+     * @param  kMask        BitSet Boolean image which contains set values indicating pixels to be transferred from
+     *                      input kImageITK1; otherwise unset values indicate pixels to be transferred from input
+     *                      kImageITK0. This image does not have to be defined (i.e., set to null) which means all
+     *                      pixels are tranferred from input kImageITK1.
+     * @param  kModelImage  ModelImage Image into which values will be transferred.
+     * @param  iStart       int Starting index into the model image linear array of values for the corresponding pixel
+     *                      at the start of the ITK image.
+     * @param  iStride      int Increment to advance to the next pixel for the same channel in the model image. The
+     *                      integral-truncated result of the starting index (iStart) divided by this increment is the
+     *                      starting index into the mask image (if defined) for the corresponding pixel at the start of
+     *                      the ITK image.
+     */
     private static void itkTransferImage2D(itkImageF2 kImageITK0, itkImageUL2 kImageITK1, BitSet kMask,
             ModelImage kModelImage, int iStart, int iStride) {
 
