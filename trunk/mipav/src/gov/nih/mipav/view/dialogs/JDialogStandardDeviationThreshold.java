@@ -783,6 +783,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 			if(!isColorImage) {
 	        	UI.setDataText("Result:\n");
 	        	UI.setDataText("            Number of standard deviations used to calculate range:     " + numStdDev + "\n");
+	        	UI.setDataText("            Inverse Threshold:     " + inverseThreshold + "\n");
 	        	UI.setDataText("            Thresholded range:     " + minIntensity + " - " + maxIntensity + "\n");
 		        if(srcImage.getNDims() == 2) {
 		        	UI.setDataText("            Total thresholded area:     " + alg.getTotalArea() + "  mm^2\n");
@@ -798,6 +799,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 	        }else {
 	        	UI.setDataText("Result:\n");
 	        	UI.setDataText("            Number of standard deviations used to calculate red channel range:     " + numStdDevR + "\n");
+	        	UI.setDataText("            Inverse Threshold:     " + inverseThreshold + "\n");
 	        	UI.setDataText("            Thresholded range R:     " + minIntensityR + " - " + maxIntensityR + "\n");
 	        	if(srcImage.getNDims() == 2) {
 		        	UI.setDataText("            Total thresholded area R:     " + alg.getTotalAreaR() + "  mm^2\n");
