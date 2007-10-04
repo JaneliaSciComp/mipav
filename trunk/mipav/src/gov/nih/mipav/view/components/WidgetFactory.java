@@ -370,5 +370,46 @@ public class WidgetFactory {
         return (separator);
     }
 
+    public static final ScrollTextArea buildScrollTextArea(Color bg) {
+    	ScrollTextArea tArea = new ScrollTextArea(bg);
+    	return tArea;
+    }
+    
+    /**
+     * ScrollPane with an accessible JTextArea
+     *
+     */
+    public static final class ScrollTextArea extends JScrollPane {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 3869765356771292936L;
+
+        /** DOCUMENT ME! */
+        private JTextArea tArea = null;
+
+        /**
+         * Creates a new ScrollTextArea object.
+         */
+        public ScrollTextArea(Color text_background) {
+            super(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
+            tArea = new JTextArea();
+            tArea.setBackground(text_background);
+            tArea.setEditable(true);
+            tArea.setFont(MipavUtil.font12);
+            tArea.setMargin(new Insets(3, 3, 3, 3));
+            setViewportView(tArea);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public JTextArea getTextArea() {
+            return tArea;
+        }
+    }
+    
     // TODO menu -- see ViewMenuBuilder
 }
