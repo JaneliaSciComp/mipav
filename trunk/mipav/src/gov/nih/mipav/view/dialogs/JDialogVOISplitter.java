@@ -191,8 +191,11 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
 		int currentSide = 0;
 		int currentSideB = 0;
 		
+		boolean isClosed = false;
+		
     	for (int voiIndex = nVOI - 1; voiIndex >= 0; voiIndex--) {
     		currentVOI = image.getVOIs().VOIAt(voiIndex);
+    		System.err.println(voiIndex + ", " + currentVOI.getCurveType());
     		if (currentVOI.getCurveType() == VOI.CONTOUR && (!onlyActive || currentVOI.isActive())) {
     			
     			curves = currentVOI.getCurves();
@@ -202,7 +205,10 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     					size = curves[slice].size();
     					for (int voiBaseIndex = size - 1; voiBaseIndex >= 0; voiBaseIndex--) {
     						currentContour = (VOIContour)curves[slice].elementAt(voiBaseIndex);
-    						if (currentContour.isClosed() && (!onlyActive || currentContour.isActive()) ) {
+    						if (!onlyActive || currentContour.isActive() ) {
+    							
+    							isClosed = currentContour.isClosed();
+    							System.err.println("checking contour.  isClosed: " + isClosed);
     						//	System.err.println("found closed contour VOIAt(" + voiIndex + ").curves[" +
     						//			slice + "].elementAt(" + voiBaseIndex + ")");
     							numPoints = currentContour.size();
@@ -229,8 +235,8 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     								
     							}
     							
-    							
-    							if (firstIntersectionPt != null &&
+    							//only check the last to first point segment if contour is closed (and 2nd intersection pt null)
+    							if (isClosed && firstIntersectionPt != null &&
     									secondIntersectionPt == null) {
     								//need to check last two segments
     								
@@ -251,8 +257,8 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     								
     								//System.err.println("Found two intersection points: " + firstIntersectionPt + "\n\t" + secondIntersectionPt);
     								
-    								VOIContour firstContour = new VOIContour("firstContour", true);
-    								VOIContour secondContour = new VOIContour("secondContour", true);
+    								VOIContour firstContour = new VOIContour("firstContour", isClosed);
+    								VOIContour secondContour = new VOIContour("secondContour", isClosed);
     								
     								//add the second intersection point 1st
     								firstContour.addElement(new Point3Df(secondIntersectionPt.x, secondIntersectionPt.y, secondIntersectionPt.z));

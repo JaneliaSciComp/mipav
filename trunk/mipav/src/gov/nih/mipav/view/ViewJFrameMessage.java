@@ -481,7 +481,7 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
     /**
      * DOCUMENT ME!
      */
-    private class ScrollTextArea extends JScrollPane {
+    public static class ScrollTextArea extends JScrollPane {
 
         /** Use serialVersionUID for interoperability. */
         private static final long serialVersionUID = 3869765356771292936L;
