@@ -786,15 +786,15 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 	        	UI.setDataText("            Inverse Threshold:     " + inverseThreshold + "\n");
 	        	UI.setDataText("            Thresholded range:     " + minIntensity + " - " + maxIntensity + "\n");
 		        if(srcImage.getNDims() == 2) {
-		        	UI.setDataText("            Total thresholded area:     " + alg.getTotalArea() + "  mm^2\n");
+		        	UI.setDataText("            Area:     " + alg.getTotalArea() + "  mm^2\n");
 		        }else if(srcImage.getNDims() == 3) {
-		        	UI.setDataText("            Total thresholded volume:     " + alg.getTotalVolume() + "  mm^3\n");
+		        	UI.setDataText("            Volume:     " + alg.getTotalVolume() + "  mm^3\n");
 		        }
 	        
-		        UI.setDataText("            Number of pixels in thresholded volume:     " + alg.getNumPixels() + "\n");
-		        UI.setDataText("            Sum pixel intensities in thresholded volume:     " + alg.getSumIntensities() + "\n");
+		        UI.setDataText("            Number of pixels:     " + alg.getNumPixels() + "\n");
+		        UI.setDataText("            Sum pixel intensities:     " + alg.getSumIntensities() + "\n");
 		        float avg = alg.getSumIntensities()/alg.getNumPixels();
-		        UI.setDataText("            Average pixel intensity in thresholded volume:     " + avg + "\n");
+		        UI.setDataText("            Average pixel intensity:     " + avg + "\n");
 		        UI.setDataText("\n -----------------------------------------------------------------------------\n");
 	        }else {
 	        	UI.setDataText("Result:\n");
@@ -802,38 +802,38 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 	        	UI.setDataText("            Inverse Threshold:     " + inverseThreshold + "\n");
 	        	UI.setDataText("            Thresholded range R:     " + minIntensityR + " - " + maxIntensityR + "\n");
 	        	if(srcImage.getNDims() == 2) {
-		        	UI.setDataText("            Total thresholded area R:     " + alg.getTotalAreaR() + "  mm^2\n");
+		        	UI.setDataText("            Area R:     " + alg.getTotalAreaR() + "  mm^2\n");
 		        }else if(srcImage.getNDims() == 3) {
-		        	UI.setDataText("            Total thresholded volume R:     " + alg.getTotalVolumeR() + "  mm^3\n");
+		        	UI.setDataText("            Volume R:     " + alg.getTotalVolumeR() + "  mm^3\n");
 		        }
-	        	UI.setDataText("            Number of pixels in thresholded volume R:     " + alg.getNumPixelsR() + "\n");
-		        UI.setDataText("            Sum pixel intensities in thresholded volume R:     " + alg.getSumIntensitiesR() + "\n");
+	        	UI.setDataText("            Number of pixels R:     " + alg.getNumPixelsR() + "\n");
+		        UI.setDataText("            Sum pixel intensities R:     " + alg.getSumIntensitiesR() + "\n");
 		        float avgR = alg.getSumIntensitiesR()/alg.getNumPixelsR();
-		        UI.setDataText("            Average pixel intensity in thresholded volume R:     " + avgR + "\n");
+		        UI.setDataText("            Average pixel intensity R:     " + avgR + "\n");
 	        	UI.setDataText("\n");
 	        	UI.setDataText("            Number of standard deviations used to calculate green channel range:     " + numStdDevG + "\n");
 	        	UI.setDataText("            Thresholded range G:     " + minIntensityG + " - " + maxIntensityG + "\n");
 	        	if(srcImage.getNDims() == 2) {
-		        	UI.setDataText("            Total thresholded area G:     " + alg.getTotalAreaG() + "  mm^2\n");
+		        	UI.setDataText("            Area G:     " + alg.getTotalAreaG() + "  mm^2\n");
 		        }else if(srcImage.getNDims() == 3) {
-		        	UI.setDataText("            Total thresholded volume G:     " + alg.getTotalVolumeG() + "  mm^3\n");
+		        	UI.setDataText("            Volume G:     " + alg.getTotalVolumeG() + "  mm^3\n");
 		        }
-	        	UI.setDataText("            Number of pixels in thresholded volume G:     " + alg.getNumPixelsG() + "\n");
-		        UI.setDataText("            Sum pixel intensities in thresholded volume G:     " + alg.getSumIntensitiesG() + "\n");
+	        	UI.setDataText("            Number of pixels G:     " + alg.getNumPixelsG() + "\n");
+		        UI.setDataText("            Sum pixel intensities G:     " + alg.getSumIntensitiesG() + "\n");
 		        float avgG = alg.getSumIntensitiesG()/alg.getNumPixelsG();
-		        UI.setDataText("            Average pixel intensity in thresholded volume G:     " + avgG + "\n");
+		        UI.setDataText("            Average pixel intensity G:     " + avgG + "\n");
 	        	UI.setDataText("\n");
 	        	UI.setDataText("            Number of standard deviations used to calculate blue channel range:     " + numStdDevB + "\n");
 	        	UI.setDataText("            Thresholded range B:     " + minIntensityB + " - " + maxIntensityB + "\n");
 	        	if(srcImage.getNDims() == 2) {
-		        	UI.setDataText("            Total thresholded area B:     " + alg.getTotalAreaB() + "  mm^2\n");
+		        	UI.setDataText("            Area B:     " + alg.getTotalAreaB() + "  mm^2\n");
 		        }else if(srcImage.getNDims() == 3) {
-		        	UI.setDataText("            Total thresholded volume B:     " + alg.getTotalVolumeB() + "  mm^3\n");
+		        	UI.setDataText("            Volume B:     " + alg.getTotalVolumeB() + "  mm^3\n");
 		        }
-	        	UI.setDataText("            Number of pixels in thresholded volume B:     " + alg.getNumPixelsB() + "\n");
-		        UI.setDataText("            Sum pixel intensities in thresholded volume B:     " + alg.getSumIntensitiesB() + "\n");
+	        	UI.setDataText("            Number of pixels B:     " + alg.getNumPixelsB() + "\n");
+		        UI.setDataText("            Sum pixel intensities B:     " + alg.getSumIntensitiesB() + "\n");
 		        float avgB = alg.getSumIntensitiesB()/alg.getNumPixelsB();
-		        UI.setDataText("            Average pixel intensity in thresholded volume B:     " + avgB + "\n");
+		        UI.setDataText("            Average pixel intensity B:     " + avgB + "\n");
 	        	UI.setDataText("\n -----------------------------------------------------------------------------\n");
 	        }
 			insertScriptLine();
