@@ -7,12 +7,10 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.*;
-import gov.nih.mipav.MipavMath;
 
 import java.awt.*;
 import java.awt.event.*;
 
-import java.util.*;
 import java.io.*;
 
 import javax.swing.*;
@@ -94,7 +92,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
   
     public JDialogNDAR(Frame theParentFrame) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         
         init();
         setVisible(true);
@@ -584,8 +582,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     }
     
     private void transfer() {
-    	System.err.println("transfer...fake");
-    	
+    	//Create the FileIO
     	FileIO fileIO = new FileIO();
     	SRBFileTransferer transferer = new SRBFileTransferer();
     	
@@ -631,11 +628,16 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		options.setOptionsSet(true);
     		
     		
+    		//write out only the header to userdir/mipav/temp
     		fileIO.writeImage(tempImage, options);
     		
+    		//use the directory and filename to send the .xml file
     		
+    		//transferer.transfer(sourceFile, targetFile)
     		
-    	//	transferer.saveToSRB(tempImage);
+    		//now send the model image
+    		
+    		//transferer.saveToSRB(tempImage);
     	
     		
     	}
