@@ -1231,7 +1231,7 @@ public class FileInfoImageXML extends FileInfoXML {
      * @author   not attributable
      * @version  1.0
      */
-    public class Investigator implements Serializable {
+    public static class Investigator implements Serializable {
 
         /** Use serialVersionUID for interoperability. */
         private static final long serialVersionUID = -5267494343773142072L;

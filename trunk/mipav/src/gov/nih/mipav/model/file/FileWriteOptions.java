@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.dialogs.JDialogNDAR.NDARData;
 
 import java.util.*;
 
@@ -153,6 +154,11 @@ public class FileWriteOptions {
     /** Tells FileIO whether or not to insert the saved image into the Quicklist (recently used image list) after successful saving */
     private boolean putInQuicklist = true;
     
+    /** Tells the FileBase (FileImageXML only now) to write only the header (.xml) if true*/
+    private boolean writeHeaderOnly = false;
+    
+    private NDARData ndarData = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -208,6 +214,38 @@ public class FileWriteOptions {
      */
     public void doPutInQuicklist(boolean doPut) {
     	this.putInQuicklist = doPut;
+    }
+    
+    /**
+     * Determines whether to write only the header (for now, .xml files) and no raw file...for NDAR SRB transfer
+     * @return write header only
+     */
+    public boolean writeHeaderOnly() {
+    	return this.writeHeaderOnly;
+    }
+    
+    /**
+     * Sets the options to write only the .xml header if true
+     * @param headerOnly write header only flag
+     */
+    public void setWriteHeaderOnly(boolean headerOnly) {
+    	this.writeHeaderOnly = headerOnly;
+    }
+    
+    /**
+     * Sets the NDAR Data that will be used to populate XML header fields
+     * @param data NDAR data generated from JDialogNDAR
+     */
+    public void setNDARData(NDARData data) {
+    	this.ndarData = data;
+    }
+    
+    /**
+     * Retrieves the NDAR data for use in populating XML fields
+     * @return the ndar data
+     */
+    public NDARData getNDARData() {
+    	return this.ndarData;
     }
     
     /**

@@ -5,6 +5,10 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.dialogs.JDialogNDAR.NDARData;
+import gov.nih.mipav.model.file.FileInfoImageXML.Investigator;
+import gov.nih.mipav.model.file.FileInfoImageXML;
+
 import gov.nih.mipav.view.*;
 
 import org.xml.sax.*;
@@ -743,9 +747,44 @@ public class FileImageXML extends FileXML {
 
             // and make a new fileInfo
             fileInfo = new FileInfoImageXML(headerName, headerDir, FileUtility.XML);
-            simple = true; // Write the header without all the Analyze info
+   
+            //if we are writing a non-XML file but are doing the SRB header-only writing
+            //  we want to write non-simple (include extra info that has been set)
+            if (options.writeHeaderOnly()) {
+            	simple = false;
+            } else {
+            	simple = true; // Write the header without all the Analyze info
+            }
         }
 
+        //set up the NDAR specific information for header writing
+        if (options.writeHeaderOnly()) {
+        	NDARData data = options.getNDARData();
+        	
+        	Investigator [] invests = new Investigator[3];
+        	
+        	invests[0] = new Investigator(data.piName);
+        	invests[0].setEmail(data.piEmail);
+        	invests[0].setPhone(data.piPhone);
+        	invests[0].setTitle(data.piTitle);
+        	
+        	((FileInfoImageXML)fileInfo).setInvestigators(invests);
+        	((FileInfoImageXML)fileInfo).setInvestigatorsComplete(new boolean[] {true, false, false});
+        	
+        	((FileInfoImageXML)fileInfo).setSubjectID(data.validGUID);
+        	
+        	((FileInfoImageXML)fileInfo).createPSet("Abstract");
+
+        	((FileInfoImageXML)fileInfo).getCurrentPSet().addParameter("Title");
+        	((FileInfoImageXML)fileInfo).getCurrentPSet().getCurrentParameter().setValueType("string");
+        	((FileInfoImageXML)fileInfo).getCurrentPSet().getCurrentParameter().setValue(data.abstractTitle);
+        	
+        	((FileInfoImageXML)fileInfo).getCurrentPSet().addParameter("Body");
+        	((FileInfoImageXML)fileInfo).getCurrentPSet().getCurrentParameter().setValueType("string");
+        	((FileInfoImageXML)fileInfo).getCurrentPSet().getCurrentParameter().setValue(data.abstractBody);
+        	
+        }
+        
         fileName = headerName + rawExtension;
 
         extents = img.getFileInfo()[0].getExtents();
@@ -1011,74 +1050,7 @@ public class FileImageXML extends FileXML {
             }
             
         }
-        
-        /**
-        TransMatrix tMat = img.getMatrix();
-
-       
-
-        if ((tMat != null) && (tMat.getNCols() >= img.getNDims())) {
-            openTag(datasetAttributesStr[13], true);
-            closedTag( "Transform-ID", TransMatrix.getTransformIDStr(myFileInfo.getTransformID()));
-
-            if (FileInfoBase.getTransformIDStr(myFileInfo.getTransformID()).equals("Talairach Tournoux")) {
-                useTal = true;
-            }
-
-            // check to see if it is sagittal or coronal with an identity transform matrix (convert)
-            if (tMat.isIdentity()) {
-
-                if (orient == FileInfoBase.SAGITTAL) {
-
-                    if (tMat.getNCols() == 3) {
-                        tMat.setMatrix(new double[][] {
-                                           { 0, 1, 0 },
-                                           { 0, 0, -1 },
-                                           { -1, 0, 0 }
-                                       });
-                    } else if (tMat.getNCols() == 4) {
-                        tMat.setMatrix(new double[][] {
-                                           { 0, 1, 0, 0 },
-                                           { 0, 0, -1, 0 },
-                                           { -1, 0, 0, 0 },
-                                           { 0, 0, 0, 1 }
-                                       });
-                    }
-                } else if (orient == FileInfoBase.CORONAL) {
-
-                    if (tMat.getNCols() == 3) {
-                        tMat.setMatrix(new double[][] {
-                                           { 1, 0, 0 },
-                                           { 0, 0, -1 },
-                                           { 0, 1, 0 }
-                                       });
-
-                    } else if (tMat.getNCols() == 4) {
-                        tMat.setMatrix(new double[][] {
-                                           { 1, 0, 0, 0 },
-                                           { 0, 0, -1, 0 },
-                                           { 0, 1, 0, 0 },
-                                           { 0, 0, 0, 1 }
-                                       });
-                    }
-                }
-            }
-
-
-            double[][] matrix = tMat.getMatrix();
-
-            for (i = 0; i < tMat.getNRows(); i++) {
-
-                for (j = 0; j < tMat.getNCols(); j++) {
-                    closedTag( "Data", new Double(matrix[i][j]).toString());
-                }
-            }
-
-            openTag(datasetAttributesStr[13], false);
-        }
-
-        */
-
+                
         closedTag( datasetAttributesStr[14], FileInfoBase.getModalityStr(myFileInfo.getModality()));
 
 
@@ -1352,7 +1324,6 @@ public class FileImageXML extends FileXML {
                 if (invest[i]) {
 
                     openTag(imageStr[3], true);
-
                     closedTag( investigatorsStr[0], ((FileInfoImageXML) fileInfo).getInvestigator(i).getName());
 
                     temp = ((FileInfoImageXML) fileInfo).getInvestigator(i).getTitle();
@@ -1693,15 +1664,19 @@ public class FileImageXML extends FileXML {
                     img.getFileInfo()[0].setCompressionType(FileInfoBase.COMPRESSION_NONE);
                 }
 
-                FileRaw rawFile;
+                if (!options.writeHeaderOnly()) {
+                	FileRaw rawFile;
 
-                rawFile = new FileRaw(fileName, fileDir, img.getFileInfo(0), FileBase.READ_WRITE);
+                	rawFile = new FileRaw(fileName, fileDir, img.getFileInfo(0), FileBase.READ_WRITE);
 
-                linkProgress(rawFile);
+                	linkProgress(rawFile);
 
-                // options.setFileName(rawName);
-                rawFile.writeImage(img, options);
-
+                	// options.setFileName(rawName);
+                	rawFile.writeImage(img, options);
+                	rawFile.close();
+                	rawFile.finalize();
+                }
+                
                 // System.err.println("wrote image");
                 // System.err.println("file info extents length: " + image.getFileInfo()[0].getExtents().length);
                 // System.err.println("image extents length: " + image.getExtents().length);
@@ -1718,8 +1693,7 @@ public class FileImageXML extends FileXML {
                     writeHeader(img, options, fhName, fileDir, false);
                 }
 
-                rawFile.close();
-                rawFile.finalize();
+                
                 img.setFileInfo(infoClone, 0);
             } catch (IOException error) {
                 img.setFileInfo(infoClone, 0);

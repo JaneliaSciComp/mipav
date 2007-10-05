@@ -2278,7 +2278,9 @@ public class FileIO {
             progressBar.dispose();
         }
 
-        if (success && ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING) {
+        //now checks to make sure we're not writing NDAR srb transfers (xml header only)
+        if (success && ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING &&
+        		!options.writeHeaderOnly()) {
         	
         	ScriptableActionInterface action;
 
