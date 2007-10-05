@@ -164,7 +164,11 @@ public class ProvenanceRecorder {
             	
             		for (int i = 0; i < inputImages.size(); i++) {
         		   //System.err.println("added: " + imageEntry + ", to: " + inputImages.elementAt(i));
-            			imageTable.getImage(inputImages.elementAt(i)).getProvenanceHolder().addElement(imageEntry);
+            			try {
+            				imageTable.getImage(inputImages.elementAt(i)).getProvenanceHolder().addElement(imageEntry);
+            			} catch (IllegalArgumentException e) {
+            				
+            			}
             		}
             	}      	
             
