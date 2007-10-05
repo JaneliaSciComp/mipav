@@ -599,6 +599,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		new File(tempDir).mkdirs();
     	}
     	
+    	String fName;
+    	
     	for (int i = 0; i < numImages; i++) {
     		tempImage = fileIO.readImage(sourceModel.elementAt(i).toString());
     		//Save the image's XML to disk
@@ -607,6 +609,11 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		ndarData.validGUID = guidFields[i].getText();
     		options.setWriteHeaderOnly(true);
     		options.setNDARData(ndarData);
+    		
+    		fName = tempImage.getImageFileName();
+    		if (!fName.endsWith(".xml")) {
+    			fName += ".xml";
+    		}
     		
     		if (tempImage.getNDims() > 2) {
     			options.setBeginSlice(0);
@@ -618,9 +625,10 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		}
     		options.setFileDirectory(tempDir);
     		options.doPutInQuicklist(false);
-    		options.setFileName(tempImage.getImageFileName());
+    		options.setFileName(fName);
     		options.setFileType(FileUtility.XML);
     		options.setMultiFile(false);
+    		options.setOptionsSet(true);
     		
     		
     		fileIO.writeImage(tempImage, options);
