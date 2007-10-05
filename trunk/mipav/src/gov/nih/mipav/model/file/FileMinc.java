@@ -157,9 +157,15 @@ public class FileMinc extends FileBase {
      * name is the name of the attribute; nc_type is the type (integer, char, etc.); values are the values of this
      * attribute. It seems that attributes are mostly of type char, so the entire attribute is just a string.<BR>
      * var := name nelems [dimid...] vatt_array nc_type vsize begin<BR>
-     * name is the name of the variable; don't know what dimid is; vatt_array is an array of attributes for this
+     * name is the name of the variable; dimid is Dimension id (for dimensions variables); vatt_array is an array of attributes for this
      * variable; nc_type is the type of the variable; vsize is the size of the variable; begin is where in the file the
      * variable data begins.</P>
+     * 
+     * Image extents are orginally determined under NC_DIMENSION with the MIPAV dimension ordering being the 
+     * reverse of the MINC dimension ordering.  However, under NC_VARIABLE refer to dimid.length of the variable 
+     * with the string name of image to determine how many of these variables to retain.  The contents of the 
+     * dimid array under variable image give the dimid indices of the dimensions found in NC_DIMENSION which 
+     * should be retained.
      *
      * @return     <code>true</code> confirms a successful read.
      *
@@ -171,6 +177,7 @@ public class FileMinc extends FileBase {
         String attrString;
         long fileLength;
         long typeSize = 1;
+        int imageID[] = null;
         FileInfoMinc fileInfo = new FileInfoMinc(fileName, fileDir, FileUtility.MINC);
 
         location = 0;
@@ -417,6 +424,13 @@ public class FileMinc extends FileBase {
                     Preferences.debug("var[" + i + "] dimid[" + j + "] = " + dimid[j] + "\n", Preferences.DEBUG_FILEIO);
                     location += 4;
                 }
+                
+                if (name.equals("image")  && (len > 0)) {
+                    imageID = new int[len];
+                    for (int j = 0; j < len; j++) {
+                        imageID[j] = dimid[j];
+                    }
+                }
 
                 fileInfo.addVarElem(name, len, dimid, i);
                 next = getInt(endianess);
@@ -494,19 +508,20 @@ public class FileMinc extends FileBase {
             throw new IOException("MINC header corrupted");
         }
         
-        long neededLength = typeSize;
         int extents[] = fileInfo.getExtents();
-        for (int i = 0; i < extents.length; i++) {
-            neededLength *= extents[i];    
-        }
-        Preferences.debug("Needed length for data = " + neededLength + "\n");
-        if (neededLength > fileLength) {
-            Preferences.debug("Needed length for data = " + neededLength + 
-                              " is greater than file length = " + fileLength + "\n");
-            Preferences.debug("Assume last MINC dimension or first MIPAV dimension is from mincaverage and does not really exist\n");
-            int newExtents[] = new int[extents.length-1];
-            for (int i = 0; i < extents.length-1; i++) {
-                newExtents[i] = extents[i+1];
+        if ((imageID != null) && (imageID.length < extents.length)) {
+            int newExtents[] = new int[imageID.length];
+            Preferences.debug("Only keeping " + imageID.length + " of " +
+                              extents.length + " dimensions found in NC_DIMENSION\n");
+            int k = imageID.length-1;
+            for (int i = 0; i < extents.length; i++) {
+                boolean found = false;
+                for (int j = 0; (j < imageID.length) && (!found); j++) {
+                    if (imageID[j] == i) {
+                        newExtents[k--] = extents[extents.length - i - 1];
+                        found = true;
+                    }
+                }
             }
             fileInfo.setExtents(newExtents);
         }
