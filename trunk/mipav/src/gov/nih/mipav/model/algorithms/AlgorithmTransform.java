@@ -3908,7 +3908,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 ptsi2[i - 1].y = yf;
             }
 
-            // System.out.println("Initial point " +i +": " +(int)ptsi2[i-1].x +", " +(int)ptsi2[i-1].y);
+            //System.out.println("Initial point " +i +": " +(int)ptsi2[i-1].x +", " +(int)ptsi2[i-1].y);
         }
 
         /* Transform corner points, ptsi2, to get transformed points, ptsf2. */
@@ -3917,7 +3917,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         /* Find new min and max values for the transformed point. */
         for (i = 1; i <= 4; i++) {
 
-            // System.out.println("Transformed point " +i +": " +(int)ptsf2[i-1].x +", " +(int)ptsf2[i-1].y);
+            //System.out.println("Transformed point " +i +": " +(int)ptsf2[i-1].x +", " +(int)ptsf2[i-1].y);
             if (ptsf2[i - 1].x < minx) {
                 minx = ptsf2[i - 1].x;
             }
@@ -3941,10 +3941,10 @@ public class AlgorithmTransform extends AlgorithmBase {
         leftPad = (int) (((xi - minx) / dxOut) + 0.5);
         rightPad = (int) (((maxx - xf) / dxOut) + 0.5);
 
-        // System.out.println("Padding in x is: " + leftPad +" and " +rightPad);
+        //System.out.println("Padding in x is: " + leftPad +" and " +rightPad);
         topPad = (int) (((yi - miny) / dyOut) + 0.5);
         bottomPad = (int) (((maxy - yf) / dyOut) + 0.5);
-        // System.out.println("Padding in y is: " + topPad+" and " +bottomPad);
+        //System.out.println("Padding in y is: " + topPad+" and " +bottomPad);
 
         margins[0] = leftPad;
         margins[1] = topPad;
@@ -4606,6 +4606,28 @@ public class AlgorithmTransform extends AlgorithmBase {
                     transformHepticLagrangian3Dim2DC(imgBuf, imgBuf2, xfrm, clip);
                 } else if (interp == WSINC) {
                     transformWSinc3Dim2DC(imgBuf, imgBuf2, xfrm, clip);
+                }
+            } else if (DIM == 4) {
+                if (interp == TRILINEAR) {
+                    transformTrilinear4DC(imgBuf, imgBuf2, xfrm);
+                } else if (interp == BSPLINE3) {
+                    transformBspline4DC(imgBuf, xfrm, 3);
+                } else if (interp == BSPLINE4) {
+                    transformBspline4DC(imgBuf, xfrm, 4);
+                } else if (interp == NEAREST_NEIGHBOR) {
+                    transformNearestNeighbor4DC(imgBuf, imgBuf2, xfrm);
+                } else if (interp == CUBIC_LAGRANGIAN) {
+                    transformCubicLagrangian4DC(imgBuf, imgBuf2, xfrm, clip);
+                } else if (interp == QUINTIC_LAGRANGIAN) {
+                    transformQuinticLagrangian4DC(imgBuf, imgBuf2, xfrm, clip);
+                } else if (interp == HEPTIC_LAGRANGIAN) {
+                    transformHepticLagrangian4DC(imgBuf, imgBuf2, xfrm, clip);
+                } else if (interp == WSINC) {
+                    transformWSinc4DC(imgBuf, imgBuf2, xfrm, clip);
+                } else if (interp == BILINEAR) {
+                    displayError("Cannot specify bilinear interpolation for 4D");
+
+                    return;
                 }
             } else if (DIM == 3) {
 
@@ -5887,10 +5909,11 @@ public class AlgorithmTransform extends AlgorithmBase {
         float invXRes = 1 / iXres;
         float invYRes = 1 / iYres;
 
-        int[] index = new int[3];
-        index[0] = 1;
-        index[1] = 2;
-        index[2] = 3;
+        int[] index = new int[4];
+        index[0] = 0;
+        index[1] = 1;
+        index[2] = 2;
+        index[3] = 3;
 
         for (z = 0; z < nz; z++) {
 
@@ -5907,14 +5930,14 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
             }
 
-            for (c = 0; c < 3; c++) {
+            for (c = 0; c < 4; c++) {
                 sliceMin = Float.MAX_VALUE;
                 sliceMax = -Float.MAX_VALUE;
 
                 for (y = 0; y < iYdim; y++) {
 
                     for (x = 0; x < iXdim; x++) {
-                        img2D[x][y] = imgBuf[(4 * (x + (iXdim * y))) + c + 1];
+                        img2D[x][y] = imgBuf[(4 * (x + (iXdim * y))) + c];
 
                         if (img2D[x][y] > sliceMax) {
                             sliceMax = img2D[x][y];
@@ -5931,8 +5954,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     if (((j % mod) == 0)) {
-                        fireProgressStateChanged((int) ((((float) z / nz * 100) + ((float) c / (3 * nz) * 100) +
-                                                         ((float) j / (3 * oYdim * nz) * 100)) + 0.5f));
+                        fireProgressStateChanged((int) ((((float) z / nz * 100) + ((float) c / (4 * nz) * 100) +
+                                                         ((float) j / (4 * oYdim * nz) * 100)) + 0.5f));
                     }
 
                     jmm = j * oYres;
@@ -6100,17 +6123,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         float[][][] image;
         int x, y, z;
         BSplineProcessing splineAlg;
-        float[] imageMin = new float[3];
-        float[] imageMax = new float[3];
+        float[] imageMin = new float[4];
+        float[] imageMax = new float[4];
         int c;
-
-        srcImage.calcMinMax();
-        imageMin[0] = (float) srcImage.getMinR();
-        imageMax[0] = (float) srcImage.getMaxR();
-        imageMin[1] = (float) srcImage.getMinG();
-        imageMax[1] = (float) srcImage.getMaxG();
-        imageMin[2] = (float) srcImage.getMinB();
-        imageMax[2] = (float) srcImage.getMaxB();
 
         float k1, k2, k3, j1, j2, j3;
 
@@ -6133,23 +6148,34 @@ public class AlgorithmTransform extends AlgorithmBase {
         float invYRes = 1 / iYres;
         float invZRes = 1 / iZres;
 
-        int[] index = new int[3];
-        index[0] = 1;
-        index[1] = 2;
-        index[2] = 3;
+        int[] index = new int[4];
+        index[0] = 0;
+        index[1] = 1;
+        index[2] = 2;
+        index[3] = 3;
 
         splineAlg = new BSplineProcessing();
 
         image = new float[iXdim][iYdim][iZdim];
 
-        for (c = 0; c < 3; c++) {
+        for (c = 0; c < 4; c++) {
+            imageMin[c] = Float.MAX_VALUE;
+            imageMax[c] = -Float.MAX_VALUE;
 
             for (z = 0; z < iZdim; z++) {
 
                 for (y = 0; y < iYdim; y++) {
 
                     for (x = 0; x < iXdim; x++) {
-                        image[x][y][z] = imgBuf[(4 * (x + (iXdim * y) + (iXdim * iYdim * z))) + c + 1];
+                        image[x][y][z] = imgBuf[(4 * (x + (iXdim * y) + (iXdim * iYdim * z))) + c];
+                        
+                        if (image[x][y][z] > imageMax[c]) {
+                            imageMax[c] = image[x][y][z];
+                        }
+                        
+                        if (image[x][y][z] < imageMin[c]) {
+                            imageMin[c] = image[x][y][z];
+                        }
                     }
                 }
             }
@@ -6160,7 +6186,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                 if (((k % mod) == 0)) {
-                    fireProgressStateChanged((int) (((float) k / (3 * oZdim) * 100) + ((float) c / 3 * 100) + 0.5f));
+                    fireProgressStateChanged((int) (((float) k / (4 * oZdim) * 100) + ((float) c / 4 * 100) + 0.5f));
                 }
 
                 kmm = k * oZres;
@@ -6177,7 +6203,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                         // transform i,j,k
-                        value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                        value = imageMin[c]; // if voxel is transformed out of bounds
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
@@ -6312,7 +6338,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
                         // transform i,j,k
-                        value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                        value = volMin; // if voxel is transformed out of bounds
                         imm = i * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
@@ -6336,6 +6362,147 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(index++, value);
+                    }
+                }
+            }
+        }
+
+        Preferences.debug("finished Bspline");
+
+    }
+    
+    /**
+     * Transforms and resamples color volume using Bspline interpolation.
+     *
+     * @param  imgBuf  image array
+     * @param  xfrm    transformation matrix to be applied
+     * @param  degree  degree of polynomial
+     */
+    private void transformBspline4DC(float[] imgBuf, float[][] xfrm, int degree) {
+        int i, j, k;
+        float X, Y, Z;
+        float value;
+        float imm, jmm, kmm;
+        float[][][] image;
+        int x, y, z, c;
+        BSplineProcessing splineAlg;
+        float volMin[] = new float[4];
+        float volMax[] = new float[4];
+        int t;
+
+        float k1, k2, k3, j1, j2, j3;
+
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T03 = (float) xfrm[0][3];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+        T13 = (float) xfrm[1][3];
+        T20 = (float) xfrm[2][0];
+        T21 = (float) xfrm[2][1];
+        T22 = (float) xfrm[2][2];
+        T23 = (float) xfrm[2][3];
+
+
+        image = new float[iXdim][iYdim][iZdim];
+        splineAlg = new BSplineProcessing();
+
+        float invXRes = 1 / iXres;
+        float invYRes = 1 / iYres;
+        float invZRes = 1 / iZres;
+
+        int index[] = new int[4];
+        index[0] = 0;
+        index[1] = 1;
+        index[2] = 2;
+        index[3] = 3;
+
+        for (t = 0; t < iTdim; t++) {
+            fireProgressStateChanged((int) (((float) t / iTdim * 100) + 0.5));
+
+            if ((t >= 1)) {
+
+                try {
+                    srcImage.exportData(t * imgLength, imgLength, imgBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+            }
+
+            for (c = 0; c < 4; c++) {
+                volMin[c] = Float.MAX_VALUE;
+                volMax[c] = -Float.MAX_VALUE;
+                for (z = 0; z < iZdim; z++) {
+    
+                    for (y = 0; y < iYdim; y++) {
+    
+                        for (x = 0; x < iXdim; x++) {
+                            image[x][y][z] = imgBuf[4*(x + (iXdim * y) + (iXdim * iYdim * z)) + c];
+    
+                            if (image[x][y][z] > volMax[c]) {
+                                volMax[c] = image[x][y][z];
+                            }
+    
+                            if (image[x][y][z] < volMin[c]) {
+                                volMin[c] = image[x][y][z];
+                            }
+                        }
+                    }
+                }
+            
+
+                splineAlg.samplesToCoefficients(image, iXdim, iYdim, iZdim, degree);
+    
+                for (k = 0; (k < oZdim) && !threadStopped; k++) {
+    
+                    kmm = k * oZres;
+                    k1 = (kmm * T02) + T03;
+                    k2 = (kmm * T12) + T13;
+                    k3 = (kmm * T22) + T23;
+    
+                    for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                        jmm = j * oYres;
+                        j1 = (jmm * T01) + k1;
+                        j2 = (jmm * T11) + k2;
+                        j3 = (jmm * T21) + k3;
+    
+                        for (i = 0; (i < oXdim) && !threadStopped; i++) {
+    
+                            // transform i,j,k
+                            value = volMin[c]; // if voxel is transformed out of bounds
+                            imm = i * oXres;
+                            X = (j1 + (imm * T00)) * invXRes;
+    
+                            if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                                Y = (j2 + (imm * T10)) * invYRes;
+    
+                                if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                                    Z = (j3 + (imm * T20)) * invZRes;
+    
+                                    if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+                                        value = (float) splineAlg.interpolatedValue(image, X, Y, Z, iXdim, iYdim, iZdim,
+                                                                                    degree);
+    
+                                        if (value > volMax[c]) {
+                                            value = volMax[c];
+                                        } else if (value < volMin[c]) {
+                                            value = volMin[c];
+                                        }
+                                    }
+                                }
+                            }
+    
+                            destImage.set(index[c], value);
+                            index[c] += 4;
+                        }
                     }
                 }
             }
@@ -7491,6 +7658,140 @@ public class AlgorithmTransform extends AlgorithmBase {
         Preferences.debug("finished cubic Lagrangian");
 
     }
+    
+    /**
+     * Transforms and resamples 4 dimensional object using 3D cubic Lagrangian interpolation.
+     *
+     * @param  imgBuf  Image array
+     * @param  imgBuffer2
+     * @param  xfrm    Transformation matrix to be applied
+     * @param  clip    if <code>true</code> clip output values to be within input range
+     */
+    private void transformCubicLagrangian4DC(float[] imgBuf, float imgBuffer2[], float[][] xfrm, boolean clip) {
+        AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
+        int i, j, k, l;
+        float X, Y, Z;
+        float value[] = new float[4];
+        int temp4;
+        float imm, jmm, kmm;
+        int[] inVolExtents = { iXdim, iYdim, iZdim };
+        int oSliceSize;
+        int oVolSize;
+        int mod = Math.max(1, oTdim / 50);
+        int counter = 0; // used for progress bar
+
+        float i1, i2, i3, j1, j2, j3;
+        float temp1, temp2, temp3;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        float argbMax = 255.0f;
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T03 = (float) xfrm[0][3];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+        T13 = (float) xfrm[1][3];
+        T20 = (float) xfrm[2][0];
+        T21 = (float) xfrm[2][1];
+        T22 = (float) xfrm[2][2];
+        T23 = (float) xfrm[2][3];
+        
+        oSliceSize = oXdim * oYdim;
+        oVolSize = oSliceSize * oZdim;
+        
+        if (srcImage.getType() == ModelStorageBase.ARGB) {
+            argbMax = 255.0f;
+        }
+        else if (srcImage.getType() == ModelStorageBase.ARGB_USHORT) {
+            argbMax = 65535.0f;
+        }
+
+        for (l = 0; (l < oTdim) && !threadStopped; l++) {
+
+            if (((l % mod) == 0)) {
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
+            }
+
+            CLag.setup3DCubicLagrangianC(imgBuf, inVolExtents, argbMax, clip);
+
+            for (i = 0; (i < oXdim) && !threadStopped; i++) {
+                imm = (float) i * oXres;
+                i1 = (imm * T00) + T03;
+                i2 = (imm * T10) + T13;
+                i3 = (imm * T20) + T23;
+
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                    jmm = (float) j * oYres;
+                    j1 = jmm * T01;
+                    j2 = jmm * T11;
+                    j3 = jmm * T21;
+                    temp1 = i3 + j3;
+                    temp2 = i2 + j2;
+                    temp3 = i1 + j1;
+
+                    for (k = 0; (k < oZdim) && !threadStopped; k++) {
+
+                        // convert to mm
+                        value[0] = 0; // will remain zero if boundary conditions not met
+                        value[1] = 0;
+                        value[2] = 0;
+                        value[3] = 0;
+                        kmm = (float) k * oZres;
+
+                        // transform i,j,k
+                        X = (temp3 + (kmm * T02)) / iXres;
+
+                        if ((X >= 0) && (X < iXdim)) { // check bounds
+                            Y = (temp2 + (kmm * T12)) / iYres;
+
+                            if ((Y >= 0) && (Y < iYdim)) {
+                                Z = (temp1 + (kmm * T22)) / iZres;
+
+                                if ((Z >= 0) && (Z < iZdim)) {
+                                    value = CLag.cubicLagrangian3DC(X, Y, Z);
+                                }
+                            }
+                        }
+
+                        temp4 = 4 *(i + (j * oXdim) + (k * oSliceSize));
+                        imgBuffer2[temp4] = value[0];
+                        imgBuffer2[temp4 + 1] = value[1];
+                        imgBuffer2[temp4 + 2] = value[2];
+                        imgBuffer2[temp4 + 3] = value[3];
+                        counter++;
+                    }
+                }
+            }
+            
+            try {
+                destImage.importData(4 * l * oVolSize, imgBuffer2, false);
+            }
+            catch (IOException error) {
+                MipavUtil.displayError("AlgorithmTransform: IOException on destImage.importData");
+            }
+
+            if (l < (oTdim - 1)) {
+
+                try {
+                    srcImage.exportData((l + 1) * imgLength, imgLength, imgBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+            } // end if (l < (oTdim - 1))
+        } // for l
+
+        destImage.calcMinMax();
+        CLag.finalize();
+        CLag = null;
+        Preferences.debug("finished cubic Lagrangian");
+
+    }
 
     /**
      * Transforms and resamples volume using cubic Lagrangian interpolation Does a slice by slice cubic Lagrangian
@@ -8341,6 +8642,140 @@ public class AlgorithmTransform extends AlgorithmBase {
         HLag = null;
         Preferences.debug("finished heptic Lagrangian");
     }
+    
+    /**
+     * transforms and resamples 4 dimensional object using 3D heptic Lagrangian interpolation.
+     *
+     * @param  imgBuf  image array
+     * @param  imgBuffer2
+     * @param  xfrm    transformation matrix to be applied
+     * @param  clip    if true clip output values to be within input range
+     */
+    private void transformHepticLagrangian4DC(float[] imgBuf, float imgBuffer2[], float[][] xfrm, boolean clip) {
+        AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
+        int i, j, k, l;
+        float X, Y, Z;
+        float value[] = new float[4];
+        int temp4;
+        float imm, jmm, kmm;
+        int[] inVolExtents = { iXdim, iYdim, iZdim };
+        int oSliceSize;
+        int oVolSize;
+        int mod = Math.max(1, oTdim / 50);
+        int counter = 0; // used for progress bar
+
+        float i1, i2, i3, j1, j2, j3;
+        float temp1, temp2, temp3;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        
+        float argbMax = 255.0f;
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T03 = (float) xfrm[0][3];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+        T13 = (float) xfrm[1][3];
+        T20 = (float) xfrm[2][0];
+        T21 = (float) xfrm[2][1];
+        T22 = (float) xfrm[2][2];
+        T23 = (float) xfrm[2][3];
+        
+        oSliceSize = oXdim * oYdim;
+        oVolSize = oSliceSize * oZdim;
+        
+        if (srcImage.getType() == ModelStorageBase.ARGB) {
+            argbMax = 255.0f;
+        }
+        else if (srcImage.getType() == ModelStorageBase.ARGB_USHORT) {
+            argbMax = 65535.0f;
+        }
+
+        for (l = 0; (l < oTdim) && !threadStopped; l++) {
+
+            if (((l % mod) == 0)) {
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
+            }
+
+            HLag.setup3DHepticLagrangianC(imgBuf, inVolExtents, argbMax, clip);
+
+            for (i = 0; (i < oXdim) && !threadStopped; i++) {
+                imm = (float) i * oXres;
+                i1 = (imm * T00) + T03;
+                i2 = (imm * T10) + T13;
+                i3 = (imm * T20) + T23;
+
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                    jmm = (float) j * oYres;
+                    j1 = jmm * T01;
+                    j2 = jmm * T11;
+                    j3 = jmm * T21;
+                    temp1 = i3 + j3;
+                    temp2 = i2 + j2;
+                    temp3 = i1 + j1;
+
+                    for (k = 0; (k < oZdim) && !threadStopped; k++) {
+
+                        // convert to mm
+                        value[0] = 0; // will remain zero if boundary conditions not met
+                        value[1] = 0;
+                        value[2] = 0;
+                        value[3] = 0;
+                        kmm = (float) k * oZres;
+
+                        // transform i,j,k
+                        X = (temp3 + (kmm * T02)) / iXres;
+
+                        if ((X >= 0) && (X < iXdim)) { // check bounds
+                            Y = (temp2 + (kmm * T12)) / iYres;
+
+                            if ((Y >= 0) && (Y < iYdim)) {
+                                Z = (temp1 + (kmm * T22)) / iZres;
+
+                                if ((Z >= 0) && (Z < iZdim)) {
+                                    value = HLag.hepticLagrangian3DC(X, Y, Z);
+                                }
+                            }
+                        }
+
+                        temp4 = 4 *(i + (j * oXdim) + (k * oSliceSize));
+                        imgBuffer2[temp4] = value[0];
+                        imgBuffer2[temp4 + 1] = value[1];
+                        imgBuffer2[temp4 + 2] = value[2];
+                        imgBuffer2[temp4 + 3] = value[3];
+                        counter++;
+                    }
+                }
+            }
+            
+            try {
+                destImage.importData(4 * l * oVolSize, imgBuffer2, false);
+            }
+            catch (IOException error) {
+                MipavUtil.displayError("AlgorithmTransform: IOException on destImage.importData");
+            }
+
+            if (l < (oTdim - 1)) {
+
+                try {
+                    srcImage.exportData((l + 1) * imgLength, imgLength, imgBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+            } // end if (l < (oTdim - 1))
+        } // for l
+
+        destImage.calcMinMax();
+        HLag.finalize();
+        HLag = null;
+        Preferences.debug("finished heptic Lagrangian");
+    }
 
     /**
      * Transforms and resamples volume using heptic Lagrangian interpolation Does a slice by slice heptic Lagrangian
@@ -9099,6 +9534,119 @@ public class AlgorithmTransform extends AlgorithmBase {
             } // end if (l < (oTdim - 1))
         } // for l
     }
+    
+    /**
+     * Transforms and resamples 4 dimensional object using 3D algorithm using nearest neighbor interpolation.
+     *
+     * @param  imgBuf  image array
+     * @param  imgBufffer2
+     * @param  xfrm    transformation matrix to be applied
+     */
+    private void transformNearestNeighbor4DC(float[] imgBuf, float imgBuffer2[], float[][] xfrm) {
+        int i, j, k, l;
+        float X, Y, Z;
+        int xOffset, yOffset, zOffset;
+        int temp;
+        float value;
+        int sliceSize;
+        int oSliceSize;
+        int oVolSize;
+        int pos;
+        int roundX, roundY, roundZ;
+        float imm, jmm, kmm;
+        int counter = 0; // used for progress bar
+
+        sliceSize = iXdim * iYdim;
+        oSliceSize = oXdim * oYdim;
+        oVolSize = oSliceSize * oZdim;
+
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T03 = (float) xfrm[0][3];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+        T13 = (float) xfrm[1][3];
+        T20 = (float) xfrm[2][0];
+        T21 = (float) xfrm[2][1];
+        T22 = (float) xfrm[2][2];
+        T23 = (float) xfrm[2][3];
+
+        for (l = 0; (l < oTdim) && !threadStopped; l++) {
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
+
+            for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+
+                    for (k = 0; (k < oZdim) && !threadStopped; k++) {
+                        temp = 4 * (i + (j * oXdim) + (k * oSliceSize));
+
+                        // transform i,j,k
+                        imm = (float) i * oXres;
+                        jmm = (float) j * oYres;
+                        kmm = (float) k * oZres;
+
+                        X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
+                        Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
+                        Z = (imm * T20) + (jmm * T21) + (kmm * T22) + T23;
+
+                        // set intensity of i,j,k to new transformed coordinate if
+                        // x,y,z is w/in dimensions of image
+                        X = X / iXres;
+                        Y = Y / iYres;
+                        Z = Z / iZres;
+
+                        roundX = (int) (X + 0.5f);
+                        roundY = (int) (Y + 0.5f);
+                        roundZ = (int) (Z + 0.5f);
+
+                        if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1)) ||
+                                (roundZ < 0) || (roundZ > (iZdim - 1))) {
+                            imgBuffer2[temp] = 0; // if voxel is transformed out of bounds
+                            imgBuffer2[temp + 1] = 0;
+                            imgBuffer2[temp + 2] = 0;
+                            imgBuffer2[temp + 3] = 0;
+                        } else {
+                            xOffset = roundX;
+                            yOffset = roundY * iXdim;
+                            zOffset = roundZ * sliceSize;
+                            pos = xOffset + yOffset + zOffset;
+                            imgBuffer2[temp] = imgBuf[4*pos];
+                            imgBuffer2[temp+1] = imgBuf[4*pos+1];
+                            imgBuffer2[temp+2] = imgBuf[4*pos+2];
+                            imgBuffer2[temp+3] = imgBuf[4*pos+3];
+                        }
+                        counter++;
+                    }
+                }
+            } // for i
+            
+            try {
+                destImage.importData(4 * l * oVolSize, imgBuffer2, false);
+            }
+            catch(IOException error) {
+                MipavUtil.displayError("AlgorithmTransform: IOException on destImage.importData");
+            }
+
+            if (l < (oTdim - 1)) {
+
+                try {
+                    srcImage.exportData((l + 1) * imgLength, imgLength, imgBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+            } // end if (l < (oTdim - 1))
+        } // for l
+        destImage.calcMinMax();
+    }
 
     /**
      * Transforms and resamples volume using nearest neighbor interpolation.
@@ -9822,6 +10370,140 @@ public class AlgorithmTransform extends AlgorithmBase {
     }
 
     /**
+     * Transforms and resamples 4 dimensional color object using 3D quintic Lagrangian interpolation.
+     *
+     * @param  imgBuf  Image array
+     * @param  imgBuf2
+     * @param  xfrm    Transformation matrix to be applied
+     * @param  clip    If <code>true</code> clip output values to be within input range
+     */
+    private void transformQuinticLagrangian4DC(float[] imgBuf, float[] imgBuffer2, float[][] xfrm, boolean clip) {
+        AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
+        int i, j, k, l;
+        float X, Y, Z;
+        float value[] = new float[4];
+        int temp4;
+        float imm, jmm, kmm;
+        int[] inVolExtents = { iXdim, iYdim, iZdim };
+        int oSliceSize;
+        int oVolSize;
+        int mod = Math.max(1, oTdim / 50);
+        int counter = 0; // used for progress bar
+
+        float i1, i2, i3, j1, j2, j3;
+        float temp1, temp2, temp3;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        float argbMax = 255.0f;
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T03 = (float) xfrm[0][3];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+        T13 = (float) xfrm[1][3];
+        T20 = (float) xfrm[2][0];
+        T21 = (float) xfrm[2][1];
+        T22 = (float) xfrm[2][2];
+        T23 = (float) xfrm[2][3];
+        
+        oSliceSize = oXdim * oYdim;
+        oVolSize = oSliceSize * oZdim;
+        
+        if (srcImage.getType() == ModelStorageBase.ARGB) {
+            argbMax = 255.0f;
+        }
+        else if (srcImage.getType() == ModelStorageBase.ARGB_USHORT) {
+            argbMax = 65535.0f;
+        }
+
+        for (l = 0; (l < oTdim) && !threadStopped; l++) {
+
+            if (((l % mod) == 0)) {
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
+            }
+
+            QLag.setup3DQuinticLagrangianC(imgBuf, inVolExtents, argbMax, clip);
+
+            for (i = 0; (i < oXdim) && !threadStopped; i++) {
+                imm = (float) i * oXres;
+                i1 = (imm * T00) + T03;
+                i2 = (imm * T10) + T13;
+                i3 = (imm * T20) + T23;
+
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                    jmm = (float) j * oYres;
+                    j1 = jmm * T01;
+                    j2 = jmm * T11;
+                    j3 = jmm * T21;
+                    temp1 = i3 + j3;
+                    temp2 = i2 + j2;
+                    temp3 = i1 + j1;
+
+                    for (k = 0; (k < oZdim) && !threadStopped; k++) {
+
+                        // convert to mm
+                        value[0] = 0; // will remain zero if boundary conditions not met
+                        value[1] = 0;
+                        value[2] = 0;
+                        value[3] = 0;
+                        kmm = (float) k * oZres;
+
+                        // transform i,j,k
+                        X = (temp3 + (kmm * T02)) / iXres;
+
+                        if ((X >= 0) && (X < iXdim)) { // check bounds
+                            Y = (temp2 + (kmm * T12)) / iYres;
+
+                            if ((Y >= 0) && (Y < iYdim)) {
+                                Z = (temp1 + (kmm * T22)) / iZres;
+
+                                if ((Z >= 0) && (Z < iZdim)) {
+                                    value = QLag.quinticLagrangian3DC(X, Y, Z);
+                                }
+                            }
+                        }
+
+                        temp4 = 4 *(i + (j * oXdim) + (k * oSliceSize));
+                        imgBuffer2[temp4] = value[0];
+                        imgBuffer2[temp4 + 1] = value[1];
+                        imgBuffer2[temp4 + 2] = value[2];
+                        imgBuffer2[temp4 + 3] = value[3];
+                        counter++;
+                    }
+                }
+            }
+            
+            try {
+                destImage.importData(4 * l * oVolSize, imgBuffer2, false);
+            }
+            catch (IOException error) {
+                MipavUtil.displayError("AlgorithmTransform: IOException on destImage.importData");
+            }
+
+            if (l < (oTdim - 1)) {
+
+                try {
+                    srcImage.exportData((l + 1) * imgLength, imgLength, imgBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+            } // end if (l < (oTdim - 1))
+        } // for l
+
+        destImage.calcMinMax();
+        QLag.finalize();
+        QLag = null;
+        Preferences.debug("finished quintic Lagrangian");
+
+    }
+    
+    /**
      * Transforms and resamples 4 dimensional object using 3D quintic Lagrangian interpolation.
      *
      * @param  imgBuf  Image array
@@ -10452,6 +11134,214 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
             } // end if (l < (oTdim - 1))
         } // end for l
+    }
+    
+    /**
+     * Transforms and resamples 4 dimensional color object using trilinear interpolation.
+     *
+     * @param  imgBuffer  Image array
+     * @param  imgBuf2
+     * @param  xfrm       Transformation matrix to be applied
+     */
+    private void transformTrilinear4DC(float[] imgBuffer, float [] imgBuffer2, float[][] xfrm) {
+        int i, j, k, l;
+        float X, Y, Z;
+        int x0, y0, z0;
+        int temp;
+        float value;
+        int sliceSize;
+        int oSliceSize;
+        int oVolSize;
+        float imm, jmm, kmm;
+        float k1, k2, k3, j1, j2, j3;
+
+        sliceSize = iXdim * iYdim;
+        oSliceSize = oXdim * oYdim;
+        oVolSize = oSliceSize * oZdim;
+
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        int deltaX, deltaY, deltaZ;
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T03 = (float) xfrm[0][3];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+        T13 = (float) xfrm[1][3];
+        T20 = (float) xfrm[2][0];
+        T21 = (float) xfrm[2][1];
+        T22 = (float) xfrm[2][2];
+        T23 = (float) xfrm[2][3];
+
+        int position1, position2;
+        float b1, b2;
+        float dx, dy, dz, dx1, dy1;
+
+        float invXRes = 1 / iXres;
+        float invYRes = 1 / iYres;
+        float invZRes = 1 / iZres;
+
+        int index = 0;
+
+        for (l = 0; (l < oTdim) && !threadStopped; l++) {
+            fireProgressStateChanged(Math.round((float) l / oTdim * 100));
+
+            for (k = 0; (k < oZdim) && !threadStopped; k++) {
+                kmm = k * oZres;
+                k1 = (kmm * T02) + T03;
+                k2 = (kmm * T12) + T13;
+                k3 = (kmm * T22) + T23;
+
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                    jmm = j * oYres;
+                    j1 = (jmm * T01) + k1;
+                    j2 = (jmm * T11) + k2;
+                    j3 = (jmm * T21) + k3;
+
+                    for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                        // transform i,j,k
+                        temp = 4 * (i + (j * oXdim) + (k * oSliceSize));
+                        imgBuffer2[temp] = 0; // remains zero if voxel is transformed out of bounds
+                        imgBuffer2[temp + 1] = 0;
+                        imgBuffer2[temp + 2] = 0;
+                        imgBuffer2[temp + 3] = 0;
+                        imm = i * oXres;
+                        X = (j1 + (imm * T00)) * invXRes;
+
+                        if ((X > -0.5f) && (X < (iXdim - 0.5f))) {
+                            Y = (j2 + (imm * T10)) * invYRes;
+
+                            if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {
+                                Z = (j3 + (imm * T20)) * invZRes;
+
+                                if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {
+
+                                    if (X <= 0) {
+                                        x0 = 0;
+                                        dx = 0;
+                                        deltaX = 0;
+                                    } else if (X >= (iXdim - 1)) {
+                                        x0 = iXdim - 1;
+                                        dx = 0;
+                                        deltaX = 0;
+                                    } else {
+                                        x0 = (int) X;
+                                        dx = X - x0;
+                                        deltaX = 1;
+                                    }
+
+                                    if (Y <= 0) {
+                                        y0 = 0;
+                                        dy = 0;
+                                        deltaY = 0;
+                                    } else if (Y >= (iYdim - 1)) {
+                                        y0 = iYdim - 1;
+                                        dy = 0;
+                                        deltaY = 0;
+                                    } else {
+                                        y0 = (int) Y;
+                                        dy = Y - y0;
+                                        deltaY = iXdim;
+                                    }
+
+                                    if (Z <= 0) {
+                                        z0 = 0;
+                                        dz = 0;
+                                        deltaZ = 0;
+                                    } else if (Z >= (iZdim - 1)) {
+                                        z0 = iZdim - 1;
+                                        dz = 0;
+                                        deltaZ = 0;
+                                    } else {
+                                        z0 = (int) Z;
+                                        dz = Z - z0;
+                                        deltaZ = sliceSize;
+                                    }
+
+                                    dx1 = 1 - dx;
+                                    dy1 = 1 - dy;
+
+                                    position1 = (z0 * sliceSize) + (y0 * iXdim) + x0;
+                                    position2 = position1 + deltaZ;
+
+                                    b1 = (dy1 * ((dx1 * imgBuffer[4*position1]) + (dx * imgBuffer[4*(position1 + deltaX)]))) +
+                                         (dy *
+                                              ((dx1 * imgBuffer[4*(position1 + deltaY)]) +
+                                                   (dx * imgBuffer[4*(position1 + deltaY + deltaX)])));
+
+                                    b2 = (dy1 * ((dx1 * imgBuffer[4*position2]) + (dx * imgBuffer[4*(position2 + deltaX)]))) +
+                                         (dy *
+                                              ((dx1 * imgBuffer[4*(position2 + deltaY)]) +
+                                                   (dx * imgBuffer[4*(position2 + deltaY + deltaX)])));
+
+                                    imgBuffer2[temp] = ((1 - dz) * b1) + (dz * b2);
+                                    
+                                    b1 = (dy1 * ((dx1 * imgBuffer[4*position1+1]) + (dx * imgBuffer[4*(position1 + deltaX)+1]))) +
+                                    (dy *
+                                         ((dx1 * imgBuffer[4*(position1 + deltaY)+1]) +
+                                              (dx * imgBuffer[4*(position1 + deltaY + deltaX)+1])));
+
+                                    b2 = (dy1 * ((dx1 * imgBuffer[4*position2+1]) + (dx * imgBuffer[4*(position2 + deltaX)+1]))) +
+                                    (dy *
+                                         ((dx1 * imgBuffer[4*(position2 + deltaY)+1]) +
+                                              (dx * imgBuffer[4*(position2 + deltaY + deltaX)+1])));
+
+                                    imgBuffer2[temp+1] = ((1 - dz) * b1) + (dz * b2);
+                                    
+                                    b1 = (dy1 * ((dx1 * imgBuffer[4*position1+2]) + (dx * imgBuffer[4*(position1 + deltaX)+2]))) +
+                                    (dy *
+                                         ((dx1 * imgBuffer[4*(position1 + deltaY)+2]) +
+                                              (dx * imgBuffer[4*(position1 + deltaY + deltaX)+2])));
+
+                                    b2 = (dy1 * ((dx1 * imgBuffer[4*position2+2]) + (dx * imgBuffer[4*(position2 + deltaX)+2]))) +
+                                    (dy *
+                                         ((dx1 * imgBuffer[4*(position2 + deltaY)+2]) +
+                                              (dx * imgBuffer[4*(position2 + deltaY + deltaX)+2])));
+
+                                    imgBuffer2[temp+2] = ((1 - dz) * b1) + (dz * b2);
+                                    
+                                    b1 = (dy1 * ((dx1 * imgBuffer[4*position1+3]) + (dx * imgBuffer[4*(position1 + deltaX)+3]))) +
+                                    (dy *
+                                         ((dx1 * imgBuffer[4*(position1 + deltaY)+3]) +
+                                              (dx * imgBuffer[4*(position1 + deltaY + deltaX)+3])));
+
+                                    b2 = (dy1 * ((dx1 * imgBuffer[4*position2+3]) + (dx * imgBuffer[4*(position2 + deltaX)+3]))) +
+                                    (dy *
+                                         ((dx1 * imgBuffer[4*(position2 + deltaY)+3]) +
+                                              (dx * imgBuffer[4*(position2 + deltaY + deltaX)+3])));
+
+                                    imgBuffer2[temp+3] = ((1 - dz) * b1) + (dz * b2);
+                                } // end if Z in bounds
+                            } // end if Y in bounds
+                        } // end if X in bounds
+                    } // end for i
+                } // end for j
+            } // end for k
+            
+            try {
+                destImage.importData(4 * l * oVolSize, imgBuffer2, false);
+            }
+            catch (IOException error) {
+                MipavUtil.displayError("AlgorithmTransform: IOException on destImage.importData");
+            }
+
+            if (l < (oTdim - 1)) {
+
+                try {
+                    srcImage.exportData((l + 1) * imgLength, imgLength, imgBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+            } // end if (l < (oTdim - 1))
+        } // end for l
+        destImage.calcMinMax();
     }
 
     /**
@@ -11324,6 +12214,140 @@ public class AlgorithmTransform extends AlgorithmBase {
             } // end if (l < (oTdim - 1))
         } // for l
 
+        WSinc.finalize();
+        WSinc = null;
+        Preferences.debug("finished windowed sinc");
+    }
+    
+    /**
+     * Transforms and resamples 4 dimensional object using 3D windowed sinc interpolation.
+     *
+     * @param  imgBuf  Image array
+     * @param  imgBuffer2
+     * @param  xfrm    Transformation matrix to be applied
+     * @param  clip    If <code>true</code> clip output values to be within input range
+     */
+    private void transformWSinc4DC(float[] imgBuf, float [] imgBuffer2, float[][] xfrm, boolean clip) {
+        AlgorithmWSinc WSinc = new AlgorithmWSinc();
+        int i, j, k, l;
+        float X, Y, Z;
+        float value[] = new float[4];
+        int temp4;
+        float imm, jmm, kmm;
+        int[] inVolExtents = { iXdim, iYdim, iZdim };
+        int oSliceSize;
+        int oVolSize;
+        int mod = Math.max(1, oTdim / 50);
+        int counter = 0; // used for progress bar
+
+        float i1, i2, i3, j1, j2, j3;
+        float temp1, temp2, temp3;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        
+        float argbMax = 255.0f;
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T03 = (float) xfrm[0][3];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+        T13 = (float) xfrm[1][3];
+        T20 = (float) xfrm[2][0];
+        T21 = (float) xfrm[2][1];
+        T22 = (float) xfrm[2][2];
+        T23 = (float) xfrm[2][3];
+        
+        oSliceSize = oXdim * oYdim;
+        oVolSize = oSliceSize * oZdim;
+        
+        if (srcImage.getType() == ModelStorageBase.ARGB) {
+            argbMax = 255.0f;
+        }
+        else if (srcImage.getType() == ModelStorageBase.ARGB_USHORT) {
+            argbMax = 65535.0f;
+        }
+
+        for (l = 0; (l < oTdim) && !threadStopped; l++) {
+
+            if (((l % mod) == 0)) {
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
+            }
+
+            WSinc.setup3DWSincC(imgBuf, inVolExtents, argbMax, clip);
+
+            for (i = 0; (i < oXdim) && !threadStopped; i++) {
+                imm = (float) i * oXres;
+                i1 = (imm * T00) + T03;
+                i2 = (imm * T10) + T13;
+                i3 = (imm * T20) + T23;
+
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                    jmm = (float) j * oYres;
+                    j1 = jmm * T01;
+                    j2 = jmm * T11;
+                    j3 = jmm * T21;
+                    temp1 = i3 + j3;
+                    temp2 = i2 + j2;
+                    temp3 = i1 + j1;
+
+                    for (k = 0; (k < oZdim) && !threadStopped; k++) {
+
+                        // convert to mm
+                        value[0] = 0; // will remain zero if boundary conditions not met
+                        value[1] = 0;
+                        value[2] = 0;
+                        value[3] = 0;
+                        kmm = (float) k * oZres;
+
+                        // transform i,j,k
+                        X = (temp3 + (kmm * T02)) / iXres;
+
+                        if ((X >= 0) && (X < iXdim)) { // check bounds
+                            Y = (temp2 + (kmm * T12)) / iYres;
+
+                            if ((Y >= 0) && (Y < iYdim)) {
+                                Z = (temp1 + (kmm * T22)) / iZres;
+
+                                if ((Z >= 0) && (Z < iZdim)) {
+                                    value = WSinc.wSinc3DC(X, Y, Z);
+                                }
+                            }
+                        }
+
+                        temp4 = 4 *(i + (j * oXdim) + (k * oSliceSize));
+                        imgBuffer2[temp4] = value[0];
+                        imgBuffer2[temp4 + 1] = value[1];
+                        imgBuffer2[temp4 + 2] = value[2];
+                        imgBuffer2[temp4 + 3] = value[3];
+                        counter++;
+                    }
+                }
+            }
+            
+            try {
+                destImage.importData(4 * l * oVolSize, imgBuffer2, false);
+            }
+            catch (IOException error) {
+                MipavUtil.displayError("AlgorithmTransform: IOException on destImage.importData");
+            }
+
+            if (l < (oTdim - 1)) {
+
+                try {
+                    srcImage.exportData((l + 1) * imgLength, imgLength, imgBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+            } // end if (l < (oTdim - 1))
+        } // for l
+
+        destImage.calcMinMax();
         WSinc.finalize();
         WSinc = null;
         Preferences.debug("finished windowed sinc");
