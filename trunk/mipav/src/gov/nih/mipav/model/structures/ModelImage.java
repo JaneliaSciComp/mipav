@@ -2104,7 +2104,11 @@ public class ModelImage extends ModelStorageBase {
                     } else if (this == imgL) {
                         ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
                     }
+                } else if ((frameList.elementAt(i) instanceof
+                        gov.nih.mipav.view.dialogs.JDialogDTIInput)) {
+                    ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages();
                 }
+
             }
         }
 

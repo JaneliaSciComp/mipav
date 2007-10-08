@@ -363,6 +363,24 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
     public void setEdgeKernelSize(float s) {
         edgeKernelSize = s;
     }
+    
+    /**
+     * Accessor to set the fill holes parameter.
+     *
+     * @param  b  when true holes are filled.
+     */
+    public void setFillHoles(boolean b) {
+        fillHoles = b;
+    }
+
+    /**
+     * Accessor to set the extract to paint parameter.
+     *
+     * @param  b  when true extract to paint.
+     */
+    public void setExtractPaint(boolean b) {
+        extractPaint = b;
+    }
 
     /**
      * Accessor to set the number of erosions / dialations.

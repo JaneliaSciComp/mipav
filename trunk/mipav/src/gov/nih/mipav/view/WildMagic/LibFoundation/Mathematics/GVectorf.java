@@ -15,14 +15,18 @@
 
 package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
 
+/** General sized float vector. */
 public class GVectorf
 {
-    // construction
+    /** Construct a general vector of size 0. */
     public GVectorf ()
     {
         m_iSize = 0;
     }
 
+    /** Construct a general vector of size iSize.
+     * @param iSize, size of the new vector.
+     */
     public GVectorf (int iSize)
     {
         if (iSize > 0)
@@ -36,6 +40,11 @@ public class GVectorf
         }
     }
 
+    /** Construct a general vector of size iSize. Copy the afTuple
+     * data into the new vector.
+     * @param iSize, size of the new vector.
+     * @param afTuple, new vector values.
+     */
     public GVectorf (int iSize, final float[] afTuple)
     {
         if (iSize > 0)
@@ -53,6 +62,9 @@ public class GVectorf
         }
     }
 
+    /** Construct a general vector that is the copy of the input vector.
+     * @param rkV, the vector to copy.
+     */
     public GVectorf (final GVectorf rkV)
     {
         m_iSize = rkV.m_iSize;
@@ -66,12 +78,15 @@ public class GVectorf
         }
     }
 
+    /** Delete the vector data. */
     public void finalize ()
     {
         m_afTuple = null;
     }
 
-    // coordinate access
+    /** Set the vector size.
+     * @param iSize, new vector size.
+     */
     public void SetSize (int iSize)
     {
         m_afTuple = null;
@@ -86,53 +101,37 @@ public class GVectorf
         }
     }
 
+    /** Get the vector size.
+     * @return vector size.
+     */
     public int GetSize ()
     {
         return m_iSize;
     }
 
+    /** Set the vector value at position i.
+     * @param i, position to set.
+     * @param fValue new value.
+     */
     public void Set( int i, float fValue )
     {
         assert(0 <= i && i < m_iSize);
         m_afTuple[i] = fValue;
     }
 
+    /** Get the vector value at position i.
+     * @param i, position to get.
+     * @return valor of vector at position i.
+     */
     public float Get( int i )
     {
         assert(0 <= i && i < m_iSize);
         return m_afTuple[i];
     }
 
-//     operator const Real* () const;
-//     operator Real* ();
-//     Real operator[] (int i) const;
-//     Real& operator[] (int i);
-
-    // assignment
-//     GVectorf& operator= (const GVectorf& rkV);
-
-    // comparison
-//     bool operator== (const GVectorf& rkV) const;
-//     bool operator!= (const GVectorf& rkV) const;
-//     bool operator<  (const GVectorf& rkV) const;
-//     bool operator<= (const GVectorf& rkV) const;
-//     bool operator>  (const GVectorf& rkV) const;
-//     bool operator>= (const GVectorf& rkV) const;
-
-    // arithmetic operations
-//     GVectorf operator+ (const GVectorf& rkV) const;
-//     GVectorf operator- (const GVectorf& rkV) const;
-//     GVectorf operator* (Real fScalar) const;
-//     GVectorf operator/ (Real fScalar) const;
-//     GVectorf operator- () const;
-
-    // arithmetic updates
-//     GVectorf& operator+= (const GVectorf& rkV);
-//     GVectorf& operator-= (const GVectorf& rkV);
-//     GVectorf& operator*= (Real fScalar);
-//     GVectorf& operator/= (Real fScalar);
-
-    // vector operations
+    /** Return the length of this vector.
+     * @return the length of this vector.
+     */
     public float Length ()
     {
         float fSqrLen = 0.0f;
@@ -143,6 +142,9 @@ public class GVectorf
         return (float)Math.sqrt(fSqrLen);
     }
 
+    /** Return the squared length of this vector.
+     * @return the squared length of this vector.
+     */
     public float SquaredLength ()
     {
         float fSqrLen = 0.0f;
@@ -153,6 +155,10 @@ public class GVectorf
         return fSqrLen;
     }
 
+    /** Return the dot-product of this vector with the input vector.
+     * @param rkV, input vector.
+     * @return dot product this*rkV.
+     */
     public float Dot (final GVectorf rkV)
     {
         float fDot = 0.0f;
@@ -163,6 +169,9 @@ public class GVectorf
         return fDot;
     }
 
+    /** Normalize this vector, return the length.
+     * @return the length of this vector prior to normalization.
+     */
     public float Normalize ()
     {
         float fLength = Length();
@@ -187,12 +196,8 @@ public class GVectorf
         return fLength;
     }
 
-    /** support for comparisons */
-    //private int CompareArrays (const GVectorf& rkV) const;
-
+    /** Vector size. */
     private int m_iSize;
+    /** Vector data. */
     private float[] m_afTuple = null;
 };
-
-// template <class Real>
-// GVectorf<Real> operator* (Real fScalar, const GVectorf<Real>& rkV);

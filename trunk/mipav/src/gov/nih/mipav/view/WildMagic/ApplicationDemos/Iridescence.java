@@ -197,7 +197,11 @@ public class Iridescence extends JavaApplication3D
         kAttr.SetNChannels(3);
         kAttr.SetTChannels(0,2);
         StandardMesh kSM = new StandardMesh(kAttr);
-        TriMesh pkMesh = kSM.Torus(20,20,2.0f,1.0f);
+        TriMesh pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
+//         TriMesh pkMesh = kSM.Torus(20,20,2.0f,1.0f);
+        
+        pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), 
+                new Vector3f(-0.707f, 0.707f, 0f),false));
         m_spkScene.AttachChild(pkMesh);
 
         m_spkEffect = new IridescenceEffect("Leaf","Gradient");
