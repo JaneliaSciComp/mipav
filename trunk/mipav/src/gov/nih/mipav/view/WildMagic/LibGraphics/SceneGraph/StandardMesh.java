@@ -794,7 +794,26 @@ public class StandardMesh
         pkMesh.ModelBound.SetRadius(fRadius);
         return pkMesh;
     }
-
+    /** Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
+     * of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
+     * and (0,1,0).  An application may transform the meshes as necessary.
+     * @param iZSamples, number of z-samples.
+     * @param iRadialSamples, number of radial samples.
+     * @param fRadius, sphere radius.
+     * @return Ellipsoid TriMesh.
+     */
+    public TriMesh Ellipsoid (int iZSamples, int iRadialSamples, 
+            float fXRadius, float fYRadius, float fZRadius)
+    {
+        TriMesh pkMesh = Sphere(iZSamples, iRadialSamples, 1.0f);
+        Transformation kTransform = new Transformation();
+        kTransform.SetScale(new Vector3f(fXRadius, fYRadius, fZRadius));
+        SetTransformation(kTransform);
+        TransformData(pkMesh.VBuffer);
+        pkMesh.ModelBound.SetRadius(Math.max(Math.max(fXRadius, fYRadius), fZRadius));
+        return pkMesh;
+    }
+    
     /** Standard meshes.  Each mesh is centered at (0,0,0) and has an up-axis
      * of (0,0,1).  The other axes forming the coordinate system are (1,0,0)
      * and (0,1,0).  An application may transform the meshes as necessary.

@@ -16,7 +16,7 @@
 package gov.nih.mipav.view.WildMagic.LibFoundation.NumericalAnalysis;
 
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
-// singular-value decompositoion SVD
+
 public class LinearSystem
 {
     // construction

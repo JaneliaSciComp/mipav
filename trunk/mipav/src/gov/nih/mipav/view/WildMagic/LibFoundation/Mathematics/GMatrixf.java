@@ -13,6 +13,8 @@
 //
 // Version: 4.0.0 (2006/06/28)
 
+package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
+
 /** Matrix operations are applied on the left.  For example, given a matrix M
  *and a vector V, matrix-times-vector is M*V.  That is, V is treated as a
  * column vector.  Some graphics APIs use V*M where V is treated as a row
@@ -26,43 +28,63 @@
  *
  * Matrices are stored in row-major order, matrix[row][col].
  */
-
-package gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics;
-
 public class GMatrixf
 {
-    // construction and destruction
+    /** Construct a general matrix of size 0,0.  */
     public GMatrixf ()
     {
         SetSize(0,0);
     }
 
+    /** Construct a general matrix of size iRows,iCols.
+     * @param iRows, number of rows in the matrix.
+     * @param iCols, number of columns in the matrix.
+     */
     public GMatrixf (int iRows, int iCols)
     {
         SetSize(iRows,iCols);
     }
 
+    /** Construct a general matrix of size iRows,iCols. Copy the
+     * afEntry array into the new matrix.
+     * @param iRows, number of rows in the matrix.
+     * @param iCols, number of columns in the matrix.
+     * @param afEntry, matrix values.
+     */
     public GMatrixf (int iRows, int iCols, final float[] afEntry)
     {
         SetMatrix(iRows,iCols,afEntry);
     }
 
+    /** Construct a general matrix of size iRows,iCols. Copy the
+     * afEntry array into the new matrix.
+     * @param iRows, number of rows in the matrix.
+     * @param iCols, number of columns in the matrix.
+     * @param afEntry, matrix values.
+     */
     public GMatrixf (int iRows, int iCols, final float[][] aafMatrix)
     {
         SetMatrix(iRows,iCols,aafMatrix);
     }
 
+    /** Construct a general matrix that is the copy of the input matrix.
+     * @param rkM, input matrix.
+     */
     public GMatrixf (GMatrixf rkM)
     {
         SetMatrix(rkM.GetRows(),rkM.GetColumns(), rkM.GetData());
     }
 
+    /** Deallocate the matrix. */
     public void finalize ()
     {
         Deallocate();
     }
 
-    // member access
+    /** Set the matrix size.
+     * @param iRows, number of rows in the matrix.
+     * @param iCols, number of columns in the matrix.
+     */
     public void SetSize (int iRows, int iCols)
     {
         Deallocate();
@@ -82,42 +104,65 @@ public class GMatrixf
         }
     }
 
+    /** Get the number of rows in the matrix.
+     * @return the number of rows in the matrix.
+     */
     public int GetRows ()
     {
         return m_iRows;
     }
 
+    /** Get the number of columns in the matrix.
+     * @return the number of rows in the matrix.
+     */
     public int GetColumns ()
     {
         return m_iCols;
     }
 
+    /** Get the size of the matrix rows*columns.
+     * @return the size of the matrix rows*columns.
+     */
     public int GetQuantity ()
     {
         return m_iQuantity;
     }
 
+    /** Set the value of the matrix at the location iRow, iCol.
+     * @param iRow, row position.
+     * @param iCol, column position.
+     * @param fValue, new value.
+     */
     public void Set( int iRow, int iCol, float fValue )
     {
         assert(0 <= iRow && iRow < m_iRows && 0 <= iCol && iCol < m_iCols);
         m_afData[iRow* m_iCols + iCol] = fValue;
     }
 
+    /** Get the value of the matrix at the location iRow, iCol.
+     * @param iRow, row position.
+     * @param iCol, column position.
+     * @return the matrix value  at the location iRow, iCol.
+     */
     public float Get( int iRow, int iCol )
     {
         assert(0 <= iRow && iRow < m_iRows && 0 <= iCol && iCol < m_iCols);
         return m_afData[iRow* m_iCols + iCol];
     }
 
+    /** Get the matrix values in float[] format.
+     * @return the matrix values.
+     */
     public float[] GetData(  )
     {
         return m_afData;
     }
 
-//     operator final float[] () final;
-//     operator float[] ();
-//     final float[] operator[] (int iRow) final;
-//     float[] operator[] (int iRow);
+    /** 
+     * Swap the iRow0 and iRow1 in the matrix.
+     * @param iRow0, first row to swap.
+     * @param iRow1, second row to swap.
+     */
     public void SwapRows (int iRow0, int iRow1)
     {
         assert(0 <= iRow0 && iRow0 < m_iRows && 0 <= iRow1 && iRow1 < m_iRows);
@@ -129,8 +174,10 @@ public class GMatrixf
         }
     }
 
-//     Real operator() (int iRow, int iCol) final;
-//     Real& operator() (int iRow, int iCol);
+    /** Set the value of the matrix for the iRow th row.
+     * @param iRow, row to set.
+     * @param rkV general vector containing the new values.
+     */
     public void SetRow (int iRow, final GVectorf rkV)
     {
         assert((0 <= iRow && iRow < m_iRows) && (rkV.GetSize() == m_iCols));
@@ -140,6 +187,10 @@ public class GMatrixf
         }
     }
 
+    /** Get the value of the matrix for the iRow th row.
+     * @param iRow, row to get.
+     * @return a general vector containing the row values.
+     */
     public GVectorf GetRow (int iRow)
     {
         assert(0 <= iRow && iRow < m_iRows);
@@ -151,6 +202,10 @@ public class GMatrixf
         return kV;
     }
 
+    /** Set the value of the matrix for the iCol th column.
+     * @param iCol, column to set.
+     * @param rkV general vector containing the new values.
+     */
     public void SetColumn (int iCol, final GVectorf rkV)
     {
         assert((0 <= iCol && iCol < m_iCols) && (rkV.GetSize() == m_iRows));
@@ -160,6 +215,10 @@ public class GMatrixf
         }
     }
 
+    /** Get the value of the matrix for the iCol th column.
+     * @param iCol, column to get.
+     * @return a general vector containing the column values.
+     */
     public GVectorf GetColumn (int iCol)
     {
         assert(0 <= iCol && iCol < m_iCols);
@@ -194,6 +253,12 @@ public class GMatrixf
         }
     }
 
+    /** Construct a general matrix of size iRows,iCols. Copy the
+     * afEntry array into the new matrix.
+     * @param iRows, number of rows in the matrix.
+     * @param iCols, number of columns in the matrix.
+     * @param afEntry, matrix values.
+     */
     public void SetMatrix (int iRows, int iCols, final float[][] aafMatrix)
     {
         Deallocate();
@@ -220,61 +285,10 @@ public class GMatrixf
         }
     }
 
-//     public void GetColumnMajor (float[] afCMajor)
-//     {
-//         for (int iRow = 0, i = 0; iRow < m_iRows; iRow++)
-//         {
-//             for (int iCol = 0; iCol < m_iCols; iCol++)
-//             {
-//                 afCMajor[i++] = m_aafEntry[iCol][iRow];
-//             }
-//         }
-//     }
-
-
-    // assignment
-//     GMatrixf& operator= (final GMatrixf& rkM);
-
-    // comparison
-//     bool operator== (final GMatrixf& rkM) final;
-//     bool operator!= (final GMatrixf& rkM) final;
-//     bool operator<  (final GMatrixf& rkM) final;
-//     bool operator<= (final GMatrixf& rkM) final;
-//     bool operator>  (final GMatrixf& rkM) final;
-//     bool operator>= (final GMatrixf& rkM) final;
-
-    // arithmetic operations
-//     GMatrixf operator+ (final GMatrixf& rkM) final;
-//     GMatrixf operator- (final GMatrixf& rkM) final;
-//     GMatrixf operator* (final GMatrixf& rkM) final;
-//     GMatrixf operator* (Real fScalar) final;
-//     GMatrixf operator/ (Real fScalar) final;
-//     GMatrixf operator- () final;
-
-    // arithmetic updates
-//     GMatrixf& operator+= (final GMatrixf& rkM);
-//     GMatrixf& operator-= (final GMatrixf& rkM);
-//     GMatrixf& operator*= (Real fScalar);
-//     GMatrixf& operator/= (Real fScalar);
-
-    // matrix products
-//     public GMatrixf Transpose () final;  // M^T
-//     public GMatrixf TransposeTimes (final GMatrixf& rkM) final;  // this^T * M
-//     public GMatrixf TimesTranspose (final GMatrixf& rkM) final;  // this * M^T
-
-    // matrix-vector operations
-//     public GVector<Real> operator* (final GVector<Real>& rkV) final;  // M * v
-//     public float QForm (final GVector<Real>& rkU, final GVector<Real>& rkV)
-//         final;  // u^T*M*v
-
-    /** Inversion.  The matrix must be square.  The function returns true
-     * whenever the matrix is square and invertible.
-     */
-//     public boolean GetInverse (GMatrixf<Real>& rkInverse) final;
-
     /** Support for allocation and deallocation.  The allocation call requires
      * m_iRows, m_iCols, and m_iQuantity to have already been correctly
      * initialized.
+     * @param bSetToZero, when true set the matrix to all 0-values.
      */
     private void Allocate (boolean bSetToZero)
     {
@@ -288,14 +302,12 @@ public class GMatrixf
         }
     }
 
+    /** Delete the matrix data. */
     private void Deallocate ()
     {
         m_afData = null;
     }
 
-
-    /** support for comparisons */
-//     private int CompareArrays (final GMatrixf& rkM) final;
 
     /** rows, columns, and size: */
     private int m_iRows, m_iCols, m_iQuantity;
@@ -303,11 +315,3 @@ public class GMatrixf
     /** the matrix is stored in row-major form as a 1-dimensional array */
     private float[] m_afData = null;
 };
-
-// c * M
-// template <class Real>
-// GMatrixf<Real> operator* (Real fScalar, final GMatrixf<Real>& rkM);
-
-// // v^T * M
-// template <class Real>
-// GVector<Real> operator* (final GVector<Real>& rkV, final GMatrixf<Real>& rkM);

@@ -560,7 +560,7 @@ public class ViewMenuBar {
     protected JMenu makeDiffusionTensorMenu() {
         return menuBuilder.makeMenu("Diffusion Tensor Imaging", true,
                                     new JComponent[] {
-                                        //menuBuilder.buildMenuItem("Open Diffusion Weighted Images", "loadDWI", 0, "open.gif", true),
+                                        menuBuilder.buildMenuItem("Open Diffusion Weighted Images", "loadDWI", 0, "open.gif", true),
                                         menuBuilder.buildMenuItem("Open Diffusion Tensor Image", "loadDTI", 0, "open.gif", true),
                                         menuBuilder.buildMenuItem("Open EigenVector and Functional Analysis Images", "loadEG_FA", 0, "open.gif", true)
                                     });

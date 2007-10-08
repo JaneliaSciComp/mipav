@@ -295,6 +295,15 @@ public class GPUVolumeRender extends JavaApplication3D
                 // Undo culling:
                 m_spkCull.CullFace = CullState.CullMode.CT_BACK;
 
+		// Displays any geometry that is inside the volume. In
+		// this case the geometry is the fiber-bundle tracts
+		// for the brain. The tracts are displayed with the
+		// colors corresponding to the positions -- thus the
+		// ray tracing will stop at the interseced geometry
+		// instead of the far wall of the proxy cube. The
+		// intersecting geometry must be rendered twice, once
+		// into the pbuffer to use for the ray-tracing bounds,
+		// and once to display it.
                 if ( m_bDisplayTract && (m_kTractNode != null) )
                 {
                     for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
@@ -305,7 +314,6 @@ public class GPUVolumeRender extends JavaApplication3D
                         kTract.AttachEffect( m_spkVertexColor3Shader );
                         kTract.UpdateGS();
                         kTract.UpdateRS();
-                        //m_pkRenderer.LoadResources(kTract);
                         m_pkRenderer.Draw(kTract);
                     }
                     m_spkAlpha.BlendEnabled = true;
@@ -335,6 +343,15 @@ public class GPUVolumeRender extends JavaApplication3D
                 // Undo culling:
                 m_spkCull.CullFace = CullState.CullMode.CT_BACK;
 
+		// Displays any geometry that is inside the volume. In
+		// this case the geometry is the fiber-bundle tracts
+		// for the brain. The tracts are displayed with the
+		// colors corresponding to the positions -- thus the
+		// ray tracing will stop at the interseced geometry
+		// instead of the far wall of the proxy cube. The
+		// intersecting geometry must be rendered twice, once
+		// into the pbuffer to use for the ray-tracing bounds,
+		// and once to display it.
                 if ( m_bDisplayTract && (m_kTractNode != null) )
                 {
                     for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
@@ -345,7 +362,6 @@ public class GPUVolumeRender extends JavaApplication3D
                         kTract.DetachAllEffects();
                         kTract.AttachEffect( m_spkVertexColor3Shader );
                         kTract.UpdateRS();
-                        //m_pkRenderer.LoadResources(kTract);
                         m_pkRenderer.Draw(kTract);
                     }
                 }
@@ -362,6 +378,11 @@ public class GPUVolumeRender extends JavaApplication3D
                 m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
                 m_pkRenderer.ClearBuffers();
 
+		// Displays any geometry that is inside the volume. In
+		// this case the geometry is the fiber-bundle tracts
+		// for the brain. This is the second display, and the
+		// tracts are shown with the non-position dependant
+		// colors.
                 if ( m_bDisplayTract && (m_kTractNode != null ) )
                 {
                     for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
@@ -372,7 +393,6 @@ public class GPUVolumeRender extends JavaApplication3D
                         kTract.AttachEffect( m_spkPolylineShader );
                         kTract.UpdateRS();
                         kTract.UpdateGS();
-                        //m_pkRenderer.LoadResources(kTract);
                         m_pkRenderer.Draw(kTract);
                     }
                     m_spkAlpha.BlendEnabled = true;
@@ -415,11 +435,11 @@ public class GPUVolumeRender extends JavaApplication3D
                 // Draw screne polygon:
                 m_pkRenderer.SetCamera(m_spkScreenCamera);
                 m_pkRenderer.Draw(m_spkScenePolygon);
-
+                */
                 //Draw frame rate:
                 m_pkRenderer.SetCamera(m_spkCamera);
                 DrawFrameRate(8,16,ColorRGBA.WHITE);
-                */
+
 
                 if ( m_kSculptor.IsSculptDrawn() )
                 {
@@ -489,7 +509,7 @@ public class GPUVolumeRender extends JavaApplication3D
         ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         m_kAnimator = new Animator( GetCanvas() );
-        //m_kAnimator.setRunAsFastAsPossible(true); 
+        m_kAnimator.setRunAsFastAsPossible(true); 
         m_kAnimator.start();
     }
 
@@ -1973,6 +1993,9 @@ public class GPUVolumeRender extends JavaApplication3D
         }
     }
 
+    /** Add a polyline to the display. Used to display fiber tract bundles.
+     * @param kLine, new polyline to display.
+     */
     public void addPolyline( Polyline kLine )
     {
         if ( m_kTractNode == null )
@@ -1987,6 +2010,7 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kTractNode.UpdateRS();
     }
 
+    /** Remove all polylines from the display. */
     public void removeAllPolylines(  )
     {
         if ( m_kTractNode == null )
@@ -2012,7 +2036,7 @@ public class GPUVolumeRender extends JavaApplication3D
     private Node m_spkScene;
     /** Turns wireframe on/off: */
     private WireframeState m_spkWireframe;
-
+    /** Alpha blending state for blending between geometry and the volume. */
     private AlphaState m_spkAlpha;
     /** Culling: turns backface/frontface culling on/off: */
     private CullState m_spkCull;
@@ -2117,6 +2141,8 @@ public class GPUVolumeRender extends JavaApplication3D
 
     /** Polyline tracts root node: */
     private Node m_kTractNode = null;
+    /** Set to true when polyline fiber bundles are displayed. */
     private boolean m_bDisplayTract = false;
+    /** For modifying the alpha-blending mode during runtime. */
     private int m_iActive = 0;
 }
