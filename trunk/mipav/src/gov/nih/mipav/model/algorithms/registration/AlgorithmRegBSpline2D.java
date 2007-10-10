@@ -224,7 +224,18 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
                             fireProgressStateChanged(kProgressPrefixString + "Iteration: " +
                                                    Integer.toString(iIteration + 1) + "/" + kOptions.iMaxIterations +
                                                    "  Convergence: " + kDecimalFormat.format(dConvergence));
-                            fireProgressStateChanged((++iIterationControlPoint) * 100 / iNumIterationControlPoints);
+                            if (m_kOptionsPass2 ==  null) {
+                            fireProgressStateChanged(((++iIterationControlPoint) + (iNumIterationControlPoints*iIteration))* 100 / 
+                                                     (iNumIterationControlPoints*kOptions.iMaxIterations));
+                            }
+                            else if (kRegPrev == null) {
+                                fireProgressStateChanged(((++iIterationControlPoint) + (iNumIterationControlPoints*iIteration))* 100 / 
+                                        (2*iNumIterationControlPoints*kOptions.iMaxIterations));    
+                            }
+                            else {
+                                fireProgressStateChanged(50 + ((++iIterationControlPoint) + (iNumIterationControlPoints*iIteration))* 100 / 
+                                        (2*iNumIterationControlPoints*kOptions.iMaxIterations));        
+                            }
 
                             // Minimize single control point.
                             kReg.minimizeControlPoint(iControlX, iControlY, kOptions.iGradientDescentMinimizeMaxSteps,
