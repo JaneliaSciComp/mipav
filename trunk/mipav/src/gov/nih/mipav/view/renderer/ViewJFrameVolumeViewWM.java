@@ -459,8 +459,10 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
         } else if (command.equals("SurRender")) {
             enableSurfaceRender();
+            updateRayTracingSteps();
         } else if (command.equals("VolRender")) {
             enableVolumeRender();
+            updateRayTracingSteps();
         } else if (command.equals("Geodesic")) {
             insertTab("Geodesic", m_kGeodesicPanel);
             insertSurfaceTab("Geodesic", m_kGeodesicPanel);
@@ -495,6 +497,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
             insertSurfaceTab("Opacity", opacityPanel);
             insertRaycastTab("Opacity", opacityPanel);
             enableVolumeRender();
+            updateRayTracingSteps();
         } else if (command.equals("Stereo")) {
 
             /* Launch the stereo viewer for the volumeTexture. Using the
@@ -1428,6 +1431,17 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
         return opacityPanel.getAlphaBlendSliderValue();
     }
+    
+    /**
+     * Get the raytracing steps value.
+     *
+     * @return  raytrcing steps slider value.
+     */
+    public int getStepsValue() {
+        JPanelVolOpacityBase opacityPanel = surRender.getVolOpacityPanel();
+
+        return opacityPanel.getStepsSliderValue();
+    }
 
     /**
      * Required by the parent super class, do nothing.
@@ -1673,19 +1687,25 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         if (raycastRenderWM != null) {
             if (radioMIP.isSelected() && (source == radioMIP)) {
                 raycastRenderWM.MIPMode();
+                updateRayTracingSteps();
             } else if (radioXRAY.isSelected() && (source == radioXRAY)) {
                 raycastRenderWM.DDRMode();
+                updateRayTracingSteps();
             } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
                 raycastRenderWM.CMPMode();
+                updateRayTracingSteps();
             } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
                 raycastRenderWM.SURMode();
+                updateRayTracingSteps();
                 surRender.getSurfaceDialog().getLightDialog().refreshLighting();
             } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
                 raycastRenderWM.SURFASTMode();
+                updateRayTracingSteps();
                 surRender.getSurfaceDialog().getLightDialog().refreshLighting();
             } else if (radioSURFACEFAST.isSelected() && (source == kSelfShadow) )
                 raycastRenderWM.SelfShadow( kSelfShadow.isSelected() );
-        }
+            	updateRayTracingSteps();
+        	}
         if ( (imageB == null) )
         {
             kSelfShadow.setEnabled(radioSURFACEFAST.isSelected());
@@ -2385,10 +2405,23 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
         return true;
     }
 
+    /** 
+     * update blenading value.
+     */
     public void updateBlend()
     {
         if (raycastRenderWM != null) {
             raycastRenderWM.Blend(1 - getBlendValue()/100.0f);
+        }
+    }
+    
+    /**
+     * Update the raytrcing step size. 
+     */
+    public void updateRayTracingSteps()
+    {
+        if (raycastRenderWM != null) {
+            raycastRenderWM.StepsSize(Math.round(getStepsValue() * 4.5f));
         }
     }
 

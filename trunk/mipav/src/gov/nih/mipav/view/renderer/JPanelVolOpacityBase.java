@@ -51,6 +51,9 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
 
     /** Opacity slider of texture 3D volume opacity changes. */
     protected JSlider blendSlider;
+    
+    /** Steps slider of Wildmagic GPU based raytracing. */
+    protected JSlider stepsSlider;
 
     /** Reference to compoment opacity control A. */
     protected ViewJComponentVolOpacityBase componentOpacityA;
@@ -198,6 +201,25 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
         return blendSlider.getValue();
     }
 
+    
+    /**
+     * This function returns the value of the raytracing steps slider.
+     *
+     * @return  int the value of the slider, or a default of 225 (the median value) if the slider has not been
+     *          initialized
+     */
+    public int getStepsSliderValue() {
+
+        if (stepsSlider == null) {
+            return 225; // 50 is the halfway point of the slider (0 min, 100 max)
+
+            // if it hasn't been initialized yet, assume half opacity
+        }
+
+        return stepsSlider.getValue();
+    }
+    
+    
     /**
      * Return the opacity histrogram component of the imageA.
      *
@@ -392,7 +414,8 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
      */
     public void mouseReleased(MouseEvent event) {
 
-        if ((event.getSource() == blendSlider) && (blendSlider.isEnabled() == true)) {
+        if (((event.getSource() == blendSlider) && (blendSlider.isEnabled() == true))
+        		|| ((event.getSource() == stepsSlider) && (stepsSlider.isEnabled() == true))) {
             int selectedTab = tabbedPane.getSelectedIndex();
 
             if ((imageA != null) &&
@@ -555,6 +578,18 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
                 }
             }
         }
+        else if ( event.getSource() == stepsSlider )
+        {
+            if ( renderBase instanceof gov.nih.mipav.view.renderer.surfaceview.SurfaceRender )
+            {
+                if ( ((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
+                     instanceof ViewJFrameVolumeViewWM )
+                {
+                    ((ViewJFrameVolumeViewWM)((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()).
+                    updateRayTracingSteps();
+                }
+            }
+        }
     }
 
     /**
@@ -632,6 +667,38 @@ public class JPanelVolOpacityBase extends JPanelRendererBase implements ChangeLi
 
         return blendPanel;
     }
+    
+    /**
+     * Build the GPU raytracing steps slider control panel.
+     *
+     * @return  stepsPanel built ray tracing steps panel.
+     */
+    protected JPanel buildStepsPanel() {
+        Hashtable labels = new Hashtable();
+
+        labels.put(new Integer(0), new JLabel("0"));
+        labels.put(new Integer(50), new JLabel("225"));
+        labels.put(new Integer(100), new JLabel("450"));
+
+        stepsSlider = new JSlider(0, 100, 50);
+        stepsSlider.setFont(serif12);
+        stepsSlider.setMinorTickSpacing(25);
+        stepsSlider.setPaintTicks(true);
+        stepsSlider.setLabelTable(labels);
+        stepsSlider.setPaintLabels(true);
+        stepsSlider.addMouseListener(this);
+        stepsSlider.addChangeListener(this);
+        stepsSlider.setEnabled(((gov.nih.mipav.view.renderer.surfaceview.SurfaceRender)renderBase).getParentFrame()
+                instanceof ViewJFrameVolumeViewWM);
+
+        JPanel stepsPanel = new JPanel(new GridLayout(1, 1));
+
+        stepsPanel.add(stepsSlider);
+        stepsPanel.setBorder(buildTitledBorder("GPU Ray tracing steps"));
+
+        return stepsPanel;
+    }
+    
 
     /**
      * Calls dispose.

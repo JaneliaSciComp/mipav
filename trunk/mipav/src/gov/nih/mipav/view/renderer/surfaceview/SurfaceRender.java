@@ -2019,8 +2019,6 @@ public class SurfaceRender extends RenderViewBase {
     public void switchToSliceView(boolean firstTime) {
     	volumeDisplayMode3D = false;
     	
-    	// switchGroup.addChild(triPlanarViewBG);
-        // switchGroup.addChild(volBG);
         volBG.detach();
         triPlanarViewBG.detach();
         switchGroup.addChild(triPlanarViewBG);
