@@ -411,7 +411,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         } else if (command.equals("AdvancedOkay")) {
             tmpStr = bracketBoundText.getText();
 
-            if (testParameter(tmpStr, 1, 50)) {
+            if (testParameter(tmpStr, 1, 60)) {
                 bracketBound = Integer.valueOf(tmpStr).intValue();
             } else {
                 bracketBound = bracketBound_def;
