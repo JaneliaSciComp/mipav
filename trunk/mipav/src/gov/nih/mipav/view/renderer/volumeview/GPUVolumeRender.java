@@ -438,7 +438,7 @@ public class GPUVolumeRender extends JavaApplication3D
                 */
                 //Draw frame rate:
                 m_pkRenderer.SetCamera(m_spkCamera);
-                DrawFrameRate(8,16,ColorRGBA.WHITE);
+                //DrawFrameRate(8,16,ColorRGBA.WHITE);
 
 
                 if ( m_kSculptor.IsSculptDrawn() )
