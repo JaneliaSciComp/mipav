@@ -1490,6 +1490,21 @@ public class VolumeShaderEffect extends ShaderEffect
     }
 
     /**
+     * Sets the steps size factor shader parameter.
+     * @param stepsSize, blend factor (range = 0-1).
+     */
+    public void setSteps(float fsteps)
+    {
+        stepsSize[0] = fsteps;
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram.GetUC("steps") != null ) 
+        {
+            pkProgram.GetUC("steps").SetDataSource(stepsSize);
+        }
+    }
+
+    
+    /**
      * Sets the BackgroundColor shader parameter.
      * @param kColor, new BackgroundColor.
      */
@@ -1827,6 +1842,8 @@ public class VolumeShaderEffect extends ShaderEffect
     private Texture m_kSceneTarget;
     /** stores the blend function */
     private float[] m_afBlend = new float[]{.5f,0,0,0};
+    /** stores the steps size */
+    private float[] stepsSize = new float[]{450f,0,0,0};
     /** stores the background color */
     private ColorRGBA m_kBackgroundColor = ColorRGBA.BLACK;
     /** stores the self-shadow paramter on/off value: */

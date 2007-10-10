@@ -1918,6 +1918,15 @@ public class GPUVolumeRender extends JavaApplication3D
     }
     
     /**
+     * Sets the raytracing steps size.
+     * @param fValue, the steps value (0-450)
+     */
+    public void StepsSize( float fValue )
+    {
+        m_kVolumeShaderEffect.setSteps(fValue);
+    }
+    
+    /**
      * Launches the ApplicationGUI window displaying the currently-loaded
      * shader parameters.
      */

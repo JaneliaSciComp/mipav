@@ -746,6 +746,8 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         }
 
         JPanel blendPanel = buildBlendPanel();
+        
+        JPanel stepsPanel = buildStepsPanel();
 
         GridBagLayout gbLayout = new GridBagLayout();
         GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -765,6 +767,11 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         gbConstraints.weighty = 1;
         gbConstraints.fill = GridBagConstraints.HORIZONTAL;
         subPanel.add(blendPanel, gbConstraints);
+        
+        gbConstraints.gridy = 3;
+        gbConstraints.weighty = 1;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        subPanel.add(stepsPanel, gbConstraints);
 
         JScrollPane scrollPaneA = new JScrollPane(subPanel);
         scrollPaneA.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);

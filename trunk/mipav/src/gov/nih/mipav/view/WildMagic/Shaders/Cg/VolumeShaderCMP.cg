@@ -48,6 +48,7 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
                          uniform sampler3D VolumeImageA_GM, 
                          uniform sampler1D OpacityMapA_GM, 
                          uniform float stepsize,
+						 uniform float4 steps,
                          uniform float IsColor,
                          uniform float DoClip,
                          uniform float GradientMagnitude,
@@ -93,11 +94,11 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
         return;
     }
 
-    // limit the number of iterations to 450, make sure that the stepsize will
+    // limit the number of iterations to STEPS, make sure that the stepsize will
     // cover the entire ray:
-    if ( (len/stepsize) > 450 )
+    if ( (len/stepsize) > steps[0] )
     {
-        stepsize = len/450.0;
+        stepsize = len/steps[0];
     }
 
     // The color at the current position along the ray:
@@ -119,7 +120,7 @@ void p_VolumeShaderCMP(  in float3 inTexCoord1    : TEXCOORD0,
 
     // For some profiles the number of loop iterations must be determined at
     // compile time:
-    for( int i = 0; i < 450; i++ )
+    for( int i = 0; i < steps[0]; i++ )
     {
         // axis-aligned clipping:
         if ( (DoClip != 0) && myClip( position, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
