@@ -815,9 +815,9 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Open image from SRB", "OpenSRBFile", 0, "open.gif",
                                                                   true), saveImageToSRBItem,
                                         menuBuilder.buildMenuItem("SRB transfer", "TransferSRBFiles", 0, null, true),
-                                        menuBuilder.buildMenuItem("SRB NDAR transfer", "TransferNDAR", 0, null, true),
-                                        menuBuilder.buildCheckBoxMenuItem("Enable auto SRB upload", "AutoUploadToSRB",
-                                                                          isAutoUploadEnabled)
+                                        menuBuilder.buildMenuItem("NDAR image import", "TransferNDAR", 0, null, true)
+                                     //   menuBuilder.buildCheckBoxMenuItem("Enable auto SRB upload", "AutoUploadToSRB",
+                                     //                                     isAutoUploadEnabled)
                                     });
     }
 

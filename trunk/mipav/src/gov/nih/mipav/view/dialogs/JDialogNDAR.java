@@ -6,6 +6,7 @@ import gov.nih.mipav.model.srb.SRBFileTransferer;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.srb.*;
 import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
@@ -16,6 +17,9 @@ import java.io.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import edu.sdsc.grid.io.*;
+import edu.sdsc.grid.io.local.*;
+import edu.sdsc.grid.io.srb.*;
 
 /**
  * <p>Title:</p>
@@ -30,7 +34,7 @@ import javax.swing.event.*;
  * @version  1.0
  */
 
-public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeListener {
+public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeListener, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -43,6 +47,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	
 	private JTextField [] guidFields;
 	
+	/** Scrolling text area for abstract */
 	private WidgetFactory.ScrollTextArea abstractArea;
 	
 	JScrollPane listPane;
@@ -63,18 +68,27 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
 	private JComboBox organizationBox;
 	
+	private JCheckBox anonConfirmBox;
+	
+	private JScrollPane privacyPane;
+	
 	private boolean doneAddingFiles = false;
 	
+	/** NDAR data object passed into FileWriteOptions and onto the writeXML with specific NDAR info */
 	private NDARData ndarData;
 	
+	/** Length of the NDAR GUID  */
 	private static final int GUID_LENGTH = 12;
 	
 	private static final String SPACE = " ";
 
-	private static final int TAB_PI = 0;
-	private static final int TAB_ABSTRACT = 1;
-	private static final int TAB_SOURCE = 2;
-	private static final int TAB_GUID = 3;
+	/** Static tab indices */
+	private static final int TAB_MAIN = 0;
+	private static final int TAB_PI = 1;
+	private static final int TAB_ABSTRACT = 2;
+	private static final int TAB_SOURCE = 3;
+	private static final int TAB_GUID = 4;
+	private static final int TAB_DESTINATION = 5;
 	
 	private static final String [] ORGANIZATIONS = { "ACE Location 1",
 													 "ACE Location 2",
@@ -96,6 +110,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         
         init();
         setVisible(true);
+        
+        validate();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -113,22 +129,28 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
         String command = e.getActionCommand();
 
+       // System.err.println("size : " + this.getSize());
+        
         if (command.equals("Next")) {
         	int index = tabbedPane.getSelectedIndex();
         	
-        	if (index == TAB_GUID) {
+        	if (index == TAB_DESTINATION) {
         		if (setVariables()) {
         			transfer();
         		}
         	} else if (index == TAB_SOURCE) {
-        		int response = JOptionPane.showConfirmDialog(this, "Done adding source files?", "Done adding source files?",
+        		if (!doneAddingFiles) {
+        			int response = JOptionPane.showConfirmDialog(this, "Done adding source files?", "Done adding source files?",
                                                              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                 
         		
-        		if (response == JOptionPane.YES_OPTION) {
-        			doneAddingFiles = true;
-        			generateGUIFields();
-        			tabbedPane.setEnabledAt(TAB_GUID, true);
+        			if (response == JOptionPane.YES_OPTION) {
+        				doneAddingFiles = true;
+        				generateGUIFields();
+        				tabbedPane.setEnabledAt(TAB_GUID, true);
+        				tabbedPane.setSelectedIndex(TAB_GUID);
+        			}
+        		} else {
         			tabbedPane.setSelectedIndex(TAB_GUID);
         		}
         	} else if (tabbedPane.getTabCount() > index + 1) {
@@ -201,14 +223,18 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 
     public void stateChanged(ChangeEvent e) {
     	int index = tabbedPane.getSelectedIndex();
-    	if (index == TAB_PI) {
+    	if (index == TAB_MAIN) {
     		previousButton.setEnabled(false);
+    	} else if (index == TAB_DESTINATION) {
+    		previousButton.setEnabled(tabbedPane.isEnabledAt(TAB_GUID));
     	} else {
     		previousButton.setEnabled(true);
     	}
     	
     	if (index == TAB_SOURCE) {
     		nextButton.setEnabled(sourceModel.size() > 0);
+    	} else if (index == TAB_DESTINATION) {
+    		nextButton.setEnabled(tabbedPane.isEnabledAt(TAB_GUID));
     	} else {
     		nextButton.setEnabled(true);
     	}
@@ -218,6 +244,20 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	loadGUIDsButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_GUID);
     }
    
+    public void itemStateChanged(ItemEvent e) {
+    	if (e.getSource().equals(anonConfirmBox)) {
+    		if (anonConfirmBox.isSelected()) {
+    			anonConfirmBox.setEnabled(false);
+    			nextButton.setEnabled(true);
+    			
+    			tabbedPane.setEnabledAt(TAB_PI, true);
+    			tabbedPane.setEnabledAt(TAB_ABSTRACT, true);
+    			tabbedPane.setEnabledAt(TAB_SOURCE, true);
+    			tabbedPane.setEnabledAt(TAB_DESTINATION, true);
+    		}
+    	}
+    }
+    
 
     private void loadAbstract(File abstractFile) {
     	RandomAccessFile raFile;
@@ -265,14 +305,23 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
      * DOCUMENT ME!
      */
     private void init() {
-        setTitle("NDAR");
+        setTitle("NDAR Imaging Import Tool");
 
         tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Main", buildPITab());
+        tabbedPane.addTab("Main", buildMainTab());
+        tabbedPane.addTab("P.I.", buildPITab());
         tabbedPane.addTab("Abstract", buildAbstractPanel());
         tabbedPane.addTab("Source", buildSourcePanel());
         tabbedPane.addTab("GUIDs", buildGUIDPane());
+        tabbedPane.addTab("Destination", buildDestinationPanel());
+        
+        
+        
+        tabbedPane.setEnabledAt(TAB_PI, false);
+        tabbedPane.setEnabledAt(TAB_ABSTRACT, false);
+        tabbedPane.setEnabledAt(TAB_SOURCE, false);
         tabbedPane.setEnabledAt(TAB_GUID, false);
+        tabbedPane.setEnabledAt(TAB_DESTINATION, false);
         
         tabbedPane.addChangeListener(this);
         
@@ -280,9 +329,75 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         getContentPane().add(buildButtonPanel(), BorderLayout.SOUTH);
         pack();
         validate();
-        this.setMinimumSize(new Dimension(600,320));
-        this.setSize(new Dimension(600,320));
+        this.setMinimumSize(new Dimension(610,437));
+        this.setSize(new Dimension(610,437));
     }    
+    
+    private JScrollPane buildMainTab() {
+    	JPanel mainPanel = new JPanel(new GridBagLayout());
+    	
+    	GridBagConstraints gbc = new GridBagConstraints();
+    	gbc.weightx = 1;
+    	gbc.weighty = 1;
+    	gbc.gridx = 0;
+    	gbc.gridy = 0;
+    	gbc.fill = GridBagConstraints.BOTH;
+    	
+    	JTextArea privacyArea = new JTextArea();
+    	privacyArea.setFont(MipavUtil.font12);
+    	privacyArea.setText(JDialogLoginSRB.NDAR_PRIVACY_NOTICE);
+    	privacyArea.setEditable(false);
+    	
+    	mainPanel.add(privacyArea, gbc);
+    	
+    	gbc.gridy++;
+    	gbc.gridx = 0;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        anonConfirmBox = WidgetFactory.buildCheckBox("I agree to the above statement", false);
+        anonConfirmBox.addItemListener(this);
+        
+        mainPanel.add(anonConfirmBox, gbc);
+    	
+        privacyPane = WidgetFactory.buildScrollPane(mainPanel);
+                
+    	return privacyPane;
+    }
+    
+    private JPanel buildDestinationPanel() {
+    	JPanel destPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.NORTHWEST;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        gbc2.weightx = 1;
+        
+        
+        
+        
+        gbc2.gridy = 0;
+        gbc2.gridx = 0;
+        gbc2.insets = new Insets(5, 10, 5, 0);
+        destPanel.add(organizationBox, gbc2);
+        
+        JPanel visPanel = new JPanel();
+        
+        ButtonGroup group = new ButtonGroup();
+        publicButton = WidgetFactory.buildRadioButton("Public", true, group);
+        organizationButton = WidgetFactory.buildRadioButton("Organization", true, group);
+        privateButton = WidgetFactory.buildRadioButton("Private", true, group);
+        
+        visPanel.add(publicButton);
+        visPanel.add(organizationButton);
+        visPanel.add(privateButton);
+
+        visPanel.setBorder(buildTitledBorder("Destination visibility"));
+
+        gbc2.gridy++;
+        destPanel.add(visPanel, gbc2);
+        
+    	return destPanel;
+    	
+    }
     
     private JPanel buildPITab() {
     	JPanel piPanel = new JPanel(new GridBagLayout());
@@ -365,39 +480,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	        
     	organizationBox = new JComboBox(ORGANIZATIONS);
         organizationBox.setFont(MipavUtil.font12);        
-        
-        JPanel destPanel = new JPanel(new GridBagLayout());
-        destPanel.setBorder(buildTitledBorder("Destination"));
-        GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.anchor = GridBagConstraints.WEST;
-        gbc2.fill = GridBagConstraints.HORIZONTAL;
-        gbc2.weightx = 1;
-               
-        
-        ButtonGroup group = new ButtonGroup();
-        publicButton = WidgetFactory.buildRadioButton("Public", true, group);
-        organizationButton = WidgetFactory.buildRadioButton("Organization", true, group);
-        privateButton = WidgetFactory.buildRadioButton("Private", true, group);
-        
-        gbc2.gridx = 0;
-        destPanel.add(organizationBox, gbc2);
-        
-        gbc2.anchor = GridBagConstraints.EAST;
-        gbc2.gridx++;
-        destPanel.add(publicButton, gbc2);
-        gbc2.gridx++;
-        destPanel.add(organizationButton, gbc2);
-        gbc2.gridx++;
-        destPanel.add(privateButton, gbc2);
-        
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        piPanel.add(destPanel, gbc);
-               
-        
-        
+              
+               	
     	return piPanel;
     }
     
@@ -584,6 +668,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     private void transfer() {
     	//Create the FileIO
     	FileIO fileIO = new FileIO();
+    	fileIO.setQuiet(true);
     	SRBFileTransferer transferer = new SRBFileTransferer();
     	
     	int numImages = sourceModel.size();
@@ -597,9 +682,12 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	}
     	
     	String fName;
+    	File currentImageFile;
+    	LocalFile localFile;
     	
     	for (int i = 0; i < numImages; i++) {
-    		tempImage = fileIO.readImage(sourceModel.elementAt(i).toString());
+    		currentImageFile = (File)sourceModel.elementAt(i);
+    		tempImage = fileIO.readImage(currentImageFile.getAbsolutePath());
     		//Save the image's XML to disk
     		
     		//set the valid GUID into the NDAR data object, and set up the filewriteoptions for this image
@@ -631,7 +719,11 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		//write out only the header to userdir/mipav/temp
     		fileIO.writeImage(tempImage, options);
     		
+    		
+    		//localFile = new LocalFile(options.getFileDirectory() + File.separator + options.getFileName());
+    		
     		//use the directory and filename to send the .xml file
+    		
     		
     		//transferer.transfer(sourceFile, targetFile)
     		
@@ -652,13 +744,14 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	for (int i = 0; i < numImages; i++) {
     		if (!isValidGUID(guidFields[i].getText())) {
     			MipavUtil.displayWarning("Invalid GUID");
+    			tabbedPane.setSelectedIndex(TAB_GUID);
     			guidFields[i].requestFocus();
     			guidFields[i].setSelectionStart(0);
     			guidFields[i].setSelectionEnd(guidFields[i].getText().length());
     			return false;
     		}
     	}
-    	
+    	    	
     	//parse out the information from the text fields/abstract info etc
     	
     	ndarData = new NDARData(piNameField.getText(),
@@ -678,16 +771,22 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	addSourceButton = WidgetFactory.buildTextButton("Add files", "Add source files", "AddSource", this);
     	removeSourceButton = WidgetFactory.buildTextButton("Remove files", "Remove source files", "RemoveSource", this);
     	loadGUIDsButton = WidgetFactory.buildTextButton("Load GUIDs", "Parse GUIDs from text file", "LoadGUIDs", this);
+    	helpButton = WidgetFactory.buildTextButton("Help", "Show MIPAV help", "", this);
     	
     	previousButton.setPreferredSize(MipavUtil.defaultButtonSize);
     	nextButton.setPreferredSize(MipavUtil.defaultButtonSize);
     	addSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
     	removeSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
     	loadGUIDsButton.setPreferredSize(MipavUtil.defaultButtonSize);
+    	helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
     	
+    	previousButton.setEnabled(false);
+    	nextButton.setEnabled(false);
     	addSourceButton.setEnabled(false);
     	removeSourceButton.setEnabled(false);
     	loadGUIDsButton.setEnabled(false);
+    	
+    	
     	buttonPanel.add(previousButton);
     	buttonPanel.add(nextButton);
     	buttonPanel.add(addSourceButton);
