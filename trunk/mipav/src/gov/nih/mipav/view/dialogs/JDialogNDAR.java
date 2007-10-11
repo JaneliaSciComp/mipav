@@ -5,6 +5,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.srb.SRBFileTransferer;
 import gov.nih.mipav.model.structures.*;
 
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.srb.*;
 import gov.nih.mipav.view.components.*;
@@ -70,7 +71,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	
 	private JCheckBox anonConfirmBox;
 	
-	private JScrollPane privacyPane;
+	private JTextArea privacyTextArea;
 	
 	private boolean doneAddingFiles = false;
 	
@@ -216,6 +217,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             	loadGUIDsFromFile(chooser.getSelectedFile());
             	
             }
+        } else if (command.equals("Help")) {
+        	//MipavUtil.showHelp("");
         }
         
         
@@ -254,6 +257,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     			tabbedPane.setEnabledAt(TAB_ABSTRACT, true);
     			tabbedPane.setEnabledAt(TAB_SOURCE, true);
     			tabbedPane.setEnabledAt(TAB_DESTINATION, true);
+    			privacyTextArea.setBackground(helpButton.getBackground());
     		}
     	}
     }
@@ -343,12 +347,12 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	gbc.gridy = 0;
     	gbc.fill = GridBagConstraints.BOTH;
     	
-    	JTextArea privacyArea = new JTextArea();
-    	privacyArea.setFont(MipavUtil.font12);
-    	privacyArea.setText(JDialogLoginSRB.NDAR_PRIVACY_NOTICE);
-    	privacyArea.setEditable(false);
+    	privacyTextArea = new JTextArea();
+    	privacyTextArea.setFont(MipavUtil.font12);
+    	privacyTextArea.setText(JDialogLoginSRB.NDAR_PRIVACY_NOTICE);
+    	privacyTextArea.setEditable(false);
     	
-    	mainPanel.add(privacyArea, gbc);
+    	mainPanel.add(privacyTextArea, gbc);
     	
     	gbc.gridy++;
     	gbc.gridx = 0;
@@ -359,7 +363,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         
         mainPanel.add(anonConfirmBox, gbc);
     	
-        privacyPane = WidgetFactory.buildScrollPane(mainPanel);
+        JScrollPane privacyPane = WidgetFactory.buildScrollPane(mainPanel);
                 
     	return privacyPane;
     }
@@ -573,7 +577,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	
     	
     	for (int i = 0; i < numImages; i++) {
-    		guidLabels[i] = new JTextField(40);
+    		guidLabels[i] = new JTextField(45);
     		guidLabels[i].setFont(WidgetFactory.font12);
     		guidLabels[i].setForeground(Color.black);
     		
@@ -592,9 +596,9 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	}
     	for (int i = 0; i < numImages; i++) {  	
     		guidLabels[i].setText(sourceModel.elementAt(i).toString());
-    		guidLabels[i].setHorizontalAlignment(JTextField.RIGHT);
-    	
-    		guidLabels[i].setEditable(false);
+    		guidLabels[i].setCaretPosition(guidLabels[i].getText().length());
+    		
+    	    guidLabels[i].setEditable(false);
     	}
     	
     	//parse the potential GUIDs into the fields NDARCJ743PV3	
@@ -792,6 +796,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	buttonPanel.add(addSourceButton);
     	buttonPanel.add(removeSourceButton);
     	buttonPanel.add(loadGUIDsButton);
+    	buttonPanel.add(helpButton);
     	
     	return buttonPanel;
     }
