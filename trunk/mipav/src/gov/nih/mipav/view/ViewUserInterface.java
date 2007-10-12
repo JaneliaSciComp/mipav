@@ -2721,7 +2721,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *
      */
     public void transferNDAR() {
-    	System.err.println("ndar");
     	JDialogNDAR ndar = new JDialogNDAR(this.getMainFrame());
     }
     

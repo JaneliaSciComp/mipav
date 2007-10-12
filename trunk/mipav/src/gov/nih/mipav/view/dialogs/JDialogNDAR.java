@@ -137,14 +137,14 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         	
         	if (index == TAB_DESTINATION) {
         		if (setVariables()) {
-        			transfer();
+        			MipavUtil.displayInfo("Transfer not yet supported.");
+        			//transfer();
         		}
         	} else if (index == TAB_SOURCE) {
         		if (!doneAddingFiles) {
         			int response = JOptionPane.showConfirmDialog(this, "Done adding source files?", "Done adding source files?",
                                                              JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                 
-        		
         			if (response == JOptionPane.YES_OPTION) {
         				doneAddingFiles = true;
         				generateGUIFields();
@@ -164,7 +164,6 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         		tabbedPane.setSelectedIndex(index - 1);
         	}
         } else if (command.equals("AddSource")) {
-        	System.err.println("addsrc");
         	JFileChooser chooser = new JFileChooser();
             chooser.setMultiSelectionEnabled(true);
             
@@ -674,6 +673,9 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	FileIO fileIO = new FileIO();
     	fileIO.setQuiet(true);
     	SRBFileTransferer transferer = new SRBFileTransferer();
+    	
+    	
+    	transferer.setNDAR(true);
     	
     	int numImages = sourceModel.size();
     	ModelImage tempImage = null;

@@ -76,6 +76,10 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     /** DOCUMENT ME! */
     private File tempDir;
 
+    /** */
+    boolean isNDAR = false;
+    
+    
     /** Used to control the transferring mode. */
     private boolean threadSeperated;
 
@@ -271,6 +275,14 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     }
 
 
+    /**
+     * Set the flag to be NDAR related (true = ndar)
+     * @param isNDAR boolean use NDAR settings
+     */
+    public void setNDAR(boolean doNDAR) {
+    	this.isNDAR = doNDAR;
+    }
+    
     /**
      * Saves the memory image to the srb server, the target directory will be selected by the user.
      *
