@@ -195,7 +195,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
 		
     	for (int voiIndex = nVOI - 1; voiIndex >= 0; voiIndex--) {
     		currentVOI = image.getVOIs().VOIAt(voiIndex);
-    		System.err.println(voiIndex + ", " + currentVOI.getCurveType());
+    		//System.err.println(voiIndex + ", " + currentVOI.getCurveType());
     		if (currentVOI.getCurveType() == VOI.CONTOUR && (!onlyActive || currentVOI.isActive())) {
     			
     			curves = currentVOI.getCurves();
@@ -208,7 +208,7 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
     						if (!onlyActive || currentContour.isActive() ) {
     							
     							isClosed = currentContour.isClosed();
-    							System.err.println("checking contour.  isClosed: " + isClosed);
+    						//	System.err.println("checking contour.  isClosed: " + isClosed);
     						//	System.err.println("found closed contour VOIAt(" + voiIndex + ").curves[" +
     						//			slice + "].elementAt(" + voiBaseIndex + ")");
     							numPoints = currentContour.size();
