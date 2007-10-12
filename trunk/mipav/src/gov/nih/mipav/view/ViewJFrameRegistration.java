@@ -2281,95 +2281,8 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         translateButton.addItemListener(this);
         translateButton.setFocusPainted(false);
         toolBar2.add(translateButton);
-        toolBar2.add(makeSeparator());
         toggleArray[1] = translateButton;
-
-        refMarkButton = new JToggleButton(MipavUtil.getIcon("reference.gif"));
-
-        // refMarkButton.setMargin(new Insets(7, 7, 7, 7));
-        refMarkButton.addActionListener(al);
-        refMarkButton.setToolTipText("Reference slice markers");
-        refMarkButton.setActionCommand("refMark");
-        refMarkButton.setSelected(false);
-        movementGroup.add(refMarkButton);
-        refMarkButton.setBorderPainted(false);
-        refMarkButton.setRolloverEnabled(true);
-
-        // refMarkButton.setBorder(pressedBorder);
-        refMarkButton.setRolloverIcon(MipavUtil.getIcon("referenceroll.gif"));
-        refMarkButton.addItemListener(this);
-        refMarkButton.setFocusPainted(false);
-        toolBar2.add(refMarkButton);
-        toggleArray[2] = refMarkButton;
-
-        adjMarkButton = new JToggleButton(MipavUtil.getIcon("adjust.gif"));
-
-        // adjMarkButton.setMargin(new Insets(7, 7, 7, 7));
-        adjMarkButton.addActionListener(al);
-        adjMarkButton.setToolTipText("Adjusted slice markers");
-        adjMarkButton.setActionCommand("adjMark");
-        adjMarkButton.setSelected(false);
-        movementGroup.add(adjMarkButton);
-        adjMarkButton.setBorderPainted(false);
-        adjMarkButton.setRolloverEnabled(true);
-
-        // adjMarkButton.setBorder(pressedBorder);
-        adjMarkButton.setRolloverIcon(MipavUtil.getIcon("adjustroll.gif"));
-        adjMarkButton.addItemListener(this);
-        adjMarkButton.setFocusPainted(false);
-        toolBar2.add(adjMarkButton);
-        toggleArray[3] = adjMarkButton;
-        toolBar2.add(makeSeparator());
-
-        refMarkMinusButton = new JButton(MipavUtil.getIcon("referenceminus.gif"));
-
-        // refMarkMinusButton.setMargin(new Insets(7, 7, 7, 7));
-        refMarkMinusButton.addActionListener(al);
-        refMarkMinusButton.setToolTipText("Delete selected reference slice markers");
-        refMarkMinusButton.setActionCommand("refMarkMinus");
-        refMarkMinusButton.setSelected(false);
-        refMarkMinusButton.setBorderPainted(false);
-        refMarkMinusButton.setRolloverEnabled(true);
-
-        // refMarkMinusButton.setBorder(pressedBorder);
-        refMarkMinusButton.setRolloverIcon(MipavUtil.getIcon("referencerollminus.gif"));
-        refMarkMinusButton.addItemListener(this);
-        refMarkMinusButton.setFocusPainted(false);
-        toolBar2.add(refMarkMinusButton);
-
-        adjMarkMinusButton = new JButton(MipavUtil.getIcon("adjustminus.gif"));
-
-        // adjMarkMinusButton.setMargin(new Insets(7, 7, 7, 7));
-        adjMarkMinusButton.addActionListener(al);
-        adjMarkMinusButton.setToolTipText("Delete selected adjusted slice markers");
-        adjMarkMinusButton.setActionCommand("adjMarkMinus");
-        adjMarkMinusButton.setSelected(false);
-        adjMarkMinusButton.setBorderPainted(false);
-        adjMarkMinusButton.setRolloverEnabled(true);
-
-        // adjMarkMinusButton.setBorder(pressedBorder);
-        adjMarkMinusButton.setRolloverIcon(MipavUtil.getIcon("adjustrollminus.gif"));
-        adjMarkMinusButton.addItemListener(this);
-        adjMarkMinusButton.setFocusPainted(false);
-        toolBar2.add(adjMarkMinusButton);
-        toolBar2.add(makeSeparator());
-
-        defaultModeButton = new JToggleButton(MipavUtil.getIcon("pointer.gif"));
-
-        // defaultModeButton.setMargin(new Insets(7, 7, 7, 7));
-        defaultModeButton.addActionListener(al);
-        defaultModeButton.setToolTipText("Return to default mode");
-        defaultModeButton.setActionCommand("defaultMode");
-        defaultModeButton.setSelected(true);
-        defaultModeButton.setRolloverEnabled(true);
-        defaultModeButton.setBorderPainted(false);
-        defaultModeButton.setRolloverIcon(MipavUtil.getIcon("pointerroll.gif"));
-        defaultModeButton.setFocusPainted(false);
-        movementGroup.add(defaultModeButton);
-        toolBar2.add(defaultModeButton);
-        toolBar2.add(makeSeparator());
-
-
+        
         upButton = new JButton(MipavUtil.getIcon("up.gif"));
         upButton.addActionListener(al);
         upButton.setToolTipText("Move image up");
@@ -2457,7 +2370,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         rotateButton.addItemListener(this);
         rotateButton.setFocusPainted(false);
         toolBar2.add(rotateButton);
-        toggleArray[4] = rotateButton;
+        toggleArray[2] = rotateButton;
 
         cwButton = new JButton(MipavUtil.getIcon("clockwise.gif"));
         cwButton.addActionListener(al);
@@ -2484,7 +2397,94 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         ccwButton.setFocusPainted(false);
         toolBar2.add(ccwButton);
         buttonArray[10] = ccwButton;
+        toolBar2.add(makeSeparator());
 
+        refMarkButton = new JToggleButton(MipavUtil.getIcon("reference.gif"));
+
+        // refMarkButton.setMargin(new Insets(7, 7, 7, 7));
+        refMarkButton.addActionListener(al);
+        refMarkButton.setToolTipText("Reference slice markers");
+        refMarkButton.setActionCommand("refMark");
+        refMarkButton.setSelected(false);
+        movementGroup.add(refMarkButton);
+        refMarkButton.setBorderPainted(false);
+        refMarkButton.setRolloverEnabled(true);
+
+        // refMarkButton.setBorder(pressedBorder);
+        refMarkButton.setRolloverIcon(MipavUtil.getIcon("referenceroll.gif"));
+        refMarkButton.addItemListener(this);
+        refMarkButton.setFocusPainted(false);
+        toolBar2.add(refMarkButton);
+        toggleArray[3] = refMarkButton;
+
+        adjMarkButton = new JToggleButton(MipavUtil.getIcon("adjust.gif"));
+
+        // adjMarkButton.setMargin(new Insets(7, 7, 7, 7));
+        adjMarkButton.addActionListener(al);
+        adjMarkButton.setToolTipText("Adjusted slice markers");
+        adjMarkButton.setActionCommand("adjMark");
+        adjMarkButton.setSelected(false);
+        movementGroup.add(adjMarkButton);
+        adjMarkButton.setBorderPainted(false);
+        adjMarkButton.setRolloverEnabled(true);
+
+        // adjMarkButton.setBorder(pressedBorder);
+        adjMarkButton.setRolloverIcon(MipavUtil.getIcon("adjustroll.gif"));
+        adjMarkButton.addItemListener(this);
+        adjMarkButton.setFocusPainted(false);
+        toolBar2.add(adjMarkButton);
+        toggleArray[4] = adjMarkButton;
+        toolBar2.add(makeSeparator());
+
+        refMarkMinusButton = new JButton(MipavUtil.getIcon("referenceminus.gif"));
+
+        // refMarkMinusButton.setMargin(new Insets(7, 7, 7, 7));
+        refMarkMinusButton.addActionListener(al);
+        refMarkMinusButton.setToolTipText("Delete selected reference slice markers");
+        refMarkMinusButton.setActionCommand("refMarkMinus");
+        refMarkMinusButton.setSelected(false);
+        refMarkMinusButton.setBorderPainted(false);
+        refMarkMinusButton.setRolloverEnabled(true);
+
+        // refMarkMinusButton.setBorder(pressedBorder);
+        refMarkMinusButton.setRolloverIcon(MipavUtil.getIcon("referencerollminus.gif"));
+        refMarkMinusButton.addItemListener(this);
+        refMarkMinusButton.setFocusPainted(false);
+        toolBar2.add(refMarkMinusButton);
+
+        adjMarkMinusButton = new JButton(MipavUtil.getIcon("adjustminus.gif"));
+
+        // adjMarkMinusButton.setMargin(new Insets(7, 7, 7, 7));
+        adjMarkMinusButton.addActionListener(al);
+        adjMarkMinusButton.setToolTipText("Delete selected adjusted slice markers");
+        adjMarkMinusButton.setActionCommand("adjMarkMinus");
+        adjMarkMinusButton.setSelected(false);
+        adjMarkMinusButton.setBorderPainted(false);
+        adjMarkMinusButton.setRolloverEnabled(true);
+
+        // adjMarkMinusButton.setBorder(pressedBorder);
+        adjMarkMinusButton.setRolloverIcon(MipavUtil.getIcon("adjustrollminus.gif"));
+        adjMarkMinusButton.addItemListener(this);
+        adjMarkMinusButton.setFocusPainted(false);
+        toolBar2.add(adjMarkMinusButton);
+        toolBar2.add(makeSeparator());
+
+        defaultModeButton = new JToggleButton(MipavUtil.getIcon("pointer.gif"));
+
+        // defaultModeButton.setMargin(new Insets(7, 7, 7, 7));
+        defaultModeButton.addActionListener(al);
+        defaultModeButton.setToolTipText("Return to default mode");
+        defaultModeButton.setActionCommand("defaultMode");
+        defaultModeButton.setSelected(true);
+        defaultModeButton.setRolloverEnabled(true);
+        defaultModeButton.setBorderPainted(false);
+        defaultModeButton.setRolloverIcon(MipavUtil.getIcon("pointerroll.gif"));
+        defaultModeButton.setFocusPainted(false);
+        movementGroup.add(defaultModeButton);
+        toolBar2.add(defaultModeButton);
+
+
+        
         toolBar2.setFloatable(false);
 
         return toolBar2;
@@ -3378,7 +3378,6 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             if (command.equals("Apply")) {
 
                 if (pixel == true) {
-                    System.out.println("HERE!");
 
                     if (testParameter(field.getText(), 0.01, 2048.0)) {
                         increment = Float.valueOf(field.getText()).floatValue();
