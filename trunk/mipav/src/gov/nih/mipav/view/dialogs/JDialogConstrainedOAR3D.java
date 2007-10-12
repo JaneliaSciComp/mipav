@@ -118,7 +118,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
     private JLabel labelTranslateRangeY = new JLabel("Limits on Y translation:");
 
     /** DOCUMENT ME! */
-    private JLabel labelTranslateRangeZ = new JLabel("Limits on Z private :");
+    private JLabel labelTranslateRangeZ = new JLabel("Limits on Z translation :");
 
     /** DOCUMENT ME! */
     private boolean limitTranslation = true, oneTransLimit = true;
@@ -1393,8 +1393,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         labelTranslateRangeX.setFont(serif12);
         toLabelX.setFont(serif12);
         mmLabelX.setFont(serif12);
-        minTransTextX = new JTextField(String.valueOf(transLimits[0][0]), 3);
-        maxTransTextX = new JTextField(String.valueOf(transLimits[1][0]), 3);
+        minTransTextX = new JTextField(String.valueOf(transLimits[0][0]), 4);
+        maxTransTextX = new JTextField(String.valueOf(transLimits[1][0]), 4);
 
         translateRangePanelX.add(labelTranslateRangeX);
         translateRangePanelX.add(minTransTextX);
@@ -1409,8 +1409,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         labelTranslateRangeY.setFont(serif12);
         toLabelY.setFont(serif12);
         mmLabelY.setFont(serif12);
-        minTransTextY = new JTextField(String.valueOf(transLimits[0][1]), 3);
-        maxTransTextY = new JTextField(String.valueOf(transLimits[1][1]), 3);
+        minTransTextY = new JTextField(String.valueOf(transLimits[0][1]), 4);
+        maxTransTextY = new JTextField(String.valueOf(transLimits[1][1]), 4);
 
         translateRangePanelY.add(labelTranslateRangeY);
         translateRangePanelY.add(minTransTextY);
@@ -1425,8 +1425,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         labelTranslateRangeZ.setFont(serif12);
         toLabelZ.setFont(serif12);
         mmLabelZ.setFont(serif12);
-        minTransTextZ = new JTextField(String.valueOf(transLimits[0][2]), 3);
-        maxTransTextZ = new JTextField(String.valueOf(transLimits[1][2]), 3);
+        minTransTextZ = new JTextField(String.valueOf(transLimits[0][2]), 4);
+        maxTransTextZ = new JTextField(String.valueOf(transLimits[1][2]), 4);
 
         translateRangePanelZ.add(labelTranslateRangeZ);
         translateRangePanelZ.add(minTransTextZ);
