@@ -10,6 +10,7 @@ import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.srb.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.util.*;
+import gov.nih.mipav.model.algorithms.AlgorithmParseMIPAVDownloads;
 
 import gov.nih.mipav.plugins.*;
 
@@ -365,8 +366,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             return;
         }
-
-        if (command.equals("gc")) {
+        if (command.equals("DownloadStats")) {
+        	ViewDirectoryChooser dirChooser = new ViewDirectoryChooser();
+        	String dir = dirChooser.getImageDirectory();
+        	if (dir != null) {
+        		AlgorithmParseMIPAVDownloads pd = new AlgorithmParseMIPAVDownloads(dir);
+        		pd.runAlgorithm();
+        	}
+        } else if (command.equals("gc")) {
             System.gc();
             ProvenanceRecorder.getReference().addLine(new ActionCollectGarbage());
             ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
