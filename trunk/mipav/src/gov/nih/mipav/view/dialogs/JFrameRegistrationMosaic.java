@@ -962,18 +962,6 @@ public class JFrameRegistrationMosaic extends JFrame
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
-                    i = fileName.lastIndexOf('.');
-
-                    if ((i > 0) && (i < (fileName.length() - 1))) {
-                        extension = fileName.substring(i + 1).toLowerCase();
-                        vFilter = new ViewImageFileFilter(ViewImageFileFilter.GEN);
-
-                        if (!vFilter.accept(extension)) {
-                            MipavUtil.displayError("Extension does not match filter type");
-
-                            return false;
-                        }
-                    }
 
                     directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                     ViewUserInterface.getReference().setDefaultDirectory(directory);
@@ -1000,7 +988,7 @@ public class JFrameRegistrationMosaic extends JFrame
 
                 if (m_akImages[m_iReference] != null) {
                     FileWriteOptions kOptions = new FileWriteOptions(true);
-                    kOptions.setFileName(fileName + ".tif");
+                    kOptions.setFileName(fileName);
                     kOptions.setFileDirectory(directory);
 
                     fileIO.writeImage(m_akImages[m_iReference], kOptions);
