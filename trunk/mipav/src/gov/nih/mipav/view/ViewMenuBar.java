@@ -1336,6 +1336,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("2.5D total intensity", false);
             menuBuilder.setMenuItemEnabled("2.5D average intensity", false);
             menuBuilder.setMenuItemEnabled("Manual 2D series", true);
+            menuBuilder.setMenuItemEnabled("Constrained optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 2.5D", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("B-Spline automatic registration 2.5D", false);
