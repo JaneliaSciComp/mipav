@@ -1896,9 +1896,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (getActiveImage().getNDims() == 3) {
                     new JDialogConstrainedOAR3D(this, getActiveImage());
 
-                } else if (getActiveImage().getNDims() == 2) {
-                    new JDialogRegistrationOAR2D(this, getActiveImage());
-                }
+                } 
             } else {
                 MipavUtil.displayError("There are no other images to register.");
             }
