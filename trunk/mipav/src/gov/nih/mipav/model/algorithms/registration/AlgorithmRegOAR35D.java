@@ -1011,6 +1011,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             float[] averageBuffer2;
             int vSize = extents[0] * extents[1] * extents[2];
             useOutsideReferenceVolume = true;
+            ModelImage averageImage;
 
             try {
                 averageBuffer = new float[colorFactor * vSize];
@@ -1026,14 +1027,21 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             for (i = 0; i < averageBuffer2.length; i++) {
                 averageBuffer2[i] = 0.0f;
             }
+            
+            if (isoImage !=  null) {
+                averageImage = isoImage;
+            }
+            else {
+                averageImage = inputImage;
+            }
 
-            for (i = 0; i < isoImage.getExtents()[3]; i++) {
+            for (i = 0; i < averageImage.getExtents()[3]; i++) {
 
                 try {
-                    isoImage.exportData(i * colorFactor * vSize, colorFactor * vSize, averageBuffer);
+                    averageImage.exportData(i * colorFactor * vSize, colorFactor * vSize, averageBuffer);
                 } catch (IOException ex) {
                     System.gc();
-                    MipavUtil.displayError("IOException = " + ex + " on isoImage.exportData");
+                    MipavUtil.displayError("IOException = " + ex + " on averageImage.exportData");
                     disposeLocal();
 
                     return;
@@ -1042,15 +1050,15 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 for (i = 0; i < averageBuffer.length; i++) {
                     averageBuffer2[i] += averageBuffer[i];
                 }
-            } // for (i = 0; i < inputImage.getExtents()[3]; i++)
+            } // for (i = 0; i < averageImage.getExtents()[3]; i++)
 
             averageBuffer = null;
 
             for (i = 0; i < averageBuffer2.length; i++) {
-                averageBuffer2[i] /= isoImage.getExtents()[3];
+                averageBuffer2[i] /= averageImage.getExtents()[3];
             }
 
-            outsideReferenceVolume = new ModelImage(isoImage.getType(), extents, "average_volume");
+            outsideReferenceVolume = new ModelImage(averageImage.getType(), extents, "average_volume");
             outsideReferenceVolume.getFileInfo()[0].setResolutions(resols);
 
             try {
