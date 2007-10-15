@@ -150,6 +150,11 @@ public class AlgorithmParseMIPAVDownloads extends AlgorithmBase {
         Integer oneCount = new Integer(1);
         boolean newUser = false;
         
+        //boolean determining if nih affil tag OR institution type was found (if not
+        boolean isNIHorOutside = false;
+        
+        String lastEmail = null;
+        
         try {
             bReader = new BufferedReader(new FileReader(xmlFile));
 
@@ -157,10 +162,29 @@ public class AlgorithmParseMIPAVDownloads extends AlgorithmBase {
             while (inString != null) {
             	
             	if (inString.startsWith("Name")) {
+            		if (numDownloads>0) {
+            			if (!isNIHorOutside) {
+            				if (lastEmail.contains("nih.gov")) {
+            					nihDownloads++;
+            					if (newUser) {
+            						nihUsers++;
+            					}
+            				} else {
+            					outsideNIHDownloads++;
+            					if (newUser) {
+            						outsideNIHUsers++;
+            					}
+            				}
+            			}
+            		}
+            		
+            		//initialize newUser and isNIHorOutside to false
+            		isNIHorOutside = false;
             		newUser = false;
             		numDownloads++;
             	} else if (inString.startsWith("email:")) {
             		inString = inString.substring(6).trim().toLowerCase();
+            		lastEmail = inString.toLowerCase();
             		if (!emailTable.containsKey(inString)) {
             			newUser = true;
             			emailTable.put(inString, inString);
@@ -168,6 +192,7 @@ public class AlgorithmParseMIPAVDownloads extends AlgorithmBase {
             		}
             	} else if (inString.startsWith("institution type:")) {
             		outsideNIHDownloads++;
+            		isNIHorOutside = true;
             		if (newUser) {
             			outsideNIHUsers++;
             			inString = inString.substring(17).trim().toLowerCase();
@@ -183,6 +208,7 @@ public class AlgorithmParseMIPAVDownloads extends AlgorithmBase {
             	} else if (inString.startsWith("nih affil:")) {
             		nihDownloads++;
             		inString = inString.substring(10).trim();
+            		isNIHorOutside = true;
             		
             		if (!nihDownloadTable.containsKey(inString)) {
             			nihDownloadTable.put(inString, new Integer(1));
@@ -212,6 +238,21 @@ public class AlgorithmParseMIPAVDownloads extends AlgorithmBase {
             	inString = bReader.readLine();
             }
 
+            //do this one last time for possible old-style end
+            if (!isNIHorOutside) {
+				if (lastEmail.contains("nih.gov")) {
+					nihDownloads++;
+					if (newUser) {
+						nihUsers++;
+					}
+				} else {
+					outsideNIHDownloads++;
+					if (newUser) {
+						outsideNIHUsers++;
+					}
+				}
+			}
+            
             bReader.close();
             bReader = null;
 
