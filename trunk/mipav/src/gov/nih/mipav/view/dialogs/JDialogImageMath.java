@@ -258,7 +258,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             name = new String("_divide");
         } else if (op == AlgorithmImageMath.SQUARE) {
             name = new String("_square");
-        } else if (op == AlgorithmImageMath.SQRT) {
+        } else if (op == AlgorithmImageMath.SQUARE_ROOT) {
             name = new String("_sqrt");
         } else if (op == AlgorithmImageMath.LOG) {
             name = new String("_log");
@@ -350,9 +350,9 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 textValue.setEnabled(false);
                 radioFloat.setEnabled(false);
                 opType = AlgorithmImageMath.SQUARE;
-            } else if (index == AlgorithmImageMath.SQRT) {
+            } else if (index == AlgorithmImageMath.SQUARE_ROOT) {
                 textValue.setEnabled(false);
-                opType = AlgorithmImageMath.SQRT;
+                opType = AlgorithmImageMath.SQUARE_ROOT;
             } else if (index == AlgorithmImageMath.LOG) {
                 textValue.setEnabled(false);
                 radioFloat.setEnabled(false);
