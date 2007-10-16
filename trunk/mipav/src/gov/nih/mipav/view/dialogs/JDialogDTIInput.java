@@ -21,7 +21,6 @@ import javax.vecmath.Point3d;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.volumeview.GPUVolumeRender;
-import gov.nih.mipav.view.renderer.volumeview.DTIEllipseRender;
 import gov.nih.mipav.view.renderer.surfaceview.JPanelSurface;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
@@ -214,9 +213,6 @@ public class JDialogDTIInput extends JDialogBase
 
     private JSlider m_kDisplaySlider;
 
-    //private DTIEllipseRender kEllipseView;
-
-
     /** Create a new JDialogDTIInput of one of the four types:
      * @param iType, type of Diffusion Tensor Input dialog to create.
      */
@@ -379,29 +375,6 @@ public class JDialogDTIInput extends JDialogBase
 	}
 	else if ( kCommand.equals("AllEllipsoids") )
 	{
-//             kEllipseView = new DTIEllipseRender(m_kVolumeDisplay.getImage() );
-//             kEllipseView.setDTIImage(m_kDTIImage);
-
-//             Frame frame = new Frame(kEllipseView.GetWindowTitle());
-//             frame.add( kEllipseView.GetCanvas() );
-//             frame.setSize( kEllipseView.GetWidth(), kEllipseView.GetHeight() );
-//             /* Animator serves the purpose of the idle function, calls display: */
-//             final Animator animator = new Animator( kEllipseView.GetCanvas() );
-//             frame.addWindowListener(new WindowAdapter() {
-//                     public void windowClosing(WindowEvent e) {
-//                         // Run this on another thread than the AWT event queue to
-//                         // avoid deadlocks on shutdown on some platforms
-//                         new Thread(new Runnable() {
-//                                 public void run() {
-//                                     animator.stop();
-//                                     System.exit(0);
-//                                 }
-//                             }).start();
-//                     }
-//                 });
-//             frame.setVisible(true);
-//             animator.start();
-
  	    Color color = m_kColorButton.getBackground();
  	    m_kVolumeDisplay.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected(), 10,
  						      !m_kUseVolumeColor.isSelected(),
