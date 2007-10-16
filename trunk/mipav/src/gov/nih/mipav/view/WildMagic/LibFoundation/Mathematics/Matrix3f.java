@@ -385,6 +385,23 @@ public class Matrix3f
         return m_afEntry[iRow*3 + iCol];
     }
 
+    
+    /** copy constructor
+     * @param rkM, matrix to copy.
+     */
+    public void SetData ( Matrix3f rkM)
+    {
+        m_afEntry[0] = rkM.m_afEntry[0];
+        m_afEntry[1] = rkM.m_afEntry[1];
+        m_afEntry[2] = rkM.m_afEntry[2];
+        m_afEntry[3] = rkM.m_afEntry[3];
+        m_afEntry[4] = rkM.m_afEntry[4];
+        m_afEntry[5] = rkM.m_afEntry[5];
+        m_afEntry[6] = rkM.m_afEntry[6];
+        m_afEntry[7] = rkM.m_afEntry[7];
+        m_afEntry[8] = rkM.m_afEntry[8];
+    }
+
     /** Set member access
      * @param iRow, row-value
      * @param iCol, column-value

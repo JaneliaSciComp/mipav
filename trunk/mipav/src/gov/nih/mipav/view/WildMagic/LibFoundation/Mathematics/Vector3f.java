@@ -132,6 +132,20 @@ public class Vector3f
         m_afTuple[2] = fZ;
     }
 
+    
+    /** construction
+     * @param fX, x-value
+     * @param fY, y-value
+     * @param fZ, z-value
+     */
+    public void SetData ( float fX, float fY, float fZ )
+    {
+        m_afTuple[0] = fX;
+        m_afTuple[1] = fY;
+        m_afTuple[2] = fZ;
+    }
+
+    
     /** Add the input vector to this, return result, this vector is
      * unchanged:
      * @param rkV, input vector to add to this
@@ -168,6 +182,17 @@ public class Vector3f
         return new Vector3f( m_afTuple[0] * rkV.m_afTuple[0],
                              m_afTuple[1] * rkV.m_afTuple[1],
                              m_afTuple[2] * rkV.m_afTuple[2] );
+    }
+
+    /** Multiply the input vector to this, this vector is
+     * changed:
+     * @param rkV, input vector to multiply to this
+     */
+    public void multEquals (Vector3f rkV)
+    {
+        m_afTuple[0] = m_afTuple[0] * rkV.m_afTuple[0];
+        m_afTuple[1] = m_afTuple[1] * rkV.m_afTuple[1];
+        m_afTuple[2] = m_afTuple[2] * rkV.m_afTuple[2];
     }
 
     /** Invert this vector, return result, this vector is unchanged:

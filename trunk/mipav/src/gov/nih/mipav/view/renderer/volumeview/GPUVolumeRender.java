@@ -3,10 +3,16 @@ package gov.nih.mipav.view.renderer.volumeview;
 import javax.media.opengl.*;
 import com.sun.opengl.util.*;
 import java.awt.event.*;
+import java.util.Iterator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
 
 import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
@@ -52,7 +58,7 @@ import gov.nih.mipav.view.renderer.volumeview.*;
  * volume in texture coordinates to trace.
  */
 public class GPUVolumeRender extends JavaApplication3D
-    implements GLEventListener, KeyListener, MouseMotionListener
+implements GLEventListener, KeyListener, MouseMotionListener
 {
     /**
      * Constructs a new GPUVolumeRender object.
@@ -64,14 +70,14 @@ public class GPUVolumeRender extends JavaApplication3D
      * @param kRGBTb, RGB lookup table for ModelImage B
      */
     public GPUVolumeRender( ModelImage kImageA, ModelLUT kLUTa, ModelRGB kRGBTa,
-                            ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
+            ModelImage kImageB, ModelLUT kLUTb, ModelRGB kRGBTb  )
     {
 
         super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
 
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-                                           m_eBuffering, m_eMultisampling,
-                                           m_iWidth, m_iHeight );
+                m_eBuffering, m_eMultisampling,
+                m_iWidth, m_iHeight );
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
@@ -80,7 +86,7 @@ public class GPUVolumeRender extends JavaApplication3D
         ImageCatalog.SetActive( new ImageCatalog("Main", System.getProperties().getProperty("user.dir")) );      
         VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", System.getProperties().getProperty("user.dir")));       
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", System.getProperties().getProperty("user.dir")));
-        
+
         m_kImageA = kImageA;
         m_kLUTa = kLUTa;
         m_kRGBTa = kRGBTa;
@@ -89,8 +95,12 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kLUTb = kLUTb;
         m_kRGBTb = kRGBTb;
 
-        m_kSculptor = new SculptorWm( ((OpenGLRenderer)m_pkRenderer).GetCanvas() );
-        m_kSculptor.setImage(m_kImageA, m_kImageB);
+        m_iDimX = m_kImageA.getExtents()[0];
+        m_iDimY = m_kImageA.getExtents()[1];
+        m_iDimZ = m_kImageA.getExtents()[2];
+        m_fScale = 1.0f/(float)(Math.max(m_iDimX,Math.max(m_iDimY,m_iDimZ)));
+        m_iLen = m_iDimX*m_iDimY*m_iDimZ;
+
     }
 
     /**
@@ -226,12 +236,15 @@ public class GPUVolumeRender extends JavaApplication3D
         }
         m_akLights = null;
 
-        try {
-            m_kSculptor.finalize();
-        } catch (Throwable e) {
-            e.printStackTrace();
+        if ( m_kSculptor != null )
+        { 
+            try {
+                m_kSculptor.finalize();
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+            m_kSculptor = null;
         }
-        m_kSculptor = null;
         m_kLUTa = null;
         for ( int i = 0; i < 4; i++ )
         {
@@ -249,6 +262,11 @@ public class GPUVolumeRender extends JavaApplication3D
         System.gc();
     }
 
+    public ModelImage getImage()
+    {
+        return m_kImageA;
+    }
+
     /**
      * Part of the GLEventListener interface.
      * display is called by the Animator object.
@@ -262,7 +280,7 @@ public class GPUVolumeRender extends JavaApplication3D
 
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         MeasureTime();
-        
+
         if (MoveCamera())
         {
             m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -276,180 +294,166 @@ public class GPUVolumeRender extends JavaApplication3D
         // Draw the scene to the back buffer/
         if (m_pkRenderer.BeginScene())
         {
-            m_pkPBuffer.SetDrawable( arg0 );
-
-            if ( !m_bDisplaySecond )
+            if ( m_bDisplayAllEllipsoids )
             {
-                // First rendering pass:
-                // Draw the proxy geometry to a color buffer, to generate the
-                // back-facing texture-coordinates:
-                m_kMesh.DetachAllEffects();
-                m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-                m_kCuller.ComputeVisibleSet(m_spkScene);
-                // Enable rendering to the PBuffer:
-                m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-                m_pkRenderer.ClearBuffers();
-                // Cull front-facing polygons:
-                m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
-                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-                // Undo culling:
-                m_spkCull.CullFace = CullState.CullMode.CT_BACK;
-
-		// Displays any geometry that is inside the volume. In
-		// this case the geometry is the fiber-bundle tracts
-		// for the brain. The tracts are displayed with the
-		// colors corresponding to the positions -- thus the
-		// ray tracing will stop at the interseced geometry
-		// instead of the far wall of the proxy cube. The
-		// intersecting geometry must be rendered twice, once
-		// into the pbuffer to use for the ray-tracing bounds,
-		// and once to display it.
-                if ( m_bDisplayTract && (m_kTractNode != null) )
-                {
-                    for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
-                    {
-                        Polyline kTract = (Polyline)m_kTractNode.GetChild(i);
-                        kTract.Local.SetRotate(m_spkScene.Local.GetRotate());
-                        kTract.DetachAllEffects();
-                        kTract.AttachEffect( m_spkVertexColor3Shader );
-                        kTract.UpdateGS();
-                        kTract.UpdateRS();
-                        m_pkRenderer.Draw(kTract);
-                    }
-                    m_spkAlpha.BlendEnabled = true;
-                }
-                else
-                {
-                    m_spkAlpha.BlendEnabled = false;
-                }
-
-
-            }
-            else
-            {
-                // First rendering pass:
-                // Draw the proxy geometry to a color buffer, to generate the
-                // back-facing texture-coordinates:
-                m_kMesh.DetachAllEffects();
-                m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-                m_kCuller.ComputeVisibleSet(m_spkScene);
-                // Enable rendering to the PBuffer:
-                m_pkPBuffer.Enable();
-                m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-                m_pkRenderer.ClearBuffers();
-                // Cull front-facing polygons:
-                m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
-                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-                // Undo culling:
-                m_spkCull.CullFace = CullState.CullMode.CT_BACK;
-
-		// Displays any geometry that is inside the volume. In
-		// this case the geometry is the fiber-bundle tracts
-		// for the brain. The tracts are displayed with the
-		// colors corresponding to the positions -- thus the
-		// ray tracing will stop at the interseced geometry
-		// instead of the far wall of the proxy cube. The
-		// intersecting geometry must be rendered twice, once
-		// into the pbuffer to use for the ray-tracing bounds,
-		// and once to display it.
-                if ( m_bDisplayTract && (m_kTractNode != null) )
-                {
-                    for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
-                    {
-                        Polyline kTract = (Polyline)m_kTractNode.GetChild(i);
-                        kTract.Local.SetRotate(m_spkScene.Local.GetRotate());
-                        kTract.UpdateGS();
-                        kTract.DetachAllEffects();
-                        kTract.AttachEffect( m_spkVertexColor3Shader );
-                        kTract.UpdateRS();
-                        m_pkRenderer.Draw(kTract);
-                    }
-                }
-
-                // Disable the PBuffer
-                m_pkPBuffer.Disable();
-
-
-                // Second rendering pass:
-                // Draw the proxy grometry with the volume ray-tracing shader:
-                m_kMesh.DetachAllEffects();
-                m_kMesh.AttachEffect( m_kVolumeShaderEffect );
-                m_kCuller.ComputeVisibleSet(m_spkScene);
                 m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
                 m_pkRenderer.ClearBuffers();
 
-		// Displays any geometry that is inside the volume. In
-		// this case the geometry is the fiber-bundle tracts
-		// for the brain. This is the second display, and the
-		// tracts are shown with the non-position dependant
-		// colors.
-                if ( m_bDisplayTract && (m_kTractNode != null ) )
+                DisplayAllEllipsoids();
+            }
+            else
+            {
+                m_pkPBuffer.SetDrawable( arg0 );
+
+                if ( !m_bDisplaySecond )
                 {
-                    for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
+                    // First rendering pass:
+                    // Draw the proxy geometry to a color buffer, to generate the
+                    // back-facing texture-coordinates:
+                    m_kMesh.DetachAllEffects();
+                    m_kMesh.AttachEffect( m_spkVertexColor3Shader );
+                    m_kCuller.ComputeVisibleSet(m_spkScene);
+                    // Enable rendering to the PBuffer:
+                    m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+                    m_pkRenderer.ClearBuffers();
+                    // Cull front-facing polygons:
+                    m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
+                    m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                    // Undo culling:
+                    m_spkCull.CullFace = CullState.CullMode.CT_BACK;
+
+                    // Displays any geometry that is inside the volume. In
+                    // this case the geometry is the fiber-bundle tracts
+                    // for the brain. The tracts are displayed with the
+                    // colors corresponding to the positions -- thus the
+                    // ray tracing will stop at the interseced geometry
+                    // instead of the far wall of the proxy cube. The
+                    // intersecting geometry must be rendered twice, once
+                    // into the pbuffer to use for the ray-tracing bounds,
+                    // and once to display it.
+                    if ( m_bDisplayTract && (m_kTracts != null) )
                     {
-                        Polyline kTract = (Polyline)m_kTractNode.GetChild(i);
-                        kTract.Local.SetRotate(m_spkScene.Local.GetRotate());
-                        kTract.DetachAllEffects();
-                        kTract.AttachEffect( m_spkPolylineShader );
-                        kTract.UpdateRS();
-                        kTract.UpdateGS();
-                        m_pkRenderer.Draw(kTract);
+                        DisplayTract(m_spkVertexColor3Shader );
                     }
-                    m_spkAlpha.BlendEnabled = true;
+                    else
+                    {
+                        m_spkAlpha.BlendEnabled = false;
+                    }
+
+
                 }
                 else
                 {
-                    m_spkAlpha.BlendEnabled = false;
-                }
+                    // First rendering pass:
+                    // Draw the proxy geometry to a color buffer, to generate the
+                    // back-facing texture-coordinates:
+                    m_kMesh.DetachAllEffects();
+                    m_kMesh.AttachEffect( m_spkVertexColor3Shader );
+                    m_kCuller.ComputeVisibleSet(m_spkScene);
+                    // Enable rendering to the PBuffer:
+                    m_pkPBuffer.Enable();
+                    m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+                    m_pkRenderer.ClearBuffers();
+                    // Cull front-facing polygons:
+                    m_spkCull.CullFace = CullState.CullMode.CT_FRONT;
+                    m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                    // Undo culling:
+                    m_spkCull.CullFace = CullState.CullMode.CT_BACK;
 
-                m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+                    // Displays any geometry that is inside the volume. In
+                    // this case the geometry is the fiber-bundle tracts
+                    // for the brain. The tracts are displayed with the
+                    // colors corresponding to the positions -- thus the
+                    // ray tracing will stop at the interseced geometry
+                    // instead of the far wall of the proxy cube. The
+                    // intersecting geometry must be rendered twice, once
+                    // into the pbuffer to use for the ray-tracing bounds,
+                    // and once to display it.
+                    if ( (m_bDisplayEllipsoids || m_bDisplayTract) && (m_kTracts != null) )
+                    {
+                        DisplayTract(m_spkVertexColor3Shader);
+                    }
 
-                if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
-                {
-                    m_spkEyeCamera.SetLocation(m_spkCamera.GetLocation());
-                    m_pkRenderer.SetCamera(m_spkEyeCamera);
-                    if ( m_bDisplayClipEye )
+
+                    // Disable the PBuffer
+                    m_pkPBuffer.Disable();
+
+
+                    // Second rendering pass:
+                    // Draw the proxy grometry with the volume ray-tracing shader:
+                    m_kMesh.DetachAllEffects();
+                    m_kMesh.AttachEffect( m_kVolumeShaderEffect );
+                    m_kCuller.ComputeVisibleSet(m_spkScene);
+                    m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
+                    m_pkRenderer.ClearBuffers();
+
+                    // Displays any geometry that is inside the volume. In
+                    // this case the geometry is the fiber-bundle tracts
+                    // for the brain. This is the second display, and the
+                    // tracts are shown with the non-position dependant
+                    // colors.
+                    if ( m_bDisplayEllipsoids )
                     {
-                        m_pkRenderer.Draw(m_kClipEye);
+                        DisplayEllipsoids();
                     }
-                    if ( m_bDisplayClipEyeInv )
+                    else if ( m_bDisplayTract && (m_kTracts != null ) )
                     {
-                        m_pkRenderer.Draw(m_kClipEyeInv);
+                        DisplayTract(null);
                     }
+                    else
+                    {
+                        m_spkAlpha.BlendEnabled = false;
+                    }
+
+                    m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+
+                    if ( m_bDisplayClipEye || m_bDisplayClipEyeInv )
+                    {
+                        m_spkEyeCamera.SetLocation(m_spkCamera.GetLocation());
+                        m_pkRenderer.SetCamera(m_spkEyeCamera);
+                        if ( m_bDisplayClipEye )
+                        {
+                            m_pkRenderer.Draw(m_kClipEye);
+                        }
+                        if ( m_bDisplayClipEyeInv )
+                        {
+                            m_pkRenderer.Draw(m_kClipEyeInv);
+                        }
+                        m_pkRenderer.SetCamera(m_spkCamera);
+                    }
+
+                    if ( m_bDisplayOrientationCube )
+                    {
+                        for ( int i = 0; i < 6; i++ )
+                        {
+                            m_akOrientationCube[i].Local.SetRotate(m_spkScene.Local.GetRotate());
+                            m_akOrientationCube[i].UpdateGS();
+                            m_akOrientationCube[i].UpdateRS();
+                            m_pkRenderer.LoadResources(m_akOrientationCube[i]);
+                            m_pkRenderer.Draw(m_akOrientationCube[i]);
+                        }
+                    }
+
+                    /*
+                    // Draw screne polygon:
+                    m_pkRenderer.SetCamera(m_spkScreenCamera);
+                    m_pkRenderer.Draw(m_spkScenePolygon);
+                     */
+                    //Draw frame rate:
                     m_pkRenderer.SetCamera(m_spkCamera);
-                }
+                    //DrawFrameRate(8,16,ColorRGBA.WHITE);
 
-                if ( m_bDisplayOrientationCube )
-                {
-                    for ( int i = 0; i < 6; i++ )
+
+                    if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
                     {
-                        m_akOrientationCube[i].Local.SetRotate(m_spkScene.Local.GetRotate());
-                        m_akOrientationCube[i].UpdateGS();
-                        m_akOrientationCube[i].UpdateRS();
-                        m_pkRenderer.LoadResources(m_akOrientationCube[i]);
-                        m_pkRenderer.Draw(m_akOrientationCube[i]);
+                        m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
                     }
-                }
-
-                /*
-                // Draw screne polygon:
-                m_pkRenderer.SetCamera(m_spkScreenCamera);
-                m_pkRenderer.Draw(m_spkScenePolygon);
-                */
-                //Draw frame rate:
-                m_pkRenderer.SetCamera(m_spkCamera);
-                //DrawFrameRate(8,16,ColorRGBA.WHITE);
-
-
-                if ( m_kSculptor.IsSculptDrawn() )
-                {
-                    m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
-                }
-            }            
+                }            
+            }
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
-        
+
         UpdateFrameCount();
     }
 
@@ -472,7 +476,7 @@ public class GPUVolumeRender extends JavaApplication3D
             {
                 m_kAnimator.start();
             }        
-            
+
             return;
         }
         m_bInit = true;
@@ -565,7 +569,7 @@ public class GPUVolumeRender extends JavaApplication3D
         m_spkScreenCamera.Perspective = false;
         m_spkScreenCamera.SetFrustum(0.0f,1.0f,0.0f,1.0f,0.0f,1.0f);
         m_spkScreenCamera.SetFrame(Vector3f.ZERO,Vector3f.UNIT_Z,
-                                   Vector3f.UNIT_Y,Vector3f.UNIT_X);
+                Vector3f.UNIT_Y,Vector3f.UNIT_X);
 
         // Create a scene graph with the face model as the leaf node.
         m_spkScene = new Node();
@@ -579,7 +583,6 @@ public class GPUVolumeRender extends JavaApplication3D
         m_spkAlpha.BlendEnabled = false;
         m_spkAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
         m_spkAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
-
         m_spkScene.AttachGlobalState(m_spkAlpha);
 
         // Create a screen polygon to use as the RGBA render target.
@@ -613,7 +616,7 @@ public class GPUVolumeRender extends JavaApplication3D
             aucData[i++] = (byte)0xFF;
         }
         m_spkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,m_iWidth,m_iHeight,aucData,
-                                    "SceneImage");
+        "SceneImage");
 
         // Create the texture effect for the scene polygon.  The resources are
         // loaded so that the scene target texture has everything needed for
@@ -633,9 +636,9 @@ public class GPUVolumeRender extends JavaApplication3D
 
         // Create the RGBA frame-buffer object to be bound to the scene polygon.
         m_pkPBuffer = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                                            m_eBuffering,m_eMultisampling,m_pkRenderer,m_pkSceneTarget,arg0);
+                m_eBuffering,m_eMultisampling,m_pkRenderer,m_pkSceneTarget,arg0);
         assert(m_pkPBuffer != null);
-        
+
         m_spkScene.UpdateGS();
         m_kTranslate = new Vector3f( m_spkScene.WorldBound.GetCenter().neg() );
         m_spkScene.GetChild(0).Local.SetTranslate( m_kTranslate );
@@ -646,8 +649,8 @@ public class GPUVolumeRender extends JavaApplication3D
             iNumImages = 2;
         }
         m_kVolumeShaderEffect = new VolumeShaderEffect(m_kImageA, m_kLUTa, m_kRGBTa, 
-                                                       m_kImageB, m_kLUTb, m_kRGBTb, 
-                                                       m_pkSceneTarget);
+                m_kImageB, m_kLUTb, m_kRGBTb, 
+                m_pkSceneTarget);
         m_pkRenderer.LoadResources(m_kVolumeShaderEffect);
         m_kVolumeShaderEffect.SetPassQuantity(1);
         m_kVolumeShaderEffect.MIPMode(m_pkRenderer);
@@ -753,7 +756,7 @@ public class GPUVolumeRender extends JavaApplication3D
         m_fX = fMaxX/m_fMax;
         m_fY = fMaxY/m_fMax;
         m_fZ = fMaxZ/m_fMax;
-        
+
         int iVQuantity = 24;
         int iTQuantity = 12;
         VertexBuffer pkVB = new VertexBuffer(kAttr,iVQuantity);
@@ -890,19 +893,32 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
-        
         super.keyPressed(e);
         switch (ucKey)
         {
         case 's':
         case 'S':
-             TestStreaming(m_spkScene,"VolumeTextures.wmof");
-             return;
+            TestStreaming(m_spkScene,"VolumeTextures.wmof");
+            return;
         case 'b':
             m_bDisplaySecond = !m_bDisplaySecond;
             return;
         case 'v':
-            m_bDisplayTract = !m_bDisplayTract;
+            m_bDisplayEllipsoids = !m_bDisplayEllipsoids;
+            return;
+        case 'd':
+            m_iEllipsoidMod--;
+            if ( m_iEllipsoidMod < 1 )
+            {
+                m_iEllipsoidMod = 1;
+            }
+            return;
+        case 'f':
+            m_iEllipsoidMod++;
+            if ( m_iEllipsoidMod > 100 )
+            {
+                m_iEllipsoidMod = 100;
+            }
             return;
         case 'c':
             System.err.println(m_iActive);
@@ -957,15 +973,24 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public boolean getSculptEnabled()
     {
+        if ( m_kSculptor == null )
+        {
+            return false;
+        }
         return m_kSculptor.getEnable();
     }
-    
+
     /**
      * Enables and disables sculpting.
      * @param bSculpt, true to enable sculpting, false to disable.
      */
     public void enableSculpt( boolean bSculpt )
     {
+        if ( m_kSculptor == null )
+        {
+            m_kSculptor = new SculptorWm( ((OpenGLRenderer)m_pkRenderer).GetCanvas() );
+            m_kSculptor.setImage(m_kImageA, m_kImageB);
+        }
         m_kSculptor.enableSculpt(bSculpt);
     }
 
@@ -974,7 +999,10 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public void invertSculpt()
     {
-        m_kSculptor.invertSculpt();
+        if ( m_kSculptor != null )
+        {
+            m_kSculptor.invertSculpt();
+        }
     }
 
     /**
@@ -982,14 +1010,22 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public void clearSculpt()
     {
-        m_kSculptor.clearSculpt();
+        if ( m_kSculptor != null )
+        {
+            m_kSculptor.clearSculpt();
+        }
     }
-    
+
     /**
      * Undo applying the sculpt region to the volume.
      */
     public void undoSculpt()
     {
+        if ( m_kSculptor == null )
+        {
+            return;
+        }
+
         if ( m_kVolumeShaderEffect.GetVolumeTargetA().GetImage().GetData() != null )
         {
             m_kSculptor.setTextureImageDataA( m_kVolumeShaderEffect.GetVolumeTargetA().GetImage().GetData() );
@@ -1018,6 +1054,11 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public void applySculpt()
     {
+        if ( m_kSculptor == null )
+        {
+            return;
+        }
+
         float[] afData = new float[16];
         m_pkRenderer.SetConstantWVPMatrix (0, afData);
         m_kSculptor.setWVPMatrix(new Matrix4f(afData, true));
@@ -1055,6 +1096,10 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public boolean save(FileWriteOptions options, int filterType)
     {
+        if ( m_kSculptor == null )
+        {
+            return false;
+        }
         return m_kSculptor.save(options, filterType);
     }
 
@@ -1064,6 +1109,10 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public void setDrawingShape(int shape)
     {
+        if ( m_kSculptor == null )
+        {
+            return;
+        }
         m_kSculptor.setDrawingShape(shape);
     }
 
@@ -1075,7 +1124,10 @@ public class GPUVolumeRender extends JavaApplication3D
     public void updateData( ModelImage kImage )
     {
         m_kImageA = kImage;
-        m_kSculptor.setImage(m_kImageA, m_kImageB);
+        if ( m_kSculptor != null )
+        {
+            m_kSculptor.setImage(m_kImageA, m_kImageB);
+        }
         if ( m_kVolumeShaderEffect != null )
         {
             m_kVolumeShaderEffect.UpdateData(kImage, 0);
@@ -1261,7 +1313,7 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kClipEyeInv.UpdateRS();
         m_pkRenderer.LoadResources(m_kClipEyeInv);
 
-       m_kVolumeShaderEffect.InitClip(new float[] { 0, 1, 0, 1, 0, 1 });
+        m_kVolumeShaderEffect.InitClip(new float[] { 0, 1, 0, 1, 0, 1 });
     }
 
     /**
@@ -1427,7 +1479,7 @@ public class GPUVolumeRender extends JavaApplication3D
         }
         else
         { 
-           if ( iWhich%2 == 0 )
+            if ( iWhich%2 == 0 )
                 fValue = 0;
             else
                 fValue = 1;
@@ -1487,7 +1539,7 @@ public class GPUVolumeRender extends JavaApplication3D
         afEquation[2] = kEyeClipV.Z();;
         afEquation[3] = kEyeClipV.W();
         float fZ = kEyeClipV.W() * m_fZ;
-        
+
         m_kClipEye.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
         m_kClipEye.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
         m_kClipEye.VBuffer.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, fZ ) );
@@ -1516,7 +1568,7 @@ public class GPUVolumeRender extends JavaApplication3D
         afEquation[2] = kEyeClipV.Z();;
         afEquation[3] = kEyeClipV.W();
         float fZ = kEyeClipV.W() * m_fZ;
-        
+
         m_kClipEyeInv.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
         m_kClipEyeInv.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
         m_kClipEyeInv.VBuffer.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, fZ ) );
@@ -1530,7 +1582,7 @@ public class GPUVolumeRender extends JavaApplication3D
         m_bDisplayClipEyeInv = bDisplay;
     }
 
-    
+
     /**
      * Enables the arbitrary clip plane position.
      * @param bEnable clipping enabled
@@ -1568,7 +1620,7 @@ public class GPUVolumeRender extends JavaApplication3D
             m_spkScene.UpdateRS();
         }
     }
-        
+
 
     /**
      * Enables the arbitrary clip plane position.
@@ -1580,7 +1632,7 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kArbitraryClip = new Vector4f(1,0,0,f4);
         doClip();
     }
-    
+
     /**
      * Calculates the rotation for the arbitrary clip plane.
      */
@@ -1640,13 +1692,13 @@ public class GPUVolumeRender extends JavaApplication3D
         kColor.R( (float)(kColor.R()/255.0) );
         kColor.G( (float)(kColor.G()/255.0) );
         kColor.B( (float)(kColor.B()/255.0) );
-       for ( int i = 0; i < 4; i++ )
+        for ( int i = 0; i < 4; i++ )
         {
             m_kClipEye.VBuffer.Color3( 0, i, kColor );
         }
         m_kClipEye.VBuffer.Release();
     }
-    
+
     /**
      * Sets the arbitrary clip plane color.
      * @param kColor, the new color.
@@ -1656,13 +1708,13 @@ public class GPUVolumeRender extends JavaApplication3D
         kColor.R( (float)(kColor.R()/255.0) );
         kColor.G( (float)(kColor.G()/255.0) );
         kColor.B( (float)(kColor.B()/255.0) );
-       for ( int i = 0; i < 4; i++ )
+        for ( int i = 0; i < 4; i++ )
         {
-           m_kClipArb.VBuffer.Color3( 0, i, kColor );
+            m_kClipArb.VBuffer.Color3( 0, i, kColor );
         }
-       m_kClipArb.VBuffer.Release();
+        m_kClipArb.VBuffer.Release();
     }
-    
+
     /**
      * Sets the inverse-eye clip plane color.
      * @param kColor, the new color.
@@ -1672,7 +1724,7 @@ public class GPUVolumeRender extends JavaApplication3D
         kColor.R( (float)(kColor.R()/255.0) );
         kColor.G( (float)(kColor.G()/255.0) );
         kColor.B( (float)(kColor.B()/255.0) );
-       for ( int i = 0; i < 4; i++ )
+        for ( int i = 0; i < 4; i++ )
         {
             m_kClipEyeInv.VBuffer.Color3( 0, i, kColor );
         }
@@ -1702,7 +1754,7 @@ public class GPUVolumeRender extends JavaApplication3D
      */
     public void mouseDragged(MouseEvent e)
     {
-        if ( !m_kSculptor.getEnable() )
+        if ( !getSculptEnabled() )
         {
             if ( !e.isControlDown() )
             {
@@ -1726,11 +1778,11 @@ public class GPUVolumeRender extends JavaApplication3D
     public void transformUpdate( float[] data )
     {
         Matrix3f kRotate = new Matrix3f( -1, 0, 0,
-                                         0,  1, 0,
-                                         0,  0, 1 );
+                0,  1, 0,
+                0,  0, 1 );
         Matrix3f kIn = new Matrix3f(data[0], data[1], data[2],
-                                    data[4], data[5], data[6],
-                                    data[8], data[9], data[10]);
+                data[4], data[5], data[6],
+                data[8], data[9], data[10]);
 
         Matrix3f kLocal = kRotate.mult(kIn.mult(kRotate));
 
@@ -1916,7 +1968,7 @@ public class GPUVolumeRender extends JavaApplication3D
     {
         m_kVolumeShaderEffect.Blend(fValue);
     }
-    
+
     /**
      * Sets the raytracing steps size.
      * @param fValue, the steps value (0-450)
@@ -1925,7 +1977,7 @@ public class GPUVolumeRender extends JavaApplication3D
     {
         m_kVolumeShaderEffect.setSteps(fValue);
     }
-    
+
     /**
      * Launches the ApplicationGUI window displaying the currently-loaded
      * shader parameters.
@@ -1942,7 +1994,7 @@ public class GPUVolumeRender extends JavaApplication3D
         m_kShaderParamsWindow.Display();
         m_kShaderParamsWindow.setParent(this);
     }
-    
+
     /**
      * Sets the background color.
      * @param kColor, new background color.
@@ -2005,41 +2057,666 @@ public class GPUVolumeRender extends JavaApplication3D
     /** Add a polyline to the display. Used to display fiber tract bundles.
      * @param kLine, new polyline to display.
      */
-    public void addPolyline( Polyline kLine )
+    public void addPolyline( Polyline kLine, int iGroup )
     {
-        if ( m_kTractNode == null )
+        if ( m_kTracts == null )
         {
-            m_kTractNode = new Node();
-            m_spkPolylineShader = new VertexColor3Effect( "ConstantColor" );
+            m_kTracts = new HashMap<Integer,Node>();
+            m_kEllipsoids = new HashMap<Integer,Vector<int[]>>();
+            m_kShaders = new HashMap<Integer,ShaderEffect>();
+            m_kEllipseConstantColor = new HashMap<Integer,ColorRGB>();
             m_bDisplayTract = true;
         }
+
+
+        int[] aiEllipsoids = new int[kLine.VBuffer.GetVertexQuantity()];
+        for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
+        {
+            Vector3f kPos = kLine.VBuffer.Position3(i);
+            int iX = (int)((kPos.X() +.5f) * m_iDimX);
+            int iY = (int)((kPos.Y() +.5f) * m_iDimY);
+            int iZ = (int)((kPos.Z() +.5f) * m_iDimZ);
+            int iIndex = iZ * m_iDimY * m_iDimX + iY * m_iDimX + iX;
+
+            ColorRGB kColor0 = kLine.VBuffer.Color3(0,i);
+            ColorRGB kColor1 = null;
+            if ( kLine.VBuffer.GetAttributes().HasColor(1) )
+            {
+                if ( m_kImageA.isColorImage() )
+                {
+                    float fR = m_kImageA.getFloat( iIndex*4 + 1 )/255.0f;
+                    float fG = m_kImageA.getFloat( iIndex*4 + 2 )/255.0f;
+                    float fB = m_kImageA.getFloat( iIndex*4 + 3 )/255.0f;
+                    kLine.VBuffer.Color3(1,i, new ColorRGB(fR, fG, fB));
+                }
+                else
+                {
+                    float fR = m_kImageA.getFloat( iIndex );
+                    kLine.VBuffer.Color3(1,i, new ColorRGB(fR, fR, fR));
+                }
+                kColor1 = kLine.VBuffer.Color3(1,i);
+            }
+
+            if ( m_kEigenVectors != null )
+            {
+                if (  m_kEigenVectors.get( new Integer(iIndex) ) != null )
+                {
+                    aiEllipsoids[i] = iIndex;
+                }
+                else
+                {
+                    aiEllipsoids[i] = -1;
+                }
+            }
+        }
+
         kLine.Local.SetScale( new Vector3f( m_fX, m_fY, m_fZ ) );
-        m_kTractNode.AttachChild(kLine);
-        m_kTractNode.UpdateGS();
-        m_kTractNode.UpdateRS();
+
+        Node kTractNode = null;
+        Integer iIGroup = new Integer(iGroup);
+        if ( m_kTracts.containsKey( iIGroup ) )
+        {
+            kTractNode = m_kTracts.get(iIGroup);
+            kTractNode.AttachChild(kLine);
+            kTractNode.UpdateGS();
+            kTractNode.UpdateRS();
+
+            Vector<int[]> kEllipseVector = m_kEllipsoids.get(iIGroup);
+            kEllipseVector.add(aiEllipsoids);
+        }
+        if ( kTractNode == null )
+        {
+            kTractNode = new Node();
+            kTractNode.AttachChild(kLine);
+            kTractNode.UpdateGS();
+            kTractNode.UpdateRS();
+            m_kTracts.put( new Integer(iIGroup), kTractNode );
+
+            Vector<int[]> kEllipseVector = new Vector<int[]>();
+            kEllipseVector.add(aiEllipsoids);
+            m_kEllipsoids.put( new Integer(iIGroup), kEllipseVector );
+
+            String kShaderName = new String( "ConstantColor" );
+            VertexColor3Effect kPolylineShader = new VertexColor3Effect( kShaderName, true );
+            m_kShaders.put( new Integer(iIGroup), kPolylineShader );
+        }
     }
 
     /** Remove all polylines from the display. */
     public void removeAllPolylines(  )
     {
-        if ( m_kTractNode == null )
+        if ( m_kTracts == null )
         {
             return;
         }
-        for ( int i = 0; i < m_kTractNode.GetQuantity(); i++ )
+
+        Iterator kIterator = m_kTracts.keySet().iterator();
+        while ( kIterator.hasNext() )
         {
-            Polyline kTract = (Polyline)m_kTractNode.DetachChildAt(i);
-            if ( kTract != null )
+            Integer iKey = (Integer)kIterator.next();
+            Node kTractNode = m_kTracts.get(iKey);
+            for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
             {
-                kTract.finalize();
+                Polyline kTract = (Polyline)kTractNode.DetachChildAt(i);
+                if ( kTract != null )
+                {
+                    kTract.DetachAllEffects();
+                    kTract.finalize();
+                }
+            }
+            kTractNode.UpdateGS();
+            kTractNode.UpdateRS();
+            kTractNode.finalize();
+            kTractNode = null;
+        }
+        m_kTracts.clear();
+        m_kTracts = null;
+
+        kIterator = m_kShaders.keySet().iterator();
+        while ( kIterator.hasNext() )
+        {
+            Integer iKey = (Integer)kIterator.next();
+            ShaderEffect kShader = m_kShaders.get(iKey);
+            kShader.finalize();
+            kShader = null;
+        }
+        m_kShaders.clear();
+        m_kShaders = null;
+
+        kIterator = m_kEllipsoids.keySet().iterator();
+        while ( kIterator.hasNext() )
+        {
+            Integer iKey = (Integer)kIterator.next();
+            Vector<int[]> kEllipseVector = m_kEllipsoids.get(iKey);
+            if ( kEllipseVector != null )
+            {
+                kEllipseVector.clear();
             }
         }
+        m_kEllipsoids.clear();
+        m_kEllipsoids = null;
+        
 
-        m_kTractNode.finalize();
-        m_kTractNode = null;
         m_bDisplayTract = false;
     }
 
+    /** 
+     */
+    public void removePolyline( int iGroup )
+    {
+        Integer kGroup = new Integer(iGroup);
+        Node kTractNode = m_kTracts.remove(kGroup);
+        for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
+        {
+            Polyline kTract = (Polyline)kTractNode.DetachChildAt(i);
+            if ( kTract != null )
+            {
+                kTract.DetachAllEffects();
+                kTract.finalize();
+            }
+        }
+        kTractNode.UpdateGS();
+        kTractNode.UpdateRS();
+        kTractNode.finalize();
+        kTractNode = null;
+
+        Vector<int[]> kEllipseVector = m_kEllipsoids.remove(kGroup);
+        if ( kEllipseVector != null )
+        {
+            kEllipseVector.clear();
+        }
+
+        ShaderEffect kShader = m_kShaders.remove(kGroup);
+        if ( kShader != null )
+        {
+            kShader.finalize();
+        }
+    }
+
+    /** 
+     */
+    public void setPolylineColor( int iGroup, ColorRGB kColor )
+    {
+        Integer kKey = new Integer(iGroup);
+        ShaderEffect kShader = m_kShaders.get(kKey);
+        if ( kShader == null )
+        {
+            return;
+        }
+        Program pkProgram = kShader.GetVProgram(0);
+        if ( pkProgram == null )
+        {
+            return;
+        }
+        if ( kColor == null )
+        {
+            if ( pkProgram.GetUC("UseConstantColor") != null )
+            {
+                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {0,0,0,0});
+            }
+
+            m_kEllipseConstantColor.remove( kKey );
+            m_kEllipseConstantColor.put( kKey, null );
+        }
+        else
+        {
+            if ( pkProgram.GetUC("ConstantColor") != null )
+            {
+                pkProgram.GetUC("ConstantColor").SetDataSource(new float[] { kColor.R(), kColor.G(), kColor.B(), 1f } );
+            }
+            if ( pkProgram.GetUC("UseConstantColor") != null )
+            {
+                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {1,0,0,0});
+            }
+
+            m_kEllipseConstantColor.remove( kKey );
+            m_kEllipseConstantColor.put( kKey, kColor );
+        }
+    }
+
+    public void setEllipseColor( ShaderEffect kShader, ColorRGB kColor )
+    {
+        if ( kShader == null )
+        {
+            return;
+        }
+        Program pkProgram = kShader.GetVProgram(0);
+        if ( pkProgram == null )
+        {
+            return;
+        }
+        if ( kColor == null )
+        {
+            if ( pkProgram.GetUC("UseConstantColor") != null )
+            {
+                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {0,0,0,0});
+            }
+        }
+        else
+        {
+            if ( pkProgram.GetUC("ConstantColor") != null )
+            {
+                pkProgram.GetUC("ConstantColor").SetDataSource(new float[] { kColor.R(), kColor.G(), kColor.B(), 1f } );
+            }
+            if ( pkProgram.GetUC("UseConstantColor") != null )
+            {
+                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {1,0,0,0});
+            }
+        }
+    }
+
+
+    public void setDTIImage( ModelImage kDTIImage )
+    {
+        float[] newRes = m_kImageA.getResolutions(0);
+        int[] volExtents = m_kImageA.getExtents();
+        AlgorithmTransform transformFunct = new AlgorithmTransform(kDTIImage, new TransMatrix(4), AlgorithmTransform.NEAREST_NEIGHBOR,
+                                                                   newRes[0], newRes[1], newRes[2],
+                                                                   volExtents[0], volExtents[1], volExtents[2],
+                                                                   false, true, false);
+        transformFunct.setRunningInSeparateThread(false);
+        transformFunct.run();
+
+        if (transformFunct.isCompleted() == false) {
+            transformFunct.finalize();
+            transformFunct = null;
+        }
+        kDTIImage.disposeLocal();
+        kDTIImage = null;
+
+        kDTIImage = transformFunct.getTransformedImage();
+        kDTIImage.calcMinMax();
+
+        if (transformFunct != null) {
+            transformFunct.disposeLocal();
+        }
+        transformFunct = null;
+
+        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating ellipse transforms", "", 0, m_iLen, true);
+        
+        m_kEigenVectors =
+            new HashMap<Integer,Transformation>();
+        Matrix3f kMatrix = new Matrix3f();;
+        float[] afTensorData = new float[6];
+        Matrix3f kEigenValues = new Matrix3f();
+        float fLambda1;
+        float fLambda2;
+        float fLambda3;
+        Vector3f kV1;
+        Vector3f kV2;
+        Vector3f kV3;
+
+        for ( int i = 0; i < m_iLen; i++ )
+        {
+            boolean bAllZero = true;
+
+
+            for ( int j = 0; j < 6; j++ )
+            {
+                afTensorData[j] = kDTIImage.getFloat(i + j*m_iLen);
+                if ( afTensorData[j] != 0 )
+                {
+                    bAllZero = false;
+                }
+            }
+            if ( !bAllZero )
+            {
+                kMatrix.SetData( afTensorData[0], afTensorData[3], afTensorData[4],
+                        afTensorData[3], afTensorData[1], afTensorData[5], 
+                        afTensorData[4], afTensorData[5], afTensorData[2] );
+
+                Matrix3f.EigenDecomposition( kMatrix, kEigenValues );
+                fLambda1 = kEigenValues.GetData(2,2);
+                fLambda2 = kEigenValues.GetData(1,1);
+                fLambda3 = kEigenValues.GetData(0,0);
+                kV1 = kMatrix.GetColumn(2);
+                kV2 = kMatrix.GetColumn(1);
+                kV3 = kMatrix.GetColumn(0);
+
+                kV1.Normalize();
+                kV2.Normalize();
+                kV3.Normalize();
+
+                kMatrix.SetColumn(0,kV1);
+                kMatrix.SetColumn(1,kV2);
+                kMatrix.SetColumn(2,kV3);
+
+                if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
+                {}
+                else
+                {
+                    Transformation kTransform = new Transformation();
+                    kTransform.SetMatrix(new Matrix3f(kMatrix));
+                    kTransform.SetScale( new Vector3f( fLambda1, fLambda2, fLambda3 ) );
+                    m_kEigenVectors.put( new Integer(i), kTransform );
+
+                    if ( fLambda1 > m_fScaleMax )
+                    {
+                        m_fScaleMax = fLambda1;
+                    }
+                    if ( fLambda2 > m_fScaleMax )
+                    {
+                        m_fScaleMax = fLambda2;
+                    }
+                    if ( fLambda3 > m_fScaleMax )
+                    {
+                        m_fScaleMax = fLambda3;
+                    }
+                }
+            }
+            if ( (i%(m_iDimX*m_iDimY)) == 0 )
+            {
+                kProgressBar.updateValue(i+1);
+            }
+        }
+        kProgressBar.dispose();
+        m_fScaleMax = 1.0f/m_fScaleMax;
+
+        kDTIImage.disposeLocal();
+        kDTIImage = null;
+
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+
+        StandardMesh kSM = new StandardMesh(kAttr);
+        m_kSphere = kSM.Sphere(10,10,1f);
+
+        m_kAllEllipsoidsShader = new MaterialEffect( );
+        m_kEllipseMaterial = new MaterialState();
+        m_kEllipseMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        m_kEllipseMaterial.Ambient = new ColorRGB(0.24725f,0.2245f,0.0645f);
+        m_kEllipseMaterial.Diffuse = new ColorRGB(0.34615f,0.3143f,0.0903f);
+        m_kEllipseMaterial.Specular = new ColorRGB(0.797357f,0.723991f,0.208006f);
+        m_kEllipseMaterial.Shininess = 83.2f;
+        m_kColorEllipse = new ColorRGB(ColorRGB.BLACK);
+    }
+
+    public void setDisplayEllipsoids( boolean bDisplay )
+    {
+        m_bDisplayEllipsoids = bDisplay;
+    }
+
+
+    public void setDisplayAllEllipsoids( boolean bDisplay, int iMod, boolean bUseConstantColor, ColorRGB kColor )
+    {
+        m_bDisplayAllEllipsoids = bDisplay;
+        //m_iEllipsoidMod = iMod;
+
+        Program pkProgram = m_kAllEllipsoidsShader.GetVProgram(0);
+        if ( pkProgram == null )
+        {
+            return;
+        }
+        if ( !bUseConstantColor || (kColor == null) )
+        {
+            if ( pkProgram.GetUC("UseConstantColor") != null )
+            {
+                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {0,0,0,0});
+            }
+        }
+        else if ( bUseConstantColor && (kColor != null) )
+        {
+            if ( pkProgram.GetUC("ConstantColor") != null )
+            {
+                pkProgram.GetUC("ConstantColor").SetDataSource(new float[] { kColor.R(), kColor.G(), kColor.B(), 1f } );
+            }
+            if ( pkProgram.GetUC("UseConstantColor") != null )
+            {
+                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {1,0,0,0});
+            }
+        }
+    }
+
+    public void setEllipseMod( int iMod )
+    {
+        m_iEllipsoidMod = iMod;
+    }
+
+
+    private void DisplayAllEllipsoids()
+    {
+        if ( m_kEigenVectors == null )
+        {
+            return;
+        }
+        
+        m_spkAlpha.BlendEnabled = true;
+        int iCount = 0;
+        int iIndex, iX, iY, iZ;
+        float fX, fY, fZ;
+        Integer kKey;
+        float fR, fG, fB;
+        Vector3f kScale;
+        TriMesh kEllipse;
+        Transformation kTransform;
+                
+        Iterator kIterator = m_kEigenVectors.keySet().iterator();
+        while ( kIterator.hasNext() )
+        {
+            kKey = (Integer)kIterator.next();
+            if ( (iCount%m_iEllipsoidMod) == 0 )
+            {                           
+                iIndex = kKey.intValue();
+                iX = iIndex % m_iDimX;
+                iIndex -= iX;
+                iIndex /= m_iDimX;
+                            
+                iY = iIndex % m_iDimY;
+                iIndex -= iY;
+                iIndex /= m_iDimY;
+                            
+                iZ = iIndex;
+                            
+                // reset iIndex:
+                iIndex = kKey.intValue();
+                            
+                if ( m_kImageA.isColorImage() )
+                {
+                    fR = m_kImageA.getFloat( iIndex*4 + 1 )/255.0f;
+                    fG = m_kImageA.getFloat( iIndex*4 + 2 )/255.0f;
+                    fB = m_kImageA.getFloat( iIndex*4 + 3 )/255.0f;
+                    m_kColorEllipse.R(fR);
+                    m_kColorEllipse.G(fG);
+                    m_kColorEllipse.B(fB);
+                }
+                else
+                {
+                    fR = m_kImageA.getFloat( iIndex );
+                    m_kColorEllipse.R(fR);
+                    m_kColorEllipse.G(fR);
+                    m_kColorEllipse.B(fR);
+                }
+
+                fX = (float)(iX)/(float)(m_iDimX);
+                fY = (float)(iY)/(float)(m_iDimY);
+                fZ = (float)(iZ)/(float)(m_iDimZ);
+
+
+                m_kTScale.MakeIdentity();
+                m_kTEllipse.MakeIdentity();
+                m_kTRotate.MakeIdentity();
+
+                kTransform = m_kEigenVectors.get(kKey);
+            
+                kScale = m_kTScale.GetScale();
+                kScale.scaleEquals( m_fScaleMax * m_fScale * 2f);
+                kScale.multEquals( kTransform.GetScale() );
+                m_kTScale.SetScale(kScale);
+                            
+                m_kTEllipse.SetTranslate( fX - .5f, fY - .5f, fZ - .5f );
+                m_kTEllipse.SetMatrixCopy( kTransform.GetMatrix() );
+
+                m_kTRotate.SetRotateCopy(m_spkScene.Local.GetRotate());
+                m_kTRotate.SetScale( m_fX, m_fY, m_fZ );
+
+                kEllipse = m_kSphere;
+                kEllipse.Local.MakeIdentity();
+                kEllipse.Local.Product( m_kTEllipse, m_kTScale );
+                kEllipse.Local.Product( m_kTRotate, kEllipse.Local );
+                            
+                kEllipse.DetachAllEffects();
+                            
+                m_kEllipseMaterial.Diffuse = m_kColorEllipse;
+                kEllipse.AttachGlobalState(m_kEllipseMaterial);
+                kEllipse.AttachEffect( m_kAllEllipsoidsShader );
+                            
+                kEllipse.UpdateRS();
+                kEllipse.UpdateGS();
+                m_pkRenderer.Draw(kEllipse);
+            }
+            iCount++;
+        }
+    }
+
+
+    private void DisplayEllipsoids( )
+    {
+        if ( m_kEllipsoids == null )
+        {
+            return;
+        }
+        
+        m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
+        m_pkRenderer.ClearBuffers();
+
+        m_spkAlpha.BlendEnabled = true;
+
+        Integer kKey;
+        Vector<int[]> kEllipseVector;
+        int[] aiEllipsoids;
+        int iIndex;
+        ColorRGB kColor;
+        int iX,iY,iZ;
+        float fX,fY,fZ;
+        float fR,fG,fB;
+        Vector3f kScale;
+        TriMesh kEllipse;
+        Transformation kTransform;
+        
+        Iterator kIterator = m_kEllipsoids.keySet().iterator();
+        while ( kIterator.hasNext() )
+        {
+            kKey = (Integer)kIterator.next();
+            kEllipseVector = m_kEllipsoids.get(kKey);
+            for ( int i = 0; i < kEllipseVector.size(); i++ )
+            {
+                aiEllipsoids = kEllipseVector.get(i);
+                for ( int j = 0; j < aiEllipsoids.length; j++ )
+                {
+                    if ( aiEllipsoids[j] != -1 )
+                    {
+                        iIndex = aiEllipsoids[j];
+
+                        kColor = m_kEllipseConstantColor.get(kKey);
+                        if ( kColor != null )
+                        {
+                            m_kColorEllipse = kColor;
+                        }
+                        else
+                        {
+                            if ( m_kImageA.isColorImage() )
+                            {
+                                fR = m_kImageA.getFloat( iIndex*4 + 1 )/255.0f;
+                                fG = m_kImageA.getFloat( iIndex*4 + 2 )/255.0f;
+                                fB = m_kImageA.getFloat( iIndex*4 + 3 )/255.0f;
+                                m_kColorEllipse.R(fR);
+                                m_kColorEllipse.G(fG);
+                                m_kColorEllipse.B(fB);
+                            }
+                            else
+                            {
+                                fR = m_kImageA.getFloat( iIndex );
+                                m_kColorEllipse.R(fR);
+                                m_kColorEllipse.G(fR);
+                                m_kColorEllipse.B(fR);
+                            }
+                        }
+                        
+                        iX = iIndex % m_iDimX;
+                        iIndex -= iX;
+                        iIndex /= m_iDimX;
+                        
+                        iY = iIndex % m_iDimY;
+                        iIndex -= iY;
+                        iIndex /= m_iDimY;
+                        
+                        iZ = iIndex;
+                        // reset iIndex
+                        iIndex = aiEllipsoids[j];
+                        
+                        fX = (float)(iX)/(float)(m_iDimX);
+                        fY = (float)(iY)/(float)(m_iDimY);
+                        fZ = (float)(iZ)/(float)(m_iDimZ);
+                        
+                        m_kTScale.MakeIdentity();
+                        m_kTEllipse.MakeIdentity();
+                        m_kTRotate.MakeIdentity();
+                        
+                        kTransform = m_kEigenVectors.get(new Integer(iIndex));
+            
+                        kScale = m_kTScale.GetScale();
+                        kScale.scaleEquals( m_fScaleMax * m_fScale * 2f);
+                        kScale.multEquals( kTransform.GetScale() );
+                        m_kTScale.SetScale(kScale);
+                        
+                        m_kTEllipse.SetTranslate( fX - .5f, fY - .5f, fZ - .5f );
+                        m_kTEllipse.SetMatrixCopy( kTransform.GetMatrix() );
+                        
+                        m_kTRotate.SetRotateCopy(m_spkScene.Local.GetRotate());
+                        m_kTRotate.SetScale( m_fX, m_fY, m_fZ );
+                        
+                        kEllipse = m_kSphere;
+                        kEllipse.Local.MakeIdentity();
+                        kEllipse.Local.Product( m_kTEllipse, m_kTScale );
+                        kEllipse.Local.Product( m_kTRotate, kEllipse.Local );
+                        
+                        kEllipse.DetachAllEffects();
+                        
+                        m_kEllipseMaterial.Diffuse = m_kColorEllipse;
+                        kEllipse.AttachGlobalState(m_kEllipseMaterial);
+                        kEllipse.AttachEffect( m_kAllEllipsoidsShader );
+                        
+                        kEllipse.UpdateRS();
+                        kEllipse.UpdateGS();
+                        m_pkRenderer.Draw(kEllipse);
+                    }
+                }
+            }
+        }
+    }
+    
+
+    
+    private void DisplayTract( ShaderEffect kInputShader )
+    {
+        Iterator kIterator = m_kTracts.keySet().iterator();
+        Integer iKey;
+        Node kTractNode;
+        Polyline kTract;
+        ShaderEffect kShader;
+        
+        m_spkAlpha.BlendEnabled = true;
+        while ( kIterator.hasNext() )
+        {
+            iKey = (Integer)kIterator.next();
+            kTractNode = m_kTracts.get(iKey);
+            kShader = kInputShader;
+            if ( kShader == null )
+            {
+                kShader = m_kShaders.get(iKey);
+            }
+            for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
+            {
+                kTract = (Polyline)kTractNode.GetChild(i);
+                kTract.Local.SetRotate(new Matrix3f(m_spkScene.Local.GetRotate()));
+                kTract.DetachAllEffects();
+                kTract.AttachEffect( kShader );
+                kTract.UpdateGS();
+                kTract.UpdateRS();
+                m_pkRenderer.Draw(kTract);
+            }
+        }
+    }
 
     /** Scene-graph root node: */
     private Node m_spkScene;
@@ -2105,15 +2782,12 @@ public class GPUVolumeRender extends JavaApplication3D
     /** Vertex-color shader effect used for the polylines and the first-pass
      * rendering of the proxy-geometry:*/
     private ShaderEffect m_spkVertexColor3Shader;
-    
-    /** Vertex-color shader effect used for the tract polylines: */
-    private ShaderEffect m_spkPolylineShader;
 
     /** Animator object, displays scene in rendering loop (similar to GLUTMainLoop() */
     private Animator m_kAnimator;
 
     /** New sculpting object for WM-based sculpting. */
-    private SculptorWm m_kSculptor;
+    private SculptorWm m_kSculptor = null;
 
     /** Stores the transfer functions: */
     private TransferFunction[] m_akTransfer = new TransferFunction[4];
@@ -2148,10 +2822,45 @@ public class GPUVolumeRender extends JavaApplication3D
      * back-facing polygons of the proxy-geometry are shown instead of the volume: */
     private boolean m_bDisplaySecond = true;
 
-    /** Polyline tracts root node: */
-    private Node m_kTractNode = null;
     /** Set to true when polyline fiber bundles are displayed. */
     private boolean m_bDisplayTract = false;
     /** For modifying the alpha-blending mode during runtime. */
     private int m_iActive = 0;
+
+    /** Hashmap for multiple fiber bundles: */
+    private HashMap<Integer,Node>  m_kTracts = null;
+
+    /** Hashmap for multiple fiber bundles: */
+    private HashMap<Integer,ShaderEffect>  m_kShaders = null;
+
+    /** Hashmap for multiple fiber bundles: */
+    private HashMap<Integer,Vector<int[]>> m_kEllipsoids = null;
+
+    private float  m_fScaleMax = -Float.MAX_VALUE;
+
+
+    private boolean m_bDisplayEllipsoids = false;
+    private boolean m_bDisplayAllEllipsoids = false;
+    private int m_iEllipsoidMod = 10;
+
+    private ShaderEffect m_kAllEllipsoidsShader = null;
+
+    private HashMap<Integer,ColorRGB> m_kEllipseConstantColor;
+
+    private MaterialState m_kEllipseMaterial;
+
+    private HashMap<Integer,Transformation>  m_kEigenVectors = null;
+
+    private TriMesh m_kSphere;
+    private Transformation m_kTScale = new Transformation();
+    private Transformation m_kTEllipse = new Transformation();
+    private Transformation m_kTRotate = new Transformation();
+    
+    private int m_iDimX;
+    private int m_iDimY;
+    private int m_iDimZ;
+    private float m_fScale;
+    private int m_iLen;
+    private ColorRGB m_kColorEllipse;
+
 }

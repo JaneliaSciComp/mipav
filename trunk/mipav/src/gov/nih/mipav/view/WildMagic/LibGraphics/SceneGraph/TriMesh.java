@@ -32,6 +32,28 @@ public class TriMesh extends Triangles
         UpdateModelNormals();
     }
 
+    /** Construction.
+     * @param pkVBuffer, vertex buffer.
+     * @param pkIBuffer, index buffer.
+     */
+    public TriMesh (VertexBuffer pkVBuffer, IndexBuffer pkIBuffer, BoundingVolume kBounds)
+    {
+        super(pkVBuffer,pkIBuffer,kBounds);
+        Type = GeometryType.GT_TRIMESH;
+        UpdateModelNormals();
+    }
+    
+    /** Construction.
+     * @param pkVBuffer, vertex buffer.
+     * @param pkIBuffer, index buffer.
+     */
+    public TriMesh (TriMesh kMesh )
+    {
+        super(kMesh);
+        Type = GeometryType.GT_TRIMESH;
+        UpdateModelNormals();
+    }
+
     /** Interpretation of the index buffer data.
      * @return number of triangles.
      */

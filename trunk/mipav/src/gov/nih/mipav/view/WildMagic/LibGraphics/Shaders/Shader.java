@@ -161,11 +161,26 @@ public abstract class Shader extends GraphicsObject
         m_kShaderName = new String(rkShaderName);
     }
 
+    /** The constructor called by the derived classes VertexShader and
+     * PixelShader.
+     * @param rkShaderName, shader name.
+     */
+    protected Shader (String rkShaderName, boolean bUnique)
+    {
+        m_kShaderName = new String(rkShaderName);
+        m_bUnique = bUnique;
+    }
+    
+    public final boolean GetUnique()
+    {
+        return m_bUnique;
+    }
 
     /** The shader name, which contributes to a uniquely identifying string
      * for a shader program. */
     protected String m_kShaderName;
  
+    protected boolean m_bUnique = false;
     /** The shader program, which is dependent on graphics API. */
     protected Program m_spkProgram;
 

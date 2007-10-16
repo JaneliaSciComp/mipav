@@ -555,10 +555,18 @@ public class ShaderEffect extends Effect
 
         if ( pkVProgram == null )
         {
-            pkVProgram =
-                VertexProgramCatalog.GetActive().
-                Find( m_kVShader.get(iPass).GetShaderName(),
-                      VertexProgramCatalog.GetActive().GetDefaultDir());
+            if ( m_kVShader.get(iPass).GetUnique() )
+            {
+                pkVProgram = VertexProgram.Load(m_kVShader.get(iPass).GetShaderName(),
+                        VertexProgramCatalog.GetActive().GetDefaultDir());
+            }
+            else
+            {
+                pkVProgram =
+                    VertexProgramCatalog.GetActive().
+                    Find( m_kVShader.get(iPass).GetShaderName(),
+                            VertexProgramCatalog.GetActive().GetDefaultDir());
+            }
             bLoadedVProgram = true;
         }
 

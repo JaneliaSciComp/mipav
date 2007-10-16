@@ -1,29 +1,27 @@
 package gov.nih.mipav.view.dialogs;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import gov.nih.mipav.view.dialogs.*;
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.event.*;
 import java.io.*;
 import java.util.Vector;
+
+import javax.media.opengl.*;
+import com.sun.opengl.util.*;
+import com.sun.opengl.util.Animator;
+import java.awt.event.*;
 
 import javax.media.j3d.*;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.view.ViewJProgressBar;
-import gov.nih.mipav.view.ViewImageUpdateInterface;
-import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewControlsImage;
-import gov.nih.mipav.view.ViewImageFileFilter;
-import gov.nih.mipav.view.ViewJComponentDTIImage;
-import gov.nih.mipav.view.ViewJFrameBase;
-import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.volumeview.GPUVolumeRender;
+import gov.nih.mipav.view.renderer.volumeview.DTIEllipseRender;
 import gov.nih.mipav.view.renderer.surfaceview.JPanelSurface;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
@@ -70,7 +68,7 @@ import gov.nih.mipav.model.structures.jama.*;
  * pass through a VOI are loaded.
  */
 public class JDialogDTIInput extends JDialogBase
-    implements ViewImageUpdateInterface
+    implements ViewImageUpdateInterface, ChangeListener
 {
 
     /** Types of dialogs: */
@@ -81,7 +79,9 @@ public class JDialogDTIInput extends JDialogBase
     /** EigenVector and Functional Anisotropy dialog: */
     public static final int EG_FA = 2;
     /** Fiber Bundle tracts dialog: */
-    public static final int TRACTS = 3;
+    public static final int TRACTS_DIALOG = 3;
+    /** Fiber Bundle tracts dialog: */
+    public static final int TRACTS_PANEL = 4;
 
     /** Eigenvector image **/
     private ModelImage m_kEigenVectorImage;
@@ -183,6 +183,40 @@ public class JDialogDTIInput extends JDialogBase
     /** ViewJFrameImage for displaying the Mask of the image that shows only the brain: */
     private ViewJFrameImage m_kBrainFrame = null;
 
+    /** The list box in the dialog for fiber bundle tracts. */
+    private JList m_kTractList;
+
+    /** Color chooser for when the user wants to change the color of the fiber bundle tracts. */
+    private ViewJColorChooser m_kColorChooser;
+
+    /** Color button for changing the color of the fiber bundles. */
+    private JButton m_kColorButton;
+
+    /** */
+    private JLabel m_kColorLabel;
+
+    private JCheckBox m_kUseVolumeColor;
+    private JCheckBox m_kUseEllipsoids;
+    private JCheckBox m_kAllEllipsoids;
+
+    /** Keeps track of the groups of polylines loaded. */
+    private int m_iBundleCount = 0;
+
+    /** The TRACTS panel is displayed in the ViewJFrameVolumeViewWM window, instead of as a dialog. */
+    JPanel m_kMainPanel;
+
+
+    private JScrollPane scroller;
+
+    private JDialogDTIInput m_kParentDialog;
+
+    private boolean m_bDTIUpdated = false;
+
+    private JSlider m_kDisplaySlider;
+
+    //private DTIEllipseRender kEllipseView;
+
+
     /** Create a new JDialogDTIInput of one of the four types:
      * @param iType, type of Diffusion Tensor Input dialog to create.
      */
@@ -206,6 +240,20 @@ public class JDialogDTIInput extends JDialogBase
         m_kVolumeDisplay = kDisplay;
     }
 
+    /** Create a new JDialogDTIInput of one of the four types:
+     * @param iType, type of Diffusion Tensor Input dialog to create.
+     * loading fiber bundle tracts.
+     */
+    public JDialogDTIInput( int iType, JDialogDTIInput kParent ) 
+    {
+        super();
+        init( iType );
+        m_iType = iType;
+        m_kParentDialog = kParent;
+    }
+
+
+
     /** The JDialogDTIInput interface. 
      * @param iType, type of Diffusion Tensor Input dialog to create.
      */
@@ -223,30 +271,52 @@ public class JDialogDTIInput extends JDialogBase
         GridBagConstraints gbcMain = new GridBagConstraints();
         gbcMain.gridx = 0;
         gbcMain.gridy = 0;
-        JPanel kMainPanel = new JPanel( new GridBagLayout() );
+        gbcMain.fill = GridBagConstraints.BOTH;
+        gbcMain.weightx = 1;
+        gbcMain.weighty = 1;
+        
+        m_kMainPanel = new JPanel( new GridBagLayout() );
         if ( iType == DWI )
         {
-            kMainPanel.add( createDWIPanel(), gbcMain );
+            m_kMainPanel.add( createDWIPanel(), gbcMain );
         }
         else if ( iType == DTI )
         {
-            kMainPanel.add( createDTIPanel(), gbcMain );
+            m_kMainPanel.add( createDTIPanel(), gbcMain );
         }
         else if ( iType == EG_FA )
         {
-            kMainPanel.add( createEigenPanel(), gbcMain );
+            m_kMainPanel.add( createEigenPanel(), gbcMain );
         }
-        else if ( iType == TRACTS )
+        else if ( iType == TRACTS_DIALOG )
         {
-            kMainPanel.add( createTractPanel(), gbcMain );
+            m_kMainPanel.add( createTractDialog(), gbcMain );
         }
-        gbcMain.gridy++;
-        kMainPanel.add( buttonPanel, gbcMain );
+        else if ( iType == TRACTS_PANEL )
+        {
+            m_kMainPanel.add( createTractPanel(), gbcMain );
+        }
 
-        getContentPane().add(kMainPanel);
-        pack();
-        setVisible(true);
+        if ( iType != TRACTS_PANEL )
+        {
+            gbcMain.gridy++;
+            gbcMain.weightx = 0;
+            gbcMain.weighty = 0;
+            m_kMainPanel.add( buttonPanel, gbcMain );
+	    getContentPane().add(m_kMainPanel);
+	    pack();
+	    setVisible(true);
+	}
     }
+
+    /** Access to the main panel for display.
+     * @return the main user-interface panel.
+     */
+    public JPanel getMainPanel()
+    {
+	return m_kMainPanel;
+    }
+
 
     /** ActionListener event.
      * @param kAction, ActionEvent
@@ -285,6 +355,69 @@ public class JDialogDTIInput extends JDialogBase
 	{
             loadTractFile();
         }
+	else if ( kCommand.equals("ChangeColor") )
+	{
+	    m_kColorChooser = new ViewJColorChooser(new Frame(),
+						    "Pick fiber bundle color",
+						    new OkColorListener(),
+						    new CancelListener());
+        } 
+	else if ( kCommand.equals("VolumeColor") )
+	{
+            if ( m_kUseVolumeColor.isSelected() )
+            {
+                setColor(null);
+            }
+            else
+            {
+                setColor( m_kColorButton.getBackground() );
+            }
+        } 
+	else if ( kCommand.equals("UseEllipsoids") )
+	{
+	    m_kVolumeDisplay.setDisplayEllipsoids( m_kUseEllipsoids.isSelected() );
+	}
+	else if ( kCommand.equals("AllEllipsoids") )
+	{
+//             kEllipseView = new DTIEllipseRender(m_kVolumeDisplay.getImage() );
+//             kEllipseView.setDTIImage(m_kDTIImage);
+
+//             Frame frame = new Frame(kEllipseView.GetWindowTitle());
+//             frame.add( kEllipseView.GetCanvas() );
+//             frame.setSize( kEllipseView.GetWidth(), kEllipseView.GetHeight() );
+//             /* Animator serves the purpose of the idle function, calls display: */
+//             final Animator animator = new Animator( kEllipseView.GetCanvas() );
+//             frame.addWindowListener(new WindowAdapter() {
+//                     public void windowClosing(WindowEvent e) {
+//                         // Run this on another thread than the AWT event queue to
+//                         // avoid deadlocks on shutdown on some platforms
+//                         new Thread(new Runnable() {
+//                                 public void run() {
+//                                     animator.stop();
+//                                     System.exit(0);
+//                                 }
+//                             }).start();
+//                     }
+//                 });
+//             frame.setVisible(true);
+//             animator.start();
+
+ 	    Color color = m_kColorButton.getBackground();
+ 	    m_kVolumeDisplay.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected(), 10,
+ 						      !m_kUseVolumeColor.isSelected(),
+ 						      new ColorRGB( color.getRed()/255.0f,
+                                       color.getGreen()/255.0f,
+                                       color.getBlue()/255.0f  )
+ 						       );
+	}
+	else if ( kCommand.equals("Add") )
+        {
+            new JDialogDTIInput( TRACTS_DIALOG, this );
+        }
+        else if ( kCommand.equals("Remove") )
+        {
+            removePolyline();
+        }
         else if ( kCommand.equalsIgnoreCase("ok") )
 	{
             if ( m_iType == DWI )
@@ -313,13 +446,25 @@ public class JDialogDTIInput extends JDialogBase
                 new DialogDTIColorDisplay(m_kEigenVectorImage, m_kAnisotropyImage, m_kLUTa, false);
                 dispose();
             }
-            else if ( m_iType == TRACTS )
+            else if ( m_iType == TRACTS_DIALOG )
             {
                 processTractFile();
                 dispose();
             }
         }
     }
+
+    /**
+     * @param  e  Event that triggered this function.
+     */
+    public void stateChanged(ChangeEvent e) {
+        Object source = e.getSource();
+
+        if (source == m_kDisplaySlider) {
+            m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
+        }
+    }
+
 
     /**
      * Launches the JFileChooser for the user to select the BMatrix file. Loads the BMatrix file.
@@ -1150,8 +1295,150 @@ public class JDialogDTIInput extends JDialogBase
      */
     private JPanel createTractPanel()
     {
+        // Scroll panel that hold the control panel layout in order to use JScrollPane
+        JPanel mainScrollPanel = new JPanel();
+        mainScrollPanel.setLayout(new BorderLayout());
+
+        scroller = new JScrollPane(mainScrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                   JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+        JPanel kTractPanel = new JPanel(new BorderLayout());
+
+        JPanel buttonPanel = new JPanel();
+
+        // buttons for add/remove of surfaces from list
+        JButton addButton = new JButton("Add");
+
+        addButton.addActionListener(this);
+        addButton.setActionCommand("Add");
+        addButton.setFont(serif12B);
+        addButton.setPreferredSize(MipavUtil.defaultButtonSize);
+
+        JButton removeButton = new JButton("Remove");
+
+        removeButton.addActionListener(this);
+        removeButton.setActionCommand("Remove");
+        removeButton.setFont(serif12B);
+        removeButton.setPreferredSize(MipavUtil.defaultButtonSize);
+
+        buttonPanel.add(addButton);
+        buttonPanel.add(removeButton);
+
+        // list panel for surface filenames
+        m_kTractList = new JList( new DefaultListModel() );
+        //m_kTractList.addListSelectionListener(this);
+        m_kTractList.setPrototypeCellValue("aaaaaaaaaaaaaaaa.aaa    ");
+
+        JScrollPane kScrollPane = new JScrollPane(m_kTractList);
+        JPanel scrollPanel = new JPanel();
+
+        scrollPanel.setLayout(new BorderLayout());
+        scrollPanel.add(kScrollPane);
+        scrollPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BorderLayout());
+        listPanel.add(scrollPanel, BorderLayout.CENTER);
+        listPanel.add(buttonPanel, BorderLayout.SOUTH);
+        listPanel.setBorder(buildTitledBorder("Fiber Bundle list"));
+
+        JPanel paintTexturePanel = new JPanel();
+        paintTexturePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+
+        m_kColorButton = new JButton("   ");
+        m_kColorButton.setToolTipText("Change fiber bundle color");
+        m_kColorButton.addActionListener(this);
+        m_kColorButton.setActionCommand("ChangeColor");
+
+        m_kColorLabel = new JLabel("Fiber Bundle color");
+        m_kColorLabel.setFont(serif12B);
+        m_kColorLabel.setForeground(Color.black);
+
+        m_kUseVolumeColor = new JCheckBox("Use volume color" );
+        m_kUseVolumeColor.addActionListener(this);
+        m_kUseVolumeColor.setActionCommand("VolumeColor");
+        m_kUseVolumeColor.setSelected(true);
+
+        m_kUseEllipsoids = new JCheckBox("Use Ellipsoids" );
+        m_kUseEllipsoids.addActionListener(this);
+        m_kUseEllipsoids.setActionCommand("UseEllipsoids");
+        m_kUseEllipsoids.setSelected(false);
+
+        m_kAllEllipsoids = new JCheckBox("Display All Ellipsoids" );
+        m_kAllEllipsoids.addActionListener(this);
+        m_kAllEllipsoids.setActionCommand("AllEllipsoids");
+        m_kAllEllipsoids.setSelected(false);
+
+        m_kDisplaySlider = new JSlider(1, 100, 80);
+        m_kDisplaySlider.setEnabled(true);
+        m_kDisplaySlider.setMinorTickSpacing(10);
+        m_kDisplaySlider.setPaintTicks(true);
+        m_kDisplaySlider.addChangeListener(this);
+        m_kDisplaySlider.setVisible(true);
+
+        JLabel kSliderLabel = new JLabel("Display ellipsoids every X step: ");
+        kSliderLabel.setFont(serif12B);
+        kSliderLabel.setForeground(Color.black);
+
+
+        JPanel colorPanel = new JPanel();
+        //colorPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        colorPanel.setLayout(new BorderLayout());
+        colorPanel.add(m_kColorButton, BorderLayout.WEST);
+        colorPanel.add(m_kColorLabel, BorderLayout.CENTER);
+        colorPanel.add(m_kUseVolumeColor, BorderLayout.EAST);
+        colorPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        colorPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+
+        JPanel ellipsePanel = new JPanel();
+        ellipsePanel.setLayout(new BorderLayout());
+        ellipsePanel.add(m_kUseEllipsoids, BorderLayout.WEST);
+        ellipsePanel.add(m_kAllEllipsoids, BorderLayout.CENTER);
+        ellipsePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        ellipsePanel.setAlignmentY(Component.TOP_ALIGNMENT);
+
+        JPanel sliderPanel = new JPanel();
+        sliderPanel.setLayout(new BorderLayout());
+        sliderPanel.add(kSliderLabel, BorderLayout.WEST);
+        sliderPanel.add(m_kDisplaySlider, BorderLayout.CENTER);
+        sliderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sliderPanel.setAlignmentY(Component.TOP_ALIGNMENT);
+
+        JPanel optionsPanel = new JPanel();
+        optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
+        optionsPanel.add(colorPanel);
+        optionsPanel.add(ellipsePanel);
+        optionsPanel.add(sliderPanel);
+        optionsPanel.setBorder(buildTitledBorder("Fiber bundle options"));
+
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BorderLayout());
+        rightPanel.add(optionsPanel, BorderLayout.NORTH);
+
+        // distinguish between the swing Box and the j3d Box
+        javax.swing.Box contentBox = new javax.swing.Box(BoxLayout.Y_AXIS);
+
+        contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        contentBox.add(listPanel);
+        contentBox.add(rightPanel);
+
+        mainScrollPanel.add(contentBox, BorderLayout.NORTH);
+
+        kTractPanel.add(scroller, BorderLayout.CENTER);
+
+        return kTractPanel;
+    }
+
+
+    private JPanel createTractDialog()
+    {
         GridBagLayout kGBL  = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+
         JPanel kTractPanel = new JPanel(kGBL);
 
         JPanel kParamsPanel = new JPanel(kGBL);
@@ -1190,33 +1477,34 @@ public class JDialogDTIInput extends JDialogBase
         gbc.gridx++;
         m_kUseVOICheck = new JCheckBox("use voi" );
         kParamsPanel.add(m_kUseVOICheck, gbc);
-
-        
+      
         JPanel filesPanel = new JPanel(kGBL);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.insets = new Insets(0,0,5,5);
+        gbc.weightx = 0;
         JLabel kTractLabel = new JLabel(" DTI tract file: ");
         filesPanel.add(kTractLabel, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
+        gbc.weightx = 1;
         m_kTractPath = new JTextField(35);
-        m_kTractPath.setEditable(false);
+        m_kTractPath.setEditable(true);
         m_kTractPath.setBackground(Color.white);
         filesPanel.add(m_kTractPath, gbc);
         gbc.gridx = 2;
         gbc.gridy = 0;
+        gbc.weightx = 0;
         JButton kTractBrowseButton = new JButton("Browse");
         kTractBrowseButton.addActionListener(this);
         kTractBrowseButton.setActionCommand("tractBrowse");
         filesPanel.add(kTractBrowseButton, gbc);
 
-        gbc.insets = new Insets(0,0,0,0);
         gbc.gridx = 0;
         gbc.gridy = 0;
         kTractPanel.add(kParamsPanel, gbc);
         gbc.gridy++;
         kTractPanel.add(filesPanel, gbc);
+
         return kTractPanel;
     }
 
@@ -1750,7 +2038,35 @@ public class JDialogDTIInput extends JDialogBase
         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.ALL));
         chooser.setDialogTitle("Choose Diffusion Tensor Tract file");
         int returnValue = chooser.showOpenDialog(this);
-        if (returnValue == JFileChooser.APPROVE_OPTION) { 	
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            String kDTIName = new String(chooser.getSelectedFile().getName());
+            String kTract = new String( "_tract" );
+            kDTIName = kDTIName.substring( 0, kDTIName.length() - kTract.length() );
+            if ( m_kParentDialog.getDTIImage() == null )
+            {
+                FileIO fileIO = new FileIO();
+                m_kDTIImage = fileIO.readImage(kDTIName,chooser.getCurrentDirectory() + File.separator);
+                if(m_kDTIImage.getNDims() != 4) {
+                    MipavUtil.displayError("Diffusion Tensor file does not have correct dimensions");
+                    if(m_kDTIImage != null) {
+                        m_kDTIImage.disposeLocal();
+                    }
+                    m_kDTIImage = null;
+                }
+                if(m_kDTIImage.getExtents()[3] != 6) {
+                    MipavUtil.displayError("Diffusion Tensor does not have correct dimensions");
+                    if(m_kDTIImage != null) {
+                        m_kDTIImage.disposeLocal();
+                    }
+                    m_kDTIImage = null;
+                }
+                m_kParentDialog.setDTIImage(m_kDTIImage);
+            }
+
+            
+            
+            
+            
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
             if ( !m_kTractFile.exists() || !m_kTractFile.canRead() )
             {
@@ -1781,7 +2097,7 @@ public class JDialogDTIInput extends JDialogBase
             MipavUtil.displayError("Tract file must be set.");
             return;
         }
-
+        
         try {
             int iNumTractsLimit = (new Integer( m_kTractsLimit.getText() )).intValue() ;
             int iTractMinLength = (new Integer( m_kTractsMin.getText() )).intValue() ;
@@ -1837,6 +2153,7 @@ public class JDialogDTIInput extends JDialogBase
                             Attributes kAttr = new Attributes();
                             kAttr.SetPChannels(3);
                             kAttr.SetCChannels(0,3);
+                            kAttr.SetCChannels(1,3);
                             VertexBuffer pkVBuffer = new VertexBuffer(kAttr,iVQuantity);                        
 
                             for (int i = 0; i < iVQuantity; i++)
@@ -1864,15 +2181,43 @@ public class JDialogDTIInput extends JDialogBase
                             }
                             boolean bClosed = false;
                             boolean bContiguous = true;
-                            m_kVolumeDisplay.addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
+                            m_kParentDialog.addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
                         }
                     }
                 }
             }
+            m_kParentDialog.addTract(); 
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    protected void setDTIImage( ModelImage kDTIImage )
+    {
+        m_kDTIImage = kDTIImage;
+        m_kVolumeDisplay.setDTIImage( m_kDTIImage );
+    }
+
+    protected ModelImage getDTIImage()
+    {
+        return m_kDTIImage;
+    }
+
+
+    protected void addPolyline( Polyline kLine )
+    {
+        m_kVolumeDisplay.addPolyline( kLine, m_iBundleCount );;
+    }
+
+    protected void addTract()
+    {
+        DefaultListModel kList = (DefaultListModel)m_kTractList.getModel();
+        int iSize = kList.getSize();
+        kList.add( iSize, new String( "FiberBundle" + m_iBundleCount ) );
+        m_iBundleCount++;
+    }
+
 
     /** ViewImageUpdateInterface : stub */
     public void setSlice(int slice) {}
@@ -1902,4 +2247,100 @@ public class JDialogDTIInput extends JDialogBase
     public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
         return false;
     }
+
+    /**
+     * Cancel the color dialog, change nothing.
+     */
+    class CancelListener implements ActionListener {
+
+        /**
+         * Do nothing.
+         *
+         * @param  e  action event
+         */
+        public void actionPerformed(ActionEvent e) { }
+    }
+
+
+    /**
+     * Pick up the selected color and call method to change the fiber bundle color.
+     */
+    class OkColorListener implements ActionListener {
+
+        /**
+         * Sets the button color to the chosen color and changes the color of the fiber bundle.
+         *
+         * @param  e  Event that triggered this method.
+         */
+        public void actionPerformed(ActionEvent e) {
+            Color color = m_kColorChooser.getColor();
+
+            m_kColorButton.setBackground(color);
+            setColor(color);
+        }
+    }
+
+    /**
+     * This is called when the user chooses a new color for the fiber bundle. It changes the color of the fiber bundle.
+     *
+     * @param  color  Color to change fiber bundle to.
+     */
+    private void setColor(Color color)
+    {
+        int[] aiSelected = m_kTractList.getSelectedIndices();
+        DefaultListModel kList = (DefaultListModel)m_kTractList.getModel();
+        int iHeaderLength = (new String("FiberBundle")).length();
+
+        for (int i = 0; i < aiSelected.length; i++)
+        {
+            if ( m_kVolumeDisplay != null )
+            {
+                String kName = ((String)(kList.elementAt(aiSelected[i])));
+                int iLength = kName.length();
+                int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
+                if ( color == null )
+                {
+                    m_kVolumeDisplay.setPolylineColor( iGroup,null);
+                }
+	    
+                else if ( !m_kUseVolumeColor.isSelected() )
+                {
+                    m_kVolumeDisplay.setPolylineColor( iGroup,
+                                                       new ColorRGB( color.getRed()/255.0f,
+                                                                     color.getGreen()/255.0f,
+                                                                     color.getBlue()/255.0f  ));
+                }
+            }
+        }
+    }
+    
+    private void removePolyline()
+    {
+        int[] aiSelected = m_kTractList.getSelectedIndices();
+
+        DefaultListModel kList = (DefaultListModel)m_kTractList.getModel();
+        int iHeaderLength = (new String("FiberBundle")).length();
+
+        for (int i = 0; i < aiSelected.length; i++)
+        {
+            if ( m_kVolumeDisplay != null )
+            {
+                String kName = ((String)(kList.elementAt(aiSelected[i])));
+                int iLength = kName.length();
+                int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
+                m_kVolumeDisplay.removePolyline( iGroup );
+            }
+            
+            kList.remove( aiSelected[i] );
+        }
+        if ( kList.size() == 0 )
+        {
+            if ( m_kDTIImage != null )
+            {
+                m_kDTIImage.disposeLocal();
+            }
+            m_kDTIImage = null;
+        }
+    }
+
 };
