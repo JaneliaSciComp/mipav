@@ -459,6 +459,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
             z = 1;
         }
 
+        int volume = z * length;
+        int space4D = t * volume;
         int totalLength = f * t * z * length;
 
         for (m = 0; (m < f) && !threadStopped; m++) {
@@ -468,7 +470,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                 for (j = 0; (j < z) && !threadStopped; j++) {
 
                     try {
-                        offset = (m * k * j * length) + (k * j * length) + (j * length);
+                        offset = (m * space4D) + (k * volume) + (j * length);
                         srcImage.exportData(offset, length, buffer); // locks and releases lock
                     } catch (IOException error) {
                         displayError("Algorithm ImageMath : Image(s) locked");
@@ -635,6 +637,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
             z = 1;
         }
 
+        int volume = z * length;
+        int space4D = t * volume;
         int totalLength = f * t * z * length;
 
         if ((opType == DIVIDE) && (value == 0.0) && (valueI == 0.0)) {
@@ -651,7 +655,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                 for (j = 0; (j < z) && !threadStopped; j++) {
 
                     try {
-                        offset = (m * k * j * length) + (k * j * length) + (j * length);
+                        offset = (m * space4D) + (k * volume) + (j * length);
                         srcImage.exportDComplexData(2 * offset, length, buffer, bufferI); // locks and releases lock
                     } catch (IOException error) {
                         displayError("Algorithm ImageMath : Image(s) locked");
@@ -1020,6 +1024,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
             z = 1;
         }
 
+        int volume = z * length;
+        int space4D = t * volume;
         int totalLength = f * t * z * length;
 
         for (m = 0; (m < f) && !threadStopped; m++) {
@@ -1029,7 +1035,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                 for (j = 0; (j < z) && !threadStopped; j++) {
 
                     try {
-                        offset = (m * k * j * length) + (k * j * length) + (j * length);
+                        offset = (m * space4D) + (k * volume) + (j * length);
                         srcImage.exportData(offset, length, buffer); // locks and releases lock
                     } catch (IOException error) {
                         displayError("Algorithm ImageMath : Image(s) locked");
@@ -1225,6 +1231,8 @@ public class AlgorithmImageMath extends AlgorithmBase {
             z = 1;
         }
 
+        int volume = z * length;
+        int space4D = t * volume;
         int totalLength = f * t * z * length;
 
         if ((opType == DIVIDE) && (value == 0.0) && (valueI == 0.0)) {
@@ -1241,7 +1249,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                 for (j = 0; (j < z) && !threadStopped; j++) {
 
                     try {
-                        offset = (m * k * j * length) + (k * j * length) + (j * length);
+                        offset = (m * space4D) + (k * volume) + (j * length);
                         srcImage.exportDComplexData(2 * offset, length, buffer, bufferI); // locks and releases lock
                     } catch (IOException error) {
                         displayError("Algorithm ImageMath : Image(s) locked");
