@@ -1237,7 +1237,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Graph based", false);
             menuBuilder.setMenuItemEnabled("Multispectral", false);
             menuBuilder.setMenuItemEnabled("Image calculator", false);
-            menuBuilder.setMenuItemEnabled("Image math", false);
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
