@@ -27,6 +27,7 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
 
 	private JCheckBox doubleEntryBox;
 	
+	private JTextField guidField;
 	private JTextField [] mainFields;
 	private JTextField [] secondaryFields;
 	
@@ -38,25 +39,42 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
 	private static final int NUM_FIELDS = 17;
 	
 	private String [] fieldNames = new String[] { 
-			"Social Security Number",
+			"Social Security Number [###-##-####]",
 			"Complete legal given name of subject at birth",
 			"Complete legal family name of subject at birth",
 			"Complete additional legal name or names at birth, if any, such as middle name",
-			"Day of month of birth",
-			"Month of birth",
-			"Year of birth",
+			"Day of month of birth [1-31]",
+			"Month of birth [1-12]",
+			"Year of birth [####]",
 			"Physical sex of subject at birth [M/F]",
 			"Name of city/municipality in which subject was born",
 			"Mother's complete legal given name at birth",
 			"Mother's complete legal family name at birth",
 			"Father's complete legal given name at birth",
 			"Father's complete legal family name at birth",
-			"Mother's day of month of birth",
-			"Mother's month of birth",
-			"Father's day of month of birth",
-			"Father's month of birth"
+			"Mother's day of month of birth [1-31]",
+			"Mother's month of birth [1-12]",
+			"Father's day of month of birth [1-31]",
+			"Father's month of birth [1-12]"
 			};
 	
+	private static final int GUID_SSN = 0;
+	private static final int GUID_FN  = 1;
+	private static final int GUID_LN =  2;
+	private static final int GUID_MN =  3;
+	private static final int GUID_DOB = 4;
+	private static final int GUID_MOB = 5;
+	private static final int GUID_YOB = 6;
+	private static final int GUID_SEX = 7;
+	private static final int GUID_COB = 8;
+	private static final int GUID_MFN = 9;
+	private static final int GUID_MLN = 10;
+	private static final int GUID_FFN = 11;
+	private static final int GUID_FLN = 12;
+	private static final int GUID_MDOB = 13;
+	private static final int GUID_MMOB = 14;
+	private static final int GUID_FDOB = 15;
+	private static final int GUID_FMOB = 16;
 	
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -124,38 +142,19 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
     		
     	} 
     	
-    	//check required fields
-    	if (mainFields[1].getText().equals("")) {
-    		JOptionPane.showMessageDialog(null, "Required field: subject's complete legal given name at birth", 
-	        		   "Error", JOptionPane.ERROR_MESSAGE);
-    		mainFields[1].requestFocus();
-    		return false;
-    	} else if (mainFields[2].getText().equals("")) {
-    		JOptionPane.showMessageDialog(null, "Required field: subject's complete legal family name at birth", 
-	        		   "Error", JOptionPane.ERROR_MESSAGE);
-    		mainFields[2].requestFocus();
-    		return false;
-    	} else if (mainFields[4].getText().equals("")) {
-    		JOptionPane.showMessageDialog(null, "Required field: day of month of birth", 
-    				"Error", JOptionPane.ERROR_MESSAGE);
- 			mainFields[4].requestFocus();
- 			return false;
-    	} else if (mainFields[5].getText().equals("")) {
-    		JOptionPane.showMessageDialog(null, "Required field: month of birth", 
-    				"Error", JOptionPane.ERROR_MESSAGE);
- 			mainFields[5].requestFocus();
- 			return false;
-    	} else if (mainFields[6].getText().equals("")) {
-    		JOptionPane.showMessageDialog(null, "Required field: year of birth", 
-    				"Error", JOptionPane.ERROR_MESSAGE);
- 			mainFields[6].requestFocus();
- 			return false;
-    	} else if (mainFields[7].getText().equals("")) {
-    		JOptionPane.showMessageDialog(null, "Required field: physical sex of subject at birth", 
-    				"Error", JOptionPane.ERROR_MESSAGE);
- 			mainFields[7].requestFocus();
- 			return false;
+    	for (int i = 0; i < NUM_FIELDS; i++) {
+    		if (mainFields[i].getText().equals("")) {
+    			JOptionPane.showMessageDialog(null, "Missing information", 
+ 	        		   "Error", JOptionPane.ERROR_MESSAGE);
+    			mainFields[i].requestFocus();
+    			return false;
+    		}
     	}
+    	
+    	String ssn = mainFields[GUID_SSN].getText();
+    	String fn = mainFields[GUID_FN].getText();
+    	String ln = mainFields[GUID_LN].getText();
+    	String mn = mainFields[GUID_MN].getText();
     	
     	return true;
     }
@@ -171,7 +170,9 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
         		   "Information", JOptionPane.INFORMATION_MESSAGE);
            
     		secondaryFields = new JTextField[NUM_FIELDS];
-    		
+    		gbc.insets = new Insets(0, 0, 0, 10);
+    		gbc.weightx = 1;
+    		gbc.fill = GridBagConstraints.HORIZONTAL;
     		ActionMap am;
     		for (int i = 0; i < NUM_FIELDS; i++) {
             	gbc.gridy = i + 1;
@@ -230,17 +231,17 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
     	
         ActionMap am;
         Insets insets1 = new Insets(0, 10, 0, 0);
-        Insets insets2 = new Insets(0, 0, 0, 0);
+        Insets insets2 = new Insets(0, 0, 0, 10);
         
         gbc.insets = insets1;
         for (int i = 0; i < NUM_FIELDS; i++) {
         	gbc.gridy = i + 1;
         	gbc.gridx = 0;
-        	gbc.weightx = .5;
+        	gbc.weightx = 0;
         	gbc.insets = insets1;
         	mainPanel.add(new JLabel(fieldNames[i]), gbc);
         	
-        	gbc.weightx = 1;
+        	gbc.weightx = .5;
         	gbc.gridx++;
         	gbc.insets = insets2;
         	
@@ -253,6 +254,21 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
         	
         	mainPanel.add(mainFields[i], gbc);
         }
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.insets = insets1;
+        
+        mainPanel.add(new JLabel("GUID"), gbc);
+        
+        gbc.weightx = .5;
+    	gbc.gridx++;
+        gbc.insets = insets2;
+        
+        guidField = new JTextField(10);
+        guidField.setEditable(false);
+        mainPanel.add(guidField, gbc);
         
         OKButton = new JButton("OK");
         OKButton.addActionListener(this);
