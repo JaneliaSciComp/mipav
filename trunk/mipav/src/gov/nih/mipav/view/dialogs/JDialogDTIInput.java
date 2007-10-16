@@ -153,6 +153,10 @@ public class JDialogDTIInput extends JDialogBase
     /** GPUVolumeRender object for loading fiber bundle tracts. */
     private GPUVolumeRender m_kVolumeDisplay = null;
 
+    private JPanelSurface m_kSurfaceDialog;
+    private ModelImage m_kImage;
+
+
     /** When outputing the fiber bundle tracts. */
     private boolean m_bFirstWrite = true;
 
@@ -228,12 +232,17 @@ public class JDialogDTIInput extends JDialogBase
      * @param kDisplay, reference to the GPUVolumeRender display for
      * loading fiber bundle tracts.
      */
-    public JDialogDTIInput( int iType, GPUVolumeRender kDisplay ) 
+    public JDialogDTIInput( int iType,
+                            GPUVolumeRender kDisplay,
+                            JPanelSurface kDialog,
+                            ModelImage kImage ) 
     {
         super();
         init( iType );
         m_iType = iType;
         m_kVolumeDisplay = kDisplay;
+        m_kSurfaceDialog = kDialog;
+        m_kImage = kImage;
     }
 
     /** Create a new JDialogDTIInput of one of the four types:
@@ -2123,38 +2132,7 @@ public class JDialogDTIInput extends JDialogBase
                         if ( iNumTracts < iNumTractsLimit )
                         {
                             iNumTracts++;
-                            Attributes kAttr = new Attributes();
-                            kAttr.SetPChannels(3);
-                            kAttr.SetCChannels(0,3);
-                            kAttr.SetCChannels(1,3);
-                            VertexBuffer pkVBuffer = new VertexBuffer(kAttr,iVQuantity);                        
-
-                            for (int i = 0; i < iVQuantity; i++)
-                            {
-                                int iIndex = kTract.get(i);
-
-                                int iX = iIndex % iDimX;
-                                iIndex -= iX;
-                                iIndex /= iDimX;
-                                
-                                int iY = iIndex % iDimY;
-                                iIndex -= iY;
-                                iIndex /= iDimY;
-                                
-                                int iZ = iIndex;
-                                
-                                float fX = (float)(iX)/(float)(iDimX);
-                                float fY = (float)(iY)/(float)(iDimY);
-                                float fZ = (float)(iZ)/(float)(iDimZ);
-                                
-                                pkVBuffer.Position3(i,
-                                                    new Vector3f( (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) ) );
-                                pkVBuffer.Color3(0,i, new ColorRGB(fX, fY, fZ));
-
-                            }
-                            boolean bClosed = false;
-                            boolean bContiguous = true;
-                            m_kParentDialog.addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
+                            m_kParentDialog.addTract( kTract, iVQuantity, iDimX, iDimY, iDimZ );
                         }
                     }
                 }
@@ -2177,10 +2155,114 @@ public class JDialogDTIInput extends JDialogBase
         return m_kDTIImage;
     }
 
+    protected void addTract( Vector<Integer> kTract, int iVQuantity, int iDimX, int iDimY, int iDimZ )
+    {
+        int iXBound = m_kImage.getExtents()[0];
+        int iYBound = m_kImage.getExtents()[1];
+        int iZBound = m_kImage.getExtents()[2];
+        float fMaxX = (float) (iXBound - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (float) (iYBound - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
+        float fMaxZ = (float) (iZBound - 1) * m_kImage.getFileInfo(0).getResolutions()[2];
+
+        float fMax = fMaxX;
+        if (fMaxY > fMax) {
+            fMax = fMaxY;
+        }
+        if (fMaxZ > fMax) {
+            fMax = fMaxZ;
+        }
+        float fXScale = fMaxX/fMax;
+        float fYScale = fMaxY/fMax;
+        float fZScale = fMaxZ/fMax;
+
+
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetCChannels(0,3);
+        kAttr.SetCChannels(1,3);
+        VertexBuffer pkVBuffer = new VertexBuffer(kAttr,iVQuantity);                        
+
+        int iTractCount = 0;
+        LineArray kLine = new LineArray(2 * (iVQuantity - 1),
+                                        GeometryArray.COORDINATES | GeometryArray.COLOR_3);
+
+        float fR = 0, fG = 0, fB = 0;
+
+        for (int i = 0; i < iVQuantity; i++)
+        {
+            int iIndex = kTract.get(i);
+
+            int iX = iIndex % iDimX;
+            iIndex -= iX;
+            iIndex /= iDimX;
+                                
+            int iY = iIndex % iDimY;
+            iIndex -= iY;
+            iIndex /= iDimY;
+                                
+            int iZ = iIndex;
+                                
+            iIndex = kTract.get(i);
+            ColorRGB kColor1;
+            if ( m_kImage.isColorImage() )
+            {
+                fR = m_kImage.getFloat( iIndex*4 + 1 )/255.0f;
+                fG = m_kImage.getFloat( iIndex*4 + 2 )/255.0f;
+                fB = m_kImage.getFloat( iIndex*4 + 3 )/255.0f;
+                kColor1 = new ColorRGB(fR, fG, fB);
+            }
+            else
+            {
+                fR = m_kImage.getFloat( iIndex );
+                kColor1 = new ColorRGB(fR, fR, fR);
+            }
+
+            float fX = (float)(iX)/(float)(iDimX);
+            float fY = (float)(iY)/(float)(iDimY);
+            float fZ = (float)(iZ)/(float)(iDimZ);
+                                
+            pkVBuffer.Position3(i,
+                                new Vector3f( (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) ) );
+            pkVBuffer.Color3(0,i, new ColorRGB(fX, fY, fZ));
+            pkVBuffer.Color3(1,i, kColor1 );
+
+
+            fY = 1 - fY;
+            fZ = 1 - fZ;
+            fX = 2*(fX-.5f);
+            fY = 2*(fY -.5f);
+            fZ = 2*(fZ-.5f);
+
+            fX *= fXScale;
+            fY *= fYScale;
+            fZ *= fZScale;
+
+            kLine.setCoordinate(iTractCount, new float[]{fX, fY, fZ});
+            kLine.setColor(iTractCount, new Color3f(fR, fG, fB));
+            if ( (i != 0) && (i != iVQuantity-1) )
+            {
+                iTractCount++;
+                kLine.setCoordinate(iTractCount, new float[]{fX, fY, fZ});
+                kLine.setColor(iTractCount, new Color3f(fR, fG, fB));
+            }
+            iTractCount++;
+
+        }
+        boolean bClosed = false;
+        boolean bContiguous = true;
+        addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
+        addLineArray(kLine);
+    }
+
 
     protected void addPolyline( Polyline kLine )
     {
-        m_kVolumeDisplay.addPolyline( kLine, m_iBundleCount );;
+        m_kVolumeDisplay.addPolyline( kLine, m_iBundleCount );
+    }
+
+    protected void addLineArray( LineArray kLine )
+    {
+        m_kSurfaceDialog.addLineArray( kLine );
     }
 
     protected void addTract()
