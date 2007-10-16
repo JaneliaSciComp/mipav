@@ -2078,25 +2078,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
             int iZ = (int)((kPos.Z() +.5f) * m_iDimZ);
             int iIndex = iZ * m_iDimY * m_iDimX + iY * m_iDimX + iX;
 
-            ColorRGB kColor0 = kLine.VBuffer.Color3(0,i);
-            ColorRGB kColor1 = null;
-            if ( kLine.VBuffer.GetAttributes().HasColor(1) )
-            {
-                if ( m_kImageA.isColorImage() )
-                {
-                    float fR = m_kImageA.getFloat( iIndex*4 + 1 )/255.0f;
-                    float fG = m_kImageA.getFloat( iIndex*4 + 2 )/255.0f;
-                    float fB = m_kImageA.getFloat( iIndex*4 + 3 )/255.0f;
-                    kLine.VBuffer.Color3(1,i, new ColorRGB(fR, fG, fB));
-                }
-                else
-                {
-                    float fR = m_kImageA.getFloat( iIndex );
-                    kLine.VBuffer.Color3(1,i, new ColorRGB(fR, fR, fR));
-                }
-                kColor1 = kLine.VBuffer.Color3(1,i);
-            }
-
             if ( m_kEigenVectors != null )
             {
                 if (  m_kEigenVectors.get( new Integer(iIndex) ) != null )

@@ -721,6 +721,37 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
+
+     */
+    public void addLineArray(LineArray kLine) {
+        /* Create the Shape3D object to contain the LineArray: */
+        Shape3D kShape = new Shape3D();
+        kShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
+        kShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+        kShape.setCapability(Shape3D.ALLOW_BOUNDS_READ);
+        kShape.addGeometry(kLine);
+        kShape.setPickable(false);
+        
+        Appearance kApp = new Appearance();
+        LineAttributes kLA = new LineAttributes();
+        kLA.setLineWidth(3);
+        kApp.setLineAttributes(kLA);
+        kShape.setAppearance(kApp);
+
+        TransformGroup kPathTransformGroup = new TransformGroup(new Transform3D());
+
+        kPathTransformGroup.addChild(kShape);
+
+        BranchGroup kPathBranchGroup = new BranchGroup();
+
+        kPathBranchGroup.setCapability(BranchGroup.ALLOW_DETACH);
+        kPathBranchGroup.addChild(kPathTransformGroup);
+        kPathBranchGroup.compile();
+
+        surfaceRootBG.addChild(kPathBranchGroup);
+    }
+
+    /**
      * Called when a mesh is changed by the Geodesic class, when a mesh is cut along the geodesic curve it may be
      * divided into two or more meshes. This function allows the Geodesic class to add meshes to the scene renderer. It
      * follows the pattern of adding a surface through the surface dialog.

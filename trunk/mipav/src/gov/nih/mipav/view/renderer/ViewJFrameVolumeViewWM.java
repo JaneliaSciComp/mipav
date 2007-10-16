@@ -576,7 +576,9 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
             surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
         } else if (command.equals("DTI")) {
-            JDialogDTIInput kDTIIn = new JDialogDTIInput( JDialogDTIInput.TRACTS_PANEL, raycastRenderWM );
+            JDialogDTIInput kDTIIn = new JDialogDTIInput( JDialogDTIInput.TRACTS_PANEL,
+                                                          raycastRenderWM,
+                                                          surRender.getSurfaceDialog(), imageA);
             insertTab("DTI", kDTIIn.getMainPanel() );
             insertSurfaceTab("DTI", kDTIIn.getMainPanel() );
             insertRaycastTab("DTI", kDTIIn.getMainPanel() );
