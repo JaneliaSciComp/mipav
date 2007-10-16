@@ -1317,7 +1317,10 @@ public class StandardMesh
         int i;
         for (i = 0; i < iVQuantity; i++)
         {
-            pkVB.Position3(i,m_kXFrm.ApplyForward(pkVB.Position3(i)));
+            Vector3f kPos = pkVB.Position3(i);
+            pkVB.Position3(i,m_kXFrm.ApplyForward(kPos));
+            kPos.finalize();
+            kPos = null;
         }
 
         if (m_kAttr.HasNormal())
@@ -1327,7 +1330,11 @@ public class StandardMesh
             for (i = 0; i < iVQuantity; i++)
             {
                 pkVB.Normal3(i, m_kXFrm.ApplyForward(pkVB.Normal3(i)));
-                pkVB.Normal3(i).Normalize();
+                Vector3f kNormal = pkVB.Normal3(i);
+                kNormal.Normalize();
+                pkVB.Normal3(i, kNormal);
+                kNormal.finalize();
+                kNormal = null;
             }
             m_kXFrm.SetTranslate(kSave);
         }

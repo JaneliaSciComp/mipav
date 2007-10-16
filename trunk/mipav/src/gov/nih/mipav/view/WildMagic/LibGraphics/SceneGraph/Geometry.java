@@ -71,6 +71,28 @@ public abstract class Geometry extends Spatial
         UpdateModelBound();
     }
 
+    /** Constructor, creates a SphereBV bounding volume.
+     * @param pkVBuffer, VertexBuffer
+     * @param pkIBuffer, IndexBuffer
+     */
+    protected Geometry (VertexBuffer pkVBuffer, IndexBuffer pkIBuffer, BoundingVolume kBounds)
+    {
+        VBuffer = pkVBuffer;
+        IBuffer = pkIBuffer;
+        ModelBound = kBounds;
+    }
+   
+    /** Constructor, creates a SphereBV bounding volume.
+     * @param pkVBuffer, VertexBuffer
+     * @param pkIBuffer, IndexBuffer
+     */
+    protected Geometry (Geometry kG)
+    {
+        VBuffer = kG.VBuffer;
+        IBuffer = kG.IBuffer;
+        ModelBound = new SphereBV( ((SphereBV)kG.GetModelBound()).GetSphere() );
+    }
+
     /** Delete memory. */
     public void finalize()
     {
@@ -115,6 +137,11 @@ public abstract class Geometry extends Spatial
         }
 
         super.finalize();
+    }
+    
+    public BoundingVolume GetModelBound()
+    {
+        return ModelBound;
     }
 
     /** geometric updates */

@@ -576,8 +576,10 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
             surRender.getProbeDialog().resizePanel(maxPanelWidth, height);
         } else if (command.equals("DTI")) {
-            new JDialogDTIInput( JDialogDTIInput.TRACTS, raycastRenderWM );
-
+            JDialogDTIInput kDTIIn = new JDialogDTIInput( JDialogDTIInput.TRACTS_PANEL, raycastRenderWM );
+            insertTab("DTI", kDTIIn.getMainPanel() );
+            insertSurfaceTab("DTI", kDTIIn.getMainPanel() );
+            insertRaycastTab("DTI", kDTIIn.getMainPanel() );
         } else if (command.equals("Capture")) {
             insertTab("Camera", cameraPanel);
             insertSurfaceTab("Camera", cameraPanel);
@@ -1349,7 +1351,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
 
             transformFunct = null;
             
-            new ViewJFrameImage((ModelImage)(imageA.clone()), null, new Dimension(610, 200), false);
+            new ViewJFrameImage((ModelImage)(imageA), null, new Dimension(610, 200), false);
             
         }
 

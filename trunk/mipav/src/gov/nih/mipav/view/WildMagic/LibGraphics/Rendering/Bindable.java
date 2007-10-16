@@ -43,6 +43,10 @@ public class Bindable extends GraphicsObject
      */
     public ResourceIdentifier GetIdentifier (Renderer pkUser)
     {
+        if ( m_kInfoArray == null )
+        {
+            return null;
+        }
         for (int i = 0; i < m_kInfoArray.size(); i++)
         {
             Info rkInfo = m_kInfoArray.get(i);

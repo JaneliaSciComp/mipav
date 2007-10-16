@@ -39,6 +39,15 @@ public class VertexColor3Effect extends ShaderEffect
         m_kPShader.set(0, new PixelShader("PassThrough3"));
     }
 
+    
+    /** Creates an new VertexColor3Effect */
+    public VertexColor3Effect ( String kShaderName, boolean bUnique )
+    {
+        super(1);
+        m_kVShader.set(0, new VertexShader(kShaderName, bUnique));
+        m_kPShader.set(0, new PixelShader("PassThrough3"));
+    }
+
     /**
      * Loads this object from the input parameter rkStream, using the input
      * Stream.Link to store the IDs of children objects of this object

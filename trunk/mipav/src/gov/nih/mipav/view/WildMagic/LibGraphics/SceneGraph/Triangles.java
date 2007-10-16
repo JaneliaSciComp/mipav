@@ -108,6 +108,26 @@ public abstract class Triangles extends Geometry
     {
         super(pkVBuffer,pkIBuffer);
     }
+    
+    /** Protected constructor. The Type value will be assigned by the derived
+     * class.
+     * @param pkVBuffer, vertex buffer.
+     * @param pkIBuffer, index buffer.
+     */
+    protected Triangles (VertexBuffer pkVBuffer, IndexBuffer pkIBuffer, BoundingVolume kBounds)
+    {
+        super(pkVBuffer,pkIBuffer,kBounds);
+    }
+
+    /** Protected constructor. The Type value will be assigned by the derived
+     * class.
+     * @param pkVBuffer, vertex buffer.
+     * @param pkIBuffer, index buffer.
+     */
+    protected Triangles (Triangles kTris)
+    {
+        super(kTris);
+    }
 
     /** Update model normals. */
     protected void UpdateModelNormals ()

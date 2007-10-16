@@ -62,9 +62,9 @@ public class Transformation
     /** Set the transformation to the identity. */
     public void MakeIdentity ()
     {
-        m_kMatrix = new Matrix3f(Matrix3f.IDENTITY);
-        m_kTranslate = new Vector3f(Vector3f.ZERO);
-        m_kScale = new Vector3f(1.0f,1.0f,1.0f);
+        m_kMatrix.MakeIdentity();
+        m_kTranslate.SetData(0f,0f,0f);
+        m_kScale.SetData(1f,1f,1f);
         m_bIsIdentity = true;
         m_bIsRSMatrix = true;
         m_bIsUniformScale = true;
@@ -120,6 +120,18 @@ public class Transformation
         m_bIsRSMatrix = true;
     }
 
+    /** The Set* functions set the is-identity hint to false.  The SetRotate
+     * function sets the is-rsmatrix hint to true.  If this hint is false,
+     * GetRotate fires an "assert" in debug mode.
+     * @param rkRotate, new matrix.
+     */
+    public void SetRotateCopy (Matrix3f rkRotate)
+    {
+        m_kMatrix.SetData(rkRotate);
+        m_bIsIdentity = false;
+        m_bIsRSMatrix = true;
+    }
+
     /** Get the rotation matrix.
      * @return the rotation matrix.
      */
@@ -140,6 +152,19 @@ public class Transformation
         m_bIsRSMatrix = false;
         m_bIsUniformScale = false;
     }
+    
+    /** The Set* functions set the is-identity hint to false. The SetMatrix
+     * function sets the is-rsmatrix and is-uniform-scale hints to false.
+     * @param rkRotate, new matrix.
+     */
+    public void SetMatrixCopy (Matrix3f rkMatrix)
+    {
+        m_kMatrix.SetData(rkMatrix);
+        m_bIsIdentity = false;
+        m_bIsRSMatrix = false;
+        m_bIsUniformScale = false;
+    }
+
 
     /** Get the matrix.
      * @return the matrix.
@@ -155,6 +180,17 @@ public class Transformation
     public void SetTranslate (Vector3f rkTranslate)
     {
         m_kTranslate = rkTranslate;
+        m_bIsIdentity = false;
+    }
+
+    /** Set the translation vector.
+     * @param the new translation vector.
+     */
+    public void SetTranslate (float fTx, float fTy, float fTz)
+    {
+        m_kTranslate.X(fTx);
+        m_kTranslate.Y(fTy);
+        m_kTranslate.Z(fTz);
         m_bIsIdentity = false;
     }
 
@@ -181,6 +217,22 @@ public class Transformation
         m_bIsIdentity = false;
         m_bIsUniformScale = false;
     }
+
+    /** The Set* functions set the is-identity hint to false.  The SetScale
+     * function sets the is-uniform-scale hint to false.  The SetUniformScale
+     * function sets the is-uniform-scale hint to true.  If this hint is
+     * false, GetUniformScale fires an "assert" in debug mode.
+     * @param rkRotate, new scale vector.
+     */
+    public void SetScale (float fSx, float fSy, float fSz)
+    {
+        m_kScale.X(fSx);
+        m_kScale.Y(fSy);
+        m_kScale.Z(fSz);
+        m_bIsIdentity = false;
+        m_bIsUniformScale = false;
+    }
+
 
     /** Get the scale vector.
      * @return the scale vector..
