@@ -154,13 +154,32 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         		} else {
         			tabbedPane.setSelectedIndex(TAB_GUID);
         		}
+        	} else if (index == TAB_GUID) {
+        		if (checkGUIDs()) {
+        			tabbedPane.setEnabledAt(TAB_MAIN, true);
+            		tabbedPane.setEnabledAt(TAB_PI, true);
+            		tabbedPane.setEnabledAt(TAB_ABSTRACT, true);
+            		tabbedPane.setEnabledAt(TAB_SOURCE, true);
+            		tabbedPane.setEnabledAt(TAB_DESTINATION, true);
+        			tabbedPane.setSelectedIndex(index + 1);
+        		}
         	} else if (tabbedPane.getTabCount() > index + 1) {
         		tabbedPane.setSelectedIndex(index + 1);
         	}
         	        	
         } else if (command.equals("Previous")) {
         	int index = tabbedPane.getSelectedIndex();
-        	if (index > 0) {
+        	
+        	if (index == TAB_GUID) {
+        		if (checkGUIDs()) {
+        			tabbedPane.setEnabledAt(TAB_MAIN, true);
+            		tabbedPane.setEnabledAt(TAB_PI, true);
+            		tabbedPane.setEnabledAt(TAB_ABSTRACT, true);
+            		tabbedPane.setEnabledAt(TAB_SOURCE, true);
+            		tabbedPane.setEnabledAt(TAB_DESTINATION, true);
+        			tabbedPane.setSelectedIndex(index -1);
+        		}
+        	} else if (index > 0) {
         		tabbedPane.setSelectedIndex(index - 1);
         	}
         } else if (command.equals("AddSource")) {
@@ -233,11 +252,22 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		previousButton.setEnabled(true);
     	}
     	
+    	
+    	
     	if (index == TAB_SOURCE) {
     		nextButton.setEnabled(sourceModel.size() > 0);
     	} else if (index == TAB_DESTINATION) {
     		nextButton.setEnabled(tabbedPane.isEnabledAt(TAB_GUID));
-    	} else {
+    	} else if (index == TAB_GUID) {
+    		previousButton.setEnabled(true);
+    		nextButton.setEnabled(true);
+    		tabbedPane.setEnabledAt(TAB_MAIN, false);
+    		tabbedPane.setEnabledAt(TAB_PI, false);
+    		tabbedPane.setEnabledAt(TAB_ABSTRACT, false);
+    		tabbedPane.setEnabledAt(TAB_SOURCE, false);
+    		tabbedPane.setEnabledAt(TAB_DESTINATION, false);
+    	}
+    	else {
     		nextButton.setEnabled(true);
     	}
     	
@@ -742,11 +772,9 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	
     }
     
-    private boolean setVariables() {
-    	
-    	//check to see that valid GUIDs are present for all listed files
+    private boolean checkGUIDs() {
+//    	check to see that valid GUIDs are present for all listed files
     	int numImages = sourceModel.size();
-    	
     	for (int i = 0; i < numImages; i++) {
     		if (!isValidGUID(guidFields[i].getText())) {
     			MipavUtil.displayWarning("Invalid GUID");
@@ -757,7 +785,11 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     			return false;
     		}
     	}
-    	    	
+    	return true;
+    }
+    
+    private boolean setVariables() {
+    	 	    	
     	//parse out the information from the text fields/abstract info etc
     	
     	ndarData = new NDARData(piNameField.getText(),
