@@ -44,10 +44,10 @@ public class AlgorithmImageMath extends AlgorithmBase {
     public static final int MULTIPLY = 6;
 
     /** DOCUMENT ME! */
-    public static final int SQRT = 7;
+    public static final int SQUARE = 7;
 
     /** DOCUMENT ME! */
-    public static final int SQUARE = 8;
+    public static final int SQUARE_ROOT = 8;
 
     /** DOCUMENT ME! */
     public static final int SUBTRACT = 9;
@@ -67,7 +67,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private static final String[] opString = {
-        "ABSOLUTE_VALUE", "ADD", "AVERAGE", "CONSTANT", "DIVIDE", "LOG", "MULTIPLY", "SQUARE", "SQRT", "SUBTRACT", "SUM"
+        "ABSOLUTE_VALUE", "ADD", "AVERAGE", "CONSTANT", "DIVIDE", "LOG", "MULTIPLY", "SQRT", "SQUARE_ROOT", "SUBTRACT", "SUM"
     };
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     setThreadStopped(true);
                 }
             }
-        } else if (opType == SQRT) {
+        } else if (opType == SQUARE_ROOT) {
 
             if (min < 0) {
                 displayError("Algorithm ImageMath: Cannot do SQRT on image data < 0");
@@ -519,7 +519,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                                     buffer[i] = buffer[i] * buffer[i];
                                     break;
 
-                                case SQRT:
+                                case SQUARE_ROOT:
                                     buffer[i] = Math.sqrt(buffer[i]);
                                     break;
 
@@ -713,7 +713,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                                     buffer[i] = temp;
                                     break;
 
-                                case SQRT:
+                                case SQUARE_ROOT:
                                     mag = Math.sqrt(Math.sqrt((buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
                                     ang = 0.5 * Math.atan2(bufferI[i], buffer[i]);
                                     buffer[i] = Math.cos(ang) * mag;
@@ -911,7 +911,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } else if ((destImage.getType() != ModelStorageBase.DOUBLE) && (max >= (double) Float.MAX_VALUE)) {
                 destImage.reallocate(ModelStorageBase.DOUBLE);
             }
-        } else if (opType == SQRT) {
+        } else if (opType == SQUARE_ROOT) {
 
             if (min < 0) {
                 displayError("Cannot do SQRT on image data < 0");
@@ -1085,7 +1085,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                                     buffer[i] = buffer[i] * buffer[i];
                                     break;
 
-                                case SQRT:
+                                case SQUARE_ROOT:
                                     buffer[i] = Math.sqrt(buffer[i]);
                                     break;
 
@@ -1307,7 +1307,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                                     buffer[i] = temp;
                                     break;
 
-                                case SQRT:
+                                case SQUARE_ROOT:
                                     mag = Math.sqrt(Math.sqrt((buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
                                     ang = 0.5 * Math.atan2(bufferI[i], buffer[i]);
                                     buffer[i] = Math.cos(ang) * mag;
