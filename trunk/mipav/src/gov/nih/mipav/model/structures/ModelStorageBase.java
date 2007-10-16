@@ -406,10 +406,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         int i;
         double value;
 
-        if (bufferType == BOOLEAN) {
-            min = 0;
-            max = 1;
-        } else if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) {
+        if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) {
 
             for (i = 0; i < dataSize; i++) {
                 value = data.getDouble(i);
