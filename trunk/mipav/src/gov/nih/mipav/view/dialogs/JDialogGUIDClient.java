@@ -1,26 +1,9 @@
 package gov.nih.mipav.view.dialogs;
 
-
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.srb.SRBFileTransferer;
-import gov.nih.mipav.model.structures.*;
-
-
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.srb.*;
-import gov.nih.mipav.view.components.*;
-
 import java.awt.*;
 import java.awt.event.*;
 
-import java.io.*;
-
 import javax.swing.*;
-import javax.swing.event.*;
-
-import edu.sdsc.grid.io.*;
-import edu.sdsc.grid.io.local.*;
-import edu.sdsc.grid.io.srb.*;
 
 /**
  * <p>Title:</p>
@@ -38,7 +21,7 @@ import edu.sdsc.grid.io.srb.*;
 public class JDialogGUIDClient extends JDialog implements ActionListener, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-
+	//private static final long serialVersionUID = -6802105487936807310L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -50,6 +33,8 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
 	JPanel mainPanel;
     GridBagConstraints gbc;
 	
+    private JButton helpButton, cancelButton, OKButton;
+    
 	private static final int NUM_FIELDS = 17;
 	
 	private String [] fieldNames = new String[] { 
@@ -102,8 +87,10 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
 
         String command = e.getActionCommand();
 
-        if (command.equals("Next")) {
-        	
+        if (command.equals("OK")) {
+        	if (setVariables()) {
+        		
+        	}
         }
     }
 
@@ -113,17 +100,85 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
     	}
     }
     
+    /**
+     * Checks the fields to see they are properly formed/entered
+     * @return whether the dialog is ready to request GUID 
+     */
+    private boolean setVariables() {
+    	
+    	if (doubleEntryBox.isSelected()) {
+    		
+    		boolean mismatch = false;
+    		for (int i = 0; i < NUM_FIELDS; i++) {
+    			if (!mainFields[i].getText().equals(secondaryFields[i].getText())) {
+    				mismatch = true;
+    				mainFields[i].setText("");
+    				secondaryFields[i].setText("");
+    			}
+    		}
+    		if (mismatch) {
+    			JOptionPane.showMessageDialog(null, "Field mismatch, re-enter information", 
+    	        		   "Error", JOptionPane.ERROR_MESSAGE);
+    			return false;
+    		}
+    		
+    	} 
+    	
+    	//check required fields
+    	if (mainFields[1].getText().equals("")) {
+    		JOptionPane.showMessageDialog(null, "Required field: subject's complete legal given name at birth", 
+	        		   "Error", JOptionPane.ERROR_MESSAGE);
+    		mainFields[1].requestFocus();
+    		return false;
+    	} else if (mainFields[2].getText().equals("")) {
+    		JOptionPane.showMessageDialog(null, "Required field: subject's complete legal family name at birth", 
+	        		   "Error", JOptionPane.ERROR_MESSAGE);
+    		mainFields[2].requestFocus();
+    		return false;
+    	} else if (mainFields[4].getText().equals("")) {
+    		JOptionPane.showMessageDialog(null, "Required field: day of month of birth", 
+    				"Error", JOptionPane.ERROR_MESSAGE);
+ 			mainFields[4].requestFocus();
+ 			return false;
+    	} else if (mainFields[5].getText().equals("")) {
+    		JOptionPane.showMessageDialog(null, "Required field: month of birth", 
+    				"Error", JOptionPane.ERROR_MESSAGE);
+ 			mainFields[5].requestFocus();
+ 			return false;
+    	} else if (mainFields[6].getText().equals("")) {
+    		JOptionPane.showMessageDialog(null, "Required field: year of birth", 
+    				"Error", JOptionPane.ERROR_MESSAGE);
+ 			mainFields[6].requestFocus();
+ 			return false;
+    	} else if (mainFields[7].getText().equals("")) {
+    		JOptionPane.showMessageDialog(null, "Required field: physical sex of subject at birth", 
+    				"Error", JOptionPane.ERROR_MESSAGE);
+ 			mainFields[7].requestFocus();
+ 			return false;
+    	}
+    	
+    	return true;
+    }
+    
+    /**
+     * Sets the dialog to use/not use double data entry (re-type each field)
+     * @param doDouble whether to use double data entry
+     */
     private void setDoubleDataFields(boolean doDouble) {
     	if (doDouble) {
     		setVisible(false);
-    		
+           JOptionPane.showMessageDialog(null, "Copy/paste functions have been disabled", 
+        		   "Information", JOptionPane.INFORMATION_MESSAGE);
+           
     		secondaryFields = new JTextField[NUM_FIELDS];
     		
     		ActionMap am;
     		for (int i = 0; i < NUM_FIELDS; i++) {
             	gbc.gridy = i + 1;
             	gbc.gridx = 2;
-            	secondaryFields[i] = WidgetFactory.buildTextField("");
+            	secondaryFields[i] = new JTextField("");
+            	secondaryFields[i].setForeground(Color.black);
+            	
             	am = secondaryFields[i].getActionMap();
             	am.get("paste").setEnabled(false);
                 am.get("paste-from-clipboard").setEnabled(false);
@@ -149,7 +204,8 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
     }
     
     /**
-     * DOCUMENT ME!
+     * Initialize the GUI (defaults to NOT using double data entry)
+     *
      */
     private void init() {
         setTitle("GUID Client");
@@ -162,7 +218,9 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
         gbc.fill = GridBagConstraints.BOTH;
        
         gbc.gridx = 0;
-        doubleEntryBox = WidgetFactory.buildCheckBox("Double data entry", false, this);
+        doubleEntryBox = new JCheckBox("Double data entry");
+        doubleEntryBox.setSelected(false);
+        doubleEntryBox.addItemListener(this);
         
         mainPanel.add(doubleEntryBox, gbc);
         
@@ -180,13 +238,15 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
         	gbc.gridx = 0;
         	gbc.weightx = .5;
         	gbc.insets = insets1;
-        	mainPanel.add(WidgetFactory.buildLabel(fieldNames[i]), gbc);
+        	mainPanel.add(new JLabel(fieldNames[i]), gbc);
         	
         	gbc.weightx = 1;
         	gbc.gridx++;
         	gbc.insets = insets2;
         	
-        	mainFields[i] = WidgetFactory.buildTextField("");
+        	mainFields[i] = new JTextField("");
+        	mainFields[i].setForeground(Color.black);
+        	
         	am = mainFields[i].getActionMap();
         	am.get("copy").setEnabled(false);
             am.get("copy-to-clipboard").setEnabled(false);
@@ -194,8 +254,24 @@ public class JDialogGUIDClient extends JDialog implements ActionListener, ItemLi
         	mainPanel.add(mainFields[i], gbc);
         }
         
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        OKButton = new JButton("OK");
+        OKButton.addActionListener(this);
+
         
+        helpButton = new JButton("Help");
+        helpButton.addActionListener(this);
+
+        
+        cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(this);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(OKButton);
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(helpButton);
+        
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
     }  
     
 }
