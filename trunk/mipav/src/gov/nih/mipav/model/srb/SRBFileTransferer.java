@@ -231,7 +231,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
      * @param  targetFileList  the target file list which will be created.
      */
     public void recursivelyCreateFileList(GeneralFile sourceFile, GeneralFile targetDir, GeneralFile sourceRootDir,
-                                          Vector sourceFileList, Vector targetFileList) {
+                                          Vector<GeneralFile> sourceFileList, Vector<GeneralFile> targetFileList) {
 
         if ((sourceFile == null) || (targetDir == null) || !targetDir.isDirectory()) {
             return;
@@ -724,14 +724,14 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
      * @param  sourceFileNames  DOCUMENT ME!
      * @param  targetDir        DOCUMENT ME!
      */
-    public void transferFiles(List sourceFileNames, String targetDir) {
+    public void transferFiles(List<String> sourceFileNames, String targetDir) {
 
         if ((sourceFileNames == null) || (targetDir == null)) {
             return;
         }
 
-        Vector sourceFileList = new Vector();
-        Vector targetFileList = new Vector();
+        Vector<GeneralFile> sourceFileList = new Vector<GeneralFile>();
+        Vector<GeneralFile> targetFileList = new Vector<GeneralFile>();
 
         int index = 0;
 

@@ -1,14 +1,11 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.structures.ModelImage;
 
-import gov.nih.mipav.view.*;
-
-import java.io.*;
-
-import java.util.*;
+import java.io.IOException;
+import java.util.BitSet;
 
 
 /**
