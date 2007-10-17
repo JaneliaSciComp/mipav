@@ -1,8 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 
 /**
