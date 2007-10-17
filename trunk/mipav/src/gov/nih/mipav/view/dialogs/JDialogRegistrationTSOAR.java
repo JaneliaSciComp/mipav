@@ -515,11 +515,17 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         comboBoxCostFunct.setFont(MipavUtil.font12);
         comboBoxCostFunct.setBackground(Color.white);
         comboBoxCostFunct.setToolTipText("Cost function");
-        comboBoxCostFunct.addItem("Correlation ratio");
-        comboBoxCostFunct.addItem("Least squares");
-        comboBoxCostFunct.addItem("Normalized cross correlation");
-        comboBoxCostFunct.addItem("Normalized mutual information");
-        comboBoxCostFunct.setSelectedIndex(2);
+        if (image.isColorImage()) {
+            comboBoxCostFunct.addItem("Least squares");
+            comboBoxCostFunct.setSelectedIndex(0);
+        }
+        else {
+            comboBoxCostFunct.addItem("Correlation ratio");
+            comboBoxCostFunct.addItem("Least squares");
+            comboBoxCostFunct.addItem("Normalized cross correlation");
+            comboBoxCostFunct.addItem("Normalized mutual information");
+            comboBoxCostFunct.setSelectedIndex(2);
+        }
         comboBoxCostFunct.addItemListener(this);
 
         JLabel labelInterp = new JLabel("Interpolation:");
@@ -545,6 +551,9 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         sincCheckBox.setFont(serif12);
         sincCheckBox.setForeground(Color.black);
         sincCheckBox.setSelected(false);
+        if (image.isColorImage()) {
+            sincCheckBox.setEnabled(false);
+        }
 
         sampleCheckBox = new JCheckBox("Subsample image for speed");
         sampleCheckBox.setFont(serif12);
@@ -772,28 +781,40 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
                 interp = AlgorithmTransform.TRILINEAR;
                 break;
         }
+        
+        if (image.isColorImage()) {
+            switch (comboBoxCostFunct.getSelectedIndex()) {
 
-        switch (comboBoxCostFunct.getSelectedIndex()) {
-
-            case 0:
-                cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
-                break;
-
-            case 1:
-                cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED;
-                break;
-
-            case 2:
-                cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION;
-                break;
-
-            case 3:
-                cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;
-                break;
-
-            default:
-                cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION;
-                break;
+                case 0:
+                    cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_COLOR;
+                    break;
+                default: 
+                    cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_COLOR;
+            }    
+        }
+        else { // black and white image
+            switch (comboBoxCostFunct.getSelectedIndex()) {
+    
+                case 0:
+                    cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
+                    break;
+    
+                case 1:
+                    cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED;
+                    break;
+    
+                case 2:
+                    cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION;
+                    break;
+    
+                case 3:
+                    cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;
+                    break;
+    
+                default:
+                    cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION;
+                    break;
+            }
         }
 
         sincNormalizedCrossCorrelation = sincCheckBox.isSelected();
