@@ -4415,20 +4415,44 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 if (interp == NEAREST_NEIGHBOR) {
                     transformNearestNeighbor3Dim2D(imgBuf, xfrm);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == BILINEAR) {
                     transformBilinear3D(imgBuf, xfrm);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == BSPLINE3) {
                     transformBspline2D(imgBuf, xfrm, 3);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == BSPLINE4) {
                     transformBspline2D(imgBuf, xfrm, 4);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian3Dim2D(imgBuf, xfrm, clip);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == QUINTIC_LAGRANGIAN) {
                     transformQuinticLagrangian3Dim2D(imgBuf, xfrm, clip);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == HEPTIC_LAGRANGIAN) {
                     transformHepticLagrangian3Dim2D(imgBuf, xfrm, clip);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == WSINC) {
                     transformWSinc3Dim2D(imgBuf, xfrm, clip);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 }
             } else if (DIM == 4) {
 
@@ -4590,22 +4614,46 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 if (interp == NEAREST_NEIGHBOR) {
                     transformNearestNeighbor3Dim2DC(imgBuf, imgBuf2, xfrm);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 }
 
-                if (interp == BILINEAR) {
+                else if (interp == BILINEAR) {
                     transformBilinear3DC(imgBuf, imgBuf2, xfrm);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == BSPLINE3) {
                     transformBspline2DC(imgBuf, xfrm, 3);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == BSPLINE4) {
                     transformBspline2DC(imgBuf, xfrm, 4);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian3Dim2DC(imgBuf, imgBuf2, xfrm, clip);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == QUINTIC_LAGRANGIAN) {
                     transformQuinticLagrangian3Dim2DC(imgBuf, imgBuf2, xfrm, clip);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == HEPTIC_LAGRANGIAN) {
                     transformHepticLagrangian3Dim2DC(imgBuf, imgBuf2, xfrm, clip);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 } else if (interp == WSINC) {
                     transformWSinc3Dim2DC(imgBuf, imgBuf2, xfrm, clip);
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                        transform25DVOI(srcImage, imgBuf, xfrm);
+                    }
                 }
             } else if (DIM == 4) {
                 if (interp == TRILINEAR) {
@@ -4754,7 +4802,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     }
 
     /**
-     * Transforms and resamples a 3D volume using trilinear interpolation.
+     * Transforms and resamples a 2D volume using bilinear interpolation.
      *
      * <ol>
      *   <li>Export VOIs as a mask image</li>
@@ -4853,6 +4901,117 @@ public class AlgorithmTransform extends AlgorithmBase {
         // ******* Make algorithm for VOI extraction.
         tmpMask.calcMinMax();
 
+        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+
+        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+        VOIExtAlgo.run();
+        destImage.setVOIs(tmpMask.getVOIs());
+        tmpMask.disposeLocal();
+        maskImage.disposeLocal();
+    }
+    
+    /**
+     * Transforms and resamples a 3D volume using bilinear interpolation.
+     *
+     * <ol>
+     *   <li>Export VOIs as a mask image</li>
+     *   <li>Transform mask</li>
+     *   <li>Extract VOI contours from mask image and put in new image.</li>
+     * </ol>
+     *
+     * @param  image      Image where VOIs are stored
+     * @param  imgBuffer  Image array
+     * @param  xfrm       Transformation matrix to be applied
+     */
+    private void transform25DVOI(ModelImage image, float[] imgBuffer, float[][] xfrm) {
+
+        int i, j;
+        int iAdj, jAdj;
+        int X0pos, Y0pos;
+        float X, Y;
+        float temp1, temp2;
+        float value;
+        float imm, jmm;
+        int roundX, roundY;
+        int z;
+
+        float T00, T01, T02, T10, T11, T12;
+        ModelImage tmpMask;
+
+        int mod = Math.max(1, iZdim / 50);
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+        int sliceSize = iXdim * iYdim;
+
+        maskImage = image.generateShortImage(1);
+        tmpMask = new ModelImage(ModelImage.SHORT, destImage.getExtents(), null);
+        
+        for (z = 0; z < iZdim; z++) {
+            if (((z % mod) == 0)) {
+                fireProgressStateChanged((int) (((float) z / iZdim * 100) + .5));
+            }
+            try {
+                maskImage.exportData(z * sliceSize, sliceSize, imgBuffer); // locks and releases lock
+            } catch (IOException error) {
+                displayError("Algorithm VOI transform: Image(s) locked");
+                setCompleted(false);
+    
+                return;
+            }
+    
+            for (i = 0; (i < oXdim) && !threadStopped; i++) {
+    
+                if (pad) {
+                    iAdj = i - margins[0];
+                } else {
+                    iAdj = i;
+                }
+    
+                imm = iAdj * oXres;
+                temp1 = (imm * T00) + T02;
+                temp2 = (imm * T10) + T12;
+    
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+    
+                    // transform i,j
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    } else {
+                        jAdj = j;
+                    }
+    
+                    jmm = jAdj * oYres;
+                    value = 0.0f; // remains zero if voxel is transformed out of bounds
+                    X = (temp1 + (jmm * T01)) / iXres;
+                    roundX = (int) (X + 0.5f);
+    
+                    if ((X >= -0.5f) && (roundX < iXdim)) {
+                        Y = (temp2 + (jmm * T11)) / iYres;
+                        roundY = (int) (Y + 0.5f);
+    
+                        if ((Y >= -0.5f) && (roundY < iYdim)) {
+                            X0pos = roundX;
+                            Y0pos = roundY * iXdim;
+                            value = imgBuffer[Y0pos + X0pos];
+                        } // end if Y in bounds
+                    } // end if X in bounds
+    
+                    tmpMask.set(i, j, z, value);
+                } // end for j
+            } // end for i
+    
+            if (threadStopped) {
+                return;
+            }
+        } // for (z = 0; z < iZdim; z++)
+        // ******* Make algorithm for VOI extraction.
+        tmpMask.calcMinMax();
+        
         AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
 
         VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);

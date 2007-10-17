@@ -1,12 +1,17 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.util.MipavConstants;
+import gov.nih.mipav.util.MipavUtil;
 
-import java.io.*;
-
-import java.util.*;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -643,6 +648,7 @@ public class AlgorithmFFT extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+        long currentTime = System.nanoTime();
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -653,10 +659,23 @@ public class AlgorithmFFT extends AlgorithmBase {
         
 
         if (destImage != null) {
-            calcStoreInDest();
+//            calcStoreInDest();
+            try{
+                makeComplexData();
+                perform(realData, imagData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
+            }catch(InterruptedException e){
+                
+            }
         } else {
-            calcInPlace();
+            try{
+                makeComplexData();
+                perform(realData, imagData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
+            }catch(InterruptedException e){
+                
+            }
+//            calcInPlace();
         }
+        System.out.println("Time consumed: " + (System.nanoTime()-currentTime));
     }
 
     /**
@@ -935,7 +954,6 @@ public class AlgorithmFFT extends AlgorithmBase {
      * or filtered image.
      */
     private void calcStoreInDest() {
-
         int i;
         float tempR;
         float[] realSubsetData;
@@ -1951,8 +1969,8 @@ public class AlgorithmFFT extends AlgorithmBase {
                             index = index3 + k1;
                             fReal = rData[index];
                             fImag = iData[index];
-                            imag = (float) ((fImag * wt1Real) + (fReal * wt1Imag));
-                            real = (float) ((fReal * wt1Real) - (fImag * wt1Imag));
+                            imag = (float) ((fImag * wt1Real) - (fReal * wt1Imag));
+                            real = (float) ((fReal * wt1Real) + (fImag * wt1Imag));
                             iData[index] = iData[index3] - imag;
                             rData[index] = rData[index3] - real;
                             iData[index3] = iData[index3] + imag;
@@ -2045,6 +2063,175 @@ public class AlgorithmFFT extends AlgorithmBase {
         } // end of if (transformDir == INVERSE)
 
     } // end of exec()
+
+    public void perform(final float[] rdata, final float[] idata, final int xdim, final int ydim, final int zdim) throws InterruptedException{
+//        int ncores = MipavUtil.getAvailableCores();
+        int nthreads = 1;
+        Executor exec = Executors.newFixedThreadPool(nthreads);
+        final CountDownLatch doneSignalX = new CountDownLatch(nthreads);
+        MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_YZ);
+//        int n = xdim % ncores;
+//        int length = 0;
+        for(int i = 0; i < nthreads; i++){
+            int nslices = zdim / nthreads;
+            final int sliceLen = xdim * ydim;
+            final int start = i * nslices * sliceLen;
+            final int end = start + 1;
+            final int length  = (i + 1)* nslices * sliceLen;
+            Runnable task = new Runnable(){
+                public void run(){
+                    doFFT(rdata, idata, start, end, 1, xdim, length);
+                    doneSignalX.countDown();
+                }
+            };
+            exec.execute(task);
+        }
+        doneSignalX.await();
+        final CountDownLatch doneSignalY = new CountDownLatch(nthreads);
+        MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_ZX);
+        for(int i = 0; i < nthreads; i++){
+            int nslices = ydim/nthreads;
+            final int start = i * nslices;
+            final int end  = (i + 1) * nslices;
+            Runnable task = new Runnable(){
+                public void run(){
+                    doFFT(rdata, idata, start, end, xdim, xdim*ydim, xdim*ydim*zdim);
+                    doneSignalY.countDown();
+                }
+            };
+            exec.execute(task);
+        }
+        doneSignalY.await();
+        
+        final CountDownLatch doneSignalZ = new CountDownLatch(nthreads);
+        MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_XY);
+        for(int i = 0; i < nthreads; i++){
+            int nslices = ydim/nthreads;
+            final int start = i * nslices * xdim;
+            final int end  = (i + 1) * nslices * xdim;
+            Runnable task = new Runnable(){
+                public void run(){
+                    doFFT(rdata, idata, start, end, xdim*ydim, xdim*ydim*zdim, xdim*ydim*zdim);
+                    doneSignalZ.countDown();
+                }
+            };
+            exec.execute(task);
+        }
+        doneSignalZ.await();
+
+        // In the frequency domain so complex data is needed
+        center(rdata, idata);
+
+        try {
+            destImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
+        } catch (IOException error) {
+            displayError("AlgorithmFFT: IOException on destImage.reallocate");
+            setCompleted(false);
+
+            return;
+        } catch (OutOfMemoryError e) {
+            System.gc();
+            displayError("AlgorithmFFT: Out of memory on destImage.reallocate");
+
+            setCompleted(false);
+
+            return;
+        }
+
+        try {
+
+            // Calculate image minimum and maximum based on magnitude
+            // if logMagDisplay is false or the log10(1 + magnitude) if logMagDisplay
+            // is true
+            destImage.importComplexData(0, rdata, idata, true, logMagDisplay);
+        } catch (IOException error) {
+            displayError("AlgorithmFFT: IOException on destination image import complex data");
+
+
+            setCompleted(false);
+
+            return;
+        } catch (OutOfMemoryError e) {
+            System.gc();
+            displayError("AlgorithmFFT: Out of memory on destination image import complex data");
+
+            setCompleted(false);
+
+            return;
+        }
+        destImage.setOriginalExtents(dimLengths);
+        destImage.setOriginalMinimum(minimum);
+        destImage.setOriginalMaximum(maximum);
+        destImage.setOriginalDoCrop(doCrop);
+
+        if (doCrop) {
+            destImage.setOriginalStart(start);
+            destImage.setOriginalEnd(end);
+        }
+
+        destImage.setHaveWindowed(false);
+        setCompleted(true);
+    }
+
+    /**
+     * Perform one dimension fast fourier transformation from start slice
+     * to end slice on given data, which includes x, y or orientation.
+     * 
+     * For x direction:
+     *      start = index of the start slice * xdim * ydim
+     *      end = index of the end slice * xdim * ydim
+     *      startDist = 1
+     *      endDist = xdim
+     *      length = end
+     * 
+     * For y direction:
+     *      start = index of the start slice
+     *      end = index of the end slice
+     *      startDist = xdim
+     *      endDist = xdim * ydim
+     *      length = xdim * ydim * zdim
+     *      
+     * For z direction:
+     *      start = index of the start slice * xdim
+     *      end = index of the end slice * xdim
+     *      startDist = xdim * ydim
+     *      endDist = xdim * ydim * zdim
+     *      length = xdim * ydim * zdim
+     *      
+     * 
+     * @param rdata         the real part of the data
+     * @param idata         the imaginary part of the data
+     * @param start         the location of the first pixel of the start slice
+     * @param end           the location of the first pixel of the end slice
+     * @param startDist     the start distance between two adjacent pixels from the FFT algorithm
+     * @param endDist       the end distance between two adjacent pixels from the FFT algorithm
+     * @param length        the length for each slice.
+     */
+    private void doFFT(float[] rdata, float[] idata, int start, int end, int startDist, int endDist, int length) {
+        for (int l = startDist; l < endDist; l <<= 1) {
+            double delta = 2.0 * Math.PI / (l << 1) * startDist;
+            double angle = 0;
+            for (int i = 0; i < l; i += startDist) {
+                double wtImag = Math.sin(angle);
+                double wtReal = Math.cos(angle);
+                angle += delta;
+                for(int j = start; j < end; j++){
+                    int step = l << 1;
+                    for (int p = j + i; p < length ; p += step) {
+                        int k = p + l;
+                        float tempReal = rdata[k];
+                        float tempImag = idata[k];
+                        float imag = (float) ((tempImag * wtReal) + (tempReal * wtImag));
+                        float real = (float) ((tempReal * wtReal) - (tempImag * wtImag));
+                        rdata[k] = rdata[p] - real;
+                        idata[k] = idata[p] - imag;
+                        rdata[p] = rdata[p] + real;
+                        idata[p] = idata[p] + imag;
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Builds a hamming kernel in 2 dimensions.
@@ -3955,4 +4142,42 @@ public class AlgorithmFFT extends AlgorithmBase {
             finalData[i] = tempData[i];
         }
     }
+    
+    /**
+     * In order to use FFT, first thing is to rearrange the order of signals. 
+     * @param l the length of one dimension FFT
+     * @return  the indices used by FFT
+     * @author Hailong Wang, Ph.D
+     */
+    public int[] generateFFTIndices(int l){
+        int n = (int)(Math.log(l)/Math.log(2));
+        int l2 = (int)Math.pow(2, n);
+        if(l != l2){
+            System.out.println("The value of l must be the power of 2: " + l);
+            return null;
+        }
+        
+        int[] indices = new int[l];
+        for(int i = 0; i < n; i++){
+            int max = (int)Math.pow(2, i);
+            
+            for(int j = 0; j < max; j++){
+                indices[max+j] += indices[j] + (int)Math.pow(2, n-i-1); 
+            }
+        }
+        
+        for(int i = 0; i < l; i++){
+            System.out.println(i + "\t" + indices[i]);
+        }
+        return indices;
+    }
+
+    public AlgorithmFFT(){
+        
+    }
+    public static void main(String[] argv){
+         AlgorithmFFT fft = new AlgorithmFFT();
+         fft.generateFFTIndices(256);
+    }
 }
+

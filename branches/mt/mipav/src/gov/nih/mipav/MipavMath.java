@@ -209,4 +209,21 @@ public class MipavMath {
             return ((int) (a + 0.5d));
         }
     }
+    
+    /**
+     * Calculates magnitude from real and imaginary parts magnitude = ( (real)^2 + (imaginary)^2 )^(1/2);
+     */
+    public static final float magnitude(float real, float imaginary){
+        return (float)Math.sqrt(real*real + imaginary*imaginary);
+    }
+    
+    /**
+     * Calculates phase from real and imaginary parts.
+     *
+     * @return  phase  = arctan(imagData/realData);
+     */
+    public static final float phase(float real, float imaginary) {
+           return (float)Math.atan2(imaginary, real);
+    }
+
 }

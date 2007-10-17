@@ -1,7 +1,6 @@
 package gov.nih.mipav.model.structures;
 
 
-import gov.nih.mipav.*;
 
 
 /**

@@ -1,10 +1,10 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
-import gov.nih.mipav.model.algorithms.*;
-
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.RandomNumberGen;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 
 /**
