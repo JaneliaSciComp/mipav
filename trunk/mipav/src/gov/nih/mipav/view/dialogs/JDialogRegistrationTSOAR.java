@@ -188,7 +188,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
                         posR[2][i] = i + 1.0f;
                     }
 
-                    ViewJFrameGraph rotGraph = new ViewJFrameGraph(posR, rot, "Rotations", "Slice number", "Degrees");
+                    ViewJFrameGraph rotGraph = new ViewJFrameGraph(posR, rot, "Rotations", "Volume number", "Degrees");
                     rotGraph.makeRangeSymmetric();
                     rotGraph.showXYZLegends();
                     rotGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
@@ -202,7 +202,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
                         posT[2][i] = i + 1.0f;
                     }
 
-                    ViewJFrameGraph transGraph = new ViewJFrameGraph(posT, trans, "Translations", "Slice number",
+                    ViewJFrameGraph transGraph = new ViewJFrameGraph(posT, trans, "Translations", "Volume number",
                                                                      "Translations in " +
                                                                      FileInfoBase.getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0)));
                     transGraph.makeRangeSymmetric();
