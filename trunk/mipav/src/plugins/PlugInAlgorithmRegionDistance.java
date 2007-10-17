@@ -1635,11 +1635,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     if (shortMask[j] != -1) {
 
-                        if (i < nRedVOIs) {
-                            redCount += buffer[j];
-                        } else {
-                            greenCount += greenBuffer[j];
-                        }
+                        redCount += buffer[j];
+                        greenCount += greenBuffer[j];
 
                         if (IDArray[j] > 0) {
                             index = IDArray[j] - 1;
@@ -1664,7 +1661,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 xPosGrav[i] = 0.0f;
                 yPosGrav[i] = 0.0f;
 
-                if (i < nRedVOIs) {
+                if (redCount >= greenCount) {
                     colorCount = 0.0f;
 
                     for (j = 0, y = 0; y < yDim; y++, j += xDim) {
@@ -1688,8 +1685,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     yPosGeo[i] /= voiCount[i];
                     xPosGrav[i] /= colorCount;
                     yPosGrav[i] /= colorCount;
-                } // if (i < nRedVOIs)
-                else { // i >= nRedVOIs
+                } // if (redCount >= greenCount)
+                else { // redCount < greenCount
                     colorCount = 0.0f;
 
                     for (j = 0, y = 0; y < yDim; y++, j += xDim) {
@@ -1713,7 +1710,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     yPosGeo[i] /= voiCount[i];
                     xPosGrav[i] /= colorCount;
                     yPosGrav[i] /= colorCount;
-                } // i >= nRedVOIs
+                } // redCount < greenCount
 
                 newPtVOI = new VOI((short) (i + nVOIs), "point2D" + i + ".voi", 1, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
@@ -1846,7 +1843,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 07/23/07 version\n");
+        UI.setDataText("Plugin 10/17/07 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -3817,11 +3814,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     if (shortMask[j] != -1) {
 
-                        if (i < nRedVOIs) {
-                            redCount += buffer[j];
-                        } else {
-                            greenCount += greenBuffer[j];
-                        }
+                        redCount += buffer[j];
+                        greenCount += greenBuffer[j];
 
                         if (IDArray[j] > 0) {
                             index = IDArray[j] - 1;
@@ -3848,7 +3842,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 yPosGrav[i] = 0.0f;
                 zPosGrav[i] = 0.0f;
 
-                if (i < nRedVOIs) {
+                if (redCount >= greenCount) {
                     colorCount = 0.0f;
 
                     for (k = 0, z = 0; z < zDim; z++, k += sliceLength) {
@@ -3881,8 +3875,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     xPosGrav[i] /= colorCount;
                     yPosGrav[i] /= colorCount;
                     zPosGrav[i] /= colorCount;
-                } // if (i < nRedVOIs)
-                else { // i >= nRedVOIs
+                } // if (redCount >= greenCount)
+                else { // redCount < greenCount
                     colorCount = 0.0f;
 
                     for (k = 0, z = 0; z < zDim; z++, k += sliceLength) {
@@ -3915,7 +3909,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     xPosGrav[i] /= colorCount;
                     yPosGrav[i] /= colorCount;
                     zPosGrav[i] /= colorCount;
-                } // else i >= nRedVOIs
+                } // redCount < greenCount
 
                 newPtVOI = new VOI((short) (i + nVOIs), "point3D" + i + ".voi", zDim, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
@@ -4219,7 +4213,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 07/23/07 version\n");
+        UI.setDataText("Plugin 10/17/07 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
