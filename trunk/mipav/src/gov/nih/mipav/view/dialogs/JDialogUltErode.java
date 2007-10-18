@@ -112,6 +112,8 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("Mor015UE");
         }
     }
 
@@ -554,6 +556,8 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
