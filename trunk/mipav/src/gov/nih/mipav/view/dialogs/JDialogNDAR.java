@@ -688,7 +688,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 				isNumChar(checkString.charAt(8)) &&
 				isValidChar(checkString.charAt(1)) &&
 				isValidChar(checkString.charAt(10)) &&
-				isNumChar(checkString.charAt(11))) {
+				(isNumChar(checkString.charAt(11)) || isValidChar(checkString.charAt(11)))) {
 			return true;
 		} 
     	return false;
