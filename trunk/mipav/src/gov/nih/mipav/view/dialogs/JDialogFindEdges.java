@@ -136,6 +136,8 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("Mor010FE");
         }
 
     }
@@ -595,6 +597,8 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
