@@ -365,7 +365,7 @@ public class JDialogPowerPaint extends JDialogBase
         if (command.equals("Close")) {
             dispose();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("10027");
+            MipavUtil.showHelp("PT0007");
         } else if (command.equals("GrowRegion")) {
 
             if (getMouseInput != GROWREGION) {
@@ -3321,7 +3321,7 @@ public class JDialogPowerPaint extends JDialogBase
 
         botPanel = new JPanel();
         botPanel.add(buildCloseButton());
-        // botPanel.add(buildHelpButton());
+        botPanel.add(buildHelpButton());
 
         getContentPane().add(mainPanel);
         getContentPane().add(botPanel, BorderLayout.SOUTH);
