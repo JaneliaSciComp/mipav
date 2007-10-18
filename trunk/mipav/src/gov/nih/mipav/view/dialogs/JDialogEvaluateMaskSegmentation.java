@@ -131,7 +131,7 @@ public class JDialogEvaluateMaskSegmentation extends JDialogScriptableBase imple
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+            MipavUtil.showHelp("Mor008ES");
         }
     }
 
