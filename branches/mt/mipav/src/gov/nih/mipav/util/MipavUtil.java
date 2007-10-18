@@ -1,6 +1,11 @@
 package gov.nih.mipav.util;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 public class MipavUtil {
+    public static final int nthreads = 8;
+    public static final Executor threadPool = Executors.newFixedThreadPool(nthreads);
     public static int getAvailableCores(){
         return Runtime.getRuntime().availableProcessors();
     }
@@ -60,8 +65,8 @@ public class MipavUtil {
                     for(int k = 0; k < xdim; k++){
                         rtemp = rdata[k + indices[i]*ydim + sliceLength*j];
                         itemp = idata[k + indices[i]*ydim + sliceLength*j];
-                        rdata[k + indices[indices[i]]*ydim + sliceLength*j] = rdata[k + indices[indices[i]]*ydim + sliceLength*j];
-                        idata[k + indices[indices[i]]*ydim + sliceLength*j] = idata[k + indices[indices[i]]*ydim + sliceLength*j];
+                        rdata[k + indices[i]*ydim + sliceLength*j] = rdata[k + indices[indices[i]]*ydim + sliceLength*j];
+                        idata[k + indices[i]*ydim + sliceLength*j] = idata[k + indices[indices[i]]*ydim + sliceLength*j];
                         rdata[k + indices[indices[i]]*ydim + sliceLength*j] = rtemp;
                         idata[k + indices[indices[i]]*ydim + sliceLength*j] = itemp;
                     }
@@ -95,10 +100,6 @@ public class MipavUtil {
             for(int j = 0; j < max; j++){
                 indices[max+j] += indices[j] + (int)Math.pow(2, n-i-1); 
             }
-        }
-        
-        for(int i = 0; i < l; i++){
-            System.out.println(indices[i]);
         }
         return indices;
     }

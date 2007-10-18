@@ -10,8 +10,6 @@ import gov.nih.mipav.util.MipavUtil;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 
 /**
@@ -648,7 +646,7 @@ public class AlgorithmFFT extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        long currentTime = System.nanoTime();
+        long startTime = System.nanoTime();
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -659,13 +657,13 @@ public class AlgorithmFFT extends AlgorithmBase {
         
 
         if (destImage != null) {
-//            calcStoreInDest();
-            try{
-                makeComplexData();
-                perform(realData, imagData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
-            }catch(InterruptedException e){
-                
-            }
+            calcStoreInDest();
+//            try{
+//                makeComplexData();
+//                perform(realData, imagData, newDimLengths[0], newDimLengths[1], newDimLengths[2]);
+//            }catch(InterruptedException e){
+//                
+//            }
         } else {
             try{
                 makeComplexData();
@@ -675,7 +673,8 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
 //            calcInPlace();
         }
-        System.out.println("Time consumed: " + (System.nanoTime()-currentTime));
+        long endTime = System.nanoTime();
+        System.out.println("Start Time: " + startTime + ", End Time: " + endTime + ", Consumed Time: " + (endTime - startTime));
     }
 
     /**
@@ -1920,8 +1919,9 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         j1 = 1;
         dim = 1;
-
+        long startTime, endTime;
         for (i = 0; (i < dimNumber) && !threadStopped; i++) {
+        	startTime = System.nanoTime();
             j1 *= dim;
             dim = newDimLengths[i];
             j2 = j1 * dim;
@@ -1952,20 +1952,24 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                 i1Swap = i1Swap + iSwap;
             }
-
+            endTime = System.nanoTime();
+            System.out.println("Prepare Data for FFT, Start Time: " + startTime + ", End Time: " + endTime + ", Consumed Time: " + (endTime-startTime));
+            int i1 = 0, i2 = 0, i3 = 0, i4 = 0;
+            startTime = System.nanoTime();
             for (k1 = j1; (k1 < j2) && !threadStopped; k1 <<= 1) {
                 delta = TWO_PI / (k1 << 1) * direction * j1;
                 angle = 0;
-
+                i1++;
                 for (index1 = 0, angle = 0; index1 < k1; index1 += j1) {
                     wt1Imag = java.lang.Math.sin(angle);
                     wt1Real = java.lang.Math.cos(angle);
                     angle += delta;
-
+                    i2++;
                     for (index2 = index1; index2 < (index1 + j1); index2++) {
                         k1Double = k1 << 1;
-
+                        i3++;
                         for (index3 = index2; index3 < j3; index3 += k1Double) {
+                        	i4++;
                             index = index3 + k1;
                             fReal = rData[index];
                             fImag = iData[index];
@@ -1979,6 +1983,9 @@ public class AlgorithmFFT extends AlgorithmBase {
                     }
                 }
             }
+            endTime = System.nanoTime();
+            System.out.println("FFT, Start Time: " + startTime + ", End Time: " + endTime + ", Consumed Time: " + (endTime-startTime));
+            System.out.println(i1 + ", " + i2 + ", " + i3 + ", " + i4);
 
             if (threadStopped) {
                 return;
@@ -2066,14 +2073,12 @@ public class AlgorithmFFT extends AlgorithmBase {
 
     public void perform(final float[] rdata, final float[] idata, final int xdim, final int ydim, final int zdim) throws InterruptedException{
 //        int ncores = MipavUtil.getAvailableCores();
-        int nthreads = 1;
-        Executor exec = Executors.newFixedThreadPool(nthreads);
-        final CountDownLatch doneSignalX = new CountDownLatch(nthreads);
+        final CountDownLatch doneSignalX = new CountDownLatch(MipavUtil.nthreads);
         MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_YZ);
 //        int n = xdim % ncores;
 //        int length = 0;
-        for(int i = 0; i < nthreads; i++){
-            int nslices = zdim / nthreads;
+        for(int i = 0; i < MipavUtil.nthreads; i++){
+            int nslices = zdim / MipavUtil.nthreads;
             final int sliceLen = xdim * ydim;
             final int start = i * nslices * sliceLen;
             final int end = start + 1;
@@ -2084,13 +2089,13 @@ public class AlgorithmFFT extends AlgorithmBase {
                     doneSignalX.countDown();
                 }
             };
-            exec.execute(task);
+            MipavUtil.threadPool.execute(task);
         }
         doneSignalX.await();
-        final CountDownLatch doneSignalY = new CountDownLatch(nthreads);
+        final CountDownLatch doneSignalY = new CountDownLatch(MipavUtil.nthreads);
         MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_ZX);
-        for(int i = 0; i < nthreads; i++){
-            int nslices = ydim/nthreads;
+        for(int i = 0; i < MipavUtil.nthreads; i++){
+            int nslices = ydim/MipavUtil.nthreads;
             final int start = i * nslices;
             final int end  = (i + 1) * nslices;
             Runnable task = new Runnable(){
@@ -2099,14 +2104,14 @@ public class AlgorithmFFT extends AlgorithmBase {
                     doneSignalY.countDown();
                 }
             };
-            exec.execute(task);
+            MipavUtil.threadPool.execute(task);
         }
         doneSignalY.await();
         
-        final CountDownLatch doneSignalZ = new CountDownLatch(nthreads);
+        final CountDownLatch doneSignalZ = new CountDownLatch(MipavUtil.nthreads);
         MipavUtil.swapSlices(rdata, idata, xdim, ydim, zdim, MipavConstants.SLICE_XY);
-        for(int i = 0; i < nthreads; i++){
-            int nslices = ydim/nthreads;
+        for(int i = 0; i < MipavUtil.nthreads; i++){
+            int nslices = ydim/MipavUtil.nthreads;
             final int start = i * nslices * xdim;
             final int end  = (i + 1) * nslices * xdim;
             Runnable task = new Runnable(){
@@ -2115,7 +2120,7 @@ public class AlgorithmFFT extends AlgorithmBase {
                     doneSignalZ.countDown();
                 }
             };
-            exec.execute(task);
+            MipavUtil.threadPool.execute(task);
         }
         doneSignalZ.await();
 
@@ -2208,16 +2213,22 @@ public class AlgorithmFFT extends AlgorithmBase {
      * @param length        the length for each slice.
      */
     private void doFFT(float[] rdata, float[] idata, int start, int end, int startDist, int endDist, int length) {
+    	long startTime = System.nanoTime();
+    	int i1 = 0, i2 = 0, i3 = 0, i4 = 0;
         for (int l = startDist; l < endDist; l <<= 1) {
-            double delta = 2.0 * Math.PI / (l << 1) * startDist;
+        	i1++;
+        	double delta = 2.0 * Math.PI / (l << 1) * startDist;
             double angle = 0;
             for (int i = 0; i < l; i += startDist) {
+            	i2++;
                 double wtImag = Math.sin(angle);
                 double wtReal = Math.cos(angle);
                 angle += delta;
                 for(int j = start; j < end; j++){
+                	i3++;
                     int step = l << 1;
                     for (int p = j + i; p < length ; p += step) {
+                    	i4++;
                         int k = p + l;
                         float tempReal = rdata[k];
                         float tempImag = idata[k];
@@ -2231,6 +2242,9 @@ public class AlgorithmFFT extends AlgorithmBase {
                 }
             }
         }
+        long endTime = System.nanoTime();
+        System.out.println("Start Time: " + startTime + ", End Time: " + endTime + ", Consumed Time: " + (endTime - startTime));
+        System.out.println(i1 + ", " + i2 + ", " + i3 + ", " + i4);
     }
 
     /**
