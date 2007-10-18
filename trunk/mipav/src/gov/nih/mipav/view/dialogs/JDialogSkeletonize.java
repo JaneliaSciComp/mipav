@@ -166,6 +166,8 @@ public class JDialogSkeletonize extends JDialogScriptableBase implements Algorit
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if (command.equals("Help")) {
+        	MipavUtil.showHelp("Mor014Skel");
         }
     }
 
@@ -724,6 +726,8 @@ public class JDialogSkeletonize extends JDialogScriptableBase implements Algorit
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
+        buildHelpButton();
+        buttonPanel.add(helpButton);
 
         getContentPane().add(mainPanelManager.getPanel());
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
