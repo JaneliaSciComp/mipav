@@ -1589,6 +1589,13 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         filePanel.add(matrixFName);
 
         matrixPanel.add(filePanel);
+        
+        String orientText = "<html>Image origin is in the upper left hand corner (first slice)." + "<P>" +
+        "Righthand coordinate system.</html>";
+        JLabel orientIconLabel = new JLabel(orientText, MipavUtil.getIcon("orient.gif"), JLabel.LEFT);
+        orientIconLabel.setFont(serif12);
+        orientIconLabel.setForeground(Color.black);
+        matrixPanel.add(orientIconLabel);
 
         userDefinedMatrix = new JRadioButton("User defined transformation matrix", false);
         userDefinedMatrix.setBounds(10, 95, 200, 25);
