@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  July 23, 2007
+ * @version  October 19, 2007
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
@@ -287,6 +287,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[] centerToFarEdge;
         float[] greenBuffer = null;
         ViewVOIVector VOIs = null;
+        ViewVOIVector VOIs2 = null;
         int nVOIs;
         short[] shortMask;
         int index;
@@ -294,12 +295,17 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         int greenCount;
         int[] idCount;
         int[] objectID;
+        int[] objectID2;
         int objectCount;
         float[] xPosGeo;
         float[] yPosGeo;
+        float[] xPosGeo2;
+        float[] yPosGeo2;
         float[] xPosGrav;
         float[] yPosGrav;
-        float colorCount;
+        float[] xPosGrav2;
+        float[] yPosGrav2;
+        float colorCount[];
         float geoToCenter;
         float gravToCenter;
         float geoToEdge;
@@ -336,7 +342,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[][] sortedGreenYCenter;
         int k;
         AlgorithmVOIExtraction algoVOIExtraction;
-        int nBoundingVOIs;
         VOI newPtVOI;
         float[] xArr = new float[1];
         float[] yArr = new float[1];
@@ -355,6 +360,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[] blueCountTotal = null;
         AlgorithmMorphology2D fillHolesAlgo2D;
         int[] voiCount;
+        int[] voiCount2;
 
         // int j1;
         int redFound;
@@ -401,6 +407,15 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         int maximumSize = 0;
         boolean initiallyOneObject;
         int response;
+        boolean isRed[];
+        int numRedFound;
+        int numGreenFound;
+        int rIndex[];
+        float rCount[];
+        int gIndex[];
+        float gCount[];
+        boolean placed;
+        int index2;
 
 
         nf = NumberFormat.getNumberInstance();
@@ -409,18 +424,20 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         VOIs = srcImage.getVOIs();
         nVOIs = VOIs.size();
+        
+        for (i = nVOIs - 1; i >=0; i--) {
 
-        nBoundingVOIs = 0;
-
-        for (i = 0; i < nVOIs; i++) {
-
-            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                nBoundingVOIs++;
+            if (VOIs.VOIAt(i).getCurveType() != VOI.CONTOUR) {
+                VOIs.remove(i);
             }
         }
+        
+        nVOIs = VOIs.size();
 
-        if (nBoundingVOIs == 0) {
-            nVOIs = 0;
+        if (nVOIs > 0) {
+            // Increase redNumber and greenNumber based on what is found in supplied VOIs
+            redNumber = 1;
+            greenNumber = 1;
         }
 
         try {
@@ -1611,6 +1628,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         xPosGrav = new float[nVOIs];
         yPosGrav = new float[nVOIs];
         objectID = new int[nVOIs];
+        isRed = new boolean[nVOIs];
+        colorCount = new float[nVOIs];
 
         UI.clearAllDataText();
         UI.setDataText("\n");
@@ -1634,9 +1653,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 for (j = 0; j < length; j++) {
 
                     if (shortMask[j] != -1) {
-
-                        redCount += buffer[j];
-                        greenCount += greenBuffer[j];
+                        if (redNumber >= 1) {
+                            redCount += buffer[j];
+                        }
+                        if (greenNumber >= 1) {
+                            greenCount += greenBuffer[j];
+                        }
 
                         if (IDArray[j] > 0) {
                             index = IDArray[j] - 1;
@@ -1662,7 +1684,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 yPosGrav[i] = 0.0f;
 
                 if (redCount >= greenCount) {
-                    colorCount = 0.0f;
+                    isRed[i] = true;
+                    colorCount[i] = 0.0f;
 
                     for (j = 0, y = 0; y < yDim; y++, j += xDim) {
 
@@ -1674,7 +1697,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                                 yPosGeo[i] += y;
                                 xPosGrav[i] += buffer[index] * x;
                                 yPosGrav[i] += buffer[index] * y;
-                                colorCount += buffer[index];
+                                colorCount[i] += buffer[index];
                                 voiCount[i]++;
                                 IDArray[index] = (byte) objectID[i];
                             }
@@ -1683,11 +1706,11 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     xPosGeo[i] /= voiCount[i];
                     yPosGeo[i] /= voiCount[i];
-                    xPosGrav[i] /= colorCount;
-                    yPosGrav[i] /= colorCount;
+                    xPosGrav[i] /= colorCount[i];
+                    yPosGrav[i] /= colorCount[i];
                 } // if (redCount >= greenCount)
                 else { // redCount < greenCount
-                    colorCount = 0.0f;
+                    colorCount[i] = 0.0f;
 
                     for (j = 0, y = 0; y < yDim; y++, j += xDim) {
 
@@ -1699,7 +1722,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                                 yPosGeo[i] += y;
                                 xPosGrav[i] += greenBuffer[index] * x;
                                 yPosGrav[i] += greenBuffer[index] * y;
-                                colorCount += greenBuffer[index];
+                                colorCount[i] += greenBuffer[index];
                                 voiCount[i]++;
                                 IDArray[index] = (byte) objectID[i];
                             }
@@ -1708,10 +1731,139 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     xPosGeo[i] /= voiCount[i];
                     yPosGeo[i] /= voiCount[i];
-                    xPosGrav[i] /= colorCount;
-                    yPosGrav[i] /= colorCount;
+                    xPosGrav[i] /= colorCount[i];
+                    yPosGrav[i] /= colorCount[i];
                 } // redCount < greenCount
 
+                
+            } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
+        } // for (i = 0; i < nVOIs; i++)
+        
+        rIndex = new int[3];
+        rCount = new float[3];
+        gIndex = new int[3];
+        gCount = new float[3];
+        VOIs2 = new ViewVOIVector();
+        objectID2 = new int[nVOIs];
+        xPosGeo2 = new float[nVOIs];
+        yPosGeo2 = new float[nVOIs];
+        xPosGrav2 = new float[nVOIs];
+        yPosGrav2 = new float[nVOIs];
+        voiCount2 = new int[nVOIs];
+        index2 = 0;
+        for (j = 1; j <= numObjects; j++) {
+            numRedFound = 0;
+            numGreenFound = 0;
+            rCount[0] = 0.0f;
+            rCount[1] = 0.0f;
+            rCount[2] = 0.0f;
+            gCount[0] = 0.0f;
+            gCount[1] = 0.0f;
+            gCount[2] = 0.0f;
+            for (i = 0; i < nVOIs; i++) {
+                if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && (objectID[i] == j)) {
+                    if (isRed[i]) {
+                        if (numRedFound < 3) {
+                            numRedFound++;
+                            if (numRedFound > redNumber) {
+                                redNumber = numRedFound;
+                            }
+                        }
+                        placed = false;
+                        for (k = 0; k <= 2 && (!placed); k++) {
+                            if (colorCount[i] >= rCount[k]) {
+                                placed = true; 
+                                for (m = numRedFound - 2; m >= k; m--) {
+                                    rIndex[m+1] = rIndex[m];
+                                    rCount[m+1] = rCount[m];
+                                }
+                                rIndex[k] = i;
+                                rCount[k] = colorCount[i];
+                            }
+                        }
+                    }
+                    else {
+                        if (numGreenFound < 3) {
+                            numGreenFound++;
+                            if (numGreenFound > greenNumber) {
+                                greenNumber = numGreenFound;
+                            }
+                        }
+                        placed = false;
+                        for (k = 0; k <= 2 && (!placed); k++) {
+                            if (colorCount[i] >= gCount[k]) {
+                                placed = true; 
+                                for (m = numGreenFound - 2; m >= k; m--) {
+                                    gIndex[m+1] = gIndex[m];
+                                    gCount[m+1] = gCount[m];
+                                }
+                                gIndex[k] = i;
+                                gCount[k] = colorCount[i];
+                            }
+                        }
+                    }
+                }
+            } // for (i = 0; i < nVOIs; i++)
+            for (k = 0; k < numRedFound; k++) {
+                VOIs.VOIAt(rIndex[k]).setName(j + "R" + (k+1));
+                if (k == 0) {
+                    VOIs.VOIAt(rIndex[k]).setColor(Color.yellow);
+                }
+                else {
+                    VOIs.VOIAt(rIndex[k]).setColor(Color.yellow.darker());
+                }
+                VOIs2.addElement(VOIs.VOIAt(rIndex[k]));
+                objectID2[index2] = j;
+                xPosGeo2[index2] = xPosGeo[rIndex[k]];
+                yPosGeo2[index2] = yPosGeo[rIndex[k]];
+                xPosGrav2[index2] = xPosGrav[rIndex[k]];
+                yPosGrav2[index2] = yPosGrav[rIndex[k]];
+                voiCount2[index2] = voiCount[rIndex[k]];
+                index2++;
+            }
+            for (k = 0; k < numGreenFound; k++) {
+                VOIs.VOIAt(gIndex[k]).setName(j + "G" + (k+1));
+                if (k == 0) {
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink);
+                }
+                else {
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink.darker());
+                }
+                VOIs2.addElement(VOIs.VOIAt(gIndex[k]));
+                objectID2[index2] = j;
+                xPosGeo2[index2] = xPosGeo[gIndex[k]];
+                yPosGeo2[index2] = yPosGeo[gIndex[k]];
+                xPosGrav2[index2] = xPosGrav[gIndex[k]];
+                yPosGrav2[index2] = yPosGrav[gIndex[k]];
+                voiCount2[index2] = voiCount[gIndex[k]];
+                index2++;
+            }
+        } // (j = 1; j <= numObjects; j++)
+        VOIs.clear();
+        nVOIs = VOIs2.size();
+        for (i = 0; i < nVOIs; i++) {
+            VOIs.addElement(VOIs2.VOIAt(i));
+        }
+        VOIs2.clear();
+        VOIs2 = null;
+        for (i = 0; i < nVOIs; i++) {
+            objectID[i] = objectID2[i];
+            xPosGeo[i] = xPosGeo2[i];
+            yPosGeo[i] = yPosGeo2[i];
+            xPosGrav[i] = xPosGrav2[i];
+            yPosGrav[i] = yPosGrav2[i];
+            voiCount[i] = voiCount2[i];
+        }
+        objectID2 = null;
+        xPosGeo2 = null;
+        yPosGeo2 = null;
+        xPosGrav2 = null;
+        yPosGrav2 = null;
+        voiCount2 = null;
+        
+        for (i = 0; i < nVOIs; i++) {
+            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                voiName = VOIs.VOIAt(i).getName();
                 newPtVOI = new VOI((short) (i + nVOIs), "point2D" + i + ".voi", 1, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xArr[0] = xPosGrav[i];
@@ -1721,8 +1873,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves()[0].elementAt(0))).setLabel(voiName);
                 srcImage.registerVOI(newPtVOI);
-            } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
-        } // for (i = 0; i < nVOIs; i++)
+            }
+        }
 
         dilateArray = new byte[length];
         boundaryArray = new byte[length];
@@ -1843,7 +1995,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 10/17/07 version\n");
+        UI.setDataText("Plugin 10/19/07 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -2178,20 +2330,28 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[] greenBuffer = null;
         ViewVOIVector VOIs = null;
         int nVOIs;
+        ViewVOIVector VOIs2 = null;
         short[] shortMask;
         int index;
         int redCount;
         int greenCount;
         int[] idCount;
         int[] objectID;
+        int[] objectID2;
         int objectCount;
         float[] xPosGeo;
         float[] yPosGeo;
         float[] zPosGeo;
+        float[] xPosGeo2;
+        float[] yPosGeo2;
+        float[] zPosGeo2;
         float[] xPosGrav;
         float[] yPosGrav;
         float[] zPosGrav;
-        float colorCount;
+        float[] xPosGrav2;
+        float[] yPosGrav2;
+        float[] zPosGrav2;
+        float colorCount[];
         float geoToCenter;
         float gravToCenter;
         float geoToEdge;
@@ -2233,7 +2393,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[][] sortedGreenYCenter;
         float[][] sortedGreenZCenter;
         AlgorithmVOIExtraction algoVOIExtraction;
-        int nBoundingVOIs;
         VOI newPtVOI;
         float[] xArr = new float[1];
         float[] yArr = new float[1];
@@ -2257,6 +2416,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         AlgorithmMorphology2D fillHolesAlgo2D;
         AlgorithmMorphology3D fillHolesAlgo3D;
         int[] voiCount;
+        int[] voiCount2;
 
         // int j1;
         // int k1;
@@ -2346,6 +2506,15 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float tempf;
         boolean initiallyOneObject;
         int response;
+        boolean isRed[];
+        int numRedFound;
+        int numGreenFound;
+        int rIndex[];
+        float rCount[];
+        int gIndex[];
+        float gCount[];
+        boolean placed;
+        int index2;
 
         nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
@@ -2354,17 +2523,20 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         VOIs = srcImage.getVOIs();
         nVOIs = VOIs.size();
 
-        nBoundingVOIs = 0;
 
-        for (i = 0; i < nVOIs; i++) {
+        for (i = nVOIs - 1; i >=0; i--) {
 
-            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                nBoundingVOIs++;
+            if (VOIs.VOIAt(i).getCurveType() != VOI.CONTOUR) {
+                VOIs.remove(i);
             }
         }
-
-        if (nBoundingVOIs == 0) {
-            nVOIs = 0;
+        
+        nVOIs = VOIs.size();
+        
+        if (nVOIs > 0) {
+            // Increase redNumber and greenNumber based on what is found in supplied VOIs
+            redNumber = 1;
+            greenNumber = 1;
         }
 
         fireProgressStateChanged("Processing image ...");
@@ -3790,6 +3962,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         yPosGrav = new float[nVOIs];
         zPosGrav = new float[nVOIs];
         objectID = new int[nVOIs];
+        isRed = new boolean[nVOIs];
+        colorCount = new float[nVOIs];
 
         UI.clearAllDataText();
         UI.setDataText("\n");
@@ -3797,12 +3971,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         voiCount = new int[nVOIs];
 
         for (i = 0; i < nVOIs; i++) {
+            Preferences.debug("i = " + i + "\n");
             fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
             fireProgressStateChanged(75 + (10 * (i + 1) / nVOIs));
             VOIs.VOIAt(i).setOnlyID((short) i);
-            voiName = VOIs.VOIAt(i).getName();
-
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                Preferences.debug("VOI contour i = " + i + "\n");
                 Arrays.fill(shortMask, (short) -1);
 
                 shortMask = srcImage.generateVOIMask(shortMask, i);
@@ -3813,9 +3987,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 for (j = 0; j < totLength; j++) {
 
                     if (shortMask[j] != -1) {
-
-                        redCount += buffer[j];
-                        greenCount += greenBuffer[j];
+                        if (redNumber >= 1) {
+                            redCount += buffer[j];
+                        }
+                        if (greenNumber >= 1) {
+                            greenCount += greenBuffer[j];
+                        }
 
                         if (IDArray[j] > 0) {
                             index = IDArray[j] - 1;
@@ -3841,9 +4018,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 xPosGrav[i] = 0.0f;
                 yPosGrav[i] = 0.0f;
                 zPosGrav[i] = 0.0f;
-
                 if (redCount >= greenCount) {
-                    colorCount = 0.0f;
+                    isRed[i] = true;
+                    colorCount[i] = 0.0f;
 
                     for (k = 0, z = 0; z < zDim; z++, k += sliceLength) {
 
@@ -3859,7 +4036,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                                     xPosGrav[i] += buffer[index] * x;
                                     yPosGrav[i] += buffer[index] * y;
                                     zPosGrav[i] += buffer[index] * z;
-                                    colorCount += buffer[index];
+                                    colorCount[i] += buffer[index];
                                     voiCount[i]++;
 
                                     // Expand blue nuclei to include VOI
@@ -3872,12 +4049,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     xPosGeo[i] /= voiCount[i];
                     yPosGeo[i] /= voiCount[i];
                     zPosGeo[i] /= voiCount[i];
-                    xPosGrav[i] /= colorCount;
-                    yPosGrav[i] /= colorCount;
-                    zPosGrav[i] /= colorCount;
+                    xPosGrav[i] /= colorCount[i];
+                    yPosGrav[i] /= colorCount[i];
+                    zPosGrav[i] /= colorCount[i];
                 } // if (redCount >= greenCount)
                 else { // redCount < greenCount
-                    colorCount = 0.0f;
+                    colorCount[i] = 0.0f;
 
                     for (k = 0, z = 0; z < zDim; z++, k += sliceLength) {
 
@@ -3893,7 +4070,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                                     xPosGrav[i] += greenBuffer[index] * x;
                                     yPosGrav[i] += greenBuffer[index] * y;
                                     zPosGrav[i] += greenBuffer[index] * z;
-                                    colorCount += greenBuffer[index];
+                                    colorCount[i] += greenBuffer[index];
                                     voiCount[i]++;
 
                                     // Expand blue nuclei to include VOI
@@ -3906,11 +4083,150 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     xPosGeo[i] /= voiCount[i];
                     yPosGeo[i] /= voiCount[i];
                     zPosGeo[i] /= voiCount[i];
-                    xPosGrav[i] /= colorCount;
-                    yPosGrav[i] /= colorCount;
-                    zPosGrav[i] /= colorCount;
+                    xPosGrav[i] /= colorCount[i];
+                    yPosGrav[i] /= colorCount[i];
+                    zPosGrav[i] /= colorCount[i];
                 } // redCount < greenCount
 
+                
+            } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
+        } // for (i = 0; i < nVOIs; i++)
+        
+        rIndex = new int[3];
+        rCount = new float[3];
+        gIndex = new int[3];
+        gCount = new float[3];
+        VOIs2 = new ViewVOIVector();
+        objectID2 = new int[nVOIs];
+        xPosGeo2 = new float[nVOIs];
+        yPosGeo2 = new float[nVOIs];
+        zPosGeo2 = new float[nVOIs];
+        xPosGrav2 = new float[nVOIs];
+        yPosGrav2 = new float[nVOIs];
+        zPosGrav2 = new float[nVOIs];
+        voiCount2 = new int[nVOIs];
+        index2 = 0;
+        for (j = 1; j <= numObjects; j++) {
+            numRedFound = 0;
+            numGreenFound = 0;
+            rCount[0] = 0.0f;
+            rCount[1] = 0.0f;
+            rCount[2] = 0.0f;
+            gCount[0] = 0.0f;
+            gCount[1] = 0.0f;
+            gCount[2] = 0.0f;
+            for (i = 0; i < nVOIs; i++) {
+                if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && (objectID[i] == j)) {
+                    if (isRed[i]) {
+                        if (numRedFound < 3) {
+                            numRedFound++;
+                            if (numRedFound > redNumber) {
+                                redNumber = numRedFound;
+                            }
+                        }
+                        placed = false;
+                        for (k = 0; k <= 2 && (!placed); k++) {
+                            if (colorCount[i] >= rCount[k]) {
+                                placed = true; 
+                                for (m = numRedFound - 2; m >= k; m--) {
+                                    rIndex[m+1] = rIndex[m];
+                                    rCount[m+1] = rCount[m];
+                                }
+                                rIndex[k] = i;
+                                rCount[k] = colorCount[i];
+                            }
+                        }
+                    }
+                    else {
+                        if (numGreenFound < 3) {
+                            numGreenFound++;
+                            if (numGreenFound > greenNumber) {
+                                greenNumber = numGreenFound;
+                            }
+                        }
+                        placed = false;
+                        for (k = 0; k <= 2 && (!placed); k++) {
+                            if (colorCount[i] >= gCount[k]) {
+                                placed = true; 
+                                for (m = numGreenFound - 2; m >= k; m--) {
+                                    gIndex[m+1] = gIndex[m];
+                                    gCount[m+1] = gCount[m];
+                                }
+                                gIndex[k] = i;
+                                gCount[k] = colorCount[i];
+                            }
+                        }
+                    }
+                }
+            } // for (i = 0; i < nVOIs; i++)
+            for (k = 0; k < numRedFound; k++) {
+                VOIs.VOIAt(rIndex[k]).setName(j + "R" + (k+1));
+                if (k == 0) {
+                    VOIs.VOIAt(rIndex[k]).setColor(Color.yellow);
+                }
+                else {
+                    VOIs.VOIAt(rIndex[k]).setColor(Color.yellow.darker());
+                }
+                VOIs2.addElement(VOIs.VOIAt(rIndex[k]));
+                objectID2[index2] = j;
+                xPosGeo2[index2] = xPosGeo[rIndex[k]];
+                yPosGeo2[index2] = yPosGeo[rIndex[k]];
+                zPosGeo2[index2] = zPosGeo[rIndex[k]];
+                xPosGrav2[index2] = xPosGrav[rIndex[k]];
+                yPosGrav2[index2] = yPosGrav[rIndex[k]];
+                zPosGrav2[index2] = zPosGrav[rIndex[k]];
+                voiCount2[index2] = voiCount[rIndex[k]];
+                index2++;
+            }
+            for (k = 0; k < numGreenFound; k++) {
+                VOIs.VOIAt(gIndex[k]).setName(j + "G" + (k+1));
+                if (k == 0) {
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink);
+                }
+                else {
+                    VOIs.VOIAt(gIndex[k]).setColor(Color.pink.darker());
+                }
+                VOIs2.addElement(VOIs.VOIAt(gIndex[k]));
+                objectID2[index2] = j;
+                xPosGeo2[index2] = xPosGeo[gIndex[k]];
+                yPosGeo2[index2] = yPosGeo[gIndex[k]];
+                zPosGeo2[index2] = zPosGeo[gIndex[k]];
+                xPosGrav2[index2] = xPosGrav[gIndex[k]];
+                yPosGrav2[index2] = yPosGrav[gIndex[k]];
+                zPosGrav2[index2] = zPosGrav[gIndex[k]];
+                voiCount2[index2] = voiCount[gIndex[k]];
+                index2++;
+            }
+        } // (j = 1; j <= numObjects; j++)
+        VOIs.clear();
+        nVOIs = VOIs2.size();
+        for (i = 0; i < nVOIs; i++) {
+            VOIs.addElement(VOIs2.VOIAt(i));
+        }
+        VOIs2.clear();
+        VOIs2 = null;
+        for (i = 0; i < nVOIs; i++) {
+            objectID[i] = objectID2[i];
+            xPosGeo[i] = xPosGeo2[i];
+            yPosGeo[i] = yPosGeo2[i];
+            zPosGeo[i] = zPosGeo2[i];
+            xPosGrav[i] = xPosGrav2[i];
+            yPosGrav[i] = yPosGrav2[i];
+            zPosGrav[i] = zPosGrav2[i];
+            voiCount[i] = voiCount2[i];
+        }
+        objectID2 = null;
+        xPosGeo2 = null;
+        yPosGeo2 = null;
+        zPosGeo2 = null;
+        xPosGrav2 = null;
+        yPosGrav2 = null;
+        zPosGrav2 = null;
+        voiCount2 = null;
+        
+        for (i = 0; i < nVOIs; i++) {
+            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                voiName = VOIs.VOIAt(i).getName();
                 newPtVOI = new VOI((short) (i + nVOIs), "point3D" + i + ".voi", zDim, VOI.POINT, -1.0f);
                 newPtVOI.setColor(Color.white);
                 xArr[0] = xPosGrav[i];
@@ -3919,9 +4235,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 newPtVOI.importCurve(xArr, yArr, zArr, (int) zPosGrav[i]);
                 ((VOIPoint) (newPtVOI.getCurves()[(int) zPosGrav[i]].elementAt(0))).setFixed(true);
                 ((VOIPoint) (newPtVOI.getCurves()[(int) zPosGrav[i]].elementAt(0))).setLabel(voiName);
-                srcImage.registerVOI(newPtVOI);
-            } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
-        } // for (i = 0; i < nVOIs; i++)
+                srcImage.registerVOI(newPtVOI);    
+            }
+        }
 
         // Ellipse fitting blue objects with first and second moments
         fireProgressStateChanged("Ellipse fitting with moments");
@@ -4213,7 +4529,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 10/17/07 version\n");
+        UI.setDataText("Plugin 10/19/07 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -4298,13 +4614,17 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                 if (objectID[j] == (i + 1)) {
                     voiType = VOIs.VOIAt(j).getName().charAt(1);
+                    Preferences.debug("VOI name found = " + VOIs.VOIAt(j).getName() + "\n");
+                    Preferences.debug("voiType = " + voiType + "\n");
 
                     if (voiType == 'R') {
                         redFound++;
+                        Preferences.debug("Red found\n");
                     }
 
                     if (voiType == 'G') {
                         greenFound++;
+                        Preferences.debug("Green found\n");
 
                         if ((greenFound == 1) && (redFound != redNumber)) {
 
