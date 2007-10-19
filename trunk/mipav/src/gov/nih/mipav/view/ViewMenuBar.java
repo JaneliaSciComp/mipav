@@ -1268,7 +1268,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Subtract VOI background", false);
             menuBuilder.setMenuItemEnabled("Single channel", false);
             menuBuilder.setMenuItemEnabled("Watershed", false);
-            menuBuilder.setMenuItemEnabled("Clone (copy)", false);
             menuBuilder.setMenuItemEnabled("Histogram summary", false);
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
