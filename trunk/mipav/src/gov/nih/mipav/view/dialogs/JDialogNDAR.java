@@ -13,6 +13,7 @@ import gov.nih.mipav.view.components.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import java.util.*;
 import java.io.*;
 
 import javax.swing.*;
@@ -86,6 +87,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	
 	private static final String SPACE = " ";
 
+	private Hashtable<File, Boolean> multiFileTable = null;
+	
 	/** Static tab indices */
 	private static final int TAB_MAIN = 0;
 	private static final int TAB_PI = 1;
@@ -140,8 +143,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         	
         	if (index == TAB_DESTINATION) {
         		if (setVariables()) {
-        			MipavUtil.displayInfo("Transfer not yet supported.");
-        			//transfer();
+        			//MipavUtil.displayInfo("Transfer not yet supported.");
+        			transfer();
         		}
         	} else if (index == TAB_SOURCE) {
         		if (!doneAddingFiles) {
@@ -186,18 +189,23 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         		tabbedPane.setSelectedIndex(index - 1);
         	}
         } else if (command.equals("AddSource")) {
-        	JFileChooser chooser = new JFileChooser();
-            chooser.setMultiSelectionEnabled(true);
-            
-            chooser.setFont(MipavUtil.defaultMenuFont);
-            
+        	ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+            JFileChooser chooser = fileChooser.getFileChooser();
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+
             int returnVal = chooser.showOpenDialog(null);
-            
+
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-            	File [] files = chooser.getSelectedFiles();
-            	for (int i = 0; i < files.length; i++) {
-            		sourceModel.addElement(files[i]);            	
-            	}
+                boolean isMultiFile = fileChooser.isMulti();
+                
+                File[] files = chooser.getSelectedFiles();
+                ViewUserInterface.getReference().setDefaultDirectory(files[0].getParent());
+                for (int i = 0; i < files.length; i++) {
+                	if (!sourceModel.contains(files[i])) {
+                		sourceModel.addElement(files[i]);  
+                		multiFileTable.put(files[i], new Boolean(isMultiFile));
+                	}
+                }
             }
             removeSourceButton.setEnabled(sourceModel.size() > 0);
             nextButton.setEnabled(sourceModel.size() > 0);
@@ -208,6 +216,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         	int [] selected = sourceList.getSelectedIndices();
         	for (int i = selected.length - 1; i >= 0; i--) {
         		sourceModel.removeElementAt(selected[i]);
+        		multiFileTable.remove(selected[i]);
         	}
         	removeSourceButton.setEnabled(sourceModel.size() > 0);
         	nextButton.setEnabled(sourceModel.size() > 0);
@@ -343,6 +352,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     private void init() {
         setTitle("NDAR Imaging Import Tool");
 
+        multiFileTable = new Hashtable<File, Boolean>();
+        
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Main", buildMainTab());
         tabbedPane.addTab("P.I.", buildPITab());
@@ -676,6 +687,11 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	return validGUID;
     }
     
+    /**
+     * Checks to see if the given string is a valid NDAR GUID
+     * @param checkString the string to check
+     * @return whether this is a valid guid
+     */
     private boolean isValidGUID(String checkString) {
     	if (checkString.length() != GUID_LENGTH) {
     		return false;
@@ -694,11 +710,21 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	return false;
     }
     
+    /**
+     * Is the char a valid number character
+     * @param checkChar char to check
+     * @return whether is a number
+     */
     private boolean isNumChar(char checkChar) {
     	
     	return (checkChar >= '0' && checkChar <= '9');
     }
     
+    /**
+     * Check if this is a valid NDAR character ( no I, O, Q, or S)
+     * @param checkChar char to check
+     * @return is the char valid
+     */
     private boolean isValidChar(char checkChar) {
     	if ((checkChar >= 'a' && checkChar <= 'z') ||
     			(checkChar >= 'A' && checkChar <= 'Z')) {
@@ -717,6 +743,11 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	return false;
     }
     
+    /**
+     * Open the file(s), save header off to local temp folder
+     * transfer the file(s) to the given destination
+     *
+     */
     private void transfer() {
     	//Create the FileIO
     	FileIO fileIO = new FileIO();
@@ -742,14 +773,20 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	
     	for (int i = 0; i < numImages; i++) {
     		currentImageFile = (File)sourceModel.elementAt(i);
+    		
+    		logOutputArea.getTextArea().append("Opening: " + currentImageFile + ", multifile: " + 
+    				multiFileTable.get(currentImageFile).booleanValue() + "\n");
     		tempImage = fileIO.readImage(currentImageFile.getAbsolutePath());
     		//Save the image's XML to disk
     		
+    		    		
     		//set the valid GUID into the NDAR data object, and set up the filewriteoptions for this image
     		ndarData.validGUID = guidFields[i].getText();
+    		options.setMultiFile(multiFileTable.get(currentImageFile).booleanValue());
     		options.setWriteHeaderOnly(true);
     		options.setNDARData(ndarData);
     		
+    		// get the image file name and add .xml to it (maintain the previous extension in the name)
     		fName = tempImage.getImageFileName();
     		if (!fName.endsWith(".xml")) {
     			fName += ".xml";
@@ -770,6 +807,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     		options.setMultiFile(false);
     		options.setOptionsSet(true);
     		
+    		logOutputArea.getTextArea().append("Saving header: " + fName + " to: " + tempDir + "\n");
     		
     		//write out only the header to userdir/mipav/temp
     		fileIO.writeImage(tempImage, options);
