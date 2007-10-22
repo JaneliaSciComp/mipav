@@ -3366,6 +3366,21 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return null;
         }
     }
+    
+    /**
+     * 
+     * @return menuBarMaker
+     */
+    public ViewMenuBar getViewMenuBar() {
+        return menuBarMaker;
+    }
+    
+    /**
+     *  @return menuBar
+     */
+    public JMenuBar getJMenuBar() {
+        return menuBar;
+    }
 
     /**
      * Returns the Vector of Registered Framed Images that are of the same dimensionalty as the active image.
