@@ -89,7 +89,7 @@ public class ViewMenuBar {
             throw error;
         }
 
-        setEnabledMenuItems(menuBar, numberOfDimensions, type);
+        setEnabledMenuItems(numberOfDimensions, type);
         menuBar.validate();
 
         return menuBar;
@@ -1199,11 +1199,10 @@ public class ViewMenuBar {
     /**
      * Enable or disable items in a menubar based on the image dimensionality and storage type.
      *
-     * @param  menu                the menubar with elements to enable / disable
      * @param  numberOfDimensions  Dimensionality of image (2D, 3D, 4D...)
      * @param  type                Data type from <code>ModelStorageBase</code>, byte, short, argb, etc.
      */
-    public void setEnabledMenuItems(JMenuBar menu, int numberOfDimensions, int type) {
+    protected void setEnabledMenuItems(int numberOfDimensions, int type) {
 
         // if (!InsightToolkitSupport.isLibraryPresent()) {
         // menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
@@ -1422,7 +1421,7 @@ public class ViewMenuBar {
      * Enable all items in a menubar.
      *
      */
-    public void enableAllMenuItems() {
+    protected void enableAllMenuItems() {
 
         // if (!InsightToolkitSupport.isLibraryPresent()) {
         // menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
