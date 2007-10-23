@@ -1267,9 +1267,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Single channel", false);
             menuBuilder.setMenuItemEnabled("Watershed", false);
             menuBuilder.setMenuItemEnabled("Histogram summary", false);
-            menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
-            menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
-            menuBuilder.setMenuItemEnabled("RGB -> HSB", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
             menuBuilder.setMenuItemEnabled("Convert 3D to 4D", false);
