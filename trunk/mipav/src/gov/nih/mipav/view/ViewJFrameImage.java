@@ -3192,6 +3192,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         menuBuilder.setMenuItemEnabled("Close image(B)", enable);
         menuBuilder.setMenuItemEnabled("Extract image(B)", enable);
     }
+    
+    /**
+     * Routine to enable some menu items and disable othter menu items when the 
+     * dimensionality or type of the image is changed.
+     *
+     */
+    public void changeMenuEnables() {
+        menuBarMaker.enableAllMenuItems();
+        menuBarMaker.setEnabledMenuItems(imageA.getNDims(), imageA.getType());
+    }
 
     /**
      * Cleans memory.
