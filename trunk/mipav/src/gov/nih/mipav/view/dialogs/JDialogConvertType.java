@@ -930,7 +930,7 @@ public class JDialogConvertType extends JDialogScriptableBase
 
                 try {
 
-                    image.getFileInfo(1).setEndianess(endianess);
+                    image.getFileInfo(0).setEndianess(endianess);
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
