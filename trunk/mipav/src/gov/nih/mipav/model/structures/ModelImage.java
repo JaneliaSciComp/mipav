@@ -393,18 +393,9 @@ public class ModelImage extends ModelStorageBase {
      * @param dims new dimensions for image
      */
     public void setExtents(int[] dims) {
-        ViewMenuBar menuBarMaker;
-        JMenuBar menuBar;
         super.setExtents(dims);
         if (this.getParentFrame() != null) {
-            if (this.getParentFrame().getViewMenuBar() != null) {
-                menuBarMaker = this.getParentFrame().getViewMenuBar();
-                if (this.getParentFrame().getJMenuBar() != null) {
-                    menuBar = this.getParentFrame().getJMenuBar();
-                    menuBarMaker.enableAllMenuItems();
-                    menuBarMaker.setEnabledMenuItems(menuBar, this.getNDims(), this.getType());
-                }
-            }
+            this.getParentFrame().changeMenuEnables();
         }
     }
 
