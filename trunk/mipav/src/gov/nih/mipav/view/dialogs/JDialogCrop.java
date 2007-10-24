@@ -78,9 +78,6 @@ public class JDialogCrop extends JDialogScriptableBase implements
 			textLowerZmm; // in millimeters
 
 	/** DOCUMENT ME! */
-	private String[] titles;
-
-	/** DOCUMENT ME! */
 	private ViewUserInterface userInterface;
 
 	/** DOCUMENT ME! */
@@ -259,7 +256,6 @@ public class JDialogCrop extends JDialogScriptableBase implements
 				Vector imageFrames = image.getImageFrameVector();
 
 				for (int i = 0; i < imageFrames.size(); i++) {
-					((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
 					((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
 					if ((((Frame) (imageFrames.elementAt(i))) != parentFrame)
