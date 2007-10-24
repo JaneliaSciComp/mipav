@@ -1757,7 +1757,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 extentsTmp = new int[3];
                 extentsTmp[0] = destImage.getExtents()[0];
                 extentsTmp[1] = destImage.getExtents()[1];
-                extentsTmp[2] = destImage.getExtents()[3];
+                extentsTmp[2] = destImage.getExtents()[2];
             } else {
                 resolsTmp = resols;
                 extentsTmp = destImage.getExtents();
