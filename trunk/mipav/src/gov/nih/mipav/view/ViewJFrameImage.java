@@ -2465,11 +2465,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         }
                     }
 
-                    if (getActiveImage().getVOIs().size() == 0) {
-                        histogramDialog.histogramLUT(true);
-                    } else {
-                        histogramDialog.constructDialog();
-                    }
+                    
+                    //if there is no VOI Contour type present, do not allow VOI histogram option
+                    boolean foundContour = false;
+                	for (int i = 0; i < getActiveImage().getVOIs().size(); i++) {
+                		if (getActiveImage().getVOIs().VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                			foundContour = true;
+                		}
+                	}
+                	if (foundContour) {
+                		histogramDialog.constructDialog();
+                	} else {
+                		histogramDialog.histogramLUT(true);
+                	}
                 }
             }
         } else if (command.equals("winLevel")) { // new win-level window when it does not exist
