@@ -33,7 +33,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Indicates that the image is in Sagittal or Coronal orientation. */
-    public static final int SAT_COR = 0;
+    public static final int SAT_COR = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
