@@ -937,11 +937,8 @@ public class AlgorithmCrop extends AlgorithmBase {
             fInfoBase[n].setResolutions(resols);
         }
 
-        System.out.println("anything");
-
         if (srcImage.getParentFrame() != null) {
             srcImage.getParentFrame().close();
-            System.out.println("anything more");
         }
 
         srcImage.disposeLocal();
@@ -1083,7 +1080,6 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         try {
             srcImage.importData(0, destBuffer, true);
-            System.out.println("imported data");
         } catch (IOException error) {
             displayError("Algorithm RGBtoGray: Output Image(s) locked");
             setCompleted(false);
