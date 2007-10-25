@@ -248,7 +248,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             	
             }
         } else if (command.equals("Help")) {
-        	//MipavUtil.showHelp("");
+        	MipavUtil.showHelp("20040");
         }
         
         
@@ -829,8 +829,12 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	
     }
     
+    /**
+     * Parses each JTextField for GUIDs... highlights first bad field found (if present) and returns false,
+     * otherwise returns true if all fields valid
+     * @return whether the GUIDs are all valid
+     */
     private boolean checkGUIDs() {
-//    	check to see that valid GUIDs are present for all listed files
     	int numImages = sourceModel.size();
     	for (int i = 0; i < numImages; i++) {
     		if (!isValidGUID(guidFields[i].getText())) {
@@ -845,6 +849,10 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	return true;
     }
     
+    /**
+     * Puts all available information (JTextField/JTextArea) into an NDARData object
+     * @return true
+     */
     private boolean setVariables() {
     	 	    	
     	//parse out the information from the text fields/abstract info etc
