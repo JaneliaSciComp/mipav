@@ -89,9 +89,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private boolean doTalairach = false;
-
+        
     /** DOCUMENT ME! */
-    private boolean doVOI, doClip, doPad, setPix, doUpdateOrigin;
+    private boolean doVOI, doClip, doPad, setPix, doUpdateOrigin, doInvMat;
 
     /**
      * Stores the matrix read in from a file it then can be converted to the corrected axis orientation (i.e. world
@@ -955,6 +955,15 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     public void setClipFlag(boolean flag) {
         doClip = flag;
     }
+    
+    /**
+     * Accessor that sets the boolean for invert matrix.
+     *
+     * @param  flag  <code>true</code> indicates invert matrix, <code>false</code> otherwise.
+     */
+    public void setDoInvMat(boolean flag) {
+        doInvMat = flag;
+    }
 
     /**
      * Resets the dimension and resolution fields for resampling panel. Called by focusLost.
@@ -1232,6 +1241,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         doTalairach = scriptParameters.getParams().getBoolean("do_talairach_transform");
         useSACenter = scriptParameters.getParams().getBoolean("use_scanner_center");
         isSATransform = scriptParameters.getParams().getBoolean("is_scanner_transform");
+        doInvMat = scriptParameters.getParams().getBoolean("do_invert_matrix");
         
         if (doTalairach) {
             tInfo = new TalairachTransformInfo();
@@ -1359,6 +1369,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_talairach_transform", doTalairach));
         scriptParameters.getParams().put(ParameterFactory.newParameter("use_scanner_center", this.useSACenter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("is_scanner_transform", this.isSATransform));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_invert_matrix", doInvMat));
         
         if (doTalairach) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("transform_type", transformType));
@@ -3122,6 +3133,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         doVOI = voiCheckbox.isSelected();
         doClip = clipCheckbox.isSelected();
+        doInvMat = invertCheckbox.isSelected();
 
         
         //set the units.  will be reset if image is being resampled to another image's size
