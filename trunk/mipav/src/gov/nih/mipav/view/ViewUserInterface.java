@@ -848,7 +848,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         JMenu genericMenu = ViewMenuBuilder.buildMenu("General", 0, false);
 
         File pluginsDir = new File(userPlugins);
-
         if (pluginsDir.isDirectory()) {
 
             File[] allFiles = pluginsDir.listFiles(new FileFilter() {

@@ -352,8 +352,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	ViewDirectoryChooser dirChooser = new ViewDirectoryChooser();
         	String dir = dirChooser.getImageDirectory();
         	if (dir != null) {
-        		AlgorithmParseMIPAVDownloads pd = new AlgorithmParseMIPAVDownloads(dir);
-        		pd.runAlgorithm();
+        		// AlgorithmParseMIPAVDownloads pd = new AlgorithmParseMIPAVDownloads(dir);
+        		// pd.runAlgorithm();
         	}
         } else if (command.equals("ScrollLink")) {
             linkedScrolling = !linkedScrolling;
@@ -2286,7 +2286,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Out of memory: unable to open Tri-planar frame.");
             }
         } else if (command.equals("VolTriplanar") || 
-                   command.equals("WMVolTriplanar") ) {
+                   command.equals("WMVolTriplanar") ||
+                   command.equals("WMStandAlone") ) {
 
             // 3 space representation makes no sense on a 2d image!
             if (componentImage.getImageA().getNDims() == 2) {
