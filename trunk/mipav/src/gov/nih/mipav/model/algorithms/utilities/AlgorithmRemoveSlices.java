@@ -270,8 +270,8 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         }
 
         // reset the extents of the srcImage, then reset the dataSize
-        srcImage.setExtents(newExtents);
-        srcImage.recomputeDataSize(); // this destroys the existing data in srcImage
+        resultImage.calcMinMax();
+        srcImage.changeExtents(newExtents);
 
         // import the result buffer from the resultImage into the srcImage
         // do this a slice at a time to conserve memory
@@ -337,10 +337,9 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         // update the fileInfo in the srcImage
         fireProgressStateChanged("Updating Image Headers...");
 
+        
         updateFileInfo(resultImage, srcImage);
-
-        // srcImage.setFileInfo(resultImage.getFileInfo());
-
+        
         // Clean up and let the calling dialog know that algorithm did its job
         srcImage.releaseLock();
 
