@@ -400,7 +400,7 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Changes the image dimensionality or extents ( used in FFT exclusively ).
+     * Changes the image dimensionality or extents.
      *
      * @param  dimExtents  new dimensions for mask, maskBU, and fileInfo
      */
