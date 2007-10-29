@@ -1011,7 +1011,7 @@ public class FileIO {
                 imageFile.setFileInfo(curFileInfo);
 
                 // Read the image
-                if (image.getType() == ModelStorageBase.FLOAT) {
+                if (image.getType() == ModelStorageBase.FLOAT) {   	
                     imageFile.readImage(bufferFloat, curFileInfo.getDataType(), start);
                 } else {
                     imageFile.readImage(bufferShort, curFileInfo.getDataType(), start);
@@ -1246,7 +1246,7 @@ public class FileIO {
         if (progressBar != null) {
             progressBar.dispose();
         }
-
+        imageFile.finalize();
         imageFile = null;
         matrix = null;
 
