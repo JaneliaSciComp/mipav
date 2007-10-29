@@ -383,7 +383,6 @@ public class AlgorithmFlip extends AlgorithmBase {
                                     Polygon[] polyTemp = ((Polygon[]) shapesAtSlice[k]);
 
                                     for (int m = 0; m < polyTemp.length; m++) {
-                                        int newPlace = voiSlice + (scope * direction);
                                         nextVoi.importPolygon(polyTemp[m], voiSlice + (scope * direction));
                                     }
                                 } else if (shapesAtSlice[k] instanceof Point3Df[]) {
