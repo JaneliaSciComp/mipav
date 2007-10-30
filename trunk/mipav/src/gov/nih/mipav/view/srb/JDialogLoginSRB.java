@@ -109,6 +109,9 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
     /** The default storage resource that the user uses. */
     private JLabel storageResourceLabel;
 
+    /** Whether to show the NDAR Privacy notice after successful connection*/
+    private boolean showPrivacyNotice = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -117,10 +120,20 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
      * @param  dialogTitle  DOCUMENT ME!
      */
     public JDialogLoginSRB(String dialogTitle) {
-        super(ViewUserInterface.getReference().getMainFrame(), dialogTitle, true);
-        init();
+    	this(dialogTitle, true);
     }
 
+    /**
+     * Constructor with Privacy notice control
+     * @param dialogTitle
+     * @param showNotice
+     */
+    public JDialogLoginSRB(String dialogTitle, boolean showNotice) {
+        super(ViewUserInterface.getReference().getMainFrame(), dialogTitle, true);
+        this.showPrivacyNotice = showNotice;
+        init();
+    }
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -263,8 +276,9 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
             }
 
             // sucessful login, display ndar privacy notice
-            MipavUtil.displayInfo(NDAR_PRIVACY_NOTICE);
-
+            if (showPrivacyNotice) {
+            	MipavUtil.displayInfo(NDAR_PRIVACY_NOTICE);
+            }
             /**
              * Save the SRBAccount information into the MIPAV's preferences.
              */
