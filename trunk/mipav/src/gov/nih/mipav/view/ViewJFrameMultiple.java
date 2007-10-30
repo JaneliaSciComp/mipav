@@ -572,7 +572,7 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
 
         float[] resFactor = initResFactor(resols, units);
 
-        zoom = initZoom(img, resFactor[0], resFactor[1]);
+        zoom = initZoom(img, resFactor[0], resFactor[1], xScreen, yScreen);
 
         imageBufferA = compImg.getImageBufferA();
         imageBufferB = compImg.getImageBufferB();
@@ -1144,7 +1144,7 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
 
         float[] resFactor = initResFactor(imgResols, imgUnits);
 
-        float imgZoom = initZoom(img, resFactor[0], resFactor[1]);
+        float imgZoom = initZoom(img, resFactor[0], resFactor[1], xScreen, yScreen);
 
         ViewJComponentEditImage imgComp = new ViewJComponentEditImage(frame, img, imgLUT, imageBuf, null, null, null,
                                                                       pixBuf, imgZoom, extents, img.getLogMagDisplay(),

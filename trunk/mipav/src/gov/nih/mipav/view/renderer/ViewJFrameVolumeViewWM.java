@@ -2847,7 +2847,7 @@ public class ViewJFrameVolumeViewWM extends ViewJFrameVolumeView implements Mous
      *
      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
      */
-    protected ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
+    public static ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
         ModelLUT newLUT = null;
 
         // only make a lut for non color images
