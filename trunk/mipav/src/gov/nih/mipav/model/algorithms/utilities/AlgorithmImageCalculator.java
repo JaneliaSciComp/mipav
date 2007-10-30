@@ -902,6 +902,30 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     }
 
                     break;
+                    
+                case OR:
+                case XOR:
+                    if (srcImageA.isColorImage()) {
+                        bestMin = Math.min(minAR, minBR);
+                        bestMin = Math.min(bestMin,Math.min(minAG, minBG));
+                        bestMin = Math.min(bestMin, Math.min(minAB, minBB));
+                        bestMax = Math.max(maxAR, maxBR);
+                        bestMax = Math.max(bestMax, Math.max(maxAG, maxBG));
+                        bestMax = Math.max(bestMax, Math.max(maxAB, maxBB));
+                    } else if (doComplex) {
+                        bestMin = Math.min(-maxA, -maxB);
+                        bestMax = Math.max(maxA, maxB);
+                    } else {
+                        bestMin = Math.min(minA, minB);
+                        bestMax = Math.max(maxA, maxB);
+                    }
+                    
+                    if ((bestMin < clipMin) || (bestMax > clipMax)) {
+                        newType = findType(srcImageA.getType());
+                    }
+
+                    break;
+                        
 
                 case ADVANCED:
                     newType = ModelImage.DOUBLE;
@@ -1599,6 +1623,29 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     } else {
                         bestMin = Math.min(minA, minB);
                         bestMax = Math.min(maxA, maxB);
+                    }
+                    
+                    if ((bestMin < clipMin) || (bestMax > clipMax)) {
+                        newType = findType(srcImageA.getType());
+                    }
+
+                    break;
+                    
+                case OR:
+                case XOR:
+                    if (srcImageA.isColorImage()) {
+                        bestMin = Math.min(minAR, minBR);
+                        bestMin = Math.min(bestMin,Math.min(minAG, minBG));
+                        bestMin = Math.min(bestMin, Math.min(minAB, minBB));
+                        bestMax = Math.max(maxAR, maxBR);
+                        bestMax = Math.max(bestMax, Math.max(maxAG, maxBG));
+                        bestMax = Math.max(bestMax, Math.max(maxAB, maxBB));
+                    } else if (doComplex) {
+                        bestMin = Math.min(-maxA, -maxB);
+                        bestMax = Math.max(maxA, maxB);
+                    } else {
+                        bestMin = Math.min(minA, minB);
+                        bestMax = Math.max(maxA, maxB);
                     }
                     
                     if ((bestMin < clipMin) || (bestMax > clipMax)) {
@@ -2490,6 +2537,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             case DIFFERENCE:
             case MAXIMUM:
             case MINIMUM:
+            case OR:
+            case XOR:
                 while (loop == true) {
 
                     if (testType(endType, bestMin, bestMax) == false) {
