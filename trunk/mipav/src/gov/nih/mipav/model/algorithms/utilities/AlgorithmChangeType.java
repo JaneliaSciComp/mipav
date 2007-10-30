@@ -178,7 +178,12 @@ public class AlgorithmChangeType extends AlgorithmBase {
             }
 
             if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
-                buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
+                if (imDiff != 0.0) {
+                    buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
+                }
+                else {
+                    buffer[i] = (stRange2 + endRange2)/2.0;
+                }
             } else if (buffer[i] < imMin) {
                 buffer[i] = stRange2;
             } else if (buffer[i] > imMax) {
@@ -273,7 +278,12 @@ public class AlgorithmChangeType extends AlgorithmBase {
                 }
 
                 if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
-                    buffer[i] = ((buffer[i] - imMin) / imDiff * newDiff) + stRange2;
+                    if (imDiff != 0.0) {
+                        buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
+                    }
+                    else {
+                        buffer[i] = (stRange2 + endRange2)/2.0;
+                    }
                 } else if (buffer[i] < imMin) {
                     buffer[i] = stRange2;
                 } else if (buffer[i] > imMax) {
@@ -318,7 +328,12 @@ public class AlgorithmChangeType extends AlgorithmBase {
                     }
 
                     if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
-                        buffer[i] = ((buffer[i] - imMin) / imDiff * newDiff) + stRange2;
+                        if (imDiff != 0.0) {
+                            buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
+                        }
+                        else {
+                            buffer[i] = (stRange2 + endRange2)/2.0;
+                        }
                     } else if (buffer[i] < imMin) {
                         buffer[i] = stRange2;
                     } else if (buffer[i] > imMax) {
@@ -416,7 +431,12 @@ public class AlgorithmChangeType extends AlgorithmBase {
             }
 
             if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
-                destImage.set(i, (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2);
+                if (imDiff != 0.0) {
+                    destImage.set(i, (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2);
+                }
+                else {
+                    destImage.set(i,(stRange2 + endRange2)/2.0);
+                }
             } else if (buffer[i] < imMin) {
                 destImage.set(i, stRange2);
             } else if (buffer[i] > imMax) {
@@ -502,7 +522,12 @@ public class AlgorithmChangeType extends AlgorithmBase {
                     }
 
                     if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
-                        destImage.set((i * length) + j, ((buffer[j] - imMin) / imDiff * newDiff) + stRange2);
+                        if (imDiff != 0.0) {
+                            destImage.set((i * length) + j, (((buffer[j] - imMin) / imDiff) * newDiff) + stRange2);
+                        }
+                        else {
+                            destImage.set((i * length) + j,(stRange2 + endRange2)/2.0);
+                        }
                     } else if (buffer[j] < imMin) {
                         destImage.set((i * length) + j, stRange2);
                     } else if (buffer[j] > imMax) {
@@ -534,7 +559,12 @@ public class AlgorithmChangeType extends AlgorithmBase {
                     }
 
                     if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
-                        destImage.set(index + j, ((buffer[j] - imMin) / imDiff * newDiff) + stRange2);
+                        if (imDiff != 0.0) {
+                            destImage.set(index + j, (((buffer[j] - imMin) / imDiff) * newDiff) + stRange2);
+                        }
+                        else {
+                            destImage.set(index + j,(stRange2 + endRange2)/2.0);
+                        }
                     } else if (buffer[j] < imMin) {
                         destImage.set(index + j, stRange2);
                     } else if (buffer[j] > imMax) {
