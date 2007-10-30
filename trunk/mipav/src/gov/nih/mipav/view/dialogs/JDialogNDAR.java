@@ -315,7 +315,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     
     private void browseSRB() {
     	if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
-            new JDialogLoginSRB("Connect to");
+            new JDialogLoginSRB("Connect to", false);
 
             if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
                 return;
