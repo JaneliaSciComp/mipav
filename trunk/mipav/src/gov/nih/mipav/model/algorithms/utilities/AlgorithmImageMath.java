@@ -1159,7 +1159,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             if (opType == AVERAGE) {
 
                 for (i = 0; i < sumAverageBuffer.length; i++) {
-                    sumAverageBuffer[i] /= z;
+                    sumAverageBuffer[i] /= (f * t * z);
                 }
             }
 
