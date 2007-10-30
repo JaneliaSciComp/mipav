@@ -1252,7 +1252,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
      *
      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
      */
-    protected static ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
+    public static ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
         ModelLUT newLUT = null;
 
         // only make a lut for non color images
