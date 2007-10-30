@@ -836,6 +836,28 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     }
                     
                     break;
+                    
+                case DIFFERENCE:
+                    if (srcImageA.isColorImage()) {
+                        bestMin = 0;
+                        bestMax = Math.max(Math.abs(minAR - maxBR), Math.abs(minAG - maxBG));
+                        bestMax = Math.max(Math.abs(minAB - maxBB), bestMax);
+                        bestMax = Math.max(Math.abs(maxAR - minBR), bestMax);
+                        bestMax = Math.max(Math.abs(maxAG - minBG), bestMax);
+                        bestMax = Math.max(Math.abs(maxAB - minBB), bestMax);
+                    } else if (doComplex) {
+                        bestMin = 0;
+                        bestMax = Math.abs(maxA + maxB);
+                    } else {
+                        bestMin = 0;
+                        bestMax = Math.max(Math.abs(minA - maxB),Math.abs(maxA - minB));
+                    }
+
+                    if ((bestMin < clipMin) || (bestMax > clipMax)) {
+                        newType = findType(srcImageA.getType());
+                    }
+
+                    break;
 
                 case ADVANCED:
                     newType = ModelImage.DOUBLE;
@@ -1474,6 +1496,27 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     }
 
                     break;
+                    
+                case DIFFERENCE:
+                    if (srcImageA.isColorImage()) {
+                        bestMin = 0;
+                        bestMax = Math.max(Math.abs(minAR - maxBR), Math.abs(minAG - maxBG));
+                        bestMax = Math.max(Math.abs(minAB - maxBB), bestMax);
+                        bestMax = Math.max(Math.abs(maxAR - minBR), bestMax);
+                        bestMax = Math.max(Math.abs(maxAG - minBG), bestMax);
+                        bestMax = Math.max(Math.abs(maxAB - minBB), bestMax);
+                    } else if (doComplex) {
+                        bestMin = 0;
+                        bestMax = Math.abs(maxA + maxB);
+                    } else {
+                        bestMin = 0;
+                        bestMax = Math.max(Math.abs(minA - maxB),Math.abs(maxA - minB));
+                    }
+
+                    if ((bestMin < clipMin) || (bestMax > clipMax)) {
+                        newType = findType(srcImageA.getType());
+                    }
+
 
                 case ADVANCED:
                     newType = ModelImage.DOUBLE;
@@ -2350,74 +2393,11 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         switch (opType) {
 
             case ADD:
-                while (loop == true) {
-
-                    if (testType(endType, bestMin, bestMax) == false) {
-                        endType = promoteType(endType);
-
-                        if ((endType == ModelStorageBase.DOUBLE) || (endType == ModelStorageBase.ARGB_FLOAT) ||
-                                (endType == ModelStorageBase.DCOMPLEX)) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
-
             case SUBTRACT:
-                while (loop == true) {
-
-                    if (testType(endType, bestMin, bestMax) == false) {
-                        endType = promoteType(endType);
-
-                        if ((endType == ModelStorageBase.DOUBLE) || (endType == ModelStorageBase.ARGB_FLOAT) ||
-                                (endType == ModelStorageBase.DCOMPLEX)) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
-
             case MULTIPLY:
-                while (loop == true) {
-
-                    if (testType(endType, bestMin, bestMax) == false) {
-                        endType = promoteType(endType);
-
-                        if ((endType == ModelStorageBase.DOUBLE) || (endType == ModelStorageBase.ARGB_FLOAT) ||
-                                (endType == ModelStorageBase.DCOMPLEX)) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
-
             case DIVIDE:
-                while (loop == true) {
-
-                    if (testType(endType, bestMin, bestMax) == false) {
-                        endType = promoteType(endType);
-
-                        if ((endType == ModelStorageBase.DOUBLE) || (endType == ModelStorageBase.ARGB_FLOAT) ||
-                                (endType == ModelStorageBase.DCOMPLEX)) {
-                            loop = false;
-                        }
-                    } else {
-                        loop = false;
-                    }
-                }
-
-                break;
-                
             case AVERAGE:
+            case DIFFERENCE:
                 while (loop == true) {
 
                     if (testType(endType, bestMin, bestMax) == false) {
