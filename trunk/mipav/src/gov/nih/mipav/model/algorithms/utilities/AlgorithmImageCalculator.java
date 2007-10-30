@@ -816,6 +816,26 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     }
 
                     break;
+                    
+                case AVERAGE:
+                    if (srcImageA.isColorImage()) {
+                        bestMax = Math.max((maxAR + maxBR)/2.0, (maxAG + maxBG)/2.0);
+                        bestMax = Math.max((maxAB + maxBB)/2.0, bestMax);
+                        bestMin = Math.min((minAR + minBR)/2.0, (minAG + minBG)/2.0);
+                        bestMin = Math.min((minAB + minBB)/2.0, bestMin);
+                    } else if (doComplex) {
+                        bestMax = (maxA + maxB)/2.0;
+                        bestMin = (-maxA - maxB)/2.0;
+                    } else {
+                        bestMax = (maxA + maxB)/2.0;
+                        bestMin = (minA + minB)/2.0;
+                    }
+
+                    if ((bestMax > clipMax) || (bestMin < clipMin)) {
+                        newType = findType(srcImageA.getType());
+                    }
+                    
+                    break;
 
                 case ADVANCED:
                     newType = ModelImage.DOUBLE;
@@ -1430,6 +1450,26 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     } // else not color
 
                     if ((bestMin < clipMin) || (bestMax > clipMax)) {
+                        newType = findType(srcImageA.getType());
+                    }
+
+                    break;
+                    
+                case AVERAGE:
+                    if (srcImageA.isColorImage()) {
+                        bestMax = Math.max((maxAR + maxBR)/2.0, (maxAG + maxBG)/2.0);
+                        bestMax = Math.max((maxAB + maxBB)/2.0, bestMax);
+                        bestMin = Math.min((minAR + minBR)/2.0, (minAG + minBG)/2.0);
+                        bestMin = Math.min((minAB + minBB)/2.0, bestMin);
+                    } else if (doComplex) {
+                        bestMax = (maxA + maxB)/2.0;
+                        bestMin = (-maxA - maxB)/2.0;
+                    } else {
+                        bestMax = (maxA + maxB)/2.0;
+                        bestMin = (minA + minB)/2.0;
+                    }
+
+                    if ((bestMax > clipMax) || (bestMin < clipMin)) {
                         newType = findType(srcImageA.getType());
                     }
 
@@ -2361,6 +2401,23 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                 break;
 
             case DIVIDE:
+                while (loop == true) {
+
+                    if (testType(endType, bestMin, bestMax) == false) {
+                        endType = promoteType(endType);
+
+                        if ((endType == ModelStorageBase.DOUBLE) || (endType == ModelStorageBase.ARGB_FLOAT) ||
+                                (endType == ModelStorageBase.DCOMPLEX)) {
+                            loop = false;
+                        }
+                    } else {
+                        loop = false;
+                    }
+                }
+
+                break;
+                
+            case AVERAGE:
                 while (loop == true) {
 
                     if (testType(endType, bestMin, bestMax) == false) {
