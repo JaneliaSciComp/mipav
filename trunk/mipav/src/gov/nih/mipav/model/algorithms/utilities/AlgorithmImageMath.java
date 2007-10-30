@@ -344,7 +344,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         			
         	}
         	
-        	AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, bestMin, bestMax,
+        	AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
                     													false);
         	changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
         	changeTypeAlgo.run();
