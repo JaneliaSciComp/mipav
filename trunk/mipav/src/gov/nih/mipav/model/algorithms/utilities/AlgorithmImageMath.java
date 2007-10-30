@@ -530,6 +530,10 @@ public class AlgorithmImageMath extends AlgorithmBase {
                                 case CONSTANT:
                                     buffer[i] = value;
                                     break;
+                                    
+                                case ABSOLUTE_VALUE:
+                                    buffer[i] = Math.abs(buffer[i]);
+                                    break;
 
                                 default:
                                     break;
