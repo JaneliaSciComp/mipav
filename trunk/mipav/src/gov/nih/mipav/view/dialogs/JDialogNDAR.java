@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.srb.SRBFileTransferer;
+import gov.nih.mipav.model.srb.SRBUtility;
 import gov.nih.mipav.model.structures.*;
 
 
@@ -47,6 +48,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	
 	private JTextField piNameField, piEmailField, piPhoneField, piTitleField;
 	
+	private JTextField privateField;
+	
 	private JTextField [] guidFields;
 	
 	/** Scrolling text area for abstract */
@@ -63,7 +66,9 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	
 	private JButton nextButton, previousButton, addSourceButton, removeSourceButton, openAbstractButton;
 	
-	private JRadioButton publicButton, organizationButton, privateButton;
+	private JButton privateBrowseButton;
+	
+	private JRadioButton publicButton, privateButton;
 	
 	private JTabbedPane tabbedPane;
 	
@@ -249,6 +254,8 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
             }
         } else if (command.equals("Help")) {
         	MipavUtil.showHelp("20040");
+        } else if (command.equals("Browse")) {
+        	browseSRB();
         }
         
         
@@ -300,9 +307,55 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     			tabbedPane.setEnabledAt(TAB_DESTINATION, true);
     			privacyTextArea.setBackground(helpButton.getBackground());
     		}
+    	} else if (e.getSource().equals(privateButton)) {
+    		privateBrowseButton.setEnabled(privateButton.isSelected());
+			privateField.setEnabled(privateButton.isSelected());
     	}
     }
     
+    private void browseSRB() {
+    	if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
+            new JDialogLoginSRB("Connect to");
+
+            if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
+                return;
+            }
+        }
+
+
+        /**
+         * Uses the JargonFileChooser to retrieve the file that the user wants to open.
+         */
+        JargonFileChooser chooser = null;
+
+        try {
+            chooser = new JargonFileChooser(JDialogLoginSRB.srbFileSystem);
+        } catch (OutOfMemoryError e) {
+            e.printStackTrace(System.err);
+            MipavUtil.displayError("Out of memory!");
+
+            return;
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
+            MipavUtil.displayError(e.getMessage());
+
+            return;
+        }
+
+        chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        chooser.setMultiSelectionEnabled(false);
+
+        int returnValue = chooser.showDialog(ViewUserInterface.getReference().getMainFrame(), "Open");
+
+        if (returnValue == JargonFileChooser.APPROVE_OPTION) {
+
+            /**
+             * According to the files selected by user, tries to create the srb file list.
+             */
+            SRBFile[] files = chooser.getSelectedFiles();
+            privateField.setText(SRBUtility.convertToString(files));
+        }
+    }
 
     private void loadAbstract(File abstractFile) {
     	RandomAccessFile raFile;
@@ -426,17 +479,46 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         gbc2.insets = new Insets(5, 10, 5, 0);
         destPanel.add(organizationBox, gbc2);
         
-        JPanel visPanel = new JPanel();
+        JPanel visPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();        
         
         ButtonGroup group = new ButtonGroup();
         publicButton = WidgetFactory.buildRadioButton("Public", true, group);
-        organizationButton = WidgetFactory.buildRadioButton("Organization", true, group);
         privateButton = WidgetFactory.buildRadioButton("Private", true, group);
+        privateButton.addItemListener(this);
         
-        visPanel.add(publicButton);
-        visPanel.add(organizationButton);
-        visPanel.add(privateButton);
-
+        privateField = WidgetFactory.buildTextField("");
+        privateBrowseButton = WidgetFactory.buildTextButton("Browse", "Browse for directory on SRB", "Browse", this);
+        
+        privateField.setEnabled(false);
+        privateBrowseButton.setEnabled(false);
+        
+        gbc.weightx = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        gbc.fill = GridBagConstraints.NONE;
+        visPanel.add(publicButton, gbc);
+        
+        gbc.gridy = 1;
+        visPanel.add(privateButton, gbc);
+        
+        gbc.gridx++;
+        gbc.gridwidth = 3;
+        gbc.weightx = 1;
+        gbc.fill = gbc.BOTH;
+        gbc.insets = new Insets(0,5,0,5);
+        visPanel.add(privateField, gbc);
+        
+        gbc.insets = new Insets(0,0,0,0);
+        gbc.weightx = 0;
+        gbc.gridx+=3;
+        gbc.gridwidth = 1;
+        gbc.fill = gbc.NONE;
+        visPanel.add(privateBrowseButton, gbc);
+        
+        
         visPanel.setBorder(buildTitledBorder("Destination visibility"));
 
         gbc2.gridy++;
