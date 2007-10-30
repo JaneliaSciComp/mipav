@@ -371,7 +371,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("TransferNDAR")) {
         	userInterface.transferNDAR();
         } else if (command.equals("TransferNDARGenomics")) {
-        	userInterface.transferNDAR();
+        	userInterface.transferNDARGenomics();
         } else if (command.equals("AutoUploadToSRB")) {
             NDARPipeline pipeline = userInterface.getNDARPipeline();
 
