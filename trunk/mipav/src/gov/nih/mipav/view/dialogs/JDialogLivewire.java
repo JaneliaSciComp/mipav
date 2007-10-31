@@ -141,39 +141,9 @@ public class JDialogLivewire extends JDialogBase{
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         
         pack();
-        
-        
-        
 
     }
 
 
-
-	
-	
-	
-	/**
-     * Handler for keys which should invoke the OK button (such as ENTER). Should be registered by inheriting classes on
-     * their main JPanel using getInputMap().put() and getActionMap().put().
-     */
-    protected class OKAction extends AbstractAction {
-
-        /** Use serialVersionUID for interoperability. */
-        private static final long serialVersionUID = -7409235372458546982L;
-
-        /**
-         * Key action event handler.
-         *
-         * @param  event  key action event
-         */
-        public void actionPerformed(ActionEvent event) {
-
-            if (OKButton != null) {
-                ((JDialogBase) OKButton.getTopLevelAncestor()).actionPerformed(new ActionEvent(OKButton, 1, "OK"));
-            }
-        }
-    }
-    
-    
 
 }
