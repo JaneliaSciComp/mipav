@@ -3720,6 +3720,8 @@ public abstract class ViewJFrameBase extends JFrame
         popupMenu.show(component, event.getX(), event.getY());
     }
     
+    
+    
     /**
      * Get the extents of an image. (don't know why this is really needed...)
      *

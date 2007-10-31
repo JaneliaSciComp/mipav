@@ -790,14 +790,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setCursorMode(ViewJComponentEditImage.DEFAULT);
         } else if (command.equals("Point")) {
 
-            if (!checkForVOICompatibility(VOI.POINT)) {
+            if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POINT, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POINT_VOI);
         } else if (command.equals("Line")) {
 
-            if (!checkForVOICompatibility(VOI.LINE)) {
+            if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.LINE, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
@@ -806,54 +806,52 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setCursorMode(ViewJComponentEditImage.SPLIT_VOI);
         } else if (command.equals("Polyslice")) {
 
-            if (!checkForVOICompatibility(VOI.POLYLINE_SLICE)) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-            }
+        	 if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE_SLICE, lastVOI_UID, getControls())) {
+                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POLYLINE_SLICE_VOI);
         } else if (command.equals("protractor")) {
 
-            if (!checkForVOICompatibility(VOI.PROTRACTOR)) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-            }
+        	 if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.PROTRACTOR, lastVOI_UID, getControls())) {
+                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.PROTRACTOR);
         } else if (command.equals("Polyline")) {
 
-            if (!checkForVOICompatibility(VOI.POLYLINE)) {
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.POLYLINE, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.POLYLINE);
         } else if (command.equals("TextVOI")) {
 
-            if (!checkForVOICompatibility(VOI.CONTOUR)) {
-                componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
-            }
+        	componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
+           
 
             componentImage.setCursorMode(ViewJComponentEditImage.ANNOTATION);
         } else if (command.equals("RectVOI")) {
 
-            if (!checkForVOICompatibility(VOI.CONTOUR)) {
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.RECTANGLE);
         } else if (command.equals("EllipseVOI")) {
-
-            if (!checkForVOICompatibility(VOI.CONTOUR)) {
+        	if (!componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls())) {
                 componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
             }
 
             componentImage.setCursorMode(ViewJComponentEditImage.ELLIPSE);
         } else if (command.equals("LevelSetVOI")) {
-            checkForVOICompatibility(VOI.CONTOUR);
+        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls());
             componentImage.setCursorMode(ViewJComponentEditImage.LEVELSET);
         } else if (command.equals("Rect3DVOI")) {
-            checkForVOICompatibility(VOI.CONTOUR);
+        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls());
             componentImage.setCursorMode(ViewJComponentEditImage.RECTANGLE3D);
         } else if (command.equals("LiveWireVOI")) {
-            checkForVOICompatibility(VOI.CONTOUR);
+        	componentImage.getVOIHandler().checkForVOICompatibility(getActiveImage().getVOIs(), VOI.CONTOUR, lastVOI_UID, getControls());
 
             if (componentImage.getVOIHandler().isLivewireNull()) {
                 JDialogLivewire dialog = new JDialogLivewire(this);
@@ -5082,66 +5080,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         };
         SwingUtilities.invokeLater(adjustScrollbarsAWTEvent);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param   type  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private boolean checkForVOICompatibility(int type) {
-
-        // System.err.println("Type is: " + type);
-        int numVOI = getActiveImage().getVOIs().size();
-        int lastType = -1;
-
-        if (numVOI == 0) {
-            return true;
-        } else if (numVOI == 1) {
-            lastType = ((VOI) (getActiveImage().getVOIs().elementAt(0))).getCurveType();
-        } else {
-
-            for (int i = 0; i < numVOI; i++) {
-
-                if (((VOI) (getActiveImage().getVOIs().elementAt(i))).getUID() == lastVOI_UID) {
-                    lastType = ((VOI) (getActiveImage().getVOIs().elementAt(i))).getCurveType();
-
-                    break;
-                }
-            }
-        }
-
-        if (lastType == -1) {
-            return true;
-        }
-
-        switch (type) {
-
-            case VOI.CONTOUR:
-            case VOI.POLYLINE:
-                if ((lastType != VOI.CONTOUR) && (lastType != VOI.POLYLINE)) {
-                    int id = (((VOI) (getActiveImage().getVOIs().lastElement())).getID() + 1);
-
-                    getControls().setVOIColor(id);
-
-                    return false;
-                }
-
-                break;
-
-            default:
-                if (type != lastType) {
-                    int id = (((VOI) (getActiveImage().getVOIs().lastElement())).getID() + 1);
-
-                    getControls().setVOIColor(id);
-
-                    return false;
-                }
-        }
-
-        return true;
     }
 
     /**
