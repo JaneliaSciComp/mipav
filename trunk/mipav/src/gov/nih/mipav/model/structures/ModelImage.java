@@ -2021,6 +2021,20 @@ public class ModelImage extends ModelStorageBase {
             return false;
         }
     }
+    
+    /**
+     * Accessor that returns whether or not the image is a COMPLEX or DCOMPLEX image.
+     *
+     * @return  <code>true</code> if complex, <code>false</code> if not complex.
+     */
+    public boolean isComplexImage() {
+
+        if ((getType() == COMPLEX) || (getType() == DCOMPLEX)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     /**
      * Accessor that returns whether or not the image is a DICOM image.
