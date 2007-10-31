@@ -264,7 +264,7 @@ public class ModelImage extends ModelStorageBase {
         int nVOI = VOIs.size();
 
         for (int i = 0; i < nVOI; i++) {
-            voiVector.add(VOIs.VOIAt(i).clone());
+            voiVector.add((VOI)VOIs.VOIAt(i).clone());
         }
 
         System.gc();
@@ -2788,7 +2788,7 @@ public class ModelImage extends ModelStorageBase {
         int nVOI = VOIs.size();
 
         for (int i = 0; i < nVOI; i++) {
-            voiVector.add(VOIs.VOIAt(i).clone());
+            voiVector.add((VOI)VOIs.VOIAt(i).clone());
         }
 
         System.gc();
