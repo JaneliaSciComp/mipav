@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase.OKAction;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -16,7 +17,7 @@ import javax.swing.*;
  * @version  1.0
  * @see      RubberbandLivewire
  */
-public class JDialogLivewire extends JDialogBase {
+public class JDialogLivewire extends JDialogBase{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -36,17 +37,37 @@ public class JDialogLivewire extends JDialogBase {
 
     /** DOCUMENT ME! */
     private int selection = 0;
+    
+    JPanel mainPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates dialog for choosing cost function for live wire.
+     * 
+     * Note:  When user hits "Enter" keystroke, it is same as if user clicked "OK"
+     *        This code was already in the super constructor, but was not working
+     *        I brought it over to this constructor...but what made it work was by moving the
+     *        setVisible(true) from the end of the init() to the end of the constructor...weird.
      *
      * @param  parent  DOCUMENT ME!
      */
     public JDialogLivewire(Frame parent) {
         super(parent, true);
-        init();
+        init();     
+        
+        // bind ENTER to okay button, ESC to cancel button
+        Action okAction = new OKAction();
+        
+        //Action helpAction = new HelpAction();
+        mainPanel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke("ENTER"),"OK");
+        
+        mainPanel.getActionMap().put("OK", okAction);
+        
+        setVisible(true);
+        
+        
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -93,7 +114,8 @@ public class JDialogLivewire extends JDialogBase {
     private void init() {
         setTitle("Live wire cost function");
 
-        JPanel mainPanel = new JPanel(new GridLayout(3, 1));
+        mainPanel = new JPanel(new GridLayout(3, 1));
+
         mainPanel.setBorder(buildTitledBorder("Choose cost function for live wire"));
 
         ButtonGroup group = new ButtonGroup();
@@ -102,6 +124,7 @@ public class JDialogLivewire extends JDialogBase {
         radioGradient.setForeground(Color.black);
         radioGradient.setFont(serif12);
         radioGradient.setSelected(true);
+        
         group.add(radioGradient);
         mainPanel.add(radioGradient);
 
@@ -116,17 +139,49 @@ public class JDialogLivewire extends JDialogBase {
         radioIntensity.setFont(serif12);
         group.add(radioIntensity);
         mainPanel.add(radioIntensity);
-
+        
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
+
         buildCancelButton();
         buttonPanel.add(cancelButton);
-
+        
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        
         pack();
-        setVisible(true);
+        
+
     }
+
+
+
+	
+	
+	
+	/**
+     * Handler for keys which should invoke the OK button (such as ENTER). Should be registered by inheriting classes on
+     * their main JPanel using getInputMap().put() and getActionMap().put().
+     */
+    protected class OKAction extends AbstractAction {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = -7409235372458546982L;
+
+        /**
+         * Key action event handler.
+         *
+         * @param  event  key action event
+         */
+        public void actionPerformed(ActionEvent event) {
+
+            if (OKButton != null) {
+                ((JDialogBase) OKButton.getTopLevelAncestor()).actionPerformed(new ActionEvent(OKButton, 1, "OK"));
+            }
+        }
+    }
+    
+    
 
 }
