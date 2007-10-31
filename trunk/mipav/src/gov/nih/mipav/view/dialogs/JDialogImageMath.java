@@ -777,7 +777,11 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         // set this for Absolute Value
         textValue.setEnabled(false);
         radioClip.setSelected(true);
-
+        if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.DOUBLE) {
+            radioFloat.setEnabled(false);
+        } else {
+            radioFloat.setEnabled(true);
+        }
 
         pack();
         // setVisible(true);
