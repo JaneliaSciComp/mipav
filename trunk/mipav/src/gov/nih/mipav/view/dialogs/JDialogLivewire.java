@@ -38,7 +38,6 @@ public class JDialogLivewire extends JDialogBase{
     /** DOCUMENT ME! */
     private int selection = 0;
     
-    JPanel mainPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -55,15 +54,6 @@ public class JDialogLivewire extends JDialogBase{
     public JDialogLivewire(Frame parent) {
         super(parent, true);
         init();     
-        
-        // bind ENTER to okay button, ESC to cancel button
-        Action okAction = new OKAction();
-        
-        //Action helpAction = new HelpAction();
-        mainPanel.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke("ENTER"),"OK");
-        
-        mainPanel.getActionMap().put("OK", okAction);
-        
         setVisible(true);
         
         
@@ -114,9 +104,9 @@ public class JDialogLivewire extends JDialogBase{
     private void init() {
         setTitle("Live wire cost function");
 
-        mainPanel = new JPanel(new GridLayout(3, 1));
+        mainDialogPanel.setLayout(new GridLayout(3, 1));
 
-        mainPanel.setBorder(buildTitledBorder("Choose cost function for live wire"));
+        mainDialogPanel.setBorder(buildTitledBorder("Choose cost function for live wire"));
 
         ButtonGroup group = new ButtonGroup();
 
@@ -126,19 +116,19 @@ public class JDialogLivewire extends JDialogBase{
         radioGradient.setSelected(true);
         
         group.add(radioGradient);
-        mainPanel.add(radioGradient);
+        mainDialogPanel.add(radioGradient);
 
         radioMedial = new JRadioButton("Laplacian medialness");
         radioMedial.setForeground(Color.black);
         radioMedial.setFont(serif12);
         group.add(radioMedial);
-        mainPanel.add(radioMedial);
+        mainDialogPanel.add(radioMedial);
 
         radioIntensity = new JRadioButton("Intensity");
         radioIntensity.setForeground(Color.black);
         radioIntensity.setFont(serif12);
         group.add(radioIntensity);
-        mainPanel.add(radioIntensity);
+        mainDialogPanel.add(radioIntensity);
         
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -147,10 +137,12 @@ public class JDialogLivewire extends JDialogBase{
         buildCancelButton();
         buttonPanel.add(cancelButton);
         
-        getContentPane().add(mainPanel);
+        getContentPane().add(mainDialogPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         
         pack();
+        
+        
         
 
     }
