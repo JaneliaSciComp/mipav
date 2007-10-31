@@ -352,9 +352,17 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             } else if (index == AlgorithmImageMath.SQUARE_ROOT) {
                 textValue.setEnabled(false);
                 opType = AlgorithmImageMath.SQUARE_ROOT;
+                radioClip.setEnabled(false);
+                radioPromote.setEnabled(false);
+                radioFloat.setEnabled(false);
+                radioFloat.setSelected(true);
             } else if (index == AlgorithmImageMath.LOG) {
                 textValue.setEnabled(false);
                 opType = AlgorithmImageMath.LOG;
+                radioClip.setEnabled(false);
+                radioPromote.setEnabled(false);
+                radioFloat.setEnabled(false);
+                radioFloat.setSelected(true);
             } else if (index == AlgorithmImageMath.CONSTANT) {
                 opType = AlgorithmImageMath.CONSTANT;
             } else if (index == AlgorithmImageMath.ABSOLUTE_VALUE) {
