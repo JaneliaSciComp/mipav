@@ -13,6 +13,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.WildMagic.LibApplications.OpenGLApplication.*;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Effects.*;
@@ -101,6 +102,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_fScale = 1.0f/(float)(Math.max(m_iDimX,Math.max(m_iDimY,m_iDimZ)));
         m_iLen = m_iDimX*m_iDimY*m_iDimZ;
 
+        m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
 
     /**
@@ -289,6 +291,25 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
+            
+            if ( m_spkEllipseScene != null)
+            {
+                m_spkEllipseScene.Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+            }
+        }
+
+        if ( m_bTestFrameRate )
+        {
+            Matrix3f kRotate = m_spkScene.Local.GetRotate();
+            kRotate.multEquals(m_kRotate);
+            m_spkScene.Local.SetRotate(kRotate);
+            m_spkScene.UpdateGS();
+            m_kCuller.ComputeVisibleSet(m_spkScene);
+            
+            if ( m_spkEllipseScene != null)
+            {
+                m_spkEllipseScene.Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+            }
         }
 
         // Draw the scene to the back buffer/
@@ -300,6 +321,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 m_pkRenderer.ClearBuffers();
 
                 DisplayAllEllipsoids();
+                //Draw frame rate:
+                m_pkRenderer.SetCamera(m_spkCamera);
+                if ( m_bTestFrameRate )
+                {
+                    DrawFrameRate(8,16,ColorRGBA.WHITE);
+                }
+
             }
             else
             {
@@ -441,7 +469,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
                      */
                     //Draw frame rate:
                     m_pkRenderer.SetCamera(m_spkCamera);
-                    //DrawFrameRate(8,16,ColorRGBA.WHITE);
+                    if ( m_bTestFrameRate )
+                    {
+                        DrawFrameRate(8,16,ColorRGBA.WHITE);
+                    }
 
 
                     if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
@@ -493,8 +524,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
-        Vector3f kCLoc = kCDir.scale(-1.4f);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);
+        Vector3f kCLoc = new Vector3f(kCDir);
+        kCLoc.scaleEquals(-1.4f);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene( arg0 );
@@ -590,14 +623,14 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kAttr.SetPChannels(3);
         kAttr.SetTChannels(0,2);
         VertexBuffer pkVBuffer = new VertexBuffer(kAttr,4);
-        pkVBuffer.Position3(0, new Vector3f(0.0f,0.0f,0.0f) );
-        pkVBuffer.Position3(1, new Vector3f(0.2f,0.0f,0.0f) );
-        pkVBuffer.Position3(2, new Vector3f(0.2f,0.2f,0.0f) );
-        pkVBuffer.Position3(3, new Vector3f(0.0f,0.2f,0.0f) );
-        pkVBuffer.TCoord2(0,0, new Vector2f(0.0f,0.0f) );
-        pkVBuffer.TCoord2(0,1, new Vector2f(1.0f,0.0f) );
-        pkVBuffer.TCoord2(0,2, new Vector2f(1.0f,1.0f) );
-        pkVBuffer.TCoord2(0,3, new Vector2f(0.0f,1.0f) );
+        pkVBuffer.SetPosition3(0,0.0f,0.0f,0.0f);
+        pkVBuffer.SetPosition3(1,0.2f,0.0f,0.0f);
+        pkVBuffer.SetPosition3(2,0.2f,0.2f,0.0f);
+        pkVBuffer.SetPosition3(3,0.0f,0.2f,0.0f);
+        pkVBuffer.SetTCoord2(0,0,0.0f,0.0f);
+        pkVBuffer.SetTCoord2(0,1,1.0f,0.0f);
+        pkVBuffer.SetTCoord2(0,2,1.0f,1.0f);
+        pkVBuffer.SetTCoord2(0,3,0.0f,1.0f);
         IndexBuffer pkIBuffer = new IndexBuffer(6);
         int[] aiIndex = pkIBuffer.GetData();
         aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
@@ -640,7 +673,8 @@ implements GLEventListener, KeyListener, MouseMotionListener
         assert(m_pkPBuffer != null);
 
         m_spkScene.UpdateGS();
-        m_kTranslate = new Vector3f( m_spkScene.WorldBound.GetCenter().neg() );
+        m_kTranslate = new Vector3f( m_spkScene.WorldBound.GetCenter() );
+        m_kTranslate.negEquals();
         m_spkScene.GetChild(0).Local.SetTranslate( m_kTranslate );
 
         int iNumImages = 1;
@@ -768,74 +802,74 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
         // generate geometry
         // front
-        pkVB.Position3(0, new Vector3f(0,0,0));
-        pkVB.Position3(1, new Vector3f(m_fX,0,0));
-        pkVB.Position3(2, new Vector3f(m_fX,m_fY,0));
-        pkVB.Position3(3, new Vector3f(0,m_fY,0));
-        pkVB.Color3(0,0, new ColorRGB(0,0,0));
-        pkVB.Color3(0,1, new ColorRGB(1,0,0));
-        pkVB.Color3(0,2, new ColorRGB(1,1,0));
-        pkVB.Color3(0,3, new ColorRGB(0,1,0));
+        pkVB.SetPosition3(0,0,0,0);
+        pkVB.SetPosition3(1,m_fX,0,0);
+        pkVB.SetPosition3(2,m_fX,m_fY,0);
+        pkVB.SetPosition3(3,0,m_fY,0);
+        pkVB.SetColor3(0,0,0,0,0);
+        pkVB.SetColor3(0,1,1,0,0);
+        pkVB.SetColor3(0,2,1,1,0);
+        pkVB.SetColor3(0,3,0,1,0);
         aiIndex[i++] = 0;  aiIndex[i++] = 2;  aiIndex[i++] = 1;
         aiIndex[i++] = 0;  aiIndex[i++] = 3;  aiIndex[i++] = 2;
 
         // back
-        pkVB.Position3(4, new Vector3f(0,0,m_fZ));
-        pkVB.Position3(5, new Vector3f(m_fX,0,m_fZ));
-        pkVB.Position3(6, new Vector3f(m_fX,m_fY,m_fZ));
-        pkVB.Position3(7, new Vector3f(0,m_fY,m_fZ));
-        pkVB.Color3(0,4, new ColorRGB(0,0,1));
-        pkVB.Color3(0,5, new ColorRGB(1,0,1));
-        pkVB.Color3(0,6, new ColorRGB(1,1,1));
-        pkVB.Color3(0,7, new ColorRGB(0,1,1));
+        pkVB.SetPosition3(4,0,0,m_fZ);
+        pkVB.SetPosition3(5,m_fX,0,m_fZ);
+        pkVB.SetPosition3(6,m_fX,m_fY,m_fZ);
+        pkVB.SetPosition3(7,0,m_fY,m_fZ);
+        pkVB.SetColor3(0,4,0,0,1);
+        pkVB.SetColor3(0,5,1,0,1);
+        pkVB.SetColor3(0,6,1,1,1);
+        pkVB.SetColor3(0,7,0,1,1);
         aiIndex[i++] = 4;  aiIndex[i++] = 5;  aiIndex[i++] = 6;
         aiIndex[i++] = 4;  aiIndex[i++] = 6;  aiIndex[i++] = 7;
 
         // top
-        pkVB.Position3(8, new Vector3f(0,m_fY,0));
-        pkVB.Position3(9, new Vector3f(m_fX,m_fY,0));
-        pkVB.Position3(10, new Vector3f(m_fX,m_fY,m_fZ));
-        pkVB.Position3(11, new Vector3f(0,m_fY,m_fZ));
-        pkVB.Color3(0,8, new ColorRGB(0,1,0));
-        pkVB.Color3(0,9, new ColorRGB(1,1,0));
-        pkVB.Color3(0,10, new ColorRGB(1,1,1));
-        pkVB.Color3(0,11, new ColorRGB(0,1,1));
+        pkVB.SetPosition3(8,0,m_fY,0);
+        pkVB.SetPosition3(9,m_fX,m_fY,0);
+        pkVB.SetPosition3(10,m_fX,m_fY,m_fZ);
+        pkVB.SetPosition3(11,0,m_fY,m_fZ);
+        pkVB.SetColor3(0,8,0,1,0);
+        pkVB.SetColor3(0,9,1,1,0);
+        pkVB.SetColor3(0,10,1,1,1);
+        pkVB.SetColor3(0,11,0,1,1);
         aiIndex[i++] = 8;  aiIndex[i++] = 10;  aiIndex[i++] = 9;
         aiIndex[i++] = 8;  aiIndex[i++] = 11;  aiIndex[i++] = 10;
 
         // bottom
-        pkVB.Position3(12, new Vector3f(0,0,0));
-        pkVB.Position3(13, new Vector3f(m_fX,0,0));
-        pkVB.Position3(14, new Vector3f(m_fX,0,m_fZ));
-        pkVB.Position3(15, new Vector3f(0,0,m_fZ));
-        pkVB.Color3(0,12, new ColorRGB(0,0,0));
-        pkVB.Color3(0,13, new ColorRGB(1,0,0));
-        pkVB.Color3(0,14, new ColorRGB(1,0,1));
-        pkVB.Color3(0,15, new ColorRGB(0,0,1));
+        pkVB.SetPosition3(12,0,0,0);
+        pkVB.SetPosition3(13,m_fX,0,0);
+        pkVB.SetPosition3(14,m_fX,0,m_fZ);
+        pkVB.SetPosition3(15,0,0,m_fZ);
+        pkVB.SetColor3(0,12,0,0,0);
+        pkVB.SetColor3(0,13,1,0,0);
+        pkVB.SetColor3(0,14,1,0,1);
+        pkVB.SetColor3(0,15,0,0,1);
         aiIndex[i++] = 12;  aiIndex[i++] = 13;  aiIndex[i++] = 14;
         aiIndex[i++] = 12;  aiIndex[i++] = 14;  aiIndex[i++] = 15;
 
         // right
-        pkVB.Position3(16, new Vector3f(m_fX,0,0));
-        pkVB.Position3(17, new Vector3f(m_fX,m_fY,0));
-        pkVB.Position3(18, new Vector3f(m_fX,m_fY,m_fZ));
-        pkVB.Position3(19, new Vector3f(m_fX,0,m_fZ));
-        pkVB.Color3(0,16, new ColorRGB(1,0,0));
-        pkVB.Color3(0,17, new ColorRGB(1,1,0));
-        pkVB.Color3(0,18, new ColorRGB(1,1,1));
-        pkVB.Color3(0,19, new ColorRGB(1,0,1));
+        pkVB.SetPosition3(16,m_fX,0,0);
+        pkVB.SetPosition3(17,m_fX,m_fY,0);
+        pkVB.SetPosition3(18,m_fX,m_fY,m_fZ);
+        pkVB.SetPosition3(19,m_fX,0,m_fZ);
+        pkVB.SetColor3(0,16,1,0,0);
+        pkVB.SetColor3(0,17,1,1,0);
+        pkVB.SetColor3(0,18,1,1,1);
+        pkVB.SetColor3(0,19,1,0,1);
         aiIndex[i++] = 16;  aiIndex[i++] = 17;  aiIndex[i++] = 18;
         aiIndex[i++] = 16;  aiIndex[i++] = 18;  aiIndex[i++] = 19;
 
         // left
-        pkVB.Position3(20, new Vector3f(0,0,0));
-        pkVB.Position3(21, new Vector3f(0,m_fY,0));
-        pkVB.Position3(22, new Vector3f(0,m_fY,m_fZ));
-        pkVB.Position3(23, new Vector3f(0,0,m_fZ));
-        pkVB.Color3(0,20, new ColorRGB(0,0,0));
-        pkVB.Color3(0,21, new ColorRGB(0,1,0));
-        pkVB.Color3(0,22, new ColorRGB(0,1,1));
-        pkVB.Color3(0,23, new ColorRGB(0,0,1));
+        pkVB.SetPosition3(20,0,0,0);
+        pkVB.SetPosition3(21,0,m_fY,0);
+        pkVB.SetPosition3(22,0,m_fY,m_fZ);
+        pkVB.SetPosition3(23,0,0,m_fZ);
+        pkVB.SetColor3(0,20,0,0,0);
+        pkVB.SetColor3(0,21,0,1,0);
+        pkVB.SetColor3(0,22,0,1,1);
+        pkVB.SetColor3(0,23,0,0,1);
         aiIndex[i++] = 20;  aiIndex[i++] = 22;  aiIndex[i++] = 21;
         aiIndex[i++] = 20;  aiIndex[i++] = 23;  aiIndex[i++] = 22;
 
@@ -845,30 +879,30 @@ implements GLEventListener, KeyListener, MouseMotionListener
             {
                 if (kAttr.HasTCoord(iUnit))
                 {
-                    pkVB.TCoord3(iUnit,0, new Vector3f(0,0,0));
-                    pkVB.TCoord3(iUnit,1, new Vector3f(1,0,0));
-                    pkVB.TCoord3(iUnit,2, new Vector3f(1,1,0));
-                    pkVB.TCoord3(iUnit,3, new Vector3f(0,1,0));
-                    pkVB.TCoord3(iUnit,4, new Vector3f(0,0,1));
-                    pkVB.TCoord3(iUnit,5, new Vector3f(1,0,1));
-                    pkVB.TCoord3(iUnit,6, new Vector3f(1,1,1));
-                    pkVB.TCoord3(iUnit,7, new Vector3f(0,1,1));
-                    pkVB.TCoord3(iUnit,8, new Vector3f(0,1,0));
-                    pkVB.TCoord3(iUnit,9, new Vector3f(1,1,0));
-                    pkVB.TCoord3(iUnit,10, new Vector3f(1,1,1));
-                    pkVB.TCoord3(iUnit,11, new Vector3f(0,1,1));
-                    pkVB.TCoord3(iUnit,12, new Vector3f(0,0,0));
-                    pkVB.TCoord3(iUnit,13, new Vector3f(1,0,0));
-                    pkVB.TCoord3(iUnit,14, new Vector3f(1,0,1));
-                    pkVB.TCoord3(iUnit,15, new Vector3f(0,0,1));
-                    pkVB.TCoord3(iUnit,16, new Vector3f(1,0,0));
-                    pkVB.TCoord3(iUnit,17, new Vector3f(1,1,0));
-                    pkVB.TCoord3(iUnit,18, new Vector3f(1,1,1));
-                    pkVB.TCoord3(iUnit,19, new Vector3f(1,0,1));
-                    pkVB.TCoord3(iUnit,20, new Vector3f(0,0,0));
-                    pkVB.TCoord3(iUnit,21, new Vector3f(0,1,0));
-                    pkVB.TCoord3(iUnit,22, new Vector3f(0,1,1));
-                    pkVB.TCoord3(iUnit,23, new Vector3f(0,0,1));
+                    pkVB.SetTCoord3(iUnit,0,0,0,0);
+                    pkVB.SetTCoord3(iUnit,1,1,0,0);
+                    pkVB.SetTCoord3(iUnit,2,1,1,0);
+                    pkVB.SetTCoord3(iUnit,3,0,1,0);
+                    pkVB.SetTCoord3(iUnit,4,0,0,1);
+                    pkVB.SetTCoord3(iUnit,5,1,0,1);
+                    pkVB.SetTCoord3(iUnit,6,1,1,1);
+                    pkVB.SetTCoord3(iUnit,7,0,1,1);
+                    pkVB.SetTCoord3(iUnit,8,0,1,0);
+                    pkVB.SetTCoord3(iUnit,9,1,1,0);
+                    pkVB.SetTCoord3(iUnit,10,1,1,1);
+                    pkVB.SetTCoord3(iUnit,11,0,1,1);
+                    pkVB.SetTCoord3(iUnit,12,0,0,0);
+                    pkVB.SetTCoord3(iUnit,13,1,0,0);
+                    pkVB.SetTCoord3(iUnit,14,1,0,1);
+                    pkVB.SetTCoord3(iUnit,15,0,0,1);
+                    pkVB.SetTCoord3(iUnit,16,1,0,0);
+                    pkVB.SetTCoord3(iUnit,17,1,1,0);
+                    pkVB.SetTCoord3(iUnit,18,1,1,1);
+                    pkVB.SetTCoord3(iUnit,19,1,0,1);
+                    pkVB.SetTCoord3(iUnit,20,0,0,0);
+                    pkVB.SetTCoord3(iUnit,21,0,1,0);
+                    pkVB.SetTCoord3(iUnit,22,0,1,1);
+                    pkVB.SetTCoord3(iUnit,23,0,0,1);
                 }
             }
         }
@@ -896,6 +930,78 @@ implements GLEventListener, KeyListener, MouseMotionListener
         super.keyPressed(e);
         switch (ucKey)
         {
+        case 'A':  // remove an ambient light
+            if (m_iAQuantity > 0)
+            {
+                m_iAQuantity--;
+                m_iLightQuantity--;
+                UpdateEffects();
+            }
+            return;
+        case 'a':  // add an ambient light
+            if (m_iLightQuantity < 8)
+            {
+                m_iAQuantity++;
+                m_iLightQuantity++;
+                UpdateEffects();
+            }
+            return;
+        case 'D':  // remove a directional light
+            if (m_iDQuantity > 0)
+            {
+                m_iDQuantity--;
+                m_iLightQuantity--;
+                UpdateEffects();
+            }
+            return;
+        case 'd':  // add a directional light
+            if (m_iLightQuantity < 8)
+            {
+                m_iDQuantity++;
+                m_iLightQuantity++;
+                UpdateEffects();
+            }
+            return;
+        case 'P':  // remove a point light
+            if (m_iPQuantity > 0)
+            {
+                m_iPQuantity--;
+                m_iLightQuantity--;
+                UpdateEffects();
+            }
+            return;
+        case 'p':  // add a point light
+            if (m_iLightQuantity < 8)
+            {
+                m_iPQuantity++;
+                m_iLightQuantity++;
+                UpdateEffects();
+            }
+            return;
+        case 'S':  // remove a spot light
+            if (m_iSQuantity > 0)
+            {
+                m_iSQuantity--;
+                m_iLightQuantity--;
+                UpdateEffects();
+            }
+            return;
+        case 's':  // add a spot light
+            if (m_iLightQuantity < 8)
+            {
+                m_iSQuantity++;
+                m_iLightQuantity++;
+                UpdateEffects();
+            }
+            return;
+        case 'f':
+            m_bTestFrameRate = !m_bTestFrameRate;
+            if ( m_bTestFrameRate )
+            {
+                ResetTime();
+            }
+            return;
+/*
         case 's':
         case 'S':
             TestStreaming(m_spkScene,"VolumeTextures.wmof");
@@ -943,7 +1049,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 m_iActive = 0;
             }
             return;
+                    */
         }
+
         return;
     }
 
@@ -1186,52 +1294,51 @@ implements GLEventListener, KeyListener, MouseMotionListener
             akOutlineSquare[i] = new VertexBuffer(kAttributes, 4 );
             for ( int j = 0; j < 4; j++ )
             {
-                akOutlineSquare[i].Color3( 0, j, new ColorRGB( 1, 0, 0 ) );
+                akOutlineSquare[i].SetColor3( 0, j, 1, 0, 0 ) ;
             }
 
-            akOutlineSquare[i].TCoord2( 0, 0, new Vector2f( 1, 1 ) );
-            akOutlineSquare[i].TCoord2( 0, 1, new Vector2f( 0, 1 ) );
-            akOutlineSquare[i].TCoord2( 0, 2, new Vector2f( 0, 0 ) );
-            akOutlineSquare[i].TCoord2( 0, 3, new Vector2f( 1, 0 ) );
+            akOutlineSquare[i].SetTCoord2( 0, 0, 1, 1 ) ;
+            akOutlineSquare[i].SetTCoord2( 0, 1, 0, 1 ) ;
+            akOutlineSquare[i].SetTCoord2( 0, 2, 0, 0 ) ;
+            akOutlineSquare[i].SetTCoord2( 0, 3, 1, 0 ) ;
         }
         // neg x clipping:
-        akOutlineSquare[0].Position3( 0, new Vector3f( 0, 0, 0 ) );
-        akOutlineSquare[0].Position3( 1, new Vector3f( 0, 0, m_fZ ) );
-        akOutlineSquare[0].Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
-        akOutlineSquare[0].Position3( 3, new Vector3f( 0, m_fY, 0 ) );
+        akOutlineSquare[0].SetPosition3( 0, 0, 0, 0 ) ;
+        akOutlineSquare[0].SetPosition3( 1, 0, 0, m_fZ ) ;
+        akOutlineSquare[0].SetPosition3( 2, 0, m_fY, m_fZ ) ;
+        akOutlineSquare[0].SetPosition3( 3, 0, m_fY, 0 ) ;
 
         // pos x clipping:
-        akOutlineSquare[1].Position3( 0, new Vector3f( m_fX, 0, m_fZ ) );
-        akOutlineSquare[1].Position3( 1, new Vector3f( m_fX, 0, 0 ) );
-        akOutlineSquare[1].Position3( 2, new Vector3f( m_fX, m_fY, 0 ) );
-        akOutlineSquare[1].Position3( 3, new Vector3f( m_fX, m_fY, m_fZ ) );
+        akOutlineSquare[1].SetPosition3( 0, m_fX, 0, m_fZ ) ;
+        akOutlineSquare[1].SetPosition3( 1, m_fX, 0, 0 ) ;
+        akOutlineSquare[1].SetPosition3( 2, m_fX, m_fY, 0 ) ;
+        akOutlineSquare[1].SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
 
         // neg y clipping:
-        akOutlineSquare[2].Position3( 0, new Vector3f( m_fX, 0, m_fZ ) );
-        akOutlineSquare[2].Position3( 1, new Vector3f( 0, 0, m_fZ ) );
-        akOutlineSquare[2].Position3( 2, new Vector3f( 0, 0, 0 ) );
-        akOutlineSquare[2].Position3( 3, new Vector3f( m_fX, 0, 0 ) );
+        akOutlineSquare[2].SetPosition3( 0, m_fX, 0, m_fZ ) ;
+        akOutlineSquare[2].SetPosition3( 1, 0, 0, m_fZ ) ;
+        akOutlineSquare[2].SetPosition3( 2, 0, 0, 0 ) ;
+        akOutlineSquare[2].SetPosition3( 3, m_fX, 0, 0 ) ;
         // pos y clipping:
-        akOutlineSquare[3].Position3( 0, new Vector3f( m_fX, m_fY, 0 ) );
-        akOutlineSquare[3].Position3( 1, new Vector3f( 0, m_fY, 0 ) );
-        akOutlineSquare[3].Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
-        akOutlineSquare[3].Position3( 3, new Vector3f( m_fX, m_fY, m_fZ ) );
+        akOutlineSquare[3].SetPosition3( 0, m_fX, m_fY, 0 ) ;
+        akOutlineSquare[3].SetPosition3( 1, 0, m_fY, 0 ) ;
+        akOutlineSquare[3].SetPosition3( 2, 0, m_fY, m_fZ ) ;
+        akOutlineSquare[3].SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
 
         // neg z clipping:
-        akOutlineSquare[4].Position3( 0, new Vector3f( m_fX, 0, 0 ) );
-        akOutlineSquare[4].Position3( 1, new Vector3f( 0, 0, 0 ) );
-        akOutlineSquare[4].Position3( 2, new Vector3f( 0, m_fY, 0 ) );
-        akOutlineSquare[4].Position3( 3, new Vector3f( m_fX, m_fY, 0 ) );
+        akOutlineSquare[4].SetPosition3( 0, m_fX, 0, 0 ) ;
+        akOutlineSquare[4].SetPosition3( 1, 0, 0, 0 ) ;
+        akOutlineSquare[4].SetPosition3( 2, 0, m_fY, 0 ) ;
+        akOutlineSquare[4].SetPosition3( 3, m_fX, m_fY, 0 ) ;
 
         // pos z clipping:
-        akOutlineSquare[5].Position3( 0, new Vector3f( 0, 0, m_fZ ) );
-        akOutlineSquare[5].Position3( 1, new Vector3f( m_fX, 0, m_fZ ) );
-        akOutlineSquare[5].Position3( 2, new Vector3f( m_fX, m_fY, m_fZ ) );
-        akOutlineSquare[5].Position3( 3, new Vector3f( 0, m_fY, m_fZ ) );
+        akOutlineSquare[5].SetPosition3( 0, 0, 0, m_fZ ) ;
+        akOutlineSquare[5].SetPosition3( 1, m_fX, 0, m_fZ ) ;
+        akOutlineSquare[5].SetPosition3( 2, m_fX, m_fY, m_fZ ) ;
+        akOutlineSquare[5].SetPosition3( 3, 0, m_fY, m_fZ ) ;
 
         Vector3f kHalf = new Vector3f( m_fX/2.0f, m_fY/2.0f, m_fZ/2.0f );
-        Vector3f kPos;
-
+        Vector3f kPos = new Vector3f();
         for ( int i = 0; i < 6; i++ )
         {
             m_akPolyline[i] = new Polyline( new VertexBuffer(akOutlineSquare[i]), true, true );
@@ -1244,9 +1351,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
             for ( int j = 0; j < 4; j++ )
             {
-                kPos = akOutlineSquare[i].Position3( j );
+                akOutlineSquare[i].GetPosition3( j, kPos );
                 kPos.subEquals(kHalf);
-                akOutlineSquare[i].Position3( j, kPos );
+                akOutlineSquare[i].SetPosition3( j, kPos );
             }
             m_akOrientationCube[i] = new TriMesh( new VertexBuffer(akOutlineSquare[i]), kIndexBuffer );
             m_akOrientationCube[i].AttachEffect( new TextureEffect( m_aakAxisFiles[i] ) );
@@ -1256,18 +1363,18 @@ implements GLEventListener, KeyListener, MouseMotionListener
             m_akOrientationCube[i].UpdateRS();
             m_pkRenderer.LoadResources(m_akOrientationCube[i]);
         }
-
+        kPos = null;
 
         VertexBuffer kOutlineSquare = new VertexBuffer( kAttributes, 4);
         // arbitrary clipping:
         for ( int i = 0; i < 4; i++ )
         {
-            kOutlineSquare.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            kOutlineSquare.SetColor3( 0, i, 1, 0, 0 ) ;
         }
-        kOutlineSquare.Position3( 0, new Vector3f( 0, 0, 0 ) );
-        kOutlineSquare.Position3( 1, new Vector3f( 0, 0, m_fZ ) );
-        kOutlineSquare.Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
-        kOutlineSquare.Position3( 3, new Vector3f( 0, m_fY, 0 ) );
+        kOutlineSquare.SetPosition3( 0, 0, 0, 0 ) ;
+        kOutlineSquare.SetPosition3( 1, 0, 0, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 2, 0, m_fY, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 3, 0, m_fY, 0 ) ;
         m_kClipArb = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipArb.AttachEffect( m_spkVertexColor3Shader );
         m_kClipArb.Local.SetTranslate(m_kTranslate);
@@ -1279,18 +1386,20 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_spkEyeCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,1000.0f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f,-1.0f,0.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
-        Vector3f kCLoc = kCDir.scale(-4.0f);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);
+        Vector3f kCLoc = new Vector3f(kCDir);
+        kCLoc.scaleEquals(-4.0f);
         m_spkEyeCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         for ( int i = 0; i < 4; i++ )
         {
-            kOutlineSquare.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            kOutlineSquare.SetColor3( 0, i, 1, 0, 0 ) ;
         }
-        kOutlineSquare.Position3( 0, new Vector3f( -.2f, -.2f, m_fZ ) );
-        kOutlineSquare.Position3( 1, new Vector3f( m_fX +.2f, -.2f, m_fZ ) );
-        kOutlineSquare.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, m_fZ ) );
-        kOutlineSquare.Position3( 3, new Vector3f( -.2f, m_fY +.2f, m_fZ ) );
+        kOutlineSquare.SetPosition3( 0, -.2f, -.2f, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 1, m_fX +.2f, -.2f, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 2, m_fX +.2f, m_fY +.2f, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 3, -.2f, m_fY +.2f, m_fZ ) ;
         m_kClipEye = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipEye.Local.SetTranslate(m_kTranslate);
         m_kClipEye.AttachEffect( m_spkVertexColor3Shader );
@@ -1300,12 +1409,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
         for ( int i = 0; i < 4; i++ )
         {
-            kOutlineSquare.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            kOutlineSquare.SetColor3( 0, i, 1, 0, 0 ) ;
         }
-        kOutlineSquare.Position3( 0, new Vector3f( -.2f, -.2f, 1.0f ) );
-        kOutlineSquare.Position3( 1, new Vector3f( m_fX +.2f, -.2f, 1.0f ) );
-        kOutlineSquare.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, 1.0f ) );
-        kOutlineSquare.Position3( 3, new Vector3f( -.2f, m_fY +.2f, 1.0f ) );
+        kOutlineSquare.SetPosition3( 0, -.2f, -.2f, 1.0f ) ;
+        kOutlineSquare.SetPosition3( 1, m_fX +.2f, -.2f, 1.0f ) ;
+        kOutlineSquare.SetPosition3( 2, m_fX +.2f, m_fY +.2f, 1.0f ) ;
+        kOutlineSquare.SetPosition3( 3, -.2f, m_fY +.2f, 1.0f ) ;
         m_kClipEyeInv = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipEyeInv.Local.SetTranslate(m_kTranslate);
         m_kClipEyeInv.AttachEffect( m_spkVertexColor3Shader );
@@ -1338,20 +1447,27 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
         for ( int i = 0; i < 4; i++ )
         {
-            Vector3f kPos = m_akPolyline[iWhich].VBuffer.Position3( i );
             if ( iWhich < 2 )
             {
-                kPos.X(fValue);
+                m_akPolyline[iWhich].VBuffer.SetPosition3(i, 
+                        fValue,
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fY(i),     
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fZ(i));
             }
             else if ( iWhich < 4 )
             {
-                kPos.Y(fValue);
+                m_akPolyline[iWhich].VBuffer.SetPosition3(i, 
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fX(i),     
+                        fValue,
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fZ(i));
             }
             else
             {
-                kPos.Z(fValue * m_fZ);
+                m_akPolyline[iWhich].VBuffer.SetPosition3(i, 
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fX(i),     
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fY(i),
+                        fValue);
             }
-            m_akPolyline[iWhich].VBuffer.Position3( i, kPos );
         }
         m_akPolyline[iWhich].VBuffer.Release();
 
@@ -1445,7 +1561,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             for ( int j = 0; j < 4; j++ )
             {
-                m_akBoundingBox[i].VBuffer.Color3( 0, j, kColor );
+                m_akBoundingBox[i].VBuffer.SetColor3( 0, j, kColor );
             }
             m_akBoundingBox[i].VBuffer.Release();
         }
@@ -1466,15 +1582,15 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             if ( iWhich < 2 )
             {
-                fValue = m_akPolyline[iWhich].VBuffer.Position3( 0 ).X();
+                fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fX( 0 );
             }
             else if ( iWhich < 4 )
             {
-                fValue = m_akPolyline[iWhich].VBuffer.Position3( 0 ).Y();
+                fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fY( 0 );
             }
             else
             {
-                fValue = m_akPolyline[iWhich].VBuffer.Position3( 0 ).Z();
+                fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fZ( 0 );
             }
         }
         else
@@ -1540,10 +1656,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         afEquation[3] = kEyeClipV.W();
         float fZ = kEyeClipV.W() * m_fZ;
 
-        m_kClipEye.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
-        m_kClipEye.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
-        m_kClipEye.VBuffer.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, fZ ) );
-        m_kClipEye.VBuffer.Position3( 3, new Vector3f( -.2f, m_fY +.2f, fZ ) );
+        m_kClipEye.VBuffer.SetPosition3( 0, -.2f, -.2f, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 1, m_fX +.2f, -.2f, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 2, m_fX +.2f, m_fY +.2f, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 3, -.2f, m_fY +.2f, fZ ) ;
         m_kClipEye.VBuffer.Release();
 
         m_kClipEye.UpdateGS();
@@ -1569,10 +1685,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         afEquation[3] = kEyeClipV.W();
         float fZ = kEyeClipV.W() * m_fZ;
 
-        m_kClipEyeInv.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
-        m_kClipEyeInv.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
-        m_kClipEyeInv.VBuffer.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, fZ ) );
-        m_kClipEyeInv.VBuffer.Position3( 3, new Vector3f( -.2f, m_fY +.2f, fZ ) );
+        m_kClipEyeInv.VBuffer.SetPosition3( 0, -.2f, -.2f, fZ ) ;
+        m_kClipEyeInv.VBuffer.SetPosition3( 1, m_fX +.2f, -.2f, fZ ) ;
+        m_kClipEyeInv.VBuffer.SetPosition3( 2, m_fX +.2f, m_fY +.2f, fZ ) ;
+        m_kClipEyeInv.VBuffer.SetPosition3( 3, -.2f, m_fY +.2f, fZ );
         m_kClipEyeInv.VBuffer.Release();
 
         m_kClipEyeInv.UpdateGS();
@@ -1639,7 +1755,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private void doClip() 
     {        
         // update position of the bounding box:
-        m_kClipArb.Local.SetTranslate( m_kTranslate.add( new Vector3f( m_kArbitraryClip.W() * m_fX, 0, 0 ) ) );
+        Vector3f kTranslate = new Vector3f( m_kArbitraryClip.W() * m_fX, 0, 0 );
+        kTranslate.addEquals(m_kTranslate);
+        m_kClipArb.Local.SetTranslate( kTranslate );
 
         // Rotate normal vector:
         Matrix3f kClipRotate = m_kArbRotate.Local.GetRotate();
@@ -1678,7 +1796,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
         for ( int i = 0; i < 4; i++ )
         {
-            m_akPolyline[iWhich].VBuffer.Color3( 0, i, kColor );
+            m_akPolyline[iWhich].VBuffer.SetColor3( 0, i, kColor );
         }
         m_akPolyline[iWhich].VBuffer.Release();
     }
@@ -1694,7 +1812,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kColor.B( (float)(kColor.B()/255.0) );
         for ( int i = 0; i < 4; i++ )
         {
-            m_kClipEye.VBuffer.Color3( 0, i, kColor );
+            m_kClipEye.VBuffer.SetColor3( 0, i, kColor );
         }
         m_kClipEye.VBuffer.Release();
     }
@@ -1710,7 +1828,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kColor.B( (float)(kColor.B()/255.0) );
         for ( int i = 0; i < 4; i++ )
         {
-            m_kClipArb.VBuffer.Color3( 0, i, kColor );
+            m_kClipArb.VBuffer.SetColor3( 0, i, kColor );
         }
         m_kClipArb.VBuffer.Release();
     }
@@ -1726,7 +1844,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kColor.B( (float)(kColor.B()/255.0) );
         for ( int i = 0; i < 4; i++ )
         {
-            m_kClipEyeInv.VBuffer.Color3( 0, i, kColor );
+            m_kClipEyeInv.VBuffer.SetColor3( 0, i, kColor );
         }
         m_kClipEyeInv.VBuffer.Release();
     }
@@ -1783,10 +1901,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
         Matrix3f kIn = new Matrix3f(data[0], data[1], data[2],
                 data[4], data[5], data[6],
                 data[8], data[9], data[10]);
+        kIn.multEquals(kRotate);
+        kRotate.multEquals(kIn);
 
-        Matrix3f kLocal = kRotate.mult(kIn.mult(kRotate));
-
-        m_spkMotionObject.Local.SetMatrix(kLocal);
+        m_spkMotionObject.Local.SetRotateCopy(kRotate);
+        kIn = null;
+        kRotate = null;
         m_spkScene.UpdateGS();
     }
 
@@ -1821,6 +1941,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
             return;
         }
         m_akLights = akGLights;
+
+        if ( m_spkEllipseScene != null )
+        {
+            m_spkEllipseScene.DetachAllLights();
+        }
+
         if ( m_bInit )
         {
             for ( int i = 0; i < akGLights.length; i++ )
@@ -1834,6 +1960,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
                     {
                         Light kLight = akGLights[i].createWMLight();
                         m_pkRenderer.SetLight( i, kLight );
+
+                        if ( m_spkEllipseScene != null )
+                        {
+                            m_spkEllipseScene.AttachLight( kLight );
+                        }
+
                         if ( akGLights[i].isTypeAmbient() )
                         {
                             afType[0] = 0;
@@ -1861,6 +1993,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
                     }
                 }
             }
+        }
+        if ( m_spkEllipseScene != null )
+        {
+            m_spkEllipseScene.UpdateRS();
         }
     }
 
@@ -2059,6 +2195,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
      */
     public void addPolyline( Polyline kLine, int iGroup )
     {
+        if ( kLine == null )
+        {
+            return;
+        }
         if ( m_kTracts == null )
         {
             m_kTracts = new HashMap<Integer,Node>();
@@ -2070,12 +2210,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
 
         int[] aiEllipsoids = new int[kLine.VBuffer.GetVertexQuantity()];
+
         for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
         {
-            Vector3f kPos = kLine.VBuffer.Position3(i);
-            int iX = (int)((kPos.X() +.5f) * m_iDimX);
-            int iY = (int)((kPos.Y() +.5f) * m_iDimY);
-            int iZ = (int)((kPos.Z() +.5f) * m_iDimZ);
+            int iX = (int)((kLine.VBuffer.GetPosition3fX(i) +.5f) * m_iDimX);
+            int iY = (int)((kLine.VBuffer.GetPosition3fY(i) +.5f) * m_iDimY);
+            int iZ = (int)((kLine.VBuffer.GetPosition3fZ(i) +.5f) * m_iDimZ);
             int iIndex = iZ * m_iDimY * m_iDimX + iY * m_iDimX + iX;
 
             if ( m_kEigenVectors != null )
@@ -2123,70 +2263,16 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
 
-    /** Remove all polylines from the display. */
-    public void removeAllPolylines(  )
-    {
-        if ( m_kTracts == null )
-        {
-            return;
-        }
-
-        Iterator kIterator = m_kTracts.keySet().iterator();
-        while ( kIterator.hasNext() )
-        {
-            Integer iKey = (Integer)kIterator.next();
-            Node kTractNode = m_kTracts.get(iKey);
-            for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
-            {
-                Polyline kTract = (Polyline)kTractNode.DetachChildAt(i);
-                if ( kTract != null )
-                {
-                    kTract.DetachAllEffects();
-                    kTract.finalize();
-                }
-            }
-            kTractNode.UpdateGS();
-            kTractNode.UpdateRS();
-            kTractNode.finalize();
-            kTractNode = null;
-        }
-        m_kTracts.clear();
-        m_kTracts = null;
-
-        kIterator = m_kShaders.keySet().iterator();
-        while ( kIterator.hasNext() )
-        {
-            Integer iKey = (Integer)kIterator.next();
-            ShaderEffect kShader = m_kShaders.get(iKey);
-            kShader.finalize();
-            kShader = null;
-        }
-        m_kShaders.clear();
-        m_kShaders = null;
-
-        kIterator = m_kEllipsoids.keySet().iterator();
-        while ( kIterator.hasNext() )
-        {
-            Integer iKey = (Integer)kIterator.next();
-            Vector<int[]> kEllipseVector = m_kEllipsoids.get(iKey);
-            if ( kEllipseVector != null )
-            {
-                kEllipseVector.clear();
-            }
-        }
-        m_kEllipsoids.clear();
-        m_kEllipsoids = null;
-        
-
-        m_bDisplayTract = false;
-    }
-
     /** 
      */
     public void removePolyline( int iGroup )
     {
         Integer kGroup = new Integer(iGroup);
         Node kTractNode = m_kTracts.remove(kGroup);
+        if ( kTractNode == null )
+        {
+            return;
+        }
         for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
         {
             Polyline kTract = (Polyline)kTractNode.DetachChildAt(i);
@@ -2200,6 +2286,11 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kTractNode.UpdateRS();
         kTractNode.finalize();
         kTractNode = null;
+        if ( m_kTracts.size() == 0 )
+        {
+            m_kTracts = null;
+            m_bDisplayTract = false;
+        }
 
         Vector<int[]> kEllipseVector = m_kEllipsoids.remove(kGroup);
         if ( kEllipseVector != null )
@@ -2287,33 +2378,56 @@ implements GLEventListener, KeyListener, MouseMotionListener
     }
 
 
+    /** Sets the DTI Image for displaying the tensors as ellipsoids.
+     * @param kDTIImage.
+     */
     public void setDTIImage( ModelImage kDTIImage )
     {
-        float[] newRes = m_kImageA.getResolutions(0);
-        int[] volExtents = m_kImageA.getExtents();
-        AlgorithmTransform transformFunct = new AlgorithmTransform(kDTIImage, new TransMatrix(4), AlgorithmTransform.NEAREST_NEIGHBOR,
-                                                                   newRes[0], newRes[1], newRes[2],
-                                                                   volExtents[0], volExtents[1], volExtents[2],
-                                                                   false, true, false);
-        transformFunct.setRunningInSeparateThread(false);
-        transformFunct.run();
+        int[] extents = kDTIImage.getExtents();
+        float[] res = kDTIImage.getResolutions(0);
+        float[] newRes = new float[extents.length];
+        int[] volExtents = new int[extents.length];
+        boolean originalVolPowerOfTwo = true;
+        int volSize = 1;
+        for (int i = 0; i < extents.length; i++) {
+            volExtents[i] = JDialogDirectResample.dimPowerOfTwo(extents[i]);
+            volSize *= volExtents[i];
 
-        if (transformFunct.isCompleted() == false) {
-            transformFunct.finalize();
+            if (volExtents[i] != extents[i]) {
+                originalVolPowerOfTwo = false;
+            }
+            newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
+        }
+        
+        ModelImage kDTIImageScaled = kDTIImage;
+        if ( !originalVolPowerOfTwo )
+        {
+            //float[] newRes = m_kImageA.getResolutions(0);
+            //int[] volExtents = m_kImageA.getExtents();
+            AlgorithmTransform transformFunct = new AlgorithmTransform(kDTIImage, new TransMatrix(4),
+                                                                       AlgorithmTransform.NEAREST_NEIGHBOR,
+                                                                       newRes[0], newRes[1], newRes[2],
+                                                                       //res[0], res[1], res[2],
+                                                                       volExtents[0], volExtents[1], volExtents[2],
+                                                                       false, true, false);
+            transformFunct.setRunningInSeparateThread(false);
+            transformFunct.run();
+            
+            if (transformFunct.isCompleted() == false) {
+                transformFunct.finalize();
+                transformFunct = null;
+            }
+            
+            kDTIImageScaled = transformFunct.getTransformedImage();
+            kDTIImageScaled.calcMinMax();
+            
+            if (transformFunct != null) {
+                transformFunct.disposeLocal();
+            }
             transformFunct = null;
         }
-        kDTIImage.disposeLocal();
-        kDTIImage = null;
 
-        kDTIImage = transformFunct.getTransformedImage();
-        kDTIImage.calcMinMax();
-
-        if (transformFunct != null) {
-            transformFunct.disposeLocal();
-        }
-        transformFunct = null;
-
-        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating ellipse transforms", "", 0, m_iLen, true);
+        ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating ellipse transforms", "", 0, 100, true);
         
         m_kEigenVectors =
             new HashMap<Integer,Transformation>();
@@ -2323,9 +2437,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
         float fLambda1;
         float fLambda2;
         float fLambda3;
-        Vector3f kV1;
-        Vector3f kV2;
-        Vector3f kV3;
+        Vector3f kV1 = new Vector3f();
+        Vector3f kV2 = new Vector3f();
+        Vector3f kV3 = new Vector3f();
 
         for ( int i = 0; i < m_iLen; i++ )
         {
@@ -2334,7 +2448,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
             for ( int j = 0; j < 6; j++ )
             {
-                afTensorData[j] = kDTIImage.getFloat(i + j*m_iLen);
+                afTensorData[j] = kDTIImageScaled.getFloat(i + j*m_iLen);
                 if ( afTensorData[j] != 0 )
                 {
                     bAllZero = false;
@@ -2350,9 +2464,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 fLambda1 = kEigenValues.GetData(2,2);
                 fLambda2 = kEigenValues.GetData(1,1);
                 fLambda3 = kEigenValues.GetData(0,0);
-                kV1 = kMatrix.GetColumn(2);
-                kV2 = kMatrix.GetColumn(1);
-                kV3 = kMatrix.GetColumn(0);
+                kMatrix.GetColumn(2,kV1);
+                kMatrix.GetColumn(1,kV2);
+                kMatrix.GetColumn(0,kV3);
 
                 kV1.Normalize();
                 kV2.Normalize();
@@ -2387,20 +2501,71 @@ implements GLEventListener, KeyListener, MouseMotionListener
             }
             if ( (i%(m_iDimX*m_iDimY)) == 0 )
             {
-                kProgressBar.updateValue(i+1);
+                int iValue = (int)(100 * (float)(i+1)/(float)m_iLen);
+                kProgressBar.updateValueImmed( iValue );
             }
         }
         kProgressBar.dispose();
         m_fScaleMax = 1.0f/m_fScaleMax;
 
-        kDTIImage.disposeLocal();
-        kDTIImage = null;
+        Integer kKey;
+        int iIndex, iX, iY, iZ;
+        float fX, fY, fZ;
+        Vector3f kScale;
+        Transformation kTransform;
+        Iterator kIterator = m_kEigenVectors.keySet().iterator();
+        while ( kIterator.hasNext() )
+        {
+            kKey = (Integer)kIterator.next();
+            iIndex = kKey.intValue();
+            iX = iIndex % m_iDimX;
+            iIndex -= iX;
+            iIndex /= m_iDimX;
+
+            iY = iIndex % m_iDimY;
+            iIndex -= iY;
+            iIndex /= m_iDimY;
+
+            iZ = iIndex;
+
+            // reset iIndex:
+                iIndex = kKey.intValue();
+
+            fX = (float)(iX)/(float)(m_iDimX);
+            fY = (float)(iY)/(float)(m_iDimY);
+            fZ = (float)(iZ)/(float)(m_iDimZ);
+
+
+            m_kTScale.MakeIdentity();
+            m_kTEllipse.MakeIdentity();
+
+            kTransform = m_kEigenVectors.get(kKey);
+
+            kScale = m_kTScale.GetScale();
+            kScale.scaleEquals( m_fScaleMax * m_fScale * 2f);
+            kScale.multEquals( kTransform.GetScale() );
+            m_kTScale.SetScale(kScale);
+
+            m_kTEllipse.SetTranslate( fX - .5f, fY - .5f, fZ - .5f );
+            m_kTEllipse.SetMatrixCopy( kTransform.GetMatrix() );
+
+
+            kTransform.Product( m_kTEllipse, m_kTScale );
+        }
+        
+        
+        if ( !originalVolPowerOfTwo )
+        {
+            kDTIImageScaled.disposeLocal();
+            kDTIImageScaled = null;
+        }
 
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
 
         StandardMesh kSM = new StandardMesh(kAttr);
-        m_kSphere = kSM.Sphere(10,10,1f);
+        m_kSphere = kSM.Sphere(64,64,1f);
 
         m_kAllEllipsoidsShader = new MaterialEffect( );
         m_kEllipseMaterial = new MaterialState();
@@ -2410,6 +2575,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_kEllipseMaterial.Specular = new ColorRGB(0.797357f,0.723991f,0.208006f);
         m_kEllipseMaterial.Shininess = 83.2f;
         m_kColorEllipse = new ColorRGB(ColorRGB.BLACK);
+
+        m_kSphere.AttachGlobalState(m_kEllipseMaterial);
+
+        CreateLights ();
     }
 
     public void setDisplayEllipsoids( boolean bDisplay )
@@ -2421,36 +2590,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
     public void setDisplayAllEllipsoids( boolean bDisplay, int iMod, boolean bUseConstantColor, ColorRGB kColor )
     {
         m_bDisplayAllEllipsoids = bDisplay;
-        //m_iEllipsoidMod = iMod;
-
-        Program pkProgram = m_kAllEllipsoidsShader.GetVProgram(0);
-        if ( pkProgram == null )
-        {
-            return;
-        }
-        if ( !bUseConstantColor || (kColor == null) )
-        {
-            if ( pkProgram.GetUC("UseConstantColor") != null )
-            {
-                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {0,0,0,0});
-            }
-        }
-        else if ( bUseConstantColor && (kColor != null) )
-        {
-            if ( pkProgram.GetUC("ConstantColor") != null )
-            {
-                pkProgram.GetUC("ConstantColor").SetDataSource(new float[] { kColor.R(), kColor.G(), kColor.B(), 1f } );
-            }
-            if ( pkProgram.GetUC("UseConstantColor") != null )
-            {
-                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {1,0,0,0});
-            }
-        }
     }
 
     public void setEllipseMod( int iMod )
     {
         m_iEllipsoidMod = iMod;
+        m_bFirst = true;
     }
 
 
@@ -2460,37 +2605,26 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             return;
         }
+        if ( m_bUpdateEffects )
+        {
+            UpdateEffectsOnIdle();
+        }
+
         
         m_spkAlpha.BlendEnabled = true;
         int iCount = 0;
-        int iIndex, iX, iY, iZ;
-        float fX, fY, fZ;
+        int iIndex;
         Integer kKey;
         float fR, fG, fB;
-        Vector3f kScale;
         TriMesh kEllipse;
-        Transformation kTransform;
-                
+        int iDisplayed = 0;
         Iterator kIterator = m_kEigenVectors.keySet().iterator();
         while ( kIterator.hasNext() )
         {
             kKey = (Integer)kIterator.next();
             if ( (iCount%m_iEllipsoidMod) == 0 )
             {                           
-                iIndex = kKey.intValue();
-                iX = iIndex % m_iDimX;
-                iIndex -= iX;
-                iIndex /= m_iDimX;
-                            
-                iY = iIndex % m_iDimY;
-                iIndex -= iY;
-                iIndex /= m_iDimY;
-                            
-                iZ = iIndex;
-                            
-                // reset iIndex:
-                iIndex = kKey.intValue();
-                            
+                iIndex = kKey.intValue();                          
                 if ( m_kImageA.isColorImage() )
                 {
                     fR = m_kImageA.getFloat( iIndex*4 + 1 )/255.0f;
@@ -2508,44 +2642,29 @@ implements GLEventListener, KeyListener, MouseMotionListener
                     m_kColorEllipse.B(fR);
                 }
 
-                fX = (float)(iX)/(float)(m_iDimX);
-                fY = (float)(iY)/(float)(m_iDimY);
-                fZ = (float)(iZ)/(float)(m_iDimZ);
-
-
-                m_kTScale.MakeIdentity();
-                m_kTEllipse.MakeIdentity();
-                m_kTRotate.MakeIdentity();
-
-                kTransform = m_kEigenVectors.get(kKey);
-            
-                kScale = m_kTScale.GetScale();
-                kScale.scaleEquals( m_fScaleMax * m_fScale * 2f);
-                kScale.multEquals( kTransform.GetScale() );
-                m_kTScale.SetScale(kScale);
-                            
-                m_kTEllipse.SetTranslate( fX - .5f, fY - .5f, fZ - .5f );
-                m_kTEllipse.SetMatrixCopy( kTransform.GetMatrix() );
-
-                m_kTRotate.SetRotateCopy(m_spkScene.Local.GetRotate());
-                m_kTRotate.SetScale( m_fX, m_fY, m_fZ );
-
                 kEllipse = m_kSphere;
-                kEllipse.Local.MakeIdentity();
-                kEllipse.Local.Product( m_kTEllipse, m_kTScale );
-                kEllipse.Local.Product( m_kTRotate, kEllipse.Local );
-                            
-                kEllipse.DetachAllEffects();
-                            
+                kEllipse.Local = m_kEigenVectors.get(kKey);
+                
+                m_kEllipseMaterial.Ambient = m_kColorEllipse;
                 m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-                kEllipse.AttachGlobalState(m_kEllipseMaterial);
-                kEllipse.AttachEffect( m_kAllEllipsoidsShader );
-                            
-                kEllipse.UpdateRS();
-                kEllipse.UpdateGS();
+                m_kEllipseMaterial.Specular = m_kColorEllipse;
+
+
+                m_spkEllipseScene.SetChild(0,kEllipse);
+                m_spkEllipseScene.UpdateGS();
+                m_spkEllipseScene.DetachChild(kEllipse);
+
+                //m_kCuller.ComputeVisibleSet(kEllipse);
+                //m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 m_pkRenderer.Draw(kEllipse);
+                iDisplayed++;
             }
             iCount++;
+        }
+        if ( m_bFirst )
+        {
+            m_bFirst = false;
+            System.err.println(iDisplayed * m_kSphere.GetTriangleQuantity ());
         }
     }
 
@@ -2651,10 +2770,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
                         kEllipse.Local.Product( m_kTEllipse, m_kTScale );
                         kEllipse.Local.Product( m_kTRotate, kEllipse.Local );
                         
-                        kEllipse.DetachAllEffects();
-                        
                         m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-                        kEllipse.AttachGlobalState(m_kEllipseMaterial);
+                        
+                        kEllipse.DetachAllEffects();
                         kEllipse.AttachEffect( m_kAllEllipsoidsShader );
                         
                         kEllipse.UpdateRS();
@@ -2695,6 +2813,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 kTract.UpdateGS();
                 kTract.UpdateRS();
                 m_pkRenderer.Draw(kTract);
+                kTract.DetachEffect( kShader );
             }
         }
     }
@@ -2844,4 +2963,181 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private int m_iLen;
     private ColorRGB m_kColorEllipse;
 
+
+
+    private void CreateLights ()
+    {
+        m_spkEllipseScene = new Node();
+        m_spkEllipseScene.Local.SetScale( m_fX, m_fY, m_fZ );
+        //m_spkEllipseScene.AttachChild(m_kSphere);
+        //m_spkEllipseScene.UpdateGS();
+        //m_spkEllipseScene.UpdateRS();
+
+
+        int i;
+        for (i = 0; i < 8; i++)
+        {
+            m_aspkALight[i] = new Light(Light.LightType.LT_AMBIENT);
+            m_aspkDLight[i] = new Light(Light.LightType.LT_DIRECTIONAL);
+            m_aspkPLight[i] = new Light(Light.LightType.LT_POINT);
+            m_aspkSLight[i] = new Light(Light.LightType.LT_SPOT);
+        }
+
+        // ambient lights
+        float fValue = 0.75f;
+        m_aspkALight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
+        m_aspkALight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
+        m_aspkALight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
+        m_aspkALight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
+        m_aspkALight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
+        m_aspkALight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
+        m_aspkALight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
+        m_aspkALight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
+
+        // directional lights
+        fValue = (float)-Math.sqrt(1.0f/3.0f);
+        m_aspkDLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
+        m_aspkDLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
+        m_aspkDLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
+        m_aspkDLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
+        m_aspkDLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
+        m_aspkDLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
+        m_aspkDLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
+        m_aspkDLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
+        m_aspkDLight[0].DVector = new Vector3f(+fValue,+fValue,+fValue);
+        m_aspkDLight[1].DVector = new Vector3f(+fValue,+fValue,-fValue);
+        m_aspkDLight[2].DVector = new Vector3f(+fValue,-fValue,+fValue);
+        m_aspkDLight[3].DVector = new Vector3f(+fValue,-fValue,-fValue);
+        m_aspkDLight[4].DVector = new Vector3f(-fValue,+fValue,+fValue);
+        m_aspkDLight[5].DVector = new Vector3f(-fValue,+fValue,-fValue);
+        m_aspkDLight[6].DVector = new Vector3f(-fValue,-fValue,+fValue);
+        m_aspkDLight[7].DVector = new Vector3f(-fValue,-fValue,-fValue);
+        for (i = 0; i < 8; i++)
+        {
+            m_aspkDLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
+            m_aspkDLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
+        }
+
+        // point lights
+        fValue = 0.1f;
+        m_aspkPLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
+        m_aspkPLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
+        m_aspkPLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
+        m_aspkPLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
+        m_aspkPLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
+        m_aspkPLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
+        m_aspkPLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
+        m_aspkPLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
+        fValue = 4.0f;
+        m_aspkPLight[0].Position = new Vector3f(+fValue,+fValue,+fValue);
+        m_aspkPLight[1].Position = new Vector3f(+fValue,+fValue,-fValue);
+        m_aspkPLight[2].Position = new Vector3f(+fValue,-fValue,+fValue);
+        m_aspkPLight[3].Position = new Vector3f(+fValue,-fValue,-fValue);
+        m_aspkPLight[4].Position = new Vector3f(-fValue,+fValue,+fValue);
+        m_aspkPLight[5].Position = new Vector3f(-fValue,+fValue,-fValue);
+        m_aspkPLight[6].Position = new Vector3f(-fValue,-fValue,+fValue);
+        m_aspkPLight[7].Position = new Vector3f(-fValue,-fValue,-fValue);
+        for (i = 0; i < 8; i++)
+        {
+            m_aspkPLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
+            m_aspkPLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
+        }
+
+        // spot lights
+        fValue = 0.1f;
+        m_aspkSLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
+        m_aspkSLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
+        m_aspkSLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
+        m_aspkSLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
+        m_aspkSLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
+        m_aspkSLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
+        m_aspkSLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
+        m_aspkSLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
+        fValue = 4.0f;
+        m_aspkSLight[0].Position = new Vector3f(+fValue,+fValue,+fValue);
+        m_aspkSLight[1].Position = new Vector3f(+fValue,+fValue,-fValue);
+        m_aspkSLight[2].Position = new Vector3f(+fValue,-fValue,+fValue);
+        m_aspkSLight[3].Position = new Vector3f(+fValue,-fValue,-fValue);
+        m_aspkSLight[4].Position = new Vector3f(-fValue,+fValue,+fValue);
+        m_aspkSLight[5].Position = new Vector3f(-fValue,+fValue,-fValue);
+        m_aspkSLight[6].Position = new Vector3f(-fValue,-fValue,+fValue);
+        m_aspkSLight[7].Position = new Vector3f(-fValue,-fValue,-fValue);
+        fValue = (float)-Math.sqrt(1.0f/3.0f);
+        m_aspkSLight[0].DVector = new Vector3f(+fValue,+fValue,+fValue);
+        m_aspkSLight[1].DVector = new Vector3f(+fValue,+fValue,-fValue);
+        m_aspkSLight[2].DVector = new Vector3f(+fValue,-fValue,+fValue);
+        m_aspkSLight[3].DVector = new Vector3f(+fValue,-fValue,-fValue);
+        m_aspkSLight[4].DVector = new Vector3f(-fValue,+fValue,+fValue);
+        m_aspkSLight[5].DVector = new Vector3f(-fValue,+fValue,-fValue);
+        m_aspkSLight[6].DVector = new Vector3f(-fValue,-fValue,+fValue);
+        m_aspkSLight[7].DVector = new Vector3f(-fValue,-fValue,-fValue);
+        for (i = 0; i < 8; i++)
+        {
+            m_aspkSLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
+            m_aspkSLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
+            m_aspkSLight[i].Exponent = 1.0f;
+            m_aspkSLight[i].SetAngle((float)(0.125f*Math.PI));
+        }
+    }
+
+    private void UpdateEffects ()
+    {
+        System.err.println( "UpdateEffects" );
+        m_bUpdateEffects = true;
+    }
+
+    private void UpdateEffectsOnIdle ()
+    {
+        m_bUpdateEffects = false;
+        int i;
+
+        if (m_iLightQuantity > 0)
+        {
+            //m_spkEllipseScene.DetachAllLights();
+            m_kSphere.DetachAllLights();
+            for (i = 0; i < m_iAQuantity; i++)
+            {
+                //System.err.println("Ambient");
+                //m_spkEllipseScene.AttachLight(m_aspkALight[i]);
+                m_kSphere.AttachLight(m_aspkALight[i]);
+            }
+            for (i = 0; i < m_iDQuantity; i++)
+            {
+                //System.err.println("Directional");
+                //m_spkEllipseScene.AttachLight(m_aspkDLight[i]);
+                m_kSphere.AttachLight(m_aspkDLight[i]);
+            }
+            for (i = 0; i < m_iPQuantity; i++)
+            {
+                //System.err.println("Point");
+                //m_spkEllipseScene.AttachLight(m_aspkPLight[i]);
+                m_kSphere.AttachLight(m_aspkPLight[i]);
+            }
+            for (i = 0; i < m_iSQuantity; i++)
+            {
+                //System.err.println("Spot");
+                //m_spkEllipseScene.AttachLight(m_aspkSLight[i]);
+                m_kSphere.AttachLight(m_aspkSLight[i]);
+            }
+        }
+
+        //m_spkEllipseScene.UpdateRS();
+        m_kSphere.UpdateRS();
+    }
+
+
+    private int m_iAQuantity = 0, m_iDQuantity = 0, m_iPQuantity = 0, m_iSQuantity = 0;
+    private Light[] m_aspkALight = new Light[8];
+    private Light[] m_aspkDLight = new Light[8];
+    private Light[] m_aspkPLight = new Light[8];
+    private Light[] m_aspkSLight = new Light[8];
+
+    private int m_iLightQuantity = 0;
+
+    private Node m_spkEllipseScene = null;
+    private boolean m_bUpdateEffects = true;
+
+    private boolean m_bTestFrameRate = false;
+    private Matrix3f m_kRotate = new Matrix3f();
+    private boolean m_bFirst = true;
 }

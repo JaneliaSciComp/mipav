@@ -153,7 +153,8 @@ public class RipplingOcean extends JavaApplication3D
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.5f);
         kCDir.Normalize();
         Vector3f kCUp = new Vector3f(0.0f,kCDir.Z(),-kCDir.Y());
-        Vector3f kCRight = Vector3f.UNIT_X.neg();
+        Vector3f kCRight = new Vector3f(Vector3f.UNIT_X);
+        kCRight.negEquals();
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();

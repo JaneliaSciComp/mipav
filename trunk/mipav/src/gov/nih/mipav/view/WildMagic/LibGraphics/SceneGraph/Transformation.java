@@ -116,6 +116,7 @@ public class Transformation
     public void SetRotate (Matrix3f rkRotate)
     {
         m_kMatrix = rkRotate;
+        m_bUpdateInverse = true;
         m_bIsIdentity = false;
         m_bIsRSMatrix = true;
     }
@@ -148,6 +149,7 @@ public class Transformation
     public void SetMatrix (Matrix3f rkMatrix)
     {
         m_kMatrix = rkMatrix;
+        m_bUpdateInverse = true;
         m_bIsIdentity = false;
         m_bIsRSMatrix = false;
         m_bIsUniformScale = false;
@@ -334,15 +336,54 @@ public class Transformation
             Vector3f kOutput = new Vector3f(m_kScale.X()*rkInput.X(),m_kScale.Y()*rkInput.Y(),
                                             m_kScale.Z()*rkInput.Z());
             //kOutput = m_kMatrix*kOutput + m_kTranslate;
-            kOutput = m_kMatrix.mult(kOutput).add( m_kTranslate );
+            m_kMatrix.mult(kOutput,kOutput);
+            kOutput.addEquals(m_kTranslate);
+            
+            //kOutput = m_kMatrix.mult(kOutput).add( m_kTranslate );
             return kOutput;
         }
 
         // Y = M*X + T
-        Vector3f kOutput = m_kMatrix.mult(rkInput).add( m_kTranslate );
+        //Vector3f kOutput = m_kMatrix.mult(rkInput).add( m_kTranslate );
+        Vector3f kOutput = m_kMatrix.mult(rkInput);
+        kOutput.addEquals( m_kTranslate );
         return kOutput;
     }
 
+    /** Compute Y = M*X+T where X is the input and Y is the output.
+     * @param rkInput, input vector X.
+     * @return output vector Y.
+     */
+    public void ApplyForward (Vector3f rkInput, Vector3f kOutput) 
+    {
+        if (m_bIsIdentity)
+        {
+            kOutput.SetData(rkInput);
+            // Y = X
+            return;// rkInput;
+        }
+
+        if (m_bIsRSMatrix)
+        {
+            // Y = R*S*X + T
+            kOutput.SetData(m_kScale.X()*rkInput.X(),m_kScale.Y()*rkInput.Y(),
+                                            m_kScale.Z()*rkInput.Z());
+            //kOutput = m_kMatrix*kOutput + m_kTranslate;
+            m_kMatrix.mult(kOutput,kOutput);
+            kOutput.addEquals(m_kTranslate);
+            
+            //kOutput = m_kMatrix.mult(kOutput).add( m_kTranslate );
+            return;// kOutput;
+        }
+
+        // Y = M*X + T
+        //Vector3f kOutput = m_kMatrix.mult(rkInput).add( m_kTranslate );
+        kOutput.SetData(rkInput);
+        m_kMatrix.mult(kOutput,kOutput);;
+        kOutput.addEquals( m_kTranslate );
+        return;// kOutput;
+    }
+    
     /** Compute X = M^{-1}*(Y-T) where Y is the input and X is the output.
      * @param rkInput, input vector Y.
      * @return output vector X.
@@ -355,11 +396,12 @@ public class Transformation
             return rkInput;
         }
 
-        Vector3f kOutput = rkInput.sub( m_kTranslate );
+        Vector3f kOutput = new Vector3f();
+        rkInput.sub( m_kTranslate, kOutput );
         if (m_bIsRSMatrix)
         {
             // X = S^{-1}*R^t*(Y - T)
-            kOutput = Matrix3f.mult(kOutput,m_kMatrix);
+            Matrix3f.mult(kOutput,m_kMatrix,kOutput);
             if (m_bIsUniformScale)
             {
                 kOutput.divEquals( GetUniformScale() );
@@ -385,12 +427,73 @@ public class Transformation
         else
         {
             // X = M^{-1}*(Y - T)
-            kOutput = m_kMatrix.Inverse().mult(kOutput);
+            if ( m_bUpdateInverse )
+            {
+                m_bUpdateInverse = false;
+                m_kMatrixInverse = m_kMatrix.Inverse();
+            }
+            kOutput = m_kMatrixInverse.mult(kOutput);
         }
 
         return kOutput;
     }
 
+    /** Compute X = M^{-1}*(Y-T) where Y is the input and X is the output.
+     * @param rkInput, input vector Y.
+     * @return output vector X.
+     */
+    public void ApplyInverse (Vector3f rkInput, Vector3f kOutput)
+    {
+        if (m_bIsIdentity)
+        {
+            kOutput.SetData(rkInput);
+            // X = Y
+            return;// rkInput;
+        }
+
+        kOutput.SetData(rkInput);
+        kOutput.subEquals( m_kTranslate );
+        if (m_bIsRSMatrix)
+        {
+            // X = S^{-1}*R^t*(Y - T)
+            Matrix3f.multEquals(kOutput,m_kMatrix);
+            if (m_bIsUniformScale)
+            {
+                kOutput.divEquals( GetUniformScale() );
+            }
+            else
+            {
+                // The direct inverse scaling is
+                //   kOutput.X() /= m_kScale.X();
+                //   kOutput.Y() /= m_kScale.Y();
+                //   kOutput.Z() /= m_kScale.Z();
+                // When division is much more expensive than multiplication,
+                // three divisions are replaced by one division and ten
+                // multiplications.
+                float fSXY = m_kScale.X()*m_kScale.Y();
+                float fSXZ = m_kScale.X()*m_kScale.Z();
+                float fSYZ = m_kScale.Y()*m_kScale.Z();
+                float fInvDet = 1.0f/(fSXY*m_kScale.Z());
+                kOutput.X( kOutput.X()* fInvDet*fSYZ );
+                kOutput.Y( kOutput.Y()* fInvDet*fSXZ );
+                kOutput.Z( kOutput.Z()* fInvDet*fSXY );
+            }
+        }
+        else
+        {
+            // X = M^{-1}*(Y - T)
+            if ( m_bUpdateInverse )
+            {
+                m_bUpdateInverse = false;
+                m_kMatrixInverse = m_kMatrix.Inverse();
+            }
+            m_kMatrixInverse.mult(kOutput,kOutput);
+        }
+
+        return;// kOutput;
+    }
+
+    
     /** Inverse-transform the input vector V0.  The output vector is
      * V1 = M^{-1}*V0.
      * @param rkInput, input vector V0.
@@ -408,7 +511,7 @@ public class Transformation
         if (m_bIsRSMatrix)
         {
             // X = S^{-1}*R^t*Y
-            kOutput = Matrix3f.mult(rkInput,m_kMatrix);
+            Matrix3f.mult(rkInput,m_kMatrix,kOutput);
             if (m_bIsUniformScale)
             {
                 //kOutput /= GetUniformScale();
@@ -435,7 +538,12 @@ public class Transformation
         else
         {
             // X = M^{-1}*Y
-            kOutput = m_kMatrix.Inverse().mult(rkInput);
+            if ( m_bUpdateInverse )
+            {
+                m_bUpdateInverse = false;
+                m_kMatrixInverse = m_kMatrix.Inverse();
+            }
+            kOutput = m_kMatrixInverse.mult(rkInput);
         }
 
         return kOutput;
@@ -468,13 +576,14 @@ public class Transformation
             // C1' = C1/|N1|.
             if (m_bIsUniformScale)
             {
-                kOutput.Normal = m_kMatrix.mult(rkInput.Normal);
+                kOutput.Normal.SetData(rkInput.Normal);
+                m_kMatrix.mult(kOutput.Normal,kOutput.Normal);
                 kOutput.Constant = GetUniformScale()*rkInput.Constant +
                     kOutput.Normal.Dot(m_kTranslate);
                 return kOutput;
             }
 
-            kOutput.Normal = rkInput.Normal;
+            kOutput.Normal.SetData(rkInput.Normal);
 
             // The direct inverse scaling is
             //   kOutput.X() /= m_kScale.X();
@@ -490,7 +599,7 @@ public class Transformation
             kOutput.Normal.X( kOutput.Normal.X()* fInvDet*fSYZ );
             kOutput.Normal.Y( kOutput.Normal.Y()* fInvDet*fSXZ );
             kOutput.Normal.Z( kOutput.Normal.Z()* fInvDet*fSXY );
-            kOutput.Normal = m_kMatrix.mult(kOutput.Normal);
+            kOutput.Normal.SetData(m_kMatrix.mult(kOutput.Normal));
         }
         else
         {
@@ -501,8 +610,12 @@ public class Transformation
             // Dot(N1,Y) = C1 where N1 = M^{-T}*N0/|M^{-1}*N0| (superscript -T
             // denotes the transpose of the inverse) and
             // C1 = C0/|M^{-1}*N0|+Dot(N1,T).
-            Matrix3f kInverse = m_kMatrix.Inverse();
-            kOutput.Normal = Matrix3f.mult(rkInput.Normal,kInverse);
+            if ( m_bUpdateInverse )
+            {
+                m_bUpdateInverse = false;
+                m_kMatrixInverse = m_kMatrix.Inverse();
+            }
+            Matrix3f.mult(rkInput.Normal,m_kMatrixInverse,kOutput.Normal);
         }
 
         float fInvLength = 1.0f/kOutput.Normal.Length();
@@ -523,6 +636,7 @@ public class Transformation
         if (rkA.IsIdentity())
         {
             m_kMatrix = rkB.m_kMatrix;
+            m_kMatrixInverse = rkB.m_kMatrixInverse;
             m_kTranslate = rkB.m_kTranslate;
             m_kScale = rkB.m_kScale;
             m_bIsIdentity = rkB.m_bIsIdentity;
@@ -534,6 +648,7 @@ public class Transformation
         if (rkB.IsIdentity())
         {
             m_kMatrix = rkA.m_kMatrix;
+            m_kMatrixInverse = rkA.m_kMatrixInverse;
             m_kTranslate = rkA.m_kTranslate;
             m_kScale = rkA.m_kScale;
             m_bIsIdentity = rkA.m_bIsIdentity;
@@ -546,9 +661,19 @@ public class Transformation
         {
             if (rkA.m_bIsUniformScale)
             {
-                SetRotate(rkA.m_kMatrix.mult(rkB.m_kMatrix));
-
-                SetTranslate(((rkA.m_kMatrix.mult(rkB.m_kTranslate)).add(rkA.m_kTranslate)).scale(rkA.GetUniformScale()));
+                Matrix3f kTempM = new Matrix3f(rkA.m_kMatrix);
+                kTempM.multEquals(rkB.m_kMatrix);
+                SetRotate(kTempM);
+                //SetRotate(rkA.m_kMatrix.mult(rkB.m_kMatrix));
+                //GetRotate().multEquals(rkB.m_kMatrix);
+                
+                //SetTranslate(((rkA.m_kMatrix.mult(rkB.m_kTranslate)).add(rkA.m_kTranslate)).scale(rkA.GetUniformScale()));
+                Vector3f kTemp = new Vector3f(rkB.m_kTranslate);
+                rkA.m_kMatrix.mult(kTemp,kTemp);
+                kTemp.addEquals(rkA.m_kTranslate);
+                kTemp.scaleEquals(rkA.GetUniformScale());
+                SetTranslate(kTemp);
+                //kTemp = null;
 
                 if (rkB.IsUniformScale())
                 {
@@ -556,7 +681,9 @@ public class Transformation
                 }
                 else
                 {
-                    SetScale((rkB.GetScale()).scale(rkA.GetUniformScale()));
+                    m_kScale.SetData(rkB.GetScale());
+                    m_kScale.scaleEquals(rkA.GetUniformScale());
+                    SetScale(m_kScale);
                 }
 
                 return;
@@ -564,16 +691,27 @@ public class Transformation
         }
 
         // In all remaining cases, the matrix cannot be written as R*S*X+T.
-        Matrix3f kMA = (rkA.m_bIsRSMatrix ?
-                        rkA.m_kMatrix.TimesDiagonal(rkA.m_kScale) :
-                        rkA.m_kMatrix);
+        m_kMatrix.SetData(rkA.m_kMatrix);
+        if (rkA.m_bIsRSMatrix)
+        {
+            m_kMatrix.TimesDiagonalEquals(rkA.m_kScale);
+        }
+        Matrix3f kMB = new Matrix3f(rkB.m_kMatrix);
+        if (rkB.m_bIsRSMatrix)
+        {
+            kMB.TimesDiagonalEquals(rkB.m_kScale);
+        }
 
-        Matrix3f kMB = (rkB.m_bIsRSMatrix ?
-                        rkB.m_kMatrix.TimesDiagonal(rkB.m_kScale) :
-                        rkB.m_kMatrix);
-
-        SetMatrix(kMA.mult(kMB));
-        SetTranslate((kMA.mult(rkB.m_kTranslate).add(rkA.m_kTranslate)));
+        m_kTranslate.SetData(rkB.m_kTranslate);
+        m_kMatrix.mult(m_kTranslate, m_kTranslate);
+        m_kTranslate.addEquals(rkA.m_kTranslate);
+        
+        m_kMatrix.multEquals(kMB);
+        m_bIsIdentity = false;
+        m_bIsRSMatrix = false;
+        m_bIsUniformScale = false;
+        
+        kMB = null;
     }
 
 
@@ -657,6 +795,7 @@ public class Transformation
 
     /** Transformation matrix. */
     private Matrix3f m_kMatrix = new Matrix3f(Matrix3f.IDENTITY);
+    private Matrix3f m_kMatrixInverse = new Matrix3f(Matrix3f.IDENTITY);
     /** Translation vector. */
     private Vector3f m_kTranslate = new Vector3f(Vector3f.ZERO);
     /** Scale vector. */
@@ -667,4 +806,7 @@ public class Transformation
     private boolean m_bIsRSMatrix = true;
     /** True if Transformation is a uniform scale. */
     private boolean m_bIsUniformScale = true;
+    /** True is the matrix inverse needs to be updated. */
+    private boolean m_bUpdateInverse = false;
+
 }

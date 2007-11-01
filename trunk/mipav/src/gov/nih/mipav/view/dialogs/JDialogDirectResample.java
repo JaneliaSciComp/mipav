@@ -625,7 +625,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
      *
      * @return  value dimension value in power of 2.
      */
-    private int dimPowerOfTwo(int dim) {
+    public static int dimPowerOfTwo(int dim) {
 
         // 128^3 x 4 is 8MB
         // 256^3 x 4 is 64MB

@@ -106,6 +106,16 @@ public class Vector2f
         m_afTuple[1] = fValue;
     }
 
+    /** construction
+     * @param fX, x-value
+     * @param fY, y-value
+     */
+    public final void SetData (float fX, float fY)
+    {
+        m_afTuple[0] = fX;
+        m_afTuple[1] = fY;
+    }
+    
     /** Add the input vector to this, return result, this vector is
      * unchanged:
      * @param rkV, input vector to add to this

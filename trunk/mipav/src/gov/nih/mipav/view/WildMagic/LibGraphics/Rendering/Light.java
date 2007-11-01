@@ -245,8 +245,10 @@ public class Light extends GraphicsObject
         {
             return false;
         }
-
-        fTest = DVector.Dot(UVector.Cross(RVector));
+        Vector3f kCross = new Vector3f();
+        UVector.Cross(RVector, kCross);
+        fTest = DVector.Dot(kCross);
+        kCross = null;
         return Math.abs(1.0f - fTest) <= Mathf.ZERO_TOLERANCE;
     }
 

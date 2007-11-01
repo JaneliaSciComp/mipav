@@ -417,13 +417,15 @@ public abstract class JavaApplication3DWM extends JavaApplication
         return bMoved;
     }
 
+
     /** 
      * Moves the camera forward.
      */
     protected void MoveForward ()
     {
-        Vector3f kLoc = m_spkCamera.GetLocation();
-        kLoc.addEquals( m_akWorldAxis[0].scale(m_fTrnSpeed) );
+        Vector3f kLoc = new Vector3f(m_akWorldAxis[0]);
+        kLoc.scaleEquals(m_fTrnSpeed);
+        kLoc.addEquals( m_spkCamera.GetLocation() );
         m_spkCamera.SetLocation(kLoc);
     }
 
@@ -432,8 +434,9 @@ public abstract class JavaApplication3DWM extends JavaApplication
      */
     protected void MoveBackward ()
     {
-        Vector3f kLoc = m_spkCamera.GetLocation();
-        kLoc.subEquals( m_akWorldAxis[0].scale(m_fTrnSpeed) );
+        Vector3f kLoc = new Vector3f(m_akWorldAxis[0]);
+        kLoc.scaleEquals(m_fTrnSpeed);
+        m_spkCamera.GetLocation().sub( kLoc, kLoc );
         m_spkCamera.SetLocation(kLoc);
     }
 
@@ -442,8 +445,9 @@ public abstract class JavaApplication3DWM extends JavaApplication
      */
     protected void MoveUp ()
     {
-        Vector3f kLoc = m_spkCamera.GetLocation();
-        kLoc.addEquals( m_akWorldAxis[1].scale(m_fTrnSpeed));
+        Vector3f kLoc = new Vector3f(m_akWorldAxis[1]); 
+        kLoc.scaleEquals(m_fTrnSpeed);
+        kLoc.addEquals(m_spkCamera.GetLocation());
         m_spkCamera.SetLocation(kLoc);
     }
 
@@ -452,8 +456,9 @@ public abstract class JavaApplication3DWM extends JavaApplication
      */
     protected void MoveDown ()
     {
-        Vector3f kLoc = m_spkCamera.GetLocation();
-        kLoc.subEquals( m_akWorldAxis[1].scale(m_fTrnSpeed) );
+        Vector3f kLoc = new Vector3f(m_akWorldAxis[1]);
+        kLoc.scaleEquals(m_fTrnSpeed);
+        m_spkCamera.GetLocation().sub( kLoc, kLoc );
         m_spkCamera.SetLocation(kLoc);
     }
 
@@ -462,8 +467,9 @@ public abstract class JavaApplication3DWM extends JavaApplication
      */
     protected void MoveRight ()
     {
-        Vector3f kLoc = m_spkCamera.GetLocation();
-        kLoc.addEquals( m_akWorldAxis[2].scale(m_fTrnSpeed));
+        Vector3f kLoc = new Vector3f(m_akWorldAxis[2]);
+        kLoc.scaleEquals(m_fTrnSpeed);
+        kLoc.addEquals(m_spkCamera.GetLocation());
         m_spkCamera.SetLocation(kLoc);
     }
 
@@ -472,8 +478,9 @@ public abstract class JavaApplication3DWM extends JavaApplication
      */
     protected void MoveLeft ()
     {
-        Vector3f kLoc = m_spkCamera.GetLocation();
-        kLoc.subEquals( m_akWorldAxis[2].scale(m_fTrnSpeed) );
+        Vector3f kLoc = new Vector3f(m_akWorldAxis[2]);
+        kLoc.scaleEquals(m_fTrnSpeed);
+        m_spkCamera.GetLocation().sub( kLoc, kLoc );
         m_spkCamera.SetLocation(kLoc);
     }
 
@@ -617,7 +624,7 @@ public abstract class JavaApplication3DWM extends JavaApplication
 
         // Check if the object has been moved by the function keys.
         Spatial pkParent = m_spkMotionObject.GetParent();
-        Vector3f kAxis;
+        Vector3f kAxis = new Vector3f(Vector3f.UNIT_X);
         float fAngle;
         Matrix3f kRot, kIncr = new Matrix3f();
 
@@ -628,11 +635,7 @@ public abstract class JavaApplication3DWM extends JavaApplication
             fAngle = m_iDoRoll*m_fRotSpeed;
             if (pkParent != null)
             {
-                kAxis = pkParent.World.GetRotate().GetColumn(0);
-            }
-            else
-            {
-                kAxis = Vector3f.UNIT_X;
+                pkParent.World.GetRotate().GetColumn(0, kAxis);
             }
 
             kIncr.FromAxisAngle(kAxis,fAngle);
@@ -641,9 +644,10 @@ public abstract class JavaApplication3DWM extends JavaApplication
             m_spkMotionObject.Local.SetRotate(kRot);
             kIncr.finalize();
             kIncr = null;
+            kAxis = null;
             return true;
         }
-
+        kAxis.SetData(Vector3f.UNIT_Y);
         if (m_iDoYaw != 0)
         {
             kRot = m_spkMotionObject.Local.GetRotate();
@@ -651,11 +655,7 @@ public abstract class JavaApplication3DWM extends JavaApplication
             fAngle = m_iDoYaw*m_fRotSpeed;
             if (pkParent != null)
             {
-                kAxis = pkParent.World.GetRotate().GetColumn(1);
-            }
-            else
-            {
-                kAxis = Vector3f.UNIT_Y;
+                pkParent.World.GetRotate().GetColumn(1, kAxis);
             }
 
             kIncr.FromAxisAngle(kAxis,fAngle);
@@ -664,9 +664,10 @@ public abstract class JavaApplication3DWM extends JavaApplication
             m_spkMotionObject.Local.SetRotate(kRot);
             kIncr.finalize();
             kIncr = null;
+            kAxis = null;
             return true;
         }
-
+        kAxis.SetData(Vector3f.UNIT_Z);
         if (m_iDoPitch != 0)
         {
             kRot = m_spkMotionObject.Local.GetRotate();
@@ -674,11 +675,7 @@ public abstract class JavaApplication3DWM extends JavaApplication
             fAngle = m_iDoPitch*m_fRotSpeed;
             if (pkParent != null)
             {
-                kAxis = pkParent.World.GetRotate().GetColumn(2);
-            }
-            else
-            {
-                kAxis = Vector3f.UNIT_Z;
+                pkParent.World.GetRotate().GetColumn(2, kAxis);
             }
 
             kIncr.FromAxisAngle(kAxis,fAngle);
@@ -687,10 +684,12 @@ public abstract class JavaApplication3DWM extends JavaApplication
             m_spkMotionObject.Local.SetRotate(kRot);
             kIncr.finalize();
             kIncr = null;
+            kAxis = null;
             return true;
         }
         kIncr.finalize();
         kIncr = null;
+        kAxis = null;
         return false;
     }
 
@@ -749,7 +748,8 @@ public abstract class JavaApplication3DWM extends JavaApplication
         Vector3f kVec1 = new Vector3f(fZ1,fY1,fX1);
 
         // create axis and angle for the rotation
-        Vector3f kAxis = kVec0.Cross(kVec1);
+        Vector3f kAxis = new Vector3f();
+        kVec0.Cross(kVec1, kAxis);
         float fDot = kVec0.Dot(kVec1);
         float fAngle;
         if (kAxis.Normalize() > Mathf.ZERO_TOLERANCE)
@@ -778,10 +778,22 @@ public abstract class JavaApplication3DWM extends JavaApplication
         // Compute the world rotation matrix implied by trackball motion.  The
         // axis vector was computed in camera coordinates.  It must be converted
         // to world coordinates.  Once again, I use the camera ordering (D,U,R).
-        Vector3f kWorldAxis =
-            m_spkCamera.GetDVector().scale(kAxis.X()).
-            add(m_spkCamera.GetUVector().scale(kAxis.Y())).
-            add(m_spkCamera.GetRVector().scale(kAxis.Z()));
+//         Vector3f kWorldAxis =
+//             m_spkCamera.GetDVector().scale(kAxis.X()).
+//             add(m_spkCamera.GetUVector().scale(kAxis.Y())).
+//             add(m_spkCamera.GetRVector().scale(kAxis.Z()));
+
+        Vector3f kWorldAxis = new Vector3f(m_spkCamera.GetDVector());
+        kWorldAxis.scaleEquals(kAxis.X());
+        Vector3f kTempU = new Vector3f(m_spkCamera.GetUVector());
+        kTempU.scaleEquals(kAxis.Y());
+        Vector3f kTempR = new Vector3f(m_spkCamera.GetRVector());
+        kTempR.scaleEquals(kAxis.Z());
+        kWorldAxis.addEquals(kTempU);
+        kWorldAxis.addEquals(kTempR);
+        kTempU = null;
+        kTempR = null;
+
 
         Matrix3f kTrackRotate = new Matrix3f(kWorldAxis,fAngle);
 
@@ -795,9 +807,13 @@ public abstract class JavaApplication3DWM extends JavaApplication
         Matrix3f kLocalRot;
         if (pkParent != null)
         {
-            final Matrix3f rkPRotate = pkParent.World.GetRotate();
-            kLocalRot = rkPRotate.TransposeTimes(kTrackRotate).mult( rkPRotate ).
-                mult( m_kSaveRotate );
+//             final Matrix3f rkPRotate = pkParent.World.GetRotate();
+//             kLocalRot = rkPRotate.TransposeTimes(kTrackRotate).mult( rkPRotate ).
+//                 mult( m_kSaveRotate );
+            Matrix3f rkPRotate = pkParent.World.GetRotate();
+            kLocalRot = rkPRotate.TransposeTimes(kTrackRotate);
+            kLocalRot.multEquals( rkPRotate );
+            kLocalRot.multEquals( m_kSaveRotate );
         }
         else
         {
@@ -806,11 +822,9 @@ public abstract class JavaApplication3DWM extends JavaApplication
         kLocalRot.Orthonormalize();
         m_spkMotionObject.Local.SetRotate(kLocalRot);
 
-        kVec0.finalize();
+        kAxis = null;
         kVec0 = null;
-        kVec1.finalize();
         kVec1 = null;
-        kTrackRotate.finalize();
         kTrackRotate = null;
     }
 

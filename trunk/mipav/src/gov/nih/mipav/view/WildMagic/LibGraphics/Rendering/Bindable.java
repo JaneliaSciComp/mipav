@@ -26,14 +26,13 @@ public class Bindable extends GraphicsObject
     public Bindable () {}
 
     /** Delete memory */
-    public void finalize()
+    public void Remove()
     {
         if ( m_kInfoArray != null )
         {
             m_kInfoArray.clear();
             m_kInfoArray = null;
         }
-        super.finalize();
     }
 
     /** Use this function when the resource has a unique representation in
@@ -43,10 +42,6 @@ public class Bindable extends GraphicsObject
      */
     public ResourceIdentifier GetIdentifier (Renderer pkUser)
     {
-        if ( m_kInfoArray == null )
-        {
-            return null;
-        }
         for (int i = 0; i < m_kInfoArray.size(); i++)
         {
             Info rkInfo = m_kInfoArray.get(i);
@@ -90,10 +85,6 @@ public class Bindable extends GraphicsObject
     /** Release the resources, call the release functions they contain. */
     public void Release ()
     {
-        if ( m_kInfoArray == null )
-        {
-            return;
-        }
         while (m_kInfoArray.size() > 0)
         {
             Info rkInfo = m_kInfoArray.get(0);

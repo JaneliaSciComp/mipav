@@ -37,7 +37,7 @@ public class Lighting extends JavaApplication3D
 {
     public Lighting()
     {
-        super("Lighting",0,0,640,480, new ColorRGBA(0.635294f,0.917647f,1.0f,1.0f));
+        super("Lighting",0,0,512,512, new ColorRGBA(0.635294f,0.917647f,1.0f,1.0f));
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                           m_eBuffering, m_eMultisampling,
                                           m_iWidth, m_iHeight );
@@ -85,22 +85,58 @@ public class Lighting extends JavaApplication3D
     public void display(GLAutoDrawable arg0) {
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
+        //lMemory = ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576);
+        //System.err.println(lMemory + " " + m_iFrameCount);
+
         if ( m_bUpdateEffects )
         {
             UpdateEffectsOnIdle();
         }
-
+        MeasureTime();
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-            m_pkRenderer.Draw(8,16,ColorRGBA.WHITE,m_acCaption);
-            //DrawFrameRate(8,GetHeight()-8,ColorRGBA::WHITE);
+            //m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
+
+            for ( int i = 0; i < 1000; i++ )
+            {
+                m_spkSphere.Local.SetTranslate( m_afRandX[i],
+                                                m_afRandY[i],
+                                                m_afRandZ[i] );
+                m_spkSphere.Local.SetScale( m_afScaleX[i],
+                                            m_afScaleY[i],
+                                            m_afScaleZ[i] );
+                m_spkSphere.UpdateGS();
+                m_pkRenderer.Draw(m_spkSphere);
+            }
+            m_pkRenderer.Draw(8,16,ColorRGBA.BLACK,m_acCaption);
+            //m_pkRenderer.Draw(8,32,ColorRGBA.WHITE,lMemory.toString().toCharArray());
+            DrawFrameRate(8,GetHeight()-8,ColorRGBA.BLACK);
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
         
         ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        
+        
+        m_kDiffuseColor.R( m_kDiffuseColor.R() + .1f );
+        if ( m_kDiffuseColor.R() > 1.0f )
+        {
+            m_kDiffuseColor.R( 1.0f );
+            m_kDiffuseColor.G( m_kDiffuseColor.G() + .1f );
+            if ( m_kDiffuseColor.G() > 1.0f )
+            {
+                m_kDiffuseColor.G( 1.0f );
+                m_kDiffuseColor.B( m_kDiffuseColor.B() + .1f );
+                if ( m_kDiffuseColor.B() > 1.0f )
+                {
+                    m_kDiffuseColor.R( 0.0f );
+                    m_kDiffuseColor.G( 0.0f );
+                    m_kDiffuseColor.B( 0.0f );
+                }
+            }
+        }
+         UpdateFrameCount();
     }
 
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {
@@ -119,7 +155,9 @@ public class Lighting extends JavaApplication3D
         // set up camera
         m_spkCamera.SetFrustum(60.0f,1.0f,0.1f,100.0f);
         Vector3f kCLoc = new Vector3f(8.0f,0.0f,4.0f);
-        Vector3f kCDir = kCLoc.neg();  // lookat origin
+        //Vector3f kCDir = kCLoc.neg();  // lookat origin
+        Vector3f kCDir = new Vector3f(kCLoc);
+        kCDir.negEquals();  // lookat origin
         kCDir.Normalize();
         Vector3f kCUp = new Vector3f(kCDir.Z(),0,-kCDir.X());
         Vector3f kCRight = new Vector3f(Vector3f.UNIT_Y);
@@ -313,19 +351,42 @@ public class Lighting extends JavaApplication3D
         kAttr.SetPChannels(3);
         kAttr.SetNChannels(3);
         StandardMesh kSM = new StandardMesh(kAttr);
-        m_spkSphere = kSM.Sphere(64,64,1.0f);
+        m_spkSphere = kSM.Sphere(64,64,.10f);
         m_spkSphere.Local.SetTranslate( new Vector3f(0.0f,0.0f,1.0f));
 
+        m_kDiffuseColor = new ColorRGB(0.34615f,0.3143f,0.0903f);
+        
         // polished gold
-        MaterialState pkMaterial = new MaterialState();
-        pkMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
-        pkMaterial.Ambient = new ColorRGB(0.24725f,0.2245f,0.0645f);
-        pkMaterial.Diffuse = new ColorRGB(0.34615f,0.3143f,0.0903f);
-        pkMaterial.Specular = new ColorRGB(0.797357f,0.723991f,0.208006f);
-        pkMaterial.Shininess = 83.2f;
-        m_spkSphere.AttachGlobalState(pkMaterial);
+        m_pkMaterial = new MaterialState();
+        m_pkMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        m_pkMaterial.Ambient = new ColorRGB(0.24725f,0.2245f,0.0645f);
+        m_pkMaterial.Diffuse = m_kDiffuseColor;
+        m_pkMaterial.Specular = new ColorRGB(0.797357f,0.723991f,0.208006f);
+        m_pkMaterial.Shininess = 83.2f;
+        m_spkSphere.AttachGlobalState(m_pkMaterial);
 
         m_spkScene.AttachChild(m_spkSphere);
+
+        m_afRandX = new float[1000];
+        m_afRandY = new float[1000];
+        m_afRandZ = new float[1000];
+
+        m_afScaleX = new float[1000];
+        m_afScaleY = new float[1000];
+        m_afScaleZ = new float[1000];
+
+        for ( int i = 0; i < 1000; i++ )
+        {
+            m_afRandX[i] = 2*Mathf.SymmetricRandom();
+            m_afRandY[i] = 2*Mathf.SymmetricRandom();
+            m_afRandZ[i] = 2*Mathf.SymmetricRandom();
+
+            m_afScaleX[i] = (float)(.25f + .75*Mathf.UnitRandom());
+            m_afScaleY[i] = (float)(.25f + .75*Mathf.UnitRandom());
+            m_afScaleZ[i] = (float)(.25f + .75*Mathf.UnitRandom());
+        }
+
+        System.err.println( m_spkSphere.GetTriangleQuantity() * 1000 );
     }
 
     private void UpdateEffects ()
@@ -430,7 +491,21 @@ public class Lighting extends JavaApplication3D
         new char[]{'.','.','.','.','.','.','.','.','.'};
 
     private boolean m_bUpdateEffects = false;
+    
+    private MaterialState m_pkMaterial;
+    private ColorRGB m_kDiffuseColor;
 
+    private float[] m_afRandX;
+    private float[] m_afRandY;
+    private float[] m_afRandZ;
+
+    private float[] m_afScaleX;
+    private float[] m_afScaleY;
+    private float[] m_afScaleZ;
+
+    Long lMemory;
+    String kMemory = new String();
+    
     public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
 
@@ -509,6 +584,25 @@ public class Lighting extends JavaApplication3D
         case 'v':
         case 'V':
             TestStreaming(m_spkScene,"Lighting.wmof");
+            return;
+        case 'm':
+            m_kDiffuseColor.R( m_kDiffuseColor.R() + .1f );
+            if ( m_kDiffuseColor.R() > 1.0f )
+            {
+                m_kDiffuseColor.R( 1.0f );
+                m_kDiffuseColor.G( m_kDiffuseColor.G() + .1f );
+                if ( m_kDiffuseColor.G() > 1.0f )
+                {
+                    m_kDiffuseColor.G( 1.0f );
+                    m_kDiffuseColor.B( m_kDiffuseColor.B() + .1f );
+                    if ( m_kDiffuseColor.B() > 1.0f )
+                    {
+                        m_kDiffuseColor.R( 0.0f );
+                        m_kDiffuseColor.G( 0.0f );
+                        m_kDiffuseColor.B( 0.0f );
+                    }
+                }
+            }
             return;
         }
 

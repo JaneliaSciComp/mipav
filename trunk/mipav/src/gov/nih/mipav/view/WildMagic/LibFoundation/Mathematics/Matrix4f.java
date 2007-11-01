@@ -145,6 +145,47 @@ public class Matrix4f
         m_afEntry[15] = fM33;
     }
 
+    /** input Mrc is in row r, column c.
+     * @param fM00, matrix[0] entry
+     * @param fM01, matrix[1] entry
+     * @param fM02, matrix[2] entry
+     * @param fM03, matrix[3] entry
+     * @param fM10, matrix[4] entry
+     * @param fM11, matrix[5] entry
+     * @param fM12, matrix[6] entry
+     * @param fM13, matrix[7] entry
+     * @param fM20, matrix[8] entry
+     * @param fM21, matrix[9] entry
+     * @param fM22, matrix[10] entry
+     * @param fM23, matrix[11] entry
+     * @param fM30, matrix[12] entry
+     * @param fM31, matrix[13] entry
+     * @param fM32, matrix[14] entry
+     * @param fM33, matrix[15] entry
+     */
+    public final void SetData (float fM00, float fM01, float fM02, float fM03,
+                         float fM10, float fM11, float fM12, float fM13,
+                         float fM20, float fM21, float fM22, float fM23,
+                         float fM30, float fM31, float fM32, float fM33)
+    {
+        m_afEntry[ 0] = fM00;
+        m_afEntry[ 1] = fM01;
+        m_afEntry[ 2] = fM02;
+        m_afEntry[ 3] = fM03;
+        m_afEntry[ 4] = fM10;
+        m_afEntry[ 5] = fM11;
+        m_afEntry[ 6] = fM12;
+        m_afEntry[ 7] = fM13;
+        m_afEntry[ 8] = fM20;
+        m_afEntry[ 9] = fM21;
+        m_afEntry[10] = fM22;
+        m_afEntry[11] = fM23;
+        m_afEntry[12] = fM30;
+        m_afEntry[13] = fM31;
+        m_afEntry[14] = fM32;
+        m_afEntry[15] = fM33;
+    }
+
 
     /** Create a matrix from an array of numbers.  The input array is
      * interpreted based on the Boolean input as
@@ -291,6 +332,7 @@ public class Matrix4f
     public Vector4f GetRow (int iRow)
     {
         int i0 = 4*iRow, i1 = i0+1, i2 = i1+1, i3 = i2+1;
+        System.err.println( "Matrix4f: GetRow" );
         return new Vector4f(m_afEntry[i0],m_afEntry[i1],m_afEntry[i2],
                             m_afEntry[i3]);
     }
@@ -313,6 +355,7 @@ public class Matrix4f
      */
     public Vector4f GetColumn (int iCol)
     {
+        System.err.println( "Matrix4f: GetColumn" );
         return new Vector4f(m_afEntry[iCol],m_afEntry[iCol+4],m_afEntry[iCol+8],
                             m_afEntry[iCol+12]);
     }
@@ -369,7 +412,95 @@ public class Matrix4f
      */
     public Matrix4f mult( Matrix4f rkM )
     {
+        System.err.println( "Matrix4f: mult 1" );
         return new Matrix4f(
+                             m_afEntry[ 0]*rkM.m_afEntry[ 0] +
+                             m_afEntry[ 1]*rkM.m_afEntry[ 4] +
+                             m_afEntry[ 2]*rkM.m_afEntry[ 8] +
+                             m_afEntry[ 3]*rkM.m_afEntry[12],
+
+                             m_afEntry[ 0]*rkM.m_afEntry[ 1] +
+                             m_afEntry[ 1]*rkM.m_afEntry[ 5] +
+                             m_afEntry[ 2]*rkM.m_afEntry[ 9] +
+                             m_afEntry[ 3]*rkM.m_afEntry[13],
+
+                             m_afEntry[ 0]*rkM.m_afEntry[ 2] +
+                             m_afEntry[ 1]*rkM.m_afEntry[ 6] +
+                             m_afEntry[ 2]*rkM.m_afEntry[10] +
+                             m_afEntry[ 3]*rkM.m_afEntry[14],
+
+                             m_afEntry[ 0]*rkM.m_afEntry[ 3] +
+                             m_afEntry[ 1]*rkM.m_afEntry[ 7] +
+                             m_afEntry[ 2]*rkM.m_afEntry[11] +
+                             m_afEntry[ 3]*rkM.m_afEntry[15],
+
+                             m_afEntry[ 4]*rkM.m_afEntry[ 0] +
+                             m_afEntry[ 5]*rkM.m_afEntry[ 4] +
+                             m_afEntry[ 6]*rkM.m_afEntry[ 8] +
+                             m_afEntry[ 7]*rkM.m_afEntry[12],
+
+                             m_afEntry[ 4]*rkM.m_afEntry[ 1] +
+                             m_afEntry[ 5]*rkM.m_afEntry[ 5] +
+                             m_afEntry[ 6]*rkM.m_afEntry[ 9] +
+                             m_afEntry[ 7]*rkM.m_afEntry[13],
+
+                             m_afEntry[ 4]*rkM.m_afEntry[ 2] +
+                             m_afEntry[ 5]*rkM.m_afEntry[ 6] +
+                             m_afEntry[ 6]*rkM.m_afEntry[10] +
+                             m_afEntry[ 7]*rkM.m_afEntry[14],
+
+                             m_afEntry[ 4]*rkM.m_afEntry[ 3] +
+                             m_afEntry[ 5]*rkM.m_afEntry[ 7] +
+                             m_afEntry[ 6]*rkM.m_afEntry[11] +
+                             m_afEntry[ 7]*rkM.m_afEntry[15],
+
+                             m_afEntry[ 8]*rkM.m_afEntry[ 0] +
+                             m_afEntry[ 9]*rkM.m_afEntry[ 4] +
+                             m_afEntry[10]*rkM.m_afEntry[ 8] +
+                             m_afEntry[11]*rkM.m_afEntry[12],
+
+                             m_afEntry[ 8]*rkM.m_afEntry[ 1] +
+                             m_afEntry[ 9]*rkM.m_afEntry[ 5] +
+                             m_afEntry[10]*rkM.m_afEntry[ 9] +
+                             m_afEntry[11]*rkM.m_afEntry[13],
+
+                             m_afEntry[ 8]*rkM.m_afEntry[ 2] +
+                             m_afEntry[ 9]*rkM.m_afEntry[ 6] +
+                             m_afEntry[10]*rkM.m_afEntry[10] +
+                             m_afEntry[11]*rkM.m_afEntry[14],
+
+                             m_afEntry[ 8]*rkM.m_afEntry[ 3] +
+                             m_afEntry[ 9]*rkM.m_afEntry[ 7] +
+                             m_afEntry[10]*rkM.m_afEntry[11] +
+                             m_afEntry[11]*rkM.m_afEntry[15],
+
+                             m_afEntry[12]*rkM.m_afEntry[ 0] +
+                             m_afEntry[13]*rkM.m_afEntry[ 4] +
+                             m_afEntry[14]*rkM.m_afEntry[ 8] +
+                             m_afEntry[15]*rkM.m_afEntry[12],
+
+                             m_afEntry[12]*rkM.m_afEntry[ 1] +
+                             m_afEntry[13]*rkM.m_afEntry[ 5] +
+                             m_afEntry[14]*rkM.m_afEntry[ 9] +
+                             m_afEntry[15]*rkM.m_afEntry[13],
+
+                             m_afEntry[12]*rkM.m_afEntry[ 2] +
+                             m_afEntry[13]*rkM.m_afEntry[ 6] +
+                             m_afEntry[14]*rkM.m_afEntry[10] +
+                             m_afEntry[15]*rkM.m_afEntry[14],
+
+                             m_afEntry[12]*rkM.m_afEntry[ 3] +
+                             m_afEntry[13]*rkM.m_afEntry[ 7] +
+                             m_afEntry[14]*rkM.m_afEntry[11] +
+                             m_afEntry[15]*rkM.m_afEntry[15]);
+    }
+
+    /** Multiply this matrix to the input matrix, return result, this is unchanged. 
+     * @param rkM, input matrix
+     */
+    public void mult( Matrix4f rkM, Matrix4f kResult )
+    {
+        kResult.SetData(
                              m_afEntry[ 0]*rkM.m_afEntry[ 0] +
                              m_afEntry[ 1]*rkM.m_afEntry[ 4] +
                              m_afEntry[ 2]*rkM.m_afEntry[ 8] +
@@ -458,6 +589,7 @@ public class Matrix4f
      */
     public Vector4f mult ( Vector4f rkV)   // M * v
     {
+        System.err.println( "Matrix4f: mult 2" );
         return new Vector4f(
                             m_afEntry[ 0]*rkV.X() +
                             m_afEntry[ 1]*rkV.Y() +
@@ -488,6 +620,7 @@ public class Matrix4f
      */
     public static Vector4f mult(Vector4f rkV, Matrix4f rkM)
     {
+        System.err.println( "Matrix4f: mult 3" );
         return new
             Vector4f(
                      rkV.X()*rkM.m_afEntry[0] + rkV.Y()*rkM.m_afEntry[4] + rkV.Z()*rkM.m_afEntry[8] + rkV.W()*rkM.m_afEntry[12],
@@ -502,6 +635,7 @@ public class Matrix4f
      */
     public Matrix4f Transpose ()  // M^T
     {
+        System.err.println( "Matrix4f: Transpose" );
         return new Matrix4f(
                             m_afEntry[ 0],
                             m_afEntry[ 4],
@@ -529,6 +663,7 @@ public class Matrix4f
     public Matrix4f TransposeTimes (Matrix4f rkM)  // this^T * M
     {
         // P = A^T*B
+        System.err.println( "Matrix4f: transpose times" );
         return new Matrix4f(
                              m_afEntry[ 0]*rkM.m_afEntry[ 0] +
                              m_afEntry[ 4]*rkM.m_afEntry[ 4] +
@@ -619,6 +754,7 @@ public class Matrix4f
     public Matrix4f TimesTranspose (Matrix4f rkM)  // this * M^T
     {
         // P = A*B^T
+        System.err.println( "Matrix4f: times transpose" );
         return new Matrix4f(
                              m_afEntry[ 0]*rkM.m_afEntry[ 0] +
                              m_afEntry[ 1]*rkM.m_afEntry[ 1] +
@@ -723,9 +859,11 @@ public class Matrix4f
         float fDet = fA0*fB5-fA1*fB4+fA2*fB3+fA3*fB2-fA4*fB1+fA5*fB0;
         if (Math.abs(fDet) <= Mathf.ZERO_TOLERANCE)
         {
+            System.err.println( "Matrix4f: inverse1" );
             return new Matrix4f(Matrix4f.ZERO);
         }
 
+        System.err.println( "Matrix4f: inverse" );
         Matrix4f kInv = new Matrix4f();
         kInv.m_afEntry[ 0] =
             + m_afEntry[ 5]*fB5 - m_afEntry[ 6]*fB4 + m_afEntry[ 7]*fB3;
@@ -799,6 +937,7 @@ public class Matrix4f
         float fB4 = m_afEntry[ 9]*m_afEntry[15] - m_afEntry[11]*m_afEntry[13];
         float fB5 = m_afEntry[10]*m_afEntry[15] - m_afEntry[11]*m_afEntry[14];
 
+        System.err.println( "Matrix4f: adjoint" );
         return new Matrix4f(
                             + m_afEntry[ 5]*fB5 - m_afEntry[ 6]*fB4 + m_afEntry[ 7]*fB3,
                             - m_afEntry[ 1]*fB5 + m_afEntry[ 2]*fB4 - m_afEntry[ 3]*fB3,
@@ -917,9 +1056,10 @@ public class Matrix4f
     public void MakePerspectiveProjection (Vector3f rkNormal,
                                            Vector3f rkPoint, Vector3f rkEye)
     {
-
-        float fNdEmP = rkNormal.Dot(rkEye.sub(rkPoint));
-
+        Vector3f kDiff = new Vector3f();
+        rkEye.sub(rkPoint, kDiff);
+        float fNdEmP = rkNormal.Dot(kDiff);
+        kDiff = null;
         m_afEntry[ 0] = fNdEmP - rkEye.X()*rkNormal.X();
         m_afEntry[ 1] = -rkEye.X()*rkNormal.Y();
         m_afEntry[ 2] = -rkEye.X()*rkNormal.Z();

@@ -2129,7 +2129,7 @@ public class ModelImage extends ModelStorageBase {
                         ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
                     }
                 } else if ((frameList.elementAt(i) instanceof
-                        gov.nih.mipav.view.dialogs.JDialogDTIInput)) {
+                        gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI)) {
                     ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages();
                 }
 

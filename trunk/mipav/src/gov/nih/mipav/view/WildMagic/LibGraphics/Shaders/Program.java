@@ -39,7 +39,7 @@ public abstract class Program extends Bindable
         m_kContext = CgGL.cgCreateContext();
      }
     /** Delete memory. Destroy the CgGL context. */
-    public void finalize ()
+    public void Remove ()
     {
         CgGL.cgDestroyContext( m_kContext );
         m_kContext = null;
@@ -62,7 +62,7 @@ public abstract class Program extends Bindable
         m_kSamplerInformation.clear();
         m_kSamplerInformation = null;
 
-        super.finalize();
+        super.Remove();
     }
     
     /** Return the program text. 
