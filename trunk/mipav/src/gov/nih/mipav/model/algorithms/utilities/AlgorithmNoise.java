@@ -108,14 +108,14 @@ public class AlgorithmNoise extends AlgorithmBase {
             if (srcImage.getNDims() == 2) {
                 calcStoreInDest2D();
             } else if (srcImage.getNDims() > 2) {
-                calcStoreInDest3D();
+                calcStoreInDest34D();
             }
         } else {
 
             if (srcImage.getNDims() == 2) {
                 calcInPlace2D();
             } else if (srcImage.getNDims() > 2) {
-                calcInPlace3D();
+                calcInPlace34D();
             }
         }
 
@@ -201,9 +201,9 @@ public class AlgorithmNoise extends AlgorithmBase {
     }
 
     /**
-     * This function replaces the 3D source image with an image that has noise added to it.
+     * This function replaces the 3D or 4D source image with an image that has noise added to it.
      */
-    private void calcInPlace3D() {
+    private void calcInPlace34D() {
         int i;
         int length;
         double[] buffer;
@@ -212,6 +212,9 @@ public class AlgorithmNoise extends AlgorithmBase {
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
+            if (srcImage.getNDims() >= 4) {
+                length *= srcImage.getExtents()[3];
+            }
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Adding noise ... ");
@@ -351,9 +354,9 @@ public class AlgorithmNoise extends AlgorithmBase {
     }
 
     /**
-     * This function produces a new 3D image that is the sum of the source image and noise.
+     * This function produces a new 3D or 4D image that is the sum of the source image and noise.
      */
-    private void calcStoreInDest3D() {
+    private void calcStoreInDest34D() {
 
         int i;
         int length;
@@ -371,6 +374,9 @@ public class AlgorithmNoise extends AlgorithmBase {
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
+            if (srcImage.getNDims() >= 4) {
+                length *= srcImage.getExtents()[3];
+            }
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
             fireProgressStateChanged(srcImage.getImageName(), "Adding noise ... ");
