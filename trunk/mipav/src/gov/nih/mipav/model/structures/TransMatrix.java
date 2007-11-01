@@ -97,7 +97,7 @@ public class TransMatrix extends Matrix // implements TableModelListener
     /** Array of transform ID strings. */
     private static final String[] transformIDStr = {
         "Unknown", "Scanner Anatomical", "Another Dataset", "Talairach Tournoux", "MNI 152", "Composite",
-        "NIFTI Scanner Anatomical"
+        "Scanner Anatomical"
     };
     
     /** DOCUMENT ME! */
