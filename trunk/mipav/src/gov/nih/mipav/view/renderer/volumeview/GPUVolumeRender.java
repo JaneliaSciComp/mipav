@@ -2671,6 +2671,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
     private void DisplayEllipsoids( )
     {
+        /*
         if ( m_kEllipsoids == null )
         {
             return;
@@ -2782,6 +2783,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 }
             }
         }
+        */
     }
     
 
