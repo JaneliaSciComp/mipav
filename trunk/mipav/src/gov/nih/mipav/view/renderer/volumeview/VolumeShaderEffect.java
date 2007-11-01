@@ -842,7 +842,7 @@ public class VolumeShaderEffect extends ShaderEffect
                 for (iX = 1; iX < (iXBound - 1); iX++) {
                     int i = iX + offset;
 
-                    kNormal.copy(Vector3f.ZERO);
+                    kNormal.SetData(Vector3f.ZERO);
                     for ( int iN = 0; iN < aiNormalAverageIndex.length; iN++ )
                     {
                         int index = i + aiNormalAverageIndex[iN];

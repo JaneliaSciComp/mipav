@@ -127,29 +127,32 @@ public class StandardMesh
         float fInv1 = 1.0f/(iYSamples - 1.0f);
         float fU, fV;
         int i, i0, i1;
+
+        Vector3f kYTmp = new Vector3f();
+        Vector3f kXTmp = new Vector3f();
         for (i1 = 0, i = 0; i1 < iYSamples; i1++)
         {
             fV = i1*fInv1;
-            Vector3f kYTmp = new Vector3f(Vector3f.UNIT_Y).scale(((2.0f*fV-1.0f)*fYExtent));
+            kYTmp.SetData(0f, ((2.0f*fV-1.0f)*fYExtent), 0f );
             for (i0 = 0; i0 < iXSamples; i0++)
             {
                 fU = i0*fInv0;
-                Vector3f kXTmp = new Vector3f(Vector3f.UNIT_X).scale(((2.0f*fU-1.0f)*fXExtent));
-                pkVB.Position3(i, kXTmp.add( kYTmp ));
+                kXTmp.SetData(((2.0f*fU-1.0f)*fXExtent), 0f, 0f);
+                kXTmp.addEquals( kYTmp );
+                pkVB.SetPosition3(i,kXTmp );
 
                 if (m_kAttr.HasNormal())
                 {
-                    pkVB.Normal3(i, new Vector3f(Vector3f.UNIT_Z));
+                    pkVB.SetNormal3(i, 0, 0, 1);
                 }
 
                 if (m_kAttr.GetMaxTCoords() > 0)
                 {
-                    Vector2f kTCoord = new Vector2f(fU,fV);
                     for (int iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
                     {
                         if (m_kAttr.HasTCoord(iUnit))
                         {
-                            pkVB.TCoord2(iUnit,i, kTCoord);
+                            pkVB.SetTCoord2(iUnit,i, fU,fV);
                         }
                     }
                 }
@@ -204,24 +207,24 @@ public class StandardMesh
         Vector2f kTCoord;
 
         // center of disk
-        pkVB.Position3(0, Vector3f.ZERO);
+        pkVB.SetPosition3(0, Vector3f.ZERO);
         if (m_kAttr.HasNormal())
         {
-            pkVB.Normal3(0, Vector3f.UNIT_Z);
+            pkVB.SetNormal3(0, Vector3f.UNIT_Z);
         }
 
         if (m_kAttr.GetMaxTCoords() > 0)
         {
-            kTCoord = new Vector2f(0.5f,0.5f);
             for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
             {
                 if (m_kAttr.HasTCoord(iUnit))
                 {
-                    pkVB.TCoord2(iUnit,0, kTCoord);
+                    pkVB.SetTCoord2(iUnit,0, 0.5f,0.5f);
                 }
             }
         }
-
+        Vector3f kFracRadial = new Vector3f();
+        
         float fInvSSm1 = 1.0f/(float)iSSm1;
         float fInvRS = 1.0f/(float)iRadialSamples;
         for (iR = 0; iR < iRadialSamples; iR++)
@@ -234,30 +237,31 @@ public class StandardMesh
             for (iS = 1; iS < iShellSamples; iS++)
             {
                 float fFraction = fInvSSm1*iS;  // in (0,R]
-                Vector3f kFracRadial = kRadial.scale(fFraction);
+                kRadial.scale(fFraction, kFracRadial);
                 i = iS+iSSm1*iR;
-                pkVB.Position3(i, kFracRadial.scale(fRadius));
+                pkVB.SetPosition3(i, kFracRadial.X() * fRadius,
+                        kFracRadial.Y() * fRadius,
+                        kFracRadial.Z() * fRadius );
                 if (m_kAttr.HasNormal())
                 {
-                    pkVB.Normal3(i, Vector3f.UNIT_Z);
+                    pkVB.SetNormal3(i, Vector3f.UNIT_Z);
                 }
 
                 if (m_kAttr.GetMaxTCoords() > 0)
                 {
-                    kTCoord = new Vector2f(1.0f+kFracRadial.X(),
-                                            1.0f+kFracRadial.Y());
-                    kTCoord.scale(0.5f);
                     for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
                     {
                         if (m_kAttr.HasTCoord(iUnit))
                         {
-                            pkVB.TCoord2(iUnit,i, kTCoord);
+                            pkVB.SetTCoord2(iUnit,i,
+                                            0.5f*(1.0f+kFracRadial.X()),
+                                            0.5f*(1.0f+kFracRadial.Y()));
                         }
                     }
                 }
             }
         }
-
+        kFracRadial = null;
         // generate connectivity
         int[] aiLocalIndex = pkIB.GetData();
         int iIndex = 0;
@@ -307,14 +311,14 @@ public class StandardMesh
         IndexBuffer pkIB = new IndexBuffer(3*iTQuantity);
 
         // generate geometry
-        pkVB.Position3(0, new Vector3f(-fXExtent,-fYExtent,-fZExtent));
-        pkVB.Position3(1, new Vector3f(+fXExtent,-fYExtent,-fZExtent));
-        pkVB.Position3(2, new Vector3f(+fXExtent,+fYExtent,-fZExtent));
-        pkVB.Position3(3, new Vector3f(-fXExtent,+fYExtent,-fZExtent));
-        pkVB.Position3(4, new Vector3f(-fXExtent,-fYExtent,+fZExtent));
-        pkVB.Position3(5, new Vector3f(+fXExtent,-fYExtent,+fZExtent));
-        pkVB.Position3(6, new Vector3f(+fXExtent,+fYExtent,+fZExtent));
-        pkVB.Position3(7, new Vector3f(-fXExtent,+fYExtent,+fZExtent));
+        pkVB.SetPosition3(0,-fXExtent,-fYExtent,-fZExtent);
+        pkVB.SetPosition3(1,+fXExtent,-fYExtent,-fZExtent);
+        pkVB.SetPosition3(2,+fXExtent,+fYExtent,-fZExtent);
+        pkVB.SetPosition3(3,-fXExtent,+fYExtent,-fZExtent);
+        pkVB.SetPosition3(4,-fXExtent,-fYExtent,+fZExtent);
+        pkVB.SetPosition3(5,+fXExtent,-fYExtent,+fZExtent);
+        pkVB.SetPosition3(6,+fXExtent,+fYExtent,+fZExtent);
+        pkVB.SetPosition3(7,-fXExtent,+fYExtent,+fZExtent);
 
         if (m_kAttr.GetMaxTCoords() > 0)
         {
@@ -322,14 +326,14 @@ public class StandardMesh
             {
                 if (m_kAttr.HasTCoord(iUnit))
                 {
-                    pkVB.TCoord2(iUnit,0, new Vector2f(0.25f,0.75f));
-                    pkVB.TCoord2(iUnit,1, new Vector2f(0.75f,0.75f));
-                    pkVB.TCoord2(iUnit,2, new Vector2f(0.75f,0.25f));
-                    pkVB.TCoord2(iUnit,3, new Vector2f(0.25f,0.25f));
-                    pkVB.TCoord2(iUnit,4, new Vector2f(0.0f,1.0f));
-                    pkVB.TCoord2(iUnit,5, new Vector2f(1.0f,1.0f));
-                    pkVB.TCoord2(iUnit,6, new Vector2f(1.0f,0.0f));
-                    pkVB.TCoord2(iUnit,7, new Vector2f(0.0f,0.0f));
+                    pkVB.SetTCoord2(iUnit,0,0.25f,0.75f);
+                    pkVB.SetTCoord2(iUnit,1,0.75f,0.75f);
+                    pkVB.SetTCoord2(iUnit,2,0.75f,0.25f);
+                    pkVB.SetTCoord2(iUnit,3,0.25f,0.25f);
+                    pkVB.SetTCoord2(iUnit,4,0.0f,1.0f);
+                    pkVB.SetTCoord2(iUnit,5,1.0f,1.0f);
+                    pkVB.SetTCoord2(iUnit,6,1.0f,0.0f);
+                    pkVB.SetTCoord2(iUnit,7,0.0f,0.0f);
                 }
             }
         }
@@ -417,27 +421,27 @@ public class StandardMesh
                 {
                     float fRadialFraction = iR*fInvRS;  // in [0,1)
                     Vector3f kNormal = new Vector3f(afCos[iR],afSin[iR],0.0f);
-                    pkVB.Position3(i, kSliceCenter.add( kNormal.scale(fRadius)));
+                    Vector3f kPos = new Vector3f(kNormal);
+                    kPos.scaleEquals(fRadius);
+                    kPos.addEquals(kSliceCenter);
+                    pkVB.SetPosition3(i, kPos);
+                    kPos = null;
                     if (m_kAttr.HasNormal())
                     {
                         if (m_bInside)
                         {
-                            pkVB.Normal3(i, kNormal.neg());
+                            kNormal.negEquals();
                         }
-                        else
-                        {
-                            pkVB.Normal3(i, kNormal);
-                        }
+                        pkVB.SetNormal3(i, kNormal);
                     }
 
                     if (m_kAttr.GetMaxTCoords() > 0)
                     {
-                        kTCoord = new Vector2f(fRadialFraction,fAxisFraction);
                         for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
                         {
                             if (m_kAttr.HasTCoord(iUnit))
                             {
-                                pkVB.TCoord2(iUnit,i, kTCoord);
+                                pkVB.SetTCoord2(iUnit,i,fRadialFraction,fAxisFraction);
                             }
                         }
                     }
@@ -445,20 +449,19 @@ public class StandardMesh
                     i++;
                 }
 
-                pkVB.Position3(i, pkVB.Position3(iSave));
+                pkVB.SetPosition3(i, pkVB.GetPosition3fX(iSave),pkVB.GetPosition3fY(iSave),pkVB.GetPosition3fZ(iSave));
                 if (m_kAttr.HasNormal())
                 {
-                    pkVB.Normal3(i, pkVB.Normal3(iSave));
+                    pkVB.SetNormal3(i, pkVB.GetNormal3fX(iSave), pkVB.GetNormal3fY(iSave), pkVB.GetNormal3fZ(iSave));
                 }
 
                 if (m_kAttr.GetMaxTCoords() > 0)
                 {
-                    kTCoord = new Vector2f(1.0f,fAxisFraction);
                     for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
                     {
                         if (m_kAttr.HasTCoord(iUnit))
                         {
-                            pkVB.TCoord2(iUnit,i, kTCoord);
+                            pkVB.SetTCoord2(iUnit,i, 1.0f,fAxisFraction);
                         }
                     }
                 }
@@ -513,12 +516,18 @@ public class StandardMesh
 
             // flatten sphere at poles
             float fHDiv2 = 0.5f*fHeight;
-            Vector3f kPosition = pkVB.Position3(iVQuantity-2);
-            kPosition.Z(-fHDiv2); // south pole
-            pkVB.Position3(iVQuantity-2, kPosition);
-            kPosition = pkVB.Position3(iVQuantity-1);
-            kPosition.Z( fHDiv2);  // north pole
-            pkVB.Position3(iVQuantity-1,kPosition);
+
+            pkVB.SetPosition3(iVQuantity-2, 
+                    pkVB.GetPosition3fX(iVQuantity-2),
+                    pkVB.GetPosition3fY(iVQuantity-2),
+                    -fHDiv2  // south pole
+                    );
+            
+              
+            pkVB.SetPosition3(iVQuantity-1,
+                    pkVB.GetPosition3fX(iVQuantity-1),
+                    pkVB.GetPosition3fY(iVQuantity-1),
+                    fHDiv2);// north pole
 
             // remap z-values to [-h/2,h/2]
             float fZFactor = 2.0f/(iAxisSamples-1);
@@ -526,16 +535,15 @@ public class StandardMesh
             float fTmp1 = 1.0f/(fRadius*(+1.0f - fZFactor));
             for (int i = 0; i < iVQuantity-2; i++)
             {
-                kPosition = pkVB.Position3(i);
-                kPosition.Z( fHDiv2*(-1.0f+fTmp1*(
-                                                  kPosition.Z()-fTmp0)));
+                float fZ = pkVB.GetPosition3fZ(i);
+                fZ = fHDiv2*(-1.0f+fTmp1*(fZ-fTmp0));
 
-                float fX = kPosition.X(), fY = kPosition.Y();
+                float fX = pkVB.GetPosition3fX(i), fY = pkVB.GetPosition3fY(i);
                 float fAdjust = fRadius*Mathf.InvSqrt(fX*fX + fY*fY);
-                kPosition.X( kPosition.X()* fAdjust);
-                kPosition.Y( kPosition.Y()* fAdjust);
+                fX *= fAdjust;
+                fY *= fAdjust;
 
-                pkVB.Position3(i, kPosition);
+                pkVB.SetPosition3(i, fX, fY, fZ);
             }
             TransformData(pkVB);
             pkMesh.UpdateMS(true);
@@ -587,14 +595,15 @@ public class StandardMesh
         afCos[iRadialSamples] = afCos[0];
         
         // generate the cylinder itself
+
+        Vector3f kSliceCenter = new Vector3f();
+        Vector3f kRadial= new Vector3f();
+
         for (iZ = 1, i = 0; iZ < iZSm1; iZ++)
         {
             float fZFraction = -1.0f + fZFactor*iZ;  // in (-1,1)
             float fZ = fRadius*fZFraction;
-            
-            // compute center of slice
-            Vector3f kSliceCenter = new Vector3f(0.0f,0.0f,fZ);
-            
+                       
             // compute radius of slice
             float fSliceRadius = (float)Math.sqrt(Math.abs(fRadius*fRadius-fZ*fZ));
             
@@ -604,51 +613,55 @@ public class StandardMesh
             for (iR = 0; iR < iRadialSamples; iR++)
             {
                 float fRadialFraction = iR*fInvRS;  // in [0,1)
-                Vector3f kRadial= new Vector3f(afCos[iR],afSin[iR],0.0f);
-                pkVB.Position3(i, kSliceCenter.add( kRadial.scale(fSliceRadius)));
+                kRadial.SetData(afCos[iR],afSin[iR],0.0f);
+                kRadial.scaleEquals(fSliceRadius);
+                
+                // compute center of slice
+                kSliceCenter.SetData(0.0f,0.0f,fZ);
+                kSliceCenter.addEquals(kRadial);
+                pkVB.SetPosition3(i, kSliceCenter);
                 if (m_kAttr.HasNormal())
                 {
-                    kNormal = pkVB.Position3(i);
+                    kNormal.SetData(pkVB.GetPosition3fX(i),pkVB.GetPosition3fY(i),pkVB.GetPosition3fZ(i));
                     kNormal.Normalize();
                     if (m_bInside)
                     {
-                        pkVB.Normal3(i, kNormal.neg());
+                        kNormal.negEquals();
+                        pkVB.SetNormal3(i, kNormal);
                     }
                     else
                     {
-                        pkVB.Normal3(i, kNormal);
+                        pkVB.SetNormal3(i, kNormal);
                     }
                 }
                 
                 if (m_kAttr.GetMaxTCoords() > 0)
                 {
-                    kTCoord = new Vector2f(fRadialFraction,
-                                           0.5f*(fZFraction+1.0f));
                     for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
                     {
                         if (m_kAttr.HasTCoord(iUnit))
                         {
-                            pkVB.TCoord2(iUnit,i, kTCoord);
+                            pkVB.SetTCoord2(iUnit,i, fRadialFraction,
+                                         0.5f*(fZFraction+1.0f));
                         }
                     }
                 }
                 i++;
             }
             
-            pkVB.Position3(i, pkVB.Position3(iSave));
+            pkVB.SetPosition3(i, pkVB.GetPosition3fX(iSave),pkVB.GetPosition3fY(iSave),pkVB.GetPosition3fZ(iSave));
             if (m_kAttr.HasNormal())
             {
-                pkVB.Normal3(i, pkVB.Normal3(iSave));
+                pkVB.SetNormal3(i, pkVB.GetNormal3fX(iSave), pkVB.GetNormal3fY(iSave), pkVB.GetNormal3fZ(iSave));
             }
             
             if (m_kAttr.GetMaxTCoords() > 0)
             {
-                kTCoord = new Vector2f(1.0f,0.5f*(fZFraction+1.0f));
                 for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
                 {
                     if (m_kAttr.HasTCoord(iUnit))
                     {
-                        pkVB.TCoord2(iUnit,i, kTCoord);
+                        pkVB.SetTCoord2(iUnit,i, 1.0f,0.5f*(fZFraction+1.0f));
                     }
                 }
             }
@@ -656,27 +669,26 @@ public class StandardMesh
         }
         
         // south pole
-        pkVB.Position3(i, new Vector3f(Vector3f.UNIT_Z).scale(-fRadius));
+        pkVB.SetPosition3(i, 0, 0, -fRadius);
         if (m_kAttr.HasNormal())
         {
             if (m_bInside)
             {
-                pkVB.Normal3(i, new Vector3f(Vector3f.UNIT_Z));
+                pkVB.SetNormal3(i, Vector3f.UNIT_Z);
             }
             else
             {
-                pkVB.Normal3(i, new Vector3f( Vector3f.UNIT_Z_NEG));
+                pkVB.SetNormal3(i, Vector3f.UNIT_Z_NEG);
             }
         }
         
         if (m_kAttr.GetMaxTCoords() > 0)
         {
-            kTCoord = new Vector2f(0.5f,0.5f);
             for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
             {
                 if (m_kAttr.HasTCoord(iUnit))
                 {
-                    pkVB.TCoord2(iUnit,i, kTCoord);
+                    pkVB.SetTCoord2(iUnit,i,0.5f,0.5f);
                 }
             }
         }
@@ -684,27 +696,26 @@ public class StandardMesh
         i++;
         
         // north pole
-        pkVB.Position3(i, new Vector3f(Vector3f.UNIT_Z).scale(fRadius));
+        pkVB.SetPosition3(i, 0, 0, fRadius);
         if (m_kAttr.HasNormal())
         {
             if (m_bInside)
             {
-                pkVB.Normal3(i, new Vector3f( Vector3f.UNIT_Z_NEG ));
+                pkVB.SetNormal3(i, Vector3f.UNIT_Z_NEG  );
             }
             else
             {
-                pkVB.Normal3(i, new Vector3f( Vector3f.UNIT_Z) );
+                pkVB.SetNormal3(i, Vector3f.UNIT_Z );
             }
         }
 
         if (m_kAttr.GetMaxTCoords() > 0)
         {
-            kTCoord = new Vector2f(0.5f,1.0f);
             for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
             {
                 if (m_kAttr.HasTCoord(iUnit))
                 {
-                    pkVB.TCoord2(iUnit,i, kTCoord);
+                    pkVB.SetTCoord2(iUnit,i,0.5f,1.0f);
                 }
             }
         }
@@ -836,6 +847,11 @@ public class StandardMesh
         float fInvRS = 1.0f/(float)iRadialSamples;
         int iC, iR, i, iUnit;
         Vector2f kTCoord;
+        
+        Vector3f kRadial = new Vector3f();
+        Vector3f kTorusMiddle = new Vector3f();
+        Vector3f kNormal = new Vector3f();
+        Vector3f kTemp = new Vector3f();
 
         // generate the cylinder itself
         for (iC = 0, i = 0; iC < iCircleSamples; iC++)
@@ -845,8 +861,10 @@ public class StandardMesh
             float fTheta = Mathf.TWO_PI*fCircleFraction;
             float fCosTheta = (float)Math.cos(fTheta);
             float fSinTheta = (float)Math.sin(fTheta);
-            Vector3f kRadial = new Vector3f(fCosTheta,fSinTheta,0.0f);
-            Vector3f kTorusMiddle = kRadial.scale(fOuterRadius);
+            kRadial.SetData(fCosTheta,fSinTheta,0.0f);
+            kTorusMiddle.SetData( kRadial.X() * fOuterRadius,
+                    kRadial.Y() * fOuterRadius,
+                    kRadial.Z() * fOuterRadius);
 
             // compute slice vertices with duplication at end point
             int iSave = i;
@@ -856,28 +874,34 @@ public class StandardMesh
                 float fPhi = Mathf.TWO_PI*fRadialFraction;
                 float fCosPhi = (float)Math.cos(fPhi);
                 float fSinPhi = (float)Math.sin(fPhi);
-                Vector3f kNormal = kRadial.scale(fCosPhi).add(Vector3f.UNIT_Z.scale(fSinPhi));
-                pkVB.Position3(i, kTorusMiddle.add( kNormal.scale(fInnerRadius) ) );
+                kNormal.SetData( kRadial.X() * fCosPhi,
+                        kRadial.Y() * fCosPhi,
+                        kRadial.Z() * fCosPhi + fSinPhi);
+                //kTorusMiddle.add( kNormal.scale(fInnerRadius) )
+                kTemp.SetData(kNormal);
+                kTemp.scaleEquals(fInnerRadius);
+                kTemp.addEquals(kTorusMiddle);
+                pkVB.SetPosition3(i, kTemp );
                 if (m_kAttr.HasNormal())
                 {
                     if (m_bInside)
                     {
-                        pkVB.Normal3(i, kNormal.neg() );
+                        kNormal.negEquals();
+                        pkVB.SetNormal3(i, kNormal );
                     }
                     else
                     {
-                        pkVB.Normal3(i, kNormal );
+                        pkVB.SetNormal3(i, kNormal );
                     }
                 }
 
                 if (m_kAttr.GetMaxTCoords() > 0)
                 {
-                    kTCoord = new Vector2f(fRadialFraction,fCircleFraction);
                     for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
                     {
                         if (m_kAttr.HasTCoord(iUnit))
                         {
-                            pkVB.TCoord2(iUnit,i, kTCoord);
+                            pkVB.SetTCoord2(iUnit,i,fRadialFraction,fCircleFraction);
                         }
                     }
                 }
@@ -885,20 +909,19 @@ public class StandardMesh
                 i++;
             }
 
-            pkVB.Position3(i, pkVB.Position3(iSave));
+            pkVB.SetPosition3(i, pkVB.GetPosition3fX(iSave),pkVB.GetPosition3fY(iSave),pkVB.GetPosition3fZ(iSave));
             if (m_kAttr.HasNormal())
             {
-                pkVB.Normal3(i, pkVB.Normal3(iSave));
+                pkVB.SetNormal3(i, pkVB.GetNormal3fX(iSave), pkVB.GetNormal3fY(iSave), pkVB.GetNormal3fZ(iSave));
             }
 
             if (m_kAttr.GetMaxTCoords() > 0)
             {
-                kTCoord = new Vector2f(1.0f,fCircleFraction);
                 for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
                 {
                     if (m_kAttr.HasTCoord(iUnit))
                     {
-                        pkVB.TCoord2(iUnit,i, kTCoord);
+                        pkVB.SetTCoord2(iUnit,i,1.0f,fCircleFraction);
                     }
                 }
             }
@@ -909,20 +932,22 @@ public class StandardMesh
         // duplicate the cylinder ends to form a torus
         for (iR = 0; iR <= iRadialSamples; iR++, i++)
         {
-            pkVB.Position3(i, pkVB.Position3(iR));
+            pkVB.SetPosition3(i, pkVB.GetPosition3fX(iR),pkVB.GetPosition3fY(iR),pkVB.GetPosition3fZ(iR));
             if (m_kAttr.HasNormal())
             {
-                pkVB.Normal3(i, pkVB.Normal3(iR));
+                pkVB.SetNormal3(i,
+                                pkVB.GetNormal3fX(iR),
+                                pkVB.GetNormal3fY(iR),
+                                pkVB.GetNormal3fZ(iR) );
             }
 
             if (m_kAttr.GetMaxTCoords() > 0)
             {
-                kTCoord = new Vector2f(pkVB.TCoord2(0,iR).X(),1.0f);
                 for (iUnit = 0; iUnit < m_kAttr.GetMaxTCoords(); iUnit++)
                 {
                     if (m_kAttr.HasTCoord(iUnit))
                     {
-                        pkVB.TCoord2(iUnit,i, kTCoord);
+                        pkVB.SetTCoord2(iUnit,i, pkVB.GetTCoord2fX(0,iR),1.0f);
                     }
                 }
             }
@@ -987,10 +1012,10 @@ public class StandardMesh
         VertexBuffer pkVB = new VertexBuffer(m_kAttr,iVQuantity);
         IndexBuffer pkIB = new IndexBuffer(3*iTQuantity);
 
-        pkVB.Position3(0, new Vector3f(0.0f,0.0f,1.0f));
-        pkVB.Position3(1, new Vector3f(2.0f*fSqrt2Div3,0.0f,-fOneThird));
-        pkVB.Position3(2, new Vector3f(-fSqrt2Div3,fSqrt6Div3,-fOneThird));
-        pkVB.Position3(3, new Vector3f(-fSqrt2Div3,-fSqrt6Div3,-fOneThird));
+        pkVB.SetPosition3(0,0.0f,0.0f,1.0f);
+        pkVB.SetPosition3(1,2.0f*fSqrt2Div3,0.0f,-fOneThird);
+        pkVB.SetPosition3(2,-fSqrt2Div3,fSqrt6Div3,-fOneThird);
+        pkVB.SetPosition3(3,-fSqrt2Div3,-fSqrt6Div3,-fOneThird);
 
         int[] aiIndex = pkIB.GetData();
         aiIndex[ 0] = 0;  aiIndex[ 1] = 1;  aiIndex[ 2] = 2;
@@ -1021,14 +1046,14 @@ public class StandardMesh
         VertexBuffer pkVB = new VertexBuffer(m_kAttr,iVQuantity);
         IndexBuffer pkIB = new IndexBuffer(3*iTQuantity);
 
-        pkVB.Position3(0, new Vector3f(-fSqrtThird,-fSqrtThird,-fSqrtThird));
-        pkVB.Position3(1, new Vector3f( fSqrtThird,-fSqrtThird,-fSqrtThird));
-        pkVB.Position3(2, new Vector3f( fSqrtThird, fSqrtThird,-fSqrtThird));
-        pkVB.Position3(3, new Vector3f(-fSqrtThird, fSqrtThird,-fSqrtThird));
-        pkVB.Position3(4, new Vector3f(-fSqrtThird,-fSqrtThird, fSqrtThird));
-        pkVB.Position3(5, new Vector3f( fSqrtThird,-fSqrtThird, fSqrtThird));
-        pkVB.Position3(6, new Vector3f( fSqrtThird, fSqrtThird, fSqrtThird));
-        pkVB.Position3(7, new Vector3f(-fSqrtThird, fSqrtThird, fSqrtThird));
+        pkVB.SetPosition3(0,-fSqrtThird,-fSqrtThird,-fSqrtThird);
+        pkVB.SetPosition3(1, fSqrtThird,-fSqrtThird,-fSqrtThird);
+        pkVB.SetPosition3(2, fSqrtThird, fSqrtThird,-fSqrtThird);
+        pkVB.SetPosition3(3,-fSqrtThird, fSqrtThird,-fSqrtThird);
+        pkVB.SetPosition3(4,-fSqrtThird,-fSqrtThird, fSqrtThird);
+        pkVB.SetPosition3(5, fSqrtThird,-fSqrtThird, fSqrtThird);
+        pkVB.SetPosition3(6, fSqrtThird, fSqrtThird, fSqrtThird);
+        pkVB.SetPosition3(7,-fSqrtThird, fSqrtThird, fSqrtThird);
 
         int[] aiIndex = pkIB.GetData();
         aiIndex[ 0] = 0;  aiIndex[ 1] = 3;  aiIndex[ 2] = 2;
@@ -1065,12 +1090,12 @@ public class StandardMesh
         VertexBuffer pkVB = new VertexBuffer(m_kAttr,iVQuantity);
         IndexBuffer pkIB = new IndexBuffer(3*iTQuantity);
 
-        pkVB.Position3(0, new Vector3f( 1.0f, 0.0f, 0.0f));
-        pkVB.Position3(1, new Vector3f(-1.0f, 0.0f, 0.0f));
-        pkVB.Position3(2, new Vector3f( 0.0f, 1.0f, 0.0f));
-        pkVB.Position3(3, new Vector3f( 0.0f,-1.0f, 0.0f));
-        pkVB.Position3(4, new Vector3f( 0.0f, 0.0f, 1.0f));
-        pkVB.Position3(5, new Vector3f( 0.0f, 0.0f,-1.0f));
+        pkVB.SetPosition3(0, 1.0f, 0.0f, 0.0f);
+        pkVB.SetPosition3(1,-1.0f, 0.0f, 0.0f);
+        pkVB.SetPosition3(2, 0.0f, 1.0f, 0.0f);
+        pkVB.SetPosition3(3, 0.0f,-1.0f, 0.0f);
+        pkVB.SetPosition3(4, 0.0f, 0.0f, 1.0f);
+        pkVB.SetPosition3(5, 0.0f, 0.0f,-1.0f);
 
         int[] aiIndex = pkIB.GetData();
         aiIndex[ 0] = 4;  aiIndex[ 1] = 0;  aiIndex[ 2] = 2;
@@ -1107,26 +1132,26 @@ public class StandardMesh
         VertexBuffer pkVB = new VertexBuffer(m_kAttr,iVQuantity);
         IndexBuffer pkIB = new IndexBuffer(3*iTQuantity);
 
-        pkVB.Position3( 0, new Vector3f( fA, fA, fA));
-        pkVB.Position3( 1, new Vector3f( fA, fA,-fA));
-        pkVB.Position3( 2, new Vector3f( fA,-fA, fA));
-        pkVB.Position3( 3, new Vector3f( fA,-fA,-fA));
-        pkVB.Position3( 4, new Vector3f(-fA, fA, fA));
-        pkVB.Position3( 5, new Vector3f(-fA, fA,-fA));
-        pkVB.Position3( 6, new Vector3f(-fA,-fA, fA));
-        pkVB.Position3( 7, new Vector3f(-fA,-fA,-fA));
-        pkVB.Position3( 8, new Vector3f(  fB,  fC, 0.0f));
-        pkVB.Position3( 9, new Vector3f( -fB,  fC, 0.0f));
-        pkVB.Position3(10, new Vector3f(  fB, -fC, 0.0f));
-        pkVB.Position3(11, new Vector3f( -fB, -fC, 0.0f));
-        pkVB.Position3(12, new Vector3f(  fC, 0.0f,  fB));
-        pkVB.Position3(13, new Vector3f(  fC, 0.0f, -fB));
-        pkVB.Position3(14, new Vector3f( -fC, 0.0f,  fB));
-        pkVB.Position3(15, new Vector3f( -fC, 0.0f, -fB));
-        pkVB.Position3(16, new Vector3f(0.0f,   fB,  fC));
-        pkVB.Position3(17, new Vector3f(0.0f,  -fB,  fC));
-        pkVB.Position3(18, new Vector3f(0.0f,   fB, -fC));
-        pkVB.Position3(19, new Vector3f(0.0f,  -fB, -fC));
+        pkVB.SetPosition3( 0, fA, fA, fA);
+        pkVB.SetPosition3( 1, fA, fA,-fA);
+        pkVB.SetPosition3( 2, fA,-fA, fA);
+        pkVB.SetPosition3( 3, fA,-fA,-fA);
+        pkVB.SetPosition3( 4,-fA, fA, fA);
+        pkVB.SetPosition3( 5,-fA, fA,-fA);
+        pkVB.SetPosition3( 6,-fA,-fA, fA);
+        pkVB.SetPosition3( 7,-fA,-fA,-fA);
+        pkVB.SetPosition3( 8,  fB,  fC, 0.0f);
+        pkVB.SetPosition3( 9, -fB,  fC, 0.0f);
+        pkVB.SetPosition3(10,  fB, -fC, 0.0f);
+        pkVB.SetPosition3(11, -fB, -fC, 0.0f);
+        pkVB.SetPosition3(12,  fC, 0.0f,  fB);
+        pkVB.SetPosition3(13,  fC, 0.0f, -fB);
+        pkVB.SetPosition3(14, -fC, 0.0f,  fB);
+        pkVB.SetPosition3(15, -fC, 0.0f, -fB);
+        pkVB.SetPosition3(16,0.0f,   fB,  fC);
+        pkVB.SetPosition3(17,0.0f,  -fB,  fC);
+        pkVB.SetPosition3(18,0.0f,   fB, -fC);
+        pkVB.SetPosition3(19,0.0f,  -fB, -fC);
 
         int[] aiIndex = pkIB.GetData();
         aiIndex[  0] =  0;  aiIndex[  1] =  8;  aiIndex[  2] =  9;
@@ -1192,18 +1217,18 @@ public class StandardMesh
         VertexBuffer pkVB = new VertexBuffer(m_kAttr,iVQuantity);
         IndexBuffer pkIB = new IndexBuffer(3*iTQuantity);
 
-        pkVB.Position3( 0, new Vector3f(  fU,  fV,0.0f));
-        pkVB.Position3( 1, new Vector3f( -fU,  fV,0.0f));
-        pkVB.Position3( 2, new Vector3f(  fU, -fV,0.0f));
-        pkVB.Position3( 3, new Vector3f( -fU, -fV,0.0f));
-        pkVB.Position3( 4, new Vector3f(  fV,0.0f,  fU));
-        pkVB.Position3( 5, new Vector3f(  fV,0.0f, -fU));
-        pkVB.Position3( 6, new Vector3f( -fV,0.0f,  fU));
-        pkVB.Position3( 7, new Vector3f( -fV,0.0f, -fU));
-        pkVB.Position3( 8, new Vector3f(0.0f,  fU,  fV));
-        pkVB.Position3( 9, new Vector3f(0.0f, -fU,  fV));
-        pkVB.Position3(10, new Vector3f(0.0f,  fU, -fV));
-        pkVB.Position3(11, new Vector3f(0.0f, -fU, -fV));
+        pkVB.SetPosition3( 0,  fU,  fV,0.0f);
+        pkVB.SetPosition3( 1, -fU,  fV,0.0f);
+        pkVB.SetPosition3( 2,  fU, -fV,0.0f);
+        pkVB.SetPosition3( 3, -fU, -fV,0.0f);
+        pkVB.SetPosition3( 4,  fV,0.0f,  fU);
+        pkVB.SetPosition3( 5,  fV,0.0f, -fU);
+        pkVB.SetPosition3( 6, -fV,0.0f,  fU);
+        pkVB.SetPosition3( 7, -fV,0.0f, -fU);
+        pkVB.SetPosition3( 8,0.0f,  fU,  fV);
+        pkVB.SetPosition3( 9,0.0f, -fU,  fV);
+        pkVB.SetPosition3(10,0.0f,  fU, -fV);
+        pkVB.SetPosition3(11,0.0f, -fU, -fV);
 
         int[] aiIndex = pkIB.GetData();
         aiIndex[ 0] =  0;  aiIndex[ 1] =  8;  aiIndex[ 2] =  4;
@@ -1247,7 +1272,9 @@ public class StandardMesh
         {
             for (int i = 0; i < pkVBuffer.GetVertexQuantity(); i++)
             {
-                pkVBuffer.Normal3(i, pkVBuffer.Position3(i));
+                pkVBuffer.SetNormal3(i,  pkVBuffer.GetPosition3fX(i), 
+                        pkVBuffer.GetPosition3fY(i),
+                        pkVBuffer.GetPosition3fZ(i));
             }
         }
     }
@@ -1264,24 +1291,21 @@ public class StandardMesh
                 {
                     for (int i = 0; i < pkVBuffer.GetVertexQuantity(); i++)
                     {
-                        if (Math.abs(pkVBuffer.Position3(i).Z()) < 1.0f)
+                        if (Math.abs(pkVBuffer.GetPosition3fZ(i)) < 1.0f)
                         {
-                            Vector2f tCoord = pkVBuffer.TCoord2(iUnit,i);
-                            tCoord.X( (float)(0.5f*(1.0f +
-                                            Math.atan2(pkVBuffer.Position3(i).Y(),
-                                                       pkVBuffer.Position3(i).X())*Mathf.INV_PI)) );
-                            pkVBuffer.TCoord2(iUnit,i,tCoord);
+                            pkVBuffer.SetTCoord2(iUnit,i,
+                                              (float)(0.5f*(1.0f +
+                                                            Math.atan2(pkVBuffer.GetPosition3fY(i),
+                                                                       pkVBuffer.GetPosition3fX(i))*Mathf.INV_PI)),
+                                              pkVBuffer.GetTCoord2fY(iUnit,i));
                         }
                         else
                         {
-                            Vector2f tCoord = pkVBuffer.TCoord2(iUnit,i);
-                            tCoord.X( 0.5f );
-                            pkVBuffer.TCoord2(iUnit,i,tCoord);
+                            pkVBuffer.SetTCoord2(iUnit,i, 0.5f, pkVBuffer.GetTCoord2fY(iUnit,i));
                         }
-                        Vector2f tCoord = pkVBuffer.TCoord2(iUnit,i);
-                        tCoord.Y( (float)Math.acos(
-                                                     pkVBuffer.Position3(i).Z())*Mathf.INV_PI );
-                        pkVBuffer.TCoord2(iUnit,i,tCoord);
+                        pkVBuffer.SetTCoord2(iUnit,i, pkVBuffer.GetTCoord2fX(iUnit,i),
+                                             (float)Math.acos(
+                                                              pkVBuffer.GetPosition3fZ(i))*Mathf.INV_PI );
                     }
                 }
             }
@@ -1317,10 +1341,14 @@ public class StandardMesh
         int i;
         for (i = 0; i < iVQuantity; i++)
         {
-            Vector3f kPos = pkVB.Position3(i);
-            pkVB.Position3(i,m_kXFrm.ApplyForward(kPos));
-            kPos.finalize();
-            kPos = null;
+            Vector3f kIn = new Vector3f();
+            pkVB.GetPosition3(i, kIn);
+
+            Vector3f kOut = new Vector3f();
+            m_kXFrm.ApplyForward(kIn,kOut);
+            pkVB.SetPosition3(i,kOut);
+            kIn = null;
+            kOut = null;
         }
 
         if (m_kAttr.HasNormal())
@@ -1329,10 +1357,13 @@ public class StandardMesh
             m_kXFrm.SetTranslate(Vector3f.ZERO);
             for (i = 0; i < iVQuantity; i++)
             {
-                pkVB.Normal3(i, m_kXFrm.ApplyForward(pkVB.Normal3(i)));
-                Vector3f kNormal = pkVB.Normal3(i);
+                Vector3f kNormal = new Vector3f();
+                pkVB.GetNormal3(i, kNormal);
+                
+                pkVB.SetNormal3(i, m_kXFrm.ApplyForward(kNormal));
+                
                 kNormal.Normalize();
-                pkVB.Normal3(i, kNormal);
+                pkVB.SetNormal3(i, kNormal);
                 kNormal.finalize();
                 kNormal = null;
             }

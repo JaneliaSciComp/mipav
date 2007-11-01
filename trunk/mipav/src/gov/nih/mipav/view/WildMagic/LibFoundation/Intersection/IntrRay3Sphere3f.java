@@ -86,10 +86,12 @@ public class IntrRay3Sphere3f extends Intersector
      */
     public boolean Test ()
     {
-        Vector3f kDiff = m_rkRay.Origin.sub( m_rkSphere.Center );
+        Vector3f kDiff = new Vector3f();
+        m_rkRay.Origin.sub( m_rkSphere.Center, kDiff );
         float fA0 = kDiff.Dot(kDiff) - m_rkSphere.Radius*m_rkSphere.Radius;
         if (fA0 <= (float)0.0)
         {
+            kDiff = null;
             // P is inside the sphere
             return true;
         }
@@ -98,9 +100,11 @@ public class IntrRay3Sphere3f extends Intersector
         float fA1 = m_rkRay.Direction.Dot(kDiff);
         if (fA1 >= (float)0.0)
         {
+            kDiff = null;
             return false;
         }
 
+        kDiff = null;
         // quadratic has a real root if discriminant is nonnegative
         return (fA1*fA1 >= fA0);
     }
@@ -111,7 +115,8 @@ public class IntrRay3Sphere3f extends Intersector
      */
     public boolean Find ()
     {
-        Vector3f kDiff = m_rkRay.Origin.sub( m_rkSphere.Center );
+        Vector3f kDiff = new Vector3f();
+        m_rkRay.Origin.sub( m_rkSphere.Center, kDiff );
         float fA0 = kDiff.Dot(kDiff) - m_rkSphere.Radius*m_rkSphere.Radius;
         float fA1, fDiscr, fRoot;
         if (fA0 <= (float)0.0)
@@ -122,7 +127,11 @@ public class IntrRay3Sphere3f extends Intersector
             fDiscr = fA1*fA1 - fA0;
             fRoot = (float)Math.sqrt(fDiscr);
             m_afRayT[0] = -fA1 + fRoot;
-            m_akPoint[0] = m_rkRay.Origin.add( m_rkRay.Direction.scale(m_afRayT[0]) );
+            Vector3f kScale = new Vector3f(m_rkRay.Direction);
+            kScale.scaleEquals(m_afRayT[0]);
+            m_rkRay.Origin.add( kScale, m_akPoint[0] );
+            kScale = null;
+            kDiff = null;
             return true;
         }
         // else: P is outside the sphere
@@ -131,6 +140,7 @@ public class IntrRay3Sphere3f extends Intersector
         if (fA1 >= (float)0.0)
         {
             m_iQuantity = 0;
+            kDiff = null;
             return false;
         }
 
@@ -144,17 +154,26 @@ public class IntrRay3Sphere3f extends Intersector
             fRoot = (float)Math.sqrt(fDiscr);
             m_afRayT[0] = -fA1 - fRoot;
             m_afRayT[1] = -fA1 + fRoot;
-            m_akPoint[0] = m_rkRay.Origin.add( m_rkRay.Direction.scale(m_afRayT[0]) );
-            m_akPoint[1] = m_rkRay.Origin.add( m_rkRay.Direction.scale(m_afRayT[1]) );
+            Vector3f kScale = new Vector3f(m_rkRay.Direction);
+            kScale.scaleEquals(m_afRayT[0]);
+            m_rkRay.Origin.add( kScale, m_akPoint[0] );
+            kScale.SetData(m_rkRay.Direction);
+            kScale.scaleEquals(m_afRayT[1]);
+            m_rkRay.Origin.add( kScale, m_akPoint[1] );
             m_iQuantity = 2;
+            kScale = null;
         }
         else
         {
             m_afRayT[0] = -fA1;
-            m_akPoint[0] = m_rkRay.Origin.add( m_rkRay.Direction.scale(m_afRayT[0]) );
+            Vector3f kScale = new Vector3f(m_rkRay.Direction);
+            kScale.scaleEquals(m_afRayT[0]);
+            m_rkRay.Origin.add( kScale, m_akPoint[0] );
             m_iQuantity = 1;
+            kScale = null;
         }
 
+        kDiff = null;
         return m_iQuantity > 0;
     }
 
@@ -197,7 +216,7 @@ public class IntrRay3Sphere3f extends Intersector
     /** information about the intersection set: number of intersections */
     private int m_iQuantity;
     /** information about the intersection set: intersection points */
-    private Vector3f[] m_akPoint = new Vector3f[2];
+    private Vector3f[] m_akPoint = new Vector3f[] { new Vector3f(), new Vector3f() };
     /** information about the intersection set: line equation T-values of
      * intersections */
     private float[] m_afRayT = new float[2];

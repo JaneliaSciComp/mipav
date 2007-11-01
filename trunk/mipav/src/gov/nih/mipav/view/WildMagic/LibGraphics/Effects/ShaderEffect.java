@@ -546,10 +546,18 @@ public class ShaderEffect extends Effect
         boolean bLoadedPProgram = false;
         if ( pkPProgram == null )
         {
-            pkPProgram =
-                PixelProgramCatalog.GetActive().
-                Find( m_kPShader.get(iPass).GetShaderName(),
-                      PixelProgramCatalog.GetActive().GetDefaultDir());
+            if ( m_kPShader.get(iPass).GetUnique() )
+            {
+                pkPProgram = PixelProgram.Load(m_kPShader.get(iPass).GetShaderName(),
+                        PixelProgramCatalog.GetActive().GetDefaultDir());
+            }
+            else
+            {
+                pkPProgram =
+                    PixelProgramCatalog.GetActive().
+                    Find( m_kPShader.get(iPass).GetShaderName(),
+                            PixelProgramCatalog.GetActive().GetDefaultDir());
+            }
             bLoadedPProgram = true;
         }
 

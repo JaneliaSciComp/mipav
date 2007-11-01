@@ -142,6 +142,8 @@ public class JPanelSurface extends JPanelRendererBase
     /** For drawing the geodesic lines on the triangle mesh:. */
     private BranchGroup m_kGeodesicGroup = null;
 
+    /** For displaying the fiber bundle tracts in the orthogonal slice view: */
+    BranchGroup m_kFiberTractGroup = null;
 
     // Light Interface:
     /** Light dialog for when the user clicks the light button. */
@@ -721,9 +723,18 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-
+     * Called from the JDialogDTIInput. Adds a line array representing the
+     * fiber bundle tract to the SurfaceRender.
+     * @param kLine, LineArray to add
+     * @param iGroup, branch group index to add the line to.
+     * @return the BranchGroup the line is added to. 
      */
-    public void addLineArray(LineArray kLine) {
+    public BranchGroup addLineArray(LineArray kLine, int iGroup ) {
+        if ( kLine == null )
+        {
+            return null;
+        }
+        
         /* Create the Shape3D object to contain the LineArray: */
         Shape3D kShape = new Shape3D();
         kShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
@@ -742,13 +753,43 @@ public class JPanelSurface extends JPanelRendererBase
 
         kPathTransformGroup.addChild(kShape);
 
-        BranchGroup kPathBranchGroup = new BranchGroup();
+        if ( m_kFiberTractGroup == null )
+        {
+            m_kFiberTractGroup = new BranchGroup();
+            m_kFiberTractGroup.setCapability(BranchGroup.ALLOW_DETACH);
+            m_kFiberTractGroup.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
+            m_kFiberTractGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+            m_kFiberTractGroup.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
+            surfaceRootBG.addChild(m_kFiberTractGroup);
+        }
+        int iNumChildren = m_kFiberTractGroup.numChildren();
+        BranchGroup kBranch = null;
+        if ( iNumChildren != iGroup )
+        {
+            kBranch = (BranchGroup)m_kFiberTractGroup.getChild(iGroup);
+        }
+        if ( kBranch == null )
+        {
+            kBranch = new BranchGroup();
+            kBranch.setCapability(BranchGroup.ALLOW_DETACH);
+            kBranch.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
+            kBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+            kBranch.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
+        }
+        kBranch.detach();
+        kBranch.addChild(kPathTransformGroup);
+        m_kFiberTractGroup.insertChild(kBranch, iGroup);
+        return kBranch;
+    }
 
-        kPathBranchGroup.setCapability(BranchGroup.ALLOW_DETACH);
-        kPathBranchGroup.addChild(kPathTransformGroup);
-        kPathBranchGroup.compile();
-
-        surfaceRootBG.addChild(kPathBranchGroup);
+    /**
+     * Called from the JDialogDTIInput. Removes the line array representing
+     * the fiber bundle tract from the SurfaceRender.
+     * @param kBranch the BranchGroup the line is in. 
+     */
+    public void removeLineArray( BranchGroup kBranch )
+    {
+        m_kFiberTractGroup.removeChild(kBranch);
     }
 
     /**

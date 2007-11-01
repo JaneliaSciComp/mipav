@@ -119,9 +119,21 @@ public class LightNode extends Node
         if (m_spkLight != null)
         {
             m_spkLight.Position = World.GetTranslate();
-            m_spkLight.DVector = World.GetRotate().GetColumn(0);
-            m_spkLight.UVector = World.GetRotate().GetColumn(1);
-            m_spkLight.RVector = World.GetRotate().GetColumn(2);
+            if (m_spkLight.DVector == null)
+            {
+                m_spkLight.DVector = new Vector3f();
+            }
+            World.GetRotate().GetColumn(0,m_spkLight.DVector);
+            if (m_spkLight.UVector == null)
+            {
+                m_spkLight.UVector = new Vector3f();
+            }
+            World.GetRotate().GetColumn(1,m_spkLight.UVector);
+            if (m_spkLight.RVector == null)
+            {
+                m_spkLight.RVector = new Vector3f();
+            }
+            World.GetRotate().GetColumn(2,m_spkLight.RVector);
         }
     }
 

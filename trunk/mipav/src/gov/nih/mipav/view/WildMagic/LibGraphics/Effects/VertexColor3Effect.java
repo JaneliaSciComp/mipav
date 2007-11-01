@@ -45,7 +45,7 @@ public class VertexColor3Effect extends ShaderEffect
     {
         super(1);
         m_kVShader.set(0, new VertexShader(kShaderName, bUnique));
-        m_kPShader.set(0, new PixelShader("PassThrough3"));
+        m_kPShader.set(0, new PixelShader("PassThrough3", bUnique));
     }
 
     /**

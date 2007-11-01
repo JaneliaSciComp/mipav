@@ -19,6 +19,8 @@
 package gov.nih.mipav.view.WildMagic.LibGraphics.Shaders;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import gov.nih.mipav.view.WildMagic.LibGraphics.ObjectSystem.*;
 
 public class PixelProgramCatalog
@@ -149,16 +151,34 @@ public class PixelProgramCatalog
         }
 
         // Attempt to find the program in the catalog.
-        PixelProgram kLocalProgram = m_kEntry.get(kProgramName);
-        if (kLocalProgram == null)
+        String kKey;
+        Iterator kIterator = m_kEntry.keySet().iterator();
+        while ( kIterator.hasNext() )
         {
-            // The program does not exist in the catalog.
-            return false;
+            kKey = (String)kIterator.next();
+            if ( kKey.equals(kProgramName) )
+            {
+                PixelProgram kLocalProgram = m_kEntry.get(kKey);
+                if ( kLocalProgram == pkProgram )
+                {
+                    kIterator.remove();
+                    return true;
+                }
+            }
         }
+        // The program does not exist in the catalog.
+        return false;
 
-        // The program exists in the catalog.
-        m_kEntry.remove(kProgramName);
-        return true;
+//         PixelProgram kLocalProgram = m_kEntry.get(kProgramName);
+//         if (kLocalProgram == null)
+//         {
+//             // The program does not exist in the catalog.
+//             return false;
+//         }
+
+//         // The program exists in the catalog.
+//         m_kEntry.remove(kProgramName);
+//         return true;
     }
 
     /** Find a pixel program in the catalog based on the program's name. If

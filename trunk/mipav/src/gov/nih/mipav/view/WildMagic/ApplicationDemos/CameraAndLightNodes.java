@@ -146,7 +146,8 @@ public class CameraAndLightNodes extends JavaApplication3D
         Vector3f kCLoc = new Vector3f(0.0f,-100.0f,5.0f);
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -216,18 +217,18 @@ public class CameraAndLightNodes extends JavaApplication3D
         VertexBuffer pkVBuffer = new VertexBuffer(kAttr,4);
 
         float fMax = 100.0f;
-        pkVBuffer.Position3(0, new Vector3f(-fMax,-fMax,0.0f));
-        pkVBuffer.Position3(1, new Vector3f(+fMax,-fMax,0.0f));
-        pkVBuffer.Position3(2, new Vector3f(+fMax,+fMax,0.0f));
-        pkVBuffer.Position3(3, new Vector3f(-fMax,+fMax,0.0f));
-        pkVBuffer.Normal3(0, Vector3f.UNIT_Z);
-        pkVBuffer.Normal3(1, Vector3f.UNIT_Z);
-        pkVBuffer.Normal3(2, Vector3f.UNIT_Z);
-        pkVBuffer.Normal3(3, Vector3f.UNIT_Z);
-        pkVBuffer.TCoord2(0,0, new Vector2f(0.0f,0.0f));
-        pkVBuffer.TCoord2(0,1, new Vector2f(8.0f,0.0f));
-        pkVBuffer.TCoord2(0,2, new Vector2f(8.0f,8.0f));
-        pkVBuffer.TCoord2(0,3, new Vector2f(0.0f,8.0f));
+        pkVBuffer.SetPosition3(0,-fMax,-fMax,0.0f);
+        pkVBuffer.SetPosition3(1,+fMax,-fMax,0.0f);
+        pkVBuffer.SetPosition3(2,+fMax,+fMax,0.0f);
+        pkVBuffer.SetPosition3(3,-fMax,+fMax,0.0f);
+        pkVBuffer.SetNormal3(0, Vector3f.UNIT_Z);
+        pkVBuffer.SetNormal3(1, Vector3f.UNIT_Z);
+        pkVBuffer.SetNormal3(2, Vector3f.UNIT_Z);
+        pkVBuffer.SetNormal3(3, Vector3f.UNIT_Z);
+        pkVBuffer.SetTCoord2(0,0,0.0f,0.0f);
+        pkVBuffer.SetTCoord2(0,1,8.0f,0.0f);
+        pkVBuffer.SetTCoord2(0,2,8.0f,8.0f);
+        pkVBuffer.SetTCoord2(0,3,0.0f,8.0f);
 
         IndexBuffer pkIBuffer = new IndexBuffer(6);
         int[] aiIndex = pkIBuffer.GetData();
@@ -269,9 +270,10 @@ public class CameraAndLightNodes extends JavaApplication3D
         int iVQuantity = pkVBuffer.GetVertexQuantity();
         for (int i = 0; i < iVQuantity; i++)
         {
-            Vector3f kPos = pkVBuffer.Position3(i);
-            kPos.Z( 1.0f - (kPos.X()*kPos.X()+kPos.Y()*kPos.Y())/128.0f );
-            pkVBuffer.Position3(i, kPos);
+            float fX = pkVBuffer.GetPosition3fX(i);
+            float fY = pkVBuffer.GetPosition3fY(i);
+            float fZ = 1.0f - (fX*fX + fY*fY)/128.0f;
+            pkVBuffer.SetPosition3(i, fX, fY, fZ);
         }
         pkMesh.UpdateMS();
 
@@ -334,14 +336,14 @@ public class CameraAndLightNodes extends JavaApplication3D
         kAttr.SetPChannels(3);
         kAttr.SetTChannels(0,2);
         VertexBuffer pkVBuffer = new VertexBuffer(kAttr,4);
-        pkVBuffer.Position3(0, new Vector3f(0.0f,0.0f,1.0f));
-        pkVBuffer.Position3(1, new Vector3f(1.0f,0.0f,1.0f));
-        pkVBuffer.Position3(2, new Vector3f(1.0f,1.0f,1.0f));
-        pkVBuffer.Position3(3, new Vector3f(0.0f,1.0f,1.0f));
-        pkVBuffer.TCoord2(0,0, new Vector2f(0.0f,1.0f));
-        pkVBuffer.TCoord2(0,1, new Vector2f(1.0f,1.0f));
-        pkVBuffer.TCoord2(0,2, new Vector2f(1.0f,0.0f));
-        pkVBuffer.TCoord2(0,3, new Vector2f(0.0f,0.0f));
+        pkVBuffer.SetPosition3(0,0.0f,0.0f,1.0f);
+        pkVBuffer.SetPosition3(1,1.0f,0.0f,1.0f);
+        pkVBuffer.SetPosition3(2,1.0f,1.0f,1.0f);
+        pkVBuffer.SetPosition3(3,0.0f,1.0f,1.0f);
+        pkVBuffer.SetTCoord2(0,0,0.0f,1.0f);
+        pkVBuffer.SetTCoord2(0,1,1.0f,1.0f);
+        pkVBuffer.SetTCoord2(0,2,1.0f,0.0f);
+        pkVBuffer.SetTCoord2(0,3,0.0f,0.0f);
         IndexBuffer pkIBuffer = new IndexBuffer(6);
         int[] aiIndex = pkIBuffer.GetData();
         aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
@@ -353,39 +355,49 @@ public class CameraAndLightNodes extends JavaApplication3D
     protected void MoveForward ()
     {
         Vector3f kLocation = m_spkCNode.Local.GetTranslate();
-        Vector3f kDirection = m_spkCNode.Local.GetRotate().GetColumn(0);
-        kLocation.addEquals( kDirection.scale(m_fTrnSpeed) );
+        Vector3f kDirection = new Vector3f();
+        m_spkCNode.Local.GetRotate().GetColumn(0, kDirection);
+        kDirection.scaleEquals(m_fTrnSpeed);
+        kLocation.addEquals( kDirection );
         m_spkCNode.Local.SetTranslate(kLocation);
         m_spkCNode.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
+        kDirection = null;
     }
 
     protected void MoveBackward ()
     {
         Vector3f kLocation = m_spkCNode.Local.GetTranslate();
-        Vector3f kDirection = m_spkCNode.Local.GetRotate().GetColumn(0);
-        kLocation.subEquals( kDirection.scale(m_fTrnSpeed) );
+        Vector3f kDirection = new Vector3f();
+        m_spkCNode.Local.GetRotate().GetColumn(0, kDirection);
+        kDirection.scaleEquals(m_fTrnSpeed);
+        kLocation.subEquals( kDirection );
         m_spkCNode.Local.SetTranslate(kLocation);
         m_spkCNode.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
+        kDirection = null;
     }
 
     protected void TurnLeft ()
     {
-        Vector3f kUp = m_spkCNode.Local.GetRotate().GetColumn(1);
+        Vector3f kUp = new Vector3f();
+        m_spkCNode.Local.GetRotate().GetColumn(1, kUp);
         m_spkCNode.Local.SetRotate(
                                     (new Matrix3f(kUp,m_fRotSpeed)).mult(m_spkCNode.Local.GetRotate()));
         m_spkCNode.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
+        kUp = null;
     }
 
     protected void TurnRight ()
     {
-        Vector3f kUp = m_spkCNode.Local.GetRotate().GetColumn(1);
+        Vector3f kUp = new Vector3f();
+        m_spkCNode.Local.GetRotate().GetColumn(1, kUp);
         m_spkCNode.Local.SetRotate(
                                     (new Matrix3f(kUp,-m_fRotSpeed)).mult(m_spkCNode.Local.GetRotate()));
         m_spkCNode.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
+        kUp = null;
     }
 
     protected void MoveUp ()

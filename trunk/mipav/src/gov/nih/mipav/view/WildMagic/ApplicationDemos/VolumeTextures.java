@@ -137,7 +137,8 @@ public class VolumeTextures extends JavaApplication3D
         Vector3f kCUp = new Vector3f(0.0f,1.0f,0.0f);
         kCDir.Normalize();
         kCUp.Normalize();
-        Vector3f kCRight = kCDir.Cross(kCUp);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);;
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -218,6 +219,7 @@ public class VolumeTextures extends JavaApplication3D
         m_afCommonAlpha[0] = 0.05f;
 
         Vector3f kPoint = new Vector3f();
+        Vector3f kDiff = new Vector3f();
         int i = 0;
         for (int iZ = 0; iZ < iBound; iZ++)
         {
@@ -229,7 +231,7 @@ public class VolumeTextures extends JavaApplication3D
                 {
                     kPoint.X( -fExtreme + 2.0f*fExtreme*iX/(float)(iBound-1) );
 
-                    Vector3f kDiff = kPoint.sub( kRCenter );
+                    kPoint.sub( kRCenter, kDiff );
                     float fRSqr = kDiff.SquaredLength();
                     float fRGauss = 1.0f - fRParam*fRSqr;
                     if (fRGauss < 0.0f)
@@ -237,7 +239,7 @@ public class VolumeTextures extends JavaApplication3D
                         fRGauss = 0.0f;
                     }
 
-                    kDiff = kPoint.sub( kGCenter );
+                    kPoint.sub( kGCenter, kDiff );
                     fRSqr = kDiff.SquaredLength();
                     float fGGauss = 1.0f - fGParam*fRSqr;
                     if (fGGauss < 0.0f)
@@ -245,7 +247,7 @@ public class VolumeTextures extends JavaApplication3D
                         fGGauss = 0.0f;
                     }
 
-                    kDiff = kPoint.sub( kBCenter );
+                    kPoint.sub( kBCenter, kDiff );
                     fRSqr = kDiff.SquaredLength();
                     float fBGauss = 1.0f - fBParam*fRSqr;
                     if (fBGauss < 0.0f)
@@ -259,7 +261,8 @@ public class VolumeTextures extends JavaApplication3D
                 }
             }
         }
-
+        kDiff = null;
+        
         m_spkVolume = new GraphicsImage(
                 GraphicsImage.FormatMode.IT_RGB888,64,64,64,aucData,
                                 "VolumeImage");
@@ -308,19 +311,25 @@ public class VolumeTextures extends JavaApplication3D
         // generate geometry
         float fInv0 = 1.0f/(iXSamples - 1.0f);
         float fInv1 = 1.0f/(iYSamples - 1.0f);
-        Vector3f kZTmp = Vector3f.UNIT_Z.scale(2.0f*fW - 1.0f);
+        //Vector3f kZTmp = Vector3f.UNIT_Z.scale(2.0f*fW - 1.0f);
         float fU, fV;
         int i, i0, i1;
         for (i1 = 0, i = 0; i1 < iYSamples; i1++)
         {
             fV = i1*fInv1;
-            Vector3f kYTmp = Vector3f.UNIT_Y.scale(2.0f*fV - 1.0f);
+            //Vector3f kYTmp = Vector3f.UNIT_Y.scale(2.0f*fV - 1.0f);
             for (i0 = 0; i0 < iXSamples; i0++)
             {
                 fU = i0*fInv0;
-                Vector3f kXTmp = Vector3f.UNIT_X.scale(2.0f*fU - 1.0f);
-                pkVB.Position3(i, kXTmp.add( kYTmp ).add( kZTmp ) );
-                pkVB.TCoord3(0,i, new Vector3f(fU,fV,fW) );
+                //Vector3f kXTmp = Vector3f.UNIT_X.scale(2.0f*fU - 1.0f);
+                //pkVB.Position3(i, kXTmp.add( kYTmp ).add( kZTmp ) );
+                
+                pkVB.SetPosition3(i, 
+                        2.0f*fU - 1.0f,
+                        2.0f*fV - 1.0f,
+                        2.0f*fW - 1.0f );
+                
+                pkVB.SetTCoord3(0,i, fU,fV,fW );
                 i++;
             }
         }

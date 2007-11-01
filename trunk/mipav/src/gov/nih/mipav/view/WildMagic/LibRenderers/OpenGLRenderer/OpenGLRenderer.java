@@ -121,14 +121,13 @@ public class OpenGLRenderer extends Renderer
 
         // Get the number of supported texture images for vertex program.
         m_iMaxVShaderImages = 0;
-        int[] aiParams = new int[1];
-        gl.glGetIntegerv(GL.GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,aiParams,0);
-        m_iMaxVShaderImages = aiParams[0];
+        gl.glGetIntegerv(GL.GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS,m_aiParams,0);
+        m_iMaxVShaderImages = m_aiParams[0];
 
         // Get the number of supported texture units for pixel programs.
         m_iMaxPShaderImages = 0;
-        gl.glGetIntegerv(GL.GL_MAX_TEXTURE_IMAGE_UNITS,aiParams,0);
-        m_iMaxPShaderImages = aiParams[0];
+        gl.glGetIntegerv(GL.GL_MAX_TEXTURE_IMAGE_UNITS,m_aiParams,0);
+        m_iMaxPShaderImages = m_aiParams[0];
 
         // TO DO.  The OpenGL shading language has separate concepts of "texture
         // image units" and "texture coordinate sets".  The values iMaxTextures
@@ -138,16 +137,16 @@ public class OpenGLRenderer extends Renderer
         // number of samplers need to be compared with what the hardware can
         // support.
         m_iMaxTCoords = 0;
-        gl.glGetIntegerv(GL.GL_MAX_TEXTURE_COORDS,aiParams,0);
-        m_iMaxTCoords = aiParams[0];
+        gl.glGetIntegerv(GL.GL_MAX_TEXTURE_COORDS,m_aiParams,0);
+        m_iMaxTCoords = m_aiParams[0];
 
         // OpenGL supports a primary and a secondary color
         m_iMaxColors = 2;
 
         // Set up light model.  TO DO:  Do we need the OpenGL calls for a
         // shader-based engine?
-        gl.glGetIntegerv(GL.GL_MAX_LIGHTS,aiParams,0);
-        m_iMaxLights = aiParams[0];
+        gl.glGetIntegerv(GL.GL_MAX_LIGHTS,m_aiParams,0);
+        m_iMaxLights = m_aiParams[0];
         assert(m_iMaxLights > 0);
         m_aspkLight = new GraphicsObject[m_iMaxLights];
 
@@ -159,12 +158,12 @@ public class OpenGLRenderer extends Renderer
 
         // get stencil buffer size
         int iBits = 0;
-        gl.glGetIntegerv(GL.GL_STENCIL_BITS,aiParams,0);
-        iBits = aiParams[0];
+        gl.glGetIntegerv(GL.GL_STENCIL_BITS,m_aiParams,0);
+        iBits = m_aiParams[0];
         m_iMaxStencilIndices = (iBits > 0 ? (1 << iBits) : 0);
 
-        gl.glGetIntegerv(GL.GL_MAX_CLIP_PLANES,aiParams,0);
-        m_iMaxUserClipPlanes = aiParams[0];
+        gl.glGetIntegerv(GL.GL_MAX_CLIP_PLANES,m_aiParams,0);
+        m_iMaxUserClipPlanes = m_aiParams[0];
 
         // Disable drawing of lines as sequences of dashes.
         gl.glDisable(GL.GL_LINE_STIPPLE);
@@ -388,7 +387,6 @@ public class OpenGLRenderer extends Renderer
         assert(acText != null);
 
 // #ifdef USE_TEXT_DISPLAY_LIST
-//         int[] aiParam = new int[1];
 //         int iListBase;
 //         gl.glGetIntegerv(GL.GL_LIST_BASE,aiParam,0);
 //         iListBase = aiParam[0];
@@ -512,8 +510,7 @@ public class OpenGLRenderer extends Renderer
         gl.glLoadIdentity();
         gl.glOrtho(0.0,(double)m_iWidth,0.0,(double)m_iHeight,0.0,1.0);
         gl.glRasterPos3f(0.0f,0.0f,0.0f);
-        byte[] aucBitmap = new byte[]{0};
-        gl.glBitmap(0,0,0.0f,0.0f,0.0f,(float)m_iHeight,aucBitmap,0);
+        gl.glBitmap(0,0,0.0f,0.0f,0.0f,(float)m_iHeight,m_aucBitmap,0);
         gl.glPopMatrix();
         gl.glMatrixMode(GL.GL_MODELVIEW);
         gl.glPopMatrix();
@@ -639,6 +636,7 @@ public class OpenGLRenderer extends Renderer
             };
         gl.glEnable(GL.GL_CLIP_PLANE0 + i);
         gl.glClipPlane(GL.GL_CLIP_PLANE0 + i,adPlane,0);
+        adPlane = null;
     }
 
     /** Disables additional clip planes.
@@ -925,6 +923,7 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
 
         // Generate binding information and compile the program.
+        //System.err.println("OnLoadVProgram");
         VProgramID pkResource = new VProgramID();
         ResourceIdentifier rpkID = pkResource;
 
@@ -933,9 +932,8 @@ public class OpenGLRenderer extends Renderer
         int iProgramLength = acProgramText.length();
 
         gl.glEnable(GL.GL_VERTEX_PROGRAM_ARB);
-        int[] aiParams = new int[1];
-        gl.glGenProgramsARB(1,aiParams,0);
-        pkResource.ID = aiParams[0];
+        gl.glGenProgramsARB(1,m_aiParams,0);
+        pkResource.ID = m_aiParams[0];
         gl.glBindProgramARB(GL.GL_VERTEX_PROGRAM_ARB,pkResource.ID);
         gl.glProgramStringARB(GL.GL_VERTEX_PROGRAM_ARB,GL.GL_PROGRAM_FORMAT_ASCII_ARB,
                               iProgramLength,acProgramText);
@@ -959,10 +957,9 @@ public class OpenGLRenderer extends Renderer
         }
 
         VProgramID pkResource = (VProgramID)pkID;
-        int[] aiParams = new int[1];
-        aiParams[0] = pkResource.ID;
-        gl.glDeleteProgramsARB(1,aiParams,0);
-        pkResource.ID = aiParams[0];
+        m_aiParams[0] = pkResource.ID;
+        gl.glDeleteProgramsARB(1,m_aiParams,0);
+        pkResource.ID = m_aiParams[0];
         pkResource = null;
     }
 
@@ -976,17 +973,21 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
 
         // Generate binding information and compile the shader.
+        //System.err.println("OnLoadPProgram");
         PProgramID pkResource = new PProgramID();
         ResourceIdentifier rpkID = pkResource;
 
         String acProgramText = pkPProgram.GetProgramText();
         //System.err.println( acProgramText );
+        if ( acProgramText == null )
+        {
+            return rpkID;
+        }
         int iProgramLength = acProgramText.length();
 
         gl.glEnable(GL.GL_FRAGMENT_PROGRAM_ARB);
-        int[] aiParams = new int[1];
-        gl.glGenProgramsARB(1,aiParams,0);
-        pkResource.ID = aiParams[0];
+        gl.glGenProgramsARB(1,m_aiParams,0);
+        pkResource.ID = m_aiParams[0];
         gl.glBindProgramARB(GL.GL_FRAGMENT_PROGRAM_ARB,pkResource.ID);
         gl.glProgramStringARB(GL.GL_FRAGMENT_PROGRAM_ARB,GL.GL_PROGRAM_FORMAT_ASCII_ARB,
                            iProgramLength,acProgramText);
@@ -1010,10 +1011,9 @@ public class OpenGLRenderer extends Renderer
         }
 
         PProgramID pkResource = (PProgramID)pkID;
-        int[] aiParams = new int[1];
-        aiParams[0] = pkResource.ID;
-        gl.glDeleteProgramsARB(1,aiParams,0);
-        pkResource.ID = aiParams[0];
+        m_aiParams[0] = pkResource.ID;
+        gl.glDeleteProgramsARB(1,m_aiParams,0);
+        pkResource.ID = m_aiParams[0];
         pkResource = null;
     }
 
@@ -1027,6 +1027,7 @@ public class OpenGLRenderer extends Renderer
         GL gl = m_kDrawable.getGL();
 
         // Activate the texture unit in hardware that will manage this texture.
+        //System.err.println("OnLoadTexture");
         TextureID pkResource = new TextureID();
         pkResource.TextureObject = pkTexture;
         ResourceIdentifier rpkID = pkResource;
@@ -1045,9 +1046,8 @@ public class OpenGLRenderer extends Renderer
         int eIType = ms_aeImageTypes[pkImage.GetFormat().Value()];
 
         // Generate the name and binding information.
-        int[] aiParams = new int[1];
-        gl.glGenTextures((int)1,aiParams,0);
-        pkResource.ID = aiParams[0];
+        gl.glGenTextures((int)1,m_aiParams,0);
+        pkResource.ID = m_aiParams[0];
         gl.glBindTexture(eTarget,pkResource.ID);
 
         // Set the filter mode.
@@ -1094,6 +1094,7 @@ public class OpenGLRenderer extends Renderer
             }
             else
             {
+                //System.err.println("new GLU 1");
                 GLU kGLU = new GLU();
                 kGLU.gluBuild1DMipmaps(eTarget,iComponent,pkImage.GetBound(0),
                                        eFormat,eIType,aucData);
@@ -1114,6 +1115,7 @@ public class OpenGLRenderer extends Renderer
                 }
                 else
                 {
+                    //System.err.println("new GLU 2");
                     GLU kGLU = new GLU();
                     kGLU.gluBuild2DMipmaps(eTarget,iComponent,pkImage.GetBound(0),
                                       pkImage.GetBound(1),eFormat,eIType,aucData);
@@ -1330,9 +1332,8 @@ public class OpenGLRenderer extends Renderer
             Activate();
         }
         TextureID pkResource = (TextureID)pkID;     
-        int[] aiParams = new int[1];
-        aiParams[0] = pkResource.ID;
-        gl.glDeleteTextures((int)1,aiParams,0);
+        m_aiParams[0] = pkResource.ID;
+        gl.glDeleteTextures((int)1,m_aiParams,0);
     }
 
     /** Resource loading and releasing (to/from video memory).
@@ -1347,6 +1348,7 @@ public class OpenGLRenderer extends Renderer
         if ( m_kDrawable == null ) { System.err.println( "OnLoadVBuffer GLDrawable null" ); return null; }
         GL gl = m_kDrawable.getGL();
 
+        //System.err.println("OnLoadVBuffer");
         VBufferID pkResource = new VBufferID();
         ResourceIdentifier rpkID = pkResource;
         pkResource.IAttr = rkIAttr;
@@ -1356,9 +1358,8 @@ public class OpenGLRenderer extends Renderer
         int iChannels = afCompatible.length;
 
         // Generate the name and binding information.
-        int[] aiParams = new int[1];
-        gl.glGenBuffers(1,aiParams,0);
-        pkResource.ID = aiParams[0];
+        gl.glGenBuffers(1,m_aiParams,0);
+        pkResource.ID = m_aiParams[0];
         gl.glBindBuffer(GL.GL_ARRAY_BUFFER,pkResource.ID);
 
         // Copy the vertex buffer data from system memory to video memory.
@@ -1385,10 +1386,9 @@ public class OpenGLRenderer extends Renderer
         }
 
         VBufferID pkResource = (VBufferID)pkID;
-        int[] aiParams = new int[1];
-        aiParams[0] = pkResource.ID;
-        gl.glDeleteBuffers(1,aiParams,0);
-        pkResource.ID = aiParams[0];
+        m_aiParams[0] = pkResource.ID;
+        gl.glDeleteBuffers(1,m_aiParams,0);
+        pkResource.ID = m_aiParams[0];
         pkResource = null;
     }
 
@@ -1401,12 +1401,12 @@ public class OpenGLRenderer extends Renderer
         if ( m_kDrawable == null ) { System.err.println( "OnLoadIBuffer GLDrawable null" ); return null; }
         GL gl = m_kDrawable.getGL();
 
+        //System.err.println("OnLoadIBuffer");
         IBufferID pkResource = new IBufferID();
         ResourceIdentifier rpkID = pkResource;
 
-        int[] aiParams = new int[1];
-        gl.glGenBuffers(1,aiParams,0);
-        pkResource.ID = aiParams[0];
+        gl.glGenBuffers(1,m_aiParams,0);
+        pkResource.ID = m_aiParams[0];
         gl.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER,pkResource.ID);
 
         // Copy the index buffer data from system memory to video memory.
@@ -1434,10 +1434,9 @@ public class OpenGLRenderer extends Renderer
         }
 
         IBufferID pkResource = (IBufferID)pkID;
-        int[] aiParams = new int[1];
-        aiParams[0] = pkResource.ID;
-        gl.glDeleteBuffers(1,aiParams,0);
-        pkResource.ID = aiParams[0];
+        m_aiParams[0] = pkResource.ID;
+        gl.glDeleteBuffers(1,m_aiParams,0);
+        pkResource.ID = m_aiParams[0];
         pkResource = null;
     }
 
@@ -1457,18 +1456,17 @@ public class OpenGLRenderer extends Renderer
         if ( m_kDrawable == null ) { System.err.println( "SetVProgramConstant GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
-        float[] afParam = new float[4];
         if (eCType != Renderer.ConstantType.CT_NUMERICAL)
         {
             for (int j = 0; j < iRegisterQuantity; j++)
             {
-                afParam[0] = afData[ j * 4 + 0];
-                afParam[1] = afData[ j * 4 + 1];
-                afParam[2] = afData[ j * 4 + 2];
-                afParam[3] = afData[ j * 4 + 3];
+                m_afParam[0] = afData[ j * 4 + 0];
+                m_afParam[1] = afData[ j * 4 + 1];
+                m_afParam[2] = afData[ j * 4 + 2];
+                m_afParam[3] = afData[ j * 4 + 3];
                 gl.glProgramLocalParameter4fARB(GL.GL_VERTEX_PROGRAM_ARB,
                                                  iBaseRegister,
-                                                 afParam[0], afParam[1], afParam[2], afParam[3] );
+                                                 m_afParam[0], m_afParam[1], m_afParam[2], m_afParam[3] );
                 iBaseRegister++;
             }
         }
@@ -1489,18 +1487,17 @@ public class OpenGLRenderer extends Renderer
         if ( m_kDrawable == null ) { System.err.println( "SetPProgramConstant GLDrawable null" ); return; }
         GL gl = m_kDrawable.getGL();
 
-        float[] afParam = new float[4];
         if (eCType != Renderer.ConstantType.CT_NUMERICAL)
         {
             for (int j = 0; j < iRegisterQuantity; j++)
             {
-                afParam[0] = afData[ j * 4 + 0];
-                afParam[1] = afData[ j * 4 + 1];
-                afParam[2] = afData[ j * 4 + 2];
-                afParam[3] = afData[ j * 4 + 3];
+                m_afParam[0] = afData[ j * 4 + 0];
+                m_afParam[1] = afData[ j * 4 + 1];
+                m_afParam[2] = afData[ j * 4 + 2];
+                m_afParam[3] = afData[ j * 4 + 3];
                 gl.glProgramLocalParameter4fARB(GL.GL_FRAGMENT_PROGRAM_ARB,
                                                  iBaseRegister,
-                                                 afParam[0], afParam[1], afParam[2], afParam[3] );
+                                                 m_afParam[0], m_afParam[1], m_afParam[2], m_afParam[3] );
                 iBaseRegister++;
             }
         }
@@ -1738,19 +1735,18 @@ public class OpenGLRenderer extends Renderer
         // save unpack state
         int iSwapBytes, iLSBFirst, iRowLength, iSkipRows, iSkipPixels;
         int iAlignment;
-        int[] aiParams = new int[1];
-        gl.glGetIntegerv(GL.GL_UNPACK_SWAP_BYTES,aiParams,0);
-        iSwapBytes = aiParams[0];
-        gl.glGetIntegerv(GL.GL_UNPACK_LSB_FIRST,aiParams,0);
-        iLSBFirst = aiParams[0];
-        gl.glGetIntegerv(GL.GL_UNPACK_ROW_LENGTH,aiParams,0);
-        iRowLength = aiParams[0];
-        gl.glGetIntegerv(GL.GL_UNPACK_SKIP_ROWS,aiParams,0);
-        iSkipRows = aiParams[0];
-        gl.glGetIntegerv(GL.GL_UNPACK_SKIP_PIXELS,aiParams,0);
-        iSkipPixels = aiParams[0];
-        gl.glGetIntegerv(GL.GL_UNPACK_ALIGNMENT,aiParams,0);
-        iAlignment = aiParams[0];
+        gl.glGetIntegerv(GL.GL_UNPACK_SWAP_BYTES,m_aiParams,0);
+        iSwapBytes = m_aiParams[0];
+        gl.glGetIntegerv(GL.GL_UNPACK_LSB_FIRST,m_aiParams,0);
+        iLSBFirst = m_aiParams[0];
+        gl.glGetIntegerv(GL.GL_UNPACK_ROW_LENGTH,m_aiParams,0);
+        iRowLength = m_aiParams[0];
+        gl.glGetIntegerv(GL.GL_UNPACK_SKIP_ROWS,m_aiParams,0);
+        iSkipRows = m_aiParams[0];
+        gl.glGetIntegerv(GL.GL_UNPACK_SKIP_PIXELS,m_aiParams,0);
+        iSkipPixels = m_aiParams[0];
+        gl.glGetIntegerv(GL.GL_UNPACK_ALIGNMENT,m_aiParams,0);
+        iAlignment = m_aiParams[0];
 
         gl.glPixelStorei(GL.GL_UNPACK_SWAP_BYTES,GL.GL_FALSE);
         gl.glPixelStorei(GL.GL_UNPACK_LSB_FIRST,GL.GL_FALSE);
@@ -2001,6 +1997,11 @@ public class OpenGLRenderer extends Renderer
     private GLCanvas m_kCanvas;
     /** JOGL GLAutoDrawable reference */
     private GLAutoDrawable m_kDrawable = null;
+    
+    /** */
+    private byte[] m_aucBitmap = new byte[]{0};
+    private int[] m_aiParams = new int[1];
+    private float[] m_afParam = new float[4];
 
     /** Bitmap Fonts: */
     private static final byte[] gs_aucChar0 = new byte[] 

@@ -21,7 +21,6 @@ import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.Shaders.*;
 import gov.nih.mipav.view.WildMagic.LibRenderers.OpenGLRenderer.*;
 
-import gov.nih.mipav.view.renderer.GeneralLight;
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.surfaceview.JPanelDisplay;
 import gov.nih.mipav.view.renderer.volumeview.*;
@@ -607,8 +606,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
-        Vector3f kCLoc = kCDir.scale(-1.4f);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);
+        Vector3f kCLoc = new Vector3f(kCDir);
+        kCLoc.scaleEquals(-1.4f);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene( arg0 );
@@ -704,14 +705,14 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kAttr.SetPChannels(3);
         kAttr.SetTChannels(0,2);
         VertexBuffer pkVBuffer = new VertexBuffer(kAttr,4);
-        pkVBuffer.Position3(0, new Vector3f(0.0f,0.0f,0.0f) );
-        pkVBuffer.Position3(1, new Vector3f(0.2f,0.0f,0.0f) );
-        pkVBuffer.Position3(2, new Vector3f(0.2f,0.2f,0.0f) );
-        pkVBuffer.Position3(3, new Vector3f(0.0f,0.2f,0.0f) );
-        pkVBuffer.TCoord2(0,0, new Vector2f(0.0f,0.0f) );
-        pkVBuffer.TCoord2(0,1, new Vector2f(1.0f,0.0f) );
-        pkVBuffer.TCoord2(0,2, new Vector2f(1.0f,1.0f) );
-        pkVBuffer.TCoord2(0,3, new Vector2f(0.0f,1.0f) );
+        pkVBuffer.SetPosition3(0,0.0f,0.0f,0.0f) ;
+        pkVBuffer.SetPosition3(1,0.2f,0.0f,0.0f) ;
+        pkVBuffer.SetPosition3(2,0.2f,0.2f,0.0f) ;
+        pkVBuffer.SetPosition3(3,0.0f,0.2f,0.0f) ;
+        pkVBuffer.SetTCoord2(0,0,0.0f,0.0f) ;
+        pkVBuffer.SetTCoord2(0,1,1.0f,0.0f) ;
+        pkVBuffer.SetTCoord2(0,2,1.0f,1.0f) ;
+        pkVBuffer.SetTCoord2(0,3,0.0f,1.0f) ;
         IndexBuffer pkIBuffer = new IndexBuffer(6);
         int[] aiIndex = pkIBuffer.GetData();
         aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
@@ -754,7 +755,8 @@ implements GLEventListener, KeyListener, MouseMotionListener
         assert(m_pkPBuffer != null);
 
         m_spkScene.UpdateGS();
-        m_kTranslate = new Vector3f( m_spkScene.WorldBound.GetCenter().neg() );
+        m_kTranslate = new Vector3f( m_spkScene.WorldBound.GetCenter() );
+        m_kTranslate.negEquals();
         m_spkScene.GetChild(0).Local.SetTranslate( m_kTranslate );
 
         int iNumImages = 1;
@@ -882,74 +884,74 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
         // generate geometry
         // front
-        pkVB.Position3(0, new Vector3f(0,0,0));
-        pkVB.Position3(1, new Vector3f(m_fX,0,0));
-        pkVB.Position3(2, new Vector3f(m_fX,m_fY,0));
-        pkVB.Position3(3, new Vector3f(0,m_fY,0));
-        pkVB.Color3(0,0, new ColorRGB(0,0,0));
-        pkVB.Color3(0,1, new ColorRGB(1,0,0));
-        pkVB.Color3(0,2, new ColorRGB(1,1,0));
-        pkVB.Color3(0,3, new ColorRGB(0,1,0));
+        pkVB.SetPosition3(0,0,0,0);
+        pkVB.SetPosition3(1,m_fX,0,0);
+        pkVB.SetPosition3(2,m_fX,m_fY,0);
+        pkVB.SetPosition3(3,0,m_fY,0);
+        pkVB.SetColor3(0,0,0,0,0);
+        pkVB.SetColor3(0,1,1,0,0);
+        pkVB.SetColor3(0,2,1,1,0);
+        pkVB.SetColor3(0,3,0,1,0);
         aiIndex[i++] = 0;  aiIndex[i++] = 2;  aiIndex[i++] = 1;
         aiIndex[i++] = 0;  aiIndex[i++] = 3;  aiIndex[i++] = 2;
 
         // back
-        pkVB.Position3(4, new Vector3f(0,0,m_fZ));
-        pkVB.Position3(5, new Vector3f(m_fX,0,m_fZ));
-        pkVB.Position3(6, new Vector3f(m_fX,m_fY,m_fZ));
-        pkVB.Position3(7, new Vector3f(0,m_fY,m_fZ));
-        pkVB.Color3(0,4, new ColorRGB(0,0,1));
-        pkVB.Color3(0,5, new ColorRGB(1,0,1));
-        pkVB.Color3(0,6, new ColorRGB(1,1,1));
-        pkVB.Color3(0,7, new ColorRGB(0,1,1));
+        pkVB.SetPosition3(4,0,0,m_fZ);
+        pkVB.SetPosition3(5,m_fX,0,m_fZ);
+        pkVB.SetPosition3(6,m_fX,m_fY,m_fZ);
+        pkVB.SetPosition3(7,0,m_fY,m_fZ);
+        pkVB.SetColor3(0,4,0,0,1);
+        pkVB.SetColor3(0,5,1,0,1);
+        pkVB.SetColor3(0,6,1,1,1);
+        pkVB.SetColor3(0,7,0,1,1);
         aiIndex[i++] = 4;  aiIndex[i++] = 5;  aiIndex[i++] = 6;
         aiIndex[i++] = 4;  aiIndex[i++] = 6;  aiIndex[i++] = 7;
 
         // top
-        pkVB.Position3(8, new Vector3f(0,m_fY,0));
-        pkVB.Position3(9, new Vector3f(m_fX,m_fY,0));
-        pkVB.Position3(10, new Vector3f(m_fX,m_fY,m_fZ));
-        pkVB.Position3(11, new Vector3f(0,m_fY,m_fZ));
-        pkVB.Color3(0,8, new ColorRGB(0,1,0));
-        pkVB.Color3(0,9, new ColorRGB(1,1,0));
-        pkVB.Color3(0,10, new ColorRGB(1,1,1));
-        pkVB.Color3(0,11, new ColorRGB(0,1,1));
+        pkVB.SetPosition3(8,0,m_fY,0);
+        pkVB.SetPosition3(9,m_fX,m_fY,0);
+        pkVB.SetPosition3(10,m_fX,m_fY,m_fZ);
+        pkVB.SetPosition3(11,0,m_fY,m_fZ);
+        pkVB.SetColor3(0,8,0,1,0);
+        pkVB.SetColor3(0,9,1,1,0);
+        pkVB.SetColor3(0,10,1,1,1);
+        pkVB.SetColor3(0,11,0,1,1);
         aiIndex[i++] = 8;  aiIndex[i++] = 10;  aiIndex[i++] = 9;
         aiIndex[i++] = 8;  aiIndex[i++] = 11;  aiIndex[i++] = 10;
 
         // bottom
-        pkVB.Position3(12, new Vector3f(0,0,0));
-        pkVB.Position3(13, new Vector3f(m_fX,0,0));
-        pkVB.Position3(14, new Vector3f(m_fX,0,m_fZ));
-        pkVB.Position3(15, new Vector3f(0,0,m_fZ));
-        pkVB.Color3(0,12, new ColorRGB(0,0,0));
-        pkVB.Color3(0,13, new ColorRGB(1,0,0));
-        pkVB.Color3(0,14, new ColorRGB(1,0,1));
-        pkVB.Color3(0,15, new ColorRGB(0,0,1));
+        pkVB.SetPosition3(12,0,0,0);
+        pkVB.SetPosition3(13,m_fX,0,0);
+        pkVB.SetPosition3(14,m_fX,0,m_fZ);
+        pkVB.SetPosition3(15,0,0,m_fZ);
+        pkVB.SetColor3(0,12,0,0,0);
+        pkVB.SetColor3(0,13,1,0,0);
+        pkVB.SetColor3(0,14,1,0,1);
+        pkVB.SetColor3(0,15,0,0,1);
         aiIndex[i++] = 12;  aiIndex[i++] = 13;  aiIndex[i++] = 14;
         aiIndex[i++] = 12;  aiIndex[i++] = 14;  aiIndex[i++] = 15;
 
         // right
-        pkVB.Position3(16, new Vector3f(m_fX,0,0));
-        pkVB.Position3(17, new Vector3f(m_fX,m_fY,0));
-        pkVB.Position3(18, new Vector3f(m_fX,m_fY,m_fZ));
-        pkVB.Position3(19, new Vector3f(m_fX,0,m_fZ));
-        pkVB.Color3(0,16, new ColorRGB(1,0,0));
-        pkVB.Color3(0,17, new ColorRGB(1,1,0));
-        pkVB.Color3(0,18, new ColorRGB(1,1,1));
-        pkVB.Color3(0,19, new ColorRGB(1,0,1));
+        pkVB.SetPosition3(16,m_fX,0,0);
+        pkVB.SetPosition3(17,m_fX,m_fY,0);
+        pkVB.SetPosition3(18,m_fX,m_fY,m_fZ);
+        pkVB.SetPosition3(19,m_fX,0,m_fZ);
+        pkVB.SetColor3(0,16,1,0,0);
+        pkVB.SetColor3(0,17,1,1,0);
+        pkVB.SetColor3(0,18,1,1,1);
+        pkVB.SetColor3(0,19,1,0,1);
         aiIndex[i++] = 16;  aiIndex[i++] = 17;  aiIndex[i++] = 18;
         aiIndex[i++] = 16;  aiIndex[i++] = 18;  aiIndex[i++] = 19;
 
         // left
-        pkVB.Position3(20, new Vector3f(0,0,0));
-        pkVB.Position3(21, new Vector3f(0,m_fY,0));
-        pkVB.Position3(22, new Vector3f(0,m_fY,m_fZ));
-        pkVB.Position3(23, new Vector3f(0,0,m_fZ));
-        pkVB.Color3(0,20, new ColorRGB(0,0,0));
-        pkVB.Color3(0,21, new ColorRGB(0,1,0));
-        pkVB.Color3(0,22, new ColorRGB(0,1,1));
-        pkVB.Color3(0,23, new ColorRGB(0,0,1));
+        pkVB.SetPosition3(20,0,0,0);
+        pkVB.SetPosition3(21,0,m_fY,0);
+        pkVB.SetPosition3(22,0,m_fY,m_fZ);
+        pkVB.SetPosition3(23,0,0,m_fZ);
+        pkVB.SetColor3(0,20,0,0,0);
+        pkVB.SetColor3(0,21,0,1,0);
+        pkVB.SetColor3(0,22,0,1,1);
+        pkVB.SetColor3(0,23,0,0,1);
         aiIndex[i++] = 20;  aiIndex[i++] = 22;  aiIndex[i++] = 21;
         aiIndex[i++] = 20;  aiIndex[i++] = 23;  aiIndex[i++] = 22;
 
@@ -959,30 +961,30 @@ implements GLEventListener, KeyListener, MouseMotionListener
             {
                 if (kAttr.HasTCoord(iUnit))
                 {
-                    pkVB.TCoord3(iUnit,0, new Vector3f(0,0,0));
-                    pkVB.TCoord3(iUnit,1, new Vector3f(1,0,0));
-                    pkVB.TCoord3(iUnit,2, new Vector3f(1,1,0));
-                    pkVB.TCoord3(iUnit,3, new Vector3f(0,1,0));
-                    pkVB.TCoord3(iUnit,4, new Vector3f(0,0,1));
-                    pkVB.TCoord3(iUnit,5, new Vector3f(1,0,1));
-                    pkVB.TCoord3(iUnit,6, new Vector3f(1,1,1));
-                    pkVB.TCoord3(iUnit,7, new Vector3f(0,1,1));
-                    pkVB.TCoord3(iUnit,8, new Vector3f(0,1,0));
-                    pkVB.TCoord3(iUnit,9, new Vector3f(1,1,0));
-                    pkVB.TCoord3(iUnit,10, new Vector3f(1,1,1));
-                    pkVB.TCoord3(iUnit,11, new Vector3f(0,1,1));
-                    pkVB.TCoord3(iUnit,12, new Vector3f(0,0,0));
-                    pkVB.TCoord3(iUnit,13, new Vector3f(1,0,0));
-                    pkVB.TCoord3(iUnit,14, new Vector3f(1,0,1));
-                    pkVB.TCoord3(iUnit,15, new Vector3f(0,0,1));
-                    pkVB.TCoord3(iUnit,16, new Vector3f(1,0,0));
-                    pkVB.TCoord3(iUnit,17, new Vector3f(1,1,0));
-                    pkVB.TCoord3(iUnit,18, new Vector3f(1,1,1));
-                    pkVB.TCoord3(iUnit,19, new Vector3f(1,0,1));
-                    pkVB.TCoord3(iUnit,20, new Vector3f(0,0,0));
-                    pkVB.TCoord3(iUnit,21, new Vector3f(0,1,0));
-                    pkVB.TCoord3(iUnit,22, new Vector3f(0,1,1));
-                    pkVB.TCoord3(iUnit,23, new Vector3f(0,0,1));
+                    pkVB.SetTCoord3(iUnit,0,0,0,0);
+                    pkVB.SetTCoord3(iUnit,1,1,0,0);
+                    pkVB.SetTCoord3(iUnit,2,1,1,0);
+                    pkVB.SetTCoord3(iUnit,3,0,1,0);
+                    pkVB.SetTCoord3(iUnit,4,0,0,1);
+                    pkVB.SetTCoord3(iUnit,5,1,0,1);
+                    pkVB.SetTCoord3(iUnit,6,1,1,1);
+                    pkVB.SetTCoord3(iUnit,7,0,1,1);
+                    pkVB.SetTCoord3(iUnit,8,0,1,0);
+                    pkVB.SetTCoord3(iUnit,9,1,1,0);
+                    pkVB.SetTCoord3(iUnit,10,1,1,1);
+                    pkVB.SetTCoord3(iUnit,11,0,1,1);
+                    pkVB.SetTCoord3(iUnit,12,0,0,0);
+                    pkVB.SetTCoord3(iUnit,13,1,0,0);
+                    pkVB.SetTCoord3(iUnit,14,1,0,1);
+                    pkVB.SetTCoord3(iUnit,15,0,0,1);
+                    pkVB.SetTCoord3(iUnit,16,1,0,0);
+                    pkVB.SetTCoord3(iUnit,17,1,1,0);
+                    pkVB.SetTCoord3(iUnit,18,1,1,1);
+                    pkVB.SetTCoord3(iUnit,19,1,0,1);
+                    pkVB.SetTCoord3(iUnit,20,0,0,0);
+                    pkVB.SetTCoord3(iUnit,21,0,1,0);
+                    pkVB.SetTCoord3(iUnit,22,0,1,1);
+                    pkVB.SetTCoord3(iUnit,23,0,0,1);
                 }
             }
         }
@@ -1300,51 +1302,51 @@ implements GLEventListener, KeyListener, MouseMotionListener
             akOutlineSquare[i] = new VertexBuffer(kAttributes, 4 );
             for ( int j = 0; j < 4; j++ )
             {
-                akOutlineSquare[i].Color3( 0, j, new ColorRGB( 1, 0, 0 ) );
+                akOutlineSquare[i].SetColor3( 0, j, 1, 0, 0 ) ;
             }
 
-            akOutlineSquare[i].TCoord2( 0, 0, new Vector2f( 1, 1 ) );
-            akOutlineSquare[i].TCoord2( 0, 1, new Vector2f( 0, 1 ) );
-            akOutlineSquare[i].TCoord2( 0, 2, new Vector2f( 0, 0 ) );
-            akOutlineSquare[i].TCoord2( 0, 3, new Vector2f( 1, 0 ) );
+            akOutlineSquare[i].SetTCoord2( 0, 0, 1, 1 ) ;
+            akOutlineSquare[i].SetTCoord2( 0, 1, 0, 1 ) ;
+            akOutlineSquare[i].SetTCoord2( 0, 2, 0, 0 ) ;
+            akOutlineSquare[i].SetTCoord2( 0, 3, 1, 0 ) ;
         }
         // neg x clipping:
-        akOutlineSquare[0].Position3( 0, new Vector3f( 0, 0, 0 ) );
-        akOutlineSquare[0].Position3( 1, new Vector3f( 0, 0, m_fZ ) );
-        akOutlineSquare[0].Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
-        akOutlineSquare[0].Position3( 3, new Vector3f( 0, m_fY, 0 ) );
+        akOutlineSquare[0].SetPosition3( 0, 0, 0, 0 ) ;
+        akOutlineSquare[0].SetPosition3( 1, 0, 0, m_fZ ) ;
+        akOutlineSquare[0].SetPosition3( 2, 0, m_fY, m_fZ ) ;
+        akOutlineSquare[0].SetPosition3( 3, 0, m_fY, 0 ) ;
 
         // pos x clipping:
-        akOutlineSquare[1].Position3( 0, new Vector3f( m_fX, 0, m_fZ ) );
-        akOutlineSquare[1].Position3( 1, new Vector3f( m_fX, 0, 0 ) );
-        akOutlineSquare[1].Position3( 2, new Vector3f( m_fX, m_fY, 0 ) );
-        akOutlineSquare[1].Position3( 3, new Vector3f( m_fX, m_fY, m_fZ ) );
+        akOutlineSquare[1].SetPosition3( 0, m_fX, 0, m_fZ ) ;
+        akOutlineSquare[1].SetPosition3( 1, m_fX, 0, 0 ) ;
+        akOutlineSquare[1].SetPosition3( 2, m_fX, m_fY, 0 ) ;
+        akOutlineSquare[1].SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
 
         // neg y clipping:
-        akOutlineSquare[2].Position3( 0, new Vector3f( m_fX, 0, m_fZ ) );
-        akOutlineSquare[2].Position3( 1, new Vector3f( 0, 0, m_fZ ) );
-        akOutlineSquare[2].Position3( 2, new Vector3f( 0, 0, 0 ) );
-        akOutlineSquare[2].Position3( 3, new Vector3f( m_fX, 0, 0 ) );
+        akOutlineSquare[2].SetPosition3( 0, m_fX, 0, m_fZ ) ;
+        akOutlineSquare[2].SetPosition3( 1, 0, 0, m_fZ ) ;
+        akOutlineSquare[2].SetPosition3( 2, 0, 0, 0 ) ;
+        akOutlineSquare[2].SetPosition3( 3, m_fX, 0, 0 ) ;
         // pos y clipping:
-        akOutlineSquare[3].Position3( 0, new Vector3f( m_fX, m_fY, 0 ) );
-        akOutlineSquare[3].Position3( 1, new Vector3f( 0, m_fY, 0 ) );
-        akOutlineSquare[3].Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
-        akOutlineSquare[3].Position3( 3, new Vector3f( m_fX, m_fY, m_fZ ) );
+        akOutlineSquare[3].SetPosition3( 0, m_fX, m_fY, 0 ) ;
+        akOutlineSquare[3].SetPosition3( 1, 0, m_fY, 0 ) ;
+        akOutlineSquare[3].SetPosition3( 2, 0, m_fY, m_fZ ) ;
+        akOutlineSquare[3].SetPosition3( 3, m_fX, m_fY, m_fZ ) ;
 
         // neg z clipping:
-        akOutlineSquare[4].Position3( 0, new Vector3f( m_fX, 0, 0 ) );
-        akOutlineSquare[4].Position3( 1, new Vector3f( 0, 0, 0 ) );
-        akOutlineSquare[4].Position3( 2, new Vector3f( 0, m_fY, 0 ) );
-        akOutlineSquare[4].Position3( 3, new Vector3f( m_fX, m_fY, 0 ) );
+        akOutlineSquare[4].SetPosition3( 0, m_fX, 0, 0 ) ;
+        akOutlineSquare[4].SetPosition3( 1, 0, 0, 0 ) ;
+        akOutlineSquare[4].SetPosition3( 2, 0, m_fY, 0 ) ;
+        akOutlineSquare[4].SetPosition3( 3, m_fX, m_fY, 0 ) ;
 
         // pos z clipping:
-        akOutlineSquare[5].Position3( 0, new Vector3f( 0, 0, m_fZ ) );
-        akOutlineSquare[5].Position3( 1, new Vector3f( m_fX, 0, m_fZ ) );
-        akOutlineSquare[5].Position3( 2, new Vector3f( m_fX, m_fY, m_fZ ) );
-        akOutlineSquare[5].Position3( 3, new Vector3f( 0, m_fY, m_fZ ) );
+        akOutlineSquare[5].SetPosition3( 0, 0, 0, m_fZ ) ;
+        akOutlineSquare[5].SetPosition3( 1, m_fX, 0, m_fZ ) ;
+        akOutlineSquare[5].SetPosition3( 2, m_fX, m_fY, m_fZ ) ;
+        akOutlineSquare[5].SetPosition3( 3, 0, m_fY, m_fZ ) ;
 
         Vector3f kHalf = new Vector3f( m_fX/2.0f, m_fY/2.0f, m_fZ/2.0f );
-        Vector3f kPos;
+        Vector3f kPos = new Vector3f();
 
         for ( int i = 0; i < 6; i++ )
         {
@@ -1358,9 +1360,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
             for ( int j = 0; j < 4; j++ )
             {
-                kPos = akOutlineSquare[i].Position3( j );
+                akOutlineSquare[i].GetPosition3( j, kPos );
                 kPos.subEquals(kHalf);
-                akOutlineSquare[i].Position3( j, kPos );
+                akOutlineSquare[i].SetPosition3( j, kPos );
             }
             m_akOrientationCube[i] = new TriMesh( new VertexBuffer(akOutlineSquare[i]), kIndexBuffer );
             m_akOrientationCube[i].AttachEffect( new TextureEffect( m_aakAxisFiles[i] ) );
@@ -1370,18 +1372,18 @@ implements GLEventListener, KeyListener, MouseMotionListener
             m_akOrientationCube[i].UpdateRS();
             m_pkRenderer.LoadResources(m_akOrientationCube[i]);
         }
-
+        kPos = null;
 
         VertexBuffer kOutlineSquare = new VertexBuffer( kAttributes, 4);
         // arbitrary clipping:
         for ( int i = 0; i < 4; i++ )
         {
-            kOutlineSquare.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            kOutlineSquare.SetColor3( 0, i, 1, 0, 0 ) ;
         }
-        kOutlineSquare.Position3( 0, new Vector3f( 0, 0, 0 ) );
-        kOutlineSquare.Position3( 1, new Vector3f( 0, 0, m_fZ ) );
-        kOutlineSquare.Position3( 2, new Vector3f( 0, m_fY, m_fZ ) );
-        kOutlineSquare.Position3( 3, new Vector3f( 0, m_fY, 0 ) );
+        kOutlineSquare.SetPosition3( 0, 0, 0, 0 ) ;
+        kOutlineSquare.SetPosition3( 1, 0, 0, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 2, 0, m_fY, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 3, 0, m_fY, 0 ) ;
         m_kClipArb = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipArb.AttachEffect( m_spkVertexColor3Shader );
         m_kClipArb.Local.SetTranslate(m_kTranslate);
@@ -1393,18 +1395,20 @@ implements GLEventListener, KeyListener, MouseMotionListener
         m_spkEyeCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,1000.0f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f,-1.0f,0.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
-        Vector3f kCLoc = kCDir.scale(-4.0f);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);
+        Vector3f kCLoc = new Vector3f(kCDir);
+        kCLoc.scaleEquals(-4.0f);
         m_spkEyeCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         for ( int i = 0; i < 4; i++ )
         {
-            kOutlineSquare.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            kOutlineSquare.SetColor3( 0, i, 1, 0, 0 ) ;
         }
-        kOutlineSquare.Position3( 0, new Vector3f( -.2f, -.2f, m_fZ ) );
-        kOutlineSquare.Position3( 1, new Vector3f( m_fX +.2f, -.2f, m_fZ ) );
-        kOutlineSquare.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, m_fZ ) );
-        kOutlineSquare.Position3( 3, new Vector3f( -.2f, m_fY +.2f, m_fZ ) );
+        kOutlineSquare.SetPosition3( 0, -.2f, -.2f, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 1, m_fX +.2f, -.2f, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 2, m_fX +.2f, m_fY +.2f, m_fZ ) ;
+        kOutlineSquare.SetPosition3( 3, -.2f, m_fY +.2f, m_fZ ) ;
         m_kClipEye = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipEye.Local.SetTranslate(m_kTranslate);
         m_kClipEye.AttachEffect( m_spkVertexColor3Shader );
@@ -1414,12 +1418,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
         for ( int i = 0; i < 4; i++ )
         {
-            kOutlineSquare.Color3( 0, i, new ColorRGB( 1, 0, 0 ) );
+            kOutlineSquare.SetColor3( 0, i, 1, 0, 0 ) ;
         }
-        kOutlineSquare.Position3( 0, new Vector3f( -.2f, -.2f, 1.0f ) );
-        kOutlineSquare.Position3( 1, new Vector3f( m_fX +.2f, -.2f, 1.0f ) );
-        kOutlineSquare.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, 1.0f ) );
-        kOutlineSquare.Position3( 3, new Vector3f( -.2f, m_fY +.2f, 1.0f ) );
+        kOutlineSquare.SetPosition3( 0, -.2f, -.2f, 1.0f ) ;
+        kOutlineSquare.SetPosition3( 1, m_fX +.2f, -.2f, 1.0f ) ;
+        kOutlineSquare.SetPosition3( 2, m_fX +.2f, m_fY +.2f, 1.0f ) ;
+        kOutlineSquare.SetPosition3( 3, -.2f, m_fY +.2f, 1.0f ) ;
         m_kClipEyeInv = new Polyline( new VertexBuffer(kOutlineSquare), true, true );
         m_kClipEyeInv.Local.SetTranslate(m_kTranslate);
         m_kClipEyeInv.AttachEffect( m_spkVertexColor3Shader );
@@ -1452,20 +1456,27 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
         for ( int i = 0; i < 4; i++ )
         {
-            Vector3f kPos = m_akPolyline[iWhich].VBuffer.Position3( i );
             if ( iWhich < 2 )
             {
-                kPos.X(fValue);
+                m_akPolyline[iWhich].VBuffer.SetPosition3(i, 
+                        fValue,
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fY(i),     
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fZ(i));
             }
             else if ( iWhich < 4 )
             {
-                kPos.Y(fValue);
+                m_akPolyline[iWhich].VBuffer.SetPosition3(i, 
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fX(i),     
+                        fValue,
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fZ(i));
             }
             else
             {
-                kPos.Z(fValue * m_fZ);
+                m_akPolyline[iWhich].VBuffer.SetPosition3(i, 
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fX(i),     
+                        m_akPolyline[iWhich].VBuffer.GetPosition3fY(i),
+                        fValue);
             }
-            m_akPolyline[iWhich].VBuffer.Position3( i, kPos );
         }
         m_akPolyline[iWhich].VBuffer.Release();
 
@@ -1559,7 +1570,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             for ( int j = 0; j < 4; j++ )
             {
-                m_akBoundingBox[i].VBuffer.Color3( 0, j, kColor );
+                m_akBoundingBox[i].VBuffer.SetColor3( 0, j, kColor );
             }
             m_akBoundingBox[i].VBuffer.Release();
         }
@@ -1580,15 +1591,15 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             if ( iWhich < 2 )
             {
-                fValue = m_akPolyline[iWhich].VBuffer.Position3( 0 ).X();
+                fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fX( 0 );
             }
             else if ( iWhich < 4 )
             {
-                fValue = m_akPolyline[iWhich].VBuffer.Position3( 0 ).Y();
+                fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fY( 0 );
             }
             else
             {
-                fValue = m_akPolyline[iWhich].VBuffer.Position3( 0 ).Z();
+                fValue = m_akPolyline[iWhich].VBuffer.GetPosition3fZ( 0 );
             }
         }
         else
@@ -1654,10 +1665,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         afEquation[3] = kEyeClipV.W();
         float fZ = kEyeClipV.W() * m_fZ;
 
-        m_kClipEye.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
-        m_kClipEye.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
-        m_kClipEye.VBuffer.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, fZ ) );
-        m_kClipEye.VBuffer.Position3( 3, new Vector3f( -.2f, m_fY +.2f, fZ ) );
+        m_kClipEye.VBuffer.SetPosition3( 0, -.2f, -.2f, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 1, m_fX +.2f, -.2f, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 2, m_fX +.2f, m_fY +.2f, fZ ) ;
+        m_kClipEye.VBuffer.SetPosition3( 3, -.2f, m_fY +.2f, fZ ) ;
         m_kClipEye.VBuffer.Release();
 
         m_kClipEye.UpdateGS();
@@ -1683,10 +1694,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         afEquation[3] = kEyeClipV.W();
         float fZ = kEyeClipV.W() * m_fZ;
 
-        m_kClipEyeInv.VBuffer.Position3( 0, new Vector3f( -.2f, -.2f, fZ ) );
-        m_kClipEyeInv.VBuffer.Position3( 1, new Vector3f( m_fX +.2f, -.2f, fZ ) );
-        m_kClipEyeInv.VBuffer.Position3( 2, new Vector3f( m_fX +.2f, m_fY +.2f, fZ ) );
-        m_kClipEyeInv.VBuffer.Position3( 3, new Vector3f( -.2f, m_fY +.2f, fZ ) );
+        m_kClipEyeInv.VBuffer.SetPosition3( 0, -.2f, -.2f, fZ ) ;
+        m_kClipEyeInv.VBuffer.SetPosition3( 1, m_fX +.2f, -.2f, fZ ) ;
+        m_kClipEyeInv.VBuffer.SetPosition3( 2, m_fX +.2f, m_fY +.2f, fZ ) ;
+        m_kClipEyeInv.VBuffer.SetPosition3( 3, -.2f, m_fY +.2f, fZ ) ;
         m_kClipEyeInv.VBuffer.Release();
 
         m_kClipEyeInv.UpdateGS();
@@ -1753,7 +1764,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
     private void doClip() 
     {        
         // update position of the bounding box:
-        m_kClipArb.Local.SetTranslate( m_kTranslate.add( new Vector3f( m_kArbitraryClip.W() * m_fX, 0, 0 ) ) );
+        Vector3f kTranslate = new Vector3f( m_kArbitraryClip.W() * m_fX, 0, 0 );
+        kTranslate.addEquals(m_kTranslate);
+        m_kClipArb.Local.SetTranslate( kTranslate );
 
         // Rotate normal vector:
         Matrix3f kClipRotate = m_kArbRotate.Local.GetRotate();
@@ -1792,7 +1805,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
         for ( int i = 0; i < 4; i++ )
         {
-            m_akPolyline[iWhich].VBuffer.Color3( 0, i, kColor );
+            m_akPolyline[iWhich].VBuffer.SetColor3( 0, i, kColor );
         }
         m_akPolyline[iWhich].VBuffer.Release();
     }
@@ -1808,7 +1821,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kColor.B( (float)(kColor.B()/255.0) );
         for ( int i = 0; i < 4; i++ )
         {
-            m_kClipEye.VBuffer.Color3( 0, i, kColor );
+            m_kClipEye.VBuffer.SetColor3( 0, i, kColor );
         }
         m_kClipEye.VBuffer.Release();
     }
@@ -1824,7 +1837,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kColor.B( (float)(kColor.B()/255.0) );
         for ( int i = 0; i < 4; i++ )
         {
-            m_kClipArb.VBuffer.Color3( 0, i, kColor );
+            m_kClipArb.VBuffer.SetColor3( 0, i, kColor );
         }
         m_kClipArb.VBuffer.Release();
     }
@@ -1840,7 +1853,7 @@ implements GLEventListener, KeyListener, MouseMotionListener
         kColor.B( (float)(kColor.B()/255.0) );
         for ( int i = 0; i < 4; i++ )
         {
-            m_kClipEyeInv.VBuffer.Color3( 0, i, kColor );
+            m_kClipEyeInv.VBuffer.SetColor3( 0, i, kColor );
         }
         m_kClipEyeInv.VBuffer.Release();
     }
@@ -1897,10 +1910,12 @@ implements GLEventListener, KeyListener, MouseMotionListener
         Matrix3f kIn = new Matrix3f(data[0], data[1], data[2],
                 data[4], data[5], data[6],
                 data[8], data[9], data[10]);
+        kIn.multEquals(kRotate);
+        kRotate.multEquals(kIn);
 
-        Matrix3f kLocal = kRotate.mult(kIn.mult(kRotate));
-
-        m_spkMotionObject.Local.SetMatrix(kLocal);
+        m_spkMotionObject.Local.SetRotateCopy(kRotate);
+        kIn = null;
+        kRotate = null;
         m_spkScene.UpdateGS();
     }
 
@@ -2186,10 +2201,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
         int[] aiEllipsoids = new int[kLine.VBuffer.GetVertexQuantity()];
         for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
         {
-            Vector3f kPos = kLine.VBuffer.Position3(i);
-            int iX = (int)((kPos.X() +.5f) * m_iDimX);
-            int iY = (int)((kPos.Y() +.5f) * m_iDimY);
-            int iZ = (int)((kPos.Z() +.5f) * m_iDimZ);
+            int iX = (int)((kLine.VBuffer.GetPosition3fX(i) +.5f) * m_iDimX);
+            int iY = (int)((kLine.VBuffer.GetPosition3fY(i) +.5f) * m_iDimY);
+            int iZ = (int)((kLine.VBuffer.GetPosition3fZ(i) +.5f) * m_iDimZ);
             int iIndex = iZ * m_iDimY * m_iDimX + iY * m_iDimX + iX;
 
             if ( m_kEigenVectors != null )
@@ -2437,9 +2451,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
         float fLambda1;
         float fLambda2;
         float fLambda3;
-        Vector3f kV1;
-        Vector3f kV2;
-        Vector3f kV3;
+        Vector3f kV1 = new Vector3f();
+        Vector3f kV2 = new Vector3f();
+        Vector3f kV3 = new Vector3f();
 
         for ( int i = 0; i < m_iLen; i++ )
         {
@@ -2464,9 +2478,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 fLambda1 = kEigenValues.GetData(2,2);
                 fLambda2 = kEigenValues.GetData(1,1);
                 fLambda3 = kEigenValues.GetData(0,0);
-                kV1 = kMatrix.GetColumn(2);
-                kV2 = kMatrix.GetColumn(1);
-                kV3 = kMatrix.GetColumn(0);
+                kMatrix.GetColumn(2,kV1);
+                kMatrix.GetColumn(1,kV2);
+                kMatrix.GetColumn(0,kV3);
 
                 kV1.Normalize();
                 kV2.Normalize();

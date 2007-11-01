@@ -140,7 +140,8 @@ public class BillboardNodes extends JavaApplication3D
         Vector3f kCLoc = new Vector3f(0.0f,-1.0f,0.25f);
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCRight = kCDir.Cross(kCUp);
+        Vector3f kCRight = new Vector3f();
+        kCDir.Cross(kCUp, kCRight);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -203,7 +204,10 @@ public class BillboardNodes extends JavaApplication3D
         int i;
         for (i = 0; i < pkGround.VBuffer.GetVertexQuantity(); i++)
         {
-            pkGround.VBuffer.TCoord2(0,i, pkGround.VBuffer.TCoord2(0,i).scale(128.0f));
+            pkGround.VBuffer.SetTCoord2(0,i, 
+                    pkGround.VBuffer.GetTCoord2fX(0,i) * 128.0f,
+                    pkGround.VBuffer.GetTCoord2fY(0,i) * 128.0f );
+
         }
 
         ShaderEffect pkEffect = new TextureEffect("Horizontal");
@@ -231,7 +235,7 @@ public class BillboardNodes extends JavaApplication3D
         // The billboard rotation is about its model-space up-vector (0,1,0).  In
         // this application, world-space up is (0,0,1).  Locally rotate the
         // billboard so it's up-vector matches the world's.
-        m_spkBillboard0.Local.SetTranslate( new Vector3f(-0.25f,0.0f,0.25f));
+        m_spkBillboard0.Local.SetTranslate( -0.25f,0.0f,0.25f);
         Matrix3f kMatrix = new Matrix3f();
         kMatrix.FromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
         m_spkBillboard0.Local.SetRotate( kMatrix );
@@ -253,7 +257,7 @@ public class BillboardNodes extends JavaApplication3D
         // The billboard rotation is about its model-space up-vector (0,1,0).  In
         // this application, world-space up is (0,0,1).  Locally rotate the
         // billboard so it's up-vector matches the world's.
-        m_spkBillboard1.Local.SetTranslate( new Vector3f(0.25f,0.0f,0.25f));
+        m_spkBillboard1.Local.SetTranslate( 0.25f,0.0f,0.25f);
         Matrix3f kMatrix2 = new Matrix3f();
         kMatrix2.FromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
         m_spkBillboard1.Local.SetRotate(kMatrix2);
