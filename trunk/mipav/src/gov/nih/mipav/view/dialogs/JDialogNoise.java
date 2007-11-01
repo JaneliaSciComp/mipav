@@ -263,206 +263,106 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     protected void callAlgorithm() {
 
         String name = makeImageName(image.getImageName(), "_noise");
+        int numberFrames = 1;
+        if (image.getNDims() >= 3) {
+            numberFrames *= image.getExtents()[2];
+        }
+        if (image.getNDims() >= 4) {
+            numberFrames *= image.getExtents()[3];
+        }    
+        
+        if (displayLoc == NEW) {
 
-        if (image.getNDims() == 2) { // source image is 2D
+            try {
 
-            int[] destExtents = new int[2];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
+                // Make result image of float type
+                resultImage = (ModelImage) image.clone();
+                resultImage.setImageName(name);
 
-            if (displayLoc == NEW) {
+                if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
-                try {
-
-                    // Make result image of float type
-                    // resultImage     = new ModelImage(image.getType(), destExtents, "Noise Image", userInterface);
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                    for (int i = 0; i < numberFrames; i++) {
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
                     }
-
-                    // Make algorithm
-                    randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    randomAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), randomAlgo);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (randomAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        randomAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
-                    MipavUtil.displayError("Dialog random: unable to allocate enough memory");
-
-                    return;
                 }
-            } else {
 
-                try {
+                // Make algorithm
+                randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise);
 
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise);
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                randomAlgo.addListener(this);
 
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    randomAlgo.addListener(this);
+                createProgressBar(image.getImageName(), randomAlgo);
 
-                    createProgressBar(image.getImageName(), randomAlgo);
+                // Hide dialog
+                setVisible(false);
 
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
+                if (isRunInSeparateThread()) {
 
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    // Start the thread as a low priority because we wish to still have user interface work fast
+                    if (randomAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
                     }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (randomAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        randomAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog random: unable to allocate enough memory");
-
-                    return;
+                } else {
+                    randomAlgo.run();
                 }
+            } catch (OutOfMemoryError x) {
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up image memory
+                    resultImage = null;
+                }
+
+                MipavUtil.displayError("Dialog random: unable to allocate enough memory");
+
+                return;
             }
-        } else if (image.getNDims() == 3) {
-            int[] destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0];
-            destExtents[1] = image.getExtents()[1];
-            destExtents[2] = image.getExtents()[2];
+        } else {
 
-            if (displayLoc == NEW) {
+            try {
 
-                try {
+                // Make algorithm
+                randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise);
 
-                    // Make result image of float type
-                    // resultImage      = new ModelImage(image.getType(), destExtents, " Noise", userInterface);
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                randomAlgo.addListener(this);
 
-                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+                createProgressBar(image.getImageName(), randomAlgo);
 
-                        for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
-                        }
-                    }
+                // Hide dialog
+                setVisible(false);
 
-                    // Make algorithm
-                    randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise);
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                Vector imageFrames = image.getImageFrameVector();
+                titles = new String[imageFrames.size()];
 
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    randomAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), randomAlgo);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (randomAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        randomAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
-                    MipavUtil.displayError("Dialog random: unable to allocate enough memory");
-
-                    return;
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
-            } else {
 
-                try {
+                if (isRunInSeparateThread()) {
 
-                    // Make algorithm
-                    randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    randomAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), randomAlgo);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    // Start the thread as a low priority because we wish to still have user interface work fast
+                    if (randomAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
                     }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (randomAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        randomAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog random: unable to allocate enough memory");
-
-                    return;
+                } else {
+                    randomAlgo.run();
                 }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog random: unable to allocate enough memory");
+
+                return;
             }
         }
     }
