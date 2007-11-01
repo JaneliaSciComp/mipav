@@ -23,9 +23,7 @@ import javax.swing.JTextField;
 
 
 /**
- * Dialog to call Maximum Intensity Projection. This dialog will not be visible because it does not require user input
- * at this time. It was made a dialog object because it may, in the future require user input and to be consistent with
- * the dialog/algorithm paradigm. It should be noted that algorithms are executed in own thread.
+ * Dialog to call Maximum Intensity Projection. It should be noted that algorithms are executed in own thread.
  *
  * @author  joshim2
  */
@@ -58,9 +56,6 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
     
     /** Algorithm instance. */
     private AlgorithmMaximumIntensityProjection mipAlgo;
-    
-    /** Instance of ViewUserInterface. */
-    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -73,8 +68,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
     public JDialogMaximumIntensityProjection() { }
 
     /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is not
-     * necessary at present.
+     * Sets the appropriate variables.
      *
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
@@ -82,7 +76,6 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
     public JDialogMaximumIntensityProjection(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -253,7 +246,6 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase imp
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         borderSize = scriptParameters.getParams().getInt("border_size");
         
