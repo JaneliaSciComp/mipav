@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.srb.SRBFileTransferer;
 import gov.nih.mipav.model.srb.SRBUtility;
@@ -47,37 +48,50 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
 	
 	private JTextField privateField;
 	
+	private JTextField irbField, abstractTitleField;
+	
+	private JTextField piNameField, piEmailField, piPhoneField, piTitleField;
+	
 	/** Scrolling text area for abstract */
 	private WidgetFactory.ScrollTextArea abstractArea;
 	
 	/** Scrolling text area for log output */
 	private WidgetFactory.ScrollTextArea logOutputArea;
 	
-	JScrollPane listPane;
-	private JList sourceList;
+	JScrollPane metaListPane, rawListPane;
+	private JList metaSourceList, rawSourceList;
+	private DefaultListModel metaSourceModel, rawSourceModel;
 	
-	private JButton nextButton, previousButton, addSourceButton, removeSourceButton;
+	private JButton nextButton, previousButton, addMetaSourceButton, addRawSourceButton,
+		removeSourceButton;
 	
-	private JButton privateBrowseButton;
+	private JButton privateBrowseButton, openAbstractButton;
 	
 	private JRadioButton publicButton, privateButton;
 	
 	private JTabbedPane tabbedPane;
 		
-	private DefaultListModel sourceModel;
+	
 
 	private JComboBox organizationBox;
 	
 	private JCheckBox anonConfirmBox;
 	
 	private JTextArea privacyTextArea;
-	
-	private boolean doneAddingFiles = false;
-	
+		
 	/** Static tab indices */
 	private static final int TAB_MAIN = 0;
-	private static final int TAB_SOURCE = 1;
-	private static final int TAB_DESTINATION = 2;
+	private static final int TAB_PI = 1;
+	private static final int TAB_ABSTRACT = 2;
+	private static final int TAB_SOURCE = 3;
+	private static final int TAB_DESTINATION = 4;
+	
+	private static final String SPACE = " ";
+
+	private static final String USER_MIPAV_TEMP_DIR = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "temp" +
+    	File.separator;
+	
+	private static final String REPOSITORY_SUBMISSION_FILENAME = "submission_info.xml";
 	
 	private static final String [] ORGANIZATIONS = { "ACE Location 1",
 													 "ACE Location 2",
@@ -118,20 +132,10 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
         	int index = tabbedPane.getSelectedIndex();
         	
         	if (index == TAB_DESTINATION) {
-        		if (setVariables()) {
-        			//MipavUtil.displayInfo("Transfer not yet supported.");
+        		if (createXML()) {
         			transfer();
         		}
-        	} else if (index == TAB_SOURCE) {
-        		if (!doneAddingFiles) {
-        			int response = JOptionPane.showConfirmDialog(this, "Done adding source files?", "Done adding source files?",
-                                                             JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-                
-        			if (response == JOptionPane.YES_OPTION) {
-        				doneAddingFiles = true;
-        				tabbedPane.setSelectedIndex(TAB_DESTINATION);
-        			}
-        		} 
+        		
         	}  else if (tabbedPane.getTabCount() > index + 1) {
         		tabbedPane.setSelectedIndex(index + 1);
         	}
@@ -142,7 +146,7 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
         	if (index > 0) {
         		tabbedPane.setSelectedIndex(index - 1);
         	}
-        } else if (command.equals("AddSource")) {
+        } else if (command.equals("AddMetaSource")) {
             JFileChooser chooser = new JFileChooser();
             chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             chooser.setMultiSelectionEnabled(true);
@@ -153,24 +157,45 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
                 File[] files = chooser.getSelectedFiles();
                 ViewUserInterface.getReference().setDefaultDirectory(files[0].getParent());
                 for (int i = 0; i < files.length; i++) {
-                	if (!sourceModel.contains(files[i])) {
-                		sourceModel.addElement(files[i]);  
+                	if (!metaSourceModel.contains(files[i])) {
+                		metaSourceModel.addElement(files[i]);  
                 	}
                 }
             }
-            removeSourceButton.setEnabled(sourceModel.size() > 0);
-            nextButton.setEnabled(sourceModel.size() > 0);
+            removeSourceButton.setEnabled(metaSourceModel.size() > 0);
+            metaListPane.setBorder(buildTitledBorder(metaSourceModel.size() + " meta-file(s) selected for transfer"));            
+        } else if (command.equals("AddRawSource")) {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            chooser.setMultiSelectionEnabled(true);
             
-            listPane.setBorder(buildTitledBorder(sourceModel.size() + " file(s) selected for transfer"));
-            
-        } else if (command.equals("RemoveSource")) {
-        	int [] selected = sourceList.getSelectedIndices();
+            int returnVal = chooser.showOpenDialog(null);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                File[] files = chooser.getSelectedFiles();
+                ViewUserInterface.getReference().setDefaultDirectory(files[0].getParent());
+                for (int i = 0; i < files.length; i++) {
+                	if (!rawSourceModel.contains(files[i])) {
+                		rawSourceModel.addElement(files[i]);  
+                	}
+                }
+            }
+            removeSourceButton.setEnabled(rawSourceModel.size() > 0);            
+            rawListPane.setBorder(buildTitledBorder(rawSourceModel.size() + " raw-file(s) selected for transfer"));            
+        }  else if (command.equals("RemoveSource")) {
+        	int [] selected = metaSourceList.getSelectedIndices();
         	for (int i = selected.length - 1; i >= 0; i--) {
-        		sourceModel.removeElementAt(selected[i]);
+        		metaSourceModel.removeElementAt(selected[i]);
         	}
-        	removeSourceButton.setEnabled(sourceModel.size() > 0);
-        	nextButton.setEnabled(sourceModel.size() > 0);
-        	listPane.setBorder(buildTitledBorder(sourceModel.size() + " file(s) selected for transfer"));
+        	
+        	selected = rawSourceList.getSelectedIndices();
+        	for (int i = selected.length - 1; i >= 0; i--) {
+        		rawSourceModel.removeElementAt(selected[i]);
+        	}
+        	
+        	removeSourceButton.setEnabled(metaSourceModel.size() > 0 && rawSourceModel.size() > 0);
+        	metaListPane.setBorder(buildTitledBorder(metaSourceModel.size() + " meta-file(s) selected for transfer"));
+        	rawListPane.setBorder(buildTitledBorder(rawSourceModel.size() + " raw-file(s) selected for transfer"));
         } else if (command.equals("Source")) {
         	tabbedPane.setSelectedIndex(TAB_SOURCE);
         } else if (command.equals("LoadAbstract")) {
@@ -187,6 +212,18 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
             }
         } else if (command.equals("Browse")) {
         	browseSRB();
+        } else if (command.equals("LoadAbstract")) {
+        	JFileChooser chooser = new JFileChooser();
+            chooser.setMultiSelectionEnabled(false);
+            
+            chooser.setFont(MipavUtil.defaultMenuFont);
+            
+            int returnVal = chooser.showOpenDialog(null);
+            
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+            	loadAbstract(chooser.getSelectedFile());
+            	
+            }
         }
         
         
@@ -198,18 +235,19 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
     		previousButton.setEnabled(false);
     	} else {
     		previousButton.setEnabled(true);
-    	}
-    	
-    	
+    	} 
     	
     	if (index == TAB_SOURCE) {
-    		nextButton.setEnabled(sourceModel.size() > 0);
+    		addMetaSourceButton.setEnabled(true);
+    		addRawSourceButton.setEnabled(true);
+    		removeSourceButton.setEnabled(metaSourceModel.size() > 0 || rawSourceModel.size() > 0);
     	} else {
-    		nextButton.setEnabled(true);
+    		addMetaSourceButton.setEnabled(false);
+    		addRawSourceButton.setEnabled(false);
+    		removeSourceButton.setEnabled(false);
     	}
     	
-    	addSourceButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_SOURCE && !doneAddingFiles);
-    	removeSourceButton.setEnabled(tabbedPane.getSelectedIndex() == TAB_SOURCE && sourceModel.size() > 0 && !doneAddingFiles);
+    	
     }
    
     public void itemStateChanged(ItemEvent e) {
@@ -220,12 +258,33 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
     			
     			tabbedPane.setEnabledAt(TAB_SOURCE, true);
     			tabbedPane.setEnabledAt(TAB_DESTINATION, true);
+    			tabbedPane.setEnabledAt(TAB_PI, true);
+    			tabbedPane.setEnabledAt(TAB_ABSTRACT, true);
     			privacyTextArea.setBackground(helpButton.getBackground());
     		}
     	} else if (e.getSource().equals(privateButton)) {
     		privateBrowseButton.setEnabled(privateButton.isSelected());
 			privateField.setEnabled(privateButton.isSelected());
     	}
+    }
+    
+    private boolean createXML() {
+    	
+    	if (!new File(USER_MIPAV_TEMP_DIR).exists()) {
+    		new File(USER_MIPAV_TEMP_DIR).mkdirs();
+    	}
+    	
+    	
+    	
+    	try {
+    		RepositoryXML repoXML = new RepositoryXML(REPOSITORY_SUBMISSION_FILENAME, USER_MIPAV_TEMP_DIR );
+    		repoXML.writeXML();
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		return false;
+    	}
+    	
+    	return true;
     }
     
     private void browseSRB() {
@@ -298,11 +357,15 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
         
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Main", buildMainTab());
+        tabbedPane.addTab("P.I.", buildPITab()); 
+        tabbedPane.addTab("Abstract", buildAbstractPanel());
         tabbedPane.addTab("Source", buildSourcePanel());
         tabbedPane.addTab("Destination", buildDestinationPanel());
         
         tabbedPane.setEnabledAt(TAB_SOURCE, false);
         tabbedPane.setEnabledAt(TAB_DESTINATION, false);
+        tabbedPane.setEnabledAt(TAB_PI, false);
+        tabbedPane.setEnabledAt(TAB_ABSTRACT, false);
         
         tabbedPane.addChangeListener(this);
         
@@ -345,23 +408,164 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
     	return privacyPane;
     }
     
-    private JScrollPane buildSourcePanel() {
-    	JPanel sourcePanel = new JPanel();
+    /**
+     * build Principal Investor
+     * @return JPanel
+     */
+    private JPanel buildPITab() {
+    	JPanel piPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        Insets insets1 = new Insets(2, 10, 2,0);
+        Insets insets2 = new Insets(2, 10, 2, 10);
+        
+        JLabel piNameLabel = WidgetFactory.buildLabel("Name");
+        gbc.insets = insets1;
+        piPanel.add(piNameLabel, gbc);
+        
+        gbc.weightx = 1;
+        piNameField = WidgetFactory.buildTextField(SPACE);
+        gbc.gridx++;
+        gbc.insets = insets2;
+        piPanel.add(piNameField, gbc);
+    	
+        gbc.gridx = 0;
+        gbc.gridy++;
+        JLabel piTitleLabel = WidgetFactory.buildLabel("Title");
+        gbc.insets = insets1;
+        piPanel.add(piTitleLabel, gbc);
+        
+        gbc.weightx = 1;
+        piTitleField = WidgetFactory.buildTextField(SPACE);
+        gbc.gridx++;
+        gbc.insets = insets2;
+        piPanel.add(piTitleField, gbc);
+        
+        
+        JLabel piEmailLabel = WidgetFactory.buildLabel("Email");
+        gbc.weightx = 0;
+        gbc.gridx =0;
+        gbc.gridy++;
+        gbc.insets = insets1;
+        piPanel.add(piEmailLabel, gbc);
+        
+        piEmailField = WidgetFactory.buildTextField(SPACE);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        gbc.insets = insets2;
+        piPanel.add(piEmailField, gbc);
+        
+        JLabel piPhoneLabel = WidgetFactory.buildLabel("Phone");
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        gbc.insets = insets1;
+        piPanel.add(piPhoneLabel, gbc);
+        
+        piPhoneField = WidgetFactory.buildTextField(SPACE);
+    	gbc.gridx++;
+    	gbc.weightx = 1;
+    	gbc.insets = insets2;
+    	piPanel.add(piPhoneField, gbc);
+        
+    	
+    	gbc.gridx= 0;
+    	gbc.gridy++;
+    	gbc.weightx = 0;
+    	 gbc.insets = insets1;
+    	JLabel irbLabel = WidgetFactory.buildLabel("IRB #");
+    	piPanel.add(irbLabel, gbc);
+        
+        gbc.gridx++;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1;
+        gbc.insets = insets2;
+        irbField = WidgetFactory.buildTextField(SPACE);
+        piPanel.add(irbField, gbc);
+    	        
+    	organizationBox = new JComboBox(ORGANIZATIONS);
+        organizationBox.setFont(MipavUtil.font12);        
+              
+               	
+    	return piPanel;
+    }
+    
+    private JPanel buildAbstractPanel() {
+    	JPanel abstractTitlePanel = new JPanel(new GridBagLayout());
+    	GridBagConstraints gbc = new GridBagConstraints();
+    	
+    	gbc.anchor = GridBagConstraints.NORTHWEST;
+    	gbc.gridx = 0;
+    	gbc.gridy = 0;
+    	gbc.weightx = 0;
+    	gbc.weighty = 0;
+    	gbc.gridwidth = 1;
+    	gbc.gridheight = 1;
+    	gbc.fill = GridBagConstraints.HORIZONTAL;
+    	
+    	JLabel abstractLabel = WidgetFactory.buildLabel("Abstract title");
+    	gbc.insets = new Insets(0, 10, 0, 0);
+    	abstractTitlePanel.add(abstractLabel, gbc);
+    	
+    	gbc.insets = new Insets(0, 0, 0, 0);
+    	gbc.gridx++;
+    	gbc.gridwidth = 2;
+    	gbc.weightx = 1;
+    	abstractTitleField = WidgetFactory.buildTextField(SPACE);
+    	abstractTitlePanel.add(abstractTitleField, gbc);
+    	
+    	openAbstractButton = WidgetFactory.buildTextButton("Load from file", "Load abstract from text file", "LoadAbstract", this);
+    	gbc.gridwidth = 1;
+    	gbc.weightx = .5;
+    	gbc.gridx+=2;
+    	abstractTitlePanel.add(openAbstractButton, gbc);
+    	
+    	
+    	JPanel abstractPanel = new JPanel(new BorderLayout());
+    	
+    	abstractArea = WidgetFactory.buildScrollTextArea(Color.white);
+    	abstractArea.getTextArea().setBorder(buildTitledBorder("Summary"));    	
+    	abstractPanel.add(abstractArea);
+    	abstractPanel.add(abstractTitlePanel, BorderLayout.NORTH);
+    	
+    	return abstractPanel;
+    }
+    
+    private JPanel buildSourcePanel() {
+    	JPanel sourcePanel = new JPanel(new GridBagLayout());
     	GridBagConstraints gbc = new GridBagConstraints();
     	
     	gbc.anchor = GridBagConstraints.NORTHWEST;	
+    	gbc.gridx = 0; gbc.gridy = 0;
     	gbc.weightx = 1;
     	gbc.weighty = 1;
     	gbc.fill = GridBagConstraints.BOTH;
     	
-    	sourceModel = new DefaultListModel();
-    	sourceList = new JList(sourceModel);
+    	metaSourceModel = new DefaultListModel();
+    	metaSourceList = new JList(metaSourceModel);
     	
-    	listPane = WidgetFactory.buildScrollPane(sourceList);
-    	listPane.setBorder(buildTitledBorder(0 + " file(s) selected for transfer"));
-    	sourcePanel.add(listPane, gbc);
+    	metaListPane = WidgetFactory.buildScrollPane(metaSourceList);
+    	metaListPane.setBorder(buildTitledBorder(0 + " meta-file(s) selected for transfer"));
     	
-    	return listPane;
+    	rawSourceModel = new DefaultListModel();
+    	rawSourceList = new JList(rawSourceModel);
+    	
+    	rawListPane = WidgetFactory.buildScrollPane(rawSourceList);
+    	rawListPane.setBorder(buildTitledBorder(0 + " raw-file(s) selected for transfer"));
+    	
+    	sourcePanel.add(metaListPane, gbc);
+    	gbc.gridx++;
+    	sourcePanel.add(rawListPane, gbc);
+    	
+    	return sourcePanel;
     }
     
     private JPanel buildDestinationPanel() {
@@ -408,7 +612,7 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
         gbc.gridx++;
         gbc.gridwidth = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(0,5,0,5);
         visPanel.add(privateField, gbc);
         
@@ -416,7 +620,7 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
         gbc.weightx = 0;
         gbc.gridx+=3;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         visPanel.add(privateBrowseButton, gbc);
         
         
@@ -448,30 +652,42 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
      *
      */
     private void transfer() {
-    	int numFiles = sourceModel.size();
-    	String tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "temp" +
-    	    File.separator;
-    	if (!new File(tempDir).exists()) {
-    		new File(tempDir).mkdirs();
-    	}
+    	int numFiles = metaSourceModel.size();
+    	
     	
         // Create a buffer for reading the files
         byte[] buf = new byte[1024];
         
         try {
             // Create the ZIP file
-            String outFilename = tempDir + "ndar_genomics.zip";
+        	long currentTime  = System.currentTimeMillis();
+            String outFilename = USER_MIPAV_TEMP_DIR + piNameField.getText() + "_" + currentTime + ".zip";
             ZipOutputStream out = new ZipOutputStream(new FileOutputStream(outFilename));
         
-            // Compress the files
+            //compress the repository submission xml
+            FileInputStream in = new FileInputStream(USER_MIPAV_TEMP_DIR + REPOSITORY_SUBMISSION_FILENAME);
+            
+            // Add ZIP entry to output stream.
+            out.putNextEntry(new ZipEntry(REPOSITORY_SUBMISSION_FILENAME));
+    
+            // Transfer bytes from the file to the ZIP file
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+    
+            // Complete the entry
+            out.closeEntry();
+            in.close();
+            
+            // Compress meta files
             for (int i=0; i < numFiles; i++) {
-                FileInputStream in = new FileInputStream((File)sourceModel.elementAt(i));
+                in = new FileInputStream((File)metaSourceModel.elementAt(i));
         
                 // Add ZIP entry to output stream.
-                out.putNextEntry(new ZipEntry(((File)sourceModel.elementAt(i)).getName()));
+                out.putNextEntry(new ZipEntry(((File)metaSourceModel.elementAt(i)).getName()));
         
                 // Transfer bytes from the file to the ZIP file
-                int len;
                 while ((len = in.read(buf)) > 0) {
                     out.write(buf, 0, len);
                 }
@@ -480,51 +696,111 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
                 out.closeEntry();
                 in.close();
             }
+            
+            numFiles = rawSourceModel.size();
+            
+//          Compress raw files
+            for (int i=0; i < numFiles; i++) {
+                in = new FileInputStream((File)rawSourceModel.elementAt(i));
         
+                // Add ZIP entry to output stream.
+                out.putNextEntry(new ZipEntry(((File)rawSourceModel.elementAt(i)).getName()));
+        
+                // Transfer bytes from the file to the ZIP file
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+        
+                // Complete the entry
+                out.closeEntry();
+                in.close();
+            }
+            
+            
             // Complete the ZIP file
             out.close();
         } catch (IOException e) {
         }
     	
     }
-    
-    /**
-     * Puts all available information (JTextField/JTextArea) into an NDARData object
-     * @return true
-     */
-    private boolean setVariables() {
-    		    	
-    	
-    	
-    	return true;
-    }
-    
+       
     private JPanel buildButtonPanel() {
     	JPanel buttonPanel = new JPanel();
     	previousButton = WidgetFactory.buildTextButton("Previous", "Go to previous tab", "Previous", this);
     	nextButton = WidgetFactory.buildTextButton("Next", "Go to next tab", "Next", this);
-    	addSourceButton = WidgetFactory.buildTextButton("Add files", "Add source files", "AddSource", this);
+    	addMetaSourceButton = WidgetFactory.buildTextButton("Add meta", "Add meta-data files", "AddMetaSource", this);
+    	addRawSourceButton = WidgetFactory.buildTextButton("Add raw", "Add raw files", "AddRawSource", this);
     	removeSourceButton = WidgetFactory.buildTextButton("Remove files", "Remove source files", "RemoveSource", this);
     	helpButton = WidgetFactory.buildTextButton("Help", "Show MIPAV help", "", this);
     	
     	previousButton.setPreferredSize(MipavUtil.defaultButtonSize);
     	nextButton.setPreferredSize(MipavUtil.defaultButtonSize);
-    	addSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
+    	addMetaSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
+    	addRawSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
     	removeSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
     	helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
     	
     	previousButton.setEnabled(false);
     	nextButton.setEnabled(false);
-    	addSourceButton.setEnabled(false);
+    	addMetaSourceButton.setEnabled(false);
+    	addRawSourceButton.setEnabled(false);
     	removeSourceButton.setEnabled(false);
     	
     	
     	buttonPanel.add(previousButton);
     	buttonPanel.add(nextButton);
-    	buttonPanel.add(addSourceButton);
+    	buttonPanel.add(addMetaSourceButton);
+    	buttonPanel.add(addRawSourceButton);
     	buttonPanel.add(removeSourceButton);
     	buttonPanel.add(helpButton);
     	
     	return buttonPanel;
     }
+    
+    
+    private class RepositoryXML extends FileXML {
+    	
+    	private File file;
+    	
+    	 public RepositoryXML(String fileName, String fileDir) throws IOException {
+    	    	super(fileName, fileDir);
+    	    	
+    	    	file = new File(fileDir + fileName);
+    	 }
+    	
+    	 public void writeXML() throws IOException {
+    	       
+    	        FileWriter fw;   	      
+
+    	        try {
+
+    	            fw = new FileWriter(file);
+    	            bw = new BufferedWriter(fw);
+
+    	            bw.write(XML_HEADER);
+    	            bw.newLine();
+
+    	            openTag("SubmissionInfo", true);
+    	                	            
+    	            closedTag( "Name", piNameField.getText());
+    	            closedTag( "Title", piTitleField.getText());
+    	            closedTag( "Email", piTitleField.getText());
+    	            closedTag( "Phone", piTitleField.getText());
+    	            closedTag( "IRBNumber", piTitleField.getText());
+    	            
+    	            closedTag("AbstractTitle", abstractTitleField.getText());
+    	            
+    	            closedTag( "AbstractBody", abstractArea.getTextArea().getText());
+
+
+    	            openTag("SubmissionInfo", false);
+    	            bw.close();
+    	        } catch (Exception e) {
+    	            System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileVOI");
+    	            e.printStackTrace();
+    	        }
+    	    }
+    	 
+    }
+    
 }
