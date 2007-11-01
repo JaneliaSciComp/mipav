@@ -1242,7 +1242,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
-            menuBuilder.setMenuItemEnabled("Noise", false);
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Adaptive path smooth", false);
             menuBuilder.setMenuItemEnabled("Nonlinear noise reduction", false);
