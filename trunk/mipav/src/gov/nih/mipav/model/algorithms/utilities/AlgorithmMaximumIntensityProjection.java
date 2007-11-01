@@ -193,7 +193,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
             			maxIntensityValue = buffer[(dim[0]*dim[1]*i) + j + (dim[0]*k)];
             		}
     			}
-    			resultBufferY[(dim[2]*dim[0]) - dim[0] - (dim[0]*i) +j] = maxIntensityValue;
+                resultBufferY[j + i*dim[0]] = maxIntensityValue;
 				maxIntensityValue = 0f;
 				mod = mod + 1; // For progress bar purposes
     		} 			
