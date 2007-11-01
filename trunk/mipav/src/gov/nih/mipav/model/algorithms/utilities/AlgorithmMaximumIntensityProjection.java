@@ -96,10 +96,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
     	float [] resultBufferZ;
     	float maxIntensityValue = 0f;
     	int [] dim = srcImage.getExtents();
-    	int cFactor = 1;
     	
     	try {
-    		length = cFactor * srcImage.getSliceSize() * srcImage.getExtents() [2];
+    		length = srcImage.getSliceSize() * srcImage.getExtents() [2];
     		buffer = new float[length];
     		srcImage.exportData(0, length, buffer);
     	} catch (IOException error) {
