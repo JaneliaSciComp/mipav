@@ -1321,6 +1321,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("FRAP", false);
             menuBuilder.setMenuItemEnabled("Inverse slice order", false);
             menuBuilder.setMenuItemEnabled("Light box", false);
+            menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Propagate", false);
             menuBuilder.setMenuItemEnabled("Triplanar", false);
             menuBuilder.setMenuItemEnabled("Volume renderers", false);
