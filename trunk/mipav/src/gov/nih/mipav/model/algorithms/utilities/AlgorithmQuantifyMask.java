@@ -168,7 +168,7 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
         String consoleString = "\nOutput from QuantifyMasks: " + srcImage.getImageName() + "\n";
     	
     	outputString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() + ")"
-    		+ "\tCenter of mass\n";
+    		+ "\t\tCenter of mass\n";
         consoleString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() + ")"
         + "\tCenter of mass\n";
     	for (int i = 0; i < dif; i++) {
@@ -180,7 +180,7 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     			  
     			outputString += (i + min) + "\t" + volume[i] + "\t" + 
     			(volume[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2]) + 
-    			"\t(" + xCenter[i] + "," + yCenter[i] + "," + zCenter[i] + ")\n";
+    			"\t\t(" + xCenter[i] + "," + yCenter[i] + "," + zCenter[i] + ")\n";
                 consoleString += (i + min) + "\t" + volume[i] + "\t\t" + 
                 (volume[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2]) + 
                 "\t(" + xCenter[i] + "," + yCenter[i] + "," + zCenter[i] + ")\n";
