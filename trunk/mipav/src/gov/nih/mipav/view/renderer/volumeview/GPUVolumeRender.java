@@ -2346,6 +2346,16 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
     }
 
+    public ColorRGB getPolylineColor( int iGroup )
+    {
+        if ( m_kEllipseConstantColor != null )
+        {
+            return m_kEllipseConstantColor.get( new Integer(iGroup) );
+        }
+        return null;
+    }
+
+
     public void setEllipseColor( ShaderEffect kShader, ColorRGB kColor )
     {
         if ( kShader == null )
@@ -2654,8 +2664,6 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 m_spkEllipseScene.UpdateGS();
                 m_spkEllipseScene.DetachChild(kEllipse);
 
-                //m_kCuller.ComputeVisibleSet(kEllipse);
-                //m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 m_pkRenderer.Draw(kEllipse);
                 iDisplayed++;
             }
@@ -2671,10 +2679,13 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
     private void DisplayEllipsoids( )
     {
-        /*
         if ( m_kEllipsoids == null )
         {
             return;
+        }
+        if ( m_bUpdateEffects )
+        {
+            UpdateEffectsOnIdle();
         }
         
         m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
@@ -2707,8 +2718,8 @@ implements GLEventListener, KeyListener, MouseMotionListener
                     if ( aiEllipsoids[j] != -1 )
                     {
                         iIndex = aiEllipsoids[j];
-
-                        kColor = m_kEllipseConstantColor.get(kKey);
+                        Integer kIndex = new Integer(iIndex);
+                        kColor = m_kEllipseConstantColor.get(kIndex);
                         if ( kColor != null )
                         {
                             m_kColorEllipse = kColor;
@@ -2733,57 +2744,23 @@ implements GLEventListener, KeyListener, MouseMotionListener
                             }
                         }
                         
-                        iX = iIndex % m_iDimX;
-                        iIndex -= iX;
-                        iIndex /= m_iDimX;
-                        
-                        iY = iIndex % m_iDimY;
-                        iIndex -= iY;
-                        iIndex /= m_iDimY;
-                        
-                        iZ = iIndex;
-                        // reset iIndex
-                        iIndex = aiEllipsoids[j];
-                        
-                        fX = (float)(iX)/(float)(m_iDimX);
-                        fY = (float)(iY)/(float)(m_iDimY);
-                        fZ = (float)(iZ)/(float)(m_iDimZ);
-                        
-                        m_kTScale.MakeIdentity();
-                        m_kTEllipse.MakeIdentity();
-                        m_kTRotate.MakeIdentity();
-                        
-                        kTransform = m_kEigenVectors.get(new Integer(iIndex));
-            
-                        kScale = m_kTScale.GetScale();
-                        kScale.scaleEquals( m_fScaleMax * m_fScale * 2f);
-                        kScale.multEquals( kTransform.GetScale() );
-                        m_kTScale.SetScale(kScale);
-                        
-                        m_kTEllipse.SetTranslate( fX - .5f, fY - .5f, fZ - .5f );
-                        m_kTEllipse.SetMatrixCopy( kTransform.GetMatrix() );
-                        
-                        m_kTRotate.SetRotateCopy(m_spkScene.Local.GetRotate());
-                        m_kTRotate.SetScale( m_fX, m_fY, m_fZ );
-                        
                         kEllipse = m_kSphere;
-                        kEllipse.Local.MakeIdentity();
-                        kEllipse.Local.Product( m_kTEllipse, m_kTScale );
-                        kEllipse.Local.Product( m_kTRotate, kEllipse.Local );
-                        
+                        kEllipse.Local = m_kEigenVectors.get(kIndex);
+                
+                        m_kEllipseMaterial.Ambient = m_kColorEllipse;
                         m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-                        
-                        kEllipse.DetachAllEffects();
-                        kEllipse.AttachEffect( m_kAllEllipsoidsShader );
-                        
-                        kEllipse.UpdateRS();
-                        kEllipse.UpdateGS();
+                        m_kEllipseMaterial.Specular = m_kColorEllipse;
+
+
+                        m_spkEllipseScene.SetChild(0,kEllipse);
+                        m_spkEllipseScene.UpdateGS();
+                        m_spkEllipseScene.DetachChild(kEllipse);
+
                         m_pkRenderer.Draw(kEllipse);
                     }
                 }
             }
         }
-        */
     }
     
 

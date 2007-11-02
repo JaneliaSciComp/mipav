@@ -58,7 +58,7 @@ import java.io.FileInputStream;
  * pass through a VOI are loaded.
  */
 public class JDialogDTIInput extends JDialogBase
-    implements AlgorithmInterface, ChangeListener
+    implements ListSelectionListener, AlgorithmInterface, ChangeListener
 {
 
     private static final long serialVersionUID = 9207590841799033846L;
@@ -156,7 +156,8 @@ public class JDialogDTIInput extends JDialogBase
 
     /** Color button for changing the color of the fiber bundles. */
     private JButton m_kColorButton;
-
+    /** Color button detault color: */
+    private Color m_kColorButtonDefault;
     /** Checkbox for turning on/off volume color for the polylines. */
     private JCheckBox m_kUseVolumeColor;
     /** Checkbox for switching between polylines and ellipsoids. */
@@ -421,6 +422,51 @@ public class JDialogDTIInput extends JDialogBase
         }
     }
 
+    /**
+     * @param  kEvent  The list selection event.
+     */
+    public void valueChanged(ListSelectionEvent kEvent) {
+
+        if ( m_kVolumeDisplay == null )
+        {
+            return;
+        }
+        if (((JList) kEvent.getSource()).getMinSelectionIndex() == -1)
+        {
+            return;
+        }
+        if ( ((JList) kEvent.getSource()) != m_kTractList )
+        {
+            return;
+        }
+        int[] aiSelected = m_kTractList.getSelectedIndices();
+        if ( aiSelected.length > 1 )
+        {
+            return;
+        }
+
+        DefaultListModel kList = (DefaultListModel)m_kTractList.getModel();
+        int iHeaderLength = (new String("FiberBundle")).length();
+        for (int i = 0; i < aiSelected.length; i++)
+        {
+            String kName = ((String)(kList.elementAt(aiSelected[i])));
+            int iLength = kName.length();
+            int iGroup = (new Integer(kName.substring( iHeaderLength, iLength ))).intValue();
+            ColorRGB kColor = m_kVolumeDisplay.getPolylineColor(iGroup);
+            if ( kColor != null )
+            {
+                m_kColorButton.setBackground(new Color( kColor.R(), kColor.G(), kColor.B() ) );
+                m_kUseVolumeColor.setSelected(false);
+            }
+            else
+            {
+                m_kColorButton.setBackground( m_kColorButtonDefault );
+                m_kUseVolumeColor.setSelected(true);
+            }
+
+        }
+
+    }
 
     /**
      * Loads the BMatrix file.
@@ -1019,7 +1065,7 @@ public class JDialogDTIInput extends JDialogBase
 
         // list panel for surface filenames
         m_kTractList = new JList( new DefaultListModel() );
-        //m_kTractList.addListSelectionListener(this);
+        m_kTractList.addListSelectionListener(this);
         m_kTractList.setPrototypeCellValue("aaaaaaaaaaaaaaaa.aaa    ");
 
         JScrollPane kScrollPane = new JScrollPane(m_kTractList);
@@ -1040,6 +1086,7 @@ public class JDialogDTIInput extends JDialogBase
 
         m_kColorButton = new JButton("   ");
         m_kColorButton.setToolTipText("Change fiber bundle color");
+        m_kColorButtonDefault = m_kColorButton.getBackground( );
         m_kColorButton.addActionListener(this);
         m_kColorButton.setActionCommand("ChangeColor");
 
