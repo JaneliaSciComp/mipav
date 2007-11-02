@@ -693,7 +693,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
      * Initializes the GUI components and places them in the dialog.
      */
     private void init() {
-        setTitle("Add Image Border");
+        setTitle("Pad image");
         setSize(350, 230);
         setForeground(Color.black);
 
@@ -701,7 +701,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         JPanel optionPanel = new JPanel();
 
         // make border
-        optionPanel.setBorder(buildTitledBorder("Margins Around Image"));
+        optionPanel.setBorder(buildTitledBorder("Pixels Around Image"));
         contentBox.add(optionPanel);
 
         // set layout
@@ -826,7 +826,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
         // default margin value
         JPanel defaultValuePanel = new JPanel();
-        defaultValuePanel.setBorder(buildTitledBorder("Select Margin Value"));
+        defaultValuePanel.setBorder(buildTitledBorder("Select pad Value"));
 
         if (image.isColorImage() == false) {
 
@@ -837,7 +837,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             gbc.anchor = GridBagConstraints.NORTHWEST;
 
             // make content, place into layout
-            JLabel defaultLabel = new JLabel("Value for margins (image minimum is default)");
+            JLabel defaultLabel = new JLabel("Pad value (image minimum is default)");
             defaultLabel.setFont(serif12);
             defaultLabel.setForeground(Color.black);
             defaultLabel.setRequestFocusEnabled(false);
@@ -859,7 +859,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             gbc.anchor = GridBagConstraints.NORTHWEST;
 
             // make content, place into layout
-            JLabel redLabel = new JLabel("Red margin value (image minimum is default)");
+            JLabel redLabel = new JLabel("Red pad value (image minimum is default)");
             redLabel.setFont(serif12);
             redLabel.setForeground(Color.black);
             redLabel.setRequestFocusEnabled(false);
@@ -874,7 +874,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             gbl.setConstraints(defaultRedInput, gbc);
             defaultValuePanel.add(defaultRedInput);
 
-            JLabel greenLabel = new JLabel("Green margin value (image minimum is default)");
+            JLabel greenLabel = new JLabel("Green pad value (image minimum is default)");
             greenLabel.setFont(serif12);
             greenLabel.setForeground(Color.black);
             greenLabel.setRequestFocusEnabled(false);
@@ -889,7 +889,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             gbl.setConstraints(defaultGreenInput, gbc);
             defaultValuePanel.add(defaultGreenInput);
 
-            JLabel blueLabel = new JLabel("Blue margin value (image minimum is default)");
+            JLabel blueLabel = new JLabel("Blue pad value (image minimum is default)");
             blueLabel.setFont(serif12);
             blueLabel.setForeground(Color.black);
             blueLabel.setRequestFocusEnabled(false);
