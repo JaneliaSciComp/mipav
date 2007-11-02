@@ -20,6 +20,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.volumeview.GPUVolumeRender;
 import gov.nih.mipav.view.renderer.surfaceview.JPanelSurface;
+import gov.nih.mipav.view.renderer.surfaceview.SurfaceRender;
 import gov.nih.mipav.view.WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.view.WildMagic.LibGraphics.SceneGraph.*;
 import java.io.FileInputStream;
@@ -1854,6 +1855,7 @@ public class JDialogDTIInput extends JDialogBase
         if ( m_kLineArrayMap == null )
         {
             m_kLineArrayMap = new HashMap<Integer,BranchGroup>();
+            ((SurfaceRender)m_kSurfaceDialog.getSurfaceRender()).getSurfaceDialog().getLightDialog().refreshLighting();
         }
 
         BranchGroup kBranch = m_kSurfaceDialog.addLineArray( kLine, m_iBundleCount );

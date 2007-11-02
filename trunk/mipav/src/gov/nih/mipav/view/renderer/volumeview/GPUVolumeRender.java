@@ -930,70 +930,70 @@ implements GLEventListener, KeyListener, MouseMotionListener
         super.keyPressed(e);
         switch (ucKey)
         {
-        case 'A':  // remove an ambient light
-            if (m_iAQuantity > 0)
-            {
-                m_iAQuantity--;
-                m_iLightQuantity--;
-                UpdateEffects();
-            }
-            return;
-        case 'a':  // add an ambient light
-            if (m_iLightQuantity < 8)
-            {
-                m_iAQuantity++;
-                m_iLightQuantity++;
-                UpdateEffects();
-            }
-            return;
-        case 'D':  // remove a directional light
-            if (m_iDQuantity > 0)
-            {
-                m_iDQuantity--;
-                m_iLightQuantity--;
-                UpdateEffects();
-            }
-            return;
-        case 'd':  // add a directional light
-            if (m_iLightQuantity < 8)
-            {
-                m_iDQuantity++;
-                m_iLightQuantity++;
-                UpdateEffects();
-            }
-            return;
-        case 'P':  // remove a point light
-            if (m_iPQuantity > 0)
-            {
-                m_iPQuantity--;
-                m_iLightQuantity--;
-                UpdateEffects();
-            }
-            return;
-        case 'p':  // add a point light
-            if (m_iLightQuantity < 8)
-            {
-                m_iPQuantity++;
-                m_iLightQuantity++;
-                UpdateEffects();
-            }
-            return;
-        case 'S':  // remove a spot light
-            if (m_iSQuantity > 0)
-            {
-                m_iSQuantity--;
-                m_iLightQuantity--;
-                UpdateEffects();
-            }
-            return;
-        case 's':  // add a spot light
-            if (m_iLightQuantity < 8)
-            {
-                m_iSQuantity++;
-                m_iLightQuantity++;
-                UpdateEffects();
-            }
-            return;
+//         case 'A':  // remove an ambient light
+//             if (m_iAQuantity > 0)
+//             {
+//                 m_iAQuantity--;
+//                 m_iLightQuantity--;
+//                 UpdateEffects();
+//             }
+//             return;
+//         case 'a':  // add an ambient light
+//             if (m_iLightQuantity < 8)
+//             {
+//                 m_iAQuantity++;
+//                 m_iLightQuantity++;
+//                 UpdateEffects();
+//             }
+//             return;
+//         case 'D':  // remove a directional light
+//             if (m_iDQuantity > 0)
+//             {
+//                 m_iDQuantity--;
+//                 m_iLightQuantity--;
+//                 UpdateEffects();
+//             }
+//             return;
+//         case 'd':  // add a directional light
+//             if (m_iLightQuantity < 8)
+//             {
+//                 m_iDQuantity++;
+//                 m_iLightQuantity++;
+//                 UpdateEffects();
+//             }
+//             return;
+//         case 'P':  // remove a point light
+//             if (m_iPQuantity > 0)
+//             {
+//                 m_iPQuantity--;
+//                 m_iLightQuantity--;
+//                 UpdateEffects();
+//             }
+//             return;
+//         case 'p':  // add a point light
+//             if (m_iLightQuantity < 8)
+//             {
+//                 m_iPQuantity++;
+//                 m_iLightQuantity++;
+//                 UpdateEffects();
+//             }
+//             return;
+//         case 'S':  // remove a spot light
+//             if (m_iSQuantity > 0)
+//             {
+//                 m_iSQuantity--;
+//                 m_iLightQuantity--;
+//                 UpdateEffects();
+//             }
+//             return;
+//         case 's':  // add a spot light
+//             if (m_iLightQuantity < 8)
+//             {
+//                 m_iSQuantity++;
+//                 m_iLightQuantity++;
+//                 UpdateEffects();
+//             }
+//             return;
         case 'f':
             m_bTestFrameRate = !m_bTestFrameRate;
             if ( m_bTestFrameRate )
@@ -1942,9 +1942,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
         }
         m_akLights = akGLights;
 
-        if ( m_spkEllipseScene != null )
+        if ( m_kSphere != null )
         {
-            m_spkEllipseScene.DetachAllLights();
+            m_kSphere.DetachAllLights();
         }
 
         if ( m_bInit )
@@ -1961,9 +1961,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
                         Light kLight = akGLights[i].createWMLight();
                         m_pkRenderer.SetLight( i, kLight );
 
-                        if ( m_spkEllipseScene != null )
+                        if ( m_kSphere != null )
                         {
-                            m_spkEllipseScene.AttachLight( kLight );
+                            m_kSphere.AttachLight( kLight );
                         }
 
                         if ( akGLights[i].isTypeAmbient() )
@@ -1994,9 +1994,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
                 }
             }
         }
-        if ( m_spkEllipseScene != null )
+        if ( m_kSphere != null )
         {
-            m_spkEllipseScene.UpdateRS();
+            m_kSphere.UpdateRS();
         }
     }
 
@@ -2588,7 +2588,9 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
         m_kSphere.AttachGlobalState(m_kEllipseMaterial);
 
-        CreateLights ();
+        m_spkEllipseScene = new Node();
+        m_spkEllipseScene.Local.SetScale( m_fX, m_fY, m_fZ );
+        //CreateLights ();
     }
 
     public void setDisplayEllipsoids( boolean bDisplay )
@@ -2615,10 +2617,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             return;
         }
-        if ( m_bUpdateEffects )
-        {
-            UpdateEffectsOnIdle();
-        }
+//         if ( m_bUpdateEffects )
+//         {
+//             UpdateEffectsOnIdle();
+//         }
 
         
         m_spkAlpha.BlendEnabled = true;
@@ -2683,10 +2685,10 @@ implements GLEventListener, KeyListener, MouseMotionListener
         {
             return;
         }
-        if ( m_bUpdateEffects )
-        {
-            UpdateEffectsOnIdle();
-        }
+//         if ( m_bUpdateEffects )
+//         {
+//             UpdateEffectsOnIdle();
+//         }
         
         m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
         m_pkRenderer.ClearBuffers();
@@ -2944,174 +2946,174 @@ implements GLEventListener, KeyListener, MouseMotionListener
 
 
 
-    private void CreateLights ()
-    {
-        m_spkEllipseScene = new Node();
-        m_spkEllipseScene.Local.SetScale( m_fX, m_fY, m_fZ );
-        //m_spkEllipseScene.AttachChild(m_kSphere);
-        //m_spkEllipseScene.UpdateGS();
-        //m_spkEllipseScene.UpdateRS();
+//     private void CreateLights ()
+//     {
+//         m_spkEllipseScene = new Node();
+//         m_spkEllipseScene.Local.SetScale( m_fX, m_fY, m_fZ );
+//         //m_spkEllipseScene.AttachChild(m_kSphere);
+//         //m_spkEllipseScene.UpdateGS();
+//         //m_spkEllipseScene.UpdateRS();
 
 
-        int i;
-        for (i = 0; i < 8; i++)
-        {
-            m_aspkALight[i] = new Light(Light.LightType.LT_AMBIENT);
-            m_aspkDLight[i] = new Light(Light.LightType.LT_DIRECTIONAL);
-            m_aspkPLight[i] = new Light(Light.LightType.LT_POINT);
-            m_aspkSLight[i] = new Light(Light.LightType.LT_SPOT);
-        }
+//         int i;
+//         for (i = 0; i < 8; i++)
+//         {
+//             m_aspkALight[i] = new Light(Light.LightType.LT_AMBIENT);
+//             m_aspkDLight[i] = new Light(Light.LightType.LT_DIRECTIONAL);
+//             m_aspkPLight[i] = new Light(Light.LightType.LT_POINT);
+//             m_aspkSLight[i] = new Light(Light.LightType.LT_SPOT);
+//         }
 
-        // ambient lights
-        float fValue = 0.75f;
-        m_aspkALight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkALight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
-        m_aspkALight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
-        m_aspkALight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
-        m_aspkALight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
-        m_aspkALight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
-        m_aspkALight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
-        m_aspkALight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
+//         // ambient lights
+//         float fValue = 0.75f;
+//         m_aspkALight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
+//         m_aspkALight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
+//         m_aspkALight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
+//         m_aspkALight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
+//         m_aspkALight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
+//         m_aspkALight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
+//         m_aspkALight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
+//         m_aspkALight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
 
-        // directional lights
-        fValue = (float)-Math.sqrt(1.0f/3.0f);
-        m_aspkDLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkDLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
-        m_aspkDLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
-        m_aspkDLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
-        m_aspkDLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
-        m_aspkDLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
-        m_aspkDLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
-        m_aspkDLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkDLight[0].DVector = new Vector3f(+fValue,+fValue,+fValue);
-        m_aspkDLight[1].DVector = new Vector3f(+fValue,+fValue,-fValue);
-        m_aspkDLight[2].DVector = new Vector3f(+fValue,-fValue,+fValue);
-        m_aspkDLight[3].DVector = new Vector3f(+fValue,-fValue,-fValue);
-        m_aspkDLight[4].DVector = new Vector3f(-fValue,+fValue,+fValue);
-        m_aspkDLight[5].DVector = new Vector3f(-fValue,+fValue,-fValue);
-        m_aspkDLight[6].DVector = new Vector3f(-fValue,-fValue,+fValue);
-        m_aspkDLight[7].DVector = new Vector3f(-fValue,-fValue,-fValue);
-        for (i = 0; i < 8; i++)
-        {
-            m_aspkDLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
-            m_aspkDLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
-        }
+//         // directional lights
+//         fValue = (float)-Math.sqrt(1.0f/3.0f);
+//         m_aspkDLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
+//         m_aspkDLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
+//         m_aspkDLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
+//         m_aspkDLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
+//         m_aspkDLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
+//         m_aspkDLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
+//         m_aspkDLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
+//         m_aspkDLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
+//         m_aspkDLight[0].DVector = new Vector3f(+fValue,+fValue,+fValue);
+//         m_aspkDLight[1].DVector = new Vector3f(+fValue,+fValue,-fValue);
+//         m_aspkDLight[2].DVector = new Vector3f(+fValue,-fValue,+fValue);
+//         m_aspkDLight[3].DVector = new Vector3f(+fValue,-fValue,-fValue);
+//         m_aspkDLight[4].DVector = new Vector3f(-fValue,+fValue,+fValue);
+//         m_aspkDLight[5].DVector = new Vector3f(-fValue,+fValue,-fValue);
+//         m_aspkDLight[6].DVector = new Vector3f(-fValue,-fValue,+fValue);
+//         m_aspkDLight[7].DVector = new Vector3f(-fValue,-fValue,-fValue);
+//         for (i = 0; i < 8; i++)
+//         {
+//             m_aspkDLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
+//             m_aspkDLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
+//         }
 
-        // point lights
-        fValue = 0.1f;
-        m_aspkPLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkPLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
-        m_aspkPLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
-        m_aspkPLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
-        m_aspkPLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
-        m_aspkPLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
-        m_aspkPLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
-        m_aspkPLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
-        fValue = 4.0f;
-        m_aspkPLight[0].Position = new Vector3f(+fValue,+fValue,+fValue);
-        m_aspkPLight[1].Position = new Vector3f(+fValue,+fValue,-fValue);
-        m_aspkPLight[2].Position = new Vector3f(+fValue,-fValue,+fValue);
-        m_aspkPLight[3].Position = new Vector3f(+fValue,-fValue,-fValue);
-        m_aspkPLight[4].Position = new Vector3f(-fValue,+fValue,+fValue);
-        m_aspkPLight[5].Position = new Vector3f(-fValue,+fValue,-fValue);
-        m_aspkPLight[6].Position = new Vector3f(-fValue,-fValue,+fValue);
-        m_aspkPLight[7].Position = new Vector3f(-fValue,-fValue,-fValue);
-        for (i = 0; i < 8; i++)
-        {
-            m_aspkPLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
-            m_aspkPLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
-        }
+//         // point lights
+//         fValue = 0.1f;
+//         m_aspkPLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
+//         m_aspkPLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
+//         m_aspkPLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
+//         m_aspkPLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
+//         m_aspkPLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
+//         m_aspkPLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
+//         m_aspkPLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
+//         m_aspkPLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
+//         fValue = 4.0f;
+//         m_aspkPLight[0].Position = new Vector3f(+fValue,+fValue,+fValue);
+//         m_aspkPLight[1].Position = new Vector3f(+fValue,+fValue,-fValue);
+//         m_aspkPLight[2].Position = new Vector3f(+fValue,-fValue,+fValue);
+//         m_aspkPLight[3].Position = new Vector3f(+fValue,-fValue,-fValue);
+//         m_aspkPLight[4].Position = new Vector3f(-fValue,+fValue,+fValue);
+//         m_aspkPLight[5].Position = new Vector3f(-fValue,+fValue,-fValue);
+//         m_aspkPLight[6].Position = new Vector3f(-fValue,-fValue,+fValue);
+//         m_aspkPLight[7].Position = new Vector3f(-fValue,-fValue,-fValue);
+//         for (i = 0; i < 8; i++)
+//         {
+//             m_aspkPLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
+//             m_aspkPLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
+//         }
 
-        // spot lights
-        fValue = 0.1f;
-        m_aspkSLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
-        m_aspkSLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
-        m_aspkSLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
-        m_aspkSLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
-        m_aspkSLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
-        m_aspkSLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
-        m_aspkSLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
-        m_aspkSLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
-        fValue = 4.0f;
-        m_aspkSLight[0].Position = new Vector3f(+fValue,+fValue,+fValue);
-        m_aspkSLight[1].Position = new Vector3f(+fValue,+fValue,-fValue);
-        m_aspkSLight[2].Position = new Vector3f(+fValue,-fValue,+fValue);
-        m_aspkSLight[3].Position = new Vector3f(+fValue,-fValue,-fValue);
-        m_aspkSLight[4].Position = new Vector3f(-fValue,+fValue,+fValue);
-        m_aspkSLight[5].Position = new Vector3f(-fValue,+fValue,-fValue);
-        m_aspkSLight[6].Position = new Vector3f(-fValue,-fValue,+fValue);
-        m_aspkSLight[7].Position = new Vector3f(-fValue,-fValue,-fValue);
-        fValue = (float)-Math.sqrt(1.0f/3.0f);
-        m_aspkSLight[0].DVector = new Vector3f(+fValue,+fValue,+fValue);
-        m_aspkSLight[1].DVector = new Vector3f(+fValue,+fValue,-fValue);
-        m_aspkSLight[2].DVector = new Vector3f(+fValue,-fValue,+fValue);
-        m_aspkSLight[3].DVector = new Vector3f(+fValue,-fValue,-fValue);
-        m_aspkSLight[4].DVector = new Vector3f(-fValue,+fValue,+fValue);
-        m_aspkSLight[5].DVector = new Vector3f(-fValue,+fValue,-fValue);
-        m_aspkSLight[6].DVector = new Vector3f(-fValue,-fValue,+fValue);
-        m_aspkSLight[7].DVector = new Vector3f(-fValue,-fValue,-fValue);
-        for (i = 0; i < 8; i++)
-        {
-            m_aspkSLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
-            m_aspkSLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
-            m_aspkSLight[i].Exponent = 1.0f;
-            m_aspkSLight[i].SetAngle((float)(0.125f*Math.PI));
-        }
-    }
+//         // spot lights
+//         fValue = 0.1f;
+//         m_aspkSLight[0].Ambient = new ColorRGB(fValue,fValue,fValue);
+//         m_aspkSLight[1].Ambient = new ColorRGB(fValue,0.0f,  0.0f);
+//         m_aspkSLight[2].Ambient = new ColorRGB(0.0f,  fValue,0.0f);
+//         m_aspkSLight[3].Ambient = new ColorRGB(0.0f,  0.0f,  fValue);
+//         m_aspkSLight[4].Ambient = new ColorRGB(0.0f,  fValue,fValue);
+//         m_aspkSLight[5].Ambient = new ColorRGB(fValue,0.0f,  fValue);
+//         m_aspkSLight[6].Ambient = new ColorRGB(fValue,fValue,0.0f);
+//         m_aspkSLight[7].Ambient = new ColorRGB(fValue,fValue,fValue);
+//         fValue = 4.0f;
+//         m_aspkSLight[0].Position = new Vector3f(+fValue,+fValue,+fValue);
+//         m_aspkSLight[1].Position = new Vector3f(+fValue,+fValue,-fValue);
+//         m_aspkSLight[2].Position = new Vector3f(+fValue,-fValue,+fValue);
+//         m_aspkSLight[3].Position = new Vector3f(+fValue,-fValue,-fValue);
+//         m_aspkSLight[4].Position = new Vector3f(-fValue,+fValue,+fValue);
+//         m_aspkSLight[5].Position = new Vector3f(-fValue,+fValue,-fValue);
+//         m_aspkSLight[6].Position = new Vector3f(-fValue,-fValue,+fValue);
+//         m_aspkSLight[7].Position = new Vector3f(-fValue,-fValue,-fValue);
+//         fValue = (float)-Math.sqrt(1.0f/3.0f);
+//         m_aspkSLight[0].DVector = new Vector3f(+fValue,+fValue,+fValue);
+//         m_aspkSLight[1].DVector = new Vector3f(+fValue,+fValue,-fValue);
+//         m_aspkSLight[2].DVector = new Vector3f(+fValue,-fValue,+fValue);
+//         m_aspkSLight[3].DVector = new Vector3f(+fValue,-fValue,-fValue);
+//         m_aspkSLight[4].DVector = new Vector3f(-fValue,+fValue,+fValue);
+//         m_aspkSLight[5].DVector = new Vector3f(-fValue,+fValue,-fValue);
+//         m_aspkSLight[6].DVector = new Vector3f(-fValue,-fValue,+fValue);
+//         m_aspkSLight[7].DVector = new Vector3f(-fValue,-fValue,-fValue);
+//         for (i = 0; i < 8; i++)
+//         {
+//             m_aspkSLight[i].Diffuse = new ColorRGB(ColorRGB.WHITE);
+//             m_aspkSLight[i].Specular = new ColorRGB(ColorRGB.WHITE);
+//             m_aspkSLight[i].Exponent = 1.0f;
+//             m_aspkSLight[i].SetAngle((float)(0.125f*Math.PI));
+//         }
+//     }
 
-    private void UpdateEffects ()
-    {
-        System.err.println( "UpdateEffects" );
-        m_bUpdateEffects = true;
-    }
+//     private void UpdateEffects ()
+//     {
+//         System.err.println( "UpdateEffects" );
+//         m_bUpdateEffects = true;
+//     }
 
-    private void UpdateEffectsOnIdle ()
-    {
-        m_bUpdateEffects = false;
-        int i;
+//     private void UpdateEffectsOnIdle ()
+//     {
+//         m_bUpdateEffects = false;
+//         int i;
 
-        if (m_iLightQuantity > 0)
-        {
-            //m_spkEllipseScene.DetachAllLights();
-            m_kSphere.DetachAllLights();
-            for (i = 0; i < m_iAQuantity; i++)
-            {
-                //System.err.println("Ambient");
-                //m_spkEllipseScene.AttachLight(m_aspkALight[i]);
-                m_kSphere.AttachLight(m_aspkALight[i]);
-            }
-            for (i = 0; i < m_iDQuantity; i++)
-            {
-                //System.err.println("Directional");
-                //m_spkEllipseScene.AttachLight(m_aspkDLight[i]);
-                m_kSphere.AttachLight(m_aspkDLight[i]);
-            }
-            for (i = 0; i < m_iPQuantity; i++)
-            {
-                //System.err.println("Point");
-                //m_spkEllipseScene.AttachLight(m_aspkPLight[i]);
-                m_kSphere.AttachLight(m_aspkPLight[i]);
-            }
-            for (i = 0; i < m_iSQuantity; i++)
-            {
-                //System.err.println("Spot");
-                //m_spkEllipseScene.AttachLight(m_aspkSLight[i]);
-                m_kSphere.AttachLight(m_aspkSLight[i]);
-            }
-        }
+//         if (m_iLightQuantity > 0)
+//         {
+//             //m_spkEllipseScene.DetachAllLights();
+//             m_kSphere.DetachAllLights();
+//             for (i = 0; i < m_iAQuantity; i++)
+//             {
+//                 //System.err.println("Ambient");
+//                 //m_spkEllipseScene.AttachLight(m_aspkALight[i]);
+//                 m_kSphere.AttachLight(m_aspkALight[i]);
+//             }
+//             for (i = 0; i < m_iDQuantity; i++)
+//             {
+//                 //System.err.println("Directional");
+//                 //m_spkEllipseScene.AttachLight(m_aspkDLight[i]);
+//                 m_kSphere.AttachLight(m_aspkDLight[i]);
+//             }
+//             for (i = 0; i < m_iPQuantity; i++)
+//             {
+//                 //System.err.println("Point");
+//                 //m_spkEllipseScene.AttachLight(m_aspkPLight[i]);
+//                 m_kSphere.AttachLight(m_aspkPLight[i]);
+//             }
+//             for (i = 0; i < m_iSQuantity; i++)
+//             {
+//                 //System.err.println("Spot");
+//                 //m_spkEllipseScene.AttachLight(m_aspkSLight[i]);
+//                 m_kSphere.AttachLight(m_aspkSLight[i]);
+//             }
+//         }
 
-        //m_spkEllipseScene.UpdateRS();
-        m_kSphere.UpdateRS();
-    }
+//         //m_spkEllipseScene.UpdateRS();
+//         m_kSphere.UpdateRS();
+//     }
 
 
-    private int m_iAQuantity = 0, m_iDQuantity = 0, m_iPQuantity = 0, m_iSQuantity = 0;
-    private Light[] m_aspkALight = new Light[8];
-    private Light[] m_aspkDLight = new Light[8];
-    private Light[] m_aspkPLight = new Light[8];
-    private Light[] m_aspkSLight = new Light[8];
+//     private int m_iAQuantity = 0, m_iDQuantity = 0, m_iPQuantity = 0, m_iSQuantity = 0;
+//     private Light[] m_aspkALight = new Light[8];
+//     private Light[] m_aspkDLight = new Light[8];
+//     private Light[] m_aspkPLight = new Light[8];
+//     private Light[] m_aspkSLight = new Light[8];
 
-    private int m_iLightQuantity = 0;
+//     private int m_iLightQuantity = 0;
 
     private Node m_spkEllipseScene = null;
     private boolean m_bUpdateEffects = true;
