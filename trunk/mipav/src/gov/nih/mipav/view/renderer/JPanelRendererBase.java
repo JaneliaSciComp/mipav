@@ -285,6 +285,15 @@ public abstract class JPanelRendererBase extends JPanel
         renderBase = _renderBase;
     }
 
+    /**
+     * Accessor to set the render base object This reference used to update volumes according to the render view base
+     * instance type.
+     *
+     * @param  _renderBase  RenderViewBase
+     */
+    public RenderViewBase getSurfaceRender() {
+        return renderBase;
+    }
 
     /**
      * Makes the dialog visible in center of screen.
