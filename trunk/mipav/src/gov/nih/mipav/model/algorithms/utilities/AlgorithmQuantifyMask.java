@@ -58,7 +58,7 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     }
     
     private void calc2D() {
-//    	run through image once to determine # of unique values (mask values)
+        //    	run through image once to determine # of unique values (mask values)
     	int min = (int)srcImage.getMin();
     	int max = (int)srcImage.getMax();
     	
@@ -96,9 +96,12 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     	}
     	
     	String outputString = "\nOutput from QuantifyMasks: " + srcImage.getImageName() + "\n";
+        String consoleString = "\nOutput from QuantifyMasks: " + srcImage.getImageName() + "\n";
     	
     	outputString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getAreaUnitsOfMeasureStr() + ")"
     		+ "\tCenter of mass\n";
+        consoleString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getAreaUnitsOfMeasureStr() + ")"
+        + "\tCenter of mass\n";
     	
     	for (int i = 0; i < dif; i++) {
     		if (area[i] != 0) {
@@ -107,11 +110,12 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     	
     			outputString += (i + min) + "\t" + area[i] + "\t" + 
     			(area[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1]) + "\t(" + xCenter[i] + "," + yCenter[i] + ")\n";
-    			                                                                      
+                consoleString += (i + min) + "\t" + area[i] + "\t\t" + 
+                (area[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1]) + "\t\t(" + xCenter[i] + "," + yCenter[i] + ")\n";                                                                      
     			
     		}
     	}
-        System.err.println(outputString);
+        System.err.println(consoleString);
     	ViewUserInterface.getReference().getMessageFrame().append(outputString, ViewJFrameMessage.DATA);
     }
     
@@ -161,9 +165,12 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     	}
     	
     	String outputString = "\nOutput from QuantifyMasks: " + srcImage.getImageName() + "\n";
+        String consoleString = "\nOutput from QuantifyMasks: " + srcImage.getImageName() + "\n";
     	
     	outputString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() + ")"
     		+ "\tCenter of mass\n";
+        consoleString += "Object\t# of voxels\tArea(" + srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr() + ")"
+        + "\tCenter of mass\n";
     	for (int i = 0; i < dif; i++) {
     		if (volume[i] != 0) {
     			xCenter[i] = xCenter[i] / volume[i];
@@ -174,12 +181,15 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     			outputString += (i + min) + "\t" + volume[i] + "\t" + 
     			(volume[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2]) + 
     			"\t(" + xCenter[i] + "," + yCenter[i] + "," + zCenter[i] + ")\n";
+                consoleString += (i + min) + "\t" + volume[i] + "\t\t" + 
+                (volume[i] * srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2]) + 
+                "\t(" + xCenter[i] + "," + yCenter[i] + "," + zCenter[i] + ")\n";
     			
     			
     		}
     	}
         
-        System.err.println(outputString);
+        System.err.println(consoleString);
     	ViewUserInterface.getReference().getMessageFrame().append(outputString, ViewJFrameMessage.DATA);
     }
 }
