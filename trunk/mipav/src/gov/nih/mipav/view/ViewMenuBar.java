@@ -881,7 +881,6 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34",
                                                                                            0, null, false),
                                                              }),
-                                        menuBuilder.buildMenuItem("Add image margins", "Add margins", 0, null, false),
                                         menuBuilder.buildMenuItem("Clone (copy)", "Clone", 0, null, false),
                                         menuBuilder.makeMenu("Conversion tools", false,
                                                              new JMenuItem[] {
