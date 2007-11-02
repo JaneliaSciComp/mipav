@@ -765,7 +765,9 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                     // result image fileinfos
                     if (destExtents.length == image.getExtents().length) {
                     	
-                    	resultImage.getMatrixHolder().addMatrix((TransMatrix) image.getMatrix().clone());
+                    	if (image.getMatrix().getTransformID() != TransMatrix.TRANSFORM_COMPOSITE) {
+                            resultImage.getMatrixHolder().addMatrix((TransMatrix) image.getMatrix().clone());
+                        }
 
                         FileInfoBase.copyCoreInfo(image.getFileInfo(), resultImage.getFileInfo(), checkListRemove);
                     }
