@@ -543,7 +543,7 @@ public class Transformation
                 m_bUpdateInverse = false;
                 m_kMatrixInverse = m_kMatrix.Inverse();
             }
-            kOutput = m_kMatrixInverse.mult(rkInput);
+            m_kMatrixInverse.mult(rkInput, kOutput);
         }
 
         return kOutput;

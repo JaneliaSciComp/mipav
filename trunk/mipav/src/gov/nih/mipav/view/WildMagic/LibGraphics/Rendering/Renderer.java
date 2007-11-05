@@ -2331,15 +2331,12 @@ public abstract class Renderer
         Light pkLight = GetLight(iLight);
         if (pkLight != null)
         {
-            //Vector3f kMDVector = m_pkGeometry.World.InvertVector(
-            //                                                     pkLight.DVector);
+            Vector3f kMDVector = m_pkGeometry.World.InvertVector(
+                                                                 pkLight.DVector);
 
-            //afData[0] = kMDVector.X();
-            //afData[1] = kMDVector.Y();
-            //afData[2] = kMDVector.Z();
-            afData[0] = pkLight.DVector.X();
-            afData[1] = pkLight.DVector.Y();
-            afData[2] = pkLight.DVector.Z();
+            afData[0] = kMDVector.X();
+            afData[1] = kMDVector.Y();
+            afData[2] = kMDVector.Z();
             afData[3] = 0.0f;
         }
         else
