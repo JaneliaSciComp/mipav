@@ -253,6 +253,18 @@ public class Preferences {
     /** Constant that indicates the SRB temp directory. */
     public static final String PREF_SRB_TEMP_DIR = "srbTempDir";
 
+    /** Constant that indicates the NDAR Imaging public dump directory */
+    public static final String PREF_NDAR_IMAGING_DIR_PUBLIC = "ndarImagingDirPublic";
+    
+    /** Constant that indicates the NDAR Imaging private dump directory */
+    public static final String PREF_NDAR_IMAGING_DIR_PRIVATE = "ndarImagingDirPrivate";
+    
+    /** Constant that indicates the NDAR Genomics public dump directory */
+    public static final String PREF_NDAR_GENOMICS_DIR_PUBLIC = "ndarGenomicsDirPublic";
+    
+    /** Constant that indicates the NDAR Genomics private dump directory */
+    public static final String PREF_NDAR_GENOMICS_DIR_PRIVATE = "ndarGenomicsDirPrivate";
+    
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
 

@@ -630,7 +630,7 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
         destPanel.add(visPanel, gbc2);
         
         logOutputArea = WidgetFactory.buildScrollTextArea(Color.white);
-        logOutputArea.getTextArea().setBorder(buildTitledBorder("Output log")); 
+        logOutputArea.setBorder(buildTitledBorder("Output log")); 
         logOutputArea.getTextArea().setEditable(false);
     	
         gbc2.fill = GridBagConstraints.BOTH;
@@ -719,9 +719,62 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
             
             // Complete the ZIP file
             out.close();
+            
+            
+            
+            //create the SRB File Transferer
+            SRBFileTransferer transferer = new SRBFileTransferer();
+            LocalFile localFile = new LocalFile(outFilename);
+            
+            String targetDir = null;
+            boolean isPublic = publicButton.isSelected();
+            if (isPublic) {
+            	targetDir = Preferences.getProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PUBLIC);
+            	if (targetDir == null) {
+            		targetDir = "/home/Public/Link/Public";
+            		Preferences.setProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PUBLIC, targetDir);
+            	}
+            	
+            } else {
+            	targetDir = Preferences.getProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PRIVATE);
+            	if (targetDir == null) {
+            		targetDir = "/home/Public/Link/Private";
+            		Preferences.setProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PRIVATE, targetDir);
+            	}
+            }
+            
+            //transfer the zipped meta and raw data to the destination dump folder (private or public)
+            GeneralFile targetFile = transferer.createTargetFile(targetDir, USER_MIPAV_TEMP_DIR, outFilename);
+            
+            logOutputArea.getTextArea().append(new Date() + " Transferring " + outFilename + " to " + targetDir + "\n");
+            transferer.transfer(localFile, targetFile);
+            
+            logOutputArea.getTextArea().append(new Date() + " Transfer successful\n");
+            
+            //if the destination is private, send all raw data to user specified directory
+            if (!isPublic) {
+            	String privateUserDir = privateField.getText();
+            	
+            	GeneralFile [] sourceFiles = new GeneralFile[rawSourceModel.getSize()];
+            	GeneralFile [] targetFiles = new GeneralFile[sourceFiles.length];
+            	String sourceFileName;
+            	for (int i = 0; i < sourceFiles.length; i++) {
+            		sourceFileName = ((File)rawSourceModel.elementAt(i)).getPath();
+            		sourceFiles[i] = new LocalFile((File)rawSourceModel.elementAt(i));
+            		targetFiles[i] = transferer.createTargetFile(privateUserDir, new File(sourceFileName).getParent(), sourceFileName);
+            		logOutputArea.getTextArea().append(new Date() + "Adding " + sourceFileName + " to transfer list\n");
+            	}
+            	logOutputArea.getTextArea().append(new Date() + " Transferring files to " + privateUserDir +"\n");
+            	transferer.transfer(sourceFiles, targetFiles);
+            	logOutputArea.getTextArea().append(new Date() + " Successfully transferred files to " + privateUserDir +"\n");
+            }
+            
+            
         } catch (IOException e) {
+        	
+        	logOutputArea.getTextArea().append(new Date() + " " + e.getMessage() +"\n");
         }
-    	
+        logOutputArea.getTextArea().append("\n\n");
     }
        
     private JPanel buildButtonPanel() {
