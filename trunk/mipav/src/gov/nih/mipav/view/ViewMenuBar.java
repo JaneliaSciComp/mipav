@@ -1275,6 +1275,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
+            menuBuilder.setMenuItemEnabled("Replace slice", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
             menuBuilder.setMenuItemEnabled("Randomize slice order", false);
             menuBuilder.setMenuItemEnabled("Barrel distortion correction", false);
