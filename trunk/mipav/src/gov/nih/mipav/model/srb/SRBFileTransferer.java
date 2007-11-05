@@ -882,7 +882,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
      * @return  the target file consisted of the target directory and relative file name of the source file name related
      *          to the source base directory.
      */
-    private GeneralFile createTargetFile(String targetDirName, String baseSourceDirName, String sourceFileName) {
+    public GeneralFile createTargetFile(String targetDirName, String baseSourceDirName, String sourceFileName) {
 
         if ((targetDirName == null) || (baseSourceDirName == null) || (sourceFileName == null)) {
             return null;

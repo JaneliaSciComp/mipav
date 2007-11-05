@@ -525,7 +525,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         destPanel.add(visPanel, gbc2);
         
         logOutputArea = WidgetFactory.buildScrollTextArea(Color.white);
-        logOutputArea.getTextArea().setBorder(buildTitledBorder("Output log")); 
+        logOutputArea.setBorder(buildTitledBorder("Output log")); 
         logOutputArea.getTextArea().setEditable(false);
     	
         gbc2.fill = GridBagConstraints.BOTH;
@@ -835,10 +835,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
     	FileIO fileIO = new FileIO();
     	fileIO.setQuiet(true);
     	SRBFileTransferer transferer = new SRBFileTransferer();
-    	
-    	
-    	transferer.setNDAR(true);
-    	
+    	    	
     	int numImages = sourceModel.size();
     	ModelImage tempImage = null;
     	
