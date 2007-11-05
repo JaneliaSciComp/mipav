@@ -4,6 +4,7 @@ import java.io.*;
 import java.awt.*;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
@@ -37,13 +38,14 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     /** List of file names for the Diffusion Weighted Images, from the .path file. */
     private String[][] m_aakDWIList = null;
     private int[] m_repidx;
+    private String m_kRawImageFormat = null;
     
     private ModelImage m_kDTIImage = null;
 
 
     public AlgorithmDWI2DTI( ModelImage kMaskImage, int iSlices, int iDimX, int iDimY,
-    int iBOrig, int iWeights, float fMeanNoise, String[][] aakDWIList, int[] repidx, GMatrixf kBMatrix       
-    )
+                             int iBOrig, int iWeights, float fMeanNoise, String[][] aakDWIList, int[] repidx, GMatrixf kBMatrix,
+                             String kRawFormat )
     {
         m_kMaskImage = kMaskImage;
         m_iSlices = iSlices;
@@ -55,6 +57,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
        m_aakDWIList = aakDWIList;
        m_repidx = repidx;
        m_kBMatrix = kBMatrix;
+       m_kRawImageFormat = kRawFormat;
     }
 
     public void disposeLocal()
@@ -80,52 +83,141 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         return m_kDTIImage;
     }
 
+    private float[] readDicomWeight( int iSlice, int iWeight )
+    {
+        int length = m_iDimX * m_iDimY;
+        float[] buffer = new float[length];
+
+        FileDicom fileDicom = null;
+        FileInfoDicom refFileInfo = null;
+        FileInfoBase fileInfo = null;
+        
+        String kPath = m_aakDWIList[ iSlice ][iWeight];
+        String kDir = kPath.substring(0,kPath.lastIndexOf(File.separator)) + File.separator;
+        String kFileName = kPath.substring(kPath.lastIndexOf(File.separator) + 1, kPath.length());
+        
+        try {
+            fileDicom = new FileDicom(kFileName, kDir);
+            fileDicom.setQuiet(true);
+            fileDicom.readHeader(true);
+            refFileInfo = (FileInfoDicom) fileDicom.getFileInfo();
+            fileInfo = fileDicom.getFileInfo();
+            fileDicom.readImage(buffer, ModelStorageBase.SHORT, 0);
+        } catch ( IOException e ) {}
+        return buffer;
+    }
+
+    private float[] readFloatWeight( int iSlice, int iWeight )
+    {
+        File kFile = new File( m_aakDWIList[ iSlice ][iWeight] );
+        if ( !kFile.exists() || !kFile.canRead() )
+        {
+            MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
+            return null;
+        }
+        int iLength = (int)kFile.length();
+        if ( iLength <= 0 )
+        {
+            MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
+            return null;
+        }
+        byte[] abSliceData = new byte[iLength];
+        try {
+            FileInputStream kFileReader = new FileInputStream(kFile);
+            kFileReader.read(abSliceData,0,iLength);
+            kFileReader.close();
+        } catch (IOException e ) {}
+
+        int length = m_iDimX * m_iDimY;
+        float[] afResult = new float[length];
+        for ( int iY = 0; iY < m_iDimY; iY++ )
+        {
+            for ( int iX = 0; iX < m_iDimX; iX++ )
+            {
+                int iIndex = (iY * m_iDimX) + iX;
+                afResult[iIndex] = readFloat( abSliceData, iIndex );
+            }
+        }
+        return afResult;
+    }
     
+    private float[] readIntegerWeight( int iSlice, int iWeight )
+    {
+        File kFile = new File( m_aakDWIList[ iSlice ][iWeight] );
+        if ( !kFile.exists() || !kFile.canRead() )
+        {
+            MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
+            return null;
+        }
+        int iLength = (int)kFile.length();
+        if ( iLength <= 0 )
+        {
+            MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
+            return null;
+        }
+        byte[] abSliceData = new byte[iLength];
+        try {
+            FileInputStream kFileReader = new FileInputStream(kFile);
+            kFileReader.read(abSliceData,0,iLength);
+            kFileReader.close();
+        } catch (IOException e ) {}
+
+        int length = m_iDimX * m_iDimY;
+        float[] afResult = new float[length];
+        for ( int iY = 0; iY < m_iDimY; iY++ )
+        {
+            for ( int iX = 0; iX < m_iDimX; iX++ )
+            {
+                int iIndex = (iY * m_iDimX) + iX;
+                afResult[iIndex] = (float)readInteger( abSliceData, iIndex );
+            }
+        }
+        return afResult;
+    }
+
+
+    private float[] readSliceWeight( int iSlice, int iWeight )
+    {
+        float[] buffer = null;
+        if ( m_kRawImageFormat.equals( "dicom" ) ) 
+        {
+            buffer = readDicomWeight( iSlice, iWeight );
+        }
+        else if ( m_kRawImageFormat.equals( "float" ) ) 
+        {
+            buffer = readFloatWeight( iSlice, iWeight );
+        }
+        else
+        {
+            buffer = readIntegerWeight( iSlice, iWeight );
+        }
+        return buffer;
+    }
+
     private void createMaskImage()
     {
+        int iWeight = 0;
         int[] imageExtents = new int[]{m_iDimX, m_iDimY, m_iSlices};
-        m_kBrainImage = new ModelImage( ModelStorageBase.FLOAT, imageExtents, new String( "BrainImage" ) );
+        m_kBrainImage = new ModelImage(ModelStorageBase.FLOAT, imageExtents, new String( "BrainImage" ) );
+
+        int length = m_iDimX * m_iDimY;
         for ( int iSlice = 0; iSlice < m_iSlices; iSlice++ )
         {
-            int iWeight = 0;
-            File kFile = new File( m_aakDWIList[ iSlice ][iWeight] );
-            if ( !kFile.exists() || !kFile.canRead() )
-            {
-                MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
-                return;
-            }
-            int iLength = (int)kFile.length();
-            if ( iLength <= 0 )
-            {
-                MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
-                return;
-            }
-            byte[] abSliceData = new byte[iLength];
+            float[] buffer = readSliceWeight(iSlice, iWeight);
             try {
-                FileInputStream kFileReader = new FileInputStream(kFile);
-                kFileReader.read(abSliceData,0,iLength);
-                kFileReader.close();
-            } catch (IOException e ) {}
-            
-            for ( int iY = 0; iY < m_iDimY; iY++ )
-            {
-                for ( int iX = 0; iX < m_iDimX; iX++ )
-                {
-                    int iIndex = (iY * m_iDimX) + iX;
-                    float p = readFloat( abSliceData, iIndex );
-                    
-                    m_kBrainImage.set(iSlice*(m_iDimX*m_iDimY) + iIndex, p );
-                }
-            }
+                m_kBrainImage.importData(length * iSlice, buffer, false);
+            } catch (IOException e) {}
         }
 
         m_kBrainImage.addImageDisplayListener(this);
         m_kBrainFrame = new ViewJFrameImage(m_kBrainImage, null, new Dimension(610, 200), false);
+
         JDialogBrainSurfaceExtractor kExtractBrain = new JDialogBrainSurfaceExtractor( m_kBrainFrame, m_kBrainImage );
-        kExtractBrain.setFilterGaussianStdDev(5);
+        kExtractBrain.setFilterGaussianStdDev(3);
         kExtractBrain.setFillHoles(false);
         kExtractBrain.setExtractPaint(true);
         kExtractBrain.callAlgorithm();
+
     }
 
 
@@ -148,27 +240,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
                 {
                     for (int slice = 0; slice < m_iSlices; slice++)
                     { 
-                        File kFile = new File( m_aakDWIList[slice][j] );
-                        if ( !kFile.exists() || !kFile.canRead() )
-                        {
-                            MipavUtil.displayError("Error reading file: " + m_aakDWIList[slice][j] + ".");
-                            return null;
-                        }
-                        int iLength = (int)kFile.length();
-                        if ( iLength <= 0 )
-                        {
-                            MipavUtil.displayError("Error reading file: " + m_aakDWIList[slice][j] + ".");
-                            return null;
-                        }
-                        byte[] abSliceData = new byte[iLength];
-                        try {
-                            abSliceData = new byte[iLength];
-                            FileInputStream kFileReader = new FileInputStream(kFile);
-                            kFileReader.read( abSliceData,0,iLength);
-                            kFileReader.close();
-                        } catch (IOException e ) {}
-
-
+                        float[] buffer = readSliceWeight(slice, j);
                         for ( int iY = 0; iY < m_iDimY; iY++ )
                         {
                             for ( int iX = 0; iX < m_iDimX; iX++ )
@@ -176,7 +248,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
                                 int iIndex = (iY * m_iDimX) + iX;
                                 if ( m_kMaskImage.getBoolean( slice*m_iDimY*m_iDimX + iIndex) )
                                 {
-                                    float fValue = readFloat( abSliceData, iIndex );
+                                    float fValue = buffer[iIndex];
                                     norm[i][slice][iIndex] += fValue;
                                 }
                                 else
@@ -197,33 +269,12 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         {
             for (int slice = 0; slice < m_iSlices; slice++)
             { 
-                File kFile = new File( m_aakDWIList[slice][j] );
-                if ( !kFile.exists() || !kFile.canRead() )
-                {
-                    MipavUtil.displayError("Error reading file: " + m_aakDWIList[slice][j] + ".");
-                    return null;
-                }
-                int iLength = (int)kFile.length();
-                if ( iLength <= 0 )
-                {
-                    MipavUtil.displayError("Error reading file: " + m_aakDWIList[slice][j] + ".");
-                    return null;
-                }
-                byte[] abSliceData = new byte[iLength];
-                try {
-                    abSliceData = new byte[iLength];
-                    FileInputStream kFileReader = new FileInputStream(kFile);
-                    kFileReader.read( abSliceData,0,iLength);
-                    kFileReader.close();
-                } catch (IOException e ) {}
-
-
+                float[] buffer = readSliceWeight(slice, j);
                 for ( int iY = 0; iY < m_iDimY; iY++ )
                 {
                     for ( int iX = 0; iX < m_iDimX; iX++ )
                     {
                         int iIndex = (iY * m_iDimX) + iX;
-
                         if ( norm[m_repidx[j]][slice][iIndex] == 0 )
                         {
                             wmask[j][slice][iIndex]= 0;
@@ -232,7 +283,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
                         {
                             if ( m_kMaskImage.getBoolean( slice*m_iDimY*m_iDimX + iIndex) )
                             {
-                                float fValue = readFloat( abSliceData, iIndex );
+                                float fValue = buffer[iIndex];
                                 wmask[j][slice][iIndex]= fValue/norm[m_repidx[j]][slice][iIndex];
                             }
                         }
@@ -282,30 +333,11 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
 
         for ( int iSlice = 0; iSlice < m_iSlices; iSlice++ )
         {
-            byte[][] aabSliceData = new byte[m_iWeights][ ];
-
+            float[][] buffer = new float[m_iWeights][];
             for ( int iWeight = 0; iWeight < m_iWeights; iWeight++ )
             {
-                File kFile = new File( m_aakDWIList[ iSlice ][iWeight] );
-                if ( !kFile.exists() || !kFile.canRead() )
-                {
-                    MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
-                    return;
-                }
-                int iLength = (int)kFile.length();
-                aabSliceData[iWeight] = new byte[iLength];
-                if ( iLength <= 0 )
-                {
-                    MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
-                    return;
-                }
-                try {
-                    FileInputStream kFileReader = new FileInputStream(kFile);
-                    kFileReader.read(aabSliceData[iWeight],0,iLength);
-                    kFileReader.close();
-                } catch (IOException e ) {}
+                buffer[iWeight] = readSliceWeight(iSlice, iWeight);
             }
-
             for ( int iY = 0; iY < m_iDimY; iY++ )
             {
                 for ( int iX = 0; iX < m_iDimX; iX++ )
@@ -323,7 +355,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
 
                         for ( int iWeight = 0; iWeight < m_iWeights; iWeight++ )
                         {
-                            double p = (double)readFloat( aabSliceData[iWeight], iIndex );
+                            double p = buffer[iWeight][iIndex];
 
                             //SIGMA is a diagonal matrix and its inverse would be diag(1/S(i,i))
                             if ( p<m_fMeanNoise )
@@ -390,8 +422,6 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
             }
             int iValue = (int)(100 * (float)(iSlice+1)/(float)m_iSlices);
             kProgressBar.updateValueImmed( iValue );
-            aabSliceData = null;
-
         }
         kProgressBar.dispose();
         aaafWeights = null;
@@ -418,6 +448,22 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         int tmpInt = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
         float fValue = Float.intBitsToFloat(tmpInt);
         return fValue;
+    }
+
+
+    /** Translates the byte[] into integer values at the given indes iIndex.
+     * @param abData, byte[] containing integer values.
+     * @param iIndex, index into the array to get the float from.
+     * @return integer value representing 4 bytes starting at abData[iIndex*4].
+     */
+    private int readInteger( byte[] abData, int iIndex )
+    {
+        int b1 = abData[iIndex*4 + 0] & 0xff;
+        int b2 = abData[iIndex*4 + 1] & 0xff;
+        int b3 = abData[iIndex*4 + 2] & 0xff;
+        int b4 = abData[iIndex*4 + 3] & 0xff;
+        int iValue = ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+        return iValue;
     }
 
 

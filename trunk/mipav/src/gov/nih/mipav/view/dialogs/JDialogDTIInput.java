@@ -190,9 +190,12 @@ public class JDialogDTIInput extends JDialogBase
     private boolean[] m_abVisited = null;
 
     /** Slice thickness read from .list file */
-    private float m_fResZ;
+    private float m_fResZ = 0f;
     /** Mean noise vale read from the .list file */
-    private float m_fMeanNoise;
+    private float m_fMeanNoise = 0f;
+
+    /** raw image format read from the .list file: */
+    private String m_kRawFormat;
 
     /** Create a new JDialogDTIInput of one of the four types:
      * @param iType, type of Diffusion Tensor Input dialog to create.
@@ -578,6 +581,8 @@ public class JDialogDTIInput extends JDialogBase
                     }else if(lineString.startsWith("<nim>")) {
             		String nimStr = lineString.substring(lineString.indexOf("<nim>") + 5, lineString.indexOf("</nim>")).trim();
             		m_iWeights = Integer.parseInt(nimStr);
+                    }else if(lineString.startsWith("<rawimageformat>")) {
+            		m_kRawFormat = lineString.substring(lineString.indexOf("<rawimageformat>") + 16, lineString.indexOf("</rawimageformat>")).trim();
                     }else if(lineString.startsWith("<raw_image_path_filename>")) {
             		pathFilename = lineString.substring(lineString.indexOf("<raw_image_path_filename>") + 25, lineString.indexOf("</raw_image_path_filename>")).trim();
             		pathFileAbsPath = parentDir + File.separator + pathFilename;
@@ -742,7 +747,7 @@ public class JDialogDTIInput extends JDialogBase
         
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-        AlgorithmDWI2DTI kAlgorithm = new AlgorithmDWI2DTI( null, m_iSlices, m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix);
+        AlgorithmDWI2DTI kAlgorithm = new AlgorithmDWI2DTI( null, m_iSlices, m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix, m_kRawFormat);
         kAlgorithm.addListener(this);
         kAlgorithm.run();
         
