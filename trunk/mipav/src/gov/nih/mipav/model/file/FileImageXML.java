@@ -987,7 +987,7 @@ public class FileImageXML extends FileXML {
             	
             	// if the dimensions arent correct for image/matrix, switch it to correct dim and identity
             	if (tMatrix.getNCols() != (nDims + 1)) {
-                	tMatrix = new TransMatrix(nDims + 1, TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                	tMatrix = new TransMatrix(Math.min(nDims + 1,4), TransMatrix.TRANSFORM_ANOTHER_DATASET);
                 	tMatrix.identity();
                 }
             	
