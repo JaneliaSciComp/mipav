@@ -659,7 +659,11 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             // import the result buffer from the resultImage into the srcImage
             // do this a slice at a time to conserve memory
             float[] resultBuffer = null;
-            int resultSize = resultImage.getSliceSize();
+            int colorFactor = 1;
+            if (srcImage.isColorImage()) {
+                colorFactor = 4;
+            }
+            int resultSize = resultImage.getSliceSize() * colorFactor;
             int numSlices = 1;
             int numTimes = 1;
 
