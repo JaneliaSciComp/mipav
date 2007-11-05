@@ -984,6 +984,9 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
         replaceBox = new JCheckBox("Replace slices (using averages)", false);
         replaceBox.setFont(MipavUtil.font12);
         optionsPanel.add(replaceBox);
+        if (image.getNDims() >= 4) {
+            replaceBox.setEnabled(false);
+        }
 
         gbc.gridy++;
         checkPanel.add(optionsPanel, gbc);
