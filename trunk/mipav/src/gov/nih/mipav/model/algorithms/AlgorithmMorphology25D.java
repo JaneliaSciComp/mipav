@@ -168,7 +168,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         this.entireImage = entireImage;
         this.kernelType = kernelType;
 
-        if (kernelType == SIZED_CIRCLE) {
+        if ((kernelType == SIZED_CIRCLE) && (srcImage != null)) {
             this.circleDiameter = circleDiameter;
             makeCircularKernel(circleDiameter);
         } else {
