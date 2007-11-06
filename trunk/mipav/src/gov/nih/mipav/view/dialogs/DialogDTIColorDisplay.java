@@ -2261,10 +2261,13 @@ public class DialogDTIColorDisplay extends ViewJFrameBase
         /* Sets the correct resolutions for the image. */
         if ( m_afScreenResolutions != null )
         {
-            screenCaptureImage.getFileInfo(0).setResolutions(m_afScreenResolutions);
-            screenCaptureImage.getFileInfo(0).setSliceThickness(m_fSliceThickness);
+            for (int i=0;i<fileInfoBases.length;i++) {
+                screenCaptureImage.getFileInfo(i).setResolutions(m_afScreenResolutions);
+                screenCaptureImage.getFileInfo(i).setSliceThickness(m_fSliceThickness);  
+            }
         }
         new ViewJFrameImage(screenCaptureImage, null, new Dimension(610, 200));
+        //System.out.println( "screenCaptureImage = " + screenCaptureImage.toString() );
         
         resultImageSlider.setValue(numSlices/2);
 
