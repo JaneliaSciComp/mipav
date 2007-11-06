@@ -1,11 +1,9 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.srb.SRBFileTransferer;
 import gov.nih.mipav.model.srb.SRBUtility;
-import gov.nih.mipav.model.structures.*;
 
 
 import gov.nih.mipav.view.*;
@@ -70,11 +68,6 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
 	private JRadioButton publicButton, privateButton;
 	
 	private JTabbedPane tabbedPane;
-		
-	
-
-	private JComboBox organizationBox;
-	
 	private JCheckBox anonConfirmBox;
 	
 	private JTextArea privacyTextArea;
@@ -86,7 +79,7 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
 	private static final int TAB_SOURCE = 3;
 	private static final int TAB_DESTINATION = 4;
 	
-	private static final String SPACE = " ";
+	private static final String SPACE = "";
 
 	private static final String USER_MIPAV_TEMP_DIR = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "temp" +
     	File.separator;
@@ -489,11 +482,7 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
         gbc.weightx = 1;
         gbc.insets = insets2;
         irbField = WidgetFactory.buildTextField(SPACE);
-        piPanel.add(irbField, gbc);
-    	        
-    	organizationBox = new JComboBox(ORGANIZATIONS);
-        organizationBox.setFont(MipavUtil.font12);        
-              
+        piPanel.add(irbField, gbc);              
                	
     	return piPanel;
     }
@@ -574,15 +563,8 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
         gbc2.anchor = GridBagConstraints.NORTHWEST;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
         gbc2.weightx = 1;
-        
-    	organizationBox = new JComboBox(ORGANIZATIONS);
-        organizationBox.setFont(MipavUtil.font12);        
-        
-        
         gbc2.gridy = 0;
         gbc2.gridx = 0;
-        gbc2.insets = new Insets(5, 10, 5, 0);
-        destPanel.add(organizationBox, gbc2);
         
         JPanel visPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();        
@@ -724,6 +706,7 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
             
             //create the SRB File Transferer
             SRBFileTransferer transferer = new SRBFileTransferer();
+            transferer.initFileSystemNDARSend();
             LocalFile localFile = new LocalFile(outFilename);
             
             String targetDir = null;
@@ -731,27 +714,35 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
             if (isPublic) {
             	targetDir = Preferences.getProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PUBLIC);
             	if (targetDir == null) {
-            		targetDir = "/home/Public/Link/Public";
+            		targetDir = "/home/Public/Link/Public/";
             		Preferences.setProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PUBLIC, targetDir);
             	}
             	
             } else {
             	targetDir = Preferences.getProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PRIVATE);
             	if (targetDir == null) {
-            		targetDir = "/home/Public/Link/Private";
+            		targetDir = "/home/Public/Link/Private/";
             		Preferences.setProperty(Preferences.PREF_NDAR_GENOMICS_DIR_PRIVATE, targetDir);
             	}
             }
             
             //transfer the zipped meta and raw data to the destination dump folder (private or public)
+            System.err.println("targetDir: " + targetDir + ", tempdir: " + USER_MIPAV_TEMP_DIR + ", outfilename: " + outFilename);
             GeneralFile targetFile = transferer.createTargetFile(targetDir, USER_MIPAV_TEMP_DIR, outFilename);
-            
+                        
+            System.err.println("created target file: " + targetFile);
             logOutputArea.getTextArea().append(new Date() + " Transferring " + outFilename + " to " + targetDir + "\n");
             transferer.transfer(localFile, targetFile);
             
             logOutputArea.getTextArea().append(new Date() + " Transfer successful\n");
             
             //if the destination is private, send all raw data to user specified directory
+            
+            //temp
+            if (logOutputArea != null) {
+            	return;
+            }
+            
             if (!isPublic) {
             	String privateUserDir = privateField.getText();
             	
@@ -817,7 +808,6 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
     	
     	 public RepositoryXML(String fileName, String fileDir) throws IOException {
     	    	super(fileName, fileDir);
-    	    	
     	    	file = new File(fileDir + fileName);
     	 }
     	
@@ -835,6 +825,7 @@ public class JDialogNDARGenomics extends JDialogBase implements ActionListener, 
 
     	            openTag("SubmissionInfo", true);
     	                	            
+    	            closedTag( "Path", privateField.getText());
     	            closedTag( "Name", piNameField.getText());
     	            closedTag( "Title", piTitleField.getText());
     	            closedTag( "Email", piTitleField.getText());

@@ -5376,7 +5376,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param controls
      * @return
      */
-    protected boolean checkForVOICompatibility(VOIVector VOIs, int type, int lastVOI_UID,
+    public boolean checkForVOICompatibility(VOIVector VOIs, int type, int lastVOI_UID,
     		ViewControlsImage controls) {
 
         // System.err.println("Type is: " + type);

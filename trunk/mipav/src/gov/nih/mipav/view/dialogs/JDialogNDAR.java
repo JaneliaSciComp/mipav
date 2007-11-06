@@ -75,8 +75,6 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	private JPanel guidPanel;
 	
 	private DefaultListModel sourceModel;
-
-	private JComboBox organizationBox;
 	
 	private JCheckBox anonConfirmBox;
 	
@@ -101,19 +99,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	private static final int TAB_SOURCE = 3;
 	private static final int TAB_GUID = 4;
 	private static final int TAB_DESTINATION = 5;
-	
-	private static final String [] ORGANIZATIONS = { "ACE Location 1",
-													 "ACE Location 2",
-													 "ACE Location 3",
-													 "ACE Location 4",
-													 "ACE Location 5",
-													 "ACE Location 6",
-													 "ACE Location 7",
-													 "ACE Location 8",
-													 "ACE Location 9",
-													 "ACE Location 10" };
-	
-	
+		
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
   
@@ -469,15 +455,9 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.NORTHWEST;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
-        gbc2.weightx = 1;
-        
-        
-        
-        
+        gbc2.weightx = 1;        
         gbc2.gridy = 0;
         gbc2.gridx = 0;
-        gbc2.insets = new Insets(5, 10, 5, 0);
-        destPanel.add(organizationBox, gbc2);
         
         JPanel visPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();        
@@ -622,11 +602,6 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         gbc.insets = insets2;
         irbField = WidgetFactory.buildTextField(SPACE);
         piPanel.add(irbField, gbc);
-    	        
-    	organizationBox = new JComboBox(ORGANIZATIONS);
-        organizationBox.setFont(MipavUtil.font12);        
-              
-               	
     	return piPanel;
     }
     
