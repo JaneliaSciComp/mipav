@@ -51,6 +51,9 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 	/** Scrolling text area for abstract */
 	private WidgetFactory.ScrollTextArea abstractArea;
 	
+	/** Scrolling text area for log output */
+	private WidgetFactory.ScrollTextArea logOutputArea;
+	
 	JScrollPane listPane;
 	
 	private JButton loadGUIDsButton;
@@ -428,10 +431,26 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
         gbc2.gridy++;
         destPanel.add(visPanel, gbc2);
         
+        logOutputArea = WidgetFactory.buildScrollTextArea(Color.white);
+        logOutputArea.getTextArea().setBorder(buildTitledBorder("Output log")); 
+        logOutputArea.getTextArea().setEditable(false);
+    	
+        gbc2.fill = GridBagConstraints.BOTH;
+        gbc2.gridy++;
+        gbc2.weightx = 1;
+        gbc2.weighty = 1;
+      //  gbc2.gridheight = 4;
+        destPanel.add(logOutputArea, gbc2);
+        
+        
     	return destPanel;
     	
     }
     
+    /**
+     * build Principal Investor
+     * @return JPanel
+     */
     private JPanel buildPITab() {
     	JPanel piPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -669,7 +688,7 @@ public class JDialogNDAR extends JDialogBase implements ActionListener, ChangeLi
 				isNumChar(checkString.charAt(8)) &&
 				isValidChar(checkString.charAt(1)) &&
 				isValidChar(checkString.charAt(10)) &&
-				isNumChar(checkString.charAt(11))) {
+				(isNumChar(checkString.charAt(11)) || isValidChar(checkString.charAt(11)))) {
 			return true;
 		} 
     	return false;
